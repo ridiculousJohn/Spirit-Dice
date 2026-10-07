@@ -1,0 +1,15 @@
+{
+  "name": "Dice.App",
+  "rootNamespace": "Dice.App",
+  "references": [
+    "Dice.Engine",
+    "Dice.UnityContent",
+    "Dice.Presentation"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "Newtonsoft.Json.dll"
+  ],
+  "noEngineReferences": false
+}

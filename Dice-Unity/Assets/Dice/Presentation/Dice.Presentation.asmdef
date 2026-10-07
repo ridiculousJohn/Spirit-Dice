@@ -1,0 +1,11 @@
+{
+  "name": "Dice.Presentation",
+  "rootNamespace": "Dice.Presentation",
+  "references": [
+    "Dice.Engine"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "noEngineReferences": false
+}
