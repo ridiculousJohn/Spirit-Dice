@@ -1,0 +1,72 @@
+# Unity project caches and generated output.
+# Adapted for this layout from https://github.com/github/gitignore/blob/main/Unity.gitignore
+/Dice-Unity/[Ll]ibrary/
+/Dice-Unity/[Tt]emp/
+/Dice-Unity/[Oo]bj/
+/Dice-Unity/[Bb]uild/
+/Dice-Unity/[Bb]uilds/
+/Dice-Unity/[Ll]ogs/
+/Dice-Unity/[Uu]ser[Ss]ettings/
+/Dice-Unity/[Mm]emoryCaptures/
+/Dice-Unity/[Rr]ecordings/
+/Dice-Unity/ExportedObj/
+/Dice-Unity/ServerData/
+/Dice-Unity/UIElementsSchema/
+.utmp/
+
+# Generated IDE files stay local; reference tools and reports in Docs stay tracked.
+.vs/
+.idea/
+.consulo/
+.gradle/
+/Dice-Unity/**/*.csproj
+/Dice-Unity/**/*.unityproj
+/Dice-Unity/**/*.sln
+/Dice-Unity/**/*.slnx
+/Dice-Unity/**/*.suo
+/Dice-Unity/**/*.user
+/Dice-Unity/**/*.userprefs
+/Dice-Unity/**/*.pidb
+/Dice-Unity/**/*.booproj
+/Dice-Unity/**/*.svd
+/Dice-Unity/**/*.pdb
+/Dice-Unity/**/*.mdb
+/Dice-Unity/**/*.opendb
+/Dice-Unity/**/*.VC.db
+/Dice-Unity/**/*.DotSettings.user
+/Dice-Unity/**/*.pidb.meta
+/Dice-Unity/**/*.pdb.meta
+/Dice-Unity/**/*.mdb.meta
+/Dice-Unity/**/*.log
+/Dice-Unity/**/*.tmp
+/Dice-Unity/sysinfo.txt
+/Dice-Unity/mono_crash.*
+/Dice-Unity/crashlytics-build.properties
+/Dice-Unity/**/*.apk
+/Dice-Unity/**/*.aab
+/Dice-Unity/**/*.app
+/Dice-Unity/**/*.unitypackage
+/Dice-Unity/**/*.unitypackage.meta
+*.blend1
+*.blend1.meta
+
+# Unity-generated assets.
+/Dice-Unity/[Aa]ssets/Plugins/Editor/JetBrains*
+/Dice-Unity/[Aa]ssets/StreamingAssets/aa*
+/Dice-Unity/[Aa]ssets/AddressableAssetsData/link.xml*
+/Dice-Unity/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/Dice-Unity/[Aa]ssets/Addressables_Temp*
+/Dice-Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Flow/UnitOptions.db*
+/Dice-Unity/[Aa]ssets/Unity.VisualScripting.Generated/VisualScripting.Core/Property\ Providers*
+/Dice-Unity/[Aa]ssets/**/[Ii]nit[Tt]est[Ss]cene*.unity*
+/Dice-Unity/[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Operating-system and Python bytecode caches.
+# Downloaded dependencies used by the reference extraction tools.
+/Docs/work/dice-of-kalma/python-packages/
+.DS_Store
+Thumbs.db
+Desktop.ini
+__pycache__/
+*.pyc
+*.pyo
