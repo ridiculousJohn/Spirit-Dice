@@ -1,0 +1,21 @@
+{
+  "name": "Dice.Tests.EditMode",
+  "rootNamespace": "Dice.Tests",
+  "references": [
+    "Dice.Engine",
+    "Dice.App",
+    "Dice.UnityContent",
+    "Dice.Presentation",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
+  ]
+}

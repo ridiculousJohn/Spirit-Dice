@@ -1,0 +1,285 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Dice.Engine;
+using NUnit.Framework;
+
+namespace Dice.Tests
+{
+    public sealed class ModifierSessionTests
+    {
+        [TestCase(false)]
+        [TestCase(true)]
+        public void PhaseEffectsCannotEnableAnotherInventoryPredicate(bool reverse)
+        {
+            int face = TestContent.Session().Snapshot.CurrentDice[0];
+            var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
+                new ModifierEffect(ModifierEffectKind.AddRerolls, face));
+            var conditional = new ModifierDefinition("conditional", "test.conditional", ModifierPhase.PlayHand,
+                new ModifierCondition(ModifierConditionKind.ContainsRerollsRemaining),
+                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+            var session = Session(new[] { grant, conditional },
+                reverse ? new[] { "conditional", "grant" } : new[] { "grant", "conditional" },
+                new[] { new StageDefinition(1000000, 3, 0) });
+            var result = session.Execute(PlayHandAction.Instance, 0);
+            Assert.That(result.Events.OfType<ModifierActivatedEvent>().Select(value => value.DefinitionId),
+                Is.EqualTo(new[] { "grant" }));
+            Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore, Is.Zero);
+        }
+
+        [TestCase(1, false)]
+        [TestCase(2, true)]
+        [TestCase(3, false)]
+        [TestCase(4, true)]
+        public void HandParityConditionUsesTheHandCountBeforePlaying(int startingHands, bool expected)
+            => AssertHandCountPredicate(ModifierConditionKind.HandsRemainingEven, startingHands, 0, expected);
+
+        [Test]
+        public void ResourceComparisonConditionsPreserveTheirNativeHandCountTiming()
+        {
+            var dice = TestContent.Session().Snapshot.CurrentDice;
+            AssertHandCountPredicate(ModifierConditionKind.ExtremeEqualsHandsRemaining, dice.ToArray().Min(), 0, true);
+            int largestGroup = dice.ToArray().GroupBy(value => value).Max(value => value.Count());
+            AssertHandCountPredicate(ModifierConditionKind.LargestGroupEqualsHandsOrRerolls, largestGroup, 0, true);
+            AssertHandCountPredicate(ModifierConditionKind.EdgeSumEqualsHandsOrRerolls, dice[0] + dice[4], 0, true);
+            AssertHandCountPredicate(ModifierConditionKind.RerollsExceedHandsRemaining, 3, 3, false);
+            AssertHandCountPredicate(ModifierConditionKind.RerollsExceedHandsRemaining, 3, 4, true);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void PhasePredicatesObserveResourcesBeforeAnyModifierEffects(bool reverse)
+        {
+            var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
+                new ModifierEffect(ModifierEffectKind.AddRerolls, 2));
+            var exhausted = new ModifierDefinition("empty", "test.empty", ModifierPhase.PlayHand,
+                new ModifierCondition(ModifierConditionKind.OutOfRerolls),
+                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+            var definitions = reverse ? new[] { exhausted, grant } : new[] { grant, exhausted };
+            var session = Session(definitions, reverse ? new[] { "empty", "grant" } : new[] { "grant", "empty" },
+                new[] { new StageDefinition(1000000, 3, 0) });
+
+            var result = session.Execute(PlayHandAction.Instance, 0);
+            var activations = result.Events.OfType<ModifierActivatedEvent>().ToArray();
+            Assert.That(activations.Select(value => value.DefinitionId),
+                Is.EqualTo(reverse ? new[] { "empty", "grant" } : new[] { "grant", "empty" }));
+            Assert.That(activations.Select(value => value.InstanceId), Is.EqualTo(new long[] { 1, 2 }));
+            Assert.That(result.Snapshot.RerollsRemaining, Is.EqualTo(2));
+            Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore, Is.EqualTo(17));
+        }
+
+        [Test]
+        public void DuplicateDefinitionsHaveIndependentOncePerHandCounters()
+        {
+            var definition = Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, 7));
+            var session = Session(new[] { definition }, new[] { "reroll", "reroll" });
+            var first = session.Execute(new RerollDiceAction(1), 0);
+            Assert.That(first.Events.OfType<ModifierActivatedEvent>().Select(value => value.InstanceId),
+                Is.EqualTo(new long[] { 1, 2 }));
+            Assert.That(first.Snapshot.ModifierBaseScore, Is.EqualTo(14));
+            Assert.That(first.Snapshot.Modifiers.Select(value => value.ActivationsThisHand), Is.EqualTo(new[] { 1, 1 }));
+            Assert.That(first.Snapshot.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 1, 1 }));
+
+            var second = session.Execute(new RerollDiceAction(1), 1);
+            Assert.That(second.Events.OfType<ModifierActivatedEvent>(), Is.Empty);
+            Assert.That(second.Snapshot.ModifierBaseScore, Is.EqualTo(14));
+            var played = session.Execute(PlayHandAction.Instance, 2);
+            Assert.That(played.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore, Is.EqualTo(14));
+            Assert.That(played.Snapshot.ModifierBaseScore, Is.Zero);
+            Assert.That(played.Snapshot.ModifierContributions, Is.Empty);
+            Assert.That(played.Snapshot.Modifiers.Select(value => value.ActivationsThisHand), Is.EqualTo(new[] { 0, 0 }));
+            Assert.That(played.Snapshot.Modifiers.Select(value => value.ActivationsThisStage), Is.EqualTo(new[] { 1, 1 }));
+
+            var nextHand = session.Execute(new RerollDiceAction(1), 3);
+            Assert.That(nextHand.Events.OfType<ModifierActivatedEvent>().Count(), Is.EqualTo(2));
+            Assert.That(nextHand.Snapshot.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 2, 2 }));
+        }
+
+        [Test]
+        public void OncePerStageCountersResetOnStageEntryAndDuplicateInstancesRemainIndependent()
+        {
+            var definition = Modifier("stage", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerStage,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, 1));
+            var probe = TestContent.Session();
+            probe.Execute(new RerollDiceAction(1), 0);
+            var firstScore = probe.PreviewPlayHand();
+            long threshold = (firstScore.BaseScore + 2) * firstScore.Multiplier + 1;
+            var session = Session(new[] { definition }, new[] { "stage", "stage" }, new[]
+            {
+                new StageDefinition(threshold, 20, 20), new StageDefinition(1000000, 20, 20)
+            });
+            Assert.That(session.Execute(new RerollDiceAction(1), 0).Events.OfType<ModifierActivatedEvent>().Count(), Is.EqualTo(2));
+            session.Execute(PlayHandAction.Instance, 1);
+            Assert.That(session.Execute(new RerollDiceAction(1), 2).Events.OfType<ModifierActivatedEvent>(), Is.Empty);
+            session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
+            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(1), "Fixture must clear the first stage.");
+            Assert.That(session.Snapshot.Modifiers.Select(value => value.ActivationsThisStage), Is.EqualTo(new[] { 0, 0 }));
+            Assert.That(session.Snapshot.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 1, 1 }));
+            var firstNextStage = session.Execute(new RerollDiceAction(1), session.Snapshot.Revision);
+            Assert.That(firstNextStage.Events.OfType<ModifierActivatedEvent>().Count(), Is.EqualTo(2));
+            Assert.That(firstNextStage.Snapshot.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 2, 2 }));
+        }
+
+        [Test]
+        public void ContributionsAccumulateAcrossPhasesAndResetBeforeTheNextInitialRoll()
+        {
+            var definitions = new[]
+            {
+                Modifier("initial", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 5)),
+                Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddMultiplier, 2)),
+                Modifier("play", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 11))
+            };
+            var session = Session(definitions, definitions.Select(value => value.Id));
+            Assert.That(session.Snapshot.ModifierBaseScore, Is.EqualTo(5));
+            session.Execute(new RerollDiceAction(3), 0);
+            var result = session.Execute(PlayHandAction.Instance, 1);
+            var score = result.Events.OfType<HandScoredEvent>().Single().Score;
+            Assert.That(score.ModifierBaseScore, Is.EqualTo(16));
+            Assert.That(score.ModifierMultiplier, Is.EqualTo(2));
+            Assert.That(score.ModifierContributions.Select(value => value.Phase), Is.EqualTo(new[]
+            {
+                ModifierPhase.InitialRoll, ModifierPhase.PlayerReroll, ModifierPhase.PlayHand
+            }));
+            Assert.That(score.HandScore, Is.EqualTo(score.BaseScore * score.Multiplier));
+            Assert.That(result.Snapshot.ModifierBaseScore, Is.EqualTo(5));
+            Assert.That(result.Snapshot.ModifierMultiplier, Is.Zero);
+            Assert.That(result.Snapshot.ModifierContributions.Count, Is.EqualTo(1));
+            Assert.That(result.Snapshot.ModifierContributions[0].DefinitionId, Is.EqualTo("initial"));
+        }
+
+        [Test]
+        public void RepeatedPreviewMatchesCommittedPlayEffectsAndPreservesFutureState()
+        {
+            var definitions = new[]
+            {
+                Modifier("initial", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 5)),
+                Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddMultiplier, 2)),
+                Modifier("play", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
+                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 11),
+                    new ModifierEffect(ModifierEffectKind.AddRerolls, 3))
+            };
+            var session = Session(definitions, definitions.Select(value => value.Id), seed: 77);
+            var control = Session(definitions, definitions.Select(value => value.Id), seed: 77);
+            session.Execute(new RerollDiceAction(3), 0);
+            control.Execute(new RerollDiceAction(3), 0);
+            var before = session.Snapshot;
+            HandPreview preview = null;
+            for (int i = 0; i < 20; ++i)
+            {
+                preview = session.PreviewHandResolution();
+                AssertScoreEqual(preview.Score, session.PreviewPlayHand());
+                AssertSnapshotsEqual(before, session.Snapshot);
+            }
+            Assert.That(preview.Events.OfType<ModifierActivatedEvent>().Select(value => value.DefinitionId), Is.EqualTo(new[] { "play" }));
+            Assert.That(preview.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 1, 1, 1 }));
+            var committed = session.Execute(PlayHandAction.Instance, before.Revision);
+            var score = committed.Events.OfType<HandScoredEvent>().Single().Score;
+            AssertScoreEqual(preview.Score, score);
+            Assert.That(preview.RerollsRemaining, Is.EqualTo(committed.Snapshot.RerollsRemaining));
+            Assert.That(preview.Events.OfType<ModifierActivatedEvent>().Select(value => value.Contribution),
+                Is.EqualTo(committed.Events.OfType<ModifierActivatedEvent>().Where(value => value.Phase == ModifierPhase.PlayHand)
+                    .Select(value => value.Contribution)));
+            AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 1).Snapshot, committed.Snapshot);
+            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 2).Snapshot,
+                session.Execute(new RerollDiceAction(31), 2).Snapshot);
+        }
+
+        [TestCase(0, CommandRejection.InvalidDiceSelection)]
+        [TestCase(32, CommandRejection.InvalidDiceSelection)]
+        public void RejectedActionsLeaveModifiersAndFutureDiceUnchanged(int selectedMask, CommandRejection rejection)
+        {
+            var modifier = Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, 19),
+                new ModifierEffect(ModifierEffectKind.AddRerolls, 1));
+            var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var before = session.Snapshot;
+            var rejected = session.Execute(new RerollDiceAction(selectedMask), 0);
+            Assert.That(rejected.Rejection, Is.EqualTo(rejection));
+            Assert.That(rejected.Events, Is.Empty);
+            AssertSnapshotsEqual(before, session.Snapshot);
+            Assert.That(session.Execute(PlayHandAction.Instance, -1).Rejection, Is.EqualTo(CommandRejection.StaleRevision));
+            AssertSnapshotsEqual(before, session.Snapshot);
+            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
+                session.Execute(new RerollDiceAction(31), 0).Snapshot);
+        }
+
+        [Test]
+        public void OverflowAfterDrawingRerollDiceDoesNotCommitRandomStateCountersOrContributions()
+        {
+            var modifier = Modifier("overflow", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, 19),
+                new ModifierEffect(ModifierEffectKind.AddRerolls, int.MaxValue));
+            var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var before = session.Snapshot;
+            for (int i = 0; i < 2; ++i)
+            {
+                Assert.Throws<OverflowException>(() => session.Execute(new RerollDiceAction(31), 0));
+                AssertSnapshotsEqual(before, session.Snapshot);
+            }
+            var committed = session.Execute(PlayHandAction.Instance, 0);
+            AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 0).Snapshot, committed.Snapshot);
+            Assert.That(committed.Events.OfType<ModifierActivatedEvent>(), Is.Empty);
+        }
+
+        [Test]
+        public void PlayOverflowAndPreviewOverflowLeaveTheEncounterRetryable()
+        {
+            var modifier = Modifier("overflow", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, long.MaxValue));
+            var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
+            var before = session.Snapshot;
+            Assert.Throws<OverflowException>(() => session.PreviewPlayHand());
+            Assert.Throws<OverflowException>(() => session.PreviewHandResolution());
+            for (int i = 0; i < 2; ++i)
+            {
+                Assert.Throws<OverflowException>(() => session.Execute(PlayHandAction.Instance, 0));
+                AssertSnapshotsEqual(before, session.Snapshot);
+            }
+            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
+                session.Execute(new RerollDiceAction(31), 0).Snapshot);
+        }
+
+        private static ModifierDefinition Modifier(string id, ModifierPhase phase, ModifierActivationLimit limit,
+            params ModifierEffect[] effects)
+            => new ModifierDefinition(id, "test." + id, phase, new ModifierCondition(ModifierConditionKind.Always), effects, limit);
+
+        private static EncounterSession Session(IEnumerable<ModifierDefinition> modifiers, IEnumerable<string> inventory,
+            IEnumerable<StageDefinition> stages = null, ulong seed = 0)
+        {
+            var encounter = new EncounterDefinition(TestContent.EncounterId,
+                stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: inventory);
+            var catalog = new MechanicalCatalog("test.modifiers", TestContent.Hands(), new[] { encounter }, modifiers);
+            return EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, seed);
+        }
+
+        private static void AssertHandCountPredicate(ModifierConditionKind kind, int hands, int rerolls, bool expected)
+        {
+            var modifier = new ModifierDefinition("condition", "test.condition", ModifierPhase.PlayHand,
+                new ModifierCondition(kind), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+            var session = Session(new[] { modifier }, new[] { modifier.Id },
+                new[] { new StageDefinition(1000000, hands, rerolls) });
+            var result = session.Execute(PlayHandAction.Instance, 0);
+            Assert.That(result.Events.OfType<ModifierActivatedEvent>().Any(), Is.EqualTo(expected), kind.ToString());
+            Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore,
+                Is.EqualTo(expected ? 17 : 0), kind.ToString());
+        }
+
+        private static void AssertScoreEqual(ScoreBreakdown expected, ScoreBreakdown actual)
+        {
+            foreach (var property in typeof(ScoreBreakdown).GetProperties())
+                Assert.That(property.GetValue(actual), Is.EqualTo(property.GetValue(expected)), property.Name);
+        }
+
+        private static void AssertSnapshotsEqual(EncounterSnapshot expected, EncounterSnapshot actual)
+            => EncounterSessionTests.AssertSnapshotsEqual(expected, actual);
+    }
+}
