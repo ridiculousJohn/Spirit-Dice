@@ -1,0 +1,9 @@
+{
+  "name": "Dice.Engine",
+  "rootNamespace": "Dice.Engine",
+  "references": [],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "noEngineReferences": true
+}
