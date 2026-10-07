@@ -50,7 +50,7 @@ namespace Dice.UnityContent
                     effects[j] = new ModifierEffect(effect.kind, effect.amount);
                 }
                 modifierDefinitions[i] = new ModifierDefinition(source.id, source.familyId, source.phase,
-                    new ModifierCondition(source.conditionKind, source.parameter, source.secondaryParameter),
+                    ModifierConditions.Create(source.conditionKind, source.parameter, source.secondaryParameter),
                     effects, source.activationLimit, source.rewardEligible);
             }
             var rewardPoolDefinitions = new ModifierRewardPoolDefinition[rewardPools.Length];

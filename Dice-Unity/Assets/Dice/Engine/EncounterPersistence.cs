@@ -273,7 +273,7 @@ namespace Dice.Engine
                 if (modifier.ActivationLimit == ModifierActivationLimit.OncePerStage)
                     Require(source.ActivationsThisStage <= 1 && source.TotalActivations <= (long)state.StageIndex + 1,
                         "Modifier exceeds its stage activation limit.");
-                if (modifier.Condition.Kind == ModifierConditionKind.Never)
+                if (modifier.Condition is NeverCondition)
                     Require(source.TotalActivations == 0, "An inactive modifier has activation history.");
                 if (modifier.Phase == ModifierPhase.InitialRoll)
                     Require(source.ActivationsThisHand <= 1 && source.ActivationsThisStage <= (long)state.HandIndex + 1 &&

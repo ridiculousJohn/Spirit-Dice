@@ -105,7 +105,7 @@ namespace Dice.Engine
                 if (definition.Phase != phase ||
                     (definition.ActivationLimit == ModifierActivationLimit.OncePerHand && instance.ActivationsThisHand != 0) ||
                     (definition.ActivationLimit == ModifierActivationLimit.OncePerStage && instance.ActivationsThisStage != 0) ||
-                    !ModifierConditions.Evaluate(definition.Condition, in context)) continue;
+                    !definition.Condition.Evaluate(in context)) continue;
 
                 long baseScore = 0;
                 long multiplier = 0;

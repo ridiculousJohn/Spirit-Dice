@@ -51,6 +51,7 @@ namespace Dice.Engine
         }
     }
 
+    // Built-in condition configuration used when constructing runtime condition objects.
     public readonly struct ModifierCondition
     {
         public ModifierConditionKind Kind { get; }
@@ -117,11 +118,18 @@ namespace Dice.Engine
         public string Id { get; }
         public string FamilyId { get; }
         public ModifierPhase Phase { get; }
-        public ModifierCondition Condition { get; }
+        public IModifierCondition Condition { get; }
         public ReadOnlyCollection<ModifierEffect> Effects { get; }
         public ModifierActivationLimit ActivationLimit { get; }
         public bool RewardEligible { get; }
         public ModifierDefinition(string id, string familyId, ModifierPhase phase, ModifierCondition condition,
+            IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
+            bool rewardEligible = true)
+            : this(id, familyId, phase, ModifierConditions.Create(condition), effects, activationLimit, rewardEligible)
+        {
+        }
+
+        public ModifierDefinition(string id, string familyId, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true)
         {
@@ -129,6 +137,7 @@ namespace Dice.Engine
             DefinitionValidation.RequireId(familyId, nameof(familyId));
             if (!Enum.IsDefined(typeof(ModifierPhase), phase)) throw new ArgumentOutOfRangeException(nameof(phase));
             if (!Enum.IsDefined(typeof(ModifierActivationLimit), activationLimit)) throw new ArgumentOutOfRangeException(nameof(activationLimit));
+            if (condition == null) throw new ArgumentNullException(nameof(condition));
             if (effects == null) throw new ArgumentNullException(nameof(effects));
             var entries = new List<ModifierEffect>(effects);
             foreach (var effect in entries)

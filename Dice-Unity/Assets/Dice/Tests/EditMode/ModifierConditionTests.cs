@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dice.Engine;
 using NUnit.Framework;
 
@@ -10,7 +11,11 @@ namespace Dice.Tests
     {
         [TestCaseSource(nameof(Cases))]
         public void ConditionsMatchIndependentBoundaryWitnesses(ModifierCondition condition, ModifierContext context, bool expected)
-            => Assert.That(ModifierConditions.Evaluate(condition, in context), Is.EqualTo(expected));
+        {
+            Assert.That(ModifierConditions.Create(condition).Evaluate(in context), Is.EqualTo(expected));
+            Assert.That(ModifierConditions.Create(condition.Kind, condition.Parameter, condition.SecondaryParameter)
+                .Evaluate(in context), Is.EqualTo(expected));
+        }
 
         [Test]
         public void WitnessesCoverEveryConditionKind()
@@ -19,7 +24,211 @@ namespace Dice.Tests
             Assert.That(covered, Is.EquivalentTo(Enum.GetValues(typeof(ModifierConditionKind))));
         }
 
-        private static IEnumerable<TestCaseData> Cases()
+        [Test]
+        public void EveryConditionKindCreatesItsOwnSealedEvaluationImplementation()
+        {
+            var types = new HashSet<Type>();
+            foreach (ModifierConditionKind kind in Enum.GetValues(typeof(ModifierConditionKind)))
+            {
+                var condition = ModifierConditions.Create(kind);
+                Type type = condition.GetType();
+                Assert.That(type.Name, Is.EqualTo(kind + "Condition"));
+                Assert.That(type.IsSealed, Is.True, kind.ToString());
+                Assert.That(type.BaseType, Is.EqualTo(typeof(object)), kind.ToString());
+                Assert.That(type.GetInterfaces(), Does.Contain(typeof(IModifierCondition)), kind.ToString());
+                Assert.That(type.GetMethod(nameof(IModifierCondition.Evaluate)).DeclaringType,
+                    Is.EqualTo(type), kind.ToString());
+                Assert.That(types.Add(type), Is.True, kind.ToString());
+                var defaults = new ModifierCondition(kind);
+                string[] parameters = defaults.Parameter == 0 ? Array.Empty<string>() :
+                    defaults.SecondaryParameter == 0 ? new[] { "Parameter" } :
+                    new[] { "Parameter", "SecondaryParameter" };
+                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                Assert.That(properties.Select(value => value.Name), Is.EquivalentTo(parameters), kind.ToString());
+                foreach (var property in properties)
+                {
+                    Assert.That(property.DeclaringType, Is.EqualTo(type), kind.ToString());
+                    Assert.That(property.PropertyType, Is.EqualTo(typeof(int)), kind.ToString());
+                    Assert.That(property.CanWrite, Is.False, kind.ToString());
+                }
+                var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                Assert.That(fields.Length, Is.EqualTo(parameters.Length), kind.ToString());
+                Assert.That(fields.All(value => value.FieldType == typeof(int) && value.IsInitOnly),
+                    Is.True, kind.ToString());
+            }
+        }
+
+        [TestCase(-1)]
+        [TestCase(int.MaxValue)]
+        public void FactoryRejectsUnknownConditionKinds(int value)
+        {
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                ModifierConditions.Create((ModifierConditionKind)value));
+            Assert.That(exception.ParamName, Is.EqualTo("kind"));
+        }
+
+        [Test]
+        public void EveryBuiltInConditionRejectsTheDefaultInvalidContext()
+        {
+            var context = default(ModifierContext);
+            foreach (ModifierConditionKind kind in Enum.GetValues(typeof(ModifierConditionKind)))
+            {
+                var condition = ModifierConditions.Create(kind);
+                var exception = Assert.Throws<ArgumentException>(() => condition.Evaluate(in context), kind.ToString());
+                Assert.That(exception.ParamName, Is.EqualTo("context"), kind.ToString());
+            }
+        }
+
+        [TestCaseSource(nameof(ParameterizedConstructors))]
+        public void ParameterizedConstructorsAndFactoriesPreserveDefaultsAndNormalizeZero(
+            ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
+            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter, int maximum)
+        {
+            foreach (var condition in new[]
+            {
+                constructDefault(), construct(0, 0), ModifierConditions.Create(kind),
+                construct(0, secondaryParameter), construct(parameter, 0),
+                ModifierConditions.Create(kind, 0, 0), ModifierConditions.Create(new ModifierCondition(kind))
+            })
+            {
+                var type = condition.GetType();
+                Assert.That(type.GetProperty("Parameter").GetValue(condition), Is.EqualTo(parameter));
+                if (secondaryParameter != 0)
+                    Assert.That(type.GetProperty("SecondaryParameter").GetValue(condition),
+                        Is.EqualTo(secondaryParameter));
+            }
+        }
+
+        [TestCaseSource(nameof(ParameterizedConstructors))]
+        public void ParameterizedConstructorsAndFactoriesRejectInvalidConsumedParameters(
+            ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
+            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter, int maximum)
+        {
+            var largest = construct(maximum, secondaryParameter);
+            Assert.That(largest.GetType().GetProperty("Parameter").GetValue(largest), Is.EqualTo(maximum));
+            Assert.Throws<ArgumentOutOfRangeException>(() => construct(-1, secondaryParameter));
+            Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, -1, secondaryParameter));
+            if (maximum != int.MaxValue)
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => construct(maximum + 1, secondaryParameter));
+                Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, maximum + 1, secondaryParameter));
+            }
+            if (secondaryParameter == 0) return;
+            Assert.Throws<ArgumentOutOfRangeException>(() => construct(parameter, -1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, parameter, -1));
+            if (kind == ModifierConditionKind.NoExtremeFaces)
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() => construct(parameter, 7));
+                Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, parameter, 7));
+            }
+        }
+
+        [TestCaseSource(nameof(NonDefaultCases))]
+        public void ConstructorsAndFactoriesUseNonDefaultParametersInEvaluation(ModifierCondition descriptor,
+            ModifierContext context, bool expected, bool defaultExpected)
+        {
+            ConditionsMatchIndependentBoundaryWitnesses(descriptor, context, expected);
+            var constructorCase = ParameterizedConstructors().Single(value =>
+                (ModifierConditionKind)value.Arguments[0] == descriptor.Kind);
+            var construct = (Func<int, int, IModifierCondition>)constructorCase.Arguments[1];
+            Assert.That(construct(descriptor.Parameter, descriptor.SecondaryParameter).Evaluate(in context),
+                Is.EqualTo(expected));
+            Assert.That(ModifierConditions.Create(descriptor.Kind).Evaluate(in context), Is.EqualTo(defaultExpected));
+        }
+
+        [Test]
+        public void NonDefaultBehaviorWitnessesCoverEveryParameterizedKind()
+        {
+            var parameterized = ParameterizedConstructors().Select(value => (ModifierConditionKind)value.Arguments[0]);
+            var covered = NonDefaultCases().Where(value => (bool)value.Arguments[2] != (bool)value.Arguments[3])
+                .Select(value => ((ModifierCondition)value.Arguments[0]).Kind).Distinct();
+            Assert.That(parameterized.Count(), Is.EqualTo(19));
+            Assert.That(covered, Is.EquivalentTo(parameterized));
+        }
+
+        private static IEnumerable<TestCaseData> ParameterizedConstructors()
+        {
+            yield return Constructor(ModifierConditionKind.ContainsFace, (p, q) => new ContainsFaceCondition(p), () => new ContainsFaceCondition(), 1, maximum: 6);
+            yield return Constructor(ModifierConditionKind.ContainsUpperFace, (p, q) => new ContainsUpperFaceCondition(p), () => new ContainsUpperFaceCondition(), 6, maximum: 6);
+            yield return Constructor(ModifierConditionKind.ExactlyOneSelectedFace, (p, q) => new ExactlyOneSelectedFaceCondition(p), () => new ExactlyOneSelectedFaceCondition(), 1, maximum: 6);
+            yield return Constructor(ModifierConditionKind.ExactlyOneFace, (p, q) => new ExactlyOneFaceCondition(p), () => new ExactlyOneFaceCondition(), 2, maximum: 6);
+            yield return Constructor(ModifierConditionKind.RangeLessThan, (p, q) => new RangeLessThanCondition(p), () => new RangeLessThanCondition(), 3);
+            yield return Constructor(ModifierConditionKind.RangeGreaterThan, (p, q) => new RangeGreaterThanCondition(p), () => new RangeGreaterThanCondition(), 3);
+            yield return Constructor(ModifierConditionKind.SelectedMatchingGroupAtLeast, (p, q) => new SelectedMatchingGroupAtLeastCondition(p), () => new SelectedMatchingGroupAtLeastCondition(), 3, maximum: 5);
+            yield return Constructor(ModifierConditionKind.MiddleFacesCountAtLeast, (p, q) => new MiddleFacesCountAtLeastCondition(p), () => new MiddleFacesCountAtLeastCondition(), 4, maximum: 5);
+            yield return Constructor(ModifierConditionKind.SumDivisibleBy, (p, q) => new SumDivisibleByCondition(p), () => new SumDivisibleByCondition(), 5);
+            yield return Constructor(ModifierConditionKind.PositiveRerollsDivisibleBy, (p, q) => new PositiveRerollsDivisibleByCondition(p), () => new PositiveRerollsDivisibleByCondition(), 3);
+            yield return Constructor(ModifierConditionKind.InteriorSumDivisibleBy, (p, q) => new InteriorSumDivisibleByCondition(p), () => new InteriorSumDivisibleByCondition(), 3);
+            yield return Constructor(ModifierConditionKind.AdjacentDifferenceAtLeast, (p, q) => new AdjacentDifferenceAtLeastCondition(p), () => new AdjacentDifferenceAtLeastCondition(), 2);
+            yield return Constructor(ModifierConditionKind.AdjacentDifferenceAtMost, (p, q) => new AdjacentDifferenceAtMostCondition(p), () => new AdjacentDifferenceAtMostCondition(), 1);
+            yield return Constructor(ModifierConditionKind.SumLessThan, (p, q) => new SumLessThanCondition(p), () => new SumLessThanCondition(), 15);
+            yield return Constructor(ModifierConditionKind.SumGreaterThan, (p, q) => new SumGreaterThanCondition(p), () => new SumGreaterThanCondition(), 22);
+            yield return Constructor(ModifierConditionKind.RerollsSpentAtLeast, (p, q) => new RerollsSpentAtLeastCondition(p), () => new RerollsSpentAtLeastCondition(), 3);
+            yield return Constructor(ModifierConditionKind.EdgeSumEqualsEither, (p, q) => new EdgeSumEqualsEitherCondition(p, q), () => new EdgeSumEqualsEitherCondition(), 6, 8);
+            yield return Constructor(ModifierConditionKind.SelectedSumEqualsEither, (p, q) => new SelectedSumEqualsEitherCondition(p, q), () => new SelectedSumEqualsEitherCondition(), 8, 10);
+            yield return Constructor(ModifierConditionKind.NoExtremeFaces, (p, q) => new NoExtremeFacesCondition(p, q), () => new NoExtremeFacesCondition(), 1, 6, 6);
+        }
+
+        private static TestCaseData Constructor(ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
+            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter = 0, int maximum = int.MaxValue)
+            => new TestCaseData(kind, construct, constructDefault, parameter, secondaryParameter, maximum)
+                .SetName("{m}_" + kind);
+
+        private static IEnumerable<TestCaseData> NonDefaultCases()
+        {
+            yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C("23456"), true, false, 6);
+            yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C(), false, true, 6);
+            yield return NonDefaultCase(ModifierConditionKind.ContainsUpperFace, C(), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.ContainsUpperFace, C("13456"), false, true, 2);
+            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneSelectedFace, C("12346", selected: 16), true, false, 6);
+            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneSelectedFace, C("12346", selected: 1), false, true, 6);
+            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneFace, C(), true, true, 5);
+            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneFace, C("12346"), false, true, 5);
+            yield return NonDefaultCase(ModifierConditionKind.RangeLessThan, C("11222"), true, true, 2);
+            yield return NonDefaultCase(ModifierConditionKind.RangeLessThan, C("11233"), false, true, 2);
+            yield return NonDefaultCase(ModifierConditionKind.RangeGreaterThan, C("12344"), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.RangeGreaterThan, C("11223"), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22345", selected: 3), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22345", selected: 1), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.MiddleFacesCountAtLeast, C("33111"), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.MiddleFacesCountAtLeast, C("31111"), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.SumDivisibleBy, C("11114"), true, false, 4);
+            yield return NonDefaultCase(ModifierConditionKind.SumDivisibleBy, C(), false, true, 4);
+            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 2), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 3), false, true, 2);
+            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 0), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.InteriorSumDivisibleBy, C("11341"), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.InteriorSumDivisibleBy, C("11261"), false, true, 2);
+            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtLeast, C("14141"), true, true, 3);
+            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtLeast, C("13131"), false, true, 3);
+            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtMost, C("11345"), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtMost, C("11456"), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.SumLessThan, C("11115"), true, true, 10);
+            yield return NonDefaultCase(ModifierConditionKind.SumLessThan, C("11116"), false, true, 10);
+            yield return NonDefaultCase(ModifierConditionKind.SumGreaterThan, C("55551"), true, false, 20);
+            yield return NonDefaultCase(ModifierConditionKind.SumGreaterThan, C("55541"), false, false, 20);
+            yield return NonDefaultCase(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 2), true, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 1), false, false, 2);
+            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("12346"), true, false, 7, 9);
+            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("32346"), true, false, 7, 9);
+            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C(), false, true, 7, 9);
+            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("22346"), false, true, 7, 9);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C(selected: 3), true, false, 3, 5);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C(selected: 6), true, false, 3, 5);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 10), false, true, 3, 5);
+            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 20), false, true, 3, 5);
+            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("13466"), true, false, 2, 5);
+            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("23344"), false, true, 2, 5);
+            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("33455"), false, true, 2, 5);
+        }
+
+        private static TestCaseData NonDefaultCase(ModifierConditionKind kind, ModifierContext context,
+            bool expected, bool defaultExpected, int parameter, int secondary = 0)
+            => new TestCaseData(new ModifierCondition(kind, parameter, secondary), context, expected, defaultExpected)
+                .SetName(kind + "_NonDefault_" + string.Join("", context.CurrentDice.ToArray()) + "_" +
+                    context.SelectedMask + "_" + context.RerollsRemaining + "_" + context.RerollsSpentOnHand);
+
+        internal static IEnumerable<TestCaseData> Cases()
         {
             yield return Case(ModifierConditionKind.NoDiceRerolled, C(), true);
             yield return Case(ModifierConditionKind.NoDiceRerolled, C(ever: 1, spent: 1), false);

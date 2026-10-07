@@ -1,0 +1,23 @@
+using System;
+
+namespace Dice.Engine
+{
+    public sealed class SumGreaterThanCondition : IModifierCondition
+    {
+        public int Parameter { get; }
+
+        public SumGreaterThanCondition(int parameter = 22)
+        {
+            parameter = parameter == 0 ? 22 : parameter;
+            if (parameter < 0) throw new ArgumentOutOfRangeException(nameof(parameter));
+            Parameter = parameter;
+        }
+
+        public bool Evaluate(in ModifierContext context)
+        {
+            ModifierConditionHelpers.ValidateContext(in context);
+            DiceValues dice = context.CurrentDice;
+            return dice.Sum > Parameter;
+        }
+    }
+}

@@ -65,7 +65,7 @@ namespace Dice.Tests
             Assert.That(pool.FallbackModifierId, Is.EqualTo("modifier.play_hand.never." + role));
             Assert.That(pool.ModifierIds, Does.Not.Contain(pool.FallbackModifierId));
             var fallback = catalog.GetModifier(pool.FallbackModifierId);
-            Assert.That(fallback.Condition.Kind, Is.EqualTo(ModifierConditionKind.Never));
+            Assert.That(fallback.Condition, Is.TypeOf<NeverCondition>());
             Assert.That(fallback.RewardEligible, Is.False);
             Assert.That(fallback.Effects, Is.Empty);
         }
