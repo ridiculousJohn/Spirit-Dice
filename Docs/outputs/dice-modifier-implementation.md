@@ -1,12 +1,24 @@
 # Dice modifier implementation
 
-The engine resolves mechanical modifiers during initial rolls, player rerolls, and played hands. The Standard catalog contains 74 families and 296 definitions: 292 functional variants and four inert variants with reward eligibility disabled. The catalog version is `standard.modifiers.v1`; the engine rules version is 2.
+The engine resolves mechanical modifiers during initial rolls, player rerolls, and played hands. The Standard catalog contains 74 families and 296 definitions: 292 functional variants and four inert variants with reward eligibility disabled. The current catalog version is `standard.rewards.v1`; the engine rules version is 3.
 
 ## Content and presentation
 
 Definitions contain stable mechanical IDs, family IDs, phase, a typed condition with parameters, effect operations and amounts, activation limits, and reward eligibility. They contain no display names, descriptions, localization keys, colors, artwork, audio, or lore. Source names and asset provenance are retained only in the research mapping under `Docs/work/modifier-reference`.
 
-`MechanicalCatalogAsset` builds immutable engine definitions. An `EncounterDefinition` can specify ordered starting modifier IDs, including duplicate copies. Each owned copy receives its own encounter-local instance ID and activation counters. Standard still starts with an empty inventory; acquiring modifiers through rewards belongs to the next implementation pass.
+`MechanicalCatalogAsset` builds immutable engine definitions. An `EncounterDefinition` can specify ordered starting modifier IDs, including duplicate copies. Each owned copy receives its own encounter-local instance ID and activation counters. Standard starts with an empty inventory and adds modifiers through reward selection.
+
+## Condition objects
+
+`ModifierDefinition.Condition` holds an `IModifierCondition`. The resolver calls its `Evaluate(in ModifierContext)` method after checking the phase and instance activation limits. Each built-in condition implements that interface directly in its own sealed class under `Assets/Dice/Engine/Conditions`, including `ThreeSmallestSumAtMostMaximumCondition`, `SelectedFaceUnchangedCondition`, and `SumDivisibleByCondition`. Each implementation reads only the context values needed by its predicate. Shared calculations and context validation are ordinary static functions in `ModifierConditionHelpers`; there is no condition base class.
+
+The serialized catalog retains its existing condition kind and parameter fields. `ModifierConditions.Create` converts those fields into condition objects when the catalog is built. The enum selects a constructor at this boundary; gameplay evaluation uses interface dispatch. Parameterized conditions validate and own only the values they use, exposed through get-only parameter properties. Parameterless conditions carry no configuration. The concrete conditions have no dependency on the catalog enum or descriptor. Existing code constructing a `ModifierDefinition` from a `ModifierCondition` descriptor is supported through a constructor overload.
+
+Custom engine content can supply any `IModifierCondition` directly to `ModifierDefinition`, without adding an enum member or factory registration. The built-in Unity catalog authoring format continues to use its registered kinds. Conditions must be immutable and deterministic: they can be shared by multiple modifiers and sessions and evaluated during preview. Per-instance activation state belongs to the session, not the condition object.
+
+Effects remain the existing numeric operations and amounts; condition objects decide whether the modifier activates. The resolver retains responsibility for collecting contributions and applying effects in the established order. Presentation remains outside the engine.
+
+Save data references stable modifier definition IDs and stores instance state. It does not serialize condition objects or CLR type names. This refactor preserves condition behavior, catalog data, numeric enum values, save schema, and compatibility versions. Restore obtains condition objects from the supplied catalog without reevaluating past activations.
 
 ## Resolution contract
 
@@ -24,6 +36,18 @@ All arithmetic and resolution happen on a private state copy. Rejected actions a
 
 Snapshots expose owned modifiers, activation counters, accumulated base score and multiplier, and immutable contributions. Score breakdowns include contributions from all phases of the current hand. These are mechanical facts for a presenter to render.
 
+`InspectModifiersForPlayHand()` reports each instance's eligibility, condition result, and activation-limit status without applying effects or advancing random streams. It shares the resolver's context construction and activation policy. PlayHand conditions see the remaining hand count after spending the proposed hand. Other phases have no predicted condition result; outside the Playing phase, inspection reports that the encounter is not playing.
+
+## Playable diagnostic scene
+
+In Unity, choose **Dice > Open Diagnostic Scene**, then press **Play**. The scene at `Assets/Scenes/DiagnosticEncounter.unity` is also the first enabled scene in Build Settings. Its controller references the Standard mechanical catalog and starts a 25-stage encounter with seed 60.
+
+Select dice to reroll; selected dice display REROLL, and unselected dice display KEEP. Play Hand submits all five current dice. The display includes resources, stage target, total score, category upgrades, a score preview, reward choices and refreshes, owned modifier conditions/effects, activation counters, and per-instance score contributions. The event log retains the latest 160 events and displays the newest 60, including complete scored-hand breakdowns. The page scrolls; a wide Game view places inventory and events beside the controls.
+
+Save and Load use the existing Newtonsoft JSON codec and file store. The current path is displayed in the scene and defaults to `Application.persistentDataPath/diagnostic-encounter.json`. Loading restores the committed mechanical state and clears selection and presentation history. The New run seed field is a suggestion for starting another run, not a recovered seed: saves preserve random-stream states, not the original seed. Start new and Abandon operate on the current in-memory run; Save is explicit.
+
+`DiagnosticEncounterController` in `Dice.App` owns the application instance, commands, preview cache, event history, and file operations. `DiagnosticEncounterView`, `DiagnosticText`, and `IDiagnosticEncounterControls` in `Dice.Presentation` own the IMGUI surface and descriptive text. Mechanical definitions still contain no labels, colors, descriptions, or Unity objects. The diagnostic presentation can be replaced without changing the engine or save format.
+
 ## Reference fidelity
 
 Native code inspection verified phase timing, frozen resource sampling, inventory-slot activation identity, accumulator lifetime, initial predicates, ordering with ties, absolute differences, and several conditions whose internal enum names disagree with their descriptions. The family mapping distinguishes native-verified branches from conditions supported by matching extracted enum/text. Effect amounts and activation phases are taken directly from all 296 extracted assets.
@@ -34,6 +58,16 @@ Two explicit initialization choices matter. Previous-play rank comparisons begin
 
 The Edit Mode suite covers all 7,776 ordered hands, predicate boundaries, all 296 catalog variants, resource timing, duplicate instances, activation resets, preview parity, rejected actions, and transactional overflow. Final results are recorded alongside this report's validation artifacts in `Docs/work`.
 
-Reward selection, hand-upgrade selection, persistence, and a diagnostic Unity scene are subsequent work. This pass supplies the modifier engine and catalog; it does not yet make the Standard encounter playable through its reward boundaries.
+Reward selection, hand-upgrade selection, JSON persistence, and the diagnostic Unity scene are implemented. The reward and save/resume reports document the underlying contracts.
 
-Final validation: Unity 6000.6.2f1, 517 Edit Mode tests passed, zero failed or skipped. Results: `Docs/work/modifier-editmode-2.xml`. No source, package, or project-settings files changed during the final validation run.
+Diagnostic scene validation on October 7, 2026: Unity 6000.6.2f1 passed 852 EditMode tests and one rendered PlayMode integration test. The diagnostic controller completes the existing 25-stage victory trace with score 80,561 and matches the headless engine after every action; another test reaches a resource-exhaustion loss. The PlayMode test loads the authored scene, submits dice actions and both reward types, inspects an acquired modifier, saves/resumes, abandons, and starts another run. Five rendered states were visually inspected. Final graphics-enabled compilation reported no C# warnings or errors. Preview/inspection failures are isolated from successful engine synchronization, with overflow and custom-condition failure coverage.
+
+Results and screenshots are under `Docs/work/diagnostic-validation`: `editmode-3.xml`, `playmode-2.xml`, their logs, and `captures-2`. Earlier attempts are retained: assembly-reference and type-name compilation issues were fixed, a deprecated test lookup was replaced, and screenshot capture required a normal graphics-enabled editor instead of batch mode. Source/configuration hashes matched across the successful validation runs. The earlier batch PlayMode attempt generated `ProjectSettings/SceneTemplateSettings.json`; that file was retained untouched. Diagnostic save fixtures remain under `Docs/work/diagnostic-file-tests`.
+
+Initial modifier validation: Unity 6000.6.2f1, 517 Edit Mode tests passed, zero failed or skipped. Results: `Docs/work/modifier-editmode-2.xml`. No source, package, or project-settings files changed during that validation run.
+
+Condition-object refactor validation on October 7, 2026: Unity 6000.6.2f1 passed all 662 EditMode tests, with zero failures or skipped tests, no compiler warnings or errors, and exit code 0. Tests cover custom conditions without enum registration, phase and activation-limit skips, stable phase resource sampling, preview parity, and save/restore without reevaluation. The existing full Standard encounter and JSON persistence tests passed. All 291 files under Assets, Packages, and ProjectSettings matched their pre-validation hashes.
+
+An offline differential harness compared the condition implementations against the evaluator from commit `f989cd6`: all 13,810,176 evaluations matched across 7,776 ordered hands, eight resource/history/mask contexts, and three parameter sets for each of the 74 condition kinds. Validation logs, file hashes, the summary, and Unity test results are retained under `Docs/work/condition-refactor-validation`; the temporary harness and baseline source have been removed. Permanent regression tests remain in the Unity test assembly. The JSON file-store test retained its save and backup under `Docs/work/save-resume-file-tests/ce743bc79ad1473d9e3f5f290ff25c04`.
+
+Companion helper validation on October 7, 2026: all 74 conditions implement `IModifierCondition` directly, with 19 owning parameters and 55 stateless. Normalized source hashes verify that every evaluation body preserves its predicate, allowing only the helper-call qualification, parameter-access, and method declaration changes. Unity 6000.6.2f1 passed all 745 EditMode tests with no failures, skipped tests, or compiler warnings/errors and exit code 0. Coverage includes direct constructor defaults, zero normalization, valid/invalid bounds, 44 nondefault behavior witnesses, and evaluation of imported catalog variants against the independent boundary witnesses. All 291 source/configuration files matched their pre-test hashes. Results are retained as `composition-editmode-1.xml`, `composition-editmode-1.log`, and `composition-validation.json` under `Docs/work/condition-refactor-validation`. File-store test saves remain under `Docs/work/save-resume-file-tests/cbc78c68dc6e492eb8425ee2c37edd5b`.
