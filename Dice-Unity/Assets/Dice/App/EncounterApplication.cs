@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
@@ -52,6 +53,7 @@ namespace Dice.App
 
         public ScoreBreakdown PreviewPlayHand() => session.PreviewPlayHand();
         public HandPreview PreviewHandResolution() => session.PreviewHandResolution();
+        public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand() => session.InspectModifiersForPlayHand();
         public EncounterSaveData CaptureSave() => session.CaptureSave();
     }
 }

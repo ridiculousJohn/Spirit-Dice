@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
@@ -80,6 +81,10 @@ namespace Dice.Engine
         }
 
         public ScoreBreakdown PreviewPlayHand() => PreviewHandResolution().Score;
+
+        /** Inspect PlayHand eligibility without applying effects, consuming resources, or advancing random streams. */
+        public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand()
+            => ModifierResolver.InspectForPlayHand(state, catalog, definition.Stages[state.StageIndex]);
 
         public HandPreview PreviewHandResolution()
         {

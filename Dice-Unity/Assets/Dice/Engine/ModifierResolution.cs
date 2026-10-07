@@ -92,10 +92,7 @@ namespace Dice.Engine
         internal static void Resolve(EncounterState state, MechanicalCatalog catalog, StageDefinition stage,
             ModifierPhase phase, List<RuleEvent> events)
         {
-            var context = new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
-                state.PreviousPlayedDice, state.LatestRerollMask, state.EverRerolledMask, state.RerollsSpentOnHand,
-                state.HandsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, stage.StartingHands,
-                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining);
+            var context = CreateContext(state, stage, state.HandsRemaining);
             var contributions = new List<ModifierContribution>();
 
             // Predicates observe one phase snapshot; resource grants cannot change later eligibility.
@@ -103,8 +100,7 @@ namespace Dice.Engine
             {
                 ModifierDefinition definition = catalog.GetModifier(instance.DefinitionId);
                 if (definition.Phase != phase ||
-                    (definition.ActivationLimit == ModifierActivationLimit.OncePerHand && instance.ActivationsThisHand != 0) ||
-                    (definition.ActivationLimit == ModifierActivationLimit.OncePerStage && instance.ActivationsThisStage != 0) ||
+                    !HasActivationAllowance(instance, definition) ||
                     !definition.Condition.Evaluate(in context)) continue;
 
                 long baseScore = 0;
@@ -142,5 +138,43 @@ namespace Dice.Engine
                     before, state.RerollsRemaining, contribution.InstanceId, contribution.DefinitionId));
             }
         }
+
+        internal static ReadOnlyCollection<ModifierInspection> InspectForPlayHand(EncounterState state,
+            MechanicalCatalog catalog, StageDefinition stage)
+        {
+            bool playing = state.Phase == EncounterPhase.Playing;
+            // PlayHand predicates see the hands spent on submission and resources before any phase effects.
+            var context = playing ? CreateContext(state, stage, state.HandsRemaining - 1) : default;
+            var values = new ModifierInspection[state.Modifiers.Length];
+            for (int i = 0; i < values.Length; ++i)
+            {
+                ModifierInstanceState instance = state.Modifiers[i];
+                ModifierDefinition definition = catalog.GetModifier(instance.DefinitionId);
+                bool limitReached = !HasActivationAllowance(instance, definition);
+                bool? conditionMet = null;
+                ModifierInspectionStatus status;
+                if (!playing) status = ModifierInspectionStatus.EncounterNotPlaying;
+                else if (definition.Phase != ModifierPhase.PlayHand)
+                    status = limitReached ? ModifierInspectionStatus.ActivationLimitReached : ModifierInspectionStatus.DifferentPhase;
+                else
+                {
+                    conditionMet = definition.Condition.Evaluate(in context);
+                    status = limitReached ? ModifierInspectionStatus.ActivationLimitReached :
+                        conditionMet.Value ? ModifierInspectionStatus.WouldActivate : ModifierInspectionStatus.ConditionNotMet;
+                }
+                values[i] = new ModifierInspection(instance, definition, status, conditionMet, limitReached);
+            }
+            return Array.AsReadOnly(values);
+        }
+
+        private static ModifierContext CreateContext(EncounterState state, StageDefinition stage, int handsRemaining)
+            => new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
+                state.PreviousPlayedDice, state.LatestRerollMask, state.EverRerolledMask, state.RerollsSpentOnHand,
+                handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, stage.StartingHands,
+                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining);
+
+        private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)
+            => (definition.ActivationLimit != ModifierActivationLimit.OncePerHand || instance.ActivationsThisHand == 0) &&
+                (definition.ActivationLimit != ModifierActivationLimit.OncePerStage || instance.ActivationsThisStage == 0);
     }
 }
