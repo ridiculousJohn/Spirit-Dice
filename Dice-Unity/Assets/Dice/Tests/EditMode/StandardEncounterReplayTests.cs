@@ -1,15 +1,85 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dice.App;
 using Dice.Engine;
 using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 
 namespace Dice.Tests
 {
     public sealed class StandardEncounterReplayTests
     {
+        [Test]
+        public void DiagnosticControlsCompleteTheStandardVictoryReplay()
+        {
+            var host = new GameObject("Diagnostic victory replay");
+            try
+            {
+                var controller = host.AddComponent<DiagnosticEncounterController>();
+                var catalog = Catalog();
+                controller.Initialize(catalog, "encounter.standard", 60, null);
+                var expected = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+                foreach (string row in VictoryActions.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    string[] values = row.Split(',');
+                    var action = Action(values, expected);
+                    switch (values[0])
+                    {
+                        case "R":
+                            controller.ClearDiceSelection();
+                            int mask = int.Parse(values[1]);
+                            for (int index = 0; index < DiceValues.Count; ++index)
+                                if ((mask & (1 << index)) != 0) controller.ToggleDie(index);
+                            controller.Reroll();
+                            break;
+                        case "P":
+                            Assert.That(controller.Preview.Score.HandScore, Is.EqualTo(long.Parse(values[2])), row);
+                            controller.PlayHand();
+                            break;
+                        case "F": controller.RefreshRewards(); break;
+                        case "M":
+                        case "U": controller.ChooseReward(long.Parse(values[1]), long.Parse(values[2])); break;
+                    }
+                    var result = expected.Execute(action, expected.Snapshot.Revision);
+                    Assert.That(result.Accepted, Is.True, row);
+                    EncounterSessionTests.AssertSnapshotsEqual(result.Snapshot, controller.Snapshot);
+                }
+                Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+                Assert.That(controller.Snapshot.TotalScore, Is.EqualTo(80561));
+                Assert.That(controller.Preview, Is.Null);
+                Assert.That(controller.EventLog.Last(), Does.Contain("Won"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void DiagnosticControlsReachResourceExhaustionLoss()
+        {
+            var host = new GameObject("Diagnostic loss replay");
+            try
+            {
+                var controller = host.AddComponent<DiagnosticEncounterController>();
+                controller.Initialize(Catalog(), "encounter.standard", 0, null);
+                for (int i = 0; i < 200 && controller.Snapshot.Phase != EncounterPhase.Completed; ++i)
+                {
+                    if (controller.Snapshot.Phase == EncounterPhase.Playing) controller.PlayHand();
+                    else
+                    {
+                        var offer = controller.Snapshot.PendingReward;
+                        controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
+                    }
+                }
+                Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
+                Assert.That(controller.Snapshot.HandsRemaining, Is.Zero);
+                Assert.That(controller.Preview, Is.Null);
+                Assert.That(controller.EventLog.Last(), Does.Contain("Lost"));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
         [Test]
         public void ActualStandardCatalogCompletesAllTwentyFiveStagesThroughLegalRewardAndPlayActions()
         {

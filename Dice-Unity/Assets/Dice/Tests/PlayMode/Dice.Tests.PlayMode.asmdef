@@ -1,0 +1,9 @@
+{
+  "name": "Dice.Tests.PlayMode",
+  "rootNamespace": "Dice.Tests",
+  "references": ["Dice.Engine", "Dice.App", "Dice.Presentation", "UnityEngine.TestRunner"],
+  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": ["nunit.framework.dll"]
+}
