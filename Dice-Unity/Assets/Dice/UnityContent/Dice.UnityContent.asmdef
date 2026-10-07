@@ -1,0 +1,11 @@
+{
+  "name": "Dice.UnityContent",
+  "rootNamespace": "Dice.UnityContent",
+  "references": [
+    "Dice.Engine"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": [],
+  "noEngineReferences": false
+}

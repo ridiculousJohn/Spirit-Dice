@@ -1,0 +1,3907 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4593a583ad0240bcb8ced3d421c02c11, type: 3}
+  m_Name: Standard
+  m_EditorClassIdentifier: 
+  catalogVersion: standard.rewards.v1
+  hands:
+  - id: hand.high_die
+    category: 0
+    baseScore: 5
+    multiplier: 1
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.pair
+    category: 1
+    baseScore: 5
+    multiplier: 2
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.two_pair
+    category: 2
+    baseScore: 10
+    multiplier: 3
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.three_of_a_kind
+    category: 3
+    baseScore: 15
+    multiplier: 4
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.full_house
+    category: 4
+    baseScore: 20
+    multiplier: 6
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.four_of_a_kind
+    category: 5
+    baseScore: 25
+    multiplier: 8
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.straight
+    category: 6
+    baseScore: 25
+    multiplier: 10
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 1
+    maximumUpgrades: 6
+  - id: hand.five_of_a_kind
+    category: 7
+    baseScore: 30
+    multiplier: 14
+    baseScorePerUpgrade: 5
+    multiplierPerUpgrade: 2
+    maximumUpgrades: 6
+  encounters:
+  - id: encounter.standard
+    startingModifiers: []
+    rewardPolicy:
+      id: reward_policy.standard
+      modifierLayouts:
+      - poolIds:
+        - reward_pool.rerolls
+        - reward_pool.rerolls
+        - reward_pool.rerolls
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      startingRefreshes: 1
+      refreshesPerClear: 1
+      refreshCost: 1
+      handUpgradeOptionCount: 4
+      upgradeHistory:
+      - maxIncomingStageNumber: 16
+        excludedRecentChoices: 3
+      - maxIncomingStageNumber: 21
+        excludedRecentChoices: 2
+      - maxIncomingStageNumber: 2147483647
+        excludedRecentChoices: 0
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
+    stages:
+    - threshold: 160
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 225
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 320
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 410
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 520
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 635
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 750
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 860
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 975
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 1090
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 1820
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 2045
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 2275
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 2545
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 2820
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 3090
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 3365
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 3635
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 3955
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 4275
+      startingHands: 4
+      startingRerolls: 4
+      exitBehavior: 1
+    - threshold: 5455
+      startingHands: 5
+      startingRerolls: 5
+      exitBehavior: 1
+    - threshold: 5910
+      startingHands: 5
+      startingRerolls: 5
+      exitBehavior: 1
+    - threshold: 6365
+      startingHands: 5
+      startingRerolls: 5
+      exitBehavior: 1
+    - threshold: 7045
+      startingHands: 5
+      startingRerolls: 5
+      exitBehavior: 1
+    - threshold: 7725
+      startingHands: 5
+      startingRerolls: 5
+      exitBehavior: 1
+  modifiers:
+  - id: modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    familyId: modifier.play_hand.three_smallest_sum_at_most_maximum
+    phase: 2
+    conditionKind: 57
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    familyId: modifier.play_hand.three_smallest_sum_at_most_maximum
+    phase: 2
+    conditionKind: 57
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+    familyId: modifier.play_hand.three_smallest_sum_at_most_maximum
+    phase: 2
+    conditionKind: 57
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    familyId: modifier.play_hand.three_smallest_sum_at_most_maximum
+    phase: 2
+    conditionKind: 57
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_less_than.base_score
+    familyId: modifier.play_hand.range_less_than
+    phase: 2
+    conditionKind: 4
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_less_than.multiplier
+    familyId: modifier.play_hand.range_less_than
+    phase: 2
+    conditionKind: 4
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_less_than.combined
+    familyId: modifier.play_hand.range_less_than
+    phase: 2
+    conditionKind: 4
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_less_than.rerolls
+    familyId: modifier.play_hand.range_less_than
+    phase: 2
+    conditionKind: 4
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
+    familyId: modifier.initial_roll.previous_stage_at_most_half_hands_played
+    phase: 0
+    conditionKind: 53
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 30
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
+    familyId: modifier.initial_roll.previous_stage_at_most_half_hands_played
+    phase: 0
+    conditionKind: 53
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 6
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_at_most_half_hands_played.combined
+    familyId: modifier.initial_roll.previous_stage_at_most_half_hands_played
+    phase: 0
+    conditionKind: 53
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
+    familyId: modifier.initial_roll.previous_stage_at_most_half_hands_played
+    phase: 0
+    conditionKind: 53
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matches_hands_remaining.base_score
+    familyId: modifier.player_reroll.selected_matches_hands_remaining
+    phase: 1
+    conditionKind: 22
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matches_hands_remaining.multiplier
+    familyId: modifier.player_reroll.selected_matches_hands_remaining
+    phase: 1
+    conditionKind: 22
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matches_hands_remaining.combined
+    familyId: modifier.player_reroll.selected_matches_hands_remaining
+    phase: 1
+    conditionKind: 22
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matches_hands_remaining.rerolls
+    familyId: modifier.player_reroll.selected_matches_hands_remaining
+    phase: 1
+    conditionKind: 22
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.second_fourth_product_at_least_sum.base_score
+    familyId: modifier.play_hand.second_fourth_product_at_least_sum
+    phase: 2
+    conditionKind: 58
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.second_fourth_product_at_least_sum.multiplier
+    familyId: modifier.play_hand.second_fourth_product_at_least_sum
+    phase: 2
+    conditionKind: 58
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.second_fourth_product_at_least_sum.combined
+    familyId: modifier.play_hand.second_fourth_product_at_least_sum
+    phase: 2
+    conditionKind: 58
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.second_fourth_product_at_least_sum.rerolls
+    familyId: modifier.play_hand.second_fourth_product_at_least_sum
+    phase: 2
+    conditionKind: 58
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than_initial.base_score
+    familyId: modifier.play_hand.sum_less_than_initial
+    phase: 2
+    conditionKind: 5
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than_initial.multiplier
+    familyId: modifier.play_hand.sum_less_than_initial
+    phase: 2
+    conditionKind: 5
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than_initial.combined
+    familyId: modifier.play_hand.sum_less_than_initial
+    phase: 2
+    conditionKind: 5
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than_initial.rerolls
+    familyId: modifier.play_hand.sum_less_than_initial
+    phase: 2
+    conditionKind: 5
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_equals_before_reroll.base_score
+    familyId: modifier.player_reroll.rank_equals_before_reroll
+    phase: 1
+    conditionKind: 13
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_equals_before_reroll.multiplier
+    familyId: modifier.player_reroll.rank_equals_before_reroll
+    phase: 1
+    conditionKind: 13
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_equals_before_reroll.combined
+    familyId: modifier.player_reroll.rank_equals_before_reroll
+    phase: 1
+    conditionKind: 13
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_equals_before_reroll.rerolls
+    familyId: modifier.player_reroll.rank_equals_before_reroll
+    phase: 1
+    conditionKind: 13
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.never.base_score
+    familyId: modifier.play_hand.never
+    phase: 2
+    conditionKind: 56
+    parameter: 0
+    secondaryParameter: 0
+    effects: []
+    activationLimit: 1
+    rewardEligible: 0
+  - id: modifier.play_hand.never.multiplier
+    familyId: modifier.play_hand.never
+    phase: 2
+    conditionKind: 56
+    parameter: 0
+    secondaryParameter: 0
+    effects: []
+    activationLimit: 1
+    rewardEligible: 0
+  - id: modifier.play_hand.never.combined
+    familyId: modifier.play_hand.never
+    phase: 2
+    conditionKind: 56
+    parameter: 0
+    secondaryParameter: 0
+    effects: []
+    activationLimit: 1
+    rewardEligible: 0
+  - id: modifier.play_hand.never.rerolls
+    familyId: modifier.play_hand.never
+    phase: 2
+    conditionKind: 56
+    parameter: 0
+    secondaryParameter: 0
+    effects: []
+    activationLimit: 1
+    rewardEligible: 0
+  - id: modifier.play_hand.no_dice_rerolled.base_score
+    familyId: modifier.play_hand.no_dice_rerolled
+    phase: 2
+    conditionKind: 0
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_dice_rerolled.multiplier
+    familyId: modifier.play_hand.no_dice_rerolled
+    phase: 2
+    conditionKind: 0
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_dice_rerolled.combined
+    familyId: modifier.play_hand.no_dice_rerolled
+    phase: 2
+    conditionKind: 0
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_dice_rerolled.rerolls
+    familyId: modifier.play_hand.no_dice_rerolled
+    phase: 2
+    conditionKind: 0
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_matching_triple.base_score
+    familyId: modifier.play_hand.adjacent_matching_triple
+    phase: 2
+    conditionKind: 19
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_matching_triple.multiplier
+    familyId: modifier.play_hand.adjacent_matching_triple
+    phase: 2
+    conditionKind: 19
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_matching_triple.combined
+    familyId: modifier.play_hand.adjacent_matching_triple
+    phase: 2
+    conditionKind: 19
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_matching_triple.rerolls
+    familyId: modifier.play_hand.adjacent_matching_triple
+    phase: 2
+    conditionKind: 19
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
+    familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+    phase: 1
+    conditionKind: 31
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+    familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+    phase: 1
+    conditionKind: 31
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
+    familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+    phase: 1
+    conditionKind: 31
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+    familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+    phase: 1
+    conditionKind: 31
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.out_of_rerolls.base_score
+    familyId: modifier.play_hand.out_of_rerolls
+    phase: 2
+    conditionKind: 3
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.out_of_rerolls.multiplier
+    familyId: modifier.play_hand.out_of_rerolls
+    phase: 2
+    conditionKind: 3
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.out_of_rerolls.combined
+    familyId: modifier.play_hand.out_of_rerolls
+    phase: 2
+    conditionKind: 3
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.out_of_rerolls.rerolls
+    familyId: modifier.play_hand.out_of_rerolls
+    phase: 2
+    conditionKind: 3
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_face.base_score
+    familyId: modifier.player_reroll.exactly_one_selected_face
+    phase: 1
+    conditionKind: 2
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_face.multiplier
+    familyId: modifier.player_reroll.exactly_one_selected_face
+    phase: 1
+    conditionKind: 2
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_face.combined
+    familyId: modifier.player_reroll.exactly_one_selected_face
+    phase: 1
+    conditionKind: 2
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.exactly_one_selected_face.rerolls
+    familyId: modifier.player_reroll.exactly_one_selected_face
+    phase: 1
+    conditionKind: 2
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.adjacent_difference_at_least.base_score
+    familyId: modifier.player_reroll.adjacent_difference_at_least
+    phase: 1
+    conditionKind: 23
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.adjacent_difference_at_least.multiplier
+    familyId: modifier.player_reroll.adjacent_difference_at_least
+    phase: 1
+    conditionKind: 23
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.adjacent_difference_at_least.combined
+    familyId: modifier.player_reroll.adjacent_difference_at_least
+    phase: 1
+    conditionKind: 23
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.adjacent_difference_at_least.rerolls
+    familyId: modifier.player_reroll.adjacent_difference_at_least
+    phase: 1
+    conditionKind: 23
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than.base_score
+    familyId: modifier.play_hand.sum_less_than
+    phase: 2
+    conditionKind: 40
+    parameter: 15
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than.multiplier
+    familyId: modifier.play_hand.sum_less_than
+    phase: 2
+    conditionKind: 40
+    parameter: 15
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than.combined
+    familyId: modifier.play_hand.sum_less_than
+    phase: 2
+    conditionKind: 40
+    parameter: 15
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_less_than.rerolls
+    familyId: modifier.play_hand.sum_less_than
+    phase: 2
+    conditionKind: 40
+    parameter: 15
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_contains_pair.base_score
+    familyId: modifier.play_hand.interior_contains_pair
+    phase: 2
+    conditionKind: 64
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_contains_pair.multiplier
+    familyId: modifier.play_hand.interior_contains_pair
+    phase: 2
+    conditionKind: 64
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_contains_pair.combined
+    familyId: modifier.play_hand.interior_contains_pair
+    phase: 2
+    conditionKind: 64
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_contains_pair.rerolls
+    familyId: modifier.play_hand.interior_contains_pair
+    phase: 2
+    conditionKind: 64
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
+    familyId: modifier.play_hand.largest_group_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 35
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
+    familyId: modifier.play_hand.largest_group_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 35
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
+    familyId: modifier.play_hand.largest_group_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 35
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.largest_group_equals_hands_or_rerolls.rerolls
+    familyId: modifier.play_hand.largest_group_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 35
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matching_group_at_least.base_score
+    familyId: modifier.player_reroll.selected_matching_group_at_least
+    phase: 1
+    conditionKind: 8
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matching_group_at_least.multiplier
+    familyId: modifier.player_reroll.selected_matching_group_at_least
+    phase: 1
+    conditionKind: 8
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matching_group_at_least.combined
+    familyId: modifier.player_reroll.selected_matching_group_at_least
+    phase: 1
+    conditionKind: 8
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_matching_group_at_least.rerolls
+    familyId: modifier.player_reroll.selected_matching_group_at_least
+    phase: 1
+    conditionKind: 8
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_either.base_score
+    familyId: modifier.play_hand.edge_sum_equals_either
+    phase: 2
+    conditionKind: 36
+    parameter: 6
+    secondaryParameter: 8
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_either.multiplier
+    familyId: modifier.play_hand.edge_sum_equals_either
+    phase: 2
+    conditionKind: 36
+    parameter: 6
+    secondaryParameter: 8
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_either.combined
+    familyId: modifier.play_hand.edge_sum_equals_either
+    phase: 2
+    conditionKind: 36
+    parameter: 6
+    secondaryParameter: 8
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_either.rerolls
+    familyId: modifier.play_hand.edge_sum_equals_either
+    phase: 2
+    conditionKind: 36
+    parameter: 6
+    secondaryParameter: 8
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_above_previous.base_score
+    familyId: modifier.play_hand.rank_above_previous
+    phase: 2
+    conditionKind: 11
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_above_previous.multiplier
+    familyId: modifier.play_hand.rank_above_previous
+    phase: 2
+    conditionKind: 11
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_above_previous.combined
+    familyId: modifier.play_hand.rank_above_previous
+    phase: 2
+    conditionKind: 11
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_above_previous.rerolls
+    familyId: modifier.play_hand.rank_above_previous
+    phase: 2
+    conditionKind: 11
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_below_before_reroll.base_score
+    familyId: modifier.player_reroll.rank_below_before_reroll
+    phase: 1
+    conditionKind: 55
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_below_before_reroll.multiplier
+    familyId: modifier.player_reroll.rank_below_before_reroll
+    phase: 1
+    conditionKind: 55
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_below_before_reroll.combined
+    familyId: modifier.player_reroll.rank_below_before_reroll
+    phase: 1
+    conditionKind: 55
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.rank_below_before_reroll.rerolls
+    familyId: modifier.player_reroll.rank_below_before_reroll
+    phase: 1
+    conditionKind: 55
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_rank_above_previous.base_score
+    familyId: modifier.initial_roll.initial_rank_above_previous
+    phase: 0
+    conditionKind: 47
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_rank_above_previous.multiplier
+    familyId: modifier.initial_roll.initial_rank_above_previous
+    phase: 0
+    conditionKind: 47
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_rank_above_previous.combined
+    familyId: modifier.initial_roll.initial_rank_above_previous
+    phase: 0
+    conditionKind: 47
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_rank_above_previous.rerolls
+    familyId: modifier.initial_roll.initial_rank_above_previous
+    phase: 0
+    conditionKind: 47
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.first_hand.base_score
+    familyId: modifier.initial_roll.first_hand
+    phase: 0
+    conditionKind: 38
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.first_hand.multiplier
+    familyId: modifier.initial_roll.first_hand
+    phase: 0
+    conditionKind: 38
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.first_hand.combined
+    familyId: modifier.initial_roll.first_hand
+    phase: 0
+    conditionKind: 38
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.first_hand.rerolls
+    familyId: modifier.initial_roll.first_hand
+    phase: 0
+    conditionKind: 38
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_pair_matches_edge.base_score
+    familyId: modifier.play_hand.interior_pair_matches_edge
+    phase: 2
+    conditionKind: 72
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_pair_matches_edge.multiplier
+    familyId: modifier.play_hand.interior_pair_matches_edge
+    phase: 2
+    conditionKind: 72
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_pair_matches_edge.combined
+    familyId: modifier.play_hand.interior_pair_matches_edge
+    phase: 2
+    conditionKind: 72
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_pair_matches_edge.rerolls
+    familyId: modifier.play_hand.interior_pair_matches_edge
+    phase: 2
+    conditionKind: 72
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.extreme_equals_hands_remaining.base_score
+    familyId: modifier.play_hand.extreme_equals_hands_remaining
+    phase: 2
+    conditionKind: 39
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.extreme_equals_hands_remaining.multiplier
+    familyId: modifier.play_hand.extreme_equals_hands_remaining
+    phase: 2
+    conditionKind: 39
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.extreme_equals_hands_remaining.combined
+    familyId: modifier.play_hand.extreme_equals_hands_remaining
+    phase: 2
+    conditionKind: 39
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.extreme_equals_hands_remaining.rerolls
+    familyId: modifier.play_hand.extreme_equals_hands_remaining
+    phase: 2
+    conditionKind: 39
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_different.base_score
+    familyId: modifier.play_hand.adjacent_different
+    phase: 2
+    conditionKind: 18
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_different.multiplier
+    familyId: modifier.play_hand.adjacent_different
+    phase: 2
+    conditionKind: 18
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_different.combined
+    familyId: modifier.play_hand.adjacent_different
+    phase: 2
+    conditionKind: 18
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_different.rerolls
+    familyId: modifier.play_hand.adjacent_different
+    phase: 2
+    conditionKind: 18
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_pair.base_score
+    familyId: modifier.initial_roll.initial_pair
+    phase: 0
+    conditionKind: 46
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_pair.multiplier
+    familyId: modifier.initial_roll.initial_pair
+    phase: 0
+    conditionKind: 46
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_pair.combined
+    familyId: modifier.initial_roll.initial_pair
+    phase: 0
+    conditionKind: 46
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.initial_pair.rerolls
+    familyId: modifier.initial_roll.initial_pair
+    phase: 0
+    conditionKind: 46
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_difference_at_most.base_score
+    familyId: modifier.play_hand.adjacent_difference_at_most
+    phase: 2
+    conditionKind: 44
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_difference_at_most.multiplier
+    familyId: modifier.play_hand.adjacent_difference_at_most
+    phase: 2
+    conditionKind: 44
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_difference_at_most.combined
+    familyId: modifier.play_hand.adjacent_difference_at_most
+    phase: 2
+    conditionKind: 44
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.adjacent_difference_at_most.rerolls
+    familyId: modifier.play_hand.adjacent_difference_at_most
+    phase: 2
+    conditionKind: 44
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.high_die.base_score
+    familyId: modifier.play_hand.high_die
+    phase: 2
+    conditionKind: 17
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 30
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.high_die.multiplier
+    familyId: modifier.play_hand.high_die
+    phase: 2
+    conditionKind: 17
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 6
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.high_die.combined
+    familyId: modifier.play_hand.high_die
+    phase: 2
+    conditionKind: 17
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.high_die.rerolls
+    familyId: modifier.play_hand.high_die
+    phase: 2
+    conditionKind: 17
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.high_die_or_straight.base_score
+    familyId: modifier.player_reroll.high_die_or_straight
+    phase: 1
+    conditionKind: 26
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.high_die_or_straight.multiplier
+    familyId: modifier.player_reroll.high_die_or_straight
+    phase: 1
+    conditionKind: 26
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.high_die_or_straight.combined
+    familyId: modifier.player_reroll.high_die_or_straight
+    phase: 1
+    conditionKind: 26
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.high_die_or_straight.rerolls
+    familyId: modifier.player_reroll.high_die_or_straight
+    phase: 1
+    conditionKind: 26
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_below_previous.base_score
+    familyId: modifier.play_hand.rank_below_previous
+    phase: 2
+    conditionKind: 10
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_below_previous.multiplier
+    familyId: modifier.play_hand.rank_below_previous
+    phase: 2
+    conditionKind: 10
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_below_previous.combined
+    familyId: modifier.play_hand.rank_below_previous
+    phase: 2
+    conditionKind: 10
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_below_previous.rerolls
+    familyId: modifier.play_hand.rank_below_previous
+    phase: 2
+    conditionKind: 10
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_hands_or_rerolls.base_score
+    familyId: modifier.play_hand.edge_sum_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 52
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_hands_or_rerolls.multiplier
+    familyId: modifier.play_hand.edge_sum_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 52
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_hands_or_rerolls.combined
+    familyId: modifier.play_hand.edge_sum_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 52
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_equals_hands_or_rerolls.rerolls
+    familyId: modifier.play_hand.edge_sum_equals_hands_or_rerolls
+    phase: 2
+    conditionKind: 52
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
+    familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
+    phase: 1
+    conditionKind: 29
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
+    familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
+    phase: 1
+    conditionKind: 29
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
+    familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
+    phase: 1
+    conditionKind: 29
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_interior_equals_neighbor_sum.rerolls
+    familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
+    phase: 1
+    conditionKind: 29
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.last_hand.base_score
+    familyId: modifier.initial_roll.last_hand
+    phase: 0
+    conditionKind: 6
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.last_hand.multiplier
+    familyId: modifier.initial_roll.last_hand
+    phase: 0
+    conditionKind: 6
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.last_hand.combined
+    familyId: modifier.initial_roll.last_hand
+    phase: 0
+    conditionKind: 6
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.last_hand.rerolls
+    familyId: modifier.initial_roll.last_hand
+    phase: 0
+    conditionKind: 6
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_prime.base_score
+    familyId: modifier.play_hand.sum_prime
+    phase: 2
+    conditionKind: 66
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_prime.multiplier
+    familyId: modifier.play_hand.sum_prime
+    phase: 2
+    conditionKind: 66
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_prime.combined
+    familyId: modifier.play_hand.sum_prime
+    phase: 2
+    conditionKind: 66
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_prime.rerolls
+    familyId: modifier.play_hand.sum_prime
+    phase: 2
+    conditionKind: 66
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_differences_equal.base_score
+    familyId: modifier.play_hand.edge_pair_differences_equal
+    phase: 2
+    conditionKind: 63
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_differences_equal.multiplier
+    familyId: modifier.play_hand.edge_pair_differences_equal
+    phase: 2
+    conditionKind: 63
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_differences_equal.combined
+    familyId: modifier.play_hand.edge_pair_differences_equal
+    phase: 2
+    conditionKind: 63
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_differences_equal.rerolls
+    familyId: modifier.play_hand.edge_pair_differences_equal
+    phase: 2
+    conditionKind: 63
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_difference.base_score
+    familyId: modifier.play_hand.interior_equals_neighbor_difference
+    phase: 2
+    conditionKind: 59
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_difference.multiplier
+    familyId: modifier.play_hand.interior_equals_neighbor_difference
+    phase: 2
+    conditionKind: 59
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_difference.combined
+    familyId: modifier.play_hand.interior_equals_neighbor_difference
+    phase: 2
+    conditionKind: 59
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_difference.rerolls
+    familyId: modifier.play_hand.interior_equals_neighbor_difference
+    phase: 2
+    conditionKind: 59
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_face_unchanged.base_score
+    familyId: modifier.player_reroll.selected_face_unchanged
+    phase: 1
+    conditionKind: 7
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_face_unchanged.multiplier
+    familyId: modifier.player_reroll.selected_face_unchanged
+    phase: 1
+    conditionKind: 7
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_face_unchanged.combined
+    familyId: modifier.player_reroll.selected_face_unchanged
+    phase: 1
+    conditionKind: 7
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_face_unchanged.rerolls
+    familyId: modifier.player_reroll.selected_face_unchanged
+    phase: 1
+    conditionKind: 7
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.minimum_equals_rerolls_spent.base_score
+    familyId: modifier.play_hand.minimum_equals_rerolls_spent
+    phase: 2
+    conditionKind: 32
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.minimum_equals_rerolls_spent.multiplier
+    familyId: modifier.play_hand.minimum_equals_rerolls_spent
+    phase: 2
+    conditionKind: 32
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.minimum_equals_rerolls_spent.combined
+    familyId: modifier.play_hand.minimum_equals_rerolls_spent
+    phase: 2
+    conditionKind: 32
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.minimum_equals_rerolls_spent.rerolls
+    familyId: modifier.play_hand.minimum_equals_rerolls_spent
+    phase: 2
+    conditionKind: 32
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_extreme_faces.base_score
+    familyId: modifier.play_hand.no_extreme_faces
+    phase: 2
+    conditionKind: 69
+    parameter: 1
+    secondaryParameter: 6
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_extreme_faces.multiplier
+    familyId: modifier.play_hand.no_extreme_faces
+    phase: 2
+    conditionKind: 69
+    parameter: 1
+    secondaryParameter: 6
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_extreme_faces.combined
+    familyId: modifier.play_hand.no_extreme_faces
+    phase: 2
+    conditionKind: 69
+    parameter: 1
+    secondaryParameter: 6
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.no_extreme_faces.rerolls
+    familyId: modifier.play_hand.no_extreme_faces
+    phase: 2
+    conditionKind: 69
+    parameter: 1
+    secondaryParameter: 6
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.hands_remaining_even.base_score
+    familyId: modifier.play_hand.hands_remaining_even
+    phase: 2
+    conditionKind: 62
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.hands_remaining_even.multiplier
+    familyId: modifier.play_hand.hands_remaining_even
+    phase: 2
+    conditionKind: 62
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.hands_remaining_even.combined
+    familyId: modifier.play_hand.hands_remaining_even
+    phase: 2
+    conditionKind: 62
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.hands_remaining_even.rerolls
+    familyId: modifier.play_hand.hands_remaining_even
+    phase: 2
+    conditionKind: 62
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_rerolls_remaining.base_score
+    familyId: modifier.play_hand.contains_rerolls_remaining
+    phase: 2
+    conditionKind: 21
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_rerolls_remaining.multiplier
+    familyId: modifier.play_hand.contains_rerolls_remaining
+    phase: 2
+    conditionKind: 21
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_rerolls_remaining.combined
+    familyId: modifier.play_hand.contains_rerolls_remaining
+    phase: 2
+    conditionKind: 21
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_rerolls_remaining.rerolls
+    familyId: modifier.play_hand.contains_rerolls_remaining
+    phase: 2
+    conditionKind: 21
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_exceed_hands_remaining.base_score
+    familyId: modifier.play_hand.rerolls_exceed_hands_remaining
+    phase: 2
+    conditionKind: 33
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
+    familyId: modifier.play_hand.rerolls_exceed_hands_remaining
+    phase: 2
+    conditionKind: 33
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_exceed_hands_remaining.combined
+    familyId: modifier.play_hand.rerolls_exceed_hands_remaining
+    phase: 2
+    conditionKind: 33
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_exceed_hands_remaining.rerolls
+    familyId: modifier.play_hand.rerolls_exceed_hands_remaining
+    phase: 2
+    conditionKind: 33
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.ordered.base_score
+    familyId: modifier.player_reroll.ordered
+    phase: 1
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.ordered.multiplier
+    familyId: modifier.player_reroll.ordered
+    phase: 1
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.ordered.combined
+    familyId: modifier.player_reroll.ordered
+    phase: 1
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.ordered.rerolls
+    familyId: modifier.player_reroll.ordered
+    phase: 1
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.last_reroll_on_last_hand.base_score
+    familyId: modifier.player_reroll.last_reroll_on_last_hand
+    phase: 1
+    conditionKind: 54
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.last_reroll_on_last_hand.multiplier
+    familyId: modifier.player_reroll.last_reroll_on_last_hand
+    phase: 1
+    conditionKind: 54
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.last_reroll_on_last_hand.combined
+    familyId: modifier.player_reroll.last_reroll_on_last_hand
+    phase: 1
+    conditionKind: 54
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.last_reroll_on_last_hand.rerolls
+    familyId: modifier.player_reroll.last_reroll_on_last_hand
+    phase: 1
+    conditionKind: 54
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.same_parity.base_score
+    familyId: modifier.play_hand.same_parity
+    phase: 2
+    conditionKind: 50
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.same_parity.multiplier
+    familyId: modifier.play_hand.same_parity
+    phase: 2
+    conditionKind: 50
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.same_parity.combined
+    familyId: modifier.play_hand.same_parity
+    phase: 2
+    conditionKind: 50
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.same_parity.rerolls
+    familyId: modifier.play_hand.same_parity
+    phase: 2
+    conditionKind: 50
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.middle_hand.base_score
+    familyId: modifier.initial_roll.middle_hand
+    phase: 0
+    conditionKind: 71
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.middle_hand.multiplier
+    familyId: modifier.initial_roll.middle_hand
+    phase: 0
+    conditionKind: 71
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.middle_hand.combined
+    familyId: modifier.initial_roll.middle_hand
+    phase: 0
+    conditionKind: 71
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.middle_hand.rerolls
+    familyId: modifier.initial_roll.middle_hand
+    phase: 0
+    conditionKind: 71
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edges_match_interior.base_score
+    familyId: modifier.play_hand.edges_match_interior
+    phase: 2
+    conditionKind: 67
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edges_match_interior.multiplier
+    familyId: modifier.play_hand.edges_match_interior
+    phase: 2
+    conditionKind: 67
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edges_match_interior.combined
+    familyId: modifier.play_hand.edges_match_interior
+    phase: 2
+    conditionKind: 67
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edges_match_interior.rerolls
+    familyId: modifier.play_hand.edges_match_interior
+    phase: 2
+    conditionKind: 67
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_sum.base_score
+    familyId: modifier.play_hand.interior_equals_neighbor_sum
+    phase: 2
+    conditionKind: 28
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_sum.multiplier
+    familyId: modifier.play_hand.interior_equals_neighbor_sum
+    phase: 2
+    conditionKind: 28
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_sum.combined
+    familyId: modifier.play_hand.interior_equals_neighbor_sum
+    phase: 2
+    conditionKind: 28
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_equals_neighbor_sum.rerolls
+    familyId: modifier.play_hand.interior_equals_neighbor_sum
+    phase: 2
+    conditionKind: 28
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_divisible_by.base_score
+    familyId: modifier.play_hand.sum_divisible_by
+    phase: 2
+    conditionKind: 14
+    parameter: 5
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_divisible_by.multiplier
+    familyId: modifier.play_hand.sum_divisible_by
+    phase: 2
+    conditionKind: 14
+    parameter: 5
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_divisible_by.combined
+    familyId: modifier.play_hand.sum_divisible_by
+    phase: 2
+    conditionKind: 14
+    parameter: 5
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_divisible_by.rerolls
+    familyId: modifier.play_hand.sum_divisible_by
+    phase: 2
+    conditionKind: 14
+    parameter: 5
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.face_equals_position.base_score
+    familyId: modifier.play_hand.face_equals_position
+    phase: 2
+    conditionKind: 37
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.face_equals_position.multiplier
+    familyId: modifier.play_hand.face_equals_position
+    phase: 2
+    conditionKind: 37
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.face_equals_position.combined
+    familyId: modifier.play_hand.face_equals_position
+    phase: 2
+    conditionKind: 37
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.face_equals_position.rerolls
+    familyId: modifier.play_hand.face_equals_position
+    phase: 2
+    conditionKind: 37
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.two_pair.base_score
+    familyId: modifier.play_hand.two_pair
+    phase: 2
+    conditionKind: 41
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.two_pair.multiplier
+    familyId: modifier.play_hand.two_pair
+    phase: 2
+    conditionKind: 41
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.two_pair.combined
+    familyId: modifier.play_hand.two_pair
+    phase: 2
+    conditionKind: 41
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.two_pair.rerolls
+    familyId: modifier.play_hand.two_pair
+    phase: 2
+    conditionKind: 41
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.alternating_parity.base_score
+    familyId: modifier.play_hand.alternating_parity
+    phase: 2
+    conditionKind: 27
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 25
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.alternating_parity.multiplier
+    familyId: modifier.play_hand.alternating_parity
+    phase: 2
+    conditionKind: 27
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 5
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.alternating_parity.combined
+    familyId: modifier.play_hand.alternating_parity
+    phase: 2
+    conditionKind: 27
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.alternating_parity.rerolls
+    familyId: modifier.play_hand.alternating_parity
+    phase: 2
+    conditionKind: 27
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_greater_than_interior.base_score
+    familyId: modifier.play_hand.edge_sum_greater_than_interior
+    phase: 2
+    conditionKind: 45
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_greater_than_interior.multiplier
+    familyId: modifier.play_hand.edge_sum_greater_than_interior
+    phase: 2
+    conditionKind: 45
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_greater_than_interior.combined
+    familyId: modifier.play_hand.edge_sum_greater_than_interior
+    phase: 2
+    conditionKind: 45
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_sum_greater_than_interior.rerolls
+    familyId: modifier.play_hand.edge_sum_greater_than_interior
+    phase: 2
+    conditionKind: 45
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_face.base_score
+    familyId: modifier.play_hand.contains_face
+    phase: 2
+    conditionKind: 1
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_face.multiplier
+    familyId: modifier.play_hand.contains_face
+    phase: 2
+    conditionKind: 1
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_face.combined
+    familyId: modifier.play_hand.contains_face
+    phase: 2
+    conditionKind: 1
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_face.rerolls
+    familyId: modifier.play_hand.contains_face
+    phase: 2
+    conditionKind: 1
+    parameter: 1
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_greater_than.base_score
+    familyId: modifier.play_hand.sum_greater_than
+    phase: 2
+    conditionKind: 61
+    parameter: 22
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_greater_than.multiplier
+    familyId: modifier.play_hand.sum_greater_than
+    phase: 2
+    conditionKind: 61
+    parameter: 22
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_greater_than.combined
+    familyId: modifier.play_hand.sum_greater_than
+    phase: 2
+    conditionKind: 61
+    parameter: 22
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.sum_greater_than.rerolls
+    familyId: modifier.play_hand.sum_greater_than
+    phase: 2
+    conditionKind: 61
+    parameter: 22
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_spent_at_least.base_score
+    familyId: modifier.play_hand.rerolls_spent_at_least
+    phase: 2
+    conditionKind: 43
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_spent_at_least.multiplier
+    familyId: modifier.play_hand.rerolls_spent_at_least
+    phase: 2
+    conditionKind: 43
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_spent_at_least.combined
+    familyId: modifier.play_hand.rerolls_spent_at_least
+    phase: 2
+    conditionKind: 43
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rerolls_spent_at_least.rerolls
+    familyId: modifier.play_hand.rerolls_spent_at_least
+    phase: 2
+    conditionKind: 43
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.unique_count_less_than_rerolls_spent.base_score
+    familyId: modifier.play_hand.unique_count_less_than_rerolls_spent
+    phase: 2
+    conditionKind: 68
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.unique_count_less_than_rerolls_spent.multiplier
+    familyId: modifier.play_hand.unique_count_less_than_rerolls_spent
+    phase: 2
+    conditionKind: 68
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.unique_count_less_than_rerolls_spent.combined
+    familyId: modifier.play_hand.unique_count_less_than_rerolls_spent
+    phase: 2
+    conditionKind: 68
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.unique_count_less_than_rerolls_spent.rerolls
+    familyId: modifier.play_hand.unique_count_less_than_rerolls_spent
+    phase: 2
+    conditionKind: 68
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_sum_divisible_by.base_score
+    familyId: modifier.play_hand.interior_sum_divisible_by
+    phase: 2
+    conditionKind: 51
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_sum_divisible_by.multiplier
+    familyId: modifier.play_hand.interior_sum_divisible_by
+    phase: 2
+    conditionKind: 51
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_sum_divisible_by.combined
+    familyId: modifier.play_hand.interior_sum_divisible_by
+    phase: 2
+    conditionKind: 51
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.interior_sum_divisible_by.rerolls
+    familyId: modifier.play_hand.interior_sum_divisible_by
+    phase: 2
+    conditionKind: 51
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_upper_face.base_score
+    familyId: modifier.play_hand.contains_upper_face
+    phase: 2
+    conditionKind: 9
+    parameter: 6
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_upper_face.multiplier
+    familyId: modifier.play_hand.contains_upper_face
+    phase: 2
+    conditionKind: 9
+    parameter: 6
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_upper_face.combined
+    familyId: modifier.play_hand.contains_upper_face
+    phase: 2
+    conditionKind: 9
+    parameter: 6
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.contains_upper_face.rerolls
+    familyId: modifier.play_hand.contains_upper_face
+    phase: 2
+    conditionKind: 9
+    parameter: 6
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.ordered.base_score
+    familyId: modifier.play_hand.ordered
+    phase: 2
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.ordered.multiplier
+    familyId: modifier.play_hand.ordered
+    phase: 2
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.ordered.combined
+    familyId: modifier.play_hand.ordered
+    phase: 2
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.ordered.rerolls
+    familyId: modifier.play_hand.ordered
+    phase: 2
+    conditionKind: 16
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.odd_sum_greater_than_even_sum.base_score
+    familyId: modifier.play_hand.odd_sum_greater_than_even_sum
+    phase: 2
+    conditionKind: 65
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
+    familyId: modifier.play_hand.odd_sum_greater_than_even_sum
+    phase: 2
+    conditionKind: 65
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.odd_sum_greater_than_even_sum.combined
+    familyId: modifier.play_hand.odd_sum_greater_than_even_sum
+    phase: 2
+    conditionKind: 65
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.odd_sum_greater_than_even_sum.rerolls
+    familyId: modifier.play_hand.odd_sum_greater_than_even_sum
+    phase: 2
+    conditionKind: 65
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_unique.base_score
+    familyId: modifier.play_hand.middle_unique
+    phase: 2
+    conditionKind: 25
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_unique.multiplier
+    familyId: modifier.play_hand.middle_unique
+    phase: 2
+    conditionKind: 25
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_unique.combined
+    familyId: modifier.play_hand.middle_unique
+    phase: 2
+    conditionKind: 25
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_unique.rerolls
+    familyId: modifier.play_hand.middle_unique
+    phase: 2
+    conditionKind: 25
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_equals_odd_count.base_score
+    familyId: modifier.play_hand.middle_equals_odd_count
+    phase: 2
+    conditionKind: 60
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_equals_odd_count.multiplier
+    familyId: modifier.play_hand.middle_equals_odd_count
+    phase: 2
+    conditionKind: 60
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_equals_odd_count.combined
+    familyId: modifier.play_hand.middle_equals_odd_count
+    phase: 2
+    conditionKind: 60
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_equals_odd_count.rerolls
+    familyId: modifier.play_hand.middle_equals_odd_count
+    phase: 2
+    conditionKind: 60
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_sums_equal.base_score
+    familyId: modifier.play_hand.edge_pair_sums_equal
+    phase: 2
+    conditionKind: 15
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_sums_equal.multiplier
+    familyId: modifier.play_hand.edge_pair_sums_equal
+    phase: 2
+    conditionKind: 15
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_sums_equal.combined
+    familyId: modifier.play_hand.edge_pair_sums_equal
+    phase: 2
+    conditionKind: 15
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.edge_pair_sums_equal.rerolls
+    familyId: modifier.play_hand.edge_pair_sums_equal
+    phase: 2
+    conditionKind: 15
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_equals_previous.base_score
+    familyId: modifier.play_hand.rank_equals_previous
+    phase: 2
+    conditionKind: 12
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_equals_previous.multiplier
+    familyId: modifier.play_hand.rank_equals_previous
+    phase: 2
+    conditionKind: 12
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_equals_previous.combined
+    familyId: modifier.play_hand.rank_equals_previous
+    phase: 2
+    conditionKind: 12
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.rank_equals_previous.rerolls
+    familyId: modifier.play_hand.rank_equals_previous
+    phase: 2
+    conditionKind: 12
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_greater_than.base_score
+    familyId: modifier.play_hand.range_greater_than
+    phase: 2
+    conditionKind: 48
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_greater_than.multiplier
+    familyId: modifier.play_hand.range_greater_than
+    phase: 2
+    conditionKind: 48
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_greater_than.combined
+    familyId: modifier.play_hand.range_greater_than
+    phase: 2
+    conditionKind: 48
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.range_greater_than.rerolls
+    familyId: modifier.play_hand.range_greater_than
+    phase: 2
+    conditionKind: 48
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    familyId: modifier.play_hand.maximum_at_most_rerolls_remaining
+    phase: 2
+    conditionKind: 34
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    familyId: modifier.play_hand.maximum_at_most_rerolls_remaining
+    phase: 2
+    conditionKind: 34
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    familyId: modifier.play_hand.maximum_at_most_rerolls_remaining
+    phase: 2
+    conditionKind: 34
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    familyId: modifier.play_hand.maximum_at_most_rerolls_remaining
+    phase: 2
+    conditionKind: 34
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.positive_rerolls_divisible_by.base_score
+    familyId: modifier.play_hand.positive_rerolls_divisible_by
+    phase: 2
+    conditionKind: 24
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.positive_rerolls_divisible_by.multiplier
+    familyId: modifier.play_hand.positive_rerolls_divisible_by
+    phase: 2
+    conditionKind: 24
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.positive_rerolls_divisible_by.combined
+    familyId: modifier.play_hand.positive_rerolls_divisible_by
+    phase: 2
+    conditionKind: 24
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.positive_rerolls_divisible_by.rerolls
+    familyId: modifier.play_hand.positive_rerolls_divisible_by
+    phase: 2
+    conditionKind: 24
+    parameter: 3
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.exactly_one_face.base_score
+    familyId: modifier.play_hand.exactly_one_face
+    phase: 2
+    conditionKind: 20
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.exactly_one_face.multiplier
+    familyId: modifier.play_hand.exactly_one_face
+    phase: 2
+    conditionKind: 20
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.exactly_one_face.combined
+    familyId: modifier.play_hand.exactly_one_face
+    phase: 2
+    conditionKind: 20
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.exactly_one_face.rerolls
+    familyId: modifier.play_hand.exactly_one_face
+    phase: 2
+    conditionKind: 20
+    parameter: 2
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_sum_equals_either.base_score
+    familyId: modifier.player_reroll.selected_sum_equals_either
+    phase: 1
+    conditionKind: 42
+    parameter: 8
+    secondaryParameter: 10
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_sum_equals_either.multiplier
+    familyId: modifier.player_reroll.selected_sum_equals_either
+    phase: 1
+    conditionKind: 42
+    parameter: 8
+    secondaryParameter: 10
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_sum_equals_either.combined
+    familyId: modifier.player_reroll.selected_sum_equals_either
+    phase: 1
+    conditionKind: 42
+    parameter: 8
+    secondaryParameter: 10
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.player_reroll.selected_sum_equals_either.rerolls
+    familyId: modifier.player_reroll.selected_sum_equals_either
+    phase: 1
+    conditionKind: 42
+    parameter: 8
+    secondaryParameter: 10
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.every_die_rerolled.base_score
+    familyId: modifier.play_hand.every_die_rerolled
+    phase: 2
+    conditionKind: 30
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.every_die_rerolled.multiplier
+    familyId: modifier.play_hand.every_die_rerolled
+    phase: 2
+    conditionKind: 30
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.every_die_rerolled.combined
+    familyId: modifier.play_hand.every_die_rerolled
+    phase: 2
+    conditionKind: 30
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 5
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.every_die_rerolled.rerolls
+    familyId: modifier.play_hand.every_die_rerolled
+    phase: 2
+    conditionKind: 30
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_faces_count_at_least.base_score
+    familyId: modifier.play_hand.middle_faces_count_at_least
+    phase: 2
+    conditionKind: 70
+    parameter: 4
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 15
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_faces_count_at_least.multiplier
+    familyId: modifier.play_hand.middle_faces_count_at_least
+    phase: 2
+    conditionKind: 70
+    parameter: 4
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 3
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_faces_count_at_least.combined
+    familyId: modifier.play_hand.middle_faces_count_at_least
+    phase: 2
+    conditionKind: 70
+    parameter: 4
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 1
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.play_hand.middle_faces_count_at_least.rerolls
+    familyId: modifier.play_hand.middle_faces_count_at_least
+    phase: 2
+    conditionKind: 70
+    parameter: 4
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_exhausted_hands.base_score
+    familyId: modifier.initial_roll.previous_stage_exhausted_hands
+    phase: 0
+    conditionKind: 49
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 20
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_exhausted_hands.multiplier
+    familyId: modifier.initial_roll.previous_stage_exhausted_hands
+    phase: 0
+    conditionKind: 49
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 1
+      amount: 4
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_exhausted_hands.combined
+    familyId: modifier.initial_roll.previous_stage_exhausted_hands
+    phase: 0
+    conditionKind: 49
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 0
+      amount: 10
+    - kind: 1
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  - id: modifier.initial_roll.previous_stage_exhausted_hands.rerolls
+    familyId: modifier.initial_roll.previous_stage_exhausted_hands
+    phase: 0
+    conditionKind: 49
+    parameter: 0
+    secondaryParameter: 0
+    effects:
+    - kind: 2
+      amount: 2
+    activationLimit: 1
+    rewardEligible: 1
+  rewardPools:
+  - id: reward_pool.base_score
+    modifierIds:
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    - modifier.play_hand.range_less_than.base_score
+    - modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
+    - modifier.player_reroll.selected_matches_hands_remaining.base_score
+    - modifier.play_hand.second_fourth_product_at_least_sum.base_score
+    - modifier.play_hand.sum_less_than_initial.base_score
+    - modifier.player_reroll.rank_equals_before_reroll.base_score
+    - modifier.play_hand.no_dice_rerolled.base_score
+    - modifier.play_hand.adjacent_matching_triple.base_score
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
+    - modifier.play_hand.out_of_rerolls.base_score
+    - modifier.player_reroll.exactly_one_selected_face.base_score
+    - modifier.player_reroll.adjacent_difference_at_least.base_score
+    - modifier.play_hand.sum_less_than.base_score
+    - modifier.play_hand.interior_contains_pair.base_score
+    - modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
+    - modifier.player_reroll.selected_matching_group_at_least.base_score
+    - modifier.play_hand.edge_sum_equals_either.base_score
+    - modifier.play_hand.rank_above_previous.base_score
+    - modifier.player_reroll.rank_below_before_reroll.base_score
+    - modifier.initial_roll.initial_rank_above_previous.base_score
+    - modifier.initial_roll.first_hand.base_score
+    - modifier.play_hand.interior_pair_matches_edge.base_score
+    - modifier.play_hand.extreme_equals_hands_remaining.base_score
+    - modifier.play_hand.adjacent_different.base_score
+    - modifier.initial_roll.initial_pair.base_score
+    - modifier.play_hand.adjacent_difference_at_most.base_score
+    - modifier.play_hand.high_die.base_score
+    - modifier.player_reroll.high_die_or_straight.base_score
+    - modifier.play_hand.rank_below_previous.base_score
+    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.base_score
+    - modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
+    - modifier.initial_roll.last_hand.base_score
+    - modifier.play_hand.sum_prime.base_score
+    - modifier.play_hand.edge_pair_differences_equal.base_score
+    - modifier.play_hand.interior_equals_neighbor_difference.base_score
+    - modifier.player_reroll.selected_face_unchanged.base_score
+    - modifier.play_hand.minimum_equals_rerolls_spent.base_score
+    - modifier.play_hand.no_extreme_faces.base_score
+    - modifier.play_hand.hands_remaining_even.base_score
+    - modifier.play_hand.contains_rerolls_remaining.base_score
+    - modifier.play_hand.rerolls_exceed_hands_remaining.base_score
+    - modifier.player_reroll.ordered.base_score
+    - modifier.player_reroll.last_reroll_on_last_hand.base_score
+    - modifier.play_hand.same_parity.base_score
+    - modifier.initial_roll.middle_hand.base_score
+    - modifier.play_hand.edges_match_interior.base_score
+    - modifier.play_hand.interior_equals_neighbor_sum.base_score
+    - modifier.play_hand.sum_divisible_by.base_score
+    - modifier.play_hand.face_equals_position.base_score
+    - modifier.play_hand.two_pair.base_score
+    - modifier.play_hand.alternating_parity.base_score
+    - modifier.play_hand.edge_sum_greater_than_interior.base_score
+    - modifier.play_hand.contains_face.base_score
+    - modifier.play_hand.sum_greater_than.base_score
+    - modifier.play_hand.rerolls_spent_at_least.base_score
+    - modifier.play_hand.unique_count_less_than_rerolls_spent.base_score
+    - modifier.play_hand.interior_sum_divisible_by.base_score
+    - modifier.play_hand.contains_upper_face.base_score
+    - modifier.play_hand.ordered.base_score
+    - modifier.play_hand.odd_sum_greater_than_even_sum.base_score
+    - modifier.play_hand.middle_unique.base_score
+    - modifier.play_hand.middle_equals_odd_count.base_score
+    - modifier.play_hand.edge_pair_sums_equal.base_score
+    - modifier.play_hand.rank_equals_previous.base_score
+    - modifier.play_hand.range_greater_than.base_score
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    - modifier.play_hand.positive_rerolls_divisible_by.base_score
+    - modifier.play_hand.exactly_one_face.base_score
+    - modifier.player_reroll.selected_sum_equals_either.base_score
+    - modifier.play_hand.every_die_rerolled.base_score
+    - modifier.play_hand.middle_faces_count_at_least.base_score
+    - modifier.initial_roll.previous_stage_exhausted_hands.base_score
+    fallbackModifierId: modifier.play_hand.never.base_score
+  - id: reward_pool.multiplier
+    modifierIds:
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    - modifier.play_hand.range_less_than.multiplier
+    - modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
+    - modifier.player_reroll.selected_matches_hands_remaining.multiplier
+    - modifier.play_hand.second_fourth_product_at_least_sum.multiplier
+    - modifier.play_hand.sum_less_than_initial.multiplier
+    - modifier.player_reroll.rank_equals_before_reroll.multiplier
+    - modifier.play_hand.no_dice_rerolled.multiplier
+    - modifier.play_hand.adjacent_matching_triple.multiplier
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+    - modifier.play_hand.out_of_rerolls.multiplier
+    - modifier.player_reroll.exactly_one_selected_face.multiplier
+    - modifier.player_reroll.adjacent_difference_at_least.multiplier
+    - modifier.play_hand.sum_less_than.multiplier
+    - modifier.play_hand.interior_contains_pair.multiplier
+    - modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
+    - modifier.player_reroll.selected_matching_group_at_least.multiplier
+    - modifier.play_hand.edge_sum_equals_either.multiplier
+    - modifier.play_hand.rank_above_previous.multiplier
+    - modifier.player_reroll.rank_below_before_reroll.multiplier
+    - modifier.initial_roll.initial_rank_above_previous.multiplier
+    - modifier.initial_roll.first_hand.multiplier
+    - modifier.play_hand.interior_pair_matches_edge.multiplier
+    - modifier.play_hand.extreme_equals_hands_remaining.multiplier
+    - modifier.play_hand.adjacent_different.multiplier
+    - modifier.initial_roll.initial_pair.multiplier
+    - modifier.play_hand.adjacent_difference_at_most.multiplier
+    - modifier.play_hand.high_die.multiplier
+    - modifier.player_reroll.high_die_or_straight.multiplier
+    - modifier.play_hand.rank_below_previous.multiplier
+    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.multiplier
+    - modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
+    - modifier.initial_roll.last_hand.multiplier
+    - modifier.play_hand.sum_prime.multiplier
+    - modifier.play_hand.edge_pair_differences_equal.multiplier
+    - modifier.play_hand.interior_equals_neighbor_difference.multiplier
+    - modifier.player_reroll.selected_face_unchanged.multiplier
+    - modifier.play_hand.minimum_equals_rerolls_spent.multiplier
+    - modifier.play_hand.no_extreme_faces.multiplier
+    - modifier.play_hand.hands_remaining_even.multiplier
+    - modifier.play_hand.contains_rerolls_remaining.multiplier
+    - modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
+    - modifier.player_reroll.ordered.multiplier
+    - modifier.player_reroll.last_reroll_on_last_hand.multiplier
+    - modifier.play_hand.same_parity.multiplier
+    - modifier.initial_roll.middle_hand.multiplier
+    - modifier.play_hand.edges_match_interior.multiplier
+    - modifier.play_hand.interior_equals_neighbor_sum.multiplier
+    - modifier.play_hand.sum_divisible_by.multiplier
+    - modifier.play_hand.face_equals_position.multiplier
+    - modifier.play_hand.two_pair.multiplier
+    - modifier.play_hand.alternating_parity.multiplier
+    - modifier.play_hand.edge_sum_greater_than_interior.multiplier
+    - modifier.play_hand.contains_face.multiplier
+    - modifier.play_hand.sum_greater_than.multiplier
+    - modifier.play_hand.rerolls_spent_at_least.multiplier
+    - modifier.play_hand.unique_count_less_than_rerolls_spent.multiplier
+    - modifier.play_hand.interior_sum_divisible_by.multiplier
+    - modifier.play_hand.contains_upper_face.multiplier
+    - modifier.play_hand.ordered.multiplier
+    - modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
+    - modifier.play_hand.middle_unique.multiplier
+    - modifier.play_hand.middle_equals_odd_count.multiplier
+    - modifier.play_hand.edge_pair_sums_equal.multiplier
+    - modifier.play_hand.rank_equals_previous.multiplier
+    - modifier.play_hand.range_greater_than.multiplier
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    - modifier.play_hand.positive_rerolls_divisible_by.multiplier
+    - modifier.play_hand.exactly_one_face.multiplier
+    - modifier.player_reroll.selected_sum_equals_either.multiplier
+    - modifier.play_hand.every_die_rerolled.multiplier
+    - modifier.play_hand.middle_faces_count_at_least.multiplier
+    - modifier.initial_roll.previous_stage_exhausted_hands.multiplier
+    fallbackModifierId: modifier.play_hand.never.multiplier
+  - id: reward_pool.combined
+    modifierIds:
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+    - modifier.play_hand.range_less_than.combined
+    - modifier.initial_roll.previous_stage_at_most_half_hands_played.combined
+    - modifier.player_reroll.selected_matches_hands_remaining.combined
+    - modifier.play_hand.second_fourth_product_at_least_sum.combined
+    - modifier.play_hand.sum_less_than_initial.combined
+    - modifier.player_reroll.rank_equals_before_reroll.combined
+    - modifier.play_hand.no_dice_rerolled.combined
+    - modifier.play_hand.adjacent_matching_triple.combined
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
+    - modifier.play_hand.out_of_rerolls.combined
+    - modifier.player_reroll.exactly_one_selected_face.combined
+    - modifier.player_reroll.adjacent_difference_at_least.combined
+    - modifier.play_hand.sum_less_than.combined
+    - modifier.play_hand.interior_contains_pair.combined
+    - modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
+    - modifier.player_reroll.selected_matching_group_at_least.combined
+    - modifier.play_hand.edge_sum_equals_either.combined
+    - modifier.play_hand.rank_above_previous.combined
+    - modifier.player_reroll.rank_below_before_reroll.combined
+    - modifier.initial_roll.initial_rank_above_previous.combined
+    - modifier.initial_roll.first_hand.combined
+    - modifier.play_hand.interior_pair_matches_edge.combined
+    - modifier.play_hand.extreme_equals_hands_remaining.combined
+    - modifier.play_hand.adjacent_different.combined
+    - modifier.initial_roll.initial_pair.combined
+    - modifier.play_hand.adjacent_difference_at_most.combined
+    - modifier.play_hand.high_die.combined
+    - modifier.player_reroll.high_die_or_straight.combined
+    - modifier.play_hand.rank_below_previous.combined
+    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.combined
+    - modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
+    - modifier.initial_roll.last_hand.combined
+    - modifier.play_hand.sum_prime.combined
+    - modifier.play_hand.edge_pair_differences_equal.combined
+    - modifier.play_hand.interior_equals_neighbor_difference.combined
+    - modifier.player_reroll.selected_face_unchanged.combined
+    - modifier.play_hand.minimum_equals_rerolls_spent.combined
+    - modifier.play_hand.no_extreme_faces.combined
+    - modifier.play_hand.hands_remaining_even.combined
+    - modifier.play_hand.contains_rerolls_remaining.combined
+    - modifier.play_hand.rerolls_exceed_hands_remaining.combined
+    - modifier.player_reroll.ordered.combined
+    - modifier.player_reroll.last_reroll_on_last_hand.combined
+    - modifier.play_hand.same_parity.combined
+    - modifier.initial_roll.middle_hand.combined
+    - modifier.play_hand.edges_match_interior.combined
+    - modifier.play_hand.interior_equals_neighbor_sum.combined
+    - modifier.play_hand.sum_divisible_by.combined
+    - modifier.play_hand.face_equals_position.combined
+    - modifier.play_hand.two_pair.combined
+    - modifier.play_hand.alternating_parity.combined
+    - modifier.play_hand.edge_sum_greater_than_interior.combined
+    - modifier.play_hand.contains_face.combined
+    - modifier.play_hand.sum_greater_than.combined
+    - modifier.play_hand.rerolls_spent_at_least.combined
+    - modifier.play_hand.unique_count_less_than_rerolls_spent.combined
+    - modifier.play_hand.interior_sum_divisible_by.combined
+    - modifier.play_hand.contains_upper_face.combined
+    - modifier.play_hand.ordered.combined
+    - modifier.play_hand.odd_sum_greater_than_even_sum.combined
+    - modifier.play_hand.middle_unique.combined
+    - modifier.play_hand.middle_equals_odd_count.combined
+    - modifier.play_hand.edge_pair_sums_equal.combined
+    - modifier.play_hand.rank_equals_previous.combined
+    - modifier.play_hand.range_greater_than.combined
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    - modifier.play_hand.positive_rerolls_divisible_by.combined
+    - modifier.play_hand.exactly_one_face.combined
+    - modifier.player_reroll.selected_sum_equals_either.combined
+    - modifier.play_hand.every_die_rerolled.combined
+    - modifier.play_hand.middle_faces_count_at_least.combined
+    - modifier.initial_roll.previous_stage_exhausted_hands.combined
+    fallbackModifierId: modifier.play_hand.never.combined
+  - id: reward_pool.rerolls
+    modifierIds:
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    - modifier.play_hand.range_less_than.rerolls
+    - modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
+    - modifier.player_reroll.selected_matches_hands_remaining.rerolls
+    - modifier.play_hand.second_fourth_product_at_least_sum.rerolls
+    - modifier.play_hand.sum_less_than_initial.rerolls
+    - modifier.player_reroll.rank_equals_before_reroll.rerolls
+    - modifier.play_hand.no_dice_rerolled.rerolls
+    - modifier.play_hand.adjacent_matching_triple.rerolls
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+    - modifier.play_hand.out_of_rerolls.rerolls
+    - modifier.player_reroll.exactly_one_selected_face.rerolls
+    - modifier.player_reroll.adjacent_difference_at_least.rerolls
+    - modifier.play_hand.sum_less_than.rerolls
+    - modifier.play_hand.interior_contains_pair.rerolls
+    - modifier.play_hand.largest_group_equals_hands_or_rerolls.rerolls
+    - modifier.player_reroll.selected_matching_group_at_least.rerolls
+    - modifier.play_hand.edge_sum_equals_either.rerolls
+    - modifier.play_hand.rank_above_previous.rerolls
+    - modifier.player_reroll.rank_below_before_reroll.rerolls
+    - modifier.initial_roll.initial_rank_above_previous.rerolls
+    - modifier.initial_roll.first_hand.rerolls
+    - modifier.play_hand.interior_pair_matches_edge.rerolls
+    - modifier.play_hand.extreme_equals_hands_remaining.rerolls
+    - modifier.play_hand.adjacent_different.rerolls
+    - modifier.initial_roll.initial_pair.rerolls
+    - modifier.play_hand.adjacent_difference_at_most.rerolls
+    - modifier.play_hand.high_die.rerolls
+    - modifier.player_reroll.high_die_or_straight.rerolls
+    - modifier.play_hand.rank_below_previous.rerolls
+    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.rerolls
+    - modifier.player_reroll.selected_interior_equals_neighbor_sum.rerolls
+    - modifier.initial_roll.last_hand.rerolls
+    - modifier.play_hand.sum_prime.rerolls
+    - modifier.play_hand.edge_pair_differences_equal.rerolls
+    - modifier.play_hand.interior_equals_neighbor_difference.rerolls
+    - modifier.player_reroll.selected_face_unchanged.rerolls
+    - modifier.play_hand.minimum_equals_rerolls_spent.rerolls
+    - modifier.play_hand.no_extreme_faces.rerolls
+    - modifier.play_hand.hands_remaining_even.rerolls
+    - modifier.play_hand.contains_rerolls_remaining.rerolls
+    - modifier.play_hand.rerolls_exceed_hands_remaining.rerolls
+    - modifier.player_reroll.ordered.rerolls
+    - modifier.player_reroll.last_reroll_on_last_hand.rerolls
+    - modifier.play_hand.same_parity.rerolls
+    - modifier.initial_roll.middle_hand.rerolls
+    - modifier.play_hand.edges_match_interior.rerolls
+    - modifier.play_hand.interior_equals_neighbor_sum.rerolls
+    - modifier.play_hand.sum_divisible_by.rerolls
+    - modifier.play_hand.face_equals_position.rerolls
+    - modifier.play_hand.two_pair.rerolls
+    - modifier.play_hand.alternating_parity.rerolls
+    - modifier.play_hand.edge_sum_greater_than_interior.rerolls
+    - modifier.play_hand.contains_face.rerolls
+    - modifier.play_hand.sum_greater_than.rerolls
+    - modifier.play_hand.rerolls_spent_at_least.rerolls
+    - modifier.play_hand.unique_count_less_than_rerolls_spent.rerolls
+    - modifier.play_hand.interior_sum_divisible_by.rerolls
+    - modifier.play_hand.contains_upper_face.rerolls
+    - modifier.play_hand.ordered.rerolls
+    - modifier.play_hand.odd_sum_greater_than_even_sum.rerolls
+    - modifier.play_hand.middle_unique.rerolls
+    - modifier.play_hand.middle_equals_odd_count.rerolls
+    - modifier.play_hand.edge_pair_sums_equal.rerolls
+    - modifier.play_hand.rank_equals_previous.rerolls
+    - modifier.play_hand.range_greater_than.rerolls
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    - modifier.play_hand.positive_rerolls_divisible_by.rerolls
+    - modifier.play_hand.exactly_one_face.rerolls
+    - modifier.player_reroll.selected_sum_equals_either.rerolls
+    - modifier.play_hand.every_die_rerolled.rerolls
+    - modifier.play_hand.middle_faces_count_at_least.rerolls
+    - modifier.initial_roll.previous_stage_exhausted_hands.rerolls
+    fallbackModifierId: modifier.play_hand.never.rerolls
