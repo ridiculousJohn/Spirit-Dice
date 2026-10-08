@@ -1,0 +1,7 @@
+{
+  "name": "Dice.Editor",
+  "rootNamespace": "Dice.Editor",
+  "references": ["Dice.App", "Dice.Engine", "Dice.Presentation", "Dice.UnityContent", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+  "includePlatforms": ["Editor"],
+  "autoReferenced": true
+}

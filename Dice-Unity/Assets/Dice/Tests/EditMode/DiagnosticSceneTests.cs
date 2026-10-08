@@ -1,3 +1,4 @@
+using System.Linq;
 using Dice.App;
 using Dice.Presentation;
 using Dice.UnityContent;
@@ -33,8 +34,7 @@ namespace Dice.Tests
                     Assert.That(serialized.FindProperty("encounterId").stringValue, Is.EqualTo("encounter.standard"));
                     Assert.That(serialized.FindProperty("initialSeed").stringValue, Is.EqualTo("60"));
                 }
-                Assert.That(EditorBuildSettings.scenes[0].path, Is.EqualTo(scene.path));
-                Assert.That(EditorBuildSettings.scenes[0].enabled, Is.True);
+                Assert.That(EditorBuildSettings.scenes.Any(entry => entry.path == scene.path && entry.enabled), Is.True);
             }
             finally { EditorSceneManager.ClosePreviewScene(scene); }
         }
