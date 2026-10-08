@@ -1,0 +1,71 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 569e81a1d7464aefa877680e6bf79405, type: 3}
+  m_Name: SpiritHouseTheme
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiTheme
+  headingFont: {fileID: 12800000, guid: c24bb156572c4beea6e125bf09b3c441, type: 3}
+  bodyFont: {fileID: 12800000, guid: 70bd877d7b5702b40adbb423dc9186ac, type: 3}
+  greenFrame:
+    texture: {fileID: 2800000, guid: e632791a9fca4fe1b969d726e21ef628, type: 3}
+    sprite: {fileID: 0}
+    referenceTextureSize: {x: 2172, y: 724}
+    spriteRect:
+      serializedVersion: 2
+      x: 4
+      y: 164
+      width: 2164
+      height: 408
+    border: {x: 360, y: 170, z: 360, w: 170}
+    pixelsPerUnitMultiplier: 6
+  amberFrame:
+    texture: {fileID: 2800000, guid: 9cd7185bd68849e380f85bc08696d2b4, type: 3}
+    sprite: {fileID: 0}
+    referenceTextureSize: {x: 2172, y: 724}
+    spriteRect:
+      serializedVersion: 2
+      x: 4
+      y: 164
+      width: 2164
+      height: 408
+    border: {x: 360, y: 170, z: 360, w: 170}
+    pixelsPerUnitMultiplier: 6
+  darkFrame:
+    texture: {fileID: 2800000, guid: 75322e8f23224941affa830ef1626042, type: 3}
+    sprite: {fileID: 0}
+    referenceTextureSize: {x: 2172, y: 724}
+    spriteRect:
+      serializedVersion: 2
+      x: 4
+      y: 164
+      width: 2164
+      height: 408
+    border: {x: 110, y: 140, z: 110, w: 140}
+    pixelsPerUnitMultiplier: 6
+  woodFrame:
+    texture: {fileID: 2800000, guid: 0f44a53c24944d4a9e17aba0a46ee3eb, type: 3}
+    sprite: {fileID: 0}
+    referenceTextureSize: {x: 2172, y: 724}
+    spriteRect:
+      serializedVersion: 2
+      x: 4
+      y: 164
+      width: 2164
+      height: 408
+    border: {x: 140, y: 100, z: 140, w: 100}
+    pixelsPerUnitMultiplier: 5
+  cream: {r: 0.965, g: 0.906, b: 0.745, a: 1}
+  muted: {r: 0.749, g: 0.733, b: 0.635, a: 1}
+  amber: {r: 0.824, g: 0.651, b: 0.345, a: 1}
+  panelColor: {r: 0.098, g: 0.141, b: 0.114, a: 1}
+  highlightedTint: {r: 1.1, g: 1.08, b: 1.01, a: 1}
+  pressedTint: {r: 0.76, g: 0.71, b: 0.58, a: 1}
+  disabledTint: {r: 0.46, g: 0.47, b: 0.43, a: 0.88}

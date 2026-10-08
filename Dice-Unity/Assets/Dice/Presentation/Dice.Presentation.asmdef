@@ -2,7 +2,9 @@
   "name": "Dice.Presentation",
   "rootNamespace": "Dice.Presentation",
   "references": [
-    "Dice.Engine"
+    "Dice.Engine",
+    "Unity.ugui",
+    "Unity.InputSystem"
   ],
   "autoReferenced": false,
   "overrideReferences": true,
