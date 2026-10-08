@@ -1,0 +1,26 @@
+{
+  "Tool": "Built-in image_gen",
+  "Prompts": "Docs/outputs/spirit-house-prototype-assets/seating-prompts.json",
+  "Assets": [
+    {
+      "Path": "Dice-Unity/Assets/Dice/Art/SpiritHousePrototype/FoxBodySeated.png",
+      "Source": "exec-e12aede7-9783-4df4-906a-708962f85323.png"
+    },
+    {
+      "Path": "Dice-Unity/Assets/Dice/Art/SpiritHousePrototype/LanternRoomSeated.png",
+      "Source": "exec-f8053bd2-f400-465b-b27d-281ef5374d0e.png"
+    }
+  ],
+  "Composition": {
+    "HeadSize": 200,
+    "ReferenceCanvas": "540 x 960",
+    "BodyWidth": 460,
+    "TableContactY": 624,
+    "RoomSourceTableEdgeUvY": 0.5323
+  },
+  "Validation": {
+    "Capture": "Docs/work/spirit-validation/seating-01/captures/initial.png",
+    "ProjectFilesChangedByTest": [],
+    "PlayMode": "Dice.Tests.SpiritScenePlayTests passed"
+  }
+}

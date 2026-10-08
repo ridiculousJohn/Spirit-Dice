@@ -1,0 +1,9 @@
+{
+  "mode": "built-in image_gen",
+  "bone": "Use case: stylized-concept. Asset type: seamless albedo texture for animated 3D bone dice in a painterly dark folklore game. Generate a square 1024x1024 flat texture filling entire image, no border. Warm aged ivory and pale honey bone, subtle dense tiny pores, scattered fine brown age freckles, occasional thin hairline scratches and small pale healed cracks. Most surface clean creamy ivory with sparse brown speckling, not dirty stone. Hand-polished antique bone with rich organic fine detail. Uniform diffuse lighting with NO shadows or highlights baked in. Absolutely NO dice pips, dots arranged in patterns, numbers, letters, shapes, objects, bevels or perspective. This is the material surface only, not a picture of a die. Tileable on all edges.",
+  "wood": "Use case: stylized-concept. Asset type: seamless albedo texture for a worn antique walnut dice tray in a painterly dark folklore game. Square flat texture completely fills the image, no border. Single continuous wood surface, long fine horizontal grain left to right, deeply aged dark warm brown walnut, many small irregular amber worn flecks where old dark varnish chipped away, narrow scraped streaks, tiny dents, weathered ridges. Rich painterly realistic game texture matching a battered tavern dice tray lit by lanterns, but diffuse even lighting, NO baked shadows or specular. Mostly dark brown with irregular honey ochre wear. NO boards with seams, NO perspective, NO objects, NO labels, NO nails, NO decoration. Tileable all edges. Material surface only.",
+  "assets": [
+    "Dice-Unity/Assets/Dice/Presentation/Resources/SpiritBoneSurface.png",
+    "Dice-Unity/Assets/Dice/Presentation/Resources/SpiritWoodSurface.png"
+  ]
+}

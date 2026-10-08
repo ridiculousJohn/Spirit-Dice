@@ -1,0 +1,12 @@
+[
+  {
+    "key": "seatedBody",
+    "transparent": true,
+    "prompt": "Use case: stylized-concept. Input image 1 is the approved gameplay concept and the EXACT character pose/style reference, NOT a UI to reproduce. Create a production transparent animation layer of this fox's SEATED UPPER TORSO, ARMS, AND TAIL only. Preserve the concept's relaxed host pose: leaning forward across the table, SCREEN LEFT elbow planted on the table and that forepaw raised toward his cheek; SCREEN RIGHT forearm rests horizontally on the table. Rust red fur, dark paws, cream chest ruff, green waistcoat, ONE broad curling tail at screen right. Do NOT use paws in lap, knees, legs, or upright full-body seated pose. Omit head and ears completely for a separate head animation layer; finish at a clean cream-fur neck ruff, harmless sprite separation. Omit chair, table, cup, all background, all text/UI, all ghost effects. Genuine transparent alpha. Landscape 3:2 framing, whole elbows and paws and tail visible, level contact baseline near bottom 90% of canvas. Neck attachment at about 40% canvas width and 22% canvas height. Match the painted amber-right/rain-blue-left lighting and reference proportions closely."
+  },
+  {
+    "key": "seatedRoom",
+    "transparent": false,
+    "prompt": "Use case: precise-object-edit. Input image 1 is the APPROVED COMPOSITION reference; image 2 is the current environment artwork for color/style. Produce a clean portrait 9:16 ROOM AND TABLE background plate for the Unity game. Match the first reference's composition: the far tabletop edge runs horizontally at 35% DOWN FROM THE TOP (not halfway down), so the bottom 65% is tabletop for later UI/dice overlays. The empty host chair sits directly behind that edge in the upper third: chair back spans x25%-70%, with its top at y25% and its bottom hidden by table at y35%. Rain-blue window on left; amber oil lamp and shelving at right, dark green wall center. Close seated first-person camera. Remove ALL foxes, animals, spirits, text, numbers, logos, UI panels, dice, buttons. Entire center tabletop quiet worn dark-green felt/wood, no objects obstructing gameplay. Keep atmospheric painted style, warm amber and cool blue contrast, full bleed no frame. Exact spatial requirement: table occupies from y35% to bottom, chair physically behind it, not a tall empty gap between host area and table."
+  }
+]

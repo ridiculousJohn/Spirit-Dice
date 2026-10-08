@@ -1,0 +1,20 @@
+{
+  "Motion": {
+    "Video": "Docs/outputs/spirit-house-motion-v1/fox-idle-and-reaction.mp4",
+    "ScoredReactionStartsAtSeconds": 12,
+    "Frames": 342,
+    "FramesPerSecond": 24,
+    "DurationSeconds": 14.25
+  },
+  "PlayMode": {
+    "Failed": 0,
+    "Passed": 3,
+    "Results": "Docs/work/spirit-validation/fox-motion-01/playmode.xml"
+  },
+  "SourceConfigurationChangesDuringValidation": 0,
+  "EditMode": {
+    "Failed": 0,
+    "Passed": 875,
+    "Results": "Docs/work/spirit-validation/fox-motion-02/editmode.xml"
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "File": "FoxBody.png",
+    "Sha256": "7D2D99361213616D7F0A191C0290C6FE46531C47CA7700712ADD603AA3A39D4C",
+    "Source": "OpenAI image generation, using approved fox character concept as reference",
+    "IntendedUse": "Unity presentation prototype; independent of mechanical catalog"
+  },
+  {
+    "File": "FoxHeadRest.png",
+    "Sha256": "7EFABA1EE253F423FBCA1CBE81C4EF88D996129796B555C4089C7C72D89E528C",
+    "Source": "OpenAI image generation, using approved fox character concept as reference",
+    "IntendedUse": "Unity presentation prototype; independent of mechanical catalog"
+  },
+  {
+    "File": "FoxHeadTurn.png",
+    "Sha256": "E34B840378ECEB9471E8F614459AB790C21F7721646078F6E3156364DAE0997D",
+    "Source": "OpenAI image generation, using approved fox character concept as reference",
+    "IntendedUse": "Unity presentation prototype; independent of mechanical catalog"
+  },
+  {
+    "File": "LanternRoom.png",
+    "Sha256": "DADB21604561ECE4BC96AC26541E728DF5302641B33FD3DAF5D4E8262A0F3C3E",
+    "Source": "OpenAI image generation, using approved fox character concept as reference",
+    "IntendedUse": "Unity presentation prototype; independent of mechanical catalog"
+  }
+]
