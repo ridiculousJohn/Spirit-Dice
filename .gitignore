@@ -14,7 +14,7 @@
 /Dice-Unity/UIElementsSchema/
 .utmp/
 
-# Generated IDE files stay local; reference tools and reports in Docs stay tracked.
+# Generated IDE files stay local.
 .vs/
 .idea/
 .consulo/
@@ -61,9 +61,24 @@
 /Dice-Unity/[Aa]ssets/**/[Ii]nit[Tt]est[Ss]cene*.unity*
 /Dice-Unity/[Aa]ssets/[Ss]ceneDependencyCache*
 
-# Operating-system and Python bytecode caches.
+# Local validation runs, temporary saves, and package-removal backups.
+# Reference analysis and authored outputs remain tracked.
+/Docs/work/*-validation/
+/Docs/work/*-file-tests/
+/Docs/work/removed-*/
+/Docs/work/*.log
+/Docs/work/*-editmode-*.xml
+/Docs/work/*-unity-before-*.json
+
+# Audio audition downloads and generated verification reports.
+/Docs/work/spirit-audio/inspectorj-rain/*.wav
+/Docs/work/spirit-audio/rain-audition-*.json
+/Docs/work/spirit-audio/verification.json
+
 # Downloaded dependencies used by the reference extraction tools.
 /Docs/work/dice-of-kalma/python-packages/
+
+# Operating-system and Python bytecode caches.
 .DS_Store
 Thumbs.db
 Desktop.ini
