@@ -17,6 +17,7 @@ namespace Dice.Tests
         public IEnumerator SceneRunsDiceRewardsInspectionAndSaveResume()
         {
             yield return SceneManager.LoadSceneAsync("DiagnosticEncounter");
+            yield return ContentReady.Diagnostic();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<DiagnosticEncounterController>();
             Assert.That(controller, Is.Not.Null);

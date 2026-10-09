@@ -1,11 +1,22 @@
 using System.Collections.Generic;
+using System.Linq;
 using Dice.Engine;
+using Dice.UnityContent;
+using UnityEditor;
 
 namespace Dice.Tests
 {
     internal static class TestContent
     {
         internal const string EncounterId = "encounter.test";
+
+        internal static ModifierAsset[] ModifierAssets() => AssetDatabase.FindAssets("t:ModifierAsset",
+                new[] { "Assets/Dice/Content/Mechanical/Modifiers" })
+            .Select(guid => AssetDatabase.LoadAssetAtPath<ModifierAsset>(AssetDatabase.GUIDToAssetPath(guid)))
+            .OrderBy(asset => asset.Id, System.StringComparer.Ordinal).ToArray();
+
+        internal static MechanicalCatalog BuildStandardCatalog() => AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>(
+            "Assets/Dice/Content/Mechanical/Standard.asset").Build(ModifierAssets());
 
         internal static HandDefinition[] Hands()
         {

@@ -3,6 +3,9 @@
   "rootNamespace": "Dice.Presentation",
   "references": [
     "Dice.Engine",
+    "Dice.UnityContent",
+    "Unity.Addressables",
+    "Unity.ResourceManager",
     "Unity.ugui",
     "Unity.InputSystem"
   ],

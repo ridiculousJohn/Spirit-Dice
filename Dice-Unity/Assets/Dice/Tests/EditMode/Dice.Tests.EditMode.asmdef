@@ -6,6 +6,9 @@
     "Dice.App",
     "Dice.UnityContent",
     "Dice.Presentation",
+    "Unity.Addressables.Editor",
+    "Unity.Addressables",
+    "Unity.ResourceManager",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

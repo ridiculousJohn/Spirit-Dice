@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -22,6 +23,7 @@ namespace Dice.App
         private EncounterApplication application;
         private IReadOnlyList<string> readOnlyEventLog;
         private string cacheStatus = string.Empty;
+        private ModifierAssetLoader modifierAssets;
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -38,16 +40,44 @@ namespace Dice.App
             BindView();
             SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "diagnostic-encounter.json");
             SeedText = initialSeed;
-            if (catalogAsset == null) return;
+        }
+
+        private IEnumerator Start()
+        {
+            if (Catalog != null) yield break;
+            if (catalogAsset == null) yield break;
+            StatusMessage = "Loading modifiers...";
+            modifierAssets = new ModifierAssetLoader();
+            yield return modifierAssets.Load();
+            if (Catalog != null) { ReleaseContent(); yield break; }
+            if (modifierAssets.Error != null)
+            {
+                StatusMessage = "Cannot load modifiers: " + modifierAssets.Error.Message;
+                ReleaseContent();
+                yield break;
+            }
             try
             {
-                Catalog = catalogAsset.Build();
+                Catalog = catalogAsset.Build(modifierAssets.Assets);
                 StartNew(initialSeed);
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception)
             {
                 StatusMessage = "Cannot initialize the encounter: " + exception.Message;
+                ReleaseContent();
             }
+        }
+
+        private void OnDestroy()
+        {
+            application?.AttachPresenter(null);
+            ReleaseContent();
+        }
+
+        private void ReleaseContent()
+        {
+            modifierAssets?.Dispose();
+            modifierAssets = null;
         }
 
         public void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string savePath)

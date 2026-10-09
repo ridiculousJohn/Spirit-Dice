@@ -29,6 +29,7 @@ namespace Dice.Tests
         public IEnumerator RealCharmActivationsLinkTheirIconToOnlyTheAffectedCounters()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
@@ -130,6 +131,7 @@ namespace Dice.Tests
         public IEnumerator ActionCueCrossfadesItsLabelAndRestoresItOnRetriggerAndDisable()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
@@ -182,6 +184,7 @@ namespace Dice.Tests
         public IEnumerator RewardAndOwnedCharmCardsShareAuthoredArtworkAndDescriptions()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();

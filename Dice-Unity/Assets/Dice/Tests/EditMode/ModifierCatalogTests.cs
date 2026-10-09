@@ -42,9 +42,8 @@ namespace Dice.Tests
             var definition = catalog.GetModifier(id);
             Assert.That(definition.FamilyId, Is.EqualTo(familyId));
             Assert.That(definition.Phase, Is.EqualTo((ModifierPhase)phase));
-            using var serialized = new SerializedObject(CatalogAsset());
-            var source = SerializedModifier(serialized, id);
-            Assert.That(source.FindPropertyRelative("conditionKind").intValue, Is.EqualTo(trigger));
+            using var source = new SerializedObject(TestContent.ModifierAssets().Single(asset => asset.Id == id));
+            Assert.That(source.FindProperty("conditionKind").intValue, Is.EqualTo(trigger));
             Assert.That(definition.Condition, Is.InstanceOf<IModifierCondition>());
             Assert.That(definition.Condition.GetType().Name, Is.EqualTo(kind + "Condition"));
             Assert.That(definition.ActivationLimit, Is.EqualTo(ModifierActivationLimit.OncePerHand));
@@ -89,17 +88,16 @@ namespace Dice.Tests
                 { ModifierConditionKind.MiddleFacesCountAtLeast, new[] { 4, 0 } }
             };
             var catalog = Catalog();
-            using var serialized = new SerializedObject(CatalogAsset());
-            var sources = serialized.FindProperty("modifiers");
-            Assert.That(sources.arraySize, Is.EqualTo(catalog.Modifiers.Count));
-            for (int i = 0; i < sources.arraySize; ++i)
+            var sources = TestContent.ModifierAssets();
+            Assert.That(sources.Length, Is.EqualTo(catalog.Modifiers.Count));
+            for (int i = 0; i < sources.Length; ++i)
             {
-                var source = sources.GetArrayElementAtIndex(i);
-                string id = source.FindPropertyRelative("id").stringValue;
-                var kind = (ModifierConditionKind)source.FindPropertyRelative("conditionKind").intValue;
+                using var source = new SerializedObject(sources[i]);
+                string id = source.FindProperty("id").stringValue;
+                var kind = (ModifierConditionKind)source.FindProperty("conditionKind").intValue;
                 var parameters = expected.TryGetValue(kind, out var values) ? values : new[] { 0, 0 };
-                Assert.That(source.FindPropertyRelative("parameter").intValue, Is.EqualTo(parameters[0]), id);
-                Assert.That(source.FindPropertyRelative("secondaryParameter").intValue, Is.EqualTo(parameters[1]), id);
+                Assert.That(source.FindProperty("parameter").intValue, Is.EqualTo(parameters[0]), id);
+                Assert.That(source.FindProperty("secondaryParameter").intValue, Is.EqualTo(parameters[1]), id);
                 var condition = catalog.GetModifier(id).Condition;
                 var type = condition.GetType();
                 if (parameters[0] != 0)
@@ -113,17 +111,16 @@ namespace Dice.Tests
         public void ImportedConditionsMatchIndependentBoundaryWitnesses()
         {
             var catalog = Catalog();
-            using var serialized = new SerializedObject(CatalogAsset());
-            var sources = serialized.FindProperty("modifiers");
+            var sources = TestContent.ModifierAssets();
             var cases = ModifierConditionTests.Cases().ToArray();
-            for (int i = 0; i < sources.arraySize; ++i)
+            for (int i = 0; i < sources.Length; ++i)
             {
-                var source = sources.GetArrayElementAtIndex(i);
-                string id = source.FindPropertyRelative("id").stringValue;
+                using var source = new SerializedObject(sources[i]);
+                string id = source.FindProperty("id").stringValue;
                 var descriptor = new ModifierCondition(
-                    (ModifierConditionKind)source.FindPropertyRelative("conditionKind").intValue,
-                    source.FindPropertyRelative("parameter").intValue,
-                    source.FindPropertyRelative("secondaryParameter").intValue);
+                    (ModifierConditionKind)source.FindProperty("conditionKind").intValue,
+                    source.FindProperty("parameter").intValue,
+                    source.FindProperty("secondaryParameter").intValue);
                 var witnesses = cases.Where(value =>
                 {
                     var witness = (ModifierCondition)value.Arguments[0];
@@ -140,19 +137,7 @@ namespace Dice.Tests
             }
         }
 
-        private static SerializedProperty SerializedModifier(SerializedObject asset, string id)
-        {
-            var sources = asset.FindProperty("modifiers");
-            for (int i = 0; i < sources.arraySize; ++i)
-            {
-                var source = sources.GetArrayElementAtIndex(i);
-                if (source.FindPropertyRelative("id").stringValue == id) return source;
-            }
-            Assert.Fail("Missing serialized modifier: " + id);
-            return null;
-        }
-
-        private static MechanicalCatalog Catalog() => CatalogAsset().Build();
+        private static MechanicalCatalog Catalog() => CatalogAsset().Build(TestContent.ModifierAssets());
 
         private static MechanicalCatalogAsset CatalogAsset()
         {

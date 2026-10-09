@@ -603,7 +603,16 @@ namespace Dice.Presentation
             ModifierHistory.SetInteractable(!Busy);
             if (Busy) return;
             var snapshot = controls.Snapshot;
-            if (snapshot == null) return;
+            if (snapshot == null)
+            {
+                inputGroup.interactable = false;
+                ModifierHistory.SetInteractable(false);
+                playingPanel.gameObject.SetActive(false);
+                rewardsPanel.gameObject.SetActive(false);
+                endingPanel.gameObject.SetActive(false);
+                statusLabel.text = controls.StatusMessage;
+                return;
+            }
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();

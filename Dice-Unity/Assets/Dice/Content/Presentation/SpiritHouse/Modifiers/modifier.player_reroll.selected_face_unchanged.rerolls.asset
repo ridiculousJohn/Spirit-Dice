@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9614d3db08e47179e43d5b63841ca85, type: 3}
+  m_Name: modifier.player_reroll.selected_face_unchanged.rerolls
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
+  modifier: {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+  displayName: Second Chance
+  icon: {fileID: 0}
+  conditionTemplate: At least one rerolled die keeps its face.
+  conditionTypeName: SelectedFaceUnchangedCondition
+  artwork: 2

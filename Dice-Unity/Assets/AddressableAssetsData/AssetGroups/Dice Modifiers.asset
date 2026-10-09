@@ -1,0 +1,1804 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Dice Modifiers
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Dice Modifiers
+  m_GUID: fe8ae7113a6551043b9b596cbc5eb7a0
+  m_SerializeEntries:
+  - m_GUID: 00fe034e3e0b1e440822eb30511dfc9b
+    m_Address: modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 01ccf671728ae2448a883b91aefc9112
+    m_Address: modifier.play_hand.interior_contains_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 027fbeb951cfda248ae8b45721028643
+    m_Address: modifier.play_hand.sum_greater_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 02b767ac96b5b1148a1b357555a5fc75
+    m_Address: modifier.play_hand.same_parity.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03a71a354f65b8b4cba7e2559b17cae6
+    m_Address: modifier.play_hand.edge_sum_equals_hands_or_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03addd76d447d5c4d8ea8bd8ab8a5555
+    m_Address: modifier.play_hand.two_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 045e5ee7068675e44a4259f4eeb06072
+    m_Address: modifier.play_hand.minimum_equals_rerolls_spent.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04c6419f8983fe649abe0595e2a85dad
+    m_Address: modifier.initial_roll.initial_rank_above_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 04dc3b1a65e9fa84c958b65a678d5aaa
+    m_Address: modifier.play_hand.adjacent_different.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 054e2e3d1a532dc43901c60a7cad575a
+    m_Address: modifier.initial_roll.first_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05c2bde6b07155143baed8c45791bb63
+    m_Address: modifier.initial_roll.last_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 064acae17de9cf443b7491acb579ac80
+    m_Address: modifier.player_reroll.adjacent_difference_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0703508354705dd4b8fc8ba48c2ca01e
+    m_Address: modifier.play_hand.extreme_equals_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0716548e5fed3594680ebc8d73ae5c43
+    m_Address: modifier.play_hand.edge_sum_equals_either.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07819b9c4bdf782409a83a49cbd8ea14
+    m_Address: modifier.play_hand.rank_below_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0825100e1c0ccd24ba75accb617fc0ed
+    m_Address: modifier.player_reroll.rank_equals_before_reroll.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 089cf1156a4946a4592644af1eccc4e5
+    m_Address: modifier.play_hand.rerolls_spent_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0a2622e9c9f7b6844a0d2eaae63f7468
+    m_Address: modifier.play_hand.interior_equals_neighbor_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0a641797fd9e44c4fb75e2e152d28d42
+    m_Address: modifier.play_hand.never.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c5abe5129dbb7441acf17a0a28d5bbc
+    m_Address: modifier.play_hand.edge_sum_greater_than_interior.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0dc07f246a1831843b1ab495db59da55
+    m_Address: modifier.play_hand.no_extreme_faces.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0e43985acf43db647904a9e4c71d6d75
+    m_Address: modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0eb4f0eda9ba4e545996e1ae1b9af5e7
+    m_Address: modifier.play_hand.every_die_rerolled.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0ed8d064ee6178b4a81bf721877ea4f8
+    m_Address: modifier.player_reroll.selected_sum_equals_either.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f2d2bb0911dd7b44b91612b30da4145
+    m_Address: modifier.play_hand.edge_sum_equals_either.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f4ce5ee620e8a04b8f42e9b24b9fdce
+    m_Address: modifier.play_hand.minimum_equals_rerolls_spent.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f82444303cd0834bb2a04709e3bd4b5
+    m_Address: modifier.player_reroll.selected_sum_equals_either.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1175ddbf9ad94f74181f14fce03a972f
+    m_Address: modifier.play_hand.contains_upper_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 122d491f0fb91ab4cb8e4ba4a7015e6a
+    m_Address: modifier.initial_roll.last_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 125afe35aca937544b02d61bbf26afa0
+    m_Address: modifier.play_hand.face_equals_position.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 12c5c4e6e39a89d478f4aa7c49047a5f
+    m_Address: modifier.play_hand.exactly_one_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 12f84913e92769748ba4573cba564eb4
+    m_Address: modifier.play_hand.extreme_equals_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 157269272abdb5f47b5fd313f5357ab6
+    m_Address: modifier.play_hand.sum_greater_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1631f097356aed6438f3618191cb61c2
+    m_Address: modifier.initial_roll.initial_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 176099bfb09d96b40b44d7221a4a4121
+    m_Address: modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a73984e262e5c54f9f65d53ac25eef1
+    m_Address: modifier.play_hand.every_die_rerolled.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1bd3c7c554d39e1449aeb214bedae99c
+    m_Address: modifier.play_hand.rank_above_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e0bbd40ded2b3342b38de35ca78a727
+    m_Address: modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f9bca2dbb13ca74bab5b178ca2189fe
+    m_Address: modifier.play_hand.sum_prime.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1fdaea1d4703498499e7f0bbfa3edc8c
+    m_Address: modifier.play_hand.middle_equals_odd_count.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 21031780f8914a4419ed6747b54fa63f
+    m_Address: modifier.play_hand.edges_match_interior.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2149383543862434b861e59b764de8d3
+    m_Address: modifier.initial_roll.last_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2245c543ae8676a46adc383862edb1a7
+    m_Address: modifier.player_reroll.selected_interior_equals_neighbor_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22506e7cae3192a4fb63f28764a2e12a
+    m_Address: modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22b564c7021115144974a32cff5fe691
+    m_Address: modifier.play_hand.same_parity.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 22dcf0cabd4d0f145a6e6b5c018ac05f
+    m_Address: modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2414450bcbcfe04409d69787a3821fe2
+    m_Address: modifier.play_hand.middle_equals_odd_count.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2479f8c1c97b52247ae72585ee7ca62c
+    m_Address: modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 249c80e6228b78f43b1fc6cdefcea3b5
+    m_Address: modifier.play_hand.adjacent_difference_at_most.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2511d18b47514cd468236eeb80a66b19
+    m_Address: modifier.play_hand.middle_unique.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2649263da3f073041b2750272a415116
+    m_Address: modifier.player_reroll.ordered.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2686b92d196223941ac9192e2e7d6c94
+    m_Address: modifier.play_hand.rerolls_spent_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26c8135239da0334bafb55ac495fd3a7
+    m_Address: modifier.initial_roll.initial_rank_above_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26cf6f230bff10a44835bc78ba963580
+    m_Address: modifier.play_hand.adjacent_matching_triple.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 281363b302f846040aa1f937c7db45ae
+    m_Address: modifier.play_hand.edge_sum_greater_than_interior.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2947d381c9b45d84ead90fdbc2c33f76
+    m_Address: modifier.initial_roll.initial_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 29778e1e3cfac8e46a51d00784a17619
+    m_Address: modifier.play_hand.largest_group_equals_hands_or_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ab41f7121e9e004bbc1ff24b3e8ed93
+    m_Address: modifier.player_reroll.high_die_or_straight.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2b300083b73b4d84b82f78cd48f9db21
+    m_Address: modifier.play_hand.hands_remaining_even.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2cb7d2a3294d4c34eaa616152153ee75
+    m_Address: modifier.play_hand.high_die.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d9a58304b40d8c4ca0e99ef55c23b0f
+    m_Address: modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e34ec1e90ed7054daa272d7165af045
+    m_Address: modifier.initial_roll.initial_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e97f5010ef9c9842bd97083a4c8bd88
+    m_Address: modifier.play_hand.ordered.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f0b650c6fd96c6498d4869fb17a69da
+    m_Address: modifier.play_hand.interior_pair_matches_edge.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 30238c9c6024741499d6177cce246bba
+    m_Address: modifier.play_hand.odd_sum_greater_than_even_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 303e2e4fd1d0d164ca2251b303f37c7f
+    m_Address: modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 31369d75ffec7b0458619f147a8e9d91
+    m_Address: modifier.play_hand.edge_pair_sums_equal.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 315cd53f1ff2721468f46920de6c0907
+    m_Address: modifier.player_reroll.rank_below_before_reroll.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3298a15fa3568754ea38274f1b28e456
+    m_Address: modifier.player_reroll.last_reroll_on_last_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3309fe6738f3db14d9e0d9b452eef648
+    m_Address: modifier.play_hand.exactly_one_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 347454457226c6c4782b64ef10b5b58c
+    m_Address: modifier.play_hand.sum_prime.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 359921b8ca81b0542829cc8a41da090f
+    m_Address: modifier.play_hand.adjacent_difference_at_most.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b063526b75fdde46a306a8068ba6add
+    m_Address: modifier.play_hand.ordered.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b12467cb8ea0e6498eaf7664e6d7e16
+    m_Address: modifier.play_hand.middle_equals_odd_count.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b1f714f1e75b514e91b807e16a2d500
+    m_Address: modifier.play_hand.sum_less_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3bd287ad475b3194cbe4000f7eb75e32
+    m_Address: modifier.player_reroll.selected_face_unchanged.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3d1d81679a2c88c4ba559a9d129b2837
+    m_Address: modifier.play_hand.interior_equals_neighbor_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3efb02beaaa789640851f90a59be194a
+    m_Address: modifier.play_hand.interior_sum_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f21655d6220ea24198f33b4f912e73f
+    m_Address: modifier.play_hand.unique_count_less_than_rerolls_spent.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3f60495e59b48374f852e5aac138e69d
+    m_Address: modifier.play_hand.range_less_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 40612ad948a5ee24ca14285dddbae7bb
+    m_Address: modifier.play_hand.edge_pair_differences_equal.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41444f8417690884eb5ef7f559001a34
+    m_Address: modifier.initial_roll.initial_rank_above_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 416b7022488702b47b0868f1cdea1fd2
+    m_Address: modifier.play_hand.range_greater_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4215033c96491f946a814edbad3025ed
+    m_Address: modifier.play_hand.sum_less_than_initial.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 434e63c4fe92ce344b6db70fb96c6ec6
+    m_Address: modifier.play_hand.sum_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 43e2a8d8b36845e4790aa6fed1354249
+    m_Address: modifier.play_hand.sum_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44e35b0bc5555624b80f01a28550f9da
+    m_Address: modifier.play_hand.contains_upper_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45431496df70c8848ab139db1fa6c558
+    m_Address: modifier.player_reroll.selected_face_unchanged.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4624ac18ab43f3d4b9d11b3c03c24170
+    m_Address: modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 462ffcd9baeca6147a1a3cfc35c95d62
+    m_Address: modifier.play_hand.extreme_equals_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 466ef736cf777a548b0c60766fb0a61c
+    m_Address: modifier.play_hand.edges_match_interior.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4717a9d69ccea8f4e9d6ae432f8a6f37
+    m_Address: modifier.initial_roll.initial_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4719ba75fb319b44693525960ec8efab
+    m_Address: modifier.play_hand.edge_sum_equals_hands_or_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4743975650b03dc4dbc8cb15073127a3
+    m_Address: modifier.player_reroll.ordered.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 485139a0215b74742ac42df76e4cdc56
+    m_Address: modifier.play_hand.adjacent_different.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 48641385b01342a4bb63d37730c66144
+    m_Address: modifier.player_reroll.adjacent_difference_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c7d69584874d9944af663fb949988b3
+    m_Address: modifier.play_hand.contains_rerolls_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ca1b30991b7dba458eecb77910def8b
+    m_Address: modifier.initial_roll.first_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d28d1e7806f77748a6d4d02e3a19f21
+    m_Address: modifier.play_hand.contains_rerolls_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50c6fb656696de049af29ed116d87077
+    m_Address: modifier.play_hand.rank_equals_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50ce7286fe32cde43afa60af9ba51ff8
+    m_Address: modifier.play_hand.contains_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51c83caf9c70b404f83c37841b118095
+    m_Address: modifier.play_hand.middle_unique.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 51e14458790aefd4c851f2bfe2a194ce
+    m_Address: modifier.play_hand.adjacent_matching_triple.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53d507885d6840b498fa44df18f3e217
+    m_Address: modifier.play_hand.adjacent_difference_at_most.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 547fc958e4d487748bb577b0d89239b3
+    m_Address: modifier.play_hand.rank_equals_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54dc2b0182d0574458935808e98ca7c5
+    m_Address: modifier.play_hand.out_of_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54e2f47ba9caa154ebf93ca94ff82e26
+    m_Address: modifier.play_hand.interior_pair_matches_edge.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 559af161a5f12484dbab16328c29ae4f
+    m_Address: modifier.player_reroll.rank_equals_before_reroll.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 559fb63ecd56d2641ad00b247e295987
+    m_Address: modifier.play_hand.rerolls_exceed_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 55d9f7f82bf1ba04883984024d6c6a00
+    m_Address: modifier.play_hand.unique_count_less_than_rerolls_spent.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58b708d5156a7a940a85e808b4c1f0aa
+    m_Address: modifier.player_reroll.adjacent_difference_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a5cb6a55e92ee34999bb56a8214af42
+    m_Address: modifier.play_hand.exactly_one_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a7a1236436149e47a16734a424c915b
+    m_Address: modifier.play_hand.second_fourth_product_at_least_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b3dc8a66c410314c989196605563e3a
+    m_Address: modifier.player_reroll.selected_matches_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5b9e7aad1de6e054182e9c4e6058a775
+    m_Address: modifier.play_hand.edge_pair_differences_equal.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5bd08cd74982ffb418c2d908c6087091
+    m_Address: modifier.play_hand.no_extreme_faces.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c1fbc1865531a84b87d6aaa0992771e
+    m_Address: modifier.player_reroll.high_die_or_straight.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c317dd4e822a94489399a7e64e9627e
+    m_Address: modifier.play_hand.hands_remaining_even.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5e7eaed983137a841867ecdaf3276917
+    m_Address: modifier.player_reroll.selected_matching_group_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5e9142aa6991938449c05de50c4ccbd5
+    m_Address: modifier.player_reroll.selected_face_unchanged.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ea36f3a26c32444888c09025c7fddc5
+    m_Address: modifier.player_reroll.last_reroll_on_last_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ee55b60d08e06c4a98676f778661b25
+    m_Address: modifier.play_hand.two_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6353ea1094ad0894abbc178f5e3b1971
+    m_Address: modifier.play_hand.same_parity.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 636968cf1002437419a9a1b74f4fd5ed
+    m_Address: modifier.player_reroll.last_reroll_on_last_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63a4d1a40c8e8b84e91e7ae1cdb63140
+    m_Address: modifier.player_reroll.selected_matching_group_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 652805a91d4bf0b4cb5e67542cc69070
+    m_Address: modifier.play_hand.range_less_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66c0d2fb3e08a304097cd8c6fb968a4a
+    m_Address: modifier.play_hand.hands_remaining_even.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 676a870c49a830743ae381a9fda5f904
+    m_Address: modifier.play_hand.edge_pair_sums_equal.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 680fd1906a58a0840b79aea91edf39d9
+    m_Address: modifier.play_hand.positive_rerolls_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 68143ef631b36a5408893bad8be3fcc5
+    m_Address: modifier.initial_roll.middle_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6923cb9b3fbed244196b03de24710fda
+    m_Address: modifier.play_hand.ordered.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6bf97f17f4d067b4db9d77ea0e0788f4
+    m_Address: modifier.play_hand.alternating_parity.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6d5cc140596b4a243a1908eafddc0668
+    m_Address: modifier.play_hand.second_fourth_product_at_least_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dc4abbe7c5b28e46a556d226bcff9d8
+    m_Address: modifier.play_hand.rank_above_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e7b7d92c4121f04a93671ab0375ed33
+    m_Address: modifier.player_reroll.rank_below_before_reroll.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e7e9b3aa8c32874bb5c483e8cf0f555
+    m_Address: modifier.play_hand.rank_below_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6f40009baf557dc48be450654e963a77
+    m_Address: modifier.play_hand.alternating_parity.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70082ff5ed0299d4b8187b9867352a8d
+    m_Address: modifier.play_hand.interior_equals_neighbor_difference.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 706c6e6064574924e822d04270b67ea9
+    m_Address: modifier.play_hand.interior_equals_neighbor_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 709956fdb5d06db4180168f86f51084d
+    m_Address: modifier.play_hand.face_equals_position.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7309326a631c87645856a88eda5c88f1
+    m_Address: modifier.play_hand.range_greater_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7392fe0dac2439f478198eea4f77ef48
+    m_Address: modifier.play_hand.no_extreme_faces.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7406a441a1b7c024aa694b7bdd3e438f
+    m_Address: modifier.initial_roll.middle_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 742f226f3d96fb24da6ceac6f13fb0c7
+    m_Address: modifier.play_hand.unique_count_less_than_rerolls_spent.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 755eab8395d15794686ee917bbd126ee
+    m_Address: modifier.play_hand.edge_sum_greater_than_interior.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 76673ea16ba82fc4a8ca1960ce107621
+    m_Address: modifier.play_hand.interior_sum_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78327f61a5434eb439b9a3abfd19d50b
+    m_Address: modifier.play_hand.rank_above_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e6ee42874db3c641b14a117ed51db8d
+    m_Address: modifier.play_hand.edge_sum_greater_than_interior.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f3d859f41b122049955ab52d67d519d
+    m_Address: modifier.player_reroll.selected_sum_equals_either.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f8963ef5aef39d4a9d0ec5411c85e71
+    m_Address: modifier.play_hand.never.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f8cef64f17e21541b26a6c62442c3e9
+    m_Address: modifier.player_reroll.selected_sum_equals_either.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 80e76a02d207190478b7fffac2dd62b9
+    m_Address: modifier.player_reroll.selected_matching_group_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 80f5176e8fd41db42a93f180dc9823e6
+    m_Address: modifier.play_hand.rerolls_spent_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81625979e9de4ee46a41372b1e538329
+    m_Address: modifier.play_hand.interior_equals_neighbor_difference.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8168785bfcd55f643a3b8ba0f0b08f83
+    m_Address: modifier.play_hand.sum_less_than_initial.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81752b42418e0cb4e8c3ec4c7eba187c
+    m_Address: modifier.play_hand.range_less_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 84f9cdc08b67ef34b8462879598c016d
+    m_Address: modifier.play_hand.odd_sum_greater_than_even_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86c3e1f28a7f04f4cb14fb4bfc327b42
+    m_Address: modifier.play_hand.out_of_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87963be813288e940b2d020d5efd2543
+    m_Address: modifier.player_reroll.selected_matching_group_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87c199eab3bc4f44896eb8a54a20c8f1
+    m_Address: modifier.play_hand.edge_pair_differences_equal.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c
+    m_Address: modifier.play_hand.contains_rerolls_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8aeb5c7be989aec4686e0fa9368948ce
+    m_Address: modifier.initial_roll.previous_stage_exhausted_hands.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8c889e113ea315f479a694f331e279d7
+    m_Address: modifier.play_hand.interior_equals_neighbor_difference.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ea2e29b269afa44a836e08f3e9c6b37
+    m_Address: modifier.play_hand.extreme_equals_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90a5dbde57595b04f8890a8ba154038e
+    m_Address: modifier.player_reroll.selected_matches_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9266fb439c901934aa273b9356d1fa5d
+    m_Address: modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 95279f4a19dc67c419724f2b1aba2df0
+    m_Address: modifier.initial_roll.first_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9542d39698b2b7847b7ac46f7c9056a2
+    m_Address: modifier.play_hand.second_fourth_product_at_least_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 954e840d9cb6d9c488b0e294b7848b42
+    m_Address: modifier.play_hand.edge_sum_equals_hands_or_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 964c9e9ff50a60a4cbbd903e080000d1
+    m_Address: modifier.play_hand.rerolls_exceed_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 969570c51392e2b4eb438885716052e5
+    m_Address: modifier.play_hand.ordered.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 96b5b1373486e5747b653cd78e555e7a
+    m_Address: modifier.play_hand.exactly_one_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 98387713ddba41b44a7ca4303f23c233
+    m_Address: modifier.play_hand.edge_pair_sums_equal.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 984c7c2fbf7175847b2cfba0699fbb98
+    m_Address: modifier.play_hand.minimum_equals_rerolls_spent.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 986ae5897dc1a6e45bd9354f2bba7dc3
+    m_Address: modifier.player_reroll.selected_face_unchanged.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99733d3ca9acf0547b23f0ede68dab59
+    m_Address: modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 997cb0ca9f77af449993d6c1556c1d5e
+    m_Address: modifier.player_reroll.ordered.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 99ad001922f8f90428863e72113295d5
+    m_Address: modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9bac75a166f988e4ab6357f9de012c9c
+    m_Address: modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c01c569b2335054bbf0c95f04023e44
+    m_Address: modifier.player_reroll.exactly_one_selected_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c38d67a0b8620041a2816daa7d37b09
+    m_Address: modifier.initial_roll.first_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9cc8cea4a07a7af4d9e0656c59eadcf0
+    m_Address: modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9fcea7173c002ce4b96d5e0f6d98d017
+    m_Address: modifier.play_hand.out_of_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1394d0a19e40f743ad86026e6add9e5
+    m_Address: modifier.player_reroll.rank_below_before_reroll.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1fa74bbb9efe9a42a77d091f98bbbc1
+    m_Address: modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a363c28437be755459bc0ef76c0aa46c
+    m_Address: modifier.play_hand.odd_sum_greater_than_even_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a3a6d67ac31250c4fa7300f3a9d6f62d
+    m_Address: modifier.play_hand.middle_unique.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a404d7ab42322c24483070d33d8f1acf
+    m_Address: modifier.play_hand.sum_less_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4193cd7b9ce5394e8eb22b33e3d4e87
+    m_Address: modifier.player_reroll.exactly_one_selected_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a41bae1010c70404f86c6e6c98cb7b9f
+    m_Address: modifier.play_hand.same_parity.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4809a433d068c54189945b5e2aeb77d
+    m_Address: modifier.play_hand.never.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5be23f86efcca44d97daaad22a647ce
+    m_Address: modifier.play_hand.edge_sum_equals_either.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a5f9a4fcffde5c94a9dbda0e25c08b4d
+    m_Address: modifier.player_reroll.adjacent_difference_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a670805d95355ab46917a58f95a2e867
+    m_Address: modifier.play_hand.interior_contains_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8304edcbcf1df4479ebde3434d376ac
+    m_Address: modifier.player_reroll.ordered.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a87dd8734c4211f47be3ba3aea8061e6
+    m_Address: modifier.play_hand.edges_match_interior.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a9e23629808b97c41947d851484952f1
+    m_Address: modifier.player_reroll.high_die_or_straight.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa125bd99ab0e78489c8e5fd729a66ce
+    m_Address: modifier.initial_roll.previous_stage_exhausted_hands.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aadb6fa8f52cac7488356d0cb094357a
+    m_Address: modifier.play_hand.middle_faces_count_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab37f0a83a18ce447aca5d2fd493e794
+    m_Address: modifier.initial_roll.middle_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abf209b1c0af81446bf55994fe0bfb0d
+    m_Address: modifier.play_hand.sum_greater_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad0c8e67db04b7e4d8c016f723895d70
+    m_Address: modifier.play_hand.no_dice_rerolled.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae0240c744e7c434ea4453a36af26a95
+    m_Address: modifier.play_hand.positive_rerolls_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b13e470c8f6e91e4b8b041c5d102daad
+    m_Address: modifier.play_hand.edge_sum_equals_hands_or_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b274572be0014e5488bc6e6b464c91ef
+    m_Address: modifier.play_hand.high_die.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b2f107f771a02a84c875f26df428ca7d
+    m_Address: modifier.play_hand.middle_unique.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b44a264f02a2c5f4589a03ca2b015255
+    m_Address: modifier.play_hand.rank_above_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b4e11f130266e6d44b1ba1180933194c
+    m_Address: modifier.play_hand.no_extreme_faces.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b69a7ad4368e1664f88c700253bdf447
+    m_Address: modifier.play_hand.rerolls_spent_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6c971c8f51e2e74ab21056533e38c3d
+    m_Address: modifier.play_hand.edge_sum_equals_either.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7465ef97624eba4c95a535e29cb77d3
+    m_Address: modifier.player_reroll.exactly_one_selected_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b7775947b3a05904cb7babae1711c995
+    m_Address: modifier.play_hand.face_equals_position.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b855721b30ec7db4988d479f165c3b97
+    m_Address: modifier.play_hand.edges_match_interior.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8c456bb3f0a4214d841588de12afc09
+    m_Address: modifier.play_hand.every_die_rerolled.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba743b83c81bc484f873626d7d336902
+    m_Address: modifier.play_hand.two_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba7c79c16939ff641aebac2bfa89ab01
+    m_Address: modifier.player_reroll.rank_equals_before_reroll.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bd2515facbab8a64d86f171912e98f87
+    m_Address: modifier.play_hand.rerolls_exceed_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdf2f1d7514ba2841a544755a49300de
+    m_Address: modifier.play_hand.rank_below_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bff633ba5dfab01428d6a809d6d53277
+    m_Address: modifier.play_hand.high_die.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bff7d34cc060c1849891bad1abd5391d
+    m_Address: modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c018a076b7d35c240a7aa847a6127afe
+    m_Address: modifier.play_hand.sum_prime.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c2059b6fb13385441af8145c71cd8660
+    m_Address: modifier.play_hand.sum_less_than_initial.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4bd8660ba12e9c409ac8e5e6684f705
+    m_Address: modifier.play_hand.adjacent_matching_triple.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4bfdfe5f1d2a1b429e1a4d3768c8425
+    m_Address: modifier.play_hand.interior_pair_matches_edge.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4e9b216d324167408c8a7dce65b2ae1
+    m_Address: modifier.initial_roll.previous_stage_exhausted_hands.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c59990f49049df44288442476a95156e
+    m_Address: modifier.play_hand.alternating_parity.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c66334d8c99fcc442ad407fb79f0ecd7
+    m_Address: modifier.play_hand.sum_greater_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c6f4fa3a7e5e27344bc1bc2afb7a1b6f
+    m_Address: modifier.play_hand.out_of_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c8282098f1896fe4ab825f441045c38b
+    m_Address: modifier.play_hand.edge_pair_sums_equal.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c83d9385beb479944ba1f9aa276aa490
+    m_Address: modifier.player_reroll.exactly_one_selected_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c84c761ab8bf6d645aef3b9c6cedf083
+    m_Address: modifier.player_reroll.rank_equals_before_reroll.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c85d9864c875cbc45b5e4763aac04bd7
+    m_Address: modifier.play_hand.rank_equals_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c90b718840e4d8d48a60968f3bb4966c
+    m_Address: modifier.play_hand.every_die_rerolled.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c9c616a498b9c264a9a9394603f4577f
+    m_Address: modifier.play_hand.interior_pair_matches_edge.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca838747ab49cd948b4a62f20c384cd3
+    m_Address: modifier.play_hand.interior_equals_neighbor_difference.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cd8100638b830e14a987a05987743c1a
+    m_Address: modifier.play_hand.middle_faces_count_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cea03e9bcfaa5a54ebd5a5adb6c18350
+    m_Address: modifier.play_hand.sum_prime.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ceb5e021014b40a4da2b6d4c870afb52
+    m_Address: modifier.play_hand.interior_sum_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfb5aff2cb49a024899c24aeeb751b9e
+    m_Address: modifier.play_hand.adjacent_difference_at_most.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0114421be6c7f84189c6d105bc537eb
+    m_Address: modifier.play_hand.minimum_equals_rerolls_spent.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d182d278633e4c040a9a3e7195261dd1
+    m_Address: modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d33cc2e6604c8dd4ca32799954e90b27
+    m_Address: modifier.play_hand.alternating_parity.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d41049a5f1bba584980bab80eab5de58
+    m_Address: modifier.play_hand.contains_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d5cf7bb1f77884b4abd08e30e2dc9730
+    m_Address: modifier.initial_roll.last_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d5df1b3d973e1fd40baf183670d2fa3c
+    m_Address: modifier.play_hand.adjacent_matching_triple.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d628157fa072a3349a1788c63ad19971
+    m_Address: modifier.play_hand.range_greater_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d6e892332cb7cd744b4082152d204399
+    m_Address: modifier.play_hand.contains_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8081912eb9efc143a0197b97bd2787d
+    m_Address: modifier.play_hand.interior_sum_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: db3d1d79bec7b5b4cb61a393742a03e4
+    m_Address: modifier.play_hand.never.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dbebd752cb30c6f4cb9a39a21b414f64
+    m_Address: modifier.play_hand.hands_remaining_even.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd5599d3a00d4384aab9d1d9b4506f7f
+    m_Address: modifier.play_hand.contains_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dedb1f74abc2c9449b78a1869e3ecb76
+    m_Address: modifier.play_hand.edge_pair_differences_equal.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df51b279b948c4942967d3306f13fa06
+    m_Address: modifier.play_hand.no_dice_rerolled.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e070ad922c9e7404295aabb099cfc45f
+    m_Address: modifier.play_hand.contains_upper_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0a293f08ad1497478d78cb0d7a31fa9
+    m_Address: modifier.play_hand.unique_count_less_than_rerolls_spent.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e0ad25eb0e5500c4f8cafa8034d97418
+    m_Address: modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1fa233030cff324fa1d0925c30b65f4
+    m_Address: modifier.player_reroll.selected_matches_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2279929f2b6dc74a979a856beef4c27
+    m_Address: modifier.initial_roll.initial_rank_above_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2555e5891db9f94a80b106d385fcb68
+    m_Address: modifier.play_hand.sum_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e296eb9ddea908746bc137ebc2257394
+    m_Address: modifier.play_hand.interior_equals_neighbor_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e3fd5471554c1854fb29f30e0efbf753
+    m_Address: modifier.play_hand.sum_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e424ace3eb8435843a3f51a676ad7352
+    m_Address: modifier.play_hand.face_equals_position.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e4d914f848589604a83c4274621b0a52
+    m_Address: modifier.play_hand.no_dice_rerolled.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e573c1bad9ab9f34d95caacebbe531bb
+    m_Address: modifier.player_reroll.selected_matches_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6b2a0162d8ba0541982cb9eebcc077e
+    m_Address: modifier.initial_roll.previous_stage_exhausted_hands.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6e643b7c19774e4a9fdc81b145aaad1
+    m_Address: modifier.play_hand.rank_below_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e813234c894fb0b40ae9746c01612788
+    m_Address: modifier.play_hand.middle_faces_count_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e82516bd4f6d5314ebb4cea2b02d478e
+    m_Address: modifier.play_hand.rank_equals_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e892c55180ed6e141b609742e5e63991
+    m_Address: modifier.play_hand.middle_equals_odd_count.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eaa8689205c440640954dffb4b8fa33e
+    m_Address: modifier.play_hand.sum_less_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ebb9e51463a67524f9137d4ce5114364
+    m_Address: modifier.play_hand.two_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec3f466aff72e284b9e82384eb9dab77
+    m_Address: modifier.play_hand.middle_faces_count_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eceffb52af06e5049a95f5663720f13a
+    m_Address: modifier.play_hand.positive_rerolls_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed2f95ddbfe5c434bbe6bf0528b9456b
+    m_Address: modifier.play_hand.range_greater_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f04333ac60e438a4a87e9626cea69a48
+    m_Address: modifier.play_hand.adjacent_different.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f1750df61c3e3994389a8855b4ed8b3d
+    m_Address: modifier.play_hand.interior_contains_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f253f02bc4ab2b54e980b9d6d344a26b
+    m_Address: modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f38ada6ef415ff64c82a9d07cb422be2
+    m_Address: modifier.play_hand.contains_rerolls_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f391d996b8ed4504e81716dd9308555e
+    m_Address: modifier.play_hand.positive_rerolls_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f4a4ee760d82be1449f07c324ed35ead
+    m_Address: modifier.play_hand.contains_upper_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f4a742b413f7ec34bb12c738a55f0d53
+    m_Address: modifier.player_reroll.rank_below_before_reroll.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f5d61ddcd2a4c8643af45c70b06d508a
+    m_Address: modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f79da9b472e0f7a4fb30c4d2cba93dc7
+    m_Address: modifier.play_hand.range_less_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7ac80fd4ecb0a840881c2e67b601c39
+    m_Address: modifier.play_hand.adjacent_different.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f848430cdf55c5f4d993794d3d896b7a
+    m_Address: modifier.player_reroll.high_die_or_straight.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f89ecf196e0eee343b55b1383f81b62e
+    m_Address: modifier.play_hand.sum_less_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8d4bd830318bb543a92de66a8833058
+    m_Address: modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: faf037042b04e6e4e89ccc2ddb3ae53d
+    m_Address: modifier.play_hand.sum_less_than_initial.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc90129cab41b31449796daf92c98854
+    m_Address: modifier.initial_roll.middle_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd505a63423578f40a75adee370e4f5d
+    m_Address: modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fda6679a3f3a9ed4189f16b4523ab08c
+    m_Address: modifier.play_hand.no_dice_rerolled.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fe67f70bd865564428b81bab7a5037e4
+    m_Address: modifier.play_hand.high_die.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff02d39bdd4cf7349a4764e30aef12dc
+    m_Address: modifier.initial_roll.previous_stage_at_most_half_hands_played.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff2341a7ed159c04481aee12ee1086bd
+    m_Address: modifier.play_hand.second_fourth_product_at_least_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffaf613f40d05bc439903b593a5cac05
+    m_Address: modifier.play_hand.interior_contains_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffc5a861df5ef194aa97a443af18664e
+    m_Address: modifier.player_reroll.last_reroll_on_last_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: a0df579548c46064397d12907ca65fa8, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: c3f036103c3d7da40a613473e0844da3, type: 2}
+    - {fileID: 11400000, guid: 00ac72360edcb5144b5dfe66a7caa6d3, type: 2}
+    m_SchemaDisplayOrder:
+    - Dice Modifiers_BundledAssetGroupSchema
+    - Dice Modifiers_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

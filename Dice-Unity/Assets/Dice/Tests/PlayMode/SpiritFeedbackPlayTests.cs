@@ -20,6 +20,7 @@ namespace Dice.Tests
         public IEnumerator ScoringPresentsContributionsInOrderAndRetainsRerollBonuses()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
@@ -76,6 +77,7 @@ namespace Dice.Tests
         public IEnumerator InitialBaseAndMultiplierBanksSurviveSelectionLoadAndRebindWithoutPreview()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
@@ -123,6 +125,7 @@ namespace Dice.Tests
         public IEnumerator ModifierHistoryRetainsRepeatedActivationsAndScrollsWithoutLosingEntries()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
@@ -248,6 +251,7 @@ namespace Dice.Tests
         public IEnumerator SoundThemeLoadsAndMuteStopsOnlyEncounterAudio()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var sound = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterAudio>();
             Assert.That(sound, Is.Not.Null);
@@ -327,6 +331,7 @@ namespace Dice.Tests
         public IEnumerator RecordedRollsAnimateSelectedDiceAndRetainTheResults()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var sound = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterAudio>();
             var tray = UnityEngine.Object.FindAnyObjectByType<SpiritDiceTray>();

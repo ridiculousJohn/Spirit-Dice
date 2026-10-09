@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9614d3db08e47179e43d5b63841ca85, type: 3}
+  m_Name: modifier.play_hand.middle_faces_count_at_least.rerolls
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
+  modifier: {fileID: 11400000, guid: ec3f466aff72e284b9e82384eb9dab77, type: 2}
+  displayName: Gathered Ferns
+  icon: {fileID: 0}
+  conditionTemplate: 
+  conditionTypeName: 
+  artwork: 0

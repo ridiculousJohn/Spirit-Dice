@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
 
@@ -10,13 +11,17 @@ namespace Dice.UnityContent
         [SerializeField] private string catalogVersion;
         [SerializeField] private HandData[] hands = Array.Empty<HandData>();
         [SerializeField] private EncounterData[] encounters = Array.Empty<EncounterData>();
-        [SerializeField] private ModifierData[] modifiers = Array.Empty<ModifierData>();
         [SerializeField] private RewardPoolData[] rewardPools = Array.Empty<RewardPoolData>();
 
-        public MechanicalCatalog Build()
+        public MechanicalCatalog Build(IEnumerable<ModifierAsset> modifiers)
         {
-            if (hands == null || encounters == null || modifiers == null || rewardPools == null)
+            if (modifiers == null) throw new ArgumentNullException(nameof(modifiers));
+            if (hands == null || encounters == null || rewardPools == null)
                 throw new InvalidOperationException("Catalog arrays are missing.");
+            var modifierAssets = new List<ModifierAsset>(modifiers);
+            if (modifierAssets.Exists(source => source == null))
+                throw new ArgumentException("A modifier asset is missing.", nameof(modifiers));
+            modifierAssets.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
             var handDefinitions = new HandDefinition[hands.Length];
             for (int i = 0; i < hands.Length; ++i)
             {
@@ -38,20 +43,10 @@ namespace Dice.UnityContent
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
                     source.startingModifiers, BuildRewardPolicy(source.rewardPolicy));
             }
-            var modifierDefinitions = new ModifierDefinition[modifiers.Length];
-            for (int i = 0; i < modifiers.Length; ++i)
+            var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
+            for (int i = 0; i < modifierAssets.Count; ++i)
             {
-                var source = modifiers[i] ?? throw new InvalidOperationException("A modifier entry is missing.");
-                if (source.effects == null) throw new InvalidOperationException("Modifier effects are missing.");
-                var effects = new ModifierEffect[source.effects.Length];
-                for (int j = 0; j < effects.Length; ++j)
-                {
-                    var effect = source.effects[j] ?? throw new InvalidOperationException("A modifier effect is missing.");
-                    effects[j] = new ModifierEffect(effect.kind, effect.amount);
-                }
-                modifierDefinitions[i] = new ModifierDefinition(source.id, source.familyId, source.phase,
-                    ModifierConditions.Create(source.conditionKind, source.parameter, source.secondaryParameter),
-                    effects, source.activationLimit, source.rewardEligible);
+                modifierDefinitions[i] = modifierAssets[i].Build();
             }
             var rewardPoolDefinitions = new ModifierRewardPoolDefinition[rewardPools.Length];
             for (int i = 0; i < rewardPools.Length; ++i)
@@ -138,27 +133,6 @@ namespace Dice.UnityContent
         {
             public int maxIncomingStageNumber;
             public int excludedRecentChoices;
-        }
-
-        [Serializable]
-        private sealed class ModifierData
-        {
-            public string id;
-            public string familyId;
-            public ModifierPhase phase;
-            public ModifierConditionKind conditionKind;
-            public int parameter;
-            public int secondaryParameter;
-            public ModifierEffectData[] effects = Array.Empty<ModifierEffectData>();
-            public ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand;
-            public bool rewardEligible = true;
-        }
-
-        [Serializable]
-        private sealed class ModifierEffectData
-        {
-            public ModifierEffectKind kind;
-            public long amount;
         }
 
         [Serializable]

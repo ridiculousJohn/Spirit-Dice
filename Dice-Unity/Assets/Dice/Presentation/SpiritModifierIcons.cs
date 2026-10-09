@@ -10,6 +10,9 @@ namespace Dice.Presentation
     {
         private static readonly Dictionary<string, Sprite> icons = new Dictionary<string, Sprite>(StringComparer.Ordinal);
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRuntime() { icons.Clear(); }
+
         public static void RegisterIcon(string definitionOrFamilyId, Sprite sprite)
         {
             if (string.IsNullOrEmpty(definitionOrFamilyId)) throw new ArgumentException("An icon identity is required.", nameof(definitionOrFamilyId));
@@ -20,7 +23,13 @@ namespace Dice.Presentation
         public static Sprite GetSprite(ModifierDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            return FindSprite(definition.Id) ?? FindSprite(definition.FamilyId) ?? SpiritModifierArtwork.GetSprite(definition.Id);
+            Sprite sprite = FindSprite(definition.Id);
+            if (sprite != null) return sprite;
+            sprite = FindSprite(definition.FamilyId);
+            if (sprite != null) return sprite;
+            sprite = SpiritModifierPresentation.GetIcon(definition.Id);
+            if (sprite != null) return sprite;
+            return SpiritModifierArtwork.GetSprite(definition.Id);
         }
 
         public static uint GetSigilSeed(ModifierDefinition definition)
@@ -45,9 +54,7 @@ namespace Dice.Presentation
         private static Sprite FindSprite(string id)
         {
             if (icons.TryGetValue(id, out Sprite sprite) && sprite != null) return sprite;
-            sprite = Resources.Load<Sprite>("SpiritModifierIcons/" + id);
-            if (sprite != null) icons[id] = sprite;
-            return sprite;
+            return null;
         }
     }
 }

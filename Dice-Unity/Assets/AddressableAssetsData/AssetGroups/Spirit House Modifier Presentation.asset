@@ -1,0 +1,1804 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Spirit House Modifier Presentation
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Spirit House Modifier Presentation
+  m_GUID: 6583e98f0921e5543802fcfc4f6e5e26
+  m_SerializeEntries:
+  - m_GUID: 031ae50c3ff380241bcc1f7ae49c4787
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_exhausted_hands.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 050641999c72ebd4da353888ed0a7f38
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 060594ef6cc1d854bb07977cf7ef997c
+    m_Address: theme.spirit-house.modifier.play_hand.interior_pair_matches_edge.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0647603240d02aa42a50004da32a19b8
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_below_before_reroll.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 06b7280ddcabf6d49b525dffdb506e98
+    m_Address: theme.spirit-house.modifier.play_hand.exactly_one_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07a6dbb2b0e550b4b9e098b5f7cdd4c5
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_hands_or_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 09930740256f5bf4b8146ca8935a678e
+    m_Address: theme.spirit-house.modifier.play_hand.no_extreme_faces.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 099f765b1af9be448b2092a7a54aa3a5
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0b30021bc55c7c34a8197eb83b309d18
+    m_Address: theme.spirit-house.modifier.play_hand.same_parity.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0c26748c8304d3746932a0682203e4c7
+    m_Address: theme.spirit-house.modifier.play_hand.rank_equals_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1033bc3a612a58a49b7b1b8c105a62e5
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_matching_triple.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 10d874773a58a4b419a0a10bb79377f4
+    m_Address: theme.spirit-house.modifier.play_hand.sum_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 11c7e0809d1ce014491bc8814ffc4715
+    m_Address: theme.spirit-house.modifier.play_hand.minimum_equals_rerolls_spent.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1269fa2966c44b04d97c12faa045ace7
+    m_Address: theme.spirit-house.modifier.play_hand.range_greater_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 147cfce7db02a7141a5f6bc54f5ae81a
+    m_Address: theme.spirit-house.modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14cc1dc3c1844754db126409ba2aee41
+    m_Address: theme.spirit-house.modifier.initial_roll.middle_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1536aac3155983e4dbe97b2fe36679d9
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_rank_above_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15c8949ee0dde57458c76cc8ce78d7cc
+    m_Address: theme.spirit-house.modifier.play_hand.middle_equals_odd_count.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15efd7688bd897b46a0140fbca577eec
+    m_Address: theme.spirit-house.modifier.play_hand.sum_prime.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 15fa6e620dee5e64ab6a39c6a279df01
+    m_Address: theme.spirit-house.modifier.play_hand.hands_remaining_even.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16f4e4b28acba5849b03cf1bfa7c0875
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_differences_equal.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17049e992f92ba74d8cebf5b34d257b2
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_different.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1740505bac469ec4bb166b36a33b4fad
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_equals_before_reroll.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 17ad20c9494f8a44080d82b519a4d153
+    m_Address: theme.spirit-house.modifier.play_hand.middle_faces_count_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1833d24af447187478da169873d5c600
+    m_Address: theme.spirit-house.modifier.play_hand.sum_prime.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1a10dffe86577dd4da7aaddd78189c2f
+    m_Address: theme.spirit-house.modifier.play_hand.odd_sum_greater_than_even_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1b430a1b73084a54497bb2aa4be69cd2
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_spent_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1d63000b59a9a29429df69f236e60e56
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_below_before_reroll.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1db1c77aa81f9724cb7192fffb43fd9b
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e898fd59b4c11545bf5cd028661f993
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1eb01d6bc0bc5c9468fc47ae65d6a410
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_face_unchanged.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f5427ba1c2f3e244bc14dbc2b69eef9
+    m_Address: theme.spirit-house.modifier.player_reroll.adjacent_difference_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f9025bdce4f14644a7bb3a6c690dbd7
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_difference.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 20e743b1afab1fe4db33614cdc3d0ba3
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_exhausted_hands.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 218ddb787f6240d4095f0a3beb239e0a
+    m_Address: theme.spirit-house.modifier.play_hand.range_less_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 223c9b7379eeaa540a333913383fa0bb
+    m_Address: theme.spirit-house.modifier.play_hand.no_dice_rerolled.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 224acc7d217c7c947bbb7c1787920278
+    m_Address: theme.spirit-house.modifier.play_hand.interior_sum_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2256094b59a49b5409c1dd2069316d5d
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_sum_equals_either.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 232902d807d9a5d4ab58baa16e6cbc71
+    m_Address: theme.spirit-house.modifier.play_hand.sum_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2340ff5009967ce468257a43f1f44a12
+    m_Address: theme.spirit-house.modifier.play_hand.sum_greater_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2371668b186c396428fd1d8cabb8519a
+    m_Address: theme.spirit-house.modifier.play_hand.middle_equals_odd_count.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 23c63e3e9c571d54693a89325e23c168
+    m_Address: theme.spirit-house.modifier.play_hand.never.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2428a2d767004b642a049a620f98833a
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_different.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2434b735f7863f24fa88bab2dc92af47
+    m_Address: theme.spirit-house.modifier.play_hand.minimum_equals_rerolls_spent.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 24ec2821b177e0a499d4f88eb51addde
+    m_Address: theme.spirit-house.modifier.play_hand.edges_match_interior.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 259b57a64778dec4fae908c4e0b2f926
+    m_Address: theme.spirit-house.modifier.play_hand.unique_count_less_than_rerolls_spent.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25bcb2be25834b54785a594cc49ff9c4
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2608d78e52e9ac449b50fe1c9a9f8fe0
+    m_Address: theme.spirit-house.modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26a3c8626b20d9a4b8a022c56a4b5fd9
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matching_group_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 27d94ab05f68ea742bbe15b3ce1cf7dd
+    m_Address: theme.spirit-house.modifier.play_hand.contains_upper_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 287b66aac9497944eb6456d96a3d2fbb
+    m_Address: theme.spirit-house.modifier.play_hand.second_fourth_product_at_least_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 28b37127bdcec1743a793b866f38a3f4
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a48c2dc6f793aa4b9c93deb32ed232d
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_hands_or_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a55ba9d2b95aaa42a9bd36213f3cca8
+    m_Address: theme.spirit-house.modifier.play_hand.middle_unique.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2a5809af36888d04388ca7148d6af6ed
+    m_Address: theme.spirit-house.modifier.play_hand.rank_below_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2ac8face87f35594da85eceacf12bc39
+    m_Address: theme.spirit-house.modifier.play_hand.sum_prime.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bb739faa66fea34b89fae3858dbd544
+    m_Address: theme.spirit-house.modifier.player_reroll.ordered.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2c0667acf2c510e42bc18940e0ef1f00
+    m_Address: theme.spirit-house.modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2c18d6aa28d6a214bbd6ac68fbb7865b
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_hands_or_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2d8cc54be8ccfa74db0841dfc2ed44c0
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2df2f74ef4800b244a8173b33d1060fc
+    m_Address: theme.spirit-house.modifier.play_hand.middle_equals_odd_count.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2e6692fd6cf0fb145b02e6ba69eff797
+    m_Address: theme.spirit-house.modifier.play_hand.never.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3043174eaed580b43b88979809ffcd93
+    m_Address: theme.spirit-house.modifier.play_hand.range_less_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3141b17c716886c4785852733a09bcb7
+    m_Address: theme.spirit-house.modifier.player_reroll.last_reroll_on_last_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 33538dc66abdcc94ebb87a0c85feecc6
+    m_Address: theme.spirit-house.modifier.play_hand.every_die_rerolled.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 340c0e5acae63fa4497d0ab2182e94fc
+    m_Address: theme.spirit-house.modifier.play_hand.no_extreme_faces.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3480a2fe711b8b248a366bb20bc57c22
+    m_Address: theme.spirit-house.modifier.play_hand.alternating_parity.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 392dcaacf35509d49a462e0650977f19
+    m_Address: theme.spirit-house.modifier.play_hand.contains_upper_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 39b868141af620647b4f57d89757ee67
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_different.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3aad27469514e9049ad81d0932519a26
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_difference_at_most.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3aae2e397834a204082aa9053dda4916
+    m_Address: theme.spirit-house.modifier.play_hand.high_die.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3ab0359c0db49b14692d13845e2ac5cb
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matching_group_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3ba1c42aeb4f96446a91cdea3c315145
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_difference.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3be5b1698eebed841acef73bed16f13c
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_difference_at_most.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c05ac8dba6d99845a4f08ad365e2d78
+    m_Address: theme.spirit-house.modifier.player_reroll.adjacent_difference_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c465e115434d5d4e9f2bfc842294c60
+    m_Address: theme.spirit-house.modifier.play_hand.high_die.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3e1e157059b17394cb51283a54a04911
+    m_Address: theme.spirit-house.modifier.play_hand.rank_above_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3eab10d3fb995b64bb65ffc39d4c0a0a
+    m_Address: theme.spirit-house.modifier.play_hand.interior_contains_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3fe1672d2e097144982ae708ce83246a
+    m_Address: theme.spirit-house.modifier.play_hand.contains_rerolls_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4006deaa833dd0f4aa2e348e9c74615c
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_greater_than_interior.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 402658913770ddf4198f21f4fbbd1a30
+    m_Address: theme.spirit-house.modifier.play_hand.ordered.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 41485c5c9a547dc47ac100c5e678a902
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_exceed_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4357c978f31e5664086a92a7626b7e76
+    m_Address: theme.spirit-house.modifier.play_hand.ordered.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 442c2a560cf2af64aa8b8f57d82b7495
+    m_Address: theme.spirit-house.modifier.initial_roll.first_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 44e3b21b81f60b448b0fb558e90160d4
+    m_Address: theme.spirit-house.modifier.play_hand.exactly_one_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4562b30c2f49bdd47b6808094ee2c6b1
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_below_before_reroll.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45794386b0dd40f49a4a84bdaf7c3985
+    m_Address: theme.spirit-house.modifier.initial_roll.middle_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 45c170f9f369e344ba6b3273955c66e8
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_spent_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 47eeccf7ec2ba774fa8f8d2be73c9c69
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 47ff80c7b923e334594a4c5cdcc7e321
+    m_Address: theme.spirit-house.modifier.play_hand.ordered.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 484b7e8b8b7f45e45b0e432c5d8bc279
+    m_Address: theme.spirit-house.modifier.initial_roll.last_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4895b3ad9dffe3b42be5201f8ccdb412
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 48b2bf0d75a0b514c803970a823ac9b1
+    m_Address: theme.spirit-house.modifier.play_hand.largest_group_equals_hands_or_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4be5dc355cf0c3d43a1f5cba962ab694
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_face_unchanged.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4c93327c335192b43a15f65928aa9efa
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_sum_equals_either.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d402d1bf9edf8c42b18feb12547bfac
+    m_Address: theme.spirit-house.modifier.play_hand.middle_unique.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d6fb94dbee74f44d959f2ee790542f1
+    m_Address: theme.spirit-house.modifier.player_reroll.adjacent_difference_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d74569cf830f464d9f52a9971a0f38b
+    m_Address: theme.spirit-house.modifier.play_hand.rank_below_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4ec9898718d1cbc4590e154d8675d762
+    m_Address: theme.spirit-house.modifier.initial_roll.first_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f90a9d744fef994b8e2a1cd2ce530f8
+    m_Address: theme.spirit-house.modifier.play_hand.odd_sum_greater_than_even_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50b1a3b7b8dc45e4d9381e22a80e9cc4
+    m_Address: theme.spirit-house.modifier.play_hand.rank_equals_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 516d9e3b77083024bb1df6cb5a03ffbb
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_exceed_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5180f9515bff09d4abd906b953e2b089
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_greater_than_interior.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 527af24fa85fffb48a3e3f4372b05c99
+    m_Address: theme.spirit-house.modifier.play_hand.two_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 52bd9beefa5a52143bfc114a518222ab
+    m_Address: theme.spirit-house.modifier.play_hand.no_dice_rerolled.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5324c3e53149b4547baf7364c377110b
+    m_Address: theme.spirit-house.modifier.play_hand.no_dice_rerolled.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53949ec4397e9de4a8c9134f57458f48
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than_initial.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 54f5327c52d9c394a99c117da16475f6
+    m_Address: theme.spirit-house.modifier.player_reroll.ordered.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 569495f913921e64e891b5a5c23687e5
+    m_Address: theme.spirit-house.modifier.play_hand.positive_rerolls_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5779f296b322f7f42a241195143f6716
+    m_Address: theme.spirit-house.modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 57bcc44dbe8305e4db65ee617813ddee
+    m_Address: theme.spirit-house.modifier.play_hand.range_greater_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5834ccf0544627a40bb442ba96b94aad
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_different.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5916b64b164ca734c8e5ed6772f9e1d1
+    m_Address: theme.spirit-house.modifier.play_hand.contains_upper_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5930818bd60292e46abab9a1d887bc5b
+    m_Address: theme.spirit-house.modifier.initial_roll.last_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59edc490ac265624d97e4506ad92d1b2
+    m_Address: theme.spirit-house.modifier.play_hand.alternating_parity.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59f06bddc5566f64a9039ffd7c4341bf
+    m_Address: theme.spirit-house.modifier.play_hand.interior_contains_pair.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ac97257fb7a4614da9ca5c9e3fd162f
+    m_Address: theme.spirit-house.modifier.player_reroll.high_die_or_straight.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c05a0b52127b0049b40ecca26a9ace0
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5c234d3a1588b2f4a833168fd43733fa
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_equals_before_reroll.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5d0fcb33e0e10f94a87e55da358bb54b
+    m_Address: theme.spirit-house.modifier.play_hand.two_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5eb439fad63b3774786f3e889c4cf808
+    m_Address: theme.spirit-house.modifier.play_hand.interior_pair_matches_edge.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5ed6463f165f67b4385ea48060a12476
+    m_Address: theme.spirit-house.modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5f37b73e0cd3a3842860da3f4ea185f7
+    m_Address: theme.spirit-house.modifier.play_hand.out_of_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60314014aca92ef4e8e187c76e2c58e7
+    m_Address: theme.spirit-house.modifier.play_hand.middle_unique.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 61cc531cbaebe8f4b9baad2ee914b928
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_exhausted_hands.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 63fcebdbe60623d46acb1a3d53bc1e70
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_matching_triple.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6521e138a28623444bcc66f3b53463a4
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matches_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 658cc8c964e66714c99fa71e49264276
+    m_Address: theme.spirit-house.modifier.play_hand.minimum_equals_rerolls_spent.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 65cfa4c40638cc844a6f9f9a577dd30a
+    m_Address: theme.spirit-house.modifier.player_reroll.high_die_or_straight.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 66e2cfe21b6c10141bbc2eb2c07654f0
+    m_Address: theme.spirit-house.modifier.player_reroll.high_die_or_straight.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6737b7e206dff5047b7ea5d5264a46df
+    m_Address: theme.spirit-house.modifier.play_hand.never.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6744801c1fd54d34cb1b1504ada9afdf
+    m_Address: theme.spirit-house.modifier.play_hand.contains_rerolls_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 678978f7985f961418824dbc9e811f98
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_differences_equal.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 68ca5491e1318ec49b55ab1c6b5cef62
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_exceed_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6aa0af6ca64b949479fd0bdf63df1541
+    m_Address: theme.spirit-house.modifier.play_hand.exactly_one_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6c6910958f125d8468c5fa9beba51717
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_below_before_reroll.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dd613042271f534fb40451b9ee927d2
+    m_Address: theme.spirit-house.modifier.play_hand.rank_above_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dfdda3d076e29d479448f18f549896c
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_difference.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6e21a06336b8a7d4e8ebfabb252bab3e
+    m_Address: theme.spirit-house.modifier.play_hand.unique_count_less_than_rerolls_spent.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 70bc6f908fc15fb49aaa1f00bb058c03
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 71fdbc5bcb62e514e850efe211ff6de5
+    m_Address: theme.spirit-house.modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 722ee76e8fc3b2544a303dbbeacd02e5
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 727e431d56908c847b0d00e069f7c3d4
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_either.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 733372221ebc53a488924525232666a4
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_matching_triple.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73e5e3c68202eec429bb3a09d32aac95
+    m_Address: theme.spirit-house.modifier.play_hand.middle_unique.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 748ad2fe896690a48933190edcb9e0e4
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_difference_at_most.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 749a6cba7a156c54ba07336018813434
+    m_Address: theme.spirit-house.modifier.play_hand.interior_sum_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 74bf597917215e243b976ea7ccb817ca
+    m_Address: theme.spirit-house.modifier.play_hand.interior_sum_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 74c88c042faac4744a8092d3a97aa127
+    m_Address: theme.spirit-house.modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 75958384b98b8d64b8ed77c6c0fd3062
+    m_Address: theme.spirit-house.modifier.play_hand.extreme_equals_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 781cddd6061126640a96b111c968e74d
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7875954f21855144cbb9d7717818b939
+    m_Address: theme.spirit-house.modifier.play_hand.interior_pair_matches_edge.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78c8f8c82b579aa4884b3ce5b0de549a
+    m_Address: theme.spirit-house.modifier.play_hand.sum_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7927351409d3f0240a234ae73567cb9d
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_at_most_half_hands_played.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b86cabdcaeb4f14a90d92b3d1bc171f
+    m_Address: theme.spirit-house.modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b8ae6e45a547fe4d988c8a95d5cff3b
+    m_Address: theme.spirit-house.modifier.play_hand.face_equals_position.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7edb03f21c046284ab5e5b8a09d5f5fc
+    m_Address: theme.spirit-house.modifier.play_hand.sum_greater_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7f0702864d114584d99c0edc77ba2320
+    m_Address: theme.spirit-house.modifier.play_hand.positive_rerolls_divisible_by.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7fb5071799caf004599bc61401e70e53
+    m_Address: theme.spirit-house.modifier.play_hand.interior_contains_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 808d6ec768493504c85bcf8782dee07c
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 811660d402ea9894590413a9801a14b5
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matches_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 81fba6b269aa4cd469a670b7d557638c
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 88c5cabbffce66d40858fa4bbd7831d6
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_greater_than_interior.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8913c62083812aa44ab1b6751df8f6ec
+    m_Address: theme.spirit-house.modifier.play_hand.rank_equals_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 89a4c054c842ad34f97846df0e675af2
+    m_Address: theme.spirit-house.modifier.player_reroll.ordered.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a04e961589f5e843b83a858582d7fea
+    m_Address: theme.spirit-house.modifier.play_hand.no_extreme_faces.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8a8c06429578deb49baf6db17bc22364
+    m_Address: theme.spirit-house.modifier.play_hand.positive_rerolls_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8abcca1128ae5344e95b1b4f7ca61947
+    m_Address: theme.spirit-house.modifier.player_reroll.ordered.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b5f6189301fcba48b9980c6d1f19c6f
+    m_Address: theme.spirit-house.modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8bf7793916dc52b4fbe12084edc83984
+    m_Address: theme.spirit-house.modifier.play_hand.every_die_rerolled.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e0ae4fd33bc15f4f9db5994647fc1aa
+    m_Address: theme.spirit-house.modifier.play_hand.rank_above_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8e1031099201e0c4f8d80ad7c0aa1054
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_rank_above_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8ec7b0e5b059514479ff25d60d535e42
+    m_Address: theme.spirit-house.modifier.play_hand.ordered.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8eea01e20bae205479245f4621b2a10b
+    m_Address: theme.spirit-house.modifier.player_reroll.last_reroll_on_last_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8f56c8bfa9ccddc46963038aae8bbca0
+    m_Address: theme.spirit-house.modifier.play_hand.hands_remaining_even.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 90ccf4e117b21a94bb26aa7ddd14b1c8
+    m_Address: theme.spirit-house.modifier.play_hand.range_less_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9455fb2690c835b4caa0d118e1cff880
+    m_Address: theme.spirit-house.modifier.play_hand.high_die.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9474057212b8a4b4dad832c46a8a1124
+    m_Address: theme.spirit-house.modifier.play_hand.face_equals_position.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94a0f148ca01cab45acafa05bf341ae3
+    m_Address: theme.spirit-house.modifier.play_hand.same_parity.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 94f4a732978a12b4f90cc6ece78cd325
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 964bdd2f6a551054ba2f4f928aeeeae1
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_equals_before_reroll.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9651c0b0ae438e649a77d9ca8ffebf15
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than_initial.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9727f6d270b283a4fa2b74038e4aad91
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than_initial.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 991ae48b84f6f9e40a9b6b3c1c265143
+    m_Address: theme.spirit-house.modifier.play_hand.middle_faces_count_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a10761290f3371459c9bee81316f1f6
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a9844a975e94dd47a4d1bb4b56c9745
+    m_Address: theme.spirit-house.modifier.play_hand.sum_prime.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b350b30aacdaae4a9078e8e10136b6b
+    m_Address: theme.spirit-house.modifier.play_hand.alternating_parity.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c000be5caf90044d8ff8b678fe38dec
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_greater_than_interior.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9db39061c19e079499c68cb1ec7531f0
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_face_unchanged.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e99688e4f9926a4a9755d57811317ef
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_sums_equal.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f54901be82eafa449deb42dedb46957
+    m_Address: theme.spirit-house.modifier.play_hand.hands_remaining_even.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a02bf6f5dc6c85944819a03b72b47c33
+    m_Address: theme.spirit-house.modifier.play_hand.middle_equals_odd_count.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a14fc77dbba0e5c489fc396a91d8f831
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_face_unchanged.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a33f3b9d51b8efe47ac33ebfaecff503
+    m_Address: theme.spirit-house.modifier.play_hand.exactly_one_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a38f434d75ff017449c6e6a63fc45460
+    m_Address: theme.spirit-house.modifier.play_hand.alternating_parity.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a419d539d9650ef438f4060ff4702b75
+    m_Address: theme.spirit-house.modifier.play_hand.rank_below_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a6d0d9744a4de2f4cafb7fbca4cc3e4b
+    m_Address: theme.spirit-house.modifier.initial_roll.first_hand.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a80daa5ffe5567e438853effef9413b1
+    m_Address: theme.spirit-house.modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8a5f69c527d0254a8511a420fab01f2
+    m_Address: theme.spirit-house.modifier.play_hand.second_fourth_product_at_least_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa5f7379ddc08ec48a817d731c2ce5a7
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_differences_equal.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aad8982fb34da6242b663b9cb7fec061
+    m_Address: theme.spirit-house.modifier.play_hand.same_parity.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab1ba61a96f209b49821f961085587e5
+    m_Address: theme.spirit-house.modifier.play_hand.never.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac043d5762789d24bbab056e2ccea9ab
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_sums_equal.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac0820b7dee85f94babdca2af90b7fa6
+    m_Address: theme.spirit-house.modifier.play_hand.no_extreme_faces.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac4f30ddd3277b742b635b9335fcb51f
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ac640d25da42fb346806ea90b39cdf9d
+    m_Address: theme.spirit-house.modifier.play_hand.contains_upper_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad3b5f682afe88344ac9524d400a5877
+    m_Address: theme.spirit-house.modifier.player_reroll.high_die_or_straight.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad459a695feb5774f9de898cce4c527b
+    m_Address: theme.spirit-house.modifier.play_hand.interior_contains_pair.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ad7755bf55e879a4f849b479aa47dc6f
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_interior_equals_neighbor_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ada5daf4863d47d41ad39d423d767934
+    m_Address: theme.spirit-house.modifier.play_hand.face_equals_position.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ae546183a17175c45bdb2193881638ca
+    m_Address: theme.spirit-house.modifier.play_hand.interior_pair_matches_edge.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b1557931068805d4fbb5ef29fb4d9aa2
+    m_Address: theme.spirit-house.modifier.play_hand.out_of_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b313ce82bc8a9b5449b5cedb97fd24de
+    m_Address: theme.spirit-house.modifier.play_hand.extreme_equals_hands_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3350aed95d3ecd47abd4e1db3be4ae4
+    m_Address: theme.spirit-house.modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3616a3546ce5004b85e473229bbe4f5
+    m_Address: theme.spirit-house.modifier.play_hand.edges_match_interior.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b3e51cd5b303d8947900a8b573effe03
+    m_Address: theme.spirit-house.modifier.play_hand.two_pair.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b5df96e91bc513e4bb48e76b96f81715
+    m_Address: theme.spirit-house.modifier.play_hand.contains_face.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b8bc8f79fd942064895fb28f84f6d7e5
+    m_Address: theme.spirit-house.modifier.play_hand.range_greater_than.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9a7f4e991d53284ba097db2922d5e1d
+    m_Address: theme.spirit-house.modifier.initial_roll.last_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ba2f1a626d53f9443a4ab0d9580236ee
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_sums_equal.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bbb7a7dc89613e24ea032277e58547d8
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_spent_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be856f2d1eae2504f8398dafb3776c7a
+    m_Address: theme.spirit-house.modifier.play_hand.rank_equals_previous.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: be9015d7e387b454eb892ce8905e27a7
+    m_Address: theme.spirit-house.modifier.play_hand.range_less_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bf1effafaabcfdd4694c2fde2698ca86
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c061733fae59b2941a5f8c5a6c432fa1
+    m_Address: theme.spirit-house.modifier.play_hand.minimum_equals_rerolls_spent.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c08cef108c04af44b9ccf4ef04eba32d
+    m_Address: theme.spirit-house.modifier.play_hand.middle_faces_count_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c0e6a08269842cb4d8b284ab80d2ac8f
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c137d5d0e98f2db4e932dfa034e3f28c
+    m_Address: theme.spirit-house.modifier.initial_roll.last_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4f2ad6bf71804149b9760e5ea63f549
+    m_Address: theme.spirit-house.modifier.play_hand.sum_greater_than.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c5f6c08a1e0ed4e44b783859138868cb
+    m_Address: theme.spirit-house.modifier.play_hand.rank_below_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c61881e6c35f5ff4ca4b8c7657a01130
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_either.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c61884df99ada0c4fa26e48307ed4aef
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c638ba0f0636fea44a4f35400b0b4dd3
+    m_Address: theme.spirit-house.modifier.initial_roll.middle_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c6fea02e137888141a8eab936c39c3bf
+    m_Address: theme.spirit-house.modifier.play_hand.contains_face.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c7b65aea56c904640b298d3cf70bb791
+    m_Address: theme.spirit-house.modifier.initial_roll.first_hand.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbbf2e8ba877495479f02d8ef7594fcd
+    m_Address: theme.spirit-house.modifier.play_hand.edges_match_interior.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc2b0466538ee50479ddb77a8a42f913
+    m_Address: theme.spirit-house.modifier.play_hand.extreme_equals_hands_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc962554b28bade48bc59120b8d9aff9
+    m_Address: theme.spirit-house.modifier.player_reroll.rank_equals_before_reroll.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ccc2640973dd8d54a8680a641b138afd
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matching_group_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cda4bbfedace7d54eb86a8353e52e6f0
+    m_Address: theme.spirit-house.modifier.play_hand.middle_faces_count_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cdcae4c5c589f67479f7932f8cb4eb59
+    m_Address: theme.spirit-house.modifier.play_hand.every_die_rerolled.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cdecb7b972db3a741aed175dd8866e85
+    m_Address: theme.spirit-house.modifier.play_hand.unique_count_less_than_rerolls_spent.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce46bc3bce0d93847a7c405b78fc5651
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_matching_triple.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce639cb21bee9b341ba00fc5009a991c
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matches_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cef957c75c787c244b42587480f76ca8
+    m_Address: theme.spirit-house.modifier.play_hand.range_greater_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cf5b4e3d550e32c4ba8a532af967bd9c
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d09b53b0376d4534ca432e70096c81af
+    m_Address: theme.spirit-house.modifier.play_hand.contains_rerolls_remaining.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d146ea99b095b334a9fe891e02e6757c
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_hands_or_rerolls.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d18c95ae5fd19dd4191ce2b37459489a
+    m_Address: theme.spirit-house.modifier.play_hand.second_fourth_product_at_least_sum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1bcfd8b5362a0349a324fb301adc759
+    m_Address: theme.spirit-house.modifier.play_hand.interior_equals_neighbor_difference.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d25520ff630021a4db3d7fe44b51a686
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_rank_above_previous.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3d327e2387d38d40852cec16de8102c
+    m_Address: theme.spirit-house.modifier.play_hand.sum_less_than_initial.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d3ec4c5336c82744f9b0b8a61dfb66e5
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_exhausted_hands.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d422d7651dff91c48a073c50dced1d47
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_rank_above_previous.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d42c7fce24b1c8946b5a369bf2afa11f
+    m_Address: theme.spirit-house.modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4a1839958afd284197a52beede231fb
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_sum_equals_either.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d51dd0b9cc21c6a489c3881f191787e5
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d68261076b11ba44dbe8e47395b6366f
+    m_Address: theme.spirit-house.modifier.player_reroll.last_reroll_on_last_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d8ff59ed2e6afa349b47530518d0551e
+    m_Address: theme.spirit-house.modifier.play_hand.sum_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9ebc587862abbe4fa03453ae2176c08
+    m_Address: theme.spirit-house.modifier.play_hand.contains_rerolls_remaining.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: db10754426dd75e49ae026e9f0ede90d
+    m_Address: theme.spirit-house.modifier.play_hand.contains_face.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dc98024cd499c344e8720dcf0ae472f6
+    m_Address: theme.spirit-house.modifier.play_hand.unique_count_less_than_rerolls_spent.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dd23f920c1423d64c8ab07ebca515237
+    m_Address: theme.spirit-house.modifier.initial_roll.initial_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ddf3c2ff5f375b34795405dd48980835
+    m_Address: theme.spirit-house.modifier.play_hand.positive_rerolls_divisible_by.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df591d4cd2e28324b99dad743d8ce3a6
+    m_Address: theme.spirit-house.modifier.player_reroll.adjacent_difference_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e222cf0733fa02848bdd8f18a34dfc77
+    m_Address: theme.spirit-house.modifier.play_hand.rank_above_previous.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2ab2789edd339b489589e7fa870f313
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_sums_equal.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e503bb375876e8444acf4345281dd1f0
+    m_Address: theme.spirit-house.modifier.play_hand.edge_pair_differences_equal.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6d4d5804830c0d4ea110530ef80039f
+    m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e6d6a1461d8c31e4d802b9e93dbb9455
+    m_Address: theme.spirit-house.modifier.play_hand.hands_remaining_even.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e92206374092c1d4fb7371b6b9fef1ee
+    m_Address: theme.spirit-house.modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e976863655a2b074090912c9fb4f432b
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_either.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb15fb55173ba9948be8b4f30e69ad31
+    m_Address: theme.spirit-house.modifier.play_hand.second_fourth_product_at_least_sum.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eb828899b6eb1b84fbb6b081415a2555
+    m_Address: theme.spirit-house.modifier.play_hand.edges_match_interior.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ec022ea7617f64249a95962f1afd6765
+    m_Address: theme.spirit-house.modifier.play_hand.odd_sum_greater_than_even_sum.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eca768dff7f237c49a4afafca170799c
+    m_Address: theme.spirit-house.modifier.play_hand.rerolls_spent_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed19e06b165064e4aa6298f380d6eb66
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matching_group_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee1f589879db0f04695ef8aa5de428a9
+    m_Address: theme.spirit-house.modifier.initial_roll.middle_hand.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee620a69b6ad0b14ba7f1b02aca71441
+    m_Address: theme.spirit-house.modifier.play_hand.extreme_equals_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0a0a3c8913cc364f9f28705a98187e8
+    m_Address: theme.spirit-house.modifier.player_reroll.last_reroll_on_last_hand.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f205cec6a4b7faa4395b8dfa4710b6e4
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f221123f3e645b64dbdff8ab8bd57f53
+    m_Address: theme.spirit-house.modifier.play_hand.no_dice_rerolled.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f22e622a4b705f447a39fa374cb0340a
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_matches_hands_remaining.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f366c674dc0c0bc43a4bde29245d7d8b
+    m_Address: theme.spirit-house.modifier.player_reroll.selected_sum_equals_either.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f582f7cb77280ef47bb7e58f5ab6a57b
+    m_Address: theme.spirit-house.modifier.play_hand.edge_sum_equals_either.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f6536a90de93e3b4d93ff452533f64b1
+    m_Address: theme.spirit-house.modifier.play_hand.same_parity.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f655d8be55518b24d8baf1cf517a7566
+    m_Address: theme.spirit-house.modifier.play_hand.every_die_rerolled.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f844317405a28ab41bcd924e40a0e7dd
+    m_Address: theme.spirit-house.modifier.play_hand.out_of_rerolls.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f8d180df1d980aa44b31b450c8ba4f95
+    m_Address: theme.spirit-house.modifier.play_hand.face_equals_position.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f90f182822e0f6c4cbde9c93a8db6aba
+    m_Address: theme.spirit-house.modifier.play_hand.high_die.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa29937354173dd439fb3e323df295f3
+    m_Address: theme.spirit-house.modifier.play_hand.interior_sum_divisible_by.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fabf015c4305e7a47826261d424c51da
+    m_Address: theme.spirit-house.modifier.play_hand.sum_greater_than.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fac4eff38baa8194e916a7a9a45952a0
+    m_Address: theme.spirit-house.modifier.play_hand.two_pair.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc54584e38d58ff4b9bdfc784734b5a4
+    m_Address: theme.spirit-house.modifier.play_hand.adjacent_difference_at_most.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fd9bde90e66230745afa07088c990ec1
+    m_Address: theme.spirit-house.modifier.play_hand.out_of_rerolls.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff330541e1ad64346a3971b8ab32a197
+    m_Address: theme.spirit-house.modifier.play_hand.contains_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: a0df579548c46064397d12907ca65fa8, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 0990801bf6d22c84593cf0b6748f8f2e, type: 2}
+    - {fileID: 11400000, guid: a7d044d0a408ddf4b813b85fd514c75d, type: 2}
+    m_SchemaDisplayOrder:
+    - Spirit House Modifier Presentation_BundledAssetGroupSchema
+    - Spirit House Modifier Presentation_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

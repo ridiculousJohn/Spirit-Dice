@@ -12,6 +12,24 @@ namespace Dice.Tests
 {
     public sealed class SpiritModifierPresentationTests
     {
+        private MechanicalCatalog catalog;
+        private ModifierPresentationAsset[] themeAssets;
+        private IDisposable theme;
+
+        [SetUp]
+        public void InstallAuthoredTheme()
+        {
+            catalog = TestContent.BuildStandardCatalog();
+            themeAssets = AssetDatabase.FindAssets("t:ModifierPresentationAsset",
+                    new[] { "Assets/Dice/Content/Presentation/SpiritHouse/Modifiers" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<ModifierPresentationAsset>(AssetDatabase.GUIDToAssetPath(guid)))
+                .OrderBy(asset => asset.Modifier.Id, StringComparer.Ordinal).ToArray();
+            theme = SpiritModifierPresentation.InstallTheme(themeAssets, catalog);
+        }
+
+        [TearDown]
+        public void ReleaseAuthoredTheme() { theme?.Dispose(); }
+
         private static readonly string[] AuthoredIds =
         {
             "modifier.initial_roll.initial_pair.base_score",
@@ -75,14 +93,16 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void UnselectedDefinitionsKeepFallbackDescriptionsWithoutAssignedArtwork()
+        public void UnselectedDefinitionsKeepActualDescriptionsWithoutAssignedArtwork()
         {
             var catalog = Catalog();
             foreach (var definition in catalog.Modifiers.Where(value => !AuthoredIds.Contains(value.Id)))
             {
                 Assert.That(SpiritModifierPresentation.GetName(definition), Is.Not.Null.And.Not.Empty, definition.Id);
-                Assert.That(SpiritModifierPresentation.GetConditionText(definition), Is.Not.Null.And.Not.Empty, definition.Id);
-                Assert.That(SpiritModifierPresentation.GetEffectText(definition), Is.Not.Null.And.Not.Empty, definition.Id);
+                Assert.That(SpiritModifierPresentation.GetConditionText(definition),
+                    Is.EqualTo(DiagnosticText.DescribeCondition(definition.Condition)), definition.Id);
+                Assert.That(SpiritModifierPresentation.GetEffectText(definition),
+                    Is.EqualTo(DiagnosticText.DescribeEffects(definition).Replace("+1 rerolls", "+1 reroll")), definition.Id);
                 Assert.That(SpiritModifierPresentation.GetTimingText(definition), Is.Not.Null.And.Not.Empty, definition.Id);
                 Assert.That(SpiritModifierIcons.GetSprite(definition), Is.Null, definition.Id);
             }
@@ -92,8 +112,50 @@ namespace Dice.Tests
                 var selected = catalog.GetModifier(id);
                 foreach (var sibling in catalog.Modifiers.Where(value => value.FamilyId == selected.FamilyId && value.Id != id))
                     Assert.That(SpiritModifierPresentation.GetName(sibling),
-                        Is.Not.EqualTo(SpiritModifierPresentation.GetName(selected)), sibling.Id);
+                        Is.EqualTo(SpiritModifierPresentation.GetName(selected)), sibling.Id);
             }
+        }
+
+        [Test]
+        public void EveryStandardFamilyHasOneDistinctThematicName()
+        {
+            var families = Catalog().Modifiers.GroupBy(definition => definition.FamilyId).ToArray();
+            Assert.That(families.Length, Is.EqualTo(74));
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var family in families)
+            {
+                var definition = family.First();
+                string name = SpiritModifierPresentation.GetName(definition);
+                Assert.That(names.Add(name), Is.True, family.Key + " shares another family's name.");
+                Assert.That(name.Split(' ').Length, Is.InRange(2, 3), family.Key);
+                string typeName = definition.Condition.GetType().Name;
+                string fallback = DiagnosticText.Humanize(typeName.Substring(0, typeName.Length - "Condition".Length));
+                Assert.That(name, Is.Not.EqualTo(fallback), family.Key + " still uses a condition class name.");
+                foreach (var variant in family)
+                    Assert.That(SpiritModifierPresentation.GetName(variant), Is.EqualTo(name), variant.Id);
+            }
+        }
+
+        [TestCase("modifier.initial_roll.first_hand", "Open Gate")]
+        [TestCase("modifier.player_reroll.rank_below_before_reroll", "Falling Leaf")]
+        [TestCase("modifier.play_hand.edge_pair_sums_equal", "Balanced Scales")]
+        [TestCase("modifier.play_hand.out_of_rerolls", "Empty Cup")]
+        [TestCase("modifier.play_hand.range_greater_than", "Wide Valley")]
+        public void StandardFamiliesUseTheirCuratedNames(string familyId, string expected)
+        {
+            foreach (var definition in Catalog().Modifiers.Where(value => value.FamilyId == familyId))
+                Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo(expected), definition.Id);
+        }
+
+        [Test]
+        public void UnknownFamilyKeepsItsActualConditionAndEffectFallbacks()
+        {
+            var definition = new ModifierDefinition("custom.contains_face.multiplier", "custom.contains_face",
+                ModifierPhase.PlayHand, new ContainsFaceCondition(4),
+                new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 7) });
+            Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo("Contains Face"));
+            Assert.That(SpiritModifierPresentation.GetConditionText(definition), Is.EqualTo("At least one die shows 4."));
+            Assert.That(SpiritModifierPresentation.GetEffectText(definition), Is.EqualTo("+7 multiplier"));
         }
 
         [TestCase("modifier.initial_roll.initial_pair.base_score", "+101 base score")]
@@ -121,6 +183,15 @@ namespace Dice.Tests
             var changed = new ModifierDefinition(original.Id, original.FamilyId, original.Phase, original.Condition,
                 new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, 3) });
             Assert.That(SpiritModifierPresentation.GetEffectText(changed), Is.EqualTo("+3 rerolls"));
+        }
+
+        [TestCase(1, "+1 reroll")]
+        [TestCase(2, "+2 rerolls")]
+        public void GenericEffectTextUsesCurrentRerollAmountAndGrammar(int amount, string expected)
+        {
+            var definition = new ModifierDefinition("custom.rerolls", "custom", ModifierPhase.PlayHand,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, amount) });
+            Assert.That(SpiritModifierPresentation.GetEffectText(definition), Is.EqualTo(expected));
         }
 
         [Test]
@@ -222,12 +293,100 @@ namespace Dice.Tests
             }
         }
 
-        private static MechanicalCatalog Catalog()
+        [Test]
+        public void ThemeAssetsReferenceEachStandardMechanicalAssetExactlyOnce()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
-            Assert.That(asset, Is.Not.Null);
-            return asset.Build();
+            Assert.That(themeAssets.Length, Is.EqualTo(catalog.Modifiers.Count));
+            CollectionAssert.AreEquivalent(TestContent.ModifierAssets(), themeAssets.Select(asset => asset.Modifier));
         }
+
+        [Test]
+        public void ThemeInstallationRejectsDuplicatesAndMissingCoverageWithoutReplacingActiveTheme()
+        {
+            var definition = catalog.GetModifier(AuthoredIds[0]);
+            string currentName = SpiritModifierPresentation.GetName(definition);
+            Assert.Throws<InvalidOperationException>(() =>
+                SpiritModifierPresentation.InstallTheme(themeAssets.Concat(new[] { themeAssets[0] }), catalog));
+            Assert.Throws<InvalidOperationException>(() =>
+                SpiritModifierPresentation.InstallTheme(themeAssets.Skip(1), catalog));
+            Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo(currentName));
+        }
+
+        [TestCase("modifier")]
+        [TestCase("displayName")]
+        public void ThemeInstallationRejectsMissingAuthoredFields(string field)
+        {
+            var replacement = UnityEngine.Object.Instantiate(themeAssets[0]);
+            try
+            {
+                var serialized = new SerializedObject(replacement);
+                SerializedProperty property = serialized.FindProperty(field);
+                if (field == "modifier") property.objectReferenceValue = null;
+                else property.stringValue = " ";
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                Assert.Throws<InvalidOperationException>(() => SpiritModifierPresentation.InstallTheme(
+                    new[] { replacement }.Concat(themeAssets.Skip(1)), catalog));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(replacement); }
+        }
+
+        [Test]
+        public void ThemeInstallationRejectsUnknownMechanicalIds()
+        {
+            var unknown = ScriptableObject.CreateInstance<ModifierAsset>();
+            var replacement = UnityEngine.Object.Instantiate(themeAssets[0]);
+            try
+            {
+                var mechanical = new SerializedObject(unknown);
+                mechanical.FindProperty("id").stringValue = "custom.unknown";
+                mechanical.ApplyModifiedPropertiesWithoutUndo();
+                var presentation = new SerializedObject(replacement);
+                presentation.FindProperty("modifier").objectReferenceValue = unknown;
+                presentation.ApplyModifiedPropertiesWithoutUndo();
+                Assert.Throws<InvalidOperationException>(() => SpiritModifierPresentation.InstallTheme(
+                    new[] { replacement }.Concat(themeAssets.Skip(1)), catalog));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(replacement);
+                UnityEngine.Object.DestroyImmediate(unknown);
+            }
+        }
+
+        [Test]
+        public void NewThemeSuppliesNamesAndSpritesAndSurvivesOlderOwnerDisposal()
+        {
+            var authored = themeAssets.Single(asset => asset.Modifier.Id == AuthoredIds[0]);
+            var replacement = UnityEngine.Object.Instantiate(authored);
+            var texture = new Texture2D(2, 2);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f));
+            IDisposable newerTheme = null;
+            try
+            {
+                var serialized = new SerializedObject(replacement);
+                serialized.FindProperty("displayName").stringValue = "Other Theme";
+                serialized.FindProperty("icon").objectReferenceValue = sprite;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                newerTheme = SpiritModifierPresentation.InstallTheme(
+                    themeAssets.Select(asset => asset == authored ? replacement : asset), catalog);
+                theme.Dispose();
+                var definition = catalog.GetModifier(AuthoredIds[0]);
+                Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo("Other Theme"));
+                Assert.That(SpiritModifierIcons.GetSprite(definition), Is.SameAs(sprite));
+                newerTheme.Dispose();
+                Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo("Initial Pair"));
+                Assert.That(SpiritModifierIcons.GetSprite(definition), Is.Null);
+            }
+            finally
+            {
+                newerTheme?.Dispose();
+                UnityEngine.Object.DestroyImmediate(replacement);
+                UnityEngine.Object.DestroyImmediate(sprite);
+                UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+
+        private MechanicalCatalog Catalog() => catalog;
 
         private static Color32[] ReadPixels(Texture2D texture)
         {

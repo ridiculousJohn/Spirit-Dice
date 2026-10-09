@@ -16,6 +16,7 @@ namespace Dice.Tests
         public IEnumerator IdleAndSpiritReactionRenderWithoutChangingEncounterState()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var fox = controller.GetComponentInChildren<SpiritFoxPortrait>();

@@ -6,9 +6,7 @@ namespace Dice.Presentation
     /** Authored line drawings rasterized as white ink for UI tint and dice-surface alpha. */
     internal static class SpiritModifierArtwork
     {
-        internal enum Kind { WelcomingPair, SecondChance, LastLantern, QuietGrove, OneSpark, LoneWatcher }
-
-        private static readonly Dictionary<Kind, Sprite> sprites = new Dictionary<Kind, Sprite>();
+        private static readonly Dictionary<ModifierArtworkKind, Sprite> sprites = new Dictionary<ModifierArtworkKind, Sprite>();
 
         static SpiritModifierArtwork()
         {
@@ -29,17 +27,17 @@ namespace Dice.Presentation
 
         internal static Sprite GetSprite(string id)
         {
-            if (!SpiritModifierPresentation.TryGetArtwork(id, out Kind kind)) return null;
+            if (!SpiritModifierPresentation.TryGetArtwork(id, out ModifierArtworkKind kind)) return null;
             if (sprites.TryGetValue(kind, out Sprite sprite) && sprite != null) return sprite;
             var drawing = new Drawing();
             switch (kind)
             {
-                case Kind.WelcomingPair: WelcomingPair(drawing); break;
-                case Kind.SecondChance: SecondChance(drawing); break;
-                case Kind.LastLantern: LastLantern(drawing); break;
-                case Kind.QuietGrove: QuietGrove(drawing); break;
-                case Kind.OneSpark: OneSpark(drawing); break;
-                case Kind.LoneWatcher: LoneWatcher(drawing); break;
+                case ModifierArtworkKind.WelcomingPair: WelcomingPair(drawing); break;
+                case ModifierArtworkKind.SecondChance: SecondChance(drawing); break;
+                case ModifierArtworkKind.LastLantern: LastLantern(drawing); break;
+                case ModifierArtworkKind.QuietGrove: QuietGrove(drawing); break;
+                case ModifierArtworkKind.OneSpark: OneSpark(drawing); break;
+                case ModifierArtworkKind.LoneWatcher: LoneWatcher(drawing); break;
             }
             Texture2D texture = drawing.CreateTexture(kind.ToString());
             sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,

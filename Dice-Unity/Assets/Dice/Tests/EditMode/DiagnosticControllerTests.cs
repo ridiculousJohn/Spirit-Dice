@@ -110,7 +110,7 @@ namespace Dice.Tests
         {
             var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
             Assert.That(asset, Is.Not.Null);
-            var catalog = asset.Build();
+            var catalog = asset.Build(TestContent.ModifierAssets());
             controller.Initialize(catalog, "encounter.standard", 60, savePath);
             var expected = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
             controller.ToggleDie(0);

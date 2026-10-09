@@ -2,7 +2,9 @@
   "name": "Dice.UnityContent",
   "rootNamespace": "Dice.UnityContent",
   "references": [
-    "Dice.Engine"
+    "Dice.Engine",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
   ],
   "autoReferenced": false,
   "overrideReferences": true,

@@ -1,49 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Dice.Engine;
+using UnityEngine;
 
 namespace Dice.Presentation
 {
-    /** Shared charm identity and wording, independent of modifier mechanics. */
+    /** Shared charm identity and wording supplied by the active theme's assets. */
     public static class SpiritModifierPresentation
     {
-        private readonly struct Identity
+        private sealed class Entry
         {
-            internal readonly string Name;
-            internal readonly SpiritModifierArtwork.Kind Artwork;
-            internal readonly Func<IModifierCondition, string> ConditionText;
+            internal readonly ModifierPresentationAsset Asset;
+            internal readonly Type ConditionType;
 
-            internal Identity(string name, SpiritModifierArtwork.Kind artwork,
-                Func<IModifierCondition, string> conditionText)
+            internal Entry(ModifierPresentationAsset asset)
             {
-                Name = name;
-                Artwork = artwork;
-                ConditionText = conditionText;
+                Asset = asset;
+                Type type = asset.Modifier.Build().Condition.GetType();
+                ConditionType = type.Name == asset.ConditionTypeName ? type : null;
             }
         }
 
-        private static readonly Dictionary<string, Identity> identities = new Dictionary<string, Identity>(StringComparer.Ordinal)
+        private sealed class Theme : IDisposable
         {
-            { "modifier.initial_roll.initial_pair.base_score", new Identity("Welcoming Pair", SpiritModifierArtwork.Kind.WelcomingPair,
-                condition => condition is InitialPairCondition ? "Your initial roll is a Pair." : null) },
-            { "modifier.player_reroll.selected_face_unchanged.rerolls", new Identity("Second Chance", SpiritModifierArtwork.Kind.SecondChance,
-                condition => condition is SelectedFaceUnchangedCondition ? "At least one rerolled die keeps its face." : null) },
-            { "modifier.player_reroll.last_reroll_on_last_hand.combined", new Identity("Last Lantern", SpiritModifierArtwork.Kind.LastLantern,
-                condition => condition is LastRerollOnLastHandCondition ? "Spend your last reroll on your last hand." : null) },
-            { "modifier.play_hand.no_extreme_faces.base_score", new Identity("Quiet Grove", SpiritModifierArtwork.Kind.QuietGrove,
-                condition => condition is NoExtremeFacesCondition value
-                    ? "No die shows " + value.Parameter + " or " + value.SecondaryParameter + "." : null) },
-            { "modifier.play_hand.contains_face.multiplier", new Identity("One Spark", SpiritModifierArtwork.Kind.OneSpark,
-                condition => condition is ContainsFaceCondition value ? "At least one die shows " + value.Parameter + "." : null) },
-            { "modifier.play_hand.middle_unique.combined", new Identity("Lone Watcher", SpiritModifierArtwork.Kind.LoneWatcher,
-                condition => condition is MiddleUniqueCondition ? "The middle die has a face no other die shows." : null) }
-        };
+            internal readonly Dictionary<string, Entry> Entries;
+            internal Theme(Dictionary<string, Entry> entries) { Entries = entries; }
+            public void Dispose()
+            {
+                // An older scene's teardown must not remove a newer scene's installed theme.
+                if (ReferenceEquals(activeTheme, this)) activeTheme = null;
+            }
+        }
+
+        private static Theme activeTheme;
+
+        public static IDisposable InstallTheme(IEnumerable<ModifierPresentationAsset> assets, MechanicalCatalog catalog)
+        {
+            if (assets == null) throw new ArgumentNullException(nameof(assets));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+            var required = new HashSet<string>(StringComparer.Ordinal);
+            foreach (ModifierDefinition definition in catalog.Modifiers) required.Add(definition.Id);
+            var entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
+            foreach (ModifierPresentationAsset asset in assets)
+            {
+                if (asset == null) throw new InvalidOperationException("A modifier presentation asset is missing.");
+                if (asset.Modifier == null) throw new InvalidOperationException("A modifier presentation requires a mechanical asset reference: " + asset.name);
+                string id = asset.Modifier.Id;
+                if (string.IsNullOrWhiteSpace(id) || !required.Contains(id))
+                    throw new InvalidOperationException("A modifier presentation references an unknown modifier: " + id);
+                if (string.IsNullOrWhiteSpace(asset.DisplayName))
+                    throw new InvalidOperationException("A modifier presentation requires a display name: " + id);
+                if (entries.ContainsKey(id))
+                    throw new InvalidOperationException("The theme contains duplicate modifier presentations: " + id);
+                if (!Enum.IsDefined(typeof(ModifierArtworkKind), asset.Artwork))
+                    throw new InvalidOperationException("A modifier presentation has an invalid artwork kind: " + id);
+                if (!string.IsNullOrEmpty(asset.ConditionTemplate) && string.IsNullOrWhiteSpace(asset.ConditionTypeName))
+                    throw new InvalidOperationException("A condition template requires its condition type guard: " + id);
+                entries.Add(id, new Entry(asset));
+            }
+            foreach (string id in required)
+                if (!entries.ContainsKey(id)) throw new InvalidOperationException("The theme is missing a modifier presentation: " + id);
+            var theme = new Theme(entries);
+            activeTheme = theme;
+            return theme;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRuntime() { activeTheme = null; }
 
         public static string GetName(ModifierDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            if (identities.TryGetValue(definition.Id, out Identity identity)) return identity.Name;
+            if (TryGetEntry(definition.Id, out Entry entry)) return entry.Asset.DisplayName;
             string typeName = definition.Condition.GetType().Name;
             if (typeName.EndsWith("Condition", StringComparison.Ordinal)) typeName = typeName.Substring(0, typeName.Length - 9);
             return DiagnosticText.Humanize(typeName);
@@ -52,10 +82,11 @@ namespace Dice.Presentation
         public static string GetConditionText(ModifierDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            if (identities.TryGetValue(definition.Id, out Identity identity))
+            if (TryGetEntry(definition.Id, out Entry entry) && entry.ConditionType == definition.Condition.GetType() &&
+                !string.IsNullOrEmpty(entry.Asset.ConditionTemplate))
             {
-                string text = identity.ConditionText(definition.Condition);
-                if (text != null) return text;
+                string template = entry.Asset.ConditionTemplate;
+                if (TryFormatTemplate(template, definition.Condition, out string text)) return text;
             }
             return DiagnosticText.DescribeCondition(definition.Condition);
         }
@@ -63,7 +94,6 @@ namespace Dice.Presentation
         public static string GetEffectText(ModifierDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            if (!identities.ContainsKey(definition.Id)) return DiagnosticText.DescribeEffects(definition);
             var text = new StringBuilder();
             foreach (ModifierEffect effect in definition.Effects)
             {
@@ -102,15 +132,40 @@ namespace Dice.Presentation
             return phase + " / " + limit;
         }
 
-        internal static bool TryGetArtwork(string id, out SpiritModifierArtwork.Kind artwork)
+        internal static Sprite GetIcon(string id)
+            => TryGetEntry(id, out Entry entry) ? entry.Asset.Icon : null;
+
+        internal static bool TryGetArtwork(string id, out ModifierArtworkKind artwork)
         {
-            if (identities.TryGetValue(id, out Identity identity))
+            artwork = TryGetEntry(id, out Entry entry) ? entry.Asset.Artwork : ModifierArtworkKind.None;
+            return artwork != ModifierArtworkKind.None;
+        }
+
+        private static bool TryGetEntry(string id, out Entry entry)
+        {
+            entry = null;
+            return activeTheme != null && activeTheme.Entries.TryGetValue(id, out entry);
+        }
+
+        private static bool TryFormatTemplate(string template, IModifierCondition condition, out string text)
+        {
+            text = template;
+            if (!template.Contains("{parameter}") && !template.Contains("{secondaryParameter}")) return true;
+            int parameter;
+            int secondaryParameter = 0;
+            bool hasSecondary = false;
+            // Read the live immutable predicate, so changed mechanical parameters appear immediately.
+            switch (condition)
             {
-                artwork = identity.Artwork;
-                return true;
+                case ContainsFaceCondition value: parameter = value.Parameter; break;
+                case NoExtremeFacesCondition value:
+                    parameter = value.Parameter; secondaryParameter = value.SecondaryParameter; hasSecondary = true; break;
+                default: return false;
             }
-            artwork = default;
-            return false;
+            if (template.Contains("{secondaryParameter}") && !hasSecondary) return false;
+            text = template.Replace("{parameter}", parameter.ToString(CultureInfo.InvariantCulture))
+                .Replace("{secondaryParameter}", secondaryParameter.ToString(CultureInfo.InvariantCulture));
+            return true;
         }
     }
 }

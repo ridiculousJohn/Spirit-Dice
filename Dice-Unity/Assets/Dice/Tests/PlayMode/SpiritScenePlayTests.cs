@@ -20,6 +20,7 @@ namespace Dice.Tests
         public IEnumerator PortraitSizesKeepScoreCaptionsAndActionLabelsVisible()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
@@ -61,6 +62,7 @@ namespace Dice.Tests
         public IEnumerator SceneButtonsPresentEngineDiceRewardsCharmsAndSaveResume()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);

@@ -343,7 +343,7 @@ namespace Dice.Tests
         {
             var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
             Assert.That(asset, Is.Not.Null);
-            var catalog = asset.Build();
+            var catalog = asset.Build(TestContent.ModifierAssets());
             var uninterrupted = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
             var resumed = Restore(catalog, uninterrupted.CaptureSave());
             var traceField = typeof(StandardEncounterReplayTests).GetField("VictoryActions", BindingFlags.NonPublic | BindingFlags.Static);

@@ -74,7 +74,7 @@ namespace Dice.Tests
         {
             var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
             Assert.That(asset, Is.Not.Null);
-            return asset.Build();
+            return asset.Build(TestContent.ModifierAssets());
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -16,6 +17,7 @@ namespace Dice.App
     public sealed class SpiritEncounterController : MonoBehaviour, ISpiritEncounterControls, IEncounterPresenter
     {
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
+        [SerializeField] private string modifierPresentationLabel = ModifierPresentationLoader.Label;
         [SerializeField] private string encounterId = "encounter.standard";
         [SerializeField, Tooltip("Use Initial Seed for repeatable debug runs. Otherwise every new run uses a fresh seed.")]
         private bool useFixedSeed;
@@ -23,6 +25,9 @@ namespace Dice.App
         private EncounterApplication application;
         private ulong seed = 60;
         private string cacheStatus = string.Empty;
+        private ModifierAssetLoader modifierAssets;
+        private ModifierPresentationLoader presentationAssets;
+        private IDisposable presentationTheme;
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -45,11 +50,63 @@ namespace Dice.App
                 StateChanged?.Invoke();
                 return;
             }
-            try { Initialize(catalogAsset.Build(), encounterId, SelectSeed(), SavePath); }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+        }
+
+        private IEnumerator Start()
+        {
+            if (catalogAsset == null || Catalog != null) yield break;
+            if (string.IsNullOrWhiteSpace(modifierPresentationLabel))
+            {
+                SetStatus("Cannot load charm presentation: A theme label is required.");
+                yield break;
+            }
+            SetStatus("Loading modifiers...");
+            modifierAssets = new ModifierAssetLoader();
+            yield return modifierAssets.Load();
+            if (Catalog != null) { ReleaseContent(); yield break; }
+            if (modifierAssets.Error != null)
+            {
+                SetStatus("Cannot load modifiers: " + modifierAssets.Error.Message);
+                ReleaseContent();
+                yield break;
+            }
+            SetStatus("Loading charm presentation...");
+            presentationAssets = new ModifierPresentationLoader(modifierPresentationLabel);
+            yield return presentationAssets.Load();
+            if (Catalog != null) { ReleaseContent(); yield break; }
+            if (presentationAssets.Error != null)
+            {
+                SetStatus("Cannot load charm presentation: " + presentationAssets.Error.Message);
+                ReleaseContent();
+                yield break;
+            }
+            try
+            {
+                var catalog = catalogAsset.Build(modifierAssets.Assets);
+                presentationTheme = SpiritModifierPresentation.InstallTheme(presentationAssets.Assets, catalog);
+                Initialize(catalog, encounterId, SelectSeed(), SavePath);
+            }
+            catch (Exception exception)
             {
                 SetStatus("Cannot initialize the encounter: " + exception.Message);
+                ReleaseContent();
             }
+        }
+
+        private void OnDestroy()
+        {
+            application?.AttachPresenter(null);
+            ReleaseContent();
+        }
+
+        private void ReleaseContent()
+        {
+            presentationTheme?.Dispose();
+            presentationTheme = null;
+            presentationAssets?.Dispose();
+            presentationAssets = null;
+            modifierAssets?.Dispose();
+            modifierAssets = null;
         }
 
         public void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string savePath)

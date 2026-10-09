@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
+  m_Name: modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
+  id: modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+  familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+  phase: 1
+  conditionKind: 31
+  parameter: 0
+  secondaryParameter: 0
+  effects:
+  - kind: 2
+    amount: 1
+  activationLimit: 1
+  rewardEligible: 1

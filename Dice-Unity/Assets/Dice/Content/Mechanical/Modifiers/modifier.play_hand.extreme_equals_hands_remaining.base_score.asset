@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
+  m_Name: modifier.play_hand.extreme_equals_hands_remaining.base_score
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
+  id: modifier.play_hand.extreme_equals_hands_remaining.base_score
+  familyId: modifier.play_hand.extreme_equals_hands_remaining
+  phase: 2
+  conditionKind: 39
+  parameter: 0
+  secondaryParameter: 0
+  effects:
+  - kind: 0
+    amount: 10
+  activationLimit: 1
+  rewardEligible: 1

@@ -32,6 +32,7 @@ namespace Dice.Editor
             PlayerSettings.Android.useCustomKeystore = false;
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
+            ModifierAddressableSetup.Configure();
             AssetDatabase.SaveAssets();
 
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath));

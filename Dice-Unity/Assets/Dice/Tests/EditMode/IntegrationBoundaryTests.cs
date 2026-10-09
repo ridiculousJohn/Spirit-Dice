@@ -23,7 +23,7 @@ namespace Dice.Tests
         {
             var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
             Assert.That(asset, Is.Not.Null);
-            MechanicalCatalog catalog = asset.Build();
+            MechanicalCatalog catalog = asset.Build(TestContent.ModifierAssets());
             EncounterDefinition encounter = catalog.GetEncounter("encounter.standard");
             long[] thresholds = { 160, 225, 320, 410, 520, 635, 750, 860, 975, 1090,
                 1820, 2045, 2275, 2545, 2820, 3090, 3365, 3635, 3955, 4275, 5455, 5910, 6365, 7045, 7725 };
@@ -44,7 +44,7 @@ namespace Dice.Tests
                 Assert.That(catalog.Hands[i].MultiplierPerUpgrade, Is.EqualTo(reference[i].MultiplierPerUpgrade));
                 Assert.That(catalog.Hands[i].MaximumUpgrades, Is.EqualTo(6));
             }
-            var application = EncounterApplication.Create(asset, "encounter.standard", 0);
+            var application = EncounterApplication.Create(asset, TestContent.ModifierAssets(), "encounter.standard", 0);
             Assert.That(application.Snapshot.StartingThreshold, Is.EqualTo(160));
             Assert.That(application.Snapshot.HandsRemaining, Is.EqualTo(3));
         }
