@@ -179,7 +179,7 @@ For each family below, include the four existing IDs formed by appending `.base_
 
 1. Add the reusable free-first-reroll rule, including zero-budget action availability, ordinary modifier activation, action/resource accounting, and save continuity. Keep host identity and visual cues in presentation data.
 2. Author the ten-stage encounter and its pools. Eligible content must be explicit in each run, with no hidden dependency on mutable profile data during resolution.
-3. The Newtonsoft JSON player profile and milestone grants are implemented. Encounter selection remains future work. Multiple encounter definitions can share a spirit ID without sharing presentation data.
+3. The Newtonsoft JSON player profile, milestone grants, investigation selection, authored introduction sequence, and return/resume flow are implemented. Multiple encounter definitions can share a spirit ID without sharing presentation data.
 4. Implement the three consumables and loadout, with persistence that prevents duplicate use or duplicated milestone grants.
 5. Test fresh-profile attempts with no consumables across many seeds, then compare experienced strategies and human novice sessions. Measure stage-of-loss distribution, full-run completion rate, run duration, and which families are selected and activate. Tune targets and offers from these results before specifying the rematch's difficulty.
 
