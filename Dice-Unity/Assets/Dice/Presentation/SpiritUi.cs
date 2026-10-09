@@ -165,9 +165,13 @@ namespace Dice.Presentation
             var image = Panel(name, parent, min, max,
                 primary ? new Color32(89, 73, 44, 255) : PanelColor, 5);
             bool compact = name == "MenuButton" || name == "CloseCharmsButton";
-            var frame = compact ? Theme.darkFrame : name == "CharmsButton" ? Theme.woodFrame : primary ? Theme.amberFrame : Theme.greenFrame;
-            ApplyFrame(image, frame, compact ? "SpiritUiDark" : name == "CharmsButton" ? "SpiritUiWood" : primary ? "SpiritUiAmber" : "SpiritUiGreen",
+            bool actionButton = name == "RerollButton" || name == "PlayButton";
+            bool footer = name == "CharmsButton" || name == "HandRanksButton";
+            var frame = compact || actionButton ? Theme.darkFrame : footer ? Theme.woodFrame : primary ? Theme.amberFrame : Theme.greenFrame;
+            ApplyFrame(image, frame, compact || actionButton ? "SpiritUiDark" : footer ? "SpiritUiWood" : primary ? "SpiritUiAmber" : "SpiritUiGreen",
                 primary ? new Color32(89, 73, 44, 255) : PanelColor);
+            if (actionButton)
+                image.color = primary ? new Color32(255, 196, 103, 255) : new Color32(170, 216, 181, 255);
             var button = image.gameObject.AddComponent<SpiritUiButtonVisual>();
             var colors = button.colors;
             colors.normalColor = Color.white;
@@ -180,6 +184,11 @@ namespace Dice.Presentation
             button.targetGraphic = image;
             button.onClick.AddListener(action);
             var text = Heading(name + "Label", image.transform, value, 21, Vector2.zero, Vector2.one, TextAnchor.MiddleCenter);
+            float padding = compact ? .09f : footer ? .10f : .08f;
+            text.rectTransform.anchorMin = new Vector2(padding, .08f);
+            text.rectTransform.anchorMax = new Vector2(1 - padding, .92f);
+            text.rectTransform.offsetMin = text.rectTransform.offsetMax = Vector2.zero;
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.resizeTextForBestFit = true;
             text.resizeTextMinSize = 14;
             text.resizeTextMaxSize = 21;

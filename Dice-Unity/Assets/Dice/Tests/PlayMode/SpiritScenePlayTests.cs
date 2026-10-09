@@ -17,6 +17,47 @@ namespace Dice.Tests
     public sealed class SpiritScenePlayTests
     {
         [UnityTest]
+        public IEnumerator PortraitSizesKeepScoreCaptionsAndActionLabelsVisible()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return null;
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            Assert.That(controller, Is.Not.Null);
+            var view = controller.GetComponent<SpiritEncounterView>();
+            Assert.That(view, Is.Not.Null);
+            string savePath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
+                "spirit-file-tests", Guid.NewGuid().ToString("N"), "portrait-labels.json"));
+            controller.Initialize(controller.Catalog, "encounter.standard", 60, savePath);
+            yield return null;
+            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            Assert.That(portrait, Is.Not.Null);
+            foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
+            {
+                portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+                portrait.sizeDelta = size;
+                portrait.anchoredPosition = Vector2.zero;
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                Assert.That(portrait.rect.width, Is.EqualTo(size.x).Within(.01f));
+                Assert.That(portrait.rect.height, Is.EqualTo(size.y).Within(.01f));
+                AssertPresentationLabelsVisible(view);
+                AssertActionButtonsStacked(view);
+                foreach (var counter in new[] { view.BaseScoreLabel, view.MultiplierLabel, view.HandScoreLabel })
+                {
+                    var caption = counter.transform.parent.Find(counter.name + "Caption").GetComponent<Text>();
+                    AssertLabelGlyphsInsideBounds(caption);
+                }
+                AssertLabelGlyphsInsideBounds(view.RerollButton.GetComponentInChildren<Text>());
+                AssertLabelGlyphsInsideBounds(view.PlayButton.GetComponentInChildren<Text>());
+                var menu = FindButton(view, "MenuButton").GetComponentInChildren<Text>();
+                AssertLabelGlyphsInsideBounds(menu);
+                Assert.That(menu.cachedTextGenerator.lineCount, Is.EqualTo(1),
+                    "The menu label must remain on one line at portrait size " + size);
+            }
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator SceneButtonsPresentEngineDiceRewardsCharmsAndSaveResume()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
@@ -77,8 +118,9 @@ namespace Dice.Tests
             yield return CaptureIfRequested("selected-slots");
             Assert.That(controller.SelectedMask, Is.EqualTo(9));
             AssertRerollPlates(view, 9);
-            Assert.That(view.RerollButton.GetComponentInChildren<Text>().text, Does.Contain("2"),
-                "The reroll action must show the number of selected dice.");
+            Assert.That(view.RerollButton.GetComponentInChildren<Text>().text, Is.EqualTo("Reroll"),
+                "Selecting dice must preserve the reroll action label.");
+            Assert.That(view.PlayButton.GetComponentInChildren<Text>().text, Is.EqualTo("Play Hand"));
             AssertPresentationLabelsVisible(view);
             var beforeRanks = controller.Snapshot;
             int beforeRanksResolutions = resolutions;
@@ -300,6 +342,28 @@ namespace Dice.Tests
             Assert.That(visibleLabels, Is.GreaterThan(0), "No active presentation labels were found.");
         }
 
+        private static void AssertLabelGlyphsInsideBounds(Text label)
+        {
+            Assert.That(label, Is.Not.Null);
+            Assert.That(label.isActiveAndEnabled, Is.True, label.name);
+            Assert.That(label.text, Is.Not.Empty, label.name);
+            var rect = label.rectTransform.rect;
+            var generator = label.cachedTextGenerator;
+            Assert.That(generator.Populate(label.text, label.GetGenerationSettings(rect.size)), Is.True, label.name);
+            Assert.That(generator.vertexCount, Is.GreaterThan(4), label.name + " has no visible glyphs.");
+            float unitsPerPixel = 1f / label.pixelsPerUnit;
+            const float glyphTolerance = 2f;
+            // TextGenerator appends a dummy quad after the rendered glyph vertices.
+            for (int index = 0; index < generator.verts.Count - 4; ++index)
+            {
+                Vector2 position = generator.verts[index].position * unitsPerPixel;
+                Assert.That(position.x, Is.InRange(rect.xMin - glyphTolerance, rect.xMax + glyphTolerance),
+                    label.name + " glyphs exceed its horizontal bounds.");
+                Assert.That(position.y, Is.InRange(rect.yMin - glyphTolerance, rect.yMax + glyphTolerance),
+                    label.name + " glyphs exceed its vertical bounds.");
+            }
+        }
+
         private static void AssertActionButtonsStacked(SpiritEncounterView view)
         {
             Canvas.ForceUpdateCanvases();
@@ -310,14 +374,27 @@ namespace Dice.Tests
             var parent = new Vector3[4];
             view.PlayButton.transform.parent.GetComponent<RectTransform>().GetWorldCorners(parent);
             float parentWidth = parent[2].x - parent[0].x;
-            Assert.That(reroll[2].x - reroll[0].x, Is.GreaterThan(parentWidth * .9f),
-                "Reroll must span the playing area.");
-            Assert.That(play[2].x - play[0].x, Is.GreaterThan(parentWidth * .9f),
-                "Play hand must span the playing area.");
-            Assert.That((reroll[0].x + reroll[2].x) * .5f,
-                Is.EqualTo((play[0].x + play[2].x) * .5f).Within(1f), "Action centers must align.");
-            Assert.That(reroll[0].y, Is.GreaterThanOrEqualTo(play[2].y),
-                "Reroll must sit above Play hand without overlapping it.");
+            float parentHeight = parent[2].y - parent[0].y;
+            float rerollWidth = reroll[2].x - reroll[0].x;
+            float playWidth = play[2].x - play[0].x;
+            var rerollRect = (RectTransform)view.RerollButton.transform;
+            var playRect = (RectTransform)view.PlayButton.transform;
+            var parentRect = (RectTransform)view.PlayButton.transform.parent;
+            Vector3 rerollInset = parentRect.TransformVector((Vector3)(rerollRect.offsetMax - rerollRect.offsetMin));
+            Vector3 rowInset = parentRect.TransformVector(new Vector3(playRect.offsetMax.x - rerollRect.offsetMin.x,
+                playRect.offsetMax.y - playRect.offsetMin.y, 0));
+            Assert.That(rerollWidth, Is.EqualTo(parentWidth * .455f + rerollInset.x).Within(1f));
+            Assert.That(playWidth, Is.EqualTo(rerollWidth).Within(1f), "Action widths must match.");
+            Assert.That(play[0].x, Is.GreaterThanOrEqualTo(reroll[2].x),
+                "Reroll must sit left of Play Hand without overlapping it.");
+            Assert.That(reroll[0].y, Is.EqualTo(play[0].y).Within(1f));
+            Assert.That(reroll[2].y, Is.EqualTo(play[2].y).Within(1f));
+            Assert.That(play[2].x - reroll[0].x, Is.EqualTo(parentWidth * .93f + rowInset.x).Within(1f),
+                "The action row must fill the reserved width.");
+            Assert.That(play[2].y - play[0].y, Is.EqualTo(parentHeight * .188f + rowInset.y).Within(1f),
+                "The action row must fill the reserved height.");
+            Assert.That(view.RerollButton.GetComponentInChildren<Text>().text, Is.EqualTo("Reroll"));
+            Assert.That(view.PlayButton.GetComponentInChildren<Text>().text, Is.EqualTo("Play Hand"));
         }
 
         private static void AssertButtonDecorationsDoNotBlockPointer(Button button)

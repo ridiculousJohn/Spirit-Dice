@@ -174,6 +174,33 @@ namespace Dice.Tests
             }
         }
 
+        [TestCase(540f, 960f)]
+        [TestCase(443f, 900f)]
+        [TestCase(960f, 540f)]
+        public void PortraitScalesEveryLayerAroundTheRoomTableContact(float width, float height)
+        {
+            var parent = host.GetComponent<RectTransform>();
+            parent.sizeDelta = new Vector2(width, height);
+            portrait.Advance(0f);
+
+            Assert.That(portraitRoot.localScale.x / (width / 540f), Is.EqualTo(1.16f).Within(0.0001f));
+            Assert.That(portraitRoot.localScale.y / (height / 960f), Is.EqualTo(1.16f).Within(0.0001f));
+            Vector3 contact = parent.InverseTransformPoint(portraitRoot.TransformPoint(new Vector3(270f, 624f, 0f)));
+            Assert.That(contact.x, Is.EqualTo(parent.rect.xMin + width * .5f).Within(0.001f));
+            Assert.That(contact.y, Is.EqualTo(parent.rect.yMin + height * .62f).Within(0.001f));
+
+            foreach (string objectName in new[] { "Cyan Tail", "Gold Tail" })
+            {
+                var tail = (RectTransform)portraitRoot.Find(objectName);
+                Assert.That(tail.anchoredPosition, Is.EqualTo(body.anchoredPosition));
+                Assert.That(tail.sizeDelta, Is.EqualTo(body.sizeDelta));
+                Assert.That(tail.localScale, Is.EqualTo(body.localScale));
+            }
+            Assert.That(physicalHead.anchoredPosition, Is.EqualTo(spiritHead.anchoredPosition));
+            Assert.That(physicalHead.sizeDelta, Is.EqualTo(spiritHead.sizeDelta));
+            Assert.That(physicalHead.localScale, Is.EqualTo(spiritHead.localScale));
+        }
+
         private void AssertBodyPose(Vector2 position, Quaternion rotation, Vector3 scale)
         {
             Assert.That(body.anchoredPosition, Is.EqualTo(position));

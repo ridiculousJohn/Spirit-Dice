@@ -7,9 +7,9 @@ namespace Dice.Presentation
     public sealed class SpiritFoxPortrait : MonoBehaviour
     {
         public const float ReactionDuration = 1.8f;
-        private const float HeadSize = 200f;
+        private const float HeadSize = 190f;
         private readonly Vector2 bodyPosition = new Vector2(300f, 724f);
-        private readonly Vector2 headPosition = new Vector2(232f, 805f);
+        private readonly Vector2 headPosition = new Vector2(232f, 792f);
         private RectTransform portraitRoot;
         private RectTransform bodyRect;
         private RectTransform physicalHead;
@@ -152,7 +152,12 @@ namespace Dice.Presentation
         private void FitPortrait()
         {
             var parent = (RectTransform)portraitRoot.parent;
-            portraitRoot.localScale = new Vector3(parent.rect.width / 540f, parent.rect.height / 960f, 1f);
+            const float scale = 1.16f;
+            Vector2 fit = new Vector2(parent.rect.width / 540f, parent.rect.height / 960f);
+            // Scale every layer about the planted contact, then align it with the room's table edge.
+            portraitRoot.localScale = new Vector3(fit.x * scale, fit.y * scale, 1f);
+            portraitRoot.anchoredPosition = Vector2.Scale(new Vector2(270f, 595.2f)
+                - new Vector2(270f, 624f) * scale, fit);
         }
 
         private void ApplyPose()
