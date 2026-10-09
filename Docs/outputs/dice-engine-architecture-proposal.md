@@ -277,9 +277,32 @@ The score sequence holds the played dice on the table while it adds the raw dice
 
 Initial-roll and reroll activations remain in this history, including repeated activations of the same instance. Tapping a die reviews its contribution; the history clears when the next hand starts. Loading or rebinding restores the ordered contributions from the snapshot. Provisional sigils and sprite mappings belong to presentation, independently of mechanical definitions.
 
+The portrait table uses side-by-side Reroll and Play Hand controls. Menu and footer labels stay on one line, both footer controls use the compact wood frame, and the hand category is inset from its score frame. The seated fox is enlarged around its table contact, with the resting arm and elbow drawn in front of the tabletop. The target, resources, and main dice move down together; spacing above the fixed history tray accounts for the tray textures' transparent margins and aspect fitting so their visible wooden edges remain close on tall screens.
+
+`SpiritActionModifierCue` presents each recorded activation centered on its associated button: InitialRoll and PlayerReroll on Reroll, PlayHand on Play Hand. It uses the same authored sprite or provisional family sigil as the history, holds through the counter step, then fades during the modifier pause. The button label fades out as the icon appears and returns as it disappears, independently of the button's disabled tint. The overlay cannot intercept input or enable a disabled button. History inspection does not replay action cues, and completion, cancellation, load, and rebind clear them and restore the label.
+
+`SpiritModifierPresentation` supplies shared names, conditions, effects, and activation timing. Six definitions currently have authored identities; other definitions retain diagnostic wording and provisional history sigils. Effect amounts and phase/limit text come from the mechanical definition. `SpiritModifierArtwork` supplies deliberate line drawings, and `SpiritModifierIcons` resolves registered or resource sprites before those built-in drawings. The same sprite appears in reward cards, owned charms, charm details, activation messages, and on the history die. During activation, a matching icon briefly appears beside each affected Base, Mult, or resource counter. These cues consume recorded contributions and resource changes, and reset when presentation finishes or is interrupted.
+
+| Charm | Definition | Icon | Standard effect |
+| --- | --- | --- | --- |
+| Welcoming Pair | `modifier.initial_roll.initial_pair.base_score` | Matching dice beneath a sunrise | Initial roll is exactly a Pair: +10 base |
+| Second Chance | `modifier.player_reroll.selected_face_unchanged.rerolls` | Return arrow around a die | A rerolled die keeps its face: +1 reroll |
+| Last Lantern | `modifier.player_reroll.last_reroll_on_last_hand.combined` | Lantern with a small flame | Spend the last reroll with one hand left: +10 base, +2 mult |
+| Quiet Grove | `modifier.play_hand.no_extreme_faces.base_score` | Leaf between boundaries | Play without a 1 or 6: +15 base |
+| One Spark | `modifier.play_hand.contains_face.multiplier` | Single pip in a starburst | Play with at least one 1: +2 mult |
+| Lone Watcher | `modifier.play_hand.middle_unique.combined` | Eye around a central die | Play with a middle face no other die shows: +5 base, +1 mult |
+
+All six activate at most once per hand. Their presentation mappings do not alter reward eligibility, probabilities, saved identities, or mechanical conditions. Other variants in the same families retain their existing presentation until individually authored.
+
 Counter steps take 0.52 seconds with a 0.35-second hold; modifiers receive a 0.55-second hold. Only after all contributions does Base times Mult become Total. A brief hold precedes the goal reduction; the next hand then resets the counters, or a cleared stage advances to rewards. Presentation never reruns modifier predicates. Reference investigation in `Docs/work/scoring-reference/native-scoring-sequence-2026-10-08.json` found that Dice of Kalma resolves modifiers together, rolls aggregate counters, and cycles modifier icons separately. Our individual numerical steps are a presentation choice. The reference's last-reroll/last-hand modifier activates after reroll cost and banks its result, which the existing engine already models.
 
-This is a playable presentation prototype. Final character rigging, authored charm names and individual icons, final recorded audio, additional spirit hosts, and physical Android device validation remain future work. Generated asset prompts are retained under `Docs/outputs/spirit-house-prototype-assets`; test results and captured screens are retained under `Docs/work/spirit-validation`.
+This is a playable presentation prototype. Final character rigging, authored names and icons for the remaining charm catalog, final recorded audio, additional spirit hosts, and broader Android device coverage remain future work. Generated asset prompts are retained under `Docs/outputs/spirit-house-prototype-assets`; test results and captured screens are retained under `Docs/work/spirit-validation` and `Docs/work/android-validation`.
+
+### Android prototype build
+
+With Android Build Support, SDK/NDK, and OpenJDK installed for the project's Unity version, select Android as the active build target and use **Dice > Build Android Prototype**. The builder includes only `SpiritHousePrototype`, producing a debug-signed ARM64 IL2CPP development APK in `Dice-Unity/Builds/Android` with a fresh timestamped filename. It persists portrait orientation and the Android application ID `net.ridiculousgaming.diceprototype`. Existing outputs are never overwritten.
+
+For a batch build, set `DICE_ANDROID_BUILD_PATH` to an absolute, unused `.apk` path and launch the project's Unity editor with `-batchmode -quit -buildTarget Android -projectPath <project-path> -executeMethod Dice.Editor.SpiritAndroidBuild.Build -logFile <log-path>`. Build logs and verification reports belong under `Docs/work/android-validation`; APKs and generated build output are ignored by Git. A successful build does not establish physical-device rendering or touch behavior; that requires a device playability pass.
 
 ## Local references
 
