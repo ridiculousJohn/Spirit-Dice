@@ -64,6 +64,7 @@
 # Local validation runs, temporary saves, and package-removal backups.
 # Reference analysis and authored outputs remain tracked.
 /Docs/work/*-validation/
+/Docs/work/modifier-assets-20261008/
 /Docs/work/*-file-tests/
 /Docs/work/removed-*/
 /Docs/work/*.log
