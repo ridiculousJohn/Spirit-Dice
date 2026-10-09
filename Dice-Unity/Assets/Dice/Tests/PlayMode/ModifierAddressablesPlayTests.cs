@@ -2,12 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dice.App;
 using Dice.Presentation;
 using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.ResourceManagement;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -16,6 +18,72 @@ namespace Dice.Tests
     public sealed class ModifierAddressablesPlayTests
     {
         private const int ModifierCount = 296;
+
+        [Test]
+        public void DisposingOwnersAfterAddressablesInvalidatesTheirOperationsDoesNotReleaseAgain()
+        {
+            using var resourceManager = new ResourceManager();
+            using var mechanics = new ModifierAssetLoader();
+            using var presentation = new ModifierPresentationLoader();
+            var mechanicsHandle = resourceManager.CreateCompletedOperation<IList<ModifierAsset>>(
+                Array.Empty<ModifierAsset>(), null);
+            var presentationHandle = resourceManager.CreateCompletedOperation<IList<ModifierPresentationAsset>>(
+                Array.Empty<ModifierPresentationAsset>(), null);
+            InstallHandle(mechanics, mechanicsHandle);
+            InstallHandle(presentation, presentationHandle);
+
+            // Release only these test operations to reproduce Addressables shutdown invalidating copied handles.
+            resourceManager.Release(mechanicsHandle);
+            resourceManager.Release(presentationHandle);
+            Assert.That(mechanicsHandle.IsValid(), Is.False);
+            Assert.That(presentationHandle.IsValid(), Is.False);
+            Assert.DoesNotThrow(mechanics.Dispose);
+            Assert.DoesNotThrow(presentation.Dispose);
+            Assert.DoesNotThrow(mechanics.Dispose);
+            Assert.DoesNotThrow(presentation.Dispose);
+            Assert.That(mechanics.Assets, Is.Empty);
+            Assert.That(presentation.Assets, Is.Empty);
+            Assert.That(mechanics.Error, Is.Null);
+            Assert.That(presentation.Error, Is.Null);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void DisposingOwnersReleasesTheirValidOperationsExactlyOnce()
+        {
+            using var resourceManager = new ResourceManager();
+            using var mechanics = new ModifierAssetLoader();
+            using var presentation = new ModifierPresentationLoader();
+            var mechanicsHandle = resourceManager.CreateCompletedOperation<IList<ModifierAsset>>(
+                Array.Empty<ModifierAsset>(), null);
+            var presentationHandle = resourceManager.CreateCompletedOperation<IList<ModifierPresentationAsset>>(
+                Array.Empty<ModifierPresentationAsset>(), null);
+            InstallHandle(mechanics, mechanicsHandle);
+            InstallHandle(presentation, presentationHandle);
+            var retainedMechanics = resourceManager.Acquire(mechanicsHandle);
+            var retainedPresentation = resourceManager.Acquire(presentationHandle);
+            try
+            {
+                Assert.That(retainedMechanics.ReferenceCount, Is.EqualTo(2));
+                Assert.That(retainedPresentation.ReferenceCount, Is.EqualTo(2));
+                mechanics.Dispose();
+                presentation.Dispose();
+                Assert.That(retainedMechanics.ReferenceCount, Is.EqualTo(1));
+                Assert.That(retainedPresentation.ReferenceCount, Is.EqualTo(1));
+                mechanics.Dispose();
+                presentation.Dispose();
+                Assert.That(retainedMechanics.ReferenceCount, Is.EqualTo(1));
+                Assert.That(retainedPresentation.ReferenceCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                if (retainedMechanics.IsValid()) resourceManager.Release(retainedMechanics);
+                if (retainedPresentation.IsValid()) resourceManager.Release(retainedPresentation);
+            }
+            Assert.That(mechanicsHandle.IsValid(), Is.False);
+            Assert.That(presentationHandle.IsValid(), Is.False);
+            LogAssert.NoUnexpectedReceived();
+        }
 
         [UnityTest]
         public IEnumerator LabelsLoadCompleteMechanicsAndThemeWithTheSameMechanicalReferences()
@@ -45,7 +113,7 @@ namespace Dice.Tests
 
             const string knownId = "modifier.initial_roll.initial_pair.base_score";
             var known = presentation.Assets.Single(asset => asset.Modifier.Id == knownId);
-            Assert.That(known.DisplayName, Is.EqualTo("Welcoming Pair"));
+            Assert.That(known.DisplayName, Is.EqualTo("Welcoming Pair / Base"));
             Assert.That(known.Artwork, Is.EqualTo(ModifierArtworkKind.WelcomingPair));
             var definition = controller.Catalog.GetModifier(knownId);
             Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo(known.DisplayName));
@@ -132,6 +200,16 @@ namespace Dice.Tests
                 ResourceManager.ExceptionHandler = previousHandler;
             }
             LogAssert.NoUnexpectedReceived();
+        }
+
+        private static void InstallHandle<T>(IDisposable loader, AsyncOperationHandle<IList<T>> handle)
+        {
+            var handleField = loader.GetType().GetField("handle", BindingFlags.Instance | BindingFlags.NonPublic);
+            var ownershipField = loader.GetType().GetField("hasHandle", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(handleField, Is.Not.Null);
+            Assert.That(ownershipField, Is.Not.Null);
+            handleField.SetValue(loader, handle);
+            ownershipField.SetValue(loader, true);
         }
 
         private static IEnumerator Complete(IEnumerator operation)

@@ -42,9 +42,14 @@ namespace Dice.Presentation
             }
             if (Error != null) yield break;
 
-            // A cancelled owner may release the operation between coroutine frames.
-            while (!disposed && !handle.IsDone) yield return null;
+            // Addressables shutdown can invalidate the operation before its owner is disposed.
+            while (!disposed && handle.IsValid() && !handle.IsDone) yield return null;
             if (disposed) yield break;
+            if (!handle.IsValid())
+            {
+                Fail(new InvalidOperationException("The modifier presentation load operation was invalidated before its assets were published."));
+                yield break;
+            }
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
                 Fail(handle.OperationException ?? new InvalidOperationException("Modifier presentation assets failed to load."));

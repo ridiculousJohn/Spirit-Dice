@@ -41,9 +41,15 @@ namespace Dice.UnityContent
             }
             if (Error != null) yield break;
 
-            // Dispose can release an in-flight handle, so check ownership before reading it each frame.
-            while (!disposed && !handle.IsDone) yield return null;
+            // Addressables shutdown can invalidate the operation before its owner is disposed.
+            while (!disposed && handle.IsValid() && !handle.IsDone) yield return null;
             if (disposed) yield break;
+            if (!handle.IsValid())
+            {
+                Error = new InvalidOperationException("The modifier load operation was invalidated before its assets were published.");
+                hasHandle = false;
+                yield break;
+            }
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
                 Error = handle.OperationException ?? new InvalidOperationException("Modifier assets failed to load.");
@@ -70,8 +76,8 @@ namespace Dice.UnityContent
             disposed = true;
             Assets = Array.Empty<ModifierAsset>();
             if (!hasHandle) return;
-            Addressables.Release(handle);
             hasHandle = false;
+            if (handle.IsValid()) Addressables.Release(handle);
         }
     }
 }
