@@ -29,6 +29,8 @@ namespace Dice.Tests
             var definitions = controller.Catalog.Modifiers.OrderBy(definition =>
                 definition.Id == family + ".multiplier" ? 0 : definition.Id == family + ".combined" ? 1 : 2).ToArray();
             Assert.That(definitions.Length, Is.EqualTo(296));
+            Assert.That(definitions.Any(definition => SpiritModifierIcons.GetSprite(definition) == null), Is.True);
+            Assert.That(definitions.Any(definition => SpiritModifierIcons.GetSprite(definition) != null), Is.True);
             var encounter = new EncounterDefinition("encounter.owned-charm-layout",
                 new[] { new StageDefinition(1000000000, 3, 3) },
                 startingModifiers: definitions.Select(definition => definition.Id));
@@ -50,6 +52,9 @@ namespace Dice.Tests
             var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
             var detailTitle = Find<Text>(view, "CharmDetailTitle");
             var detailBody = Find<Text>(view, "CharmDetailBody");
+            var reward = SpiritRewardCard.Create("CharmIconComparisonReward", portrait, (offerId, optionId) => { });
+            reward.gameObject.SetActive(false);
+            var comparedGraphics = new HashSet<bool>();
             foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
             {
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
@@ -70,7 +75,6 @@ namespace Dice.Tests
                     var effects = CardText(card, "Effects");
                     var badge = card.GetComponentInChildren<SpiritCharmStatusBadge>();
                     Assert.That(badge, Is.Not.Null, definition.Id);
-                    var status = badge.Count;
                     Assert.That(title.text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)), definition.Id);
                     Assert.That(condition.text, Is.EqualTo(SpiritModifierPresentation.GetConditionText(definition)), definition.Id);
                     Assert.That(effects.text, Is.EqualTo(SpiritModifierPresentation.GetEffectText(definition)), definition.Id);
@@ -78,15 +82,18 @@ namespace Dice.Tests
                     AssertSections((RectTransform)card.transform, labels, definition.Id);
                     foreach (var label in labels) AssertCompleteText(label, definition.Id + "/" + label.name);
                     AssertBadge(card, badge, definition.Id);
-                    AssertCompleteText(status, definition.Id + "/use count");
+                    AssertOwnedGraphic(card, definition, badge);
 
                     card.onClick.Invoke();
                     Canvas.ForceUpdateCanvases();
                     Assert.That(detailTitle.text, Is.EqualTo(title.text));
                     Assert.That(detailBody.text, Is.EqualTo(condition.text + "\n" + effects.text + "\n" +
                         SpiritModifierPresentation.GetTimingText(definition) + "\n" +
-                        FullStatus(controller, snapshot.Modifiers[index]) + "\n" +
                         AvailabilityText(definition, controller.Snapshot)));
+                    AssertDetailStatus(view, controller, snapshot.Modifiers[index], definition, badge);
+                    AssertDetailGraphic(view, definition);
+                    if (comparedGraphics.Add(SpiritModifierIcons.GetSprite(definition) != null))
+                        AssertRewardGraphic(reward, card, view, definition);
                     AssertSections((RectTransform)detailTitle.transform.parent,
                         new[] { detailTitle, detailBody }, definition.Id + "/inspection");
                     AssertCompleteText(detailTitle, definition.Id + "/inspection title");
@@ -164,7 +171,8 @@ namespace Dice.Tests
             var states = new[] { SpiritCharmStatusState.Ready, SpiritCharmStatusState.WaitingCondition,
                 SpiritCharmStatusState.Used, SpiritCharmStatusState.OnRoll,
                 SpiritCharmStatusState.Used, SpiritCharmStatusState.OnRoll };
-            var counts = new[] { "1/1", "1/1", "0/1", "1/1", "0/1", "\u221e" };
+            var details = new[] { "Ready", "Waiting", "Activated this hand", "On the initial roll",
+                "Activated this stage", "After a reroll" };
             var snapshot = controller.Snapshot;
             var scroll = Find<ScrollRect>(view, "OwnedCharmScroll");
             var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
@@ -189,14 +197,17 @@ namespace Dice.Tests
                     Assert.That(badge, Is.Not.Null, definitions[index].Id);
                     Assert.That(badge.Presentation.State, Is.EqualTo(states[index]), definitions[index].Id);
                     Assert.That(badge.Icon.State, Is.EqualTo(states[index]), definitions[index].Id);
-                    Assert.That(badge.Count.text, Is.EqualTo(counts[index]), definitions[index].Id);
                     AssertBadge(card, badge, definitions[index].Id);
                     AssertSymbol(badge.Icon, symbols, definitions[index].Id);
-                    AssertCompleteText(badge.Count, definitions[index].Id + "/use count");
+                    Assert.That(SpiritModifierIcons.GetSprite(definitions[index]), Is.Null, definitions[index].Id);
+                    AssertOwnedGraphic(card, definitions[index], badge);
+                    var sigil = Find<SpiritModifierSigilGraphic>(card, "CharmSigil");
+                    AssertSigilMesh(sigil, definitions[index].Id);
+                    ClickAt(card, sigil.rectTransform);
+                    AssertDetail(view, controller, snapshot.Modifiers[index], definitions[index]);
                     ClickAt(card, badge.Icon.rectTransform);
                     AssertDetail(view, controller, snapshot.Modifiers[index], definitions[index]);
-                    ClickAt(card, badge.Count.rectTransform);
-                    AssertDetail(view, controller, snapshot.Modifiers[index], definitions[index]);
+                    AssertDetailStatus(view, controller, snapshot.Modifiers[index], definitions[index], badge, details[index]);
                     if (index % 2 == 1)
                         yield return Capture("owned-status-row-" + (index / 2 + 1) + "-" + (int)size.x);
                 }
@@ -209,7 +220,6 @@ namespace Dice.Tests
             yield return null;
             var waitingBadge = cards[1].GetComponentInChildren<SpiritCharmStatusBadge>();
             Assert.That(waitingBadge.Presentation.State, Is.EqualTo(SpiritCharmStatusState.Inactive));
-            Assert.That(waitingBadge.Count.text, Is.EqualTo("1/1"));
             Assert.That(cards[2].GetComponentInChildren<SpiritCharmStatusBadge>().Presentation.State,
                 Is.EqualTo(SpiritCharmStatusState.Used));
             CenterCard(scroll, (RectTransform)cards[1].transform);
@@ -217,8 +227,19 @@ namespace Dice.Tests
             Canvas.ForceUpdateCanvases();
             ClickAt(cards[1], waitingBadge.Icon.rectTransform);
             AssertDetail(view, controller, controller.Snapshot.Modifiers[1], definitions[1]);
+            AssertDetailStatus(view, controller, controller.Snapshot.Modifiers[1], definitions[1], waitingBadge, "Encounter ended");
             AssertSymbol(waitingBadge.Icon, symbols, definitions[1].Id);
             yield return Capture("owned-status-inactive-540");
+            var emptyEncounter = new EncounterDefinition("encounter.owned-charm-empty",
+                new[] { new StageDefinition(1000000000, 3, 3) });
+            var emptyCatalog = new MechanicalCatalog("owned-charm-empty.v1", controller.Catalog.Hands,
+                new[] { emptyEncounter }, definitions);
+            controller.Initialize(emptyCatalog, emptyEncounter.Id, 60, Path.Combine(Path.GetDirectoryName(savePath), "empty-charms.json"));
+            view.ShowCharms();
+            yield return null;
+            Assert.That(Find<RectTransform>(view, "CharmDetailStatusRow").gameObject.activeSelf, Is.False);
+            Assert.That(Find<Image>(view, "CharmDetailIcon").gameObject.activeSelf, Is.False);
+            Assert.That(Find<SpiritModifierSigilGraphic>(view, "CharmDetailSigil").gameObject.activeSelf, Is.False);
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -236,10 +257,118 @@ namespace Dice.Tests
             Assert.That(title.text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
             Assert.That(body.text, Is.EqualTo(SpiritModifierPresentation.GetConditionText(definition) + "\n" +
                 SpiritModifierPresentation.GetEffectText(definition) + "\n" +
-                SpiritModifierPresentation.GetTimingText(definition) + "\n" + FullStatus(controller, instance) + "\n" +
+                SpiritModifierPresentation.GetTimingText(definition) + "\n" +
                 AvailabilityText(definition, controller.Snapshot)));
             AssertCompleteText(title, definition.Id + "/detail title");
             AssertCompleteText(body, definition.Id + "/detail body");
+            AssertDetailGraphic(view, definition);
+        }
+
+        private static void AssertOwnedGraphic(Button card, ModifierDefinition definition, SpiritCharmStatusBadge badge)
+        {
+            AssertCharmGraphic(card, "CharmIcon", "CharmSigil", definition, 36,
+                new[] { CardText(card, "Title").rectTransform, CardText(card, "Condition").rectTransform,
+                    CardText(card, "Effects").rectTransform, (RectTransform)badge.transform });
+        }
+
+        private static void AssertDetailGraphic(SpiritEncounterView view, ModifierDefinition definition)
+        {
+            var title = Find<Text>(view, "CharmDetailTitle");
+            AssertCharmGraphic(title.transform.parent, "CharmDetailIcon", "CharmDetailSigil", definition, 44,
+                new[] { title.rectTransform, Find<Text>(view, "CharmDetailBody").rectTransform,
+                    Find<RectTransform>(view, "CharmDetailStatusRow") });
+        }
+
+        private static void AssertCharmGraphic(Component root, string imageName, string sigilName,
+            ModifierDefinition definition, float size, RectTransform[] sections)
+        {
+            var image = Find<Image>(root, imageName);
+            var sigil = Find<SpiritModifierSigilGraphic>(root, sigilName);
+            var sprite = SpiritModifierIcons.GetSprite(definition);
+            Assert.That(image.gameObject.activeSelf, Is.EqualTo(sprite != null), definition.Id + "/" + imageName);
+            Assert.That(sigil.gameObject.activeSelf, Is.EqualTo(sprite == null), definition.Id + "/" + sigilName);
+            Assert.That(image.sprite, Is.SameAs(sprite), definition.Id + "/sprite");
+            Assert.That(sigil.Seed, Is.EqualTo(SpiritModifierIcons.GetSigilSeed(definition)), definition.Id + "/sigil seed");
+            Assert.That(image.raycastTarget, Is.False, definition.Id + " image must permit card inspection.");
+            Assert.That(sigil.raycastTarget, Is.False, definition.Id + " sigil must permit card inspection.");
+            Assert.That(image.preserveAspect, Is.True, definition.Id + "/sprite aspect");
+            var graphic = sprite != null ? image.rectTransform : sigil.rectTransform;
+            var panel = (RectTransform)graphic.parent;
+            var bounds = BoundsIn(panel, graphic);
+            Assert.That(graphic.rect.width, Is.EqualTo(size).Within(.01f), definition.Id + "/graphic width");
+            Assert.That(graphic.rect.height, Is.EqualTo(size).Within(.01f), definition.Id + "/graphic height");
+            AssertInside(panel.rect, bounds, definition.Id + "/graphic");
+            foreach (var section in sections)
+                Assert.That(bounds.Overlaps(BoundsIn(panel, section)), Is.False,
+                    definition.Id + " graphic overlaps " + section.name + ".");
+        }
+
+        private static void AssertRewardGraphic(SpiritRewardCard reward, Button card, SpiritEncounterView view,
+            ModifierDefinition definition)
+        {
+            reward.RenderModifier(definition, 1, 1);
+            var rewardImage = Find<Image>(reward, "CharmIcon");
+            var rewardSigil = Find<SpiritModifierSigilGraphic>(reward, "CharmSigil");
+            var image = Find<Image>(card, "CharmIcon");
+            var sigil = Find<SpiritModifierSigilGraphic>(card, "CharmSigil");
+            var detailImage = Find<Image>(view, "CharmDetailIcon");
+            var detailSigil = Find<SpiritModifierSigilGraphic>(view, "CharmDetailSigil");
+            Assert.That(image.gameObject.activeSelf, Is.EqualTo(rewardImage.gameObject.activeSelf), definition.Id);
+            Assert.That(sigil.gameObject.activeSelf, Is.EqualTo(rewardSigil.gameObject.activeSelf), definition.Id);
+            Assert.That(image.sprite, Is.SameAs(rewardImage.sprite), definition.Id + "/reward sprite");
+            Assert.That(detailImage.sprite, Is.SameAs(rewardImage.sprite), definition.Id + "/reward detail sprite");
+            Assert.That(sigil.Seed, Is.EqualTo(rewardSigil.Seed), definition.Id + "/reward sigil seed");
+            Assert.That(detailSigil.Seed, Is.EqualTo(rewardSigil.Seed), definition.Id + "/reward detail sigil seed");
+            Assert.That(sigil.color, Is.EqualTo(rewardSigil.color), definition.Id + "/reward sigil color");
+            Assert.That(detailSigil.color, Is.EqualTo(rewardSigil.color), definition.Id + "/reward detail sigil color");
+        }
+
+        private static void AssertSigilMesh(SpiritModifierSigilGraphic sigil, string context)
+        {
+            var mesh = sigil.canvasRenderer.GetMesh();
+            Assert.That(mesh, Is.Not.Null, context + " sigil must provide a rendered mesh.");
+            Assert.That(mesh.vertexCount, Is.GreaterThan(0), context + " sigil must draw visible geometry.");
+            var bounds = sigil.rectTransform.rect;
+            // Family marks extend beyond the central sigil's rectangle by less than a tenth of its size.
+            float margin = Mathf.Min(bounds.width, bounds.height) * .1f;
+            foreach (var vertex in mesh.vertices)
+            {
+                Assert.That(vertex.x, Is.InRange(bounds.xMin - margin, bounds.xMax + margin), context + "/sigil x");
+                Assert.That(vertex.y, Is.InRange(bounds.yMin - margin, bounds.yMax + margin), context + "/sigil y");
+            }
+        }
+
+        private static void AssertDetailStatus(SpiritEncounterView view, SpiritEncounterController controller,
+            ModifierInstanceSnapshot instance, ModifierDefinition definition, SpiritCharmStatusBadge cardBadge,
+            string expectedText = null)
+        {
+            var row = Find<RectTransform>(view, "CharmDetailStatusRow");
+            var label = Find<Text>(view, "CharmDetailStatus");
+            var badge = row.GetComponentInChildren<SpiritCharmStatusBadge>();
+            var inspection = controller.ModifierInspections.SingleOrDefault(value => value.InstanceId == instance.InstanceId);
+            var status = SpiritCharmStatusPresentation.Create(instance, definition, controller.Snapshot.Phase, inspection);
+            Assert.That(row.gameObject.activeSelf, Is.True, definition.Id);
+            Assert.That(badge, Is.Not.Null, definition.Id);
+            Assert.That(label.text, Is.EqualTo(expectedText ?? status.GetDetailText(definition.Phase, controller.Snapshot.Phase)),
+                definition.Id);
+            Assert.That(badge.Presentation.State, Is.EqualTo(cardBadge.Presentation.State), definition.Id);
+            Assert.That(badge.Icon.State, Is.EqualTo(cardBadge.Icon.State), definition.Id);
+            Assert.That(badge.GetComponentsInChildren<Text>(true), Is.Empty, definition.Id + "/detail badge text");
+            Assert.That(view.GetComponentsInChildren<Transform>(true).Any(value => value.name == "CharmDetailUseCount"),
+                Is.False, definition.Id + "/detail use count");
+            var panel = (RectTransform)row.parent;
+            var bounds = BoundsIn(panel, row);
+            var body = BoundsIn(panel, Find<Text>(view, "CharmDetailBody").rectTransform);
+            AssertInside(panel.rect, bounds, definition.Id + "/detail status row");
+            Assert.That(bounds.yMax, Is.LessThanOrEqualTo(body.yMin + .01f), definition.Id + " status row overlaps description.");
+            var labelBounds = BoundsIn(row, label.rectTransform);
+            var badgeBounds = BoundsIn(row, (RectTransform)badge.transform);
+            AssertInside(row.rect, labelBounds, definition.Id + "/detail status label");
+            AssertInside(row.rect, badgeBounds, definition.Id + "/detail status badge");
+            Assert.That(badgeBounds.xMin, Is.GreaterThan(labelBounds.xMax), definition.Id + " status label overlaps badge.");
+            var iconBounds = BoundsIn(row, badge.Icon.rectTransform);
+            AssertInside(badgeBounds, iconBounds, definition.Id + "/detail status icon");
+            if (!string.IsNullOrEmpty(label.text)) AssertCompleteText(label, definition.Id + "/detail status");
         }
 
         private static void AssertBadge(Button card, SpiritCharmStatusBadge badge, string context)
@@ -250,12 +379,10 @@ namespace Dice.Tests
             Assert.That(bounds.center.x, Is.GreaterThan(panel.rect.center.x), context + " badge must occupy the right corner.");
             Assert.That(bounds.center.y, Is.LessThan(panel.rect.center.y), context + " badge must occupy the bottom corner.");
             var icon = BoundsIn(panel, badge.Icon.rectTransform);
-            var count = BoundsIn(panel, badge.Count.rectTransform);
             AssertInside(bounds, icon, context + "/icon");
-            AssertInside(bounds, count, context + "/count");
-            Assert.That(count.xMin, Is.GreaterThan(icon.xMax), context + " icon and count overlap.");
+            Assert.That(badge.GetComponentsInChildren<Text>(true), Is.Empty, context + "/badge text");
             Assert.That(badge.Icon.raycastTarget, Is.False, context + " icon must permit card inspection.");
-            foreach (string name in new[] { "Title", "Condition", "Effects", "CharmIcon" })
+            foreach (string name in new[] { "Title", "Condition", "Effects", "CharmIcon", "CharmSigil" })
             {
                 var section = card.transform.Find(name) as RectTransform;
                 if (section == null || !section.gameObject.activeSelf) continue;
@@ -292,6 +419,36 @@ namespace Dice.Tests
                 Assert.That(vertex.x, Is.InRange(bounds.xMin, bounds.xMax), context + "/symbol x");
                 Assert.That(vertex.y, Is.InRange(bounds.yMin, bounds.yMax), context + "/symbol y");
             }
+            if (icon.State == SpiritCharmStatusState.Used)
+            {
+                var vertices = mesh.vertices;
+                var triangles = mesh.triangles;
+                float radius = Mathf.Min(bounds.width, bounds.height) * .3f;
+                for (int sample = 0; sample <= 16; ++sample)
+                {
+                    float angle = sample * Mathf.PI * 2 / 16;
+                    Vector3 point = bounds.center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) *
+                        (sample == 16 ? 0 : radius);
+                    bool covered = false;
+                    for (int triangle = 0; triangle < triangles.Length; triangle += 3)
+                    {
+                        Vector3 a = vertices[triangles[triangle]];
+                        Vector3 b = vertices[triangles[triangle + 1]];
+                        Vector3 c = vertices[triangles[triangle + 2]];
+                        if (Mathf.Abs(Vector3.Cross(b - a, c - a).z) < .0001f) continue;
+                        float first = Vector3.Cross(b - a, point - a).z;
+                        float second = Vector3.Cross(c - b, point - b).z;
+                        float third = Vector3.Cross(a - c, point - c).z;
+                        if ((first >= -.0001f && second >= -.0001f && third >= -.0001f) ||
+                            (first <= .0001f && second <= .0001f && third <= .0001f))
+                        {
+                            covered = true;
+                            break;
+                        }
+                    }
+                    Assert.That(covered, Is.True, context + "/used circle interior " + sample);
+                }
+            }
             if (!symbols.ContainsKey(icon.State))
             {
                 var vertices = mesh.vertices;
@@ -322,17 +479,9 @@ namespace Dice.Tests
             EventSystem.current.RaycastAll(pointer, hits);
             Assert.That(hits, Is.Not.Empty, card.name);
             var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
-            Assert.That(handler, Is.SameAs(card.gameObject), card.name + " badge must reach the card click handler.");
+            Assert.That(handler, Is.SameAs(card.gameObject), card.name + "/" + target.name + " must reach the card click handler.");
             pointer.pointerCurrentRaycast = hits[0];
             ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
-        }
-
-        private static string FullStatus(SpiritEncounterController controller, ModifierInstanceSnapshot instance)
-        {
-            if (controller.Snapshot.Phase != EncounterPhase.Playing && instance.ActivationsThisHand > 0)
-                return "Activated on last hand";
-            var inspection = controller.ModifierInspections.SingleOrDefault(value => value.InstanceId == instance.InstanceId);
-            return inspection == null ? "Kept for this run" : DiagnosticText.DescribeInspectionStatus(inspection.Status);
         }
 
         private static IEnumerator Wait(SpiritEncounterController controller)
@@ -366,19 +515,6 @@ namespace Dice.Tests
             var generated = label.cachedTextGenerator;
             Assert.That(generated.Populate(label.text, settings), Is.True, context);
             Assert.That(generated.vertexCount, Is.GreaterThanOrEqualTo(4), context);
-            if (label.text == "\u221e")
-            {
-                Assert.That(label.font.HasCharacter('\u221e'), Is.True, context + " font must contain infinity.");
-                var vertices = generated.verts;
-                Assert.That(vertices.Max(value => value.position.x) - vertices.Min(value => value.position.x),
-                    Is.GreaterThan(0), context + " infinity must have visible width.");
-                Assert.That(vertices.Max(value => value.position.y) - vertices.Min(value => value.position.y),
-                    Is.GreaterThan(0), context + " infinity must have visible height.");
-                Assert.That(vertices.Max(value => value.uv0.x) - vertices.Min(value => value.uv0.x),
-                    Is.GreaterThan(0), context + " infinity must sample a font atlas region.");
-                Assert.That(vertices.Max(value => value.uv0.y) - vertices.Min(value => value.uv0.y),
-                    Is.GreaterThan(0), context + " infinity must sample a font atlas region.");
-            }
             settings.fontSize = label.resizeTextForBestFit ? generated.fontSizeUsedForBestFit : label.fontSize;
             settings.resizeTextForBestFit = false;
             settings.verticalOverflow = VerticalWrapMode.Overflow;

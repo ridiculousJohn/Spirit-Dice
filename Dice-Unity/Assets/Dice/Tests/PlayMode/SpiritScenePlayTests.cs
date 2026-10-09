@@ -49,7 +49,7 @@ namespace Dice.Tests
             Assert.That(CardLabel(card.Button, "Title").text, Is.EqualTo("Quiet Grove / Base"));
             Assert.That(CardLabel(card.Button, "Condition").text, Is.EqualTo("No die shows 1 or 6."));
             Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("+15 base score"));
-            Assert.That(CardLabel(card.Button, "Status").text, Is.EqualTo("When played / Once per hand"));
+            Assert.That(CardLabel(card.Button, "Status").text, Is.EqualTo("When your hand is scored / Once per hand"));
             foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues" })
                 Assert.That(CardLabel(card.Button, name).gameObject.activeSelf, Is.False, name);
             card.Button.onClick.Invoke();

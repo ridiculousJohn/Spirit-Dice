@@ -9,27 +9,29 @@ namespace Dice.Presentation
         private Text title;
         private Text condition;
         private Text effects;
-        private Text status;
         private Image icon;
+        private SpiritModifierSigilGraphic sigil;
 
-        internal void Initialize(Text title, Text condition, Text effects, Text status, Image icon)
+        internal void Initialize(Text title, Text condition, Text effects, Image icon, SpiritModifierSigilGraphic sigil)
         {
             this.title = title;
             this.condition = condition;
             this.effects = effects;
-            this.status = status;
             this.icon = icon;
-            foreach (var label in new[] { title, condition, effects, status }) label.resizeTextForBestFit = false;
+            this.sigil = sigil;
+            foreach (var label in new[] { title, condition, effects }) label.resizeTextForBestFit = false;
         }
 
         internal float Arrange(float width)
         {
-            bool hasIcon = icon.gameObject.activeSelf;
+            bool hasIcon = icon.gameObject.activeSelf || sigil.gameObject.activeSelf;
             float titleLeft = hasIcon ? 58 : 16;
             float titleHeight = TextHeight(title, width - titleLeft - 16);
             Place(title, titleLeft, 16, 14, titleHeight);
             icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = new Vector2(0, 1);
             icon.rectTransform.anchoredPosition = new Vector2(34, -32);
+            sigil.rectTransform.anchorMin = sigil.rectTransform.anchorMax = icon.rectTransform.anchorMin;
+            sigil.rectTransform.anchoredPosition = icon.rectTransform.anchoredPosition;
             float top = 14 + Mathf.Max(titleHeight, hasIcon ? 36 : 0) + 8;
             foreach (var label in new[] { condition, effects })
             {

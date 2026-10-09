@@ -11,7 +11,6 @@ namespace Dice.Presentation
         public SpiritCharmStatusState State { get; }
         public int? RemainingUses { get; }
         public ModifierActivationLimit ActivationLimit { get; }
-        public string UseCountText => RemainingUses.HasValue ? (RemainingUses.Value == 0 ? "0/1" : "1/1") : "\u221e";
 
         private SpiritCharmStatusPresentation(SpiritCharmStatusState state, int? remainingUses,
             ModifierActivationLimit activationLimit)
@@ -19,6 +18,22 @@ namespace Dice.Presentation
             State = state;
             RemainingUses = remainingUses;
             ActivationLimit = activationLimit;
+        }
+
+        public string GetDetailText(ModifierPhase phase, EncounterPhase encounterPhase)
+        {
+            switch (State)
+            {
+                case SpiritCharmStatusState.Ready: return "Ready";
+                case SpiritCharmStatusState.WaitingCondition: return "Waiting";
+                case SpiritCharmStatusState.Used:
+                    return ActivationLimit == ModifierActivationLimit.OncePerStage ? "Activated this stage" : "Activated this hand";
+                case SpiritCharmStatusState.OnRoll:
+                    return phase == ModifierPhase.InitialRoll ? "On the initial roll" : "After a reroll";
+                case SpiritCharmStatusState.Inactive:
+                    return encounterPhase == EncounterPhase.Completed ? "Encounter ended" : "Between stages";
+                default: return "";
+            }
         }
 
         public static SpiritCharmStatusPresentation Create(ModifierInstanceSnapshot instance,

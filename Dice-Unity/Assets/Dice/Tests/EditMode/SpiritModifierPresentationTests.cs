@@ -41,17 +41,17 @@ namespace Dice.Tests
         };
 
         [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair / Base", typeof(InitialPairCondition),
-            "Your initial roll is a Pair.", "+10 base score", "On initial roll / Once per hand")]
+            "Your initial roll is a Pair.", "+10 base score", "On the initial roll / Once per hand")]
         [TestCase("modifier.player_reroll.selected_face_unchanged.rerolls", "Second Chance / Rerolls", typeof(SelectedFaceUnchangedCondition),
-            "At least one rerolled die keeps its face.", "+1 reroll", "After rerolling / Once per hand")]
+            "At least one rerolled die keeps its face.", "+1 reroll", "After a reroll / Once per hand")]
         [TestCase("modifier.player_reroll.last_reroll_on_last_hand.combined", "Last Lantern / Base + Mult", typeof(LastRerollOnLastHandCondition),
-            "Spend your last reroll on your last hand.", "+10 base score, +2 multiplier", "After rerolling / Once per hand")]
+            "Spend your last reroll on your last hand.", "+10 base score, +2 multiplier", "After a reroll / Once per hand")]
         [TestCase("modifier.play_hand.no_extreme_faces.base_score", "Quiet Grove / Base", typeof(NoExtremeFacesCondition),
-            "No die shows 1 or 6.", "+15 base score", "When played / Once per hand")]
+            "No die shows 1 or 6.", "+15 base score", "When your hand is scored / Once per hand")]
         [TestCase("modifier.play_hand.contains_face.multiplier", "One Spark / Mult", typeof(ContainsFaceCondition),
-            "At least one die shows 1.", "+2 multiplier", "When played / Once per hand")]
+            "At least one die shows 1.", "+2 multiplier", "When your hand is scored / Once per hand")]
         [TestCase("modifier.play_hand.middle_unique.combined", "Lone Watcher / Base + Mult", typeof(MiddleUniqueCondition),
-            "The middle die has a face no other die shows.", "+5 base score, +1 multiplier", "When played / Once per hand")]
+            "The middle die has a face no other die shows.", "+5 base score, +1 multiplier", "When your hand is scored / Once per hand")]
         public void AuthoredIdentityDescribesTheActualStandardDefinition(string id, string name, Type conditionType,
             string conditionText, string effectText, string timingText)
         {
@@ -235,15 +235,15 @@ namespace Dice.Tests
             Assert.That(SpiritModifierPresentation.GetConditionText(changed), Is.EqualTo("Always meets its condition."));
         }
 
-        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand, "On initial roll / Once per hand")]
-        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerStage, "On initial roll / Once per stage")]
-        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.Unlimited, "On initial roll / Every time")]
-        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand, "After rerolling / Once per hand")]
-        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerStage, "After rerolling / Once per stage")]
-        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.Unlimited, "After rerolling / Every time")]
-        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand, "When played / Once per hand")]
-        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerStage, "When played / Once per stage")]
-        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited, "When played / Every time")]
+        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand, "On the initial roll / Once per hand")]
+        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerStage, "On the initial roll / Once per stage")]
+        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.Unlimited, "On the initial roll / Every time")]
+        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand, "After a reroll / Once per hand")]
+        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerStage, "After a reroll / Once per stage")]
+        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.Unlimited, "After a reroll / Every time")]
+        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand, "When your hand is scored / Once per hand")]
+        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerStage, "When your hand is scored / Once per stage")]
+        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited, "When your hand is scored / Every time")]
         public void TimingTextUsesCurrentPhaseAndActivationLimit(ModifierPhase phase, ModifierActivationLimit limit, string expected)
         {
             var original = Catalog().GetModifier(AuthoredIds[0]);

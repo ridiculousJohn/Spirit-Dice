@@ -22,6 +22,19 @@ namespace Dice.Presentation
             float size = Mathf.Min(rect.width, rect.height);
             float width = Mathf.Max(1, size * .065f);
             const int segments = 32;
+            if (state == SpiritCharmStatusState.Used)
+            {
+                vertices.AddVert(center, color, Vector2.zero);
+                for (int i = 0; i < segments; ++i)
+                {
+                    float angle = i * Mathf.PI * 2 / segments;
+                    vertices.AddVert(center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * size * .43f,
+                        color, Vector2.zero);
+                }
+                for (int i = 0; i < segments; ++i)
+                    vertices.AddTriangle(0, (i + 1) % segments + 1, i + 1);
+                return;
+            }
             for (int i = 0; i < segments; ++i)
             {
                 float start = i * Mathf.PI * 2 / segments;
@@ -40,10 +53,6 @@ namespace Dice.Presentation
                     Stroke(vertices, center, size, width, new Vector2(-.18f, -.23f), new Vector2(.18f, -.23f));
                     Stroke(vertices, center, size, width, new Vector2(-.15f, .21f), new Vector2(.15f, -.21f));
                     Stroke(vertices, center, size, width, new Vector2(.15f, .21f), new Vector2(-.15f, -.21f));
-                    break;
-                case SpiritCharmStatusState.Used:
-                    Stroke(vertices, center, size, width, new Vector2(-.19f, -.19f), new Vector2(.19f, .19f));
-                    Stroke(vertices, center, size, width, new Vector2(-.19f, .19f), new Vector2(.19f, -.19f));
                     break;
                 case SpiritCharmStatusState.OnRoll:
                     for (int i = 0; i < 20; ++i)

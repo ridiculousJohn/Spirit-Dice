@@ -116,9 +116,9 @@ namespace Dice.Presentation
             string phase;
             switch (definition.Phase)
             {
-                case ModifierPhase.InitialRoll: phase = "On initial roll"; break;
-                case ModifierPhase.PlayerReroll: phase = "After rerolling"; break;
-                case ModifierPhase.PlayHand: phase = "When played"; break;
+                case ModifierPhase.InitialRoll: phase = "On the initial roll"; break;
+                case ModifierPhase.PlayerReroll: phase = "After a reroll"; break;
+                case ModifierPhase.PlayHand: phase = "When your hand is scored"; break;
                 default: phase = DiagnosticText.Humanize(definition.Phase.ToString()); break;
             }
             string limit;

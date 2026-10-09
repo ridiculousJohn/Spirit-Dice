@@ -107,11 +107,15 @@ namespace Dice.Presentation
         private Text profileSummary;
         private Text charmTitle;
         private Text charmDetail;
+        private RectTransform charmDetailStatusRow;
+        private Text charmDetailStatus;
+        private SpiritCharmStatusBadge charmDetailBadge;
         private Text charmCount;
         private Text selectionLabel;
         private SpiritUiOrnament modifierEmblem;
         private Image modifierActivationIcon;
         private Image charmDetailIcon;
+        private SpiritModifierSigilGraphic charmDetailSigil;
         private CounterHighlight baseScoreHighlight;
         private CounterHighlight multiplierHighlight;
         private CounterHighlight rerollsHighlight;
@@ -141,8 +145,8 @@ namespace Dice.Presentation
             internal Text Title;
             internal Text Body;
             internal Text Effect;
-            internal Text Status;
             internal Image Icon;
+            internal SpiritModifierSigilGraphic Sigil;
             internal SpiritCharmCardLayout Layout;
             internal SpiritCharmStatusBadge Badge;
             internal long OfferId;
@@ -655,6 +659,21 @@ namespace Dice.Presentation
             card.Icon.sprite = definition == null ? null : SpiritModifierIcons.GetSprite(definition);
             bool visible = card.Icon.sprite != null;
             card.Icon.gameObject.SetActive(visible);
+            if (definition != null) card.Sigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            card.Sigil.gameObject.SetActive(definition != null && !visible);
+        }
+
+        private static SpiritModifierSigilGraphic MakeCharmSigil(string name, Image icon)
+        {
+            var rect = SpiritUi.Rect(name, icon.transform.parent, icon.rectTransform.anchorMin, icon.rectTransform.anchorMax);
+            rect.pivot = icon.rectTransform.pivot;
+            rect.anchoredPosition = icon.rectTransform.anchoredPosition;
+            rect.sizeDelta = icon.rectTransform.sizeDelta;
+            var sigil = rect.gameObject.AddComponent<SpiritModifierSigilGraphic>();
+            sigil.color = SpiritUi.Amber;
+            sigil.raycastTarget = false;
+            sigil.gameObject.SetActive(false);
+            return sigil;
         }
 
         private void BuildRewards()
@@ -729,6 +748,7 @@ namespace Dice.Presentation
             charmTitle = SpiritUi.Heading("CharmDetailTitle", details.transform, "No charms yet", 23, new Vector2(0, .72f), Vector2.one);
             charmDetailIcon = MakeIcon("CharmDetailIcon", details.transform, new Vector2(0, .86f), 44);
             charmDetailIcon.rectTransform.anchoredPosition = new Vector2(42, 0);
+            charmDetailSigil = MakeCharmSigil("CharmDetailSigil", charmDetailIcon);
             charmDetail = SpiritUi.Label("CharmDetailBody", details.transform, "Clear a stage to choose a charm.", 17,
                 Vector2.zero, new Vector2(1, .72f));
             foreach (var text in new[] { charmTitle, charmDetail })
@@ -736,8 +756,16 @@ namespace Dice.Presentation
                 text.rectTransform.offsetMin = new Vector2(24, 5);
                 text.rectTransform.offsetMax = new Vector2(-24, -5);
             }
+            charmDetailStatusRow = SpiritUi.Rect("CharmDetailStatusRow", details.transform, Vector2.zero, Vector2.one);
+            charmDetailStatus = SpiritUi.Label("CharmDetailStatus", charmDetailStatusRow, "", 17,
+                Vector2.zero, Vector2.one, TextAnchor.MiddleLeft);
+            charmDetailStatus.resizeTextForBestFit = false;
+            charmDetailBadge = SpiritCharmStatusBadge.Create(charmDetailStatusRow);
+            ((RectTransform)charmDetailBadge.transform).anchoredPosition = Vector2.zero;
+            charmDetailStatusRow.gameObject.SetActive(false);
             charmDetailsLayout = details.gameObject.AddComponent<SpiritCharmDetailsLayout>();
-            charmDetailsLayout.Initialize(charmTitle, charmDetail, charmDetailIcon, (RectTransform)scroll.transform);
+            charmDetailsLayout.Initialize(charmTitle, charmDetail, charmDetailIcon, (RectTransform)scroll.transform,
+                charmDetailStatusRow, charmDetailStatus, charmDetailBadge, charmDetailSigil);
             charmsPanel.gameObject.SetActive(false);
         }
 
@@ -1455,13 +1483,12 @@ namespace Dice.Presentation
                 new Vector2(0, .70f), new Vector2(1, .96f), TextAnchor.MiddleLeft, SpiritUi.Cream);
             card.Icon = MakeIcon("CharmIcon", image.transform, new Vector2(0, .83f), 36);
             card.Icon.rectTransform.anchoredPosition = new Vector2(42, 0);
+            card.Sigil = MakeCharmSigil("CharmSigil", card.Icon);
             card.Body = SpiritUi.Label("Condition", image.transform, "", 17,
                 new Vector2(0, .40f), new Vector2(1, .70f));
             card.Effect = SpiritUi.Label("Effects", image.transform, "", 17, new Vector2(0, .20f), new Vector2(1, .4f),
                 TextAnchor.MiddleLeft, SpiritUi.Amber);
-            card.Status = SpiritUi.Label("Status", image.transform, "", 14, Vector2.zero, new Vector2(1, .20f),
-                TextAnchor.MiddleRight, SpiritUi.Muted);
-            foreach (var text in new[] { card.Title, card.Body, card.Effect, card.Status })
+            foreach (var text in new[] { card.Title, card.Body, card.Effect })
             {
                 text.rectTransform.offsetMin = new Vector2(24, 5);
                 text.rectTransform.offsetMax = new Vector2(-24, -5);
@@ -1469,9 +1496,6 @@ namespace Dice.Presentation
                 text.resizeTextMinSize = 14;
                 text.resizeTextMaxSize = text.fontSize;
             }
-            card.Status.rectTransform.offsetMin = new Vector2(24, 0);
-            card.Status.rectTransform.offsetMax = new Vector2(-24, 0);
-            card.Status.resizeTextMinSize = 12;
             card.Title.resizeTextForBestFit = true;
             card.Title.resizeTextMinSize = 14;
             card.Title.resizeTextMaxSize = owned ? 17 : 18;
@@ -1479,10 +1503,9 @@ namespace Dice.Presentation
             {
                 card.Body.fontSize = 15;
                 card.Effect.fontSize = 16;
-                card.Status.fontSize = 13;
                 card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
-                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Status, card.Icon);
-                card.Badge = SpiritCharmStatusBadge.Create(image.transform, card.Status);
+                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil);
+                card.Badge = SpiritCharmStatusBadge.Create(image.transform);
             }
             button.onClick.AddListener(() =>
             {
@@ -1565,10 +1588,7 @@ namespace Dice.Presentation
                     card.Title.text = CharmName(definition);
                     card.Body.text = SpiritModifierPresentation.GetConditionText(definition);
                     card.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-                    ModifierInspection inspection = null;
-                    foreach (var candidate in controls.ModifierInspections)
-                        if (candidate.InstanceId == instance.InstanceId) { inspection = candidate; break; }
-                    card.Badge.Render(SpiritCharmStatusPresentation.Create(instance, definition, snapshot.Phase, inspection));
+                    card.Badge.Render(CharmStatus(instance, definition));
                 }
                 charmGrid.RefreshLayout();
             }
@@ -1582,13 +1602,12 @@ namespace Dice.Presentation
             return false;
         }
 
-        private string CharmStatus(ModifierInstanceSnapshot instance)
+        private SpiritCharmStatusPresentation CharmStatus(ModifierInstanceSnapshot instance, ModifierDefinition definition)
         {
-            if (controls.Snapshot.Phase != EncounterPhase.Playing && instance.ActivationsThisHand > 0)
-                return "Activated on last hand";
-            foreach (var inspection in controls.ModifierInspections)
-                if (inspection.InstanceId == instance.InstanceId) return DiagnosticText.DescribeInspectionStatus(inspection.Status);
-            return "Kept for this run";
+            ModifierInspection inspection = null;
+            foreach (var candidate in controls.ModifierInspections)
+                if (candidate.InstanceId == instance.InstanceId) { inspection = candidate; break; }
+            return SpiritCharmStatusPresentation.Create(instance, definition, controls.Snapshot.Phase, inspection);
         }
 
         private void RenderCharmDetail()
@@ -1599,11 +1618,18 @@ namespace Dice.Presentation
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                 charmDetailIcon.sprite = SpiritModifierIcons.GetSprite(definition);
                 charmDetailIcon.gameObject.SetActive(charmDetailIcon.sprite != null);
+                charmDetailSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+                charmDetailSigil.gameObject.SetActive(charmDetailIcon.sprite == null);
                 charmTitle.text = CharmName(definition);
                 charmDetail.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
                     SpiritModifierPresentation.GetEffectText(definition) + "\n" +
-                    SpiritModifierPresentation.GetTimingText(definition) + "\n" + CharmStatus(instance) + "\n" +
+                    SpiritModifierPresentation.GetTimingText(definition) + "\n" +
                     AvailabilityText(definition);
+                var status = CharmStatus(instance, definition);
+                charmDetailBadge.Render(status);
+                charmDetailStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase);
+                charmDetailStatus.color = charmDetailBadge.Icon.color;
+                charmDetailStatusRow.gameObject.SetActive(true);
                 charmDetailsLayout.RefreshLayout();
                 foreach (var card in charmCards)
                     card.Button.GetComponent<Image>().color = card.InstanceId == selectedCharm ? new Color32(255, 232, 179, 255) : Color.white;
@@ -1612,7 +1638,9 @@ namespace Dice.Presentation
             charmTitle.text = "No charms yet";
             charmDetailIcon.sprite = null;
             charmDetailIcon.gameObject.SetActive(false);
+            charmDetailSigil.gameObject.SetActive(false);
             charmDetail.text = "Clear a stage to choose a charm.";
+            charmDetailStatusRow.gameObject.SetActive(false);
             charmDetailsLayout.RefreshLayout();
         }
     }
