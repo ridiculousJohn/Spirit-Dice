@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.rank_equals_before_reroll.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
-  displayName: Still Reflection
+  displayName: Still Reflection / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

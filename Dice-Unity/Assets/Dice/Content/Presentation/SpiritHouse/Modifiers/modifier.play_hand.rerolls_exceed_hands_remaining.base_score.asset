@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rerolls_exceed_hands_remaining.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 559fb63ecd56d2641ad00b247e295987, type: 2}
-  displayName: Full Seed Pouch
+  displayName: Full Seed Pouch / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

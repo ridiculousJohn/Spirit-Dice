@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 9cc8cea4a07a7af4d9e0656c59eadcf0, type: 2}
-  displayName: Counting Bead
+  displayName: Counting Bead / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

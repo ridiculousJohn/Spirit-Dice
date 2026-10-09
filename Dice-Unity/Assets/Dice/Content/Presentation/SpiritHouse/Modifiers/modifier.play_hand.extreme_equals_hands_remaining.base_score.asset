@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.extreme_equals_hands_remaining.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 8ea2e29b269afa44a836e08f3e9c6b37, type: 2}
-  displayName: Boundary Stone
+  displayName: Boundary Stone / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

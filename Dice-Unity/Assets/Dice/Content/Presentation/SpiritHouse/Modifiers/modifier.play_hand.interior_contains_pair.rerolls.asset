@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_contains_pair.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ffaf613f40d05bc439903b593a5cac05, type: 2}
-  displayName: Nestled Twins
+  displayName: Nestled Twins / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

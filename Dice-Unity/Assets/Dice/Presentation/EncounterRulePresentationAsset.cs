@@ -8,12 +8,14 @@ namespace Dice.Presentation
     {
         [SerializeField] private string ruleId;
         [SerializeField] private string displayName;
+        [SerializeField, TextArea] private string description;
         [SerializeField] private string availableText;
         [SerializeField] private string usedText;
         [SerializeField] private Sprite icon;
 
         public string RuleId => ruleId;
         public string DisplayName => displayName;
+        public string Description => string.IsNullOrWhiteSpace(description) ? availableText : description;
         public string AvailableText => availableText;
         public string UsedText => usedText;
         public Sprite Icon => icon;

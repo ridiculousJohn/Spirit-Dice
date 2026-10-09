@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.never.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: db3d1d79bec7b5b4cb61a393742a03e4, type: 2}
-  displayName: Sleeping Stone
+  displayName: Sleeping Stone / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

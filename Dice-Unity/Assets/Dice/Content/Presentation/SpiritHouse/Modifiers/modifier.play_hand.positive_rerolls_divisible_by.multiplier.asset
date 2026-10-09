@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.positive_rerolls_divisible_by.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: eceffb52af06e5049a95f5663720f13a, type: 2}
-  displayName: Spare Beads
+  displayName: Spare Beads / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

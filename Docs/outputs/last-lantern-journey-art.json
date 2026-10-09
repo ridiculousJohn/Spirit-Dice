@@ -1,0 +1,8 @@
+{
+  "tool": "Built-in image_gen.imagegen",
+  "date": "2026-10-09",
+  "use": "Investigation card, illustrated approach, and parting door transition",
+  "reference": "Dice-Unity/Assets/Dice/Art/SpiritHousePrototype/LanternRoomSeated.png",
+  "asset": "Dice-Unity/Assets/Dice/Art/SpiritHousePrototype/LanternDoorway.png",
+  "prompt": "Use case: stylized-concept. Asset type: portrait background illustration for a Unity spirit encounter opening. Generate a new exterior view matching the richly textured painterly realism, warm amber lantern light, dark weathered timber, deep green shadows, and cool blue rainy night of the supplied interior style reference. Stand directly outside a mysterious small tea house. Large CLOSED pair of timber-framed translucent paper sliding doors centered, filling the middle two-thirds of image; simple broad cream paper panels, with central vertical join. Wooden lintel, amber hanging lantern to right, a little autumn foliage, wet stone threshold and steps below reflecting warm light. Frontal viewpoint, believable perspective, cozy but uncanny. Upper door paper panels unobstructed for a moving shadow added at runtime. No fox, no person, no animal, no silhouette baked in. No lettering, UI, symbols, text or watermark. This is the exterior of the reference room, not an edit of its interior. Portrait 9:16 composition."
+}

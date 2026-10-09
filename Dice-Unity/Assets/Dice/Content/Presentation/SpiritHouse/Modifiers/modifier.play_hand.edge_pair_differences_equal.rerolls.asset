@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_pair_differences_equal.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: dedb1f74abc2c9449b78a1869e3ecb76, type: 2}
-  displayName: Twin Footprints
+  displayName: Twin Footprints / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

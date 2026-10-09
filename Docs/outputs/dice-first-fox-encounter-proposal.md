@@ -1,22 +1,34 @@
 # First fox encounter and progression proposal
 
-Draft for John Price. October 8, 2026.
+Design and implementation notes for John Price. Updated October 9, 2026.
 
 The first fox encounter introduces spirit bargains through ten stages, twelve modifier conditions, and a free first reroll on each hand. Planned milestone rewards persist after a loss. Modifier strength stays at the existing catalog values; the encounter's length, targets, and reward policy accommodate the smaller pool.
 
-The first playable configuration implements the ten-stage encounter, starting pools, reward policy, and free-first-reroll rule described below. The thresholds remain playtest starting values, not a measured difficulty curve. Persistent milestone rewards, profile unlocks, consumables, story rewards, and rematches remain proposals for subsequent work.
+The playable configuration implements the ten-stage encounter, curated pools, reward tiers, free-first-reroll rule, persistent modifier unlocks, completion history, investigation selection, the arrival and bargain sequence, and a story clue earned on victory. The thresholds and tier assignments remain playtest starting values, not a measured difficulty curve. Consumables, a physical token collection, and rematches remain proposals for subsequent work.
 
 ## Implementation boundaries
 
-`SpiritHousePrototype` starts `encounter.fox.introduction`. The existing 25-stage `encounter.standard` remains available to diagnostics, tests, and existing saves. Mechanical rules are immutable engine objects built from encounter rule ScriptableObjects. The fox's rule wording and optional sprite are authored separately in `FoxCourtesy.asset`, referenced by the presentation.
+`SpiritHousePrototype` opens the investigation catalog. Selecting The Last Lantern presents its approach, arrival, bargain, and invitation. Accepting creates `encounter.fox.introduction` and animates its initial roll. The 25-stage `encounter.standard` remains available to diagnostics and direct initialization with its existing targets and resource cadence. The investigation's load action requires an authored journey for the saved encounter ID. New offers use scoped collection eligibility and tier schedules; tests retain the historical uniform reward trace in an explicit reference fixture. Mechanical rules are immutable engine objects built from encounter rule ScriptableObjects. The fox's rule wording and optional sprite are authored separately in `FoxCourtesy.asset`, referenced by the presentation.
 
-Accepted reroll actions still drive modifier conditions. Separate stage and cumulative free-use counters account for the resource discount. Save format 2 / rules version 4 stores this accounting; format 1 / rules version 3 can still restore encounters without encounter rules and is written in the current format on the next save.
+Accepted reroll actions still drive modifier conditions. Separate stage and cumulative free-use counters account for the resource discount. Save format 3 / rules version 5 stores rule accounting, permanent modifier eligibility, run-earned unlocks, and the unlock context used to generate a pending offer. Format 1 / rules version 3 and format 2 / rules version 4 remain readable; the oldest format requires an encounter without rules. Legacy owned charms and already-generated offers survive migration. Future offers use the progression rules.
 
 ## Encounter configuration
 
-The investigator enters The Last Lantern following evidence that a missing person visited the fox. Victory earns a concrete lead, the fox's token, and access to an optional rematch. Spirits and encounters have separate identities, allowing this host to return with a different challenge and story purpose.
+### Journey authoring
 
-Use a separate mechanical encounter definition for this first meeting. Preserve `encounter.standard` as the existing 25-stage reference configuration. The first meeting starts with no owned charms and all eight hand categories at level zero. Every stage starts with three hands and three paid rerolls. Paid rerolls are shared across the stage; they do not refill for each hand. Stage resources reset on entering the next stage as they do now.
+`Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset` lists selectable journeys. Each `EncounterJourneyAsset` owns its mechanical encounter ID, investigation lead, ordered presentation beats, table presentation, ending dialogue, and completion clue. `LastLanternJourney.asset` is the authored first example; the shared controller and views do not select behavior by its ID or spirit identity.
+
+The six player-facing steps are investigation selection, the illustrated approach with a moving silhouette, arrival at the table, the host's bargain, the invitation with its exact rule description, and acceptance followed by the opening roll. Beat data selects textures, foreground clipping and motion, timing, optional audio, and a fade or parting-panel transition. `LastLanternTable.asset` selects the room, sound theme, rule presentations, and host factory. `LanternKeeperHost.asset` supplies the specialized fox portrait and sigil implementation through the common host interface.
+
+Investigation and introduction do not create a dice session or advance gameplay randomness. Acceptance records the visit in the JSON profile before creating the session. Returning visits can skip immediately to the invitation. Back cancels the introduction. Returning to the investigation during an active run retains that run for Continue at the table; loading resumes the saved phase and pending offer without replaying the introduction or initial roll. Wins and losses show their authored closing exchange, statistics, and unlocks. Victory exposes the authored completion clue on the investigation board through the persistent completion record.
+
+To add an encounter, supply its mechanical definition, create a journey and table asset, author the beats and endings, and add the journey to the catalog. Use a host presentation asset compatible with the desired renderer, or omit the host. Presentation data validates its rule IDs against the selected mechanical definition. The current illustrated sequence uses the same controller and views as the unrelated encounter fixtures in the regression tests.
+
+The doorway illustration is `Assets/Dice/Art/SpiritHousePrototype/LanternDoorway.png`. Its built-in image generation prompt and provenance are recorded in `last-lantern-journey-art.json` beside this document.
+
+The investigator enters The Last Lantern following evidence that a missing person visited the fox. Victory earns a concrete lead. The larger progression proposal adds the fox's token and access to an optional rematch. Spirits and encounters have separate identities, allowing this host to return with a different challenge and story purpose.
+
+Use a separate mechanical encounter definition for this first meeting. Keep the existing 25-stage targets and resource cadence of `encounter.standard`; apply progression eligibility and its own tier schedule to new offers. The first meeting starts with no owned charms and all eight hand categories at level zero. Every stage starts with three hands and three paid rerolls. Paid rerolls are shared across the stage; they do not refill for each hand. Stage resources reset on entering the next stage as they do now.
 
 | Stage | Proposed target | Existing Standard target | Permanent reward on first clear of this milestone |
 | --- | ---: | ---: | --- |
@@ -93,7 +105,7 @@ Charm offers normally contain one base variant, one multiplier variant, and one 
 
 Keep one starting offer refresh, one earned per nonfinal stage clear, and a cost of one per refresh. Retain the existing offer-history behavior and distinct-family rule. Use no inert fallback in these pools.
 
-Each effect pool begins with twelve distinct families. Before the ninth offer, at most eight definitions can be owned, so every effect pool still has at least four unowned definitions. Even after excluding the families picked for the first two offer slots, the third slot has candidates. Existing refresh-history relaxation prevents historical exclusions from exhausting an otherwise valid pool.
+Each effect pool has twelve initial families plus three milestone families. Before the ninth offer, at most eight definitions can be owned, so initial content alone retains at least four unowned definitions per effect pool before tier filtering. History relaxation and minimum-tier exhaustion fallback retain choices without bypassing collection or scope restrictions.
 
 Keep four hand-upgrade choices and the existing upgrade amounts and six-level caps. Exclude only the immediately previous upgrade choice, instead of Standard's three-choice history window. This lets a short run invest repeatedly in a preferred hand category while still making occasional alternative choices. Hands remain at level zero when a new encounter begins.
 
@@ -109,13 +121,37 @@ Unlock all four variants of each milestone family together:
 
 The initial pool is 48 definitions. These rewards expand the player's available set to 52, then 56, then 60. Future modifiers are eligible rewards, not automatically owned charms.
 
-Freeze the run's eligible modifier IDs when it starts. A milestone unlock is recorded immediately in the player profile and becomes available when starting the next encounter or retry. The unlock message must say this explicitly. Saving and resuming a run preserves that run's eligibility set even if the profile subsequently changes. Later visits to the first encounter may use its initial families plus these three unlocked families; unrelated future unlocks do not automatically enter every encounter's pool.
+Milestone unlocks are recorded immediately in spirit-profile.json through Newtonsoft JSON and can appear in the current run's subsequent offers, subject to its tier schedule. They survive losses, retries, application restarts, and loading an older run. Unlocking does not equip a charm. Already-generated offers retain their choices when a newer profile is merged; refreshes and later offers use the expanded set. The three fox milestone families use Spirit scope with spirit.fox, so they are available only in permitted pools for fox encounters. A later fox encounter can reuse those unlocks; another spirit cannot offer them.
 
 Milestones grant their profile rewards once, on first achievement. A loss after clearing stage 3 or 6 retains those rewards. Replaying or loading the same milestone cannot duplicate them. These initial rewards are not a repeatable consumable farm; repeatable earning rules can be designed separately.
 
 The proposed consumables are one extra paid reroll, one free modifier-offer refresh, and one extra hand. Bring at most three individual consumable charges into an encounter, with duplicates allowed. Newly earned charges enter the persistent inventory for a future loadout. Unused brought charges remain owned; used charges remain consumed even if the encounter is lost or an earlier run save is loaded. Inventory and run saves must agree on each consumption transaction. An extra hand must be used while the stage is active, before a failed encounter has ended.
 
 Victory records the fox token, advances the investigation, and unlocks an optional fox rematch entry. That rematch keeps the signature rule and is tuned against the 60 definitions guaranteed by the first victory. Its longer target curve should follow testing of this opening configuration; it does not need a new spirit model or location to exercise the progression flow.
+
+
+## Modifier availability and reward tiers
+
+Each mechanical ModifierAsset authors powerTier, access, availabilityScope, and availabilityScopeId. Presentation names, artwork, and descriptions remain in separate presentation assets. Reward pool membership, access, scope, ownership, family exclusions, and tier rules must all allow a choice.
+
+Access is Starter (no unlock needed), PermanentUnlock (the player profile must contain its ID), or EncounterExclusive (available without a permanent unlock within its authored scope). Scope is Global, Spirit with a spirit ID, or Encounter with an encounter ID. An exclusive modifier requires a non-global scope. A permanently unlocked modifier may have any of the three scopes.
+
+The initial collection contains 44 global starter definitions. Welcoming Pair's four variants are exclusive to encounter.fox.introduction and bring its initial pool to 48. Each fox effect pool also lists the three locked milestone definitions for that effect, making 60 possible definitions after all milestones. Other functional definitions require permanent unlocks; their future unlock sources are not yet authored. The standard encounter also uses the player's eligible collection and a tier schedule.
+
+Tier values are authored data. The initial assignment groups the existing effect magnitudes into three provisional tiers; activation difficulty and combinations still require playtesting. No tier calculation runs when loading content.
+
+| Incoming playable stages | Fox start stage | Standard start stage | Tier 1 / 2 / 3 weights |
+| --- | ---: | ---: | --- |
+| Opening | 1 | 1 | 100 / 0 / 0 |
+| Developing | 4 | 9 | 60 / 35 / 5 |
+| Late | 7 | 17 | 30 / 50 / 20 |
+| Final | 10 | 23 | 15 / 45 / 40 |
+
+At the first developing and late offers, choices require at least tier 2 while an eligible candidate exists in that slot. The first final offer requires tier 3 while available. If the minimum tier has been exhausted or excluded by current-offer family uniqueness, the slot uses its normally weighted eligible pool. This never bypasses unlock or scope requirements. A tier is chosen by weight, then a modifier uniformly within that tier, so adding more assets to a tier does not inflate its probability.
+
+Unlock milestones refer to the stage just cleared; tier schedules refer to the stage the reward prepares for. Clearing fox stage 3 grants Open Gate before generating the incoming stage 4 offer. Its tier 1 variants can appear in subsequent ordinary offers; the stage 4 guaranteed stronger offer still follows its tier rule.
+
+Profile writes use a temporary file and atomic replacement with a backup. A corrupt profile is reported without overwriting it. A failed milestone write retains dirty progress in memory and blocks further actions, loading, or starting another run until a retry succeeds. Encounter saves remain separate and cannot remove persistent unlocks. Consumable transactions are outside this implementation.
 
 ## Exact catalog mapping
 
@@ -143,7 +179,7 @@ For each family below, include the four existing IDs formed by appending `.base_
 
 1. Add the reusable free-first-reroll rule, including zero-budget action availability, ordinary modifier activation, action/resource accounting, and save continuity. Keep host identity and visual cues in presentation data.
 2. Author the ten-stage encounter and its pools. Eligible content must be explicit in each run, with no hidden dependency on mutable profile data during resolution.
-3. Add the Newtonsoft JSON player profile, milestone grants, and encounter selection. Grant completion rewards once, preserve them through losses, and keep multiple encounters associated with the same presentation host.
+3. The Newtonsoft JSON player profile and milestone grants are implemented. Encounter selection remains future work. Multiple encounter definitions can share a spirit ID without sharing presentation data.
 4. Implement the three consumables and loadout, with persistence that prevents duplicate use or duplicated milestone grants.
 5. Test fresh-profile attempts with no consumables across many seeds, then compare experienced strategies and human novice sessions. Measure stage-of-loss distribution, full-run completion rate, run duration, and which families are selected and activate. Tune targets and offers from these results before specifying the rematch's difficulty.
 

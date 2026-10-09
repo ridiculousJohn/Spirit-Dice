@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_sum_equals_either.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0716548e5fed3594680ebc8d73ae5c43, type: 2}
-  displayName: Two Gateposts
+  displayName: Two Gateposts / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

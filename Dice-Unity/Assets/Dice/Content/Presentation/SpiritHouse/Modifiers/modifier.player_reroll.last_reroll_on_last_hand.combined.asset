@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.last_reroll_on_last_hand.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3298a15fa3568754ea38274f1b28e456, type: 2}
-  displayName: Last Lantern
+  displayName: Last Lantern / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: Spend your last reroll on your last hand.
   conditionTypeName: LastRerollOnLastHandCondition

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_different.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 485139a0215b74742ac42df76e4cdc56, type: 2}
-  displayName: Mixed Pebbles
+  displayName: Mixed Pebbles / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_matching_group_at_least.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 5e7eaed983137a841867ecdaf3276917, type: 2}
-  displayName: Flocking Birds
+  displayName: Flocking Birds / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

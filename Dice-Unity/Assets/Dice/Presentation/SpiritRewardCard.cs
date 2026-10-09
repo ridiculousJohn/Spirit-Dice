@@ -167,12 +167,15 @@ namespace Dice.Presentation
             if (width <= 114 || Mathf.Approximately(width, measuredWidth)) return;
             measuredWidth = width;
             // Measure at the authored font sizes so wrapped rules remain readable on narrow screens.
+            float titleHeight = TextHeight(title, width - 114, 22);
             float conditionHeight = TextHeight(condition, width - 114, 48);
             float effectsHeight = TextHeight(effects, width - 48, 22);
             float statusHeight = TextHeight(status, width - 48, 17);
-            float effectsTop = 37 + conditionHeight + 2;
+            float conditionTop = 14 + titleHeight + 1;
+            float effectsTop = conditionTop + conditionHeight + 2;
             float statusTop = effectsTop + effectsHeight + 2;
-            Place(condition, 90, 24, 37, conditionHeight);
+            Place(title, 90, 24, 14, titleHeight);
+            Place(condition, 90, 24, conditionTop, conditionHeight);
             Place(effects, 24, 24, effectsTop, effectsHeight);
             Place(status, 24, 24, statusTop, statusHeight);
             var layout = GetComponent<LayoutElement>();

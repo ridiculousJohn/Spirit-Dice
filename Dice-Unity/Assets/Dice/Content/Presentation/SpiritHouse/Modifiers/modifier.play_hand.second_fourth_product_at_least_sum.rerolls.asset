@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.second_fourth_product_at_least_sum.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 9542d39698b2b7847b7ac46f7c9056a2, type: 2}
-  displayName: Crossed Beams
+  displayName: Crossed Beams / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

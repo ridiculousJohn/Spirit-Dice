@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.middle_hand.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 7406a441a1b7c024aa694b7bdd3e438f, type: 2}
-  displayName: Midday Shade
+  displayName: Midday Shade / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

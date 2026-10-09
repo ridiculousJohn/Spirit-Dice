@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
+  m_Name: LastLanternTable
+  m_EditorClassIdentifier: 
+  displayTitle: THE LAST LANTERN
+  roomTexture: {fileID: 2800000, guid: 30162e8d21cc427dbaaba6cba020cccb, type: 3}
+  hostPresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df801, type: 2}
+  audioTheme: {fileID: 11400000, guid: 2d1e1402124140e3958c38431d5abbd6, type: 2}
+  rulePresentations:
+  - {fileID: 11400000, guid: 90bf42108a3248c18075ae2ddad9c893, type: 2}
+  roomTableEdge: 0.5323
+  roomSplit: 0.625
+

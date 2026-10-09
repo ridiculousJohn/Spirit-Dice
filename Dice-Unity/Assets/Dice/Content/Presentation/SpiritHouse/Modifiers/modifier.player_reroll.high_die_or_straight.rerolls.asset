@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.high_die_or_straight.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f848430cdf55c5f4d993794d3d896b7a, type: 2}
-  displayName: Forked Path
+  displayName: Forked Path / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

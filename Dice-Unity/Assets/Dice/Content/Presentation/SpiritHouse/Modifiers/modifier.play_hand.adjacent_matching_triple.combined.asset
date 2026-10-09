@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_matching_triple.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 26cf6f230bff10a44835bc78ba963580, type: 2}
-  displayName: Braided Cord
+  displayName: Braided Cord / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

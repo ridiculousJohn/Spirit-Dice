@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_difference_at_most.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 249c80e6228b78f43b1fc6cdefcea3b5, type: 2}
-  displayName: Close Branches
+  displayName: Close Branches / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

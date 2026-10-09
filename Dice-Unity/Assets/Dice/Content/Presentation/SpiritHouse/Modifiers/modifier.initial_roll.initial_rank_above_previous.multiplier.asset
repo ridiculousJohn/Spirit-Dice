@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.initial_rank_above_previous.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
-  displayName: Rising Sun
+  displayName: Rising Sun / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

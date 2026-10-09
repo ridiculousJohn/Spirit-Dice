@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.contains_face.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
-  displayName: One Spark
+  displayName: One Spark / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

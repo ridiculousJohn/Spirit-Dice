@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.middle_unique.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
-  displayName: Lone Watcher
+  displayName: Lone Watcher / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

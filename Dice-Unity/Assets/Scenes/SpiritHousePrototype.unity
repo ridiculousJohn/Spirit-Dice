@@ -153,6 +153,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.App::Dice.App.SpiritEncounterController
   catalogAsset: {fileID: 11400000, guid: cc8a241269354f6db46d60178ddc427d, type: 2}
   encounterId: encounter.fox.introduction
+  journeyCatalog: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df804, type: 2}
   initialSeed: 60
   useFixedSeed: 0
 --- !u!114 &675357729
@@ -168,6 +169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritEncounterView
   roomTexture: {fileID: 2800000, guid: 30162e8d21cc427dbaaba6cba020cccb, type: 3}
+  tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
   foxBodyTexture: {fileID: 2800000, guid: 08217cb586464a53a1dbb7a0f2e858a6, type: 3}
   foxHeadTexture: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
   foxTurnedHeadTexture: {fileID: 2800000, guid: 283d515401fbea140b4b8fa1802d4b07, type: 3}

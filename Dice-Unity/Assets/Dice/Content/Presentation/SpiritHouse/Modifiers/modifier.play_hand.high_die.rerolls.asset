@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.high_die.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
-  displayName: Lone Mountain
+  displayName: Lone Mountain / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

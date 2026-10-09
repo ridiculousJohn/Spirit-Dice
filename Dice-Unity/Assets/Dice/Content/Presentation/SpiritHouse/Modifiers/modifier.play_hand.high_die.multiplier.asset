@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.high_die.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
-  displayName: Lone Mountain
+  displayName: Lone Mountain / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

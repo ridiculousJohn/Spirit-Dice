@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
-  displayName: Low Roof
+  displayName: Low Roof / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.exactly_one_selected_face.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
-  displayName: Single Firefly
+  displayName: Single Firefly / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

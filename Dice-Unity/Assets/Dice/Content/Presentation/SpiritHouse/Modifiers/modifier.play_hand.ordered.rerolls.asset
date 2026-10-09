@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.ordered.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
-  displayName: Stepping Stones
+  displayName: Stepping Stones / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

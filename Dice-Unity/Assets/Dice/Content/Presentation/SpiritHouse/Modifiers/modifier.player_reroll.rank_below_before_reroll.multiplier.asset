@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.rank_below_before_reroll.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6e7b7d92c4121f04a93671ab0375ed33, type: 2}
-  displayName: Falling Leaf
+  displayName: Falling Leaf / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.contains_face.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
-  displayName: One Spark
+  displayName: One Spark / Mult
   icon: {fileID: 0}
   conditionTemplate: At least one die shows {parameter}.
   conditionTypeName: ContainsFaceCondition

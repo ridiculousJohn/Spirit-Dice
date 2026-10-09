@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.first_hand.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
-  displayName: Open Gate
+  displayName: Open Gate / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

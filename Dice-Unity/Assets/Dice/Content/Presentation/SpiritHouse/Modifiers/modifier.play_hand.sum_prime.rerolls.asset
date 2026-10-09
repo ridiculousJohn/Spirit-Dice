@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_prime.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: c018a076b7d35c240a7aa847a6127afe, type: 2}
-  displayName: Unbroken Stone
+  displayName: Unbroken Stone / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

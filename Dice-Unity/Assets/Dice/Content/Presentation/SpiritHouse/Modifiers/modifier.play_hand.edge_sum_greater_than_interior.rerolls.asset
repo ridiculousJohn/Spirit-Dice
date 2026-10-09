@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_sum_greater_than_interior.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 7e6ee42874db3c641b14a117ed51db8d, type: 2}
-  displayName: Strong Fence
+  displayName: Strong Fence / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

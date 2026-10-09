@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_below_previous.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6e7e9b3aa8c32874bb5c483e8cf0f555, type: 2}
-  displayName: Descending Stream
+  displayName: Descending Stream / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

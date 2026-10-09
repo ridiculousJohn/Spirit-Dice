@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.contains_upper_face.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
-  displayName: Tall Pine
+  displayName: Tall Pine / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

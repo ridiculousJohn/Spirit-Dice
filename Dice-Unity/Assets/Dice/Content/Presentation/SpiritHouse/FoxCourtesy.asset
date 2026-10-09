@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   ruleId: rule.first_reroll_free
   displayName: The Host's Courtesy
+  description: The first reroll of each hand does not spend a reroll.
   availableText: First reroll free
   usedText: Favor used
   icon: {fileID: 0}

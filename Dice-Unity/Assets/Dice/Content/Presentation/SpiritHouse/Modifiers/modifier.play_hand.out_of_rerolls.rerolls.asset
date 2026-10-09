@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.out_of_rerolls.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 54dc2b0182d0574458935808e98ca7c5, type: 2}
-  displayName: Empty Cup
+  displayName: Empty Cup / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

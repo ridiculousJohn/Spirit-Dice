@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_matches_hands_remaining.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 90a5dbde57595b04f8890a8ba154038e, type: 2}
-  displayName: Handful of Seeds
+  displayName: Handful of Seeds / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_less_than_initial.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
-  displayName: Draining Bowl
+  displayName: Draining Bowl / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

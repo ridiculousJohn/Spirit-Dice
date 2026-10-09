@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.last_reroll_on_last_hand.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ffc5a861df5ef194aa97a443af18664e, type: 2}
-  displayName: Last Lantern
+  displayName: Last Lantern / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

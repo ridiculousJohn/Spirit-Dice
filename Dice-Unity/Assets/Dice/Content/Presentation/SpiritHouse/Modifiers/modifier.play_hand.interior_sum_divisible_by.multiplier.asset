@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_sum_divisible_by.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 76673ea16ba82fc4a8ca1960ce107621, type: 2}
-  displayName: Bundled Reeds
+  displayName: Bundled Reeds / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

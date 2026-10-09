@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.no_dice_rerolled.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
-  displayName: Untouched Snow
+  displayName: Untouched Snow / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

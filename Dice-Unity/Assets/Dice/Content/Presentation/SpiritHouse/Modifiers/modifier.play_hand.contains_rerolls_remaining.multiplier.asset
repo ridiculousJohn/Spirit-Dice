@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.contains_rerolls_remaining.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
-  displayName: Stored Acorn
+  displayName: Stored Acorn / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

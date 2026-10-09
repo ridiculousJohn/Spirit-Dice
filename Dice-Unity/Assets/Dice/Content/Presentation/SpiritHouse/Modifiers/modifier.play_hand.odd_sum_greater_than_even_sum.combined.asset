@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.odd_sum_greater_than_even_sum.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 30238c9c6024741499d6177cce246bba, type: 2}
-  displayName: Uneven Scales
+  displayName: Uneven Scales / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

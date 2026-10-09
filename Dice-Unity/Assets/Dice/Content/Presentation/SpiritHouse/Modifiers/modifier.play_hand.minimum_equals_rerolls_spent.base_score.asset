@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.minimum_equals_rerolls_spent.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 984c7c2fbf7175847b2cfba0699fbb98, type: 2}
-  displayName: Worn Pebble
+  displayName: Worn Pebble / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

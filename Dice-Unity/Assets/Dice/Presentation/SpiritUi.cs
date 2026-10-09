@@ -164,7 +164,7 @@ namespace Dice.Presentation
         {
             var image = Panel(name, parent, min, max,
                 primary ? new Color32(89, 73, 44, 255) : PanelColor, 5);
-            bool compact = name == "MenuButton" || name == "CloseCharmsButton";
+            bool compact = name == "MenuButton" || name == "CloseCharmsButton" || name == "ReturnToInvestigationButton";
             bool actionButton = name == "RerollButton" || name == "PlayButton";
             bool footer = name == "CharmsButton" || name == "HandRanksButton";
             var frame = compact || actionButton ? Theme.darkFrame : footer ? Theme.woodFrame : primary ? Theme.amberFrame : Theme.greenFrame;

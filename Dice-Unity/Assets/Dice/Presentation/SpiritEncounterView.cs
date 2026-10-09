@@ -23,6 +23,7 @@ namespace Dice.Presentation
         [SerializeField] private Texture2D foxHeadTexture;
         [SerializeField] private Texture2D foxTurnedHeadTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
+        [SerializeField] private EncounterTablePresentationAsset tablePresentation;
 
         public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
@@ -37,6 +38,8 @@ namespace Dice.Presentation
         public Text MultiplierLabel { get; private set; }
         public Text HandScoreLabel { get; private set; }
         public EncounterRulePresentationAsset EncounterRulePresentation => encounterRulePresentation;
+        public EncounterJourneyView JourneyView { get; private set; }
+        public SpiritHostPortrait HostPortrait => fox;
 
         private ISpiritEncounterControls controls;
         private Canvas canvas;
@@ -54,7 +57,17 @@ namespace Dice.Presentation
         private SpiritHandRanksPanel handRanksPanel;
         private RectTransform rewardContent;
         private RectTransform charmContent;
-        private SpiritFoxPortrait fox;
+        private SpiritCharmGridLayout charmGrid;
+        private SpiritCharmDetailsLayout charmDetailsLayout;
+        private SpiritHostPortrait fox;
+        private IEncounterJourneyControls journeyControls;
+        private EncounterTablePresentationAsset configuredTable;
+        private RawImage roomImage;
+        private RawImage tableImage;
+        private Text encounterTitle;
+        private Text menuTitle;
+        private Button endingContinueButton;
+        private Button investigationButton;
         private SpiritEncounterAudio encounterAudio;
         private SpiritActionModifierCue actionModifierCue;
         private CanvasGroup inputGroup;
@@ -78,15 +91,20 @@ namespace Dice.Presentation
         private CanvasGroup encounterRuleGroup;
         private Text encounterRuleLabel;
         private Image encounterRuleIcon;
-        private SpiritFoxSigilGraphic encounterRuleSigil;
+        private Graphic encounterRuleSigil;
+        private RectTransform encounterRuleSigilRoot;
         private RectTransform rerollActionLabel;
         private Vector2 rerollLabelMin;
         private Vector2 rerollLabelMax;
         private CanvasGroup ruleSpiritSweep;
         private Image ruleSpiritIcon;
-        private SpiritFoxSigilGraphic ruleSpiritSigil;
+        private Graphic ruleSpiritSigil;
+        private RectTransform ruleSpiritSigilRoot;
         private Text endingTitle;
         private Text endingDetail;
+        private Text endingUnlocks;
+        private RectTransform endingUnlockContent;
+        private Text profileSummary;
         private Text charmTitle;
         private Text charmDetail;
         private Text charmCount;
@@ -125,6 +143,8 @@ namespace Dice.Presentation
             internal Text Effect;
             internal Text Status;
             internal Image Icon;
+            internal SpiritCharmCardLayout Layout;
+            internal SpiritCharmStatusBadge Badge;
             internal long OfferId;
             internal long OptionId;
             internal long InstanceId;
@@ -152,17 +172,125 @@ namespace Dice.Presentation
             controls = nextControls;
             if (canvas == null) Build();
             presentedSnapshot = null;
-            fox.ResetPose();
+            fox?.ResetPose();
             controls.StateChanged += Refresh;
             controls.Resolved += Present;
             Refresh();
         }
 
+        public void BindJourney(IEncounterJourneyControls journey)
+        {
+            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
+            journeyControls = journey ?? throw new ArgumentNullException(nameof(journey));
+            if (canvas == null) Build();
+            JourneyView.Bind(journeyControls, controls);
+            journeyControls.JourneyChanged += RefreshJourney;
+            RefreshJourney();
+        }
+
+        private void RefreshJourney()
+        {
+            ConfigureTable(journeyControls.SelectedJourney?.TablePresentation ?? tablePresentation);
+            if (journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
+            {
+                bool canceled = presenting;
+                ResetPresentation();
+                if (canceled) controls?.CompletePresentation();
+                charmsPanel.gameObject.SetActive(false);
+                handRanksPanel.Root.gameObject.SetActive(false);
+                menuPanel.gameObject.SetActive(false);
+                SetGameplayVisible(false);
+                bool seated = journeyControls.JourneyPhase == EncounterJourneyPhase.Sequence &&
+                    journeyControls.SelectedJourney != null && journeyControls.BeatIndex >= 0 &&
+                    journeyControls.BeatIndex < journeyControls.SelectedJourney.Beats.Count &&
+                    journeyControls.SelectedJourney.Beats[journeyControls.BeatIndex].Kind != EncounterJourneyBeatKind.Illustration;
+                fox?.SetVisible(seated);
+            }
+            else
+            {
+                fox?.SetVisible(true);
+                SetGameplayVisible(true);
+            }
+            JourneyView.Refresh();
+            Refresh();
+        }
+
+        private void SetGameplayVisible(bool visible)
+        {
+            foreach (var rect in new[] { playingPanel, rewardsPanel, endingPanel, targetPanel, handsPanel, rerollsPanel })
+                rect.gameObject.SetActive(visible);
+            stageLabel.gameObject.SetActive(visible);
+            statusLabel.gameObject.SetActive(visible);
+            resourcesLabel.gameObject.SetActive(visible);
+            CharmsButton.gameObject.SetActive(visible);
+            HandRanksButton.gameObject.SetActive(visible);
+            menuButton.gameObject.SetActive(visible);
+            investigationButton.gameObject.SetActive(visible && journeyControls != null);
+            encounterRuleGroup.gameObject.SetActive(visible);
+        }
+
+        private void ConfigureTable(EncounterTablePresentationAsset selectedTable)
+        {
+            if (configuredTable == selectedTable && (selectedTable == null || fox != null || selectedTable.HostPresentation == null)) return;
+            configuredTable = selectedTable;
+            if (fox != null) { fox.gameObject.SetActive(false); Destroy(fox.gameObject); fox = null; }
+            if (selectedTable != null)
+            {
+                if (selectedTable.HostPresentation != null)
+                {
+                    fox = selectedTable.HostPresentation.Create(portrait);
+                    fox.transform.SetSiblingIndex(tableImage.transform.GetSiblingIndex() + 1);
+                    fox.SpiritGesture += () => encounterAudio.Play(SpiritAudioCue.Spirit);
+                }
+                encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
+                encounterAudio.SetTheme(selectedTable.AudioTheme);
+            }
+            ConfigureHostSigils(selectedTable?.HostPresentation);
+            Texture2D texture = selectedTable != null ? selectedTable.RoomTexture : roomTexture;
+            float edge = selectedTable != null ? selectedTable.RoomTableEdge : RoomTableEdge;
+            float split = selectedTable != null ? selectedTable.RoomSplit : .625f;
+            roomImage.texture = tableImage.texture = texture;
+            roomImage.color = tableImage.color = texture != null ? Color.white : Color.clear;
+            roomImage.uvRect = new Rect(0, edge, 1, 1 - edge);
+            tableImage.uvRect = new Rect(0, 0, 1, edge);
+            roomImage.rectTransform.anchorMin = new Vector2(0, split);
+            tableImage.rectTransform.anchorMax = new Vector2(1, split);
+            encounterTitle.text = menuTitle.text = selectedTable != null ? selectedTable.DisplayTitle : "";
+        }
+
+        private void ReactHost() => fox?.React();
+
+        private void ConfigureHostSigils(SpiritHostPresentationAsset presentation)
+        {
+            if (encounterRuleSigil != null) { encounterRuleSigil.gameObject.SetActive(false); Destroy(encounterRuleSigil.gameObject); }
+            if (ruleSpiritSigil != null) { ruleSpiritSigil.gameObject.SetActive(false); Destroy(ruleSpiritSigil.gameObject); }
+            encounterRuleSigil = presentation?.CreateSigil("EncounterRuleSigil", encounterRuleSigilRoot);
+            ruleSpiritSigil = presentation?.CreateSigil("RuleSpiritSigil", ruleSpiritSigilRoot);
+            if (ruleSpiritSigil != null) ruleSpiritSigil.color = ruleSpiritIcon.color;
+            actionModifierCue.ConfigureHost(presentation);
+        }
+
         private void OnDestroy()
         {
+            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
             if (controls == null) return;
             controls.StateChanged -= Refresh;
             controls.Resolved -= Present;
+        }
+
+        private void OnDisable()
+        {
+            bool canceled = presenting;
+            ResetPresentation();
+            if (JourneyView != null) JourneyView.gameObject.SetActive(false);
+            if (canceled) controls?.CompletePresentation();
+        }
+
+        private void OnEnable()
+        {
+            if (canvas == null) return;
+            if (journeyControls != null) RefreshJourney();
+            else Refresh();
         }
 
         private void Update()
@@ -209,24 +337,21 @@ namespace Dice.Presentation
             SpiritUi.Panel("ForestBackground", portrait, Vector2.zero, Vector2.one, new Color32(20, 29, 25, 255));
             var room = SpiritUi.Rect("TeaRoom", portrait, new Vector2(0, .625f), Vector2.one)
                 .gameObject.AddComponent<RawImage>();
+            roomImage = room;
             room.texture = roomTexture;
             room.uvRect = new Rect(0, RoomTableEdge, 1, 1 - RoomTableEdge);
             room.color = roomTexture != null ? Color.white : Color.clear;
             room.raycastTarget = false;
             inputGroup = portrait.gameObject.AddComponent<CanvasGroup>();
 
-            var host = SpiritUi.Full("HostPortrait", portrait);
-            fox = host.gameObject.AddComponent<SpiritFoxPortrait>();
-            fox.Build(host, foxBodyTexture, foxHeadTexture, foxTurnedHeadTexture);
-            fox.SpiritGesture += () => encounterAudio.Play(SpiritAudioCue.Spirit);
             var table = SpiritUi.Rect("ForegroundTable", portrait, Vector2.zero, new Vector2(1, .625f))
                 .gameObject.AddComponent<RawImage>();
+            tableImage = table;
             table.texture = roomTexture;
             table.uvRect = new Rect(0, 0, 1, RoomTableEdge);
             table.color = roomTexture != null ? Color.white : Color.clear;
             table.raycastTarget = false;
-            host.SetAsLastSibling();
-            SpiritUi.Heading("EncounterTitle", portrait, "THE LAST LANTERN", 21,
+            encounterTitle = SpiritUi.Heading("EncounterTitle", portrait, "", 21,
                 new Vector2(.12f, .963f), new Vector2(.88f, .999f), TextAnchor.MiddleCenter);
             var headerRule = SpiritUi.Rect("HeaderRule", portrait, new Vector2(.16f, .925f), new Vector2(.84f, .995f));
             SpiritUi.Decorate(headerRule);
@@ -272,10 +397,20 @@ namespace Dice.Presentation
             charmCount.gameObject.SetActive(false);
             statusLabel = SpiritUi.Label("StatusMessage", portrait, "", 14, new Vector2(.12f, .892f), new Vector2(.88f, .927f),
                 TextAnchor.MiddleCenter, SpiritUi.Muted);
+            investigationButton = SpiritUi.Button("ReturnToInvestigationButton", portrait, "Clues",
+                new Vector2(.01f, .932f), new Vector2(.20f, .978f), () =>
+                { if (!Busy) journeyControls?.ReturnToInvestigation(); });
+            var investigationText = investigationButton.GetComponentInChildren<Text>();
+            investigationText.fontSize = investigationText.resizeTextMaxSize = 15;
+            investigationText.resizeTextMinSize = 12;
+            investigationButton.gameObject.SetActive(false);
             BuildCharms();
             handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
             handRanksPanel.Build(portrait, ShowTable);
             BuildMenu();
+            JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
+            JourneyView.Build(ReactHost, encounterAudio);
+            ConfigureTable(tablePresentation);
             if (EventSystem.current == null)
             {
                 var eventSystem = new GameObject("SpiritEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
@@ -296,8 +431,6 @@ namespace Dice.Presentation
             float width = Mathf.Min(540, previousSafeArea.width / scale);
             portrait.sizeDelta = new Vector2(width, 0);
             portrait.anchoredPosition = Vector2.zero;
-            if (charmContent != null)
-                charmContent.GetComponent<GridLayoutGroup>().cellSize = new Vector2((width - 46) / 2, 156);
         }
 
         private void BuildPlaying()
@@ -424,9 +557,7 @@ namespace Dice.Presentation
             encounterRuleIcon.preserveAspect = true;
             encounterRuleIcon.color = SpiritUi.Amber;
             encounterRuleIcon.raycastTarget = false;
-            encounterRuleSigil = SpiritUi.Full("EncounterRuleSigil", icon).gameObject.AddComponent<SpiritFoxSigilGraphic>();
-            encounterRuleSigil.color = SpiritUi.Amber;
-            encounterRuleSigil.raycastTarget = false;
+            encounterRuleSigilRoot = icon;
             encounterRuleLabel = SpiritUi.Label("EncounterRuleLabel", favor, "", 14,
                 Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.Amber);
             encounterRuleLabel.rectTransform.offsetMin = new Vector2(21, 0);
@@ -445,9 +576,7 @@ namespace Dice.Presentation
             ruleSpiritIcon.preserveAspect = true;
             ruleSpiritIcon.color = new Color(.35f, .9f, .9f, .75f);
             ruleSpiritIcon.raycastTarget = false;
-            ruleSpiritSigil = SpiritUi.Full("RuleSpiritSigil", sweep).gameObject.AddComponent<SpiritFoxSigilGraphic>();
-            ruleSpiritSigil.color = ruleSpiritIcon.color;
-            ruleSpiritSigil.raycastTarget = false;
+            ruleSpiritSigilRoot = sweep;
             sweep.gameObject.SetActive(false);
             RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
@@ -468,7 +597,7 @@ namespace Dice.Presentation
                 encounterRuleGroup.alpha = rule.IsAvailable ? 1 : .4f;
                 encounterRuleIcon.sprite = encounterRulePresentation.Icon;
                 encounterRuleIcon.enabled = encounterRulePresentation.Icon != null;
-                encounterRuleSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
+                if (encounterRuleSigil != null) encounterRuleSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
             }
             RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
@@ -526,7 +655,6 @@ namespace Dice.Presentation
             card.Icon.sprite = definition == null ? null : SpiritModifierIcons.GetSprite(definition);
             bool visible = card.Icon.sprite != null;
             card.Icon.gameObject.SetActive(visible);
-            card.Title.rectTransform.offsetMin = new Vector2(visible ? 66 : 24, 5);
         }
 
         private void BuildRewards()
@@ -563,16 +691,20 @@ namespace Dice.Presentation
 
         private void BuildEnding()
         {
-            endingPanel = SpiritUi.Panel("EndingPanel", portrait, new Vector2(.045f, .075f), new Vector2(.955f, .535f),
+            endingPanel = SpiritUi.Panel("EndingPanel", portrait, new Vector2(.045f, .075f), new Vector2(.955f, .625f),
                 SpiritUi.PanelColor, 0, true).rectTransform;
-            endingTitle = SpiritUi.Heading("EndingTitle", endingPanel, "", 42, new Vector2(0, .67f), Vector2.one,
+            endingTitle = SpiritUi.Heading("EndingTitle", endingPanel, "", 42, new Vector2(0, .84f), Vector2.one,
                 TextAnchor.MiddleCenter, SpiritUi.Amber);
-            var endingRule = SpiritUi.Rect("EndingRule", endingPanel, new Vector2(.1f, .52f), new Vector2(.9f, .81f));
+            var endingRule = SpiritUi.Rect("EndingRule", endingPanel, new Vector2(.1f, .45f), new Vector2(.9f, .48f));
             SpiritUi.Decorate(endingRule);
-            endingDetail = SpiritUi.Label("EndingDetail", endingPanel, "", 23, new Vector2(.05f, .35f), new Vector2(.95f, .67f),
+            endingDetail = SpiritUi.Label("EndingDetail", endingPanel, "", 19, new Vector2(.05f, .49f), new Vector2(.95f, .84f),
                 TextAnchor.MiddleCenter);
-            SpiritUi.Button("EndingNewRunButton", endingPanel, "Return to the table", new Vector2(.1f, .08f), new Vector2(.9f, .27f),
-                () => { if (!Busy) controls.StartNew(); }, true);
+            SpiritUi.Scroll("EndingUnlockScroll", endingPanel, new Vector2(.05f, .29f), new Vector2(.95f, .44f),
+                out endingUnlockContent);
+            endingUnlocks = SpiritUi.Label("EndingUnlocks", endingUnlockContent, "", 16, Vector2.zero, Vector2.one,
+                TextAnchor.UpperLeft, SpiritUi.Amber);
+            endingContinueButton = SpiritUi.Button("EndingNewRunButton", endingPanel, "Return to the table", new Vector2(.1f, .08f), new Vector2(.9f, .27f),
+                () => { if (!Busy) { if (journeyControls != null) journeyControls.ReturnToInvestigation(); else controls.StartNew(); } }, true);
         }
 
         private void BuildCharms()
@@ -583,7 +715,7 @@ namespace Dice.Presentation
             SpiritUi.Button("CloseCharmsButton", charmsPanel, "Close", new Vector2(.75f, .9f), new Vector2(.98f, .98f), ShowTable);
             SpiritUi.Label("CharmsSubtitle", charmsPanel, "Kept for this run. Tap a charm to inspect it.", 18,
                 new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.Muted);
-            SpiritUi.Scroll("OwnedCharmScroll", charmsPanel, new Vector2(0, .34f), new Vector2(1, .84f), out charmContent);
+            var scroll = SpiritUi.Scroll("OwnedCharmScroll", charmsPanel, new Vector2(0, .34f), new Vector2(1, .84f), out charmContent);
             var layout = charmContent.gameObject.AddComponent<GridLayoutGroup>();
             layout.cellSize = new Vector2(235, 156);
             layout.spacing = new Vector2(12, 12);
@@ -591,6 +723,7 @@ namespace Dice.Presentation
             layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             layout.constraintCount = 2;
             charmContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            charmGrid = charmContent.gameObject.AddComponent<SpiritCharmGridLayout>();
             var details = SpiritUi.Panel("CharmDetails", charmsPanel, new Vector2(.02f, .04f), new Vector2(.98f, .33f),
                 SpiritUi.PanelColor, 6, true);
             charmTitle = SpiritUi.Heading("CharmDetailTitle", details.transform, "No charms yet", 23, new Vector2(0, .72f), Vector2.one);
@@ -603,6 +736,8 @@ namespace Dice.Presentation
                 text.rectTransform.offsetMin = new Vector2(24, 5);
                 text.rectTransform.offsetMax = new Vector2(-24, -5);
             }
+            charmDetailsLayout = details.gameObject.AddComponent<SpiritCharmDetailsLayout>();
+            charmDetailsLayout.Initialize(charmTitle, charmDetail, charmDetailIcon, (RectTransform)scroll.transform);
             charmsPanel.gameObject.SetActive(false);
         }
 
@@ -610,7 +745,7 @@ namespace Dice.Presentation
         {
             menuPanel = SpiritUi.Panel("MenuOverlay", portrait, Vector2.zero, Vector2.one, new Color(0, 0, 0, .86f)).rectTransform;
             var panel = SpiritUi.Panel("MenuPanel", menuPanel, new Vector2(.12f, .17f), new Vector2(.88f, .83f), SpiritUi.PanelColor, 0, true);
-            SpiritUi.Heading("MenuTitle", panel.transform, "THE LAST LANTERN", 28, new Vector2(0, .9f), Vector2.one,
+            menuTitle = SpiritUi.Heading("MenuTitle", panel.transform, "", 28, new Vector2(0, .9f), Vector2.one,
                 TextAnchor.MiddleCenter, SpiritUi.Amber);
             soundButton = SpiritUi.Button("SoundButton", panel.transform, encounterAudio.Muted ? "Sound: Off" : "Sound: On",
                 new Vector2(.2f, .8f), new Vector2(.8f, .895f), () =>
@@ -618,11 +753,13 @@ namespace Dice.Presentation
                     encounterAudio.Muted = !encounterAudio.Muted;
                     SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
                 });
-            MenuAction(panel.transform, "SaveRunButton", "Save run", .65f, () => controls.Save());
-            MenuAction(panel.transform, "LoadRunButton", "Load run", .49f, () => controls.Load());
-            MenuAction(panel.transform, "NewRunButton", "New run", .33f, () => controls.StartNew());
-            MenuAction(panel.transform, "AbandonRunButton", "Abandon run", .17f, () => controls.Abandon());
-            SpiritUi.Button("CloseMenuButton", panel.transform, "Back to table", new Vector2(.05f, .02f), new Vector2(.95f, .16f), ToggleMenu);
+            profileSummary = SpiritUi.Label("ProfileSummary", panel.transform, "", 14, new Vector2(.05f, .67f),
+                new Vector2(.95f, .80f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+            MenuAction(panel.transform, "SaveRunButton", "Save run", .54f, () => controls.Save());
+            MenuAction(panel.transform, "LoadRunButton", "Load run", .41f, () => controls.Load());
+            MenuAction(panel.transform, "NewRunButton", "New run", .28f, () => controls.StartNew());
+            MenuAction(panel.transform, "AbandonRunButton", "Abandon run", .15f, () => controls.Abandon());
+            SpiritUi.Button("CloseMenuButton", panel.transform, "Back to table", new Vector2(.05f, .02f), new Vector2(.95f, .13f), ToggleMenu);
             if (encounterAudio.Theme != null && encounterAudio.Theme.credits != null)
             {
                 SpiritUi.Panel("AudioCreditsBacking", menuPanel, new Vector2(.04f, .025f), new Vector2(.96f, .16f),
@@ -635,7 +772,7 @@ namespace Dice.Presentation
 
         private void MenuAction(Transform parent, string name, string title, float y, Action action)
         {
-            SpiritUi.Button(name, parent, title, new Vector2(.05f, y), new Vector2(.95f, y + .14f), () =>
+            SpiritUi.Button(name, parent, title, new Vector2(.05f, y), new Vector2(.95f, y + .12f), () =>
             {
                 if (Busy) return;
                 menuPanel.gameObject.SetActive(false);
@@ -687,6 +824,13 @@ namespace Dice.Presentation
         private void Refresh()
         {
             if (canvas == null || controls == null) return;
+            if (journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
+            {
+                inputGroup.interactable = true;
+                ModifierHistory.SetInteractable(false);
+                SetGameplayVisible(false);
+                return;
+            }
             if (presenting && !ReferenceEquals(controls.Snapshot, presentationSnapshot))
             {
                 ResetPresentation();
@@ -712,7 +856,7 @@ namespace Dice.Presentation
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
-                fox.ResetPose();
+                fox?.ResetPose();
                 lastScore = null;
                 renderedOffer = -2;
                 renderedCharmsRevision = -1;
@@ -738,6 +882,7 @@ namespace Dice.Presentation
             charmCount.text = snapshot.Modifiers.Count + " kept";
             SpiritUi.SetButtonLabel(CharmsButton, "CHARMS (" + snapshot.Modifiers.Count + ")");
             statusLabel.text = ProductStatus(controls.StatusMessage);
+            RenderProfileSummary();
             if (playing)
             {
                 modifierEmblem.gameObject.SetActive(false);
@@ -757,9 +902,22 @@ namespace Dice.Presentation
             else if (!completed) RenderRewards(snapshot);
             else
             {
-                endingTitle.text = snapshot.Outcome.ToString();
-                endingDetail.text = "Total score  " + DiagnosticText.Number(snapshot.TotalScore) + "\n" +
-                    snapshot.TotalHandsPlayed + " hands played\n" + snapshot.TotalRerollsSpent + " rerolls spent";
+                var journey = journeyControls?.SelectedJourney;
+                endingTitle.text = journey == null ? snapshot.Outcome.ToString() :
+                    snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryTitle : journey.DefeatTitle;
+                string endingText = journey == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryText :
+                    snapshot.Outcome == EncounterOutcome.Abandoned ? journey.AbandonText : journey.DefeatText;
+                endingDetail.text = (string.IsNullOrWhiteSpace(endingText) ? "" : endingText + "\n\n") +
+                    "Total score  " + DiagnosticText.Number(snapshot.TotalScore) + "\n" +
+                    snapshot.TotalHandsPlayed + (snapshot.TotalHandsPlayed == 1 ? " hand played\n" : " hands played\n") +
+                    snapshot.TotalRerollsSpent + (snapshot.TotalRerollsSpent == 1 ? " reroll spent" : " rerolls spent");
+                endingDetail.resizeTextForBestFit = journey != null;
+                endingDetail.resizeTextMinSize = 16;
+                endingDetail.resizeTextMaxSize = 19;
+                SpiritUi.SetButtonLabel(endingContinueButton, journey == null ? "Return to the table" : journey.ResultContinueLabel);
+                endingUnlocks.text = UnlockSummary(snapshot.NewlyUnlockedModifierIds);
+                endingUnlockContent.sizeDelta = new Vector2(endingUnlockContent.sizeDelta.x,
+                    Mathf.Max(80, endingUnlocks.preferredHeight + 12));
             }
             if (IsCharmsOpen) RenderCharms();
             if (IsHandRanksOpen) RenderHandRanks();
@@ -838,6 +996,8 @@ namespace Dice.Presentation
         private static string ProductStatus(string status)
         {
             if (string.IsNullOrEmpty(status)) return "";
+            int profileWarning = status.IndexOf("Progress is pending:", StringComparison.Ordinal);
+            if (profileWarning >= 0) return status.Substring(profileWarning);
             if (status.StartsWith("Started encounter", StringComparison.Ordinal) ||
                 status.StartsWith("Accepted action", StringComparison.Ordinal) ||
                 status.StartsWith("Encounter ready.", StringComparison.Ordinal))
@@ -874,11 +1034,11 @@ namespace Dice.Presentation
                 {
                     if (encounterRulePresentation == null || activatedRule.RuleId != encounterRulePresentation.RuleId) continue;
                     RenderEncounterRule(resolution.Snapshot);
-                    actionModifierCue.Show(encounterRulePresentation.Icon, ModifierPhase.PlayerReroll,
-                        SpiritFoxPortrait.ReactionDuration, useFoxSigil: true);
+                    actionModifierCue.ShowHost(encounterRulePresentation.Icon, ModifierPhase.PlayerReroll,
+                        fox != null ? fox.GestureDuration : 1.8f);
                     selectionLabel.text = encounterRulePresentation.DisplayName;
                     selectionLabel.color = SpiritUi.Amber;
-                    fox.React();
+                    fox?.React();
                     yield return AnimateRuleSpirit(.65f);
                 }
                 else if (ruleEvent is DiceRolledEvent rolled)
@@ -911,7 +1071,7 @@ namespace Dice.Presentation
                     DiceTray.SetValues(scored.Dice);
                     SetScore(scored.Score, true);
                     HandScoreLabel.text = "0";
-                    fox.React();
+                    fox?.React();
                     modifierEmblem.gameObject.SetActive(false);
                     selectionLabel.color = SpiritUi.Muted;
                     selectionLabel.text = "DICE\n+" + DiagnosticText.Number(scored.Score.DiceSum) + " base";
@@ -960,8 +1120,8 @@ namespace Dice.Presentation
                     targetLabel.text = "0";
                     targetCaption.text = "STAGE CLEARED";
                     encounterAudio.Play(SpiritAudioCue.StageClear);
-                    fox.React();
-                    yield return new WaitForSecondsRealtime(SpiritFoxPortrait.ReactionDuration);
+                    fox?.React();
+                    yield return new WaitForSecondsRealtime(fox != null ? fox.GestureDuration : 1.8f);
                 }
                 else if (ruleEvent is StageStartedEvent stage)
                 {
@@ -976,10 +1136,25 @@ namespace Dice.Presentation
                     rewardsPanel.gameObject.SetActive(false);
                     endingPanel.gameObject.SetActive(false);
                     stageIntroTitle.text = stageLabel.text;
+                    stageIntroDetail.fontSize = 19;
                     stageIntroDetail.text = "CLEAR " + DiagnosticText.Number(stage.Threshold) + " POINTS\n" +
                         stage.Hands + " hands / " + stage.Rerolls + " rerolls";
+                    if (resolution.PreviousRevision >= 0)
+                    {
+                        stageIntroPanel.gameObject.SetActive(true);
+                        yield return new WaitForSecondsRealtime(.9f);
+                    }
+                    stageIntroPanel.gameObject.SetActive(false);
+                }
+                else if (ruleEvent is ModifierUnlockedEvent unlocked)
+                {
+                    var definition = controls.Catalog.GetModifier(unlocked.ModifierId);
+                    stageIntroTitle.text = HasPendingProgress ? "CHARM UNLOCKED - SAVE PENDING" : "CHARM UNLOCKED";
+                    stageIntroDetail.fontSize = 16;
+                    stageIntroDetail.text = CharmName(definition) + "\n" +
+                        (HasPendingProgress ? "Unlock save pending / " + AvailabilityScopeText(definition) : AvailabilityText(definition));
                     stageIntroPanel.gameObject.SetActive(true);
-                    yield return new WaitForSecondsRealtime(.9f);
+                    yield return new WaitForSecondsRealtime(1.1f);
                     stageIntroPanel.gameObject.SetActive(false);
                 }
                 else if (ruleEvent is HandStartedEvent hand)
@@ -994,7 +1169,7 @@ namespace Dice.Presentation
                     selectionLabel.color = SpiritUi.Muted;
                     selectionLabel.text = "NEW HAND";
                     scoreDetail.text = "ROLL BONUSES BANK HERE";
-                    yield return new WaitForSecondsRealtime(.16f);
+                    if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(.16f);
                 }
                 else if (ruleEvent is ResourceChangedEvent resource)
                 {
@@ -1205,12 +1380,56 @@ namespace Dice.Presentation
         private static string CharmName(ModifierDefinition definition)
             => SpiritModifierPresentation.GetName(definition);
 
+        private string AvailabilityText(ModifierDefinition definition)
+        {
+            var availability = definition.Availability;
+            var unlocked = new HashSet<string>(controls.Snapshot.UnlockedModifierIds, StringComparer.Ordinal);
+            string access = availability.Access == ModifierAccess.PermanentUnlock ?
+                (unlocked.Contains(definition.Id) ? "Permanently unlocked" : "Requires permanent unlock") :
+                availability.Access == ModifierAccess.EncounterExclusive ? "Encounter exclusive" : "Available from the start";
+            return access + " / " + AvailabilityScopeText(definition);
+        }
+
+        private static string AvailabilityScopeText(ModifierDefinition definition)
+        {
+            var availability = definition.Availability;
+            string scope = availability.Scope == ModifierAvailabilityScope.Global ? "All encounters" :
+                availability.Scope == ModifierAvailabilityScope.Spirit ? "This spirit's encounters" : "This encounter";
+            return scope + " / Tier " + availability.PowerTier;
+        }
+
+        private string UnlockSummary(IReadOnlyList<string> ids)
+        {
+            if (ids.Count == 0) return "No new charms unlocked this run.";
+            var names = new List<string>();
+            foreach (string id in ids) names.Add(CharmName(controls.Catalog.GetModifier(id)));
+            return (HasPendingProgress ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
+                string.Join("\n", names);
+        }
+
+        private bool HasPendingProgress => controls is ISpiritProgressionControls progression &&
+            progression.ProfileStatusMessage.StartsWith("Progress is pending:", StringComparison.Ordinal);
+
+        private void RenderProfileSummary()
+        {
+            if (!(controls is ISpiritProgressionControls progression)) { profileSummary.text = ""; return; }
+            int unlocked = 0;
+            var ids = new HashSet<string>(progression.ProfileUnlockedModifierIds, StringComparer.Ordinal);
+            foreach (var modifier in controls.Catalog.Modifiers)
+                if (ids.Contains(modifier.Id)) ++unlocked;
+            profileSummary.text = string.IsNullOrEmpty(progression.ProfileStatusMessage)
+                ? unlocked + (unlocked == 1 ? " charm permanently unlocked\n" : " charms permanently unlocked\n") +
+                    progression.CompletedEncounterIds.Count +
+                    (progression.CompletedEncounterIds.Count == 1 ? " encounter completed" : " encounters completed")
+                : "Player profile needs attention.\n" + (HasPendingProgress ? "Progress save is pending." : "Profile could not be loaded.");
+        }
+
         private IEnumerator AnimateRuleSpirit(float duration)
         {
             var rect = (RectTransform)ruleSpiritSweep.transform;
             ruleSpiritIcon.sprite = encounterRulePresentation.Icon;
             ruleSpiritIcon.gameObject.SetActive(encounterRulePresentation.Icon != null);
-            ruleSpiritSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
+            if (ruleSpiritSigil != null) ruleSpiritSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
             ruleSpiritSweep.gameObject.SetActive(true);
             float elapsed = 0;
             while (elapsed < duration)
@@ -1256,6 +1475,15 @@ namespace Dice.Presentation
             card.Title.resizeTextForBestFit = true;
             card.Title.resizeTextMinSize = 14;
             card.Title.resizeTextMaxSize = owned ? 17 : 18;
+            if (owned)
+            {
+                card.Body.fontSize = 15;
+                card.Effect.fontSize = 16;
+                card.Status.fontSize = 13;
+                card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
+                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Status, card.Icon);
+                card.Badge = SpiritCharmStatusBadge.Create(image.transform, card.Status);
+            }
             button.onClick.AddListener(() =>
             {
                 if (Busy) return;
@@ -1337,8 +1565,12 @@ namespace Dice.Presentation
                     card.Title.text = CharmName(definition);
                     card.Body.text = SpiritModifierPresentation.GetConditionText(definition);
                     card.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-                    card.Status.text = CharmStatus(instance);
+                    ModifierInspection inspection = null;
+                    foreach (var candidate in controls.ModifierInspections)
+                        if (candidate.InstanceId == instance.InstanceId) { inspection = candidate; break; }
+                    card.Badge.Render(SpiritCharmStatusPresentation.Create(instance, definition, snapshot.Phase, inspection));
                 }
+                charmGrid.RefreshLayout();
             }
             if (snapshot.Modifiers.Count > 0 && !ContainsCharm(snapshot, selectedCharm)) selectedCharm = snapshot.Modifiers[0].InstanceId;
             RenderCharmDetail();
@@ -1367,11 +1599,12 @@ namespace Dice.Presentation
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                 charmDetailIcon.sprite = SpiritModifierIcons.GetSprite(definition);
                 charmDetailIcon.gameObject.SetActive(charmDetailIcon.sprite != null);
-                charmTitle.rectTransform.offsetMin = new Vector2(charmDetailIcon.sprite != null ? 76 : 24, 5);
                 charmTitle.text = CharmName(definition);
                 charmDetail.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
                     SpiritModifierPresentation.GetEffectText(definition) + "\n" +
-                    SpiritModifierPresentation.GetTimingText(definition) + "\n" + CharmStatus(instance);
+                    SpiritModifierPresentation.GetTimingText(definition) + "\n" + CharmStatus(instance) + "\n" +
+                    AvailabilityText(definition);
+                charmDetailsLayout.RefreshLayout();
                 foreach (var card in charmCards)
                     card.Button.GetComponent<Image>().color = card.InstanceId == selectedCharm ? new Color32(255, 232, 179, 255) : Color.white;
                 return;
@@ -1379,8 +1612,8 @@ namespace Dice.Presentation
             charmTitle.text = "No charms yet";
             charmDetailIcon.sprite = null;
             charmDetailIcon.gameObject.SetActive(false);
-            charmTitle.rectTransform.offsetMin = new Vector2(24, 5);
             charmDetail.text = "Clear a stage to choose a charm.";
+            charmDetailsLayout.RefreshLayout();
         }
     }
 }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.middle_unique.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a3a6d67ac31250c4fa7300f3a9d6f62d, type: 2}
-  displayName: Lone Watcher
+  displayName: Lone Watcher / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: The middle die has a face no other die shows.
   conditionTypeName: MiddleUniqueCondition

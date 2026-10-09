@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.range_less_than.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
-  displayName: Narrow Bridge
+  displayName: Narrow Bridge / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

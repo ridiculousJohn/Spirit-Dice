@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.initial_pair.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 1631f097356aed6438f3618191cb61c2, type: 2}
-  displayName: Welcoming Pair
+  displayName: Welcoming Pair / Base
   icon: {fileID: 0}
   conditionTemplate: Your initial roll is a Pair.
   conditionTypeName: InitialPairCondition

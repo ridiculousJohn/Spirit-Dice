@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.every_die_rerolled.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
-  displayName: Turning Wheel
+  displayName: Turning Wheel / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

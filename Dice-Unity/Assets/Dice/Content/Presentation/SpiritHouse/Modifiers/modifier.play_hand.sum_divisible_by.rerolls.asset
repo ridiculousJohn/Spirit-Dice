@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_divisible_by.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 434e63c4fe92ce344b6db70fb96c6ec6, type: 2}
-  displayName: Counted Coins
+  displayName: Counted Coins / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

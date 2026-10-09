@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.every_die_rerolled.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
-  displayName: Turning Wheel
+  displayName: Turning Wheel / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

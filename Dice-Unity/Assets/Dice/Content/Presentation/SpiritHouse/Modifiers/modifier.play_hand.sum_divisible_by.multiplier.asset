@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_divisible_by.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
-  displayName: Counted Coins
+  displayName: Counted Coins / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

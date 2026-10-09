@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_sum_greater_than_interior.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0c5abe5129dbb7441acf17a0a28d5bbc, type: 2}
-  displayName: Strong Fence
+  displayName: Strong Fence / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

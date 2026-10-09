@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.last_hand.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 122d491f0fb91ab4cb8e4ba4a7015e6a, type: 2}
-  displayName: Evening Bell
+  displayName: Evening Bell / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

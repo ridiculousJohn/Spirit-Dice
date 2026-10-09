@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_above_previous.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6dc4abbe7c5b28e46a556d226bcff9d8, type: 2}
-  displayName: Climbing Vine
+  displayName: Climbing Vine / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

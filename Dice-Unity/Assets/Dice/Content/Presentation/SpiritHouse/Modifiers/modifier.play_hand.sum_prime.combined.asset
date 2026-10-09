@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_prime.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: cea03e9bcfaa5a54ebd5a5adb6c18350, type: 2}
-  displayName: Unbroken Stone
+  displayName: Unbroken Stone / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

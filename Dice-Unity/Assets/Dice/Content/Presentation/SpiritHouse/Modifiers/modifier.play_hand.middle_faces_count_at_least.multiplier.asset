@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.middle_faces_count_at_least.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: aadb6fa8f52cac7488356d0cb094357a, type: 2}
-  displayName: Gathered Ferns
+  displayName: Gathered Ferns / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

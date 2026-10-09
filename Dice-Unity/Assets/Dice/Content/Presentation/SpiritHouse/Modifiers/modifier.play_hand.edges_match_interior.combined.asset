@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edges_match_interior.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b855721b30ec7db4988d479f165c3b97, type: 2}
-  displayName: Echoing Bells
+  displayName: Echoing Bells / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

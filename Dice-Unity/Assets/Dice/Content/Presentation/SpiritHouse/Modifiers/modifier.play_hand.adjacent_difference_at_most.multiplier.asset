@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_difference_at_most.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
-  displayName: Close Branches
+  displayName: Close Branches / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

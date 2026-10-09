@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.face_equals_position.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e424ace3eb8435843a3f51a676ad7352, type: 2}
-  displayName: Marked Stepping Stone
+  displayName: Marked Stepping Stone / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

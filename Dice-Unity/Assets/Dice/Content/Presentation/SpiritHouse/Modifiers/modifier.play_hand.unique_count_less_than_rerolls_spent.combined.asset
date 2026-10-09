@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.unique_count_less_than_rerolls_spent.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 55d9f7f82bf1ba04883984024d6c6a00, type: 2}
-  displayName: Polished Shells
+  displayName: Polished Shells / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

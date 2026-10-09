@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 1e0bbd40ded2b3342b38de35ca78a727, type: 2}
-  displayName: Gathering Basket
+  displayName: Gathering Basket / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

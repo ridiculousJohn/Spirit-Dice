@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_equals_previous.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e82516bd4f6d5314ebb4cea2b02d478e, type: 2}
-  displayName: Returning Echo
+  displayName: Returning Echo / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

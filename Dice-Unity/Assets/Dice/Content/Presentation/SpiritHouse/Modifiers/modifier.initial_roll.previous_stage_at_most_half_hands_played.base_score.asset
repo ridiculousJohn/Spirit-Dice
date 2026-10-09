@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 99ad001922f8f90428863e72113295d5, type: 2}
-  displayName: Spare Candle
+  displayName: Spare Candle / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

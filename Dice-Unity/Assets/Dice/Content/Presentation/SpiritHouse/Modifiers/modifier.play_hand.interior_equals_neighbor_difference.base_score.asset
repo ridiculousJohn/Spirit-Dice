@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_equals_neighbor_difference.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 70082ff5ed0299d4b8187b9867352a8d, type: 2}
-  displayName: Hollow Reed
+  displayName: Hollow Reed / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_pair_differences_equal.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 87c199eab3bc4f44896eb8a54a20c8f1, type: 2}
-  displayName: Twin Footprints
+  displayName: Twin Footprints / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

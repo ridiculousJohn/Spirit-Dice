@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.no_extreme_faces.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
-  displayName: Quiet Grove
+  displayName: Quiet Grove / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

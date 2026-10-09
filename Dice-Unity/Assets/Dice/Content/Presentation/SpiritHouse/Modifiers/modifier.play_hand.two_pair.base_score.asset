@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.two_pair.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
-  displayName: Twin Knots
+  displayName: Twin Knots / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

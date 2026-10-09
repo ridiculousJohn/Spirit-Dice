@@ -66,14 +66,13 @@ namespace Dice.Editor
                 Assign(root.AddComponent<SpiritPresentationEnvironment>(), "pipeline", pipeline);
                 Assign(root.AddComponent<SpiritDiceTray>(), "diceShader", Shader.Find("Universal Render Pipeline/Simple Lit"));
                 var view = root.AddComponent<SpiritEncounterView>();
-                Assign(view, "roomTexture", Texture("LanternRoomSeated"));
-                Assign(view, "foxBodyTexture", Texture("FoxBodySeated"));
-                Assign(view, "foxHeadTexture", Texture("FoxHeadTurn"));
-                Assign(view, "foxTurnedHeadTexture", Texture("FoxHeadRest"));
-                Assign(view, "encounterRulePresentation", AssetDatabase.LoadAssetAtPath<EncounterRulePresentationAsset>(
-                    "Assets/Dice/Content/Presentation/SpiritHouse/FoxCourtesy.asset"));
-                Assign(root.AddComponent<SpiritEncounterController>(), "catalogAsset",
+                Assign(view, "tablePresentation", AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
+                    "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset"));
+                var controller = root.AddComponent<SpiritEncounterController>();
+                Assign(controller, "catalogAsset",
                     AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset"));
+                Assign(controller, "journeyCatalog", AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
+                    "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset"));
                 EditorSceneManager.SaveScene(scene, ScenePath);
             }
             if (!EditorBuildSettings.scenes.Any(scene => scene.path == ScenePath))

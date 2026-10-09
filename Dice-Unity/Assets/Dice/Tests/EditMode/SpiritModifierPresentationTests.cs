@@ -40,17 +40,17 @@ namespace Dice.Tests
             "modifier.play_hand.middle_unique.combined"
         };
 
-        [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair", typeof(InitialPairCondition),
+        [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair / Base", typeof(InitialPairCondition),
             "Your initial roll is a Pair.", "+10 base score", "On initial roll / Once per hand")]
-        [TestCase("modifier.player_reroll.selected_face_unchanged.rerolls", "Second Chance", typeof(SelectedFaceUnchangedCondition),
+        [TestCase("modifier.player_reroll.selected_face_unchanged.rerolls", "Second Chance / Rerolls", typeof(SelectedFaceUnchangedCondition),
             "At least one rerolled die keeps its face.", "+1 reroll", "After rerolling / Once per hand")]
-        [TestCase("modifier.player_reroll.last_reroll_on_last_hand.combined", "Last Lantern", typeof(LastRerollOnLastHandCondition),
+        [TestCase("modifier.player_reroll.last_reroll_on_last_hand.combined", "Last Lantern / Base + Mult", typeof(LastRerollOnLastHandCondition),
             "Spend your last reroll on your last hand.", "+10 base score, +2 multiplier", "After rerolling / Once per hand")]
-        [TestCase("modifier.play_hand.no_extreme_faces.base_score", "Quiet Grove", typeof(NoExtremeFacesCondition),
+        [TestCase("modifier.play_hand.no_extreme_faces.base_score", "Quiet Grove / Base", typeof(NoExtremeFacesCondition),
             "No die shows 1 or 6.", "+15 base score", "When played / Once per hand")]
-        [TestCase("modifier.play_hand.contains_face.multiplier", "One Spark", typeof(ContainsFaceCondition),
+        [TestCase("modifier.play_hand.contains_face.multiplier", "One Spark / Mult", typeof(ContainsFaceCondition),
             "At least one die shows 1.", "+2 multiplier", "When played / Once per hand")]
-        [TestCase("modifier.play_hand.middle_unique.combined", "Lone Watcher", typeof(MiddleUniqueCondition),
+        [TestCase("modifier.play_hand.middle_unique.combined", "Lone Watcher / Base + Mult", typeof(MiddleUniqueCondition),
             "The middle die has a face no other die shows.", "+5 base score, +1 multiplier", "When played / Once per hand")]
         public void AuthoredIdentityDescribesTheActualStandardDefinition(string id, string name, Type conditionType,
             string conditionText, string effectText, string timingText)
@@ -77,7 +77,7 @@ namespace Dice.Tests
                 Assert.That(names.Add(SpiritModifierPresentation.GetName(definition)), Is.True, id);
                 var sprite = SpiritModifierIcons.GetSprite(definition);
                 Assert.That(sprite, Is.Not.Null, id);
-                string artworkName = SpiritModifierPresentation.GetName(definition).Replace(" ", "");
+                string artworkName = themeAssets.Single(asset => asset.Modifier.Id == id).Artwork.ToString();
                 Assert.That(sprite.name, Is.EqualTo("Spirit Charm " + artworkName), id);
                 Assert.That(sprite.texture.name, Is.EqualTo("Spirit Charm Ink " + artworkName), id);
                 Assert.That(sprites.Add(sprite), Is.True, id);
@@ -112,7 +112,7 @@ namespace Dice.Tests
                 var selected = catalog.GetModifier(id);
                 foreach (var sibling in catalog.Modifiers.Where(value => value.FamilyId == selected.FamilyId && value.Id != id))
                     Assert.That(SpiritModifierPresentation.GetName(sibling),
-                        Is.EqualTo(SpiritModifierPresentation.GetName(selected)), sibling.Id);
+                        Is.Not.EqualTo(SpiritModifierPresentation.GetName(selected)), sibling.Id);
             }
         }
 
@@ -125,14 +125,16 @@ namespace Dice.Tests
             foreach (var family in families)
             {
                 var definition = family.First();
-                string name = SpiritModifierPresentation.GetName(definition);
+                string name = SpiritModifierPresentation.GetName(definition).Split(new[] { " / " }, StringSplitOptions.None)[0];
                 Assert.That(names.Add(name), Is.True, family.Key + " shares another family's name.");
                 Assert.That(name.Split(' ').Length, Is.InRange(2, 3), family.Key);
                 string typeName = definition.Condition.GetType().Name;
                 string fallback = DiagnosticText.Humanize(typeName.Substring(0, typeName.Length - "Condition".Length));
                 Assert.That(name, Is.Not.EqualTo(fallback), family.Key + " still uses a condition class name.");
-                foreach (var variant in family)
-                    Assert.That(SpiritModifierPresentation.GetName(variant), Is.EqualTo(name), variant.Id);
+                var variantNames = family.Select(SpiritModifierPresentation.GetName).ToArray();
+                Assert.That(variantNames.Distinct().Count(), Is.EqualTo(4), family.Key);
+                foreach (var variantName in variantNames)
+                    Assert.That(variantName, Does.StartWith(name + " / "), family.Key);
             }
         }
 
@@ -144,7 +146,22 @@ namespace Dice.Tests
         public void StandardFamiliesUseTheirCuratedNames(string familyId, string expected)
         {
             foreach (var definition in Catalog().Modifiers.Where(value => value.FamilyId == familyId))
-                Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo(expected), definition.Id);
+                Assert.That(SpiritModifierPresentation.GetName(definition), Does.StartWith(expected + " / "), definition.Id);
+        }
+
+        [TestCase("base_score", "Base")]
+        [TestCase("multiplier", "Mult")]
+        [TestCase("combined", "Base + Mult")]
+        [TestCase("rerolls", "Rerolls")]
+        public void AuthoredVariantNamesIdentifyTheirEffectRole(string role, string label)
+        {
+            var variants = Catalog().Modifiers.Where(value => value.Id.EndsWith("." + role, StringComparison.Ordinal)).ToArray();
+            Assert.That(variants.Length, Is.EqualTo(74));
+            foreach (var definition in variants)
+                Assert.That(SpiritModifierPresentation.GetName(definition), Does.EndWith(" / " + label), definition.Id);
+            Assert.That(SpiritModifierPresentation.GetName(Catalog().GetModifier(
+                "modifier.play_hand.edge_sum_equals_either." + role)), Is.EqualTo("Two Gateposts / " + label));
+            Assert.That(Catalog().Modifiers.Select(SpiritModifierPresentation.GetName).Distinct().Count(), Is.EqualTo(296));
         }
 
         [Test]

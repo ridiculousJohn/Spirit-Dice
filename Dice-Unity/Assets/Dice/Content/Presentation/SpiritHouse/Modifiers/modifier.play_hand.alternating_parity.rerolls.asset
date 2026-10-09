@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.alternating_parity.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
-  displayName: Woven Mat
+  displayName: Woven Mat / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

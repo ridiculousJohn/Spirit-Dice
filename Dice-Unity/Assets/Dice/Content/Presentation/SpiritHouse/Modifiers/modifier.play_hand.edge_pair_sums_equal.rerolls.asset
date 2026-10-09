@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_pair_sums_equal.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
-  displayName: Balanced Scales
+  displayName: Balanced Scales / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

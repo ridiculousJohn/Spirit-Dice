@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.previous_stage_exhausted_hands.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: aa125bd99ab0e78489c8e5fd729a66ce, type: 2}
-  displayName: Last Ember
+  displayName: Last Ember / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

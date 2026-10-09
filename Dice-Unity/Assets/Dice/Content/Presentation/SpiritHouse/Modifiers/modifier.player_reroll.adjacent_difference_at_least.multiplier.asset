@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.adjacent_difference_at_least.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a5f9a4fcffde5c94a9dbda0e25c08b4d, type: 2}
-  displayName: Leaping Stones
+  displayName: Leaping Stones / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

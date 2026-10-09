@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_face_unchanged.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
-  displayName: Second Chance
+  displayName: Second Chance / Rerolls
   icon: {fileID: 0}
   conditionTemplate: At least one rerolled die keeps its face.
   conditionTypeName: SelectedFaceUnchangedCondition

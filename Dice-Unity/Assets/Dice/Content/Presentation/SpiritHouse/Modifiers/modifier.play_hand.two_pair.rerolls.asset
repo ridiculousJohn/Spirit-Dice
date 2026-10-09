@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.two_pair.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
-  displayName: Twin Knots
+  displayName: Twin Knots / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

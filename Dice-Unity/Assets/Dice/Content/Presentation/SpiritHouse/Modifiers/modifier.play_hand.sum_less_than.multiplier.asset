@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_less_than.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
-  displayName: Light Basket
+  displayName: Light Basket / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

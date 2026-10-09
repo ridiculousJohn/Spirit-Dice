@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.contains_upper_face.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
-  displayName: Tall Pine
+  displayName: Tall Pine / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

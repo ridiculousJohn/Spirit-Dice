@@ -171,7 +171,9 @@ namespace Dice.Tests
             Assert.That(rerollGroup.gameObject.activeSelf, Is.True);
             Assert.That(rerollGroup.alpha, Is.EqualTo(0f));
             Assert.That(rerollLabel.alpha, Is.EqualTo(1f));
-            yield return null;
+            deadline = Time.realtimeSinceStartup + .5f;
+            while (cue.IsVisible && rerollGroup.alpha == 0 && Time.realtimeSinceStartup < deadline)
+                yield return null;
             Assert.That(rerollGroup.alpha, Is.GreaterThan(0f));
             Assert.That(rerollLabel.alpha + rerollGroup.alpha, Is.EqualTo(1f).Within(.001f));
             cue.enabled = false;

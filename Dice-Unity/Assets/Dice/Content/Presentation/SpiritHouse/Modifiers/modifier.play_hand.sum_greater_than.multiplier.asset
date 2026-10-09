@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_greater_than.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 027fbeb951cfda248ae8b45721028643, type: 2}
-  displayName: Full Basket
+  displayName: Full Basket / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

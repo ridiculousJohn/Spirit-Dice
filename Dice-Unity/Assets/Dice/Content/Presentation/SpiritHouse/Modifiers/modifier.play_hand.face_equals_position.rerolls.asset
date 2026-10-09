@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.face_equals_position.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 125afe35aca937544b02d61bbf26afa0, type: 2}
-  displayName: Marked Stepping Stone
+  displayName: Marked Stepping Stone / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -46,7 +46,7 @@ namespace Dice.Tests
             Assert.That(chosenOption, Is.EqualTo(21));
 
             card.RenderModifier(controller.Catalog.GetModifier("modifier.play_hand.no_extreme_faces.base_score"), 12, 22);
-            Assert.That(CardLabel(card.Button, "Title").text, Is.EqualTo("Quiet Grove"));
+            Assert.That(CardLabel(card.Button, "Title").text, Is.EqualTo("Quiet Grove / Base"));
             Assert.That(CardLabel(card.Button, "Condition").text, Is.EqualTo("No die shows 1 or 6."));
             Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("+15 base score"));
             Assert.That(CardLabel(card.Button, "Status").text, Is.EqualTo("When played / Once per hand"));
@@ -365,6 +365,8 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Null);
             int beforeNewRunResolutions = resolutions;
             Click(view, "EndingNewRunButton");
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            controller.StartNew();
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view.DiceTray.IsRolling, Is.False);
             Assert.That(resolutions, Is.EqualTo(beforeNewRunResolutions));
@@ -811,7 +813,8 @@ namespace Dice.Tests
                 ++cards;
                 foreach (string childName in childNames)
                 {
-                    var child = button.transform.Find(childName);
+                    var child = button.transform.Find(childName == "Status" && prefix == "OwnedCharm"
+                        ? "StatusBadge/Status" : childName);
                     Assert.That(child, Is.Not.Null, button.name + "/" + childName);
                     var label = child.GetComponent<Text>();
                     Assert.That(label, Is.Not.Null, button.name + "/" + childName);

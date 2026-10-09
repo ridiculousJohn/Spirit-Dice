@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_sum_equals_either.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 7f8cef64f17e21541b26a6c62442c3e9, type: 2}
-  displayName: Twin Bowls
+  displayName: Twin Bowls / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

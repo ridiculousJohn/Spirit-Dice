@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.initial_pair.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2e34ec1e90ed7054daa272d7165af045, type: 2}
-  displayName: Welcoming Pair
+  displayName: Welcoming Pair / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

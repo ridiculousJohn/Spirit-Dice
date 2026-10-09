@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_contains_pair.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f1750df61c3e3994389a8855b4ed8b3d, type: 2}
-  displayName: Nestled Twins
+  displayName: Nestled Twins / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

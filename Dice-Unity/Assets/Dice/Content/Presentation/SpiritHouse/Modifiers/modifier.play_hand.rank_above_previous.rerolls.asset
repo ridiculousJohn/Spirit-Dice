@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_above_previous.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b44a264f02a2c5f4589a03ca2b015255, type: 2}
-  displayName: Climbing Vine
+  displayName: Climbing Vine / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

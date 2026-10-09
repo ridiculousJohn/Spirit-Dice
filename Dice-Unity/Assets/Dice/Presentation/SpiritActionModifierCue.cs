@@ -13,6 +13,7 @@ namespace Dice.Presentation
             internal Image Artwork;
             internal SpiritModifierSigilGraphic Sigil;
             internal SpiritFoxSigilGraphic FoxSigil;
+            internal Graphic HostSigil;
             internal CanvasGroup Label;
             internal float LabelAlpha;
         }
@@ -52,13 +53,46 @@ namespace Dice.Presentation
             active.Artwork.gameObject.SetActive(ActiveSprite != null);
             active.Sigil.Seed = sigilSeed;
             active.Sigil.gameObject.SetActive(ActiveSprite == null && !useFoxSigil);
-            active.FoxSigil.gameObject.SetActive(ActiveSprite == null && useFoxSigil);
+            if (useFoxSigil && active.FoxSigil == null)
+            {
+                active.FoxSigil = SpiritUi.Full("FoxSigil", active.Group.transform).gameObject.AddComponent<SpiritFoxSigilGraphic>();
+                Stretch(active.FoxSigil.rectTransform, 4);
+                active.FoxSigil.color = SpiritUi.Amber;
+                active.FoxSigil.raycastTarget = false;
+            }
+            if (active.FoxSigil != null) active.FoxSigil.gameObject.SetActive(ActiveSprite == null && useFoxSigil);
+            if (active.HostSigil != null) active.HostSigil.gameObject.SetActive(false);
             active.Group.gameObject.SetActive(true);
             active.Group.alpha = 0;
             active.LabelAlpha = active.Label.alpha;
             active.Group.transform.localScale = Vector3.one;
             duration = Mathf.Max(.01f, displayDuration);
             elapsed = 0;
+        }
+
+        public void ConfigureHost(SpiritHostPresentationAsset presentation)
+        {
+            Clear();
+            foreach (var cue in new[] { reroll, play })
+            {
+                if (cue == null) continue;
+                if (cue.HostSigil != null) { cue.HostSigil.gameObject.SetActive(false); Destroy(cue.HostSigil.gameObject); }
+                cue.HostSigil = presentation?.CreateSigil("HostSigil", (RectTransform)cue.Group.transform);
+                if (cue.HostSigil != null)
+                {
+                    Stretch(cue.HostSigil.rectTransform, 4);
+                    cue.HostSigil.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        public void ShowHost(Sprite sprite, ModifierPhase phase, float displayDuration)
+        {
+            Show(sprite, phase, displayDuration);
+            if (active == null || sprite != null || active.HostSigil == null) return;
+            active.Sigil.gameObject.SetActive(false);
+            if (active.FoxSigil != null) active.FoxSigil.gameObject.SetActive(false);
+            active.HostSigil.gameObject.SetActive(true);
         }
 
         public void Clear()
@@ -116,17 +150,11 @@ namespace Dice.Presentation
             Stretch(sigil.rectTransform, 4);
             sigil.color = SpiritUi.Amber;
             sigil.raycastTarget = false;
-            var foxSigil = new GameObject("FoxSigil", typeof(RectTransform), typeof(SpiritFoxSigilGraphic))
-                .GetComponent<SpiritFoxSigilGraphic>();
-            foxSigil.transform.SetParent(rect, false);
-            Stretch(foxSigil.rectTransform, 4);
-            foxSigil.color = SpiritUi.Amber;
-            foxSigil.raycastTarget = false;
             // A separate opacity group leaves the button's disabled and hover tints under Selectable's control.
             var label = button.GetComponentInChildren<Text>().gameObject;
             var labelGroup = label.GetComponent<CanvasGroup>();
             if (labelGroup == null) labelGroup = label.AddComponent<CanvasGroup>();
-            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, FoxSigil = foxSigil, Label = labelGroup };
+            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, Label = labelGroup };
         }
 
         private static void Stretch(RectTransform rect, float inset)

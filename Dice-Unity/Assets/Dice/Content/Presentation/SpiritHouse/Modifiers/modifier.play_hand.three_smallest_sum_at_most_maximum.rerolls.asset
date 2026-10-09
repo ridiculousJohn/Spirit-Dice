@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
-  displayName: Great Oak
+  displayName: Great Oak / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

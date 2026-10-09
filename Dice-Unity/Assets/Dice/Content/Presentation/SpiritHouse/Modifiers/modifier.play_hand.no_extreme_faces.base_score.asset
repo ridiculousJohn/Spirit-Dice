@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.no_extreme_faces.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
-  displayName: Quiet Grove
+  displayName: Quiet Grove / Base
   icon: {fileID: 0}
   conditionTemplate: No die shows {parameter} or {secondaryParameter}.
   conditionTypeName: NoExtremeFacesCondition

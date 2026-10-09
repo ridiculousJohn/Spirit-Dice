@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.range_less_than.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
-  displayName: Narrow Bridge
+  displayName: Narrow Bridge / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

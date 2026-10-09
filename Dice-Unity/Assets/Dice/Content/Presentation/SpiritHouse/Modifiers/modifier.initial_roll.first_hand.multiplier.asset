@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.first_hand.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
-  displayName: Open Gate
+  displayName: Open Gate / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

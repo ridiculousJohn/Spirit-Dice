@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_greater_than.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: c66334d8c99fcc442ad407fb79f0ecd7, type: 2}
-  displayName: Full Basket
+  displayName: Full Basket / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

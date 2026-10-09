@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_equals_previous.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
-  displayName: Returning Echo
+  displayName: Returning Echo / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

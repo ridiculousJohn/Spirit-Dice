@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_pair_matches_edge.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 54e2f47ba9caa154ebf93ca94ff82e26, type: 2}
-  displayName: Sheltering Branch
+  displayName: Sheltering Branch / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

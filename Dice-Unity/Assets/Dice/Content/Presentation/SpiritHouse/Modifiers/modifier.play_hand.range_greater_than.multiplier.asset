@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.range_greater_than.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d628157fa072a3349a1788c63ad19971, type: 2}
-  displayName: Wide Valley
+  displayName: Wide Valley / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

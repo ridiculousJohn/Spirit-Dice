@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.ordered.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 4743975650b03dc4dbc8cb15073127a3, type: 2}
-  displayName: Winding Stair
+  displayName: Winding Stair / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

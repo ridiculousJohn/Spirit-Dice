@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.same_parity.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a41bae1010c70404f86c6e6c98cb7b9f, type: 2}
-  displayName: Matching Shells
+  displayName: Matching Shells / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

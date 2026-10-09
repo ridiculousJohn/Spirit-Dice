@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_equals_neighbor_sum.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0a2622e9c9f7b6844a0d2eaae63f7468, type: 2}
-  displayName: Joined Roots
+  displayName: Joined Roots / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.initial_rank_above_previous.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
-  displayName: Rising Sun
+  displayName: Rising Sun / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

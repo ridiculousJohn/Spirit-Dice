@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f5d61ddcd2a4c8643af45c70b06d508a, type: 2}
-  displayName: Spare Candle
+  displayName: Spare Candle / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

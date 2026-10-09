@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e0ad25eb0e5500c4f8cafa8034d97418, type: 2}
-  displayName: Spare Candle
+  displayName: Spare Candle / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

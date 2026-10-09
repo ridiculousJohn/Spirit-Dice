@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.hands_remaining_even.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 66c0d2fb3e08a304097cd8c6fb968a4a, type: 2}
-  displayName: Paired Gloves
+  displayName: Paired Gloves / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.middle_equals_odd_count.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e892c55180ed6e141b609742e5e63991, type: 2}
-  displayName: Counting Lantern
+  displayName: Counting Lantern / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

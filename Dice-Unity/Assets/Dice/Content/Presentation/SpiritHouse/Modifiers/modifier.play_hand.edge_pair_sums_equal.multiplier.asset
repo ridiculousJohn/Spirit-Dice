@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_pair_sums_equal.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
-  displayName: Balanced Scales
+  displayName: Balanced Scales / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

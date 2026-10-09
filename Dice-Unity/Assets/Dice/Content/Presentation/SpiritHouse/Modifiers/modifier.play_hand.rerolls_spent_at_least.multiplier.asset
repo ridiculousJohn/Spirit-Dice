@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rerolls_spent_at_least.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 089cf1156a4946a4592644af1eccc4e5, type: 2}
-  displayName: Patient Mill
+  displayName: Patient Mill / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_face_unchanged.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
-  displayName: Second Chance
+  displayName: Second Chance / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

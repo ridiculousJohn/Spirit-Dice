@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.second_fourth_product_at_least_sum.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6d5cc140596b4a243a1908eafddc0668, type: 2}
-  displayName: Crossed Beams
+  displayName: Crossed Beams / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

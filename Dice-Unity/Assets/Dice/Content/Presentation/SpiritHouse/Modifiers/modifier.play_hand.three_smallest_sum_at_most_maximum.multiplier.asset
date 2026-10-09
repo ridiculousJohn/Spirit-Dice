@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
-  displayName: Great Oak
+  displayName: Great Oak / Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

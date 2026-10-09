@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_sum_equals_either.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0ed8d064ee6178b4a81bf721877ea4f8, type: 2}
-  displayName: Twin Bowls
+  displayName: Twin Bowls / Rerolls
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

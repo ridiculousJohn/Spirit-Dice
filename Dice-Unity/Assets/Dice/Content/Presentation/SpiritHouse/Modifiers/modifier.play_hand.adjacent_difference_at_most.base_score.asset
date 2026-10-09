@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_difference_at_most.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
-  displayName: Close Branches
+  displayName: Close Branches / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

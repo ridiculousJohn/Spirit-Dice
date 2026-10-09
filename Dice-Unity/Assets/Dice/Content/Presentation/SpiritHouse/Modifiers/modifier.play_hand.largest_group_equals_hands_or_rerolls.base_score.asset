@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: bff7d34cc060c1849891bad1abd5391d, type: 2}
-  displayName: Measured Bundle
+  displayName: Measured Bundle / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.alternating_parity.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
-  displayName: Woven Mat
+  displayName: Woven Mat / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

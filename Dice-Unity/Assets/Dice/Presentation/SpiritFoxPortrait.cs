@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    public sealed class SpiritFoxPortrait : MonoBehaviour
+    public sealed class SpiritFoxPortrait : SpiritHostPortrait
     {
         public const float ReactionDuration = 1.8f;
         private const float HeadSize = 190f;
@@ -41,7 +41,8 @@ namespace Dice.Presentation
         private float initialEars;
 
         public bool IsReacting => reactionAge >= 0f;
-        public event Action SpiritGesture;
+        public override float GestureDuration => ReactionDuration;
+        public override event Action SpiritGesture;
 
         public void Build(RectTransform parent, Texture2D body, Texture2D head, Texture2D turnedHead)
         {
@@ -77,7 +78,7 @@ namespace Dice.Presentation
             ApplyPose();
         }
 
-        public void React()
+        public override void React()
         {
             if (portraitRoot == null || !portraitRoot.gameObject.activeInHierarchy) return;
             initialPose = physicalPose;
@@ -92,7 +93,7 @@ namespace Dice.Presentation
             SpiritGesture?.Invoke();
         }
 
-        public void SetVisible(bool visible)
+        public override void SetVisible(bool visible)
         {
             if (portraitRoot == null) return;
             if (portraitRoot.gameObject.activeSelf == visible) return;
@@ -100,7 +101,7 @@ namespace Dice.Presentation
             portraitRoot.gameObject.SetActive(visible);
         }
 
-        public void ResetPose()
+        public override void ResetPose()
         {
             idleAge = 0f;
             reactionAge = -1f;

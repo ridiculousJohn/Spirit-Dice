@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rerolls_exceed_hands_remaining.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 964c9e9ff50a60a4cbbd903e080000d1, type: 2}
-  displayName: Full Seed Pouch
+  displayName: Full Seed Pouch / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 

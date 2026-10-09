@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rerolls_spent_at_least.base_score
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b69a7ad4368e1664f88c700253bdf447, type: 2}
-  displayName: Patient Mill
+  displayName: Patient Mill / Base
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 
