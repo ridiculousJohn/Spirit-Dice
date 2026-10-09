@@ -1,0 +1,41 @@
+{
+  "authoring": "Project-authored filtered noise; no third-party samples or tonal oscillators.",
+  "generator": "Docs/work/spirit-audio/generate_soft_whooshes.py",
+  "reference": "Dice-Unity\\Assets\\Dice\\Presentation\\Resources\\SpiritAudio\\spirit_air.wav",
+  "reference_sha256": "4a817c134d7a5a81a8b686469890ce6eade246238fec9b07d6014572e83d873a",
+  "relative_rms_db": -12,
+  "audition_playback_gain": 0.65,
+  "sample_rate": 44100,
+  "clips": [
+    {
+      "file": "fox_whoosh_01.wav",
+      "seed": 901,
+      "duration_seconds": 0.72,
+      "maximum_cutoff_hz": 790,
+      "attack_fraction": 0.32,
+      "peak_dbfs": -26.71,
+      "rms_dbfs": -42.17,
+      "sha256": "399d506fc047e3afd41db371216307c1be2df5977bd484729eef1093bca2cdc4"
+    },
+    {
+      "file": "fox_whoosh_02.wav",
+      "seed": 902,
+      "duration_seconds": 0.86,
+      "maximum_cutoff_hz": 900,
+      "attack_fraction": 0.38,
+      "peak_dbfs": -26.16,
+      "rms_dbfs": -42.17,
+      "sha256": "72245597006f5489e6f6fb275ff5a397bd9ddd4aa36fe85ae1f4e5af15503dd1"
+    },
+    {
+      "file": "fox_whoosh_03.wav",
+      "seed": 903,
+      "duration_seconds": 0.65,
+      "maximum_cutoff_hz": 710,
+      "attack_fraction": 0.29,
+      "peak_dbfs": -27.79,
+      "rms_dbfs": -42.17,
+      "sha256": "f5015dd42e645d9b6085249ff886ff47ac96415691639d904dd23968163fa9ad"
+    }
+  ]
+}

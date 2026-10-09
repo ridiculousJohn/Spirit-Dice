@@ -21,8 +21,21 @@ namespace Dice.Presentation
         private bool paused;
         private float nextCreak;
         private int nextCueSource;
+        private AudioClip lastSpiritClip;
+        private bool themeSelected;
 
         public SpiritAudioTheme Theme => theme;
+        public void SetTheme(SpiritAudioTheme selectedTheme)
+        {
+            themeSelected = true;
+            if (theme == selectedTheme) return;
+            StopPlayback();
+            theme = selectedTheme;
+            lastSpiritClip = null;
+            RefreshPlayback();
+        }
+
+        public void PlayJourneyCue(AudioClip clip) => PlayClip(clip);
         public bool Muted
         {
             get => muted;
@@ -51,7 +64,7 @@ namespace Dice.Presentation
 
         private void Initialize()
         {
-            if (theme == null) theme = Resources.Load<SpiritAudioTheme>("SpiritAudio/SpiritAudioTheme");
+            if (theme == null && !themeSelected) theme = Resources.Load<SpiritAudioTheme>("SpiritAudio/SpiritAudioTheme");
             if (cosmeticRandom == null)
                 cosmeticRandom = new System.Random();
             if (sourceOwner != null) return;
@@ -109,12 +122,30 @@ namespace Dice.Presentation
                 case SpiritAudioCue.Roll:
                     PlayRoll(5);
                     return;
-                case SpiritAudioCue.Spirit: clip = theme.spirit; break;
+                case SpiritAudioCue.Spirit: clip = ChooseSpiritClip(); break;
                 case SpiritAudioCue.Score: clip = theme.score; break;
                 case SpiritAudioCue.StageClear: clip = theme.stageClear; break;
                 default: return;
             }
             PlayClip(clip);
+        }
+
+        private AudioClip ChooseSpiritClip()
+        {
+            AudioClip selected = null;
+            int candidates = 0;
+            if (theme.spiritClips != null)
+            {
+                // Reservoir selection skips empty slots and the previous clip without allocating a list.
+                foreach (var clip in theme.spiritClips)
+                    if (clip != null && clip != lastSpiritClip && cosmeticRandom.Next(++candidates) == 0)
+                        selected = clip;
+                if (selected == null)
+                    foreach (var clip in theme.spiritClips)
+                        if (clip != null) { selected = clip; break; }
+            }
+            lastSpiritClip = selected != null ? selected : theme.spirit;
+            return lastSpiritClip;
         }
 
         private void PlayClip(AudioClip clip)

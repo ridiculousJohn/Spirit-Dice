@@ -12,6 +12,8 @@ namespace Dice.Presentation
         public SpiritRollContactTrack[] rollContactTracks;
         [Min(0)] public float rollLaunchTime = .15f;
         public AudioClip spirit;
+        [Tooltip("Gesture variations chosen randomly without immediate repeats. Spirit is the fallback when none are assigned.")]
+        public AudioClip[] spiritClips;
         public AudioClip score;
         public AudioClip stageClear;
         public AudioClip ambience;
