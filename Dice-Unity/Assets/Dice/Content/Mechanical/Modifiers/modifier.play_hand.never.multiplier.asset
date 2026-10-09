@@ -21,3 +21,7 @@ MonoBehaviour:
   effects: []
   activationLimit: 1
   rewardEligible: 0
+  powerTier: 1
+  access: 0
+  availabilityScope: 0
+  availabilityScopeId:

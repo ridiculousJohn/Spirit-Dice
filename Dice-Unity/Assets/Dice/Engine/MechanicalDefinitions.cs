@@ -74,6 +74,28 @@ namespace Dice.Engine
         }
     }
 
+    public sealed class ModifierUnlockMilestone
+    {
+        public int StageNumber { get; }
+        public ReadOnlyCollection<string> ModifierIds { get; }
+
+        public ModifierUnlockMilestone(int stageNumber, IEnumerable<string> modifierIds)
+        {
+            if (stageNumber < 1) throw new ArgumentOutOfRangeException(nameof(stageNumber));
+            if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
+            var ids = new List<string>(modifierIds);
+            var unique = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in ids)
+            {
+                DefinitionValidation.RequireId(id, nameof(modifierIds));
+                if (!unique.Add(id)) throw new ArgumentException("Unlock IDs must be unique.", nameof(modifierIds));
+            }
+            if (ids.Count == 0) throw new ArgumentException("An unlock milestone requires modifiers.", nameof(modifierIds));
+            StageNumber = stageNumber;
+            ModifierIds = ids.AsReadOnly();
+        }
+    }
+
     public sealed class EncounterDefinition
     {
         public string Id { get; }
@@ -82,10 +104,13 @@ namespace Dice.Engine
         public ReadOnlyCollection<string> StartingModifiers { get; }
         public RewardPolicyDefinition RewardPolicy { get; }
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
+        public string SpiritId { get; }
+        public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
 
         public EncounterDefinition(string id, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
-            IEnumerable<EncounterRuleDefinition> rules = null)
+            IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
+            IEnumerable<ModifierUnlockMilestone> unlockMilestones = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -109,6 +134,14 @@ namespace Dice.Engine
                 if (rule == null || !ruleIds.Add(rule.Id))
                     throw new ArgumentException("Encounter rule IDs must be unique and nonnull.", nameof(rules));
             Rules = ruleList.AsReadOnly();
+            if (spiritId != null) DefinitionValidation.RequireId(spiritId, nameof(spiritId));
+            SpiritId = spiritId;
+            var milestones = unlockMilestones == null ? new List<ModifierUnlockMilestone>() : new List<ModifierUnlockMilestone>(unlockMilestones);
+            var milestoneStages = new HashSet<int>();
+            foreach (var milestone in milestones)
+                if (milestone == null || milestone.StageNumber > Stages.Count || !milestoneStages.Add(milestone.StageNumber))
+                    throw new ArgumentException("Unlock stages must be unique and within the encounter.", nameof(unlockMilestones));
+            UnlockMilestones = milestones.AsReadOnly();
         }
     }
 
@@ -176,6 +209,12 @@ namespace Dice.Engine
                 foreach (string modifierId in encounter.StartingModifiers)
                     if (!modifiersById.ContainsKey(modifierId))
                         throw new ArgumentException("A starting modifier is missing from the catalog.", nameof(encounters));
+                foreach (var milestone in encounter.UnlockMilestones)
+                    foreach (string modifierId in milestone.ModifierIds)
+                        if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
+                            modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
+                            !modifier.Availability.MatchesEncounter(encounter))
+                            throw new ArgumentException("Milestones must reference permanent unlocks within the encounter scope.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
                         foreach (string poolId in layout.PoolIds)

@@ -16,6 +16,10 @@ namespace Dice.UnityContent
         [SerializeField] private ModifierEffectData[] effects = Array.Empty<ModifierEffectData>();
         [SerializeField] private ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand;
         [SerializeField] private bool rewardEligible = true;
+        [SerializeField, Min(1)] private int powerTier = 1;
+        [SerializeField] private ModifierAccess access;
+        [SerializeField] private ModifierAvailabilityScope availabilityScope;
+        [SerializeField] private string availabilityScopeId;
 
         public string Id => id;
         public string FamilyId => familyId;
@@ -31,7 +35,9 @@ namespace Dice.UnityContent
             }
             return new ModifierDefinition(id, familyId, phase,
                 ModifierConditions.Create(conditionKind, parameter, secondaryParameter),
-                effectDefinitions, activationLimit, rewardEligible);
+                effectDefinitions, activationLimit, rewardEligible,
+                new ModifierAvailabilityDefinition(powerTier, availabilityScope,
+                    string.IsNullOrEmpty(availabilityScopeId) ? null : availabilityScopeId, access));
         }
 
         [Serializable]

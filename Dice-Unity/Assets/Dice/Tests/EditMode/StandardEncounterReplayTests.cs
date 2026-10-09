@@ -13,13 +13,13 @@ namespace Dice.Tests
     public sealed class StandardEncounterReplayTests
     {
         [Test]
-        public void DiagnosticControlsCompleteTheStandardVictoryReplay()
+        public void DiagnosticControlsCompleteTheLegacyStandardVictoryReplay()
         {
             var host = new GameObject("Diagnostic victory replay");
             try
             {
                 var controller = host.AddComponent<DiagnosticEncounterController>();
-                var catalog = Catalog();
+                var catalog = LegacyCatalog();
                 controller.Initialize(catalog, "encounter.standard", 60, null);
                 var expected = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
                 foreach (string row in VictoryActions.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
@@ -81,9 +81,9 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void ActualStandardCatalogCompletesAllTwentyFiveStagesThroughLegalRewardAndPlayActions()
+        public void LegacyStandardCatalogCompletesAllTwentyFiveStagesThroughLegalRewardAndPlayActions()
         {
-            var catalog = Catalog();
+            var catalog = LegacyCatalog();
             var session = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
             var control = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
             Assert.That(session.Snapshot.StageCount, Is.EqualTo(25));
@@ -169,6 +169,84 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.PendingReward, Is.Null);
         }
 
+        [Test]
+        public void ActualStandardProgressionCatalogReproducesOffersAndActionsThroughCompletion()
+        {
+            var catalog = Catalog();
+            Assert.That(catalog.GetEncounter("encounter.standard").RewardPolicy.TierRules, Is.Not.Empty);
+            Assert.That(catalog.Modifiers.Any(value => value.Availability.PowerTier > 1), Is.True);
+            var session = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            var repeated = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            var phases = new HashSet<EncounterPhase> { session.Snapshot.Phase };
+            int refreshes = 0;
+            for (int count = 0; count < 1000 && session.Snapshot.Phase != EncounterPhase.Completed; ++count)
+            {
+                var action = ProgressionAction(catalog, session);
+                var before = session.Snapshot;
+                var result = session.Execute(action, before.Revision);
+                var control = repeated.Execute(action, repeated.Snapshot.Revision);
+                Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
+                Assert.That(control.Accepted, Is.True, control.Rejection.ToString());
+                Assert.That(result.Snapshot.Revision, Is.EqualTo(before.Revision + 1));
+                EncounterSessionTests.AssertSnapshotsEqual(control.Snapshot, result.Snapshot);
+                EncounterPersistenceTests.AssertGraphEqual(repeated.CaptureSave(), session.CaptureSave());
+                AssertEventsEqual(control.Events, result.Events);
+                phases.Add(result.Snapshot.Phase);
+                refreshes += result.Events.OfType<RewardOfferedEvent>().Count(value => value.IsRefresh);
+            }
+            Assert.That(phases, Is.EquivalentTo(new[] { EncounterPhase.Playing, EncounterPhase.ChoosingModifier,
+                EncounterPhase.ChoosingHandUpgrade, EncounterPhase.Completed }));
+            Assert.That(refreshes, Is.GreaterThan(0));
+            Assert.That(session.Snapshot.StageIndex, Is.GreaterThanOrEqualTo(1));
+            Assert.That(session.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won).Or.EqualTo(EncounterOutcome.Lost));
+            Assert.That(session.Snapshot.PendingReward, Is.Null);
+        }
+
+        internal static EncounterAction ProgressionAction(MechanicalCatalog catalog, EncounterSession session)
+        {
+            var snapshot = session.Snapshot;
+            // This prefix clears the first authored stage before rewards can influence the dice stream.
+            if (snapshot.Revision == 0) return new RerollDiceAction(9);
+            if (snapshot.Revision <= 2) return PlayHandAction.Instance;
+            if (snapshot.Phase == EncounterPhase.ChoosingModifier)
+            {
+                var encounter = catalog.GetEncounter(snapshot.EncounterId);
+                var offer = snapshot.PendingReward;
+                foreach (var option in offer.Options)
+                {
+                    var modifier = catalog.GetModifier(option.DefinitionId);
+                    Assert.That(modifier.Availability.MatchesEncounter(encounter), Is.True, modifier.Id);
+                    Assert.That(modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
+                        snapshot.UnlockedModifierIds.Contains(modifier.Id), Is.True, modifier.Id);
+                    Assert.That(snapshot.Modifiers.Any(value => value.DefinitionId == modifier.Id), Is.False, modifier.Id);
+                }
+                Assert.That(offer.Options.Select(value => catalog.GetModifier(value.DefinitionId).FamilyId).Distinct().Count(),
+                    Is.EqualTo(offer.Options.Count));
+                if (offer.OfferId == 1 && snapshot.RewardRefreshes >= encounter.RewardPolicy.RefreshCost)
+                    return new RefreshModifierOfferAction(offer.OfferId);
+                var selected = offer.Options.OrderByDescending(value => catalog.GetModifier(value.DefinitionId).Availability.PowerTier)
+                    .ThenBy(value => value.DefinitionId, StringComparer.Ordinal).First();
+                return new SelectModifierAction(offer.OfferId, selected.OptionId);
+            }
+            if (snapshot.Phase == EncounterPhase.ChoosingHandUpgrade)
+            {
+                var offer = snapshot.PendingReward;
+                var selected = offer.Options.OrderByDescending(value => value.Category.Value).First();
+                return new SelectHandUpgradeAction(offer.OfferId, selected.OptionId);
+            }
+            Assert.That(snapshot.Phase, Is.EqualTo(EncounterPhase.Playing));
+            if (snapshot.CanReroll && snapshot.RerollsSpentOnHand < 2)
+            {
+                int face = snapshot.CurrentDice.ToArray().GroupBy(value => value).OrderByDescending(value => value.Count())
+                    .ThenByDescending(value => value.Key).First().Key;
+                int mask = 0;
+                for (int index = 0; index < DiceValues.Count; ++index)
+                    if (snapshot.CurrentDice[index] != face) mask |= 1 << index;
+                if (mask != 0) return new RerollDiceAction(mask);
+            }
+            return PlayHandAction.Instance;
+        }
+
         private static EncounterAction Action(string[] values, EncounterSession session)
         {
             var snapshot = session.Snapshot;
@@ -213,14 +291,28 @@ namespace Dice.Tests
             }
         }
 
-        private static MechanicalCatalog Catalog()
+        internal static MechanicalCatalog Catalog()
         {
             var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
             Assert.That(asset, Is.Not.Null);
             return asset.Build(TestContent.ModifierAssets());
         }
 
-        // Legal action trace for the imported Standard catalog with seed 60.
+        internal static MechanicalCatalog LegacyCatalog()
+        {
+            var authored = Catalog();
+            var encounter = authored.GetEncounter("encounter.standard");
+            var policy = encounter.RewardPolicy;
+            var legacyPolicy = new RewardPolicyDefinition(policy.Id, policy.ModifierLayouts, policy.StartingRefreshes,
+                policy.RefreshesPerClear, policy.RefreshCost, policy.HandUpgradeOptionCount, policy.UpgradeHistory);
+            var legacyEncounter = new EncounterDefinition(encounter.Id, encounter.Stages, encounter.StartingUpgrades,
+                encounter.StartingModifiers, legacyPolicy, encounter.Rules);
+            var modifiers = authored.Modifiers.Select(value => new ModifierDefinition(value.Id, value.FamilyId, value.Phase,
+                value.Condition, value.Effects, value.ActivationLimit, value.RewardEligible));
+            return new MechanicalCatalog("test.standard.legacy", authored.Hands, new[] { legacyEncounter }, modifiers, authored.RewardPools);
+        }
+
+        // Legal action trace for the legacy Standard mechanics fixture with seed 60.
         private const string VictoryActions = @"R,9
 P,0,152
 P,0,81

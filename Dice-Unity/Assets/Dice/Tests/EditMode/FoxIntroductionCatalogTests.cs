@@ -73,7 +73,9 @@ namespace Dice.Tests
             var catalog = Catalog();
             var pool = catalog.GetRewardPool(PoolPrefix + role);
             Assert.That(pool.FallbackModifierId, Is.Null);
-            Assert.That(pool.ModifierIds, Is.EquivalentTo(Families.Select(value => value + "." + role)));
+            Assert.That(pool.ModifierIds.Where(id => catalog.GetModifier(id).Availability.Access != ModifierAccess.PermanentUnlock),
+                Is.EquivalentTo(Families.Select(value => value + "." + role)));
+            Assert.That(pool.ModifierIds.Count, Is.EqualTo(15));
             foreach (var member in pool.ModifierIds.Select(catalog.GetModifier))
             {
                 Assert.That(member.RewardEligible, Is.True, member.Id);
@@ -100,7 +102,7 @@ namespace Dice.Tests
             for (int clearedStageNumber = 1; clearedStageNumber <= 9; ++clearedStageNumber)
             {
                 var generated = RewardGenerator.GenerateModifiers(catalog, policy, clearedStageNumber,
-                    Array.Empty<string>(), Array.Empty<string>(), ref random);
+                    Array.Empty<string>(), Array.Empty<string>(), ref random, catalog.GetEncounter(EncounterId), Array.Empty<string>());
                 string thirdRole = clearedStageNumber % 3 == 0 ? "rerolls" : "combined";
                 AssertOffer(catalog, generated, Array.Empty<string>(), new[] { "base_score", "multiplier", thirdRole });
             }
@@ -121,7 +123,8 @@ namespace Dice.Tests
                 IEnumerable<string> history = Array.Empty<string>();
                 for (int refresh = 0; refresh < 64; ++refresh)
                 {
-                    var generated = RewardGenerator.GenerateModifiers(catalog, policy, 9, owned, history, ref random);
+                    var generated = RewardGenerator.GenerateModifiers(catalog, policy, 9, owned, history, ref random,
+                        catalog.GetEncounter(EncounterId), Array.Empty<string>());
                     AssertOffer(catalog, generated, owned, new[] { "base_score", "multiplier", "rerolls" });
                     history = generated.ExcludedFamilyIds;
                 }

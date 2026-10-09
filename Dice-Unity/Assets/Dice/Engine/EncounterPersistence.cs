@@ -38,6 +38,10 @@ namespace Dice.Engine
                 ExcludedRewardFamilies = state.ExcludedRewardFamilies.ToArray(),
                 RecentHandUpgrades = state.RecentHandUpgrades.ToArray(),
                 PendingUpgradeCategories = state.PendingUpgradeCategories?.ToArray(),
+                UnlockedModifierIds = state.UnlockedModifierIds.ToArray(),
+                NewlyUnlockedModifierIds = state.NewlyUnlockedModifierIds.ToArray(),
+                PendingModifierOfferUsesLegacyEligibility = state.PendingModifierOfferUsesLegacyEligibility,
+                PendingModifierOfferUnlockedIds = state.PendingModifierOfferUnlockedIds?.ToArray(),
                 Modifiers = new EncounterSaveModifierData[state.Modifiers.Length],
                 ModifierContributions = new EncounterSaveContributionData[state.ModifierContributions.Count]
             };
@@ -90,9 +94,9 @@ namespace Dice.Engine
             detail = null;
             if (save == null) return Fail(EncounterRestoreError.NullSave, "The save is missing.", out error, out detail);
             bool legacy = save.SaveFormatVersion == 1;
-            if (!legacy && save.SaveFormatVersion != EncounterSaveData.CurrentFormatVersion)
+            if (save.SaveFormatVersion < 1 || save.SaveFormatVersion > EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
-            if (save.RulesVersion != (legacy ? 3 : EncounterSession.RulesVersion))
+            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : EncounterSession.RulesVersion))
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -186,6 +190,7 @@ namespace Dice.Engine
                 RecentHandUpgrades = new List<HandCategory>(save.RecentHandUpgrades),
                 PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories)
             };
+            ValidateUnlocks(catalog, definition, save, state);
             ValidateHistory(definition, save, state, postPlay);
             ValidateDiceHistory(state, postPlay);
             var definitions = new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
@@ -202,6 +207,49 @@ namespace Dice.Engine
             }
             ValidateRewards(catalog, definition, save, state, definitions, postPlay);
             return state;
+        }
+
+        private static void ValidateUnlocks(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save, EncounterState state)
+        {
+            if (save.SaveFormatVersion < 3)
+            {
+                state.PendingModifierOfferUsesLegacyEligibility = state.Phase == EncounterPhase.ChoosingModifier;
+                return;
+            }
+            Require(save.UnlockedModifierIds != null && save.NewlyUnlockedModifierIds != null, "Unlock arrays are missing.");
+            var unlocked = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in save.UnlockedModifierIds)
+            {
+                Require(!string.IsNullOrWhiteSpace(id) && unlocked.Add(id), "Unlock IDs must be valid and unique.");
+                ModifierDefinition modifier;
+                try { modifier = catalog.GetModifier(id); }
+                catch (KeyNotFoundException) { throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Unlocked modifier is missing from the catalog."); }
+                Require(modifier.Availability.Access == ModifierAccess.PermanentUnlock, "An unlock requires permanent access.");
+            }
+            var earned = new HashSet<string>(StringComparer.Ordinal);
+            int clearedStageNumber = state.StageIndex + (state.RemainingThreshold == 0 ? 1 : 0);
+            foreach (string id in save.NewlyUnlockedModifierIds)
+            {
+                Require(id != null && unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
+                bool reached = false;
+                foreach (var milestone in definition.UnlockMilestones)
+                    if (milestone.StageNumber <= clearedStageNumber && milestone.ModifierIds.Contains(id)) reached = true;
+                Require(reached, "An earned unlock requires a cleared milestone.");
+            }
+            state.UnlockedModifierIds = new List<string>(save.UnlockedModifierIds);
+            state.NewlyUnlockedModifierIds = new List<string>(save.NewlyUnlockedModifierIds);
+            Require(!save.PendingModifierOfferUsesLegacyEligibility || state.Phase == EncounterPhase.ChoosingModifier,
+                "Legacy eligibility requires a pending modifier offer.");
+            state.PendingModifierOfferUsesLegacyEligibility = save.PendingModifierOfferUsesLegacyEligibility;
+            if (state.Phase == EncounterPhase.ChoosingModifier && !state.PendingModifierOfferUsesLegacyEligibility)
+            {
+                Require(save.PendingModifierOfferUnlockedIds != null, "Pending offer unlocks are missing.");
+                var pendingUnlocks = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string id in save.PendingModifierOfferUnlockedIds)
+                    Require(id != null && unlocked.Contains(id) && pendingUnlocks.Add(id), "Pending offer unlocks must be unique and currently unlocked.");
+                state.PendingModifierOfferUnlockedIds = new List<string>(save.PendingModifierOfferUnlockedIds);
+            }
+            else Require(save.PendingModifierOfferUnlockedIds == null, "Pending offer unlocks require a generated modifier offer.");
         }
 
         private static void ValidateHistory(EncounterDefinition definition, EncounterSaveData save, EncounterState state, bool postPlay)
@@ -475,6 +523,21 @@ namespace Dice.Engine
             foreach (string poolId in layout.PoolIds)
             {
                 var pool = catalog.GetRewardPool(poolId);
+                if (!state.PendingModifierOfferUsesLegacyEligibility)
+                {
+                    var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
+                    var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.StageIndex + 2, pool, owned, offered, definition, unlocked);
+                    string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.StageIndex + 2, pool, definition, unlocked);
+                    if (eligible.Count == 0 && fallback == null) continue;
+                    Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
+                    var currentOption = options[nextOption++];
+                    var currentModifier = catalog.GetModifier(currentOption.DefinitionId);
+                    Require(eligible.Count == 0 ? currentOption.DefinitionId == fallback : eligible.Contains(currentOption.DefinitionId),
+                        "Modifier option violates its scope, unlock, pool, or tier eligibility.");
+                    Require(history.Contains(currentModifier.FamilyId), "An offered family is absent from reward history.");
+                    offered.Add(currentModifier.FamilyId);
+                    continue;
+                }
                 bool hasCandidate = false;
                 foreach (string id in pool.ModifierIds)
                     if (!owned.Contains(id) && !offered.Contains(catalog.GetModifier(id).FamilyId)) { hasCandidate = true; break; }

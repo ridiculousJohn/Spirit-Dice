@@ -252,6 +252,32 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void VersionTwoRuleSavesPreserveFreeUsageWhenUpgradedAndContinued()
+        {
+            var catalog = Catalog();
+            var session = Session(catalog);
+            Execute(session, new RerollDiceAction(1));
+            var legacy = session.CaptureSave();
+            legacy.SaveFormatVersion = 2;
+            legacy.RulesVersion = 4;
+            legacy.UnlockedModifierIds = null;
+            legacy.NewlyUnlockedModifierIds = null;
+            var resumed = Restore(catalog, legacy);
+            var upgraded = resumed.CaptureSave();
+            Assert.That(upgraded.SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
+            Assert.That(upgraded.RulesVersion, Is.EqualTo(EncounterSession.RulesVersion));
+            Assert.That(resumed.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
+            EncounterPersistenceTests.AssertGraphEqual(session.CaptureSave(), upgraded);
+            foreach (var action in new EncounterAction[] { new RerollDiceAction(7), PlayHandAction.Instance,
+                new RerollDiceAction(31) })
+            {
+                Execute(session, action);
+                Execute(resumed, action);
+                EncounterPersistenceTests.AssertGraphEqual(session.CaptureSave(), resumed.CaptureSave());
+            }
+        }
+
+        [Test]
         public void LegacySavesCannotOptIntoEncounterRulesAndVersionPairsCannotBeMixed()
         {
             var catalog = Catalog();
@@ -263,6 +289,12 @@ namespace Dice.Tests
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.RulesVersionMismatch));
             save.SaveFormatVersion = EncounterSaveData.CurrentFormatVersion;
             save.RulesVersion = 3;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.RulesVersionMismatch));
+            save.SaveFormatVersion = 2;
+            save.RulesVersion = EncounterSession.RulesVersion;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.RulesVersionMismatch));
+            save.SaveFormatVersion = EncounterSaveData.CurrentFormatVersion;
+            save.RulesVersion = 4;
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.RulesVersionMismatch));
         }
 

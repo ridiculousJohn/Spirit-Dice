@@ -79,6 +79,8 @@ namespace Dice.Engine
         public int RewardRefreshes { get; }
         public ReadOnlyCollection<string> ExcludedRewardFamilies { get; }
         public ReadOnlyCollection<HandCategory> RecentHandUpgrades { get; }
+        public ReadOnlyCollection<string> UnlockedModifierIds { get; }
+        public ReadOnlyCollection<string> NewlyUnlockedModifierIds { get; }
 
         internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
         {
@@ -125,6 +127,8 @@ namespace Dice.Engine
             RewardRefreshes = state.RewardRefreshes;
             ExcludedRewardFamilies = new List<string>(state.ExcludedRewardFamilies).AsReadOnly();
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();
+            UnlockedModifierIds = new List<string>(state.UnlockedModifierIds).AsReadOnly();
+            NewlyUnlockedModifierIds = new List<string>(state.NewlyUnlockedModifierIds).AsReadOnly();
         }
     }
 
@@ -136,6 +140,17 @@ namespace Dice.Engine
         {
             StageIndex = stageIndex;
             HandIndex = handIndex;
+        }
+    }
+
+    public sealed class ModifierUnlockedEvent : RuleEvent
+    {
+        public string ModifierId { get; }
+        public ModifierAvailabilityDefinition Availability { get; }
+        internal ModifierUnlockedEvent(EncounterState state, ModifierDefinition modifier) : base(state.StageIndex, state.HandIndex)
+        {
+            ModifierId = modifier.Id;
+            Availability = modifier.Availability;
         }
     }
 

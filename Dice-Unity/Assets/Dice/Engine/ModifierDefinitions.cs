@@ -4,6 +4,42 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
+    public enum ModifierAvailabilityScope { Global, Spirit, Encounter }
+    public enum ModifierAccess { Starter, PermanentUnlock, EncounterExclusive }
+
+    public sealed class ModifierAvailabilityDefinition
+    {
+        public int PowerTier { get; }
+        public ModifierAvailabilityScope Scope { get; }
+        public string ScopeId { get; }
+        public ModifierAccess Access { get; }
+
+        public ModifierAvailabilityDefinition(int powerTier = 1, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
+            string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
+        {
+            if (powerTier < 1) throw new ArgumentOutOfRangeException(nameof(powerTier));
+            if (!Enum.IsDefined(typeof(ModifierAvailabilityScope), scope)) throw new ArgumentOutOfRangeException(nameof(scope));
+            if (!Enum.IsDefined(typeof(ModifierAccess), access)) throw new ArgumentOutOfRangeException(nameof(access));
+            if (scope == ModifierAvailabilityScope.Global)
+            {
+                if (scopeId != null || access == ModifierAccess.EncounterExclusive)
+                    throw new ArgumentException("Global modifiers cannot have a scope ID or exclusive access.");
+            }
+            else DefinitionValidation.RequireId(scopeId, nameof(scopeId));
+            PowerTier = powerTier;
+            Scope = scope;
+            ScopeId = scopeId;
+            Access = access;
+        }
+
+        public bool MatchesEncounter(EncounterDefinition encounter)
+            => Scope == ModifierAvailabilityScope.Global || (encounter != null &&
+                (Scope == ModifierAvailabilityScope.Spirit ? ScopeId == encounter.SpiritId : ScopeId == encounter.Id));
+
+        internal bool IsAvailable(EncounterDefinition encounter, ISet<string> unlockedIds, string modifierId)
+            => MatchesEncounter(encounter) && (Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId));
+    }
+
     public enum ModifierPhase { InitialRoll, PlayerReroll, PlayHand }
     public enum ModifierEffectKind { AddBaseScore, AddMultiplier, AddRerolls }
     public enum ModifierActivationLimit { Unlimited, OncePerHand, OncePerStage }
@@ -122,16 +158,17 @@ namespace Dice.Engine
         public ReadOnlyCollection<ModifierEffect> Effects { get; }
         public ModifierActivationLimit ActivationLimit { get; }
         public bool RewardEligible { get; }
+        public ModifierAvailabilityDefinition Availability { get; }
         public ModifierDefinition(string id, string familyId, ModifierPhase phase, ModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
-            bool rewardEligible = true)
-            : this(id, familyId, phase, ModifierConditions.Create(condition), effects, activationLimit, rewardEligible)
+            bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
+            : this(id, familyId, phase, ModifierConditions.Create(condition), effects, activationLimit, rewardEligible, availability)
         {
         }
 
         public ModifierDefinition(string id, string familyId, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
-            bool rewardEligible = true)
+            bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             DefinitionValidation.RequireId(familyId, nameof(familyId));
@@ -149,6 +186,7 @@ namespace Dice.Engine
             Effects = entries.AsReadOnly();
             ActivationLimit = activationLimit;
             RewardEligible = rewardEligible;
+            Availability = availability ?? new ModifierAvailabilityDefinition();
         }
     }
 

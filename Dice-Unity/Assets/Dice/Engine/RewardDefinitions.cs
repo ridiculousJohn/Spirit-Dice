@@ -62,6 +62,41 @@ namespace Dice.Engine
         }
     }
 
+    public sealed class ModifierTierRule
+    {
+        public int FirstIncomingStageNumber { get; }
+        public ReadOnlyCollection<int> TierWeights { get; }
+
+        public ModifierTierRule(int firstIncomingStageNumber, IEnumerable<int> tierWeights)
+        {
+            if (firstIncomingStageNumber < 1) throw new ArgumentOutOfRangeException(nameof(firstIncomingStageNumber));
+            if (tierWeights == null) throw new ArgumentNullException(nameof(tierWeights));
+            var weights = new List<int>(tierWeights);
+            long total = 0;
+            foreach (int weight in weights)
+            {
+                if (weight < 0) throw new ArgumentOutOfRangeException(nameof(tierWeights));
+                total += weight;
+            }
+            if (total < 1 || total > int.MaxValue) throw new ArgumentException("Tier weights require a positive integer total.", nameof(tierWeights));
+            FirstIncomingStageNumber = firstIncomingStageNumber;
+            TierWeights = weights.AsReadOnly();
+        }
+    }
+
+    public readonly struct ModifierTierMilestone
+    {
+        public int IncomingStageNumber { get; }
+        public int MinimumTier { get; }
+        public ModifierTierMilestone(int incomingStageNumber, int minimumTier)
+        {
+            if (incomingStageNumber < 1) throw new ArgumentOutOfRangeException(nameof(incomingStageNumber));
+            if (minimumTier < 1) throw new ArgumentOutOfRangeException(nameof(minimumTier));
+            IncomingStageNumber = incomingStageNumber;
+            MinimumTier = minimumTier;
+        }
+    }
+
     public sealed class RewardPolicyDefinition
     {
         public string Id { get; }
@@ -71,10 +106,13 @@ namespace Dice.Engine
         public int RefreshCost { get; }
         public int HandUpgradeOptionCount { get; }
         public ReadOnlyCollection<HandUpgradeHistoryRule> UpgradeHistory { get; }
+        public ReadOnlyCollection<ModifierTierRule> TierRules { get; }
+        public ReadOnlyCollection<ModifierTierMilestone> TierMilestones { get; }
 
         public RewardPolicyDefinition(string id, IEnumerable<ModifierRewardLayout> modifierLayouts,
             int startingRefreshes, int refreshesPerClear, int refreshCost, int handUpgradeOptionCount,
-            IEnumerable<HandUpgradeHistoryRule> upgradeHistory)
+            IEnumerable<HandUpgradeHistoryRule> upgradeHistory, IEnumerable<ModifierTierRule> tierRules = null,
+            IEnumerable<ModifierTierMilestone> tierMilestones = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (modifierLayouts == null) throw new ArgumentNullException(nameof(modifierLayouts));
@@ -104,6 +142,23 @@ namespace Dice.Engine
             RefreshCost = refreshCost;
             HandUpgradeOptionCount = handUpgradeOptionCount;
             UpgradeHistory = rules.AsReadOnly();
+            var tiers = tierRules == null ? new List<ModifierTierRule>() : new List<ModifierTierRule>(tierRules);
+            int previousStage = 0;
+            foreach (var rule in tiers)
+            {
+                if (rule == null || rule.FirstIncomingStageNumber <= previousStage)
+                    throw new ArgumentException("Tier rules require increasing stage boundaries.", nameof(tierRules));
+                previousStage = rule.FirstIncomingStageNumber;
+            }
+            if (tiers.Count > 0 && tiers[0].FirstIncomingStageNumber != 1)
+                throw new ArgumentException("Tier rules must cover the first incoming stage.", nameof(tierRules));
+            TierRules = tiers.AsReadOnly();
+            var milestones = tierMilestones == null ? new List<ModifierTierMilestone>() : new List<ModifierTierMilestone>(tierMilestones);
+            var milestoneStages = new HashSet<int>();
+            foreach (var milestone in milestones)
+                if (milestone.IncomingStageNumber < 1 || milestone.MinimumTier < 1 || !milestoneStages.Add(milestone.IncomingStageNumber))
+                    throw new ArgumentException("Tier milestones require unique positive stages and tiers.", nameof(tierMilestones));
+            TierMilestones = milestones.AsReadOnly();
         }
     }
 

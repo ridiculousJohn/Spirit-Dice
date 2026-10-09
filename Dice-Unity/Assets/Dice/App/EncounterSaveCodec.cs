@@ -62,7 +62,7 @@ namespace Dice.App
                         throw new FormatException("The save format version must be an integer.");
                     var serializer = JsonSerializer.Create(Settings);
                     int formatVersion = version.ToObject<int>(serializer);
-                    if (formatVersion != 1 && formatVersion != EncounterSaveData.CurrentFormatVersion)
+                    if (formatVersion < 1 || formatVersion > EncounterSaveData.CurrentFormatVersion)
                         throw new NotSupportedException("The save format version is unsupported.");
                     if (formatVersion == 1)
                     {
@@ -73,6 +73,17 @@ namespace Dice.App
                             document.Add(nameof(EncounterSaveData.TotalFreeRerollsUsed), 0L);
                         if (document[nameof(EncounterSaveData.RerollsSpentInStage)] == null)
                             document.Add(nameof(EncounterSaveData.RerollsSpentInStage), 0);
+                    }
+                    if (formatVersion < 3)
+                    {
+                        if (document[nameof(EncounterSaveData.UnlockedModifierIds)] == null)
+                            document.Add(nameof(EncounterSaveData.UnlockedModifierIds), new JArray());
+                        if (document[nameof(EncounterSaveData.NewlyUnlockedModifierIds)] == null)
+                            document.Add(nameof(EncounterSaveData.NewlyUnlockedModifierIds), new JArray());
+                        if (document[nameof(EncounterSaveData.PendingModifierOfferUsesLegacyEligibility)] == null)
+                            document.Add(nameof(EncounterSaveData.PendingModifierOfferUsesLegacyEligibility), false);
+                        if (document[nameof(EncounterSaveData.PendingModifierOfferUnlockedIds)] == null)
+                            document.Add(nameof(EncounterSaveData.PendingModifierOfferUnlockedIds), JValue.CreateNull());
                     }
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);

@@ -75,6 +75,34 @@ MonoBehaviour:
     startingModifiers: []
     rewardPolicy:
       id: reward_policy.standard
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights:
+        - 100
+        - 0
+        - 0
+      - firstIncomingStageNumber: 9
+        tierWeights:
+        - 60
+        - 35
+        - 5
+      - firstIncomingStageNumber: 17
+        tierWeights:
+        - 30
+        - 50
+        - 20
+      - firstIncomingStageNumber: 23
+        tierWeights:
+        - 15
+        - 45
+        - 40
+      tierMilestones:
+      - incomingStageNumber: 9
+        minimumTier: 2
+      - incomingStageNumber: 17
+        minimumTier: 2
+      - incomingStageNumber: 23
+        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.rerolls
@@ -206,12 +234,60 @@ MonoBehaviour:
       startingRerolls: 5
       exitBehavior: 1
   - id: encounter.fox.introduction
+    spiritId: spirit.fox
+    unlockMilestones:
+    - stageNumber: 3
+      modifierIds:
+      - modifier.initial_roll.first_hand.base_score
+      - modifier.initial_roll.first_hand.multiplier
+      - modifier.initial_roll.first_hand.combined
+      - modifier.initial_roll.first_hand.rerolls
+    - stageNumber: 6
+      modifierIds:
+      - modifier.player_reroll.rank_equals_before_reroll.base_score
+      - modifier.player_reroll.rank_equals_before_reroll.multiplier
+      - modifier.player_reroll.rank_equals_before_reroll.combined
+      - modifier.player_reroll.rank_equals_before_reroll.rerolls
+    - stageNumber: 10
+      modifierIds:
+      - modifier.initial_roll.initial_rank_above_previous.base_score
+      - modifier.initial_roll.initial_rank_above_previous.multiplier
+      - modifier.initial_roll.initial_rank_above_previous.combined
+      - modifier.initial_roll.initial_rank_above_previous.rerolls
     startingModifiers: []
     startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
     rules:
     - {fileID: 11400000, guid: fe318bf39f5245e59ff45614028ed05c, type: 2}
     rewardPolicy:
       id: reward_policy.fox.introduction
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights:
+        - 100
+        - 0
+        - 0
+      - firstIncomingStageNumber: 4
+        tierWeights:
+        - 60
+        - 35
+        - 5
+      - firstIncomingStageNumber: 7
+        tierWeights:
+        - 30
+        - 50
+        - 20
+      - firstIncomingStageNumber: 10
+        tierWeights:
+        - 15
+        - 45
+        - 40
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.fox.introduction.base_score
@@ -580,6 +656,9 @@ MonoBehaviour:
     fallbackModifierId: modifier.play_hand.never.rerolls
   - id: reward_pool.fox.introduction.base_score
     modifierIds:
+    - modifier.initial_roll.first_hand.base_score
+    - modifier.player_reroll.rank_equals_before_reroll.base_score
+    - modifier.initial_roll.initial_rank_above_previous.base_score
     - modifier.play_hand.contains_face.base_score
     - modifier.play_hand.contains_upper_face.base_score
     - modifier.play_hand.no_extreme_faces.base_score
@@ -595,6 +674,9 @@ MonoBehaviour:
     fallbackModifierId:
   - id: reward_pool.fox.introduction.multiplier
     modifierIds:
+    - modifier.initial_roll.first_hand.multiplier
+    - modifier.player_reroll.rank_equals_before_reroll.multiplier
+    - modifier.initial_roll.initial_rank_above_previous.multiplier
     - modifier.play_hand.contains_face.multiplier
     - modifier.play_hand.contains_upper_face.multiplier
     - modifier.play_hand.no_extreme_faces.multiplier
@@ -610,6 +692,9 @@ MonoBehaviour:
     fallbackModifierId:
   - id: reward_pool.fox.introduction.combined
     modifierIds:
+    - modifier.initial_roll.first_hand.combined
+    - modifier.player_reroll.rank_equals_before_reroll.combined
+    - modifier.initial_roll.initial_rank_above_previous.combined
     - modifier.play_hand.contains_face.combined
     - modifier.play_hand.contains_upper_face.combined
     - modifier.play_hand.no_extreme_faces.combined
@@ -625,6 +710,9 @@ MonoBehaviour:
     fallbackModifierId:
   - id: reward_pool.fox.introduction.rerolls
     modifierIds:
+    - modifier.initial_roll.first_hand.rerolls
+    - modifier.player_reroll.rank_equals_before_reroll.rerolls
+    - modifier.initial_roll.initial_rank_above_previous.rerolls
     - modifier.play_hand.contains_face.rerolls
     - modifier.play_hand.contains_upper_face.rerolls
     - modifier.play_hand.no_extreme_faces.rerolls

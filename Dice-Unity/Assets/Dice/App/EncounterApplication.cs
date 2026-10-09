@@ -15,9 +15,10 @@ namespace Dice.App
         public EncounterSnapshot Snapshot => session.Snapshot;
         public Resolution InitialResolution => session.InitialResolution;
 
-        public EncounterApplication(MechanicalCatalog catalog, string encounterId, ulong seed)
+        public EncounterApplication(MechanicalCatalog catalog, string encounterId, ulong seed,
+            IEnumerable<string> unlockedModifierIds = null)
         {
-            session = EncounterSession.CreateEncounter(catalog, encounterId, seed);
+            session = EncounterSession.CreateEncounter(catalog, encounterId, seed, unlockedModifierIds);
         }
 
         private EncounterApplication(EncounterSession restoredSession)
@@ -57,5 +58,6 @@ namespace Dice.App
         public HandPreview PreviewHandResolution() => session.PreviewHandResolution();
         public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand() => session.InspectModifiersForPlayHand();
         public EncounterSaveData CaptureSave() => session.CaptureSave();
+        public void MergeUnlockedModifiers(IEnumerable<string> modifierIds) => session.AddUnlockedModifiers(modifierIds);
     }
 }

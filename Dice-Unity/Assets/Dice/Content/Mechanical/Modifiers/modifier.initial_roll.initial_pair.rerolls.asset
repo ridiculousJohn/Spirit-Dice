@@ -23,3 +23,7 @@ MonoBehaviour:
     amount: 1
   activationLimit: 1
   rewardEligible: 1
+  powerTier: 1
+  access: 2
+  availabilityScope: 2
+  availabilityScopeId: encounter.fox.introduction

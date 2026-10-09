@@ -5,9 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Dice.App;
 using Dice.Engine;
-using Dice.UnityContent;
 using NUnit.Framework;
-using UnityEditor;
 
 namespace Dice.Tests
 {
@@ -339,11 +337,9 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void RestoringAtEveryActualStandardActionBoundaryPreservesTheCompleteVictory()
+        public void RestoringAtEveryLegacyStandardActionBoundaryPreservesTheCompleteVictory()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
-            Assert.That(asset, Is.Not.Null);
-            var catalog = asset.Build(TestContent.ModifierAssets());
+            var catalog = StandardEncounterReplayTests.LegacyCatalog();
             var uninterrupted = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
             var resumed = Restore(catalog, uninterrupted.CaptureSave());
             var traceField = typeof(StandardEncounterReplayTests).GetField("VictoryActions", BindingFlags.NonPublic | BindingFlags.Static);
@@ -376,6 +372,32 @@ namespace Dice.Tests
             Assert.That(resumed.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             Assert.That(resumed.Snapshot.TotalScore, Is.EqualTo(80561));
             Assert.That(resumed.Snapshot.Modifiers.Count, Is.EqualTo(24));
+        }
+
+        [Test]
+        public void ActualStandardProgressionResumesAtEveryActionBoundaryWithIdenticalOffersAndRandomStreams()
+        {
+            var catalog = StandardEncounterReplayTests.Catalog();
+            var uninterrupted = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            var resumed = Restore(catalog, uninterrupted.CaptureSave());
+            var restoredPhases = new HashSet<EncounterPhase> { resumed.Snapshot.Phase };
+            int refreshes = 0;
+            for (int count = 0; count < 1000 && uninterrupted.Snapshot.Phase != EncounterPhase.Completed; ++count)
+            {
+                var action = StandardEncounterReplayTests.ProgressionAction(catalog, uninterrupted);
+                if (action is RefreshModifierOfferAction) ++refreshes;
+                AssertContinuation(uninterrupted, resumed, action);
+                var save = resumed.CaptureSave();
+                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save)));
+                AssertGraphEqual(save, resumed.CaptureSave());
+                restoredPhases.Add(resumed.Snapshot.Phase);
+            }
+            Assert.That(restoredPhases, Is.EquivalentTo(new[] { EncounterPhase.Playing, EncounterPhase.ChoosingModifier,
+                EncounterPhase.ChoosingHandUpgrade, EncounterPhase.Completed }));
+            Assert.That(refreshes, Is.GreaterThan(0));
+            Assert.That(resumed.Snapshot.StageIndex, Is.GreaterThanOrEqualTo(1));
+            Assert.That(resumed.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won).Or.EqualTo(EncounterOutcome.Lost));
+            AssertGraphEqual(uninterrupted.CaptureSave(), resumed.CaptureSave());
         }
 
         [Test]

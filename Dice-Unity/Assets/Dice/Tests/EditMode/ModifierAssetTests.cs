@@ -32,6 +32,10 @@ namespace Dice.Tests
             serialized.FindProperty("secondaryParameter").intValue = 12;
             serialized.FindProperty("activationLimit").intValue = (int)ModifierActivationLimit.OncePerStage;
             serialized.FindProperty("rewardEligible").boolValue = false;
+            serialized.FindProperty("powerTier").intValue = 3;
+            serialized.FindProperty("access").intValue = (int)ModifierAccess.PermanentUnlock;
+            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Spirit;
+            serialized.FindProperty("availabilityScopeId").stringValue = "spirit.fox";
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 2;
             Effect(effects.GetArrayElementAtIndex(0), ModifierEffectKind.AddBaseScore, 25);
@@ -50,6 +54,10 @@ namespace Dice.Tests
             Assert.That(condition.SecondaryParameter, Is.EqualTo(12));
             Assert.That(definition.ActivationLimit, Is.EqualTo(ModifierActivationLimit.OncePerStage));
             Assert.That(definition.RewardEligible, Is.False);
+            Assert.That(definition.Availability.PowerTier, Is.EqualTo(3));
+            Assert.That(definition.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
+            Assert.That(definition.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
+            Assert.That(definition.Availability.ScopeId, Is.EqualTo("spirit.fox"));
             Assert.That(definition.Effects.Select(effect => effect.Kind),
                 Is.EqualTo(new[] { ModifierEffectKind.AddBaseScore, ModifierEffectKind.AddRerolls }));
             Assert.That(definition.Effects.Select(effect => effect.Amount), Is.EqualTo(new long[] { 25, 2 }));

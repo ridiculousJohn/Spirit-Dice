@@ -41,7 +41,8 @@ namespace Dice.UnityContent
                     stages[j] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
                 }
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
-                    source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules));
+                    source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
+                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones));
             }
             var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
             for (int i = 0; i < modifierAssets.Count; ++i)
@@ -71,6 +72,18 @@ namespace Dice.UnityContent
             return definitions;
         }
 
+        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
+        {
+            if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
+            var definitions = new ModifierUnlockMilestone[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
+                definitions[i] = new ModifierUnlockMilestone(source.stageNumber, source.modifierIds);
+            }
+            return definitions;
+        }
+
         private static RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source)
         {
             if (source == null || string.IsNullOrEmpty(source.id)) return null;
@@ -88,8 +101,22 @@ namespace Dice.UnityContent
                 var rule = source.upgradeHistory[i] ?? throw new InvalidOperationException("An upgrade history rule is missing.");
                 history[i] = new HandUpgradeHistoryRule(rule.maxIncomingStageNumber, rule.excludedRecentChoices);
             }
+            if (source.tierRules == null || source.tierMilestones == null)
+                throw new InvalidOperationException("Reward tier schedules are missing.");
+            var tierRules = new ModifierTierRule[source.tierRules.Length];
+            for (int i = 0; i < tierRules.Length; ++i)
+            {
+                var rule = source.tierRules[i] ?? throw new InvalidOperationException("A tier rule is missing.");
+                tierRules[i] = new ModifierTierRule(rule.firstIncomingStageNumber, rule.tierWeights);
+            }
+            var tierMilestones = new ModifierTierMilestone[source.tierMilestones.Length];
+            for (int i = 0; i < tierMilestones.Length; ++i)
+            {
+                var milestone = source.tierMilestones[i] ?? throw new InvalidOperationException("A tier milestone is missing.");
+                tierMilestones[i] = new ModifierTierMilestone(milestone.incomingStageNumber, milestone.minimumTier);
+            }
             return new RewardPolicyDefinition(source.id, layouts, source.startingRefreshes,
-                source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history);
+                source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
         }
 
         [Serializable]
@@ -108,6 +135,8 @@ namespace Dice.UnityContent
         private sealed class EncounterData
         {
             public string id;
+            public string spiritId;
+            public UnlockMilestoneData[] unlockMilestones = Array.Empty<UnlockMilestoneData>();
             public int[] startingUpgrades = new int[HandDefinition.CategoryCount];
             public string[] startingModifiers = Array.Empty<string>();
             public StageData[] stages = Array.Empty<StageData>();
@@ -133,6 +162,29 @@ namespace Dice.UnityContent
             public int refreshCost;
             public int handUpgradeOptionCount;
             public UpgradeHistoryData[] upgradeHistory = Array.Empty<UpgradeHistoryData>();
+            public TierRuleData[] tierRules = Array.Empty<TierRuleData>();
+            public TierMilestoneData[] tierMilestones = Array.Empty<TierMilestoneData>();
+        }
+
+        [Serializable]
+        private sealed class UnlockMilestoneData
+        {
+            public int stageNumber;
+            public string[] modifierIds = Array.Empty<string>();
+        }
+
+        [Serializable]
+        private sealed class TierRuleData
+        {
+            public int firstIncomingStageNumber;
+            public int[] tierWeights = Array.Empty<int>();
+        }
+
+        [Serializable]
+        private sealed class TierMilestoneData
+        {
+            public int incomingStageNumber;
+            public int minimumTier;
         }
 
         [Serializable]
