@@ -66,6 +66,10 @@
 /Docs/work/*-validation/
 /Docs/work/modifier-assets-20261008/
 /Docs/work/*-file-tests/
+/Docs/work/player-profile-tests/
+/Docs/work/spirit-progression-tests/
+/Docs/work/spirit-progression-presentation-tests/
+/Docs/work/encounter-journey-tests/
 /Docs/work/removed-*/
 /Docs/work/*.log
 /Docs/work/*-editmode-*.xml
