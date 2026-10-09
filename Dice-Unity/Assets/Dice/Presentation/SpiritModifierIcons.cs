@@ -20,7 +20,7 @@ namespace Dice.Presentation
         public static Sprite GetSprite(ModifierDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            return FindSprite(definition.Id) ?? FindSprite(definition.FamilyId);
+            return FindSprite(definition.Id) ?? FindSprite(definition.FamilyId) ?? SpiritModifierArtwork.GetSprite(definition.Id);
         }
 
         public static uint GetSigilSeed(ModifierDefinition definition)
