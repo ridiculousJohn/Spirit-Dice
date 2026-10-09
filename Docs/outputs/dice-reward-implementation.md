@@ -24,12 +24,22 @@ Snapshots expose the immutable pending offer, refresh balance, shown-family hist
 
 Pure generator functions and mechanical authoring support custom policies. An exhausted custom pool without a fallback contributes no option; if no modifier options remain, the engine continues to the upgrade decision. Encounters without a reward policy retain their explicit `AwaitingRewards` boundary. Standard has a complete policy and continues through all 25 stages.
 
-## Validation and next work
+## Spirit-house reward presentation
+
+The stage-clear presentation holds the table on its scored hand while the fox reacts. The reward panel then identifies the cleared stage, the current choice, and the upcoming stage's target and starting resources. Charm choices use the active theme's name, icon, condition, effect, and activation timing. Refreshing shows both the cost and the available balance.
+
+`SpiritRewardCard` renders each offered option and retains its current offer and option IDs. Hand-upgrade cards compare the category's current Base/Mult with its upgraded Base/Mult, including all existing upgrade levels. These values exclude the dice sum and temporary charm contributions. All offered choices remain accessible in the scroll area, with Charms and Hand Ranks available beside it.
+
+After the final reward choice, a brief stage introduction shows the next target and resources before the initial roll. Input remains blocked through the introduction and roll. The presentation consumes the existing engine events without changing reward generation, scoring, or progression.
+
+Rendered validation covers reward screens at 540x960 and 443x912, all 296 modifier descriptions at narrow card width, upgrade values at existing levels, refreshed choice IDs, reward-screen save/load, and input blocking during the stage introduction. The PlayMode suite and affected reruns have passing results for all 16 tests. Logs, results, and screenshots are retained under `Docs/work/spirit-reward-validation/20261008-01`.
+
+## Engine validation
 
 Final validation on Unity 6000.6.2f1 passed all 547 EditMode tests, with zero failures or skipped tests. Unity exited with code 0. A before/after SHA-256 comparison found no file changes in Assets, Packages, or ProjectSettings during validation. Results are saved as `Docs/work/reward-editmode-2.xml` and the editor log as `Docs/work/reward-editmode-2.log`.
 
 Tests cover imported Standard data, offer cadence, pool eligibility, history fallback, caps, refresh accounting, offer and option identity, rejected actions, preview/state isolation, independent dice randomness, and cached upgrade choices. A recorded legal Standard victory uses the actual 25 thresholds, budgets, starting state, and full catalog; its replay requires no injected dice or modified difficulty. A separate legal loss verifies exhaustion.
 
-The reference disassembly findings, pool mapping, search artifact, and validation outputs are retained under `Docs/work/reward-reference` and `Docs/work`. Save/resume is next, followed by the diagnostic Unity scene. No playable presentation has been added in this pass.
+The reference disassembly findings, pool mapping, search artifact, and engine validation outputs are retained under `Docs/work/reward-reference` and `Docs/work`.
 
 The recorded victory uses seed 60 and 264 accepted actions: 67 hand plays, 140 rerolls, 24 modifier selections, 24 upgrades, and 9 refreshes. It clears all 25 stages with a total score of 80,561. A seed 0 run without rerolls loses through resource exhaustion on stage five after 13 hands. These traces demonstrate reachable outcomes; they are not a balance evaluation.

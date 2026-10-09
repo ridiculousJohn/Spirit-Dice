@@ -20,6 +20,7 @@ namespace Dice.Presentation
         private Action<long, long> choose;
         private long offerId;
         private long optionId;
+        private float measuredWidth = -1;
 
         public Button Button { get; private set; }
 
@@ -53,6 +54,9 @@ namespace Dice.Presentation
             card.condition.resizeTextMaxSize = 15;
             card.effects = SpiritUi.Label("Effects", card.transform, "", 16, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleLeft, SpiritUi.Amber);
+            card.effects.resizeTextForBestFit = true;
+            card.effects.resizeTextMinSize = 14;
+            card.effects.resizeTextMaxSize = 16;
             card.status = SpiritUi.Label("Status", card.transform, "", 13, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleRight, SpiritUi.Muted);
             card.status.resizeTextForBestFit = true;
@@ -64,6 +68,9 @@ namespace Dice.Presentation
                 TextAnchor.MiddleLeft, SpiritUi.Amber);
             card.upgradedValues = SpiritUi.Label("UpgradedValues", card.transform, "", 16, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleLeft, SpiritUi.Amber);
+            card.upgradedValues.resizeTextForBestFit = true;
+            card.upgradedValues.resizeTextMinSize = 14;
+            card.upgradedValues.resizeTextMaxSize = 16;
 
             var iconRect = SpiritUi.Rect("CharmIcon", card.transform, new Vector2(0, 1), new Vector2(0, 1));
             iconRect.pivot = new Vector2(0, 1);
@@ -91,6 +98,7 @@ namespace Dice.Presentation
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             this.offerId = offerId;
             this.optionId = optionId;
+            GetComponent<LayoutElement>().preferredHeight = 140;
             SetUpgradeVisibility(false);
             charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
             charmIcon.gameObject.SetActive(charmIcon.sprite != null);
@@ -104,6 +112,8 @@ namespace Dice.Presentation
             Place(condition, 90, 24, 37, 48);
             Place(effects, 24, 24, 87, 22);
             Place(status, 24, 24, 111, 17);
+            measuredWidth = -1;
+            UpdateModifierLayout();
             ((SpiritUiButtonVisual)Button).CaptureContent();
         }
 
@@ -119,6 +129,7 @@ namespace Dice.Presentation
             long upgradedMultiplier = checked(hand.Multiplier + hand.MultiplierPerUpgrade * upgradedLevel);
             this.offerId = offerId;
             this.optionId = optionId;
+            GetComponent<LayoutElement>().preferredHeight = 156;
             SetUpgradeVisibility(true);
             charmIcon.gameObject.SetActive(false);
             charmSigil.gameObject.SetActive(false);
@@ -131,9 +142,9 @@ namespace Dice.Presentation
             Place(condition, 24, 24, 37, 19);
             Place(currentHeader, 24, 8, 58, 17, 0, .5f);
             Place(upgradedHeader, 8, 24, 58, 17, .5f, 1);
-            Place(effects, 24, 8, 76, 36, 0, .5f);
-            Place(upgradedValues, 8, 24, 76, 36, .5f, 1);
-            Place(status, 24, 24, 114, 17);
+            Place(effects, 24, 8, 76, 52, 0, .5f);
+            Place(upgradedValues, 8, 24, 76, 52, .5f, 1);
+            Place(status, 24, 24, 130, 17);
             ((SpiritUiButtonVisual)Button).CaptureContent();
         }
 
@@ -142,6 +153,40 @@ namespace Dice.Presentation
             currentHeader.gameObject.SetActive(visible);
             upgradedHeader.gameObject.SetActive(visible);
             upgradedValues.gameObject.SetActive(visible);
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            if (condition == null || currentHeader == null || currentHeader.gameObject.activeSelf) return;
+            UpdateModifierLayout();
+        }
+
+        private void UpdateModifierLayout()
+        {
+            float width = ((RectTransform)transform).rect.width;
+            if (width <= 114 || Mathf.Approximately(width, measuredWidth)) return;
+            measuredWidth = width;
+            // Measure at the authored font sizes so wrapped rules remain readable on narrow screens.
+            float conditionHeight = TextHeight(condition, width - 114, 48);
+            float effectsHeight = TextHeight(effects, width - 48, 22);
+            float statusHeight = TextHeight(status, width - 48, 17);
+            float effectsTop = 37 + conditionHeight + 2;
+            float statusTop = effectsTop + effectsHeight + 2;
+            Place(condition, 90, 24, 37, conditionHeight);
+            Place(effects, 24, 24, effectsTop, effectsHeight);
+            Place(status, 24, 24, statusTop, statusHeight);
+            var layout = GetComponent<LayoutElement>();
+            float height = Mathf.Max(140, statusTop + statusHeight + 12);
+            if (!Mathf.Approximately(layout.preferredHeight, height)) layout.preferredHeight = height;
+        }
+
+        private static float TextHeight(Text label, float width, float minimum)
+        {
+            var settings = label.GetGenerationSettings(new Vector2(width, 0));
+            settings.resizeTextForBestFit = false;
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            return Mathf.Max(minimum, Mathf.Ceil(label.cachedTextGeneratorForLayout.GetPreferredHeight(label.text, settings) /
+                label.pixelsPerUnit) + 2);
         }
 
         private static void Place(Text label, float left, float right, float top, float height, float min = 0, float max = 1)
