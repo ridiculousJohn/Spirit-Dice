@@ -12,6 +12,7 @@ namespace Dice.Presentation
             internal CanvasGroup Group;
             internal Image Artwork;
             internal SpiritModifierSigilGraphic Sigil;
+            internal SpiritFoxSigilGraphic FoxSigil;
             internal CanvasGroup Label;
             internal float LabelAlpha;
         }
@@ -35,15 +36,23 @@ namespace Dice.Presentation
 
         public void Show(ModifierDefinition definition, float displayDuration)
         {
+            if (definition == null) { Clear(); return; }
+            Show(SpiritModifierIcons.GetSprite(definition), definition.Phase, displayDuration,
+                SpiritModifierIcons.GetSigilSeed(definition));
+        }
+
+        public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0, bool useFoxSigil = false)
+        {
             Clear();
-            if (definition == null || reroll == null || play == null) return;
-            active = definition.Phase == ModifierPhase.PlayHand ? play : reroll;
-            ActivePhase = definition.Phase;
-            ActiveSprite = SpiritModifierIcons.GetSprite(definition);
+            if (reroll == null || play == null) return;
+            active = phase == ModifierPhase.PlayHand ? play : reroll;
+            ActivePhase = phase;
+            ActiveSprite = sprite;
             active.Artwork.sprite = ActiveSprite;
             active.Artwork.gameObject.SetActive(ActiveSprite != null);
-            active.Sigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
-            active.Sigil.gameObject.SetActive(ActiveSprite == null);
+            active.Sigil.Seed = sigilSeed;
+            active.Sigil.gameObject.SetActive(ActiveSprite == null && !useFoxSigil);
+            active.FoxSigil.gameObject.SetActive(ActiveSprite == null && useFoxSigil);
             active.Group.gameObject.SetActive(true);
             active.Group.alpha = 0;
             active.LabelAlpha = active.Label.alpha;
@@ -107,11 +116,17 @@ namespace Dice.Presentation
             Stretch(sigil.rectTransform, 4);
             sigil.color = SpiritUi.Amber;
             sigil.raycastTarget = false;
+            var foxSigil = new GameObject("FoxSigil", typeof(RectTransform), typeof(SpiritFoxSigilGraphic))
+                .GetComponent<SpiritFoxSigilGraphic>();
+            foxSigil.transform.SetParent(rect, false);
+            Stretch(foxSigil.rectTransform, 4);
+            foxSigil.color = SpiritUi.Amber;
+            foxSigil.raycastTarget = false;
             // A separate opacity group leaves the button's disabled and hover tints under Selectable's control.
             var label = button.GetComponentInChildren<Text>().gameObject;
             var labelGroup = label.GetComponent<CanvasGroup>();
             if (labelGroup == null) labelGroup = label.AddComponent<CanvasGroup>();
-            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, Label = labelGroup };
+            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, FoxSigil = foxSigil, Label = labelGroup };
         }
 
         private static void Stretch(RectTransform rect, float inset)

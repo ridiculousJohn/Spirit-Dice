@@ -54,6 +54,8 @@ namespace Dice.Engine
         public int StartingRerolls { get; }
         public int HandsRemaining { get; }
         public int RerollsRemaining { get; }
+        public bool CanReroll { get; }
+        public ReadOnlyCollection<EncounterRuleSnapshot> EncounterRules { get; }
         public DiceValues CurrentDice { get; }
         public DiceValues InitialDice { get; }
         public DiceValues? DiceBeforeLastReroll { get; }
@@ -95,6 +97,11 @@ namespace Dice.Engine
             StartingRerolls = stage.StartingRerolls;
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
+            CanReroll = state.Phase == EncounterPhase.Playing &&
+                (state.RerollsRemaining > 0 || EncounterRuleResolver.RerollCostWaiver(definition, state) != null);
+            var rules = new List<EncounterRuleSnapshot>();
+            foreach (var rule in definition.Rules) rules.Add(new EncounterRuleSnapshot(rule, state));
+            EncounterRules = rules.AsReadOnly();
             CurrentDice = state.CurrentDice;
             InitialDice = state.InitialDice;
             DiceBeforeLastReroll = state.DiceBeforeLastReroll;
@@ -172,6 +179,14 @@ namespace Dice.Engine
             SelectedMask = selectedMask;
             ChangedMask = changedMask;
         }
+    }
+
+    public sealed class EncounterRuleActivatedEvent : RuleEvent
+    {
+        public string RuleId { get; }
+
+        internal EncounterRuleActivatedEvent(EncounterState state, string ruleId) : base(state.StageIndex, state.HandIndex)
+            => RuleId = ruleId;
     }
 
     public sealed class ResourceChangedEvent : RuleEvent

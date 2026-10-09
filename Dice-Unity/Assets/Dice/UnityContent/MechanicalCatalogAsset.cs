@@ -41,7 +41,7 @@ namespace Dice.UnityContent
                     stages[j] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
                 }
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
-                    source.startingModifiers, BuildRewardPolicy(source.rewardPolicy));
+                    source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules));
             }
             var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
             for (int i = 0; i < modifierAssets.Count; ++i)
@@ -57,6 +57,18 @@ namespace Dice.UnityContent
             }
             return new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions,
                 modifierDefinitions, rewardPoolDefinitions);
+        }
+
+        private static EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
+        {
+            if (sources == null) throw new InvalidOperationException("Encounter rules are missing.");
+            var definitions = new EncounterRuleDefinition[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                var source = sources[i] ?? throw new InvalidOperationException("An encounter rule asset is missing.");
+                definitions[i] = source.Build();
+            }
+            return definitions;
         }
 
         private static RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source)
@@ -100,6 +112,7 @@ namespace Dice.UnityContent
             public string[] startingModifiers = Array.Empty<string>();
             public StageData[] stages = Array.Empty<StageData>();
             public RewardPolicyData rewardPolicy;
+            public EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
         }
 
         [Serializable]

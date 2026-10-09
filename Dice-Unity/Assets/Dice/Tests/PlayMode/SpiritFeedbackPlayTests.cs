@@ -319,9 +319,25 @@ namespace Dice.Tests
             controller.ToggleDie(0);
             controller.ToggleDie(3);
             controller.Reroll();
-            yield return new WaitForSecondsRealtime(sound.Theme.rollLaunchTime + .06f);
-            Assert.That(Array.Exists(sound.GetComponentsInChildren<AudioSource>(),
-                source => source.clip == sound.Theme.rollClips[1] && source.isPlaying), Is.True,
+            float rollDeadline = Time.realtimeSinceStartup + 5;
+            while (!view.DiceTray.IsRolling && controller.IsBusy && Time.realtimeSinceStartup < rollDeadline)
+                yield return null;
+            Assert.That(view.DiceTray.IsRolling, Is.True, "The rule cue must lead into the dice roll.");
+            bool selectedRecordingPlayed = false;
+            while (controller.IsBusy && Time.realtimeSinceStartup < rollDeadline)
+            {
+                selectedRecordingPlayed = Array.Exists(sound.GetComponentsInChildren<AudioSource>(),
+                    source => source.clip == sound.Theme.rollClips[1] && source.isPlaying);
+                if (selectedRecordingPlayed) break;
+                yield return null;
+            }
+            TestContext.WriteLine("roll mask=" + controller.Snapshot.LatestRerollMask + " muted=" + sound.Muted +
+                " focused=" + Application.isFocused + " audioFocus=" + typeof(SpiritEncounterAudio).GetField("hasFocus",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(sound));
+            foreach (var source in sound.GetComponentsInChildren<AudioSource>())
+                TestContext.WriteLine("clip=" + source.clip?.name + " playing=" + source.isPlaying +
+                    " time=" + (source.clip != null ? source.time : 0));
+            Assert.That(selectedRecordingPlayed, Is.True,
                 "Rerolling two selected dice must use the two-dice recording.");
             yield return WaitForPresentation(controller);
             LogAssert.NoUnexpectedReceived();

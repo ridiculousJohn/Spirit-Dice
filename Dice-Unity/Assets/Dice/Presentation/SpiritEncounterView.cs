@@ -22,6 +22,7 @@ namespace Dice.Presentation
         [SerializeField] private Texture2D foxBodyTexture;
         [SerializeField] private Texture2D foxHeadTexture;
         [SerializeField] private Texture2D foxTurnedHeadTexture;
+        [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
 
         public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
@@ -35,6 +36,7 @@ namespace Dice.Presentation
         public Text BaseScoreLabel { get; private set; }
         public Text MultiplierLabel { get; private set; }
         public Text HandScoreLabel { get; private set; }
+        public EncounterRulePresentationAsset EncounterRulePresentation => encounterRulePresentation;
 
         private ISpiritEncounterControls controls;
         private Canvas canvas;
@@ -73,6 +75,16 @@ namespace Dice.Presentation
         private Text upcomingStage;
         private Text stageIntroTitle;
         private Text stageIntroDetail;
+        private CanvasGroup encounterRuleGroup;
+        private Text encounterRuleLabel;
+        private Image encounterRuleIcon;
+        private SpiritFoxSigilGraphic encounterRuleSigil;
+        private RectTransform rerollActionLabel;
+        private Vector2 rerollLabelMin;
+        private Vector2 rerollLabelMax;
+        private CanvasGroup ruleSpiritSweep;
+        private Image ruleSpiritIcon;
+        private SpiritFoxSigilGraphic ruleSpiritSigil;
         private Text endingTitle;
         private Text endingDetail;
         private Text charmTitle;
@@ -392,6 +404,73 @@ namespace Dice.Presentation
             }
             actionModifierCue = gameObject.AddComponent<SpiritActionModifierCue>();
             actionModifierCue.Initialize(RerollButton, PlayButton);
+            BuildEncounterRule();
+        }
+
+        private void BuildEncounterRule()
+        {
+            rerollActionLabel = RerollButton.GetComponentInChildren<Text>().rectTransform;
+            rerollLabelMin = rerollActionLabel.anchorMin;
+            rerollLabelMax = rerollActionLabel.anchorMax;
+            var favor = SpiritUi.Rect("EncounterRuleFavor", RerollButton.transform,
+                new Vector2(.08f, .06f), new Vector2(.94f, .35f));
+            encounterRuleGroup = favor.gameObject.AddComponent<CanvasGroup>();
+            encounterRuleGroup.interactable = false;
+            encounterRuleGroup.blocksRaycasts = false;
+            var icon = SpiritUi.Rect("EncounterRuleIcon", favor, new Vector2(0, .5f), new Vector2(0, .5f));
+            icon.sizeDelta = new Vector2(18, 18);
+            icon.anchoredPosition = new Vector2(9, 0);
+            encounterRuleIcon = icon.gameObject.AddComponent<Image>();
+            encounterRuleIcon.preserveAspect = true;
+            encounterRuleIcon.color = SpiritUi.Amber;
+            encounterRuleIcon.raycastTarget = false;
+            encounterRuleSigil = SpiritUi.Full("EncounterRuleSigil", icon).gameObject.AddComponent<SpiritFoxSigilGraphic>();
+            encounterRuleSigil.color = SpiritUi.Amber;
+            encounterRuleSigil.raycastTarget = false;
+            encounterRuleLabel = SpiritUi.Label("EncounterRuleLabel", favor, "", 14,
+                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.Amber);
+            encounterRuleLabel.rectTransform.offsetMin = new Vector2(21, 0);
+            encounterRuleLabel.rectTransform.offsetMax = Vector2.zero;
+            encounterRuleLabel.resizeTextForBestFit = true;
+            encounterRuleLabel.resizeTextMinSize = 12;
+            encounterRuleLabel.resizeTextMaxSize = 14;
+            favor.gameObject.SetActive(false);
+
+            var sweep = SpiritUi.Rect("RuleSpiritSweep", diceTrayFrame, new Vector2(0, .5f), new Vector2(0, .5f));
+            sweep.sizeDelta = new Vector2(72, 72);
+            ruleSpiritSweep = sweep.gameObject.AddComponent<CanvasGroup>();
+            ruleSpiritSweep.interactable = false;
+            ruleSpiritSweep.blocksRaycasts = false;
+            ruleSpiritIcon = SpiritUi.Full("RuleSpiritArtwork", sweep).gameObject.AddComponent<Image>();
+            ruleSpiritIcon.preserveAspect = true;
+            ruleSpiritIcon.color = new Color(.35f, .9f, .9f, .75f);
+            ruleSpiritIcon.raycastTarget = false;
+            ruleSpiritSigil = SpiritUi.Full("RuleSpiritSigil", sweep).gameObject.AddComponent<SpiritFoxSigilGraphic>();
+            ruleSpiritSigil.color = ruleSpiritIcon.color;
+            ruleSpiritSigil.raycastTarget = false;
+            sweep.gameObject.SetActive(false);
+            RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
+        }
+
+        private void RenderEncounterRule(EncounterSnapshot snapshot)
+        {
+            EncounterRuleSnapshot rule = null;
+            if (encounterRulePresentation != null && snapshot?.Phase == EncounterPhase.Playing)
+                foreach (var candidate in snapshot.EncounterRules)
+                    if (candidate.Id == encounterRulePresentation.RuleId) { rule = candidate; break; }
+            bool visible = rule != null;
+            encounterRuleGroup.gameObject.SetActive(visible);
+            rerollActionLabel.anchorMin = visible ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
+            rerollActionLabel.anchorMax = rerollLabelMax;
+            if (visible)
+            {
+                encounterRuleLabel.text = rule.IsAvailable ? encounterRulePresentation.AvailableText : encounterRulePresentation.UsedText;
+                encounterRuleGroup.alpha = rule.IsAvailable ? 1 : .4f;
+                encounterRuleIcon.sprite = encounterRulePresentation.Icon;
+                encounterRuleIcon.enabled = encounterRulePresentation.Icon != null;
+                encounterRuleSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
+            }
+            RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
 
         private static Text BuildScoreCounter(string name, string caption, Transform parent, float left, float right)
@@ -621,6 +700,7 @@ namespace Dice.Presentation
             var snapshot = controls.Snapshot;
             if (snapshot == null)
             {
+                RenderEncounterRule(null);
                 inputGroup.interactable = false;
                 ModifierHistory.SetInteractable(false);
                 playingPanel.gameObject.SetActive(false);
@@ -651,6 +731,7 @@ namespace Dice.Presentation
             rerollsPanel.gameObject.SetActive(playing);
             resourcesLabel.gameObject.SetActive(!playing);
             SetResources(snapshot.HandsRemaining, snapshot.RerollsRemaining);
+            RenderEncounterRule(snapshot);
             resourcesLabel.text = playing ? snapshot.HandsRemaining + " hands left  /  " + snapshot.RerollsRemaining + " rerolls left" :
                 lastScore != null ? "Last hand  " + DiagnosticText.Number(lastScore.HandScore) + " points" :
                 "Total score  " + DiagnosticText.Number(snapshot.TotalScore);
@@ -668,7 +749,7 @@ namespace Dice.Presentation
                 HandScoreLabel.text = "0";
                 scoreDetail.text = "ROLL BONUSES BANK HERE";
                 PlayButton.interactable = true;
-                RerollButton.interactable = controls.SelectedMask != 0 && snapshot.RerollsRemaining > 0;
+                RerollButton.interactable = controls.SelectedMask != 0 && snapshot.CanReroll;
                 int selected = 0;
                 for (int i = 0; i < DiceValues.Count; ++i) if ((controls.SelectedMask & (1 << i)) != 0) ++selected;
                 selectionLabel.text = selected == 0 ? "Tap dice to select for reroll" : selected + " selected for reroll";
@@ -712,6 +793,7 @@ namespace Dice.Presentation
         private void ResetTransientVisuals()
         {
             actionModifierCue?.Clear();
+            if (ruleSpiritSweep != null) ruleSpiritSweep.gameObject.SetActive(false);
             if (stageIntroPanel != null) stageIntroPanel.gameObject.SetActive(false);
             if (modifierEmblem == null) return;
             modifierEmblem.gameObject.SetActive(false);
@@ -788,7 +870,18 @@ namespace Dice.Presentation
             // The committed snapshot may include a new hand; only event dice are shown until presentation completes.
             foreach (var ruleEvent in resolution.Events)
             {
-                if (ruleEvent is DiceRolledEvent rolled)
+                if (ruleEvent is EncounterRuleActivatedEvent activatedRule)
+                {
+                    if (encounterRulePresentation == null || activatedRule.RuleId != encounterRulePresentation.RuleId) continue;
+                    RenderEncounterRule(resolution.Snapshot);
+                    actionModifierCue.Show(encounterRulePresentation.Icon, ModifierPhase.PlayerReroll,
+                        SpiritFoxPortrait.ReactionDuration, useFoxSigil: true);
+                    selectionLabel.text = encounterRulePresentation.DisplayName;
+                    selectionLabel.color = SpiritUi.Amber;
+                    fox.React();
+                    yield return AnimateRuleSpirit(.65f);
+                }
+                else if (ruleEvent is DiceRolledEvent rolled)
                 {
                     playingPanel.gameObject.SetActive(true);
                     rewardsPanel.gameObject.SetActive(false);
@@ -892,6 +985,7 @@ namespace Dice.Presentation
                 else if (ruleEvent is HandStartedEvent hand)
                 {
                     ModifierHistory.Clear();
+                    RenderEncounterRule(resolution.Snapshot);
                     SetResources(hand.HandsRemaining, hand.RerollsRemaining);
                     SetScoreValues(0, 0);
                     HandScoreLabel.text = "0";
@@ -1110,6 +1204,26 @@ namespace Dice.Presentation
 
         private static string CharmName(ModifierDefinition definition)
             => SpiritModifierPresentation.GetName(definition);
+
+        private IEnumerator AnimateRuleSpirit(float duration)
+        {
+            var rect = (RectTransform)ruleSpiritSweep.transform;
+            ruleSpiritIcon.sprite = encounterRulePresentation.Icon;
+            ruleSpiritIcon.gameObject.SetActive(encounterRulePresentation.Icon != null);
+            ruleSpiritSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
+            ruleSpiritSweep.gameObject.SetActive(true);
+            float elapsed = 0;
+            while (elapsed < duration)
+            {
+                float progress = elapsed / duration;
+                rect.anchoredPosition = new Vector2(Mathf.Lerp(-36, diceTrayFrame.rect.width + 36, progress),
+                    Mathf.Sin(progress * Mathf.PI) * 16);
+                ruleSpiritSweep.alpha = Mathf.Sin(progress * Mathf.PI);
+                yield return null;
+                elapsed += Time.unscaledDeltaTime;
+            }
+            ruleSpiritSweep.gameObject.SetActive(false);
+        }
 
         private Card MakeCard(string name, Transform parent, bool owned)
         {

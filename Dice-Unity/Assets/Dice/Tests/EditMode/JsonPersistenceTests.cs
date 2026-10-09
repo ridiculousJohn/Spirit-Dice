@@ -11,6 +11,53 @@ namespace Dice.Tests
     public sealed class JsonPersistenceTests
     {
         [Test]
+        public void LegacyStandardJsonResumesAndResavesWithCurrentAccounting()
+        {
+            var catalog = TestContent.BuildStandardCatalog();
+            var original = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            original.Execute(new RerollDiceAction(1), original.Snapshot.Revision);
+            var json = SaveJson(original);
+            json["SaveFormatVersion"] = 1;
+            json["RulesVersion"] = 3;
+            json.Remove("RerollsSpentInStage");
+            json.Remove("FreeRerollsUsedInStage");
+            json.Remove("TotalFreeRerollsUsed");
+            var result = EncounterSession.RestoreEncounter(catalog, Decode(json));
+            Assert.That(result.Success, Is.True, result.Detail);
+            var resumed = result.Session;
+            original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
+            resumed.Execute(new RerollDiceAction(3), resumed.Snapshot.Revision);
+            EncounterPersistenceTests.AssertGraphEqual(original.CaptureSave(), resumed.CaptureSave());
+            Assert.That(Decode(SaveJson(resumed)).SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
+        }
+
+        [Test]
+        public void FoxJsonRoundTripPreservesFavorUsageAndFollowingRandomSequence()
+        {
+            var catalog = TestContent.BuildStandardCatalog();
+            var original = EncounterSession.CreateEncounter(catalog, "encounter.fox.introduction", 60);
+            Assert.That(original.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);
+            Assert.That(original.Snapshot.RerollsRemaining, Is.EqualTo(3));
+            var result = EncounterSession.RestoreEncounter(catalog, Decode(SaveJson(original)));
+            Assert.That(result.Success, Is.True, result.Detail);
+            Assert.That(result.Session.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
+            original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
+            result.Session.Execute(new RerollDiceAction(3), result.Session.Snapshot.Revision);
+            Assert.That(result.Session.Snapshot.RerollsRemaining, Is.EqualTo(2));
+            EncounterPersistenceTests.AssertGraphEqual(original.CaptureSave(), result.Session.CaptureSave());
+        }
+
+        [TestCase("RerollsSpentInStage")]
+        [TestCase("FreeRerollsUsedInStage")]
+        [TestCase("TotalFreeRerollsUsed")]
+        public void CurrentFormatRequiresExplicitRerollAccounting(string field)
+        {
+            var json = SaveJson(TestContent.Session());
+            json.Remove(field);
+            Assert.Throws<FormatException>(() => Decode(json));
+        }
+
+        [Test]
         public void SavesAreIndentedUtf8ObjectsWithReadableFieldsAndEnumNames()
         {
             var session = RewardTestContent.Session();

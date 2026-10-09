@@ -34,7 +34,7 @@ namespace Dice.Tests
             Assert.That(policy.ModifierLayouts.Count, Is.EqualTo(layouts.Length));
             for (int i = 0; i < layouts.Length; ++i)
                 Assert.That(policy.ModifierLayouts[i].PoolIds, Is.EqualTo(layouts[i]));
-            Assert.That(catalog.RewardPools.Select(value => value.Id), Is.EquivalentTo(new[]
+            Assert.That(policy.ModifierLayouts.SelectMany(value => value.PoolIds).Distinct(), Is.EquivalentTo(new[]
             {
                 "reward_pool.base_score", "reward_pool.multiplier", "reward_pool.combined", "reward_pool.rerolls"
             }));

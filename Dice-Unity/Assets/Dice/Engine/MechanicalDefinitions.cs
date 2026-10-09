@@ -81,9 +81,11 @@ namespace Dice.Engine
         public ReadOnlyCollection<int> StartingUpgrades { get; }
         public ReadOnlyCollection<string> StartingModifiers { get; }
         public RewardPolicyDefinition RewardPolicy { get; }
+        public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
 
         public EncounterDefinition(string id, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
-            IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null)
+            IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
+            IEnumerable<EncounterRuleDefinition> rules = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -101,6 +103,12 @@ namespace Dice.Engine
             foreach (string modifierId in modifiers) DefinitionValidation.RequireId(modifierId, nameof(startingModifiers));
             StartingModifiers = modifiers.AsReadOnly();
             RewardPolicy = rewardPolicy;
+            var ruleList = rules == null ? new List<EncounterRuleDefinition>() : new List<EncounterRuleDefinition>(rules);
+            var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var rule in ruleList)
+                if (rule == null || !ruleIds.Add(rule.Id))
+                    throw new ArgumentException("Encounter rule IDs must be unique and nonnull.", nameof(rules));
+            Rules = ruleList.AsReadOnly();
         }
     }
 

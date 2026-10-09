@@ -61,13 +61,22 @@ namespace Dice.App
                     if (version == null || version.Type != JTokenType.Integer)
                         throw new FormatException("The save format version must be an integer.");
                     var serializer = JsonSerializer.Create(Settings);
-                    if (version.ToObject<int>(serializer) != EncounterSaveData.CurrentFormatVersion)
+                    int formatVersion = version.ToObject<int>(serializer);
+                    if (formatVersion != 1 && formatVersion != EncounterSaveData.CurrentFormatVersion)
                         throw new NotSupportedException("The save format version is unsupported.");
+                    if (formatVersion == 1)
+                    {
+                        // Legacy encounters spent one resource per reroll; retain the version for rules validation.
+                        if (document[nameof(EncounterSaveData.FreeRerollsUsedInStage)] == null)
+                            document.Add(nameof(EncounterSaveData.FreeRerollsUsedInStage), 0);
+                        if (document[nameof(EncounterSaveData.TotalFreeRerollsUsed)] == null)
+                            document.Add(nameof(EncounterSaveData.TotalFreeRerollsUsed), 0L);
+                        if (document[nameof(EncounterSaveData.RerollsSpentInStage)] == null)
+                            document.Add(nameof(EncounterSaveData.RerollsSpentInStage), 0);
+                    }
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
                     if (save == null) throw new FormatException("The save payload is missing.");
-                    if (save.SaveFormatVersion != EncounterSaveData.CurrentFormatVersion)
-                        throw new NotSupportedException("The save format version is unsupported.");
                     return save;
                 }
             }

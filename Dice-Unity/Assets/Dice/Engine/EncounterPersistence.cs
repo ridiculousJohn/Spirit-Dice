@@ -23,12 +23,14 @@ namespace Dice.Engine
                 PreviousPlayedDice = state.PreviousPlayedDice?.ToArray(),
                 LatestRerollMask = state.LatestRerollMask, LatestChangedMask = state.LatestChangedMask,
                 EverRerolledMask = state.EverRerolledMask, RerollsSpentOnHand = state.RerollsSpentOnHand,
+                RerollsSpentInStage = state.RerollsSpentInStage, FreeRerollsUsedInStage = state.FreeRerollsUsedInStage,
                 HandsPlayedInStage = state.HandsPlayedInStage,
                 HasPreviousStage = state.PreviousStageStartingHands.HasValue,
                 PreviousStageStartingHands = state.PreviousStageStartingHands ?? 0,
                 PreviousStageHandsRemaining = state.PreviousStageHandsRemaining ?? 0,
                 TotalScore = state.TotalScore, TotalHandsPlayed = state.TotalHandsPlayed,
                 TotalRerollsSpent = state.TotalRerollsSpent,
+                TotalFreeRerollsUsed = state.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])state.HandUpgrades.Clone(),
                 DiceRandomState = state.DiceRandom.State, RewardRandomState = state.RewardRandom.State,
                 ModifierBaseScore = state.ModifierBaseScore, ModifierMultiplier = state.ModifierMultiplier,
@@ -87,9 +89,10 @@ namespace Dice.Engine
             error = EncounterRestoreError.None;
             detail = null;
             if (save == null) return Fail(EncounterRestoreError.NullSave, "The save is missing.", out error, out detail);
-            if (save.SaveFormatVersion != EncounterSaveData.CurrentFormatVersion)
+            bool legacy = save.SaveFormatVersion == 1;
+            if (!legacy && save.SaveFormatVersion != EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
-            if (save.RulesVersion != EncounterSession.RulesVersion)
+            if (save.RulesVersion != (legacy ? 3 : EncounterSession.RulesVersion))
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -98,6 +101,8 @@ namespace Dice.Engine
             try { definition = catalog.GetEncounter(save.EncounterId); }
             catch (ArgumentException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is invalid.", out error, out detail); }
             catch (KeyNotFoundException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is missing from the catalog.", out error, out detail); }
+            if (legacy && definition.Rules.Count != 0)
+                return Fail(EncounterRestoreError.RulesVersionMismatch, "Legacy saves require an encounter without rules.", out error, out detail);
             try
             {
                 state = ValidateAndMap(catalog, definition, save);
@@ -130,6 +135,11 @@ namespace Dice.Engine
                 save.TotalRerollsSpent >= save.RerollsSpentOnHand && save.TotalHandsPlayed <= save.Revision &&
                 save.TotalRerollsSpent <= save.Revision - save.TotalHandsPlayed,
                 "Cumulative counters or resources are invalid.");
+            Require(save.RerollsSpentInStage >= 0 && save.FreeRerollsUsedInStage >= 0 && save.TotalFreeRerollsUsed >= 0,
+                "Reroll accounting counters are invalid.");
+            if (save.SaveFormatVersion == 1)
+                Require(save.RerollsSpentInStage == 0 && save.FreeRerollsUsedInStage == 0 && save.TotalFreeRerollsUsed == 0,
+                    "Legacy saves cannot contain rule accounting history.");
             Require(save.NextOfferId > 0 && save.NextOptionId > 0, "Reward identity counters are invalid.");
             bool completed = save.Phase == EncounterPhase.Completed;
             Require(completed == (save.Outcome != EncounterOutcome.None), "Phase and outcome disagree.");
@@ -162,10 +172,12 @@ namespace Dice.Engine
                 PreviousPlayedDice = save.PreviousPlayedDice == null ? (DiceValues?)null : ReadDice(save.PreviousPlayedDice),
                 LatestRerollMask = save.LatestRerollMask, LatestChangedMask = save.LatestChangedMask,
                 EverRerolledMask = save.EverRerolledMask, RerollsSpentOnHand = save.RerollsSpentOnHand,
+                RerollsSpentInStage = save.RerollsSpentInStage, FreeRerollsUsedInStage = save.FreeRerollsUsedInStage,
                 HandsPlayedInStage = save.HandsPlayedInStage,
                 PreviousStageStartingHands = save.HasPreviousStage ? (int?)save.PreviousStageStartingHands : null,
                 PreviousStageHandsRemaining = save.HasPreviousStage ? (int?)save.PreviousStageHandsRemaining : null,
                 TotalScore = save.TotalScore, TotalHandsPlayed = save.TotalHandsPlayed, TotalRerollsSpent = save.TotalRerollsSpent,
+                TotalFreeRerollsUsed = save.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])save.HandUpgrades.Clone(), DiceRandom = new DeterministicRandom(save.DiceRandomState),
                 RewardRandom = new DeterministicRandom(save.RewardRandomState), RewardRefreshes = save.RewardRefreshes,
                 NextOfferId = save.NextOfferId, NextOptionId = save.NextOptionId,
@@ -180,6 +192,7 @@ namespace Dice.Engine
             var families = new HashSet<string>(StringComparer.Ordinal);
             foreach (var modifier in catalog.Modifiers) { definitions.Add(modifier.Id, modifier); families.Add(modifier.FamilyId); }
             ValidateModifiers(catalog, definition, save, state, definitions, postPlay);
+            ValidateRerollAccounting(definition, state);
             var excluded = new HashSet<string>(StringComparer.Ordinal);
             foreach (string family in state.ExcludedRewardFamilies)
             {
@@ -321,11 +334,39 @@ namespace Dice.Engine
                 "Modifier accumulated totals are inconsistent.");
             state.ModifierBaseScore = baseScore;
             state.ModifierMultiplier = multiplier;
-            decimal stageRerollsSpent = definition.Stages[state.StageIndex].StartingRerolls + stageRerollGrants - state.RerollsRemaining;
-            Require(stageRerollsSpent >= state.RerollsSpentOnHand && stageRerollsSpent <= state.TotalRerollsSpent,
-                "Stage reroll resources disagree with activation and spending history.");
+            decimal stagePaidRerolls = definition.Stages[state.StageIndex].StartingRerolls + stageRerollGrants - state.RerollsRemaining;
+            if (save.SaveFormatVersion == 1)
+            {
+                Require(stagePaidRerolls >= 0 && stagePaidRerolls <= int.MaxValue,
+                    "Legacy stage reroll accounting is outside its supported range.");
+                state.RerollsSpentInStage = (int)stagePaidRerolls;
+            }
+            Require(stagePaidRerolls == (long)state.RerollsSpentInStage - state.FreeRerollsUsedInStage,
+                "Stage reroll resources disagree with paid and free action history.");
             for (int i = 0; i < state.HandUpgrades.Length; ++i)
                 Require(state.HandUpgrades[i] <= catalog.Hands[i].MaximumUpgrades, "A hand upgrade exceeds its catalog cap.");
+        }
+
+        private static void ValidateRerollAccounting(EncounterDefinition definition, EncounterState state)
+        {
+            int currentFree = EncounterRuleResolver.FreeRerollsUsedOnHand(definition, state.RerollsSpentOnHand);
+            int maximumFreePerHand = EncounterRuleResolver.MaximumFreeRerollsPerHand(definition);
+            long previousHands = state.TotalHandsPlayed - state.HandsPlayedInStage;
+            long previousFree = state.TotalFreeRerollsUsed - state.FreeRerollsUsedInStage;
+            Require(state.RerollsSpentInStage >= state.RerollsSpentOnHand &&
+                state.TotalRerollsSpent >= state.RerollsSpentInStage &&
+                (state.StageIndex != 0 || state.TotalRerollsSpent == state.RerollsSpentInStage),
+                "Stage and cumulative reroll action counts disagree.");
+            Require(state.FreeRerollsUsedInStage >= currentFree &&
+                state.FreeRerollsUsedInStage <= (long)state.HandIndex * maximumFreePerHand + currentFree &&
+                previousFree >= 0 && previousFree <= previousHands * maximumFreePerHand &&
+                state.TotalFreeRerollsUsed <= state.TotalRerollsSpent,
+                "Free reroll history disagrees with encounter rules and hand history.");
+            long paidOnHand = (long)state.RerollsSpentOnHand - currentFree;
+            long paidInStage = (long)state.RerollsSpentInStage - state.FreeRerollsUsedInStage;
+            long paidTotal = state.TotalRerollsSpent - state.TotalFreeRerollsUsed;
+            Require(paidOnHand >= 0 && paidInStage >= paidOnHand && paidTotal >= paidInStage,
+                "Paid reroll history disagrees with free reroll accounting.");
         }
 
         private static void ValidateRewards(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,

@@ -134,8 +134,8 @@ namespace Dice.Tests
             Assert.That(view, Is.Not.Null);
             Assert.That(view.enabled, Is.True);
             Assert.That(controller.Snapshot, Is.Not.Null);
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.standard"));
-            Assert.That(controller.Snapshot.StageCount, Is.EqualTo(25));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.fox.introduction"));
+            Assert.That(controller.Snapshot.StageCount, Is.EqualTo(10));
             string artifactRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N")));
             string savePath = Path.Combine(artifactRoot, "playmode-encounter.json");

@@ -221,7 +221,7 @@ namespace Dice.Presentation
             BeginCard("CURRENT HAND");
             GUILayout.Label(selectionLabel, smallStyle);
             bool playing = cachedSnapshot.Phase == EncounterPhase.Playing;
-            GUI.enabled = playing && cachedSnapshot.RerollsRemaining > 0;
+            GUI.enabled = cachedSnapshot.CanReroll;
             int dicePerRow = Mathf.Clamp(Mathf.FloorToInt((width - 32) / 98), 1, DiceValues.Count);
             for (int first = 0; first < DiceValues.Count; first += dicePerRow)
             {
@@ -240,7 +240,7 @@ namespace Dice.Presentation
             if (GUILayout.Button("Clear selection", ButtonHeight)) { controls.ClearDiceSelection(); GUIUtility.ExitGUI(); }
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUI.enabled = playing && cachedSnapshot.RerollsRemaining > 0 && controls.SelectedMask != 0;
+            GUI.enabled = cachedSnapshot.CanReroll && controls.SelectedMask != 0;
             if (GUILayout.Button("Reroll selected", ButtonHeight)) { controls.Reroll(); GUIUtility.ExitGUI(); }
             GUI.enabled = playing && cachedSnapshot.HandsRemaining > 0;
             if (GUILayout.Button("Play hand", ButtonHeight)) { controls.PlayHand(); GUIUtility.ExitGUI(); }

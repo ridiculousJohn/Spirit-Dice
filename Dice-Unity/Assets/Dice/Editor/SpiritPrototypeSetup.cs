@@ -70,6 +70,8 @@ namespace Dice.Editor
                 Assign(view, "foxBodyTexture", Texture("FoxBodySeated"));
                 Assign(view, "foxHeadTexture", Texture("FoxHeadTurn"));
                 Assign(view, "foxTurnedHeadTexture", Texture("FoxHeadRest"));
+                Assign(view, "encounterRulePresentation", AssetDatabase.LoadAssetAtPath<EncounterRulePresentationAsset>(
+                    "Assets/Dice/Content/Presentation/SpiritHouse/FoxCourtesy.asset"));
                 Assign(root.AddComponent<SpiritEncounterController>(), "catalogAsset",
                     AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset"));
                 EditorSceneManager.SaveScene(scene, ScenePath);

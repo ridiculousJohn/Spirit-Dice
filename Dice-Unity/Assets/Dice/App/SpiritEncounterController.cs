@@ -18,7 +18,7 @@ namespace Dice.App
     {
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
         [SerializeField] private string modifierPresentationLabel = ModifierPresentationLoader.Label;
-        [SerializeField] private string encounterId = "encounter.standard";
+        [SerializeField] private string encounterId = "encounter.fox.introduction";
         [SerializeField, Tooltip("Use Initial Seed for repeatable debug runs. Otherwise every new run uses a fresh seed.")]
         private bool useFixedSeed;
         [SerializeField] private string initialSeed = "60";

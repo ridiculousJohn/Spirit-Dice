@@ -6,7 +6,7 @@ namespace Dice.Engine
 {
     public sealed class EncounterSession
     {
-        public const int RulesVersion = 3;
+        public const int RulesVersion = 4;
         private readonly MechanicalCatalog catalog;
         private readonly EncounterDefinition definition;
         private EncounterState state;
@@ -131,7 +131,8 @@ namespace Dice.Engine
             {
                 if (reroll.SelectedMask <= 0 || (reroll.SelectedMask & ~DiceValues.AllMask) != 0)
                     return CommandRejection.InvalidDiceSelection;
-                if (state.RerollsRemaining <= 0) return CommandRejection.NoRerollsRemaining;
+                if (state.RerollsRemaining <= 0 && EncounterRuleResolver.RerollCostWaiver(definition, state) == null)
+                    return CommandRejection.NoRerollsRemaining;
                 return CommandRejection.None;
             }
             return CommandRejection.InvalidAction;
@@ -296,6 +297,8 @@ namespace Dice.Engine
             next.HandsRemaining = stage.StartingHands;
             next.RerollsRemaining = stage.StartingRerolls;
             next.HandsPlayedInStage = 0;
+            next.RerollsSpentInStage = 0;
+            next.FreeRerollsUsedInStage = 0;
             next.HandIndex = 0;
             foreach (var modifier in next.Modifiers) modifier.ActivationsThisStage = 0;
             events.Add(new StageStartedEvent(next.StageIndex, stage));
@@ -331,11 +334,20 @@ namespace Dice.Engine
         private void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
         {
             int beforeRerolls = next.RerollsRemaining;
-            --next.RerollsRemaining;
+            var costWaiver = EncounterRuleResolver.RerollCostWaiver(definition, next);
+            if (costWaiver == null) --next.RerollsRemaining;
+            else
+            {
+                next.FreeRerollsUsedInStage = checked(next.FreeRerollsUsedInStage + 1);
+                next.TotalFreeRerollsUsed = checked(next.TotalFreeRerollsUsed + 1);
+                events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Id));
+            }
             next.RerollsSpentOnHand = checked(next.RerollsSpentOnHand + 1);
+            next.RerollsSpentInStage = checked(next.RerollsSpentInStage + 1);
             next.TotalRerollsSpent = checked(next.TotalRerollsSpent + 1);
-            events.Add(new ResourceChangedEvent(next, ResourceKind.Rerolls, ResourceChangeCause.RerollDice,
-                beforeRerolls, next.RerollsRemaining));
+            if (beforeRerolls != next.RerollsRemaining)
+                events.Add(new ResourceChangedEvent(next, ResourceKind.Rerolls, ResourceChangeCause.RerollDice,
+                    beforeRerolls, next.RerollsRemaining));
             DiceValues before = next.CurrentDice;
             next.DiceBeforeLastReroll = before;
             next.CurrentDice = Roll(next, selectedMask);
@@ -415,12 +427,15 @@ namespace Dice.Engine
         internal int LatestChangedMask;
         internal int EverRerolledMask;
         internal int RerollsSpentOnHand;
+        internal int RerollsSpentInStage;
+        internal int FreeRerollsUsedInStage;
         internal int HandsPlayedInStage;
         internal int? PreviousStageStartingHands;
         internal int? PreviousStageHandsRemaining;
         internal long TotalScore;
         internal long TotalHandsPlayed;
         internal long TotalRerollsSpent;
+        internal long TotalFreeRerollsUsed;
         internal int[] HandUpgrades;
         internal DeterministicRandom DiceRandom;
         internal ModifierInstanceState[] Modifiers;
