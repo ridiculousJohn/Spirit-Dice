@@ -33,6 +33,7 @@ MonoBehaviour:
     transition: 0
     scaleFrom: 0.72
     scaleTo: 0.8
+    hostState: 0
   - id: arrival
     kind: 1
     title: An unexpected welcome
@@ -48,6 +49,7 @@ MonoBehaviour:
     transition: 1
     scaleFrom: 1
     scaleTo: 1
+    hostState: 2
   - id: bargain
     kind: 2
     title: The Lantern Keeper
@@ -63,6 +65,7 @@ MonoBehaviour:
     transition: 0
     scaleFrom: 1
     scaleTo: 1
+    hostState: 0
   - id: invitation
     kind: 3
     title: The Host's Courtesy
@@ -78,12 +81,13 @@ MonoBehaviour:
     transition: 0
     scaleFrom: 1
     scaleTo: 1
+    hostState: 0
   tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
   victoryTitle: A promise kept
-  victoryText: You have earned an answer. They left before dawn, following the river upstream. Listen where the water falls silent.
+  victoryText: You have earned an answer. They crossed the marsh before dawn, toward the old watchtower. Climb the steps. The watcher may have seen more.
   defeatTitle: The lantern is still burning
   defeatText: Not tonight. The road will wait, and so will I. Come back when you are ready to try again.
   abandonText: The keeper leaves your place at the table open.
   resultContinueLabel: Return to the trail
-  completionClueTitle: Where the water falls silent
-  completionClueText: The missing traveler followed the river upstream before dawn. Search for a place where the water makes no sound.
+  completionClueTitle: The watchtower above the marsh
+  completionClueText: The missing traveler crossed the marsh toward the old watchtower before dawn. Climb the steps and find the watcher.

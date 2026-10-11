@@ -1,5 +1,6 @@
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Dice.Tests
@@ -7,7 +8,7 @@ namespace Dice.Tests
     public sealed class SpiritFoxPortraitTests
     {
         private GameObject host;
-        private SpiritFoxPortrait portrait;
+        private SpiritHostPortrait portrait;
         private RectTransform portraitRoot;
         private RectTransform physicalHead;
         private RectTransform spiritHead;
@@ -19,12 +20,15 @@ namespace Dice.Tests
             host = new GameObject("Spirit Fox Test", typeof(RectTransform));
             var parent = host.GetComponent<RectTransform>();
             parent.sizeDelta = new Vector2(540f, 960f);
-            portrait = host.AddComponent<SpiritFoxPortrait>();
-            portrait.Build(parent, Texture2D.whiteTexture, Texture2D.whiteTexture, Texture2D.whiteTexture);
-            portraitRoot = (RectTransform)parent.Find("Spirit Fox Portrait");
-            physicalHead = (RectTransform)portraitRoot.Find("Physical Head");
-            spiritHead = (RectTransform)portraitRoot.Find("Spirit Head");
-            body = (RectTransform)portraitRoot.Find("Fox Body");
+            portrait = host.AddComponent<SpiritHostPortrait>();
+            var presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LanternKeeperHost.asset");
+            Assert.That(presentation, Is.Not.Null);
+            portrait.Build(parent, presentation);
+            portraitRoot = (RectTransform)parent.Find("Spirit Portrait");
+            physicalHead = portrait.GetLayer("Physical Front").rectTransform;
+            spiritHead = portrait.GetLayer("Cyan Front").rectTransform;
+            body = portrait.GetLayer("Body").rectTransform;
         }
 
         [TearDown]
@@ -56,10 +60,10 @@ namespace Dice.Tests
         public void ScoredReactionCompletesAndHeadsReturnToSharedIdlePose()
         {
             portrait.React();
-            portrait.Advance(SpiritFoxPortrait.ReactionDuration * 0.5f);
+            portrait.Advance(portrait.GestureDuration * 0.5f);
             Assert.That(portrait.IsReacting, Is.True);
 
-            portrait.Advance(SpiritFoxPortrait.ReactionDuration * 0.5f + 0.01f);
+            portrait.Advance(portrait.GestureDuration * 0.5f + 0.01f);
             Assert.That(portrait.IsReacting, Is.False);
             Assert.That(Vector2.Distance(physicalHead.anchoredPosition, spiritHead.anchoredPosition),
                 Is.LessThan(0.001f));
@@ -85,12 +89,12 @@ namespace Dice.Tests
         public void AnotherScoredHandRestartsTheReactionDuration()
         {
             portrait.React();
-            portrait.Advance(SpiritFoxPortrait.ReactionDuration * 0.8f);
+            portrait.Advance(portrait.GestureDuration * 0.8f);
             portrait.React();
-            portrait.Advance(SpiritFoxPortrait.ReactionDuration * 0.4f);
+            portrait.Advance(portrait.GestureDuration * 0.4f);
 
             Assert.That(portrait.IsReacting, Is.True);
-            portrait.Advance(SpiritFoxPortrait.ReactionDuration * 0.6f + 0.01f);
+            portrait.Advance(portrait.GestureDuration * 0.6f + 0.01f);
             Assert.That(portrait.IsReacting, Is.False);
         }
 

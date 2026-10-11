@@ -25,7 +25,7 @@ MonoBehaviour:
     amount: 2
   activationLimit: 1
   rewardEligible: 1
-  powerTier: 3
+  powerTier: 2
   access: 1
-  availabilityScope: 0
-  availabilityScopeId:
+  availabilityScope: 1
+  availabilityScopeId: spirit.owl

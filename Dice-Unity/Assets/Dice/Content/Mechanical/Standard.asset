@@ -349,6 +349,122 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
+  - id: encounter.owl.watchtower
+    spiritId: spirit.owl
+    unlockMilestones:
+    - stageNumber: 3
+      modifierIds:
+      - modifier.play_hand.edge_pair_sums_equal.base_score
+      - modifier.play_hand.edge_pair_sums_equal.multiplier
+      - modifier.play_hand.edge_pair_sums_equal.combined
+      - modifier.play_hand.edge_pair_sums_equal.rerolls
+    - stageNumber: 6
+      modifierIds:
+      - modifier.play_hand.alternating_parity.base_score
+      - modifier.play_hand.alternating_parity.multiplier
+      - modifier.play_hand.alternating_parity.combined
+      - modifier.play_hand.alternating_parity.rerolls
+    - stageNumber: 10
+      modifierIds:
+      - modifier.play_hand.ordered.base_score
+      - modifier.play_hand.ordered.multiplier
+      - modifier.play_hand.ordered.combined
+      - modifier.play_hand.ordered.rerolls
+    startingModifiers: []
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
+    rules:
+    - {fileID: 11400000, guid: 57ddf15a05484a56b82e2eca70b60ba4, type: 2}
+    rewardPolicy:
+      id: reward_policy.owl.watchtower
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights:
+        - 100
+        - 0
+        - 0
+      - firstIncomingStageNumber: 4
+        tierWeights:
+        - 60
+        - 35
+        - 5
+      - firstIncomingStageNumber: 7
+        tierWeights:
+        - 30
+        - 50
+        - 20
+      - firstIncomingStageNumber: 10
+        tierWeights:
+        - 15
+        - 45
+        - 40
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+      modifierLayouts:
+      - poolIds:
+        - reward_pool.owl.watchtower.base_score
+        - reward_pool.owl.watchtower.multiplier
+        - reward_pool.owl.watchtower.rerolls
+      - poolIds:
+        - reward_pool.owl.watchtower.base_score
+        - reward_pool.owl.watchtower.multiplier
+        - reward_pool.owl.watchtower.combined
+      - poolIds:
+        - reward_pool.owl.watchtower.base_score
+        - reward_pool.owl.watchtower.multiplier
+        - reward_pool.owl.watchtower.combined
+      startingRefreshes: 1
+      refreshesPerClear: 1
+      refreshCost: 1
+      handUpgradeOptionCount: 4
+      upgradeHistory:
+      - maxIncomingStageNumber: 2147483647
+        excludedRecentChoices: 1
+    stages:
+    - threshold: 120
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 170
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 230
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 300
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 380
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 470
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 570
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 680
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 800
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 930
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
   rewardPools:
   - id: reward_pool.base_score
     modifierIds:
@@ -725,4 +841,68 @@ MonoBehaviour:
     - modifier.initial_roll.initial_pair.rerolls
     - modifier.player_reroll.selected_face_unchanged.rerolls
     - modifier.player_reroll.exactly_one_selected_face.rerolls
+    fallbackModifierId:
+  - id: reward_pool.owl.watchtower.base_score
+    modifierIds:
+    - modifier.play_hand.high_die.base_score
+    - modifier.play_hand.middle_unique.base_score
+    - modifier.play_hand.adjacent_different.base_score
+    - modifier.play_hand.range_greater_than.base_score
+    - modifier.play_hand.exactly_one_face.base_score
+    - modifier.play_hand.face_equals_position.base_score
+    - modifier.player_reroll.selected_face_unchanged.base_score
+    - modifier.player_reroll.exactly_one_selected_face.base_score
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
+    - modifier.player_reroll.high_die_or_straight.base_score
+    - modifier.play_hand.edge_pair_sums_equal.base_score
+    - modifier.play_hand.alternating_parity.base_score
+    - modifier.play_hand.ordered.base_score
+    fallbackModifierId:
+  - id: reward_pool.owl.watchtower.multiplier
+    modifierIds:
+    - modifier.play_hand.high_die.multiplier
+    - modifier.play_hand.middle_unique.multiplier
+    - modifier.play_hand.adjacent_different.multiplier
+    - modifier.play_hand.range_greater_than.multiplier
+    - modifier.play_hand.exactly_one_face.multiplier
+    - modifier.play_hand.face_equals_position.multiplier
+    - modifier.player_reroll.selected_face_unchanged.multiplier
+    - modifier.player_reroll.exactly_one_selected_face.multiplier
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+    - modifier.player_reroll.high_die_or_straight.multiplier
+    - modifier.play_hand.edge_pair_sums_equal.multiplier
+    - modifier.play_hand.alternating_parity.multiplier
+    - modifier.play_hand.ordered.multiplier
+    fallbackModifierId:
+  - id: reward_pool.owl.watchtower.combined
+    modifierIds:
+    - modifier.play_hand.high_die.combined
+    - modifier.play_hand.middle_unique.combined
+    - modifier.play_hand.adjacent_different.combined
+    - modifier.play_hand.range_greater_than.combined
+    - modifier.play_hand.exactly_one_face.combined
+    - modifier.play_hand.face_equals_position.combined
+    - modifier.player_reroll.selected_face_unchanged.combined
+    - modifier.player_reroll.exactly_one_selected_face.combined
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
+    - modifier.player_reroll.high_die_or_straight.combined
+    - modifier.play_hand.edge_pair_sums_equal.combined
+    - modifier.play_hand.alternating_parity.combined
+    - modifier.play_hand.ordered.combined
+    fallbackModifierId:
+  - id: reward_pool.owl.watchtower.rerolls
+    modifierIds:
+    - modifier.play_hand.high_die.rerolls
+    - modifier.play_hand.middle_unique.rerolls
+    - modifier.play_hand.adjacent_different.rerolls
+    - modifier.play_hand.range_greater_than.rerolls
+    - modifier.play_hand.exactly_one_face.rerolls
+    - modifier.play_hand.face_equals_position.rerolls
+    - modifier.player_reroll.selected_face_unchanged.rerolls
+    - modifier.player_reroll.exactly_one_selected_face.rerolls
+    - modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
+    - modifier.player_reroll.high_die_or_straight.rerolls
+    - modifier.play_hand.edge_pair_sums_equal.rerolls
+    - modifier.play_hand.alternating_parity.rerolls
+    - modifier.play_hand.ordered.rerolls
     fallbackModifierId:

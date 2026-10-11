@@ -12,7 +12,6 @@ namespace Dice.Presentation
             internal CanvasGroup Group;
             internal Image Artwork;
             internal SpiritModifierSigilGraphic Sigil;
-            internal SpiritFoxSigilGraphic FoxSigil;
             internal Graphic HostSigil;
             internal CanvasGroup Label;
             internal float LabelAlpha;
@@ -42,7 +41,7 @@ namespace Dice.Presentation
                 SpiritModifierIcons.GetSigilSeed(definition));
         }
 
-        public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0, bool useFoxSigil = false)
+        public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0)
         {
             Clear();
             if (reroll == null || play == null) return;
@@ -52,15 +51,7 @@ namespace Dice.Presentation
             active.Artwork.sprite = ActiveSprite;
             active.Artwork.gameObject.SetActive(ActiveSprite != null);
             active.Sigil.Seed = sigilSeed;
-            active.Sigil.gameObject.SetActive(ActiveSprite == null && !useFoxSigil);
-            if (useFoxSigil && active.FoxSigil == null)
-            {
-                active.FoxSigil = SpiritUi.Full("FoxSigil", active.Group.transform).gameObject.AddComponent<SpiritFoxSigilGraphic>();
-                Stretch(active.FoxSigil.rectTransform, 4);
-                active.FoxSigil.color = SpiritUi.Amber;
-                active.FoxSigil.raycastTarget = false;
-            }
-            if (active.FoxSigil != null) active.FoxSigil.gameObject.SetActive(ActiveSprite == null && useFoxSigil);
+            active.Sigil.gameObject.SetActive(ActiveSprite == null);
             if (active.HostSigil != null) active.HostSigil.gameObject.SetActive(false);
             active.Group.gameObject.SetActive(true);
             active.Group.alpha = 0;
@@ -91,7 +82,6 @@ namespace Dice.Presentation
             Show(sprite, phase, displayDuration);
             if (active == null || sprite != null || active.HostSigil == null) return;
             active.Sigil.gameObject.SetActive(false);
-            if (active.FoxSigil != null) active.FoxSigil.gameObject.SetActive(false);
             active.HostSigil.gameObject.SetActive(true);
         }
 

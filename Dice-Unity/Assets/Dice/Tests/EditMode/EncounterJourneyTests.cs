@@ -348,6 +348,7 @@ namespace Dice.Tests
             var beat = new EncounterJourneyBeat();
             Set(beat, "id", id);
             Set(beat, "kind", kind);
+            if (kind == EncounterJourneyBeatKind.Arrival) Set(beat, "hostState", SpiritPresentationState.Arrival);
             return beat;
         }
 

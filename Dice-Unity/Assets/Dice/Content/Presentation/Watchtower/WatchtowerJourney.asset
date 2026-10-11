@@ -1,0 +1,183 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
+  m_Name: WatchtowerJourney
+  m_EditorClassIdentifier:
+  encounterId: encounter.owl.watchtower
+  locationTitle: The Watchtower
+  spiritName: The Watcher
+  leadText: The fox saw the missing traveler cross the marsh toward the old watchtower. A watcher waits above the steps.
+  cardArtwork: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
+  beats:
+  - id: approach
+    kind: 0
+    title: The Watchtower
+    text: The fox's directions end at a stairway above the marsh. A small lantern still burns beside the open arch.
+    continueLabel: Climb the steps
+    background: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 3
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: climb
+    kind: 0
+    title: Above the marsh
+    text: Wet stone steps wind upward. The marsh falls quiet below you.
+    continueLabel: Enter the chamber
+    background: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 2
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: -0.035}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1.12
+  - id: perch
+    kind: 2
+    title: A watcher in the window
+    text: An owl watches from the upper arch.
+    continueLabel: Wait
+    background: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 1.8
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 1
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: flight
+    kind: 1
+    title: The watcher descends
+    text:
+    continueLabel: Meet the watcher
+    background: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 4.5
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 2
+    hideNarrativeDuringMotion: 1
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: witness
+    kind: 2
+    title: The Watcher
+    text: I saw someone cross the marsh. You followed their footsteps. Tell me - what else did you notice?
+    continueLabel: Listen
+    background: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 1
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: bargain
+    kind: 2
+    title: A game of attention
+    text: Sit. Show me what you see, and I will tell you what I saw.
+    continueLabel: Hear the terms
+    background: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 1
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: invitation
+    kind: 3
+    title: The Watcher's Eye
+    text: There is more to a handful of dice than what repeats.
+    continueLabel: Accept the bargain
+    background: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 1
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  tablePresentation: {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402002, type: 2}
+  victoryTitle: What the watcher saw
+  victoryText: You saw what the others overlooked. The traveler left the marsh by the northern causeway. Follow the stones beyond the reeds.
+  defeatTitle: Look again
+  defeatText: There is more here than you have seen. Come back when you are ready to look again.
+  abandonText: The watcher folds its wings and waits beside the empty chair.
+  resultContinueLabel: Return to the trail
+  completionClueTitle: The northern causeway
+  completionClueText: The watcher saw the missing traveler leave the marsh by the northern causeway. Follow the stones beyond the reeds.

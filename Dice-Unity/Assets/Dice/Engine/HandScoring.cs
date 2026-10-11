@@ -49,10 +49,11 @@ namespace Dice.Engine
         public long HandScore { get; }
         public long ModifierBaseScore { get; }
         public long ModifierMultiplier { get; }
+        public long EncounterRuleMultiplier { get; }
         public ReadOnlyCollection<ModifierContribution> ModifierContributions { get; }
 
         internal ScoreBreakdown(DiceValues dice, HandDefinition hand, int upgradeCount,
-            IEnumerable<ModifierContribution> contributions)
+            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier = 0)
         {
             Category = hand.Category;
             HandDefinitionId = hand.Id;
@@ -60,6 +61,7 @@ namespace Dice.Engine
             UpgradeCount = upgradeCount;
             CategoryBaseScore = hand.BaseScore;
             CategoryMultiplier = hand.Multiplier;
+            EncounterRuleMultiplier = encounterRuleMultiplier;
             ModifierContributions = new List<ModifierContribution>(contributions).AsReadOnly();
             checked
             {
@@ -71,7 +73,7 @@ namespace Dice.Engine
                 UpgradeBaseScore = hand.BaseScorePerUpgrade * upgradeCount;
                 UpgradeMultiplier = hand.MultiplierPerUpgrade * upgradeCount;
                 BaseScore = DiceSum + CategoryBaseScore + UpgradeBaseScore + ModifierBaseScore;
-                Multiplier = CategoryMultiplier + UpgradeMultiplier + ModifierMultiplier;
+                Multiplier = CategoryMultiplier + UpgradeMultiplier + ModifierMultiplier + EncounterRuleMultiplier;
                 HandScore = BaseScore * Multiplier;
             }
         }
@@ -83,7 +85,7 @@ namespace Dice.Engine
             => Calculate(dice, catalog, upgrades, Array.Empty<ModifierContribution>());
 
         internal static ScoreBreakdown Calculate(DiceValues dice, MechanicalCatalog catalog, IReadOnlyList<int> upgrades,
-            IEnumerable<ModifierContribution> contributions)
+            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier = 0)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (upgrades == null) throw new ArgumentNullException(nameof(upgrades));
@@ -92,7 +94,8 @@ namespace Dice.Engine
                 if (upgrades[i] < 0 || upgrades[i] > catalog.Hands[i].MaximumUpgrades)
                     throw new ArgumentOutOfRangeException(nameof(upgrades));
             HandCategory category = HandEvaluator.Evaluate(dice);
-            return new ScoreBreakdown(dice, catalog.GetHand(category), upgrades[(int)category], contributions);
+            return new ScoreBreakdown(dice, catalog.GetHand(category), upgrades[(int)category], contributions,
+                encounterRuleMultiplier);
         }
     }
 }

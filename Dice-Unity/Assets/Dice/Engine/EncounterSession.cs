@@ -111,9 +111,6 @@ namespace Dice.Engine
             return new HandPreview(score, preview, events);
         }
 
-        private ScoreBreakdown CalculateHand(EncounterState current)
-            => HandScorer.Calculate(current.CurrentDice, catalog, current.HandUpgrades, current.ModifierContributions);
-
         private ScoreBreakdown ResolvePlayedHand(EncounterState next, List<RuleEvent> events)
         {
             int beforeHands = next.HandsRemaining;
@@ -121,7 +118,16 @@ namespace Dice.Engine
             events.Add(new ResourceChangedEvent(next, ResourceKind.Hands, ResourceChangeCause.PlayHand,
                 beforeHands, next.HandsRemaining));
             ModifierResolver.Resolve(next, catalog, definition.Stages[next.StageIndex], ModifierPhase.PlayHand, events);
-            return CalculateHand(next);
+            long ruleMultiplier = 0;
+            foreach (var rule in definition.Rules)
+            {
+                long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice);
+                if (bonus == 0) continue;
+                ruleMultiplier = checked(ruleMultiplier + bonus);
+                events.Add(new EncounterRuleActivatedEvent(next, rule.Id, bonus));
+            }
+            return HandScorer.Calculate(next.CurrentDice, catalog, next.HandUpgrades, next.ModifierContributions,
+                ruleMultiplier);
         }
 
         private CommandRejection Validate(EncounterAction action, long expectedRevision)

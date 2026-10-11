@@ -34,7 +34,8 @@ namespace Dice.Presentation
         private Button loadButton;
         private RectTransform clueContent;
         private readonly List<GameObject> clueCards = new List<GameObject>();
-        private Action arrival;
+        private Action<SpiritPresentationState, float> hostState;
+        private CanvasGroup narrativeGroup;
         private SpiritEncounterAudio audio;
         private EncounterJourneyAsset renderedJourney;
         private EncounterJourneyCatalogAsset renderedCatalog;
@@ -44,9 +45,10 @@ namespace Dice.Presentation
         public bool IsAnimating { get; private set; }
         public int VisibleBeatIndex { get; private set; } = -1;
 
-        public void Build(Action hostArrival, SpiritEncounterAudio encounterAudio)
+        public void Build(SpiritEncounterAudio encounterAudio,
+            Action<SpiritPresentationState, float> presentHostState = null)
         {
-            arrival = hostArrival;
+            hostState = presentHostState;
             audio = encounterAudio;
             var root = (RectTransform)transform;
             board = SpiritUi.Panel("InvestigationBoard", root, Vector2.zero, Vector2.one,
@@ -94,6 +96,7 @@ namespace Dice.Presentation
                 SpiritUi.PanelColor, 0, true);
             narrativeImage.type = Image.Type.Tiled;
             var narrative = narrativeImage.rectTransform;
+            narrativeGroup = narrative.gameObject.AddComponent<CanvasGroup>();
             title = SpiritUi.Heading("JourneyTitle", narrative, "", 29,
                 new Vector2(.035f, .79f), new Vector2(.965f, .98f), TextAnchor.MiddleCenter, SpiritUi.Amber);
             body = SpiritUi.Label("JourneyBody", narrative, "", 23,
@@ -264,7 +267,6 @@ namespace Dice.Presentation
             leftPanel.texture = rightPanel.texture = previous;
             leftPanel.uvRect = new Rect(0, 0, .5f, 1);
             rightPanel.uvRect = new Rect(.5f, 0, .5f, 1);
-            if (beat.Kind == EncounterJourneyBeatKind.Arrival) arrival?.Invoke();
             if (beat.AudioCue != null) audio?.PlayJourneyCue(beat.AudioCue);
             StartCoroutine(AnimateBeat(beat, parting));
         }
@@ -285,12 +287,18 @@ namespace Dice.Presentation
             leftPanel.gameObject.SetActive(false);
             rightPanel.gameObject.SetActive(false);
             IsAnimating = false;
+            narrativeGroup.alpha = 1;
             SetButtons(true);
         }
 
         private void ApplyMotion(EncounterJourneyBeat beat, float value, bool parting)
         {
             float eased = Mathf.SmoothStep(0, 1, value);
+            hostState?.Invoke(beat.HostState, value);
+            narrativeGroup.alpha = beat.HideNarrativeDuringMotion ? Mathf.Clamp01((value - .9f) * 10f) : 1;
+            background.rectTransform.anchoredPosition = Vector2.Scale(
+                Vector2.Lerp(beat.BackgroundMotionFrom, beat.BackgroundMotionTo, eased), artwork.rect.size);
+            background.rectTransform.localScale = Vector3.one * Mathf.Lerp(beat.BackgroundScaleFrom, beat.BackgroundScaleTo, eased);
             var rect = foreground.rectTransform;
             rect.anchoredPosition = Vector2.Scale(Vector2.Lerp(beat.MotionFrom, beat.MotionTo, eased), artwork.rect.size);
             rect.localScale = Vector3.one * Mathf.Lerp(beat.ScaleFrom, beat.ScaleTo, eased);
@@ -324,6 +332,9 @@ namespace Dice.Presentation
             rightPanel.gameObject.SetActive(false);
             foreground.rectTransform.anchoredPosition = Vector2.zero;
             foreground.rectTransform.localScale = Vector3.one;
+            background.rectTransform.anchoredPosition = Vector2.zero;
+            background.rectTransform.localScale = Vector3.one;
+            narrativeGroup.alpha = 1;
             SetButtons(true);
         }
 

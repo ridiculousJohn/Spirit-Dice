@@ -1,130 +1,97 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Localized mesh motion preserves the portrait's planted contact points. */
+    /** Authored grid shapes preserve contact points while deforming independent portrait layers. */
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class SpiritPortraitImage : RawImage
     {
-        public enum Region { Body, Head }
+        private SpiritPortraitMeshAsset mesh;
+        private float[] weights = Array.Empty<float>();
+        private IReadOnlyList<float> readOnlyWeights = Array.Empty<float>();
+        public IReadOnlyList<float> Weights => readOnlyWeights;
 
-        private const int Columns = 24;
-        private const int Rows = 18;
-        private Region deformationRegion;
-        private bool tailOnly;
-        private float breathing;
-        private float tail;
-        private float ears;
-
-        public Region DeformationRegion
+        public void Configure(SpiritPortraitMeshAsset asset)
         {
-            get => deformationRegion;
-            set
-            {
-                if (deformationRegion == value) return;
-                deformationRegion = value;
-                SetVerticesDirty();
-            }
-        }
-
-        public bool TailOnly
-        {
-            get => tailOnly;
-            set
-            {
-                if (tailOnly == value) return;
-                tailOnly = value;
-                SetVerticesDirty();
-            }
-        }
-
-        public void SetPose(float breathing, float tail, float ears)
-        {
-            breathing = Mathf.Clamp(breathing, -1f, 1f);
-            tail = Mathf.Clamp(tail, -1f, 1f);
-            ears = Mathf.Clamp(ears, -1f, 1f);
-            if (this.breathing == breathing && this.tail == tail && this.ears == ears) return;
-            this.breathing = breathing;
-            this.tail = tail;
-            this.ears = ears;
+            if (asset != null) asset.Validate();
+            mesh = asset;
+            weights = new float[mesh != null ? mesh.Shapes.Length : 0];
+            readOnlyWeights = Array.AsReadOnly(weights);
             SetVerticesDirty();
+        }
+
+        public void SetWeights(float[] values)
+        {
+            if (values == null || values.Length != weights.Length) throw new ArgumentException("Weights must match the configured mesh shapes.", nameof(values));
+            bool changed = false;
+            for (int i = 0; i < values.Length; ++i)
+            {
+                if (!SpiritHostPresentationAsset.Finite(values[i])) throw new ArgumentException("Weights must be finite.", nameof(values));
+                changed |= weights[i] != values[i];
+            }
+            if (!changed) return;
+            Array.Copy(values, weights, weights.Length);
+            SetVerticesDirty();
+        }
+
+        public Vector2 EvaluateDisplacement(Vector2 uv, Vector2 size)
+        {
+            if (mesh == null) return Vector2.zero;
+            float x = Mathf.Clamp01(uv.x) * mesh.Columns;
+            float y = Mathf.Clamp01(uv.y) * mesh.Rows;
+            int column = Mathf.Min((int)x, mesh.Columns - 1);
+            int row = Mathf.Min((int)y, mesh.Rows - 1);
+            int first = row * (mesh.Columns + 1) + column;
+            float along = x - column;
+            float up = y - row;
+            Vector2 result = Vector2.zero;
+            for (int i = 0; i < weights.Length; ++i)
+            {
+                if (weights[i] == 0f) continue;
+                Vector2[] shape = mesh.Shapes[i].Offsets;
+                result += Vector2.LerpUnclamped(Vector2.LerpUnclamped(shape[first], shape[first + 1], along),
+                    Vector2.LerpUnclamped(shape[first + mesh.Columns + 1], shape[first + mesh.Columns + 2], along), up) * weights[i];
+            }
+            return Vector2.Scale(result, size);
         }
 
         protected override void OnPopulateMesh(VertexHelper vertices)
         {
             vertices.Clear();
-            Texture portraitTexture = mainTexture;
-            if (portraitTexture == null) return;
-
+            if (texture == null) return;
             Rect area = GetPixelAdjustedRect();
-            Rect textureRect = uvRect;
-            Vector2 texelSize = portraitTexture.texelSize;
-            float uvScaleX = portraitTexture.width * texelSize.x;
-            float uvScaleY = portraitTexture.height * texelSize.y;
-            Color32 vertexColor = color;
-
-            for (int row = 0; row <= Rows; ++row)
+            int columns = mesh != null ? mesh.Columns : 1;
+            int rows = mesh != null ? mesh.Rows : 1;
+            for (int row = 0; row <= rows; ++row)
             {
-                float normalizedY = (float)row / Rows;
-                float artworkY = textureRect.y + textureRect.height * normalizedY;
-                for (int column = 0; column <= Columns; ++column)
+                for (int column = 0; column <= columns; ++column)
                 {
-                    float normalizedX = (float)column / Columns;
-                    float artworkX = textureRect.x + textureRect.width * normalizedX;
-                    Vector2 displacement = Deformation(artworkX, artworkY, area.width, area.height);
-                    Vector3 position = new Vector3(area.x + area.width * normalizedX + displacement.x,
-                        area.y + area.height * normalizedY + displacement.y, 0f);
-                    Color32 tintedColor = vertexColor;
-                    if (tailOnly)
-                        tintedColor.a = (byte)Mathf.RoundToInt(vertexColor.a * TailMask(artworkX, artworkY));
-                    vertices.AddVert(position, tintedColor,
-                        new Vector4(artworkX * uvScaleX, artworkY * uvScaleY, 0f, 0f));
+                    int index = row * (columns + 1) + column;
+                    Vector2 uv = new Vector2((float)column / columns, (float)row / rows);
+                    Vector2 displacement = Vector2.zero;
+                    if (mesh != null)
+                        for (int i = 0; i < weights.Length; ++i) displacement += mesh.Shapes[i].Offsets[index] * weights[i];
+                    displacement = Vector2.Scale(displacement, area.size);
+                    Color tint = color;
+                    if (mesh != null && mesh.Alpha != null && mesh.Alpha.Length > 0) tint.a *= mesh.Alpha[index];
+                    vertices.AddVert(new Vector3(area.x + uv.x * area.width + displacement.x,
+                        area.y + uv.y * area.height + displacement.y, 0f), tint,
+                        new Vector2(uvRect.x + uv.x * uvRect.width, uvRect.y + uv.y * uvRect.height));
                 }
             }
-
-            for (int row = 0; row < Rows; ++row)
+            for (int row = 0; row < rows; ++row)
             {
-                for (int column = 0; column < Columns; ++column)
+                for (int column = 0; column < columns; ++column)
                 {
-                    int lowerLeft = row * (Columns + 1) + column;
-                    int upperLeft = lowerLeft + Columns + 1;
+                    int lowerLeft = row * (columns + 1) + column;
+                    int upperLeft = lowerLeft + columns + 1;
                     vertices.AddTriangle(lowerLeft, upperLeft, upperLeft + 1);
                     vertices.AddTriangle(upperLeft + 1, lowerLeft + 1, lowerLeft);
                 }
             }
-        }
-
-        private Vector2 Deformation(float x, float y, float width, float height)
-        {
-            if (deformationRegion == Region.Head)
-            {
-                // Ear weights fade to zero above the eyes, leaving the face and chin untouched.
-                float heightWeight = Smooth(0.62f, 0.9f, y);
-                float left = Smooth(0.12f, 0.22f, x) * (1f - Smooth(0.42f, 0.5f, x)) * heightWeight;
-                float right = Smooth(0.57f, 0.67f, x) * (1f - Smooth(0.88f, 0.96f, x)) * heightWeight;
-                return new Vector2((right - left) * ears * 2f * width / 200f,
-                    (left + right) * ears * 0.7f * height / 200f);
-            }
-
-            // The chest and tail weights vanish before the forearms and tail root.
-            float chest = Smooth(0.33f, 0.41f, x) * (1f - Smooth(0.55f, 0.63f, x))
-                * Smooth(0.32f, 0.46f, y) * (1f - Smooth(0.65f, 0.74f, y));
-            float tailWeight = TailMask(x, y) * Smooth(0.72f, 0.97f, x) * Smooth(0.3f, 0.68f, y);
-            return new Vector2((breathing * chest * (x - 0.46f) * 2.5f + tail * tailWeight * 8f) * width / 460f,
-                (breathing * chest * 0.9f + tail * tailWeight * 3f) * height / (460f * 2f / 3f));
-        }
-
-        private static float TailMask(float x, float y)
-        {
-            // Vertex alpha isolates the tail while the shader retains the texture's alpha.
-            return Smooth(0.72f, 0.82f, x) * Smooth(0.3f, 0.45f, y);
-        }
-
-        private static float Smooth(float start, float end, float value)
-        {
-            float progress = Mathf.Clamp01((value - start) / (end - start));
-            return progress * progress * (3f - 2f * progress);
         }
     }
 }

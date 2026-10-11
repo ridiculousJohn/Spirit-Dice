@@ -1,6 +1,6 @@
 # Spirit Dice project handoff
 
-Updated October 9, 2026. This is the continuation point after the encounter journey, charm badges, and Addressables shutdown fixes.
+Updated October 11, 2026. This is the continuation point for the Watchtower encounter and owl entrance.
 
 ## Start here
 
@@ -8,7 +8,7 @@ Updated October 9, 2026. This is the continuation point after the encounter jour
 - Local root: `C:/Users/jsp73/Projects/Dice`; Unity project: `Dice-Unity`.
 - Unity version: `6000.6.2f1`. Editor: `C:/Program Files/Unity/Hub/Editor/6000.6.2f1/Editor/Unity.exe`.
 - Main playable scene: `Dice-Unity/Assets/Scenes/SpiritHousePrototype.unity`.
-- Immediate pending task: improve the selected charm's description. John specifically dislikes the diagnostic phrase `condition not met` in that description. Card badges are implemented, but the selected-detail panel still uses diagnostic status prose. The prior request prioritized the validation and Addressables fixes; those are complete. The replacement wording or presentation has not been agreed upon.
+- Charm wording and provisional icons are complete in commit `d8ff637`. The current work adds The Watchtower as the second playable encounter, including its illustrated approach and owl arrival. Balance playtesting is explicitly deferred while more encounters are authored.
 - The latest work was validated in the Unity editor. No Android rebuild or install was performed for these latest changes; do not assume the phone matches the repository.
 
 ## Design decisions to preserve
@@ -33,23 +33,41 @@ Scoring presentation is deliberately sequential. Begin with zero base, multiplie
 - Profile persistence stores unlocks, visits, and completion history separately from a run save. Loading an older run does not erase profile unlocks or reroll an already-generated offer.
 - The reusable journey covers investigation selection, approach, arrival, bargain, invitation/rule explanation, and acceptance with an animated opening roll. Returning visits can skip to the invitation. Active runs can return to the board and resume. Authored win/loss endings and a victory clue complete the flow.
 - The main authored journey assets are under `Dice-Unity/Assets/Dice/Content/Presentation/SpiritHouse`: `SpiritJourneyCatalog.asset`, `LastLanternJourney.asset`, `LastLanternTable.asset`, and `LanternKeeperHost.asset`.
-- Charm names distinguish effect variants. Cards wrap their full rules/effects and use corner state badges: check for ready, hourglass for waiting, cross for used, circular arrow for roll evaluation, pause for inactive, and a diamond fallback for kept/uninspected.
-- Badges display remaining uses as `1/1`, `0/1`, or infinity. All 296 authored modifier definitions currently use once-per-hand activation. The engine also supports once-per-stage and unlimited activation; it does not currently author arbitrary N-use limits.
+- Charm names distinguish effect variants. Cards wrap their full rules/effects and use corner state badges: check for ready, hourglass for waiting, filled circle for activated, circular arrow for roll evaluation, pause for inactive, and a diamond fallback for kept/uninspected. Detail status is separate from the rules description. Charms activate; they are not played or manually invoked.
+- Activation counts are not displayed. All 296 authored modifier definitions currently use once-per-hand activation. The engine also supports once-per-stage and unlimited activation. Owned cards and selected details use the same provisional family sigils as reward cards when no authored icon exists.
+- The Watchtower (`encounter.owl.watchtower`, `spirit.owl`) has ten provisional stages, ten initial reward families and three owl-scoped milestone families. The Watcher's Eye adds one multiplier per distinct face in the scored hand. The bonus is separate from modifier contributions and is not banked on rerolls.
+- The Watchtower journey shows the exterior, an upward stairway approach, the owl perched in the small upper-storey opening above the right arch, its descent and landing on the far table edge, witness dialogue, the bargain, and the invitation. The revised room brings that higher opening into frame. The owl starts at one fifth of its table height and grows with its approach. The host's normalized arrival is authored on journey beats; it uses separate resting, flight and landing art. The spectral head leads physical head motion. The narrative fades out during the flight.
+- Both hosts use the same `SpiritHostPortrait` renderer and concrete `SpiritHostPresentationAsset`. Generic states are Idle, Waiting, Arrival, and Reaction. Artwork layers, mesh shapes, animation curves, gesture cues, and line sigils are authored data. The runtime has no fox/owl renderer classes or flight-specific state. The approved artwork and contact placement are retained.
+- Watchtower assets are under `Dice-Unity/Assets/Dice/Content/Presentation/Watchtower` and `Dice-Unity/Assets/Dice/Art/Watchtower`. Resting artwork is the approved owl v7. Entry and room retain a small amber lantern within a predominantly moonlit palette. The audio theme retains dice and game cues; bespoke marsh ambience and stone footsteps are not yet authored.
 - The Clues button now draws behind Charms, Hand Ranks, and Menu. Both modifier loaders tolerate handles invalidated by Addressables shutdown; valid owned handles are released exactly once.
 - Rain volume is reduced. Fox movement uses three quiet randomized whooshes, avoiding immediate repeats when alternatives exist. Audio sources and generation records are preserved in the repository.
 
 ## Pending and proposed work
 
-- Fix the selected charm description's diagnostic status wording first, after agreeing on how it should read or use the badge.
+- Review the Watchtower entrance and owl motion in the editor. The entrance uses painted pose transitions and mesh motion, not a skeletal bird animation.
 - A permanent unlocked-modifier collection screen is not implemented. The Charms screen shows owned modifiers for the current run; it is not the player's entire unlocked collection.
 - Consumables, their loadout and transaction-safe consumption, physical victory tokens, and authored rematches remain proposals. Do not treat the proposal's reward table as proof those rewards exist.
-- Additional spirit encounters are not yet authored as playable content. Synthetic test fixtures exercise reuse but are not finished encounters.
+- Encounters beyond the fox and owl are not yet authored. The owl's northern causeway clue is a story lead without a playable destination.
 - Targets and tier assignments are provisional. No measured balance pass or completion-rate study has established their difficulty.
 - Further visual/audio polish remains open; John accepted the current flow as a usable foundation.
 
+## Spirit presentation authoring
+
+Host assets list independent artwork layers in draw order. Each layer supplies a texture, pivot, reference-canvas position and size, tint, optional silhouette material, and optional deformation mesh. Mesh shapes are weighted UV displacements with a separate per-vertex opacity mask, so artwork transparency and planted contact points remain intact.
+
+Sequences target Idle, Waiting, Arrival, or Reaction. Track curves use seconds and can replace or add position, size, rotation, opacity, or a deformation weight. Multiple Idle sequences can loop at different durations. Waiting overlays Idle; other states include Idle only when authored to do so. Arrival is sampled from normalized journey progress and does not advance independently. Reaction duration comes from the authored sequences. Optional entry-weight curves fade the difference from the captured starting pose, keeping interrupted reactions continuous. Gesture markers drive the shared spirit audio cue.
+
+`Docs/work/author-spirit-presentations.py` is the dependency-free content authoring source for the two current hosts and their nine mesh assets. It samples the approved motion formulas into editable Unity curves; the game does not execute those formulas. Run it only when intentionally reauthoring those assets, because it writes both hosts and their mesh data. New hosts can supply different layers, sequences, durations, and sigils without adding a renderer class. The older `author-watchtower.ps1` is retained as the original content-generation record, not a regeneration path for the current presentation.
+
 ## Validation and working practices
 
-The final focused run passed eight PlayMode tests: five Addressables tests, the three-overlay navigation/layering test, and two owned-charm tests. It covers 443x912 and 540x960 portrait layouts, all 296 charm descriptions, mixed badge states, use counts, and card interaction. The Unity process exited successfully without the previous invalid-operation-handle exception. Earlier badge work passed nine EditMode status tests and three additional gameplay UI PlayMode tests. These are focused results, not a claim that the entire suite was rerun after every change.
+The generic spirit presentation refactor passed 83 distinct focused EditMode cases across `Docs/work/spirit-refactor-validation/20261011-01` and `20261011-04`. Coverage includes both authored hosts, an arbitrary third host, independent looping sequences, reaction interruption, normalized Arrival seeking and gesture markers, mesh contacts, and invalid authored data. Ten rendered PlayMode scenarios passed across `20261011-02` and `20261011-03`: all six journey scenarios, the fox rule and motion scenarios, and both Watchtower scenarios. The first rendered run exposed two migrated test assertions (exact float equality and checking a host container instead of visible artwork); those assertions were corrected and both Watchtower tests passed on rerun. Reviewed captures retain the upper-window owl, descent, table landing, and fox presentation at both portrait sizes. No Android build or balance playtest was performed.
+
+The Watchtower validation passed 171 distinct focused EditMode cases across mechanics, scoring, progression, replay/persistence, journey validation and owl animation. The first run passed 170 with one test reflection error; the corrected owl class subsequently passed all 14 of its cases. Four rendered PlayMode tests passed after the final perch adjustment: both Watchtower scenarios, the fox intro, and the fox encounter rule. They cover first arrival, flight input gating, return/revisit skip, opening roll, rule placement on Play Hand, scored multiplier presentation, and captures at 443x912 and 540x960. Unity exited successfully. No Android build or balance playtest was run.
+
+Watchtower results and captures are under `Docs/work/watchtower-validation/20261011-03` (initial EditMode), `20261011-05` (corrected owl tests), and `20261011-06` (final rendered tests). Earlier charm and Addressables validation remains below as historical evidence.
+
+The higher-window correction passed both Watchtower PlayMode scenarios in `20261011-upper-arch-01`. After lowering the departure curve to clear the title, the full approach-to-scoring scenario passed again in `20261011-upper-arch-02`, with both portrait sizes captured. The owl's starting height is .062 of the portrait versus .31 at the table, with growth tied to approach progress.
 
 Local reports and captures are under `Docs/work/charm-followup-validation/20261009-01` and `Docs/work/charm-status-validation/20261009-01`. These are ignored, reproducible evidence; a fresh clone will not include them. The regression source is committed.
 
@@ -71,5 +89,7 @@ John's global working instructions are saved in `C:/Users/jsp73/.codex/AGENTS.md
 - [Modifier implementation](outputs/dice-modifier-implementation.md), [rewards](outputs/dice-reward-implementation.md), and [save/resume](outputs/dice-save-resume-implementation.md): implementation-era notes; consult current code for later changes.
 - `outputs/spirit-house-concepts-v1`, `outputs/spirit-house-portrait-v1`, and `outputs/spirit-house-prototype-assets`: saved concepts, prompts, and asset provenance.
 - `outputs/audio/fox-whoosh-v1`, `work/spirit-audio/README.md`, and `outputs/last-lantern-journey-art.json`: audio and doorway artwork records.
+- `outputs/watchtower-environments-v1`, `outputs/watchtower-owl-v1` through `outputs/watchtower-owl-v7`, and `outputs/watchtower-motion-v1`: original generated artwork, iteration history, prompts, and source references. Preserve earlier versions.
+- `outputs/watchtower-upper-arch-v1`: revised room showing the higher perch opening, its draft and built-in imagegen prompts. The table references `WatchtowerRoomUpperArch.png`; the original room remains preserved.
 
 The implementation commits preceding this handoff are `e2653b2`, `521a812`, `200cb8f`, `0185ed8`, and `53f2026`. Source and binary assets use Git and Git LFS. Original chat uploads in temporary directories are not the durable asset archive; use the committed reference and concept files above.

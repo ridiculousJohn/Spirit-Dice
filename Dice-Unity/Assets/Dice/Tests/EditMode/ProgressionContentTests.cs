@@ -37,20 +37,23 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void NewPlayerHasFortyFourGeneralStartersAndFourIntroductionExclusives()
+        public void NewPlayerHasFortyFourGeneralStartersAndEncounterScopedExclusives()
         {
             var catalog = Catalog();
             var functional = catalog.Modifiers.Where(value => value.RewardEligible).ToArray();
             Assert.That(functional.Count(value => value.Availability.Access == ModifierAccess.Starter), Is.EqualTo(44));
             var exclusive = functional.Where(value => value.Availability.Access == ModifierAccess.EncounterExclusive).ToArray();
-            Assert.That(exclusive.Length, Is.EqualTo(4));
-            Assert.That(exclusive.All(value => value.FamilyId == "modifier.initial_roll.initial_pair"), Is.True);
-            Assert.That(exclusive.All(value => value.Availability.Scope == ModifierAvailabilityScope.Encounter &&
-                value.Availability.ScopeId == "encounter.fox.introduction"), Is.True);
+            Assert.That(exclusive.Length, Is.EqualTo(28));
+            var foxExclusive = exclusive.Where(value => value.Availability.ScopeId == "encounter.fox.introduction").ToArray();
+            Assert.That(foxExclusive.Length, Is.EqualTo(4));
+            Assert.That(foxExclusive.All(value => value.FamilyId == "modifier.initial_roll.initial_pair"), Is.True);
+            Assert.That(exclusive.All(value => value.Availability.Scope == ModifierAvailabilityScope.Encounter), Is.True);
+            Assert.That(exclusive.Count(value => value.Availability.ScopeId == "encounter.owl.watchtower"), Is.EqualTo(24));
             Assert.That(functional.All(value => value.Availability.PowerTier >= 1 && value.Availability.PowerTier <= 3), Is.True);
         }
 
         [TestCase("encounter.fox.introduction", 4, 7, 10)]
+        [TestCase("encounter.owl.watchtower", 4, 7, 10)]
         [TestCase("encounter.standard", 9, 17, 23)]
         public void EveryAuthoredEncounterUsesIncreasingTierWeightsAndMilestoneOffers(string id, int middle, int late, int final)
         {

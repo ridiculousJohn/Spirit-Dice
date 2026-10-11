@@ -19,9 +19,6 @@ namespace Dice.Presentation
         private const float ScoreStepHold = .35f;
         private const float ModifierStepHold = .55f;
         [SerializeField] private Texture2D roomTexture;
-        [SerializeField] private Texture2D foxBodyTexture;
-        [SerializeField] private Texture2D foxHeadTexture;
-        [SerializeField] private Texture2D foxTurnedHeadTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
         [SerializeField] private EncounterTablePresentationAsset tablePresentation;
 
@@ -39,7 +36,7 @@ namespace Dice.Presentation
         public Text HandScoreLabel { get; private set; }
         public EncounterRulePresentationAsset EncounterRulePresentation => encounterRulePresentation;
         public EncounterJourneyView JourneyView { get; private set; }
-        public SpiritHostPortrait HostPortrait => fox;
+        public SpiritHostPortrait HostPortrait => hostPortrait;
 
         private ISpiritEncounterControls controls;
         private Canvas canvas;
@@ -59,7 +56,7 @@ namespace Dice.Presentation
         private RectTransform charmContent;
         private SpiritCharmGridLayout charmGrid;
         private SpiritCharmDetailsLayout charmDetailsLayout;
-        private SpiritHostPortrait fox;
+        private SpiritHostPortrait hostPortrait;
         private IEncounterJourneyControls journeyControls;
         private EncounterTablePresentationAsset configuredTable;
         private RawImage roomImage;
@@ -94,6 +91,7 @@ namespace Dice.Presentation
         private Graphic encounterRuleSigil;
         private RectTransform encounterRuleSigilRoot;
         private RectTransform rerollActionLabel;
+        private RectTransform playActionLabel;
         private Vector2 rerollLabelMin;
         private Vector2 rerollLabelMax;
         private CanvasGroup ruleSpiritSweep;
@@ -176,7 +174,7 @@ namespace Dice.Presentation
             controls = nextControls;
             if (canvas == null) Build();
             presentedSnapshot = null;
-            fox?.ResetPose();
+            hostPortrait?.ResetPose();
             controls.StateChanged += Refresh;
             controls.Resolved += Present;
             Refresh();
@@ -208,11 +206,12 @@ namespace Dice.Presentation
                     journeyControls.SelectedJourney != null && journeyControls.BeatIndex >= 0 &&
                     journeyControls.BeatIndex < journeyControls.SelectedJourney.Beats.Count &&
                     journeyControls.SelectedJourney.Beats[journeyControls.BeatIndex].Kind != EncounterJourneyBeatKind.Illustration;
-                fox?.SetVisible(seated);
+                hostPortrait?.SetVisible(seated);
             }
             else
             {
-                fox?.SetVisible(true);
+                hostPortrait?.SetVisible(true);
+                hostPortrait?.SetState(SpiritPresentationState.Idle, 1);
                 SetGameplayVisible(true);
             }
             JourneyView.Refresh();
@@ -235,16 +234,16 @@ namespace Dice.Presentation
 
         private void ConfigureTable(EncounterTablePresentationAsset selectedTable)
         {
-            if (configuredTable == selectedTable && (selectedTable == null || fox != null || selectedTable.HostPresentation == null)) return;
+            if (configuredTable == selectedTable && (selectedTable == null || hostPortrait != null || selectedTable.HostPresentation == null)) return;
             configuredTable = selectedTable;
-            if (fox != null) { fox.gameObject.SetActive(false); Destroy(fox.gameObject); fox = null; }
+            if (hostPortrait != null) { hostPortrait.gameObject.SetActive(false); Destroy(hostPortrait.gameObject); hostPortrait = null; }
             if (selectedTable != null)
             {
                 if (selectedTable.HostPresentation != null)
                 {
-                    fox = selectedTable.HostPresentation.Create(portrait);
-                    fox.transform.SetSiblingIndex(tableImage.transform.GetSiblingIndex() + 1);
-                    fox.SpiritGesture += () => encounterAudio.Play(SpiritAudioCue.Spirit);
+                    hostPortrait = selectedTable.HostPresentation.Create(portrait);
+                    hostPortrait.transform.SetSiblingIndex(tableImage.transform.GetSiblingIndex() + 1);
+                    hostPortrait.SpiritGesture += () => encounterAudio.Play(SpiritAudioCue.Spirit);
                 }
                 encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
                 encounterAudio.SetTheme(selectedTable.AudioTheme);
@@ -261,8 +260,6 @@ namespace Dice.Presentation
             tableImage.rectTransform.anchorMax = new Vector2(1, split);
             encounterTitle.text = menuTitle.text = selectedTable != null ? selectedTable.DisplayTitle : "";
         }
-
-        private void ReactHost() => fox?.React();
 
         private void ConfigureHostSigils(SpiritHostPresentationAsset presentation)
         {
@@ -413,7 +410,7 @@ namespace Dice.Presentation
             handRanksPanel.Build(portrait, ShowTable);
             BuildMenu();
             JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
-            JourneyView.Build(ReactHost, encounterAudio);
+            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
             ConfigureTable(tablePresentation);
             if (EventSystem.current == null)
             {
@@ -547,6 +544,7 @@ namespace Dice.Presentation
         private void BuildEncounterRule()
         {
             rerollActionLabel = RerollButton.GetComponentInChildren<Text>().rectTransform;
+            playActionLabel = PlayButton.GetComponentInChildren<Text>().rectTransform;
             rerollLabelMin = rerollActionLabel.anchorMin;
             rerollLabelMax = rerollActionLabel.anchorMax;
             var favor = SpiritUi.Rect("EncounterRuleFavor", RerollButton.transform,
@@ -592,9 +590,14 @@ namespace Dice.Presentation
                 foreach (var candidate in snapshot.EncounterRules)
                     if (candidate.Id == encounterRulePresentation.RuleId) { rule = candidate; break; }
             bool visible = rule != null;
+            bool onPlay = encounterRulePresentation != null && encounterRulePresentation.ActivationPhase == ModifierPhase.PlayHand;
+            var ruleButton = onPlay ? PlayButton : RerollButton;
+            encounterRuleGroup.transform.SetParent(ruleButton.transform, false);
             encounterRuleGroup.gameObject.SetActive(visible);
-            rerollActionLabel.anchorMin = visible ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
+            rerollActionLabel.anchorMin = visible && !onPlay ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
             rerollActionLabel.anchorMax = rerollLabelMax;
+            playActionLabel.anchorMin = visible && onPlay ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
+            playActionLabel.anchorMax = rerollLabelMax;
             if (visible)
             {
                 encounterRuleLabel.text = rule.IsAvailable ? encounterRulePresentation.AvailableText : encounterRulePresentation.UsedText;
@@ -604,6 +607,7 @@ namespace Dice.Presentation
                 if (encounterRuleSigil != null) encounterRuleSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
             }
             RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
+            PlayButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
 
         private static Text BuildScoreCounter(string name, string caption, Transform parent, float left, float right)
@@ -884,7 +888,7 @@ namespace Dice.Presentation
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
-                fox?.ResetPose();
+                hostPortrait?.ResetPose();
                 lastScore = null;
                 renderedOffer = -2;
                 renderedCharmsRevision = -1;
@@ -972,7 +976,7 @@ namespace Dice.Presentation
             activeRoll = null;
             presenting = false;
             presentationSnapshot = null;
-            fox?.ResetPose();
+            hostPortrait?.ResetPose();
             ResetTransientVisuals();
         }
 
@@ -1060,13 +1064,15 @@ namespace Dice.Presentation
             {
                 if (ruleEvent is EncounterRuleActivatedEvent activatedRule)
                 {
+                    // Scored-hand rule bonuses are presented after the hand's modifier contributions.
+                    if (activatedRule.MultiplierBonus != 0) continue;
                     if (encounterRulePresentation == null || activatedRule.RuleId != encounterRulePresentation.RuleId) continue;
                     RenderEncounterRule(resolution.Snapshot);
                     actionModifierCue.ShowHost(encounterRulePresentation.Icon, ModifierPhase.PlayerReroll,
-                        fox != null ? fox.GestureDuration : 1.8f);
+                        hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
                     selectionLabel.text = encounterRulePresentation.DisplayName;
                     selectionLabel.color = SpiritUi.Amber;
-                    fox?.React();
+                    hostPortrait?.React();
                     yield return AnimateRuleSpirit(.65f);
                 }
                 else if (ruleEvent is DiceRolledEvent rolled)
@@ -1099,7 +1105,7 @@ namespace Dice.Presentation
                     DiceTray.SetValues(scored.Dice);
                     SetScore(scored.Score, true);
                     HandScoreLabel.text = "0";
-                    fox?.React();
+                    hostPortrait?.React();
                     modifierEmblem.gameObject.SetActive(false);
                     selectionLabel.color = SpiritUi.Muted;
                     selectionLabel.text = "DICE\n+" + DiagnosticText.Number(scored.Score.DiceSum) + " base";
@@ -1128,6 +1134,20 @@ namespace Dice.Presentation
                         yield return AnimateContribution(contribution, scored.StageIndex, scored.HandIndex, resolution, false);
                         yield return new WaitForSecondsRealtime(ModifierStepHold);
                     }
+                    if (scored.Score.EncounterRuleMultiplier != 0)
+                    {
+                        selectionLabel.text = (encounterRulePresentation != null ? encounterRulePresentation.DisplayName : "ENCOUNTER RULE") +
+                            "\n+" + DiagnosticText.Number(scored.Score.EncounterRuleMultiplier) + " multiplier";
+                        selectionLabel.color = SpiritUi.Amber;
+                        scoreDetail.text = "ADDING ENCOUNTER RULE";
+                        actionModifierCue.ShowHost(encounterRulePresentation != null ? encounterRulePresentation.Icon : null,
+                            ModifierPhase.PlayHand, hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
+                        hostPortrait?.React();
+                        encounterAudio.Play(SpiritAudioCue.Score);
+                        yield return AnimateScore(displayedBaseScore, displayedMultiplier, displayedBaseScore,
+                            checked(displayedMultiplier + scored.Score.EncounterRuleMultiplier), ScoreStepDuration);
+                        yield return new WaitForSecondsRealtime(ScoreStepHold);
+                    }
                     modifierEmblem.gameObject.SetActive(false);
                     selectionLabel.text = "TOTAL";
                     selectionLabel.color = SpiritUi.Muted;
@@ -1148,8 +1168,8 @@ namespace Dice.Presentation
                     targetLabel.text = "0";
                     targetCaption.text = "STAGE CLEARED";
                     encounterAudio.Play(SpiritAudioCue.StageClear);
-                    fox?.React();
-                    yield return new WaitForSecondsRealtime(fox != null ? fox.GestureDuration : 1.8f);
+                    hostPortrait?.React();
+                    yield return new WaitForSecondsRealtime(hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
                 }
                 else if (ruleEvent is StageStartedEvent stage)
                 {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Dice.Presentation
 {
@@ -27,6 +28,12 @@ namespace Dice.Presentation
         [SerializeField] private EncounterJourneyTransition transition;
         [SerializeField] private float scaleFrom = 1;
         [SerializeField] private float scaleTo = 1;
+        [SerializeField, FormerlySerializedAs("hostPose")] private SpiritPresentationState hostState;
+        [SerializeField] private bool hideNarrativeDuringMotion;
+        [SerializeField] private Vector2 backgroundMotionFrom;
+        [SerializeField] private Vector2 backgroundMotionTo;
+        [SerializeField] private float backgroundScaleFrom = 1;
+        [SerializeField] private float backgroundScaleTo = 1;
 
         public string Id => id;
         public EncounterJourneyBeatKind Kind => kind;
@@ -44,6 +51,12 @@ namespace Dice.Presentation
         public EncounterJourneyTransition Transition => transition;
         public float ScaleFrom => scaleFrom;
         public float ScaleTo => scaleTo;
+        public SpiritPresentationState HostState => hostState;
+        public bool HideNarrativeDuringMotion => hideNarrativeDuringMotion;
+        public Vector2 BackgroundMotionFrom => backgroundMotionFrom;
+        public Vector2 BackgroundMotionTo => backgroundMotionTo;
+        public float BackgroundScaleFrom => backgroundScaleFrom;
+        public float BackgroundScaleTo => backgroundScaleTo;
     }
 
     /** Authoring data joins the investigation lead, arrival sequence, and encounter presentation. */
@@ -98,10 +111,15 @@ namespace Dice.Presentation
                 if (beat == null || !IsStableId(beat.Id) || !ids.Add(beat.Id))
                     throw new FormatException("Journey beat IDs must be nonempty and unique.");
                 if (!Enum.IsDefined(typeof(EncounterJourneyBeatKind), beat.Kind) ||
+                    !Enum.IsDefined(typeof(SpiritPresentationState), beat.HostState) ||
+                    beat.HostState == SpiritPresentationState.Reaction ||
                     !Enum.IsDefined(typeof(EncounterJourneyTransition), beat.Transition) ||
                     float.IsNaN(beat.Duration) || float.IsInfinity(beat.Duration) || beat.Duration < 0 ||
                     float.IsNaN(beat.ScaleFrom) || float.IsInfinity(beat.ScaleFrom) || beat.ScaleFrom <= 0 ||
-                    float.IsNaN(beat.ScaleTo) || float.IsInfinity(beat.ScaleTo) || beat.ScaleTo <= 0)
+                    float.IsNaN(beat.ScaleTo) || float.IsInfinity(beat.ScaleTo) || beat.ScaleTo <= 0 ||
+                    float.IsNaN(beat.BackgroundScaleFrom) || float.IsInfinity(beat.BackgroundScaleFrom) || beat.BackgroundScaleFrom <= 0 ||
+                    float.IsNaN(beat.BackgroundScaleTo) || float.IsInfinity(beat.BackgroundScaleTo) || beat.BackgroundScaleTo <= 0 ||
+                    !Finite(beat.BackgroundMotionFrom) || !Finite(beat.BackgroundMotionTo))
                     throw new FormatException("Journey beat animation data is invalid.");
                 if (beat.Kind == EncounterJourneyBeatKind.Invitation) ++invitations;
             }
@@ -120,6 +138,9 @@ namespace Dice.Presentation
             foreach (var rule in definition.Rules)
                 if (!ruleIds.Contains(rule.Id)) throw new FormatException("An encounter rule is missing its presentation.");
         }
+
+        private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
+            !float.IsNaN(value.y) && !float.IsInfinity(value.y);
 
         private static bool IsStableId(string value)
         {

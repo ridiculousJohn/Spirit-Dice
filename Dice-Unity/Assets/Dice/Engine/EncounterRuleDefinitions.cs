@@ -16,6 +16,7 @@ namespace Dice.Engine
         internal virtual bool WaivesRerollCost(EncounterState state) => false;
         internal virtual int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => 0;
         internal virtual int MaximumFreeRerollsPerHand => 0;
+        internal virtual long ScoredHandMultiplierBonus(DiceValues dice) => 0;
     }
 
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
@@ -28,6 +29,28 @@ namespace Dice.Engine
         internal override bool WaivesRerollCost(EncounterState state) => IsAvailable(state);
         internal override int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => rerollsSpentOnHand > 0 ? 1 : 0;
         internal override int MaximumFreeRerollsPerHand => 1;
+    }
+
+    public sealed class DistinctFacesMultiplierRuleDefinition : EncounterRuleDefinition
+    {
+        public const string StableId = "rule.distinct_faces_multiplier";
+
+        public DistinctFacesMultiplierRuleDefinition() : base(StableId) { }
+
+        internal override bool IsAvailable(EncounterState state) => true;
+
+        internal override long ScoredHandMultiplierBonus(DiceValues dice)
+        {
+            int faceMask = 0;
+            int distinct = 0;
+            for (int i = 0; i < DiceValues.Count; ++i)
+            {
+                int bit = 1 << dice[i];
+                if ((faceMask & bit) == 0) ++distinct;
+                faceMask |= bit;
+            }
+            return distinct;
+        }
     }
 
     public sealed class EncounterRuleSnapshot : IEquatable<EncounterRuleSnapshot>

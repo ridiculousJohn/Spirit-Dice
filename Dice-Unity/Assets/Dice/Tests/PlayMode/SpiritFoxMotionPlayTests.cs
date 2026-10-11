@@ -19,7 +19,7 @@ namespace Dice.Tests
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var fox = controller.GetComponentInChildren<SpiritFoxPortrait>();
+            var fox = controller.GetComponentInChildren<SpiritHostPortrait>();
             Assert.That(fox, Is.Not.Null);
             var snapshot = controller.Snapshot;
             fox.enabled = false;
@@ -54,7 +54,7 @@ namespace Dice.Tests
             fox.enabled = true;
         }
 
-        private static IEnumerator CaptureMotion(SpiritFoxPortrait fox, float seconds, int framesPerSecond,
+        private static IEnumerator CaptureMotion(SpiritHostPortrait fox, float seconds, int framesPerSecond,
             string root, int firstFrame)
         {
             int count = Mathf.RoundToInt(seconds * framesPerSecond);

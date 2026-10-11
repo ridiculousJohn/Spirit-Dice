@@ -1,4 +1,5 @@
 using UnityEngine;
+using Dice.Engine;
 
 namespace Dice.Presentation
 {
@@ -12,6 +13,7 @@ namespace Dice.Presentation
         [SerializeField] private string availableText;
         [SerializeField] private string usedText;
         [SerializeField] private Sprite icon;
+        [SerializeField] private ModifierPhase activationPhase = ModifierPhase.PlayerReroll;
 
         public string RuleId => ruleId;
         public string DisplayName => displayName;
@@ -19,5 +21,6 @@ namespace Dice.Presentation
         public string AvailableText => availableText;
         public string UsedText => usedText;
         public Sprite Icon => icon;
+        public ModifierPhase ActivationPhase => activationPhase;
     }
 }

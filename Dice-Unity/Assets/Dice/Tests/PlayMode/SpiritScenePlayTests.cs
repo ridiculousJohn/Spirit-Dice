@@ -239,7 +239,7 @@ namespace Dice.Tests
             Assert.That(view.HandScoreLabel.text, Is.EqualTo("0"));
 
             ClickThroughEventSystem(view, "PlayButton");
-            Assert.That(view.GetComponentInChildren<SpiritFoxPortrait>().IsReacting, Is.True,
+            Assert.That(view.GetComponentInChildren<SpiritHostPortrait>().IsReacting, Is.True,
                 "Scoring must trigger the host's physical and spirit response.");
             AssertSnapshot(expected.Execute(PlayHandAction.Instance, 1).Snapshot, controller.Snapshot);
             Assert.That(controller.IsBusy, Is.True);
@@ -349,7 +349,7 @@ namespace Dice.Tests
             Click(view, "LoadRunButton");
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view.DiceTray.IsRolling, Is.False);
-            Assert.That(view.GetComponentInChildren<SpiritFoxPortrait>().IsReacting, Is.False,
+            Assert.That(view.GetComponentInChildren<SpiritHostPortrait>().IsReacting, Is.False,
                 "Loading a run must clear the previous host reaction.");
             Assert.That(resolutions, Is.EqualTo(beforeLoadResolutions));
             Assert.That(controller.SelectedMask, Is.Zero);
@@ -395,7 +395,7 @@ namespace Dice.Tests
                 yield return null;
             Assert.That(caption.text, Is.EqualTo("STAGE CLEARED"));
             Assert.That(controller.IsBusy, Is.True);
-            var fox = view.GetComponentInChildren<SpiritFoxPortrait>();
+            var fox = view.GetComponentInChildren<SpiritHostPortrait>();
             Assert.That(fox.IsReacting, Is.True, "Clearing the stage must trigger its own host reaction.");
             Assert.That(FindButton(view, "RefreshRewardsButton").gameObject.activeInHierarchy, Is.False);
             yield return new WaitForSecondsRealtime(.2f);

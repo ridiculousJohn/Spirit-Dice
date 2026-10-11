@@ -36,7 +36,7 @@ namespace Dice.Tests
             controller.Initialize(catalog, encounter.Id, 60, savePath);
             yield return null;
             var cue = view.GetComponent<SpiritActionModifierCue>();
-            var fox = view.GetComponentInChildren<SpiritFoxPortrait>();
+            var fox = view.GetComponentInChildren<SpiritHostPortrait>();
             int gestures = 0;
             fox.SpiritGesture += () => ++gestures;
             AssertFavor(view, presentation, true);
@@ -77,7 +77,7 @@ namespace Dice.Tests
             Assert.That(cue.IsVisible, Is.True);
             Assert.That(cue.ActivePhase, Is.EqualTo(ModifierPhase.PlayerReroll));
             Assert.That(cue.ActiveSprite, Is.SameAs(presentation.Icon));
-            Assert.That(Find<SpiritFoxSigilGraphic>(Find<CanvasGroup>(view, "RerollModifierCue"), "FoxSigil")
+            Assert.That(Find<SpiritHostSigilGraphic>(Find<CanvasGroup>(view, "RerollModifierCue"), "HostSigil")
                 .gameObject.activeInHierarchy, Is.EqualTo(presentation.Icon == null));
             AssertFavor(view, presentation, false);
             yield return new WaitForSecondsRealtime(.18f);
@@ -142,7 +142,7 @@ namespace Dice.Tests
             Assert.That(label.gameObject.activeInHierarchy, Is.True);
             Assert.That(label.text, Is.EqualTo(available ? presentation.AvailableText : presentation.UsedText));
             Assert.That(Find<CanvasGroup>(view, "EncounterRuleFavor").alpha, Is.EqualTo(available ? 1 : .4f));
-            Assert.That(Find<SpiritFoxSigilGraphic>(view, "EncounterRuleSigil").gameObject.activeInHierarchy,
+            Assert.That(Find<SpiritHostSigilGraphic>(view, "EncounterRuleSigil").gameObject.activeInHierarchy,
                 Is.EqualTo(presentation.Icon == null));
         }
 
