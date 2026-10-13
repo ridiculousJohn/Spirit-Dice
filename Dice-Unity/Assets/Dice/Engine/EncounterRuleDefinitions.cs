@@ -16,7 +16,8 @@ namespace Dice.Engine
         internal virtual bool WaivesRerollCost(EncounterState state) => false;
         internal virtual int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => 0;
         internal virtual int MaximumFreeRerollsPerHand => 0;
-        internal virtual long ScoredHandMultiplierBonus(DiceValues dice) => 0;
+        internal virtual long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => 0;
+        internal virtual int FavoredFace(long totalHandsPlayed) => 0;
     }
 
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
@@ -39,7 +40,7 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
 
-        internal override long ScoredHandMultiplierBonus(DiceValues dice)
+        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
         {
             int faceMask = 0;
             int distinct = 0;
@@ -53,22 +54,45 @@ namespace Dice.Engine
         }
     }
 
+    public sealed class CyclingFavoredFaceMultiplierRuleDefinition : EncounterRuleDefinition
+    {
+        public const string StableId = "rule.cycling_favored_face_multiplier";
+
+        public CyclingFavoredFaceMultiplierRuleDefinition() : base(StableId) { }
+
+        internal override bool IsAvailable(EncounterState state) => true;
+
+        /** The persisted encounter-wide hand count keeps the cycle stable through stage changes and resume. */
+        internal override int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % 6) + 1;
+
+        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
+        {
+            int favoredFace = FavoredFace(totalHandsPlayed);
+            long bonus = 0;
+            for (int i = 0; i < DiceValues.Count; ++i)
+                if (dice[i] == favoredFace) bonus += 2;
+            return bonus;
+        }
+    }
+
     public sealed class EncounterRuleSnapshot : IEquatable<EncounterRuleSnapshot>
     {
         public string Id { get; }
         public bool IsAvailable { get; }
+        public int FavoredFace { get; }
 
         internal EncounterRuleSnapshot(EncounterRuleDefinition definition, EncounterState state)
         {
             Id = definition.Id;
             IsAvailable = state.Phase == EncounterPhase.Playing && definition.IsAvailable(state);
+            FavoredFace = definition.FavoredFace(state.TotalHandsPlayed);
         }
 
         public bool Equals(EncounterRuleSnapshot other)
-            => other != null && Id == other.Id && IsAvailable == other.IsAvailable;
+            => other != null && Id == other.Id && IsAvailable == other.IsAvailable && FavoredFace == other.FavoredFace;
 
         public override bool Equals(object obj) => obj is EncounterRuleSnapshot other && Equals(other);
-        public override int GetHashCode() => unchecked(StringComparer.Ordinal.GetHashCode(Id) * 397 ^ IsAvailable.GetHashCode());
+        public override int GetHashCode() => unchecked((StringComparer.Ordinal.GetHashCode(Id) * 397 ^ IsAvailable.GetHashCode()) * 397 ^ FavoredFace);
     }
 
     internal static class EncounterRuleResolver

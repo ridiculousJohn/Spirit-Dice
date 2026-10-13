@@ -121,7 +121,7 @@ namespace Dice.Engine
             long ruleMultiplier = 0;
             foreach (var rule in definition.Rules)
             {
-                long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice);
+                long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
                 ruleMultiplier = checked(ruleMultiplier + bonus);
                 events.Add(new EncounterRuleActivatedEvent(next, rule.Id, bonus));

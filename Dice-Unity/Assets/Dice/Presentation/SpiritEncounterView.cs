@@ -651,7 +651,7 @@ namespace Dice.Presentation
             playActionLabel.anchorMax = rerollLabelMax;
             if (visible)
             {
-                encounterRuleLabel.text = rule.IsAvailable ? encounterRulePresentation.AvailableText : encounterRulePresentation.UsedText;
+                encounterRuleLabel.text = encounterRulePresentation.TextFor(rule);
                 encounterRuleGroup.alpha = rule.IsAvailable ? 1 : .4f;
                 encounterRuleIcon.sprite = encounterRulePresentation.Icon;
                 encounterRuleIcon.enabled = encounterRulePresentation.Icon != null;

@@ -22,5 +22,11 @@ namespace Dice.Presentation
         public string UsedText => usedText;
         public Sprite Icon => icon;
         public ModifierPhase ActivationPhase => activationPhase;
+
+        public string TextFor(EncounterRuleSnapshot rule)
+        {
+            string text = rule.IsAvailable ? availableText : usedText;
+            return rule.FavoredFace > 0 ? text?.Replace("{face}", rule.FavoredFace.ToString(System.Globalization.CultureInfo.InvariantCulture)) : text;
+        }
     }
 }
