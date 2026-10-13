@@ -9,6 +9,20 @@ namespace Dice.Presentation
     public enum SpiritTrackBlend { Replace, Add }
 
     [Serializable]
+    public sealed class SpiritPortraitSmoke
+    {
+        public bool Enabled;
+        [Tooltip("Optional linear motion mask: black remains fixed, white receives smoke motion.")]
+        public Texture2D MotionMask;
+        [Tooltip("Optional linear, repeating RG flow noise. An omitted texture uses generated noise.")]
+        public Texture2D FlowNoise;
+        [Range(0f, .05f)] public float Distortion = .035f;
+        [Min(0f)] public float Speed = .7f;
+        [Range(0f, 1f)] public float Opacity = .6f;
+        public Vector2 Flow = new Vector2(0f, .018f);
+    }
+
+    [Serializable]
     public sealed class SpiritPortraitLayer
     {
         public string Id;
@@ -22,6 +36,7 @@ namespace Dice.Presentation
         public bool Silhouette;
         [Tooltip("Respond to authored environment lighting. Disable for self-lit spirit details.")]
         public bool ReceiveSceneLighting = true;
+        public SpiritPortraitSmoke Smoke = new SpiritPortraitSmoke();
         public float[] Weights = Array.Empty<float>();
     }
 
@@ -101,6 +116,16 @@ namespace Dice.Presentation
                 Require(Finite(layer.Pivot) && layer.Pivot.x >= 0f && layer.Pivot.x <= 1f && layer.Pivot.y >= 0f && layer.Pivot.y <= 1f,
                     "Layer " + layer.Id + " has invalid Pivot.");
                 Require(Finite(layer.Rotation) && Finite(layer.Tint.r) && Finite(layer.Tint.g) && Finite(layer.Tint.b) && Finite(layer.Tint.a), "Layer " + layer.Id + " has invalid tint or rotation.");
+                if (layer.Smoke != null && layer.Smoke.Enabled)
+                {
+                    Require(!layer.Silhouette, "Layer " + layer.Id + " cannot use both silhouette and smoke materials.");
+                    Require(Finite(layer.Smoke.Distortion) && layer.Smoke.Distortion >= 0f && layer.Smoke.Distortion <= .05f,
+                        "Layer " + layer.Id + " smoke distortion must be between zero and 0.05.");
+                    Require(Finite(layer.Smoke.Speed) && layer.Smoke.Speed >= 0f && Finite(layer.Smoke.Flow),
+                        "Layer " + layer.Id + " smoke motion must be finite, with nonnegative speed.");
+                    Require(Finite(layer.Smoke.Opacity) && layer.Smoke.Opacity >= 0f && layer.Smoke.Opacity <= 1f,
+                        "Layer " + layer.Id + " smoke opacity must be between zero and one.");
+                }
                 if (layer.Mesh != null) layer.Mesh.Validate();
                 int channels = layer.Mesh != null && layer.Mesh.Shapes != null ? layer.Mesh.Shapes.Length : 0;
                 Require(layer.Weights == null || layer.Weights.Length == 0 || layer.Weights.Length == channels, "Layer " + layer.Id + " weights must match its mesh shapes.");

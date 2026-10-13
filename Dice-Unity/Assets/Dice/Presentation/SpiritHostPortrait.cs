@@ -11,6 +11,7 @@ namespace Dice.Presentation
         private sealed class LayerRuntime
         {
             public SpiritPortraitImage Image;
+            public SpiritSmokeMaterial Smoke;
             public float[] Defaults;
             public float[] Values;
             public float[] EntryPose;
@@ -27,6 +28,8 @@ namespace Dice.Presentation
         private readonly bool[] includesIdle = new bool[4];
         private Material silhouetteMaterial;
         private double stateAge;
+        // Continuous effects retain their phase across dialogue and pose resets.
+        private double effectAge;
         private float arrivalProgress;
         private Color sceneLightingTint = Color.white;
         private bool hasSceneLighting;
@@ -81,6 +84,8 @@ namespace Dice.Presentation
                 image.texture = source.Texture;
                 image.raycastTarget = false;
                 if (source.Silhouette) image.material = silhouetteMaterial;
+                SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled ? new SpiritSmokeMaterial(source.Smoke) : null;
+                if (smoke != null) image.material = smoke.Material;
                 image.enabled = source.Texture != null && (!source.Silhouette || silhouetteMaterial != null);
                 int channels = source.Mesh != null ? source.Mesh.Shapes.Length : 0;
                 var defaults = new float[6 + channels];
@@ -94,7 +99,7 @@ namespace Dice.Presentation
                     Array.Copy(source.Weights, 0, defaults, 6, channels);
                 layers[i] = new LayerRuntime
                 {
-                    Image = image, Defaults = defaults, Values = new float[defaults.Length],
+                    Image = image, Smoke = smoke, Defaults = defaults, Values = new float[defaults.Length],
                     EntryPose = new float[defaults.Length], EntryBaseline = new float[defaults.Length],
                     Weights = new float[channels]
                 };
@@ -215,6 +220,7 @@ namespace Dice.Presentation
         public void Advance(float deltaTime)
         {
             if (!Visible || !SpiritHostPresentationAsset.Finite(deltaTime) || deltaTime < 0f) return;
+            effectAge += deltaTime;
             if (State == SpiritPresentationState.Arrival)
             {
                 ApplyPose();
@@ -272,6 +278,7 @@ namespace Dice.Presentation
                 layer.Image.color = tint;
                 if (layer.Weights.Length > 0) Array.Copy(values, 6, layer.Weights, 0, layer.Weights.Length);
                 layer.Image.SetWeights(layer.Weights);
+                layer.Smoke?.ApplyTime(effectAge, layer.Image);
             }
         }
 
@@ -341,6 +348,13 @@ namespace Dice.Presentation
 
         private void OnDestroy()
         {
+            if (layers != null)
+                foreach (LayerRuntime layer in layers)
+                    if (layer != null && layer.Smoke != null)
+                    {
+                        if (layer.Image != null) layer.Image.material = null;
+                        layer.Smoke.Dispose();
+                    }
             if (portraitRoot != null) DestroyOwned(portraitRoot.gameObject);
             if (silhouetteMaterial != null) DestroyOwned(silhouetteMaterial);
         }
