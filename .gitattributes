@@ -90,8 +90,3 @@
 *.dicesave filter=lfs diff=lfs merge=lfs -text
 LightingData.asset filter=lfs diff=lfs merge=lfs -text
 LightmapSnapshot.asset filter=lfs diff=lfs merge=lfs -text
-
-# Large extracted reference dumps are data rather than maintained source.
-Docs/work/dice-of-kalma/code/script.json filter=lfs diff=lfs merge=lfs -text
-Docs/work/dice-of-kalma/code/il2cpp.h filter=lfs diff=lfs merge=lfs -text
-Docs/work/dice-of-kalma/code/dump.cs filter=lfs diff=lfs merge=lfs -text

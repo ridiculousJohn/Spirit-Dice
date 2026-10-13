@@ -1,6 +1,6 @@
 # Spirit Dice project handoff
 
-Updated October 11, 2026. This is the continuation point for the Watchtower encounter and owl entrance.
+Updated October 13, 2026. This is the continuation point for the Watchtower encounter and owl entrance.
 
 ## Start here
 
@@ -8,7 +8,9 @@ Updated October 11, 2026. This is the continuation point for the Watchtower enco
 - Local root: `C:/Users/jsp73/Projects/Dice`; Unity project: `Dice-Unity`.
 - Unity version: `6000.6.2f1`. Editor: `C:/Program Files/Unity/Hub/Editor/6000.6.2f1/Editor/Unity.exe`.
 - Main playable scene: `Dice-Unity/Assets/Scenes/SpiritHousePrototype.unity`.
-- Charm wording and provisional icons are complete in commit `d8ff637`. The current work adds The Watchtower as the second playable encounter, including its illustrated approach and owl arrival. Balance playtesting is explicitly deferred while more encounters are authored.
+- Charm wording and provisional icons are complete. The Watchtower is the second playable encounter, including its illustrated approach and owl arrival. Balance playtesting is explicitly deferred while more encounters are authored.
+- All of `Docs/work` and the Watchtower source/iteration directories under `Docs/outputs/watchtower-*` are local-only and ignored. They must not be staged, force-added, or moved elsewhere to get them into Git. Production game assets belong under `Dice-Unity/Assets`; working scripts, renders, generated source images, and rejected iterations stay out of Git. This exclusion is John's instruction and overrides provenance/archive preferences.
+- Local history has been rewritten to remove those paths from every reference. Commit hashes recorded before October 13 are historical identifiers. The remote is being recreated by John; this cleanup does not publish or fetch repository history.
 - The latest work was validated in the Unity editor. No Android rebuild or install was performed for these latest changes; do not assume the phone matches the repository.
 
 ## Design decisions to preserve
@@ -40,7 +42,7 @@ Scoring presentation is deliberately sequential. Begin with zero base, multiplie
 - Both hosts use the same `SpiritHostPortrait` renderer and concrete `SpiritHostPresentationAsset`. Generic states are Idle, Waiting, Arrival, and Reaction. Artwork layers, mesh shapes, animation curves, gesture cues, and line sigils are authored data. The runtime has no fox/owl renderer classes or flight-specific state. The approved artwork and contact placement are retained.
 - Watchtower assets are under `Dice-Unity/Assets/Dice/Content/Presentation/Watchtower` and `Dice-Unity/Assets/Dice/Art/Watchtower`. Resting artwork is the approved owl v7. Entry and room retain a small amber lantern within a predominantly moonlit palette. The audio theme retains dice and game cues; bespoke marsh ambience and stone footsteps are not yet authored.
 - The Clues button now draws behind Charms, Hand Ranks, and Menu. Both modifier loaders tolerate handles invalidated by Addressables shutdown; valid owned handles are released exactly once.
-- Rain volume is reduced. Fox movement uses three quiet randomized whooshes, avoiding immediate repeats when alternatives exist. Audio sources and generation records are preserved in the repository.
+- Rain volume is reduced. Fox movement uses three quiet randomized whooshes, avoiding immediate repeats when alternatives exist. Production audio is preserved in the repository; working audio scripts and audition files stay local.
 
 ## Pending and proposed work
 
@@ -57,7 +59,7 @@ Host assets list independent artwork layers in draw order. Each layer supplies a
 
 Sequences target Idle, Waiting, Arrival, or Reaction. Track curves use seconds and can replace or add position, size, rotation, opacity, or a deformation weight. Multiple Idle sequences can loop at different durations. Waiting overlays Idle; other states include Idle only when authored to do so. Arrival is sampled from normalized journey progress and does not advance independently. Reaction duration comes from the authored sequences. Optional entry-weight curves fade the difference from the captured starting pose, keeping interrupted reactions continuous. Gesture markers drive the shared spirit audio cue.
 
-`Docs/work/author-spirit-presentations.py` is the dependency-free content authoring source for the two current hosts and their nine mesh assets. It samples the approved motion formulas into editable Unity curves; the game does not execute those formulas. Run it only when intentionally reauthoring those assets, because it writes both hosts and their mesh data. New hosts can supply different layers, sequences, durations, and sigils without adding a renderer class. The older `author-watchtower.ps1` is retained as the original content-generation record, not a regeneration path for the current presentation.
+The local-only `Docs/work/author-spirit-presentations.py` samples the two hosts' motion into editable Unity curves; the game does not execute it. It is not present in a fresh clone. Run it only when intentionally reauthoring those assets, because it writes both hosts and their mesh data. New hosts can supply different layers, sequences, durations, and sigils without adding a renderer class. The local-only `author-watchtower.ps1` is an original content-generation record, not a regeneration path for the current presentation.
 
 ## Validation and working practices
 
@@ -79,7 +81,7 @@ John's global working instructions are saved in `C:/Users/jsp73/.codex/AGENTS.md
 - Prefer GPT-6 Astra orchestration and GPT-6.1 Sol with high reasoning for bounded coding/test work. Delegation is authorized within approved work; the orchestrator reviews integration. Do not claim that a preference changes the active model.
 - Never reset, restore, revert, clean, delete, or otherwise roll back workspace changes without John's explicit direction for that exact action. This includes newly written agent code, generated output, and test artifacts. All changes are user-owned.
 - Do not create worktrees unless requested. Do not rename existing identifiers. Use ASCII comments and string literals. Always spell out checkpoint.
-- Ignore disposable test output rather than committing it; leave existing files on disk. Preserve authored assets, provenance, and useful reference material.
+- Keep all working files and generated source iterations local and ignored. Preserve their local files; provenance is not an exception to John's Git exclusions.
 
 ## Durable reference material
 
@@ -88,8 +90,8 @@ John's global working instructions are saved in `C:/Users/jsp73/.codex/AGENTS.md
 - [Reference game design](outputs/dice-of-kalma-design-reference.html) and [extracted design data](outputs/dice-of-kalma-design-data.json).
 - [Modifier implementation](outputs/dice-modifier-implementation.md), [rewards](outputs/dice-reward-implementation.md), and [save/resume](outputs/dice-save-resume-implementation.md): implementation-era notes; consult current code for later changes.
 - `outputs/spirit-house-concepts-v1`, `outputs/spirit-house-portrait-v1`, and `outputs/spirit-house-prototype-assets`: saved concepts, prompts, and asset provenance.
-- `outputs/audio/fox-whoosh-v1`, `work/spirit-audio/README.md`, and `outputs/last-lantern-journey-art.json`: audio and doorway artwork records.
-- `outputs/watchtower-environments-v1`, `outputs/watchtower-owl-v1` through `outputs/watchtower-owl-v7`, and `outputs/watchtower-motion-v1`: original generated artwork, iteration history, prompts, and source references. Preserve earlier versions.
-- `outputs/watchtower-upper-arch-v1`: revised room showing the higher perch opening, its draft and built-in imagegen prompts. The table references `WatchtowerRoomUpperArch.png`; the original room remains preserved.
+- `outputs/audio/fox-whoosh-v1` and `outputs/last-lantern-journey-art.json`: audio and doorway artwork records. `work/spirit-audio/README.md` is a local-only working reference.
+- The local-only `outputs/watchtower-environments-v1`, `outputs/watchtower-owl-v1` through `outputs/watchtower-owl-v7`, and `outputs/watchtower-motion-v1` contain generated source artwork and iterations. These are ignored and unavailable in a fresh clone.
+- The local-only `outputs/watchtower-upper-arch-v1` contains the room draft and generation prompts. The production table references the tracked `WatchtowerRoomUpperArch.png` asset.
 
-The implementation commits preceding this handoff are `e2653b2`, `521a812`, `200cb8f`, `0185ed8`, and `53f2026`. Source and binary assets use Git and Git LFS. Original chat uploads in temporary directories are not the durable asset archive; use the committed reference and concept files above.
+Production source and binary assets use Git and Git LFS. Excluded working files and source iterations remain local. History cleanup changes commit hashes; use the rewritten Git log to locate implementation commits.
