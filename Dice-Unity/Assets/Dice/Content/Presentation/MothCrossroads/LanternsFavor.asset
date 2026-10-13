@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
+  m_Name: LanternsFavor
+  m_EditorClassIdentifier:
+  ruleId: rule.cycling_favored_face_multiplier
+  activationPhase: 2
+  displayName: Lantern's Favor
+  description: The lantern favors faces 1 through 6 in order, advancing after each played hand across the encounter. Each matching die in your scored hand adds +2 multiplier.
+  availableText: "Face {face}: +2 per match"
+  usedText: "Face {face}: +2 per match"
+  icon: {fileID: 0}

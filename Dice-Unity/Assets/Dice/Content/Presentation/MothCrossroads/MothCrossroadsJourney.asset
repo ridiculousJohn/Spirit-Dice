@@ -1,0 +1,167 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: "13a2179ce2ab44a59ab59de3267cba11", type: 3}
+  m_Name: "MothCrossroadsJourney"
+  m_EditorClassIdentifier: ""
+  encounterId: "encounter.moth.crossroads"
+  locationTitle: "The Unmarked Fork"
+  spiritName: "The Lightkeeper"
+  leadText: "The watcher's stones lead beyond the reeds to an unmarked fork. A flickering lantern is the only light on either road."
+  cardArtwork: {fileID: 2800000, guid: "af0ed9f1ba954df3be70282b2333aaf6", type: 3}
+  beats:
+    - id: "causeway"
+      kind: 0
+      title: "The Unmarked Fork"
+      text: "Beyond the reeds, the causeway meets two muddy roads. Rain and rot have taken the names from the signpost. A lantern trembles above a broken cart."
+      continueLabel: "Approach the lantern"
+      background: {fileID: 2800000, guid: "af0ed9f1ba954df3be70282b2333aaf6", type: 3}
+      sceneLighting: {fileID: 11400000, guid: "2ced84039759489a83409d353eaa81c6", type: 2}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 2.5
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 0
+      hideNarrativeDuringMotion: 0
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+    - id: "lantern"
+      kind: 2
+      title: "Around the flame"
+      text: "Small moths circle the lantern. One leaves the light, doubles back, and turns toward the cart."
+      continueLabel: "Follow its movement"
+      background: {fileID: 0}
+      sceneLighting: {fileID: 0}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 2.5
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 1
+      hideNarrativeDuringMotion: 0
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+    - id: "arrival"
+      kind: 1
+      title: "A light of its own"
+      text: "Blue light gathers along its wings. The moth settles on the cart's far rail, larger now than any creature that circled the flame."
+      continueLabel: "Meet the lightkeeper"
+      background: {fileID: 0}
+      sceneLighting: {fileID: 0}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 7
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 2
+      hideNarrativeDuringMotion: 1
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+    - id: "witness"
+      kind: 2
+      title: "The Lightkeeper"
+      text: "You followed the stones. The one you seek followed a light. I remember it passing here."
+      continueLabel: "Ask which road"
+      background: {fileID: 0}
+      sceneLighting: {fileID: 0}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 1
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 0
+      hideNarrativeDuringMotion: 0
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+    - id: "bargain"
+      kind: 2
+      title: "What the light remembers"
+      text: "The lantern draws us close, but its favor never rests. Keep pace with it, and I will show you the road they took."
+      continueLabel: "Hear the terms"
+      background: {fileID: 0}
+      sceneLighting: {fileID: 0}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 1
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 0
+      hideNarrativeDuringMotion: 0
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+    - id: "invitation"
+      kind: 3
+      title: "Lantern's Favor"
+      text: "Watch where the light falls. What it favors now will change with your next hand."
+      continueLabel: "Accept the bargain"
+      background: {fileID: 0}
+      sceneLighting: {fileID: 0}
+      foreground: {fileID: 0}
+      audioCue: {fileID: 0}
+      duration: 1
+      motionFrom: {x: 0, y: 0}
+      motionTo: {x: 0, y: 0}
+      foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+      foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+      transition: 0
+      scaleFrom: 1
+      scaleTo: 1
+      hostState: 0
+      hideNarrativeDuringMotion: 0
+      backgroundMotionFrom: {x: 0, y: 0}
+      backgroundMotionTo: {x: 0, y: 0}
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
+  tablePresentation: {fileID: 11400000, guid: "11aef833f59245afbc56b0b313422f71", type: 2}
+  victoryTitle: "The road to the old crossing"
+  victoryText: "The light they followed was blue. It crossed the fork without lighting the mud beneath it. Your traveler stopped, then followed it down the right-hand road. Beyond the leaning milestone, that road reaches the old crossing."
+  defeatTitle: "The light moves on"
+  defeatText: "You held your gaze where the light had been. Rest a while. The roads will still be here."
+  abandonText: "The lightkeeper settles beside the lantern. Both roads disappear into the night."
+  resultContinueLabel: "Return to the trail"
+  completionClueTitle: "A light without a reflection"
+  completionClueText: "The traveler followed a blue light down the right-hand road toward the old crossing, beyond a leaning milestone. The moth saw no light fall on the wet ground beneath it."

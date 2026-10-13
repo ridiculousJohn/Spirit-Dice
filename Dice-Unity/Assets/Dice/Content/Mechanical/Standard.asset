@@ -465,6 +465,122 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
+  - id: encounter.moth.crossroads
+    spiritId: spirit.moth
+    unlockMilestones:
+    - stageNumber: 3
+      modifierIds:
+      - modifier.play_hand.contains_rerolls_remaining.base_score
+      - modifier.play_hand.contains_rerolls_remaining.multiplier
+      - modifier.play_hand.contains_rerolls_remaining.combined
+      - modifier.play_hand.contains_rerolls_remaining.rerolls
+    - stageNumber: 6
+      modifierIds:
+      - modifier.play_hand.every_die_rerolled.base_score
+      - modifier.play_hand.every_die_rerolled.multiplier
+      - modifier.play_hand.every_die_rerolled.combined
+      - modifier.play_hand.every_die_rerolled.rerolls
+    - stageNumber: 10
+      modifierIds:
+      - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+      - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+      - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+      - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    startingModifiers: []
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
+    rules:
+    - {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
+    rewardPolicy:
+      id: reward_policy.moth.crossroads
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights:
+        - 100
+        - 0
+        - 0
+      - firstIncomingStageNumber: 4
+        tierWeights:
+        - 60
+        - 35
+        - 5
+      - firstIncomingStageNumber: 7
+        tierWeights:
+        - 30
+        - 50
+        - 20
+      - firstIncomingStageNumber: 10
+        tierWeights:
+        - 15
+        - 45
+        - 40
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+      modifierLayouts:
+      - poolIds:
+        - reward_pool.moth.crossroads.base_score
+        - reward_pool.moth.crossroads.multiplier
+        - reward_pool.moth.crossroads.rerolls
+      - poolIds:
+        - reward_pool.moth.crossroads.base_score
+        - reward_pool.moth.crossroads.multiplier
+        - reward_pool.moth.crossroads.combined
+      - poolIds:
+        - reward_pool.moth.crossroads.base_score
+        - reward_pool.moth.crossroads.multiplier
+        - reward_pool.moth.crossroads.combined
+      startingRefreshes: 1
+      refreshesPerClear: 1
+      refreshCost: 1
+      handUpgradeOptionCount: 4
+      upgradeHistory:
+      - maxIncomingStageNumber: 2147483647
+        excludedRecentChoices: 1
+    stages:
+    - threshold: 120
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 170
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 230
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 300
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 380
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 470
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 570
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 680
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 800
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 930
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
   rewardPools:
   - id: reward_pool.base_score
     modifierIds:
@@ -905,4 +1021,68 @@ MonoBehaviour:
     - modifier.play_hand.edge_pair_sums_equal.rerolls
     - modifier.play_hand.alternating_parity.rerolls
     - modifier.play_hand.ordered.rerolls
+    fallbackModifierId:
+  - id: reward_pool.moth.crossroads.base_score
+    modifierIds:
+    - modifier.play_hand.contains_face.base_score
+    - modifier.play_hand.contains_upper_face.base_score
+    - modifier.play_hand.range_less_than.base_score
+    - modifier.play_hand.two_pair.base_score
+    - modifier.play_hand.no_extreme_faces.base_score
+    - modifier.play_hand.sum_less_than.base_score
+    - modifier.play_hand.high_die.base_score
+    - modifier.player_reroll.exactly_one_selected_face.base_score
+    - modifier.player_reroll.selected_face_unchanged.base_score
+    - modifier.play_hand.no_dice_rerolled.base_score
+    - modifier.play_hand.contains_rerolls_remaining.base_score
+    - modifier.play_hand.every_die_rerolled.base_score
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    fallbackModifierId:
+  - id: reward_pool.moth.crossroads.multiplier
+    modifierIds:
+    - modifier.play_hand.contains_face.multiplier
+    - modifier.play_hand.contains_upper_face.multiplier
+    - modifier.play_hand.range_less_than.multiplier
+    - modifier.play_hand.two_pair.multiplier
+    - modifier.play_hand.no_extreme_faces.multiplier
+    - modifier.play_hand.sum_less_than.multiplier
+    - modifier.play_hand.high_die.multiplier
+    - modifier.player_reroll.exactly_one_selected_face.multiplier
+    - modifier.player_reroll.selected_face_unchanged.multiplier
+    - modifier.play_hand.no_dice_rerolled.multiplier
+    - modifier.play_hand.contains_rerolls_remaining.multiplier
+    - modifier.play_hand.every_die_rerolled.multiplier
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    fallbackModifierId:
+  - id: reward_pool.moth.crossroads.combined
+    modifierIds:
+    - modifier.play_hand.contains_face.combined
+    - modifier.play_hand.contains_upper_face.combined
+    - modifier.play_hand.range_less_than.combined
+    - modifier.play_hand.two_pair.combined
+    - modifier.play_hand.no_extreme_faces.combined
+    - modifier.play_hand.sum_less_than.combined
+    - modifier.play_hand.high_die.combined
+    - modifier.player_reroll.exactly_one_selected_face.combined
+    - modifier.player_reroll.selected_face_unchanged.combined
+    - modifier.play_hand.no_dice_rerolled.combined
+    - modifier.play_hand.contains_rerolls_remaining.combined
+    - modifier.play_hand.every_die_rerolled.combined
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    fallbackModifierId:
+  - id: reward_pool.moth.crossroads.rerolls
+    modifierIds:
+    - modifier.play_hand.contains_face.rerolls
+    - modifier.play_hand.contains_upper_face.rerolls
+    - modifier.play_hand.range_less_than.rerolls
+    - modifier.play_hand.two_pair.rerolls
+    - modifier.play_hand.no_extreme_faces.rerolls
+    - modifier.play_hand.sum_less_than.rerolls
+    - modifier.play_hand.high_die.rerolls
+    - modifier.player_reroll.exactly_one_selected_face.rerolls
+    - modifier.player_reroll.selected_face_unchanged.rerolls
+    - modifier.play_hand.no_dice_rerolled.rerolls
+    - modifier.play_hand.contains_rerolls_remaining.rerolls
+    - modifier.play_hand.every_die_rerolled.rerolls
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
     fallbackModifierId:

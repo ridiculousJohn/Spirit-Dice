@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a4a5f344575f100d9cd1acd699ced5, type: 3}
+  m_Name: MothCrossroadsTableLighting
+  m_EditorClassIdentifier:
+  BaseTexture: {fileID: 2800000, guid: b4a10c9a5aaa4dfa83846b830f8d94e6, type: 3}
+  Lights:
+  - Contribution: {fileID: 2800000, guid: 040d019fb84746198c82fb7749d72601, type: 3}
+    ResponseMap: {fileID: 2800000, guid: c49e7abfb99e4175b2ceaece568eb034, type: 3}
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    Intensity: 0.65
+    DistanceFalloff: 1.6
+    SourceResponse: 0.35
+    FlickerAmount: 0.12
+    FlickerSpeed: 1
+    Seed: 1977
+    ContributionIncludesBase: 1
+    ConstrainAmbientToReference: 1
+    ReceiverPosition: {x: -2.5, y: 4, z: 0}
+    ReceiverColor: {r: 1, g: 0.64, b: 0.25, a: 1}
+    ReceiverIntensity: 18
+    ReceiverRange: 12
+  ReceiverAmbient: {r: 0.22, g: 0.25, b: 0.32, a: 1}
+  ReceiverKeyColor: {r: 0.45, g: 0.5, b: 0.62, a: 1}
+  ReceiverKeyDirection: {x: -0.35, y: 0.8, z: -0.45}
