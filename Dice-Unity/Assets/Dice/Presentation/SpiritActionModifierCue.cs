@@ -138,7 +138,7 @@ namespace Dice.Presentation
                 .GetComponent<SpiritModifierSigilGraphic>();
             sigil.transform.SetParent(rect, false);
             Stretch(sigil.rectTransform, 4);
-            sigil.color = SpiritUi.Amber;
+            sigil.color = SpiritUi.GetTheme(button.transform).amber;
             sigil.raycastTarget = false;
             // A separate opacity group leaves the button's disabled and hover tints under Selectable's control.
             var label = button.GetComponentInChildren<Text>().gameObject;

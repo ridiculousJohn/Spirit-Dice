@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: "8fac0627b592494ebcb02707d77b5c91", type: 3}
   m_Name: "WatchtowerHost"
   m_EditorClassIdentifier: ""
+  SilhouetteShader: {fileID: 4800000, guid: 762be0bdbd5d4dbf83e93d96e8ea783c, type: 3}
+  SmokeShader: {fileID: 4800000, guid: 080d110560e4644488071e7a87d73820, type: 3}
   ReferenceSize: {x: 540, y: 960}
   Scale: 1
   Offset: {x: 0, y: 0}
@@ -25117,3 +25119,4 @@ MonoBehaviour:
             m_RotationOrder: 4
   SigilLines: []
   SigilWidth: 0.035
+  SigilColor: {r: 0.8235294, g: 0.6509804, b: 0.345098, a: 1}

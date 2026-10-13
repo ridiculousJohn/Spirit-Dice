@@ -3,6 +3,7 @@ using System.Reflection;
 using Dice.Editor;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -22,6 +23,7 @@ namespace Dice.Tests
             texture.SetPixels(Enumerable.Repeat(new Color(.55f, .35f, .2f, 1f), 64).ToArray());
             texture.Apply();
             lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
+            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.BaseTexture = texture;
             table = ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
             Set(table, "roomTexture", texture);

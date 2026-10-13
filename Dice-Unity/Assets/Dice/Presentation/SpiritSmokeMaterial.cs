@@ -11,10 +11,9 @@ namespace Dice.Presentation
         private Texture2D generatedNoise, generatedMask;
         public Material Material { get; private set; }
 
-        public SpiritSmokeMaterial(SpiritPortraitSmoke settings)
+        public SpiritSmokeMaterial(SpiritPortraitSmoke settings, Shader shader)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
-            Shader shader = Resources.Load<Shader>("SpiritSmoke") ?? Shader.Find("Dice/Spirit Smoke");
             if (shader == null || !shader.isSupported) throw new InvalidOperationException("Spirit smoke shader is unavailable.");
             try
             {

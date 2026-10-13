@@ -35,6 +35,7 @@ namespace Dice.Presentation
     public sealed class SceneLightingAsset : ScriptableObject
     {
         public const int MaximumLights = 4;
+        public Shader Shader;
         public Texture2D BaseTexture;
         public SceneLightLayer[] Lights = Array.Empty<SceneLightLayer>();
         public Color ReceiverAmbient = new Color(.22f, .25f, .32f, 1f);

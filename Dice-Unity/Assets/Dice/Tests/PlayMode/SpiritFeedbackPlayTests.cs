@@ -600,8 +600,8 @@ namespace Dice.Tests
             Assert.That(mesh.bounds.size.y, Is.GreaterThan(.5f));
             Assert.That(mesh.bounds.size.z, Is.GreaterThan(.5f));
             var bone = body.sharedMaterial;
-            var boneTexture = Resources.Load<Texture2D>("SpiritBoneSurface");
-            var woodTexture = Resources.Load<Texture2D>("SpiritWoodSurface");
+            var boneTexture = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterView>().TrayPresentation.BoneTexture;
+            var woodTexture = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterView>().TrayPresentation.WoodTexture;
             Assert.That(boneTexture, Is.Not.Null);
             Assert.That(woodTexture, Is.Not.Null);
             Assert.That(bone.GetTexture("_SurfaceTexture"), Is.SameAs(boneTexture));

@@ -1,7 +1,10 @@
 using System.Collections;
+using System.Linq;
+using Dice.App;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace Dice.Tests
@@ -11,10 +14,16 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator SmokePhaseSurvivesPoseResetsVisibilityAndPresentationStates()
         {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
+            var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
+            var authoredHost = controller.JourneyCatalog.Entries.Select(entry => entry.TablePresentation?.HostPresentation)
+                .First(asset => asset != null && asset.SmokeShader != null);
             var host = new GameObject("Smoke Test", typeof(RectTransform));
             var presentation = ScriptableObject.CreateInstance<SpiritHostPresentationAsset>();
             try
             {
+                presentation.SmokeShader = authoredHost.SmokeShader;
                 var parent = host.GetComponent<RectTransform>();
                 parent.sizeDelta = presentation.ReferenceSize;
                 presentation.Layers = new[]

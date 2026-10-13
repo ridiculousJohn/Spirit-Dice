@@ -22,12 +22,10 @@ namespace Dice.Presentation
         private float nextCreak;
         private int nextCueSource;
         private AudioClip lastSpiritClip;
-        private bool themeSelected;
 
         public SpiritAudioTheme Theme => theme;
         public void SetTheme(SpiritAudioTheme selectedTheme)
         {
-            themeSelected = true;
             if (theme == selectedTheme) return;
             StopPlayback();
             theme = selectedTheme;
@@ -64,7 +62,6 @@ namespace Dice.Presentation
 
         private void Initialize()
         {
-            if (theme == null && !themeSelected) theme = Resources.Load<SpiritAudioTheme>("SpiritAudio/SpiritAudioTheme");
             if (cosmeticRandom == null)
                 cosmeticRandom = new System.Random();
             if (sourceOwner != null) return;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -43,6 +44,10 @@ namespace Dice.Tests
         {
             var root = Root("Table lighting lifecycle", preview, typeof(RectTransform));
             var view = root.AddComponent<SpiritEncounterView>();
+            Set(view, "uiTheme", AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
+                "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
+            Set(view, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset"));
             Invoke(view, "Build");
             SceneManager.MoveGameObjectToScene(view.DiceTray.RenderRoot.gameObject, preview);
             SceneManager.MoveGameObjectToScene(view.ModifierHistory.Renderer.RenderRoot.gameObject, preview);
@@ -119,6 +124,8 @@ namespace Dice.Tests
             var root = Root("Journey lighting lifecycle", preview, typeof(RectTransform));
             root.GetComponent<RectTransform>().sizeDelta = new Vector2(540, 960);
             var view = root.AddComponent<EncounterJourneyView>();
+            root.AddComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
+                "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
             view.Build(null);
             view.Bind(controls, null);
             view.Refresh();
@@ -185,6 +192,7 @@ namespace Dice.Tests
             for (int i = 0; i < pixels.Length; ++i) pixels[i] = new Color(.2f, .15f, .08f);
             contribution.SetPixels(pixels); contribution.Apply();
             var asset = UnityEngine.ScriptableObject.CreateInstance<SceneLightingAsset>();
+            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             asset.hideFlags = texture.hideFlags = contribution.hideFlags = HideFlags.HideAndDontSave;
             asset.BaseTexture = texture;
             asset.Lights = new[] { new SceneLightLayer { Contribution = contribution, Intensity = intensity, FlickerAmount = 0f } };

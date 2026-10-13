@@ -70,10 +70,6 @@ namespace Dice.Presentation
             portraitRoot = SpiritUi.Rect("Spirit Portrait", parent, Vector2.zero, Vector2.zero);
             portraitRoot.pivot = Vector2.zero;
             portraitRoot.sizeDelta = asset.ReferenceSize;
-            Shader shader = Resources.Load<Shader>("SpiritSilhouette") ?? Shader.Find("Dice/Spirit Silhouette");
-            if (shader != null)
-                silhouetteMaterial = new Material(shader) { name = "Spirit Portrait Silhouette", hideFlags = HideFlags.DontSave };
-
             for (int i = 0; i < layers.Length; ++i)
             {
                 SpiritPortraitLayer source = asset.Layers[i];
@@ -83,8 +79,16 @@ namespace Dice.Presentation
                 image.Configure(source.Mesh);
                 image.texture = source.Texture;
                 image.raycastTarget = false;
-                if (source.Silhouette) image.material = silhouetteMaterial;
-                SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled ? new SpiritSmokeMaterial(source.Smoke) : null;
+                if (source.Silhouette)
+                {
+                    if (silhouetteMaterial == null)
+                    {
+                        if (asset.SilhouetteShader == null) throw new InvalidOperationException("Spirit silhouette shader is unavailable.");
+                        silhouetteMaterial = new Material(asset.SilhouetteShader) { name = "Spirit Portrait Silhouette", hideFlags = HideFlags.DontSave };
+                    }
+                    image.material = silhouetteMaterial;
+                }
+                SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled ? new SpiritSmokeMaterial(source.Smoke, asset.SmokeShader) : null;
                 if (smoke != null) image.material = smoke.Material;
                 image.enabled = source.Texture != null && (!source.Silhouette || silhouetteMaterial != null);
                 int channels = source.Mesh != null ? source.Mesh.Shapes.Length : 0;

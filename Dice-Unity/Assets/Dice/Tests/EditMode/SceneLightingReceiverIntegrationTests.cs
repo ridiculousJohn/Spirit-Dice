@@ -5,6 +5,7 @@ using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -25,16 +26,24 @@ namespace Dice.Tests
         public void SetUp()
         {
             scene = EditorSceneManager.NewPreviewScene();
+            var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset");
             tray = Root("Lighting dice").AddComponent<SpiritDiceTray>();
+            tray.Configure(trayPresentation);
             tray.Initialize();
             MoveRenderer(tray.RenderRoot, tray.RenderCamera);
             history = Root("Lighting history").AddComponent<SpiritModifierHistoryRenderer>();
+            history.Configure(trayPresentation);
             history.Initialize();
             MoveRenderer(history.RenderRoot, history.RenderCamera);
             AddHistory();
             var parent = Root("Lighting host", typeof(RectTransform)).GetComponent<RectTransform>();
             parent.sizeDelta = new Vector2(128, 128);
             var presentation = Own(ScriptableObject.CreateInstance<SpiritHostPresentationAsset>());
+            var authoredHost = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
+                "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsHost.asset");
+            presentation.SilhouetteShader = authoredHost.SilhouetteShader;
+            presentation.SmokeShader = authoredHost.SmokeShader;
             presentation.ReferenceSize = parent.sizeDelta;
             presentation.Layers = new[]
             {
@@ -44,6 +53,7 @@ namespace Dice.Tests
             };
             host = presentation.Create(parent);
             lighting = Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
+            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.BaseTexture = Texture2D.whiteTexture;
             lighting.ReceiverAmbient = new Color(.15f, .15f, .15f);
             lighting.ReceiverKeyColor = Color.black;
@@ -54,7 +64,7 @@ namespace Dice.Tests
                 new SceneLightLayer { Contribution = Texture2D.whiteTexture, FlickerAmount = .35f, Seed = 97,
                     ReceiverPosition = new Vector3(2, 4, -3), ReceiverColor = Color.green, ReceiverIntensity = 4f, ReceiverRange = 15f }
             };
-            compositor = new SceneLightingMaterial();
+            compositor = new SceneLightingMaterial(lighting.Shader);
         }
 
         [TearDown]

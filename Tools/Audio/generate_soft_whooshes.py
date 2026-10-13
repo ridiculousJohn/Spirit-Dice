@@ -11,7 +11,7 @@ from pathlib import Path
 
 RATE = 44100
 ROOT = Path(__file__).resolve().parents[2]
-REFERENCE = ROOT / 'Dice-Unity/Assets/Dice/Presentation/Resources/SpiritAudio/spirit_air.wav'
+REFERENCE = ROOT / 'Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/spirit_air.wav'
 
 
 def reference_rms(path):

@@ -17,6 +17,7 @@ namespace Dice.Editor
         private const string DefaultTablePath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsTable.asset";
         private const string DefaultEntryPath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsEntryLighting.asset";
         private const string PreviewPipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
+        private const string TrayPresentationPath = "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset";
         private const int UiLayer = 30;
         [SerializeField] private EncounterTablePresentationAsset table;
         [SerializeField] private SceneLightingAsset entry;
@@ -190,7 +191,7 @@ namespace Dice.Editor
                 lighting.hideFlags = HideFlags.HideAndDontSave;
                 lighting.Lights = new SceneLightLayer[sourceLighting.Lights.Length];
                 for (int i = 0; i < lighting.Lights.Length; ++i) lighting.Lights[i] = Copy(sourceLighting.Lights[i]);
-                compositor = new SceneLightingMaterial();
+                compositor = new SceneLightingMaterial(lighting.Shader);
             }
             if (showTable) BuildTable(canvasRoot);
             else roomImage = Image("Entry", canvasRoot, Vector2.zero, Vector2.one);
@@ -198,6 +199,9 @@ namespace Dice.Editor
 
         private void BuildTable(RectTransform canvasRoot)
         {
+            var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(TrayPresentationPath);
+            if (trayPresentation == null) throw new InvalidOperationException("The encounter tray presentation is unavailable.");
+            trayPresentation.Validate();
             roomImage = Image("TeaRoom", canvasRoot, new Vector2(0, table.RoomSplit), Vector2.one);
             tableImage = Image("ForegroundTable", canvasRoot, Vector2.zero, new Vector2(1, table.RoomSplit));
             roomImage.uvRect = new Rect(0, table.RoomTableEdge, 1, 1 - table.RoomTableEdge);
@@ -208,6 +212,7 @@ namespace Dice.Editor
                 PrepareUi(host.gameObject);
             }
             tray = stage.AddComponent<SpiritDiceTray>();
+            tray.Configure(trayPresentation);
             tray.Initialize();
             tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
             PrepareRenderer(tray.RenderRoot, tray.RenderCamera);
@@ -220,6 +225,7 @@ namespace Dice.Editor
             aspect.aspectRatio = (float)tray.Texture.width / tray.Texture.height;
             var historyImage = Image("ModifierHistory", playing, new Vector2(.06f, .48f), new Vector2(.94f, .578f));
             history = stage.AddComponent<SpiritModifierHistoryRenderer>();
+            history.Configure(trayPresentation);
             history.Initialize();
             PrepareRenderer(history.RenderRoot, history.RenderCamera);
             historyImage.texture = history.Texture;

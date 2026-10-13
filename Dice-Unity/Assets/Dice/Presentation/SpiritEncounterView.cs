@@ -21,6 +21,11 @@ namespace Dice.Presentation
         [SerializeField] private Texture2D roomTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
         [SerializeField] private EncounterTablePresentationAsset tablePresentation;
+        [SerializeField] private SpiritUiTheme uiTheme;
+        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
+
+        public SpiritUiTheme UiTheme => uiTheme;
+        public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
 
         public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
@@ -332,7 +337,11 @@ namespace Dice.Presentation
             sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
             if (asset != null)
             {
-                if (sceneLightingMaterial == null) sceneLightingMaterial = new SceneLightingMaterial();
+                if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
+                {
+                    sceneLightingMaterial?.Dispose();
+                    sceneLightingMaterial = new SceneLightingMaterial(asset.Shader);
+                }
                 sceneLightingMaterial.Apply(sceneLightingState);
             }
             else
@@ -372,7 +381,10 @@ namespace Dice.Presentation
 
         private void Build()
         {
+            var context = GetComponent<SpiritUiContext>() ?? gameObject.AddComponent<SpiritUiContext>();
+            context.Configure(uiTheme);
             encounterAudio = GetComponent<SpiritEncounterAudio>() ?? gameObject.AddComponent<SpiritEncounterAudio>();
+            encounterAudio.SetTheme(tablePresentation?.AudioTheme);
             var canvasRect = SpiritUi.Full("SpiritCanvas", transform);
             canvas = canvasRect.gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -414,7 +426,7 @@ namespace Dice.Presentation
             menuText.fontSize = menuText.resizeTextMaxSize = 15;
             menuText.resizeTextMinSize = 12;
             var target = SpiritUi.Panel("TargetPanel", portrait, new Vector2(.035f, .544f), new Vector2(.965f, .63f),
-                SpiritUi.PanelColor, 0, true);
+                SpiritUi.GetTheme(transform).panelColor, 0, true);
             targetPanel = target.rectTransform;
             targetLabel = SpiritUi.Heading("TargetLabel", target.transform, "", 56, new Vector2(.2f, .29f), new Vector2(.8f, .99f),
                 TextAnchor.MiddleCenter);
@@ -423,15 +435,15 @@ namespace Dice.Presentation
             targetCaption.rectTransform.offsetMin = new Vector2(12, 0);
             targetCaption.rectTransform.offsetMax = new Vector2(-12, 0);
             handsPanel = SpiritUi.Panel("HandsPanel", portrait, new Vector2(.12f, .506f), new Vector2(.495f, .542f),
-                SpiritUi.PanelColor, 0, true).rectTransform;
+                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             handsLabel = SpiritUi.Heading("HandsRemainingLabel", handsPanel, "", 20, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleCenter);
             rerollsPanel = SpiritUi.Panel("RerollsPanel", portrait, new Vector2(.505f, .506f), new Vector2(.88f, .542f),
-                SpiritUi.PanelColor, 0, true).rectTransform;
+                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             rerollsLabel = SpiritUi.Heading("RerollsRemainingLabel", rerollsPanel, "", 20, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleCenter);
             resourcesLabel = SpiritUi.Label("ResourcesLabel", portrait, "", 18, new Vector2(.04f, .503f), new Vector2(.96f, .54f),
-                TextAnchor.MiddleCenter, SpiritUi.Muted);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
 
             BuildPlaying();
             BuildRewards();
@@ -445,10 +457,10 @@ namespace Dice.Presentation
                 text.resizeTextMinSize = 14;
             }
             charmCount = SpiritUi.Label("CharmCount", portrait, "", 15, new Vector2(.35f, .005f), new Vector2(.52f, .065f),
-                TextAnchor.MiddleCenter, SpiritUi.Muted);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             charmCount.gameObject.SetActive(false);
             statusLabel = SpiritUi.Label("StatusMessage", portrait, "", 14, new Vector2(.12f, .892f), new Vector2(.88f, .927f),
-                TextAnchor.MiddleCenter, SpiritUi.Muted);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             investigationButton = SpiritUi.Button("ReturnToInvestigationButton", portrait, "Clues",
                 new Vector2(.01f, .932f), new Vector2(.20f, .978f), () =>
                 { if (!Busy) journeyControls?.ReturnToInvestigation(); });
@@ -495,6 +507,7 @@ namespace Dice.Presentation
             var aspect = trayRect.gameObject.AddComponent<AspectRatioFitter>();
             aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             DiceTray = GetComponent<SpiritDiceTray>() ?? gameObject.AddComponent<SpiritDiceTray>();
+            DiceTray.Configure(trayPresentation);
             DiceTray.Initialize();
             aspect.aspectRatio = (float)DiceTray.Texture.width / DiceTray.Texture.height;
             trayImage.texture = DiceTray.Texture;
@@ -520,25 +533,26 @@ namespace Dice.Presentation
                     labelCenter + new Vector2(slotWidth * .43f, .064f), new Color32(38, 26, 12, 245), 0, true);
                 plate.raycastTarget = false;
                 var label = SpiritUi.Label("DieRerollLabel" + (i + 1), plate.transform, "REROLL", 12,
-                    Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.Amber);
+                    Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
                 label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
                 diceSelectionLabels.Add(plate.gameObject);
                 plate.gameObject.SetActive(false);
             }
             var historySlot = SpiritUi.Rect("ModifierHistorySlot", playingPanel, new Vector2(.06f, .48f), new Vector2(.94f, .578f));
             ModifierHistory = historySlot.gameObject.AddComponent<SpiritModifierHistoryTray>();
+            ModifierHistory.Configure(trayPresentation);
             ModifierHistory.Build(historySlot);
             ModifierHistory.TokenSelected += (contribution, definition) =>
             {
                 if (Busy) return;
-                selectionLabel.color = SpiritUi.Amber;
+                selectionLabel.color = SpiritUi.GetTheme(transform).amber;
                 selectionLabel.text = CharmName(definition) + "\n" +
                     ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
                     (contribution.Phase == ModifierPhase.PlayHand ? " (on play)" : " (banked)");
                 ShowActivationIcon(definition);
             };
             selectionLabel = SpiritUi.Label("SelectionLabel", playingPanel, "Tap dice to select for reroll", 17,
-                new Vector2(.115f, .394f), new Vector2(.97f, .478f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.115f, .394f), new Vector2(.97f, .478f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             selectionLabel.resizeTextForBestFit = true;
             selectionLabel.resizeTextMinSize = 14;
             selectionLabel.resizeTextMaxSize = 17;
@@ -548,13 +562,13 @@ namespace Dice.Presentation
             modifierEmblem = SpiritUi.Rect("ModifierEmblem", playingPanel, new Vector2(.045f, .409f), new Vector2(.105f, .464f))
                 .gameObject.AddComponent<SpiritUiOrnament>();
             modifierEmblem.kind = "charm";
-            modifierEmblem.color = SpiritUi.Amber;
+            modifierEmblem.color = SpiritUi.GetTheme(transform).amber;
             modifierEmblem.raycastTarget = false;
             modifierActivationIcon = MakeIcon("ModifierActivationIcon", modifierEmblem.transform,
                 new Vector2(.5f, .5f), 32);
             modifierEmblem.gameObject.SetActive(false);
             var score = SpiritUi.Panel("ScorePreview", playingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .39f),
-                SpiritUi.PanelColor, 0, true);
+                SpiritUi.GetTheme(transform).panelColor, 0, true);
             categoryLabel = SpiritUi.Heading("HandCategory", score.transform, "", 23,
                 new Vector2(.05f, .70f), new Vector2(.95f, .91f), TextAnchor.MiddleCenter);
             SpiritUi.Decorate(score.transform);
@@ -570,7 +584,7 @@ namespace Dice.Presentation
             rerollsHighlight = MakeCounterHighlight("RerollsCharmIcon", rerollsLabel, false);
             handsHighlight = MakeCounterHighlight("HandsCharmIcon", handsLabel, false);
             scoreDetail = SpiritUi.Label("ScoreBreakdown", score.transform, "ROLL BONUSES BANK HERE", 13,
-                new Vector2(.04f, .07f), new Vector2(.96f, .25f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.04f, .07f), new Vector2(.96f, .25f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             scoreDetail.rectTransform.offsetMin = scoreDetail.rectTransform.offsetMax = Vector2.zero;
             scoreDetail.resizeTextForBestFit = true;
             scoreDetail.resizeTextMinSize = 11;
@@ -608,11 +622,11 @@ namespace Dice.Presentation
             icon.anchoredPosition = new Vector2(9, 0);
             encounterRuleIcon = icon.gameObject.AddComponent<Image>();
             encounterRuleIcon.preserveAspect = true;
-            encounterRuleIcon.color = SpiritUi.Amber;
+            encounterRuleIcon.color = SpiritUi.GetTheme(transform).amber;
             encounterRuleIcon.raycastTarget = false;
             encounterRuleSigilRoot = icon;
             encounterRuleLabel = SpiritUi.Label("EncounterRuleLabel", favor, "", 14,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.Amber);
+                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             encounterRuleLabel.rectTransform.offsetMin = new Vector2(21, 0);
             encounterRuleLabel.rectTransform.offsetMax = Vector2.zero;
             encounterRuleLabel.resizeTextForBestFit = true;
@@ -665,7 +679,7 @@ namespace Dice.Presentation
         {
             var cell = SpiritUi.Rect(name + "Cell", parent, new Vector2(left, 0), new Vector2(right, 1));
             var heading = SpiritUi.Heading(name + "Caption", cell, caption, 14,
-                new Vector2(0, .46f), Vector2.one, TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(0, .46f), Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(parent).muted);
             heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = new Vector2(0, -4);
             var value = SpiritUi.Heading(name, cell, "0", 30,
                 Vector2.zero, new Vector2(1, .50f), TextAnchor.MiddleCenter);
@@ -725,7 +739,7 @@ namespace Dice.Presentation
             rect.anchoredPosition = icon.rectTransform.anchoredPosition;
             rect.sizeDelta = icon.rectTransform.sizeDelta;
             var sigil = rect.gameObject.AddComponent<SpiritModifierSigilGraphic>();
-            sigil.color = SpiritUi.Amber;
+            sigil.color = SpiritUi.GetTheme(icon.transform).amber;
             sigil.raycastTarget = false;
             sigil.gameObject.SetActive(false);
             return sigil;
@@ -736,9 +750,9 @@ namespace Dice.Presentation
             rewardsPanel = SpiritUi.Panel("RewardsPanel", portrait, new Vector2(.025f, .065f), new Vector2(.975f, .80f),
                 new Color32(20, 32, 27, 255), 0, true).rectTransform;
             rewardTitle = SpiritUi.Heading("RewardTitle", rewardsPanel, "STAGE CLEARED", 25, new Vector2(0, .94f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.Amber);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             rewardStep = SpiritUi.Label("RewardStep", rewardsPanel, "", 14, new Vector2(.04f, .885f), new Vector2(.96f, .94f),
-                TextAnchor.MiddleCenter, SpiritUi.Amber);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             rewardInstruction = SpiritUi.Label("RewardInstruction", rewardsPanel, "", 17, new Vector2(.04f, .80f), new Vector2(.96f, .885f),
                 TextAnchor.MiddleCenter);
             SpiritUi.Scroll("RewardScroll", rewardsPanel, new Vector2(.015f, .15f), new Vector2(.985f, .80f), out rewardContent);
@@ -750,14 +764,14 @@ namespace Dice.Presentation
             layout.childForceExpandHeight = false;
             rewardContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             upcomingStage = SpiritUi.Label("UpcomingStage", rewardsPanel, "", 14, new Vector2(.04f, .08f), new Vector2(.96f, .15f),
-                TextAnchor.MiddleCenter, SpiritUi.Muted);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             RefreshButton = SpiritUi.Button("RefreshRewardsButton", rewardsPanel, "Refresh choices", new Vector2(.035f, 0), new Vector2(.965f, .075f),
                 () => { if (!Busy) controls.RefreshRewards(); });
             SpiritUi.ActionIcon(RefreshButton.transform, "reroll");
             stageIntroPanel = SpiritUi.Panel("StageIntroPanel", portrait, new Vector2(.06f, .37f), new Vector2(.94f, .57f),
-                SpiritUi.PanelColor, 0, true).rectTransform;
+                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             stageIntroTitle = SpiritUi.Heading("StageIntroTitle", stageIntroPanel, "", 28,
-                new Vector2(.04f, .55f), new Vector2(.96f, .94f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                new Vector2(.04f, .55f), new Vector2(.96f, .94f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             stageIntroDetail = SpiritUi.Label("StageIntroDetail", stageIntroPanel, "", 19,
                 new Vector2(.04f, .08f), new Vector2(.96f, .55f), TextAnchor.MiddleCenter);
             stageIntroPanel.gameObject.SetActive(false);
@@ -766,9 +780,9 @@ namespace Dice.Presentation
         private void BuildEnding()
         {
             endingPanel = SpiritUi.Panel("EndingPanel", portrait, new Vector2(.045f, .075f), new Vector2(.955f, .625f),
-                SpiritUi.PanelColor, 0, true).rectTransform;
+                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             endingTitle = SpiritUi.Heading("EndingTitle", endingPanel, "", 42, new Vector2(0, .84f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.Amber);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             var endingRule = SpiritUi.Rect("EndingRule", endingPanel, new Vector2(.1f, .45f), new Vector2(.9f, .48f));
             SpiritUi.Decorate(endingRule);
             endingDetail = SpiritUi.Label("EndingDetail", endingPanel, "", 19, new Vector2(.05f, .49f), new Vector2(.95f, .84f),
@@ -776,7 +790,7 @@ namespace Dice.Presentation
             SpiritUi.Scroll("EndingUnlockScroll", endingPanel, new Vector2(.05f, .29f), new Vector2(.95f, .44f),
                 out endingUnlockContent);
             endingUnlocks = SpiritUi.Label("EndingUnlocks", endingUnlockContent, "", 16, Vector2.zero, Vector2.one,
-                TextAnchor.UpperLeft, SpiritUi.Amber);
+                TextAnchor.UpperLeft, SpiritUi.GetTheme(transform).amber);
             endingContinueButton = SpiritUi.Button("EndingNewRunButton", endingPanel, "Return to the table", new Vector2(.1f, .08f), new Vector2(.9f, .27f),
                 () => { if (!Busy) { if (journeyControls != null) journeyControls.ReturnToInvestigation(); else controls.StartNew(); } }, true);
         }
@@ -788,7 +802,7 @@ namespace Dice.Presentation
             SpiritUi.Heading("CharmsTitle", charmsPanel, "YOUR CHARMS", 29, new Vector2(.03f, .9f), new Vector2(.73f, .98f));
             SpiritUi.Button("CloseCharmsButton", charmsPanel, "Close", new Vector2(.75f, .9f), new Vector2(.98f, .98f), ShowTable);
             SpiritUi.Label("CharmsSubtitle", charmsPanel, "Kept for this run. Tap a charm to inspect it.", 18,
-                new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.Muted);
+                new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted);
             var scroll = SpiritUi.Scroll("OwnedCharmScroll", charmsPanel, new Vector2(0, .34f), new Vector2(1, .84f), out charmContent);
             var layout = charmContent.gameObject.AddComponent<GridLayoutGroup>();
             layout.cellSize = new Vector2(235, 156);
@@ -799,7 +813,7 @@ namespace Dice.Presentation
             charmContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             charmGrid = charmContent.gameObject.AddComponent<SpiritCharmGridLayout>();
             var details = SpiritUi.Panel("CharmDetails", charmsPanel, new Vector2(.02f, .04f), new Vector2(.98f, .33f),
-                SpiritUi.PanelColor, 6, true);
+                SpiritUi.GetTheme(transform).panelColor, 6, true);
             charmTitle = SpiritUi.Heading("CharmDetailTitle", details.transform, "No charms yet", 23, new Vector2(0, .72f), Vector2.one);
             charmDetailIcon = MakeIcon("CharmDetailIcon", details.transform, new Vector2(0, .86f), 44);
             charmDetailIcon.rectTransform.anchoredPosition = new Vector2(42, 0);
@@ -827,9 +841,9 @@ namespace Dice.Presentation
         private void BuildMenu()
         {
             menuPanel = SpiritUi.Panel("MenuOverlay", portrait, Vector2.zero, Vector2.one, new Color(0, 0, 0, .86f)).rectTransform;
-            var panel = SpiritUi.Panel("MenuPanel", menuPanel, new Vector2(.12f, .17f), new Vector2(.88f, .83f), SpiritUi.PanelColor, 0, true);
+            var panel = SpiritUi.Panel("MenuPanel", menuPanel, new Vector2(.12f, .17f), new Vector2(.88f, .83f), SpiritUi.GetTheme(transform).panelColor, 0, true);
             menuTitle = SpiritUi.Heading("MenuTitle", panel.transform, "", 28, new Vector2(0, .9f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.Amber);
+                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             soundButton = SpiritUi.Button("SoundButton", panel.transform, encounterAudio.Muted ? "Sound: Off" : "Sound: On",
                 new Vector2(.2f, .8f), new Vector2(.8f, .895f), () =>
                 {
@@ -837,7 +851,7 @@ namespace Dice.Presentation
                     SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
                 });
             profileSummary = SpiritUi.Label("ProfileSummary", panel.transform, "", 14, new Vector2(.05f, .67f),
-                new Vector2(.95f, .80f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                new Vector2(.95f, .80f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             MenuAction(panel.transform, "SaveRunButton", "Save run", .54f, () => controls.Save());
             MenuAction(panel.transform, "LoadRunButton", "Load run", .41f, () => controls.Load());
             MenuAction(panel.transform, "NewRunButton", "New run", .28f, () => controls.StartNew());
@@ -848,7 +862,7 @@ namespace Dice.Presentation
                 SpiritUi.Panel("AudioCreditsBacking", menuPanel, new Vector2(.04f, .025f), new Vector2(.96f, .16f),
                     new Color(.025f, .035f, .025f, .97f));
                 SpiritUi.Label("AudioCredits", menuPanel, encounterAudio.Theme.credits.text, 16,
-                    new Vector2(.05f, .035f), new Vector2(.95f, .155f), TextAnchor.MiddleCenter, SpiritUi.Cream);
+                    new Vector2(.05f, .035f), new Vector2(.95f, .155f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).cream);
             }
             menuPanel.gameObject.SetActive(false);
         }
@@ -1046,18 +1060,18 @@ namespace Dice.Presentation
             foreach (var highlight in new[] { baseScoreHighlight, multiplierHighlight, rerollsHighlight, handsHighlight })
                 ResetCounterHighlight(highlight);
             selectionLabel.text = "";
-            selectionLabel.color = SpiritUi.Muted;
+            selectionLabel.color = SpiritUi.GetTheme(transform).muted;
             selectionLabel.rectTransform.localScale = Vector3.one;
-            scoreDetail.color = SpiritUi.Muted;
+            scoreDetail.color = SpiritUi.GetTheme(transform).muted;
             scoreDetail.rectTransform.localScale = Vector3.one;
             foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
             {
-                label.color = SpiritUi.Cream;
+                label.color = SpiritUi.GetTheme(transform).cream;
                 label.rectTransform.localScale = Vector3.one;
             }
-            HandScoreLabel.color = SpiritUi.Cream;
+            HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
             HandScoreLabel.rectTransform.localScale = Vector3.one;
-            targetLabel.color = SpiritUi.Cream;
+            targetLabel.color = SpiritUi.GetTheme(transform).cream;
             targetLabel.rectTransform.localScale = Vector3.one;
         }
 
@@ -1122,7 +1136,7 @@ namespace Dice.Presentation
                     actionModifierCue.ShowHost(encounterRulePresentation.Icon, ModifierPhase.PlayerReroll,
                         hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
                     selectionLabel.text = encounterRulePresentation.DisplayName;
-                    selectionLabel.color = SpiritUi.Amber;
+                    selectionLabel.color = SpiritUi.GetTheme(transform).amber;
                     hostPortrait?.React();
                     yield return AnimateRuleSpirit(.65f);
                 }
@@ -1158,7 +1172,7 @@ namespace Dice.Presentation
                     HandScoreLabel.text = "0";
                     hostPortrait?.React();
                     modifierEmblem.gameObject.SetActive(false);
-                    selectionLabel.color = SpiritUi.Muted;
+                    selectionLabel.color = SpiritUi.GetTheme(transform).muted;
                     selectionLabel.text = "DICE\n+" + DiagnosticText.Number(scored.Score.DiceSum) + " base";
                     scoreDetail.text = "COUNTING DICE";
                     encounterAudio.Play(SpiritAudioCue.Score);
@@ -1189,7 +1203,7 @@ namespace Dice.Presentation
                     {
                         selectionLabel.text = (encounterRulePresentation != null ? encounterRulePresentation.DisplayName : "ENCOUNTER RULE") +
                             "\n+" + DiagnosticText.Number(scored.Score.EncounterRuleMultiplier) + " multiplier";
-                        selectionLabel.color = SpiritUi.Amber;
+                        selectionLabel.color = SpiritUi.GetTheme(transform).amber;
                         scoreDetail.text = "ADDING ENCOUNTER RULE";
                         actionModifierCue.ShowHost(encounterRulePresentation != null ? encounterRulePresentation.Icon : null,
                             ModifierPhase.PlayHand, hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
@@ -1201,7 +1215,7 @@ namespace Dice.Presentation
                     }
                     modifierEmblem.gameObject.SetActive(false);
                     selectionLabel.text = "TOTAL";
-                    selectionLabel.color = SpiritUi.Muted;
+                    selectionLabel.color = SpiritUi.GetTheme(transform).muted;
                     scoreDetail.text = DiagnosticText.Number(scored.Score.BaseScore) + " x " +
                         DiagnosticText.Number(scored.Score.Multiplier);
                     encounterAudio.Play(SpiritAudioCue.Score);
@@ -1265,7 +1279,7 @@ namespace Dice.Presentation
                     HandScoreLabel.text = "0";
                     categoryLabel.text = "";
                     modifierEmblem.gameObject.SetActive(false);
-                    selectionLabel.color = SpiritUi.Muted;
+                    selectionLabel.color = SpiritUi.GetTheme(transform).muted;
                     selectionLabel.text = "NEW HAND";
                     scoreDetail.text = "ROLL BONUSES BANK HERE";
                     if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(.16f);
@@ -1332,7 +1346,7 @@ namespace Dice.Presentation
             var definition = controls.Catalog.GetModifier(contribution.DefinitionId);
             ModifierHistory.Add(contribution, definition, true);
             ShowActivationIcon(definition);
-            selectionLabel.color = SpiritUi.Amber;
+            selectionLabel.color = SpiritUi.GetTheme(transform).amber;
             selectionLabel.text = CharmName(definition) + "\n" +
                 ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
                 (banked ? " (banked)" : " (on play)");
@@ -1366,7 +1380,7 @@ namespace Dice.Presentation
 
         private static void ResetCounterHighlight(CounterHighlight highlight)
         {
-            highlight.Label.color = SpiritUi.Cream;
+            highlight.Label.color = SpiritUi.GetTheme(highlight.Label.transform).cream;
             highlight.Label.rectTransform.localScale = Vector3.one;
             highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset;
             highlight.Icon.gameObject.SetActive(false);
@@ -1394,19 +1408,19 @@ namespace Dice.Presentation
                 SetScoreValues(Interpolate(beforeBase, afterBase, progress), Interpolate(beforeMultiplier, afterMultiplier, progress));
                 if (beforeBase != afterBase)
                 {
-                    BaseScoreLabel.color = SpiritUi.Amber;
+                    BaseScoreLabel.color = SpiritUi.GetTheme(transform).amber;
                     BaseScoreLabel.rectTransform.localScale = Vector3.one * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
                 }
                 if (beforeMultiplier != afterMultiplier)
                 {
-                    MultiplierLabel.color = SpiritUi.Amber;
+                    MultiplierLabel.color = SpiritUi.GetTheme(transform).amber;
                     MultiplierLabel.rectTransform.localScale = Vector3.one * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
                 }
                 if (highlights != null)
                     foreach (var highlight in highlights)
                     {
                         float pulse = Mathf.Sin(progress * Mathf.PI);
-                        highlight.Label.color = Color.Lerp(SpiritUi.Cream, SpiritUi.Amber, pulse);
+                        highlight.Label.color = Color.Lerp(SpiritUi.GetTheme(transform).cream, SpiritUi.GetTheme(transform).amber, pulse);
                         highlight.Label.rectTransform.localScale = Vector3.one * (1 + .07f * pulse);
                         highlight.Icon.rectTransform.localScale = Vector3.one * (1 + .1f * pulse);
                     }
@@ -1416,7 +1430,7 @@ namespace Dice.Presentation
             SetScoreValues(afterBase, afterMultiplier);
             foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
             {
-                label.color = SpiritUi.Cream;
+                label.color = SpiritUi.GetTheme(transform).cream;
                 label.rectTransform.localScale = Vector3.one;
             }
             if (highlights != null)
@@ -1430,13 +1444,13 @@ namespace Dice.Presentation
             {
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
                 HandScoreLabel.text = DiagnosticText.Number(Interpolate(0, score, progress));
-                HandScoreLabel.color = SpiritUi.Amber;
+                HandScoreLabel.color = SpiritUi.GetTheme(transform).amber;
                 HandScoreLabel.rectTransform.localScale = Vector3.one * (1 + .14f * Mathf.Sin(progress * Mathf.PI));
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
             HandScoreLabel.text = DiagnosticText.Number(score);
-            HandScoreLabel.color = SpiritUi.Cream;
+            HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
             HandScoreLabel.rectTransform.localScale = Vector3.one;
         }
 
@@ -1448,13 +1462,13 @@ namespace Dice.Presentation
             {
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
                 targetLabel.text = DiagnosticText.Number(Interpolate(before, after, progress));
-                targetLabel.color = SpiritUi.Amber;
+                targetLabel.color = SpiritUi.GetTheme(transform).amber;
                 targetLabel.rectTransform.localScale = Vector3.one * (1 + .06f * Mathf.Sin(progress * Mathf.PI));
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
             targetLabel.text = DiagnosticText.Number(after);
-            targetLabel.color = SpiritUi.Cream;
+            targetLabel.color = SpiritUi.GetTheme(transform).cream;
             targetLabel.rectTransform.localScale = Vector3.one;
         }
 
@@ -1467,12 +1481,12 @@ namespace Dice.Presentation
             while (elapsed < duration)
             {
                 float pulse = Mathf.Sin(elapsed / duration * Mathf.PI);
-                label.color = Color.Lerp(SpiritUi.Cream, SpiritUi.Amber, pulse);
+                label.color = Color.Lerp(SpiritUi.GetTheme(label.transform).cream, SpiritUi.GetTheme(label.transform).amber, pulse);
                 label.rectTransform.localScale = Vector3.one * (1 + amount * pulse);
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
-            label.color = SpiritUi.Cream;
+            label.color = SpiritUi.GetTheme(label.transform).cream;
             label.rectTransform.localScale = Vector3.one;
         }
 
@@ -1545,20 +1559,20 @@ namespace Dice.Presentation
 
         private Card MakeCard(string name, Transform parent, bool owned)
         {
-            var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.PanelColor, 0, true);
+            var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.GetTheme(transform).panelColor, 0, true);
             var button = image.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             var card = new Card { Button = button };
             if (!owned) image.gameObject.AddComponent<LayoutElement>().preferredHeight = 155;
             card.Title = SpiritUi.Heading("Title", image.transform, "", owned ? 17 : 18,
-                new Vector2(0, .70f), new Vector2(1, .96f), TextAnchor.MiddleLeft, SpiritUi.Cream);
+                new Vector2(0, .70f), new Vector2(1, .96f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).cream);
             card.Icon = MakeIcon("CharmIcon", image.transform, new Vector2(0, .83f), 36);
             card.Icon.rectTransform.anchoredPosition = new Vector2(42, 0);
             card.Sigil = MakeCharmSigil("CharmSigil", card.Icon);
             card.Body = SpiritUi.Label("Condition", image.transform, "", 17,
                 new Vector2(0, .40f), new Vector2(1, .70f));
             card.Effect = SpiritUi.Label("Effects", image.transform, "", 17, new Vector2(0, .20f), new Vector2(1, .4f),
-                TextAnchor.MiddleLeft, SpiritUi.Amber);
+                TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).amber);
             foreach (var text in new[] { card.Title, card.Body, card.Effect })
             {
                 text.rectTransform.offsetMin = new Vector2(24, 5);

@@ -18,11 +18,11 @@ namespace Dice.Presentation
             public float pixelsPerUnitMultiplier = 3;
             [NonSerialized] private Sprite runtimeSprite;
 
-            internal Sprite GetSprite(string resource)
+            internal Sprite GetSprite()
             {
                 if (sprite != null) return sprite;
                 if (runtimeSprite != null) return runtimeSprite;
-                var source = texture != null ? texture : Resources.Load<Texture2D>(resource);
+                var source = texture;
                 if (source == null) return null;
                 float scaleX = referenceTextureSize.x > 0 ? source.width / referenceTextureSize.x : 1;
                 float scaleY = referenceTextureSize.y > 0 ? source.height / referenceTextureSize.y : 1;

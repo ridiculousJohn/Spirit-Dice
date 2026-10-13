@@ -15,6 +15,7 @@ namespace Dice.Presentation
         public const float InnerHalfWidth = 2.70f;
         public const int VisibleCapacity = 9;
         public const float ArrivalDuration = .30f;
+        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         private static int rendererOrdinal;
         private readonly List<Entry> entries = new List<Entry>();
         private readonly List<UnityEngine.Object> ownedResources = new List<UnityEngine.Object>();
@@ -56,11 +57,21 @@ namespace Dice.Presentation
             internal float SupportHeight;
         }
 
+        public void Configure(SpiritTrayPresentationAsset presentation)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (renderRoot != null && trayPresentation != presentation)
+                throw new InvalidOperationException("The modifier history presentation cannot change after initialization.");
+            presentation.Validate();
+            trayPresentation = presentation;
+        }
+
         public void Initialize()
         {
             if (renderRoot != null) return;
-            shader = Resources.Load<Shader>("SpiritDiceSurface") ?? Shader.Find("Dice/Spirit Dice Surface");
-            if (shader == null) throw new InvalidOperationException("The Spirit dice surface shader is required.");
+            if (trayPresentation == null) throw new InvalidOperationException("Configure the modifier history presentation before initialization.");
+            trayPresentation.Validate();
+            shader = trayPresentation.DiceShader;
             renderRoot = new GameObject("Spirit Modifier History Render Root");
             renderRoot.layer = SpiritDiceTray.RenderLayer;
             renderRoot.transform.position = new Vector3(12000 + rendererOrdinal++ * 100, 0, 0);
@@ -126,7 +137,7 @@ namespace Dice.Presentation
             material.SetFloat("_ShowPips", 0);
             material.SetFloat("_ShowFaceIcon", 1);
             material.SetFloat("_Seed", entries.Count * 17.31f);
-            Texture2D bone = Resources.Load<Texture2D>("SpiritBoneSurface");
+            Texture2D bone = trayPresentation.BoneTexture;
             if (bone != null) material.SetTexture("_SurfaceTexture", bone);
             Color ink = SpiritModifierIcons.GetEffectColor(contribution);
             material.SetColor("_FaceIconColor", new Color(ink.r * .45f, ink.g * .45f, ink.b * .45f, 1));
@@ -252,7 +263,7 @@ namespace Dice.Presentation
         private void BuildTray(Mesh boxMesh)
         {
             trayRoot = Child("Spirit Modifier Wooden Tray", renderRoot.transform).transform;
-            Texture2D woodTexture = Resources.Load<Texture2D>("SpiritWoodSurface");
+            Texture2D woodTexture = trayPresentation.WoodTexture;
             Material wood = Surface("Spirit Modifier Worn Walnut", woodTexture != null ? Color.white : new Color(.33f, .145f, .052f), 1);
             if (woodTexture != null) wood.SetTexture("_SurfaceTexture", woodTexture);
             Material felt = Surface("Spirit Modifier Deep Green Felt", new Color(.085f, .12f, .067f), 2);

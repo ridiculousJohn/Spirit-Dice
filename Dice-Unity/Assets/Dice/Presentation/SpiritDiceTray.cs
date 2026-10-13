@@ -19,7 +19,7 @@ namespace Dice.Presentation
             Vector3.left, Vector3.down, Vector3.back
         };
 
-        [SerializeField] private Shader diceShader;
+        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         private readonly Transform[] dice = new Transform[DiceValues.Count];
         private readonly Material[] diceMaterials = new Material[DiceValues.Count];
         private readonly GameObject[] selectionOutlines = new GameObject[DiceValues.Count];
@@ -48,13 +48,22 @@ namespace Dice.Presentation
                     SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
         }
 
+        public void Configure(SpiritTrayPresentationAsset presentation)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (renderRoot != null && trayPresentation != presentation)
+                throw new InvalidOperationException("The dice tray presentation cannot change after initialization.");
+            presentation.Validate();
+            trayPresentation = presentation;
+        }
+
         public void Initialize()
         {
             if (renderRoot != null) return;
 
-            Shader shader = Resources.Load<Shader>("SpiritDiceSurface")
-                ?? (diceShader != null ? diceShader : FindShader());
-            if (shader == null) throw new InvalidOperationException("A dice rendering shader is required.");
+            if (trayPresentation == null) throw new InvalidOperationException("Configure the dice tray presentation before initialization.");
+            trayPresentation.Validate();
+            Shader shader = trayPresentation.DiceShader;
 
             renderRoot = new GameObject("Spirit Dice Render Root");
             renderRoot.layer = RenderLayer;
@@ -125,7 +134,7 @@ namespace Dice.Presentation
             haloMaterial.renderQueue = 3020;
             outerHaloMaterial.renderQueue = 3010;
 
-            Texture2D boneTexture = Resources.Load<Texture2D>("SpiritBoneSurface");
+            Texture2D boneTexture = trayPresentation.BoneTexture;
 
             Mesh pipMesh = null;
             Material pipMaterial = null;
@@ -357,15 +366,6 @@ namespace Dice.Presentation
             return renderer;
         }
 
-        private static Shader FindShader()
-        {
-            return Shader.Find("Universal Render Pipeline/Simple Lit")
-                ?? Shader.Find("Universal Render Pipeline/Lit")
-                ?? Shader.Find("Universal Render Pipeline/Unlit")
-                ?? Shader.Find("Standard")
-                ?? Shader.Find("Unlit/Color");
-        }
-
         private Material CreateMaterial(Shader shader, Color color, string materialName)
         {
             Material material = new Material(shader) { name = materialName };
@@ -396,7 +396,7 @@ namespace Dice.Presentation
 
         private void BuildTray(Shader shader, Mesh boxMesh)
         {
-            Texture2D woodTexture = Resources.Load<Texture2D>("SpiritWoodSurface");
+            Texture2D woodTexture = trayPresentation.WoodTexture;
             Material wood = CreateSurfaceMaterial(shader, woodTexture != null ? Color.white : new Color(0.33f, 0.145f, 0.052f),
                 "Spirit Tray Worn Walnut", 1);
             if (woodTexture != null && wood.HasProperty("_SurfaceTexture")) wood.SetTexture("_SurfaceTexture", woodTexture);

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70365ad616e9415aa4038f2f3bd30c35, type: 3}
+  m_Name: SpiritTrayPresentation
+  m_EditorClassIdentifier:
+  DiceShader: {fileID: 4800000, guid: 2bf45d368b9b4a21b2da5b3a1c1ed36b, type: 3}
+  BoneTexture: {fileID: 2800000, guid: 4554059d4d75478c8ea275baa3695ef7, type: 3}
+  WoodTexture: {fileID: 2800000, guid: 0edec0dd42ef415bb6a06e07a40e4c5b, type: 3}

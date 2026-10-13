@@ -34,14 +34,14 @@ namespace Dice.Presentation
             if (Root != null) throw new InvalidOperationException("The hand ranks panel has already been built.");
 
             Root = SpiritUi.Panel("HandRanksOverlay", parent, Vector2.zero, Vector2.one,
-                SpiritUi.PanelColor, 0, true).rectTransform;
+                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             SpiritUi.Heading("HandRanksTitle", Root, "HAND RANKS", 29,
-                new Vector2(.03f, .9f), new Vector2(.73f, .98f), TextAnchor.MiddleLeft, SpiritUi.Amber);
+                new Vector2(.03f, .9f), new Vector2(.73f, .98f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).amber);
             CloseButton = SpiritUi.Button("CloseHandRanksButton", Root, "Close",
                 new Vector2(.75f, .9f), new Vector2(.98f, .98f), () => close());
             var subtitle = SpiritUi.Label("HandRanksSubtitle", Root,
                 "Hand bonuses include upgrades. Dice and charm bonuses are extra.", 18,
-                new Vector2(.03f, .835f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.Muted);
+                new Vector2(.03f, .835f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted);
             FitLabel(subtitle, 14);
             var rule = SpiritUi.Rect("HandRanksRule", Root, new Vector2(.02f, .813f), new Vector2(.98f, .831f));
             SpiritUi.Decorate(rule);
@@ -51,7 +51,7 @@ namespace Dice.Presentation
                 var category = (HandCategory)i;
                 float top = .805f - i * .091f;
                 var background = SpiritUi.Panel("HandRankRow" + category, Root,
-                    new Vector2(.04f, top - .085f), new Vector2(.96f, top), SpiritUi.PanelColor);
+                    new Vector2(.04f, top - .085f), new Vector2(.96f, top), SpiritUi.GetTheme(transform).panelColor);
                 var row = new Row
                 {
                     Category = category,
@@ -60,9 +60,9 @@ namespace Dice.Presentation
                         DiagnosticText.Humanize(category.ToString()), 23,
                         new Vector2(.01f, .48f), new Vector2(.73f, 1)),
                     CurrentLabel = SpiritUi.Label("CurrentLabel", background.transform, "", 14,
-                        new Vector2(.73f, .48f), new Vector2(.99f, 1), TextAnchor.MiddleRight, SpiritUi.Amber),
+                        new Vector2(.73f, .48f), new Vector2(.99f, 1), TextAnchor.MiddleRight, SpiritUi.GetTheme(transform).amber),
                     LevelLabel = SpiritUi.Label("LevelLabel", background.transform, "", 18,
-                        new Vector2(.01f, 0), new Vector2(.29f, .48f), TextAnchor.MiddleLeft, SpiritUi.Muted),
+                        new Vector2(.01f, 0), new Vector2(.29f, .48f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted),
                     BaseLabel = SpiritUi.Label("BaseLabel", background.transform, "", 18,
                         new Vector2(.29f, 0), new Vector2(.66f, .48f)),
                     MultiplierLabel = SpiritUi.Label("MultiplierLabel", background.transform, "", 18,
@@ -76,7 +76,7 @@ namespace Dice.Presentation
             }
 
             SpiritUi.Label("HandRanksFooter", Root, "Highest matching rank is played.", 17,
-                new Vector2(.04f, .025f), new Vector2(.96f, .072f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.04f, .025f), new Vector2(.96f, .072f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             Root.gameObject.SetActive(false);
         }
 
@@ -98,7 +98,7 @@ namespace Dice.Presentation
                 row.BaseLabel.text = "+Base " + DiagnosticText.Number(baseScore);
                 row.MultiplierLabel.text = "+Mult " + DiagnosticText.Number(multiplier);
                 row.CurrentLabel.text = current ? "CURRENT" : "";
-                row.CategoryLabel.color = current ? SpiritUi.Amber : SpiritUi.Cream;
+                row.CategoryLabel.color = current ? SpiritUi.GetTheme(transform).amber : SpiritUi.GetTheme(transform).cream;
                 row.Background.color = current ? new Color32(73, 62, 37, 255) : new Color32(29, 43, 34, 255);
             }
         }

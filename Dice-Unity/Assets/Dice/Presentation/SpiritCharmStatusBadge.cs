@@ -27,7 +27,7 @@ namespace Dice.Presentation
             Icon.State = presentation.State;
             Color tint = presentation.State == SpiritCharmStatusState.Ready ? new Color32(167, 204, 158, 255) :
                 presentation.State == SpiritCharmStatusState.WaitingCondition || presentation.State == SpiritCharmStatusState.OnRoll ?
-                    SpiritUi.Amber : SpiritUi.Muted;
+                    SpiritUi.GetTheme(transform).amber : SpiritUi.GetTheme(transform).muted;
             Icon.color = tint;
         }
     }

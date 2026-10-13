@@ -19,9 +19,8 @@ namespace Dice.Presentation
         private static readonly int[] ConstrainAmbientIds = CreateIds("_SceneLightConstrainAmbient");
         public Material Material { get; private set; }
 
-        public SceneLightingMaterial(Shader shader = null)
+        public SceneLightingMaterial(Shader shader)
         {
-            if (shader == null) shader = Shader.Find("Dice/Scene Lighting");
             if (shader == null) throw new InvalidOperationException("Scene lighting shader is unavailable.");
             Material = new Material(shader) { name = "Scene Lighting", hideFlags = HideFlags.HideAndDontSave };
         }

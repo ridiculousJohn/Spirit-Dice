@@ -13,7 +13,7 @@ namespace Dice.Tests
         [TestCase(5)]
         public void RecordedRollLandsPromptlyAndSettlesContinuously(int count)
         {
-            var theme = Resources.Load<SpiritAudioTheme>("SpiritAudio/SpiritAudioTheme");
+            var theme = UnityEditor.AssetDatabase.LoadAssetAtPath<SpiritAudioTheme>("Assets/Dice/Presentation/Shared/SpiritAudio/SpiritAudioTheme.asset");
             var track = theme.rollContactTracks[count - 1];
             var clip = theme.rollClips[count - 1];
             var timing = new SpiritRollTiming(clip.length, track, theme.rollLaunchTime, 10, 20);

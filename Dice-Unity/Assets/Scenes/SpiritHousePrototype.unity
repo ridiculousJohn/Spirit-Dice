@@ -170,6 +170,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritEncounterView
   roomTexture: {fileID: 2800000, guid: 30162e8d21cc427dbaaba6cba020cccb, type: 3}
   tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
+  uiTheme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
+  trayPresentation: {fileID: 11400000, guid: 9df042d8698942b0a018185f688bde5e, type: 2}
   encounterRulePresentation: {fileID: 11400000, guid: 90bf42108a3248c18075ae2ddad9c893, type: 2}
 --- !u!114 &675357730
 MonoBehaviour:
@@ -183,7 +185,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fa76e63f1e3425da1e0b85237cb274a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritDiceTray
-  diceShader: {fileID: 4800000, guid: 8d2bb70cbf9db8d4da26e15b26e74248, type: 3}
+  trayPresentation: {fileID: 11400000, guid: 9df042d8698942b0a018185f688bde5e, type: 2}
 --- !u!114 &675357731
 MonoBehaviour:
   m_ObjectHideFlags: 0

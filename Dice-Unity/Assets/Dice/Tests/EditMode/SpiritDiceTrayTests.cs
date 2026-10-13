@@ -3,6 +3,7 @@ using System.Collections;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Dice.Tests
@@ -17,6 +18,8 @@ namespace Dice.Tests
         {
             host = new GameObject("Spirit Dice Test");
             tray = host.AddComponent<SpiritDiceTray>();
+            tray.Configure(AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset"));
             tray.Initialize();
         }
 

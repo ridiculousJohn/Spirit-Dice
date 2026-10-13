@@ -6,26 +6,12 @@ namespace Dice.Presentation
 {
     internal static class SpiritUi
     {
-        internal static Color Cream => Theme.cream;
-        internal static Color Muted => Theme.muted;
-        internal static Color Amber => Theme.amber;
-        internal static Color PanelColor => Theme.panelColor;
-        private static Font font;
-        private static SpiritUiTheme theme;
-
-        private static SpiritUiTheme Theme
+        internal static SpiritUiTheme GetTheme(Transform parent)
         {
-            get
-            {
-                if (theme != null) return theme;
-                theme = Resources.Load<SpiritUiTheme>("SpiritHouseTheme");
-                if (theme == null)
-                {
-                    theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
-                    theme.hideFlags = HideFlags.HideAndDontSave;
-                }
-                return theme;
-            }
+            var context = parent.GetComponentInParent<SpiritUiContext>(true);
+            if (context == null || context.Theme == null)
+                throw new System.InvalidOperationException("The UI hierarchy requires an assigned theme.");
+            return context.Theme;
         }
 
         internal static RectTransform Rect(string name, Transform parent, Vector2 min, Vector2 max,
@@ -52,25 +38,26 @@ namespace Dice.Presentation
             bool decorated = border || name == "RewardsPanel" || name == "CharmsOverlay";
             if (decorated)
             {
-                var frame = name == "TargetPanel" ? Theme.greenFrame : Theme.darkFrame;
+                var theme = GetTheme(parent);
+                var frame = name == "TargetPanel" ? theme.greenFrame : theme.darkFrame;
                 bool largePanel = name == "RewardsPanel" || name == "CharmsOverlay" || name == "HandRanksOverlay" ||
                     name == "MenuPanel" || name == "EndingPanel";
                 var frameImage = image;
                 if (largePanel)
                 {
-                    image.color = PanelColor;
+                    image.color = theme.panelColor;
                     frameImage = Full("Frame", rect).gameObject.AddComponent<Image>();
                     frameImage.raycastTarget = false;
                 }
-                ApplyFrame(frameImage, frame, name == "TargetPanel" ? "SpiritUiGreen" : "SpiritUiDark", color);
+                ApplyFrame(frameImage, frame, color);
                 if (largePanel && frameImage.sprite != null) frameImage.type = Image.Type.Tiled;
             }
             return image;
         }
 
-        private static void ApplyFrame(Image image, SpiritUiTheme.Frame frame, string resource, Color fallback)
+        private static void ApplyFrame(Image image, SpiritUiTheme.Frame frame, Color fallback)
         {
-            var sprite = frame?.GetSprite(resource);
+            var sprite = frame?.GetSprite();
             image.sprite = sprite;
             if (sprite != null)
             {
@@ -82,7 +69,8 @@ namespace Dice.Presentation
             {
                 image.color = fallback;
                 var outline = image.gameObject.GetComponent<Outline>() ?? image.gameObject.AddComponent<Outline>();
-                outline.effectColor = new Color(Amber.r, Amber.g, Amber.b, .6f);
+                var amber = GetTheme(image.transform).amber;
+                outline.effectColor = new Color(amber.r, amber.g, amber.b, .6f);
                 outline.effectDistance = new Vector2(1, -1);
             }
         }
@@ -92,11 +80,11 @@ namespace Dice.Presentation
         {
             var rect = Rect(name, parent, min, max, 12, 4, 12, 4);
             var text = rect.gameObject.AddComponent<Text>();
-            if (font == null) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.font = Theme.bodyFont != null ? Theme.bodyFont : font;
+            var theme = GetTheme(parent);
+            text.font = theme.bodyFont;
             text.text = value;
             text.fontSize = size;
-            text.color = color ?? Cream;
+            text.color = color ?? theme.cream;
             text.alignment = align;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Truncate;
@@ -108,7 +96,8 @@ namespace Dice.Presentation
             Vector2 min, Vector2 max, TextAnchor align = TextAnchor.MiddleLeft, Color? color = null)
         {
             var text = Label(name, parent, value, size, min, max, align, color);
-            text.font = Theme.headingFont != null ? Theme.headingFont : text.font;
+            var theme = GetTheme(parent);
+            text.font = theme.headingFont != null ? theme.headingFont : text.font;
             text.rectTransform.offsetMin = new Vector2(12, 0);
             text.rectTransform.offsetMax = new Vector2(-12, 0);
             text.resizeTextForBestFit = true;
@@ -148,7 +137,7 @@ namespace Dice.Presentation
             var rect = Rect(name, parent, min, max);
             var ornament = rect.gameObject.AddComponent<SpiritUiOrnament>();
             ornament.kind = kind;
-            ornament.color = Amber;
+            ornament.color = GetTheme(parent).amber;
             ornament.raycastTarget = false;
             return ornament;
         }
@@ -162,23 +151,23 @@ namespace Dice.Presentation
         internal static Button Button(string name, Transform parent, string value,
             Vector2 min, Vector2 max, UnityAction action, bool primary = false)
         {
+            var theme = GetTheme(parent);
             var image = Panel(name, parent, min, max,
-                primary ? new Color32(89, 73, 44, 255) : PanelColor, 5);
+                primary ? new Color32(89, 73, 44, 255) : theme.panelColor, 5);
             bool compact = name == "MenuButton" || name == "CloseCharmsButton" || name == "ReturnToInvestigationButton";
             bool actionButton = name == "RerollButton" || name == "PlayButton";
             bool footer = name == "CharmsButton" || name == "HandRanksButton";
-            var frame = compact || actionButton ? Theme.darkFrame : footer ? Theme.woodFrame : primary ? Theme.amberFrame : Theme.greenFrame;
-            ApplyFrame(image, frame, compact || actionButton ? "SpiritUiDark" : footer ? "SpiritUiWood" : primary ? "SpiritUiAmber" : "SpiritUiGreen",
-                primary ? new Color32(89, 73, 44, 255) : PanelColor);
+            var frame = compact || actionButton ? theme.darkFrame : footer ? theme.woodFrame : primary ? theme.amberFrame : theme.greenFrame;
+            ApplyFrame(image, frame, primary ? new Color32(89, 73, 44, 255) : theme.panelColor);
             if (actionButton)
                 image.color = primary ? new Color32(255, 196, 103, 255) : new Color32(170, 216, 181, 255);
             var button = image.gameObject.AddComponent<SpiritUiButtonVisual>();
             var colors = button.colors;
             colors.normalColor = Color.white;
-            colors.highlightedColor = Theme.highlightedTint;
-            colors.selectedColor = Theme.highlightedTint;
-            colors.pressedColor = Theme.pressedTint;
-            colors.disabledColor = Theme.disabledTint;
+            colors.highlightedColor = theme.highlightedTint;
+            colors.selectedColor = theme.highlightedTint;
+            colors.pressedColor = theme.pressedTint;
+            colors.disabledColor = theme.disabledTint;
             colors.fadeDuration = .12f;
             button.colors = colors;
             button.targetGraphic = image;

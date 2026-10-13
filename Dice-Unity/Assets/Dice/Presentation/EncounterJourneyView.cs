@@ -60,9 +60,9 @@ namespace Dice.Presentation
             board = SpiritUi.Panel("InvestigationBoard", root, Vector2.zero, Vector2.one,
                 new Color32(17, 28, 23, 255)).rectTransform;
             investigationTitle = SpiritUi.Heading("InvestigationTitle", board, "INVESTIGATION", 31,
-                new Vector2(.04f, .917f), new Vector2(.96f, .982f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                new Vector2(.04f, .917f), new Vector2(.96f, .982f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             investigationDescription = SpiritUi.Label("InvestigationSubtitle", board, "", 18,
-                new Vector2(.06f, .85f), new Vector2(.94f, .92f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.06f, .85f), new Vector2(.94f, .92f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             SpiritUi.Scroll("InvestigationClues", board, new Vector2(.015f, .24f), new Vector2(.985f, .845f), out clueContent);
             var layout = clueContent.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 16;
@@ -73,7 +73,7 @@ namespace Dice.Presentation
             layout.childForceExpandHeight = false;
             clueContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             boardStatus = SpiritUi.Label("InvestigationStatus", board, "", 17,
-                new Vector2(.04f, .172f), new Vector2(.96f, .24f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.04f, .172f), new Vector2(.96f, .24f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             resumeButton = SpiritUi.Button("ResumeEncounterButton", board, "Continue at the table",
                 new Vector2(.035f, .09f), new Vector2(.965f, .165f), () => controls.ResumeEncounter(), true);
             loadButton = SpiritUi.Button("LoadJourneyButton", board, "Load saved encounter",
@@ -99,19 +99,19 @@ namespace Dice.Presentation
                 .gameObject.AddComponent<RawImage>();
             leftPanel.raycastTarget = rightPanel.raycastTarget = false;
             var narrativeImage = SpiritUi.Panel("JourneyNarrative", sequence, new Vector2(.035f, .145f), new Vector2(.965f, .57f),
-                SpiritUi.PanelColor, 0, true);
+                SpiritUi.GetTheme(transform).panelColor, 0, true);
             narrativeImage.type = Image.Type.Tiled;
             var narrative = narrativeImage.rectTransform;
             narrativeGroup = narrative.gameObject.AddComponent<CanvasGroup>();
             title = SpiritUi.Heading("JourneyTitle", narrative, "", 29,
-                new Vector2(.035f, .79f), new Vector2(.965f, .98f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                new Vector2(.035f, .79f), new Vector2(.965f, .98f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             body = SpiritUi.Label("JourneyBody", narrative, "", 23,
                 new Vector2(.04f, .36f), new Vector2(.96f, .79f), TextAnchor.MiddleCenter);
             body.resizeTextForBestFit = true;
             body.resizeTextMinSize = 19;
             body.resizeTextMaxSize = 23;
             rules = SpiritUi.Label("JourneyRuleText", narrative, "", 19,
-                new Vector2(.04f, .045f), new Vector2(.96f, .345f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                new Vector2(.04f, .045f), new Vector2(.96f, .345f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             rules.resizeTextForBestFit = true;
             rules.resizeTextMinSize = 17;
             rules.resizeTextMaxSize = 19;
@@ -124,7 +124,7 @@ namespace Dice.Presentation
             skipButton = SpiritUi.Button("JourneySkipButton", sequence, "Skip to invitation",
                 new Vector2(.505f, .003f), new Vector2(.965f, .064f), () => controls.SkipIntro());
             journeyStatus = SpiritUi.Label("JourneyStatus", sequence, "", 16,
-                new Vector2(.05f, .895f), new Vector2(.95f, .945f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                new Vector2(.05f, .895f), new Vector2(.95f, .945f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             root.gameObject.SetActive(false);
         }
 
@@ -189,11 +189,11 @@ namespace Dice.Presentation
                 if (journey == null) continue;
                 var selected = journey;
                 var cardImage = SpiritUi.Panel("ClueButton" + index++, clueContent, Vector2.zero, Vector2.one,
-                    SpiritUi.PanelColor, 0, true);
+                    SpiritUi.GetTheme(transform).panelColor, 0, true);
                 cardImage.type = Image.Type.Tiled;
                 var button = cardImage.gameObject.AddComponent<SpiritUiButtonVisual>();
                 button.targetGraphic = cardImage;
-                var theme = Resources.Load<SpiritUiTheme>("SpiritHouseTheme");
+                var theme = SpiritUi.GetTheme(transform);
                 var colors = button.colors;
                 colors.normalColor = Color.white;
                 colors.highlightedColor = colors.selectedColor = theme != null ? theme.highlightedTint : new Color(1.10f, 1.08f, 1.01f, 1);
@@ -214,7 +214,7 @@ namespace Dice.Presentation
                 aspect.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
                 aspect.aspectRatio = journey.CardArtwork != null ? (float)journey.CardArtwork.width / journey.CardArtwork.height : 1;
                 SpiritUi.Heading("ClueTitle", button.transform, journey.LocationTitle, 26,
-                    new Vector2(.055f, .33f), new Vector2(.945f, .45f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                    new Vector2(.055f, .33f), new Vector2(.945f, .45f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
                 var lead = SpiritUi.Label("ClueLead", button.transform, journey.LeadText, 19,
                     new Vector2(.055f, .09f), new Vector2(.945f, .32f), TextAnchor.MiddleCenter);
                 lead.resizeTextForBestFit = true;
@@ -228,16 +228,16 @@ namespace Dice.Presentation
                     foreach (string completedId in progression.CompletedEncounterIds)
                         if (completedId == journey.EncounterId) { completed = true; break; }
                 SpiritUi.Label("ClueState", button.transform, visited ? "VISITED - RETURN TO THE TABLE" : "FOLLOW THIS LEAD", 14,
-                    new Vector2(.055f, .027f), new Vector2(.945f, .09f), TextAnchor.MiddleCenter, SpiritUi.Muted);
+                    new Vector2(.055f, .027f), new Vector2(.945f, .09f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
                 button.CaptureContent();
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))
                 {
                     var discovered = SpiritUi.Panel("CompletionClue", clueContent, Vector2.zero, Vector2.one,
-                        SpiritUi.PanelColor, 0, true).rectTransform;
+                        SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
                     clueCards.Add(discovered.gameObject);
                     discovered.gameObject.AddComponent<LayoutElement>().preferredHeight = 180;
                     SpiritUi.Heading("CompletionClueTitle", discovered, journey.CompletionClueTitle, 24,
-                        new Vector2(.035f, .67f), new Vector2(.965f, .95f), TextAnchor.MiddleCenter, SpiritUi.Amber);
+                        new Vector2(.035f, .67f), new Vector2(.965f, .95f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
                     var discoveredText = SpiritUi.Label("CompletionClueText", discovered, journey.CompletionClueText, 19,
                         new Vector2(.045f, .06f), new Vector2(.955f, .66f), TextAnchor.MiddleCenter);
                     discoveredText.resizeTextForBestFit = true;
@@ -392,7 +392,11 @@ namespace Dice.Presentation
             sceneLightingState.Sample(asset, time);
             if (asset != null)
             {
-                if (sceneLightingMaterial == null) sceneLightingMaterial = new SceneLightingMaterial();
+                if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
+                {
+                    sceneLightingMaterial?.Dispose();
+                    sceneLightingMaterial = new SceneLightingMaterial(asset.Shader);
+                }
                 sceneLightingMaterial.Apply(sceneLightingState);
             }
             else
@@ -409,7 +413,7 @@ namespace Dice.Presentation
             }
             if (previousSceneLighting == null) return;
             previousSceneLightingState.Sample(previousSceneLighting, time);
-            if (previousSceneLightingMaterial == null) previousSceneLightingMaterial = new SceneLightingMaterial();
+            if (previousSceneLightingMaterial == null) previousSceneLightingMaterial = new SceneLightingMaterial(previousSceneLighting.Shader);
             previousSceneLightingMaterial.Apply(previousSceneLightingState);
             leftPanel.texture = rightPanel.texture = previousSceneLighting.BaseTexture;
             leftPanel.material = rightPanel.material = previousSceneLightingMaterial.Material;

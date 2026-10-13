@@ -27,7 +27,7 @@ namespace Dice.Presentation
         public static SpiritRewardCard Create(string name, Transform parent, Action<long, long> choose)
         {
             if (choose == null) throw new ArgumentNullException(nameof(choose));
-            var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.PanelColor, 0, true);
+            var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.GetTheme(parent).panelColor, 0, true);
             var card = image.gameObject.AddComponent<SpiritRewardCard>();
             card.choose = choose;
             var layout = image.gameObject.AddComponent<LayoutElement>();
@@ -35,7 +35,7 @@ namespace Dice.Presentation
             layout.flexibleHeight = 0;
             var button = image.gameObject.AddComponent<SpiritUiButtonVisual>();
             button.targetGraphic = image;
-            var theme = Resources.Load<SpiritUiTheme>("SpiritHouseTheme");
+            var theme = SpiritUi.GetTheme(parent);
             var colors = button.colors;
             colors.normalColor = Color.white;
             colors.highlightedColor = colors.selectedColor = theme != null ? theme.highlightedTint : new Color(1.10f, 1.08f, 1.01f, 1);
@@ -53,21 +53,21 @@ namespace Dice.Presentation
             card.condition.resizeTextMinSize = 13;
             card.condition.resizeTextMaxSize = 15;
             card.effects = SpiritUi.Label("Effects", card.transform, "", 16, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleLeft, SpiritUi.Amber);
+                TextAnchor.MiddleLeft, SpiritUi.GetTheme(parent).amber);
             card.effects.resizeTextForBestFit = true;
             card.effects.resizeTextMinSize = 14;
             card.effects.resizeTextMaxSize = 16;
             card.status = SpiritUi.Label("Status", card.transform, "", 13, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleRight, SpiritUi.Muted);
+                TextAnchor.MiddleRight, SpiritUi.GetTheme(parent).muted);
             card.status.resizeTextForBestFit = true;
             card.status.resizeTextMinSize = 12;
             card.status.resizeTextMaxSize = 13;
             card.currentHeader = SpiritUi.Label("CurrentHeader", card.transform, "CURRENT", 12, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleLeft, SpiritUi.Muted);
+                TextAnchor.MiddleLeft, SpiritUi.GetTheme(parent).muted);
             card.upgradedHeader = SpiritUi.Label("UpgradedHeader", card.transform, "UPGRADED", 12, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleLeft, SpiritUi.Amber);
+                TextAnchor.MiddleLeft, SpiritUi.GetTheme(parent).amber);
             card.upgradedValues = SpiritUi.Label("UpgradedValues", card.transform, "", 16, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleLeft, SpiritUi.Amber);
+                TextAnchor.MiddleLeft, SpiritUi.GetTheme(parent).amber);
             card.upgradedValues.resizeTextForBestFit = true;
             card.upgradedValues.resizeTextMinSize = 14;
             card.upgradedValues.resizeTextMaxSize = 16;
@@ -84,7 +84,7 @@ namespace Dice.Presentation
             card.charmSigil.rectTransform.pivot = new Vector2(0, 1);
             card.charmSigil.rectTransform.anchoredPosition = iconRect.anchoredPosition;
             card.charmSigil.rectTransform.sizeDelta = iconRect.sizeDelta;
-            card.charmSigil.color = SpiritUi.Amber;
+            card.charmSigil.color = SpiritUi.GetTheme(parent).amber;
             card.charmSigil.raycastTarget = false;
             card.SetUpgradeVisibility(false);
             card.charmIcon.gameObject.SetActive(false);

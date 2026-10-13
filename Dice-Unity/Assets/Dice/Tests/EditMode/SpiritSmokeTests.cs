@@ -1,6 +1,7 @@
 using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace Dice.Tests
@@ -20,7 +21,8 @@ namespace Dice.Tests
                 Material owned;
                 UnityEngine.Texture usedMask, usedNoise;
                 var settings = new SpiritPortraitSmoke { Enabled = true, MotionMask = mask, FlowNoise = noise };
-                using (var wrapper = new SpiritSmokeMaterial(settings))
+                using (var wrapper = new SpiritSmokeMaterial(settings,
+                    AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SpiritSmoke.shader")))
                 {
                     owned = wrapper.Material;
                     usedMask = owned.GetTexture("_MotionMask");
@@ -57,7 +59,8 @@ namespace Dice.Tests
             try
             {
                 using (var wrapper = new SpiritSmokeMaterial(new SpiritPortraitSmoke
-                    { Enabled = true, MotionMask = mask, FlowNoise = noise, Opacity = opacity }))
+                    { Enabled = true, MotionMask = mask, FlowNoise = noise, Opacity = opacity },
+                    AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SpiritSmoke.shader")))
                 {
                     target.Create();
                     RenderTexture.active = target;

@@ -75,6 +75,7 @@ namespace Dice.Editor
             Directory.CreateDirectory(absolute);
 
             SceneLightingAsset scene = CreateInstance<SceneLightingAsset>();
+            scene.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             scene.hideFlags = HideFlags.HideAndDontSave;
             SceneLightingMaterial material = null;
             RenderTexture target = null;
@@ -86,7 +87,7 @@ namespace Dice.Editor
                 scene.Lights = new[] { light };
                 light.Contribution = LoadTexture(DefaultIlluminatedPath);
                 light.ResponseMap = LoadTexture(DefaultResponsePath, linear: true);
-                material = new SceneLightingMaterial();
+                material = new SceneLightingMaterial(scene.Shader);
                 if (!material.Material.shader.isSupported)
                     throw new InvalidOperationException("Scene lighting shader is unsupported by the graphics device.");
                 target = new RenderTexture(scene.BaseTexture.width, scene.BaseTexture.height, 0,
@@ -195,6 +196,7 @@ namespace Dice.Editor
         {
             startedAt = EditorApplication.timeSinceStartup;
             lighting = CreateInstance<SceneLightingAsset>();
+            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.hideFlags = HideFlags.HideAndDontSave;
             lights.Add(new PreviewLight
             {
@@ -377,7 +379,7 @@ namespace Dice.Editor
                 }
                 UpdateLayers();
                 ReleaseOutput();
-                if (compositor == null) compositor = new SceneLightingMaterial();
+                if (compositor == null) compositor = new SceneLightingMaterial(lighting.Shader);
             }
             catch (Exception exception)
             {

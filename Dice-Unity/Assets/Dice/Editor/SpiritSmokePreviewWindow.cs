@@ -134,7 +134,7 @@ namespace Dice.Editor
             Texture2D loadedBase = null, loadedSmoke = null;
             try
             {
-                Shader shader = Resources.Load<Shader>("SpiritSmoke");
+                Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SpiritSmoke.shader");
                 if (shader == null || !shader.isSupported) throw new InvalidOperationException("Dice/Spirit Smoke shader is missing or unsupported.");
                 loadedBase = LoadTexture(basePath);
                 loadedSmoke = LoadTexture(smokePath);

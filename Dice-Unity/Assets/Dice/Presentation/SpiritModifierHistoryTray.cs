@@ -12,6 +12,7 @@ namespace Dice.Presentation
         public const float TokenSize = 40;
         public const float ArrivalDuration = .30f;
         private const float TokenSpacing = 42;
+        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         private readonly List<ModifierContribution> contributions = new List<ModifierContribution>();
         private readonly List<Token> tokens = new List<Token>();
         private IReadOnlyList<ModifierContribution> readOnlyContributions;
@@ -38,6 +39,16 @@ namespace Dice.Presentation
             internal Button Button;
         }
 
+        public void Configure(SpiritTrayPresentationAsset presentation)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (root != null && trayPresentation != presentation)
+                throw new InvalidOperationException("The modifier tray presentation cannot change after building.");
+            presentation.Validate();
+            trayPresentation = presentation;
+            Renderer?.Configure(presentation);
+        }
+
         public void Build(RectTransform parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
@@ -47,8 +58,11 @@ namespace Dice.Presentation
                 return;
             }
 
+            if (trayPresentation == null) throw new InvalidOperationException("Configure the modifier tray presentation before building.");
+            trayPresentation.Validate();
             root = SpiritUi.Full("ModifierHistoryTray", parent);
             Renderer = gameObject.AddComponent<SpiritModifierHistoryRenderer>();
+            Renderer.Configure(trayPresentation);
             Renderer.Initialize();
             var image = root.gameObject.AddComponent<RawImage>();
             image.texture = Renderer.Texture;

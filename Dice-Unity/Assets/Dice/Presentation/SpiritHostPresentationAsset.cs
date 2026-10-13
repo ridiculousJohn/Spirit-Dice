@@ -69,6 +69,8 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Spirit Host")]
     public sealed class SpiritHostPresentationAsset : ScriptableObject
     {
+        public Shader SilhouetteShader;
+        public Shader SmokeShader;
         public Vector2 ReferenceSize = new Vector2(540f, 960f);
         public float Scale = 1f;
         public Vector2 Offset;
@@ -76,6 +78,7 @@ namespace Dice.Presentation
         public SpiritPresentationSequence[] Sequences = Array.Empty<SpiritPresentationSequence>();
         public Vector2[] SigilLines = Array.Empty<Vector2>();
         public float SigilWidth = .035f;
+        public Color SigilColor = new Color32(210, 166, 88, 255);
 
         public SpiritHostPortrait Create(RectTransform parent)
         {
@@ -97,7 +100,7 @@ namespace Dice.Presentation
                 sigil = lines;
             }
             else sigil = SpiritUi.Full(name, parent).gameObject.AddComponent<SpiritModifierSigilGraphic>();
-            sigil.color = SpiritUi.Amber;
+            sigil.color = SigilColor;
             sigil.raycastTarget = false;
             return sigil;
         }

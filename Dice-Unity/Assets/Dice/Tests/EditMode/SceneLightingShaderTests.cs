@@ -24,7 +24,7 @@ namespace Dice.Tests
             Assert.That(QualitySettings.activeColorSpace, Is.EqualTo(ColorSpace.Linear));
             Assert.That(SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat), Is.True);
             Assert.That(SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat), Is.True);
-            Shader shader = Shader.Find("Dice/Scene Lighting");
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             Assert.That(shader, Is.Not.Null);
             Assert.That(shader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(shader), Is.False);

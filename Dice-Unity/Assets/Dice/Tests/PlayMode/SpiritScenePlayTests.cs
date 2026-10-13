@@ -160,7 +160,7 @@ namespace Dice.Tests
                 TestContext.WriteLine(image.name + " sprite texture: " + image.sprite.texture.width + " x " +
                     image.sprite.texture.height);
             }
-            var theme = Resources.Load<SpiritUiTheme>("SpiritHouseTheme");
+            var theme = view.UiTheme;
             if (theme != null)
                 TestContext.WriteLine("Theme greenFrame spriteRect: " + theme.greenFrame.spriteRect);
             yield return CaptureIfRequested("initial");
@@ -329,7 +329,18 @@ namespace Dice.Tests
             Assert.That(view.IsCharmsOpen, Is.True);
             Click(view, "OwnedCharm1");
             yield return CaptureIfRequested("charms");
-            yield return AssertCardTextVisible(view, "OwnedCharm", "Status");
+            yield return AssertCardTextVisible(view, "OwnedCharm", "Title", "Condition", "Effects");
+            var badges = view.GetComponentsInChildren<SpiritCharmStatusBadge>();
+            Assert.That(badges, Is.Not.Empty);
+            foreach (var badge in badges)
+            {
+                Assert.That(badge.Icon, Is.Not.Null);
+                Assert.That(badge.Icon.IsActive(), Is.True);
+                Assert.That(badge.Icon.State, Is.EqualTo(badge.Presentation.State));
+                Assert.That(badge.Icon.color.a, Is.GreaterThan(0));
+                Assert.That(badge.Icon.rectTransform.rect.width, Is.GreaterThan(0));
+                Assert.That(badge.Icon.rectTransform.rect.height, Is.GreaterThan(0));
+            }
             AssertPresentationLabelsVisible(view);
             Click(view, "CloseCharmsButton");
             Assert.That(view.IsCharmsOpen, Is.False);
@@ -813,8 +824,7 @@ namespace Dice.Tests
                 ++cards;
                 foreach (string childName in childNames)
                 {
-                    var child = button.transform.Find(childName == "Status" && prefix == "OwnedCharm"
-                        ? "StatusBadge/Status" : childName);
+                    var child = button.transform.Find(childName);
                     Assert.That(child, Is.Not.Null, button.name + "/" + childName);
                     var label = child.GetComponent<Text>();
                     Assert.That(label, Is.Not.Null, button.name + "/" + childName);

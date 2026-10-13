@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a4a5f344575f100d9cd1acd699ced5, type: 3}
   m_Name: MothCrossroadsEntryLighting
   m_EditorClassIdentifier:
+  Shader: {fileID: 4800000, guid: 56e01f30524756ed6f7d40b98a2655af, type: 3}
   BaseTexture: {fileID: 2800000, guid: aba40eff9d364f6f9db0d43b78a14fb3, type: 3}
   Lights:
   - Contribution: {fileID: 2800000, guid: af0ed9f1ba954df3be70282b2333aaf6, type: 3}

@@ -64,8 +64,13 @@ namespace Dice.Editor
                 cameraObject.AddComponent<UniversalAdditionalCameraData>();
                 var root = new GameObject("Spirit Encounter");
                 Assign(root.AddComponent<SpiritPresentationEnvironment>(), "pipeline", pipeline);
-                Assign(root.AddComponent<SpiritDiceTray>(), "diceShader", Shader.Find("Universal Render Pipeline/Simple Lit"));
+                var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                    "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset");
+                root.AddComponent<SpiritDiceTray>().Configure(trayPresentation);
                 var view = root.AddComponent<SpiritEncounterView>();
+                Assign(view, "uiTheme", AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
+                    "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
+                Assign(view, "trayPresentation", trayPresentation);
                 Assign(view, "tablePresentation", AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
                     "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset"));
                 var controller = root.AddComponent<SpiritEncounterController>();
