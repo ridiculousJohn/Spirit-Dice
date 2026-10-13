@@ -12,6 +12,7 @@ namespace Dice.Presentation
         {
             public Texture2D texture;
             public Sprite sprite;
+            public Material surfaceMaterial;
             public Vector2 referenceTextureSize;
             public Rect spriteRect;
             public Vector4 border = new Vector4(120, 60, 120, 60);

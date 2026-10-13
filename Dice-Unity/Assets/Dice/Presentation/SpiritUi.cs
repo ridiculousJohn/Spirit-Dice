@@ -50,7 +50,6 @@ namespace Dice.Presentation
                     frameImage.raycastTarget = false;
                 }
                 ApplyFrame(frameImage, frame, color);
-                if (largePanel && frameImage.sprite != null) frameImage.type = Image.Type.Tiled;
             }
             return image;
         }
@@ -62,6 +61,7 @@ namespace Dice.Presentation
             if (sprite != null)
             {
                 image.type = Image.Type.Sliced;
+                image.material = frame.surfaceMaterial;
                 image.pixelsPerUnitMultiplier = Mathf.Max(.1f, frame.pixelsPerUnitMultiplier);
                 image.color = Color.white;
             }

@@ -100,7 +100,6 @@ namespace Dice.Presentation
             leftPanel.raycastTarget = rightPanel.raycastTarget = false;
             var narrativeImage = SpiritUi.Panel("JourneyNarrative", sequence, new Vector2(.035f, .145f), new Vector2(.965f, .57f),
                 SpiritUi.GetTheme(transform).panelColor, 0, true);
-            narrativeImage.type = Image.Type.Tiled;
             var narrative = narrativeImage.rectTransform;
             narrativeGroup = narrative.gameObject.AddComponent<CanvasGroup>();
             title = SpiritUi.Heading("JourneyTitle", narrative, "", 29,
@@ -190,7 +189,6 @@ namespace Dice.Presentation
                 var selected = journey;
                 var cardImage = SpiritUi.Panel("ClueButton" + index++, clueContent, Vector2.zero, Vector2.one,
                     SpiritUi.GetTheme(transform).panelColor, 0, true);
-                cardImage.type = Image.Type.Tiled;
                 var button = cardImage.gameObject.AddComponent<SpiritUiButtonVisual>();
                 button.targetGraphic = cardImage;
                 var theme = SpiritUi.GetTheme(transform);

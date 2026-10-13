@@ -1,0 +1,6 @@
+{
+  "generator": "Built-in image_gen",
+  "asset": "Dice-Unity/Assets/Dice/Presentation/Shared/SpiritPanelCloth.png",
+  "purpose": "Independent subtle green surface for nine-sliced ornamental UI frames",
+  "prompt": "Create one production game UI texture, square 1024x1024, opaque, perfectly seamless tile horizontally and vertically. Material: extremely dark desaturated forest green aged bookcloth, with very fine subtle warm olive fibers and fine mottled grain. Overall color about sRGB #151f12, mostly values #11190f to #1d2818, very low contrast. Flat uniform diffuse lighting. Absolutely no gradient, no vignette, no edge shading, no borders, no frame, no symbols, no gold specks, no repeating motifs, no stains, no folds, no focal point, no text. Fine small-scale organic grain distributed evenly across whole surface. This is a quiet background behind cream text, matching the green interiors of antique gold-framed fantasy game menus. Texture must look continuous when repeated and have no recognizable repeated large features."
+}

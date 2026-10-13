@@ -39,6 +39,7 @@ MonoBehaviour:
     border: {x: 360, y: 170, z: 360, w: 170}
     pixelsPerUnitMultiplier: 6
   darkFrame:
+    surfaceMaterial: {fileID: 2100000, guid: 10ed7ca63aa443f99f452022f6166cab, type: 2}
     texture: {fileID: 2800000, guid: 75322e8f23224941affa830ef1626042, type: 3}
     sprite: {fileID: 0}
     referenceTextureSize: {x: 2172, y: 724}
