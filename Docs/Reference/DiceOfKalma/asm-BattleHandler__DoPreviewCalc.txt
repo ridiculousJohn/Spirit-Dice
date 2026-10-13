@@ -1,0 +1,277 @@
+BattleHandler$$DoPreviewCalc
+018c164c: str      x30, [sp, #-0x50]!                         
+018c1650: stp      x26, x25, [sp, #0x10]                      
+018c1654: stp      x24, x23, [sp, #0x20]                      
+018c1658: stp      x22, x21, [sp, #0x30]                      
+018c165c: stp      x20, x19, [sp, #0x40]                      
+018c1660: adrp     x20, #0x3c20000                            
+018c1664: adrp     x21, #0x39ad000                            
+018c1668: mov      x19, x0                                    
+018c166c: ldrb     w8, [x20, #0xfe1]                          
+018c1670: ldr      x21, [x21, #0xc60]                         [39adc60]  bytes=0000000000000000
+018c1674: tbnz     w8, #0, #0x18c16bc                         
+018c1678: adrp     x0, #0x39ad000                             
+018c167c: ldr      x0, [x0, #0xc68]                           [39adc68]  bytes=0000000000000000
+018c1680: bl       #0x17b6854                                 
+018c1684: adrp     x0, #0x39ad000                             
+018c1688: ldr      x0, [x0, #0xd08]                           [39add08]  bytes=0000000000000000
+018c168c: bl       #0x17b6854                                 
+018c1690: adrp     x0, #0x39ad000                             
+018c1694: ldr      x0, [x0, #0xc48]                           [39adc48]  bytes=0000000000000000
+018c1698: bl       #0x17b6854                                 
+018c169c: adrp     x0, #0x39ad000                             
+018c16a0: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000
+018c16a4: bl       #0x17b6854                                 
+018c16a8: adrp     x0, #0x39ad000                             
+018c16ac: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000
+018c16b0: bl       #0x17b6854                                 
+018c16b4: mov      w8, #1                                     
+018c16b8: strb     w8, [x20, #0xfe1]                          
+018c16bc: movi     v0.2d, #0000000000000000                   
+018c16c0: ldr      x0, [x21]                                  
+018c16c4: str      wzr, [x19, #0x220]                         
+018c16c8: str      d0, [x19, #0x218]                          
+018c16cc: ldr      w8, [x0, #0xe4]                            
+018c16d0: cbnz     w8, #0x18c16dc                             
+018c16d4: bl       #0x17b69d4                                 
+018c16d8: ldr      x0, [x21]                                  
+018c16dc: ldr      x8, [x0, #0xb8]                            
+018c16e0: ldr      x8, [x8, #0x40]                            
+018c16e4: cbz      x8, #0x18c1a94                             
+018c16e8: ldr      x8, [x8, #0x10]                            
+018c16ec: cbz      x8, #0x18c1a94                             
+018c16f0: adrp     x23, #0x39ad000                            
+018c16f4: adrp     x22, #0x39ad000                            
+018c16f8: mov      x20, xzr                                   
+018c16fc: ldr      x23, [x23, #0xc48]                         [39adc48]  bytes=0000000000000000
+018c1700: ldr      x22, [x22, #0xc68]                         [39adc68]  bytes=0000000000000000
+018c1704: ldr      w9, [x19, #0x21c]                          
+018c1708: ldp      w11, w10, [x8, #0x30]                      
+018c170c: ldr      w12, [x19, #0x220]                         
+018c1710: ldr      w8, [x8, #0x2c]                            
+018c1714: add      w9, w10, w9                                
+018c1718: add      w8, w8, w12                                
+018c171c: str      w11, [x19, #0x218]                         
+018c1720: str      w9, [x19, #0x21c]                          
+018c1724: str      w8, [x19, #0x220]                          
+018c1728: ldr      w8, [x0, #0xe4]                            
+018c172c: cbnz     w8, #0x18c1738                             
+018c1730: bl       #0x17b69d4                                 
+018c1734: ldr      x0, [x21]                                  
+018c1738: ldr      x8, [x0, #0xb8]                            
+018c173c: ldr      x8, [x8, #0x40]                            
+018c1740: cbz      x8, #0x18c1a94                             
+018c1744: ldr      x9, [x8, #0x10]                            
+018c1748: cbz      x9, #0x18c1a94                             
+018c174c: ldr      x9, [x9, #0x10]                            
+018c1750: cbz      x9, #0x18c1a94                             
+018c1754: ldrsw    x9, [x9, #0x18]                            
+018c1758: cmp      x20, x9                                    
+018c175c: b.ge     #0x18c17b4                                 
+018c1760: ldr      w9, [x0, #0xe4]                            
+018c1764: ldr      w24, [x19, #0x218]                         
+018c1768: cbnz     w9, #0x18c1780                             
+018c176c: bl       #0x17b69d4                                 
+018c1770: ldr      x0, [x21]                                  
+018c1774: ldr      x8, [x0, #0xb8]                            
+018c1778: ldr      x8, [x8, #0x40]                            
+018c177c: cbz      x8, #0x18c1a94                             
+018c1780: ldr      x8, [x8, #0x10]                            
+018c1784: cbz      x8, #0x18c1a94                             
+018c1788: ldr      x8, [x8, #0x10]                            
+018c178c: cbz      x8, #0x18c1a94                             
+018c1790: ldr      w9, [x8, #0x18]                            
+018c1794: cmp      x20, x9                                    
+018c1798: b.hs     #0x18c1a98                                 
+018c179c: add      x8, x8, x20, lsl #2                        
+018c17a0: add      x20, x20, #1                               
+018c17a4: ldr      w8, [x8, #0x20]                            
+018c17a8: add      w8, w8, w24                                
+018c17ac: str      w8, [x19, #0x218]                          
+018c17b0: b        #0x18c1728                                 
+018c17b4: ldr      w9, [x0, #0xe4]                            
+018c17b8: cbnz     w9, #0x18c17d0                             
+018c17bc: bl       #0x17b69d4                                 
+018c17c0: ldr      x8, [x21]                                  
+018c17c4: ldr      x8, [x8, #0xb8]                            
+018c17c8: ldr      x8, [x8, #0x40]                            
+018c17cc: cbz      x8, #0x18c1a94                             
+018c17d0: ldr      x8, [x8, #0x10]                            
+018c17d4: cbz      x8, #0x18c1a94                             
+018c17d8: ldr      x1, [x8, #0x10]                            
+018c17dc: bl       #0x18ad8dc                                 BattleHandler$$CheckHand
+018c17e0: ldr      x8, [x19, #0x2d0]                          
+018c17e4: cbz      x8, #0x18c1a94                             
+018c17e8: ldr      x2, [x23]                                  
+018c17ec: mov      w20, w0                                    
+018c17f0: mov      x0, x8                                     
+018c17f4: mov      w1, #8                                     
+018c17f8: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018c17fc: mov      w8, w0                                     
+018c1800: ldr      x0, [x22]                                  
+018c1804: ldr      w24, [x19, #0x218]                         
+018c1808: ldr      w9, [x0, #0xe4]                            
+018c180c: tbz      w8, #0, #0x18c1844                         
+018c1810: cbnz     w9, #0x18c181c                             
+018c1814: bl       #0x17b69d4                                 
+018c1818: ldr      x0, [x22]                                  
+018c181c: ldr      x8, [x0, #0xb8]                            
+018c1820: ldr      x8, [x8, #0x40]                            
+018c1824: cbz      x8, #0x18c1a94                             
+018c1828: ldr      w9, [x8, #0x18]                            
+018c182c: cmp      w20, w9                                    
+018c1830: b.hs     #0x18c1a98                                 
+018c1834: add      x8, x8, w20, sxtw #2                       
+018c1838: ldr      w8, [x8, #0x20]                            
+018c183c: add      w8, w8, w24                                
+018c1840: b        #0x18c18c4                                 
+018c1844: cbnz     w9, #0x18c1850                             
+018c1848: bl       #0x17b69d4                                 
+018c184c: ldr      x0, [x22]                                  
+018c1850: ldr      x8, [x0, #0xb8]                            
+018c1854: ldr      x8, [x8, #0x40]                            
+018c1858: cbz      x8, #0x18c1a94                             
+018c185c: ldr      w9, [x8, #0x18]                            
+018c1860: cmp      w20, w9                                    
+018c1864: b.hs     #0x18c1a98                                 
+018c1868: sxtw     x25, w20                                   
+018c186c: ldr      x0, [x21]                                  
+018c1870: add      x8, x8, x25, lsl #2                        
+018c1874: ldr      w9, [x0, #0xe4]                            
+018c1878: ldr      w26, [x8, #0x20]                           
+018c187c: cbnz     w9, #0x18c1888                             
+018c1880: bl       #0x17b69d4                                 
+018c1884: ldr      x0, [x21]                                  
+018c1888: ldr      x8, [x0, #0xb8]                            
+018c188c: ldr      x8, [x8, #0x40]                            
+018c1890: cbz      x8, #0x18c1a94                             
+018c1894: ldr      x8, [x8, #0x10]                            
+018c1898: cbz      x8, #0x18c1a94                             
+018c189c: ldr      x8, [x8, #0x60]                            
+018c18a0: cbz      x8, #0x18c1a94                             
+018c18a4: ldr      w9, [x8, #0x18]                            
+018c18a8: cmp      w20, w9                                    
+018c18ac: b.hs     #0x18c1a98                                 
+018c18b0: add      x8, x8, x25, lsl #2                        
+018c18b4: add      w9, w26, w24                               
+018c18b8: ldr      w8, [x8, #0x20]                            
+018c18bc: add      w8, w8, w8, lsl #2                         
+018c18c0: add      w8, w9, w8                                 
+018c18c4: ldr      x0, [x19, #0x2d0]                          
+018c18c8: str      w8, [x19, #0x218]                          
+018c18cc: cbz      x0, #0x18c1a94                             
+018c18d0: ldr      x2, [x23]                                  
+018c18d4: mov      w1, #5                                     
+018c18d8: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018c18dc: tbz      w0, #0, #0x18c1920                         
+018c18e0: ldr      x0, [x22]                                  
+018c18e4: ldr      w23, [x19, #0x21c]                         
+018c18e8: ldr      w8, [x0, #0xe4]                            
+018c18ec: cbnz     w8, #0x18c18f8                             
+018c18f0: bl       #0x17b69d4                                 
+018c18f4: ldr      x0, [x22]                                  
+018c18f8: ldr      x8, [x0, #0xb8]                            
+018c18fc: ldr      x8, [x8, #0x38]                            
+018c1900: cbz      x8, #0x18c1a94                             
+018c1904: ldr      w9, [x8, #0x18]                            
+018c1908: cmp      w20, w9                                    
+018c190c: b.hs     #0x18c1a98                                 
+018c1910: add      x8, x8, w20, sxtw #2                       
+018c1914: ldr      w8, [x8, #0x20]                            
+018c1918: add      w8, w8, w23                                
+018c191c: b        #0x18c1a28                                 
+018c1920: ldr      x0, [x22]                                  
+018c1924: ldr      w23, [x19, #0x21c]                         
+018c1928: cmp      w20, #9                                    
+018c192c: ldr      w8, [x0, #0xe4]                            
+018c1930: b.ne     #0x18c19a8                                 
+018c1934: cbnz     w8, #0x18c1940                             
+018c1938: bl       #0x17b69d4                                 
+018c193c: ldr      x0, [x22]                                  
+018c1940: ldr      x8, [x0, #0xb8]                            
+018c1944: ldr      x8, [x8, #0x38]                            
+018c1948: cbz      x8, #0x18c1a94                             
+018c194c: ldr      w9, [x8, #0x18]                            
+018c1950: cmp      w9, #9                                     
+018c1954: b.ls     #0x18c1a98                                 
+018c1958: ldr      x0, [x21]                                  
+018c195c: ldr      w20, [x8, #0x44]                           
+018c1960: ldr      w9, [x0, #0xe4]                            
+018c1964: cbnz     w9, #0x18c1970                             
+018c1968: bl       #0x17b69d4                                 
+018c196c: ldr      x0, [x21]                                  
+018c1970: ldr      x8, [x0, #0xb8]                            
+018c1974: ldr      x8, [x8, #0x40]                            
+018c1978: cbz      x8, #0x18c1a94                             
+018c197c: ldr      x8, [x8, #0x10]                            
+018c1980: cbz      x8, #0x18c1a94                             
+018c1984: ldr      x8, [x8, #0x60]                            
+018c1988: cbz      x8, #0x18c1a94                             
+018c198c: ldr      w9, [x8, #0x18]                            
+018c1990: cmp      w9, #9                                     
+018c1994: b.ls     #0x18c1a98                                 
+018c1998: ldr      w8, [x8, #0x44]                            
+018c199c: add      w9, w20, w23                               
+018c19a0: add      w8, w9, w8, lsl #1                         
+018c19a4: b        #0x18c1a28                                 
+018c19a8: cbnz     w8, #0x18c19b4                             
+018c19ac: bl       #0x17b69d4                                 
+018c19b0: ldr      x0, [x22]                                  
+018c19b4: ldr      x8, [x0, #0xb8]                            
+018c19b8: ldr      x8, [x8, #0x38]                            
+018c19bc: cbz      x8, #0x18c1a94                             
+018c19c0: ldr      w9, [x8, #0x18]                            
+018c19c4: cmp      w20, w9                                    
+018c19c8: b.hs     #0x18c1a98                                 
+018c19cc: mov      w9, w20                                    
+018c19d0: ldr      x0, [x21]                                  
+018c19d4: sxtw     x22, w9                                    
+018c19d8: ldr      w9, [x0, #0xe4]                            
+018c19dc: add      x8, x8, x22, lsl #2                        
+018c19e0: ldr      w24, [x8, #0x20]                           
+018c19e4: cbnz     w9, #0x18c19f0                             
+018c19e8: bl       #0x17b69d4                                 
+018c19ec: ldr      x0, [x21]                                  
+018c19f0: ldr      x8, [x0, #0xb8]                            
+018c19f4: ldr      x8, [x8, #0x40]                            
+018c19f8: cbz      x8, #0x18c1a94                             
+018c19fc: ldr      x8, [x8, #0x10]                            
+018c1a00: cbz      x8, #0x18c1a94                             
+018c1a04: ldr      x8, [x8, #0x60]                            
+018c1a08: cbz      x8, #0x18c1a94                             
+018c1a0c: ldr      w9, [x8, #0x18]                            
+018c1a10: cmp      w20, w9                                    
+018c1a14: b.hs     #0x18c1a98                                 
+018c1a18: add      x8, x8, x22, lsl #2                        
+018c1a1c: add      w9, w24, w23                               
+018c1a20: ldr      w8, [x8, #0x20]                            
+018c1a24: add      w8, w9, w8                                 
+018c1a28: mov      x0, x19                                    
+018c1a2c: mov      w1, wzr                                    
+018c1a30: mov      w2, wzr                                    
+018c1a34: str      w8, [x19, #0x21c]                          
+018c1a38: bl       #0x18af3e0                                 BattleHandler$$CheckSkullEffects
+018c1a3c: ldr      x8, [x21]                                  
+018c1a40: mov      w19, w0                                    
+018c1a44: ldr      w9, [x8, #0xe4]                            
+018c1a48: cbnz     w9, #0x18c1a58                             
+018c1a4c: mov      x0, x8                                     
+018c1a50: bl       #0x17b69d4                                 
+018c1a54: ldr      x8, [x21]                                  
+018c1a58: ldr      x8, [x8, #0xb8]                            
+018c1a5c: ldr      x8, [x8, #0x40]                            
+018c1a60: cbz      x8, #0x18c1a94                             
+018c1a64: ldr      x8, [x8, #0x10]                            
+018c1a68: cbz      x8, #0x18c1a94                             
+018c1a6c: ldr      x8, [x8, #0x80]                            
+018c1a70: cbz      x8, #0x18c1a94                             
+018c1a74: ldr      w8, [x8, #0x18]                            
+018c1a78: ldp      x22, x21, [sp, #0x30]                      
+018c1a7c: ldp      x24, x23, [sp, #0x20]                      
+018c1a80: add      w0, w8, w19                                
+018c1a84: ldp      x20, x19, [sp, #0x40]                      
+018c1a88: ldp      x26, x25, [sp, #0x10]                      
+018c1a8c: ldr      x30, [sp], #0x50                           
+018c1a90: ret                                                 
+018c1a94: bl       #0x17b6b00                                 
+018c1a98: bl       #0x17b6b08                                 

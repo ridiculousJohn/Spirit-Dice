@@ -1,0 +1,11 @@
+public static class DiceUtility // TypeDefIndex: 6188
+{
+	// Methods
+
+	// RVA: 0x18F6F58 Offset: 0x18F2F58 VA: 0x18F6F58
+	public static int DiceOpposite(int inputNum) { }
+
+	// RVA: 0x18F6FB8 Offset: 0x18F2FB8 VA: 0x18F6FB8
+	public static int[] DiceAdjacent(int inputNum, int forbiddenNum1 = -1, int forbiddenNum2 = -1, int forbiddenNum3 = -1) { }
+}
+

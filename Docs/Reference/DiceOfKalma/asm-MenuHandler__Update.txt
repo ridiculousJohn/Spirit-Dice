@@ -1,0 +1,93 @@
+MenuHandler$$Update
+0190dde8: stp      x30, x23, [sp, #-0x30]!                    
+0190ddec: stp      x22, x21, [sp, #0x10]                      
+0190ddf0: stp      x20, x19, [sp, #0x20]                      
+0190ddf4: adrp     x20, #0x3c21000                            
+0190ddf8: mov      x19, x0                                    
+0190ddfc: ldrb     w8, [x20, #0x157]                          
+0190de00: tbnz     w8, #0, #0x190de18                         
+0190de04: adrp     x0, #0x39ad000                             
+0190de08: ldr      x0, [x0, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+0190de0c: bl       #0x17b6854                                 
+0190de10: mov      w8, #1                                     
+0190de14: strb     w8, [x20, #0x157]                          
+0190de18: adrp     x20, #0x3c20000                            
+0190de1c: adrp     x21, #0x39ad000                            
+0190de20: ldrb     w8, [x20, #0xff7]                          
+0190de24: ldr      x21, [x21, #0xe48]                         [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+0190de28: cbnz     w8, #0x190de40                             
+0190de2c: adrp     x0, #0x39ae000                             
+0190de30: ldr      x0, [x0, #0x258]                           [39ae258]  bytes=0000000000000000 -> 3a7a9e8 AdsManager_TypeInfo
+0190de34: bl       #0x17b6854                                 
+0190de38: mov      w8, #1                                     
+0190de3c: strb     w8, [x20, #0xff7]                          
+0190de40: adrp     x8, #0x39ae000                             
+0190de44: ldr      x8, [x8, #0x258]                           [39ae258]  bytes=0000000000000000 -> 3a7a9e8 AdsManager_TypeInfo
+0190de48: ldr      x0, [x21]                                  [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+0190de4c: ldr      x8, [x8]                                   [3a7a9e8] AdsManager_TypeInfo bytes=bd66002000000000
+0190de50: ldr      w9, [x0, #0xe4]                            
+0190de54: ldr      x8, [x8, #0xb8]                            
+0190de58: ldr      x20, [x8]                                  
+0190de5c: cbnz     w9, #0x190de64                             
+0190de60: bl       #0x17b69d4                                 
+0190de64: mov      x0, x20                                    
+0190de68: mov      x1, xzr                                    
+0190de6c: mov      x2, xzr                                    
+0190de70: bl       #0x34d43d0                                 UnityEngine.Object$$op_Inequality
+0190de74: tbz      w0, #0, #0x190df48                         
+0190de78: adrp     x22, #0x3c21000                            
+0190de7c: ldrb     w8, [x22, #0xac]                           
+0190de80: cbnz     w8, #0x190de98                             
+0190de84: adrp     x0, #0x39ae000                             
+0190de88: ldr      x0, [x0, #0x888]                           [39ae888]  bytes=0000000000000000 -> 3a7d5c0 IAPManager_TypeInfo
+0190de8c: bl       #0x17b6854                                 
+0190de90: mov      w8, #1                                     
+0190de94: strb     w8, [x22, #0xac]                           
+0190de98: adrp     x23, #0x39ae000                            
+0190de9c: ldr      x23, [x23, #0x888]                         [39ae888]  bytes=0000000000000000 -> 3a7d5c0 IAPManager_TypeInfo
+0190dea0: ldr      x0, [x21]                                  [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+0190dea4: ldr      x8, [x23]                                  [3a7d5c0] IAPManager_TypeInfo bytes=bd88002000000000
+0190dea8: ldr      w9, [x0, #0xe4]                            
+0190deac: ldr      x8, [x8, #0xb8]                            
+0190deb0: ldr      x20, [x8]                                  
+0190deb4: cbnz     w9, #0x190debc                             
+0190deb8: bl       #0x17b69d4                                 
+0190debc: mov      x0, x20                                    
+0190dec0: mov      x1, xzr                                    
+0190dec4: mov      x2, xzr                                    
+0190dec8: bl       #0x34d43d0                                 UnityEngine.Object$$op_Inequality
+0190decc: tbz      w0, #0, #0x190df48                         
+0190ded0: ldrb     w8, [x22, #0xac]                           
+0190ded4: cbnz     w8, #0x190deec                             
+0190ded8: adrp     x0, #0x39ae000                             
+0190dedc: ldr      x0, [x0, #0x888]                           [39ae888]  bytes=0000000000000000 -> 3a7d5c0 IAPManager_TypeInfo
+0190dee0: bl       #0x17b6854                                 
+0190dee4: mov      w8, #1                                     
+0190dee8: strb     w8, [x22, #0xac]                           
+0190deec: ldr      x8, [x23]                                  [3a7d5c0] IAPManager_TypeInfo bytes=bd88002000000000
+0190def0: ldr      x8, [x8, #0xb8]                            
+0190def4: ldr      x8, [x8]                                   
+0190def8: cbz      x8, #0x190df44                             
+0190defc: ldrb     w9, [x8, #0x5b]                            
+0190df00: cbz      w9, #0x190df24                             
+0190df04: ldr      x0, [x19, #0x68]                           
+0190df08: cbz      x0, #0x190df44                             
+0190df0c: ldp      x20, x19, [sp, #0x20]                      
+0190df10: mov      w1, #1                                     
+0190df14: ldp      x22, x21, [sp, #0x10]                      
+0190df18: mov      x2, xzr                                    
+0190df1c: ldp      x30, x23, [sp], #0x30                      
+0190df20: b        #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+0190df24: ldrb     w9, [x8, #0x5a]                            
+0190df28: cbnz     w9, #0x190df3c                             
+0190df2c: ldrb     w9, [x8, #0x59]                            
+0190df30: cbnz     w9, #0x190df3c                             
+0190df34: ldrb     w8, [x8, #0x58]                            
+0190df38: cbz      w8, #0x190df48                             
+0190df3c: ldr      x0, [x19, #0x70]                           
+0190df40: cbnz     x0, #0x190df0c                             
+0190df44: bl       #0x17b6b00                                 
+0190df48: ldp      x20, x19, [sp, #0x20]                      
+0190df4c: ldp      x22, x21, [sp, #0x10]                      
+0190df50: ldp      x30, x23, [sp], #0x30                      
+0190df54: ret                                                 

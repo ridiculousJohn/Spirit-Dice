@@ -1,0 +1,9 @@
+InventoryVisualizer$$DoSkullReroll
+01909710: stp      x30, x19, [sp, #-0x10]!                    
+01909714: mov      x19, x0                                    
+01909718: bl       #0x1909730                                 InventoryVisualizer$$SkullRerollCoroutine
+0190971c: mov      x1, x0                                     
+01909720: mov      x0, x19                                    
+01909724: mov      x2, xzr                                    
+01909728: ldp      x30, x19, [sp], #0x10                      
+0190972c: b        #0x34ce820                                 UnityEngine.MonoBehaviour$$StartCoroutine

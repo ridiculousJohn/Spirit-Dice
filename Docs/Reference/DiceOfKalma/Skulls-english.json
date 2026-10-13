@@ -1,0 +1,1167 @@
+[
+  {
+    "key": "Skulls.TriggerTitle",
+    "text": "Activation condition:",
+    "description": "The word \"condition\" refers to what condition causes the item to activate."
+  },
+  {
+    "key": "Skulls.Effect.BonesOnly",
+    "text": "<color=#1FADA6>+? BONES</color>",
+    "description": "BONES are the basic score units in the game. Basically Balatro Chips."
+  },
+  {
+    "key": "Skulls.Effect.MultOnly",
+    "text": "<color=#FF4751>+? MULT</color>",
+    "description": "MULT is short for multiplier."
+  },
+  {
+    "key": "Skulls.Effect.BonesAndMult",
+    "text": "<color=#1FADA6>+? BONES</color> and <color=#FF4751>+! MULT</color>",
+    "description": "BONES are the basic score units in the game. MULT is short for multiplier."
+  },
+  {
+    "key": "Skulls.Effect.RerollsOnlySingle",
+    "text": "<color=#EFAC1A>+? REROLL</color>",
+    "description": "REROLLs are used to roll selected dice again. These can be translated as throws as well."
+  },
+  {
+    "key": "Skulls.Effect.RerollsOnlyMultiple",
+    "text": "<color=#EFAC1A>+? REROLLS</color>",
+    "description": "REROLLs are used to roll selected dice again. These can be translated as throws as well."
+  },
+  {
+    "key": "Skulls.ActivationExampleTitle",
+    "text": "Example:",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AlreadyOwnedDesc",
+    "text": "You have this skull in your deck in different color.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.Effect.HealthLoss",
+    "text": "<color=#FF4751>-? RIBS</color>",
+    "description": "Note: translate as RIBS or Health."
+  },
+  {
+    "key": "Skulls.Effect.HealthGain",
+    "text": "<color=#1FADA6>+? RIBS</color>",
+    "description": "Note: translate as RIBS or Health."
+  },
+  {
+    "key": "Skulls.Effect.Total",
+    "text": "<color=#B18FCC>+? TOTAL</color>",
+    "description": "Note: translate the same as the TOTAL in GameUI tab."
+  },
+  {
+    "key": "Skulls.BlindSkull.Name",
+    "text": "BLIND SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BlindSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if no dice were <color=#EFAC1A>rerolled</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BlindSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> without <color=#EFAC1A>rerolling</color> any dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PirateSkull.Name",
+    "text": "PIRATE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PirateSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that contains a die with the number 1.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PirateSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11345.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CaptainSkull.Name",
+    "text": "CAPTAIN SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CaptainSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> exactly one die into the number 1. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CaptainSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 23456 into 12345.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CandleSkull.Name",
+    "text": "CANDLE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CandleSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if out of <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CandleSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> when out of <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ArcherSkull.Name",
+    "text": "ARCHER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ArcherSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the difference between the smallest and the largest die is smaller than 3.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ArcherSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23334.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BandagedSkull.Name",
+    "text": "BANDAGED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BandagedSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> with a smaller sum of dice than the initially rolled hand.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BandagedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11111 when the initially rolled hand was 11112.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GuardSkull.Name",
+    "text": "GUARD SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GuardSkull.Desc",
+    "text": "When reaching the last <color=#69A64E>hand</color> in a level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GuardSkull.DescExample",
+    "text": "There is only one <color=#69A64E>hand</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JesterSkull.Name",
+    "text": "JESTER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JesterSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> at least one die without changing its number. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JesterSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> a die with the number 1 back into the number 1.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ClairvoyantSkull.Name",
+    "text": "CLAIRVOYANT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ClairvoyantSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> at least three dice into the same number with a single <color=#EFAC1A>reroll</color>. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ClairvoyantSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 12345 into 55512.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RoyalSkull.Name",
+    "text": "ROYAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RoyalSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that contains a die with the number 6.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RoyalSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12366.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamblerSkull.Name",
+    "text": "GAMBLER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamblerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that is <color=#B18FCC>lower rank</color> than the previous <color=#69A64E>played hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamblerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> a <color=#B18FCC>Pair</color> when the previous <color=#69A64E>played hand</color> is a <color=#B18FCC>Two Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DaredevilSkull.Name",
+    "text": "DAREDEVIL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DaredevilSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that is <color=#B18FCC>higher rank</color> than the previous <color=#69A64E>played hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DaredevilSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> a <color=#B18FCC>Two Pair</color> when the previous <color=#69A64E>played hand</color> is a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SwindlerSkull.Name",
+    "text": "SWINDLER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SwindlerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that is the <color=#B18FCC>same rank</color> as the previous <color=#69A64E>played hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SwindlerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> a <color=#B18FCC>Pair</color> when the previous <color=#69A64E>played hand</color> is a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BettorSkull.Name",
+    "text": "BETTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BettorSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> without changing the <color=#B18FCC>rank</color> of the hand. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BettorSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> a <color=#B18FCC>Pair</color> into a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OccultSkull.Name",
+    "text": "OCCULT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OccultSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the dice is divisible by 5.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OccultSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11111 or 23456.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SplitSkull.Name",
+    "text": "SPLIT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SplitSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the two first dice is equal to the sum of the two last dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SplitSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 32132.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ScholarSkull.Name",
+    "text": "SCHOLAR SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ScholarSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the dice are in ascending or descending order.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ScholarSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12234 or 54333.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MerchantSkull.Name",
+    "text": "MERCHANT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MerchantSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> the dice into ascending or descending order. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MerchantSkull.DescExample",
+    "text": "After a <color=#EFAC1A>reroll</color>, the hand is 12234 or 54333.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FracturedSkull.Name",
+    "text": "FRACTURED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FracturedSkull.Desc",
+    "text": "When <color=#69A64E>playing</color> a <color=#B18FCC>High Die</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FracturedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12346.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ExecutionerSkull.Name",
+    "text": "EXECUTIONER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ExecutionerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if every die is different from its adjacent dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ExecutionerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12132.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BoltedSkull.Name",
+    "text": "BOLTED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BoltedSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that contains three adjacent dice with the same number.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BoltedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11123.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VampireSkull.Name",
+    "text": "VAMPIRE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VampireSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> that contains exactly a single die with the number 2.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VampireSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11123.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MachineSkull.Name",
+    "text": "MACHINE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MachineSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least one die is equal to <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MachineSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11123 when there is one <color=#EFAC1A>reroll</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AutomatonSkull.Name",
+    "text": "AUTOMATON SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AutomatonSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> at least one die into a number equal to <color=#69A64E>hands</color> left. Once per <color=#69A64E>hand</color>. ",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AutomatonSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 23456 into 13456 when there is one <color=#69A64E>hand</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CarnivalSkull.Name",
+    "text": "CARNIVAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CarnivalSkull.Desc",
+    "text": "After a <color=#EFAC1A>reroll</color> if all dice in hand differ from their adjacent dice by more than one. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.CarnivalSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 23456 into 26416.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrinitySkull.Name",
+    "text": "TRINITY SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrinitySkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the amount of <color=#EFAC1A>rerolls</color> is divisible by 3 and larger than 0.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrinitySkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> when the amount of <color=#EFAC1A>rerolls</color> is 3.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShotSkull.Name",
+    "text": "SHOT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShotSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the middle die is different from all the other dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShotSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11233.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FungalSkull.Name",
+    "text": "FUNGAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FungalSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> any amount of dice into a <color=#B18FCC>High Die</color> or <color=#B18FCC>Straight</color>. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FungalSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 23232 into 23456.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PartySkull.Name",
+    "text": "PARTY SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PartySkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if every other die is even and every other is odd.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PartySkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12121 or 23456.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.NerdSkull.Name",
+    "text": "NERD SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.NerdSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least one die is equal to the sum of its two adjacent dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.NerdSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12132.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GeekSkull.Name",
+    "text": "GEEK SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GeekSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> at least one die into the sum of its two adjacent dice. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GeekSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 11132 into 12132.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WeepingSkull.Name",
+    "text": "WEEPING SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WeepingSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if every die was <color=#EFAC1A>rerolled</color> at least once.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WeepingSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> after <color=#EFAC1A>rerolling</color> all dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BombSkull.Name",
+    "text": "BOMB SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BombSkull.Desc",
+    "text": "When <color=#EFAC1A>rerolling</color> exactly one die into a number equal to the amount of dice <color=#EFAC1A>rerolled</color>. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BombSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 11111 into 34511 when three dice were <color=#EFAC1A>rerolled</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JollySkull.Name",
+    "text": "JOLLY SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JollySkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the smallest die is equal to <color=#EFAC1A>rerolls</color> spent on the <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JollySkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23456 after using two <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MasqueSkull.Name",
+    "text": "MASQUE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MasqueSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if there are more <color=#EFAC1A>rerolls</color> than <color=#69A64E>hands</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MasqueSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> when there are 2 <color=#69A64E>hands</color> and 3 <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrenchSkull.Name",
+    "text": "TRENCH SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrenchSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the largest die is smaller or equal to <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TrenchSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11122 when there are 3 <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChokedSkull.Name",
+    "text": "CHOKED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChokedSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the largest amount of similar dice is equal to <color=#69A64E>hands</color> or <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChokedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11122 when there are 3 <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DJSkull.Name",
+    "text": "DJ SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DJSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the first and the last die is 6 or 8.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DJSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23456.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OfficerSkull.Name",
+    "text": "OFFICER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OfficerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the number on at least one die corresponds to its position in hand.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OfficerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12345.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DoctorSkull.Name",
+    "text": "DOCTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DoctorSkull.Desc",
+    "text": "When starting a new level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DoctorSkull.DescExample",
+    "text": "Start a new level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrinkingSkull.Name",
+    "text": "DRINKING SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrinkingSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the smallest or the largest die is equal to <color=#69A64E>hands</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrinkingSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23456 when there are 2 <color=#69A64E>hands</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChefSkull.Name",
+    "text": "CHEF SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChefSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the dice is less than 15.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChefSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23333.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OperaSkull.Name",
+    "text": "OPERA SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OperaSkull.Desc",
+    "text": "When <color=#69A64E>playing</color> a <color=#B18FCC>Two Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.OperaSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11223.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VirtualSkull.Name",
+    "text": "VIRTUAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VirtualSkull.Desc",
+    "text": "After a <color=#EFAC1A>reroll</color> if the sum of the <color=#EFAC1A>rerolled</color> dice is 8 or 10. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.VirtualSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> 11111 into 44111 by <color=#EFAC1A>rerolling</color> only the two first dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PrincessSkull.Name",
+    "text": "PRINCESS SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PrincessSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least 3 <color=#EFAC1A>rerolls</color> were spent on the <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PrincessSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> after spending 3 <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FloristSkull.Name",
+    "text": "FLORIST SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FloristSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if no dice differ from their adjacent dice by more than 1.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FloristSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12123.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PilotSkull.Name",
+    "text": "PILOT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PilotSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the first and the last die is larger than the sum of the dice between them.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PilotSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 21112.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FisherSkull.Name",
+    "text": "FISHER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FisherSkull.Desc",
+    "text": "When the initially rolled hand is a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.FisherSkull.DescExample",
+    "text": "The initially rolled hand is a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DemonSkull.Name",
+    "text": "DEMON SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DemonSkull.Desc",
+    "text": "When the initially rolled hand is <color=#B18FCC>higher rank</color> than the previous <color=#69A64E>played hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DemonSkull.DescExample",
+    "text": "The initially rolled hand is a <color=#B18FCC>Two Pair</color> when the previous <color=#69A64E>played hand</color> is a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TacticalSkull.Name",
+    "text": "TACTICAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TacticalSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the difference between the smallest and the largest die is larger than 3.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.TacticalSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 23336.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.YuleSkull.Name",
+    "text": "YULE SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.YuleSkull.Desc",
+    "text": "When starting a new level if there were no <color=#69A64E>hands</color> left at the end of the previous level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.YuleSkull.DescExample",
+    "text": "The previous level was finished with no <color=#69A64E>hands</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MinerSkull.Name",
+    "text": "MINER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MinerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if all dice are even or all dice are odd.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MinerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 22446 or 13335.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RitualSkull.Name",
+    "text": "RITUAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RitualSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the three dice in the middle is divisible by 3.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.RitualSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 21112.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamerSkull.Name",
+    "text": "GAMER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the first and the last die is equal to <color=#69A64E>hands</color> or <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.GamerSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12321 when there are two <color=#69A64E>hands</color> or <color=#EFAC1A>rerolls</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AstronautSkull.Name",
+    "text": "ASTRONAUT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AstronautSkull.Desc",
+    "text": "When starting a new level if only half or fewer of the <color=#69A64E>hands</color> of the previous level were <color=#69A64E>played</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AstronautSkull.DescExample",
+    "text": "The previous level was finished with only a single <color=#69A64E>hand</color> having been played.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MercySkull.Name",
+    "text": "MERCY SKULL",
+    "description": "Note: can also be translated as merciful skull."
+  },
+  {
+    "key": "Skulls.MercySkull.Desc",
+    "text": "After spending the last <color=#EFAC1A>reroll</color> if there is only one <color=#69A64E>hand</color> left. Once per level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MercySkull.DescExample",
+    "text": "Use your last <color=#EFAC1A>reroll</color> when there is only one <color=#69A64E>hand</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DealerSkull.Name",
+    "text": "DEALER SKULL",
+    "description": "Note: dealer refers to a card dealer or game master."
+  },
+  {
+    "key": "Skulls.DealerSkull.Desc",
+    "text": "After a <color=#EFAC1A>reroll</color> if the <color=#B18FCC>rank</color> of the hand was reduced by the <color=#EFAC1A>reroll</color>. Once per <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DealerSkull.DescExample",
+    "text": "<color=#EFAC1A>Reroll</color> a <color=#B18FCC>Two Pair</color> into a <color=#B18FCC>Pair</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BlankSkull.Name",
+    "text": "BLANK SKULL",
+    "description": "Note: can be translated as useless skull or empty skull."
+  },
+  {
+    "key": "Skulls.BlankSkull.Desc",
+    "text": "This skull does not do anything.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BlankSkull.DescExample",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AceSkull.Name",
+    "text": "ACE SKULL",
+    "description": "The word \"ace\" refers to fighter pilot ace."
+  },
+  {
+    "key": "Skulls.AceSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the three smallest dice is smaller or equal to the largest die.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.AceSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12366.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.BachelorSkull.Name",
+    "text": "BACHELOR SKULL",
+    "description": "Note: has to be different from Scholar Skull. Alternate name: Graduate Skull."
+  },
+  {
+    "key": "Skulls.BachelorSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the product of the second and the fourth die is larger or equal to the the sum of all the dice.",
+    "description": "Note: the word \"product\" refers to multiplication, for example, the product of 2 and 3 is 6."
+  },
+  {
+    "key": "Skulls.BachelorSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 13131.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.KnightSkull.Name",
+    "text": "KNIGHT SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.KnightSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the amount of <color=#69A64E>hands</color> left is even.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.KnightSkull.DescExample",
+    "text": "<color=#69A64E>Play a hand</color> when there are 2 <color=#69A64E>hands</color> left.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.InventorSkull.Name",
+    "text": "INVENTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.InventorSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least one die is equal to the difference between its two adjacent dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.InventorSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 43145.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SpikedSkull.Name",
+    "text": "SPIKED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SpikedSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the middle die is equal to the amount of odd dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.SpikedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12345.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PotSkull.Name",
+    "text": "POT SKULL",
+    "description": "The word \"pot\" refers to a cooking pot."
+  },
+  {
+    "key": "Skulls.PotSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the dice is larger than 22.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.PotSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 55553.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HalfSkull.Name",
+    "text": "HALF SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HalfSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the difference between the two first dice is equal to the difference between the two last dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HalfSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 45132.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChieftainSkull.Name",
+    "text": "CHIEFTAIN SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChieftainSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least two of the three dice in the middle are equal to each other.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ChieftainSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12232 or 11112.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShamanSkull.Name",
+    "text": "SHAMAN SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShamanSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of odd dice is larger than the sum of even dice.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.ShamanSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 33344.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HackerSkull.Name",
+    "text": "HACKER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HackerSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the sum of the dice is divisible only by itself.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.HackerSkull.DescExample",
+    "text": "The sum of the dice is a prime number, such as 5, 7, 11, 13, 17, 19, 23 or 29.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.NailedSkull.Name",
+    "text": "NAILED SKULL",
+    "description": "Can be alternatively translated as \"pincushion skull\"."
+  },
+  {
+    "key": "Skulls.NailedSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the first, the last and at least one other die all have the same number.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.NailedSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11231.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.QueenSkull.Name",
+    "text": "QUEEN SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.QueenSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if the amount of unique dice numbers is smaller than the amount of <color=#EFAC1A>rerolls</color> spent on the <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.QueenSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 11123 after spending at least four <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JudgeSkull.Name",
+    "text": "JUDGE SKULL",
+    "description": "Note: a court judge, not a referee."
+  },
+  {
+    "key": "Skulls.JudgeSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if there are no dice with numbers 1 or 6.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.JudgeSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 22345.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WelderSkull.Name",
+    "text": "WELDER SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WelderSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if there are at least four dice with the numbers 3 or 4.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.WelderSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 33445.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MusketeerSkull.Name",
+    "text": "MUSKETEER SKULL",
+    "description": "Alternative translation: Cavalier skull (do not mix with Knight skull)"
+  },
+  {
+    "key": "Skulls.MusketeerSkull.Desc",
+    "text": "When reaching the middle <color=#69A64E>hand</color> of a level.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.MusketeerSkull.DescExample",
+    "text": "Reach the third <color=#69A64E>hand</color> of a level that started with four or five <color=#69A64E>hands</color>.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrilledSkull.Name",
+    "text": "DRILLED SKULL",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrilledSkull.Desc",
+    "text": "When <color=#69A64E>playing a hand</color> if at least two of the three middle dice are equal to the first or last die.",
+    "description": ""
+  },
+  {
+    "key": "Skulls.DrilledSkull.DescExample",
+    "text": "<color=#69A64E>Play</color> 12232.",
+    "description": ""
+  }
+]

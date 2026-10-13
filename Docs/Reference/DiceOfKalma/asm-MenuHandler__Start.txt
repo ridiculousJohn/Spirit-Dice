@@ -1,0 +1,28 @@
+MenuHandler$$Start
+0190b90c: stp      x30, x21, [sp, #-0x20]!                    
+0190b910: stp      x20, x19, [sp, #0x10]                      
+0190b914: adrp     x20, #0x3c21000                            
+0190b918: adrp     x21, #0x39af000                            
+0190b91c: mov      x19, x0                                    
+0190b920: ldrb     w8, [x20, #0x152]                          
+0190b924: ldr      x21, [x21, #0xc20]                         [39afc20]  bytes=0000000000000000 -> 3a85698 MenuHandler.<Start>d__56_TypeInfo
+0190b928: tbnz     w8, #0, #0x190b940                         
+0190b92c: adrp     x0, #0x39af000                             
+0190b930: ldr      x0, [x0, #0xc20]                           [39afc20]  bytes=0000000000000000 -> 3a85698 MenuHandler.<Start>d__56_TypeInfo
+0190b934: bl       #0x17b6854                                 
+0190b938: mov      w8, #1                                     
+0190b93c: strb     w8, [x20, #0x152]                          
+0190b940: ldr      x0, [x21]                                  [3a85698] MenuHandler.<Start>d__56_TypeInfo bytes=95e5002000000000
+0190b944: bl       #0x17b6af0                                 
+0190b948: mov      x1, xzr                                    
+0190b94c: mov      x20, x0                                    
+0190b950: bl       #0x2b6c5c0                                 System.Object$$.ctor
+0190b954: mov      x0, x20                                    
+0190b958: mov      x1, x19                                    
+0190b95c: str      wzr, [x20, #0x10]                          
+0190b960: str      x19, [x0, #0x20]!                          
+0190b964: bl       #0x17b67f8                                 
+0190b968: mov      x0, x20                                    
+0190b96c: ldp      x20, x19, [sp, #0x10]                      
+0190b970: ldp      x30, x21, [sp], #0x20                      
+0190b974: ret                                                 

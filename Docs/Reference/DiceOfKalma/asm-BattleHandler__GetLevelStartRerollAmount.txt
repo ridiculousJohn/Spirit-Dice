@@ -1,0 +1,93 @@
+BattleHandler$$GetLevelStartRerollAmount
+018aa3ac: str      x30, [sp, #-0x40]!                         
+018aa3b0: stp      x24, x23, [sp, #0x10]                      
+018aa3b4: stp      x22, x21, [sp, #0x20]                      
+018aa3b8: stp      x20, x19, [sp, #0x30]                      
+018aa3bc: adrp     x19, #0x3c20000                            
+018aa3c0: mov      x20, x0                                    
+018aa3c4: ldrb     w8, [x19, #0xff3]                          
+018aa3c8: tbnz     w8, #0, #0x18aa404                         
+018aa3cc: adrp     x0, #0x39ad000                             
+018aa3d0: ldr      x0, [x0, #0xc68]                           [39adc68]  bytes=0000000000000000
+018aa3d4: bl       #0x17b6854                                 
+018aa3d8: adrp     x0, #0x39ad000                             
+018aa3dc: ldr      x0, [x0, #0xc48]                           [39adc48]  bytes=0000000000000000
+018aa3e0: bl       #0x17b6854                                 
+018aa3e4: adrp     x0, #0x39ad000                             
+018aa3e8: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000
+018aa3ec: bl       #0x17b6854                                 
+018aa3f0: adrp     x0, #0x39ad000                             
+018aa3f4: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000
+018aa3f8: bl       #0x17b6854                                 
+018aa3fc: mov      w8, #1                                     
+018aa400: strb     w8, [x19, #0xff3]                          
+018aa404: ldr      x0, [x20, #0x2d0]                          
+018aa408: cbz      x0, #0x18aa514                             
+018aa40c: adrp     x24, #0x39ad000                            
+018aa410: mov      w1, #4                                     
+018aa414: ldr      x24, [x24, #0xc48]                         [39adc48]  bytes=0000000000000000
+018aa418: ldr      w21, [x20, #0x3f0]                         
+018aa41c: ldr      x2, [x24]                                  
+018aa420: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018aa424: ldr      x8, [x20, #0x2d0]                          
+018aa428: cbz      x8, #0x18aa514                             
+018aa42c: adrp     x22, #0x39ad000                            
+018aa430: adrp     x23, #0x39ad000                            
+018aa434: mov      w19, w0                                    
+018aa438: ldr      x22, [x22, #0xc68]                         [39adc68]  bytes=0000000000000000
+018aa43c: ldr      x23, [x23, #0xc60]                         [39adc60]  bytes=0000000000000000
+018aa440: ldr      x2, [x24]                                  
+018aa444: mov      x0, x8                                     
+018aa448: mov      w1, #7                                     
+018aa44c: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018aa450: ldr      x8, [x22]                                  
+018aa454: ldrb     w10, [x20, #0x312]                         
+018aa458: mov      w20, w0                                    
+018aa45c: ldr      w9, [x8, #0xe4]                            
+018aa460: cbz      w10, #0x18aa4ec                            
+018aa464: cbnz     w9, #0x18aa474                             
+018aa468: mov      x0, x8                                     
+018aa46c: bl       #0x17b69d4                                 
+018aa470: ldr      x8, [x22]                                  
+018aa474: ldr      x0, [x23]                                  
+018aa478: ldr      x8, [x8, #0xb8]                            
+018aa47c: ldr      w9, [x0, #0xe4]                            
+018aa480: ldr      x22, [x8, #0x70]                           
+018aa484: cbnz     w9, #0x18aa490                             
+018aa488: bl       #0x17b69d4                                 
+018aa48c: ldr      x0, [x23]                                  
+018aa490: ldr      x8, [x0, #0xb8]                            
+018aa494: ldr      x8, [x8, #0x40]                            
+018aa498: cbz      x8, #0x18aa514                             
+018aa49c: ldr      x8, [x8, #0x10]                            
+018aa4a0: cbz      x8, #0x18aa514                             
+018aa4a4: cbz      x22, #0x18aa514                            
+018aa4a8: ldr      w8, [x8, #0x5c]                            
+018aa4ac: ldr      w9, [x22, #0x18]                           
+018aa4b0: sub      w8, w8, #1                                 
+018aa4b4: cmp      w8, w9                                     
+018aa4b8: b.hs     #0x18aa518                                 
+018aa4bc: add      x8, x22, w8, sxtw #2                       
+018aa4c0: and      w9, w19, #1                                
+018aa4c4: and      w10, w20, #1                               
+018aa4c8: sub      w9, w21, w9                                
+018aa4cc: ldp      x20, x19, [sp, #0x30]                      
+018aa4d0: ldr      w8, [x8, #0x20]                            
+018aa4d4: ldp      x22, x21, [sp, #0x20]                      
+018aa4d8: ldp      x24, x23, [sp, #0x10]                      
+018aa4dc: sub      w9, w9, w10                                
+018aa4e0: add      w0, w9, w8                                 
+018aa4e4: ldr      x30, [sp], #0x40                           
+018aa4e8: ret                                                 
+018aa4ec: cbnz     w9, #0x18aa4fc                             
+018aa4f0: mov      x0, x8                                     
+018aa4f4: bl       #0x17b69d4                                 
+018aa4f8: ldr      x8, [x22]                                  
+018aa4fc: ldr      x0, [x23]                                  
+018aa500: ldr      x8, [x8, #0xb8]                            
+018aa504: ldr      w9, [x0, #0xe4]                            
+018aa508: ldr      x22, [x8, #0x60]                           
+018aa50c: cbnz     w9, #0x18aa490                             
+018aa510: b        #0x18aa488                                 
+018aa514: bl       #0x17b6b00                                 
+018aa518: bl       #0x17b6b08                                 

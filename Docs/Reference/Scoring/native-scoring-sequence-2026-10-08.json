@@ -1,0 +1,58 @@
+{
+  "scope": "Read-only investigation of extracted Dice of Kalma ARM64 IL2CPP. Ordinary scoring flow; challenge branches are not fully reconstructed.",
+  "sources": {
+    "metadata": "Docs/work/dice-of-kalma/code/dump.cs",
+    "binary": "Docs/work/dice-of-kalma/libil2cpp.so",
+    "points": "Docs/Reference/DiceOfKalma/asm-BattleHandler._PointsCountCycle_d__194__MoveNext.txt",
+    "reroll": "Docs/Reference/DiceOfKalma/asm-BattleHandler._RerollDiceCycle_d__196__MoveNext.txt",
+    "resolver": "Docs/Reference/Modifiers/check-skull-effects-arm64.txt",
+    "prior_findings": "Docs/Reference/Modifiers/modifier-reference-findings.md"
+  },
+  "native_facts": [
+    {
+      "finding": "Mercy (trigger 54) activates after spending the last reroll while one hand remains. It is not deferred until PlayHand.",
+      "evidence": ["RerollBtnPress post-cost writes 0x18ab6d0-0x18ab6f4", "RerollDiceCycle CheckSkullEffects call 0x18e47b4", "Mercy H == 1 and R == 0 checks 0x18b9e04-0x18b9e48"]
+    },
+    {
+      "finding": "Initial/reroll bones and multiplier contributions accumulate into saved currentBones/currentMult and survive ordinary rerolls. Scoring begins from those values, then adds dice sum, category, upgrades and play-phase modifiers.",
+      "evidence": ["RunSaveData currentBones/currentMult offsets 0x30/0x34", "Resolver aggregate adds 0x18bfcac-0x18bfccc", "PointsCountCycle captures old totals 0x18dbb1c-0x18dbb24", "Dice sum adds 0x18dbbd4-0x18dbbe4", "Category/upgrades bones add 0x18ddac8-0x18ddad4", "ResetScoreCounting call after score processing 0x18dc46c"]
+    },
+    {
+      "finding": "PlayHand starts a coroutine which disables input before its first yield. The caller then spends one hand. Later play-phase predicates see that post-cost hand count.",
+      "evidence": ["PlayHand StartCoroutine 0x18ab3c4-0x18ab3dc", "allowInput = false 0x18dba4c", "first coroutine yield 0x18dba64-0x18dba78", "hands decrement 0x18ab43c-0x18ab444", "play CheckSkullEffects call 0x18e2ff0"]
+    },
+    {
+      "finding": "Modifier eligibility is scanned in ascending owned-inventory-slot order. All effects are accumulated synchronously; earlier grants do not change later predicates. Actual activations use owned-slot identity for the per-hand activation gate.",
+      "evidence": ["index initialization 0x18afa80", "slot fetch 0x18afab4-0x18afacc", "index increment 0x18bfa68", "slot activation Contains 0x18afb50-0x18afb70", "slot activation Add 0x18bdf3c-0x18bdf80", "aggregate commit 0x18bfcac-0x18bfccc"]
+    },
+    {
+      "finding": "The modifier animation cycles activated skulls one by one, while score counters animate aggregate before/after totals concurrently. Native presentation is not a sequence of per-modifier arithmetic increments.",
+      "evidence": ["CheckSkullEffects runs once 0x18e2ff0", "handSkullBox activated and DoSkullsRoll scheduled 0x18bfa9c-0x18bfb08", "aggregate Bones RollTexts 0x18e30f4", "aggregate Mult RollTexts 0x18e31c0", "aggregate Rerolls RollTexts 0x18e327c", "Each RollTexts is StartCoroutine without intervening yield", "SkullsRollAnimation time/count division 0x192b378-0x192b390", "per-item dice highlight 0x192b450-0x192b488", "per-item box flash 0x192b490", "per-item haptics 0x192b4b0", "per-item InitializeSkullBox 0x192b4dc", "per-item WaitForSeconds 0x192b4e0-0x192b500", "index increment after wait 0x192b398-0x192b3ac"]
+    },
+    {
+      "finding": "Native base animationTime is 0.5 seconds, and soundIntervalTime is 0.04 seconds. Dice/category use longAnimTime = 1 second. For N activated play modifiers, the aggregate animation lasts 0.5*(N+1) seconds; each icon receives that duration divided by N.",
+      "evidence": ["ConstantStorage static offsets: soundIntervalTime 0x14, animationTime 0x1c", "cctor 0x19271d8 loads 16 bytes at 0x9ae5e0: floats [100, 0.04, 1.5, 0.5]", "cctor 0x19271f0 stores q0/q1 at offsets 0x00/0x10", "longAnimTime double 0x18dbb3c-0x18dbb48", "N-1 times animationTime plus longAnimTime 0x18e301c-0x18e306c", "DoSkullsRoll same duration formula 0x18bfae4-0x18bfb08", "icon duration division 0x192b378-0x192b390"]
+    },
+    {
+      "finding": "Normal scoring highlights/counts the dice sum, then category/upgrades, then modifiers, then the multiplied total. Bone and multiplier box hit markers bracket their count animations. The total is calculated only after modifier totals are available.",
+      "evidence": ["dice highlight MarkHandBoneDice(true) 0x18df56c", "dice sum RollTexts 0x18df5c0", "dice highlight off 0x18df6f0", "category MarkHandMultDice 0x18e2c28", "category bones RollTexts 0x18e2cec", "category multiplier RollTexts 0x18e35cc", "category hit markers end 0x18e3624 and 0x18e3674", "modifier CheckSkullEffects 0x18e2ff0", "bones * multiplier 0x18e32fc-0x18e3304", "total RollTexts 0x18e3398", "total hit marker 0x18e33b8"]
+    },
+    {
+      "finding": "The next hand is rolled later in the points coroutine, after scoring presentation, rather than immediately replacing the displayed dice when PlayHand is pressed.",
+      "evidence": ["input disabled 0x18dba4c", "score cycle final UpdateFullUI 0x18e1a78", "RerollDiceCycle(true) 0x18e1b24-0x18e1b30", "next-hand coroutine started 0x18e1b40"]
+    }
+  ],
+  "engine_mapping_and_recommendations": [
+    "Current EncounterSession.Play completes its mechanical transaction synchronously and can call StartHand before returning. Preserve a pre-command presentation snapshot of the played dice, contributions and resources; reveal post-command next-hand state only after playback.",
+    "Use recorded contribution/event data for presentation. Never rerun eligibility while counter animations advance.",
+    "Previously activated initial/reroll contributions belong in starting displayed accumulators and must not be replayed or added again at PlayHand.",
+    "Explicit per-modifier numerical increments would be a deliberate presentation change from this native build, although they preserve arithmetic if driven from the same recorded contributions.",
+    "Native per-modifier dice highlights are derived from a parallel list built by CheckSkullEffects. The current ModifierContribution carries no affected-dice list; highlighting all played dice is a presentation choice unless the trigger's actual matching dice are reconstructed separately."
+  ],
+  "limits": [
+    "No live reference-device playback was performed in this investigation.",
+    "SoundManager calls were found in RollTexts, including Click1, Click4, Click5, CoinJingle0, CoinJingle2, Ding1 and Swoosh. Exact sound-to-counter branch mapping is not fully reconstructed here.",
+    "The claim that dice remain frozen is based on the input gate and delayed next-roll control flow, not a dedicated immutable native played-dice object.",
+    "Disassembler's inline register-derived annotations can be stale across branches. Conclusions use instructions, field offsets, named calls and explicit literal bytes, not incidental inferred addresses."
+  ]
+}

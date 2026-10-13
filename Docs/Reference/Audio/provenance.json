@@ -1,0 +1,90 @@
+{
+  "authoring": "Original mathematical synthesis authored for the Spirit House prototype.",
+  "license": "Project-authored material; no third-party samples or external media.",
+  "generator": "Tools/Audio/generate_spirit_audio.py",
+  "seed": 731082,
+  "sample_rate": 44100,
+  "encoding": "signed 16-bit PCM WAV",
+  "clips": {
+    "bone_wood_roll_01.wav": {
+      "duration_seconds": 0.54,
+      "channels": 1,
+      "peak_dbfs": -6.745,
+      "rms_dbfs": -20.564,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "31344e330e80a77b9d0c615bdd380f3c2e1311b47f42828ac9d1414321f52717"
+    },
+    "bone_wood_roll_02.wav": {
+      "duration_seconds": 0.54,
+      "channels": 1,
+      "peak_dbfs": -6.745,
+      "rms_dbfs": -20.899,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "ed2e9b62e6f29838acf4e31fbcf4b4c44d944d1a7c0ec44b1334f310b952cf9c"
+    },
+    "bone_wood_roll_03.wav": {
+      "duration_seconds": 0.54,
+      "channels": 1,
+      "peak_dbfs": -6.745,
+      "rms_dbfs": -20.396,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "06db2e80e370a8a336b11e6ae129dd1d1ab2e664ed06a1c7abda8695f881d017"
+    },
+    "rain_room_lantern_loop.wav": {
+      "duration_seconds": 12.0,
+      "channels": 2,
+      "peak_dbfs": -20.915,
+      "rms_dbfs": -33.815,
+      "boundary_step": 0.0085686,
+      "clipped_samples": 0,
+      "loop": true,
+      "sha256": "c4e16393d1e0362af409ed7eeb55399b106c2478a830949db55663a5bdcbd776"
+    },
+    "spirit_air.wav": {
+      "duration_seconds": 0.66,
+      "channels": 1,
+      "peak_dbfs": -15.391,
+      "rms_dbfs": -30.168,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "4a817c134d7a5a81a8b686469890ce6eade246238fec9b07d6014572e83d873a"
+    },
+    "score_bone_tick.wav": {
+      "duration_seconds": 0.12,
+      "channels": 1,
+      "peak_dbfs": -12.765,
+      "rms_dbfs": -27.417,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "3ec166b7a5dd80fd729d097ae6b3bfcc2c313553f6188f24cdb0c25789190dc5"
+    },
+    "stage_clear_warm.wav": {
+      "duration_seconds": 0.88,
+      "channels": 1,
+      "peak_dbfs": -10.458,
+      "rms_dbfs": -22.733,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "3897e989755fe1a76049de0f91b8c8cf751d2e83e22ff5f0d4ffe8ce8fa9f665"
+    },
+    "room_creak.wav": {
+      "duration_seconds": 1.1,
+      "channels": 1,
+      "peak_dbfs": -14.425,
+      "rms_dbfs": -26.205,
+      "boundary_step": 0.0,
+      "clipped_samples": 0,
+      "loop": false,
+      "sha256": "b8ce2dd572caa786da8f661320b32c83b2e86cb4932aecd68b87780665b8acfa"
+    }
+  }
+}

@@ -1,0 +1,266 @@
+ConstantStorage$$.cctor
+019270a4: stp      x29, x30, [sp, #-0x60]!                    
+019270a8: stp      x28, x27, [sp, #0x10]                      
+019270ac: stp      x26, x25, [sp, #0x20]                      
+019270b0: stp      x24, x23, [sp, #0x30]                      
+019270b4: stp      x22, x21, [sp, #0x40]                      
+019270b8: stp      x20, x19, [sp, #0x50]                      
+019270bc: adrp     x20, #0x39ad000                            
+019270c0: adrp     x21, #0x39ad000                            
+019270c4: adrp     x19, #0x39b0000                            
+019270c8: adrp     x24, #0x39b0000                            
+019270cc: adrp     x23, #0x39b0000                            
+019270d0: adrp     x22, #0x39b0000                            
+019270d4: adrp     x29, #0x39b0000                            
+019270d8: adrp     x28, #0x39b0000                            
+019270dc: adrp     x27, #0x39b0000                            
+019270e0: adrp     x26, #0x39b0000                            
+019270e4: adrp     x25, #0x3c21000                            
+019270e8: ldr      x20, [x20, #0xc68]                         [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+019270ec: ldr      x21, [x21, #0xc70]                         [39adc70]  bytes=0000000000000000 -> 3a7a0d0 int[]_TypeInfo
+019270f0: ldr      x19, [x19, #0x1d0]                         [39b01d0]  bytes=0000000000000000 -> 3aafa00 Field$<PrivateImplementationDetails>.E846C644B34A5EB65097EB4B70C60074060F7BC938D27C06187D8895A72DB3D3
+019270f4: ldr      x24, [x24, #0x1d8]                         [39b01d8]  bytes=0000000000000000 -> 3aaf9c8 Field$<PrivateImplementationDetails>.6BB5FD9B816CC94F1C72D6BA0B8358224F8AE620328117C778B2E2EEA51DDD6A
+019270f8: ldr      x23, [x23, #0x1e0]                         [39b01e0]  bytes=0000000000000000 -> 3aaf9b0 Field$<PrivateImplementationDetails>.1C535DF2BA2A5B86D3164332968B9B789EF3D7C3004CB5329F15041A093BECD1
+019270fc: ldr      x22, [x22, #0x1e8]                         [39b01e8]  bytes=0000000000000000 -> 3aafa08 Field$<PrivateImplementationDetails>.F12AF066F4D6A456B2AC765588F299C4183C613E18AC2C8DCD063D978BEBA0FF
+01927100: ldr      x29, [x29, #0x1f0]                         [39b01f0]  bytes=0000000000000000 -> 3aaf9f8 Field$<PrivateImplementationDetails>.E38BCEC7F8698D89576E04ABE6F937DFF828C426D4825A315A6F370C8D442C1C
+01927104: ldr      x28, [x28, #0x1f8]                         [39b01f8]  bytes=0000000000000000 -> 3aaf9d8 Field$<PrivateImplementationDetails>.9CCD2BC3A973A8CB84893948388D9CC508126C105F6E33C0319DFDB3C214A50C
+01927108: ldr      x27, [x27, #0x200]                         [39b0200]  bytes=0000000000000000 -> 3aaf9a0 Field$<PrivateImplementationDetails>.0C8BF2AF157CE7713648BAE260CA56F4F27BE981D82DCD8B9AB78558C56DDB22
+0192710c: ldr      x26, [x26, #0x208]                         [39b0208]  bytes=0000000000000000 -> 3aaf9a8 Field$<PrivateImplementationDetails>.0D18D8E14A479C9D762498CD1C03CACBC25F8761F8371BE2FBFB2B8D4B29B743
+01927110: ldrb     w8, [x25, #0x1ad]                          
+01927114: tbnz     w8, #0, #0x19271c8                         
+01927118: adrp     x0, #0x39ad000                             
+0192711c: ldr      x0, [x0, #0xc68]                           [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+01927120: bl       #0x17b6854                                 
+01927124: adrp     x0, #0x39ad000                             
+01927128: ldr      x0, [x0, #0xc70]                           [39adc70]  bytes=0000000000000000 -> 3a7a0d0 int[]_TypeInfo
+0192712c: bl       #0x17b6854                                 
+01927130: adrp     x0, #0x39b0000                             
+01927134: ldr      x0, [x0, #0x210]                           [39b0210]  bytes=0000000000000000 -> 3a7a180 LootType[]_TypeInfo
+01927138: bl       #0x17b6854                                 
+0192713c: adrp     x0, #0x39b0000                             
+01927140: ldr      x0, [x0, #0x200]                           [39b0200]  bytes=0000000000000000 -> 3aaf9a0 Field$<PrivateImplementationDetails>.0C8BF2AF157CE7713648BAE260CA56F4F27BE981D82DCD8B9AB78558C56DDB22
+01927144: bl       #0x17b6854                                 
+01927148: adrp     x0, #0x39b0000                             
+0192714c: ldr      x0, [x0, #0x208]                           [39b0208]  bytes=0000000000000000 -> 3aaf9a8 Field$<PrivateImplementationDetails>.0D18D8E14A479C9D762498CD1C03CACBC25F8761F8371BE2FBFB2B8D4B29B743
+01927150: bl       #0x17b6854                                 
+01927154: adrp     x0, #0x39b0000                             
+01927158: ldr      x0, [x0, #0x1e0]                           [39b01e0]  bytes=0000000000000000 -> 3aaf9b0 Field$<PrivateImplementationDetails>.1C535DF2BA2A5B86D3164332968B9B789EF3D7C3004CB5329F15041A093BECD1
+0192715c: bl       #0x17b6854                                 
+01927160: adrp     x0, #0x39b0000                             
+01927164: ldr      x0, [x0, #0x1d8]                           [39b01d8]  bytes=0000000000000000 -> 3aaf9c8 Field$<PrivateImplementationDetails>.6BB5FD9B816CC94F1C72D6BA0B8358224F8AE620328117C778B2E2EEA51DDD6A
+01927168: bl       #0x17b6854                                 
+0192716c: adrp     x0, #0x39b0000                             
+01927170: ldr      x0, [x0, #0x1f8]                           [39b01f8]  bytes=0000000000000000 -> 3aaf9d8 Field$<PrivateImplementationDetails>.9CCD2BC3A973A8CB84893948388D9CC508126C105F6E33C0319DFDB3C214A50C
+01927174: bl       #0x17b6854                                 
+01927178: adrp     x0, #0x39b0000                             
+0192717c: ldr      x0, [x0, #0x218]                           [39b0218]  bytes=0000000000000000 -> 3aaf9e0 Field$<PrivateImplementationDetails>.A1CB9CF8A0C9119BC00C5F61A4D867E399324FD35161E77EC453DAF866B2D0F1
+01927180: bl       #0x17b6854                                 
+01927184: adrp     x0, #0x39b0000                             
+01927188: ldr      x0, [x0, #0x220]                           [39b0220]  bytes=0000000000000000 -> 3aaf9e8 Field$<PrivateImplementationDetails>.AF626EBC7070A8BF41C0FC019C209DB5FEE9EFD710F13A6EA759B3E56B661034
+0192718c: bl       #0x17b6854                                 
+01927190: adrp     x0, #0x39b0000                             
+01927194: ldr      x0, [x0, #0x1f0]                           [39b01f0]  bytes=0000000000000000 -> 3aaf9f8 Field$<PrivateImplementationDetails>.E38BCEC7F8698D89576E04ABE6F937DFF828C426D4825A315A6F370C8D442C1C
+01927198: bl       #0x17b6854                                 
+0192719c: adrp     x0, #0x39b0000                             
+019271a0: ldr      x0, [x0, #0x1d0]                           [39b01d0]  bytes=0000000000000000 -> 3aafa00 Field$<PrivateImplementationDetails>.E846C644B34A5EB65097EB4B70C60074060F7BC938D27C06187D8895A72DB3D3
+019271a4: bl       #0x17b6854                                 
+019271a8: adrp     x0, #0x39b0000                             
+019271ac: ldr      x0, [x0, #0x1e8]                           [39b01e8]  bytes=0000000000000000 -> 3aafa08 Field$<PrivateImplementationDetails>.F12AF066F4D6A456B2AC765588F299C4183C613E18AC2C8DCD063D978BEBA0FF
+019271b0: bl       #0x17b6854                                 
+019271b4: adrp     x0, #0x39b0000                             
+019271b8: ldr      x0, [x0, #0x228]                           [39b0228]  bytes=0000000000000000 -> 3aafa10 Field$<PrivateImplementationDetails>.FB18C675CC71E72AD3C2DE850DE9B80AA3F83C161502ABE64D4749E3A9CFB33D
+019271bc: bl       #0x17b6854                                 
+019271c0: mov      w8, #1                                     
+019271c4: strb     w8, [x25, #0x1ad]                          
+019271c8: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019271cc: adrp     x9, #0x9ad000                              
+019271d0: adrp     x10, #0x9ae000                             
+019271d4: ldr      q0, [x9, #0xd10]                           [9add10]  bytes=00007a440000a04000007a4400002041
+019271d8: ldr      q1, [x10, #0x5e0]                          [9ae5e0]  bytes=0000c8420ad7233d0000c03f0000003f
+019271dc: mov      w9, #0xcccd                                
+019271e0: ldr      x8, [x8, #0xb8]                            
+019271e4: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+019271e8: movk     w9, #0x3e4c, lsl #16                       
+019271ec: mov      w1, #0xa                                   
+019271f0: stp      q0, q1, [x8]                               
+019271f4: str      w9, [x8, #0x20]                            
+019271f8: bl       #0x17b6944                                 
+019271fc: ldr      x1, [x19]                                  [3aafa00] Field$<PrivateImplementationDetails>.E846C644B34A5EB65097EB4B70C60074060F7BC938D27C06187D8895A72DB3D3 bytes=1900008000000000
+01927200: mov      x2, xzr                                    
+01927204: mov      x19, x0                                    
+01927208: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+0192720c: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927210: mov      x1, x19                                    
+01927214: ldr      x0, [x8, #0xb8]                            
+01927218: str      x19, [x0, #0x28]!                          
+0192721c: bl       #0x17b67f8                                 
+01927220: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927224: adrp     x9, #0x9af000                              
+01927228: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+0192722c: ldr      d0, [x9, #0xa58]                           [9afa58]  bytes=190000000a000000
+01927230: mov      w1, #0xa                                   
+01927234: ldr      x8, [x8, #0xb8]                            
+01927238: str      d0, [x8, #0x30]                            
+0192723c: bl       #0x17b6944                                 
+01927240: ldr      x1, [x24]                                  [3aaf9c8] Field$<PrivateImplementationDetails>.6BB5FD9B816CC94F1C72D6BA0B8358224F8AE620328117C778B2E2EEA51DDD6A bytes=0b00008000000000
+01927244: mov      x2, xzr                                    
+01927248: mov      x19, x0                                    
+0192724c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927250: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927254: mov      x1, x19                                    
+01927258: ldr      x0, [x8, #0xb8]                            
+0192725c: str      x19, [x0, #0x38]!                          
+01927260: bl       #0x17b67f8                                 
+01927264: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927268: mov      w1, #0xa                                   
+0192726c: bl       #0x17b6944                                 
+01927270: ldr      x1, [x23]                                  [3aaf9b0] Field$<PrivateImplementationDetails>.1C535DF2BA2A5B86D3164332968B9B789EF3D7C3004CB5329F15041A093BECD1 bytes=0500008000000000
+01927274: mov      x2, xzr                                    
+01927278: mov      x19, x0                                    
+0192727c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927280: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927284: mov      x1, x19                                    
+01927288: ldr      x0, [x8, #0xb8]                            
+0192728c: str      x19, [x0, #0x40]!                          
+01927290: bl       #0x17b67f8                                 
+01927294: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927298: mov      w1, #0x49                                  
+0192729c: bl       #0x17b6944                                 
+019272a0: ldr      x1, [x22]                                  [3aafa08] Field$<PrivateImplementationDetails>.F12AF066F4D6A456B2AC765588F299C4183C613E18AC2C8DCD063D978BEBA0FF bytes=1b00008000000000
+019272a4: mov      x2, xzr                                    
+019272a8: mov      x19, x0                                    
+019272ac: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+019272b0: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019272b4: mov      x1, x19                                    
+019272b8: ldr      x0, [x8, #0xb8]                            
+019272bc: str      x19, [x0, #0x48]!                          
+019272c0: bl       #0x17b67f8                                 
+019272c4: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+019272c8: mov      w1, #0x6f                                  
+019272cc: bl       #0x17b6944                                 
+019272d0: ldr      x1, [x29]                                  [3aaf9f8] Field$<PrivateImplementationDetails>.E38BCEC7F8698D89576E04ABE6F937DFF828C426D4825A315A6F370C8D442C1C bytes=1700008000000000
+019272d4: mov      x2, xzr                                    
+019272d8: mov      x19, x0                                    
+019272dc: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+019272e0: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019272e4: mov      x1, x19                                    
+019272e8: ldr      x0, [x8, #0xb8]                            
+019272ec: str      x19, [x0, #0x50]!                          
+019272f0: bl       #0x17b67f8                                 
+019272f4: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+019272f8: mov      w1, #0x6f                                  
+019272fc: bl       #0x17b6944                                 
+01927300: ldr      x1, [x28]                                  [3aaf9d8] Field$<PrivateImplementationDetails>.9CCD2BC3A973A8CB84893948388D9CC508126C105F6E33C0319DFDB3C214A50C bytes=0f00008000000000
+01927304: mov      x2, xzr                                    
+01927308: mov      x19, x0                                    
+0192730c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927310: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927314: mov      x1, x19                                    
+01927318: ldr      x0, [x8, #0xb8]                            
+0192731c: str      x19, [x0, #0x58]!                          
+01927320: bl       #0x17b67f8                                 
+01927324: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927328: mov      w1, #0x6f                                  
+0192732c: bl       #0x17b6944                                 
+01927330: ldr      x1, [x28]                                  [3aaf9d8] Field$<PrivateImplementationDetails>.9CCD2BC3A973A8CB84893948388D9CC508126C105F6E33C0319DFDB3C214A50C bytes=0f00008000000000
+01927334: mov      x2, xzr                                    
+01927338: mov      x19, x0                                    
+0192733c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927340: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927344: mov      x1, x19                                    
+01927348: ldr      x0, [x8, #0xb8]                            
+0192734c: str      x19, [x0, #0x60]!                          
+01927350: bl       #0x17b67f8                                 
+01927354: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927358: mov      w1, #0xa                                   
+0192735c: bl       #0x17b6944                                 
+01927360: ldr      x1, [x27]                                  [3aaf9a0] Field$<PrivateImplementationDetails>.0C8BF2AF157CE7713648BAE260CA56F4F27BE981D82DCD8B9AB78558C56DDB22 bytes=0100008000000000
+01927364: mov      x2, xzr                                    
+01927368: mov      x19, x0                                    
+0192736c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927370: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927374: mov      x1, x19                                    
+01927378: ldr      x0, [x8, #0xb8]                            
+0192737c: str      x19, [x0, #0x68]!                          
+01927380: bl       #0x17b67f8                                 
+01927384: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927388: mov      w1, #0xa                                   
+0192738c: bl       #0x17b6944                                 
+01927390: ldr      x1, [x27]                                  [3aaf9a0] Field$<PrivateImplementationDetails>.0C8BF2AF157CE7713648BAE260CA56F4F27BE981D82DCD8B9AB78558C56DDB22 bytes=0100008000000000
+01927394: mov      x2, xzr                                    
+01927398: mov      x19, x0                                    
+0192739c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+019273a0: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019273a4: mov      x1, x19                                    
+019273a8: ldr      x0, [x8, #0xb8]                            
+019273ac: str      x19, [x0, #0x70]!                          
+019273b0: bl       #0x17b67f8                                 
+019273b4: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+019273b8: mov      w1, #0xa                                   
+019273bc: bl       #0x17b6944                                 
+019273c0: ldr      x1, [x26]                                  [3aaf9a8] Field$<PrivateImplementationDetails>.0D18D8E14A479C9D762498CD1C03CACBC25F8761F8371BE2FBFB2B8D4B29B743 bytes=0300008000000000
+019273c4: mov      x2, xzr                                    
+019273c8: mov      x19, x0                                    
+019273cc: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+019273d0: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019273d4: mov      x1, x19                                    
+019273d8: ldr      x0, [x8, #0xb8]                            
+019273dc: str      x19, [x0, #0x78]!                          
+019273e0: bl       #0x17b67f8                                 
+019273e4: adrp     x8, #0x39b0000                             
+019273e8: mov      w1, #4                                     
+019273ec: ldr      x8, [x8, #0x210]                           [39b0210]  bytes=0000000000000000 -> 3a7a180 LootType[]_TypeInfo
+019273f0: ldr      x0, [x8]                                   [3a7a180] LootType[]_TypeInfo bytes=791a012000000000
+019273f4: bl       #0x17b6944                                 
+019273f8: adrp     x8, #0x39b0000                             
+019273fc: mov      x2, xzr                                    
+01927400: mov      x19, x0                                    
+01927404: ldr      x8, [x8, #0x218]                           [39b0218]  bytes=0000000000000000 -> 3aaf9e0 Field$<PrivateImplementationDetails>.A1CB9CF8A0C9119BC00C5F61A4D867E399324FD35161E77EC453DAF866B2D0F1
+01927408: ldr      x1, [x8]                                   [3aaf9e0] Field$<PrivateImplementationDetails>.A1CB9CF8A0C9119BC00C5F61A4D867E399324FD35161E77EC453DAF866B2D0F1 bytes=1100008000000000
+0192740c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927410: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927414: mov      x1, x19                                    
+01927418: ldr      x0, [x8, #0xb8]                            
+0192741c: str      x19, [x0, #0x80]!                          
+01927420: bl       #0x17b67f8                                 
+01927424: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927428: mov      w1, #0xc                                   
+0192742c: bl       #0x17b6944                                 
+01927430: adrp     x8, #0x39b0000                             
+01927434: mov      x2, xzr                                    
+01927438: mov      x19, x0                                    
+0192743c: ldr      x8, [x8, #0x228]                           [39b0228]  bytes=0000000000000000 -> 3aafa10 Field$<PrivateImplementationDetails>.FB18C675CC71E72AD3C2DE850DE9B80AA3F83C161502ABE64D4749E3A9CFB33D
+01927440: ldr      x1, [x8]                                   [3aafa10] Field$<PrivateImplementationDetails>.FB18C675CC71E72AD3C2DE850DE9B80AA3F83C161502ABE64D4749E3A9CFB33D bytes=1d00008000000000
+01927444: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927448: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+0192744c: mov      x1, x19                                    
+01927450: ldr      x0, [x8, #0xb8]                            
+01927454: str      x19, [x0, #0x88]!                          
+01927458: bl       #0x17b67f8                                 
+0192745c: ldr      x0, [x21]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+01927460: mov      w1, #5                                     
+01927464: bl       #0x17b6944                                 
+01927468: adrp     x8, #0x39b0000                             
+0192746c: mov      x2, xzr                                    
+01927470: mov      x19, x0                                    
+01927474: ldr      x8, [x8, #0x220]                           [39b0220]  bytes=0000000000000000 -> 3aaf9e8 Field$<PrivateImplementationDetails>.AF626EBC7070A8BF41C0FC019C209DB5FEE9EFD710F13A6EA759B3E56B661034
+01927478: ldr      x1, [x8]                                   [3aaf9e8] Field$<PrivateImplementationDetails>.AF626EBC7070A8BF41C0FC019C209DB5FEE9EFD710F13A6EA759B3E56B661034 bytes=1300008000000000
+0192747c: bl       #0x2a536f8                                 System.Runtime.CompilerServices.RuntimeHelpers$$InitializeArray
+01927480: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927484: mov      x1, x19                                    
+01927488: ldr      x0, [x8, #0xb8]                            
+0192748c: str      x19, [x0, #0x90]!                          
+01927490: bl       #0x17b67f8                                 
+01927494: ldr      x8, [x20]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01927498: ldp      x20, x19, [sp, #0x50]                      
+0192749c: ldp      x22, x21, [sp, #0x40]                      
+019274a0: ldr      x8, [x8, #0xb8]                            
+019274a4: ldp      x24, x23, [sp, #0x30]                      
+019274a8: ldp      x26, x25, [sp, #0x20]                      
+019274ac: str      wzr, [x8, #0x98]                           
+019274b0: ldp      x28, x27, [sp, #0x10]                      
+019274b4: stur     wzr, [x8, #0x9b]                           
+019274b8: stp      xzr, xzr, [x8, #0xa0]                      
+019274bc: strh     wzr, [x8, #0xb0]                           
+019274c0: ldp      x29, x30, [sp], #0x60                      
+019274c4: ret                                                 

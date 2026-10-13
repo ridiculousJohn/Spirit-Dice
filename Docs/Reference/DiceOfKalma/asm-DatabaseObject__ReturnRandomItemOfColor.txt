@@ -1,0 +1,566 @@
+DatabaseObject$$ReturnRandomItemOfColor
+01927734: sub      sp, sp, #0x80                              
+01927738: stp      x29, x30, [sp, #0x20]                      
+0192773c: stp      x28, x27, [sp, #0x30]                      
+01927740: stp      x26, x25, [sp, #0x40]                      
+01927744: stp      x24, x23, [sp, #0x50]                      
+01927748: stp      x22, x21, [sp, #0x60]                      
+0192774c: stp      x20, x19, [sp, #0x70]                      
+01927750: str      x6, [sp]                                   
+01927754: adrp     x21, #0x3c21000                            
+01927758: adrp     x19, #0x39af000                            
+0192775c: stp      w2, w1, [sp, #0x18]                        
+01927760: adrp     x29, #0x39ad000                            
+01927764: adrp     x28, #0x39ad000                            
+01927768: ldr      x19, [x19, #0x5c0]                         [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+0192776c: ldrb     w8, [x21, #0x1b0]                          
+01927770: ldr      x29, [x29, #0xe40]                         [39ade40]  bytes=0000000000000000 -> 3a782e8 System.Collections.Generic.List<Item>_TypeInfo
+01927774: ldr      x28, [x28, #0xde8]                         [39adde8]  bytes=0000000000000000 -> 3a90ee0 Method$System.Collections.Generic.List<Item>..ctor()
+01927778: mov      x26, x5                                    
+0192777c: mov      x22, x4                                    
+01927780: mov      w25, w3                                    
+01927784: mov      x20, x0                                    
+01927788: tbnz     w8, #0, #0x1927878                         
+0192778c: adrp     x0, #0x39ae000                             
+01927790: ldr      x0, [x0, #0x310]                           [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+01927794: bl       #0x17b6854                                 
+01927798: adrp     x0, #0x39ad000                             
+0192779c: ldr      x0, [x0, #0xdd0]                           [39addd0]  bytes=0000000000000000 -> 3a90ee8 Method$System.Collections.Generic.List<Item>.Add()
+019277a0: bl       #0x17b6854                                 
+019277a4: adrp     x0, #0x39b0000                             
+019277a8: ldr      x0, [x0, #0x258]                           [39b0258]  bytes=0000000000000000 -> 3a90ef0 Method$System.Collections.Generic.List<Item>.Clear()
+019277ac: bl       #0x17b6854                                 
+019277b0: adrp     x0, #0x39ad000                             
+019277b4: ldr      x0, [x0, #0xc78]                           [39adc78]  bytes=0000000000000000 -> 3a90da8 Method$System.Collections.Generic.List<int>.Clear()
+019277b8: bl       #0x17b6854                                 
+019277bc: adrp     x0, #0x39b0000                             
+019277c0: ldr      x0, [x0, #0x260]                           [39b0260]  bytes=0000000000000000 -> 3a90ef8 Method$System.Collections.Generic.List<Item>.Contains()
+019277c4: bl       #0x17b6854                                 
+019277c8: adrp     x0, #0x39ad000                             
+019277cc: ldr      x0, [x0, #0xde8]                           [39adde8]  bytes=0000000000000000 -> 3a90ee0 Method$System.Collections.Generic.List<Item>..ctor()
+019277d0: bl       #0x17b6854                                 
+019277d4: adrp     x0, #0x39ad000                             
+019277d8: ldr      x0, [x0, #0xe00]                           [39ade00]  bytes=0000000000000000 -> 3a90ed0 Method$System.Collections.Generic.List<InventorySlot>.get_Count()
+019277dc: bl       #0x17b6854                                 
+019277e0: adrp     x0, #0x39ad000                             
+019277e4: ldr      x0, [x0, #0xe08]                           [39ade08]  bytes=0000000000000000 -> 3a90f00 Method$System.Collections.Generic.List<Item>.get_Count()
+019277e8: bl       #0x17b6854                                 
+019277ec: adrp     x0, #0x39ad000                             
+019277f0: ldr      x0, [x0, #0xd08]                           [39add08]  bytes=0000000000000000 -> 3a90e00 Method$System.Collections.Generic.List<int>.get_Count()
+019277f4: bl       #0x17b6854                                 
+019277f8: adrp     x0, #0x39af000                             
+019277fc: ldr      x0, [x0, #0x758]                           [39af758]  bytes=0000000000000000 -> 3a90f08 Method$System.Collections.Generic.List<Item>.get_Item()
+01927800: bl       #0x17b6854                                 
+01927804: adrp     x0, #0x39ad000                             
+01927808: ldr      x0, [x0, #0xe18]                           [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+0192780c: bl       #0x17b6854                                 
+01927810: adrp     x0, #0x39ad000                             
+01927814: ldr      x0, [x0, #0xd10]                           [39add10]  bytes=0000000000000000 -> 3a90e08 Method$System.Collections.Generic.List<int>.get_Item()
+01927818: bl       #0x17b6854                                 
+0192781c: adrp     x0, #0x39ad000                             
+01927820: ldr      x0, [x0, #0xe40]                           [39ade40]  bytes=0000000000000000 -> 3a782e8 System.Collections.Generic.List<Item>_TypeInfo
+01927824: bl       #0x17b6854                                 
+01927828: adrp     x0, #0x39ad000                             
+0192782c: ldr      x0, [x0, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+01927830: bl       #0x17b6854                                 
+01927834: adrp     x0, #0x39af000                             
+01927838: ldr      x0, [x0, #0x5c0]                           [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+0192783c: bl       #0x17b6854                                 
+01927840: adrp     x0, #0x39ad000                             
+01927844: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+01927848: bl       #0x17b6854                                 
+0192784c: adrp     x0, #0x39ae000                             
+01927850: ldr      x0, [x0, #0x250]                           [39ae250]  bytes=0000000000000000 -> 3a95438 Method$Source.Data.Serialization.SaveStore<ExpandedSaveData>.get_Data()
+01927854: bl       #0x17b6854                                 
+01927858: adrp     x0, #0x39b0000                             
+0192785c: ldr      x0, [x0, #0x268]                           [39b0268]  bytes=0000000000000000 -> 3abec80 No suitable skulls found, blank skull returned.
+01927860: bl       #0x17b6854                                 
+01927864: adrp     x0, #0x39b0000                             
+01927868: ldr      x0, [x0, #0x270]                           [39b0270]  bytes=0000000000000000 -> 3abee70 Not enough suitable skulls found, allowing previously ignored skulls to reappear.
+0192786c: bl       #0x17b6854                                 
+01927870: mov      w8, #1                                     
+01927874: strb     w8, [x21, #0x1b0]                          
+01927878: adrp     x21, #0x39ad000                            
+0192787c: adrp     x23, #0x39ad000                            
+01927880: ldr      x21, [x21, #0xe18]                         [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+01927884: ldr      x23, [x23, #0xdd0]                         [39addd0]  bytes=0000000000000000 -> 3a90ee8 Method$System.Collections.Generic.List<Item>.Add()
+01927888: ldr      x0, [x19]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+0192788c: bl       #0x17b6af0                                 
+01927890: mov      w1, w25                                    
+01927894: mov      x2, xzr                                    
+01927898: mov      x19, x0                                    
+0192789c: bl       #0x2b3b0d0                                 System.Random$$.ctor
+019278a0: ldr      x0, [x29]                                  [3a782e8] System.Collections.Generic.List<Item>_TypeInfo bytes=2340002000000000
+019278a4: bl       #0x17b6af0                                 
+019278a8: ldr      x1, [x28]                                  [3a90ee0] Method$System.Collections.Generic.List<Item>..ctor() bytes=9fc902c000000000
+019278ac: mov      x27, x0                                    
+019278b0: bl       #0x244aec4                                 System.Collections.Generic.List<object>$$.ctor
+019278b4: cbz      x22, #0x1927990                            
+019278b8: ldr      x2, [x21]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+019278bc: mov      x0, x22                                    
+019278c0: mov      w1, wzr                                    
+019278c4: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+019278c8: cbz      x0, #0x192798c                             
+019278cc: mov      w25, wzr                                   
+019278d0: adrp     x8, #0x39ad000                             
+019278d4: ldr      x8, [x8, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+019278d8: ldr      x24, [x0, #0x10]                           
+019278dc: ldr      x8, [x8]                                   [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+019278e0: ldr      w9, [x8, #0xe4]                            
+019278e4: cbnz     w9, #0x19278f0                             
+019278e8: mov      x0, x8                                     
+019278ec: bl       #0x17b69d4                                 
+019278f0: mov      x0, x24                                    
+019278f4: mov      x1, xzr                                    
+019278f8: mov      x2, xzr                                    
+019278fc: bl       #0x34d43d0                                 UnityEngine.Object$$op_Inequality
+01927900: tbz      w0, #0, #0x1927990                         
+01927904: ldr      x2, [x21]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01927908: mov      x0, x22                                    
+0192790c: mov      w1, w25                                    
+01927910: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01927914: cbz      x0, #0x192798c                             
+01927918: cbz      x27, #0x192798c                            
+0192791c: ldr      w10, [x27, #0x1c]                          
+01927920: ldr      x8, [x27, #0x10]                           
+01927924: ldr      x1, [x0, #0x10]                            
+01927928: ldr      x9, [x23]                                  [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+0192792c: add      w10, w10, #1                               
+01927930: str      w10, [x27, #0x1c]                          
+01927934: cbz      x8, #0x192798c                             
+01927938: ldrsw    x10, [x27, #0x18]                          
+0192793c: ldr      w11, [x8, #0x18]                           
+01927940: cmp      w10, w11                                   
+01927944: b.hs     #0x1927960                                 
+01927948: add      x0, x8, x10, lsl #3                        
+0192794c: add      w9, w10, #1                                
+01927950: str      w9, [x27, #0x18]                           
+01927954: str      x1, [x0, #0x20]!                           
+01927958: bl       #0x17b67f8                                 
+0192795c: b        #0x1927974                                 
+01927960: ldr      x8, [x9, #0x20]                            
+01927964: mov      x0, x27                                    
+01927968: ldr      x8, [x8, #0xc0]                            
+0192796c: ldr      x2, [x8, #0x70]                            
+01927970: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927974: ldr      x2, [x21]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01927978: add      w25, w25, #1                               
+0192797c: mov      x0, x22                                    
+01927980: mov      w1, w25                                    
+01927984: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01927988: cbnz     x0, #0x19278d0                             
+0192798c: bl       #0x17b6b00                                 
+01927990: adrp     x21, #0x39ad000                            
+01927994: ldr      x21, [x21, #0xd10]                         [39add10]  bytes=0000000000000000 -> 3a90e08 Method$System.Collections.Generic.List<int>.get_Item()
+01927998: cbz      x26, #0x1927a44                            
+0192799c: ldr      w8, [x26, #0x18]                           
+019279a0: cmp      w8, #1                                     
+019279a4: b.lt     #0x1927a44                                 
+019279a8: mov      w25, wzr                                   
+019279ac: ldr      x2, [x21]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+019279b0: mov      x0, x26                                    
+019279b4: mov      w1, w25                                    
+019279b8: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019279bc: mov      w1, w0                                     
+019279c0: mov      x0, x20                                    
+019279c4: bl       #0x19274c8                                 DatabaseObject$$GetItemByID
+019279c8: cbz      x27, #0x192798c                            
+019279cc: ldr      w10, [x27, #0x1c]                          
+019279d0: ldr      x8, [x27, #0x10]                           
+019279d4: ldr      x9, [x23]                                  [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+019279d8: add      w10, w10, #1                               
+019279dc: str      w10, [x27, #0x1c]                          
+019279e0: cbz      x8, #0x192798c                             
+019279e4: ldrsw    x10, [x27, #0x18]                          
+019279e8: ldr      w11, [x8, #0x18]                           
+019279ec: mov      x1, x0                                     
+019279f0: cmp      w10, w11                                   
+019279f4: b.hs     #0x1927a10                                 
+019279f8: add      x0, x8, x10, lsl #3                        
+019279fc: add      w9, w10, #1                                
+01927a00: str      w9, [x27, #0x18]                           
+01927a04: str      x1, [x0, #0x20]!                           
+01927a08: bl       #0x17b67f8                                 
+01927a0c: b        #0x1927a24                                 
+01927a10: ldr      x8, [x9, #0x20]                            
+01927a14: mov      x0, x27                                    
+01927a18: ldr      x8, [x8, #0xc0]                            
+01927a1c: ldr      x2, [x8, #0x70]                            
+01927a20: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927a24: ldr      w8, [x26, #0x18]                           
+01927a28: add      w25, w25, #1                               
+01927a2c: cmp      w25, w8                                    
+01927a30: b.lt     #0x19279ac                                 
+01927a34: ldr      w1, [sp, #0x1c]                            
+01927a38: mov      x0, x20                                    
+01927a3c: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927a40: b        #0x1927a54                                 
+01927a44: ldr      w1, [sp, #0x1c]                            
+01927a48: mov      x0, x20                                    
+01927a4c: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927a50: cbz      x27, #0x192798c                            
+01927a54: ldr      w10, [x27, #0x1c]                          
+01927a58: ldr      x8, [x27, #0x10]                           
+01927a5c: mov      x1, x0                                     
+01927a60: ldr      x9, [x23]                                  [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927a64: add      w10, w10, #1                               
+01927a68: str      w10, [x27, #0x1c]                          
+01927a6c: cbz      x8, #0x192798c                             
+01927a70: ldrsw    x10, [x27, #0x18]                          
+01927a74: ldr      w11, [x8, #0x18]                           
+01927a78: str      x19, [sp, #8]                              
+01927a7c: cmp      w10, w11                                   
+01927a80: b.hs     #0x1927a9c                                 
+01927a84: add      x0, x8, x10, lsl #3                        
+01927a88: add      w9, w10, #1                                
+01927a8c: str      w9, [x27, #0x18]                           
+01927a90: str      x1, [x0, #0x20]!                           
+01927a94: bl       #0x17b67f8                                 
+01927a98: b        #0x1927ab0                                 
+01927a9c: ldr      x8, [x9, #0x20]                            
+01927aa0: mov      x0, x27                                    
+01927aa4: ldr      x8, [x8, #0xc0]                            
+01927aa8: ldr      x2, [x8, #0x70]                            
+01927aac: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927ab0: ldr      x0, [x29]                                  [3a782e8] System.Collections.Generic.List<Item>_TypeInfo bytes=2340002000000000
+01927ab4: bl       #0x17b6af0                                 
+01927ab8: ldr      x1, [x28]                                  [3a90ee0] Method$System.Collections.Generic.List<Item>..ctor() bytes=9fc902c000000000
+01927abc: mov      x29, x0                                    
+01927ac0: bl       #0x244aec4                                 System.Collections.Generic.List<object>$$.ctor
+01927ac4: ldr      x23, [x20, #0x18]                          
+01927ac8: cbz      x23, #0x192798c                            
+01927acc: ldr      w8, [x23, #0x18]                           [3a90f00] Method$System.Collections.Generic.List<Item>.get_Count() bytes=a7c902c000000000
+01927ad0: ldr      w24, [sp, #0x18]                           
+01927ad4: str      x29, [sp, #0x10]                           
+01927ad8: cmp      w8, #1                                     
+01927adc: b.lt     #0x1927c18                                 
+01927ae0: mov      w19, wzr                                   
+01927ae4: cmp      w19, w8                                    
+01927ae8: b.hs     #0x1928004                                 
+01927aec: add      x8, x23, w19, sxtw #3                      
+01927af0: ldr      x28, [x8, #0x20]                           
+01927af4: cbz      x28, #0x192798c                            
+01927af8: ldr      w8, [x28, #0x2c]                           [3a90f0c]  bytes=00000000abc902c0
+01927afc: ldr      w9, [sp, #0x1c]                            
+01927b00: cmp      w8, w9                                     
+01927b04: b.ne     #0x1927c08                                 
+01927b08: ldr      w8, [x28, #0x28]                           [3a90f08] Method$System.Collections.Generic.List<Item>.get_Item() bytes=a9c902c000000000
+01927b0c: cmp      w8, w24                                    
+01927b10: b.gt     #0x1927c08                                 
+01927b14: adrp     x8, #0x39b0000                             
+01927b18: mov      x0, x27                                    
+01927b1c: mov      x1, x28                                    
+01927b20: ldr      x8, [x8, #0x260]                           [39b0260]  bytes=0000000000000000 -> 3a90ef8 Method$System.Collections.Generic.List<Item>.Contains()
+01927b24: ldr      x2, [x8]                                   [3a90ef8] Method$System.Collections.Generic.List<Item>.Contains() bytes=a5c902c000000000
+01927b28: bl       #0x244bac8                                 System.Collections.Generic.List<object>$$Contains
+01927b2c: tbnz     w0, #0, #0x1927c08                         
+01927b30: cbz      x26, #0x1927ba0                            
+01927b34: ldr      w8, [x26, #0x18]                           
+01927b38: cmp      w8, #1                                     
+01927b3c: b.lt     #0x1927ba0                                 
+01927b40: mov      w29, wzr                                   
+01927b44: mov      w25, #1                                    
+01927b48: ldr      x2, [x21]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01927b4c: ldr      x24, [x28, #0x18]                          [3a90ef8] Method$System.Collections.Generic.List<Item>.Contains() bytes=a5c902c000000000
+01927b50: mov      x0, x26                                    
+01927b54: mov      w1, w29                                    
+01927b58: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01927b5c: mov      w1, w0                                     
+01927b60: mov      x0, x20                                    
+01927b64: bl       #0x19274c8                                 DatabaseObject$$GetItemByID
+01927b68: cbz      x0, #0x192798c                             
+01927b6c: ldr      x1, [x0, #0x18]                            
+01927b70: mov      x0, x24                                    
+01927b74: mov      x2, xzr                                    
+01927b78: bl       #0x29a3e70                                 System.String$$op_Equality
+01927b7c: ldr      w8, [x26, #0x18]                           
+01927b80: add      w29, w29, #1                               
+01927b84: eor      w9, w0, #1                                 
+01927b88: and      w25, w9, w25                               
+01927b8c: cmp      w29, w8                                    
+01927b90: b.lt     #0x1927b48                                 
+01927b94: ldr      w24, [sp, #0x18]                           
+01927b98: ldr      x29, [sp, #0x10]                           
+01927b9c: tbz      w25, #0, #0x1927c08                        
+01927ba0: cbz      x29, #0x192798c                            
+01927ba4: adrp     x9, #0x39ad000                             
+01927ba8: ldr      w10, [x29, #0x1c]                          [3a78304]  bytes=000000002d0f0120
+01927bac: ldr      x8, [x29, #0x10]                           [3a782f8] System.Collections.Generic.List<JToken>_TypeInfo bytes=290f012000000000
+01927bb0: ldr      x9, [x9, #0xdd0]                           [39addd0]  bytes=0000000000000000 -> 3a90ee8 Method$System.Collections.Generic.List<Item>.Add()
+01927bb4: add      w10, w10, #1                               
+01927bb8: ldr      x9, [x9]                                   [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927bbc: str      w10, [x29, #0x1c]                          
+01927bc0: cbz      x8, #0x192798c                             
+01927bc4: ldrsw    x10, [x29, #0x18]                          
+01927bc8: ldr      w11, [x8, #0x18]                           
+01927bcc: cmp      w10, w11                                   
+01927bd0: b.hs     #0x1927bf0                                 
+01927bd4: add      x0, x8, x10, lsl #3                        
+01927bd8: add      w9, w10, #1                                
+01927bdc: mov      x1, x28                                    
+01927be0: str      w9, [x29, #0x18]                           
+01927be4: str      x28, [x0, #0x20]!                          
+01927be8: bl       #0x17b67f8                                 
+01927bec: b        #0x1927c08                                 
+01927bf0: ldr      x8, [x9, #0x20]                            
+01927bf4: mov      x0, x29                                    
+01927bf8: mov      x1, x28                                    
+01927bfc: ldr      x8, [x8, #0xc0]                            
+01927c00: ldr      x2, [x8, #0x70]                            
+01927c04: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927c08: ldr      w8, [x23, #0x18]                           [3a90f00] Method$System.Collections.Generic.List<Item>.get_Count() bytes=a7c902c000000000
+01927c0c: add      w19, w19, #1                               
+01927c10: cmp      w19, w8                                    
+01927c14: b.lt     #0x1927ae4                                 
+01927c18: cbz      x29, #0x192798c                            
+01927c1c: ldr      w8, [x29, #0x18]                           [3a78300] System.Collections.Generic.List<JsonConverter>_TypeInfo bytes=2b0f012000000000
+01927c20: ldr      x23, [sp, #8]                              
+01927c24: cmp      w8, #2                                     
+01927c28: b.gt     #0x1927fb4                                 
+01927c2c: adrp     x28, #0x39ae000                            
+01927c30: ldr      x28, [x28, #0x310]                         [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+01927c34: ldr      x0, [x28]                                  [3a7c320] UnityEngine.Debug_TypeInfo bytes=cd79002000000000
+01927c38: ldr      w8, [x0, #0xe4]                            
+01927c3c: cbnz     w8, #0x1927c44                             
+01927c40: bl       #0x17b69d4                                 
+01927c44: adrp     x8, #0x39b0000                             
+01927c48: mov      x1, xzr                                    
+01927c4c: ldr      x8, [x8, #0x270]                           [39b0270]  bytes=0000000000000000 -> 3abee70 Not enough suitable skulls found, allowing previously ignored skulls to reappear.
+01927c50: ldr      x0, [x8]                                   [3abee70] Not enough suitable skulls found, allowing previously ignored skulls to reappear. bytes=cd3700a000000000
+01927c54: bl       #0x34a3d1c                                 UnityEngine.Debug$$Log
+01927c58: ldp      w2, w8, [x29, #0x18]                       
+01927c5c: add      w8, w8, #1                                 
+01927c60: cmp      w2, #1                                     
+01927c64: stp      wzr, w8, [x29, #0x18]                      
+01927c68: b.lt     #0x1927c7c                                 
+01927c6c: ldr      x0, [x29, #0x10]                           [3a782f8] System.Collections.Generic.List<JToken>_TypeInfo bytes=290f012000000000
+01927c70: mov      w1, wzr                                    
+01927c74: mov      x3, xzr                                    
+01927c78: bl       #0x2b4ca9c                                 System.Array$$Clear
+01927c7c: adrp     x19, #0x39ad000                            
+01927c80: ldr      x19, [x19, #0xc60]                         [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+01927c84: ldr      x0, [x19]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01927c88: ldr      w8, [x0, #0xe4]                            
+01927c8c: cbnz     w8, #0x1927c98                             
+01927c90: bl       #0x17b69d4                                 
+01927c94: ldr      x0, [x19]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01927c98: ldr      x8, [x0, #0xb8]                            
+01927c9c: ldr      x19, [sp]                                  
+01927ca0: ldr      x8, [x8, #0x48]                            [3abeeb8] Nothing bytes=df3700a000000000
+01927ca4: cbz      x8, #0x192798c                             
+01927ca8: ldr      x8, [x8, #0x10]                            
+01927cac: cbz      x8, #0x192798c                             
+01927cb0: ldr      x8, [x8, #0x50]                            
+01927cb4: cbz      x8, #0x192798c                             
+01927cb8: ldr      w9, [x8, #0x1c]                            
+01927cbc: ldr      x21, [x20, #0x18]                          
+01927cc0: add      w9, w9, #1                                 
+01927cc4: stp      wzr, w9, [x8, #0x18]                       
+01927cc8: cbz      x21, #0x192798c                            
+01927ccc: ldr      x8, [x21, #0x18]                           [3a90e20] Method$System.Collections.Generic.List<long>..ctor() bytes=9f3b01c000000000
+01927cd0: cmp      w8, #1                                     
+01927cd4: b.lt     #0x1927f18                                 
+01927cd8: mov      x29, xzr                                   
+01927cdc: and      x8, x8, #0xffffffff                        
+01927ce0: cmp      x29, w8, uxtw                              
+01927ce4: b.hs     #0x1928004                                 
+01927ce8: add      x8, x21, x29, lsl #3                       
+01927cec: ldr      x26, [x8, #0x20]                           
+01927cf0: cbz      x22, #0x1927e3c                            
+01927cf4: cbz      x26, #0x192798c                            
+01927cf8: ldr      w8, [x26, #0x2c]                           
+01927cfc: ldr      w9, [sp, #0x1c]                            
+01927d00: cmp      w8, w9                                     
+01927d04: b.ne     #0x1927f08                                 
+01927d08: ldr      w8, [x26, #0x28]                           
+01927d0c: ldr      w9, [sp, #0x18]                            
+01927d10: cmp      w8, w9                                     
+01927d14: b.gt     #0x1927f08                                 
+01927d18: ldr      w1, [sp, #0x1c]                            
+01927d1c: mov      x0, x20                                    
+01927d20: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927d24: adrp     x8, #0x39ad000                             
+01927d28: mov      x24, x0                                    
+01927d2c: ldr      x8, [x8, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+01927d30: ldr      x8, [x8]                                   [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+01927d34: ldr      w9, [x8, #0xe4]                            
+01927d38: cbnz     w9, #0x1927d44                             
+01927d3c: mov      x0, x8                                     
+01927d40: bl       #0x17b69d4                                 
+01927d44: mov      x0, x26                                    
+01927d48: mov      x1, x24                                    
+01927d4c: mov      x2, xzr                                    
+01927d50: bl       #0x34d43d0                                 UnityEngine.Object$$op_Inequality
+01927d54: tbz      w0, #0, #0x1927f08                         
+01927d58: ldr      w8, [x22, #0x18]                           
+01927d5c: cmp      w8, #1                                     
+01927d60: b.lt     #0x1927ea0                                 
+01927d64: mov      w27, wzr                                   
+01927d68: adrp     x8, #0x39ad000                             
+01927d6c: mov      x0, x22                                    
+01927d70: mov      w1, w27                                    
+01927d74: ldr      x8, [x8, #0xe18]                           [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+01927d78: ldr      x2, [x8]                                   [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01927d7c: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01927d80: cbz      x0, #0x192798c                             
+01927d84: adrp     x9, #0x39ad000                             
+01927d88: mov      x8, x0                                     
+01927d8c: ldr      x9, [x9, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+01927d90: ldr      x24, [x8, #0x10]                           [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927d94: ldr      x0, [x9]                                   [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+01927d98: ldr      w9, [x0, #0xe4]                            
+01927d9c: cbnz     w9, #0x1927da4                             
+01927da0: bl       #0x17b69d4                                 
+01927da4: mov      x0, x24                                    
+01927da8: mov      x1, x26                                    
+01927dac: mov      x2, xzr                                    
+01927db0: bl       #0x34d25f4                                 UnityEngine.Object$$op_Equality
+01927db4: tbnz     w0, #0, #0x1927f08                         
+01927db8: ldr      w1, [sp, #0x1c]                            
+01927dbc: mov      x0, x20                                    
+01927dc0: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927dc4: adrp     x8, #0x39ad000                             
+01927dc8: mov      x24, x0                                    
+01927dcc: ldr      x8, [x8, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+01927dd0: ldr      x8, [x8]                                   [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+01927dd4: ldr      w9, [x8, #0xe4]                            
+01927dd8: cbnz     w9, #0x1927de4                             
+01927ddc: mov      x0, x8                                     
+01927de0: bl       #0x17b69d4                                 
+01927de4: mov      x0, x26                                    
+01927de8: mov      x1, x24                                    
+01927dec: mov      x2, xzr                                    
+01927df0: bl       #0x34d25f4                                 UnityEngine.Object$$op_Equality
+01927df4: tbnz     w0, #0, #0x1927f08                         
+01927df8: cbz      x19, #0x1927e28                            
+01927dfc: mov      x0, x20                                    
+01927e00: mov      x1, x26                                    
+01927e04: mov      w2, wzr                                    
+01927e08: bl       #0x1928008                                 DatabaseObject$$ReturnItemInColor
+01927e0c: adrp     x8, #0x39b0000                             
+01927e10: mov      x1, x0                                     
+01927e14: mov      x0, x19                                    
+01927e18: ldr      x8, [x8, #0x260]                           [39b0260]  bytes=0000000000000000 -> 3a90ef8 Method$System.Collections.Generic.List<Item>.Contains()
+01927e1c: ldr      x2, [x8]                                   [3a90ef8] Method$System.Collections.Generic.List<Item>.Contains() bytes=a5c902c000000000
+01927e20: bl       #0x244bac8                                 System.Collections.Generic.List<object>$$Contains
+01927e24: tbnz     w0, #0, #0x1927f08                         
+01927e28: ldr      w8, [x22, #0x18]                           
+01927e2c: add      w27, w27, #1                               
+01927e30: cmp      w27, w8                                    
+01927e34: b.lt     #0x1927d68                                 
+01927e38: b        #0x1927ea0                                 
+01927e3c: cbz      x26, #0x192798c                            
+01927e40: ldr      w8, [x26, #0x2c]                           
+01927e44: ldr      w9, [sp, #0x1c]                            
+01927e48: cmp      w8, w9                                     
+01927e4c: b.ne     #0x1927f08                                 
+01927e50: ldr      w8, [x26, #0x28]                           
+01927e54: ldr      w9, [sp, #0x18]                            
+01927e58: cmp      w8, w9                                     
+01927e5c: b.gt     #0x1927f08                                 
+01927e60: ldr      w1, [sp, #0x1c]                            
+01927e64: mov      x0, x20                                    
+01927e68: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927e6c: adrp     x8, #0x39ad000                             
+01927e70: mov      x24, x0                                    
+01927e74: ldr      x8, [x8, #0xe48]                           [39ade48]  bytes=0000000000000000 -> 3a7fd40 UnityEngine.Object_TypeInfo
+01927e78: ldr      x8, [x8]                                   [3a7fd40] UnityEngine.Object_TypeInfo bytes=89a3002000000000
+01927e7c: ldr      w9, [x8, #0xe4]                            
+01927e80: cbnz     w9, #0x1927e8c                             
+01927e84: mov      x0, x8                                     
+01927e88: bl       #0x17b69d4                                 
+01927e8c: mov      x0, x26                                    
+01927e90: mov      x1, x24                                    
+01927e94: mov      x2, xzr                                    
+01927e98: bl       #0x34d43d0                                 UnityEngine.Object$$op_Inequality
+01927e9c: tbz      w0, #0, #0x1927f08                         
+01927ea0: ldr      x12, [sp, #0x10]                           
+01927ea4: adrp     x9, #0x39ad000                             
+01927ea8: ldr      w10, [x12, #0x1c]                          
+01927eac: ldr      x8, [x12, #0x10]                           
+01927eb0: ldr      x9, [x9, #0xdd0]                           [39addd0]  bytes=0000000000000000 -> 3a90ee8 Method$System.Collections.Generic.List<Item>.Add()
+01927eb4: ldr      x9, [x9]                                   [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927eb8: add      w10, w10, #1                               
+01927ebc: str      w10, [x12, #0x1c]                          
+01927ec0: cbz      x8, #0x192798c                             
+01927ec4: ldrsw    x10, [x12, #0x18]                          
+01927ec8: ldr      w11, [x8, #0x18]                           
+01927ecc: cmp      w10, w11                                   
+01927ed0: b.hs     #0x1927ef0                                 
+01927ed4: add      x0, x8, x10, lsl #3                        
+01927ed8: add      w9, w10, #1                                
+01927edc: mov      x1, x26                                    
+01927ee0: str      w9, [x12, #0x18]                           
+01927ee4: str      x26, [x0, #0x20]!                          
+01927ee8: bl       #0x17b67f8                                 
+01927eec: b        #0x1927f08                                 
+01927ef0: ldr      x8, [x9, #0x20]                            
+01927ef4: mov      x0, x12                                    
+01927ef8: mov      x1, x26                                    
+01927efc: ldr      x8, [x8, #0xc0]                            
+01927f00: ldr      x2, [x8, #0x70]                            
+01927f04: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927f08: ldr      w8, [x21, #0x18]                           [3a90e20] Method$System.Collections.Generic.List<long>..ctor() bytes=9f3b01c000000000
+01927f0c: add      x29, x29, #1                               
+01927f10: cmp      x29, w8, sxtw                              
+01927f14: b.lt     #0x1927ce0                                 
+01927f18: ldr      x29, [sp, #0x10]                           
+01927f1c: ldr      w8, [x29, #0x18]                           [3a78300] System.Collections.Generic.List<JsonConverter>_TypeInfo bytes=2b0f012000000000
+01927f20: cbnz     w8, #0x1927fb4                             
+01927f24: ldr      x0, [x28]                                  [3a7c320] UnityEngine.Debug_TypeInfo bytes=cd79002000000000
+01927f28: ldr      w8, [x0, #0xe4]                            
+01927f2c: cbnz     w8, #0x1927f34                             
+01927f30: bl       #0x17b69d4                                 
+01927f34: adrp     x8, #0x39b0000                             
+01927f38: mov      x1, xzr                                    
+01927f3c: ldr      x8, [x8, #0x268]                           [39b0268]  bytes=0000000000000000 -> 3abec80 No suitable skulls found, blank skull returned.
+01927f40: ldr      x0, [x8]                                   [3abec80] No suitable skulls found, blank skull returned. bytes=513700a000000000
+01927f44: bl       #0x34a3d1c                                 UnityEngine.Debug$$Log
+01927f48: ldr      w1, [sp, #0x1c]                            
+01927f4c: mov      x0, x20                                    
+01927f50: bl       #0x19276a8                                 DatabaseObject$$ReturnBlankItem
+01927f54: adrp     x9, #0x39ad000                             
+01927f58: ldr      w10, [x29, #0x1c]                          [3a78304]  bytes=000000002d0f0120
+01927f5c: ldr      x8, [x29, #0x10]                           [3a782f8] System.Collections.Generic.List<JToken>_TypeInfo bytes=290f012000000000
+01927f60: ldr      x9, [x9, #0xdd0]                           [39addd0]  bytes=0000000000000000 -> 3a90ee8 Method$System.Collections.Generic.List<Item>.Add()
+01927f64: add      w10, w10, #1                               
+01927f68: ldr      x9, [x9]                                   [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927f6c: str      w10, [x29, #0x1c]                          
+01927f70: cbz      x8, #0x192798c                             
+01927f74: ldrsw    x10, [x29, #0x18]                          
+01927f78: ldr      w11, [x8, #0x18]                           
+01927f7c: mov      x1, x0                                     
+01927f80: cmp      w10, w11                                   
+01927f84: b.hs     #0x1927fa0                                 
+01927f88: add      x0, x8, x10, lsl #3                        
+01927f8c: add      w9, w10, #1                                
+01927f90: str      w9, [x29, #0x18]                           
+01927f94: str      x1, [x0, #0x20]!                           
+01927f98: bl       #0x17b67f8                                 
+01927f9c: b        #0x1927fb4                                 
+01927fa0: ldr      x8, [x9, #0x20]                            
+01927fa4: mov      x0, x29                                    
+01927fa8: ldr      x8, [x8, #0xc0]                            
+01927fac: ldr      x2, [x8, #0x70]                            
+01927fb0: bl       #0x244b72c                                 System.Collections.Generic.List<object>$$AddWithResize
+01927fb4: cbz      x23, #0x192798c                            
+01927fb8: ldr      x8, [x23]                                  [3a90ee8] Method$System.Collections.Generic.List<Item>.Add() bytes=a1c902c000000000
+01927fbc: adrp     x19, #0x39af000                            
+01927fc0: mov      x0, x23                                    
+01927fc4: ldr      x19, [x19, #0x758]                         [39af758]  bytes=0000000000000000 -> 3a90f08 Method$System.Collections.Generic.List<Item>.get_Item()
+01927fc8: ldr      w2, [x29, #0x18]                           [3a78300] System.Collections.Generic.List<JsonConverter>_TypeInfo bytes=2b0f012000000000
+01927fcc: mov      w1, wzr                                    
+01927fd0: ldp      x9, x3, [x8, #0x198]                       
+01927fd4: blr      x9                                         
+01927fd8: ldr      x2, [x19]                                  [3a90f08] Method$System.Collections.Generic.List<Item>.get_Item() bytes=a9c902c000000000
+01927fdc: mov      w1, w0                                     
+01927fe0: mov      x0, x29                                    
+01927fe4: ldp      x20, x19, [sp, #0x70]                      
+01927fe8: ldp      x22, x21, [sp, #0x60]                      
+01927fec: ldp      x24, x23, [sp, #0x50]                      
+01927ff0: ldp      x26, x25, [sp, #0x40]                      
+01927ff4: ldp      x28, x27, [sp, #0x30]                      
+01927ff8: ldp      x29, x30, [sp, #0x20]                      
+01927ffc: add      sp, sp, #0x80                              
+01928000: b        #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01928004: bl       #0x17b6b08                                 

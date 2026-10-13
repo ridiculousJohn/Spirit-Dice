@@ -1,0 +1,2202 @@
+[
+  {
+    "key": "GameUI.PlayHandBtn",
+    "text": "PLAY HAND",
+    "description": "Hand refers to things like poker hands, except here it is with dice rather than cards."
+  },
+  {
+    "key": "GameUI.RerollBtn",
+    "text": "REROLL",
+    "description": "REROLLs are used to roll selected dice again."
+  },
+  {
+    "key": "GameUI.BonesTitle",
+    "text": "BONES",
+    "description": "BONES are the basic score units in the game."
+  },
+  {
+    "key": "GameUI.MultTitle",
+    "text": "MULT",
+    "description": "MULT is short for multiplier."
+  },
+  {
+    "key": "GameUI.TotalTitle",
+    "text": "TOTAL",
+    "description": "the result of BONES x MULT"
+  },
+  {
+    "key": "GameUI.BonePileTitle",
+    "text": "LEVEL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ThresholdTitle",
+    "text": "THRESHOLD",
+    "description": "Threshold means the score required to pass a level."
+  },
+  {
+    "key": "GameUI.SettingsTitle",
+    "text": "SETTINGS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HandsTitle",
+    "text": "HANDS",
+    "description": "The title text of the hand listing that lists all different hands that can be played."
+  },
+  {
+    "key": "GameUI.InventoryTitle",
+    "text": "SKULLS",
+    "description": "The title text of the player's inventory that lists all collected skulls."
+  },
+  {
+    "key": "GameUI.LootTitle",
+    "text": "CHOOSE A SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollSkullsBtn",
+    "text": "REROLL\r\nSKULLS",
+    "description": "The title text on the button that refreshes the offered skulls the player can add to their deck."
+  },
+  {
+    "key": "GameUI.UpgradeHandsTitle",
+    "text": "CHOOSE A HAND TO UPGRADE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.LossTitle",
+    "text": "YOU LOST",
+    "description": ""
+  },
+  {
+    "key": "GameUI.VictoryTitle",
+    "text": "YOU ESCAPED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RetryTitle",
+    "text": "PLAY AGAIN",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuContinue",
+    "text": "CONTINUE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuNewGame",
+    "text": "NEW GAME",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuCredits",
+    "text": "CREDITS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.PlayTutorial",
+    "text": "PLAY TUTORIAL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuWishlist",
+    "text": "WISHLIST",
+    "description": "An order to the player to wishlist the game."
+  },
+  {
+    "key": "GameUI.MenuRemoveAds",
+    "text": "REMOVE ADS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuUpgradeToPro",
+    "text": "PREMIUM VERSION",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Quit",
+    "text": "QUIT GAME",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsAudioTitle",
+    "text": "AUDIO",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsVideoTitle",
+    "text": "VIDEO",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsGameplayTitle",
+    "text": "GAMEPLAY",
+    "description": "Gameplay settings."
+  },
+  {
+    "key": "GameUI.SettingsOtherTitle",
+    "text": "OTHER",
+    "description": "Other settings."
+  },
+  {
+    "key": "GameUI.SettingsMasterVolume",
+    "text": "Master volume",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsMusicVolume",
+    "text": "Music volume",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsSFXVolume",
+    "text": "SFX volume",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsResolution",
+    "text": "Resolution",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsQuitToMenu",
+    "text": "QUIT TO MENU",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuClose",
+    "text": "CLOSE",
+    "description": "The text on the button that closes an open menu window."
+  },
+  {
+    "key": "GameUI.SettingsFullscreen",
+    "text": "Fullscreen",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsDisplay",
+    "text": "Display",
+    "description": "The title of the setting that determines the default monitor where the game will render."
+  },
+  {
+    "key": "GameUI.MenuAchievements",
+    "text": "CHALLENGES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuPlay",
+    "text": "PLAY",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuDeleteSaveToggle",
+    "text": "CONTINUE FROM SAVE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuAbandonRun",
+    "text": "ABANDON RUN",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuAbandonRun2",
+    "text": "ABANDON\r\nRUN",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuTutorial",
+    "text": "TUTORIAL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuDiscord",
+    "text": "DISCORD",
+    "description": "Note: do not translate. This is the name of the Discord social media app."
+  },
+  {
+    "key": "GameUI.MenuCustomize",
+    "text": "CUSTOMIZE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats",
+    "text": "STATISTICS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuCustomizeTitle",
+    "text": "CUSTOMIZATION",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsRestartRequired",
+    "text": "Game restart required.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.LeaderboardsTitle",
+    "text": "LEADERBOARD",
+    "description": ""
+  },
+  {
+    "key": "GameUI.EndOfDemoTitle",
+    "text": "END OF DEMO",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Difficulty",
+    "text": "DIFFICULTY LEVEL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CreditsList",
+    "text": "- GAME DESIGN -\r\nElias Viro\r\n\r\n- PROGRAMMING -\r\nElias Viro\r\nRami Ojala\r\nMiikka Sipil\u00e4\r\nTaru Vikstr\u00f6m\r\n\r\n- PIXEL ART -\r\nElias Viro\r\n\r\n- MUSIC -\r\nSanttu Salm\u00e9n\r\n\r\n- SOUND EFFECTS -\r\nElias Viro\r\nKenney's Asset Pack\r\nFreeSFX Asset Pack\r\nThe Essential Retro Video Game Sound Effects Collection: Juhani Junkala\r\n\r\n- QUALITY ASSURANCE -\r\nMiikka Sipil\u00e4\r\n\r\n- MARKETING -\r\nMiikka Sipil\u00e4\r\nSanttu Salm\u00e9n\r\n\r\n- FONT -\r\nSilver: Poppy Works\r\n\r\n- COVER ART -\r\nRaphael Cavalcante\r\n\r\n- ENGLISH LOCALIZATION -\r\nElias Viro\r\n\r\n- JAMK INTERNS -\r\nProducer: Saul Roland\r\nUI Design: Madli Ojakivi\r\nAnimations: Iida Lapinkoski\r\nAdditional Art: Fatima Raza\r\nAudio: Terhi van Leeuwen\r\nMarketing: Kateryna Baranova\r\nMarketing: Viktoriia Zazulia\r\n\r\n- SPECIAL THANKS -\r\nVille Saarenketo\r\nJanita Junnikkala\r\nMisa Hajimoto\r\nMaria Fe Rossi\r\nJonathan Resurreccion\r\nViktor Iglinski\r\nOur friends and families",
+    "description": "Note: replace the localization language to the one you are translating to and replace the name of the translator with yours.\r\n\r\nNote: do not include the roles of JAMK-Interns in front of their names."
+  },
+  {
+    "key": "GameUI.SettingsSlimWindow",
+    "text": "Slim window",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsInverseRerolls",
+    "text": "Inverse reroll selection",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsLanguage",
+    "text": "LANGUAGE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsLanguageChoice",
+    "text": "English",
+    "description": "Note: do not translate the language, rather have the translation be the name of your own language in your own language."
+  },
+  {
+    "key": "GameUI.HighScoreStats.NewRecord",
+    "text": "NEW RECORD!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.RunsStarted",
+    "text": "Runs started",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.RunsWon",
+    "text": "Runs won",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.HighestTotal",
+    "text": "Best total score",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.FastestRun",
+    "text": "Fastest victory",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.BestHand",
+    "text": "Best hand",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.LeastHands",
+    "text": "Victory with least hands",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.LeastRerolls",
+    "text": "Victory with least rerolls",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.MostSkullActivations",
+    "text": "Most skull activations",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.TotalScore",
+    "text": "Total score",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.Time",
+    "text": "Time",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.BestHand",
+    "text": "Best hand",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.HandsPlayed",
+    "text": "Hands played",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.RerollsRolled",
+    "text": "Rerolls spent",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.SkullActivations",
+    "text": "Skull activations",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuAchievementsMenuBtn",
+    "text": "ACHIEVEMENTS",
+    "description": "Note: has to be different from GameUI.MenuAchievements string. The difference between achievements and challenges is subtle, but necessary."
+  },
+  {
+    "key": "GameUI.MomentStats.SituationalStats",
+    "text": "SITUATION INFO",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.LastHand",
+    "text": "Last played hand",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.InitialHand",
+    "text": "Initial hand",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.InitialSum",
+    "text": "Sum of initial dice",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.RerollsSpentOnHand",
+    "text": "Rerolls spent on the hand",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.DiceRolledSinceInitial",
+    "text": "Dice rerolled since initial roll",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.Yes",
+    "text": "YES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MomentStats.No",
+    "text": "NO",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AdConsentTitle",
+    "text": "AD CONSENT",
+    "description": "The text on the button that opens a menu to adjust targeted ads on/off. Can be translated as \"ad settings\" as well."
+  },
+  {
+    "key": "GameUI.RestoreButtonTitle",
+    "text": "RESTORE PURCHASES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.DeleteSavesButtonTitle",
+    "text": "DELETE\r\nSAVE DATA",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GooglePlayBtn",
+    "text": "GOOGLE PLAY GAMES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameCenterBtn",
+    "text": "GAME CENTER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsControllerSens",
+    "text": "Controller speed",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsNotchAvoidance",
+    "text": "Camera notch avoidance",
+    "description": "A setting toggle that moves rendering away from the selfie camera notch/island on mobile devices. Can also be translated as \"Avoid camera notch\"."
+  },
+  {
+    "key": "GameUI.Achievements0",
+    "text": "LEARNING THE ROPES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc0",
+    "text": "Complete the tutorial.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements1",
+    "text": "BEGINNER'S LUCK",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc1",
+    "text": "Complete the fifth level.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements2",
+    "text": "ESCALATION",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc2",
+    "text": "Complete the tenth level.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements3",
+    "text": "WITH LUCK AND SKILL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc3",
+    "text": "Complete the fifteenth level.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements4",
+    "text": "ON THE FINAL STRETCH",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc4",
+    "text": "Complete the twentieth level.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements5",
+    "text": "THE WORLD OF THE LIVING AWAITS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc5",
+    "text": "Win and escape the Underworld.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements6",
+    "text": "ESCAPE ARTIST",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc6",
+    "text": "Win and escape the Underworld five times.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements7",
+    "text": "LIMITED SELECTION",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc7",
+    "text": "Win without using any skull rerolls.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements8",
+    "text": "REROLL HOARDER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc8",
+    "text": "Complete a level with more rerolls than you started with.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements9",
+    "text": "SPEEDSTER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc9",
+    "text": "Win in under 30 minutes.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements10",
+    "text": "MINMAXER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc10",
+    "text": "Play a fully upgraded hand.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements11",
+    "text": "UNSTOPPABLE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc11",
+    "text": "Score a TOTAL of 2500 or more with a single hand.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements12",
+    "text": "COMPULSIVE REROLLER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc12",
+    "text": "Spend at least ten rerolls on a single hand.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements13",
+    "text": "PERSISTENT",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc13",
+    "text": "Lose ten runs.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements14",
+    "text": "SHOW-OFF",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc14",
+    "text": "Upgrade and play every hand at least once during a run.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements15",
+    "text": "SKULL WAVE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc15",
+    "text": "Activate at least 15 skulls at once when playing a hand.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements16",
+    "text": "HIGH ROLLER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc16",
+    "text": "Activate at least five skulls at once with a single reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements17",
+    "text": "CALCULATED RISK",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc17",
+    "text": "Reduce a level to zero with no room to spare.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements18",
+    "text": "PRAISEWORTHY",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc18",
+    "text": "Earn praise from Kalma five levels in a row.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements19_0",
+    "text": "PASSIVE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc19_0",
+    "text": "Activate at least three skulls at once due to a favourable initial roll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements19_1",
+    "text": "COLORBLIND",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc19_1",
+    "text": "Win a run with only two colors of skulls in your deck. ",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements19_2",
+    "text": "COLLECTOR",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc19_2",
+    "text": "Collect all four different color variants of the same skull in a single run.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements19_3",
+    "text": "HOLD MY DICE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc19_3",
+    "text": "Win a run without rerolling any dice.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements19_4",
+    "text": "HANDHOLDING",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc19_4",
+    "text": "Win a run having played 60 or fewer hands.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements20",
+    "text": "HIGH DIE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc20",
+    "text": "Play a High Die.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements21",
+    "text": "PAIR",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc21",
+    "text": "Play a Pair.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements22",
+    "text": "TWO PAIR",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc22",
+    "text": "Play a Two Pair.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements23",
+    "text": "THREE OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc23",
+    "text": "Play a Three of a Kind.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements25",
+    "text": "FULL HOUSE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc25",
+    "text": "Play a Full House.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements27",
+    "text": "FOUR OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc27",
+    "text": "Play a Four of a Kind.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements28",
+    "text": "STRAIGHT",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc28",
+    "text": "Play a Straight.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements29_0",
+    "text": "FIVE OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc29_0",
+    "text": "Play a Five of a Kind.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements29_1",
+    "text": "YULE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc29_1",
+    "text": "Activate a yule skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements29_2",
+    "text": "MINER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc29_2",
+    "text": "Activate a miner skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements30",
+    "text": "BLIND SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc30",
+    "text": "Activate a blind skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements31",
+    "text": "PIRATE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc31",
+    "text": "Activate a pirate skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements32",
+    "text": "CAPTAIN SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc32",
+    "text": "Activate a captain skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements33",
+    "text": "CANDLE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc33",
+    "text": "Activate a candle skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements34",
+    "text": "ARCHER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc34",
+    "text": "Activate an archer skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements35",
+    "text": "BANDAGED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc35",
+    "text": "Activate a bandaged skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements36",
+    "text": "GUARD SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc36",
+    "text": "Activate a guard skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements37",
+    "text": "JESTER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc37",
+    "text": "Activate a jester skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements38",
+    "text": "CLAIRVOYANT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc38",
+    "text": "Activate a clairvoyant skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements39",
+    "text": "ROYAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc39",
+    "text": "Activate a royal skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements40",
+    "text": "GAMBLER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc40",
+    "text": "Activate a gambler skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements41",
+    "text": "DAREDEVIL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc41",
+    "text": "Activate a daredevil skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements42",
+    "text": "SWINDLER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc42",
+    "text": "Activate a swindler skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements43",
+    "text": "BETTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc43",
+    "text": "Activate a bettor skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements44",
+    "text": "OCCULT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc44",
+    "text": "Activate an occult skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements45",
+    "text": "SPLIT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc45",
+    "text": "Activate a split skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements46",
+    "text": "SCHOLAR SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc46",
+    "text": "Activate a scholar skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements47",
+    "text": "MERCHANT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc47",
+    "text": "Activate a merchant skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements48",
+    "text": "FRACTURED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc48",
+    "text": "Activate a fractured skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements49",
+    "text": "EXECUTIONER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc49",
+    "text": "Activate an executioner skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements50",
+    "text": "BOLTED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc50",
+    "text": "Activate a bolted skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements51",
+    "text": "VAMPIRE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc51",
+    "text": "Activate a vampire skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements52",
+    "text": "MACHINE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc52",
+    "text": "Activate a machine skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements53",
+    "text": "AUTOMATON SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc53",
+    "text": "Activate an automaton skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements54",
+    "text": "CARNIVAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc54",
+    "text": "Activate a carnival skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements55",
+    "text": "TRINITY SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc55",
+    "text": "Activate a trinity skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements56",
+    "text": "SHOT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc56",
+    "text": "Activate a shot skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements57",
+    "text": "FUNGAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc57",
+    "text": "Activate a fungal skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements58",
+    "text": "PARTY SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc58",
+    "text": "Activate a party skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements59",
+    "text": "NERD SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc59",
+    "text": "Activate a nerd skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements60",
+    "text": "GEEK SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc60",
+    "text": "Activate a geek skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements61",
+    "text": "WEEPING SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc61",
+    "text": "Activate a weeping skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements62",
+    "text": "BOMB SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc62",
+    "text": "Activate a bomb skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements63",
+    "text": "JOLLY SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc63",
+    "text": "Activate a jolly skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements64",
+    "text": "MASQUE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc64",
+    "text": "Activate a masque skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements65",
+    "text": "TRENCH SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc65",
+    "text": "Activate a trench skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements66",
+    "text": "CHOKED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc66",
+    "text": "Activate a choked skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements67",
+    "text": "DJ SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc67",
+    "text": "Activate a DJ skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements68",
+    "text": "OFFICER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc68",
+    "text": "Activate an officer skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements69",
+    "text": "DOCTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc69",
+    "text": "Activate a doctor skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements70",
+    "text": "DRINKING SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc70",
+    "text": "Activate a drinking skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements71",
+    "text": "CHEF SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc71",
+    "text": "Activate a chef skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements72",
+    "text": "OPERA SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc72",
+    "text": "Activate an opera skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements73",
+    "text": "VIRTUAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc73",
+    "text": "Activate a virtual skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements74",
+    "text": "PRINCESS SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc74",
+    "text": "Activate a princess skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements75",
+    "text": "FLORIST SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc75",
+    "text": "Activate a florist skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements76",
+    "text": "PILOT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc76",
+    "text": "Activate a pilot skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements77",
+    "text": "FISHER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc77",
+    "text": "Activate a fisher skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements78",
+    "text": "DEMON SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc78",
+    "text": "Activate a demon skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements79",
+    "text": "TACTICAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc79",
+    "text": "Activate a tactical skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements80",
+    "text": "RITUAL SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc80",
+    "text": "Activate a ritual skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements81",
+    "text": "GAMER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc81",
+    "text": "Activate a gamer skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements82",
+    "text": "ASTRONAUT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc82",
+    "text": "Activate an astronaut skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements83",
+    "text": "MERCY SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc83",
+    "text": "Activate a mercy skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements84",
+    "text": "DEALER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc84",
+    "text": "Activate a dealer skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements85",
+    "text": "BLANK SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc85",
+    "text": "Win a run with a blank skull in your deck.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements86",
+    "text": "CHALLENGER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc86",
+    "text": "Win a challenge run.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements87",
+    "text": "THE GAME MASTER",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc87",
+    "text": "Win a run with the total score of at least 250 000.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements88",
+    "text": "ACE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc88",
+    "text": "Activate an ace skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements89",
+    "text": "BACHELOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc89",
+    "text": "Activate a bachelor skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements90",
+    "text": "ENDLESS GAMBLING",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc90",
+    "text": "Complete level 35 on endless mode.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements91",
+    "text": "ETERNAL ADDICTION",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc91",
+    "text": "Complete level 45 on endless mode.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements92",
+    "text": "KNIGHT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc92",
+    "text": "Activate a knight skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements93",
+    "text": "INVENTOR SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc93",
+    "text": "Activate an inventor skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements94",
+    "text": "DAY ONE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc94",
+    "text": "Complete a daily challenge.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements95",
+    "text": "DAILY DOSE OF DICE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc95",
+    "text": "Complete three daily challenges.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements96",
+    "text": "SPIKED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc96",
+    "text": "Activate a spiked skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements97",
+    "text": "POT SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc97",
+    "text": "Activate a pot skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements98",
+    "text": "DAY IN DAY OUT",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc98",
+    "text": "Complete six daily challenges.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements99",
+    "text": "DAILY ROUTINE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc99",
+    "text": "Complete ten daily challenges.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements100",
+    "text": "HALF SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc100",
+    "text": "Activate a half skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements101",
+    "text": "CHIEFTAIN SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc101",
+    "text": "Activate a chieftain skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements102",
+    "text": "SHAMAN SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc102",
+    "text": "Activate a shaman skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements103",
+    "text": "HACKER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc103",
+    "text": "Activate a hacker skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements104",
+    "text": "NAILED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc104",
+    "text": "Activate a nailed skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements105",
+    "text": "QUEEN SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc105",
+    "text": "Activate a queen skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements106",
+    "text": "JUDGE SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc106",
+    "text": "Activate a judge skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements107",
+    "text": "WELDER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc107",
+    "text": "Activate a welder skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements108",
+    "text": "MUSKETEER SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc108",
+    "text": "Activate a musketeer skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Achievements109",
+    "text": "DRILLED SKULL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AchievementsDesc109",
+    "text": "Activate a drilled skull.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ChallengePoints",
+    "text": "Challenge points",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ChallengeUnlockRequirement",
+    "text": "Win a run with at least ? challenge points to unlock this challenge.",
+    "description": "? is replaced by a number during runtime."
+  },
+  {
+    "key": "GameUI.ChallengeStatus",
+    "text": "Challenge points: !\r\nTotal score: +? %",
+    "description": "? and ! are replaced by numbers during runtime."
+  },
+  {
+    "key": "GameUI.ChooseChallengesTitle",
+    "text": "CHOOSE CHALLENGES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge10",
+    "text": "Get only two options for hand upgrades.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge11",
+    "text": "Blue skulls are replaced by blank skulls.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge20",
+    "text": "All levels are 10% harder.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge21",
+    "text": "Red skulls are replaced by blank skulls.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge22",
+    "text": "Start every level with one less reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge30",
+    "text": "Hand upgrades don't increase BONES.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge31",
+    "text": "Skull selections can't be rerolled.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge32",
+    "text": "Start every level with one less reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge40",
+    "text": "Hand upgrades don't increase MULT.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge41",
+    "text": "Yellow skulls are replaced by blank skulls.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge50",
+    "text": "Dice can't be rerolled.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.Challenge51",
+    "text": "Start every level with one less hand.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.PurchaseMenuTitle",
+    "text": "CHOOSE A PURCHASE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupportTheDevsTitle",
+    "text": "SUPPORT THE DEVS",
+    "description": "This can be translated as \"support the developer(s)\""
+  },
+  {
+    "key": "GameUI.AdRemovalPackDesc",
+    "text": "- Remove ads",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack1Title",
+    "text": "SUPPORTER\r\nPACK 1",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack1Desc",
+    "text": "- Sapphire crown, cape and\r\n<color=#000000>- </color>dice",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack1AndRemoveAdsDesc",
+    "text": "- Remove ads\r\n- Sapphire crown, cape and\r\n<color=#000000>- </color>dice",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack2Title",
+    "text": "SUPPORTER\r\nPACK 2",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack2Desc",
+    "text": "- Emerald crown, cape and dice\r\n- Everything in supporter \r\n<color=#000000>- </color>pack 1",
+    "description": "NOTE: do not touch the \"- Everything in supporter <color=#000000>- </color>pack X\" part when updating translations!"
+  },
+  {
+    "key": "GameUI.SupporterPack2AndRemoveAdsDesc",
+    "text": "- Remove ads\r\n- Emerald crown, cape and dice\r\n- Everything in supporter \r\n<color=#000000>- </color>pack 1",
+    "description": "NOTE: do not touch the \"- Everything in supporter <color=#000000>- </color>pack X\" part when updating translations!"
+  },
+  {
+    "key": "GameUI.SupporterPack3Title",
+    "text": "SUPPORTER\r\nPACK 3",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterPack3Desc",
+    "text": "- Ruby crown, cape and dice\r\n- Everything in supporter \r\n<color=#000000>- </color>packs 1 and 2",
+    "description": "NOTE: do not touch the \"- Everything in supporter <color=#000000>- </color>pack X\" part when updating translations!"
+  },
+  {
+    "key": "GameUI.SupporterPack3AndRemoveAdsDesc",
+    "text": "- Remove ads\r\n- Ruby crown, cape and dice\r\n- Everything in supporter \r\n<color=#000000>- </color>packs 1 and 2",
+    "description": "NOTE: do not touch the \"- Everything in supporter <color=#000000>- </color>pack X\" part when updating translations!"
+  },
+  {
+    "key": "GameUI.AlreadyPurchased",
+    "text": "PURCHASED",
+    "description": "A text that means the player has already purchased the package."
+  },
+  {
+    "key": "GameUI.ThanksForPurchase",
+    "text": "Thank you for your support!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ExtrasTitle",
+    "text": "EXTRAS",
+    "description": "The title text for a button that opens a menu that has a list of buttons for various submenus such as statistics, achievements, credits, Discord link etc."
+  },
+  {
+    "key": "GameUI.TutorialOnToggle",
+    "text": "TUTORIAL\r\nON",
+    "description": ""
+  },
+  {
+    "key": "GameUI.TutorialOffToggle",
+    "text": "TUTORIAL\r\nOFF",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeStandard",
+    "text": "GAME MODE:\r\nSTANDARD",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeStandardDesc",
+    "text": "The standard game experience.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeChallenge",
+    "text": "GAME MODE:\r\nCHALLENGE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeChallengeDesc",
+    "text": "Choose challenges to make the game harder.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeChallengeLongDesc",
+    "text": "Each challenge gives a set amount of challenge points.\r\n\r\nUnlock more challenges by winning with enough challenge points.\r\n\r\nThe total score is increased by 15% for every 5 challenge points.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeEndless",
+    "text": "GAME MODE:\r\nENDLESS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeEndlessDesc",
+    "text": "Survive as long as possible.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeEndlessLongDesc",
+    "text": "The game continues past level 25.\r\n\r\nYellow skulls, extra rerolls and hands are not given past level 25.\r\n\r\nSome statistics and records are not tracked.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeDaily",
+    "text": "GAME MODE:\r\nDAILY",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeDailyDesc",
+    "text": "A short challenge that changes every day.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeDailyWon",
+    "text": "Completed! Come back next day for a new challenge.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeDailyLongDesc",
+    "text": "A new daily challenge arrives every day at ?.\r\n\r\nThe game ends at level 10. You start with eight skulls in your deck and all hand upgrades are locked to level 2.\r\n\r\nSome statistics and records are not tracked.\r\n",
+    "description": "? is replaced at runtime by hours and minutes using the 24 hour clock. For example: 19:00"
+  },
+  {
+    "key": "GameUI.LockedTitle",
+    "text": "LOCKED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.LockedDesc",
+    "text": "Unlock by winning the standard game mode.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.StatsEndlessRecord",
+    "text": "Longest endless run",
+    "description": "The title of the record that measures the most amount of levels the played has completed in a single run of the endless mode."
+  },
+  {
+    "key": "GameUI.StatsHighestLevel",
+    "text": "Highest level reached",
+    "description": ""
+  },
+  {
+    "key": "GameUI.StatsEndlessStarted",
+    "text": "Endless runs started",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RunStats.LevelReached",
+    "text": "Level reached",
+    "description": ""
+  },
+  {
+    "key": "GameUI.StatsDailiesCompleted",
+    "text": "Daily challenges completed",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ComingSoon",
+    "text": "COMING SOON",
+    "description": ""
+  },
+  {
+    "key": "GameUI.LockedUntil15Desc",
+    "text": "Unlock by reaching level 15.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SkullRollHint",
+    "text": "Choosing the right skulls for your playstyle is important! If the offered skulls don't fit your deck, you should reroll them!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.DailyVictoryTitle",
+    "text": "DAILY CHALLENGE WON",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HighScoreStats.DailiesWon",
+    "text": "Daily challenges completed",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CloudConnectionSuccess",
+    "text": "Cloud sync succeeded!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CloudConnectionFailure",
+    "text": "Cloud sync failed!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CloudLoad",
+    "text": "SAVE TO CLOUD",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CloudDisconnect",
+    "text": "DISCONNECT CLOUD",
+    "description": ""
+  },
+  {
+    "key": "GameUI.CloudSaveQuestion",
+    "text": "Would you like to save your progress to cloud or download an existing cloud save?\r\n\r\nYou can change this later in the settings.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ScreenshotBanners0",
+    "text": "ROLL THE DICE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ScreenshotBanners1",
+    "text": "PUSH YOUR LUCK",
+    "description": "Alternative translation: GO ALL IN"
+  },
+  {
+    "key": "GameUI.ScreenshotBanners2",
+    "text": "BUILD YOUR DECK",
+    "description": "Alternative translation: DECKBUILDING"
+  },
+  {
+    "key": "GameUI.ScreenshotBanners3",
+    "text": "200+ SKULLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ScreenshotBanners4",
+    "text": "POWERFUL COMBOS",
+    "description": "Alternative translations: PLAY SKILLFULLY or LUCK AND SKILL"
+  },
+  {
+    "key": "GameUI.ScreenshotBanners5",
+    "text": "CHALLENGES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ScreenshotBanners6",
+    "text": "FUN GAME MODES",
+    "description": "Alternative translation: GAME MODES"
+  },
+  {
+    "key": "GameUI.ScreenshotBanners7",
+    "text": "CHEAT DEATH",
+    "description": ""
+  },
+  {
+    "key": "GameUI.DailyNotificationTitle",
+    "text": "Daily challenge",
+    "description": ""
+  },
+  {
+    "key": "GameUI.DailyNotificationBody",
+    "text": "A new daily challenge has arrived!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.PurchaseRemoveAds",
+    "text": "REMOVE ADS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SkinMenuTitle",
+    "text": "WARDROBE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.WardrobeUnlockNotif",
+    "text": "New items unlocked in the wardrobe!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterSkinLock1",
+    "text": "Purchase supporter pack 1.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterSkinLock2",
+    "text": "Purchase supporter pack 2.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SupporterSkinLock3",
+    "text": "Purchase supporter pack 3.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.PackContentDescTitle",
+    "text": "Contents of the purchase:",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SettingsHaptic",
+    "text": "Haptic feedback",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuStore",
+    "text": "STORE",
+    "description": ""
+  },
+  {
+    "key": "GameUI.MenuMoreGames",
+    "text": "MORE GAMES",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RewardClaimed",
+    "text": "REWARD CLAIMED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RewardAdToDisableInterstitials",
+    "text": "REMOVE ADS\r\nTEMPORARILY",
+    "description": ""
+  },
+  {
+    "key": "GameUI.AdWarning",
+    "text": "Sorry for the interruption!\r\nThis game needs to show ads in order to keep the developers fed.\r\nHowever, you can support us by removing ads!",
+    "description": ""
+  },
+  {
+    "key": "GameUI.ContinueWithAds",
+    "text": "CONTINUE WITH ADS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.PurchaseDLC",
+    "text": "Purchase the Supporter Pack DLC.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.LootTitleCursed",
+    "text": "SKULLS FOR THE LEVEL",
+    "description": "Note: the title text in the window that shows all the skulls that the player will temporarily gain for just only level."
+  },
+  {
+    "key": "GameUI.GameModeCursed",
+    "text": "GAME MODE:\r\nCURSED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeCursedDesc",
+    "text": "Avoid activating most skulls you pick.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.GameModeCursedLongDesc",
+    "text": "Build a deck of cursed skulls and try to survive as long as possible.\r\n\r\nRunning out of hands is punished but does not end the game.\r\n\r\nSome statistics and records are not tracked.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.HealthTitle",
+    "text": "RIBS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceUsed",
+    "text": "SECOND CHANCE USED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceBtn",
+    "text": "RESTART THE LEVEL",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceBtnQuestion",
+    "text": "RESTART THE LEVEL?",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceGiveUp",
+    "text": "GIVE UP",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceBtnFree",
+    "text": "FREE\r\n(ONCE A DAY)",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceBtnFreeUsed",
+    "text": "FREE RESTART USED",
+    "description": ""
+  },
+  {
+    "key": "GameUI.SecondChanceBtnFreeTime",
+    "text": "A new free restart arrives at ?.",
+    "description": "? is replaced at runtime by hours and minutes using the 24 hour clock. For example: 19:00"
+  },
+  {
+    "key": "GameUI.RerollAbilityClassic",
+    "text": "CLASSIC REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescClassic",
+    "text": "- Rerolling rolls the selected dice.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockClassic",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilitySticky",
+    "text": "STICKY REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescSticky",
+    "text": "- Rerolling rolls the selected dice.\r\n- Initial rolls do not roll the middle die.\r\n- Start every level with one less reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockSticky",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityTwin",
+    "text": "TWIN REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescTwin",
+    "text": "- Rerolling rolls the selected dice.\r\n- Exactly two dice can be rerolled at a time.\r\n- Start every level with one more reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockTwin",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityChaotic",
+    "text": "CHAOTIC REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescChaotic",
+    "text": "- Rerolls roll all the dice.\r\n- Start every level with one more reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockChaotic",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityChained",
+    "text": "CHAINED REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescChained",
+    "text": "- Rerolling rolls the selected dice.\r\n- Every die can be rerolled only once per hand.\r\n- Start every level with two more rerolls.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockChained",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityWeighed",
+    "text": "WEIGHED REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescWeighed",
+    "text": "- Rerolling rolls the selected dice.\r\n- Rerolling dice never increases their value.\r\n- Start every level with one less reroll.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockWeighed",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityCogwheel",
+    "text": "COGWHEEL REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescCogwheel",
+    "text": "- Rerolling increments the number of the selected die up by 1.\r\n- Rerolling a die with the number 6 turns it into 1.\r\n- Only one die can be rerolled at a time.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockCogwheel",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityReverse",
+    "text": "REVERSING REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescReverse",
+    "text": "- Rerolling turns the selected die upside down.\r\n- Only one die can be rerolled at a time.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockReverse",
+    "text": "-",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilitySorting",
+    "text": "SORTING REROLLS",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityDescSorting",
+    "text": "- Rerolling a die makes it swap its number with the number of the die to its right.\r\n- Rerolling the last die makes it swap its number with the first die.\r\n- Start the game with all hands upgraded once.",
+    "description": ""
+  },
+  {
+    "key": "GameUI.RerollAbilityUnlockSorting",
+    "text": "-",
+    "description": ""
+  }
+]

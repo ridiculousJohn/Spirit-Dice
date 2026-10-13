@@ -1,0 +1,2122 @@
+[
+  {
+    "key": "Dialogues.Death.BadScore0",
+    "text": "Atrocious.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore1",
+    "text": "Despicable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore2",
+    "text": "Pathetic.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore3",
+    "text": "What a letdown.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore4",
+    "text": "Disappointing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore5",
+    "text": "This will hurt.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore6",
+    "text": "A waste of time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore7",
+    "text": "You will have to try\r\nharder than that.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore8",
+    "text": "What a disappointment.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore9",
+    "text": "You did not even try.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore10",
+    "text": "I excpected more than that.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore11",
+    "text": "My disappointment\r\nis immeasurable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore12",
+    "text": "I am disappointed.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore13",
+    "text": "You lost way too soon.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.BadScore14",
+    "text": "You disappoint me.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore0",
+    "text": "Time to die. Again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore1",
+    "text": "End of the road.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore2",
+    "text": "How unfortunate.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore3",
+    "text": "Too bad.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore4",
+    "text": "Bad luck.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore5",
+    "text": "Your time is up.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore6",
+    "text": "Back to the coffin.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore7",
+    "text": "Go back to your rest.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore8",
+    "text": "Game over.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore9",
+    "text": "Hold still.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore10",
+    "text": "You lost.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore11",
+    "text": "Unfortunate.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore12",
+    "text": "What a shame.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore13",
+    "text": "Your time has run out.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.OkayScore14",
+    "text": "It is over.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore0",
+    "text": "Nothing personal.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore1",
+    "text": "Not too bad of an attempt.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore2",
+    "text": "I will make it quick.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore3",
+    "text": "Sweet dreams.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore4",
+    "text": "Until we meet again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore5",
+    "text": "Just doing my job.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore6",
+    "text": "Rules are rules.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore7",
+    "text": "Decent.\r\nBut not good enough.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore8",
+    "text": "Rest in peace.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.DecentScore9",
+    "text": "It is time for you\r\nto go back to sleep.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore0",
+    "text": "It was just getting good.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore1",
+    "text": "You played well.\r\nBut not well enough.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore2",
+    "text": "That was quite enjoyable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore3",
+    "text": "Good game.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore4",
+    "text": "You got so far.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore5",
+    "text": "Good while it lasted.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore6",
+    "text": "I am sorry.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore7",
+    "text": "Well played.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore8",
+    "text": "I hope you understand.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GoodScore9",
+    "text": "It was a pleasure.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore0",
+    "text": "So close yet so far.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore1",
+    "text": "I am so sorry.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore2",
+    "text": "I am truly sorry.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore3",
+    "text": "You played splendidly.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore4",
+    "text": "I look forward to\r\nour next game.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore5",
+    "text": "Please do not hold a grudge.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore6",
+    "text": "My deepest condolences.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore7",
+    "text": "Please forgive me.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore8",
+    "text": "Perhaps you will\r\nmake it the next time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.GreatScore9",
+    "text": "You were almost there.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore0",
+    "text": "Magnificent.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore1",
+    "text": "Congratulations.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore2",
+    "text": "Incredible.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore3",
+    "text": "I applaud your skill.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore4",
+    "text": "You have won.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore5",
+    "text": "We have a victor.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore6",
+    "text": "That was truly special.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore7",
+    "text": "It seems you have bested me.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore8",
+    "text": "That was exhilarating.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.EndScore9",
+    "text": "Masterfully played.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue0",
+    "text": "I shall honor my promise.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue1",
+    "text": "Go on. The world of\r\nthe living awaits.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue2",
+    "text": "I will miss playing with you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue3",
+    "text": "Until death brings you back.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue4",
+    "text": "Someday, we shall play again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue5",
+    "text": "Enjoy your time out there.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue6",
+    "text": "Try to stay alive\r\na bit longer this time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue7",
+    "text": "We shall play again\r\nonce you return.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue8",
+    "text": "I look forward to your return.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Dialogue9",
+    "text": "Farewell.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue0",
+    "text": "No further, wayward soul.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue1",
+    "text": "You may not return\r\nto the world of the living.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue2",
+    "text": "No matter how many\r\ntimes you try.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue3",
+    "text": "I admit, trying to catch you\r\nis quite the annoyance.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue4",
+    "text": "I told you this before,\r\nyet you keep trying.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue5",
+    "text": "So... I have a proposition.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue6",
+    "text": "Instead of running around,\r\nyou can play a game with me.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue7",
+    "text": "Win my challenge...\r\nand you will be free to leave.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue8",
+    "text": "Lose... and you will go\r\nback to your rest.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue9",
+    "text": "Deal?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro0.Dialogue10",
+    "text": "Let us begin.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue0",
+    "text": "Back for another game?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue1",
+    "text": "I knew you would be back.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue2",
+    "text": "Back to try again?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue3",
+    "text": "Welcome back.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue4",
+    "text": "Hello again, wayward soul.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue5",
+    "text": "We meet again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue6",
+    "text": "Here to play again?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue7",
+    "text": "I kept the dice ready for you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue8",
+    "text": "You are back. Welcome.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue9",
+    "text": "I was wondering\r\nwhen you would return.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue10",
+    "text": "Hello again. Let us begin.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue11",
+    "text": "Up for rolling the dice again?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue12",
+    "text": "Up for another game?",
+    "description": "Game refers to \"round of the same game\" in this case."
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue13",
+    "text": "The challenger has returned.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue14",
+    "text": "Did you sleep well?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue15",
+    "text": "Ah. My main source \r\nof entertainment is back.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue16",
+    "text": "I knew you would not give up.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue17",
+    "text": "Another game?",
+    "description": "Game refers to \"round of the same game\" in this case."
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue18",
+    "text": "Back again? You know the drill.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Intro1.Dialogue19",
+    "text": "Welcome back.\r\nI have been expecting you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue0",
+    "text": "I will explain\r\nthe rules on the go.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue1",
+    "text": "Go on. <color=#69A64E>Play the hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue2",
+    "text": "First, the sum of the dice is added to <color=#1FADA6>BONES</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue3",
+    "text": "You gain <color=#1FADA6>BONES</color> and <color=#FF4751>MULT</color>\r\nbased on the <color=#69A64E>played hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue4",
+    "text": "<color=#1FADA6>BONES</color> are your base score.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue5",
+    "text": "<color=#FF4751>MULT</color> multiplies <color=#1FADA6>BONES</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue6",
+    "text": "This results in <color=#B18FCC>TOTAL</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue7",
+    "text": "<color=#B18FCC>TOTAL</color> is reduced from\r\nthe threshold of the level.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue8",
+    "text": "There is an initial dice\r\nroll after each <color=#69A64E>hand</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue9",
+    "text": "REMOVED",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue10",
+    "text": "REMOVED",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue11",
+    "text": "Now, choose as many\r\ndice as you wish.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue12",
+    "text": "<color=#EFAC1A>Reroll</color> the chosen dice\r\nonce you are ready.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue13",
+    "text": "Use your <color=#EFAC1A>rerolls</color>\r\nwith care.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue14",
+    "text": "REMOVED",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue15",
+    "text": "Some <color=#B18FCC>hands</color> are more\r\nvaluable than others.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue16",
+    "text": "Here you can see all\r\n<color=#B18FCC>hands</color> sorted by <color=#B18FCC>rank</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue17",
+    "text": "The order of dice in\r\n<color=#B18FCC>hands</color> does not matter.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue18",
+    "text": "One last thing.\r\nIf you run out of <color=#69A64E>hands</color>...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue19",
+    "text": "You lose.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue20",
+    "text": "Go on. Reduce the current\r\nlevel threshold to zero.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Tutorial.Dialogue21",
+    "text": "You may add a skull to your deck after each level.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue0",
+    "text": "Let us make this more interesting.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue1",
+    "text": "Let us increase the stakes.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue2",
+    "text": "How about we increase the stakes?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue3",
+    "text": "How about we make\r\nthis more interesting?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue4",
+    "text": "I am feeling lenient.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue5",
+    "text": "Hmm. I think you could\r\nuse an advantage.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue6",
+    "text": "That was a good start.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue7",
+    "text": "Hmm. You seem to be doing all right.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue8",
+    "text": "You might need something\r\nfor the next challenges.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue9",
+    "text": "I am feeling generous today.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.FirstIncrease.Dialogue10",
+    "text": "You got this far.\r\nNot bad.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue0",
+    "text": "Time for the final showdown.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue1",
+    "text": "Onto the final stretch.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue2",
+    "text": "You have made it this far.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue3",
+    "text": "Just a bit longer to go.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue4",
+    "text": "Only a few levels left.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue5",
+    "text": "You are almost there.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue6",
+    "text": "Almost there. \r\nI am rooting for you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue7",
+    "text": "Just a bit further.\r\nYou can do it.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue8",
+    "text": "How about we make this\r\neven more thrilling?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondIncrease.Dialogue9",
+    "text": "The grand finale awaits.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue0",
+    "text": "Here. Have an extra\r\n<color=#69A64E>hand</color> and a <color=#EFAC1A>reroll</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue1",
+    "text": "How about an extra\r\n<color=#69A64E>hand</color> and a <color=#EFAC1A>reroll</color>?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue2",
+    "text": "You now have more\r\n<color=#69A64E>hands</color> and <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue3",
+    "text": "You deserve an extra\r\n<color=#69A64E>hand</color> and a <color=#EFAC1A>reroll</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue4",
+    "text": "Have more <color=#69A64E>hands</color> and <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue5",
+    "text": "Take these extra\r\n<color=#69A64E>hands</color> and <color=#EFAC1A>rerolls</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue6",
+    "text": "One more <color=#69A64E>hand</color> and <color=#EFAC1A>reroll</color>.\r\nYou are welcome.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue7",
+    "text": "I will allow you one more\r\n<color=#69A64E>hand</color> and <color=#EFAC1A>reroll</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue8",
+    "text": "More <color=#69A64E>hands</color> and <color=#EFAC1A>rerolls</color>.\r\nHow about that?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseEnd.Dialogue9",
+    "text": "You could use an extra\r\n<color=#69A64E>hand</color> and a <color=#EFAC1A>reroll</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad0",
+    "text": "Lucky.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad1",
+    "text": "Quite the lucky play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad2",
+    "text": "That was lucky.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad3",
+    "text": "Just a strike of luck.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad4",
+    "text": "The fortune was in your favor.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad5",
+    "text": "You got lucky.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad6",
+    "text": "Hmm. Lucky.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad7",
+    "text": "The luck was on your side.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad8",
+    "text": "A lucky play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad9",
+    "text": "Lucky for you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad10",
+    "text": "Hmm.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad11",
+    "text": "How fortunate.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad12",
+    "text": "You were lucky.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad13",
+    "text": "You were in luck.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Bad14",
+    "text": "One gets lucky sometimes.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay0",
+    "text": "All right.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay1",
+    "text": "Not bad.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay2",
+    "text": "Decent.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay3",
+    "text": "Luck? Or something else?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay4",
+    "text": "Perhaps I underestimated you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay5",
+    "text": "Hmm. That was decent.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay6",
+    "text": "Good. But you can do better.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay7",
+    "text": "Not too bad.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay8",
+    "text": "A decent play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay9",
+    "text": "A mix of luck and... skill?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay10",
+    "text": "Acceptable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay11",
+    "text": "Good enough.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay12",
+    "text": "Passable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay13",
+    "text": "Sufficient.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Okay14",
+    "text": "Fortuitous.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent0",
+    "text": "Was that luck or skill?\r\nA good play either way.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent1",
+    "text": "I admit, that was a good play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent2",
+    "text": "Good play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent3",
+    "text": "You have become\r\npretty good at this.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent4",
+    "text": "Hmm. Impressive.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent5",
+    "text": "Surprisingly good.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent6",
+    "text": "That was quite the play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent7",
+    "text": "Adequate.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent8",
+    "text": "You exceeded my\r\nexpectations with that one.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent9",
+    "text": "Now that was a good play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent10",
+    "text": "Keep it up.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent11",
+    "text": "Very good.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent12",
+    "text": "Continue playing like that.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent13",
+    "text": "Surprisingly well played.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Decent14",
+    "text": "Impressive.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good0",
+    "text": "A fine play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good1",
+    "text": "Well played.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good2",
+    "text": "I am impressed.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good3",
+    "text": "Comptetent.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good4",
+    "text": "A skillful play.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good5",
+    "text": "Now that is what I like to see.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good6",
+    "text": "Very impressive.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good7",
+    "text": "Keep it up and\r\nyou might just win.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good8",
+    "text": "Excellent.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good9",
+    "text": "Outstanding.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good10",
+    "text": "Capable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good11",
+    "text": "Fine work.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good12",
+    "text": "Expertly played.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good13",
+    "text": "Proficient.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Good14",
+    "text": "Adept.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great0",
+    "text": "Exhilarating!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great1",
+    "text": "Masterful!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great2",
+    "text": "A fine display of skill!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great3",
+    "text": "What a flourish!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great4",
+    "text": "Master at work!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great5",
+    "text": "Truly sublime!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great6",
+    "text": "Spectacular!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great7",
+    "text": "Brilliant!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great8",
+    "text": "A truly skilled play!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great9",
+    "text": "Splendid!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great10",
+    "text": "Fantastic!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great11",
+    "text": "Incredible!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great12",
+    "text": "Magnificent!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great13",
+    "text": "Excellent!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PraiseDialogue.Great14",
+    "text": "Marvellous!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue0",
+    "text": "Let us continue.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue1",
+    "text": "Where were we? Oh yes...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue2",
+    "text": "Did you have a nice break?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue3",
+    "text": "How was your break?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue4",
+    "text": "Let us keep going.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue5",
+    "text": "You are back.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue6",
+    "text": "Shall we continue?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue7",
+    "text": "Let us carry on.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue8",
+    "text": "Do not worry.\r\nI remember where we were.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IntroContinue.Dialogue9",
+    "text": "Had a nice break?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue0",
+    "text": "Hey. No touching.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue1",
+    "text": "Please respect my\r\npersonal space.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue2",
+    "text": "That tickles.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue3",
+    "text": "Please focus on the game.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue4",
+    "text": "You are staining my clothing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue5",
+    "text": "Could you not do that?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue6",
+    "text": "Stop touching me, please.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue7",
+    "text": "Please stop that.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue8",
+    "text": "That is quite enough.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.PokeDialogue9",
+    "text": "Cease your prodding.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Demo0",
+    "text": "Well played!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Demo1",
+    "text": "You have reached the end of the demo.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Demo2",
+    "text": "Please remember to <color=#69A64E>wishlist</color> the game.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Demo3",
+    "text": "I hope we will meet again at the full release!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Demo4",
+    "text": "You can also share your score on the devs' Discord.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Hint0.Dialogue0",
+    "text": "By the way...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Hint0.Dialogue1",
+    "text": "You can hold <color=#69A64E>PLAY HAND</color> to\r\nsee a preview of <color=#B18FCC>TOTAL</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin0_0",
+    "text": "You already won, yet you want to continue playing?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin0_1",
+    "text": "Honestly, I am happy to oblige!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin1_0",
+    "text": "Why are you disappointed by your victory?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin1_1",
+    "text": "I see... I do not mind! We can continue playing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin2_0",
+    "text": "Hmm? Are you suggesting the game was too short?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin2_1",
+    "text": "Well, I suppose we could keep playing!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin3_0",
+    "text": "What? Are you not happy with your victory?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin3_1",
+    "text": "Oh, I see how it is. We can keep playing!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin4_0",
+    "text": "What now? Was your victory too easy?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin4_1",
+    "text": "Well, I am happy to keep playing!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin5_0",
+    "text": "What is wrong? You won.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBegin5_1",
+    "text": "Hmm... I will allow it. We can carry on playing!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd0",
+    "text": "Prepare yourself for a proper challenge.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd1",
+    "text": "Now show me what you are really made of.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd2",
+    "text": "You will eventually lose. But how long will it take?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd3",
+    "text": "How long do you think you can survive?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd4",
+    "text": "Do your best.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd5",
+    "text": "I wonder how long you can keep up.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd6",
+    "text": "Do not expect me to go easy on you now though.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.EndlessModeBeginEnd7",
+    "text": "Try to keep up for as long as you can.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless0",
+    "text": "All good things must come to an end.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless1",
+    "text": "Your luck seems to have run out.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless2",
+    "text": "It seems you have reached your limit.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless3",
+    "text": "Well played. I look forward to your next attempt.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless4",
+    "text": "Perhaps you will make it even further next time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless5",
+    "text": "Maybe next time you will do even better.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless6",
+    "text": "It is over. I am sure you will be back soon.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless7",
+    "text": "Not bad. We should play like this again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless8",
+    "text": "I expect that you will be back to try again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless9",
+    "text": "You survived longer than I expected.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless10",
+    "text": "It seems your luck has run out. What a shame.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless11",
+    "text": "You gave it your everything. Next time, try even harder.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless12",
+    "text": "You made it quite far. I will eagerly wait for your return.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless13",
+    "text": "What an interesting way to lose.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Death.Endless14",
+    "text": "You made it further than most ever do.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.DotDotDot",
+    "text": ". . .",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.DailyIntroFirst0",
+    "text": "Hello again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.DailyIntroFirst1",
+    "text": "So you are taking a break from trying to escape.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.DailyIntroFirst2",
+    "text": "In that case, how about a shorter game?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.DailyIntroFirst3",
+    "text": "I will even let you have some skulls from the beginning.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily0",
+    "text": "We should do this again tomorrow.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily1",
+    "text": "I hope to see you again tomorrow.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily2",
+    "text": "We can play again tomorrow.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily3",
+    "text": "A game of dice a day keeps the boredom away.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily4",
+    "text": "See you tomorrow. Unless you want to try escaping again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily5",
+    "text": "Come back tomorrow for a new challenge.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily6",
+    "text": "I would not mind playing like this every day.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily7",
+    "text": "I will have a new challenge for you tomorrow.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.Success.Daily8",
+    "text": "Please come back tomorrow for another challenge.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.LossSkullHint0",
+    "text": "You really should utilize your skulls more.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.LossSkullHint1",
+    "text": "You will keep losing if you do not learn to use your skulls.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.LossSkullHint2",
+    "text": "Next time, pick skulls that work well together.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.LossSkullHint3",
+    "text": "Picking the right skulls is not enough if you do not play to their strengths.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSupporter1",
+    "text": "You bought me a crown... Thank you!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSupporter1",
+    "text": "Are you gifting this to me? You have my thanks!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSupporter2",
+    "text": "What incredible craftsmanship... Thank you so much!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSupporter2",
+    "text": "What a magnificent cape... You are beyond generous!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSupporter3",
+    "text": "This crown is magnificent! Your generosity knows no bounds!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSupporter3",
+    "text": "If I could, I would weep! Words are not enough to express my gratitude!",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueLeaf",
+    "text": "Did you make this yourself?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueLeaf",
+    "text": "How did you manage to keep all these leaves fresh?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSkate",
+    "text": "Is this what the cool kids wear on their heads these days?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSkate",
+    "text": "Hmm. Surprisingly comfortable. The hood is a pleasant feature.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSummer",
+    "text": "I have never taken a holiday. Maybe I should.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSummer",
+    "text": "The colors on this shirt are giving me a headache.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueFish",
+    "text": "Could you have chosen a hat that did not smell like fish?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueFish",
+    "text": "I would be glad to wear this if it did not reek of fish.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueNerd",
+    "text": "I took the liberty of removing the lenses so I could see.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueNerd",
+    "text": "It is fascinating how mortals are able to invent so many strange things.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueConstruction",
+    "text": "I guess mortals need to worry about safety more than I do.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueConstruction",
+    "text": "Why does this vest have such bright colors?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueMummy",
+    "text": "I have no idea when you managed to wrap my skull in these.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueMummy",
+    "text": "It is going to be a pain to unwrap all of these bandages.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueChef",
+    "text": "Before you ask, I do not know how to cook.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueChef",
+    "text": "This feels completely unnecessary.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueJoker",
+    "text": "Do you take me for a fool?",
+    "description": "The word \"fool\" refers to joker or trickster, though if possible, preserve the meaning of \"stupid\"."
+  },
+  {
+    "key": "Dialogues.CapeDialogueJoker",
+    "text": "I look ridiculous.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueLumber",
+    "text": "This hat is way too warm.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueLumber",
+    "text": "I usually prefer wearing clothing with less color.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialoguePilot",
+    "text": "I learned to fly before mortals even dreamt of doing it.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialoguePilot",
+    "text": "I have never worn anything this warm.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialoguePirate",
+    "text": "Before you ask, I am not going to yell \"yarrr\".",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialoguePirate",
+    "text": "Just wearing this makes me seasick.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueAdmiral",
+    "text": "This is one of the most ridiculous hats I have ever worn.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueAdmiral",
+    "text": "Ridiculous. Absolutely ridiculous.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueCowboy",
+    "text": "It smells like cattle and gunpowder.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueCowboy",
+    "text": "I guess I am now the judge, jury and executioner.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueKnight",
+    "text": "It is a bit difficult to see out of this thing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueKnight",
+    "text": "I do not really need armor, but I can not deny how stylish it is.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueViking",
+    "text": "The lack of horns means this is a real viking helmet.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueViking",
+    "text": "It would be really difficult to move silently while wearing this.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSuit",
+    "text": "Do not expect me to start performing magic tricks for you.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSuit",
+    "text": "Stylish in its simplicity.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSpeedy",
+    "text": "Seriously?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSpeedy",
+    "text": "I do not agree that flames make everything better.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueWW1",
+    "text": "There was a time when a lot of men wearing similar helmets arrived here.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueWW1",
+    "text": "The amount of stuff I could fit in all these pockets is astonishing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialoguePumpkin",
+    "text": "Did you carve this yourself? I think it has started to rot.",
+    "description": "\"Carving\" refers to pumpkin carving."
+  },
+  {
+    "key": "Dialogues.CapeDialoguePumpkin",
+    "text": "Did you not consider removing the hay first?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueYule",
+    "text": "A bit too festive for my taste.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueYule",
+    "text": "This would fit me better if I had some meat on my bones.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSombrero",
+    "text": "A brim this wide is a bit impractical.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSombrero",
+    "text": "A bit too flamboyant for my style.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueMime",
+    "text": "If you wish for me to be silent, bring me a shirt that fits with this hat.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueMime",
+    "text": "If you wish for me to be silent, bring me a hat that fits with this shirt.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueJudge",
+    "text": "This is insulting. I take pride in the smoothness of my bald skull.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueJudge",
+    "text": "It is not my job to judge people, but your fashion sense is often questionable.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.HatDialogueSamurai",
+    "text": "The decorative elements of this helmet seem a bit impractical.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CapeDialogueSamurai",
+    "text": "It is unnecessary for me to wear armor for any other reason than style.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseCursed.Dialogue0",
+    "text": "Having some more <color=#FF4751>ribs</color> would not hurt either.",
+    "description": "Note: the word \"ribs\" refers to human ribs."
+  },
+  {
+    "key": "Dialogues.IncreaseCursed.Dialogue1",
+    "text": "Take these <color=#FF4751>ribs</color> as well.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseCursed.Dialogue2",
+    "text": "Perhaps a few <color=#FF4751>ribs</color> too for a good measure.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.IncreaseCursed.Dialogue3",
+    "text": "A few more <color=#FF4751>ribs</color> are also in order.",
+    "description": "Note: \"in order\" here refers to \"needed\" or \"appropriate\"."
+  },
+  {
+    "key": "Dialogues.IncreaseCursed.Dialogue4",
+    "text": "More <color=#FF4751>ribs</color> too, of course.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst0",
+    "text": "It is you. \r\nWhat a surprise.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst1",
+    "text": "I am in a foul mood today, so the rules are going to be a bit different.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst2",
+    "text": "You will get a few temporary skulls for the duration of each level.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst3",
+    "text": "These skulls add points directly to <color=#B18FCC>TOTAL</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst4",
+    "text": "At the end of most levels, you must add a <color=#FF4751>cursed skull</color> to your deck.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst5",
+    "text": "<color=#FF4751>Cursed skulls</color> reduce your <color=#FF4751>ribs</color>. If you run out of <color=#FF4751>ribs</color>, you lose.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst6",
+    "text": "Failing to complete a level halves your remaining <color=#FF4751>ribs</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst7",
+    "text": "Successfully completing a level lets you regain a few <color=#FF4751>ribs</color>.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.CursedIntroFirst8",
+    "text": "Now show me how far you can make it.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceOkay0",
+    "text": "It would be a shame to end the game this early...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceOkay1",
+    "text": "Hmm. We were just getting started...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceOkay2",
+    "text": "I feel pity for you...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceOkay3",
+    "text": "On a second thought, that was just too short...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceOkay4",
+    "text": "What is with the sad look? You look so pitiful...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceDecent0",
+    "text": "Hmm... I could give you a second chance.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceDecent1",
+    "text": "If it was just bad luck... perhaps you could try that again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceDecent2",
+    "text": "It feels appropriate to show you some mercy.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceDecent3",
+    "text": "I must admit that I am a bit curious to see you try that again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceDecent4",
+    "text": "If it was just bad luck, giving you a second chance would be fair.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGood0",
+    "text": "You were doing so well. Would you like to try that again?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGood1",
+    "text": "Hmm. If you ask nicely, I could be convinced to show you mercy.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGood2",
+    "text": "I could bend the rules a bit if you want to keep playing.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGood3",
+    "text": "It would be a shame to end the game here...",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGood4",
+    "text": "Hmm... Do you think you could win if I gave you a second chance?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGreat0",
+    "text": "You were doing so well that you may try again if you wish.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGreat1",
+    "text": "If you wish, I could let you try that again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGreat2",
+    "text": "Now that was just bad luck. Do you want to try that again?",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGreat3",
+    "text": "You were so close to victory. I could bend the rules a little.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceGreat4",
+    "text": "It would be a shame to end the game this close to victory.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore0",
+    "text": "No more second chances.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore1",
+    "text": "Do not let my mercy go to waste.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore2",
+    "text": "If you lose again, I am out of mercy.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore3",
+    "text": "I will not show you mercy again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore4",
+    "text": "This is where we were a few moments ago.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore5",
+    "text": "Do not make the same mistakes again.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore6",
+    "text": "Perhaps the dice will be in your favor this time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore7",
+    "text": "Perhaps luck will be on your side this time.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore8",
+    "text": "Do not make me regret giving you another chance.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore9",
+    "text": "Hopefully you learned something from your mistakes.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore10",
+    "text": "Do not expect any more mercy.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore11",
+    "text": "Now show me it was just bad luck.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore12",
+    "text": "I am letting you try this only once.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore13",
+    "text": "Do not let this chance go to waste.",
+    "description": ""
+  },
+  {
+    "key": "Dialogues.SecondChanceRestore14",
+    "text": "This is how things were just a moment ago.",
+    "description": ""
+  }
+]

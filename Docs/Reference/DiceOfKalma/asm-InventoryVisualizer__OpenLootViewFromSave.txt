@@ -1,0 +1,130 @@
+InventoryVisualizer$$OpenLootViewFromSave
+019084a8: str      x30, [sp, #-0x40]!                         
+019084ac: stp      x24, x23, [sp, #0x10]                      
+019084b0: stp      x22, x21, [sp, #0x20]                      
+019084b4: stp      x20, x19, [sp, #0x30]                      
+019084b8: adrp     x20, #0x3c21000                            
+019084bc: mov      x19, x0                                    
+019084c0: ldrb     w8, [x20, #0x131]                          
+019084c4: tbnz     w8, #0, #0x19084f4                         
+019084c8: adrp     x0, #0x39ad000                             
+019084cc: ldr      x0, [x0, #0xe18]                           [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+019084d0: bl       #0x17b6854                                 
+019084d4: adrp     x0, #0x39ad000                             
+019084d8: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+019084dc: bl       #0x17b6854                                 
+019084e0: adrp     x0, #0x39ad000                             
+019084e4: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000 -> 3a95468 Method$Source.Data.Serialization.SaveStore<RunSaveData>.get_Data()
+019084e8: bl       #0x17b6854                                 
+019084ec: mov      w8, #1                                     
+019084f0: strb     w8, [x20, #0x131]                          
+019084f4: ldr      x0, [x19, #0x80]                           
+019084f8: cbz      x0, #0x19086a4                             
+019084fc: mov      w1, wzr                                    
+01908500: mov      x2, xzr                                    
+01908504: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01908508: ldr      x0, [x19, #0x88]                           
+0190850c: cbz      x0, #0x19086a4                             
+01908510: mov      w1, wzr                                    
+01908514: mov      x2, xzr                                    
+01908518: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+0190851c: ldr      x0, [x19, #0x90]                           
+01908520: cbz      x0, #0x19086a4                             
+01908524: adrp     x23, #0x39ad000                            
+01908528: adrp     x24, #0x39ad000                            
+0190852c: mov      w1, wzr                                    
+01908530: ldr      x23, [x23, #0xc60]                         [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+01908534: ldr      x24, [x24, #0xe18]                         [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+01908538: mov      x2, xzr                                    
+0190853c: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01908540: mov      w8, #1                                     
+01908544: mov      x20, xzr                                   
+01908548: strb     w8, [x19, #0x70]                           
+0190854c: ldr      x0, [x23]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908550: ldr      w8, [x0, #0xe4]                            
+01908554: cbnz     w8, #0x1908560                             
+01908558: bl       #0x17b69d4                                 
+0190855c: ldr      x0, [x23]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908560: ldr      x8, [x0, #0xb8]                            
+01908564: ldr      x8, [x8, #0x40]                            
+01908568: cbz      x8, #0x19086a4                             
+0190856c: ldr      x9, [x8, #0x10]                            
+01908570: cbz      x9, #0x19086a4                             
+01908574: ldr      x9, [x9, #0x98]                            
+01908578: cbz      x9, #0x19086a4                             
+0190857c: ldrsw    x9, [x9, #0x18]                            
+01908580: cmp      x20, x9                                    
+01908584: b.ge     #0x1908620                                 
+01908588: ldr      x8, [x19, #0x58]                           
+0190858c: cbz      x8, #0x19086a4                             
+01908590: ldr      x0, [x8, #0x30]                            
+01908594: cbz      x0, #0x19086a4                             
+01908598: ldr      x2, [x24]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+0190859c: mov      w1, w20                                    
+019085a0: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+019085a4: ldr      x8, [x23]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+019085a8: ldr      x22, [x19, #0xa8]                          
+019085ac: mov      x21, x0                                    
+019085b0: ldr      w9, [x8, #0xe4]                            
+019085b4: cbnz     w9, #0x19085c4                             
+019085b8: mov      x0, x8                                     
+019085bc: bl       #0x17b69d4                                 
+019085c0: ldr      x8, [x23]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+019085c4: ldr      x8, [x8, #0xb8]                            
+019085c8: ldr      x8, [x8, #0x40]                            
+019085cc: cbz      x8, #0x19086a4                             
+019085d0: ldr      x8, [x8, #0x10]                            
+019085d4: cbz      x8, #0x19086a4                             
+019085d8: ldr      x8, [x8, #0x98]                            
+019085dc: cbz      x8, #0x19086a4                             
+019085e0: ldr      w9, [x8, #0x18]                            
+019085e4: cmp      x20, x9                                    
+019085e8: b.hs     #0x19086a8                                 
+019085ec: cbz      x22, #0x19086a4                            
+019085f0: add      x8, x8, x20, lsl #2                        
+019085f4: mov      x0, x22                                    
+019085f8: mov      x2, xzr                                    
+019085fc: ldr      w1, [x8, #0x20]                            
+01908600: bl       #0x19274c8                                 DatabaseObject$$GetItemByID
+01908604: cbz      x21, #0x19086a4                            
+01908608: mov      x1, x0                                     
+0190860c: str      x0, [x21, #0x10]!                          
+01908610: mov      x0, x21                                    
+01908614: bl       #0x17b67f8                                 
+01908618: add      x20, x20, #1                               
+0190861c: b        #0x190854c                                 
+01908620: ldr      w9, [x0, #0xe4]                            
+01908624: cbnz     w9, #0x190863c                             
+01908628: bl       #0x17b69d4                                 
+0190862c: ldr      x8, [x23]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908630: ldr      x8, [x8, #0xb8]                            
+01908634: ldr      x8, [x8, #0x40]                            
+01908638: cbz      x8, #0x19086a4                             
+0190863c: ldr      x8, [x8, #0x10]                            
+01908640: cbz      x8, #0x19086a4                             
+01908644: ldr      w8, [x8, #0xac]                            
+01908648: cmp      w8, #2                                     
+0190864c: b.ne     #0x1908670                                 
+01908650: mov      w8, #1                                     
+01908654: mov      x0, x19                                    
+01908658: strb     w8, [x19, #0xe8]                           
+0190865c: bl       #0x1907d2c                                 InventoryVisualizer$$UpdateLootSlotVisualsCursed
+01908660: mov      x0, x19                                    
+01908664: mov      w1, #1                                     
+01908668: bl       #0x1907e4c                                 InventoryVisualizer$$LootViewAnimCursed
+0190866c: b        #0x1908684                                 
+01908670: mov      x0, x19                                    
+01908674: bl       #0x1908300                                 InventoryVisualizer$$UpdateLootSlotVisuals
+01908678: mov      x0, x19                                    
+0190867c: mov      w1, #1                                     
+01908680: bl       #0x1908420                                 InventoryVisualizer$$LootViewAnim
+01908684: mov      x1, x0                                     
+01908688: mov      x0, x19                                    
+0190868c: mov      x2, xzr                                    
+01908690: ldp      x20, x19, [sp, #0x30]                      
+01908694: ldp      x22, x21, [sp, #0x20]                      
+01908698: ldp      x24, x23, [sp, #0x10]                      
+0190869c: ldr      x30, [sp], #0x40                           
+019086a0: b        #0x34ce820                                 UnityEngine.MonoBehaviour$$StartCoroutine
+019086a4: bl       #0x17b6b00                                 
+019086a8: bl       #0x17b6b08                                 

@@ -40,6 +40,6 @@ Final validation on Unity 6000.6.2f1 passed all 547 EditMode tests, with zero fa
 
 Tests cover imported Standard data, offer cadence, pool eligibility, history fallback, caps, refresh accounting, offer and option identity, rejected actions, preview/state isolation, independent dice randomness, and cached upgrade choices. A recorded legal Standard victory uses the actual 25 thresholds, budgets, starting state, and full catalog; its replay requires no injected dice or modified difficulty. A separate legal loss verifies exhaustion.
 
-The reference disassembly findings, pool mapping, search artifact, and engine validation outputs are retained under `Docs/work/reward-reference` and `Docs/work`.
+The reference disassembly findings and pool mapping are retained under `Docs/Reference/Rewards`. The temporary search harness and engine validation outputs remain local under `Docs/work`.
 
 The recorded victory uses seed 60 and 264 accepted actions: 67 hand plays, 140 rerolls, 24 modifier selections, 24 upgrades, and 9 refreshes. It clears all 25 stages with a total score of 80,561. A seed 0 run without rerolls loses through resource exhaustion on stage five after 13 hands. These traces demonstrate reachable outcomes; they are not a balance evaluation.

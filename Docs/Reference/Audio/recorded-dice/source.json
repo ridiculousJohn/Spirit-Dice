@@ -1,0 +1,41 @@
+{
+  "title": "SFX Pack - Rolling Dice",
+  "creator": "Halfwits & Failed Crits",
+  "recordist": "Jonathan Swenson",
+  "source": "https://halfwitsfailedcrits.itch.io/sfx-pack-rolling-dice",
+  "license": "CC0 1.0",
+  "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "processing": "None. WAV files copied byte-for-byte from the downloaded archive.",
+  "files": [
+    {
+      "file": "Roll 1d6.wav",
+      "archive_entry": "d6/Roll 1d6.wav",
+      "sha256": "d95fc4aa36559f612a97979d47bde45e1bcade73996d97332604364fd34f210e",
+      "duration_seconds": 0.6775056689342404
+    },
+    {
+      "file": "Roll 2d6.wav",
+      "archive_entry": "d6/Roll 2d6.wav",
+      "sha256": "1848d9596c16a754546d5a07ae16132eef5159364c9f1a19998f8bc6e8fc1946",
+      "duration_seconds": 0.9329705215419501
+    },
+    {
+      "file": "Roll 3d6.wav",
+      "archive_entry": "d6/Roll 3d6.wav",
+      "sha256": "05ce4aaef19ac764d0495bc74c7067c92e89b6f124fb17aa33eb08cc41bbb8fa",
+      "duration_seconds": 2.097052154195011
+    },
+    {
+      "file": "Roll 4d6.wav",
+      "archive_entry": "d6/Roll 4d6.wav",
+      "sha256": "81f356441c49477bcc4cd582562a7f635722c3d5d77491c40dcb32e438233ac2",
+      "duration_seconds": 1.685532879818594
+    },
+    {
+      "file": "Roll 5d6.wav",
+      "archive_entry": "d6/Roll 5d6.wav",
+      "sha256": "8df3ef10ac5d8c56a067b7b70784f0aea7bb4f889a82da513f0430a71c5eb897",
+      "duration_seconds": 1.36421768707483
+    }
+  ]
+}

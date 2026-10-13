@@ -1,0 +1,594 @@
+BattleHandler$$ResetRunSaveDataToDefaults
+018a9a68: str      x30, [sp, #-0x50]!                         
+018a9a6c: stp      x26, x25, [sp, #0x10]                      
+018a9a70: stp      x24, x23, [sp, #0x20]                      
+018a9a74: stp      x22, x21, [sp, #0x30]                      
+018a9a78: stp      x20, x19, [sp, #0x40]                      
+018a9a7c: adrp     x20, #0x3c20000                            
+018a9a80: adrp     x22, #0x39ad000                            
+018a9a84: mov      x19, x0                                    
+018a9a88: ldrb     w8, [x20, #0xfa4]                          
+018a9a8c: ldr      x22, [x22, #0xc60]                         [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+018a9a90: tbnz     w8, #0, #0x18a9b08                         
+018a9a94: adrp     x0, #0x39ad000                             
+018a9a98: ldr      x0, [x0, #0xc68]                           [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+018a9a9c: bl       #0x17b6854                                 
+018a9aa0: adrp     x0, #0x39ad000                             
+018a9aa4: ldr      x0, [x0, #0xc70]                           [39adc70]  bytes=0000000000000000 -> 3a7a0d0 int[]_TypeInfo
+018a9aa8: bl       #0x17b6854                                 
+018a9aac: adrp     x0, #0x39ad000                             
+018a9ab0: ldr      x0, [x0, #0xc78]                           [39adc78]  bytes=0000000000000000 -> 3a90da8 Method$System.Collections.Generic.List<int>.Clear()
+018a9ab4: bl       #0x17b6854                                 
+018a9ab8: adrp     x0, #0x39ad000                             
+018a9abc: ldr      x0, [x0, #0xc80]                           [39adc80]  bytes=0000000000000000 -> 3a90d78 Method$System.Collections.Generic.List<int>..ctor()
+018a9ac0: bl       #0x17b6854                                 
+018a9ac4: adrp     x0, #0x39ad000                             
+018a9ac8: ldr      x0, [x0, #0xc48]                           [39adc48]  bytes=0000000000000000 -> 3a8fe80 Method$System.Collections.Generic.List<bool>.get_Item()
+018a9acc: bl       #0x17b6854                                 
+018a9ad0: adrp     x0, #0x39ad000                             
+018a9ad4: ldr      x0, [x0, #0xc88]                           [39adc88]  bytes=0000000000000000 -> 3a782b0 System.Collections.Generic.List<int>_TypeInfo
+018a9ad8: bl       #0x17b6854                                 
+018a9adc: adrp     x0, #0x39ad000                             
+018a9ae0: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+018a9ae4: bl       #0x17b6854                                 
+018a9ae8: adrp     x0, #0x39ad000                             
+018a9aec: ldr      x0, [x0, #0xc90]                           [39adc90]  bytes=0000000000000000 -> 3a954c8 Method$Source.Data.Serialization.SaveStore<SaveData>.get_Data()
+018a9af0: bl       #0x17b6854                                 
+018a9af4: adrp     x0, #0x39ad000                             
+018a9af8: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000 -> 3a95468 Method$Source.Data.Serialization.SaveStore<RunSaveData>.get_Data()
+018a9afc: bl       #0x17b6854                                 
+018a9b00: mov      w8, #1                                     
+018a9b04: strb     w8, [x20, #0xfa4]                          
+018a9b08: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9b0c: ldr      w8, [x0, #0xe4]                            
+018a9b10: cbnz     w8, #0x18a9b1c                             
+018a9b14: bl       #0x17b69d4                                 
+018a9b18: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9b1c: ldr      x8, [x0, #0xb8]                            
+018a9b20: ldr      x9, [x8, #0x38]                            
+018a9b24: cbz      x9, #0x18aa3a4                             
+018a9b28: ldr      x9, [x9, #0x10]                            
+018a9b2c: cbz      x9, #0x18aa3a4                             
+018a9b30: ldr      x8, [x8, #0x40]                            
+018a9b34: strb     wzr, [x9, #0x28]                           
+018a9b38: cbz      x8, #0x18aa3a4                             
+018a9b3c: ldr      x8, [x8, #0x10]                            
+018a9b40: cbz      x8, #0x18aa3a4                             
+018a9b44: ldr      x0, [x19, #0x2d0]                          
+018a9b48: mov      w9, #1                                     
+018a9b4c: str      w9, [x8, #0x5c]                            
+018a9b50: cbz      x0, #0x18aa3a4                             
+018a9b54: adrp     x20, #0x39ad000                            
+018a9b58: adrp     x23, #0x39ad000                            
+018a9b5c: mov      w1, #2                                     
+018a9b60: ldr      x20, [x20, #0xc48]                         [39adc48]  bytes=0000000000000000 -> 3a8fe80 Method$System.Collections.Generic.List<bool>.get_Item()
+018a9b64: ldr      x23, [x23, #0xc68]                         [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+018a9b68: ldr      x2, [x20]                                  [3a8fe80] Method$System.Collections.Generic.List<bool>.get_Item() bytes=733001c000000000
+018a9b6c: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018a9b70: tbz      w0, #0, #0x18a9bd4                         
+018a9b74: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9b78: ldr      w8, [x0, #0xe4]                            
+018a9b7c: cbnz     w8, #0x18a9b88                             
+018a9b80: bl       #0x17b69d4                                 
+018a9b84: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9b88: ldr      x8, [x0, #0xb8]                            
+018a9b8c: ldr      x8, [x8, #0x40]                            
+018a9b90: cbz      x8, #0x18aa3a4                             
+018a9b94: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9b98: ldr      x21, [x8, #0x10]                           
+018a9b9c: ldr      w9, [x0, #0xe4]                            
+018a9ba0: cbnz     w9, #0x18a9bbc                             
+018a9ba4: bl       #0x17b69d4                                 
+018a9ba8: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9bac: ldr      x8, [x8, #0xb8]                            
+018a9bb0: ldr      x8, [x8, #0x40]                            
+018a9bb4: cbz      x8, #0x18aa3a4                             
+018a9bb8: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9bbc: ldr      x9, [x8, #0x10]                            
+018a9bc0: cbz      x9, #0x18aa3a4                             
+018a9bc4: ldr      x8, [x0, #0xb8]                            
+018a9bc8: ldr      x8, [x8, #0x48]                            
+018a9bcc: cbnz     x8, #0x18a9c90                             
+018a9bd0: b        #0x18aa3a4                                 
+018a9bd4: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9bd8: ldrb     w9, [x19, #0x312]                          
+018a9bdc: ldr      w8, [x0, #0xe4]                            
+018a9be0: cbz      w9, #0x18a9c3c                             
+018a9be4: cbnz     w8, #0x18a9bf0                             
+018a9be8: bl       #0x17b69d4                                 
+018a9bec: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9bf0: ldr      x8, [x0, #0xb8]                            
+018a9bf4: ldr      x8, [x8, #0x40]                            
+018a9bf8: cbz      x8, #0x18aa3a4                             
+018a9bfc: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9c00: ldr      x21, [x8, #0x10]                           
+018a9c04: ldr      w9, [x0, #0xe4]                            
+018a9c08: cbnz     w9, #0x18a9c24                             
+018a9c0c: bl       #0x17b69d4                                 
+018a9c10: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9c14: ldr      x8, [x8, #0xb8]                            
+018a9c18: ldr      x8, [x8, #0x40]                            
+018a9c1c: cbz      x8, #0x18aa3a4                             
+018a9c20: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9c24: ldr      x9, [x8, #0x10]                            
+018a9c28: cbz      x9, #0x18aa3a4                             
+018a9c2c: ldr      x8, [x0, #0xb8]                            
+018a9c30: ldr      x8, [x8, #0x78]                            
+018a9c34: cbnz     x8, #0x18a9c90                             
+018a9c38: b        #0x18aa3a4                                 
+018a9c3c: cbnz     w8, #0x18a9c48                             
+018a9c40: bl       #0x17b69d4                                 
+018a9c44: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9c48: ldr      x8, [x0, #0xb8]                            
+018a9c4c: ldr      x8, [x8, #0x40]                            
+018a9c50: cbz      x8, #0x18aa3a4                             
+018a9c54: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9c58: ldr      x21, [x8, #0x10]                           
+018a9c5c: ldr      w9, [x0, #0xe4]                            
+018a9c60: cbnz     w9, #0x18a9c7c                             
+018a9c64: bl       #0x17b69d4                                 
+018a9c68: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9c6c: ldr      x8, [x8, #0xb8]                            
+018a9c70: ldr      x8, [x8, #0x40]                            
+018a9c74: cbz      x8, #0x18aa3a4                             
+018a9c78: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9c7c: ldr      x9, [x8, #0x10]                            
+018a9c80: cbz      x9, #0x18aa3a4                             
+018a9c84: ldr      x8, [x0, #0xb8]                            
+018a9c88: ldr      x8, [x8, #0x50]                            
+018a9c8c: cbz      x8, #0x18aa3a4                             
+018a9c90: ldr      w9, [x9, #0x5c]                            
+018a9c94: ldr      w10, [x8, #0x18]                           
+018a9c98: sub      w9, w9, #1                                 
+018a9c9c: cmp      w9, w10                                    
+018a9ca0: b.hs     #0x18aa3a8                                 
+018a9ca4: cbz      x21, #0x18aa3a4                            
+018a9ca8: add      x8, x8, w9, sxtw #2                        
+018a9cac: ldr      x0, [x19, #0x2d0]                          
+018a9cb0: ldr      w8, [x8, #0x20]                            
+018a9cb4: str      w8, [x21, #0x24]                           
+018a9cb8: cbz      x0, #0x18aa3a4                             
+018a9cbc: ldr      x2, [x20]                                  [3a8fe80] Method$System.Collections.Generic.List<bool>.get_Item() bytes=733001c000000000
+018a9cc0: mov      w1, #0xb                                   
+018a9cc4: bl       #0x23b80d4                                 System.Collections.Generic.List<bool>$$get_Item
+018a9cc8: tbz      w0, #0, #0x18a9d54                         
+018a9ccc: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9cd0: ldr      w8, [x0, #0xe4]                            
+018a9cd4: cbnz     w8, #0x18a9ce0                             
+018a9cd8: bl       #0x17b69d4                                 
+018a9cdc: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9ce0: ldr      x8, [x0, #0xb8]                            
+018a9ce4: ldr      x9, [x8, #0x40]                            
+018a9ce8: cbz      x9, #0x18aa3a4                             
+018a9cec: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9cf0: ldr      x20, [x9, #0x10]                           
+018a9cf4: ldr      w10, [x8, #0xe4]                           
+018a9cf8: cbnz     w10, #0x18a9d18                            
+018a9cfc: mov      x0, x8                                     
+018a9d00: bl       #0x17b69d4                                 
+018a9d04: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9d08: ldr      x8, [x0, #0xb8]                            
+018a9d0c: ldr      x9, [x8, #0x40]                            
+018a9d10: cbz      x9, #0x18aa3a4                             
+018a9d14: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9d18: ldr      x9, [x9, #0x10]                            
+018a9d1c: cbz      x9, #0x18aa3a4                             
+018a9d20: ldr      x8, [x8, #0xb8]                            
+018a9d24: ldr      x8, [x8, #0x58]                            
+018a9d28: cbz      x8, #0x18aa3a4                             
+018a9d2c: ldr      w9, [x9, #0x5c]                            
+018a9d30: ldr      w10, [x8, #0x18]                           
+018a9d34: sub      w9, w9, #1                                 
+018a9d38: cmp      w9, w10                                    
+018a9d3c: b.hs     #0x18aa3a8                                 
+018a9d40: cbz      x20, #0x18aa3a4                            
+018a9d44: add      x8, x8, w9, sxtw #2                        
+018a9d48: ldr      w8, [x8, #0x20]                            
+018a9d4c: sub      w8, w8, #1                                 
+018a9d50: b        #0x18a9e38                                 
+018a9d54: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9d58: ldrb     w9, [x19, #0x312]                          
+018a9d5c: ldr      w8, [x0, #0xe4]                            
+018a9d60: cbz      w9, #0x18a9dc0                             
+018a9d64: cbnz     w8, #0x18a9d70                             
+018a9d68: bl       #0x17b69d4                                 
+018a9d6c: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9d70: ldr      x8, [x0, #0xb8]                            
+018a9d74: ldr      x9, [x8, #0x40]                            
+018a9d78: cbz      x9, #0x18aa3a4                             
+018a9d7c: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9d80: ldr      x20, [x9, #0x10]                           
+018a9d84: ldr      w10, [x8, #0xe4]                           
+018a9d88: cbnz     w10, #0x18a9da8                            
+018a9d8c: mov      x0, x8                                     
+018a9d90: bl       #0x17b69d4                                 
+018a9d94: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9d98: ldr      x8, [x0, #0xb8]                            
+018a9d9c: ldr      x9, [x8, #0x40]                            
+018a9da0: cbz      x9, #0x18aa3a4                             
+018a9da4: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9da8: ldr      x9, [x9, #0x10]                            
+018a9dac: cbz      x9, #0x18aa3a4                             
+018a9db0: ldr      x8, [x8, #0xb8]                            
+018a9db4: ldr      x8, [x8, #0x68]                            
+018a9db8: cbnz     x8, #0x18a9e18                             
+018a9dbc: b        #0x18aa3a4                                 
+018a9dc0: cbnz     w8, #0x18a9dcc                             
+018a9dc4: bl       #0x17b69d4                                 
+018a9dc8: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9dcc: ldr      x8, [x0, #0xb8]                            
+018a9dd0: ldr      x9, [x8, #0x40]                            
+018a9dd4: cbz      x9, #0x18aa3a4                             
+018a9dd8: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9ddc: ldr      x20, [x9, #0x10]                           
+018a9de0: ldr      w10, [x8, #0xe4]                           
+018a9de4: cbnz     w10, #0x18a9e04                            
+018a9de8: mov      x0, x8                                     
+018a9dec: bl       #0x17b69d4                                 
+018a9df0: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9df4: ldr      x8, [x0, #0xb8]                            
+018a9df8: ldr      x9, [x8, #0x40]                            
+018a9dfc: cbz      x9, #0x18aa3a4                             
+018a9e00: ldr      x8, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018a9e04: ldr      x9, [x9, #0x10]                            
+018a9e08: cbz      x9, #0x18aa3a4                             
+018a9e0c: ldr      x8, [x8, #0xb8]                            
+018a9e10: ldr      x8, [x8, #0x58]                            
+018a9e14: cbz      x8, #0x18aa3a4                             
+018a9e18: ldr      w9, [x9, #0x5c]                            
+018a9e1c: ldr      w10, [x8, #0x18]                           
+018a9e20: sub      w9, w9, #1                                 
+018a9e24: cmp      w9, w10                                    
+018a9e28: b.hs     #0x18aa3a8                                 
+018a9e2c: cbz      x20, #0x18aa3a4                            
+018a9e30: add      x8, x8, w9, sxtw #2                        
+018a9e34: ldr      w8, [x8, #0x20]                            
+018a9e38: ldr      w9, [x0, #0xe4]                            
+018a9e3c: str      w8, [x20, #0x28]                           
+018a9e40: cbnz     w9, #0x18a9e4c                             
+018a9e44: bl       #0x17b69d4                                 
+018a9e48: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9e4c: ldr      x8, [x0, #0xb8]                            
+018a9e50: ldr      x8, [x8, #0x40]                            
+018a9e54: cbz      x8, #0x18aa3a4                             
+018a9e58: ldr      x20, [x8, #0x10]                           
+018a9e5c: mov      x0, x19                                    
+018a9e60: bl       #0x18aa3ac                                 BattleHandler$$GetLevelStartRerollAmount
+018a9e64: cbz      x20, #0x18aa3a4                            
+018a9e68: mov      w8, w0                                     
+018a9e6c: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9e70: str      w8, [x20, #0x2c]                           
+018a9e74: ldr      x9, [x0, #0xb8]                            
+018a9e78: ldr      x9, [x9, #0x40]                            
+018a9e7c: cbz      x9, #0x18aa3a4                             
+018a9e80: ldr      x8, [x9, #0x10]                            
+018a9e84: cbz      x8, #0x18aa3a4                             
+018a9e88: adrp     x25, #0x39ad000                            
+018a9e8c: adrp     x24, #0x39ad000                            
+018a9e90: adrp     x26, #0x39ad000                            
+018a9e94: ldr      x25, [x25, #0xc88]                         [39adc88]  bytes=0000000000000000 -> 3a782b0 System.Collections.Generic.List<int>_TypeInfo
+018a9e98: ldr      x24, [x24, #0xc80]                         [39adc80]  bytes=0000000000000000 -> 3a90d78 Method$System.Collections.Generic.List<int>..ctor()
+018a9e9c: ldr      x26, [x26, #0xc70]                         [39adc70]  bytes=0000000000000000 -> 3a7a0d0 int[]_TypeInfo
+018a9ea0: mov      x20, xzr                                   
+018a9ea4: str      xzr, [x8, #0x30]                           
+018a9ea8: ldr      w8, [x0, #0xe4]                            
+018a9eac: cbnz     w8, #0x18a9eb8                             
+018a9eb0: bl       #0x17b69d4                                 
+018a9eb4: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9eb8: ldr      x8, [x0, #0xb8]                            
+018a9ebc: ldr      x8, [x8, #0x40]                            
+018a9ec0: cbz      x8, #0x18aa3a4                             
+018a9ec4: ldr      x9, [x8, #0x10]                            
+018a9ec8: cbz      x9, #0x18aa3a4                             
+018a9ecc: ldr      x9, [x9, #0x10]                            
+018a9ed0: cbz      x9, #0x18aa3a4                             
+018a9ed4: ldrsw    x10, [x9, #0x18]                           
+018a9ed8: ldr      w9, [x0, #0xe4]                            
+018a9edc: cmp      x20, x10                                   
+018a9ee0: b.ge     #0x18a9ff0                                 
+018a9ee4: cbnz     w9, #0x18a9efc                             
+018a9ee8: bl       #0x17b69d4                                 
+018a9eec: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9ef0: ldr      x8, [x8, #0xb8]                            
+018a9ef4: ldr      x8, [x8, #0x40]                            
+018a9ef8: cbz      x8, #0x18aa3a4                             
+018a9efc: ldr      x8, [x8, #0x10]                            
+018a9f00: cbz      x8, #0x18aa3a4                             
+018a9f04: ldr      x0, [x19, #0x38]                           
+018a9f08: cbz      x0, #0x18aa3a4                             
+018a9f0c: ldr      x9, [x0]                                   
+018a9f10: ldr      x21, [x8, #0x10]                           
+018a9f14: mov      w1, #1                                     
+018a9f18: mov      w2, #7                                     
+018a9f1c: ldp      x8, x3, [x9, #0x198]                       
+018a9f20: blr      x8                                         
+018a9f24: cbz      x21, #0x18aa3a4                            
+018a9f28: ldr      w9, [x21, #0x18]                           
+018a9f2c: cmp      x20, x9                                    
+018a9f30: b.hs     #0x18aa3a8                                 
+018a9f34: mov      w8, w0                                     
+018a9f38: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9f3c: add      x10, x21, x20, lsl #2                      
+018a9f40: ldr      x9, [x0, #0xb8]                            
+018a9f44: str      w8, [x10, #0x20]                           
+018a9f48: ldr      x9, [x9, #0x40]                            
+018a9f4c: cbz      x9, #0x18aa3a4                             
+018a9f50: ldr      x8, [x9, #0x10]                            
+018a9f54: cbz      x8, #0x18aa3a4                             
+018a9f58: ldr      x9, [x8, #0x40]                            
+018a9f5c: cbz      x9, #0x18aa3a4                             
+018a9f60: ldr      w10, [x9, #0x18]                           
+018a9f64: cmp      x20, x10                                   
+018a9f68: b.hs     #0x18aa3a8                                 
+018a9f6c: ldr      x10, [x8, #0x48]                           
+018a9f70: add      x9, x9, x20                                
+018a9f74: strb     wzr, [x9, #0x20]                           
+018a9f78: cbz      x10, #0x18aa3a4                            
+018a9f7c: ldr      w9, [x10, #0x18]                           
+018a9f80: cmp      x20, x9                                    
+018a9f84: b.hs     #0x18aa3a8                                 
+018a9f88: ldr      x9, [x8, #0x10]                            
+018a9f8c: add      x10, x10, x20                              
+018a9f90: strb     wzr, [x10, #0x20]                          
+018a9f94: cbz      x9, #0x18aa3a4                             
+018a9f98: ldr      w10, [x9, #0x18]                           
+018a9f9c: cmp      x20, x10                                   
+018a9fa0: b.hs     #0x18aa3a8                                 
+018a9fa4: ldr      x10, [x8, #0x50]                           
+018a9fa8: cbz      x10, #0x18aa3a4                            
+018a9fac: ldr      w11, [x10, #0x18]                          
+018a9fb0: cmp      x20, x11                                   
+018a9fb4: b.hs     #0x18aa3a8                                 
+018a9fb8: add      x9, x9, x20, lsl #2                        
+018a9fbc: add      x10, x10, x20, lsl #2                      
+018a9fc0: ldr      x8, [x8, #0x38]                            
+018a9fc4: ldr      w11, [x9, #0x20]                           
+018a9fc8: str      w11, [x10, #0x20]                          
+018a9fcc: cbz      x8, #0x18aa3a4                             
+018a9fd0: ldr      w10, [x8, #0x18]                           
+018a9fd4: cmp      x20, x10                                   
+018a9fd8: b.hs     #0x18aa3a8                                 
+018a9fdc: ldr      w9, [x9, #0x20]                            
+018a9fe0: add      x8, x8, x20, lsl #2                        
+018a9fe4: add      x20, x20, #1                               
+018a9fe8: str      w9, [x8, #0x20]                            
+018a9fec: b        #0x18a9ea8                                 
+018a9ff0: cbnz     w9, #0x18aa008                             
+018a9ff4: bl       #0x17b69d4                                 
+018a9ff8: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018a9ffc: ldr      x8, [x8, #0xb8]                            
+018aa000: ldr      x8, [x8, #0x40]                            
+018aa004: cbz      x8, #0x18aa3a4                             
+018aa008: ldr      x0, [x25]                                  [3a782b0] System.Collections.Generic.List<int>_TypeInfo bytes=ff3f002000000000
+018aa00c: ldr      x20, [x8, #0x10]                           
+018aa010: bl       #0x17b6af0                                 
+018aa014: ldr      x1, [x24]                                  [3a90d78] Method$System.Collections.Generic.List<int>..ctor() bytes=a73a01c000000000
+018aa018: mov      x21, x0                                    
+018aa01c: bl       #0x23f01a0                                 System.Collections.Generic.List<int>$$.ctor
+018aa020: cbz      x20, #0x18aa3a4                            
+018aa024: str      x21, [x20, #0x80]!                         
+018aa028: mov      x0, x20                                    
+018aa02c: mov      x1, x21                                    
+018aa030: bl       #0x17b67f8                                 
+018aa034: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa038: ldr      x8, [x8, #0xb8]                            
+018aa03c: ldr      x8, [x8, #0x40]                            
+018aa040: cbz      x8, #0x18aa3a4                             
+018aa044: ldr      x8, [x8, #0x10]                            
+018aa048: cbz      x8, #0x18aa3a4                             
+018aa04c: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018aa050: mov      w10, #1                                    
+018aa054: str      w10, [x8, #0x74]                           
+018aa058: ldr      w9, [x0, #0xe4]                            
+018aa05c: cbnz     w9, #0x18aa068                             
+018aa060: bl       #0x17b69d4                                 
+018aa064: ldr      x0, [x23]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+018aa068: ldr      x8, [x0, #0xb8]                            
+018aa06c: ldrb     w8, [x8, #0x9d]                            
+018aa070: cbz      w8, #0x18aa07c                             
+018aa074: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa078: b        #0x18aa088                                 
+018aa07c: ldrb     w8, [x19, #0x313]                          
+018aa080: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa084: cbz      w8, #0x18aa0b0                             
+018aa088: ldr      w8, [x0, #0xe4]                            
+018aa08c: cbnz     w8, #0x18aa098                             
+018aa090: bl       #0x17b69d4                                 
+018aa094: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa098: ldr      x8, [x0, #0xb8]                            
+018aa09c: ldr      x8, [x8, #0x40]                            
+018aa0a0: cbz      x8, #0x18aa3a4                             
+018aa0a4: ldr      x8, [x8, #0x10]                            
+018aa0a8: cbz      x8, #0x18aa3a4                             
+018aa0ac: str      wzr, [x8, #0x74]                           
+018aa0b0: ldr      w8, [x0, #0xe4]                            
+018aa0b4: cbnz     w8, #0x18aa0c0                             
+018aa0b8: bl       #0x17b69d4                                 
+018aa0bc: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa0c0: ldr      x8, [x0, #0xb8]                            
+018aa0c4: ldr      x8, [x8, #0x40]                            
+018aa0c8: cbz      x8, #0x18aa3a4                             
+018aa0cc: ldr      x8, [x8, #0x10]                            
+018aa0d0: cbz      x8, #0x18aa3a4                             
+018aa0d4: movi     v0.2d, #0xffffffffffffffff                 
+018aa0d8: mov      w10, #1                                    
+018aa0dc: ldr      x9, [x8, #0x88]                            
+018aa0e0: str      w10, [x8, #0x78]                           
+018aa0e4: str      w10, [x8, #0x5c]                           
+018aa0e8: mov      w10, #-1                                   
+018aa0ec: str      w10, [x8, #0x70]                           
+018aa0f0: str      d0, [x8, #0x68]                            
+018aa0f4: cbz      x9, #0x18aa3a4                             
+018aa0f8: ldr      w10, [x9, #0x18]                           
+018aa0fc: cbz      w10, #0x18aa3a8                            
+018aa100: mov      w11, #1                                    
+018aa104: cmp      w10, #1                                    
+018aa108: str      w11, [x9, #0x20]                           
+018aa10c: b.eq     #0x18aa3a8                                 
+018aa110: mov      w11, #2                                    
+018aa114: cmp      w10, #2                                    
+018aa118: str      w11, [x9, #0x24]                           
+018aa11c: b.ls     #0x18aa3a8                                 
+018aa120: mov      w11, #3                                    
+018aa124: cmp      w10, #3                                    
+018aa128: str      w11, [x9, #0x28]                           
+018aa12c: b.eq     #0x18aa3a8                                 
+018aa130: mov      w11, #4                                    
+018aa134: cmp      w10, #4                                    
+018aa138: str      w11, [x9, #0x2c]                           
+018aa13c: b.ls     #0x18aa3a8                                 
+018aa140: mov      w10, #6                                    
+018aa144: mov      x20, xzr                                   
+018aa148: str      w10, [x9, #0x30]                           
+018aa14c: str      wzr, [x8, #0x58]                           
+018aa150: ldr      w8, [x0, #0xe4]                            
+018aa154: cbnz     w8, #0x18aa160                             
+018aa158: bl       #0x17b69d4                                 
+018aa15c: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa160: ldr      x8, [x0, #0xb8]                            
+018aa164: ldr      x8, [x8, #0x40]                            
+018aa168: cbz      x8, #0x18aa3a4                             
+018aa16c: ldr      x9, [x8, #0x10]                            
+018aa170: cbz      x9, #0x18aa3a4                             
+018aa174: ldr      x9, [x9, #0x60]                            
+018aa178: cbz      x9, #0x18aa3a4                             
+018aa17c: ldrsw    x10, [x9, #0x18]                           
+018aa180: ldr      w9, [x0, #0xe4]                            
+018aa184: cmp      x20, x10                                   
+018aa188: b.ge     #0x18aa1ec                                 
+018aa18c: cbnz     w9, #0x18aa1a4                             
+018aa190: bl       #0x17b69d4                                 
+018aa194: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa198: ldr      x8, [x8, #0xb8]                            
+018aa19c: ldr      x8, [x8, #0x40]                            
+018aa1a0: cbz      x8, #0x18aa3a4                             
+018aa1a4: ldr      x8, [x8, #0x10]                            
+018aa1a8: cbz      x8, #0x18aa3a4                             
+018aa1ac: ldr      x8, [x8, #0x60]                            
+018aa1b0: cbz      x8, #0x18aa3a4                             
+018aa1b4: ldr      w9, [x8, #0x18]                            
+018aa1b8: cmp      x20, x9                                    
+018aa1bc: b.hs     #0x18aa3a8                                 
+018aa1c0: add      x8, x8, x20, lsl #2                        
+018aa1c4: ldr      x0, [x19, #0x108]                          
+018aa1c8: str      wzr, [x8, #0x20]                           
+018aa1cc: cbz      x0, #0x18aa3a4                             
+018aa1d0: mov      w1, w20                                    
+018aa1d4: mov      w2, wzr                                    
+018aa1d8: mov      x3, xzr                                    
+018aa1dc: bl       #0x18fe800                                 HandsSyncToUI$$UpdateHandUpgrades
+018aa1e0: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa1e4: add      x20, x20, #1                               
+018aa1e8: b        #0x18aa150                                 
+018aa1ec: cbnz     w9, #0x18aa204                             
+018aa1f0: bl       #0x17b69d4                                 
+018aa1f4: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa1f8: ldr      x8, [x8, #0xb8]                            
+018aa1fc: ldr      x8, [x8, #0x40]                            
+018aa200: cbz      x8, #0x18aa3a4                             
+018aa204: ldr      x0, [x25]                                  [3a782b0] System.Collections.Generic.List<int>_TypeInfo bytes=ff3f002000000000
+018aa208: ldr      x19, [x8, #0x10]                           
+018aa20c: bl       #0x17b6af0                                 
+018aa210: ldr      x1, [x24]                                  [3a90d78] Method$System.Collections.Generic.List<int>..ctor() bytes=a73a01c000000000
+018aa214: mov      x20, x0                                    
+018aa218: bl       #0x23f01a0                                 System.Collections.Generic.List<int>$$.ctor
+018aa21c: cbz      x19, #0x18aa3a4                            
+018aa220: str      x20, [x19, #0x90]!                         
+018aa224: mov      x0, x19                                    
+018aa228: mov      x1, x20                                    
+018aa22c: bl       #0x17b67f8                                 
+018aa230: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa234: ldr      x8, [x8, #0xb8]                            
+018aa238: ldr      x8, [x8, #0x40]                            
+018aa23c: cbz      x8, #0x18aa3a4                             
+018aa240: ldr      x0, [x26]                                  [3a7a0d0] int[]_TypeInfo bytes=9b60002000000000
+018aa244: ldr      x19, [x8, #0x10]                           
+018aa248: mov      w1, #3                                     
+018aa24c: bl       #0x17b6944                                 
+018aa250: cbz      x19, #0x18aa3a4                            
+018aa254: mov      x1, x0                                     
+018aa258: str      x0, [x19, #0x98]!                          
+018aa25c: mov      x0, x19                                    
+018aa260: bl       #0x17b67f8                                 
+018aa264: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa268: ldr      x8, [x8, #0xb8]                            
+018aa26c: ldr      x8, [x8, #0x40]                            
+018aa270: cbz      x8, #0x18aa3a4                             
+018aa274: ldr      x0, [x25]                                  [3a782b0] System.Collections.Generic.List<int>_TypeInfo bytes=ff3f002000000000
+018aa278: ldr      x19, [x8, #0x10]                           
+018aa27c: bl       #0x17b6af0                                 
+018aa280: ldr      x1, [x24]                                  [3a90d78] Method$System.Collections.Generic.List<int>..ctor() bytes=a73a01c000000000
+018aa284: mov      x20, x0                                    
+018aa288: bl       #0x23f01a0                                 System.Collections.Generic.List<int>$$.ctor
+018aa28c: cbz      x19, #0x18aa3a4                            
+018aa290: str      x20, [x19, #0xa0]!                         
+018aa294: mov      x0, x19                                    
+018aa298: mov      x1, x20                                    
+018aa29c: bl       #0x17b67f8                                 
+018aa2a0: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa2a4: ldr      x8, [x0, #0xb8]                            
+018aa2a8: ldr      x8, [x8, #0x40]                            
+018aa2ac: cbz      x8, #0x18aa3a4                             
+018aa2b0: ldr      x8, [x8, #0x10]                            
+018aa2b4: cbz      x8, #0x18aa3a4                             
+018aa2b8: movi     v0.2d, #0000000000000000                   
+018aa2bc: mov      x19, xzr                                   
+018aa2c0: str      wzr, [x8, #0xe0]                           
+018aa2c4: stur     xzr, [x8, #0xcc]                           
+018aa2c8: stur     q0, [x8, #0xac]                            
+018aa2cc: stur     q0, [x8, #0xbc]                            
+018aa2d0: ldr      w8, [x0, #0xe4]                            
+018aa2d4: cbnz     w8, #0x18aa2e0                             
+018aa2d8: bl       #0x17b69d4                                 
+018aa2dc: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa2e0: ldr      x8, [x0, #0xb8]                            
+018aa2e4: ldr      x8, [x8, #0x40]                            
+018aa2e8: cbz      x8, #0x18aa3a4                             
+018aa2ec: ldr      x9, [x8, #0x10]                            
+018aa2f0: cbz      x9, #0x18aa3a4                             
+018aa2f4: ldr      x9, [x9, #0xe8]                            
+018aa2f8: cbz      x9, #0x18aa3a4                             
+018aa2fc: ldrsw    x10, [x9, #0x18]                           
+018aa300: ldr      w9, [x0, #0xe4]                            
+018aa304: cmp      x19, x10                                   
+018aa308: b.ge     #0x18aa350                                 
+018aa30c: cbnz     w9, #0x18aa324                             
+018aa310: bl       #0x17b69d4                                 
+018aa314: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa318: ldr      x8, [x0, #0xb8]                            
+018aa31c: ldr      x8, [x8, #0x40]                            
+018aa320: cbz      x8, #0x18aa3a4                             
+018aa324: ldr      x8, [x8, #0x10]                            
+018aa328: cbz      x8, #0x18aa3a4                             
+018aa32c: ldr      x8, [x8, #0xe8]                            
+018aa330: cbz      x8, #0x18aa3a4                             
+018aa334: ldr      w9, [x8, #0x18]                            
+018aa338: cmp      x19, x9                                    
+018aa33c: b.hs     #0x18aa3a8                                 
+018aa340: add      x8, x8, x19                                
+018aa344: add      x19, x19, #1                               
+018aa348: strb     wzr, [x8, #0x20]                           
+018aa34c: b        #0x18aa2d0                                 
+018aa350: cbnz     w9, #0x18aa368                             
+018aa354: bl       #0x17b69d4                                 
+018aa358: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+018aa35c: ldr      x8, [x8, #0xb8]                            
+018aa360: ldr      x8, [x8, #0x40]                            
+018aa364: cbz      x8, #0x18aa3a4                             
+018aa368: ldr      x8, [x8, #0x10]                            
+018aa36c: cbz      x8, #0x18aa3a4                             
+018aa370: ldr      x9, [x8, #0xf8]                            
+018aa374: str      wzr, [x8, #0xf0]                           
+018aa378: cbz      x9, #0x18aa3a4                             
+018aa37c: ldr      w10, [x9, #0x1c]                           
+018aa380: ldp      x20, x19, [sp, #0x40]                      
+018aa384: ldp      x22, x21, [sp, #0x30]                      
+018aa388: strb     wzr, [x8, #0xf4]                           
+018aa38c: add      w10, w10, #1                               
+018aa390: ldp      x24, x23, [sp, #0x20]                      
+018aa394: stp      wzr, w10, [x9, #0x18]                      
+018aa398: ldp      x26, x25, [sp, #0x10]                      
+018aa39c: ldr      x30, [sp], #0x50                           
+018aa3a0: ret                                                 
+018aa3a4: bl       #0x17b6b00                                 
+018aa3a8: bl       #0x17b6b08                                 

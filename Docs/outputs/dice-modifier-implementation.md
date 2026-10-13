@@ -4,7 +4,7 @@ The engine resolves mechanical modifiers during initial rolls, player rerolls, a
 
 ## Content and presentation
 
-Definitions contain stable mechanical IDs, family IDs, phase, a typed condition with parameters, effect operations and amounts, activation limits, and reward eligibility. They contain no display names, descriptions, localization keys, colors, artwork, audio, or lore. Source names and asset provenance are retained only in the research mapping under `Docs/work/modifier-reference`.
+Definitions contain stable mechanical IDs, family IDs, phase, a typed condition with parameters, effect operations and amounts, activation limits, and reward eligibility. They contain no display names, descriptions, localization keys, colors, artwork, audio, or lore. Source names and asset provenance are retained only in the research mapping under `Docs/Reference/Modifiers`.
 
 Each modifier variant is authored in its own `ModifierAsset` ScriptableObject under `Assets/Dice/Content/Mechanical/Modifiers`. All 296 assets belong to the local `Dice Modifiers` Addressables group and carry the `dice.modifiers` label. `ModifierAssetLoader` discovers them asynchronously by label at startup; `MechanicalCatalogAsset.Build` takes that collection, orders it by stable ID, and builds immutable engine definitions. The catalog asset retains hands, encounters, and reward pools; it does not embed modifier data or an inventory of modifier assets.
 

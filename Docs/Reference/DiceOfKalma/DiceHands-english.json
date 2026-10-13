@@ -1,0 +1,107 @@
+[
+  {
+    "key": "DiceHand.HighDice.Name",
+    "text": "HIGH DIE",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.HighDice.Desc",
+    "text": "No better hands.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.Pair.Name",
+    "text": "PAIR",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.Pair.Desc",
+    "text": "Hand contains two of the same number.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.TwoPair.Name",
+    "text": "TWO PAIR",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.TwoPair.Desc",
+    "text": "Hand contains two pairs.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.ThreeOfKind.Name",
+    "text": "THREE OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.ThreeOfKind.Desc",
+    "text": "Hand contains three of the same number.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.Flush.Name",
+    "text": "FLUSH",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.Flush.Desc",
+    "text": "All dice in hand are of the same parity.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FullHouse.Name",
+    "text": "FULL HOUSE",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FullHouse.Desc",
+    "text": "Hand contains three of a kind and a pair.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FlushHouse.Name",
+    "text": "FLUSH HOUSE",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FlushHouse.Desc",
+    "text": "Hand contains three of a kind and a pair of the same parity.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FourOfKind.Name",
+    "text": "FOUR OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.FourOfKind.Desc",
+    "text": "Hand contains four of the same number.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.StraightFlush.Name",
+    "text": "STRAIGHT",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.StraightFlush.Desc",
+    "text": "Hand contains five consecutive numbers.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.RoyalFlush.Name",
+    "text": "FIVE OF A KIND",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.RoyalFlush.Desc",
+    "text": "Hand contains five of the same number.",
+    "description": ""
+  },
+  {
+    "key": "DiceHand.LevelText",
+    "text": "Level ?",
+    "description": "The title text of the upgrade level of a hand. \"?\" will be replaced by a number during runtime."
+  }
+]

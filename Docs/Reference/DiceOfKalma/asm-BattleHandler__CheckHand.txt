@@ -1,0 +1,200 @@
+BattleHandler$$CheckHand
+018ad8dc: str      x30, [sp, #-0x40]!                         
+018ad8e0: stp      x24, x23, [sp, #0x10]                      
+018ad8e4: stp      x22, x21, [sp, #0x20]                      
+018ad8e8: stp      x20, x19, [sp, #0x30]                      
+018ad8ec: adrp     x20, #0x3c20000                            
+018ad8f0: adrp     x21, #0x39ad000                            
+018ad8f4: mov      x19, x1                                    
+018ad8f8: ldrb     w8, [x20, #0xfb9]                          
+018ad8fc: ldr      x21, [x21, #0xc70]                         [39adc70]  bytes=0000000000000000
+018ad900: tbnz     w8, #0, #0x18ad918                         
+018ad904: adrp     x0, #0x39ad000                             
+018ad908: ldr      x0, [x0, #0xc70]                           [39adc70]  bytes=0000000000000000
+018ad90c: bl       #0x17b6854                                 
+018ad910: mov      w8, #1                                     
+018ad914: strb     w8, [x20, #0xfb9]                          
+018ad918: ldr      x0, [x21]                                  
+018ad91c: mov      w1, #6                                     
+018ad920: bl       #0x17b6944                                 
+018ad924: cbz      x19, #0x18adbf4                            
+018ad928: ldr      w8, [x19, #0x18]                           
+018ad92c: add      x11, x0, #0x20                             
+018ad930: cmp      w8, #1                                     
+018ad934: b.lt     #0x18ad97c                                 
+018ad938: bic      w9, w8, w8, asr #31                        
+018ad93c: mov      w10, wzr                                   
+018ad940: cmp      w8, w10                                    
+018ad944: b.eq     #0x18adbf0                                 
+018ad948: cbz      x0, #0x18adbf4                             
+018ad94c: add      x12, x19, w10, sxtw #2                     
+018ad950: ldr      w13, [x0, #0x18]                           
+018ad954: ldr      w12, [x12, #0x20]                          
+018ad958: sub      w12, w12, #1                               
+018ad95c: cmp      w12, w13                                   
+018ad960: b.hs     #0x18adbf0                                 
+018ad964: ldr      w13, [x11, w12, sxtw #2]                   
+018ad968: add      w10, w10, #1                               
+018ad96c: cmp      w9, w10                                    
+018ad970: add      w13, w13, #1                               
+018ad974: str      w13, [x11, w12, sxtw #2]                   
+018ad978: b.ne     #0x18ad940                                 
+018ad97c: cbz      x0, #0x18adbf4                             
+018ad980: ldr      x14, [x0, #0x18]                           
+018ad984: cmp      w14, #1                                    
+018ad988: b.lt     #0x18adaf4                                 
+018ad98c: bic      w2, w14, w14, asr #31                      
+018ad990: mov      w12, wzr                                   
+018ad994: mov      w13, wzr                                   
+018ad998: mov      w10, wzr                                   
+018ad99c: mov      w9, wzr                                    
+018ad9a0: mov      w8, wzr                                    
+018ad9a4: mov      w15, wzr                                   
+018ad9a8: mov      w16, wzr                                   
+018ad9ac: mov      w6, wzr                                    
+018ad9b0: mov      w17, wzr                                   
+018ad9b4: mov      w7, wzr                                    
+018ad9b8: mov      x1, xzr                                    
+018ad9bc: and      x3, x14, #0xffffffff                       
+018ad9c0: add      x4, x0, #0x20                              
+018ad9c4: mov      w5, #1                                     
+018ad9c8: cmp      x1, x3                                     
+018ad9cc: b.eq     #0x18adbf0                                 
+018ad9d0: add      x19, x0, x1, lsl #2                        
+018ad9d4: ldr      w21, [x19, #0x20]                          
+018ad9d8: cmp      w21, #5                                    
+018ad9dc: cset     w19, eq                                    
+018ad9e0: cmp      w21, #4                                    
+018ad9e4: cset     w20, eq                                    
+018ad9e8: cmp      w21, #3                                    
+018ad9ec: b.ne     #0x18ada4c                                 
+018ad9f0: cmp      w14, #1                                    
+018ad9f4: b.lt     #0x18adab4                                 
+018ad9f8: mov      x6, xzr                                    
+018ad9fc: cmp      x1, x6                                     
+018ada00: b.eq     #0x18ada3c                                 
+018ada04: orr      w22, w6, w1                                
+018ada08: tst      w22, #1                                    
+018ada0c: and      w22, w6, #0x80000001                       
+018ada10: cset     w23, eq                                    
+018ada14: cmp      w22, #1                                    
+018ada18: ldr      w22, [x4, x6, lsl #2]                      
+018ada1c: cset     w24, eq                                    
+018ada20: orr      w23, w23, w9                               
+018ada24: and      w24, w1, w24                               
+018ada28: cmp      w22, #2                                    
+018ada2c: orr      w24, w24, w10                              
+018ada30: csel     w9, w9, w23, ne                            
+018ada34: csel     w8, w8, w5, ne                             
+018ada38: csel     w10, w10, w24, ne                          
+018ada3c: add      x6, x6, #1                                 
+018ada40: cmp      x3, x6                                     
+018ada44: b.ne     #0x18ad9fc                                 
+018ada48: mov      w6, #1                                     
+018ada4c: cmp      w21, #2                                    
+018ada50: b.ne     #0x18adab8                                 
+018ada54: cmp      w14, #1                                    
+018ada58: b.lt     #0x18adaac                                 
+018ada5c: mov      x7, xzr                                    
+018ada60: cmp      x1, x7                                     
+018ada64: b.eq     #0x18adaa0                                 
+018ada68: orr      w21, w7, w1                                
+018ada6c: tst      w21, #1                                    
+018ada70: and      w21, w7, #0x80000001                       
+018ada74: cset     w22, eq                                    
+018ada78: cmp      w21, #1                                    
+018ada7c: ldr      w21, [x4, x7, lsl #2]                      
+018ada80: cset     w23, eq                                    
+018ada84: orr      w22, w22, w16                              
+018ada88: and      w23, w1, w23                               
+018ada8c: cmp      w21, #2                                    
+018ada90: orr      w23, w23, w15                              
+018ada94: csel     w16, w16, w22, ne                          
+018ada98: csel     w17, w17, w5, ne                           
+018ada9c: csel     w15, w15, w23, ne                          
+018adaa0: add      x7, x7, #1                                 
+018adaa4: cmp      x3, x7                                     
+018adaa8: b.ne     #0x18ada60                                 
+018adaac: mov      w7, #1                                     
+018adab0: b        #0x18adab8                                 
+018adab4: mov      w6, #1                                     
+018adab8: add      x1, x1, #1                                 
+018adabc: orr      w12, w19, w12                              
+018adac0: orr      w13, w20, w13                              
+018adac4: cmp      x1, x2                                     
+018adac8: b.ne     #0x18ad9c8                                 
+018adacc: orr      w15, w15, w16                              
+018adad0: and      w16, w7, #1                                
+018adad4: orr      w15, w15, w17                              
+018adad8: tst      w15, #1                                    
+018adadc: mov      w15, #2                                    
+018adae0: csel     w15, w15, w16, ne                          
+018adae4: tst      w6, #1                                     
+018adae8: mov      w16, #3                                    
+018adaec: csel     w15, w16, w15, ne                          
+018adaf0: b        #0x18adb0c                                 
+018adaf4: mov      w15, wzr                                   
+018adaf8: mov      w8, wzr                                    
+018adafc: mov      w9, wzr                                    
+018adb00: mov      w10, wzr                                   
+018adb04: mov      w13, wzr                                   
+018adb08: mov      w12, wzr                                   
+018adb0c: cmp      w14, #1                                    
+018adb10: b.ls     #0x18adbf0                                 
+018adb14: ldr      w16, [x0, #0x24]                           
+018adb18: cmp      w16, #1                                    
+018adb1c: b.ne     #0x18adb84                                 
+018adb20: cmp      w14, #2                                    
+018adb24: b.eq     #0x18adbf0                                 
+018adb28: ldr      w16, [x0, #0x28]                           
+018adb2c: cmp      w16, #1                                    
+018adb30: b.ne     #0x18adb84                                 
+018adb34: cmp      w14, #3                                    
+018adb38: b.ls     #0x18adbf0                                 
+018adb3c: ldr      w16, [x0, #0x2c]                           
+018adb40: cmp      w16, #1                                    
+018adb44: b.ne     #0x18adb8c                                 
+018adb48: cmp      w14, #4                                    
+018adb4c: b.eq     #0x18adbf0                                 
+018adb50: ldr      w16, [x0, #0x30]                           
+018adb54: cmp      w16, #1                                    
+018adb58: b.ne     #0x18adb8c                                 
+018adb5c: ldr      w11, [x11]                                 
+018adb60: cmp      w11, #1                                    
+018adb64: b.eq     #0x18adb90                                 
+018adb68: cmp      w14, #5                                    
+018adb6c: b.ls     #0x18adbf0                                 
+018adb70: ldr      w11, [x0, #0x34]                           
+018adb74: cmp      w11, #1                                    
+018adb78: b.eq     #0x18adb9c                                 
+018adb7c: orr      w11, w12, w13                              
+018adb80: b        #0x18adbb4                                 
+018adb84: cmp      w14, #3                                    
+018adb88: b.ls     #0x18adbf0                                 
+018adb8c: mov      w11, wzr                                   
+018adb90: cmp      w14, #5                                    
+018adb94: b.ls     #0x18adbf0                                 
+018adb98: cbz      w11, #0x18adbac                            
+018adb9c: tst      w12, #1                                    
+018adba0: mov      w8, #8                                     
+018adba4: cinc     w0, w8, ne                                 
+018adba8: b        #0x18adbdc                                 
+018adbac: orr      w11, w12, w11                              
+018adbb0: orr      w11, w11, w13                              
+018adbb4: tst      w12, #1                                    
+018adbb8: mov      w12, #7                                    
+018adbbc: mov      w13, #9                                    
+018adbc0: csel     w0, w13, w12, ne                           
+018adbc4: tbnz     w11, #0, #0x18adbdc                        
+018adbc8: orr      w9, w10, w9                                
+018adbcc: orr      w8, w9, w8                                 
+018adbd0: tst      w8, #1                                     
+018adbd4: mov      w8, #5                                     
+018adbd8: csel     w0, w8, w15, ne                            
+018adbdc: ldp      x20, x19, [sp, #0x30]                      
+018adbe0: ldp      x22, x21, [sp, #0x20]                      
+018adbe4: ldp      x24, x23, [sp, #0x10]                      
+018adbe8: ldr      x30, [sp], #0x40                           
+018adbec: ret                                                 
+018adbf0: bl       #0x17b6b08                                 
+018adbf4: bl       #0x17b6b00                                 

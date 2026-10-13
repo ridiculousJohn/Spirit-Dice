@@ -1,0 +1,1078 @@
+HandsSyncToUI$$SelectHandsForUpgrade
+018fffb8: sub      sp, sp, #0xc0                              
+018fffbc: stp      x29, x30, [sp, #0x60]                      
+018fffc0: stp      x28, x27, [sp, #0x70]                      
+018fffc4: stp      x26, x25, [sp, #0x80]                      
+018fffc8: stp      x24, x23, [sp, #0x90]                      
+018fffcc: stp      x22, x21, [sp, #0xa0]                      
+018fffd0: stp      x20, x19, [sp, #0xb0]                      
+018fffd4: adrp     x22, #0x3c21000                            
+018fffd8: mov      w19, w3                                    
+018fffdc: mov      x20, x2                                    
+018fffe0: ldrb     w8, [x22, #0x11b]                          
+018fffe4: mov      w23, w1                                    
+018fffe8: mov      x21, x0                                    
+018fffec: tbnz     w8, #0, #0x19000c4                         
+018ffff0: adrp     x0, #0x39ad000                             
+018ffff4: ldr      x0, [x0, #0xc68]                           [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+018ffff8: bl       #0x17b6854                                 
+018ffffc: adrp     x0, #0x39ae000                             
+01900000: ldr      x0, [x0, #0x310]                           [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+01900004: bl       #0x17b6854                                 
+01900008: adrp     x0, #0x39ae000                             
+0190000c: ldr      x0, [x0, #0x278]                           [39ae278]  bytes=0000000000000000 -> 3a8cd30 Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose()
+01900010: bl       #0x17b6854                                 
+01900014: adrp     x0, #0x39ae000                             
+01900018: ldr      x0, [x0, #0x280]                           [39ae280]  bytes=0000000000000000 -> 3a8cd38 Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext()
+0190001c: bl       #0x17b6854                                 
+01900020: adrp     x0, #0x39ae000                             
+01900024: ldr      x0, [x0, #0x288]                           [39ae288]  bytes=0000000000000000 -> 3a8cd40 Method$System.Collections.Generic.List.Enumerator<GameObject>.get_Current()
+01900028: bl       #0x17b6854                                 
+0190002c: adrp     x0, #0x39ad000                             
+01900030: ldr      x0, [x0, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01900034: bl       #0x17b6854                                 
+01900038: adrp     x0, #0x39ad000                             
+0190003c: ldr      x0, [x0, #0xc78]                           [39adc78]  bytes=0000000000000000 -> 3a90da8 Method$System.Collections.Generic.List<int>.Clear()
+01900040: bl       #0x17b6854                                 
+01900044: adrp     x0, #0x39ae000                             
+01900048: ldr      x0, [x0, #0x290]                           [39ae290]  bytes=0000000000000000 -> 3a907d8 Method$System.Collections.Generic.List<GameObject>.GetEnumerator()
+0190004c: bl       #0x17b6854                                 
+01900050: adrp     x0, #0x39af000                             
+01900054: ldr      x0, [x0, #0x9b0]                           [39af9b0]  bytes=0000000000000000 -> 3a90de0 Method$System.Collections.Generic.List<int>.Sort()
+01900058: bl       #0x17b6854                                 
+0190005c: adrp     x0, #0x39ad000                             
+01900060: ldr      x0, [x0, #0xd08]                           [39add08]  bytes=0000000000000000 -> 3a90e00 Method$System.Collections.Generic.List<int>.get_Count()
+01900064: bl       #0x17b6854                                 
+01900068: adrp     x0, #0x39ad000                             
+0190006c: ldr      x0, [x0, #0xd10]                           [39add10]  bytes=0000000000000000 -> 3a90e08 Method$System.Collections.Generic.List<int>.get_Item()
+01900070: bl       #0x17b6854                                 
+01900074: adrp     x0, #0x39ad000                             
+01900078: ldr      x0, [x0, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+0190007c: bl       #0x17b6854                                 
+01900080: adrp     x0, #0x39ae000                             
+01900084: ldr      x0, [x0, #0xc8]                            [39ae0c8]  bytes=0000000000000000 -> 3a90e18 Method$System.Collections.Generic.List<int>.set_Item()
+01900088: bl       #0x17b6854                                 
+0190008c: adrp     x0, #0x39af000                             
+01900090: ldr      x0, [x0, #0x5c0]                           [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+01900094: bl       #0x17b6854                                 
+01900098: adrp     x0, #0x39ad000                             
+0190009c: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+019000a0: bl       #0x17b6854                                 
+019000a4: adrp     x0, #0x39ad000                             
+019000a8: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000 -> 3a95468 Method$Source.Data.Serialization.SaveStore<RunSaveData>.get_Data()
+019000ac: bl       #0x17b6854                                 
+019000b0: adrp     x0, #0x39af000                             
+019000b4: ldr      x0, [x0, #0x998]                           [39af998]  bytes=0000000000000000 -> 3ac6370 WARNING: NOT ENOUGH HAND UPGRADE CANDIDATES
+019000b8: bl       #0x17b6854                                 
+019000bc: mov      w8, #1                                     
+019000c0: strb     w8, [x22, #0x11b]                          
+019000c4: ldr      x0, [x21, #0x50]                           
+019000c8: str      w19, [sp, #0xc]                            
+019000cc: stp      xzr, xzr, [sp, #0x40]                      
+019000d0: str      xzr, [sp, #0x50]                           
+019000d4: str      xzr, [sp, #0x38]                           
+019000d8: str      wzr, [sp, #0x30]                           
+019000dc: cbz      x0, #0x19008cc                             
+019000e0: adrp     x8, #0x39ae000                             
+019000e4: adrp     x19, #0x39ae000                            
+019000e8: adrp     x28, #0x39af000                            
+019000ec: ldr      x8, [x8, #0x290]                           [39ae290]  bytes=0000000000000000 -> 3a907d8 Method$System.Collections.Generic.List<GameObject>.GetEnumerator()
+019000f0: adrp     x29, #0x39ad000                            
+019000f4: adrp     x25, #0x39ad000                            
+019000f8: adrp     x26, #0x39ad000                            
+019000fc: adrp     x22, #0x39ae000                            
+01900100: ldr      x19, [x19, #0x280]                         [39ae280]  bytes=0000000000000000 -> 3a8cd38 Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext()
+01900104: ldr      x28, [x28, #0x5c0]                         [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+01900108: ldr      x29, [x29, #0xc68]                         [39adc68]  bytes=0000000000000000 -> 3a7bc18 ConstantStorage_TypeInfo
+0190010c: ldr      x25, [x25, #0xc60]                         [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+01900110: ldr      x26, [x26, #0xd10]                         [39add10]  bytes=0000000000000000 -> 3a90e08 Method$System.Collections.Generic.List<int>.get_Item()
+01900114: ldr      x22, [x22, #0x278]                         [39ae278]  bytes=0000000000000000 -> 3a8cd30 Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose()
+01900118: ldr      x1, [x8]                                   [3a907d8] Method$System.Collections.Generic.List<GameObject>.GetEnumerator() bytes=4fc802c000000000
+0190011c: add      x8, sp, #0x10                              
+01900120: bl       #0x244c204                                 System.Collections.Generic.List<object>$$GetEnumerator
+01900124: ldr      x8, [sp, #0x20]                            
+01900128: ldr      q0, [sp, #0x10]                            
+0190012c: str      x8, [sp, #0x50]                            
+01900130: add      x8, sp, #0x40                              
+01900134: str      q0, [sp, #0x40]                            
+01900138: stp      xzr, x8, [sp, #0x10]                       
+0190013c: ldr      x1, [x19]                                  [3a8cd38] Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext() bytes=f3bc02c000000000
+01900140: add      x0, sp, #0x40                              
+01900144: bl       #0x21075dc                                 System.Collections.Generic.List.Enumerator<object>$$MoveNext
+01900148: tbz      w0, #0, #0x1900164                         
+0190014c: ldr      x0, [sp, #0x50]                            
+01900150: cbz      x0, #0x1900ef8                             
+01900154: mov      w1, wzr                                    
+01900158: mov      x2, xzr                                    
+0190015c: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900160: b        #0x190013c                                 
+01900164: ldr      x1, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01900168: add      x0, sp, #0x40                              
+0190016c: bl       #0x21075d8                                 System.Collections.Generic.List.Enumerator<object>$$Dispose
+01900170: ldr      x0, [x28]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+01900174: bl       #0x17b6af0                                 
+01900178: mov      w1, w23                                    
+0190017c: mov      x2, xzr                                    
+01900180: mov      x22, x0                                    
+01900184: bl       #0x2b3b0d0                                 System.Random$$.ctor
+01900188: ldr      x8, [x21, #0x60]                           
+0190018c: cbz      x8, #0x19008cc                             
+01900190: ldr      w9, [x8, #0x1c]                            [3a907f4]  bytes=0000000057c802c0
+01900194: ldr      w28, [sp, #0xc]                            
+01900198: mov      x23, xzr                                   
+0190019c: add      w9, w9, #1                                 
+019001a0: stp      wzr, w9, [x8, #0x18]                       
+019001a4: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019001a8: ldr      w8, [x0, #0xe4]                            
+019001ac: cbnz     w8, #0x19001b8                             
+019001b0: bl       #0x17b69d4                                 
+019001b4: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019001b8: ldr      x8, [x0, #0xb8]                            
+019001bc: ldr      x9, [x8, #0x40]                            [3a90818] Method$System.Collections.Generic.List<Glyph>.get_Count() bytes=5fc802c000000000
+019001c0: cbz      x9, #0x19008cc                             
+019001c4: ldrsw    x9, [x9, #0x18]                            
+019001c8: cmp      x23, x9                                    
+019001cc: b.ge     #0x19003a0                                 
+019001d0: cbz      x20, #0x19008cc                            
+019001d4: ldr      w9, [x20, #0x18]                           
+019001d8: cmp      x23, x9                                    
+019001dc: b.hs     #0x1900ef4                                 
+019001e0: add      x9, x20, x23, lsl #2                       
+019001e4: ldr      w10, [x0, #0xe4]                           
+019001e8: ldr      w19, [x9, #0x20]                           
+019001ec: cbnz     w10, #0x19001fc                            
+019001f0: bl       #0x17b69d4                                 
+019001f4: ldr      x8, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+019001f8: ldr      x8, [x8, #0xb8]                            
+019001fc: ldr      x8, [x8, #0x28]                            
+01900200: cbz      x8, #0x19008cc                             
+01900204: ldr      w9, [x8, #0x18]                            
+01900208: cmp      x23, x9                                    
+0190020c: b.hs     #0x1900ef4                                 
+01900210: add      x8, x8, x23, lsl #2                        
+01900214: ldr      w8, [x8, #0x20]                            
+01900218: sub      w8, w8, #1                                 
+0190021c: cmp      w19, w8                                    
+01900220: b.ge     #0x1900230                                 
+01900224: orr      w8, w23, #2                                
+01900228: cmp      w8, #6                                     
+0190022c: b.ne     #0x1900238                                 
+01900230: add      x23, x23, #1                               
+01900234: b        #0x19001a4                                 
+01900238: cmp      w28, #0x10                                 
+0190023c: b.le     #0x19002a8                                 
+01900240: cmp      w28, #0x15                                 
+01900244: b.hi     #0x190033c                                 
+01900248: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+0190024c: ldr      w8, [x0, #0xe4]                            
+01900250: cbnz     w8, #0x190025c                             
+01900254: bl       #0x17b69d4                                 
+01900258: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+0190025c: ldr      x8, [x0, #0xb8]                            
+01900260: ldr      x8, [x8, #0x40]                            
+01900264: cbz      x8, #0x19008cc                             
+01900268: ldr      x9, [x8, #0x10]                            
+0190026c: cbz      x9, #0x19008cc                             
+01900270: ldr      w9, [x9, #0x68]                            
+01900274: cmp      x23, x9                                    
+01900278: b.eq     #0x1900230                                 
+0190027c: ldr      w9, [x0, #0xe4]                            
+01900280: cbnz     w9, #0x1900298                             
+01900284: bl       #0x17b69d4                                 
+01900288: ldr      x8, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+0190028c: ldr      x8, [x8, #0xb8]                            
+01900290: ldr      x8, [x8, #0x40]                            
+01900294: cbz      x8, #0x19008cc                             
+01900298: ldr      x8, [x8, #0x10]                            
+0190029c: cbz      x8, #0x19008cc                             
+019002a0: ldr      w8, [x8, #0x6c]                            
+019002a4: b        #0x1900334                                 
+019002a8: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+019002ac: ldr      w8, [x0, #0xe4]                            
+019002b0: cbnz     w8, #0x19002bc                             
+019002b4: bl       #0x17b69d4                                 
+019002b8: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+019002bc: ldr      x8, [x0, #0xb8]                            
+019002c0: ldr      x8, [x8, #0x40]                            
+019002c4: cbz      x8, #0x19008cc                             
+019002c8: ldr      x9, [x8, #0x10]                            
+019002cc: cbz      x9, #0x19008cc                             
+019002d0: ldr      w9, [x9, #0x68]                            
+019002d4: cmp      x23, x9                                    
+019002d8: b.eq     #0x1900230                                 
+019002dc: ldr      w9, [x0, #0xe4]                            
+019002e0: cbnz     w9, #0x19002f8                             
+019002e4: bl       #0x17b69d4                                 
+019002e8: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+019002ec: ldr      x8, [x0, #0xb8]                            
+019002f0: ldr      x8, [x8, #0x40]                            
+019002f4: cbz      x8, #0x19008cc                             
+019002f8: ldr      x9, [x8, #0x10]                            
+019002fc: cbz      x9, #0x19008cc                             
+01900300: ldr      w9, [x9, #0x6c]                            
+01900304: cmp      x23, x9                                    
+01900308: b.eq     #0x1900230                                 
+0190030c: ldr      w9, [x0, #0xe4]                            
+01900310: cbnz     w9, #0x1900328                             
+01900314: bl       #0x17b69d4                                 
+01900318: ldr      x8, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+0190031c: ldr      x8, [x8, #0xb8]                            
+01900320: ldr      x8, [x8, #0x40]                            
+01900324: cbz      x8, #0x19008cc                             
+01900328: ldr      x8, [x8, #0x10]                            
+0190032c: cbz      x8, #0x19008cc                             
+01900330: ldr      w8, [x8, #0x70]                            
+01900334: cmp      x23, x8                                    
+01900338: b.eq     #0x1900230                                 
+0190033c: ldr      x0, [x21, #0x60]                           
+01900340: cbz      x0, #0x19008cc                             
+01900344: adrp     x9, #0x39ad000                             
+01900348: ldr      w10, [x0, #0x1c]                           
+0190034c: ldr      x8, [x0, #0x10]                            
+01900350: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01900354: add      w10, w10, #1                               
+01900358: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+0190035c: str      w10, [x0, #0x1c]                           
+01900360: cbz      x8, #0x19008cc                             
+01900364: ldrsw    x10, [x0, #0x18]                           
+01900368: ldr      w11, [x8, #0x18]                           
+0190036c: cmp      w10, w11                                   
+01900370: b.hs     #0x1900388                                 
+01900374: add      x8, x8, x10, lsl #2                        
+01900378: add      w9, w10, #1                                
+0190037c: str      w9, [x0, #0x18]                            
+01900380: str      w23, [x8, #0x20]                           
+01900384: b        #0x1900230                                 
+01900388: ldr      x8, [x9, #0x20]                            
+0190038c: mov      w1, w23                                    
+01900390: ldr      x8, [x8, #0xc0]                            
+01900394: ldr      x2, [x8, #0x70]                            
+01900398: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+0190039c: b        #0x1900230                                 
+019003a0: ldr      x8, [x21, #0x60]                           
+019003a4: cbz      x8, #0x19008cc                             
+019003a8: ldr      w8, [x8, #0x18]                            
+019003ac: cmp      w8, #3                                     
+019003b0: b.le     #0x19003f4                                 
+019003b4: ldr      x0, [x21, #0x58]                           
+019003b8: cbz      x0, #0x19008cc                             
+019003bc: adrp     x9, #0x39ad000                             
+019003c0: ldr      w10, [x0, #0x1c]                           
+019003c4: ldr      x8, [x0, #0x10]                            
+019003c8: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+019003cc: add      w10, w10, #2                               
+019003d0: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+019003d4: stp      wzr, w10, [x0, #0x18]                      
+019003d8: cbz      x8, #0x19008cc                             
+019003dc: ldr      w10, [x8, #0x18]                           
+019003e0: cbz      w10, #0x1900538                            
+019003e4: mov      w9, #1                                     
+019003e8: str      w9, [x0, #0x18]                            
+019003ec: str      wzr, [x8, #0x20]                           
+019003f0: b        #0x1900554                                 
+019003f4: adrp     x8, #0x39ae000                             
+019003f8: ldr      x8, [x8, #0x310]                           [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+019003fc: ldr      x0, [x8]                                   [3a7c320] UnityEngine.Debug_TypeInfo bytes=cd79002000000000
+01900400: ldr      w8, [x0, #0xe4]                            
+01900404: cbnz     w8, #0x190040c                             
+01900408: bl       #0x17b69d4                                 
+0190040c: adrp     x8, #0x39af000                             
+01900410: mov      x1, xzr                                    
+01900414: ldr      x8, [x8, #0x998]                           [39af998]  bytes=0000000000000000 -> 3ac6370 WARNING: NOT ENOUGH HAND UPGRADE CANDIDATES
+01900418: ldr      x0, [x8]                                   [3ac6370] WARNING: NOT ENOUGH HAND UPGRADE CANDIDATES bytes=215500a000000000
+0190041c: bl       #0x34a3d1c                                 UnityEngine.Debug$$Log
+01900420: ldr      x8, [x21, #0x60]                           
+01900424: cbz      x8, #0x19008cc                             
+01900428: ldr      w9, [x8, #0x1c]                            [3ac638c]  bytes=00000000295500a0
+0190042c: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01900430: mov      x23, xzr                                   
+01900434: add      x28, x20, #0x20                            
+01900438: add      w9, w9, #1                                 
+0190043c: stp      wzr, w9, [x8, #0x18]                       
+01900440: ldr      w8, [x0, #0xe4]                            
+01900444: cbnz     w8, #0x1900450                             
+01900448: bl       #0x17b69d4                                 
+0190044c: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01900450: ldr      x8, [x0, #0xb8]                            
+01900454: ldr      x9, [x8, #0x40]                            [3ac63b0] WEB_CLIENTID bytes=315500a000000000
+01900458: cbz      x9, #0x19008cc                             
+0190045c: ldrsw    x9, [x9, #0x18]                            
+01900460: cmp      x23, x9                                    
+01900464: b.ge     #0x19003b4                                 
+01900468: cbz      x20, #0x19008cc                            
+0190046c: ldr      w9, [x20, #0x18]                           
+01900470: cmp      x23, x9                                    
+01900474: b.hs     #0x1900ef4                                 
+01900478: ldr      w9, [x0, #0xe4]                            
+0190047c: ldr      w19, [x28, x23, lsl #2]                    
+01900480: cbnz     w9, #0x1900490                             
+01900484: bl       #0x17b69d4                                 
+01900488: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+0190048c: ldr      x8, [x0, #0xb8]                            
+01900490: ldr      x8, [x8, #0x28]                            [3ac6398] WARNING: not authenticated, attempting to open leaderboard UI. bytes=2b5500a000000000
+01900494: cbz      x8, #0x19008cc                             
+01900498: ldr      w9, [x8, #0x18]                            
+0190049c: cmp      x23, x9                                    
+019004a0: b.hs     #0x1900ef4                                 
+019004a4: add      x8, x8, x23, lsl #2                        
+019004a8: ldr      w8, [x8, #0x20]                            
+019004ac: sub      w8, w8, #1                                 
+019004b0: cmp      w19, w8                                    
+019004b4: b.ge     #0x19004c4                                 
+019004b8: orr      w8, w23, #2                                
+019004bc: cmp      w8, #6                                     
+019004c0: b.ne     #0x19004cc                                 
+019004c4: add      x23, x23, #1                               
+019004c8: b        #0x1900440                                 
+019004cc: ldr      x8, [x21, #0x60]                           
+019004d0: cbz      x8, #0x19008cc                             
+019004d4: adrp     x10, #0x39ad000                            
+019004d8: ldr      w11, [x8, #0x1c]                           
+019004dc: ldr      x9, [x8, #0x10]                            
+019004e0: ldr      x10, [x10, #0xd18]                         [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+019004e4: add      w11, w11, #1                               
+019004e8: ldr      x10, [x10]                                 [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+019004ec: str      w11, [x8, #0x1c]                           
+019004f0: cbz      x9, #0x19008cc                             
+019004f4: ldrsw    x11, [x8, #0x18]                           
+019004f8: ldr      w12, [x9, #0x18]                           
+019004fc: cmp      w11, w12                                   
+01900500: b.hs     #0x1900518                                 
+01900504: add      x9, x9, x11, lsl #2                        
+01900508: add      w10, w11, #1                               
+0190050c: str      w10, [x8, #0x18]                           
+01900510: str      w23, [x9, #0x20]                           
+01900514: b        #0x19004c4                                 
+01900518: ldr      x9, [x10, #0x20]                           
+0190051c: mov      x0, x8                                     
+01900520: mov      w1, w23                                    
+01900524: ldr      x9, [x9, #0xc0]                            
+01900528: ldr      x2, [x9, #0x70]                            
+0190052c: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+01900530: ldr      x0, [x29]                                  [3a7bc18] ConstantStorage_TypeInfo bytes=6175002000000000
+01900534: b        #0x19004c4                                 
+01900538: ldr      x8, [x9, #0x20]                            
+0190053c: mov      w1, wzr                                    
+01900540: ldr      x8, [x8, #0xc0]                            
+01900544: ldr      x2, [x8, #0x70]                            
+01900548: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+0190054c: ldr      x0, [x21, #0x58]                           
+01900550: cbz      x0, #0x19008cc                             
+01900554: adrp     x9, #0x39ad000                             
+01900558: ldr      w10, [x0, #0x1c]                           
+0190055c: ldr      x8, [x0, #0x10]                            
+01900560: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01900564: add      w10, w10, #1                               
+01900568: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+0190056c: str      w10, [x0, #0x1c]                           
+01900570: cbz      x8, #0x19008cc                             
+01900574: ldrsw    x10, [x0, #0x18]                           
+01900578: ldr      w11, [x8, #0x18]                           
+0190057c: cmp      w10, w11                                   
+01900580: b.hs     #0x1900598                                 
+01900584: add      x8, x8, x10, lsl #2                        
+01900588: add      w9, w10, #1                                
+0190058c: str      w9, [x0, #0x18]                            
+01900590: str      wzr, [x8, #0x20]                           
+01900594: b        #0x19005b4                                 
+01900598: ldr      x8, [x9, #0x20]                            
+0190059c: mov      w1, wzr                                    
+019005a0: ldr      x8, [x8, #0xc0]                            
+019005a4: ldr      x2, [x8, #0x70]                            
+019005a8: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+019005ac: ldr      x0, [x21, #0x58]                           
+019005b0: cbz      x0, #0x19008cc                             
+019005b4: adrp     x9, #0x39ad000                             
+019005b8: ldr      w10, [x0, #0x1c]                           
+019005bc: ldr      x8, [x0, #0x10]                            
+019005c0: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+019005c4: add      w10, w10, #1                               
+019005c8: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+019005cc: str      w10, [x0, #0x1c]                           
+019005d0: cbz      x8, #0x19008cc                             
+019005d4: ldrsw    x10, [x0, #0x18]                           
+019005d8: ldr      w11, [x8, #0x18]                           
+019005dc: cmp      w10, w11                                   
+019005e0: b.hs     #0x19005f8                                 
+019005e4: add      x8, x8, x10, lsl #2                        
+019005e8: add      w9, w10, #1                                
+019005ec: str      w9, [x0, #0x18]                            
+019005f0: str      wzr, [x8, #0x20]                           
+019005f4: b        #0x1900614                                 
+019005f8: ldr      x8, [x9, #0x20]                            
+019005fc: mov      w1, wzr                                    
+01900600: ldr      x8, [x8, #0xc0]                            
+01900604: ldr      x2, [x8, #0x70]                            
+01900608: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+0190060c: ldr      x0, [x21, #0x58]                           
+01900610: cbz      x0, #0x19008cc                             
+01900614: adrp     x9, #0x39ad000                             
+01900618: ldr      w10, [x0, #0x1c]                           
+0190061c: ldr      x8, [x0, #0x10]                            
+01900620: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01900624: add      w10, w10, #1                               
+01900628: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+0190062c: str      w10, [x0, #0x1c]                           
+01900630: cbz      x8, #0x19008cc                             
+01900634: ldrsw    x10, [x0, #0x18]                           
+01900638: ldr      w11, [x8, #0x18]                           
+0190063c: cmp      w10, w11                                   
+01900640: b.hs     #0x1900658                                 
+01900644: add      x8, x8, x10, lsl #2                        
+01900648: add      w9, w10, #1                                
+0190064c: str      w9, [x0, #0x18]                            
+01900650: str      wzr, [x8, #0x20]                           
+01900654: b        #0x190066c                                 
+01900658: ldr      x8, [x9, #0x20]                            
+0190065c: mov      w1, wzr                                    
+01900660: ldr      x8, [x8, #0xc0]                            
+01900664: ldr      x2, [x8, #0x70]                            
+01900668: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+0190066c: ldr      x8, [x21, #0x60]                           
+01900670: cbz      x8, #0x19008cc                             
+01900674: ldr      w9, [x8, #0x18]                            
+01900678: cmp      w9, #3                                     
+0190067c: b.le     #0x19008d0                                 
+01900680: cbz      x22, #0x19008cc                            
+01900684: adrp     x29, #0x39ae000                            
+01900688: ldr      x29, [x29, #0xc8]                          [39ae0c8]  bytes=0000000000000000 -> 3a90e18 Method$System.Collections.Generic.List<int>.set_Item()
+0190068c: ldr      x9, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01900690: ldr      w2, [x8, #0x18]                            
+01900694: mov      x0, x22                                    
+01900698: ldr      x23, [x21, #0x58]                          
+0190069c: mov      w1, wzr                                    
+019006a0: ldp      x8, x3, [x9, #0x198]                       
+019006a4: blr      x8                                         
+019006a8: cbz      x23, #0x19008cc                            
+019006ac: ldr      x3, [x29]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+019006b0: mov      w2, w0                                     
+019006b4: mov      x0, x23                                    
+019006b8: mov      w1, wzr                                    
+019006bc: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+019006c0: ldr      x8, [x21, #0x60]                           
+019006c4: cbz      x8, #0x19008cc                             
+019006c8: ldr      x9, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+019006cc: ldr      w2, [x8, #0x18]                            
+019006d0: mov      x0, x22                                    
+019006d4: ldr      x23, [x21, #0x58]                          
+019006d8: mov      w1, wzr                                    
+019006dc: ldp      x8, x3, [x9, #0x198]                       
+019006e0: blr      x8                                         
+019006e4: cbz      x23, #0x19008cc                            
+019006e8: ldr      x3, [x29]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+019006ec: mov      w2, w0                                     
+019006f0: mov      x0, x23                                    
+019006f4: mov      w1, #1                                     
+019006f8: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+019006fc: ldr      x8, [x21, #0x60]                           
+01900700: cbz      x8, #0x19008cc                             
+01900704: ldr      x9, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01900708: ldr      w2, [x8, #0x18]                            
+0190070c: mov      x0, x22                                    
+01900710: ldr      x23, [x21, #0x58]                          
+01900714: mov      w1, wzr                                    
+01900718: ldp      x8, x3, [x9, #0x198]                       
+0190071c: blr      x8                                         
+01900720: cbz      x23, #0x19008cc                            
+01900724: ldr      x3, [x29]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900728: mov      w2, w0                                     
+0190072c: mov      x0, x23                                    
+01900730: mov      w1, #2                                     
+01900734: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900738: ldr      x8, [x21, #0x60]                           
+0190073c: cbz      x8, #0x19008cc                             
+01900740: ldr      x9, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01900744: ldr      w2, [x8, #0x18]                            
+01900748: mov      x0, x22                                    
+0190074c: ldr      x23, [x21, #0x58]                          
+01900750: mov      w1, wzr                                    
+01900754: ldp      x8, x3, [x9, #0x198]                       
+01900758: blr      x8                                         
+0190075c: cbz      x23, #0x19008cc                            
+01900760: ldr      x3, [x29]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900764: mov      w2, w0                                     
+01900768: mov      x0, x23                                    
+0190076c: mov      w1, #3                                     
+01900770: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900774: ldr      x0, [x21, #0x58]                           
+01900778: cbz      x0, #0x19008cc                             
+0190077c: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900780: mov      w1, wzr                                    
+01900784: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900788: ldr      x8, [x21, #0x58]                           
+0190078c: cbz      x8, #0x19008cc                             
+01900790: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900794: mov      w23, w0                                    
+01900798: mov      x0, x8                                     
+0190079c: mov      w1, #1                                     
+019007a0: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019007a4: cmp      w23, w0                                    
+019007a8: b.eq     #0x19008c4                                 
+019007ac: ldr      x0, [x21, #0x58]                           
+019007b0: cbz      x0, #0x19008cc                             
+019007b4: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+019007b8: mov      w1, wzr                                    
+019007bc: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019007c0: ldr      x8, [x21, #0x58]                           
+019007c4: cbz      x8, #0x19008cc                             
+019007c8: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+019007cc: mov      w23, w0                                    
+019007d0: mov      x0, x8                                     
+019007d4: mov      w1, #2                                     
+019007d8: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019007dc: cmp      w23, w0                                    
+019007e0: b.eq     #0x19008c4                                 
+019007e4: ldr      x0, [x21, #0x58]                           
+019007e8: cbz      x0, #0x19008cc                             
+019007ec: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+019007f0: mov      w1, wzr                                    
+019007f4: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019007f8: ldr      x8, [x21, #0x58]                           
+019007fc: cbz      x8, #0x19008cc                             
+01900800: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900804: mov      w23, w0                                    
+01900808: mov      x0, x8                                     
+0190080c: mov      w1, #3                                     
+01900810: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900814: cmp      w23, w0                                    
+01900818: b.eq     #0x19008c4                                 
+0190081c: ldr      x0, [x21, #0x58]                           
+01900820: cbz      x0, #0x19008cc                             
+01900824: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900828: mov      w1, #1                                     
+0190082c: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900830: ldr      x8, [x21, #0x58]                           
+01900834: cbz      x8, #0x19008cc                             
+01900838: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+0190083c: mov      w23, w0                                    
+01900840: mov      x0, x8                                     
+01900844: mov      w1, #2                                     
+01900848: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+0190084c: cmp      w23, w0                                    
+01900850: b.eq     #0x19008c4                                 
+01900854: ldr      x0, [x21, #0x58]                           
+01900858: cbz      x0, #0x19008cc                             
+0190085c: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900860: mov      w1, #1                                     
+01900864: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900868: ldr      x8, [x21, #0x58]                           
+0190086c: cbz      x8, #0x19008cc                             
+01900870: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900874: mov      w23, w0                                    
+01900878: mov      x0, x8                                     
+0190087c: mov      w1, #3                                     
+01900880: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900884: cmp      w23, w0                                    
+01900888: b.eq     #0x19008c4                                 
+0190088c: ldr      x0, [x21, #0x58]                           
+01900890: cbz      x0, #0x19008cc                             
+01900894: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900898: mov      w1, #2                                     
+0190089c: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019008a0: ldr      x8, [x21, #0x58]                           
+019008a4: cbz      x8, #0x19008cc                             
+019008a8: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+019008ac: mov      w23, w0                                    
+019008b0: mov      x0, x8                                     
+019008b4: mov      w1, #3                                     
+019008b8: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+019008bc: cmp      w23, w0                                    
+019008c0: b.ne     #0x1900b0c                                 
+019008c4: ldr      x8, [x21, #0x60]                           
+019008c8: cbnz     x8, #0x190068c                             
+019008cc: bl       #0x17b6b00                                 
+019008d0: cmp      w9, #0                                     
+019008d4: b.le     #0x1900970                                 
+019008d8: cmp      w9, #1                                     
+019008dc: b.eq     #0x19009ec                                 
+019008e0: cmp      w9, #2                                     
+019008e4: b.eq     #0x1900998                                 
+019008e8: cmp      w9, #3                                     
+019008ec: b.ne     #0x1900680                                 
+019008f0: ldr      x0, [x21, #0xb0]                           
+019008f4: cbz      x0, #0x19008cc                             
+019008f8: adrp     x8, #0x39ad000                             
+019008fc: mov      w1, wzr                                    
+01900900: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900904: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900908: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+0190090c: cbz      x0, #0x19008cc                             
+01900910: mov      w1, wzr                                    
+01900914: mov      x2, xzr                                    
+01900918: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+0190091c: ldr      x0, [x21, #0xb0]                           
+01900920: cbz      x0, #0x19008cc                             
+01900924: adrp     x8, #0x39ad000                             
+01900928: mov      w1, #1                                     
+0190092c: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900930: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900934: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900938: cbz      x0, #0x19008cc                             
+0190093c: mov      w1, wzr                                    
+01900940: mov      x2, xzr                                    
+01900944: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900948: ldr      x0, [x21, #0xb0]                           
+0190094c: cbz      x0, #0x19008cc                             
+01900950: adrp     x8, #0x39ad000                             
+01900954: mov      w1, #2                                     
+01900958: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+0190095c: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900960: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900964: cbz      x0, #0x19008cc                             
+01900968: mov      w1, wzr                                    
+0190096c: b        #0x1900a68                                 
+01900970: ldr      x0, [x21, #0xb0]                           
+01900974: cbz      x0, #0x19008cc                             
+01900978: adrp     x8, #0x39ad000                             
+0190097c: mov      w1, wzr                                    
+01900980: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900984: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900988: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+0190098c: cbz      x0, #0x19008cc                             
+01900990: mov      w1, #1                                     
+01900994: b        #0x1900a10                                 
+01900998: ldr      x0, [x21, #0xb0]                           
+0190099c: cbz      x0, #0x19008cc                             
+019009a0: adrp     x8, #0x39ad000                             
+019009a4: mov      w1, wzr                                    
+019009a8: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+019009ac: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+019009b0: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+019009b4: cbz      x0, #0x19008cc                             
+019009b8: mov      w1, wzr                                    
+019009bc: mov      x2, xzr                                    
+019009c0: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+019009c4: ldr      x0, [x21, #0xb0]                           
+019009c8: cbz      x0, #0x19008cc                             
+019009cc: adrp     x8, #0x39ad000                             
+019009d0: mov      w1, #1                                     
+019009d4: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+019009d8: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+019009dc: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+019009e0: cbz      x0, #0x19008cc                             
+019009e4: mov      w1, wzr                                    
+019009e8: b        #0x1900a3c                                 
+019009ec: ldr      x0, [x21, #0xb0]                           
+019009f0: cbz      x0, #0x19008cc                             
+019009f4: adrp     x8, #0x39ad000                             
+019009f8: mov      w1, wzr                                    
+019009fc: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900a00: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900a04: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900a08: cbz      x0, #0x19008cc                             
+01900a0c: mov      w1, wzr                                    
+01900a10: mov      x2, xzr                                    
+01900a14: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900a18: ldr      x0, [x21, #0xb0]                           
+01900a1c: cbz      x0, #0x19008cc                             
+01900a20: adrp     x8, #0x39ad000                             
+01900a24: mov      w1, #1                                     
+01900a28: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900a2c: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900a30: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900a34: cbz      x0, #0x19008cc                             
+01900a38: mov      w1, #1                                     
+01900a3c: mov      x2, xzr                                    
+01900a40: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900a44: ldr      x0, [x21, #0xb0]                           
+01900a48: cbz      x0, #0x19008cc                             
+01900a4c: adrp     x8, #0x39ad000                             
+01900a50: mov      w1, #2                                     
+01900a54: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900a58: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900a5c: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900a60: cbz      x0, #0x19008cc                             
+01900a64: mov      w1, #1                                     
+01900a68: mov      x2, xzr                                    
+01900a6c: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900a70: ldr      x0, [x21, #0xb0]                           
+01900a74: cbz      x0, #0x19008cc                             
+01900a78: adrp     x8, #0x39ad000                             
+01900a7c: mov      w1, #3                                     
+01900a80: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900a84: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900a88: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900a8c: cbz      x0, #0x19008cc                             
+01900a90: mov      w1, #1                                     
+01900a94: mov      x2, xzr                                    
+01900a98: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900a9c: ldr      x0, [x21, #0x58]                           
+01900aa0: cbz      x0, #0x19008cc                             
+01900aa4: adrp     x19, #0x39ae000                            
+01900aa8: mov      w1, wzr                                    
+01900aac: mov      w2, wzr                                    
+01900ab0: ldr      x19, [x19, #0xc8]                          [39ae0c8]  bytes=0000000000000000 -> 3a90e18 Method$System.Collections.Generic.List<int>.set_Item()
+01900ab4: ldr      x3, [x19]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900ab8: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900abc: ldr      x0, [x21, #0x58]                           
+01900ac0: cbz      x0, #0x19008cc                             
+01900ac4: ldr      x3, [x19]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900ac8: mov      w1, #1                                     
+01900acc: mov      w2, #1                                     
+01900ad0: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900ad4: ldr      x0, [x21, #0x58]                           
+01900ad8: cbz      x0, #0x19008cc                             
+01900adc: ldr      x3, [x19]                                  [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900ae0: mov      w1, #2                                     
+01900ae4: mov      w2, #2                                     
+01900ae8: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900aec: ldr      x0, [x21, #0x58]                           
+01900af0: cbz      x0, #0x19008cc                             
+01900af4: adrp     x8, #0x39ae000                             
+01900af8: mov      w1, #3                                     
+01900afc: mov      w2, #3                                     
+01900b00: ldr      x8, [x8, #0xc8]                            [39ae0c8]  bytes=0000000000000000 -> 3a90e18 Method$System.Collections.Generic.List<int>.set_Item()
+01900b04: ldr      x3, [x8]                                   [3a90e18] Method$System.Collections.Generic.List<int>.set_Item() bytes=1f3b01c000000000
+01900b08: bl       #0x23f078c                                 System.Collections.Generic.List<int>$$set_Item
+01900b0c: ldr      x0, [x21, #0x58]                           
+01900b10: cbz      x0, #0x19008cc                             
+01900b14: adrp     x8, #0x39af000                             
+01900b18: ldr      x8, [x8, #0x9b0]                           [39af9b0]  bytes=0000000000000000 -> 3a90de0 Method$System.Collections.Generic.List<int>.Sort()
+01900b1c: ldr      x1, [x8]                                   [3a90de0] Method$System.Collections.Generic.List<int>.Sort() bytes=ed3a01c000000000
+01900b20: bl       #0x23f2264                                 System.Collections.Generic.List<int>$$Sort
+01900b24: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01900b28: ldr      w8, [x0, #0xe4]                            
+01900b2c: cbnz     w8, #0x1900b38                             
+01900b30: bl       #0x17b69d4                                 
+01900b34: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01900b38: ldr      x8, [x0, #0xb8]                            
+01900b3c: ldr      x8, [x8, #0x40]                            [3a90e20] Method$System.Collections.Generic.List<long>..ctor() bytes=9f3b01c000000000
+01900b40: cbz      x8, #0x19008cc                             
+01900b44: ldr      x8, [x8, #0x10]                            
+01900b48: cbz      x8, #0x19008cc                             
+01900b4c: ldr      x8, [x8, #0xd8]                            
+01900b50: cbz      x8, #0x19008cc                             
+01900b54: ldr      w9, [x8, #0x1c]                            
+01900b58: str      wzr, [sp, #0x3c]                           
+01900b5c: add      w9, w9, #1                                 
+01900b60: stp      wzr, w9, [x8, #0x18]                       
+01900b64: ldr      x8, [x21, #0x58]                           
+01900b68: cbz      x8, #0x19008cc                             
+01900b6c: adrp     x19, #0x39ae000                            
+01900b70: adrp     x23, #0x39ad000                            
+01900b74: adrp     x29, #0x39af000                            
+01900b78: ldr      x19, [x19, #0x138]                         [39ae138]  bytes=0000000000000000 -> 3c30040 
+01900b7c: ldr      x23, [x23, #0xd08]                         [39add08]  bytes=0000000000000000 -> 3a90e00 Method$System.Collections.Generic.List<int>.get_Count()
+01900b80: ldr      x29, [x29, #0x9a0]                         [39af9a0]  bytes=0000000000000000 -> 3ab12a0  
+01900b84: mov      w24, wzr                                   
+01900b88: mov      w9, wzr                                    
+01900b8c: ldr      w8, [x8, #0x18]                            
+01900b90: cmp      w9, w8                                     
+01900b94: b.ge     #0x1900e90                                 
+01900b98: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01900b9c: ldr      w8, [x0, #0xe4]                            
+01900ba0: cbnz     w8, #0x1900bac                             
+01900ba4: bl       #0x17b69d4                                 
+01900ba8: ldr      x0, [x25]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01900bac: ldr      x8, [x0, #0xb8]                            
+01900bb0: ldr      x8, [x8, #0x40]                            
+01900bb4: cbz      x8, #0x19008cc                             
+01900bb8: ldr      x8, [x8, #0x10]                            
+01900bbc: cbz      x8, #0x19008cc                             
+01900bc0: ldr      x0, [x21, #0x58]                           
+01900bc4: cbz      x0, #0x19008cc                             
+01900bc8: ldr      w1, [sp, #0x3c]                            
+01900bcc: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900bd0: mov      x28, x29                                   
+01900bd4: ldr      x29, [x8, #0xd8]                           
+01900bd8: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900bdc: cbz      x29, #0x19008cc                            
+01900be0: adrp     x9, #0x39ad000                             
+01900be4: ldr      w10, [x29, #0x1c]                          [3ab12bc]  bytes=00000000c90000a0
+01900be8: ldr      x8, [x29, #0x10]                           [3ab12b0]  	
+{}[],:" bytes=c50000a000000000
+01900bec: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01900bf0: add      w10, w10, #1                               
+01900bf4: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+01900bf8: str      w10, [x29, #0x1c]                          
+01900bfc: cbz      x8, #0x19008cc                             
+01900c00: ldrsw    x10, [x29, #0x18]                          
+01900c04: ldr      w11, [x8, #0x18]                           
+01900c08: mov      w1, w0                                     
+01900c0c: cmp      w10, w11                                   
+01900c10: b.hs     #0x1900c28                                 
+01900c14: add      x8, x8, x10, lsl #2                        
+01900c18: add      w9, w10, #1                                
+01900c1c: str      w9, [x29, #0x18]                           
+01900c20: str      w1, [x8, #0x20]                            
+01900c24: b        #0x1900c3c                                 
+01900c28: ldr      x8, [x9, #0x20]                            
+01900c2c: mov      x0, x29                                    
+01900c30: ldr      x8, [x8, #0xc0]                            
+01900c34: ldr      x2, [x8, #0x70]                            
+01900c38: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+01900c3c: ldr      x0, [x21, #0x58]                           
+01900c40: mov      x27, x23                                   
+01900c44: cbz      x0, #0x1900cbc                             
+01900c48: ldr      x29, [x21, #0x50]                          
+01900c4c: ldr      x23, [x21, #0x60]                          
+01900c50: ldr      w1, [sp, #0x3c]                            
+01900c54: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900c58: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900c5c: mov      w1, w0                                     
+01900c60: cbz      x23, #0x1900cc4                            
+01900c64: ldr      x2, [x26]                                  [3a90e08] Method$System.Collections.Generic.List<int>.get_Item() bytes=1b3b01c000000000
+01900c68: mov      x0, x23                                    
+01900c6c: bl       #0x23f0738                                 System.Collections.Generic.List<int>$$get_Item
+01900c70: mov      w1, w0                                     
+01900c74: cbz      x29, #0x1900ccc                            
+01900c78: adrp     x8, #0x39ad000                             
+01900c7c: mov      x23, x27                                   
+01900c80: ldr      x8, [x8, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+01900c84: ldr      x2, [x8]                                   [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+01900c88: mov      x0, x29                                    
+01900c8c: mov      x29, x28                                   
+01900c90: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01900c94: cbz      x0, #0x1900cd4                             
+01900c98: mov      w1, #1                                     
+01900c9c: mov      x2, xzr                                    
+01900ca0: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01900ca4: ldr      w9, [sp, #0x3c]                            
+01900ca8: ldr      x8, [x21, #0x58]                           
+01900cac: add      w9, w9, #1                                 
+01900cb0: str      w9, [sp, #0x3c]                            
+01900cb4: cbnz     x8, #0x1900b8c                             
+01900cb8: b        #0x19008cc                                 
+01900cbc: bl       #0x17b6b00                                 
+01900cc0: b        #0x1900f04                                 
+01900cc4: bl       #0x17b6b00                                 
+01900cc8: b        #0x1900f04                                 
+01900ccc: bl       #0x17b6b00                                 
+01900cd0: b        #0x1900f04                                 
+01900cd4: bl       #0x17b6b00                                 
+01900cd8: b        #0x1900f04                                 
+01900cdc: b        #0x1900ce4                                 
+01900ce0: b        #0x1900ce4                                 
+01900ce4: mov      x23, x27                                   
+01900ce8: b        #0x1900cec                                 
+01900cec: cmp      w1, #1                                     
+01900cf0: b.ne     #0x1900f04                                 
+01900cf4: bl       #0x37d1840                                 
+01900cf8: mov      x29, x0                                    
+01900cfc: ldr      x0, [x19, #0x10]                           [3c30050]  bytes=
+01900d00: ldr      x8, [x29]                                  [3ab12a0]   bytes=c10000a000000000
+01900d04: ldr      x1, [x8]                                   
+01900d08: bl       #0x17b6f08                                 
+01900d0c: tbz      w0, #0, #0x1900f0c                         
+01900d10: ldrsw    x19, [sp, #0x30]                           
+01900d14: ldr      x8, [x29]                                  [3ab12a0]   bytes=c10000a000000000
+01900d18: add      x9, sp, #0x28                              
+01900d1c: str      x8, [x9, x19, lsl #3]                      
+01900d20: add      w8, w19, #1                                
+01900d24: str      w8, [sp, #0x30]                            
+01900d28: bl       #0x37d1850                                 
+01900d2c: adrp     x0, #0x39ae000                             
+01900d30: ldr      x0, [x0, #0x2a8]                           [39ae2a8]  bytes=0000000000000000 -> 3a7a388 string[]_TypeInfo
+01900d34: bl       #0x17b6868                                 
+01900d38: mov      w1, #7                                     
+01900d3c: bl       #0x17b6944                                 
+01900d40: cbz      x0, #0x19008cc                             
+01900d44: mov      x29, x0                                    
+01900d48: str      x19, [sp]                                  
+01900d4c: adrp     x0, #0x39af000                             
+01900d50: ldr      x0, [x0, #0x9b8]                           [39af9b8]  bytes=0000000000000000 -> 3abb410 HandsSync error: index out of range. 
+01900d54: bl       #0x17b6868                                 
+01900d58: mov      x2, x0                                     
+01900d5c: mov      x0, x29                                    
+01900d60: mov      x1, xzr                                    
+01900d64: bl       #0x15caf80                                 
+01900d68: ldr      x19, [x21, #0x60]                          
+01900d6c: cbz      x19, #0x19008cc                            
+01900d70: mov      x0, x23                                    
+01900d74: bl       #0x17b6868                                 
+01900d78: ldr      w8, [x19, #0x18]                           [3c30058]  bytes=
+01900d7c: add      x0, sp, #0x38                              
+01900d80: mov      x1, xzr                                    
+01900d84: str      w8, [sp, #0x38]                            
+01900d88: bl       #0x2b27678                                 System.Int32$$ToString
+01900d8c: mov      x2, x0                                     
+01900d90: mov      x0, x29                                    
+01900d94: mov      w1, #1                                     
+01900d98: bl       #0x15caf80                                 
+01900d9c: mov      x0, x28                                    
+01900da0: mov      x24, x28                                   
+01900da4: bl       #0x17b6868                                 
+01900da8: mov      x2, x0                                     
+01900dac: mov      x0, x29                                    
+01900db0: mov      w1, #2                                     
+01900db4: bl       #0x15caf80                                 
+01900db8: ldr      x19, [x21, #0x58]                          
+01900dbc: cbz      x19, #0x19008cc                            
+01900dc0: mov      x0, x23                                    
+01900dc4: bl       #0x17b6868                                 
+01900dc8: ldr      w8, [x19, #0x18]                           [3c30058]  bytes=
+01900dcc: add      x0, sp, #0x38                              
+01900dd0: mov      x1, xzr                                    
+01900dd4: str      w8, [sp, #0x38]                            
+01900dd8: bl       #0x2b27678                                 System.Int32$$ToString
+01900ddc: mov      x2, x0                                     
+01900de0: mov      x0, x29                                    
+01900de4: mov      w1, #3                                     
+01900de8: bl       #0x15caf80                                 
+01900dec: mov      x0, x24                                    
+01900df0: bl       #0x17b6868                                 
+01900df4: mov      x2, x0                                     
+01900df8: mov      x0, x29                                    
+01900dfc: mov      w1, #4                                     
+01900e00: bl       #0x15caf80                                 
+01900e04: add      x0, sp, #0x3c                              
+01900e08: mov      x1, xzr                                    
+01900e0c: bl       #0x2b27678                                 System.Int32$$ToString
+01900e10: mov      x2, x0                                     
+01900e14: mov      x0, x29                                    
+01900e18: mov      w1, #5                                     
+01900e1c: bl       #0x15caf80                                 
+01900e20: adrp     x0, #0x39af000                             
+01900e24: ldr      x0, [x0, #0x808]                           [39af808]  bytes=0000000000000000 -> 3ab3290 .
+01900e28: bl       #0x17b6868                                 
+01900e2c: mov      x2, x0                                     
+01900e30: mov      x0, x29                                    
+01900e34: mov      w1, #6                                     
+01900e38: bl       #0x15caf80                                 
+01900e3c: mov      x0, x29                                    
+01900e40: mov      x1, xzr                                    
+01900e44: bl       #0x29b3d34                                 System.String$$Concat
+01900e48: mov      x23, x0                                    
+01900e4c: adrp     x0, #0x39ae000                             
+01900e50: ldr      x0, [x0, #0x310]                           [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+01900e54: bl       #0x17b6868                                 
+01900e58: ldr      w8, [x0, #0xe4]                            [3a7c404]  bytes=000000006d7a0020
+01900e5c: cbnz     w8, #0x1900e64                             
+01900e60: bl       #0x17b69d4                                 
+01900e64: mov      x0, x23                                    
+01900e68: mov      x1, xzr                                    
+01900e6c: bl       #0x34a3d1c                                 UnityEngine.Debug$$Log
+01900e70: ldr      x8, [sp]                                   
+01900e74: adrp     x19, #0x39ae000                            
+01900e78: mov      w24, #1                                    
+01900e7c: mov      x23, x27                                   
+01900e80: mov      x29, x28                                   
+01900e84: str      w8, [sp, #0x30]                            
+01900e88: ldr      x19, [x19, #0x138]                         [39ae138]  bytes=0000000000000000 -> 3c30040 
+01900e8c: b        #0x1900ca4                                 
+01900e90: tbz      w24, #0, #0x1900ed4                        
+01900e94: mov      x23, x21                                   
+01900e98: ldp      w8, w9, [x23, #0xb8]!                      
+01900e9c: cmp      w8, w9                                     
+01900ea0: b.ge     #0x1900ed4                                 
+01900ea4: add      w8, w8, #1                                 
+01900ea8: str      w8, [x23]                                  
+01900eac: cbz      x22, #0x1900efc                            
+01900eb0: ldr      x8, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01900eb4: ldp      x9, x1, [x8, #0x188]                       
+01900eb8: mov      x0, x22                                    
+01900ebc: blr      x9                                         
+01900ec0: mov      w1, w0                                     
+01900ec4: ldr      w3, [sp, #0xc]                             
+01900ec8: mov      x0, x21                                    
+01900ecc: mov      x2, x20                                    
+01900ed0: bl       #0x18fffb8                                 HandsSyncToUI$$SelectHandsForUpgrade
+01900ed4: ldp      x20, x19, [sp, #0xb0]                      
+01900ed8: ldp      x22, x21, [sp, #0xa0]                      
+01900edc: ldp      x24, x23, [sp, #0x90]                      
+01900ee0: ldp      x26, x25, [sp, #0x80]                      
+01900ee4: ldp      x28, x27, [sp, #0x70]                      
+01900ee8: ldp      x29, x30, [sp, #0x60]                      
+01900eec: add      sp, sp, #0xc0                              
+01900ef0: ret                                                 
+01900ef4: bl       #0x17b6b08                                 
+01900ef8: bl       #0x17b6b00                                 
+01900efc: mov      x20, x19                                   
+01900f00: bl       #0x17b6b00                                 
+01900f04: str      x0, [sp]                                   
+01900f08: b        #0x1900f3c                                 
+01900f0c: mov      w0, #8                                     
+01900f10: bl       #0x37d1870                                 
+01900f14: ldr      x8, [x29]                                  [3ab12a0]   bytes=c10000a000000000
+01900f18: str      x8, [x0]                                   
+01900f1c: adrp     x1, #0x37d7000                             
+01900f20: add      x1, x1, #0xc98                             addr 37d7c98 
+01900f24: mov      x2, xzr                                    
+01900f28: bl       #0x37d1880                                 
+01900f2c: b        #0x1901028                                 
+01900f30: b        #0x1900f34                                 
+01900f34: str      x0, [sp]                                   
+01900f38: bl       #0x37d1850                                 
+01900f3c: ldr      x0, [sp]                                   
+01900f40: bl       #0x18a54ec                                 
+01900f44: b        #0x1900f48                                 
+01900f48: mov      x20, x19                                   
+01900f4c: b        #0x1900f50                                 
+01900f50: cmp      w1, #1                                     
+01900f54: str      x0, [sp]                                   
+01900f58: b.ne     #0x1900f3c                                 
+01900f5c: ldr      x0, [sp]                                   
+01900f60: bl       #0x37d1840                                 
+01900f64: mov      x19, x0                                    
+01900f68: ldr      x0, [x20, #0x10]                           
+01900f6c: ldr      x8, [x19]                                  [3c30040]  bytes=
+01900f70: ldr      x1, [x8]                                   
+01900f74: bl       #0x17b6f08                                 
+01900f78: tbz      w0, #0, #0x1901008                         
+01900f7c: ldrsw    x21, [sp, #0x30]                           
+01900f80: ldr      x8, [x19]                                  [3c30040]  bytes=
+01900f84: add      x9, sp, #0x28                              
+01900f88: str      x8, [x9, x21, lsl #3]                      
+01900f8c: add      w8, w21, #1                                
+01900f90: str      w8, [sp, #0x30]                            
+01900f94: bl       #0x37d1850                                 
+01900f98: mov      x0, x23                                    
+01900f9c: mov      x1, xzr                                    
+01900fa0: bl       #0x2b27678                                 System.Int32$$ToString
+01900fa4: mov      x19, x0                                    
+01900fa8: adrp     x0, #0x39af000                             
+01900fac: ldr      x0, [x0, #0x9c0]                           [39af9c0]  bytes=0000000000000000 -> 3abb390 HandSync error backup system failed after 
+01900fb0: bl       #0x17b6868                                 
+01900fb4: mov      x20, x0                                    
+01900fb8: adrp     x0, #0x39af000                             
+01900fbc: ldr      x0, [x0, #0x9c8]                           [39af9c8]  bytes=0000000000000000 -> 3ab15c0  attempts.
+01900fc0: bl       #0x17b6868                                 
+01900fc4: mov      x2, x0                                     
+01900fc8: mov      x0, x20                                    
+01900fcc: mov      x1, x19                                    
+01900fd0: mov      x3, xzr                                    
+01900fd4: bl       #0x29b36c8                                 System.String$$Concat
+01900fd8: mov      x19, x0                                    
+01900fdc: adrp     x0, #0x39ae000                             
+01900fe0: ldr      x0, [x0, #0x310]                           [39ae310]  bytes=0000000000000000 -> 3a7c320 UnityEngine.Debug_TypeInfo
+01900fe4: bl       #0x17b6868                                 
+01900fe8: ldr      w8, [x0, #0xe4]                            [3a7c404]  bytes=000000006d7a0020
+01900fec: cbnz     w8, #0x1900ff4                             
+01900ff0: bl       #0x17b69d4                                 
+01900ff4: mov      x0, x19                                    
+01900ff8: mov      x1, xzr                                    
+01900ffc: bl       #0x34a3d1c                                 UnityEngine.Debug$$Log
+01901000: str      w21, [sp, #0x30]                           
+01901004: b        #0x1900ed4                                 
+01901008: mov      w0, #8                                     
+0190100c: bl       #0x37d1870                                 
+01901010: ldr      x8, [x19]                                  [3c30040]  bytes=
+01901014: str      x8, [x0]                                   
+01901018: adrp     x1, #0x37d7000                             
+0190101c: add      x1, x1, #0xc98                             addr 37d7c98 
+01901020: mov      x2, xzr                                    
+01901024: bl       #0x37d1880                                 
+01901028: str      x0, [sp]                                   
+0190102c: bl       #0x37d1850                                 
+01901030: b        #0x1900f3c                                 
+01901034: b        #0x190103c                                 
+01901038: b        #0x190103c                                 
+0190103c: cmp      w1, #1                                     
+01901040: str      x0, [sp]                                   
+01901044: b.ne     #0x1901078                                 
+01901048: ldr      x0, [sp]                                   
+0190104c: bl       #0x37d1840                                 
+01901050: ldr      x19, [x0]                                  [3a7c320] UnityEngine.Debug_TypeInfo bytes=cd79002000000000
+01901054: str      x19, [sp, #0x10]                           
+01901058: bl       #0x37d1850                                 
+0190105c: ldr      x0, [sp, #0x18]                            
+01901060: ldr      x1, [x22]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01901064: bl       #0x21075d8                                 System.Collections.Generic.List.Enumerator<object>$$Dispose
+01901068: cbz      x19, #0x1900170                            
+0190106c: mov      x0, x19                                    
+01901070: bl       #0x17b6af8                                 
+01901074: str      x0, [sp]                                   
+01901078: add      x0, sp, #0x10                              
+0190107c: bl       #0x15ca9ec                                 
+01901080: b        #0x1900f3c                                 
+01901084: bl       #0x15ca950                                 

@@ -1,0 +1,39 @@
+InventoryVisualizer$$SkullRerollCoroutine
+01909730: str      x30, [sp, #-0x40]!                         
+01909734: stp      x24, x23, [sp, #0x10]                      
+01909738: stp      x22, x21, [sp, #0x20]                      
+0190973c: stp      x20, x19, [sp, #0x30]                      
+01909740: adrp     x23, #0x3c21000                            
+01909744: adrp     x24, #0x39af000                            
+01909748: mov      w19, w3                                    
+0190974c: ldrb     w8, [x23, #0x13f]                          
+01909750: ldr      x24, [x24, #0xb58]                         [39afb58]  bytes=0000000000000000 -> 3a85258 InventoryVisualizer.<SkullRerollCoroutine>d__42_TypeInfo
+01909754: mov      w20, w2                                    
+01909758: mov      w21, w1                                    
+0190975c: mov      x22, x0                                    
+01909760: tbnz     w8, #0, #0x1909778                         
+01909764: adrp     x0, #0x39af000                             
+01909768: ldr      x0, [x0, #0xb58]                           [39afb58]  bytes=0000000000000000 -> 3a85258 InventoryVisualizer.<SkullRerollCoroutine>d__42_TypeInfo
+0190976c: bl       #0x17b6854                                 
+01909770: mov      w8, #1                                     
+01909774: strb     w8, [x23, #0x13f]                          
+01909778: ldr      x0, [x24]                                  [3a85258] InventoryVisualizer.<SkullRerollCoroutine>d__42_TypeInfo bytes=ebe2002000000000
+0190977c: bl       #0x17b6af0                                 
+01909780: mov      w1, wzr                                    
+01909784: mov      x2, xzr                                    
+01909788: mov      x23, x0                                    
+0190978c: bl       #0x1909cd0                                 InventoryVisualizer.<SkullRerollCoroutine>d__42$$.ctor
+01909790: cbz      x23, #0x19097c4                            
+01909794: mov      x0, x23                                    
+01909798: mov      x1, x22                                    
+0190979c: str      x22, [x0, #0x20]!                          
+019097a0: bl       #0x17b67f8                                 
+019097a4: stp      w21, w20, [x23, #0x28]                     
+019097a8: mov      x0, x23                                    
+019097ac: str      w19, [x23, #0x30]                          
+019097b0: ldp      x20, x19, [sp, #0x30]                      
+019097b4: ldp      x22, x21, [sp, #0x20]                      
+019097b8: ldp      x24, x23, [sp, #0x10]                      
+019097bc: ldr      x30, [sp], #0x40                           
+019097c0: ret                                                 
+019097c4: bl       #0x17b6b00                                 

@@ -1,0 +1,573 @@
+public class BattleHandler : MonoBehaviour // TypeDefIndex: 6170
+{
+	// Fields
+	public DatabaseObject db; // 0x20
+	[SerializeField]
+	private Inventory inv; // 0x28
+	public InventoryVisualizer invVisualizer; // 0x30
+	private Random rng; // 0x38
+	[SerializeField]
+	private Image viewCover; // 0x40
+	[SerializeField]
+	private ReaperAnimator reaperAnimator; // 0x48
+	[SerializeField]
+	private BackgroundAnimator bgAnimator; // 0x50
+	[SerializeField]
+	private List<DiceVisualizer> diceVisualizers; // 0x58
+	[SerializeField]
+	private List<DiceVisualizer> diceVisualizersHorizontal; // 0x60
+	[SerializeField]
+	private List<TextMeshProUGUI> boneTexts; // 0x68
+	[SerializeField]
+	private List<TextMeshProUGUI> multTexts; // 0x70
+	[SerializeField]
+	private List<TextMeshProUGUI> multTextsSlash; // 0x78
+	[SerializeField]
+	private List<TextMeshProUGUI> totalTexts; // 0x80
+	[SerializeField]
+	private List<TextMeshProUGUI> thresholdTexts; // 0x88
+	[SerializeField]
+	private List<TextMeshProUGUI> pileTexts; // 0x90
+	[SerializeField]
+	private List<TextMeshProUGUI> pileTextsSlash; // 0x98
+	[SerializeField]
+	private List<TextMeshProUGUI> skullRollTexts; // 0xA0
+	[SerializeField]
+	private List<TextMeshProUGUI> rollsTexts; // 0xA8
+	[SerializeField]
+	private List<TextMeshProUGUI> handsTexts; // 0xB0
+	private bool allowInput; // 0xB8
+	[SerializeField]
+	private ImageBlink blinkingHandsHighlight; // 0xC0
+	[SerializeField]
+	private List<GameObject> handHighlights; // 0xC8
+	[SerializeField]
+	private List<GameObject> skullHighlights; // 0xD0
+	[SerializeField]
+	private List<GameObject> windowOpenFrames; // 0xD8
+	[SerializeField]
+	private GameObject windowParent; // 0xE0
+	public GameObject inputBlocker; // 0xE8
+	public GameObject deathInputBlocker; // 0xF0
+	[SerializeField]
+	private GameObject handsToSkullRollsHighlight; // 0xF8
+	private bool windowOpeningAnimInProgress; // 0x100
+	[SerializeField]
+	public HandsSyncToUI handSync; // 0x108
+	[SerializeField]
+	private List<GameObject> windowSwitchAnimFrames; // 0x110
+	[SerializeField]
+	private Image pileIndicatorCorners; // 0x118
+	[SerializeField]
+	private Image thresholdIndicatorCorners; // 0x120
+	[SerializeField]
+	private Image boneIndicatorCorners; // 0x128
+	[SerializeField]
+	private Image multIndicatorCorners; // 0x130
+	[SerializeField]
+	private Image totalIndicatorCorners; // 0x138
+	[SerializeField]
+	private Image rerollIndicatorCorners; // 0x140
+	[SerializeField]
+	private GameObject rerollIndicatorCorners2; // 0x148
+	[SerializeField]
+	private GameObject handIndicatorCorners; // 0x150
+	[SerializeField]
+	private GameObject handsBtnIndicatorCorners; // 0x158
+	[SerializeField]
+	private ConstantStorage cs; // 0x160
+	[SerializeField]
+	private GameObject deathScreen; // 0x168
+	[SerializeField]
+	private GameObject demoDeathScreen; // 0x170
+	[SerializeField]
+	private LocalizedText endScreenTitle; // 0x178
+	private int tutorialPhase; // 0x180
+	private bool isDebugFrameByFrame; // 0x184
+	private bool x0; // 0x185
+	private bool x1; // 0x186
+	private bool x2; // 0x187
+	[SerializeField]
+	private SkullVisualizer handSkullBoxVisualizer; // 0x188
+	[SerializeField]
+	private SkullVisualizer rollSkullBoxVisualizer; // 0x190
+	[SerializeField]
+	private GameObject handSkullBoxObj; // 0x198
+	[SerializeField]
+	private GameObject rollSkullBoxObj; // 0x1A0
+	[SerializeField]
+	private Image fullscreenCover; // 0x1A8
+	public Settings settingsInstance; // 0x1B0
+	[SerializeField]
+	private BoxHitMarker bonesHitmark; // 0x1B8
+	[SerializeField]
+	private BoxHitMarker multHitmark; // 0x1C0
+	[SerializeField]
+	private BoxHitMarker totalHitmark; // 0x1C8
+	[SerializeField]
+	private BoxHitMarker pileHitmark; // 0x1D0
+	[SerializeField]
+	private BoxHitMarker thresholdHitmark; // 0x1D8
+	[SerializeField]
+	private BoxHitMarker hpHitmark; // 0x1E0
+	[SerializeField]
+	private TextMeshProUGUI totalPreviewText; // 0x1E8
+	[SerializeField]
+	private TextMeshProUGUI bonesPreviewText; // 0x1F0
+	[SerializeField]
+	private TextMeshProUGUI multPreviewText; // 0x1F8
+	[SerializeField]
+	private TextMeshProUGUI hpPreviewSlash; // 0x200
+	[SerializeField]
+	private TextMeshProUGUI rerollPreviewText; // 0x208
+	[SerializeField]
+	private TextMeshProUGUI thresholdPreviewText; // 0x210
+	private int previewBones; // 0x218
+	private int previewMult; // 0x21C
+	private int previewRolls; // 0x220
+	private float previewTimer; // 0x224
+	private readonly float previewTimeLimit; // 0x228
+	private bool previewPressInProgress; // 0x22C
+	private bool previewInterrupt; // 0x22D
+	private float secTimer; // 0x230
+	[SerializeField]
+	private EndScreenStats endScreenStats; // 0x238
+	[SerializeField]
+	private ImmediateStats immediateStats; // 0x240
+	[SerializeField]
+	private RapidBlink pileBlink; // 0x248
+	[SerializeField]
+	private DecorLights decorLights; // 0x250
+	[SerializeField]
+	private Button debugThresholdReduceBtn; // 0x258
+	[SerializeField]
+	private GameObject rewardedAdBtn; // 0x260
+	[SerializeField]
+	private GameObject rewardedAdBtnIcon; // 0x268
+	[SerializeField]
+	private GameObject rewardedAdBtnCursed; // 0x270
+	[SerializeField]
+	private GameObject rewardedAdBtnIconCursed; // 0x278
+	[HideInInspector]
+	public float timeSinceInput; // 0x280
+	private bool handDialogueInterrupted; // 0x284
+	private bool handDialogueInProgress; // 0x285
+	[SerializeField]
+	private Image borderBlinker; // 0x288
+	[SerializeField]
+	private Image successBlinker; // 0x290
+	[SerializeField]
+	private Sprite pcBlinkerSprite; // 0x298
+	private bool dangerBlinking; // 0x2A0
+	private bool successBlinking; // 0x2A1
+	[SerializeField]
+	private LootTutorialBlink skullLootTitleBlink; // 0x2A8
+	[SerializeField]
+	private LootTutorialBlink handLootTitleBlink; // 0x2B0
+	private bool waitActive; // 0x2B8
+	private bool rerollAnimSkipped; // 0x2B9
+	private bool scoreCalcAnimSkipped; // 0x2BA
+	private int deathDepth; // 0x2BC
+	private int handsLeftAtTheEndOfPrevLevel; // 0x2C0
+	[SerializeField]
+	private Transform reaperCharTransform; // 0x2C8
+	[HideInInspector]
+	public List<bool> challengesInUse; // 0x2D0
+	[SerializeField]
+	private List<GameObject> challengeBlockerObjs; // 0x2D8
+	[SerializeField]
+	private List<Image> challengeRecolorToBlack; // 0x2E0
+	[SerializeField]
+	private List<Image> challengeRecolorToDimOrange; // 0x2E8
+	[SerializeField]
+	private List<TextMeshProUGUI> challengeRecolorTextToDimOrange; // 0x2F0
+	[SerializeField]
+	private GameObject retryBtnThatOpensChallengeMenu; // 0x2F8
+	[SerializeField]
+	private TextMeshProUGUI retryBtnThatOpensChallengeMenuText; // 0x300
+	private bool rewardedAdWasWatchedInLooting; // 0x308
+	private int sceneOpenTimer; // 0x30C
+	private bool additionalSkipCheck; // 0x310
+	[HideInInspector]
+	public bool endlessInUse; // 0x311
+	[HideInInspector]
+	public bool dailyInUse; // 0x312
+	[HideInInspector]
+	public bool cursedInUse; // 0x313
+	[HideInInspector]
+	public bool pointsCountCycleInProgress; // 0x314
+	private bool rerollCycleInProgress; // 0x315
+	private bool rollSkullAnimInProgress; // 0x316
+	[SerializeField]
+	private DailyModeSkulls dailyModeSkulls; // 0x318
+	private bool tutorialRun; // 0x320
+	[SerializeField]
+	private GameObject skullRollTutorialHint; // 0x328
+	[SerializeField]
+	public GameObject dailyModeSkullsWindow; // 0x330
+	[SerializeField]
+	private List<SkullVisualizer> dailyModeBeginSkullVisualizers; // 0x338
+	private bool introFullyDone; // 0x340
+	[SerializeField]
+	private BoxHitMarker bonePreviewHitMark; // 0x348
+	[SerializeField]
+	private BoxHitMarker multPreviewHitMark; // 0x350
+	[SerializeField]
+	private BoxHitMarker multPreviewHitMarkCursed; // 0x358
+	[SerializeField]
+	private BoxHitMarker totalPreviewHitMark; // 0x360
+	[SerializeField]
+	public CustomizationMenuManager customizationManager; // 0x368
+	[SerializeField]
+	public CustomizationMenuManager endScreenCustomizationManager; // 0x370
+	[SerializeField]
+	private GameObject storeMenu; // 0x378
+	[SerializeField]
+	private GameObject interstitialNotification; // 0x380
+	[SerializeField]
+	private GameObject handsMenuDimmer; // 0x388
+	[SerializeField]
+	private GameObject cursedHealthUI; // 0x390
+	[SerializeField]
+	private RectTransform cursedHpIndicatorDimensions; // 0x398
+	[SerializeField]
+	private List<TextMeshProUGUI> skullActivationPreviewText; // 0x3A0
+	[SerializeField]
+	private GameObject handsSkullTriggerHighlight; // 0x3A8
+	[SerializeField]
+	private GameObject rerollsSkullTriggerHighlight; // 0x3B0
+	[SerializeField]
+	public GameObject snapshotRestoreWindow; // 0x3B8
+	[SerializeField]
+	private GameObject snapshotRestorePc; // 0x3C0
+	[SerializeField]
+	private GameObject snapshotRestoreMobile; // 0x3C8
+	[SerializeField]
+	private GameObject snapshotRestoreMobileFreeUsed; // 0x3D0
+	[SerializeField]
+	private List<GameObject> snapshotRestoreAdBtnsList; // 0x3D8
+	[SerializeField]
+	private LocalizedText snapshotFreeRestoreArrivalTimeText; // 0x3E0
+	private Coroutine snapshotIapCoroutine; // 0x3E8
+	private int rerollAmountFromRerollAbility; // 0x3F0
+	[HideInInspector]
+	public RerollAbilityType rerollAbility; // 0x3F4
+	[SerializeField]
+	private GameObject stickyChainObj; // 0x3F8
+
+	// Methods
+
+	[IteratorStateMachine(typeof(BattleHandler.<Start>d__146))]
+	// RVA: 0x18A9404 Offset: 0x18A5404 VA: 0x18A9404
+	private IEnumerator Start() { }
+
+	// RVA: 0x18A9478 Offset: 0x18A5478 VA: 0x18A9478
+	public void AchievementUnlock(AchievementType achievement) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<AchievementUnlockCoroutine>d__148))]
+	// RVA: 0x18A94F4 Offset: 0x18A54F4 VA: 0x18A94F4
+	private IEnumerator AchievementUnlockCoroutine(AchievementType achievement) { }
+
+	// RVA: 0x18A9568 Offset: 0x18A5568 VA: 0x18A9568
+	private void SetRollBlocker(bool onOff) { }
+
+	// RVA: 0x18A9A68 Offset: 0x18A5A68 VA: 0x18A9A68
+	private void ResetRunSaveDataToDefaults() { }
+
+	// RVA: 0x18AA51C Offset: 0x18A651C VA: 0x18AA51C
+	private void Update() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<IdleDiceAnim>d__152))]
+	// RVA: 0x18AAD78 Offset: 0x18A6D78 VA: 0x18AAD78
+	private IEnumerator IdleDiceAnim() { }
+
+	// RVA: 0x18AADEC Offset: 0x18A6DEC VA: 0x18AADEC
+	public void DebugThresholdBtnPress() { }
+
+	// RVA: 0x18AAF4C Offset: 0x18A6F4C VA: 0x18AAF4C
+	private void RerollNextDice() { }
+
+	// RVA: 0x18AB04C Offset: 0x18A704C VA: 0x18AB04C
+	public void PlayHandBtnPress() { }
+
+	// RVA: 0x18AB458 Offset: 0x18A7458 VA: 0x18AB458
+	public void RerollBtnPress() { }
+
+	// RVA: 0x18AB99C Offset: 0x18A799C VA: 0x18AB99C
+	public void RerollChallengeBtnPress() { }
+
+	// RVA: 0x18AA894 Offset: 0x18A6894 VA: 0x18AA894
+	public void DiceRollToggleBtnPress(int diceIndex) { }
+
+	// RVA: 0x18AB9AC Offset: 0x18A79AC VA: 0x18AB9AC
+	public void SkullRollBtnPress() { }
+
+	// RVA: 0x18AB2A8 Offset: 0x18A72A8 VA: 0x18AB2A8
+	private void PlayHand() { }
+
+	// RVA: 0x18ABE50 Offset: 0x18A7E50 VA: 0x18ABE50
+	private void ResetScoreCounting() { }
+
+	// RVA: 0x18ABECC Offset: 0x18A7ECC VA: 0x18ABECC
+	private void MarkHandBoneDice(bool onOff) { }
+
+	// RVA: 0x18AC038 Offset: 0x18A8038 VA: 0x18AC038
+	private void MarkHandBoneDiceActive(List<int> indices) { }
+
+	// RVA: 0x18AC190 Offset: 0x18A8190 VA: 0x18AC190
+	private List<int> GetIndicesOfHandDice(DiceHand hand) { }
+
+	// RVA: 0x18AC9D8 Offset: 0x18A89D8 VA: 0x18AC9D8
+	private void MarkHandTotalDice(bool onOff) { }
+
+	// RVA: 0x18ACB44 Offset: 0x18A8B44 VA: 0x18ACB44
+	public void MarkHandTotalDiceActive(List<int> indices) { }
+
+	// RVA: 0x18ACC9C Offset: 0x18A8C9C VA: 0x18ACC9C
+	private void MarkHandRerollDice(bool onOff) { }
+
+	// RVA: 0x18ACE0C Offset: 0x18A8E0C VA: 0x18ACE0C
+	private void MarkHandRerollDiceActive(List<int> indices) { }
+
+	// RVA: 0x18ACF68 Offset: 0x18A8F68 VA: 0x18ACF68
+	private void MarkHandMultDice(bool onOff) { }
+
+	// RVA: 0x18AD0D4 Offset: 0x18A90D4 VA: 0x18AD0D4
+	private void MarkHandMultDiceActive(List<int> indices) { }
+
+	// RVA: 0x18AD22C Offset: 0x18A922C VA: 0x18AD22C
+	private void MarkHandMultDice(DiceHand hand) { }
+
+	// RVA: 0x18AD8DC Offset: 0x18A98DC VA: 0x18AD8DC
+	public DiceHand CheckHand(int[] handToCheck) { }
+
+	// RVA: 0x18AB22C Offset: 0x18A722C VA: 0x18AB22C
+	private void DiceRollToggle(int diceIndex, bool onOff, bool doBop = False) { }
+
+	// RVA: 0x18AB7B0 Offset: 0x18A77B0 VA: 0x18AB7B0
+	private void UpdateFullUI() { }
+
+	// RVA: 0x18ABBAC Offset: 0x18A7BAC VA: 0x18ABBAC
+	private void UpdateSkullRollTexts() { }
+
+	// RVA: 0x18AE2E4 Offset: 0x18AA2E4 VA: 0x18AE2E4
+	private void UpdateSkullRollTexts(int newRolls) { }
+
+	// RVA: 0x18AE428 Offset: 0x18AA428 VA: 0x18AE428
+	public void RewardedAdBtnPress() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RewardedAdBtnPressWait>d__178))]
+	// RVA: 0x18AE470 Offset: 0x18AA470 VA: 0x18AE470
+	private IEnumerator RewardedAdBtnPressWait() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RewardedAdShow>d__179))]
+	// RVA: 0x18AE4E4 Offset: 0x18AA4E4 VA: 0x18AE4E4
+	private IEnumerator RewardedAdShow(bool saveRestore = False) { }
+
+	// RVA: 0x18ADF70 Offset: 0x18A9F70 VA: 0x18ADF70
+	private void UpdatePileTexts() { }
+
+	// RVA: 0x18AE56C Offset: 0x18AA56C VA: 0x18AE56C
+	private void UpdatePileTexts(int pile) { }
+
+	// RVA: 0x18ADBF8 Offset: 0x18A9BF8 VA: 0x18ADBF8
+	private void UpdateBoneTexts() { }
+
+	// RVA: 0x18AE894 Offset: 0x18AA894 VA: 0x18AE894
+	private void UpdateBoneTexts(int bones) { }
+
+	// RVA: 0x18ADCD4 Offset: 0x18A9CD4 VA: 0x18ADCD4
+	private void UpdateMultTexts() { }
+
+	// RVA: 0x18AE91C Offset: 0x18AA91C VA: 0x18AE91C
+	private void UpdateMultTexts(int mult) { }
+
+	// RVA: 0x18AE9E4 Offset: 0x18AA9E4 VA: 0x18AE9E4
+	private void UpdateTotalTexts() { }
+
+	// RVA: 0x18ADDF8 Offset: 0x18A9DF8 VA: 0x18ADDF8
+	private void UpdateTotalTexts(int total) { }
+
+	// RVA: 0x18AAE70 Offset: 0x18A6E70 VA: 0x18AAE70
+	private void UpdateThresholdTexts() { }
+
+	// RVA: 0x18AEAC4 Offset: 0x18AAAC4 VA: 0x18AEAC4
+	private void UpdateThresholdTexts(int threshold) { }
+
+	// RVA: 0x18ADE94 Offset: 0x18A9E94 VA: 0x18ADE94
+	private void UpdateRollsTexts() { }
+
+	// RVA: 0x18AEB60 Offset: 0x18AAB60 VA: 0x18AEB60
+	private void UpdateRollsTexts(int rolls) { }
+
+	// RVA: 0x18ABD74 Offset: 0x18A7D74 VA: 0x18ABD74
+	private void UpdateHandsTexts() { }
+
+	// RVA: 0x18AEBE8 Offset: 0x18AABE8 VA: 0x18AEBE8
+	private void UpdateHandsTexts(int hands) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<PointsCountCycle>d__194))]
+	// RVA: 0x18ABCF0 Offset: 0x18A7CF0 VA: 0x18ABCF0
+	private IEnumerator PointsCountCycle(GameState state = 0) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RollTexts>d__195))]
+	// RVA: 0x18AEC70 Offset: 0x18AAC70 VA: 0x18AEC70
+	private IEnumerator RollTexts(int beginVal, int endVal, float animDuration, TextRollType whatToRoll, bool playSound = True, float pitch = 0, bool skippable = True) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RerollDiceCycle>d__196))]
+	// RVA: 0x18AB914 Offset: 0x18A7914 VA: 0x18AB914
+	private IEnumerator RerollDiceCycle(bool initialRoll = False) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<HandTextToggleOffWait>d__197))]
+	// RVA: 0x18AED40 Offset: 0x18AAD40 VA: 0x18AED40
+	private IEnumerator HandTextToggleOffWait() { }
+
+	// RVA: 0x18AEDB4 Offset: 0x18AADB4 VA: 0x18AEDB4
+	private void UpdateAllDice() { }
+
+	// RVA: 0x18AEEDC Offset: 0x18AAEDC VA: 0x18AEEDC
+	public void UpgradeHand(int handIndex) { }
+
+	// RVA: 0x18AF0BC Offset: 0x18AB0BC VA: 0x18AF0BC
+	public int[] GetHandUpgrades() { }
+
+	// RVA: 0x18AF134 Offset: 0x18AB134 VA: 0x18AF134
+	public void PlayWindowAnimation(bool dir) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<WindowAnimCoroutine>d__202))]
+	// RVA: 0x18AF154 Offset: 0x18AB154 VA: 0x18AF154
+	private IEnumerator WindowAnimCoroutine(bool dir) { }
+
+	// RVA: 0x18AF1DC Offset: 0x18AB1DC VA: 0x18AF1DC
+	public void PlayWindowSwitchAnimation() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<WindowSwitchAnimCoroutine>d__204))]
+	// RVA: 0x18AF36C Offset: 0x18AB36C VA: 0x18AF36C
+	private IEnumerator WindowSwitchAnimCoroutine() { }
+
+	// RVA: 0x18AF3E0 Offset: 0x18AB3E0 VA: 0x18AF3E0
+	public int CheckSkullEffects(SkullActivation activationCondition, bool increaseScore = True) { }
+
+	// RVA: 0x18BFD30 Offset: 0x18BBD30 VA: 0x18BFD30
+	public void RetryBtnPress(bool opensChallenges = False) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RunEndInterstitial>d__207))]
+	// RVA: 0x18C0FD8 Offset: 0x18BCFD8 VA: 0x18C0FD8
+	private IEnumerator RunEndInterstitial(bool isRetry, bool allowAd, int depth) { }
+
+	// RVA: 0x18C107C Offset: 0x18BD07C VA: 0x18C107C
+	public void ReloadScene() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<DelayedSceneReload>d__209))]
+	// RVA: 0x18C109C Offset: 0x18BD09C VA: 0x18C109C
+	private IEnumerator DelayedSceneReload() { }
+
+	// RVA: 0x18C0EAC Offset: 0x18BCEAC VA: 0x18C0EAC
+	public void ReturnToMenu(bool adAllowed) { }
+
+	// RVA: 0x18C1110 Offset: 0x18BD110 VA: 0x18C1110
+	public void PauseMenuClosed() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<FadeAnim>d__212))]
+	// RVA: 0x18C1138 Offset: 0x18BD138 VA: 0x18C1138
+	private IEnumerator FadeAnim(bool dir) { }
+
+	// RVA: 0x18C11C0 Offset: 0x18BD1C0 VA: 0x18C11C0
+	public void PreviewPressStarted() { }
+
+	// RVA: 0x18C1270 Offset: 0x18BD270 VA: 0x18C1270
+	public void PreviewPressEnded() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<PreviewWaitCoroutine>d__215))]
+	// RVA: 0x18C11FC Offset: 0x18BD1FC VA: 0x18C11FC
+	private IEnumerator PreviewWaitCoroutine() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<PreviewPressEndWait>d__216))]
+	// RVA: 0x18C15D8 Offset: 0x18BD5D8 VA: 0x18C15D8
+	private IEnumerator PreviewPressEndWait() { }
+
+	// RVA: 0x18C12A4 Offset: 0x18BD2A4 VA: 0x18C12A4
+	private void DisplayTotalPreview(bool on) { }
+
+	// RVA: 0x18C164C Offset: 0x18BD64C VA: 0x18C164C
+	private int DoPreviewCalc() { }
+
+	// RVA: 0x18C1A9C Offset: 0x18BDA9C VA: 0x18C1A9C
+	public void WishlistBtnPress() { }
+
+	// RVA: 0x18C1AA0 Offset: 0x18BDAA0 VA: 0x18C1AA0
+	public void DiscordBtnPress() { }
+
+	// RVA: 0x18C1B08 Offset: 0x18BDB08 VA: 0x18C1B08
+	private void DecorLights() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<AdBtnIconLoop>d__222))]
+	// RVA: 0x18C2024 Offset: 0x18BE024 VA: 0x18C2024
+	private IEnumerator AdBtnIconLoop() { }
+
+	// RVA: 0x18C2098 Offset: 0x18BE098 VA: 0x18C2098
+	private void CheckForBorderBlink(bool onOff = True) { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<BorderBlinkLoop>d__224))]
+	// RVA: 0x18C2C0C Offset: 0x18BEC0C VA: 0x18C2C0C
+	private IEnumerator BorderBlinkLoop() { }
+
+	// RVA: 0x18C2C80 Offset: 0x18BEC80 VA: 0x18C2C80
+	public bool LuckAssist(int levelLimit = 10) { }
+
+	// RVA: 0x18C2DBC Offset: 0x18BEDBC VA: 0x18C2DBC
+	public void PurchaseBtnAnalyticsEvent() { }
+
+	// RVA: 0x18C2F04 Offset: 0x18BEF04 VA: 0x18C2F04
+	private void CheckForFourSkullAchievement() { }
+
+	// RVA: 0x18C333C Offset: 0x18BF33C VA: 0x18C333C
+	public void DenySnapshotBtnPress() { }
+
+	// RVA: 0x18C3358 Offset: 0x18BF358 VA: 0x18C3358
+	public void RestoreSnapshotBtnPress() { }
+
+	// RVA: 0x18C3434 Offset: 0x18BF434 VA: 0x18C3434
+	public void RestoreSnapshotBtnPressAd() { }
+
+	// RVA: 0x18C35B8 Offset: 0x18BF5B8 VA: 0x18C35B8
+	public void RestoreSnapshotBtnPressIap() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<SnapshotIapRetryCoroutine>d__232))]
+	// RVA: 0x18C36B4 Offset: 0x18BF6B4 VA: 0x18C36B4
+	private IEnumerator SnapshotIapRetryCoroutine() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<RestoreSnapshotIapCoroutine>d__233))]
+	// RVA: 0x18C3640 Offset: 0x18BF640 VA: 0x18C3640
+	private IEnumerator RestoreSnapshotIapCoroutine() { }
+
+	// RVA: 0x18C335C Offset: 0x18BF35C VA: 0x18C335C
+	public void RestoreSaveSnapshot() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<SaveSnapshotRestoreAnim>d__235))]
+	// RVA: 0x18C3728 Offset: 0x18BF728 VA: 0x18C3728
+	private IEnumerator SaveSnapshotRestoreAnim() { }
+
+	// RVA: 0x18C3780 Offset: 0x18BF780 VA: 0x18C3780
+	private void CheckSnapshotRestoreBtns() { }
+
+	[IteratorStateMachine(typeof(BattleHandler.<ContinuousRestoreSeedCheck>d__237))]
+	// RVA: 0x18C3AC8 Offset: 0x18BFAC8 VA: 0x18C3AC8
+	private IEnumerator ContinuousRestoreSeedCheck() { }
+
+	// RVA: 0x18C3B3C Offset: 0x18BFB3C VA: 0x18C3B3C
+	private bool CheckIfFirstHandOfLevel(int handsToConsider) { }
+
+	// RVA: 0x18C3D64 Offset: 0x18BFD64 VA: 0x18C3D64
+	public void UpdateSnapshotTextTime() { }
+
+	// RVA: 0x18AA3AC Offset: 0x18A63AC VA: 0x18AA3AC
+	private int GetLevelStartRerollAmount() { }
+
+	// RVA: 0x18C4014 Offset: 0x18C0014 VA: 0x18C4014
+	public void FlipDiceRollChoices() { }
+
+	// RVA: 0x18C4390 Offset: 0x18C0390 VA: 0x18C4390
+	public void .ctor() { }
+}
+

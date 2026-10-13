@@ -61,7 +61,8 @@
 /Dice-Unity/[Aa]ssets/**/[Ii]nit[Tt]est[Ss]cene*.unity*
 /Dice-Unity/[Aa]ssets/[Ss]ceneDependencyCache*
 
-# Working files, downloads, source studies, and validation output stay local.
+# Scratch files, downloads, art iterations, and validation output stay local.
+# Durable tools and reference inputs belong in Tools and Docs/Reference.
 /Docs/work/
 
 # Generated Watchtower source artwork and iterations stay local.

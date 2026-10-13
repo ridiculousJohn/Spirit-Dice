@@ -1,0 +1,429 @@
+InventoryVisualizer$$TakeLoot
+019088a0: sub      sp, sp, #0x80                              
+019088a4: stp      x30, x25, [sp, #0x40]                      
+019088a8: stp      x24, x23, [sp, #0x50]                      
+019088ac: stp      x22, x21, [sp, #0x60]                      
+019088b0: stp      x20, x19, [sp, #0x70]                      
+019088b4: adrp     x20, #0x3c21000                            
+019088b8: mov      x19, x0                                    
+019088bc: ldrb     w8, [x20, #0x138]                          
+019088c0: tbnz     w8, #0, #0x190895c                         
+019088c4: adrp     x0, #0x39ae000                             
+019088c8: ldr      x0, [x0, #0x278]                           [39ae278]  bytes=0000000000000000 -> 3a8cd30 Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose()
+019088cc: bl       #0x17b6854                                 
+019088d0: adrp     x0, #0x39ae000                             
+019088d4: ldr      x0, [x0, #0x280]                           [39ae280]  bytes=0000000000000000 -> 3a8cd38 Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext()
+019088d8: bl       #0x17b6854                                 
+019088dc: adrp     x0, #0x39ae000                             
+019088e0: ldr      x0, [x0, #0x288]                           [39ae288]  bytes=0000000000000000 -> 3a8cd40 Method$System.Collections.Generic.List.Enumerator<GameObject>.get_Current()
+019088e4: bl       #0x17b6854                                 
+019088e8: adrp     x0, #0x39ad000                             
+019088ec: ldr      x0, [x0, #0xcb8]                           [39adcb8]  bytes=0000000000000000 -> 3a7d3e0 Haptics_TypeInfo
+019088f0: bl       #0x17b6854                                 
+019088f4: adrp     x0, #0x39ad000                             
+019088f8: ldr      x0, [x0, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+019088fc: bl       #0x17b6854                                 
+01908900: adrp     x0, #0x39ad000                             
+01908904: ldr      x0, [x0, #0xc78]                           [39adc78]  bytes=0000000000000000 -> 3a90da8 Method$System.Collections.Generic.List<int>.Clear()
+01908908: bl       #0x17b6854                                 
+0190890c: adrp     x0, #0x39ae000                             
+01908910: ldr      x0, [x0, #0x290]                           [39ae290]  bytes=0000000000000000 -> 3a907d8 Method$System.Collections.Generic.List<GameObject>.GetEnumerator()
+01908914: bl       #0x17b6854                                 
+01908918: adrp     x0, #0x39ad000                             
+0190891c: ldr      x0, [x0, #0xe18]                           [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+01908920: bl       #0x17b6854                                 
+01908924: adrp     x0, #0x39ad000                             
+01908928: ldr      x0, [x0, #0xc60]                           [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+0190892c: bl       #0x17b6854                                 
+01908930: adrp     x0, #0x39ae000                             
+01908934: ldr      x0, [x0, #0x250]                           [39ae250]  bytes=0000000000000000 -> 3a95438 Method$Source.Data.Serialization.SaveStore<ExpandedSaveData>.get_Data()
+01908938: bl       #0x17b6854                                 
+0190893c: adrp     x0, #0x39ad000                             
+01908940: ldr      x0, [x0, #0xc98]                           [39adc98]  bytes=0000000000000000 -> 3a95468 Method$Source.Data.Serialization.SaveStore<RunSaveData>.get_Data()
+01908944: bl       #0x17b6854                                 
+01908948: adrp     x0, #0x39af000                             
+0190894c: ldr      x0, [x0, #0x9d0]                           [39af9d0]  bytes=0000000000000000 -> 3ac5190 UI_CloseMenu
+01908950: bl       #0x17b6854                                 
+01908954: mov      w8, #1                                     
+01908958: strb     w8, [x20, #0x138]                          
+0190895c: ldr      x0, [x19, #0x78]                           
+01908960: stp      xzr, xzr, [sp, #0x20]                      
+01908964: str      xzr, [sp, #0x30]                           
+01908968: cbz      x0, #0x1908ef4                             
+0190896c: adrp     x8, #0x39ae000                             
+01908970: adrp     x20, #0x39ae000                            
+01908974: adrp     x24, #0x39af000                            
+01908978: ldr      x8, [x8, #0x290]                           [39ae290]  bytes=0000000000000000 -> 3a907d8 Method$System.Collections.Generic.List<GameObject>.GetEnumerator()
+0190897c: adrp     x21, #0x39ad000                            
+01908980: adrp     x22, #0x39ad000                            
+01908984: adrp     x23, #0x39ad000                            
+01908988: adrp     x25, #0x39ae000                            
+0190898c: ldr      x20, [x20, #0x280]                         [39ae280]  bytes=0000000000000000 -> 3a8cd38 Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext()
+01908990: ldr      x24, [x24, #0x9d0]                         [39af9d0]  bytes=0000000000000000 -> 3ac5190 UI_CloseMenu
+01908994: ldr      x21, [x21, #0xcb8]                         [39adcb8]  bytes=0000000000000000 -> 3a7d3e0 Haptics_TypeInfo
+01908998: ldr      x22, [x22, #0xc60]                         [39adc60]  bytes=0000000000000000 -> 3a80d70 Source.SaveManager.SaveDataManager_TypeInfo
+0190899c: ldr      x23, [x23, #0xe18]                         [39ade18]  bytes=0000000000000000 -> 3a90ed8 Method$System.Collections.Generic.List<InventorySlot>.get_Item()
+019089a0: ldr      x25, [x25, #0x278]                         [39ae278]  bytes=0000000000000000 -> 3a8cd30 Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose()
+019089a4: ldr      x1, [x8]                                   [3a907d8] Method$System.Collections.Generic.List<GameObject>.GetEnumerator() bytes=4fc802c000000000
+019089a8: add      x8, sp, #8                                 
+019089ac: bl       #0x244c204                                 System.Collections.Generic.List<object>$$GetEnumerator
+019089b0: ldr      x8, [sp, #0x18]                            
+019089b4: ldur     q0, [sp, #8]                               
+019089b8: str      x8, [sp, #0x30]                            
+019089bc: add      x8, sp, #0x20                              
+019089c0: str      q0, [sp, #0x20]                            
+019089c4: stp      xzr, x8, [sp, #8]                          
+019089c8: ldr      x1, [x20]                                  [3a8cd38] Method$System.Collections.Generic.List.Enumerator<GameObject>.MoveNext() bytes=f3bc02c000000000
+019089cc: add      x0, sp, #0x20                              
+019089d0: bl       #0x21075dc                                 System.Collections.Generic.List.Enumerator<object>$$MoveNext
+019089d4: tbz      w0, #0, #0x19089f0                         
+019089d8: ldr      x0, [sp, #0x30]                            
+019089dc: cbz      x0, #0x1908ef0                             
+019089e0: mov      w1, wzr                                    
+019089e4: mov      x2, xzr                                    
+019089e8: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+019089ec: b        #0x19089c8                                 
+019089f0: ldr      x1, [x25]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+019089f4: add      x0, sp, #0x20                              
+019089f8: bl       #0x21075d8                                 System.Collections.Generic.List.Enumerator<object>$$Dispose
+019089fc: fmov     s0, #1.50000000                            
+01908a00: fmov     s1, #1.00000000                            
+01908a04: ldr      x3, [x24]                                  [3ac5190] UI_CloseMenu bytes=a55000a000000000
+01908a08: mov      w0, wzr                                    
+01908a0c: mov      x1, xzr                                    
+01908a10: mov      w2, wzr                                    
+01908a14: mov      x4, xzr                                    
+01908a18: bl       #0x192a5dc                                 SoundManager$$PlaySound
+01908a1c: ldr      x0, [x21]                                  [3a7d3e0] Haptics_TypeInfo bytes=1d87002000000000
+01908a20: ldr      w8, [x0, #0xe4]                            
+01908a24: cbnz     w8, #0x1908a2c                             
+01908a28: bl       #0x17b69d4                                 
+01908a2c: mov      w0, #2                                     
+01908a30: mov      x1, xzr                                    
+01908a34: bl       #0x192b604                                 Haptics$$Play
+01908a38: ldrb     w8, [x19, #0xe8]                           
+01908a3c: cbz      w8, #0x1908b2c                             
+01908a40: ldr      x8, [x19, #0xa0]                           
+01908a44: cbz      x8, #0x1908ef4                             
+01908a48: ldrb     w8, [x8, #0x313]                           
+01908a4c: cbz      w8, #0x1908b2c                             
+01908a50: ldr      x8, [x19, #0x58]                           
+01908a54: cbz      x8, #0x1908ef4                             
+01908a58: ldr      x0, [x8, #0x30]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+01908a5c: cbz      x0, #0x1908ef4                             
+01908a60: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908a64: mov      w1, wzr                                    
+01908a68: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908a6c: cbz      x0, #0x1908ef4                             
+01908a70: ldr      x1, [x0, #0x10]                            
+01908a74: mov      x0, x19                                    
+01908a78: mov      w2, wzr                                    
+01908a7c: bl       #0x1908f50                                 InventoryVisualizer$$ReplaceLootToVisualInv
+01908a80: ldr      x8, [x19, #0x58]                           
+01908a84: cbz      x8, #0x1908ef4                             
+01908a88: ldr      x0, [x8, #0x30]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+01908a8c: cbz      x0, #0x1908ef4                             
+01908a90: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908a94: mov      w1, #1                                     
+01908a98: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908a9c: cbz      x0, #0x1908ef4                             
+01908aa0: ldr      x1, [x0, #0x10]                            
+01908aa4: mov      x0, x19                                    
+01908aa8: mov      w2, #1                                     
+01908aac: bl       #0x1908f50                                 InventoryVisualizer$$ReplaceLootToVisualInv
+01908ab0: ldr      x8, [x19, #0x58]                           
+01908ab4: cbz      x8, #0x1908ef4                             
+01908ab8: ldr      x0, [x8, #0x30]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+01908abc: cbz      x0, #0x1908ef4                             
+01908ac0: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908ac4: mov      w1, #2                                     
+01908ac8: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908acc: cbz      x0, #0x1908ef4                             
+01908ad0: ldr      x1, [x0, #0x10]                            
+01908ad4: mov      x0, x19                                    
+01908ad8: mov      w2, #2                                     
+01908adc: bl       #0x1908f50                                 InventoryVisualizer$$ReplaceLootToVisualInv
+01908ae0: ldr      x0, [x19, #0x58]                           
+01908ae4: cbz      x0, #0x1908ef4                             
+01908ae8: mov      w1, wzr                                    
+01908aec: mov      w2, wzr                                    
+01908af0: mov      x3, xzr                                    
+01908af4: bl       #0x19284a4                                 Inventory$$ReplaceItemFromGround
+01908af8: ldr      x0, [x19, #0x58]                           
+01908afc: cbz      x0, #0x1908ef4                             
+01908b00: mov      w1, #1                                     
+01908b04: mov      w2, #1                                     
+01908b08: mov      x3, xzr                                    
+01908b0c: bl       #0x19284a4                                 Inventory$$ReplaceItemFromGround
+01908b10: ldr      x0, [x19, #0x58]                           
+01908b14: cbz      x0, #0x1908ef4                             
+01908b18: mov      w1, #2                                     
+01908b1c: mov      w2, #2                                     
+01908b20: mov      x3, xzr                                    
+01908b24: bl       #0x19284a4                                 Inventory$$ReplaceItemFromGround
+01908b28: b        #0x1908b70                                 
+01908b2c: ldr      x8, [x19, #0x58]                           
+01908b30: cbz      x8, #0x1908ef4                             
+01908b34: ldr      x0, [x8, #0x30]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+01908b38: cbz      x0, #0x1908ef4                             
+01908b3c: ldr      w1, [x19, #0x40]                           
+01908b40: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908b44: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908b48: cbz      x0, #0x1908ef4                             
+01908b4c: ldr      x1, [x0, #0x10]                            
+01908b50: mov      x0, x19                                    
+01908b54: mov      w2, #1                                     
+01908b58: bl       #0x1907ed4                                 InventoryVisualizer$$AddLootToVisualInv
+01908b5c: ldr      x0, [x19, #0x58]                           
+01908b60: cbz      x0, #0x1908ef4                             
+01908b64: ldr      w1, [x19, #0x40]                           
+01908b68: mov      x2, xzr                                    
+01908b6c: bl       #0x1928220                                 Inventory$$AddItemFromGround
+01908b70: ldrb     w8, [x19, #0xe8]                           
+01908b74: cbz      w8, #0x1908c34                             
+01908b78: mov      w8, #-1                                    
+01908b7c: mov      x0, x19                                    
+01908b80: str      w8, [x19, #0x40]                           
+01908b84: bl       #0x1908fc4                                 InventoryVisualizer$$ResetLootHighlights
+01908b88: ldr      x0, [x19, #0x58]                           
+01908b8c: cbz      x0, #0x1908ef4                             
+01908b90: mov      x1, xzr                                    
+01908b94: bl       #0x1928760                                 Inventory$$ResetLootSlots
+01908b98: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908b9c: ldr      w8, [x0, #0xe4]                            
+01908ba0: cbnz     w8, #0x1908bac                             
+01908ba4: bl       #0x17b69d4                                 
+01908ba8: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908bac: ldr      x8, [x0, #0xb8]                            
+01908bb0: ldr      x8, [x8, #0x40]                            [3a90818] Method$System.Collections.Generic.List<Glyph>.get_Count() bytes=5fc802c000000000
+01908bb4: cbz      x8, #0x1908ef4                             
+01908bb8: ldr      x8, [x8, #0x10]                            
+01908bbc: cbz      x8, #0x1908ef4                             
+01908bc0: ldr      x8, [x8, #0xa0]                            
+01908bc4: cbz      x8, #0x1908ef4                             
+01908bc8: ldr      w9, [x8, #0x1c]                            
+01908bcc: add      w9, w9, #1                                 
+01908bd0: stp      wzr, w9, [x8, #0x18]                       
+01908bd4: ldrb     w8, [x19, #0xe8]                           
+01908bd8: strb     wzr, [x19, #0x70]                          
+01908bdc: cbz      w8, #0x1908c1c                             
+01908be0: ldr      x8, [x19, #0xa0]                           
+01908be4: cbz      x8, #0x1908ef4                             
+01908be8: ldr      x8, [x8, #0x108]                           
+01908bec: cbz      x8, #0x1908ef4                             
+01908bf0: ldr      x0, [x8, #0x98]                            
+01908bf4: cbz      x0, #0x1908ef4                             
+01908bf8: mov      w1, wzr                                    
+01908bfc: mov      x2, xzr                                    
+01908c00: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+01908c04: ldr      x8, [x19, #0xa0]                           
+01908c08: cbz      x8, #0x1908ef4                             
+01908c0c: ldr      x8, [x8, #0x108]                           
+01908c10: cbz      x8, #0x1908ef4                             
+01908c14: strb     wzr, [x8, #0xa0]                           
+01908c18: strb     wzr, [x19, #0xe8]                          
+01908c1c: ldp      x20, x19, [sp, #0x70]                      
+01908c20: ldp      x22, x21, [sp, #0x60]                      
+01908c24: ldp      x24, x23, [sp, #0x50]                      
+01908c28: ldp      x30, x25, [sp, #0x40]                      
+01908c2c: add      sp, sp, #0x80                              
+01908c30: ret                                                 
+01908c34: ldr      x8, [x19, #0xa0]                           
+01908c38: cbz      x8, #0x1908ef4                             
+01908c3c: ldrb     w8, [x8, #0x313]                           
+01908c40: cbz      w8, #0x1908b78                             
+01908c44: ldr      x8, [x19, #0x58]                           
+01908c48: cbz      x8, #0x1908ef4                             
+01908c4c: ldr      x0, [x8, #0x30]                            
+01908c50: cbz      x0, #0x1908ef4                             
+01908c54: ldr      w1, [x19, #0x40]                           
+01908c58: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908c5c: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908c60: cbz      x0, #0x1908ef4                             
+01908c64: ldr      x8, [x0, #0x10]                            
+01908c68: cbz      x8, #0x1908ef4                             
+01908c6c: ldr      w8, [x8, #0x2c]                            
+01908c70: cmp      w8, #1                                     
+01908c74: b.ne     #0x1908df0                                 
+01908c78: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908c7c: ldr      w8, [x0, #0xe4]                            
+01908c80: cbnz     w8, #0x1908c8c                             
+01908c84: bl       #0x17b69d4                                 
+01908c88: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908c8c: ldr      x8, [x0, #0xb8]                            
+01908c90: ldr      x8, [x8, #0x48]                            
+01908c94: cbz      x8, #0x1908ef4                             
+01908c98: ldr      x8, [x8, #0x10]                            
+01908c9c: cbz      x8, #0x1908ef4                             
+01908ca0: ldr      x9, [x19, #0x58]                           
+01908ca4: cbz      x9, #0x1908ef4                             
+01908ca8: ldr      x0, [x9, #0x30]                            
+01908cac: cbz      x0, #0x1908ef4                             
+01908cb0: ldr      w1, [x19, #0x40]                           
+01908cb4: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908cb8: ldr      x20, [x8, #0x50]                           
+01908cbc: ldr      x21, [x19, #0xa8]                          
+01908cc0: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908cc4: cbz      x0, #0x1908ef4                             
+01908cc8: cbz      x21, #0x1908ef4                            
+01908ccc: ldr      x1, [x0, #0x10]                            
+01908cd0: mov      x0, x21                                    
+01908cd4: mov      w2, #2                                     
+01908cd8: mov      x3, xzr                                    
+01908cdc: bl       #0x1928148                                 DatabaseObject$$ReturnItemIdInColor
+01908ce0: cbz      x20, #0x1908ef4                            
+01908ce4: adrp     x24, #0x39ad000                            
+01908ce8: ldr      x24, [x24, #0xd18]                         [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01908cec: ldr      w10, [x20, #0x1c]                          [3a8cd54]  bytes=00000000fbbc02c0
+01908cf0: ldr      x8, [x20, #0x10]                           [3a8cd48] Method$UnityEngine.InputSystem.Utilities.ReadOnlyArray.Enumerator<Gamepad>.Dispose() bytes=f7bc02c000000000
+01908cf4: ldr      x9, [x24]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+01908cf8: add      w10, w10, #1                               
+01908cfc: str      w10, [x20, #0x1c]                          
+01908d00: cbz      x8, #0x1908ef4                             
+01908d04: ldrsw    x10, [x20, #0x18]                          
+01908d08: ldr      w11, [x8, #0x18]                           
+01908d0c: mov      w1, w0                                     
+01908d10: cmp      w10, w11                                   
+01908d14: b.hs     #0x1908d2c                                 
+01908d18: add      x8, x8, x10, lsl #2                        
+01908d1c: add      w9, w10, #1                                
+01908d20: str      w9, [x20, #0x18]                           
+01908d24: str      w1, [x8, #0x20]                            
+01908d28: b        #0x1908d40                                 
+01908d2c: ldr      x8, [x9, #0x20]                            
+01908d30: mov      x0, x20                                    
+01908d34: ldr      x8, [x8, #0xc0]                            
+01908d38: ldr      x2, [x8, #0x70]                            
+01908d3c: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+01908d40: ldr      x8, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908d44: ldr      x8, [x8, #0xb8]                            
+01908d48: ldr      x8, [x8, #0x48]                            
+01908d4c: cbz      x8, #0x1908ef4                             
+01908d50: ldr      x8, [x8, #0x10]                            
+01908d54: cbz      x8, #0x1908ef4                             
+01908d58: ldr      x9, [x19, #0x58]                           
+01908d5c: cbz      x9, #0x1908ef4                             
+01908d60: ldr      x0, [x9, #0x30]                            
+01908d64: cbz      x0, #0x1908ef4                             
+01908d68: ldr      w1, [x19, #0x40]                           
+01908d6c: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908d70: ldr      x20, [x8, #0x50]                           
+01908d74: ldr      x21, [x19, #0xa8]                          
+01908d78: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908d7c: cbz      x0, #0x1908ef4                             
+01908d80: cbz      x21, #0x1908ef4                            
+01908d84: ldr      x1, [x0, #0x10]                            
+01908d88: mov      x0, x21                                    
+01908d8c: mov      w2, #3                                     
+01908d90: mov      x3, xzr                                    
+01908d94: bl       #0x1928148                                 DatabaseObject$$ReturnItemIdInColor
+01908d98: cbz      x20, #0x1908ef4                            
+01908d9c: ldr      w10, [x20, #0x1c]                          [3a8cd54]  bytes=00000000fbbc02c0
+01908da0: ldr      x8, [x20, #0x10]                           [3a8cd48] Method$UnityEngine.InputSystem.Utilities.ReadOnlyArray.Enumerator<Gamepad>.Dispose() bytes=f7bc02c000000000
+01908da4: ldr      x9, [x24]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+01908da8: add      w10, w10, #1                               
+01908dac: str      w10, [x20, #0x1c]                          
+01908db0: cbz      x8, #0x1908ef4                             
+01908db4: ldrsw    x10, [x20, #0x18]                          
+01908db8: ldr      w11, [x8, #0x18]                           
+01908dbc: mov      w1, w0                                     
+01908dc0: cmp      w10, w11                                   
+01908dc4: b.hs     #0x1908ddc                                 
+01908dc8: add      x8, x8, x10, lsl #2                        
+01908dcc: add      w9, w10, #1                                
+01908dd0: str      w9, [x20, #0x18]                           
+01908dd4: str      w1, [x8, #0x20]                            
+01908dd8: b        #0x1908df0                                 
+01908ddc: ldr      x8, [x9, #0x20]                            
+01908de0: mov      x0, x20                                    
+01908de4: ldr      x8, [x8, #0xc0]                            
+01908de8: ldr      x2, [x8, #0x70]                            
+01908dec: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+01908df0: ldr      x8, [x19, #0x58]                           
+01908df4: cbz      x8, #0x1908ef4                             
+01908df8: ldr      x0, [x8, #0x30]                            
+01908dfc: cbz      x0, #0x1908ef4                             
+01908e00: ldr      w1, [x19, #0x40]                           
+01908e04: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908e08: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908e0c: cbz      x0, #0x1908ef4                             
+01908e10: ldr      x8, [x0, #0x10]                            
+01908e14: cbz      x8, #0x1908ef4                             
+01908e18: ldr      w8, [x8, #0x2c]                            
+01908e1c: cmp      w8, #3                                     
+01908e20: b.ne     #0x1908b78                                 
+01908e24: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908e28: ldr      w8, [x0, #0xe4]                            
+01908e2c: cbnz     w8, #0x1908e38                             
+01908e30: bl       #0x17b69d4                                 
+01908e34: ldr      x0, [x22]                                  [3a80d70] Source.SaveManager.SaveDataManager_TypeInfo bytes=4baf002000000000
+01908e38: ldr      x8, [x0, #0xb8]                            
+01908e3c: ldr      x8, [x8, #0x48]                            
+01908e40: cbz      x8, #0x1908ef4                             
+01908e44: ldr      x8, [x8, #0x10]                            
+01908e48: cbz      x8, #0x1908ef4                             
+01908e4c: ldr      x9, [x19, #0x58]                           
+01908e50: cbz      x9, #0x1908ef4                             
+01908e54: ldr      x0, [x9, #0x30]                            
+01908e58: cbz      x0, #0x1908ef4                             
+01908e5c: ldr      w1, [x19, #0x40]                           
+01908e60: ldr      x2, [x23]                                  [3a90ed8] Method$System.Collections.Generic.List<InventorySlot>.get_Item() bytes=9dc902c000000000
+01908e64: ldr      x20, [x8, #0x50]                           
+01908e68: ldr      x21, [x19, #0xa8]                          
+01908e6c: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+01908e70: cbz      x0, #0x1908ef4                             
+01908e74: cbz      x21, #0x1908ef4                            
+01908e78: ldr      x1, [x0, #0x10]                            
+01908e7c: mov      x0, x21                                    
+01908e80: mov      w2, #1                                     
+01908e84: mov      x3, xzr                                    
+01908e88: bl       #0x1928148                                 DatabaseObject$$ReturnItemIdInColor
+01908e8c: cbz      x20, #0x1908ef4                            
+01908e90: adrp     x9, #0x39ad000                             
+01908e94: ldr      x9, [x9, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+01908e98: ldr      w10, [x20, #0x1c]                          [3a8cd54]  bytes=00000000fbbc02c0
+01908e9c: ldr      x8, [x20, #0x10]                           [3a8cd48] Method$UnityEngine.InputSystem.Utilities.ReadOnlyArray.Enumerator<Gamepad>.Dispose() bytes=f7bc02c000000000
+01908ea0: ldr      x9, [x9]                                   [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+01908ea4: add      w10, w10, #1                               
+01908ea8: str      w10, [x20, #0x1c]                          
+01908eac: cbz      x8, #0x1908ef4                             
+01908eb0: ldrsw    x10, [x20, #0x18]                          
+01908eb4: ldr      w11, [x8, #0x18]                           
+01908eb8: mov      w1, w0                                     
+01908ebc: cmp      w10, w11                                   
+01908ec0: b.hs     #0x1908ed8                                 
+01908ec4: add      x8, x8, x10, lsl #2                        
+01908ec8: add      w9, w10, #1                                
+01908ecc: str      w9, [x20, #0x18]                           
+01908ed0: str      w1, [x8, #0x20]                            
+01908ed4: b        #0x1908b78                                 
+01908ed8: ldr      x8, [x9, #0x20]                            
+01908edc: mov      x0, x20                                    
+01908ee0: ldr      x8, [x8, #0xc0]                            
+01908ee4: ldr      x2, [x8, #0x70]                            
+01908ee8: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+01908eec: b        #0x1908b78                                 
+01908ef0: bl       #0x17b6b00                                 
+01908ef4: bl       #0x17b6b00                                 
+01908ef8: b        #0x1908f00                                 
+01908efc: b        #0x1908f00                                 
+01908f00: mov      x20, x0                                    
+01908f04: cmp      w1, #1                                     
+01908f08: b.ne     #0x1908f3c                                 
+01908f0c: mov      x0, x20                                    
+01908f10: bl       #0x37d1840                                 
+01908f14: ldr      x20, [x0]                                  
+01908f18: str      x20, [sp, #8]                              
+01908f1c: bl       #0x37d1850                                 
+01908f20: ldr      x0, [sp, #0x10]                            
+01908f24: ldr      x1, [x25]                                  [3a8cd30] Method$System.Collections.Generic.List.Enumerator<GameObject>.Dispose() bytes=f1bc02c000000000
+01908f28: bl       #0x21075d8                                 System.Collections.Generic.List.Enumerator<object>$$Dispose
+01908f2c: cbz      x20, #0x19089fc                            
+01908f30: mov      x0, x20                                    
+01908f34: bl       #0x17b6af8                                 
+01908f38: mov      x20, x0                                    
+01908f3c: add      x0, sp, #8                                 
+01908f40: bl       #0x15ca9ec                                 
+01908f44: mov      x0, x20                                    
+01908f48: bl       #0x18a54ec                                 
+01908f4c: bl       #0x15ca950                                 

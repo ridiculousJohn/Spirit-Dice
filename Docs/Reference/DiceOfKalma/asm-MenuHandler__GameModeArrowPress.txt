@@ -1,0 +1,61 @@
+MenuHandler$$GameModeArrowPress
+0190f7d0: str      x30, [sp, #-0x30]!                         
+0190f7d4: stp      x22, x21, [sp, #0x10]                      
+0190f7d8: stp      x20, x19, [sp, #0x20]                      
+0190f7dc: adrp     x21, #0x3c21000                            
+0190f7e0: mov      w20, w1                                    
+0190f7e4: mov      x19, x0                                    
+0190f7e8: ldrb     w8, [x21, #0x16b]                          
+0190f7ec: tbnz     w8, #0, #0x190f810                         
+0190f7f0: adrp     x0, #0x39af000                             
+0190f7f4: ldr      x0, [x0, #0x630]                           [39af630]  bytes=0000000000000000 -> 3a907e8 Method$System.Collections.Generic.List<GameObject>.get_Count()
+0190f7f8: bl       #0x17b6854                                 
+0190f7fc: adrp     x0, #0x39ad000                             
+0190f800: ldr      x0, [x0, #0xc58]                           [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+0190f804: bl       #0x17b6854                                 
+0190f808: mov      w8, #1                                     
+0190f80c: strb     w8, [x21, #0x16b]                          
+0190f810: mov      x0, x19                                    
+0190f814: bl       #0x190e134                                 MenuHandler$$GetCurrentGameModeIndex
+0190f818: cmp      w20, #1                                    
+0190f81c: sub      w8, w0, #1                                 
+0190f820: csinc    w8, w8, w0, lt                             
+0190f824: ldr      x0, [x19, #0x128]                          
+0190f828: tbnz     w8, #0x1f, #0x190f840                      
+0190f82c: cbz      x0, #0x190f8a8                             
+0190f830: ldr      w9, [x0, #0x18]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+0190f834: cmp      w8, w9                                     
+0190f838: csel     w20, w8, wzr, lt                           
+0190f83c: b        #0x190f84c                                 
+0190f840: cbz      x0, #0x190f8a8                             
+0190f844: ldr      w8, [x0, #0x18]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+0190f848: sub      w20, w8, #1                                
+0190f84c: adrp     x22, #0x39ad000                            
+0190f850: mov      w21, wzr                                   
+0190f854: ldr      x22, [x22, #0xc58]                         [39adc58]  bytes=0000000000000000 -> 3a907f0 Method$System.Collections.Generic.List<GameObject>.get_Item()
+0190f858: ldr      w8, [x0, #0x18]                            [3a90808] Method$System.Collections.Generic.List<Glyph>.Clear() bytes=5bc802c000000000
+0190f85c: cmp      w21, w8                                    
+0190f860: b.ge     #0x190f8ac                                 
+0190f864: ldr      x2, [x22]                                  [3a907f0] Method$System.Collections.Generic.List<GameObject>.get_Item() bytes=55c802c000000000
+0190f868: cmp      w20, w21                                   
+0190f86c: b.ne     #0x190f884                                 
+0190f870: mov      w1, w20                                    
+0190f874: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+0190f878: cbz      x0, #0x190f8a8                             
+0190f87c: mov      w1, #1                                     
+0190f880: b        #0x190f894                                 
+0190f884: mov      w1, w21                                    
+0190f888: bl       #0x244b45c                                 System.Collections.Generic.List<object>$$get_Item
+0190f88c: cbz      x0, #0x190f8a8                             
+0190f890: mov      w1, wzr                                    
+0190f894: mov      x2, xzr                                    
+0190f898: bl       #0x34ccdc4                                 UnityEngine.GameObject$$SetActive
+0190f89c: ldr      x0, [x19, #0x128]                          
+0190f8a0: add      w21, w21, #1                               
+0190f8a4: cbnz     x0, #0x190f858                             
+0190f8a8: bl       #0x17b6b00                                 
+0190f8ac: mov      x0, x19                                    
+0190f8b0: ldp      x20, x19, [sp, #0x20]                      
+0190f8b4: ldp      x22, x21, [sp, #0x10]                      
+0190f8b8: ldr      x30, [sp], #0x30                           
+0190f8bc: b        #0x190d4e8                                 MenuHandler$$UpdateChallengeStatus

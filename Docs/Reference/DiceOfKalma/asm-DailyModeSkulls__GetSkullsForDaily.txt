@@ -1,0 +1,456 @@
+DailyModeSkulls$$GetSkullsForDaily
+018f52ec: stp      x30, x27, [sp, #-0x50]!                    
+018f52f0: stp      x26, x25, [sp, #0x10]                      
+018f52f4: stp      x24, x23, [sp, #0x20]                      
+018f52f8: stp      x22, x21, [sp, #0x30]                      
+018f52fc: stp      x20, x19, [sp, #0x40]                      
+018f5300: adrp     x19, #0x3c21000                            
+018f5304: adrp     x23, #0x39ad000                            
+018f5308: adrp     x22, #0x39ad000                            
+018f530c: adrp     x24, #0x39af000                            
+018f5310: ldr      x23, [x23, #0xc88]                         [39adc88]  bytes=0000000000000000 -> 3a782b0 System.Collections.Generic.List<int>_TypeInfo
+018f5314: ldrb     w8, [x19, #0xec]                           
+018f5318: ldr      x22, [x22, #0xc80]                         [39adc80]  bytes=0000000000000000 -> 3a90d78 Method$System.Collections.Generic.List<int>..ctor()
+018f531c: ldr      x24, [x24, #0x5c0]                         [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+018f5320: mov      w21, w1                                    
+018f5324: mov      x20, x0                                    
+018f5328: tbnz     w8, #0, #0x18f5364                         
+018f532c: adrp     x0, #0x39ad000                             
+018f5330: ldr      x0, [x0, #0xd18]                           [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+018f5334: bl       #0x17b6854                                 
+018f5338: adrp     x0, #0x39ad000                             
+018f533c: ldr      x0, [x0, #0xc80]                           [39adc80]  bytes=0000000000000000 -> 3a90d78 Method$System.Collections.Generic.List<int>..ctor()
+018f5340: bl       #0x17b6854                                 
+018f5344: adrp     x0, #0x39ad000                             
+018f5348: ldr      x0, [x0, #0xc88]                           [39adc88]  bytes=0000000000000000 -> 3a782b0 System.Collections.Generic.List<int>_TypeInfo
+018f534c: bl       #0x17b6854                                 
+018f5350: adrp     x0, #0x39af000                             
+018f5354: ldr      x0, [x0, #0x5c0]                           [39af5c0]  bytes=0000000000000000 -> 3a80708 System.Random_TypeInfo
+018f5358: bl       #0x17b6854                                 
+018f535c: mov      w8, #1                                     
+018f5360: strb     w8, [x19, #0xec]                           
+018f5364: ldr      x0, [x23]                                  [3a782b0] System.Collections.Generic.List<int>_TypeInfo bytes=ff3f002000000000
+018f5368: bl       #0x17b6af0                                 
+018f536c: ldr      x1, [x22]                                  [3a90d78] Method$System.Collections.Generic.List<int>..ctor() bytes=a73a01c000000000
+018f5370: mov      x19, x0                                    
+018f5374: bl       #0x23f01a0                                 System.Collections.Generic.List<int>$$.ctor
+018f5378: ldr      x0, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f537c: bl       #0x17b6af0                                 
+018f5380: mov      w1, w21                                    
+018f5384: mov      x2, xzr                                    
+018f5388: mov      x24, x0                                    
+018f538c: bl       #0x2b3b0d0                                 System.Random$$.ctor
+018f5390: ldr      x0, [x23]                                  [3a782b0] System.Collections.Generic.List<int>_TypeInfo bytes=ff3f002000000000
+018f5394: bl       #0x17b6af0                                 
+018f5398: ldr      x1, [x22]                                  [3a90d78] Method$System.Collections.Generic.List<int>..ctor() bytes=a73a01c000000000
+018f539c: mov      x23, x0                                    
+018f53a0: bl       #0x23f01a0                                 System.Collections.Generic.List<int>$$.ctor
+018f53a4: cbz      x23, #0x18f5a04                            
+018f53a8: adrp     x26, #0x39ad000                            
+018f53ac: ldr      x26, [x26, #0xd18]                         [39add18]  bytes=0000000000000000 -> 3a90d90 Method$System.Collections.Generic.List<int>.Add()
+018f53b0: ldr      w10, [x23, #0x1c]                          [3a782cc]  bytes=00000000230f0120
+018f53b4: ldr      x8, [x23, #0x10]                           [3a782c0] System.Collections.Generic.List<IntPtr>_TypeInfo bytes=1f0f012000000000
+018f53b8: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f53bc: add      w10, w10, #1                               
+018f53c0: str      w10, [x23, #0x1c]                          
+018f53c4: cbz      x8, #0x18f5a04                             
+018f53c8: ldrsw    x10, [x23, #0x18]                          
+018f53cc: ldr      w11, [x8, #0x18]                           
+018f53d0: cmp      w10, w11                                   
+018f53d4: b.hs     #0x18f53f0                                 
+018f53d8: add      w9, w10, #1                                
+018f53dc: add      x8, x8, x10, lsl #2                        
+018f53e0: str      w9, [x23, #0x18]                           
+018f53e4: mov      w9, #0xb4                                  
+018f53e8: str      w9, [x8, #0x20]                            
+018f53ec: b        #0x18f5408                                 
+018f53f0: ldr      x8, [x9, #0x20]                            
+018f53f4: mov      x0, x23                                    
+018f53f8: mov      w1, #0xb4                                  
+018f53fc: ldr      x8, [x8, #0xc0]                            
+018f5400: ldr      x2, [x8, #0x70]                            
+018f5404: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5408: cbz      x24, #0x18f5a04                            
+018f540c: ldr      x8, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f5410: ldr      x21, [x20, #0x38]                          
+018f5414: mov      x0, x24                                    
+018f5418: ldp      x9, x1, [x8, #0x188]                       
+018f541c: blr      x9                                         
+018f5420: cbz      x21, #0x18f5a04                            
+018f5424: mov      w3, w0                                     
+018f5428: mov      x0, x21                                    
+018f542c: mov      w1, wzr                                    
+018f5430: mov      w2, wzr                                    
+018f5434: mov      x4, xzr                                    
+018f5438: mov      x5, x23                                    
+018f543c: mov      x6, xzr                                    
+018f5440: mov      x7, xzr                                    
+018f5444: bl       #0x1927734                                 DatabaseObject$$ReturnRandomItemOfColor
+018f5448: ldr      x8, [x20, #0x38]                           
+018f544c: cbz      x8, #0x18f5a04                             
+018f5450: mov      x22, x0                                    
+018f5454: mov      x0, x8                                     
+018f5458: mov      x2, xzr                                    
+018f545c: mov      x1, x22                                    
+018f5460: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f5464: ldr      w10, [x23, #0x1c]                          [3a782cc]  bytes=00000000230f0120
+018f5468: ldr      x8, [x23, #0x10]                           [3a782c0] System.Collections.Generic.List<IntPtr>_TypeInfo bytes=1f0f012000000000
+018f546c: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5470: add      w10, w10, #1                               
+018f5474: str      w10, [x23, #0x1c]                          
+018f5478: cbz      x8, #0x18f5a04                             
+018f547c: ldrsw    x10, [x23, #0x18]                          
+018f5480: ldr      w11, [x8, #0x18]                           
+018f5484: mov      w1, w0                                     
+018f5488: cmp      w10, w11                                   
+018f548c: b.hs     #0x18f54a4                                 
+018f5490: add      x8, x8, x10, lsl #2                        
+018f5494: add      w9, w10, #1                                
+018f5498: str      w9, [x23, #0x18]                           
+018f549c: str      w1, [x8, #0x20]                            
+018f54a0: b        #0x18f54b8                                 
+018f54a4: ldr      x8, [x9, #0x20]                            
+018f54a8: mov      x0, x23                                    
+018f54ac: ldr      x8, [x8, #0xc0]                            
+018f54b0: ldr      x2, [x8, #0x70]                            
+018f54b4: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f54b8: cbz      x22, #0x18f5a04                            
+018f54bc: ldr      w8, [x22, #0x38]                           [3a90db0] Method$System.Collections.Generic.List<int>.Contains() bytes=bf3a01c000000000
+018f54c0: cmp      w8, #0xa                                   
+018f54c4: b.ne     #0x18f550c                                 
+018f54c8: ldr      x8, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f54cc: ldr      x21, [x20, #0x38]                          
+018f54d0: mov      x0, x24                                    
+018f54d4: ldp      x9, x1, [x8, #0x188]                       
+018f54d8: blr      x9                                         
+018f54dc: cbz      x21, #0x18f5a04                            
+018f54e0: mov      w3, w0                                     
+018f54e4: mov      x0, x21                                    
+018f54e8: mov      w1, wzr                                    
+018f54ec: mov      w2, wzr                                    
+018f54f0: mov      x4, xzr                                    
+018f54f4: mov      x5, x23                                    
+018f54f8: mov      x6, xzr                                    
+018f54fc: mov      x7, xzr                                    
+018f5500: bl       #0x1927734                                 DatabaseObject$$ReturnRandomItemOfColor
+018f5504: mov      x21, x0                                    
+018f5508: b        #0x18f5574                                 
+018f550c: mov      w25, #1                                    
+018f5510: ldr      x8, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f5514: ldr      x21, [x20, #0x38]                          
+018f5518: mov      x0, x24                                    
+018f551c: ldp      x9, x1, [x8, #0x188]                       
+018f5520: blr      x9                                         
+018f5524: cbz      x21, #0x18f5a04                            
+018f5528: mov      w3, w0                                     
+018f552c: mov      x0, x21                                    
+018f5530: mov      w1, wzr                                    
+018f5534: mov      w2, wzr                                    
+018f5538: mov      x4, xzr                                    
+018f553c: mov      x5, x23                                    
+018f5540: mov      x6, xzr                                    
+018f5544: mov      x7, xzr                                    
+018f5548: bl       #0x1927734                                 DatabaseObject$$ReturnRandomItemOfColor
+018f554c: cbz      x0, #0x18f5a04                             
+018f5550: add      w8, w25, #1                                
+018f5554: cmp      w25, #0xf                                  
+018f5558: mov      w25, w8                                    
+018f555c: b.lt     #0x18f5510                                 
+018f5560: ldr      w9, [x0, #0x38]                            
+018f5564: mov      x21, x0                                    
+018f5568: mov      w25, w8                                    
+018f556c: cmp      w9, #0xa                                   
+018f5570: b.gt     #0x18f5510                                 
+018f5574: ldr      x0, [x20, #0x38]                           
+018f5578: cbz      x0, #0x18f5a04                             
+018f557c: mov      x1, x21                                    
+018f5580: mov      x2, xzr                                    
+018f5584: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f5588: ldr      w10, [x23, #0x1c]                          [3a782cc]  bytes=00000000230f0120
+018f558c: ldr      x8, [x23, #0x10]                           [3a782c0] System.Collections.Generic.List<IntPtr>_TypeInfo bytes=1f0f012000000000
+018f5590: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5594: add      w10, w10, #1                               
+018f5598: str      w10, [x23, #0x1c]                          
+018f559c: cbz      x8, #0x18f5a04                             
+018f55a0: ldrsw    x10, [x23, #0x18]                          
+018f55a4: ldr      w11, [x8, #0x18]                           
+018f55a8: mov      w1, w0                                     
+018f55ac: cmp      w10, w11                                   
+018f55b0: b.hs     #0x18f55c8                                 
+018f55b4: add      x8, x8, x10, lsl #2                        
+018f55b8: add      w9, w10, #1                                
+018f55bc: str      w9, [x23, #0x18]                           
+018f55c0: str      w1, [x8, #0x20]                            
+018f55c4: b        #0x18f55dc                                 
+018f55c8: ldr      x8, [x9, #0x20]                            
+018f55cc: mov      x0, x23                                    
+018f55d0: ldr      x8, [x8, #0xc0]                            
+018f55d4: ldr      x2, [x8, #0x70]                            
+018f55d8: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f55dc: ldr      w8, [x22, #0x38]                           [3a90db0] Method$System.Collections.Generic.List<int>.Contains() bytes=bf3a01c000000000
+018f55e0: cmp      w8, #0xa                                   
+018f55e4: b.ne     #0x18f5664                                 
+018f55e8: cbz      x21, #0x18f5a04                            
+018f55ec: ldr      w8, [x21, #0x38]                           
+018f55f0: cmp      w8, #0xa                                   
+018f55f4: b.ne     #0x18f5664                                 
+018f55f8: mov      w27, #1                                    
+018f55fc: ldr      x8, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f5600: ldr      x25, [x20, #0x38]                          
+018f5604: mov      x0, x24                                    
+018f5608: ldp      x9, x1, [x8, #0x188]                       
+018f560c: blr      x9                                         
+018f5610: cbz      x25, #0x18f5a04                            
+018f5614: mov      w3, w0                                     
+018f5618: mov      x0, x25                                    
+018f561c: mov      w1, wzr                                    
+018f5620: mov      w2, wzr                                    
+018f5624: mov      x4, xzr                                    
+018f5628: mov      x5, x23                                    
+018f562c: mov      x6, xzr                                    
+018f5630: mov      x7, xzr                                    
+018f5634: bl       #0x1927734                                 DatabaseObject$$ReturnRandomItemOfColor
+018f5638: cbz      x0, #0x18f5a04                             
+018f563c: add      w8, w27, #1                                
+018f5640: cmp      w27, #0xf                                  
+018f5644: mov      w27, w8                                    
+018f5648: b.lt     #0x18f55fc                                 
+018f564c: ldr      w9, [x0, #0x38]                            
+018f5650: mov      x25, x0                                    
+018f5654: mov      w27, w8                                    
+018f5658: cmp      w9, #0xb                                   
+018f565c: b.lt     #0x18f55fc                                 
+018f5660: b        #0x18f56a4                                 
+018f5664: ldr      x8, [x24]                                  [3a80708] System.Random_TypeInfo bytes=abaa002000000000
+018f5668: ldr      x25, [x20, #0x38]                          
+018f566c: mov      x0, x24                                    
+018f5670: ldp      x9, x1, [x8, #0x188]                       
+018f5674: blr      x9                                         
+018f5678: cbz      x25, #0x18f5a04                            
+018f567c: mov      w3, w0                                     
+018f5680: mov      x0, x25                                    
+018f5684: mov      w1, wzr                                    
+018f5688: mov      w2, wzr                                    
+018f568c: mov      x4, xzr                                    
+018f5690: mov      x5, x23                                    
+018f5694: mov      x6, xzr                                    
+018f5698: mov      x7, xzr                                    
+018f569c: bl       #0x1927734                                 DatabaseObject$$ReturnRandomItemOfColor
+018f56a0: mov      x25, x0                                    
+018f56a4: ldr      x0, [x20, #0x38]                           
+018f56a8: cbz      x0, #0x18f5a04                             
+018f56ac: mov      x1, x25                                    
+018f56b0: mov      x2, xzr                                    
+018f56b4: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f56b8: cbz      x19, #0x18f5a04                            
+018f56bc: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f56c0: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f56c4: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f56c8: add      w10, w10, #1                               
+018f56cc: str      w10, [x19, #0x1c]                          
+018f56d0: cbz      x8, #0x18f5a04                             
+018f56d4: ldrsw    x10, [x19, #0x18]                          
+018f56d8: ldr      w11, [x8, #0x18]                           
+018f56dc: mov      w1, w0                                     
+018f56e0: cmp      w10, w11                                   
+018f56e4: b.hs     #0x18f56fc                                 
+018f56e8: add      x8, x8, x10, lsl #2                        
+018f56ec: add      w9, w10, #1                                
+018f56f0: str      w9, [x19, #0x18]                           
+018f56f4: str      w1, [x8, #0x20]                            
+018f56f8: b        #0x18f5710                                 
+018f56fc: ldr      x8, [x9, #0x20]                            
+018f5700: mov      x0, x19                                    
+018f5704: ldr      x8, [x8, #0xc0]                            
+018f5708: ldr      x2, [x8, #0x70]                            
+018f570c: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5710: ldr      x0, [x20, #0x38]                           
+018f5714: cbz      x0, #0x18f5a04                             
+018f5718: mov      x1, x25                                    
+018f571c: mov      x2, xzr                                    
+018f5720: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f5724: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f5728: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f572c: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5730: add      w10, w10, #1                               
+018f5734: str      w10, [x19, #0x1c]                          
+018f5738: cbz      x8, #0x18f5a04                             
+018f573c: ldrsw    x10, [x19, #0x18]                          
+018f5740: ldr      w11, [x8, #0x18]                           
+018f5744: add      w1, w0, #2                                 
+018f5748: cmp      w10, w11                                   
+018f574c: b.hs     #0x18f5764                                 
+018f5750: add      x8, x8, x10, lsl #2                        
+018f5754: add      w9, w10, #1                                
+018f5758: str      w9, [x19, #0x18]                           
+018f575c: str      w1, [x8, #0x20]                            
+018f5760: b        #0x18f5778                                 
+018f5764: ldr      x8, [x9, #0x20]                            
+018f5768: mov      x0, x19                                    
+018f576c: ldr      x8, [x8, #0xc0]                            
+018f5770: ldr      x2, [x8, #0x70]                            
+018f5774: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5778: ldr      x0, [x20, #0x38]                           
+018f577c: cbz      x0, #0x18f5a04                             
+018f5780: mov      x1, x22                                    
+018f5784: mov      x2, xzr                                    
+018f5788: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f578c: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f5790: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f5794: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5798: add      w10, w10, #1                               
+018f579c: str      w10, [x19, #0x1c]                          
+018f57a0: cbz      x8, #0x18f5a04                             
+018f57a4: ldrsw    x10, [x19, #0x18]                          
+018f57a8: ldr      w11, [x8, #0x18]                           
+018f57ac: mov      w1, w0                                     
+018f57b0: cmp      w10, w11                                   
+018f57b4: b.hs     #0x18f57cc                                 
+018f57b8: add      x8, x8, x10, lsl #2                        
+018f57bc: add      w9, w10, #1                                
+018f57c0: str      w9, [x19, #0x18]                           
+018f57c4: str      w1, [x8, #0x20]                            
+018f57c8: b        #0x18f57e0                                 
+018f57cc: ldr      x8, [x9, #0x20]                            
+018f57d0: mov      x0, x19                                    
+018f57d4: ldr      x8, [x8, #0xc0]                            
+018f57d8: ldr      x2, [x8, #0x70]                            
+018f57dc: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f57e0: ldr      x0, [x20, #0x38]                           
+018f57e4: cbz      x0, #0x18f5a04                             
+018f57e8: mov      x1, x22                                    
+018f57ec: mov      x2, xzr                                    
+018f57f0: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f57f4: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f57f8: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f57fc: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5800: add      w10, w10, #1                               
+018f5804: str      w10, [x19, #0x1c]                          
+018f5808: cbz      x8, #0x18f5a04                             
+018f580c: ldrsw    x10, [x19, #0x18]                          
+018f5810: ldr      w11, [x8, #0x18]                           
+018f5814: add      w1, w0, #3                                 
+018f5818: cmp      w10, w11                                   
+018f581c: b.hs     #0x18f5834                                 
+018f5820: add      x8, x8, x10, lsl #2                        
+018f5824: add      w9, w10, #1                                
+018f5828: str      w9, [x19, #0x18]                           
+018f582c: str      w1, [x8, #0x20]                            
+018f5830: b        #0x18f5848                                 
+018f5834: ldr      x8, [x9, #0x20]                            
+018f5838: mov      x0, x19                                    
+018f583c: ldr      x8, [x8, #0xc0]                            
+018f5840: ldr      x2, [x8, #0x70]                            
+018f5844: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5848: ldr      x0, [x20, #0x38]                           
+018f584c: cbz      x0, #0x18f5a04                             
+018f5850: mov      x1, x22                                    
+018f5854: mov      x2, xzr                                    
+018f5858: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f585c: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f5860: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f5864: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5868: add      w10, w10, #1                               
+018f586c: str      w10, [x19, #0x1c]                          
+018f5870: cbz      x8, #0x18f5a04                             
+018f5874: ldrsw    x10, [x19, #0x18]                          
+018f5878: ldr      w11, [x8, #0x18]                           
+018f587c: add      w1, w0, #2                                 
+018f5880: cmp      w10, w11                                   
+018f5884: b.hs     #0x18f589c                                 
+018f5888: add      x8, x8, x10, lsl #2                        
+018f588c: add      w9, w10, #1                                
+018f5890: str      w9, [x19, #0x18]                           
+018f5894: str      w1, [x8, #0x20]                            
+018f5898: b        #0x18f58b0                                 
+018f589c: ldr      x8, [x9, #0x20]                            
+018f58a0: mov      x0, x19                                    
+018f58a4: ldr      x8, [x8, #0xc0]                            
+018f58a8: ldr      x2, [x8, #0x70]                            
+018f58ac: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f58b0: ldr      x0, [x20, #0x38]                           
+018f58b4: cbz      x0, #0x18f5a04                             
+018f58b8: mov      x1, x21                                    
+018f58bc: mov      x2, xzr                                    
+018f58c0: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f58c4: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f58c8: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f58cc: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f58d0: add      w10, w10, #1                               
+018f58d4: str      w10, [x19, #0x1c]                          
+018f58d8: cbz      x8, #0x18f5a04                             
+018f58dc: ldrsw    x10, [x19, #0x18]                          
+018f58e0: ldr      w11, [x8, #0x18]                           
+018f58e4: mov      w1, w0                                     
+018f58e8: cmp      w10, w11                                   
+018f58ec: b.hs     #0x18f5904                                 
+018f58f0: add      x8, x8, x10, lsl #2                        
+018f58f4: add      w9, w10, #1                                
+018f58f8: str      w9, [x19, #0x18]                           
+018f58fc: str      w1, [x8, #0x20]                            
+018f5900: b        #0x18f5918                                 
+018f5904: ldr      x8, [x9, #0x20]                            
+018f5908: mov      x0, x19                                    
+018f590c: ldr      x8, [x8, #0xc0]                            
+018f5910: ldr      x2, [x8, #0x70]                            
+018f5914: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5918: ldr      x0, [x20, #0x38]                           
+018f591c: cbz      x0, #0x18f5a04                             
+018f5920: mov      x1, x21                                    
+018f5924: mov      x2, xzr                                    
+018f5928: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f592c: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f5930: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f5934: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f5938: add      w10, w10, #1                               
+018f593c: str      w10, [x19, #0x1c]                          
+018f5940: cbz      x8, #0x18f5a04                             
+018f5944: ldrsw    x10, [x19, #0x18]                          
+018f5948: ldr      w11, [x8, #0x18]                           
+018f594c: add      w1, w0, #2                                 
+018f5950: cmp      w10, w11                                   
+018f5954: b.hs     #0x18f596c                                 
+018f5958: add      x8, x8, x10, lsl #2                        
+018f595c: add      w9, w10, #1                                
+018f5960: str      w9, [x19, #0x18]                           
+018f5964: str      w1, [x8, #0x20]                            
+018f5968: b        #0x18f5980                                 
+018f596c: ldr      x8, [x9, #0x20]                            
+018f5970: mov      x0, x19                                    
+018f5974: ldr      x8, [x8, #0xc0]                            
+018f5978: ldr      x2, [x8, #0x70]                            
+018f597c: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f5980: ldr      x0, [x20, #0x38]                           
+018f5984: cbz      x0, #0x18f5a04                             
+018f5988: mov      x1, x21                                    
+018f598c: mov      x2, xzr                                    
+018f5990: bl       #0x1927594                                 DatabaseObject$$GetIdByItem
+018f5994: ldr      w10, [x19, #0x1c]                          [3c2101c]  bytes=
+018f5998: ldr      x8, [x19, #0x10]                           [3c21010]  bytes=
+018f599c: ldr      x9, [x26]                                  [3a90d90] Method$System.Collections.Generic.List<int>.Add() bytes=ad3a01c000000000
+018f59a0: add      w10, w10, #1                               
+018f59a4: str      w10, [x19, #0x1c]                          
+018f59a8: cbz      x8, #0x18f5a04                             
+018f59ac: ldrsw    x10, [x19, #0x18]                          
+018f59b0: ldr      w11, [x8, #0x18]                           
+018f59b4: add      w1, w0, #3                                 
+018f59b8: cmp      w10, w11                                   
+018f59bc: b.hs     #0x18f59d4                                 
+018f59c0: add      x8, x8, x10, lsl #2                        
+018f59c4: add      w9, w10, #1                                
+018f59c8: str      w9, [x19, #0x18]                           
+018f59cc: str      w1, [x8, #0x20]                            
+018f59d0: b        #0x18f59e8                                 
+018f59d4: ldr      x8, [x9, #0x20]                            
+018f59d8: mov      x0, x19                                    
+018f59dc: ldr      x8, [x8, #0xc0]                            
+018f59e0: ldr      x2, [x8, #0x70]                            
+018f59e4: bl       #0x23f0a30                                 System.Collections.Generic.List<int>$$AddWithResize
+018f59e8: mov      x0, x19                                    
+018f59ec: ldp      x20, x19, [sp, #0x40]                      
+018f59f0: ldp      x22, x21, [sp, #0x30]                      
+018f59f4: ldp      x24, x23, [sp, #0x20]                      
+018f59f8: ldp      x26, x25, [sp, #0x10]                      
+018f59fc: ldp      x30, x27, [sp], #0x50                      
+018f5a00: ret                                                 
+018f5a04: bl       #0x17b6b00                                 

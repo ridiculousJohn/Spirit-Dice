@@ -1,6 +1,6 @@
 {
   "authoring": "Project-authored filtered noise; no third-party samples or tonal oscillators.",
-  "generator": "Docs/work/spirit-audio/generate_soft_whooshes.py",
+  "generator": "Tools/Audio/generate_soft_whooshes.py",
   "reference": "Dice-Unity\\Assets\\Dice\\Presentation\\Resources\\SpiritAudio\\spirit_air.wav",
   "reference_sha256": "4a817c134d7a5a81a8b686469890ce6eade246238fec9b07d6014572e83d873a",
   "relative_rms_db": -12,

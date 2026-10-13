@@ -1,0 +1,15 @@
+{
+  "source": "https://freesound.org/people/InspectorJ/sounds/346642/",
+  "author": "InspectorJ",
+  "license": "CC BY 4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "source_sha256": "1e5a322dcd49e95454962109c571dffceeb60a3eaccb8dc07202fa96e91a70cd",
+  "loop_sha256": "337a23472bad491757cda73ace6fbb0b4fbcbac07df6a3acad7d78405c1a3bac",
+  "processing": "0.8 second equal-power tail/head crossfade. Original stereo sample rate, bit depth, and gain retained.",
+  "loop_duration_seconds": 30.717709750566893,
+  "loop_boundary_delta": [
+    2,
+    -37
+  ],
+  "peak": 0.15301513671875
+}

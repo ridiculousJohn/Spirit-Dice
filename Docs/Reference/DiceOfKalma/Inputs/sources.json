@@ -1,0 +1,22 @@
+{
+  "game": "Dice of Kalma",
+  "version": "1.6.3",
+  "platform": "Android ARM64",
+  "files": [
+    {
+      "name": "base.apk",
+      "bytes": 90424441,
+      "sha256": "d9fe35b368d1f2c907f54ceea80b45ddcb200afa923ba30cea34b511cd204a75"
+    },
+    {
+      "name": "split_config.arm64_v8a.apk",
+      "bytes": 30979646,
+      "sha256": "ae8e38a9d3f995383e8197020e943fdff9cc960fc1b6aeaf858d4f55b6f2fcb8"
+    },
+    {
+      "name": "split_gpdeku.apk",
+      "bytes": 119049,
+      "sha256": "064c9522bd6715a84e266c9c7c534cc57af23120eb6c3ce1154ae5b6d0451969"
+    }
+  ]
+}
