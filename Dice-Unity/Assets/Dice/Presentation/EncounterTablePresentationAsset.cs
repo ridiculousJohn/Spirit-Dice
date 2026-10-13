@@ -10,6 +10,8 @@ namespace Dice.Presentation
     {
         [SerializeField] private string displayTitle;
         [SerializeField] private Texture2D roomTexture;
+        [SerializeField] private SceneLightingAsset sceneLighting;
+        [SerializeField] private Vector3 hostLightingPosition = new Vector3(0, 1, 2);
         [SerializeField] private SpiritHostPresentationAsset hostPresentation;
         [SerializeField] private SpiritAudioTheme audioTheme;
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
@@ -18,6 +20,8 @@ namespace Dice.Presentation
 
         public string DisplayTitle => displayTitle;
         public Texture2D RoomTexture => roomTexture;
+        public SceneLightingAsset SceneLighting => sceneLighting;
+        public Vector3 HostLightingPosition => hostLightingPosition;
         public SpiritHostPresentationAsset HostPresentation => hostPresentation;
         public SpiritAudioTheme AudioTheme => audioTheme;
         public IReadOnlyList<EncounterRulePresentationAsset> RulePresentations => rulePresentations ?? Array.Empty<EncounterRulePresentationAsset>();

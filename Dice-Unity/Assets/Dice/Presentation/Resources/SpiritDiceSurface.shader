@@ -16,6 +16,22 @@ Shader "Dice/Spirit Dice Surface"
         _GrainScale ("Grain Scale", Vector) = (1,1,1,0)
         _ShadowLift ("Shadow Lift", Float) = 0
         _Smoothness ("Smoothness", Float) = 0.23
+        [HideInInspector] _SceneLightingEnabled ("Scene Lighting Enabled", Float) = 0
+        [HideInInspector] _SceneLightingAmbient ("Scene Lighting Ambient", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightingKeyColor ("Scene Lighting Key Color", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightingKeyDirection ("Scene Lighting Key Direction", Vector) = (0,1,0,0)
+        [HideInInspector] _SceneLightPosition0 ("Scene Light Position 0", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightPosition1 ("Scene Light Position 1", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightPosition2 ("Scene Light Position 2", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightPosition3 ("Scene Light Position 3", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightColor0 ("Scene Light Color 0", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightColor1 ("Scene Light Color 1", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightColor2 ("Scene Light Color 2", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightColor3 ("Scene Light Color 3", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightParameters0 ("Scene Light Parameters 0", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightParameters1 ("Scene Light Parameters 1", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightParameters2 ("Scene Light Parameters 2", Vector) = (0,0,0,0)
+        [HideInInspector] _SceneLightParameters3 ("Scene Light Parameters 3", Vector) = (0,0,0,0)
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Source Blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Destination Blend", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 2
@@ -54,6 +70,22 @@ Shader "Dice/Spirit Dice Surface"
                 float4 _GrainScale;
                 float _ShadowLift;
                 float _Smoothness;
+                float _SceneLightingEnabled;
+                float4 _SceneLightingAmbient;
+                float4 _SceneLightingKeyColor;
+                float4 _SceneLightingKeyDirection;
+                float4 _SceneLightPosition0;
+                float4 _SceneLightPosition1;
+                float4 _SceneLightPosition2;
+                float4 _SceneLightPosition3;
+                float4 _SceneLightColor0;
+                float4 _SceneLightColor1;
+                float4 _SceneLightColor2;
+                float4 _SceneLightColor3;
+                float4 _SceneLightParameters0;
+                float4 _SceneLightParameters1;
+                float4 _SceneLightParameters2;
+                float4 _SceneLightParameters3;
             CBUFFER_END
             TEXTURE2D(_SurfaceTexture);
             SAMPLER(sampler_SurfaceTexture);
@@ -134,6 +166,31 @@ Shader "Dice/Spirit Dice Surface"
                 return distance;
             }
 
+            void AccumulateSceneLight(float3 positionWS, half3 normal, half3 view, half roughness,
+                float4 lightPosition, float4 lightColor, float4 parameters,
+                inout half3 lighting, inout half3 specularLighting)
+            {
+                // The sampled level drives both physical light power and low-power artistic falloff.
+                float intensity = parameters.x;
+                float range = lightPosition.w;
+                if (intensity <= 0 || parameters.y <= 0 || range <= 0) return;
+                float3 offset = lightPosition.xyz - positionWS;
+                float distanceSquared = dot(offset, offset);
+                float distance = sqrt(distanceSquared);
+                float normalizedDistance = distance / range;
+                float attenuation = saturate(1 - normalizedDistance * normalizedDistance);
+                attenuation *= attenuation / max(1, distanceSquared);
+                attenuation *= intensity * parameters.y
+                    * pow(min(intensity, 1), normalizedDistance * parameters.z);
+                float3 direction = offset * rsqrt(max(distanceSquared, 0.000001));
+                half3 radiance = lightColor.rgb * attenuation;
+                half diffuse = saturate(dot(normal, direction));
+                half3 halfDirection = SafeNormalize(direction + view);
+                half specular = pow(saturate(dot(normal, halfDirection)), lerp(84, 10, roughness));
+                lighting += radiance * diffuse * 0.92;
+                specularLighting += radiance * specular;
+            }
+
             half4 frag(Varyings input) : SV_Target
             {
                 if (_ClipWorldX.z > 0.5)
@@ -205,13 +262,32 @@ Shader "Dice/Spirit Dice Surface"
 
                 half3 normal = normalize(input.normalWS);
                 half3 view = normalize(GetWorldSpaceViewDir(input.positionWS));
+                half3 specularColor = lerp(half3(0.18, 0.14, 0.085), albedo * 0.58, metallic);
+                if (_SceneLightingEnabled > 0.5)
+                {
+                    half3 lighting = _SceneLightingAmbient.rgb;
+                    half3 direction = _SceneLightingKeyDirection.xyz;
+                    half3 key = _SceneLightingKeyColor.rgb;
+                    lighting += key * saturate(dot(normal, direction)) * 0.92;
+                    half3 halfDirection = SafeNormalize(direction + view);
+                    half specular = pow(saturate(dot(normal, halfDirection)), lerp(84, 10, roughness));
+                    half3 specularLighting = key * specular;
+                    AccumulateSceneLight(input.positionWS, normal, view, roughness,
+                        _SceneLightPosition0, _SceneLightColor0, _SceneLightParameters0, lighting, specularLighting);
+                    AccumulateSceneLight(input.positionWS, normal, view, roughness,
+                        _SceneLightPosition1, _SceneLightColor1, _SceneLightParameters1, lighting, specularLighting);
+                    AccumulateSceneLight(input.positionWS, normal, view, roughness,
+                        _SceneLightPosition2, _SceneLightColor2, _SceneLightParameters2, lighting, specularLighting);
+                    AccumulateSceneLight(input.positionWS, normal, view, roughness,
+                        _SceneLightPosition3, _SceneLightColor3, _SceneLightParameters3, lighting, specularLighting);
+                    return half4(albedo * lighting * cavity + specularColor * specularLighting, _BaseColor.a);
+                }
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half diffuse = saturate(dot(normal, light.direction));
                 half3 ambient = half3(0.095, 0.10, 0.12);
                 half3 lighting = ambient + light.color * diffuse * light.shadowAttenuation * 0.92;
                 half3 halfDirection = normalize(light.direction + view);
                 half specular = pow(saturate(dot(normal, halfDirection)), lerp(84, 10, roughness));
-                half3 specularColor = lerp(half3(0.18, 0.14, 0.085), albedo * 0.58, metallic);
                 half3 color = albedo * lighting * cavity + specularColor * light.color * specular * light.shadowAttenuation;
                 return half4(color, _BaseColor.a);
             }

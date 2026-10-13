@@ -18,6 +18,7 @@ namespace Dice.Presentation
         [SerializeField, TextArea] private string text;
         [SerializeField] private string continueLabel;
         [SerializeField] private Texture2D background;
+        [SerializeField] private SceneLightingAsset sceneLighting;
         [SerializeField] private Texture2D foreground;
         [SerializeField] private AudioClip audioCue;
         [SerializeField] private float duration = 1;
@@ -41,6 +42,7 @@ namespace Dice.Presentation
         public string Text => text;
         public string ContinueLabel => continueLabel;
         public Texture2D Background => background;
+        public SceneLightingAsset SceneLighting => sceneLighting;
         public Texture2D Foreground => foreground;
         public AudioClip AudioCue => audioCue;
         public float Duration => duration;
@@ -122,10 +124,17 @@ namespace Dice.Presentation
                     !Finite(beat.BackgroundMotionFrom) || !Finite(beat.BackgroundMotionTo))
                     throw new FormatException("Journey beat animation data is invalid.");
                 if (beat.Kind == EncounterJourneyBeatKind.Invitation) ++invitations;
+                beat.SceneLighting?.Validate();
             }
             if (invitations != 1 || beats[beats.Length - 1].Kind != EncounterJourneyBeatKind.Invitation)
                 throw new FormatException("The final journey beat must be its only invitation.");
             if (tablePresentation == null) throw new FormatException("An encounter journey requires table presentation.");
+            tablePresentation.SceneLighting?.Validate();
+            if (tablePresentation.SceneLighting != null &&
+                (!SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.x) ||
+                 !SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.y) ||
+                 !SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.z)))
+                throw new FormatException("Journey host lighting position must be finite.");
             if (tablePresentation.RulePresentations == null) throw new FormatException("Journey rule presentations require an array.");
             var ruleIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var rule in tablePresentation.RulePresentations)

@@ -41,6 +41,12 @@ namespace Dice.Presentation
         private EncounterJourneyCatalogAsset renderedCatalog;
         private EncounterJourneyPhase renderedPhase;
         private bool hasRendered;
+        private EncounterJourneyBeat activeBeat;
+        private SceneLightingAsset previousSceneLighting;
+        private SceneLightingState sceneLightingState = new SceneLightingState();
+        private SceneLightingState previousSceneLightingState = new SceneLightingState();
+        private SceneLightingMaterial sceneLightingMaterial;
+        private SceneLightingMaterial previousSceneLightingMaterial;
 
         public bool IsAnimating { get; private set; }
         public int VisibleBeatIndex { get; private set; } = -1;
@@ -124,6 +130,8 @@ namespace Dice.Presentation
 
         public void Bind(IEncounterJourneyControls journey, ISpiritEncounterControls encounter)
         {
+            CancelAnimation();
+            ClearSceneLighting();
             controls = journey;
             encounterControls = encounter;
             hasRendered = false;
@@ -138,12 +146,19 @@ namespace Dice.Presentation
             bool changed = !hasRendered || renderedPhase != phase || renderedJourney != journey ||
                 renderedCatalog != controls.JourneyCatalog || VisibleBeatIndex != index;
             gameObject.SetActive(phase != EncounterJourneyPhase.Playing);
-            if (phase == EncounterJourneyPhase.Playing) { CancelAnimation(); hasRendered = false; return; }
+            if (phase == EncounterJourneyPhase.Playing)
+            {
+                CancelAnimation();
+                ClearSceneLighting();
+                hasRendered = false;
+                return;
+            }
             board.gameObject.SetActive(phase == EncounterJourneyPhase.Investigation);
             sequence.gameObject.SetActive(phase == EncounterJourneyPhase.Sequence);
             if (phase == EncounterJourneyPhase.Investigation)
             {
                 CancelAnimation();
+                ClearSceneLighting();
                 investigationTitle.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Title : "INVESTIGATION";
                 investigationDescription.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Description : "";
                 if (changed) BuildClues();
@@ -234,9 +249,30 @@ namespace Dice.Presentation
 
         private void ShowBeat(EncounterJourneyAsset journey, int index)
         {
-            Texture2D previous = background.texture as Texture2D;
+            bool continuingJourney = hasRendered && renderedJourney == journey && renderedPhase == EncounterJourneyPhase.Sequence;
+            Texture2D previous = continuingJourney ? background.texture as Texture2D : null;
+            Rect previousUv = background.uvRect;
+            var previousLighting = continuingJourney ? activeBeat?.SceneLighting : null;
             CancelAnimation();
             var beat = journey.Beats[index];
+            bool parting = beat.Transition == EncounterJourneyTransition.PartingPanels && previous != null;
+            background.material = null;
+            if (parting)
+            {
+                previousSceneLighting = previousLighting;
+                previousSceneLightingMaterial = sceneLightingMaterial;
+                var state = previousSceneLightingState;
+                previousSceneLightingState = sceneLightingState;
+                sceneLightingState = state;
+                sceneLightingMaterial = null;
+            }
+            else
+            {
+                sceneLightingMaterial?.Dispose();
+                sceneLightingMaterial = null;
+            }
+            sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+            activeBeat = beat;
             title.text = beat.Title;
             body.text = beat.Text;
             bool invitation = beat.Kind == EncounterJourneyBeatKind.Invitation;
@@ -251,8 +287,9 @@ namespace Dice.Presentation
             SpiritUi.SetButtonLabel(invitation ? acceptButton : advanceButton,
                 string.IsNullOrWhiteSpace(beat.ContinueLabel) ? invitation ? "Accept" : "Continue" : beat.ContinueLabel);
             skipButton.gameObject.SetActive(controls.CanSkipIntro && !invitation);
-            background.texture = beat.Background;
-            background.color = beat.Background != null ? Color.white : Color.clear;
+            var backgroundTexture = beat.SceneLighting != null ? beat.SceneLighting.BaseTexture : beat.Background;
+            background.texture = backgroundTexture;
+            background.color = backgroundTexture != null ? Color.white : Color.clear;
             foreground.texture = beat.Foreground;
             foreground.GetComponent<AspectRatioFitter>().aspectRatio = beat.Foreground != null ?
                 (float)beat.Foreground.width / beat.Foreground.height : 1;
@@ -261,12 +298,13 @@ namespace Dice.Presentation
             clip.anchorMin = beat.ForegroundRect.min;
             clip.anchorMax = beat.ForegroundRect.max;
             clip.offsetMin = clip.offsetMax = Vector2.zero;
-            bool parting = beat.Transition == EncounterJourneyTransition.PartingPanels && previous != null;
             leftPanel.gameObject.SetActive(parting);
             rightPanel.gameObject.SetActive(parting);
             leftPanel.texture = rightPanel.texture = previous;
-            leftPanel.uvRect = new Rect(0, 0, .5f, 1);
-            rightPanel.uvRect = new Rect(.5f, 0, .5f, 1);
+            leftPanel.material = rightPanel.material = previousSceneLightingMaterial?.Material;
+            leftPanel.uvRect = new Rect(previousUv.x, previousUv.y, previousUv.width * .5f, previousUv.height);
+            rightPanel.uvRect = new Rect(previousUv.x + previousUv.width * .5f, previousUv.y,
+                previousUv.width * .5f, previousUv.height);
             if (beat.AudioCue != null) audio?.PlayJourneyCue(beat.AudioCue);
             StartCoroutine(AnimateBeat(beat, parting));
         }
@@ -286,6 +324,7 @@ namespace Dice.Presentation
             ApplyMotion(beat, 1, parting);
             leftPanel.gameObject.SetActive(false);
             rightPanel.gameObject.SetActive(false);
+            ClearPartingLighting();
             IsAnimating = false;
             narrativeGroup.alpha = 1;
             SetButtons(true);
@@ -325,6 +364,7 @@ namespace Dice.Presentation
         {
             StopAllCoroutines();
             IsAnimating = false;
+            ClearPartingLighting();
             if (illustrationGroup == null) return;
             illustrationGroup.alpha = 1;
             leftPanel.rectTransform.anchoredPosition = rightPanel.rectTransform.anchoredPosition = Vector2.zero;
@@ -341,7 +381,63 @@ namespace Dice.Presentation
         private void OnDisable()
         {
             CancelAnimation();
+            ClearSceneLighting();
             hasRendered = false;
+        }
+
+        private void LateUpdate()
+        {
+            double time = Time.unscaledTimeAsDouble;
+            var asset = activeBeat?.SceneLighting;
+            sceneLightingState.Sample(asset, time);
+            if (asset != null)
+            {
+                if (sceneLightingMaterial == null) sceneLightingMaterial = new SceneLightingMaterial();
+                sceneLightingMaterial.Apply(sceneLightingState);
+            }
+            else
+            {
+                sceneLightingMaterial?.Dispose();
+                sceneLightingMaterial = null;
+            }
+            if (background != null)
+            {
+                var texture = asset != null ? asset.BaseTexture : activeBeat?.Background;
+                background.texture = texture;
+                background.color = texture != null ? Color.white : Color.clear;
+                background.material = sceneLightingMaterial?.Material;
+            }
+            if (previousSceneLighting == null) return;
+            previousSceneLightingState.Sample(previousSceneLighting, time);
+            if (previousSceneLightingMaterial == null) previousSceneLightingMaterial = new SceneLightingMaterial();
+            previousSceneLightingMaterial.Apply(previousSceneLightingState);
+            leftPanel.texture = rightPanel.texture = previousSceneLighting.BaseTexture;
+            leftPanel.material = rightPanel.material = previousSceneLightingMaterial.Material;
+        }
+
+        private void ClearPartingLighting()
+        {
+            if (leftPanel != null) { leftPanel.material = null; leftPanel.texture = null; }
+            if (rightPanel != null) { rightPanel.material = null; rightPanel.texture = null; }
+            previousSceneLightingMaterial?.Dispose();
+            previousSceneLightingMaterial = null;
+            previousSceneLighting = null;
+            previousSceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+        }
+
+        private void ClearSceneLighting()
+        {
+            if (background != null) background.material = null;
+            sceneLightingMaterial?.Dispose();
+            sceneLightingMaterial = null;
+            sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+            activeBeat = null;
+        }
+
+        private void OnDestroy()
+        {
+            ClearPartingLighting();
+            ClearSceneLighting();
         }
     }
 }

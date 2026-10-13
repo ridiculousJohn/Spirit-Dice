@@ -1,0 +1,99 @@
+using System;
+using UnityEngine;
+
+namespace Dice.Presentation
+{
+    /** Own one material per view; sampling the same asset and time keeps split scene views synchronized. */
+    public sealed class SceneLightingMaterial : IDisposable
+    {
+        public const int PreviewPass = 1;
+        private static readonly int BaseTextureId = Shader.PropertyToID("_BaseTex");
+        private static readonly int[] ContributionIds = CreateIds("_LightTex");
+        private static readonly int[] ColorIds = CreateIds("_SceneLightTint");
+        private static readonly int[] IntensityIds = CreateIds("_LightIntensity");
+        private static readonly int[] ReferenceIds = CreateIds("_LightReference");
+        private static readonly int[] ResponseMapIds = CreateIds("_SceneLightResponseTex");
+        private static readonly int[] ResponseEnabledIds = CreateIds("_SceneLightResponseEnabled");
+        private static readonly int[] DistanceFalloffIds = CreateIds("_SceneLightDistanceFalloff");
+        private static readonly int[] SourceResponseIds = CreateIds("_SceneLightSourceResponse");
+        private static readonly int[] ConstrainAmbientIds = CreateIds("_SceneLightConstrainAmbient");
+        public Material Material { get; private set; }
+
+        public SceneLightingMaterial(Shader shader = null)
+        {
+            if (shader == null) shader = Shader.Find("Dice/Scene Lighting");
+            if (shader == null) throw new InvalidOperationException("Scene lighting shader is unavailable.");
+            Material = new Material(shader) { name = "Scene Lighting", hideFlags = HideFlags.HideAndDontSave };
+        }
+
+        /** Overrides multiply each authored intensity; disabling animation retains the authored light levels. */
+        public void Apply(SceneLightingAsset asset, double time, float[] intensityOverrides = null, bool animate = true)
+            => Apply(asset, time, intensityOverrides, animate, null);
+
+        public void Apply(SceneLightingState state)
+        {
+            if (state == null || state.Asset == null) throw new ArgumentException("A sampled lighting asset is required.", nameof(state));
+            Apply(state.Asset, state.SampleTime, null, false, state);
+        }
+
+        private void Apply(SceneLightingAsset asset, double time, float[] intensityOverrides, bool animate, SceneLightingState state)
+        {
+            if (Material == null) throw new ObjectDisposedException(nameof(SceneLightingMaterial));
+            if (asset == null) throw new ArgumentNullException(nameof(asset));
+            asset.Validate();
+            if (intensityOverrides != null && intensityOverrides.Length != asset.Lights.Length)
+                throw new ArgumentException("Intensity overrides must match the authored light count.", nameof(intensityOverrides));
+            if (intensityOverrides != null)
+                foreach (float value in intensityOverrides)
+                    if (!SceneLightingAsset.Finite(value) || value < 0f)
+                        throw new ArgumentException("Intensity overrides must be finite and nonnegative.", nameof(intensityOverrides));
+            Material.SetTexture(BaseTextureId, asset.BaseTexture);
+            for (int i = 0; i < SceneLightingAsset.MaximumLights; ++i)
+            {
+                SceneLightLayer light = i < asset.Lights.Length ? asset.Lights[i] : null;
+                if (light == null)
+                {
+                    Material.SetTexture(ContributionIds[i], Texture2D.blackTexture);
+                    Material.SetFloat(IntensityIds[i], 0f);
+                    Material.SetFloat(ReferenceIds[i], 0f);
+                    Material.SetVector(ColorIds[i], Vector4.zero);
+                    Material.SetTexture(ResponseMapIds[i], Texture2D.blackTexture);
+                    Material.SetFloat(ResponseEnabledIds[i], 0f);
+                    Material.SetFloat(DistanceFalloffIds[i], 0f);
+                    Material.SetFloat(SourceResponseIds[i], 1f);
+                    Material.SetFloat(ConstrainAmbientIds[i], 0f);
+                    continue;
+                }
+                float intensity = state != null ? state.GetIntensity(i) : SceneLightFlicker.EvaluateIntensity(time, light.Intensity,
+                    animate ? light.FlickerAmount : 0f, light.FlickerSpeed, light.Seed);
+                float multiplier = intensityOverrides != null ? intensityOverrides[i] : 1f;
+                intensity = (float)Math.Min(float.MaxValue, (double)intensity * multiplier);
+                Color tint = light.Tint.linear;
+                Material.SetTexture(ContributionIds[i], light.Contribution);
+                Material.SetVector(ColorIds[i], new Vector4(tint.r, tint.g, tint.b, tint.a));
+                Material.SetFloat(IntensityIds[i], intensity);
+                Material.SetFloat(ReferenceIds[i], light.ContributionIncludesBase ? 1f : 0f);
+                Material.SetTexture(ResponseMapIds[i], light.ResponseMap != null ? light.ResponseMap : Texture2D.blackTexture);
+                Material.SetFloat(ResponseEnabledIds[i], light.ResponseMap != null ? 1f : 0f);
+                Material.SetFloat(DistanceFalloffIds[i], light.DistanceFalloff);
+                Material.SetFloat(SourceResponseIds[i], light.SourceResponse);
+                Material.SetFloat(ConstrainAmbientIds[i], light.ContributionIncludesBase && light.ConstrainAmbientToReference ? 1f : 0f);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (Material == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(Material);
+            else UnityEngine.Object.DestroyImmediate(Material);
+            Material = null;
+        }
+
+        private static int[] CreateIds(string prefix)
+        {
+            var values = new int[SceneLightingAsset.MaximumLights];
+            for (int i = 0; i < values.Length; ++i) values[i] = Shader.PropertyToID(prefix + i);
+            return values;
+        }
+    }
+}

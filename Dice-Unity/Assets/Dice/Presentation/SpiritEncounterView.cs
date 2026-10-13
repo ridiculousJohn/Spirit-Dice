@@ -61,6 +61,8 @@ namespace Dice.Presentation
         private EncounterTablePresentationAsset configuredTable;
         private RawImage roomImage;
         private RawImage tableImage;
+        private readonly SceneLightingState sceneLightingState = new SceneLightingState();
+        private SceneLightingMaterial sceneLightingMaterial;
         private Text encounterTitle;
         private Text menuTitle;
         private Button endingContinueButton;
@@ -235,6 +237,7 @@ namespace Dice.Presentation
         private void ConfigureTable(EncounterTablePresentationAsset selectedTable)
         {
             if (configuredTable == selectedTable && (selectedTable == null || hostPortrait != null || selectedTable.HostPresentation == null)) return;
+            ClearSceneLighting();
             configuredTable = selectedTable;
             if (hostPortrait != null) { hostPortrait.gameObject.SetActive(false); Destroy(hostPortrait.gameObject); hostPortrait = null; }
             if (selectedTable != null)
@@ -249,7 +252,8 @@ namespace Dice.Presentation
                 encounterAudio.SetTheme(selectedTable.AudioTheme);
             }
             ConfigureHostSigils(selectedTable?.HostPresentation);
-            Texture2D texture = selectedTable != null ? selectedTable.RoomTexture : roomTexture;
+            Texture2D texture = selectedTable?.SceneLighting != null ? selectedTable.SceneLighting.BaseTexture :
+                selectedTable != null ? selectedTable.RoomTexture : roomTexture;
             float edge = selectedTable != null ? selectedTable.RoomTableEdge : RoomTableEdge;
             float split = selectedTable != null ? selectedTable.RoomSplit : .625f;
             roomImage.texture = tableImage.texture = texture;
@@ -273,6 +277,7 @@ namespace Dice.Presentation
 
         private void OnDestroy()
         {
+            ClearSceneLighting();
             if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
             if (controls == null) return;
             controls.StateChanged -= Refresh;
@@ -281,6 +286,7 @@ namespace Dice.Presentation
 
         private void OnDisable()
         {
+            ClearSceneLighting();
             bool canceled = presenting;
             ResetPresentation();
             if (JourneyView != null) JourneyView.gameObject.SetActive(false);
@@ -302,6 +308,7 @@ namespace Dice.Presentation
 
         private void LateUpdate()
         {
+            UpdateSceneLighting();
             if (portrait == null || diceTrayFrame == null || ModifierHistory == null) return;
             Vector2 size = portrait.rect.size;
             if (size == previousPortraitSize) return;
@@ -317,6 +324,50 @@ namespace Dice.Presentation
             handsPanel.anchoredPosition = offset;
             rerollsPanel.anchoredPosition = offset;
             resourcesLabel.rectTransform.anchoredPosition = offset;
+        }
+
+        private void UpdateSceneLighting()
+        {
+            var asset = configuredTable?.SceneLighting;
+            sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
+            if (asset != null)
+            {
+                if (sceneLightingMaterial == null) sceneLightingMaterial = new SceneLightingMaterial();
+                sceneLightingMaterial.Apply(sceneLightingState);
+            }
+            else
+            {
+                sceneLightingMaterial?.Dispose();
+                sceneLightingMaterial = null;
+            }
+            Texture2D texture = asset != null ? asset.BaseTexture :
+                configuredTable != null ? configuredTable.RoomTexture : roomTexture;
+            SetBackgroundLighting(roomImage, texture, sceneLightingMaterial?.Material);
+            SetBackgroundLighting(tableImage, texture, sceneLightingMaterial?.Material);
+            var state = asset != null ? sceneLightingState : null;
+            DiceTray?.SetSceneLighting(state);
+            ModifierHistory?.Renderer?.SetSceneLighting(state);
+            hostPortrait?.SetSceneLighting(state, configuredTable != null ? configuredTable.HostLightingPosition : Vector3.zero);
+        }
+
+        private static void SetBackgroundLighting(RawImage image, Texture2D texture, Material material)
+        {
+            if (image == null) return;
+            image.texture = texture;
+            image.color = texture != null ? Color.white : Color.clear;
+            image.material = material;
+        }
+
+        private void ClearSceneLighting()
+        {
+            if (roomImage != null) roomImage.material = null;
+            if (tableImage != null) tableImage.material = null;
+            sceneLightingMaterial?.Dispose();
+            sceneLightingMaterial = null;
+            sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+            DiceTray?.SetSceneLighting(null);
+            ModifierHistory?.Renderer?.SetSceneLighting(null);
+            hostPortrait?.SetSceneLighting(null, Vector3.zero);
         }
 
         private void Build()

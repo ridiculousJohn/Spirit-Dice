@@ -20,6 +20,8 @@ namespace Dice.Presentation
         public float Rotation;
         public Color Tint = Color.white;
         public bool Silhouette;
+        [Tooltip("Respond to authored environment lighting. Disable for self-lit spirit details.")]
+        public bool ReceiveSceneLighting = true;
         public float[] Weights = Array.Empty<float>();
     }
 

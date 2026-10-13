@@ -28,6 +28,8 @@ namespace Dice.Presentation
         private Material silhouetteMaterial;
         private double stateAge;
         private float arrivalProgress;
+        private Color sceneLightingTint = Color.white;
+        private bool hasSceneLighting;
 
         public bool IsReacting => State == SpiritPresentationState.Reaction;
         public SpiritPresentationState State { get; private set; }
@@ -35,6 +37,13 @@ namespace Dice.Presentation
             : durations[(int)State] > 0f ? Mathf.Clamp01((float)(stateAge / durations[(int)State])) : 0f;
         public float GestureDuration => durations[(int)SpiritPresentationState.Reaction];
         public event Action SpiritGesture;
+
+        public void SetSceneLighting(SceneLightingState state, Vector3 position)
+        {
+            hasSceneLighting = state != null && state.Asset != null;
+            sceneLightingTint = state != null ? state.EvaluateReceiver(position, Vector3.back) : Color.white;
+            ApplyPose();
+        }
 
         public void Build(RectTransform parent, SpiritHostPresentationAsset asset)
         {
@@ -257,6 +266,8 @@ namespace Dice.Presentation
                 rect.sizeDelta = new Vector2(values[2], values[3]);
                 rect.localRotation = Quaternion.Euler(0f, 0f, values[4]);
                 Color tint = presentation.Layers[i].Tint;
+                if (hasSceneLighting && !presentation.Layers[i].Silhouette && presentation.Layers[i].ReceiveSceneLighting)
+                    tint = (tint.linear * sceneLightingTint).gamma;
                 tint.a = Mathf.Clamp01(values[5]);
                 layer.Image.color = tint;
                 if (layer.Weights.Length > 0) Array.Copy(values, 6, layer.Weights, 0, layer.Weights.Length);

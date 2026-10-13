@@ -29,12 +29,22 @@ namespace Dice.Presentation
         private Material shadowMaterial;
         private Shader shader;
         private float normalizedScroll;
+        private SceneLightingState sceneLighting;
 
         public RenderTexture Texture => texture;
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
         public Transform TrayRoot => trayRoot;
         public int Count => entries.Count;
+
+        public void SetSceneLighting(SceneLightingState state)
+        {
+            sceneLighting = state;
+            if (renderRoot == null) return;
+            foreach (UnityEngine.Object resource in ownedResources)
+                if (resource is Material material)
+                    SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
+        }
 
         private sealed class Entry
         {
@@ -291,6 +301,7 @@ namespace Dice.Presentation
                 material.renderQueue = 3000;
             }
             ownedResources.Add(material);
+            SceneLightingReceiverMaterial.Apply(material, sceneLighting, renderRoot.transform);
             return material;
         }
 

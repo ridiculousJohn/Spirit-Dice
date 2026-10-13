@@ -6,6 +6,8 @@
     "Dice.App",
     "Dice.UnityContent",
     "Dice.Presentation",
+    "Dice.Editor",
+    "Unity.ugui",
     "Unity.Addressables.Editor",
     "Unity.Addressables",
     "Unity.ResourceManager",

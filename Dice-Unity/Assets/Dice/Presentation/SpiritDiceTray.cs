@@ -32,9 +32,21 @@ namespace Dice.Presentation
         private Vector3[] supportPoints;
         private int selectionMask;
         private int rollingMask;
+        private SceneLightingState sceneLighting;
 
         public RenderTexture Texture => texture;
+        public Camera RenderCamera => renderCamera;
+        public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
         public bool IsRolling { get; private set; }
+
+        public void SetSceneLighting(SceneLightingState state)
+        {
+            sceneLighting = state;
+            if (renderRoot == null) return;
+            foreach (UnityEngine.Object resource in ownedResources)
+                if (resource is Material material)
+                    SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
+        }
 
         public void Initialize()
         {
@@ -361,6 +373,7 @@ namespace Dice.Presentation
             if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.23f);
             if (material.HasProperty("_SpecColor")) material.SetColor("_SpecColor", new Color(0.2f, 0.2f, 0.2f));
             ownedResources.Add(material);
+            SceneLightingReceiverMaterial.Apply(material, sceneLighting, renderRoot.transform);
             return material;
         }
 
