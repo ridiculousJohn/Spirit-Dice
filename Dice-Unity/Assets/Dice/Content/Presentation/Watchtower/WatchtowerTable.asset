@@ -11,6 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
   m_Name: WatchtowerTable
+  trayPresentation: {fileID: 11400000, guid: 8c9b75e71b2550b0add7247fa71d77bc, type: 2}
   m_EditorClassIdentifier:
   displayTitle: THE WATCHTOWER
   roomTexture: {fileID: 2800000, guid: ca91f59aa817436aa20f12d49e1f81b4, type: 3}

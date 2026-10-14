@@ -1,6 +1,6 @@
 # Spirit Dice project handoff
 
-Updated October 14, 2026. This is the continuation point for the moth crossroads presentation and shared scene lighting.
+Updated October 14, 2026. This is the continuation point for encounter tray composition and shared scene lighting.
 
 ## Start here
 
@@ -13,6 +13,8 @@ Updated October 14, 2026. This is the continuation point for the moth crossroads
 - Local history has been rewritten to remove those paths from every reference. Commit hashes recorded before October 13 are historical identifiers. The remote is being recreated by John; this cleanup does not publish or fetch repository history.
 - The explicit-reference migration is validated through the Unity CLI: 1,192 distinct EditMode cases and ten rendered PlayMode cases passed across the initial runs and focused reruns. No Android rebuild or install was performed; do not assume the phone matches the repository.
 - Run automated tests through the Unity CLI, using the existing NUnit assemblies. If the project editor is open, stop and tell John; he will close it or explicitly direct another approach. Do not close it or substitute editor-menu checks. See `Tools/README.md` for the command and output location.
+- Encounter tray validation on Unity `6000.6.5f1`: 75 distinct targeted EditMode cases passed across the initial runs and focused fixes, plus two PlayMode cases covering all three encounter compositions, table switching and modifier-history scrolling. Gameplay captures cover 540x960 and 443x960. The editor preview also checks both portrait widths and releases its owned render resources explicitly in Edit Mode. Android has not been rebuilt for this change.
+- Automatic framing and simplified placement validation: 40 targeted EditMode cases passed, including projected geometry/roll bounds, position/size at both portrait widths, stable camera framing, and Undo/Redo. One rendered PlayMode case passed across all three encounters and both widths, including table switching and projected click targets. The preview and gameplay captures show complete tray edges.
 
 ## Design decisions to preserve
 
@@ -29,6 +31,10 @@ Encounters reuse existing modifier identities, effects, tiers and access require
 Use Newtonsoft JSON for saves and profiles. New ordinary runs use fresh seeds; fixed seeds are an explicit debugging option. Save/resume preserves randomness and the pending reward choices.
 
 The accepted visual direction is a portrait-friendly hybrid: painted room/host artwork with physical 3D rounded bone-like dice, a deep perspective tray, and a smaller 3D modifier history tray. The seated fox should feel large and present at the table. Spirit motion can use a faint spectral silhouette that anticipates the physical movement. Future hosts can be entirely ghostly animals. Charms and Hand Ranks have separate screens.
+
+Each encounter table references its own tray presentation asset and geometry prefab. Dice and modifier bays share one automatically framed camera, with an authored viewing angle matched to the static background. The authoring controls are Position, Size and Viewing angle; size scales the complete tray image without a competing height constraint. Fixed geometry and animation bounds keep the camera stable during play. The preview scene persists across edits and uses ordinary serialized-property Undo. Shared gameplay code contains no encounter-specific tray branches. Use `Dice > Tray Composition Preview` to compose the background, host, lighting and bays; see `Tools/Presentation/README.md` for asset paths and authoring controls.
+
+The tray preview shows the gameplay HUD by default. `Show gameplay UI` toggles it, and `Preview options > UI theme` selects its explicit theme asset. Preview and gameplay share HUD construction, so panels, counters and buttons occupy the actual gameplay layout. The preview uses sample values without starting a game session or accepting button input.
 
 Scoring presentation is deliberately sequential. Begin with zero base, multiplier, and total. Roll-triggered modifier bonuses accumulate before playing. On Play Hand, count the raw dice into base, then apply the hand category's complete upgraded base and multiplier together, then present each matching modifier, then calculate base times multiplier and apply it to the target. Do not present a hand upgrade as a separate modifier. Show modifier feedback over its action button and slide its icon die into the history tray. Chained or post-total modifier activation must not be inferred from the reference without evidence.
 
