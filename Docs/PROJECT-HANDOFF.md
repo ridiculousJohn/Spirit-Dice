@@ -1,12 +1,12 @@
 # Spirit Dice project handoff
 
-Updated October 13, 2026. This is the continuation point for the moth crossroads presentation and shared scene lighting.
+Updated October 14, 2026. This is the continuation point for the moth crossroads presentation and shared scene lighting.
 
 ## Start here
 
 - Repository: `git@github.com:ridiculousJohn/Spirit-Dice.git`, branch `main`.
 - Local root: `C:/Users/jsp73/Projects/Dice`; Unity project: `Dice-Unity`.
-- Unity version: `6000.6.2f1`. Editor: `C:/Program Files/Unity/Hub/Editor/6000.6.2f1/Editor/Unity.exe`.
+- Unity version: `6000.6.5f1`. Editor: `C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe`. Upgraded October 14, 2026; earlier validation records retain the editor version used for those runs.
 - Main playable scene: `Dice-Unity/Assets/Scenes/SpiritHousePrototype.unity`.
 - Charm wording and provisional icons are complete. The Watchtower is the second playable encounter; The Unmarked Fork is the third, with the moth's approach, arrival, dialogue and Lantern's Favor rule. Balance playtesting is explicitly deferred while more encounters are authored.
 - `Docs/work` is ignored scratch space. Reusable authoring/analysis scripts and setup instructions belong under `Tools`; durable reference-game inputs, findings, and audio source records belong under `Docs/Reference`. John explicitly approved promoting this material so another computer can use it. Production assets belong under `Dice-Unity/Assets`. Art iterations, test renders, auditions, temporary tests, logs, downloaded tools, and dependency caches stay local. The source/iteration directories under `Docs/outputs/watchtower-*` remain ignored; do not relocate art experiments to get them into Git.
