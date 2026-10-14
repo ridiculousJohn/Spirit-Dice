@@ -24,6 +24,9 @@ namespace Dice.Presentation
         private string encounterId;
         private int stageIndex;
         private int handIndex;
+        private SpiritTrayScene sharedScene;
+        private RectTransform frame;
+        private RawImage image;
 
         public int Count => contributions.Count;
         public IReadOnlyList<ModifierContribution> Contributions
@@ -42,11 +45,31 @@ namespace Dice.Presentation
         public void Configure(SpiritTrayPresentationAsset presentation)
         {
             if (presentation == null) throw new ArgumentNullException(nameof(presentation));
-            if (root != null && trayPresentation != presentation)
-                throw new InvalidOperationException("The modifier tray presentation cannot change after building.");
             presentation.Validate();
+            if (trayPresentation != presentation || sharedScene != null) ReleasePresentation();
             trayPresentation = presentation;
             Renderer?.Configure(presentation);
+        }
+
+        public void Configure(SpiritTrayPresentationAsset presentation, SpiritTrayScene scene)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (scene == null) throw new ArgumentNullException(nameof(scene));
+            presentation.ValidateScene();
+            if (scene.Presentation != presentation)
+                throw new InvalidOperationException("The modifier tray must use the shared scene's presentation.");
+            if (trayPresentation != presentation || sharedScene != scene) ReleasePresentation();
+            trayPresentation = presentation;
+            sharedScene = scene;
+            Renderer?.Configure(presentation, scene);
+        }
+
+        public void ReleasePresentation()
+        {
+            Clear();
+            Renderer?.ReleasePresentation();
+            if (image != null) { image.texture = null; image.enabled = false; }
+            sharedScene = null;
         }
 
         public void Build(RectTransform parent)
@@ -55,6 +78,7 @@ namespace Dice.Presentation
             if (root != null)
             {
                 if (root.parent != parent) throw new InvalidOperationException("The modifier tray already has a parent.");
+                InitializeRenderer();
                 return;
             }
 
@@ -62,13 +86,8 @@ namespace Dice.Presentation
             trayPresentation.Validate();
             root = SpiritUi.Full("ModifierHistoryTray", parent);
             Renderer = gameObject.AddComponent<SpiritModifierHistoryRenderer>();
-            Renderer.Configure(trayPresentation);
-            Renderer.Initialize();
-            var image = root.gameObject.AddComponent<RawImage>();
-            image.texture = Renderer.Texture;
-            image.raycastTarget = false;
 
-            var frame = SpiritUi.Rect("HistoryScroll", root, new Vector2(.055f, .06f), new Vector2(.945f, .97f));
+            frame = SpiritUi.Rect("HistoryScroll", root, new Vector2(.055f, .06f), new Vector2(.945f, .97f));
             scroll = frame.gameObject.AddComponent<ScrollRect>();
             var viewport = SpiritUi.Full("Viewport", frame);
             var hitSurface = viewport.gameObject.AddComponent<Image>();
@@ -83,7 +102,39 @@ namespace Dice.Presentation
             scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.scrollSensitivity = TokenSpacing;
             scroll.decelerationRate = .12f;
+            InitializeRenderer();
             ResizeContent();
+        }
+
+        private void InitializeRenderer()
+        {
+            if (sharedScene != null) Renderer.Configure(trayPresentation, sharedScene);
+            else Renderer.Configure(trayPresentation);
+            Renderer.Initialize();
+            if (sharedScene == null)
+            {
+                if (image == null) image = root.gameObject.AddComponent<RawImage>();
+                image.texture = Renderer.Texture;
+                image.raycastTarget = false;
+                image.enabled = true;
+                frame.anchorMin = new Vector2(.055f, .06f);
+                frame.anchorMax = new Vector2(.945f, .97f);
+            }
+            else
+            {
+                if (image != null) image.enabled = false;
+                UpdateBayFrame();
+            }
+        }
+
+        private void UpdateBayFrame()
+        {
+            if (sharedScene == null || Renderer == null || frame == null) return;
+            Rect bounds = Renderer.GetBayViewportRect();
+            frame.anchorMin = bounds.min;
+            frame.anchorMax = bounds.max;
+            frame.offsetMin = Vector2.zero;
+            frame.offsetMax = Vector2.zero;
         }
 
         public void SetInteractable(bool value)
@@ -184,6 +235,7 @@ namespace Dice.Presentation
 
         private void LateUpdate()
         {
+            UpdateBayFrame();
             ResizeContent();
             if (scroll == null || Renderer == null) return;
             if (scrollToLatest)
@@ -209,7 +261,7 @@ namespace Dice.Presentation
         {
             if (content == null || scroll == null) return;
             content.sizeDelta = new Vector2(scroll.viewport.rect.width +
-                Mathf.Max(0, contributions.Count - SpiritModifierHistoryRenderer.VisibleCapacity) * TokenSpacing, 0);
+                Mathf.Max(0, contributions.Count - (Renderer != null ? Renderer.Capacity : SpiritModifierHistoryRenderer.VisibleCapacity)) * TokenSpacing, 0);
         }
     }
 }

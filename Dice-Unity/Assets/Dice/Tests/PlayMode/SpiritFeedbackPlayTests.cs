@@ -158,10 +158,10 @@ namespace Dice.Tests
             Vector3 framePosition = renderer.TrayRoot.position;
             Quaternion frameRotation = renderer.TrayRoot.rotation;
             Vector3 firstDiePosition = renderer.GetDieTransform(0).position;
-            var clipping = renderer.GetDieRenderer(0).sharedMaterial.GetVector("_ClipWorldX");
+            var clipping = renderer.GetDieRenderer(0).sharedMaterial.GetVector("_ClipLocalX");
             Assert.That(clipping.z, Is.EqualTo(1f), "Overflow pieces must be clipped to the tray interior.");
             Assert.That(clipping.x, Is.LessThan(clipping.y));
-            Assert.That(renderer.GetDieRenderer(11).bounds.min.x, Is.GreaterThan(clipping.y),
+            Assert.That(HistoryDieXBounds(renderer, 11).x, Is.GreaterThan(clipping.y),
                 "The final history die must overflow the interior at the start of the scroll.");
             Assert.That(renderer.GetDieViewportRect(11).width, Is.Zero,
                 "A clipped history die must expose no pointer target.");
@@ -172,9 +172,10 @@ namespace Dice.Tests
             yield return null;
             Assert.That(renderer.TrayRoot.position, Is.EqualTo(framePosition), "Scrolling must leave the wooden tray fixed.");
             Assert.That(renderer.TrayRoot.rotation, Is.EqualTo(frameRotation));
-            Assert.That(renderer.GetDieTransform(0).position.x, Is.LessThan(firstDiePosition.x - .1f),
+            Assert.That(renderer.TrayRoot.InverseTransformPoint(renderer.GetDieTransform(0).position).x,
+                Is.LessThan(renderer.TrayRoot.InverseTransformPoint(firstDiePosition).x - .1f),
                 "Scrolling must move the physical dice along the fixed tray.");
-            Assert.That(renderer.GetDieRenderer(0).bounds.max.x, Is.LessThan(clipping.x),
+            Assert.That(HistoryDieXBounds(renderer, 0).y, Is.LessThan(clipping.x),
                 "The first history die must be clipped beyond the opposite end after scrolling.");
             Assert.That(renderer.GetDieViewportRect(0).width, Is.Zero);
             AssertHistory(view, controller.Snapshot.ModifierContributions);
@@ -197,7 +198,7 @@ namespace Dice.Tests
                             Assert.That(renderer.GetArrivalProgress(expectedCount - 1), Is.LessThan(1f),
                                 "A new activation must enter the tray before it settles.");
                             Assert.That(HistoryDieMinimumHeight(renderer, expectedCount - 1),
-                                Is.GreaterThan(renderer.RenderRoot.position.y + SpiritModifierHistoryRenderer.FeltHeight),
+                                Is.GreaterThan(renderer.TrayRoot.position.y),
                                 "Arrival must lift the rounded die above the tray floor.");
                             AssertHistoryDieWithinFrame(renderer, expectedCount - 1);
                         }
@@ -583,7 +584,9 @@ namespace Dice.Tests
         {
             Assert.That(renderer, Is.Not.Null);
             Assert.That(renderer.RenderCamera, Is.Not.Null);
-            Assert.That(renderer.RenderCamera.orthographic, Is.False, "History dice require perspective projection.");
+            var view = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterView>();
+            Assert.That(renderer.RenderCamera, Is.SameAs(view.TrayScene.RenderCamera));
+            Assert.That(renderer.RenderCamera.orthographic, Is.EqualTo(view.TrayScene.Presentation.Orthographic));
             Assert.That(renderer.RenderCamera.targetTexture, Is.SameAs(renderer.Texture));
             Assert.That(renderer.Texture.width, Is.GreaterThan(100));
             Assert.That(renderer.Texture.height, Is.GreaterThan(50));
@@ -600,8 +603,8 @@ namespace Dice.Tests
             Assert.That(mesh.bounds.size.y, Is.GreaterThan(.5f));
             Assert.That(mesh.bounds.size.z, Is.GreaterThan(.5f));
             var bone = body.sharedMaterial;
-            var boneTexture = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterView>().TrayPresentation.BoneTexture;
-            var woodTexture = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterView>().TrayPresentation.WoodTexture;
+            var boneTexture = view.TrayScene.Presentation.BoneTexture;
+            var woodTexture = view.TrayScene.Presentation.WoodTexture;
             Assert.That(boneTexture, Is.Not.Null);
             Assert.That(woodTexture, Is.Not.Null);
             Assert.That(bone.GetTexture("_SurfaceTexture"), Is.SameAs(boneTexture));
@@ -620,7 +623,7 @@ namespace Dice.Tests
                 "The icon-bearing top face must settle facing upward.");
             Assert.That(renderer.GetShadowRenderer(0).sharedMaterial, Is.Not.Null);
             bool texturedWood = false;
-            foreach (var part in renderer.TrayRoot.GetComponentsInChildren<MeshRenderer>())
+            foreach (var part in view.TrayScene.Geometry.GetComponentsInChildren<MeshRenderer>())
             {
                 var material = part.sharedMaterial;
                 if (material != null && material.HasProperty("_SurfaceTexture") &&
@@ -643,9 +646,21 @@ namespace Dice.Tests
         private static void AssertHistoryDieOnFloor(SpiritModifierHistoryRenderer renderer, int index)
         {
             Assert.That(HistoryDieMinimumHeight(renderer, index),
-                Is.EqualTo(renderer.RenderRoot.position.y + SpiritModifierHistoryRenderer.FeltHeight).Within(.003f),
+                Is.EqualTo(renderer.TrayRoot.position.y).Within(.003f),
                 "The settled rounded body must contact the tray floor without floating or sinking.");
             AssertHistoryDieWithinFrame(renderer, index);
+        }
+
+        private static Vector2 HistoryDieXBounds(SpiritModifierHistoryRenderer renderer, int index)
+        {
+            var body = renderer.GetDieRenderer(index);
+            Vector2 bounds = new Vector2(float.PositiveInfinity, float.NegativeInfinity);
+            foreach (Vector3 vertex in body.GetComponent<MeshFilter>().sharedMesh.vertices)
+            {
+                float x = renderer.TrayRoot.InverseTransformPoint(body.transform.TransformPoint(vertex)).x;
+                bounds.x = Mathf.Min(bounds.x, x); bounds.y = Mathf.Max(bounds.y, x);
+            }
+            return bounds;
         }
 
         private static void AssertHistoryDieWithinFrame(SpiritModifierHistoryRenderer renderer, int index)

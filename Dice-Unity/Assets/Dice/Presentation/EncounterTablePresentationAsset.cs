@@ -14,6 +14,7 @@ namespace Dice.Presentation
         [SerializeField] private Vector3 hostLightingPosition = new Vector3(0, 1, 2);
         [SerializeField] private SpiritHostPresentationAsset hostPresentation;
         [SerializeField] private SpiritAudioTheme audioTheme;
+        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
         [SerializeField, Range(0, 1)] private float roomTableEdge = .5323f;
         [SerializeField, Range(0, 1)] private float roomSplit = .625f;
@@ -24,6 +25,7 @@ namespace Dice.Presentation
         public Vector3 HostLightingPosition => hostLightingPosition;
         public SpiritHostPresentationAsset HostPresentation => hostPresentation;
         public SpiritAudioTheme AudioTheme => audioTheme;
+        public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
         public IReadOnlyList<EncounterRulePresentationAsset> RulePresentations => rulePresentations ?? Array.Empty<EncounterRulePresentationAsset>();
         public float RoomTableEdge => roomTableEdge;
         public float RoomSplit => roomSplit;

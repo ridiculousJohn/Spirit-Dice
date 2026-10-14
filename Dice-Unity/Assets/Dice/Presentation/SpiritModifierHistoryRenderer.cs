@@ -31,10 +31,20 @@ namespace Dice.Presentation
         private Shader shader;
         private float normalizedScroll;
         private SceneLightingState sceneLighting;
+        private SpiritTrayScene sharedScene;
+        private Transform contentRoot;
+        private Transform LightingRoot => sharedScene != null ? sharedScene.RenderRoot : RenderRoot;
+        private Transform BayRoot => sharedScene != null ? sharedScene.Geometry.ModifierRoot : renderRoot.transform;
+        private float BayHalfWidth => sharedScene != null ? sharedScene.Geometry.ModifierWidth * .5f : InnerHalfWidth;
+        private float BayDepth => sharedScene != null ? sharedScene.Geometry.ModifierDepth : .62f;
+        private float SurfaceHeight => sharedScene != null ? 0 : FeltHeight;
+        private float ContentDieSize => sharedScene != null ? sharedScene.Geometry.ModifierDieSize : DieSize;
+        private float ContentSlotSpacing => sharedScene != null ? sharedScene.Geometry.ModifierSlotSpacing : SlotSpacing;
+        public int Capacity => sharedScene != null ? sharedScene.Geometry.ModifierVisibleCapacity : VisibleCapacity;
 
         public RenderTexture Texture => texture;
         public Camera RenderCamera => renderCamera;
-        public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
+        public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public Transform TrayRoot => trayRoot;
         public int Count => entries.Count;
 
@@ -44,7 +54,7 @@ namespace Dice.Presentation
             if (renderRoot == null) return;
             foreach (UnityEngine.Object resource in ownedResources)
                 if (resource is Material material)
-                    SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
+                    SceneLightingReceiverMaterial.Apply(material, state, LightingRoot);
         }
 
         private sealed class Entry
@@ -60,10 +70,21 @@ namespace Dice.Presentation
         public void Configure(SpiritTrayPresentationAsset presentation)
         {
             if (presentation == null) throw new ArgumentNullException(nameof(presentation));
-            if (renderRoot != null && trayPresentation != presentation)
-                throw new InvalidOperationException("The modifier history presentation cannot change after initialization.");
             presentation.Validate();
+            if (trayPresentation != presentation || sharedScene != null) ReleasePresentation();
             trayPresentation = presentation;
+        }
+
+        public void Configure(SpiritTrayPresentationAsset presentation, SpiritTrayScene scene)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (scene == null) throw new ArgumentNullException(nameof(scene));
+            presentation.ValidateScene();
+            if (scene.Presentation != presentation)
+                throw new InvalidOperationException("The modifier tray must use the shared scene's presentation.");
+            if (trayPresentation != presentation || sharedScene != scene) ReleasePresentation();
+            trayPresentation = presentation;
+            sharedScene = scene;
         }
 
         public void Initialize()
@@ -74,41 +95,56 @@ namespace Dice.Presentation
             shader = trayPresentation.DiceShader;
             renderRoot = new GameObject("Spirit Modifier History Render Root");
             renderRoot.layer = SpiritDiceTray.RenderLayer;
-            renderRoot.transform.position = new Vector3(12000 + rendererOrdinal++ * 100, 0, 0);
-            texture = new RenderTexture(1536, 192, 24, RenderTextureFormat.ARGB32)
+            if (sharedScene != null)
             {
-                name = "Spirit Modifier History Texture",
-                antiAliasing = 4,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            texture.Create();
-            renderCamera = Child("Spirit Modifier History Camera", renderRoot.transform).AddComponent<Camera>();
-            renderCamera.transform.localPosition = new Vector3(0, 6.8f, -4.8f);
-            renderCamera.transform.LookAt(renderRoot.transform.position + Vector3.up * .20f);
-            renderCamera.orthographic = false;
-            renderCamera.fieldOfView = 6.9f;
-            renderCamera.aspect = (float)texture.width / texture.height;
-            renderCamera.nearClipPlane = .1f;
-            renderCamera.farClipPlane = 30;
-            renderCamera.clearFlags = CameraClearFlags.SolidColor;
-            renderCamera.backgroundColor = Color.clear;
-            renderCamera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
-            renderCamera.allowHDR = false;
-            renderCamera.allowMSAA = true;
-            renderCamera.targetTexture = texture;
+                sharedScene.Initialize();
+                renderRoot.transform.SetParent(sharedScene.Geometry.ModifierRoot, false);
+                texture = sharedScene.Texture;
+                renderCamera = sharedScene.RenderCamera;
+                trayRoot = sharedScene.Geometry.ModifierRoot;
+            }
+            else
+            {
+                renderRoot.transform.position = new Vector3(12000 + rendererOrdinal++ * 100, 0, 0);
+                texture = new RenderTexture(1536, 192, 24, RenderTextureFormat.ARGB32)
+                {
+                    name = "Spirit Modifier History Texture",
+                    antiAliasing = 4,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                texture.Create();
+                renderCamera = Child("Spirit Modifier History Camera", renderRoot.transform).AddComponent<Camera>();
+                renderCamera.transform.localPosition = new Vector3(0, 6.8f, -4.8f);
+                renderCamera.transform.LookAt(renderRoot.transform.position + Vector3.up * .20f);
+                renderCamera.orthographic = false;
+                renderCamera.fieldOfView = 6.9f;
+                renderCamera.aspect = (float)texture.width / texture.height;
+                renderCamera.nearClipPlane = .1f;
+                renderCamera.farClipPlane = 30;
+                renderCamera.clearFlags = CameraClearFlags.SolidColor;
+                renderCamera.backgroundColor = Color.clear;
+                renderCamera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
+                renderCamera.allowHDR = false;
+                renderCamera.allowMSAA = true;
+                renderCamera.targetTexture = texture;
+            }
+            contentRoot = renderRoot.transform;
 
             bodyMesh = SpiritDiceTray.CreateRoundedCube(false, .18f, 32);
             bodyMesh.name = "Spirit Modifier Rounded Bone";
             shadowMesh = SpiritDiceTray.CreateShadowPlane();
-            Mesh boxMesh = SpiritDiceTray.CreateRoundedCube(false, .09f, 8);
             ownedResources.Add(bodyMesh);
             ownedResources.Add(shadowMesh);
-            ownedResources.Add(boxMesh);
             supportPoints = bodyMesh.vertices;
             shadowMaterial = Surface("Spirit Modifier Contact Shadow", new Color(.025f, .018f, .011f, .66f), 5, true);
             SetClip(shadowMaterial);
-            BuildTray(boxMesh);
+            if (sharedScene == null)
+            {
+                Mesh boxMesh = SpiritDiceTray.CreateRoundedCube(false, .09f, 8);
+                ownedResources.Add(boxMesh);
+                BuildTray(boxMesh);
+            }
             renderRoot.SetActive(isActiveAndEnabled);
         }
 
@@ -143,13 +179,13 @@ namespace Dice.Presentation
             material.SetColor("_FaceIconColor", new Color(ink.r * .45f, ink.g * .45f, ink.b * .45f, 1));
             SetIcon(material, definition);
             SetClip(material);
-            Transform die = Child("Spirit Modifier Die " + entries.Count, renderRoot.transform).transform;
-            die.localScale = Vector3.one * DieSize;
+            Transform die = Child("Spirit Modifier Die " + entries.Count, contentRoot).transform;
+            die.localScale = Vector3.one * ContentDieSize;
             var entry = new Entry
             {
                 Die = die,
                 Renderer = AddMesh(die.gameObject, bodyMesh, material),
-                Shadow = AddMesh(Child("Modifier Contact Shadow " + entries.Count, renderRoot.transform), shadowMesh, shadowMaterial),
+                Shadow = AddMesh(Child("Modifier Contact Shadow " + entries.Count, contentRoot), shadowMesh, shadowMaterial),
                 Material = material,
                 Elapsed = animate ? 0 : ArrivalDuration
             };
@@ -185,19 +221,39 @@ namespace Dice.Presentation
         public Rect GetDieViewportRect(int index)
         {
             Transform die = entries[index].Die;
-            float left = renderRoot.transform.position.x - InnerHalfWidth;
-            float right = renderRoot.transform.position.x + InnerHalfWidth;
-            Bounds bounds = entries[index].Renderer.bounds;
-            if (bounds.max.x <= left || bounds.min.x >= right) return Rect.zero;
             Vector2 min = Vector2.one * float.MaxValue;
             Vector2 max = Vector2.one * float.MinValue;
+            float localMin = float.MaxValue;
+            float localMax = float.MinValue;
             for (int x = -1; x <= 1; x += 2)
                 for (int y = -1; y <= 1; y += 2)
                     for (int z = -1; z <= 1; z += 2)
                     {
                         Vector3 world = die.TransformPoint(new Vector3(x, y, z) * .5f);
-                        world.x = Mathf.Clamp(world.x, left, right);
+                        Vector3 local = BayRoot.InverseTransformPoint(world);
+                        localMin = Mathf.Min(localMin, local.x);
+                        localMax = Mathf.Max(localMax, local.x);
+                        local.x = Mathf.Clamp(local.x, -BayHalfWidth, BayHalfWidth);
+                        world = BayRoot.TransformPoint(local);
                         Vector3 point = renderCamera.WorldToViewportPoint(world);
+                        min = Vector2.Min(min, new Vector2(point.x, point.y));
+                        max = Vector2.Max(max, new Vector2(point.x, point.y));
+                    }
+            if (localMax <= -BayHalfWidth || localMin >= BayHalfWidth) return Rect.zero;
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        public Rect GetBayViewportRect()
+        {
+            Initialize();
+            Vector2 min = Vector2.one * float.MaxValue;
+            Vector2 max = Vector2.one * float.MinValue;
+            for (int x = -1; x <= 1; x += 2)
+                for (int y = 0; y <= 1; ++y)
+                    for (int z = -1; z <= 1; z += 2)
+                    {
+                        Vector3 point = renderCamera.WorldToViewportPoint(BayRoot.TransformPoint(
+                            new Vector3(x * BayHalfWidth, SurfaceHeight + y * ContentDieSize * 1.5f, z * BayDepth * .5f)));
                         min = Vector2.Min(min, new Vector2(point.x, point.y));
                         max = Vector2.Max(max, new Vector2(point.x, point.y));
                     }
@@ -212,16 +268,16 @@ namespace Dice.Presentation
                 entry.Die.localRotation = Quaternion.Euler(-14 * remaining, (index % 3 - 1) * 4, 8 * remaining);
                 float minimum = float.MaxValue;
                 foreach (Vector3 point in supportPoints)
-                    minimum = Mathf.Min(minimum, (entry.Die.localRotation * point).y * DieSize);
+                    minimum = Mathf.Min(minimum, (entry.Die.localRotation * point).y * ContentDieSize);
                 entry.SupportHeight = -minimum;
             }
-            float overflow = Mathf.Max(0, (entries.Count - VisibleCapacity) * SlotSpacing);
-            float x = -(VisibleCapacity - 1) * SlotSpacing * .5f + index * SlotSpacing - overflow * normalizedScroll;
+            float overflow = Mathf.Max(0, (entries.Count - Capacity) * ContentSlotSpacing);
+            float x = -(Capacity - 1) * ContentSlotSpacing * .5f + index * ContentSlotSpacing - overflow * normalizedScroll;
             x -= .20f * remaining;
             float lift = .08f * remaining;
-            entry.Die.localPosition = new Vector3(x, FeltHeight + entry.SupportHeight + lift, 0);
-            entry.Shadow.transform.localPosition = new Vector3(x, FeltHeight + .003f, 0);
-            entry.Shadow.transform.localScale = new Vector3(DieSize * (1.08f + lift), 1, DieSize * (1.08f + lift));
+            entry.Die.localPosition = new Vector3(x, SurfaceHeight + entry.SupportHeight + lift, 0);
+            entry.Shadow.transform.localPosition = new Vector3(x, SurfaceHeight + .003f, 0);
+            entry.Shadow.transform.localScale = new Vector3(ContentDieSize * (1.08f + lift), 1, ContentDieSize * (1.08f + lift));
             var properties = new MaterialPropertyBlock();
             properties.SetFloat("_ShadowLift", lift / .08f);
             entry.Shadow.SetPropertyBlock(properties);
@@ -312,13 +368,21 @@ namespace Dice.Presentation
                 material.renderQueue = 3000;
             }
             ownedResources.Add(material);
-            SceneLightingReceiverMaterial.Apply(material, sceneLighting, renderRoot.transform);
+            SceneLightingReceiverMaterial.Apply(material, sceneLighting, LightingRoot);
             return material;
         }
 
         private void SetClip(Material material)
-            => material.SetVector("_ClipWorldX", new Vector4(renderRoot.transform.position.x - InnerHalfWidth,
-                renderRoot.transform.position.x + InnerHalfWidth, 1, 0));
+        {
+            if (sharedScene == null)
+                material.SetVector("_ClipWorldX", new Vector4(renderRoot.transform.position.x - InnerHalfWidth,
+                    renderRoot.transform.position.x + InnerHalfWidth, 1, 0));
+            else
+            {
+                material.SetVector("_ClipLocalX", new Vector4(-BayHalfWidth, BayHalfWidth, 1, 0));
+                material.SetMatrix("_ClipWorldToLocal", BayRoot.worldToLocalMatrix);
+            }
+        }
 
         private static GameObject Child(string name, Transform parent)
         {
@@ -348,10 +412,11 @@ namespace Dice.Presentation
             if (renderRoot != null) renderRoot.SetActive(false);
         }
 
-        private void OnDestroy()
+        public void ReleasePresentation()
         {
-            if (renderCamera != null) { renderCamera.enabled = false; renderCamera.targetTexture = null; }
-            if (texture != null) { texture.Release(); Release(texture); }
+            if (sharedScene == null && renderCamera != null) { renderCamera.enabled = false; renderCamera.targetTexture = null; }
+            if (sharedScene == null && texture != null) { texture.Release(); Release(texture); }
+            if (renderRoot != null) renderRoot.SetActive(false);
             Release(renderRoot);
             foreach (UnityEngine.Object resource in ownedResources) Release(resource);
             ownedResources.Clear();
@@ -359,7 +424,14 @@ namespace Dice.Presentation
             entries.Clear();
             texture = null;
             renderRoot = null;
+            renderCamera = null;
+            trayRoot = null;
+            contentRoot = null;
+            sharedScene = null;
+            normalizedScroll = 0;
         }
+
+        private void OnDestroy() => ReleasePresentation();
 
         private static void Release(UnityEngine.Object resource)
         {

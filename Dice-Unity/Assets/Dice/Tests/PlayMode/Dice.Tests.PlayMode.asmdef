@@ -1,7 +1,7 @@
 {
   "name": "Dice.Tests.PlayMode",
   "rootNamespace": "Dice.Tests",
-  "references": ["Dice.Engine", "Dice.App", "Dice.UnityContent", "Dice.Presentation", "Unity.Addressables", "Unity.ResourceManager", "UnityEngine.TestRunner", "Unity.ugui"],
+  "references": ["Dice.Engine", "Dice.App", "Dice.UnityContent", "Dice.Presentation", "Unity.Addressables", "Unity.ResourceManager", "UnityEngine.TestRunner", "Unity.ugui", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
   "defineConstraints": ["UNITY_INCLUDE_TESTS"],
   "autoReferenced": false,
   "overrideReferences": true,

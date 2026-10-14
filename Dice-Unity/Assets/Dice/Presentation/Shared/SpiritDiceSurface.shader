@@ -11,6 +11,7 @@ Shader "Dice/Spirit Dice Surface"
         _FaceIconColor ("Top Face Ink", Color) = (0.04,0.03,0.02,1)
         _ShowFaceIcon ("Show Top Face Icon", Float) = 0
         _ClipWorldX ("World X Clip Bounds", Vector) = (0,0,0,0)
+        _ClipLocalX ("Bay Local X Clip Bounds", Vector) = (0,0,0,0)
         _SurfaceKind ("Surface Kind", Float) = 0
         _Seed ("Surface Seed", Float) = 0
         _GrainScale ("Grain Scale", Vector) = (1,1,1,0)
@@ -65,6 +66,8 @@ Shader "Dice/Spirit Dice Surface"
                 half4 _FaceIconColor;
                 float _ShowFaceIcon;
                 float4 _ClipWorldX;
+                float4 _ClipLocalX;
+                float4x4 _ClipWorldToLocal;
                 float _SurfaceKind;
                 float _Seed;
                 float4 _GrainScale;
@@ -109,6 +112,7 @@ Shader "Dice/Spirit Dice Surface"
                 float2 uv : TEXCOORD3;
                 float face : TEXCOORD4;
                 float2 surfaceUV : TEXCOORD5;
+                float3 surfacePosition : TEXCOORD6;
             };
 
             Varyings vert(Attributes input)
@@ -121,6 +125,9 @@ Shader "Dice/Spirit Dice Surface"
                 output.uv = input.uv;
                 output.face = input.face.x;
                 output.surfaceUV = input.surfaceUV;
+                float3 objectScale = float3(length(unity_ObjectToWorld._m00_m10_m20),
+                    length(unity_ObjectToWorld._m01_m11_m21), length(unity_ObjectToWorld._m02_m12_m22));
+                output.surfacePosition = input.positionOS.xyz * objectScale;
                 return output;
             }
 
@@ -195,6 +202,11 @@ Shader "Dice/Spirit Dice Surface"
             {
                 if (_ClipWorldX.z > 0.5)
                     clip(min(input.positionWS.x - _ClipWorldX.x, _ClipWorldX.y - input.positionWS.x));
+                if (_ClipLocalX.z > 0.5)
+                {
+                    float bayX = mul(_ClipWorldToLocal, float4(input.positionWS, 1)).x;
+                    clip(min(bayX - _ClipLocalX.x, _ClipLocalX.y - bayX));
+                }
                 if (_SurfaceKind > 4.5 && _SurfaceKind < 5.5)
                 {
                     float2 footprint = input.uv * 2;
@@ -202,13 +214,14 @@ Shader "Dice/Spirit Dice Surface"
                     half alpha = _BaseColor.a * radial * radial * (1 - _ShadowLift * 0.62);
                     return half4(_BaseColor.rgb, alpha);
                 }
-                if (_SurfaceKind > 5.5) return half4(_BaseColor.rgb * 1.4, _BaseColor.a);
+                if (_SurfaceKind > 5.5 && _SurfaceKind < 6.5) return half4(_BaseColor.rgb * 1.4, _BaseColor.a);
 
                 float3 samplePosition = input.positionOS + _Seed * float3(0.71, 0.37, 0.53);
                 half3 albedo = _BaseColor.rgb;
                 half roughness = 0.72;
                 half metallic = 0;
                 half cavity = 1;
+                float surfaceHeight = 0;
                 if (_SurfaceKind < 0.5)
                 {
                     float fine = Noise(samplePosition * 76);
@@ -259,10 +272,70 @@ Shader "Dice/Spirit Dice Surface"
                     roughness = 0.37;
                     metallic = 0.62;
                 }
+                else if (_SurfaceKind > 6.5 && _SurfaceKind < 7.5)
+                {
+                    // Local physical coordinates keep the mineral pattern isotropic across scaled blocks.
+                    float3 stonePosition = input.surfacePosition * _GrainScale.xyz
+                        + _Seed * float3(0.71, 0.37, 0.53);
+                    float mottling = Noise(stonePosition * 2.3);
+                    float mineral = Noise(stonePosition * 11.7 + mottling * 1.8);
+                    float aggregate = Noise(stonePosition * 42);
+                    float fissure = abs(Noise(stonePosition * 6.4 + mineral * 0.65) - 0.48);
+                    float crackWidth = max(fwidth(fissure), 0.008);
+                    float cracks = (1 - smoothstep(0.009, 0.009 + crackWidth, fissure))
+                        * smoothstep(0.46, 0.68, mottling);
+                    float pits = (1 - smoothstep(0.19, 0.28, aggregate))
+                        * smoothstep(0.35, 0.65, mineral);
+                    albedo *= 0.68 + mottling * 0.48 + mineral * 0.21;
+                    albedo *= 0.91 + aggregate * 0.18;
+                    albedo *= 1 - cracks * 0.39 - pits * 0.24;
+                    cavity = 1 - cracks * 0.15 - pits * 0.12;
+                    surfaceHeight = mineral * 0.004 + aggregate * 0.002 - cracks * 0.003 - pits * 0.004;
+                    roughness = 0.98;
+                }
+                else if (_SurfaceKind > 7.5)
+                {
+                    // Long fibers follow the plank's local X, including planks rotated across the tray.
+                    float3 woodPosition = input.surfacePosition * _GrainScale.xyz
+                        + _Seed * float3(0.71, 0.37, 0.53);
+                    float weathering = Noise(woodPosition * float3(0.7, 2.8, 2.8));
+                    float grain = Noise(woodPosition * float3(0.85, 28, 28) + weathering * 0.7);
+                    float fiber = Noise(woodPosition * float3(3.5, 100, 100));
+                    float splitDistance = abs(Noise(woodPosition * float3(0.42, 7.5, 7.5)
+                        + weathering * 0.35) - 0.5);
+                    float splitWidth = max(fwidth(splitDistance), 0.006);
+                    float splits = (1 - smoothstep(0.014, 0.014 + splitWidth, splitDistance))
+                        * smoothstep(0.43, 0.7, weathering);
+                    float exposedGrain = smoothstep(0.36, 0.75, grain);
+                    float2 woodUV = input.surfaceUV * _SurfaceTexture_ST.xy + _SurfaceTexture_ST.zw;
+                    half3 woodTexture = SAMPLE_TEXTURE2D(_SurfaceTexture, sampler_SurfaceTexture, woodUV).rgb;
+                    float wornGrain = sqrt(dot(woodTexture, half3(0.299, 0.587, 0.114)));
+                    half3 fadedColor = lerp(_BaseColor.rgb,
+                        dot(_BaseColor.rgb, half3(0.299, 0.587, 0.114)).xxx * half3(1.04, 1.03, 1),
+                        0.2 + weathering * 0.25);
+                    albedo = fadedColor * (0.38 + wornGrain * 2.4) * (0.71 + weathering * 0.44 + grain * 0.12);
+                    albedo *= 0.86 + fiber * 0.2 + exposedGrain * 0.08;
+                    albedo *= 1 - splits * 0.65;
+                    cavity = 1 - splits * 0.24;
+                    surfaceHeight = wornGrain * 0.012 + grain * 0.004 + fiber * 0.0015 - splits * 0.006;
+                    roughness = 0.99;
+                }
 
                 half3 normal = normalize(input.normalWS);
+                if (_SurfaceKind > 6.5)
+                {
+                    float3 positionDx = ddx(input.positionWS);
+                    float3 positionDy = ddy(input.positionWS);
+                    float3 tangentDx = cross(positionDy, normal);
+                    float3 tangentDy = cross(normal, positionDx);
+                    float determinant = dot(positionDx, tangentDx);
+                    float3 surfaceGradient = (ddx(surfaceHeight) * tangentDx + ddy(surfaceHeight) * tangentDy)
+                        * sign(determinant) / max(abs(determinant), 0.000001);
+                    normal = normalize(normal - surfaceGradient);
+                }
                 half3 view = normalize(GetWorldSpaceViewDir(input.positionWS));
                 half3 specularColor = lerp(half3(0.18, 0.14, 0.085), albedo * 0.58, metallic);
+                if (_SurfaceKind > 6.5) specularColor = half3(0.022, 0.022, 0.022);
                 if (_SceneLightingEnabled > 0.5)
                 {
                     half3 lighting = _SceneLightingAmbient.rgb;

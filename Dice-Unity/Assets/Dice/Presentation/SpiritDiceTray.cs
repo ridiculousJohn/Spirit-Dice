@@ -32,11 +32,16 @@ namespace Dice.Presentation
         private Vector3[] supportPoints;
         private int selectionMask;
         private int rollingMask;
+        private int presentationVersion;
         private SceneLightingState sceneLighting;
+        private SpiritTrayScene sharedScene;
+        private readonly Transform[] slotRoots = new Transform[DiceValues.Count];
+        private Transform LightingRoot => sharedScene != null ? sharedScene.RenderRoot : RenderRoot;
+        private float DieScale => sharedScene != null ? sharedScene.Geometry.DiceScale : 1;
 
         public RenderTexture Texture => texture;
         public Camera RenderCamera => renderCamera;
-        public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
+        public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public bool IsRolling { get; private set; }
 
         public void SetSceneLighting(SceneLightingState state)
@@ -45,16 +50,27 @@ namespace Dice.Presentation
             if (renderRoot == null) return;
             foreach (UnityEngine.Object resource in ownedResources)
                 if (resource is Material material)
-                    SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
+                    SceneLightingReceiverMaterial.Apply(material, state, LightingRoot);
         }
 
         public void Configure(SpiritTrayPresentationAsset presentation)
         {
             if (presentation == null) throw new ArgumentNullException(nameof(presentation));
-            if (renderRoot != null && trayPresentation != presentation)
-                throw new InvalidOperationException("The dice tray presentation cannot change after initialization.");
             presentation.Validate();
+            if (trayPresentation != presentation || sharedScene != null) ReleasePresentation();
             trayPresentation = presentation;
+        }
+
+        public void Configure(SpiritTrayPresentationAsset presentation, SpiritTrayScene scene)
+        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
+            if (scene == null) throw new ArgumentNullException(nameof(scene));
+            presentation.ValidateScene();
+            if (scene.Presentation != presentation)
+                throw new InvalidOperationException("The dice tray must use the shared scene's presentation.");
+            if (trayPresentation != presentation || sharedScene != scene) ReleasePresentation();
+            trayPresentation = presentation;
+            sharedScene = scene;
         }
 
         public void Initialize()
@@ -67,55 +83,73 @@ namespace Dice.Presentation
 
             renderRoot = new GameObject("Spirit Dice Render Root");
             renderRoot.layer = RenderLayer;
-            renderRoot.transform.position = new Vector3(10000f, 0f, 0f);
-
-            texture = new RenderTexture(1024, 320, 24, RenderTextureFormat.ARGB32)
+            if (sharedScene != null)
             {
-                name = "Spirit Dice Texture",
-                antiAliasing = 4,
-                filterMode = FilterMode.Bilinear,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            texture.Create();
+                sharedScene.Initialize();
+                renderRoot.transform.SetParent(sharedScene.RenderRoot, false);
+                texture = sharedScene.Texture;
+                renderCamera = sharedScene.RenderCamera;
+                for (int index = 0; index < DiceValues.Count; ++index)
+                {
+                    slotRoots[index] = CreateChild("Spirit Dice Slot Content " + index,
+                        sharedScene.Geometry.DiceSlots[index]).transform;
+                }
+            }
+            else
+            {
+                renderRoot.transform.position = new Vector3(10000f, 0f, 0f);
 
-            GameObject cameraObject = CreateChild("Spirit Dice Camera", renderRoot.transform);
-            renderCamera = cameraObject.AddComponent<Camera>();
-            renderCamera.transform.localPosition = new Vector3(0f, 6.8f, -4.8f);
-            renderCamera.transform.LookAt(renderRoot.transform.position + Vector3.up * 0.27f);
-            renderCamera.orthographic = false;
-            renderCamera.fieldOfView = 20f;
-            renderCamera.aspect = (float)texture.width / texture.height;
-            renderCamera.nearClipPlane = 0.1f;
-            renderCamera.farClipPlane = 30f;
-            renderCamera.clearFlags = CameraClearFlags.SolidColor;
-            renderCamera.backgroundColor = Color.clear;
-            renderCamera.cullingMask = 1 << RenderLayer;
-            renderCamera.allowHDR = false;
-            renderCamera.allowMSAA = true;
-            renderCamera.targetTexture = texture;
+                texture = new RenderTexture(1024, 320, 24, RenderTextureFormat.ARGB32)
+                {
+                    name = "Spirit Dice Texture",
+                    antiAliasing = 4,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                texture.Create();
 
-            GameObject lightObject = CreateChild("Spirit Dice Key Light", renderRoot.transform);
-            Light light = lightObject.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.color = new Color(1f, 0.94f, 0.8f);
-            light.intensity = 1.2f;
-            light.shadows = LightShadows.Soft;
-            light.shadowStrength = 0.8f;
-            light.shadowBias = 0.025f;
-            light.shadowNormalBias = 0.04f;
-            light.cullingMask = 1 << RenderLayer;
-            light.transform.localRotation = Quaternion.Euler(65f, -32f, 0f);
+                GameObject cameraObject = CreateChild("Spirit Dice Camera", renderRoot.transform);
+                renderCamera = cameraObject.AddComponent<Camera>();
+                renderCamera.transform.localPosition = new Vector3(0f, 6.8f, -4.8f);
+                renderCamera.transform.LookAt(renderRoot.transform.position + Vector3.up * 0.27f);
+                renderCamera.orthographic = false;
+                renderCamera.fieldOfView = 20f;
+                renderCamera.aspect = (float)texture.width / texture.height;
+                renderCamera.nearClipPlane = 0.1f;
+                renderCamera.farClipPlane = 30f;
+                renderCamera.clearFlags = CameraClearFlags.SolidColor;
+                renderCamera.backgroundColor = Color.clear;
+                renderCamera.cullingMask = 1 << RenderLayer;
+                renderCamera.allowHDR = false;
+                renderCamera.allowMSAA = true;
+                renderCamera.targetTexture = texture;
+
+                GameObject lightObject = CreateChild("Spirit Dice Key Light", renderRoot.transform);
+                Light light = lightObject.AddComponent<Light>();
+                light.type = LightType.Directional;
+                light.color = new Color(1f, 0.94f, 0.8f);
+                light.intensity = 1.2f;
+                light.shadows = LightShadows.Soft;
+                light.shadowStrength = 0.8f;
+                light.shadowBias = 0.025f;
+                light.shadowNormalBias = 0.04f;
+                light.cullingMask = 1 << RenderLayer;
+                light.transform.localRotation = Quaternion.Euler(65f, -32f, 0f);
+            }
 
             Mesh bodyMesh = CreateRoundedCube();
             supportPoints = CreateSupportPoints(bodyMesh);
-            Mesh boxMesh = CreateRoundedCube(false, 0.09f, 8);
             Mesh shadowMesh = CreateShadowPlane();
             Mesh selectionMesh = CreateSelectionRing();
             ownedResources.Add(bodyMesh);
-            ownedResources.Add(boxMesh);
             ownedResources.Add(shadowMesh);
             ownedResources.Add(selectionMesh);
-            BuildTray(shader, boxMesh);
+            if (sharedScene == null)
+            {
+                Mesh boxMesh = CreateRoundedCube(false, 0.09f, 8);
+                ownedResources.Add(boxMesh);
+                BuildTray(shader, boxMesh);
+            }
 
             Material shadowMaterial = CreateSurfaceMaterial(shader, new Color(0.025f, 0.018f, 0.011f, 0.66f),
                 "Spirit Dice Contact Shadow", 5, true);
@@ -147,7 +181,9 @@ namespace Dice.Presentation
 
             for (int index = 0; index < DiceValues.Count; index++)
             {
-                GameObject die = CreateChild("Spirit Die " + index, renderRoot.transform);
+                Transform parent = sharedScene != null ? slotRoots[index] : renderRoot.transform;
+                GameObject die = CreateChild("Spirit Die " + index, parent);
+                die.transform.localScale = Vector3.one * DieScale;
                 dice[index] = die.transform;
                 diceMaterials[index] = CreateSurfaceMaterial(shader, new Color(1f, 0.97f, 0.9f),
                     "Spirit Dice Ivory " + index, 0);
@@ -158,8 +194,9 @@ namespace Dice.Presentation
                 if (pipMesh != null)
                     for (int face = 1; face <= 6; face++) AddPips(die.transform, face, pipMesh, pipMaterial);
 
-                GameObject shadow = CreateChild("Die " + index + " Contact Shadow", renderRoot.transform);
-                shadow.transform.localPosition = new Vector3((index - 2) * SlotSpacing, FeltHeight + 0.003f, 0f);
+                GameObject shadow = CreateChild("Die " + index + " Contact Shadow", parent);
+                shadow.transform.localPosition = sharedScene != null ? Vector3.up * .003f
+                    : new Vector3((index - 2) * SlotSpacing, FeltHeight + 0.003f, 0f);
                 contactShadows[index] = AddMesh(shadow, shadowMesh, shadowMaterial);
                 SetShadowHeight(index, 0f);
 
@@ -174,13 +211,16 @@ namespace Dice.Presentation
                 outline.transform.localScale = Vector3.one * 1.022f;
                 AddMesh(outline, bodyMesh, outlineMaterial);
 
-                selectionFrames[index] = CreateChild("Bay " + index + " Selection Frame", renderRoot.transform);
-                selectionFrames[index].transform.localPosition = new Vector3((index - 2) * SlotSpacing, FeltHeight + 0.009f, 0f);
+                selectionFrames[index] = CreateChild("Bay " + index + " Selection Frame", parent);
+                selectionFrames[index].transform.localScale = Vector3.one * DieScale;
+                selectionFrames[index].transform.localPosition = sharedScene != null ? Vector3.up * .009f
+                    : new Vector3((index - 2) * SlotSpacing, FeltHeight + 0.009f, 0f);
                 AddMesh(selectionFrames[index], selectionMesh, frameMaterial);
             }
 
             SetValues(new DiceValues(1, 2, 3, 4, 5));
             SetSelection(0);
+            SetContentActive(isActiveAndEnabled);
         }
 
         public void SetValues(DiceValues values)
@@ -223,6 +263,7 @@ namespace Dice.Presentation
 
             Quaternion[] startRotations = new Quaternion[DiceValues.Count];
             Quaternion[] endRotations = new Quaternion[DiceValues.Count];
+            int version = presentationVersion;
             for (int index = 0; index < DiceValues.Count; index++)
             {
                 startRotations[index] = dice[index].localRotation;
@@ -237,6 +278,7 @@ namespace Dice.Presentation
                     if ((rollingMask & (1 << index)) != 0) diceCount++;
                 while (true)
                 {
+                    if (version != presentationVersion) yield break;
                     float elapsed = timing.Elapsed;
                     int ordinal = 0;
                     for (int index = 0; index < DiceValues.Count; index++)
@@ -246,8 +288,8 @@ namespace Dice.Presentation
                             out Quaternion rotation, out float lift, out float drift);
                         dice[index].localRotation = rotation;
                         Vector3 position = SlotPosition(index);
-                        position.y = FeltHeight + SupportHeight(rotation) + lift;
-                        position.x += drift;
+                        position.y = (sharedScene != null ? 0 : FeltHeight) + (SupportHeight(rotation) + lift) * DieScale;
+                        position.x += drift * DieScale;
                         dice[index].localPosition = position;
                         SetShadowHeight(index, lift / .34f);
                     }
@@ -257,7 +299,7 @@ namespace Dice.Presentation
             }
             finally
             {
-                for (int index = 0; index < DiceValues.Count; index++)
+                for (int index = 0; version == presentationVersion && index < DiceValues.Count; index++)
                 {
                     if ((rollingMask & (1 << index)) == 0) continue;
                     if (dice[index] == null) continue;
@@ -265,8 +307,11 @@ namespace Dice.Presentation
                     dice[index].localPosition = SlotPosition(index);
                     SetShadowHeight(index, 0f);
                 }
-                rollingMask = 0;
-                IsRolling = false;
+                if (version == presentationVersion)
+                {
+                    rollingMask = 0;
+                    IsRolling = false;
+                }
             }
         }
 
@@ -274,7 +319,8 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 towardCamera = (renderCamera.transform.position - dice[index].position).normalized;
+            Vector3 towardCamera = renderCamera.orthographic ? -renderCamera.transform.forward
+                : (renderCamera.transform.position - dice[index].position).normalized;
             float bestAlignment = float.NegativeInfinity;
             int visibleFace = 1;
             for (int face = 1; face <= 6; face++)
@@ -291,7 +337,7 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 point = renderRoot.transform.TransformPoint(SlotPosition(index) + Vector3.up * 0.18f);
+            Vector3 point = dice[index].parent.TransformPoint(SlotPosition(index) + Vector3.up * (.18f * DieScale));
             return renderCamera.WorldToViewportPoint(point);
         }
 
@@ -299,14 +345,33 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 point = renderRoot.transform.TransformPoint(new Vector3((index - 2) * SlotSpacing, 0.35f, -1.13f));
+            Vector3 point = sharedScene != null ? sharedScene.Geometry.DiceLabelAnchors[index].position
+                : renderRoot.transform.TransformPoint(new Vector3((index - 2) * SlotSpacing, 0.35f, -1.13f));
             return renderCamera.WorldToViewportPoint(point);
+        }
+
+        public Rect GetSlotViewportRect(int index)
+        {
+            if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            Initialize();
+            Vector2 min = Vector2.one * float.MaxValue;
+            Vector2 max = Vector2.one * float.MinValue;
+            for (int x = -1; x <= 1; x += 2)
+                for (int y = -1; y <= 1; y += 2)
+                    for (int z = -1; z <= 1; z += 2)
+                    {
+                        Vector3 point = renderCamera.WorldToViewportPoint(dice[index].TransformPoint(new Vector3(x, y, z) * .5f));
+                        min = Vector2.Min(min, new Vector2(point.x, point.y));
+                        max = Vector2.Max(max, new Vector2(point.x, point.y));
+                    }
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
         private void SetShadowHeight(int index, float lift)
         {
             if (contactShadows[index] == null) return;
-            contactShadows[index].transform.localScale = new Vector3(1.24f + lift * 0.24f, 1f, 1.16f + lift * 0.18f);
+            contactShadows[index].transform.localScale = new Vector3((1.24f + lift * 0.24f) * DieScale, 1f,
+                (1.16f + lift * 0.18f) * DieScale);
             MaterialPropertyBlock properties = new MaterialPropertyBlock();
             properties.SetFloat("_ShadowLift", lift);
             contactShadows[index].SetPropertyBlock(properties);
@@ -314,7 +379,8 @@ namespace Dice.Presentation
 
         private Vector3 SlotPosition(int index)
         {
-            return new Vector3((index - 2) * SlotSpacing, RestHeight, 0f);
+            return sharedScene != null ? Vector3.up * (SupportHeight(dice[index].localRotation) * DieScale)
+                : new Vector3((index - 2) * SlotSpacing, RestHeight, 0f);
         }
 
         private float SupportHeight(Quaternion rotation)
@@ -373,7 +439,7 @@ namespace Dice.Presentation
             if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.23f);
             if (material.HasProperty("_SpecColor")) material.SetColor("_SpecColor", new Color(0.2f, 0.2f, 0.2f));
             ownedResources.Add(material);
-            SceneLightingReceiverMaterial.Apply(material, sceneLighting, renderRoot.transform);
+            SceneLightingReceiverMaterial.Apply(material, sceneLighting, LightingRoot);
             return material;
         }
 
@@ -706,24 +772,52 @@ namespace Dice.Presentation
             return mesh;
         }
 
-        private void OnDestroy()
+        public void ReleasePresentation()
         {
-            if (renderCamera != null)
+            ++presentationVersion;
+            if (sharedScene == null && renderCamera != null)
             {
                 renderCamera.enabled = false;
                 renderCamera.targetTexture = null;
             }
-            if (texture != null)
+            if (sharedScene == null && texture != null)
             {
                 texture.Release();
                 DestroyOwned(texture);
             }
+            if (renderRoot != null) renderRoot.SetActive(false);
             DestroyOwned(renderRoot);
+            for (int i = 0; i < DiceValues.Count; ++i)
+            {
+                if (slotRoots[i] != null) slotRoots[i].gameObject.SetActive(false);
+                DestroyOwned(slotRoots[i] != null ? slotRoots[i].gameObject : null);
+                slotRoots[i] = null;
+                dice[i] = null;
+                diceMaterials[i] = null;
+                selectionOutlines[i] = null;
+                selectionFrames[i] = null;
+                contactShadows[i] = null;
+            }
             foreach (UnityEngine.Object resource in ownedResources) DestroyOwned(resource);
             ownedResources.Clear();
             texture = null;
             renderRoot = null;
+            renderCamera = null;
+            sharedScene = null;
+            rollingMask = 0;
+            IsRolling = false;
         }
+
+        private void SetContentActive(bool active)
+        {
+            if (renderRoot != null) renderRoot.SetActive(active);
+            foreach (Transform slot in slotRoots)
+                if (slot != null) slot.gameObject.SetActive(active);
+        }
+
+        private void OnEnable() => SetContentActive(true);
+        private void OnDisable() => SetContentActive(false);
+        private void OnDestroy() => ReleasePresentation();
 
         private static void DestroyOwned(UnityEngine.Object resource)
         {

@@ -221,6 +221,15 @@ namespace Dice.Presentation
 
         private void Update() => Advance(Time.unscaledDeltaTime);
 
+        /** Evaluate an absolute idle time for authoring, including the continuous effect phase. */
+        public void Sample(float seconds)
+        {
+            if (!Visible || !SpiritHostPresentationAsset.Finite(seconds) || seconds < 0f) return;
+            effectAge = 0d;
+            ResetPose();
+            Advance(seconds);
+        }
+
         public void Advance(float deltaTime)
         {
             if (!Visible || !SpiritHostPresentationAsset.Finite(deltaTime) || deltaTime < 0f) return;

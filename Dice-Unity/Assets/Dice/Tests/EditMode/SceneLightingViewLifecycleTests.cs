@@ -47,8 +47,9 @@ namespace Dice.Tests
             Set(view, "uiTheme", AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
                 "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
             Set(view, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset"));
+                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset"));
             Invoke(view, "Build");
+            Field<RectTransform>(view, "rewardsPanel").gameObject.SetActive(false);
             SceneManager.MoveGameObjectToScene(view.DiceTray.RenderRoot.gameObject, preview);
             SceneManager.MoveGameObjectToScene(view.ModifierHistory.Renderer.RenderRoot.gameObject, preview);
             view.DiceTray.RenderCamera.scene = preview;

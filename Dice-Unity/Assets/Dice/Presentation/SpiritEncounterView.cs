@@ -30,6 +30,7 @@ namespace Dice.Presentation
         public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
         public SpiritDiceTray DiceTray { get; private set; }
+        public SpiritTrayScene TrayScene { get; private set; }
         public SpiritModifierHistoryTray ModifierHistory { get; private set; }
         public Button PlayButton { get; private set; }
         public Button RerollButton { get; private set; }
@@ -50,6 +51,7 @@ namespace Dice.Presentation
         private RectTransform playingPanel;
         private RectTransform targetPanel;
         private RectTransform diceTrayFrame;
+        private RawImage trayImage;
         private Vector2 previousPortraitSize;
         private RectTransform rewardsPanel;
         private RectTransform stageIntroPanel;
@@ -146,6 +148,7 @@ namespace Dice.Presentation
         private long displayedMultiplier;
         private Rect previousSafeArea;
         private Vector2 previousScreenSize;
+        private SpiritHostPresentationAsset compositionHost;
 
         private sealed class Card
         {
@@ -168,6 +171,68 @@ namespace Dice.Presentation
             internal Text Caption;
             internal Image Icon;
             internal Vector2 OriginalInset;
+        }
+
+        /** Builds the gameplay HUD on an existing portrait for composition authoring. */
+        public void BuildCompositionOverlay(RectTransform parent, SpiritUiTheme theme)
+        {
+            if (parent == null) throw new ArgumentNullException(nameof(parent));
+            if (theme == null) throw new ArgumentNullException(nameof(theme));
+            if (portrait != null || canvas != null || controls != null)
+                throw new InvalidOperationException("Build the composition overlay on an unused encounter view.");
+            enabled = false;
+            uiTheme = theme;
+            var context = GetComponent<SpiritUiContext>();
+            if (context == null) context = gameObject.AddComponent<SpiritUiContext>();
+            context.Configure(theme);
+            var parentContext = parent.GetComponent<SpiritUiContext>();
+            if (parentContext == null) parentContext = parent.gameObject.AddComponent<SpiritUiContext>();
+            parentContext.Configure(theme);
+            portrait = parent;
+            inputGroup = parent.GetComponent<CanvasGroup>();
+            if (inputGroup == null) inputGroup = parent.gameObject.AddComponent<CanvasGroup>();
+            inputGroup.blocksRaycasts = false;
+            BuildHeader();
+            BuildPlayingPanel();
+            BuildPlayingHud();
+            BuildEncounterRule();
+            BuildFooter();
+        }
+
+        /** Representative playing values expose the HUD's occupied space without a game session. */
+        public void RefreshCompositionOverlay(EncounterTablePresentationAsset table, DiceValues faces)
+        {
+            if (portrait == null || canvas != null || controls != null)
+                throw new InvalidOperationException("Build the composition overlay before refreshing it.");
+            if (!faces.IsValid) throw new ArgumentException("Every die must have a face from 1 to 6.", nameof(faces));
+            SpiritHostPresentationAsset host = table != null ? table.HostPresentation : null;
+            EncounterRulePresentationAsset rule = table != null && table.RulePresentations.Count > 0
+                ? table.RulePresentations[0] : null;
+            if (configuredTable != table || compositionHost != host || encounterRulePresentation != rule)
+            {
+                configuredTable = table;
+                compositionHost = host;
+                encounterRulePresentation = rule;
+                ConfigureEncounterRuleSigil(host);
+            }
+            encounterTitle.text = table != null ? table.DisplayTitle : "ENCOUNTER";
+            stageLabel.text = "STAGE 1 / 3";
+            targetLabel.text = "120";
+            targetCaption.text = "TO CLEAR";
+            SetResources(3, 3);
+            resourcesLabel.gameObject.SetActive(false);
+            categoryLabel.text = DiagnosticText.Humanize(HandEvaluator.Evaluate(faces).ToString()).ToUpperInvariant();
+            SetScoreValues(0, 0);
+            HandScoreLabel.text = "0";
+            selectionLabel.text = "Tap dice to select for reroll";
+            scoreDetail.text = "ROLL BONUSES BANK HERE";
+            statusLabel.text = "COMPOSITION PREVIEW";
+            investigationButton.gameObject.SetActive(table != null);
+            string ruleText = rule != null ? rule.AvailableText?.Replace("{face}",
+                faces[0].ToString(System.Globalization.CultureInfo.InvariantCulture)) : null;
+            RenderEncounterRuleBadge(rule != null, true, ruleText);
+            foreach (Button button in new[] { PlayButton, RerollButton, CharmsButton, HandRanksButton, menuButton, investigationButton })
+                button.interactable = true;
         }
 
         public void Bind(ISpiritEncounterControls encounterControls)
@@ -271,16 +336,69 @@ namespace Dice.Presentation
             roomImage.rectTransform.anchorMin = new Vector2(0, split);
             tableImage.rectTransform.anchorMax = new Vector2(1, split);
             encounterTitle.text = menuTitle.text = selectedTable != null ? selectedTable.DisplayTitle : "";
+            ConfigureTrays(selectedTable?.TrayPresentation ?? tablePresentation?.TrayPresentation ?? trayPresentation);
+        }
+
+        private void ConfigureTrays(SpiritTrayPresentationAsset presentation)
+        {
+            if (TrayScene == null || TrayScene.Presentation == presentation) return;
+            DiceTray.ReleasePresentation();
+            ModifierHistory.ReleasePresentation();
+            TrayScene.Configure(presentation);
+            TrayScene.Initialize();
+            DiceTray.Configure(presentation, TrayScene);
+            DiceTray.Initialize();
+            ModifierHistory.Configure(presentation, TrayScene);
+            ModifierHistory.Build(trayImage.rectTransform);
+            trayImage.texture = TrayScene.Texture;
+            PositionTrays();
+        }
+
+        private void PositionTrays()
+        {
+            if (TrayScene == null || TrayScene.Presentation == null) return;
+            if (portrait.rect.width <= 0 || portrait.rect.height <= 0) return;
+            Rect placement = TrayScene.Presentation.GetCompositionRect(portrait.rect.width / portrait.rect.height);
+            Vector2 panelMin = playingPanel.anchorMin;
+            Vector2 panelSize = playingPanel.anchorMax - panelMin;
+            diceTrayFrame.anchorMin = new Vector2((placement.xMin - panelMin.x) / panelSize.x,
+                (placement.yMin - panelMin.y) / panelSize.y);
+            diceTrayFrame.anchorMax = new Vector2((placement.xMax - panelMin.x) / panelSize.x,
+                (placement.yMax - panelMin.y) / panelSize.y);
+            diceTrayFrame.offsetMin = diceTrayFrame.offsetMax = Vector2.zero;
+            for (int i = 0; i < diceButtons.Count; ++i)
+            {
+                Rect bounds = DiceTray.GetSlotViewportRect(i);
+                var hit = (RectTransform)diceButtons[i].transform;
+                hit.anchorMin = bounds.min;
+                hit.anchorMax = bounds.max;
+                hit.offsetMin = hit.offsetMax = Vector2.zero;
+                Vector2 labelCenter = DiceTray.GetSlotLabelViewportPosition(i);
+                var plate = (RectTransform)diceSelectionLabels[i].transform;
+                plate.anchorMin = labelCenter - new Vector2(bounds.width * .43f, .035f);
+                plate.anchorMax = labelCenter + new Vector2(bounds.width * .43f, .035f);
+                plate.offsetMin = plate.offsetMax = Vector2.zero;
+            }
         }
 
         private void ConfigureHostSigils(SpiritHostPresentationAsset presentation)
         {
-            if (encounterRuleSigil != null) { encounterRuleSigil.gameObject.SetActive(false); Destroy(encounterRuleSigil.gameObject); }
+            ConfigureEncounterRuleSigil(presentation);
             if (ruleSpiritSigil != null) { ruleSpiritSigil.gameObject.SetActive(false); Destroy(ruleSpiritSigil.gameObject); }
-            encounterRuleSigil = presentation?.CreateSigil("EncounterRuleSigil", encounterRuleSigilRoot);
             ruleSpiritSigil = presentation?.CreateSigil("RuleSpiritSigil", ruleSpiritSigilRoot);
             if (ruleSpiritSigil != null) ruleSpiritSigil.color = ruleSpiritIcon.color;
             actionModifierCue.ConfigureHost(presentation);
+        }
+
+        private void ConfigureEncounterRuleSigil(SpiritHostPresentationAsset presentation)
+        {
+            if (encounterRuleSigil != null)
+            {
+                encounterRuleSigil.gameObject.SetActive(false);
+                if (Application.isPlaying) Destroy(encounterRuleSigil.gameObject);
+                else DestroyImmediate(encounterRuleSigil.gameObject);
+            }
+            encounterRuleSigil = presentation?.CreateSigil("EncounterRuleSigil", encounterRuleSigilRoot);
         }
 
         private void OnDestroy()
@@ -318,21 +436,11 @@ namespace Dice.Presentation
         {
             UpdateSceneLighting();
             if (portrait == null || diceTrayFrame == null || ModifierHistory == null) return;
+            PositionTrays();
             Vector2 size = portrait.rect.size;
             if (size == previousPortraitSize) return;
             previousPortraitSize = size;
             if (rewardsPanel.gameObject.activeSelf) UpdateRewardLayout();
-            float frameHeight = playingPanel.rect.height * .36f;
-            float imageHeight = Mathf.Min(frameHeight, size.x * DiceTray.Texture.height / DiceTray.Texture.width);
-            float historyHeight = ((RectTransform)ModifierHistory.transform).rect.height;
-            // Include the rendered wood margins and the aspect fitter's letterboxing in the visible gap.
-            float gap = (frameHeight - imageHeight) * .5f + imageHeight * (13f / 320f) + historyHeight * .20f;
-            Vector2 offset = new Vector2(0, -Mathf.Max(0, gap - 5f));
-            diceTrayFrame.anchoredPosition = offset;
-            targetPanel.anchoredPosition = offset;
-            handsPanel.anchoredPosition = offset;
-            rerollsPanel.anchoredPosition = offset;
-            resourcesLabel.rectTransform.anchoredPosition = offset;
         }
 
         private void UpdateSceneLighting()
@@ -358,6 +466,7 @@ namespace Dice.Presentation
             SetBackgroundLighting(roomImage, texture, sceneLightingMaterial?.Material);
             SetBackgroundLighting(tableImage, texture, sceneLightingMaterial?.Material);
             var state = asset != null ? sceneLightingState : null;
+            TrayScene?.SetSceneLighting(state);
             DiceTray?.SetSceneLighting(state);
             ModifierHistory?.Renderer?.SetSceneLighting(state);
             hostPortrait?.SetSceneLighting(state, configuredTable != null ? configuredTable.HostLightingPosition : Vector3.zero);
@@ -378,6 +487,7 @@ namespace Dice.Presentation
             sceneLightingMaterial?.Dispose();
             sceneLightingMaterial = null;
             sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+            TrayScene?.SetSceneLighting(null);
             DiceTray?.SetSceneLighting(null);
             ModifierHistory?.Renderer?.SetSceneLighting(null);
             hostPortrait?.SetSceneLighting(null, Vector3.zero);
@@ -419,6 +529,29 @@ namespace Dice.Presentation
             table.uvRect = new Rect(0, 0, 1, RoomTableEdge);
             table.color = roomTexture != null ? Color.white : Color.clear;
             table.raycastTarget = false;
+            BuildHeader();
+
+            BuildPlaying();
+            BuildRewards();
+            BuildEnding();
+            BuildFooter();
+            BuildCharms();
+            handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
+            handRanksPanel.Build(portrait, ShowTable);
+            BuildMenu();
+            JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
+            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
+            ConfigureTable(tablePresentation);
+            if (EventSystem.current == null)
+            {
+                var eventSystem = new GameObject("SpiritEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+                eventSystem.transform.SetParent(transform, false);
+            }
+            FitScreen();
+        }
+
+        private void BuildHeader()
+        {
             encounterTitle = SpiritUi.Heading("EncounterTitle", portrait, "", 21,
                 new Vector2(.12f, .963f), new Vector2(.88f, .999f), TextAnchor.MiddleCenter);
             var headerRule = SpiritUi.Rect("HeaderRule", portrait, new Vector2(.16f, .925f), new Vector2(.84f, .995f));
@@ -448,10 +581,10 @@ namespace Dice.Presentation
                 TextAnchor.MiddleCenter);
             resourcesLabel = SpiritUi.Label("ResourcesLabel", portrait, "", 18, new Vector2(.04f, .503f), new Vector2(.96f, .54f),
                 TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+        }
 
-            BuildPlaying();
-            BuildRewards();
-            BuildEnding();
+        private void BuildFooter()
+        {
             CharmsButton = SpiritUi.Button("CharmsButton", portrait, "CHARMS (0)", new Vector2(.035f, .007f), new Vector2(.49f, .065f), ShowCharms);
             HandRanksButton = SpiritUi.Button("HandRanksButton", portrait, "HAND RANKS", new Vector2(.51f, .007f), new Vector2(.965f, .065f), ShowHandRanks);
             foreach (var button in new[] { CharmsButton, HandRanksButton })
@@ -472,19 +605,6 @@ namespace Dice.Presentation
             investigationText.fontSize = investigationText.resizeTextMaxSize = 15;
             investigationText.resizeTextMinSize = 12;
             investigationButton.gameObject.SetActive(false);
-            BuildCharms();
-            handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
-            handRanksPanel.Build(portrait, ShowTable);
-            BuildMenu();
-            JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
-            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
-            ConfigureTable(tablePresentation);
-            if (EventSystem.current == null)
-            {
-                var eventSystem = new GameObject("SpiritEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-                eventSystem.transform.SetParent(transform, false);
-            }
-            FitScreen();
         }
 
         private void FitScreen()
@@ -503,18 +623,19 @@ namespace Dice.Presentation
 
         private void BuildPlaying()
         {
-            playingPanel = SpiritUi.Rect("PlayingPanel", portrait, new Vector2(0, .065f), new Vector2(1, .55f));
+            BuildPlayingPanel();
             var trayFrame = SpiritUi.Rect("DiceTrayFrame", playingPanel, new Vector2(0, .578f), new Vector2(1, .938f));
             diceTrayFrame = trayFrame;
             var trayRect = SpiritUi.Full("DiceTrayImage", trayFrame);
-            var trayImage = trayRect.gameObject.AddComponent<RawImage>();
-            var aspect = trayRect.gameObject.AddComponent<AspectRatioFitter>();
-            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            trayImage = trayRect.gameObject.AddComponent<RawImage>();
+            var presentation = tablePresentation?.TrayPresentation ?? trayPresentation;
+            TrayScene = gameObject.AddComponent<SpiritTrayScene>();
+            TrayScene.Configure(presentation);
+            TrayScene.Initialize();
             DiceTray = GetComponent<SpiritDiceTray>() ?? gameObject.AddComponent<SpiritDiceTray>();
-            DiceTray.Configure(trayPresentation);
+            DiceTray.Configure(presentation, TrayScene);
             DiceTray.Initialize();
-            aspect.aspectRatio = (float)DiceTray.Texture.width / DiceTray.Texture.height;
-            trayImage.texture = DiceTray.Texture;
+            trayImage.texture = TrayScene.Texture;
             trayImage.raycastTarget = false;
             var hitArea = SpiritUi.Full("DiceTouchTargets", trayRect);
             float slotWidth = DiceTray.GetSlotViewportPosition(1).x - DiceTray.GetSlotViewportPosition(0).x;
@@ -542,10 +663,9 @@ namespace Dice.Presentation
                 diceSelectionLabels.Add(plate.gameObject);
                 plate.gameObject.SetActive(false);
             }
-            var historySlot = SpiritUi.Rect("ModifierHistorySlot", playingPanel, new Vector2(.06f, .48f), new Vector2(.94f, .578f));
-            ModifierHistory = historySlot.gameObject.AddComponent<SpiritModifierHistoryTray>();
-            ModifierHistory.Configure(trayPresentation);
-            ModifierHistory.Build(historySlot);
+            ModifierHistory = trayRect.gameObject.AddComponent<SpiritModifierHistoryTray>();
+            ModifierHistory.Configure(presentation, TrayScene);
+            ModifierHistory.Build(trayRect);
             ModifierHistory.TokenSelected += (contribution, definition) =>
             {
                 if (Busy) return;
@@ -555,6 +675,20 @@ namespace Dice.Presentation
                     (contribution.Phase == ModifierPhase.PlayHand ? " (on play)" : " (banked)");
                 ShowActivationIcon(definition);
             };
+            PositionTrays();
+            BuildPlayingHud();
+            actionModifierCue = gameObject.AddComponent<SpiritActionModifierCue>();
+            actionModifierCue.Initialize(RerollButton, PlayButton);
+            BuildEncounterRule();
+        }
+
+        private void BuildPlayingPanel()
+        {
+            playingPanel = SpiritUi.Rect("PlayingPanel", portrait, new Vector2(0, .065f), new Vector2(1, .55f));
+        }
+
+        private void BuildPlayingHud()
+        {
             selectionLabel = SpiritUi.Label("SelectionLabel", playingPanel, "Tap dice to select for reroll", 17,
                 new Vector2(.115f, .394f), new Vector2(.97f, .478f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             selectionLabel.resizeTextForBestFit = true;
@@ -605,9 +739,6 @@ namespace Dice.Presentation
                 text.fontSize = text.resizeTextMaxSize = 25;
                 text.resizeTextMinSize = 18;
             }
-            actionModifierCue = gameObject.AddComponent<SpiritActionModifierCue>();
-            actionModifierCue.Initialize(RerollButton, PlayButton);
-            BuildEncounterRule();
         }
 
         private void BuildEncounterRule()
@@ -638,6 +769,12 @@ namespace Dice.Presentation
             encounterRuleLabel.resizeTextMaxSize = 14;
             favor.gameObject.SetActive(false);
 
+            if (diceTrayFrame != null) BuildRuleSpiritSweep();
+            RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
+        }
+
+        private void BuildRuleSpiritSweep()
+        {
             var sweep = SpiritUi.Rect("RuleSpiritSweep", diceTrayFrame, new Vector2(0, .5f), new Vector2(0, .5f));
             sweep.sizeDelta = new Vector2(72, 72);
             ruleSpiritSweep = sweep.gameObject.AddComponent<CanvasGroup>();
@@ -649,7 +786,6 @@ namespace Dice.Presentation
             ruleSpiritIcon.raycastTarget = false;
             ruleSpiritSigilRoot = sweep;
             sweep.gameObject.SetActive(false);
-            RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
 
         private void RenderEncounterRule(EncounterSnapshot snapshot)
@@ -658,7 +794,12 @@ namespace Dice.Presentation
             if (encounterRulePresentation != null && snapshot?.Phase == EncounterPhase.Playing)
                 foreach (var candidate in snapshot.EncounterRules)
                     if (candidate.Id == encounterRulePresentation.RuleId) { rule = candidate; break; }
-            bool visible = rule != null;
+            RenderEncounterRuleBadge(rule != null, rule != null && rule.IsAvailable,
+                rule != null ? encounterRulePresentation.TextFor(rule) : null);
+        }
+
+        private void RenderEncounterRuleBadge(bool visible, bool available, string text)
+        {
             bool onPlay = encounterRulePresentation != null && encounterRulePresentation.ActivationPhase == ModifierPhase.PlayHand;
             var ruleButton = onPlay ? PlayButton : RerollButton;
             encounterRuleGroup.transform.SetParent(ruleButton.transform, false);
@@ -669,8 +810,8 @@ namespace Dice.Presentation
             playActionLabel.anchorMax = rerollLabelMax;
             if (visible)
             {
-                encounterRuleLabel.text = encounterRulePresentation.TextFor(rule);
-                encounterRuleGroup.alpha = rule.IsAvailable ? 1 : .4f;
+                encounterRuleLabel.text = text;
+                encounterRuleGroup.alpha = available ? 1 : .4f;
                 encounterRuleIcon.sprite = encounterRulePresentation.Icon;
                 encounterRuleIcon.enabled = encounterRulePresentation.Icon != null;
                 if (encounterRuleSigil != null) encounterRuleSigil.gameObject.SetActive(encounterRulePresentation.Icon == null);
