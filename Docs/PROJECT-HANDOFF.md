@@ -88,6 +88,10 @@ Four focused rendered PlayMode cases passed, followed by two passing reruns afte
 
 ## Validation and working practices
 
+Unity CLI launches from Codex on this Windows machine require a per-command sandbox exception (`exec_command` with `sandbox_permissions: "require_escalated"`). Use it on the first attempt; sandboxed launches repeatedly fail to connect to Unity's licensing IPC channel and cannot open its profile cache. Successful rendered validations used the exception. See `Tools/README.md` for the launch procedure. Keep ordinary edits sandboxed and leave global permissions and licensing files unchanged.
+
+The corrected launch procedure was verified with `ReusableRewardCardComparesUpgradedValuesAndRebindsItsChoice`: licensing connected, the PlayMode test passed, and Unity exited. The report is under ignored `Docs/work/unity-tests/230169093d0740498066d438fa53458e`.
+
 The Resources-to-Shared migration preserves asset GUIDs and removes project Resources loading and shader-name lookup fallbacks. The full EditMode run passed 1,189 of 1,192 cases; three synthetic preview fixtures needed explicit shader assignment, and the subsequent 21-case focused run passed. Ten rendered PlayMode cases passed across the main run and one focused rerun after correcting an existing assertion that still expected removed charm status text. The assertion now checks the current icon badge and card text. Screenshots retain the authored UI, host, trays, and audio credits. The reference migration preserves the original appearance; the separate panel-surface correction above addresses background tiling.
 
 Migration reports are under ignored `Docs/work/unity-tests/55884108b03f4c2eaedfe480520168d4`, `35b443f989584a648455d5155d6b31a8`, `e5d86100efca437a82bdfccc866c11ed`, and `e7d9e68321ca4629a31c64ba9b070147`. An earlier batch-mode PlayMode attempt stalled at a rendered-frame wait and was stopped; rendered PlayMode checks use the CLI without `-batchmode`, as documented in `Tools/README.md`.

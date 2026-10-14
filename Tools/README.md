@@ -12,6 +12,10 @@ Generated previews, extraction output, downloaded tool installations, dependency
 
 Regression tests belong in `Dice-Unity/Assets/Dice/Tests/EditMode` or `PlayMode`, using the existing NUnit test assemblies. Run them through the Unity CLI. If the project is open in the editor, stop and tell John so he can close it or explicitly choose another approach. Do not close the editor or substitute menu-driven checks without his direction.
 
+When launching Unity from Codex on this Windows machine, use `exec_command` with `sandbox_permissions: "require_escalated"` for the Unity process. Request this per-command exception on the first launch. The workspace sandbox prevents the editor from connecting to the local Unity licensing client and accessing its profile cache; repeated sandboxed retries time out before tests begin. Normal file edits and inspection can remain sandboxed. Do not change global sandbox settings, Windows ACLs, or Unity licensing files to run these tests.
+
+When using `Start-Process`, pass `-WindowStyle Hidden` and capture its process ID. Process creation or a successful shell exit does not establish that tests passed: wait for Unity's results XML and inspect failures. If a test launch stalls, stop only the process launched for that run, confirm it has exited, and retain its log before attempting another launch.
+
 From the repository root in PowerShell, with the project editor closed:
 
 ```powershell
