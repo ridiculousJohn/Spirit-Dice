@@ -78,6 +78,14 @@ Window and card frames use nine-slicing. The dark frame references SpiritPanelSu
 
 The cloth was generated with the built-in image tool; prompt and asset provenance are in Docs/outputs/spirit-panel-cloth.json. Four rendered PlayMode cases passed, followed by two passing reruns after the interior trim adjustment. Portrait captures include 443- and 540-unit layouts, investigation, rewards, Charms, Hand Ranks, and Menu. Reports and captures are under ignored Docs/work/unity-tests/edbab5b84a504d42ab268034c5ecc924 and Docs/work/unity-tests/47fece6e44594c0591e975b3c3a33006. No Android build or installation was performed.
 
+## Hand upgrade selection
+
+Hand upgrade rewards use compact rows with a five-dice pattern, current level, base, and multiplier. Selecting a row previews the increments inline; the bottom Upgrade button commits the choice. Selection is presentation-only and clears when the offer is replaced or loaded. The panel fits its offered rows, retaining scrolling for larger authored offers. The repeated headings, comparison columns, free-upgrade captions, next-stage summary, and underlying gameplay plaque are hidden during this choice. Modifier reward cards retain their existing flow.
+
+`SpiritHandPatternGraphic` draws the category examples without external assets. `SpiritRewardCard` presents the selected values; `SpiritEncounterView` owns preview selection and confirmation. Existing PlayMode coverage checks selection changes without engine mutation, save/load, single confirmation, stale clicks, modifier-card reuse, and full visibility at 540x960, 443x912, and 443x960 portrait sizes.
+
+Four focused rendered PlayMode cases passed, followed by two passing reruns after hiding the underlying gameplay plaque. Reports and portrait captures are under ignored `Docs/work/unity-tests/d235c6d48a1d4c2e81b6f2ca53e7eba9` and `Docs/work/unity-tests/720f71e61e4a4ceba45f49dcb319e1b4`. No Android build or installation was performed for this change.
+
 ## Validation and working practices
 
 The Resources-to-Shared migration preserves asset GUIDs and removes project Resources loading and shader-name lookup fallbacks. The full EditMode run passed 1,189 of 1,192 cases; three synthetic preview fixtures needed explicit shader assignment, and the subsequent 21-case focused run passed. Ten rendered PlayMode cases passed across the main run and one focused rerun after correcting an existing assertion that still expected removed charm status text. The assertion now checks the current icon badge and card text. Screenshots retain the authored UI, host, trays, and audio credits. The reference migration preserves the original appearance; the separate panel-surface correction above addresses background tiling.

@@ -17,6 +17,22 @@ namespace Dice.Presentation
         private Text upgradedValues;
         private Image charmIcon;
         private SpiritModifierSigilGraphic charmSigil;
+        private SpiritHandPatternGraphic handPattern;
+        private Image upgradeDivider;
+        private Image upgradeSelectionMarker;
+        private Image background;
+        private Sprite modifierSprite;
+        private Material modifierMaterial;
+        private Image.Type modifierImageType;
+        private Color modifierColor;
+        private float modifierPixelsPerUnit;
+        private bool modifierOutlineEnabled;
+        private bool handUpgradeMode;
+        private int handLevel;
+        private long handBase;
+        private long handMultiplier;
+        private long handBaseIncrement;
+        private long handMultiplierIncrement;
         private Action<long, long> choose;
         private long offerId;
         private long optionId;
@@ -29,6 +45,13 @@ namespace Dice.Presentation
             if (choose == null) throw new ArgumentNullException(nameof(choose));
             var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.GetTheme(parent).panelColor, 0, true);
             var card = image.gameObject.AddComponent<SpiritRewardCard>();
+            card.background = image;
+            card.modifierSprite = image.sprite;
+            card.modifierMaterial = image.material;
+            card.modifierImageType = image.type;
+            card.modifierColor = image.color;
+            card.modifierPixelsPerUnit = image.pixelsPerUnitMultiplier;
+            card.modifierOutlineEnabled = image.GetComponent<Outline>()?.enabled ?? false;
             card.choose = choose;
             var layout = image.gameObject.AddComponent<LayoutElement>();
             layout.preferredHeight = 140;
@@ -86,6 +109,20 @@ namespace Dice.Presentation
             card.charmSigil.rectTransform.sizeDelta = iconRect.sizeDelta;
             card.charmSigil.color = SpiritUi.GetTheme(parent).amber;
             card.charmSigil.raycastTarget = false;
+            var patternRect = SpiritUi.Rect("HandPattern", card.transform, new Vector2(0, 1), new Vector2(0, 1));
+            patternRect.pivot = new Vector2(0, 1);
+            patternRect.anchoredPosition = new Vector2(14, -45);
+            patternRect.sizeDelta = new Vector2(174, 34);
+            card.handPattern = patternRect.gameObject.AddComponent<SpiritHandPatternGraphic>();
+            card.handPattern.raycastTarget = false;
+            card.upgradeDivider = SpiritUi.Rect("UpgradeDivider", card.transform, Vector2.zero, new Vector2(1, 0),
+                14, 0, 14, -1).gameObject.AddComponent<Image>();
+            card.upgradeDivider.color = new Color(theme.amber.r, theme.amber.g, theme.amber.b, .3f);
+            card.upgradeDivider.raycastTarget = false;
+            card.upgradeSelectionMarker = SpiritUi.Rect("UpgradeSelectionMarker", card.transform, Vector2.zero, new Vector2(0, 1),
+                0, 12, -3, 12).gameObject.AddComponent<Image>();
+            card.upgradeSelectionMarker.color = theme.amber;
+            card.upgradeSelectionMarker.raycastTarget = false;
             card.SetUpgradeVisibility(false);
             card.charmIcon.gameObject.SetActive(false);
             card.charmSigil.gameObject.SetActive(false);
@@ -98,8 +135,20 @@ namespace Dice.Presentation
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             this.offerId = offerId;
             this.optionId = optionId;
+            handUpgradeMode = false;
+            background.sprite = modifierSprite;
+            background.material = modifierMaterial;
+            background.type = modifierImageType;
+            background.color = modifierColor;
+            background.pixelsPerUnitMultiplier = modifierPixelsPerUnit;
+            var outline = background.GetComponent<Outline>();
+            if (outline != null) outline.enabled = modifierOutlineEnabled;
             GetComponent<LayoutElement>().preferredHeight = 140;
             SetUpgradeVisibility(false);
+            condition.alignment = TextAnchor.MiddleLeft;
+            condition.color = SpiritUi.GetTheme(transform).cream;
+            title.color = SpiritUi.GetTheme(transform).cream;
+            status.gameObject.SetActive(true);
             charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
             charmIcon.gameObject.SetActive(charmIcon.sprite != null);
             charmSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
@@ -121,43 +170,69 @@ namespace Dice.Presentation
         {
             if (hand == null) throw new ArgumentNullException(nameof(hand));
             if (level < 0) throw new ArgumentOutOfRangeException(nameof(level));
-            // Compare the category's persistent values, excluding dice and temporary charm contributions.
-            int upgradedLevel = checked(level + 1);
+            // Show persistent category values, excluding dice and temporary charm contributions.
             long currentBase = checked(hand.BaseScore + hand.BaseScorePerUpgrade * level);
             long currentMultiplier = checked(hand.Multiplier + hand.MultiplierPerUpgrade * level);
-            long upgradedBase = checked(hand.BaseScore + hand.BaseScorePerUpgrade * upgradedLevel);
-            long upgradedMultiplier = checked(hand.Multiplier + hand.MultiplierPerUpgrade * upgradedLevel);
+            _ = checked(level + 1);
+            _ = checked(currentBase + hand.BaseScorePerUpgrade);
+            _ = checked(currentMultiplier + hand.MultiplierPerUpgrade);
             this.offerId = offerId;
             this.optionId = optionId;
-            GetComponent<LayoutElement>().preferredHeight = 156;
+            handUpgradeMode = true;
+            handLevel = level;
+            handBase = currentBase;
+            handMultiplier = currentMultiplier;
+            handBaseIncrement = hand.BaseScorePerUpgrade;
+            handMultiplierIncrement = hand.MultiplierPerUpgrade;
+            GetComponent<LayoutElement>().preferredHeight = 100;
+            background.sprite = null;
+            background.material = null;
+            background.type = Image.Type.Simple;
+            var outline = background.GetComponent<Outline>();
+            if (outline != null) outline.enabled = false;
             SetUpgradeVisibility(true);
             charmIcon.gameObject.SetActive(false);
             charmSigil.gameObject.SetActive(false);
+            handPattern.Category = hand.Category;
             title.text = DiagnosticText.Humanize(hand.Category.ToString());
-            condition.text = "Level " + level + " to " + upgradedLevel;
-            effects.text = "BASE " + DiagnosticText.Number(currentBase) + "\nMULT " + DiagnosticText.Number(currentMultiplier);
-            upgradedValues.text = "BASE " + DiagnosticText.Number(upgradedBase) + "\nMULT " + DiagnosticText.Number(upgradedMultiplier);
-            status.text = "Free hand upgrade";
-            Place(title, 24, 24, 14, 22);
-            Place(condition, 24, 24, 37, 19);
-            Place(currentHeader, 24, 8, 58, 17, 0, .5f);
-            Place(upgradedHeader, 8, 24, 58, 17, .5f, 1);
-            Place(effects, 24, 8, 76, 52, 0, .5f);
-            Place(upgradedValues, 8, 24, 76, 52, .5f, 1);
-            Place(status, 24, 24, 130, 17);
+            condition.alignment = TextAnchor.MiddleRight;
+            status.text = "";
+            status.gameObject.SetActive(false);
+            Place(title, 14, 125, 10, 26);
+            Place(condition, 0, 14, 12, 22, .64f, 1);
+            Place(effects, 202, 14, 43, 42);
+            SetHandUpgradeSelected(false);
+        }
+
+        public void SetHandUpgradeSelected(bool selected)
+        {
+            if (!handUpgradeMode) return;
+            var theme = SpiritUi.GetTheme(transform);
+            condition.text = "Level " + handLevel + (selected ? " +1" : "");
+            effects.text = "BASE " + DiagnosticText.Number(handBase) +
+                (selected ? " +" + DiagnosticText.Number(handBaseIncrement) : "") +
+                "\nMULT " + DiagnosticText.Number(handMultiplier) +
+                (selected ? " +" + DiagnosticText.Number(handMultiplierIncrement) : "");
+            title.color = selected ? theme.amber : theme.cream;
+            condition.color = selected ? theme.amber : theme.muted;
+            background.color = selected ? new Color32(43, 65, 49, 255) : new Color32(26, 40, 32, 215);
+            upgradeSelectionMarker.gameObject.SetActive(selected);
             ((SpiritUiButtonVisual)Button).CaptureContent();
         }
 
         private void SetUpgradeVisibility(bool visible)
         {
-            currentHeader.gameObject.SetActive(visible);
-            upgradedHeader.gameObject.SetActive(visible);
-            upgradedValues.gameObject.SetActive(visible);
+            currentHeader.gameObject.SetActive(false);
+            upgradedHeader.gameObject.SetActive(false);
+            upgradedValues.gameObject.SetActive(false);
+            handPattern.gameObject.SetActive(visible);
+            upgradeDivider.gameObject.SetActive(visible);
+            upgradeSelectionMarker.gameObject.SetActive(false);
         }
 
         private void OnRectTransformDimensionsChange()
         {
-            if (condition == null || currentHeader == null || currentHeader.gameObject.activeSelf) return;
+            if (condition == null || currentHeader == null || handUpgradeMode) return;
             UpdateModifierLayout();
         }
 

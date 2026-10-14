@@ -223,7 +223,16 @@ namespace Dice.Tests
             yield return Wait(controller);
             Assert.That(controller.Snapshot.PendingReward.Kind, Is.EqualTo(RewardKind.HandUpgrade));
             Assert.That(Find<Image>(Find<Button>(view, "RewardCard1"), "CharmIcon").gameObject.activeSelf, Is.False);
+            yield return Capture("readability-hand-upgrade-unselected");
+            var beforeUpgrade = controller.Snapshot;
+            var upgradeButton = Find<Button>(view, "UpgradeHandButton");
+            Assert.That(upgradeButton.IsInteractable(), Is.False);
             Find<Button>(view, "RewardCard1").onClick.Invoke();
+            Assert.That(controller.Snapshot, Is.SameAs(beforeUpgrade));
+            Assert.That(controller.IsBusy, Is.False);
+            Assert.That(upgradeButton.IsInteractable(), Is.True);
+            yield return Capture("readability-hand-upgrade-selected");
+            upgradeButton.onClick.Invoke();
             yield return Wait(controller);
             view.ShowCharms();
             var owned = Find<Button>(view, "OwnedCharm1");
