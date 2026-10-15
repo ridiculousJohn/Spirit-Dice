@@ -64,6 +64,7 @@ namespace Dice.Presentation
         private Button upgradeHandButton;
         private long selectedUpgradeOption = -1;
         private RectTransform charmContent;
+        private ScrollRect charmScroll;
         private SpiritCharmGridLayout charmGrid;
         private SpiritCharmDetailsLayout charmDetailsLayout;
         private SpiritHostPortrait hostPortrait;
@@ -160,6 +161,7 @@ namespace Dice.Presentation
             internal SpiritModifierSigilGraphic Sigil;
             internal SpiritCharmCardLayout Layout;
             internal SpiritCharmStatusBadge Badge;
+            internal SpiritCharmSelectionGraphic SelectionOutline;
             internal long OfferId;
             internal long OptionId;
             internal long InstanceId;
@@ -669,11 +671,10 @@ namespace Dice.Presentation
             ModifierHistory.TokenSelected += (contribution, definition) =>
             {
                 if (Busy) return;
-                selectionLabel.color = SpiritUi.GetTheme(transform).amber;
-                selectionLabel.text = CharmName(definition) + "\n" +
-                    ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
-                    (contribution.Phase == ModifierPhase.PlayHand ? " (on play)" : " (banked)");
-                ShowActivationIcon(definition);
+                selectedCharm = contribution.InstanceId;
+                ShowCharms();
+                foreach (var card in charmCards)
+                    if (card.InstanceId == selectedCharm) card.SelectionOutline.Pulse();
             };
             PositionTrays();
             BuildPlayingHud();
@@ -690,14 +691,14 @@ namespace Dice.Presentation
         private void BuildPlayingHud()
         {
             selectionLabel = SpiritUi.Label("SelectionLabel", playingPanel, "Tap dice to select for reroll", 17,
-                new Vector2(.115f, .394f), new Vector2(.97f, .478f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+                new Vector2(.115f, .438f), new Vector2(.97f, .525f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             selectionLabel.resizeTextForBestFit = true;
             selectionLabel.resizeTextMinSize = 14;
             selectionLabel.resizeTextMaxSize = 17;
             selectionLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
             selectionLabel.rectTransform.offsetMin = new Vector2(0, 0);
             selectionLabel.rectTransform.offsetMax = new Vector2(0, 0);
-            modifierEmblem = SpiritUi.Rect("ModifierEmblem", playingPanel, new Vector2(.045f, .409f), new Vector2(.105f, .464f))
+            modifierEmblem = SpiritUi.Rect("ModifierEmblem", playingPanel, new Vector2(.045f, .456f), new Vector2(.105f, .511f))
                 .gameObject.AddComponent<SpiritUiOrnament>();
             modifierEmblem.kind = "charm";
             modifierEmblem.color = SpiritUi.GetTheme(transform).amber;
@@ -705,7 +706,7 @@ namespace Dice.Presentation
             modifierActivationIcon = MakeIcon("ModifierActivationIcon", modifierEmblem.transform,
                 new Vector2(.5f, .5f), 32);
             modifierEmblem.gameObject.SetActive(false);
-            var score = SpiritUi.Panel("ScorePreview", playingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .39f),
+            var score = SpiritUi.Panel("ScorePreview", playingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .435f),
                 SpiritUi.GetTheme(transform).panelColor, 0, true);
             categoryLabel = SpiritUi.Heading("HandCategory", score.transform, "", 23,
                 new Vector2(.05f, .70f), new Vector2(.95f, .91f), TextAnchor.MiddleCenter);
@@ -713,7 +714,7 @@ namespace Dice.Presentation
             var divider = score.transform.Find("GoldDivider").GetComponent<RectTransform>();
             divider.anchorMin = new Vector2(.07f, .65f);
             divider.anchorMax = new Vector2(.93f, .67f);
-            var formula = SpiritUi.Rect("ScoreFormula", score.transform, new Vector2(.04f, .24f), new Vector2(.96f, .70f));
+            var formula = SpiritUi.Rect("ScoreFormula", score.transform, new Vector2(.04f, .20f), new Vector2(.96f, .65f));
             BaseScoreLabel = BuildScoreCounter("BaseScoreLabel", "BASE", formula, 0, .32f);
             MultiplierLabel = BuildScoreCounter("MultiplierLabel", "MULT", formula, .34f, .66f);
             HandScoreLabel = BuildScoreCounter("HandScore", "TOTAL", formula, .68f, 1);
@@ -721,12 +722,12 @@ namespace Dice.Presentation
             multiplierHighlight = MakeCounterHighlight("MultiplierCharmIcon", MultiplierLabel, true);
             rerollsHighlight = MakeCounterHighlight("RerollsCharmIcon", rerollsLabel, false);
             handsHighlight = MakeCounterHighlight("HandsCharmIcon", handsLabel, false);
-            scoreDetail = SpiritUi.Label("ScoreBreakdown", score.transform, "ROLL BONUSES BANK HERE", 13,
-                new Vector2(.04f, .07f), new Vector2(.96f, .25f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+            scoreDetail = SpiritUi.Label("ScoreBreakdown", score.transform, "ROLL BONUSES BANK HERE", 14,
+                new Vector2(.04f, .06f), new Vector2(.96f, .20f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             scoreDetail.rectTransform.offsetMin = scoreDetail.rectTransform.offsetMax = Vector2.zero;
             scoreDetail.resizeTextForBestFit = true;
             scoreDetail.resizeTextMinSize = 11;
-            scoreDetail.resizeTextMaxSize = 13;
+            scoreDetail.resizeTextMaxSize = 14;
             SetScoreValues(0, 0);
             HandScoreLabel.text = "0";
             RerollButton = SpiritUi.Button("RerollButton", playingPanel, "Reroll", new Vector2(.035f, 0), new Vector2(.49f, .188f),
@@ -823,13 +824,13 @@ namespace Dice.Presentation
         private static Text BuildScoreCounter(string name, string caption, Transform parent, float left, float right)
         {
             var cell = SpiritUi.Rect(name + "Cell", parent, new Vector2(left, 0), new Vector2(right, 1));
-            var heading = SpiritUi.Heading(name + "Caption", cell, caption, 14,
-                new Vector2(0, .46f), Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(parent).muted);
-            heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = new Vector2(0, -4);
-            var value = SpiritUi.Heading(name, cell, "0", 30,
-                Vector2.zero, new Vector2(1, .50f), TextAnchor.MiddleCenter);
-            value.rectTransform.offsetMin = value.rectTransform.offsetMax = new Vector2(0, -1);
-            value.resizeTextMinSize = 16;
+            var heading = SpiritUi.Heading(name + "Caption", cell, caption, 16,
+                new Vector2(0, .65f), Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(parent).muted);
+            heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
+            var value = SpiritUi.Heading(name, cell, "0", 36,
+                Vector2.zero, new Vector2(1, .68f), TextAnchor.MiddleCenter);
+            value.rectTransform.offsetMin = value.rectTransform.offsetMax = Vector2.zero;
+            value.resizeTextMinSize = 22;
             return value;
         }
 
@@ -911,8 +912,12 @@ namespace Dice.Presentation
             upcomingStage = SpiritUi.Label("UpcomingStage", rewardsPanel, "", 14, new Vector2(.04f, .08f), new Vector2(.96f, .15f),
                 TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             RefreshButton = SpiritUi.Button("RefreshRewardsButton", rewardsPanel, "Refresh choices", new Vector2(.035f, 0), new Vector2(.965f, .075f),
-                () => { if (!Busy) controls.RefreshRewards(); });
-            SpiritUi.ActionIcon(RefreshButton.transform, "reroll");
+                () => { if (!Busy) { ClearRewardSelection(); controls.RefreshRewards(); } });
+            var refreshLabel = RefreshButton.GetComponentInChildren<Text>();
+            refreshLabel.rectTransform.anchorMin = new Vector2(.19f, .08f);
+            refreshLabel.rectTransform.anchorMax = new Vector2(.81f, .92f);
+            refreshLabel.resizeTextMinSize = 12;
+            refreshLabel.resizeTextMaxSize = 18;
             upgradeHandButton = SpiritUi.Button("UpgradeHandButton", rewardsPanel, "Upgrade",
                 Vector2.zero, Vector2.one, ConfirmHandUpgrade);
             upgradeHandButton.gameObject.SetActive(false);
@@ -952,6 +957,7 @@ namespace Dice.Presentation
             SpiritUi.Label("CharmsSubtitle", charmsPanel, "Kept for this run. Tap a charm to inspect it.", 18,
                 new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted);
             var scroll = SpiritUi.Scroll("OwnedCharmScroll", charmsPanel, new Vector2(0, .34f), new Vector2(1, .84f), out charmContent);
+            charmScroll = scroll;
             var layout = charmContent.gameObject.AddComponent<GridLayoutGroup>();
             layout.cellSize = new Vector2(235, 156);
             layout.spacing = new Vector2(12, 12);
@@ -1034,6 +1040,31 @@ namespace Dice.Presentation
             handRanksPanel.Root.gameObject.SetActive(false);
             RenderCharms();
             charmsPanel.gameObject.SetActive(true);
+            ScrollToSelectedCharm();
+        }
+
+        private void ScrollToSelectedCharm()
+        {
+            Canvas.ForceUpdateCanvases();
+            charmGrid.RefreshLayout();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(charmContent);
+            Canvas.ForceUpdateCanvases();
+            charmScroll.StopMovement();
+            foreach (var card in charmCards)
+            {
+                if (card.InstanceId != selectedCharm || !card.Button.gameObject.activeSelf) continue;
+                var viewport = charmScroll.viewport;
+                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(viewport, card.Button.transform);
+                float overflow = charmContent.rect.height - viewport.rect.height;
+                if (overflow <= 0) return;
+                float shift = 0;
+                if (bounds.max.y > viewport.rect.yMax || bounds.size.y > viewport.rect.height)
+                    shift = viewport.rect.yMax - bounds.max.y;
+                else if (bounds.min.y < viewport.rect.yMin)
+                    shift = viewport.rect.yMin - bounds.min.y;
+                charmScroll.verticalNormalizedPosition = Mathf.Clamp01(charmScroll.verticalNormalizedPosition - shift / overflow);
+                return;
+            }
         }
 
         public void ShowHandRanks()
@@ -1107,8 +1138,10 @@ namespace Dice.Presentation
                 renderedCharmsRevision = -1;
                 presentedSnapshot = snapshot;
             }
-            ModifierHistory.Synchronize(snapshot, controls.Catalog);
             bool playing = snapshot.Phase == EncounterPhase.Playing;
+            if (playing && controls.Preview != null)
+                ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog);
+            else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
             bool choosingUpgrade = snapshot.Phase == EncounterPhase.ChoosingHandUpgrade;
             targetPanel.gameObject.SetActive(!choosingUpgrade);
@@ -1146,6 +1179,8 @@ namespace Dice.Presentation
                 int selected = 0;
                 for (int i = 0; i < DiceValues.Count; ++i) if ((controls.SelectedMask & (1 << i)) != 0) ++selected;
                 selectionLabel.text = selected == 0 ? "Tap dice to select for reroll" : selected + " selected for reroll";
+                selectionLabel.text += "\n" + (ModifierHistory.Count == 0 ? "No charms ready on play" :
+                    ModifierHistory.Count + (ModifierHistory.Count == 1 ? " charm ready" : " charms ready") + " - tap to inspect");
             }
             else if (!completed) RenderRewards(snapshot);
             else
@@ -1199,6 +1234,8 @@ namespace Dice.Presentation
         private void ResetTransientVisuals()
         {
             actionModifierCue?.Clear();
+            DiceTray?.SetScoringHighlight(0);
+            ModifierHistory?.ClearResolving();
             if (ruleSpiritSweep != null) ruleSpiritSweep.gameObject.SetActive(false);
             if (stageIntroPanel != null) stageIntroPanel.gameObject.SetActive(false);
             if (modifierEmblem == null) return;
@@ -1293,6 +1330,8 @@ namespace Dice.Presentation
                 }
                 else if (ruleEvent is DiceRolledEvent rolled)
                 {
+                    ModifierHistory.Clear();
+                    DiceTray.SetScoringHighlight(0);
                     playingPanel.gameObject.SetActive(true);
                     rewardsPanel.gameObject.SetActive(false);
                     endingPanel.gameObject.SetActive(false);
@@ -1320,12 +1359,15 @@ namespace Dice.Presentation
                     SetDiceSelection(0);
                     DiceTray.SetValues(scored.Dice);
                     SetScore(scored.Score, true);
+                    ModifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog);
+                    DiceTray.SetScoringHighlight(DiceValues.AllMask);
                     HandScoreLabel.text = "0";
                     hostPortrait?.React();
                     modifierEmblem.gameObject.SetActive(false);
                     selectionLabel.color = SpiritUi.GetTheme(transform).muted;
                     selectionLabel.text = "DICE\n+" + DiagnosticText.Number(scored.Score.DiceSum) + " base";
-                    scoreDetail.text = "COUNTING DICE";
+                    categoryLabel.text = "COUNTING DICE";
+                    scoreDetail.text = "STEP 1 OF 4 - DICE";
                     encounterAudio.Play(SpiritAudioCue.Score);
                     yield return AnimateScore(displayedBaseScore, displayedMultiplier,
                         checked(displayedBaseScore + scored.Score.DiceSum), displayedMultiplier, ScoreStepDuration);
@@ -1333,9 +1375,11 @@ namespace Dice.Presentation
 
                     long handBase = checked(scored.Score.CategoryBaseScore + scored.Score.UpgradeBaseScore);
                     long handMultiplier = checked(scored.Score.CategoryMultiplier + scored.Score.UpgradeMultiplier);
+                    categoryLabel.text = DiagnosticText.Humanize(scored.Score.Category.ToString()).ToUpperInvariant();
+                    DiceTray.SetScoringHighlight(SpiritHandScoringHighlights.GetMask(scored.Dice, scored.Score.Category));
                     selectionLabel.text = categoryLabel.text + " / LEVEL " + scored.Score.UpgradeCount + "\n" +
                         ContributionDelta(handBase, handMultiplier, 0);
-                    scoreDetail.text = "ADDING HAND CATEGORY";
+                    scoreDetail.text = "STEP 2 OF 4 - HAND RANK";
                     encounterAudio.Play(SpiritAudioCue.Score);
                     yield return AnimateScore(displayedBaseScore, displayedMultiplier,
                         checked(displayedBaseScore + handBase),
@@ -1343,6 +1387,7 @@ namespace Dice.Presentation
                     yield return new WaitForSecondsRealtime(ScoreStepHold);
 
                     // Recorded contributions retain the eligibility and activation order of the engine phase.
+                    DiceTray.SetScoringHighlight(0);
                     foreach (var contribution in scored.Score.ModifierContributions)
                     {
                         if (contribution.Phase != ModifierPhase.PlayHand) continue;
@@ -1350,12 +1395,14 @@ namespace Dice.Presentation
                         yield return AnimateContribution(contribution, scored.StageIndex, scored.HandIndex, resolution, false);
                         yield return new WaitForSecondsRealtime(ModifierStepHold);
                     }
+                    ModifierHistory.ClearResolving();
                     if (scored.Score.EncounterRuleMultiplier != 0)
                     {
                         selectionLabel.text = (encounterRulePresentation != null ? encounterRulePresentation.DisplayName : "ENCOUNTER RULE") +
                             "\n+" + DiagnosticText.Number(scored.Score.EncounterRuleMultiplier) + " multiplier";
                         selectionLabel.color = SpiritUi.GetTheme(transform).amber;
-                        scoreDetail.text = "ADDING ENCOUNTER RULE";
+                        categoryLabel.text = "ENCOUNTER RULE";
+                        scoreDetail.text = "STEP 3 OF 4 - ENCOUNTER RULE";
                         actionModifierCue.ShowHost(encounterRulePresentation != null ? encounterRulePresentation.Icon : null,
                             ModifierPhase.PlayHand, hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
                         hostPortrait?.React();
@@ -1365,9 +1412,10 @@ namespace Dice.Presentation
                         yield return new WaitForSecondsRealtime(ScoreStepHold);
                     }
                     modifierEmblem.gameObject.SetActive(false);
+                    categoryLabel.text = "FINAL SCORE";
                     selectionLabel.text = "TOTAL";
                     selectionLabel.color = SpiritUi.GetTheme(transform).muted;
-                    scoreDetail.text = DiagnosticText.Number(scored.Score.BaseScore) + " x " +
+                    scoreDetail.text = "STEP 4 OF 4 - " + DiagnosticText.Number(scored.Score.BaseScore) + " x " +
                         DiagnosticText.Number(scored.Score.Multiplier);
                     encounterAudio.Play(SpiritAudioCue.Score);
                     yield return AnimateTotal(scored.Score.HandScore, ScoreStepDuration);
@@ -1495,13 +1543,14 @@ namespace Dice.Presentation
         private void ShowContribution(ModifierContribution contribution, bool banked)
         {
             var definition = controls.Catalog.GetModifier(contribution.DefinitionId);
-            ModifierHistory.Add(contribution, definition, true);
+            if (!banked) ModifierHistory.SetResolving(contribution);
             ShowActivationIcon(definition);
+            categoryLabel.text = CharmName(definition);
             selectionLabel.color = SpiritUi.GetTheme(transform).amber;
             selectionLabel.text = CharmName(definition) + "\n" +
                 ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
                 (banked ? " (banked)" : " (on play)");
-            scoreDetail.text = banked ? "ROLL BONUS BANKED" : "ADDING PLAY BONUS";
+            scoreDetail.text = banked ? "ROLL BONUS" : "STEP 3 OF 4 - CHARMS";
         }
 
         private IEnumerator AnimateContribution(ModifierContribution contribution, int stageIndex, int handIndex,
@@ -1509,7 +1558,22 @@ namespace Dice.Presentation
         {
             ShowContribution(contribution, banked);
             var definition = controls.Catalog.GetModifier(contribution.DefinitionId);
-            actionModifierCue.Show(definition, ScoreStepDuration + ModifierStepHold);
+            bool showReroll = contribution.Rerolls != 0;
+            bool showPlay = false;
+            foreach (var ruleEvent in resolution.Events)
+                if (ruleEvent is ResourceChangedEvent resource && resource.Cause == ResourceChangeCause.ModifierEffect &&
+                    resource.StageIndex == stageIndex && resource.HandIndex == handIndex &&
+                    resource.SourceInstanceId == contribution.InstanceId && resource.After != resource.Before)
+                {
+                    showReroll |= resource.Resource == ResourceKind.Rerolls;
+                    showPlay |= resource.Resource == ResourceKind.Hands;
+                }
+            if (contribution.BaseScore != 0 || contribution.Multiplier != 0 || (!showReroll && !showPlay))
+            {
+                showPlay |= definition.Phase == ModifierPhase.PlayHand;
+                showReroll |= definition.Phase != ModifierPhase.PlayHand;
+            }
+            actionModifierCue.Show(definition, ScoreStepDuration + ModifierStepHold, showReroll, showPlay);
             var sprite = SpiritModifierIcons.GetSprite(definition);
             var highlights = new List<CounterHighlight>();
             if (contribution.BaseScore != 0) AddCounterHighlight(highlights, baseScoreHighlight, sprite);
@@ -1742,6 +1806,10 @@ namespace Dice.Presentation
                 card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
                 card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil);
                 card.Badge = SpiritCharmStatusBadge.Create(image.transform);
+                card.SelectionOutline = SpiritUi.Full("SelectionOutline", image.transform).gameObject.AddComponent<SpiritCharmSelectionGraphic>();
+                card.SelectionOutline.color = new Color32(255, 215, 119, 255);
+                card.SelectionOutline.raycastTarget = false;
+                card.SelectionOutline.gameObject.SetActive(false);
             }
             button.onClick.AddListener(() =>
             {
@@ -1756,11 +1824,12 @@ namespace Dice.Presentation
         {
             var offer = snapshot.PendingReward;
             bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
-            rewardTitle.text = handUpgrade ? "Choose a hand to upgrade" : "STAGE " + (snapshot.StageIndex + 1) + " CLEARED";
-            rewardStep.gameObject.SetActive(!handUpgrade);
-            rewardInstruction.gameObject.SetActive(!handUpgrade);
-            upcomingStage.gameObject.SetActive(!handUpgrade);
-            upgradeHandButton.gameObject.SetActive(handUpgrade);
+            rewardTitle.text = handUpgrade ? "Choose a hand to upgrade" : "Choose a charm";
+            rewardStep.gameObject.SetActive(false);
+            rewardInstruction.gameObject.SetActive(false);
+            upcomingStage.gameObject.SetActive(false);
+            upgradeHandButton.gameObject.SetActive(offer != null);
+            SpiritUi.SetButtonLabel(upgradeHandButton, handUpgrade ? "Upgrade" : "Select");
             rewardStep.text = offer == null ? "REWARDS COMPLETE" : offer.Kind == RewardKind.Modifier ?
                 "CHARM CHOICE" : "HAND UPGRADE CHOICE";
             rewardInstruction.text = offer == null ? "Preparing the next stage" : offer.Kind == RewardKind.Modifier ?
@@ -1771,20 +1840,19 @@ namespace Dice.Presentation
             {
                 var nextStage = encounter.Stages[nextStageIndex];
                 upcomingStage.text = "NEXT STAGE " + (nextStageIndex + 1) + " / " + snapshot.StageCount +
-                    " - CLEAR " + DiagnosticText.Number(nextStage.Threshold) + "\n" +
-                    nextStage.StartingHands + " hands / " + nextStage.StartingRerolls + " rerolls";
+                    " - CLEAR " + DiagnosticText.Number(nextStage.Threshold);
             }
             else upcomingStage.text = "";
             bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
             RefreshButton.gameObject.SetActive(canRefresh);
             int cost = encounter.RewardPolicy?.RefreshCost ?? 1;
             RefreshButton.interactable = canRefresh && snapshot.RewardRefreshes >= cost;
-            SpiritUi.SetButtonLabel(RefreshButton, "Refresh / cost " + cost + " / balance " + snapshot.RewardRefreshes);
+            SpiritUi.SetButtonLabel(RefreshButton, cost > 0
+                ? "Refresh (" + (snapshot.RewardRefreshes / cost) + ")" : "Refresh");
             long offerId = offer?.OfferId ?? -1;
             if (renderedOffer == offerId) return;
             renderedOffer = offerId;
-            selectedUpgradeOption = -1;
-            upgradeHandButton.interactable = false;
+            ClearRewardSelection();
             int count = offer?.Options.Count ?? 0;
             while (rewardCards.Count < count)
                 rewardCards.Add(SpiritRewardCard.Create("RewardCard" + (rewardCards.Count + 1), rewardContent,
@@ -1816,17 +1884,16 @@ namespace Dice.Presentation
             if (Busy) return;
             var offer = controls.Snapshot?.PendingReward;
             if (offer == null || offer.OfferId != offerId || renderedOffer != offerId) return;
-            if (offer.Kind == RewardKind.Modifier)
-            {
-                controls.ChooseReward(offerId, optionId);
-                return;
-            }
             foreach (var option in offer.Options)
             {
                 if (option.OptionId != optionId) continue;
                 selectedUpgradeOption = optionId;
                 for (int i = 0; i < offer.Options.Count; ++i)
-                    rewardCards[i].SetHandUpgradeSelected(offer.Options[i].OptionId == optionId);
+                {
+                    bool selected = offer.Options[i].OptionId == optionId;
+                    if (offer.Kind == RewardKind.HandUpgrade) rewardCards[i].SetHandUpgradeSelected(selected);
+                    else rewardCards[i].SetModifierSelected(selected);
+                }
                 upgradeHandButton.interactable = true;
                 return;
             }
@@ -1836,11 +1903,26 @@ namespace Dice.Presentation
         {
             if (Busy || selectedUpgradeOption < 0) return;
             var offer = controls.Snapshot?.PendingReward;
-            if (offer == null || offer.Kind != RewardKind.HandUpgrade || offer.OfferId != renderedOffer) return;
-            long optionId = selectedUpgradeOption;
+            if (offer == null || offer.OfferId != renderedOffer) return;
+            foreach (var option in offer.Options)
+            {
+                if (option.OptionId != selectedUpgradeOption) continue;
+                long optionId = selectedUpgradeOption;
+                ClearRewardSelection();
+                controls.ChooseReward(offer.OfferId, optionId);
+                return;
+            }
+        }
+
+        private void ClearRewardSelection()
+        {
             selectedUpgradeOption = -1;
             upgradeHandButton.interactable = false;
-            controls.ChooseReward(offer.OfferId, optionId);
+            foreach (var card in rewardCards)
+            {
+                card.SetModifierSelected(false);
+                card.SetHandUpgradeSelected(false);
+            }
         }
 
         private void UpdateRewardLayout()
@@ -1849,7 +1931,8 @@ namespace Dice.Presentation
             bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
             var scrollRect = (RectTransform)rewardScroll.transform;
             var layout = rewardContent.GetComponent<VerticalLayoutGroup>();
-            layout.spacing = handUpgrade ? 6 : 10;
+            layout.spacing = 6;
+            rewardScroll.vertical = handUpgrade;
             rewardsPanel.anchorMin = new Vector2(.025f, .065f);
             rewardsPanel.anchorMax = new Vector2(.975f, .80f);
             rewardsPanel.offsetMin = rewardsPanel.offsetMax = Vector2.zero;
@@ -1876,14 +1959,34 @@ namespace Dice.Presentation
             }
             else
             {
-                rewardTitle.rectTransform.anchorMin = new Vector2(0, .94f);
+                rewardTitle.rectTransform.anchorMin = new Vector2(0, 1);
                 rewardTitle.rectTransform.anchorMax = Vector2.one;
-                rewardTitle.rectTransform.offsetMin = new Vector2(12, 0);
-                rewardTitle.rectTransform.offsetMax = new Vector2(-12, 0);
-                scrollRect.anchorMin = new Vector2(.015f, .15f);
-                scrollRect.anchorMax = new Vector2(.985f, .80f);
-                scrollRect.offsetMin = new Vector2(12, 8);
-                scrollRect.offsetMax = new Vector2(-12, -8);
+                rewardTitle.rectTransform.offsetMin = new Vector2(20, -64);
+                rewardTitle.rectTransform.offsetMax = new Vector2(-20, -12);
+                scrollRect.anchorMin = Vector2.zero;
+                scrollRect.anchorMax = Vector2.one;
+                scrollRect.offsetMin = new Vector2(20, 76);
+                scrollRect.offsetMax = new Vector2(-20, -72);
+                var refreshRect = (RectTransform)RefreshButton.transform;
+                refreshRect.anchorMin = Vector2.zero;
+                refreshRect.anchorMax = new Vector2(.5f, 0);
+                refreshRect.offsetMin = new Vector2(20, 14);
+                refreshRect.offsetMax = new Vector2(-6, 66);
+                var confirmRect = (RectTransform)upgradeHandButton.transform;
+                confirmRect.anchorMin = new Vector2(.5f, 0);
+                confirmRect.anchorMax = new Vector2(1, 0);
+                confirmRect.offsetMin = new Vector2(6, 14);
+                confirmRect.offsetMax = new Vector2(-20, 66);
+                if (offer != null)
+                {
+                    float availableHeight = rewardsPanel.rect.height - 148 - layout.padding.vertical -
+                        Mathf.Max(0, offer.Options.Count - 1) * layout.spacing;
+                    float cardHeight = offer.Options.Count > 3 ? 180 :
+                        Mathf.Clamp(availableHeight / Mathf.Max(1, offer.Options.Count), 160, 180);
+                    for (int i = 0; i < offer.Options.Count; ++i)
+                        rewardCards[i].GetComponent<LayoutElement>().preferredHeight = cardHeight;
+                    rewardScroll.vertical = cardHeight * offer.Options.Count > availableHeight + .5f;
+                }
             }
         }
 
@@ -1952,7 +2055,10 @@ namespace Dice.Presentation
                 charmDetailStatusRow.gameObject.SetActive(true);
                 charmDetailsLayout.RefreshLayout();
                 foreach (var card in charmCards)
+                {
                     card.Button.GetComponent<Image>().color = card.InstanceId == selectedCharm ? new Color32(255, 232, 179, 255) : Color.white;
+                    card.SelectionOutline.gameObject.SetActive(card.InstanceId == selectedCharm);
+                }
                 return;
             }
             charmTitle.text = "No charms yet";

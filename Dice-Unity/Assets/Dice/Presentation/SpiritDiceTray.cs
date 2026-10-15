@@ -31,6 +31,7 @@ namespace Dice.Presentation
         private RenderTexture texture;
         private Vector3[] supportPoints;
         private int selectionMask;
+        private int scoringHighlightMask;
         private int rollingMask;
         private int presentationVersion;
         private SceneLightingState sceneLighting;
@@ -43,6 +44,7 @@ namespace Dice.Presentation
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public bool IsRolling { get; private set; }
+        public int ScoringHighlightMask => scoringHighlightMask;
 
         public void SetSceneLighting(SceneLightingState state)
         {
@@ -240,9 +242,23 @@ namespace Dice.Presentation
         {
             Initialize();
             selectionMask = mask & DiceValues.AllMask;
+            RefreshHighlights();
+        }
+
+        public void SetScoringHighlight(int mask)
+        {
+            scoringHighlightMask = mask & DiceValues.AllMask;
+            // Clearing feedback during scene shutdown must not recreate the shared render scene.
+            if (renderRoot == null) return;
+            RefreshHighlights();
+        }
+
+        private void RefreshHighlights()
+        {
             for (int index = 0; index < DiceValues.Count; index++)
             {
-                bool selected = (selectionMask & (1 << index)) != 0;
+                if (dice[index] == null || selectionOutlines[index] == null || selectionFrames[index] == null) continue;
+                bool selected = ((selectionMask | scoringHighlightMask) & (1 << index)) != 0;
                 selectionOutlines[index].SetActive(selected);
                 selectionFrames[index].SetActive(selected);
                 if ((rollingMask & (1 << index)) == 0) dice[index].localPosition = SlotPosition(index);
@@ -804,6 +820,8 @@ namespace Dice.Presentation
             renderRoot = null;
             renderCamera = null;
             sharedScene = null;
+            selectionMask = 0;
+            scoringHighlightMask = 0;
             rollingMask = 0;
             IsRolling = false;
         }

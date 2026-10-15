@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Dice.Engine;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,7 +37,6 @@ namespace Dice.Presentation
         private Action<long, long> choose;
         private long offerId;
         private long optionId;
-        private float measuredWidth = -1;
 
         public Button Button { get; private set; }
 
@@ -69,17 +69,18 @@ namespace Dice.Presentation
             card.Button = button;
             button.onClick.AddListener(() => card.choose(card.offerId, card.optionId));
 
-            card.title = SpiritUi.Heading("Title", card.transform, "", 18, Vector2.zero, Vector2.one);
+            card.title = SpiritUi.Heading("Title", card.transform, "", 20, Vector2.zero, Vector2.one);
             card.title.resizeTextMinSize = 14;
-            card.condition = SpiritUi.Label("Condition", card.transform, "", 15, Vector2.zero, Vector2.one);
+            card.condition = SpiritUi.Label("Condition", card.transform, "", 20, Vector2.zero, Vector2.one);
             card.condition.resizeTextForBestFit = true;
-            card.condition.resizeTextMinSize = 13;
-            card.condition.resizeTextMaxSize = 15;
-            card.effects = SpiritUi.Label("Effects", card.transform, "", 16, Vector2.zero, Vector2.one,
+            card.condition.resizeTextMinSize = 15;
+            card.condition.resizeTextMaxSize = 20;
+            card.condition.supportRichText = true;
+            card.effects = SpiritUi.Label("Effects", card.transform, "", 18, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleLeft, SpiritUi.GetTheme(parent).amber);
             card.effects.resizeTextForBestFit = true;
             card.effects.resizeTextMinSize = 14;
-            card.effects.resizeTextMaxSize = 16;
+            card.effects.resizeTextMaxSize = 18;
             card.status = SpiritUi.Label("Status", card.transform, "", 13, Vector2.zero, Vector2.one,
                 TextAnchor.MiddleRight, SpiritUi.GetTheme(parent).muted);
             card.status.resizeTextForBestFit = true;
@@ -97,8 +98,8 @@ namespace Dice.Presentation
 
             var iconRect = SpiritUi.Rect("CharmIcon", card.transform, new Vector2(0, 1), new Vector2(0, 1));
             iconRect.pivot = new Vector2(0, 1);
-            iconRect.anchoredPosition = new Vector2(26, -24);
-            iconRect.sizeDelta = new Vector2(54, 54);
+            iconRect.anchoredPosition = new Vector2(16, -14);
+            iconRect.sizeDelta = new Vector2(42, 42);
             card.charmIcon = iconRect.gameObject.AddComponent<Image>();
             card.charmIcon.preserveAspect = true;
             card.charmIcon.raycastTarget = false;
@@ -146,23 +147,57 @@ namespace Dice.Presentation
             GetComponent<LayoutElement>().preferredHeight = 140;
             SetUpgradeVisibility(false);
             condition.alignment = TextAnchor.MiddleLeft;
+            title.resizeTextMaxSize = 20;
+            condition.resizeTextMinSize = 15;
+            condition.resizeTextMaxSize = 20;
+            effects.resizeTextMaxSize = 18;
             condition.color = SpiritUi.GetTheme(transform).cream;
             title.color = SpiritUi.GetTheme(transform).cream;
-            status.gameObject.SetActive(true);
+            status.text = "";
+            status.gameObject.SetActive(false);
             charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
             charmIcon.gameObject.SetActive(charmIcon.sprite != null);
             charmSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
             charmSigil.gameObject.SetActive(charmIcon.sprite == null);
             title.text = SpiritModifierPresentation.GetName(definition);
-            condition.text = SpiritModifierPresentation.GetConditionText(definition);
-            effects.text = SpiritModifierPresentation.GetEffectText(definition);
-            status.text = SpiritModifierPresentation.GetTimingText(definition);
-            Place(title, 90, 24, 14, 22);
-            Place(condition, 90, 24, 37, 48);
-            Place(effects, 24, 24, 87, 22);
-            Place(status, 24, 24, 111, 17);
-            measuredWidth = -1;
+            condition.text = GetModifierDescription(definition, SpiritUi.GetTheme(transform).amber);
+            effects.text = "<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>";
+            effects.supportRichText = true;
             UpdateModifierLayout();
+            SetModifierSelected(false);
+        }
+
+        public static string GetModifierDescription(ModifierDefinition definition, Color highlight)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            string timing;
+            switch (definition.Phase)
+            {
+                case ModifierPhase.InitialRoll: timing = "On initial roll"; break;
+                case ModifierPhase.PlayerReroll: timing = "When rerolling"; break;
+                case ModifierPhase.PlayHand: timing = "When playing a hand"; break;
+                default: timing = DiagnosticText.Humanize(definition.Phase.ToString()); break;
+            }
+            string color = ColorUtility.ToHtmlStringRGB(highlight);
+            string description = SpiritModifierPresentation.GetConditionText(definition);
+            description = Regex.Replace(description,
+                @"\b(?:\d+|High Die|Two Pair|Pair|Straight|rerolled|rerolls?|hands?|initial roll|previous played hand)\b",
+                match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
+            string text = "<b><color=#" + color + ">" + timing + "</color></b>: " + description;
+            if (definition.ActivationLimit == ModifierActivationLimit.OncePerStage)
+                text += " <b>Once per stage.</b>";
+            else if (definition.ActivationLimit == ModifierActivationLimit.OncePerHand && definition.Phase != ModifierPhase.PlayHand)
+                text += " <b>Once per hand.</b>";
+            return text;
+        }
+
+        public void SetModifierSelected(bool selected)
+        {
+            if (handUpgradeMode) return;
+            var theme = SpiritUi.GetTheme(transform);
+            title.color = selected ? theme.amber : theme.cream;
+            background.color = selected ? modifierColor * new Color(1.12f, 1.08f, .82f, 1) : modifierColor;
+            upgradeSelectionMarker.gameObject.SetActive(selected);
             ((SpiritUiButtonVisual)Button).CaptureContent();
         }
 
@@ -196,6 +231,10 @@ namespace Dice.Presentation
             handPattern.Category = hand.Category;
             title.text = DiagnosticText.Humanize(hand.Category.ToString());
             condition.alignment = TextAnchor.MiddleRight;
+            title.resizeTextMaxSize = 18;
+            condition.resizeTextMinSize = 13;
+            condition.resizeTextMaxSize = 15;
+            effects.resizeTextMaxSize = 16;
             status.text = "";
             status.gameObject.SetActive(false);
             Place(title, 14, 125, 10, 26);
@@ -238,33 +277,11 @@ namespace Dice.Presentation
 
         private void UpdateModifierLayout()
         {
-            float width = ((RectTransform)transform).rect.width;
-            if (width <= 114 || Mathf.Approximately(width, measuredWidth)) return;
-            measuredWidth = width;
-            // Measure at the authored font sizes so wrapped rules remain readable on narrow screens.
-            float titleHeight = TextHeight(title, width - 114, 22);
-            float conditionHeight = TextHeight(condition, width - 114, 48);
-            float effectsHeight = TextHeight(effects, width - 48, 22);
-            float statusHeight = TextHeight(status, width - 48, 17);
-            float conditionTop = 14 + titleHeight + 1;
-            float effectsTop = conditionTop + conditionHeight + 2;
-            float statusTop = effectsTop + effectsHeight + 2;
-            Place(title, 90, 24, 14, titleHeight);
-            Place(condition, 90, 24, conditionTop, conditionHeight);
-            Place(effects, 24, 24, effectsTop, effectsHeight);
-            Place(status, 24, 24, statusTop, statusHeight);
-            var layout = GetComponent<LayoutElement>();
-            float height = Mathf.Max(140, statusTop + statusHeight + 12);
-            if (!Mathf.Approximately(layout.preferredHeight, height)) layout.preferredHeight = height;
-        }
-
-        private static float TextHeight(Text label, float width, float minimum)
-        {
-            var settings = label.GetGenerationSettings(new Vector2(width, 0));
-            settings.resizeTextForBestFit = false;
-            settings.verticalOverflow = VerticalWrapMode.Overflow;
-            return Mathf.Max(minimum, Mathf.Ceil(label.cachedTextGeneratorForLayout.GetPreferredHeight(label.text, settings) /
-                label.pixelsPerUnit) + 2);
+            float height = ((RectTransform)transform).rect.height;
+            if (height <= 0) height = GetComponent<LayoutElement>().preferredHeight;
+            Place(title, 68, 16, 10, 25);
+            Place(effects, 68, 16, 35, 25);
+            Place(condition, 16, 16, 64, Mathf.Max(36, height - 76));
         }
 
         private static void Place(Text label, float left, float right, float top, float height, float min = 0, float max = 1)

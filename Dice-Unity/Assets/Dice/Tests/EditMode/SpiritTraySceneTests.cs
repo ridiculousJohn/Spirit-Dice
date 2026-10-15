@@ -329,6 +329,104 @@ namespace Dice.Tests
             return dice;
         }
 
+        [Test]
+        public void ReadyTrayFiltersRollsPreservesResourceOnlyActivationsAndRefreshesDescriptions()
+        {
+            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
+            var preview = session.PreviewHandResolution();
+            var before = session.Snapshot;
+            history.SynchronizeReady(preview.Score.ModifierContributions, catalog);
+            Assert.That(history.Count, Is.EqualTo(3));
+            Assert.That(history.Contributions.Select(value => value.Phase), Is.All.EqualTo(ModifierPhase.PlayHand));
+            Assert.That(history.Contributions[2].BaseScore, Is.Zero);
+            Assert.That(history.Contributions[2].Multiplier, Is.Zero);
+            Assert.That(history.Contributions[2].Rerolls, Is.EqualTo(2));
+            Assert.That(session.Snapshot.Revision, Is.EqualTo(before.Revision));
+            Assert.That(session.Snapshot.RerollsRemaining, Is.EqualTo(before.RerollsRemaining));
+
+            Transform die = history.Renderer.GetDieTransform(0);
+            history.SynchronizeReady(session.PreviewHandResolution().Score.ModifierContributions, catalog);
+            Assert.That(history.Renderer.GetDieTransform(0), Is.SameAs(die));
+            ModifierContribution selected = default;
+            history.TokenSelected += (contribution, definition) => selected = contribution;
+            history.SynchronizeReady(new[] { history.Contributions[2] }, catalog);
+            Assert.That(history.Count, Is.EqualTo(1));
+            history.Content.GetComponentInChildren<Button>(true).onClick.Invoke();
+            Assert.That(selected.InstanceId, Is.EqualTo(preview.Score.ModifierContributions.Last().InstanceId));
+            history.SynchronizeReady(Array.Empty<ModifierContribution>(), catalog);
+            Assert.That(history.Count, Is.Zero);
+            Assert.That(history.Renderer.Count, Is.Zero);
+        }
+
+        [Test]
+        public void ReadyTrayHighlightsExactInstancesAndOccurrencesAndRevealsOverflow()
+        {
+            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
+            var ready = session.PreviewHandResolution().Score.ModifierContributions
+                .Where(value => value.Phase == ModifierPhase.PlayHand).ToArray();
+            var repeated = Enumerable.Repeat(ready[0], history.Renderer.Capacity + 2).ToList();
+            repeated.Insert(1, ready[1]);
+            history.SynchronizeReady(repeated, catalog);
+            Canvas.ForceUpdateCanvases();
+            Color bone = history.Renderer.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor");
+            Vector3 resting = history.Renderer.GetDieTransform(1).localPosition;
+            Assert.That(history.SetResolving(ready[1]), Is.True);
+            Assert.That(history.ResolvingIndex, Is.EqualTo(1));
+            Assert.That(history.Renderer.GetDieTransform(1).localPosition.y, Is.GreaterThan(resting.y));
+            Assert.That(history.Renderer.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), Is.Not.EqualTo(bone));
+            Assert.That(history.Renderer.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(bone));
+            Assert.That(history.SetResolving(ready[0], history.Renderer.Capacity + 1), Is.True);
+            Assert.That(history.ResolvingIndex, Is.EqualTo(repeated.Count - 1));
+            Assert.That(history.Scroll.horizontalNormalizedPosition, Is.EqualTo(1).Within(.0001f));
+            Assert.That(history.Renderer.GetDieViewportRect(repeated.Count - 1).width, Is.GreaterThan(0));
+            history.ClearResolving();
+            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
+            Assert.That(history.Renderer.GetDieTransform(1).localPosition.y, Is.EqualTo(resting.y));
+            Assert.That(history.Renderer.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(bone));
+            Assert.That(history.SetResolving(ready[2]), Is.False);
+            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ClearingReadyHighlightAfterSceneHierarchyDestructionDoesNotRebuildPresentation(bool destroyWholeScene)
+        {
+            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
+            history.SynchronizeReady(session.PreviewHandResolution().Score.ModifierContributions, catalog);
+            Assert.That(history.SetResolving(history.Contributions[0]), Is.True);
+            var renderer = history.Renderer;
+            Transform renderRoot = renderer.RenderRoot;
+            if (destroyWholeScene) UnityEngine.Object.DestroyImmediate(renderRoot.gameObject);
+            else UnityEngine.Object.DestroyImmediate(renderer.GetDieTransform(0).gameObject);
+
+            Assert.DoesNotThrow(() => history.ClearResolving());
+            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
+            Assert.That(renderer.RenderRoot, destroyWholeScene ? Is.Null : Is.SameAs(renderRoot));
+            Assert.That(renderer.GetDieTransform(0) == null, Is.True);
+        }
+
+        private SpiritModifierHistoryTray ReadyTray(out MechanicalCatalog catalog, out EncounterSession session)
+        {
+            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
+            var canvasRoot = Root("Ready tray canvas", typeof(RectTransform)).GetComponent<RectTransform>();
+            canvasRoot.sizeDelta = new Vector2(700, 350);
+            canvasRoot.gameObject.AddComponent<Canvas>();
+            var history = Root("Ready tray").AddComponent<SpiritModifierHistoryTray>();
+            history.Configure(scene.Presentation, scene);
+            history.Build(canvasRoot);
+            var roll = new ModifierDefinition("test.ready.roll", "test.ready.roll", ModifierPhase.InitialRoll,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+            var score = new ModifierDefinition("test.ready.score", "test.ready.score", ModifierPhase.PlayHand,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 2) });
+            var grant = new ModifierDefinition("test.ready.grant", "test.ready.grant", ModifierPhase.PlayHand,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, 2) });
+            var encounter = new EncounterDefinition("test.ready", new[] { new StageDefinition(1000000, 3, 3) },
+                startingModifiers: new[] { roll.Id, score.Id, score.Id, grant.Id });
+            catalog = new MechanicalCatalog("test.ready", TestContent.Hands(), new[] { encounter }, new[] { roll, score, grant });
+            session = EncounterSession.CreateEncounter(catalog, encounter.Id, 60);
+            return history;
+        }
+
         private SpiritModifierHistoryRenderer AddHistory(SpiritTrayScene scene)
         {
             var history = Root("Shared history consumer").AddComponent<SpiritModifierHistoryRenderer>();

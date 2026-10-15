@@ -75,10 +75,15 @@ namespace Dice.Tests
                     {
                         Assert.That(Find<Text>(view, "SelectionLabel").text,
                             Does.Contain(SpiritModifierPresentation.GetName(definition)));
-                        int index = view.ModifierHistory.Count - 1;
-                        Assert.That(index, Is.GreaterThanOrEqualTo(0));
-                        Assert.That(view.ModifierHistory.Renderer.GetDieRenderer(index).sharedMaterial.GetTexture("_FaceIcon"),
-                            Is.SameAs(icon.sprite.texture), "History and counter cues must use the same artwork.");
+                        if (definition.Phase == ModifierPhase.PlayHand)
+                        {
+                            int index = view.ModifierHistory.ResolvingIndex;
+                            Assert.That(index, Is.GreaterThanOrEqualTo(0));
+                            Assert.That(view.ModifierHistory.Renderer.GetDieRenderer(index).sharedMaterial.GetTexture("_FaceIcon"),
+                                Is.SameAs(icon.sprite.texture), "Ready tray and counter cues must use the same artwork.");
+                        }
+                        else Assert.That(view.ModifierHistory.Count, Is.Zero,
+                            "Roll activations use transient cues instead of ready tiles.");
                         if (!observed && cueGroup.alpha > .95f)
                         {
                             AssertActionCue(view, actionCue, definition);
@@ -183,6 +188,81 @@ namespace Dice.Tests
         }
 
         [UnityTest]
+        public IEnumerator EveryCharmRuleFitsCompactCardsAtNarrowPortraitWidth()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
+            yield return null;
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var view = controller.GetComponent<SpiritEncounterView>();
+            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = new Vector2(443, 912);
+            portrait.anchoredPosition = Vector2.zero;
+            var card = SpiritRewardCard.Create("CompactCatalogReward", portrait, (offer, option) => { });
+            var cardRect = (RectTransform)card.transform;
+            cardRect.anchorMin = cardRect.anchorMax = new Vector2(.5f, .5f);
+            cardRect.sizeDelta = new Vector2(443 * .95f - 48, 160);
+            foreach (var definition in controller.Catalog.Modifiers)
+            {
+                card.RenderModifier(definition, 1, 1);
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                foreach (string name in new[] { "Title", "Effects", "Condition" })
+                {
+                    var label = Find<Text>(card, name);
+                    AssertCompleteRewardLabelInsideBounds(label, definition.Id);
+                    var corners = new Vector3[4];
+                    label.rectTransform.GetWorldCorners(corners);
+                    foreach (var corner in corners)
+                        Assert.That(cardRect.rect.Contains(cardRect.InverseTransformPoint(corner)), Is.True,
+                            definition.Id + "/" + name + " exceeds the compact card.");
+                }
+            }
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator LargerCharmOffersKeepReadableRowsAndAllowScrolling()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
+            yield return null;
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var view = controller.GetComponent<SpiritEncounterView>();
+            var standard = controller.Catalog;
+            var definitions = standard.Modifiers.Where(definition => definition.RewardEligible &&
+                    definition.Availability.Access == ModifierAccess.Starter &&
+                    definition.Availability.Scope == ModifierAvailabilityScope.Global)
+                .GroupBy(definition => definition.FamilyId).Select(family => family.First()).Take(5).ToArray();
+            Assert.That(definitions.Length, Is.EqualTo(5));
+            var pool = new ModifierRewardPoolDefinition("pool.large-reward", definitions.Select(definition => definition.Id));
+            var policy = new RewardPolicyDefinition("rewards.large-reward",
+                new[] { new ModifierRewardLayout(Enumerable.Repeat(pool.Id, 5)) }, 1, 1, 1, 3,
+                new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
+            var encounter = new EncounterDefinition("encounter.large-reward",
+                new[] { new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards), new StageDefinition(100000, 3, 3) },
+                rewardPolicy: policy);
+            var catalog = new MechanicalCatalog("large-reward.v1", standard.Hands, new[] { encounter },
+                definitions, new[] { pool });
+            controller.Initialize(catalog, encounter.Id, 60, SavePath());
+            controller.PlayHand();
+            yield return Wait(controller);
+            Canvas.ForceUpdateCanvases();
+            var scroll = Find<ScrollRect>(view, "RewardScroll");
+            Assert.That(controller.Snapshot.PendingReward.Options.Count, Is.EqualTo(5));
+            Assert.That(scroll.vertical, Is.True);
+            Assert.That(scroll.content.rect.height, Is.GreaterThan(scroll.viewport.rect.height));
+            for (int i = 1; i <= 5; ++i)
+            {
+                var card = Find<Button>(view, "RewardCard" + i);
+                Assert.That(((RectTransform)card.transform).rect.height, Is.EqualTo(180f).Within(.1f));
+            }
+            Assert.That(Find<Button>(view, "UpgradeHandButton").IsInteractable(), Is.False);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator RewardAndOwnedCharmCardsShareAuthoredArtworkAndDescriptions()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
@@ -214,12 +294,18 @@ namespace Dice.Tests
                 Assert.That(image.gameObject.activeInHierarchy, Is.True);
                 Assert.That(image.sprite, Is.SameAs(SpiritModifierIcons.GetSprite(definition)));
                 Assert.That(Find<Text>(card, "Title").text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
-                Assert.That(Find<Text>(card, "Condition").text, Does.Contain(SpiritModifierPresentation.GetConditionText(definition)));
+                Assert.That(Find<Text>(card, "Condition").text,
+                    Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition,
+                        card.GetComponentInParent<SpiritUiContext>().Theme.amber)));
             }
             yield return Capture("rewards");
             AssertCardTextVisible(view);
             var chosen = catalog.GetModifier(offer.Options[0].DefinitionId);
+            var beforeCharmSelection = controller.Snapshot;
             Find<Button>(view, "RewardCard1").onClick.Invoke();
+            Assert.That(controller.Snapshot, Is.SameAs(beforeCharmSelection));
+            Assert.That(Find<Button>(view, "UpgradeHandButton").IsInteractable(), Is.True);
+            Find<Button>(view, "UpgradeHandButton").onClick.Invoke();
             yield return Wait(controller);
             Assert.That(controller.Snapshot.PendingReward.Kind, Is.EqualTo(RewardKind.HandUpgrade));
             Assert.That(Find<Image>(Find<Button>(view, "RewardCard1"), "CharmIcon").gameObject.activeSelf, Is.False);
@@ -326,6 +412,33 @@ namespace Dice.Tests
                 if (label.name != "Status" || string.IsNullOrWhiteSpace(label.text)) continue;
                 Assert.That(label.cachedTextGenerator.vertexCount, Is.GreaterThanOrEqualTo(4),
                     "Charm timing and status must fit within the card: " + label.text);
+            }
+        }
+
+        private static void AssertCompleteRewardLabelInsideBounds(Text label, string definitionId)
+        {
+            string context = definitionId + "/" + label.name;
+            var rect = label.rectTransform.rect;
+            var generated = label.cachedTextGenerator;
+            Assert.That(generated.Populate(label.text, label.GetGenerationSettings(rect.size)), Is.True, context);
+            Assert.That(generated.vertexCount, Is.GreaterThan(4), context + " has no visible glyphs.");
+            float unitsPerPixel = 1f / label.pixelsPerUnit;
+            // TextGenerator appends a dummy quad after the rendered glyph vertices.
+            for (int index = 0; index < generated.verts.Count - 4; ++index)
+            {
+                Vector2 position = generated.verts[index].position * unitsPerPixel;
+                Assert.That(position.x, Is.InRange(rect.xMin - 3f, rect.xMax + 3f), context + " exceeds its horizontal bounds.");
+                Assert.That(position.y, Is.InRange(rect.yMin - 3f, rect.yMax + 3f), context + " exceeds its vertical bounds.");
+            }
+            var settings = label.GetGenerationSettings(rect.size);
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            settings.fontSize = label.resizeTextForBestFit ? generated.fontSizeUsedForBestFit : label.fontSize;
+            settings.resizeTextForBestFit = false;
+            using (var complete = new TextGenerator())
+            {
+                Assert.That(complete.Populate(label.text, settings), Is.True, context);
+                Assert.That(generated.vertexCount, Is.EqualTo(complete.vertexCount),
+                    context + " truncates glyphs or whole lines: " + label.text);
             }
         }
 

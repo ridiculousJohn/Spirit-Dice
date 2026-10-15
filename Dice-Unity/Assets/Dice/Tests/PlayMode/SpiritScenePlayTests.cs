@@ -56,9 +56,14 @@ namespace Dice.Tests
 
             card.RenderModifier(controller.Catalog.GetModifier("modifier.play_hand.no_extreme_faces.base_score"), 12, 22);
             Assert.That(CardLabel(card.Button, "Title").text, Is.EqualTo("Quiet Grove / Base"));
-            Assert.That(CardLabel(card.Button, "Condition").text, Is.EqualTo("No die shows 1 or 6."));
-            Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("+15 base score"));
-            Assert.That(CardLabel(card.Button, "Status").text, Is.EqualTo("When your hand is scored / Once per hand"));
+            Assert.That(CardLabel(card.Button, "Condition").text, Does.Contain("When playing a hand").And.Contain("No die shows"));
+            Assert.That(CardLabel(card.Button, "Condition").text, Does.Not.Contain("Once per hand"));
+            Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("<b>+15 base score</b>"));
+            Assert.That(CardLabel(card.Button, "Status").gameObject.activeSelf, Is.False);
+            card.SetModifierSelected(true);
+            Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.True);
+            card.SetModifierSelected(false);
+            Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.False);
             Assert.That(pattern.gameObject.activeSelf, Is.False);
             foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues" })
                 Assert.That(CardLabel(card.Button, name).gameObject.activeSelf, Is.False, name);
@@ -72,7 +77,7 @@ namespace Dice.Tests
                 yield return null;
                 cardRect.sizeDelta = new Vector2(376, card.GetComponent<LayoutElement>().preferredHeight);
                 Canvas.ForceUpdateCanvases();
-                foreach (string name in new[] { "Title", "Condition", "Effects", "Status" })
+                foreach (string name in new[] { "Title", "Condition", "Effects" })
                 {
                     var label = CardLabel(card.Button, name);
                     try { AssertCompleteLabelInsideBounds(label); }
@@ -269,23 +274,45 @@ namespace Dice.Tests
             yield return WaitForPresentation(controller, view, "modifier-reward");
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier));
             Assert.That(controller.Preview, Is.Null);
-            yield return AssertCardTextVisible(view, "RewardCard", "Effects", "Status");
+            yield return AssertCardTextVisible(view, "RewardCard", "Effects", "Condition");
             AssertModifierRewards(controller, view);
-            yield return AssertRewardPortraitBounds(view);
+            yield return AssertRewardPortraitBounds(view, "charm-choice");
 
             var offer = controller.Snapshot.PendingReward;
             var firstRewardCard = FindButton(view, "RewardCard1");
             long previousOfferId = offer.OfferId;
+            var beforeCharmSelection = controller.Snapshot;
+            ClickThroughEventSystem(view, "RewardCard1");
+            Assert.That(controller.Snapshot, Is.SameAs(beforeCharmSelection));
+            AssertModifierRewards(controller, view, 0);
             Click(view, "RefreshRewardsButton");
             AssertSnapshot(expected.Execute(new RefreshModifierOfferAction(offer.OfferId), expected.Snapshot.Revision).Snapshot,
                 controller.Snapshot);
             yield return WaitForPresentation(controller, view, "modifier-refreshed");
-            yield return AssertCardTextVisible(view, "RewardCard", "Effects", "Status");
+            yield return AssertCardTextVisible(view, "RewardCard", "Effects", "Condition");
             offer = controller.Snapshot.PendingReward;
             Assert.That(offer.OfferId, Is.Not.EqualTo(previousOfferId));
             Assert.That(FindButton(view, "RewardCard1"), Is.SameAs(firstRewardCard));
             AssertModifierRewards(controller, view);
+            var selectCharmButton = FindButton(view, "UpgradeHandButton");
+            var refreshedOfferSnapshot = controller.Snapshot;
+            selectCharmButton.onClick.Invoke();
+            Assert.That(controller.Snapshot, Is.SameAs(refreshedOfferSnapshot));
+            ClickThroughEventSystem(view, "RewardCard2");
+            AssertModifierRewards(controller, view, 1);
+            Assert.That(controller.Snapshot, Is.SameAs(refreshedOfferSnapshot));
+            controller.Save();
+            controller.Load();
+            yield return null;
+            AssertModifierRewards(controller, view);
+            AssertSnapshot(expected.Snapshot, controller.Snapshot);
+            var loadedOfferSnapshot = controller.Snapshot;
+            selectCharmButton.onClick.Invoke();
+            Assert.That(controller.Snapshot, Is.SameAs(loadedOfferSnapshot));
             Click(view, "RewardCard1");
+            Assert.That(controller.Snapshot, Is.SameAs(loadedOfferSnapshot));
+            AssertModifierRewards(controller, view, 0);
+            ClickThroughEventSystem(view, "UpgradeHandButton");
             AssertSnapshot(expected.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId),
                 expected.Snapshot.Revision).Snapshot, controller.Snapshot);
             yield return WaitForPresentation(controller, view, "hand-upgrade");
@@ -502,22 +529,29 @@ namespace Dice.Tests
             Assert.That(File.ReadAllText(savePath), Is.EqualTo(saved));
         }
 
-        private static void AssertModifierRewards(SpiritEncounterController controller, SpiritEncounterView view)
+        private static void AssertModifierRewards(SpiritEncounterController controller, SpiritEncounterView view,
+            int selectedIndex = -1)
         {
             var offer = controller.Snapshot.PendingReward;
-            Assert.That(FindLabel(view, "RewardStep").text, Is.EqualTo("CHARM CHOICE"));
+            Assert.That(FindLabel(view, "RewardTitle").text, Is.EqualTo("Choose a charm"));
             foreach (string name in new[] { "RewardStep", "RewardInstruction", "UpcomingStage" })
-                Assert.That(FindLabel(view, name).gameObject.activeInHierarchy, Is.True, name);
-            Assert.That(FindButton(view, "UpgradeHandButton").gameObject.activeInHierarchy, Is.False);
+                Assert.That(FindLabel(view, name).gameObject.activeInHierarchy, Is.False, name);
+            var selectButton = FindButton(view, "UpgradeHandButton");
+            Assert.That(selectButton.gameObject.activeInHierarchy, Is.True);
+            Assert.That(selectButton.GetComponentInChildren<Text>().text, Is.EqualTo("Select"));
+            Assert.That(selectButton.IsInteractable(), Is.EqualTo(selectedIndex >= 0));
             for (int index = 0; index < offer.Options.Count; ++index)
             {
                 var card = FindButton(view, "RewardCard" + (index + 1));
                 Assert.That(card.GetComponent<SpiritRewardCard>(), Is.Not.Null);
                 var definition = controller.Catalog.GetModifier(offer.Options[index].DefinitionId);
                 Assert.That(CardLabel(card, "Title").text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
-                Assert.That(CardLabel(card, "Condition").text, Is.EqualTo(SpiritModifierPresentation.GetConditionText(definition)));
-                Assert.That(CardLabel(card, "Effects").text, Is.EqualTo(SpiritModifierPresentation.GetEffectText(definition)));
-                Assert.That(CardLabel(card, "Status").text, Is.EqualTo(SpiritModifierPresentation.GetTimingText(definition)));
+                var context = card.GetComponentInParent<SpiritUiContext>();
+                Assert.That(CardLabel(card, "Condition").text,
+                    Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition, context.Theme.amber)));
+                Assert.That(CardLabel(card, "Effects").text, Is.EqualTo("<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>"));
+                Assert.That(CardLabel(card, "Status").gameObject.activeSelf, Is.False);
+                Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.EqualTo(index == selectedIndex));
                 foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues" })
                     Assert.That(CardLabel(card, name).gameObject.activeSelf, Is.False, card.name + "/" + name);
             }
@@ -599,17 +633,30 @@ namespace Dice.Tests
                     Assert.That(rewardScroll, Is.Not.Null);
                     Assert.That(rewardScroll.content.rect.height,
                         Is.LessThanOrEqualTo(rewardScroll.viewport.rect.height + 1f),
-                        "All offered upgrades must fit without scrolling at portrait size " + size);
+                        "All offered rewards must fit without scrolling at portrait size " + size);
+                    bool modifierOffer = view.RefreshButton.gameObject.activeInHierarchy;
+                    Assert.That(rewardScroll.vertical, Is.EqualTo(!modifierOffer));
                     foreach (var card in view.GetComponentsInChildren<SpiritRewardCard>())
                     {
                         var rect = (RectTransform)card.transform;
-                        Assert.That(rect.rect.height, Is.LessThanOrEqualTo(110f), card.name + " must remain compact.");
+                        Assert.That(rect.rect.height, Is.LessThanOrEqualTo(modifierOffer ? 180f : 110f),
+                            card.name + " must remain compact.");
+                        if (modifierOffer) Assert.That(rect.rect.height, Is.GreaterThanOrEqualTo(160f));
                         AssertRectInsideBounds(rect, rewardScroll.viewport);
                         foreach (var graphic in card.GetComponentsInChildren<Graphic>())
                             AssertRectInsideBounds(graphic.rectTransform, rect);
                     }
                     AssertRectInsideBounds((RectTransform)upgradeButton.transform, portrait);
                     AssertCompleteLabelInsideBounds(upgradeButton.GetComponentInChildren<Text>());
+                    if (modifierOffer)
+                    {
+                        var refreshRect = (RectTransform)view.RefreshButton.transform;
+                        var confirmRect = (RectTransform)upgradeButton.transform;
+                        Assert.That(refreshRect.rect.height, Is.EqualTo(52f).Within(.1f));
+                        Assert.That(refreshRect.position.y, Is.EqualTo(confirmRect.position.y).Within(.1f));
+                        AssertRectInsideBounds(refreshRect, portrait);
+                        AssertCompleteLabelInsideBounds(view.RefreshButton.GetComponentInChildren<Text>());
+                    }
                     if (captureName != null)
                         yield return CaptureIfRequested(captureName + "-" + (int)size.x + "x" + (int)size.y);
                 }
@@ -879,8 +926,20 @@ namespace Dice.Tests
 
         private static void AssertVisibleDice(SpiritEncounterView view, DiceValues values)
         {
+            var faceNormals = new[] { Vector3.forward, Vector3.up, Vector3.right,
+                Vector3.left, Vector3.down, Vector3.back };
             for (int index = 0; index < DiceValues.Count; ++index)
-                Assert.That(view.DiceTray.GetVisibleFace(index), Is.EqualTo(values[index]), "Die " + index);
+            {
+                var slot = view.TrayScene.Geometry.DiceSlots[index];
+                var die = slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index);
+                Assert.That(die, Is.Not.Null, "Die " + index);
+                Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
+                Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + index + " result face");
+                var camera = view.DiceTray.RenderCamera;
+                Vector3 towardCamera = camera.orthographic ? -camera.transform.forward
+                    : (camera.transform.position - die.position).normalized;
+                Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0f), "Die " + index + " result visibility");
+            }
         }
 
         private static void AssertRerollPlates(SpiritEncounterView view, int selectedMask)

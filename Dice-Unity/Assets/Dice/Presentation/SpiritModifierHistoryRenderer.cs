@@ -30,6 +30,7 @@ namespace Dice.Presentation
         private Material shadowMaterial;
         private Shader shader;
         private float normalizedScroll;
+        private int resolvingIndex = -1;
         private SceneLightingState sceneLighting;
         private SpiritTrayScene sharedScene;
         private Transform contentRoot;
@@ -47,6 +48,7 @@ namespace Dice.Presentation
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public Transform TrayRoot => trayRoot;
         public int Count => entries.Count;
+        public int ResolvingIndex => resolvingIndex;
 
         public void SetSceneLighting(SceneLightingState state)
         {
@@ -65,6 +67,7 @@ namespace Dice.Presentation
             internal Material Material;
             internal float Elapsed;
             internal float SupportHeight;
+            internal Color BoneColor;
         }
 
         public void Configure(SpiritTrayPresentationAsset presentation)
@@ -161,6 +164,7 @@ namespace Dice.Presentation
             }
             entries.Clear();
             normalizedScroll = 0;
+            resolvingIndex = -1;
         }
 
         public void Add(ModifierContribution contribution, ModifierDefinition definition, bool animate)
@@ -187,7 +191,8 @@ namespace Dice.Presentation
                 Renderer = AddMesh(die.gameObject, bodyMesh, material),
                 Shadow = AddMesh(Child("Modifier Contact Shadow " + entries.Count, contentRoot), shadowMesh, shadowMaterial),
                 Material = material,
-                Elapsed = animate ? 0 : ArrivalDuration
+                Elapsed = animate ? 0 : ArrivalDuration,
+                BoneColor = material.GetColor("_BaseColor")
             };
             entries.Add(entry);
             Position(entry, entries.Count - 1, true);
@@ -199,6 +204,20 @@ namespace Dice.Presentation
             if (float.IsNaN(normalized) || float.IsInfinity(normalized)) throw new ArgumentOutOfRangeException(nameof(normalized));
             normalizedScroll = Mathf.Clamp01(normalized);
             for (int i = 0; i < entries.Count; ++i) Position(entries[i], i, false);
+        }
+
+        public void SetResolving(int index)
+        {
+            if (index < -1 || index >= entries.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            resolvingIndex = index;
+            if (renderRoot == null || contentRoot == null) return;
+            for (int i = 0; i < entries.Count; ++i)
+            {
+                Entry entry = entries[i];
+                if (entry.Die == null || entry.Shadow == null || entry.Material == null) continue;
+                entry.Material.SetColor("_BaseColor", i == index ? new Color(1, .74f, .32f) : entry.BoneColor);
+                Position(entry, i, false);
+            }
         }
 
         public void Advance(float seconds)
@@ -274,7 +293,7 @@ namespace Dice.Presentation
             float overflow = Mathf.Max(0, (entries.Count - Capacity) * ContentSlotSpacing);
             float x = -(Capacity - 1) * ContentSlotSpacing * .5f + index * ContentSlotSpacing - overflow * normalizedScroll;
             x -= .20f * remaining;
-            float lift = .08f * remaining;
+            float lift = .08f * remaining + (index == resolvingIndex ? ContentDieSize * .12f : 0);
             entry.Die.localPosition = new Vector3(x, SurfaceHeight + entry.SupportHeight + lift, 0);
             entry.Shadow.transform.localPosition = new Vector3(x, SurfaceHeight + .003f, 0);
             entry.Shadow.transform.localScale = new Vector3(ContentDieSize * (1.08f + lift), 1, ContentDieSize * (1.08f + lift));
@@ -422,6 +441,7 @@ namespace Dice.Presentation
             ownedResources.Clear();
             sigils.Clear();
             entries.Clear();
+            resolvingIndex = -1;
             texture = null;
             renderRoot = null;
             renderCamera = null;

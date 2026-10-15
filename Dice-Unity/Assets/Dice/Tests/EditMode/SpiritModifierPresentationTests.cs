@@ -251,6 +251,26 @@ namespace Dice.Tests
             Assert.That(SpiritModifierPresentation.GetTimingText(changed), Is.EqualTo(expected));
         }
 
+        [TestCase(ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand, "On initial roll", "Once per hand.")]
+        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand, "When rerolling", "Once per hand.")]
+        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand, "When playing a hand", "")]
+        [TestCase(ModifierPhase.PlayHand, ModifierActivationLimit.OncePerStage, "When playing a hand", "Once per stage.")]
+        [TestCase(ModifierPhase.PlayerReroll, ModifierActivationLimit.Unlimited, "When rerolling", "")]
+        public void RewardDescriptionIncludesTimingAndOnlyMeaningfulLimits(ModifierPhase phase,
+            ModifierActivationLimit limit, string timing, string expectedLimit)
+        {
+            var original = Catalog().GetModifier("modifier.play_hand.contains_face.multiplier");
+            var changed = new ModifierDefinition(original.Id, original.FamilyId, phase, original.Condition, original.Effects, limit);
+            string text = SpiritRewardCard.GetModifierDescription(changed, Color.red);
+            Assert.That(text, Does.StartWith("<b><color=#FF0000>" + timing + "</color></b>: "));
+            Assert.That(text, Does.Contain("<b><color=#FF0000>" + ((ContainsFaceCondition)original.Condition).Parameter + "</color></b>"));
+            string plain = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "");
+            Assert.That(plain, Does.Contain(SpiritModifierPresentation.GetConditionText(changed)));
+            if (expectedLimit.Length > 0) Assert.That(plain, Does.EndWith(expectedLimit));
+            else Assert.That(plain, Does.Not.Contain("Once per").And.Not.Contain("Every time"));
+            Assert.That(plain, Does.Not.Contain("\n"));
+        }
+
         [Test]
         public void DefinitionRegistrationOverridesArtworkAndRemovalRestoresItWithoutChangingOtherCharms()
         {

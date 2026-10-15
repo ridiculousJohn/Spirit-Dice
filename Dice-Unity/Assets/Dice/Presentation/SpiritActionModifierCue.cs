@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Identifies the action responsible for the modifier currently being presented. */
+    /** Marks the triggering action and any action resources granted by a modifier. */
     public sealed class SpiritActionModifierCue : MonoBehaviour
     {
         private sealed class Cue
@@ -20,12 +20,15 @@ namespace Dice.Presentation
         private Cue reroll;
         private Cue play;
         private Cue active;
+        private Cue secondary;
         private float elapsed;
         private float duration;
 
         public ModifierPhase? ActivePhase { get; private set; }
         public Sprite ActiveSprite { get; private set; }
         public bool IsVisible => active != null && active.Group.gameObject.activeInHierarchy;
+        public bool IsRerollVisible => reroll != null && reroll.Group.gameObject.activeInHierarchy;
+        public bool IsPlayVisible => play != null && play.Group.gameObject.activeInHierarchy;
 
         public void Initialize(Button rerollButton, Button playButton)
         {
@@ -42,23 +45,41 @@ namespace Dice.Presentation
         }
 
         public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0)
+            => Show(sprite, phase, displayDuration, sigilSeed, phase != ModifierPhase.PlayHand, phase == ModifierPhase.PlayHand);
+
+        public void Show(ModifierDefinition definition, float displayDuration, bool showReroll, bool showPlay)
+        {
+            if (definition == null) { Clear(); return; }
+            Show(SpiritModifierIcons.GetSprite(definition), definition.Phase, displayDuration,
+                SpiritModifierIcons.GetSigilSeed(definition), showReroll, showPlay);
+        }
+
+        private void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed,
+            bool showReroll, bool showPlay)
         {
             Clear();
-            if (reroll == null || play == null) return;
-            active = phase == ModifierPhase.PlayHand ? play : reroll;
+            if (reroll == null || play == null || (!showReroll && !showPlay)) return;
+            active = showReroll ? reroll : play;
+            secondary = showReroll && showPlay ? play : null;
             ActivePhase = phase;
             ActiveSprite = sprite;
-            active.Artwork.sprite = ActiveSprite;
-            active.Artwork.gameObject.SetActive(ActiveSprite != null);
-            active.Sigil.Seed = sigilSeed;
-            active.Sigil.gameObject.SetActive(ActiveSprite == null);
-            if (active.HostSigil != null) active.HostSigil.gameObject.SetActive(false);
-            active.Group.gameObject.SetActive(true);
-            active.Group.alpha = 0;
-            active.LabelAlpha = active.Label.alpha;
-            active.Group.transform.localScale = Vector3.one;
+            Prepare(active, sprite, sigilSeed);
+            if (secondary != null) Prepare(secondary, sprite, sigilSeed);
             duration = Mathf.Max(.01f, displayDuration);
             elapsed = 0;
+        }
+
+        private static void Prepare(Cue cue, Sprite sprite, uint sigilSeed)
+        {
+            cue.Artwork.sprite = sprite;
+            cue.Artwork.gameObject.SetActive(sprite != null);
+            cue.Sigil.Seed = sigilSeed;
+            cue.Sigil.gameObject.SetActive(sprite == null);
+            if (cue.HostSigil != null) cue.HostSigil.gameObject.SetActive(false);
+            cue.Group.gameObject.SetActive(true);
+            cue.Group.alpha = 0;
+            cue.LabelAlpha = cue.Label.alpha;
+            cue.Group.transform.localScale = Vector3.one;
         }
 
         public void ConfigureHost(SpiritHostPresentationAsset presentation)
@@ -88,9 +109,11 @@ namespace Dice.Presentation
         public void Clear()
         {
             if (active != null && active.Label != null) active.Label.alpha = active.LabelAlpha;
+            if (secondary != null && secondary.Label != null) secondary.Label.alpha = secondary.LabelAlpha;
             if (reroll != null) reroll.Group.gameObject.SetActive(false);
             if (play != null) play.Group.gameObject.SetActive(false);
             active = null;
+            secondary = null;
             ActivePhase = null;
             ActiveSprite = null;
         }
@@ -101,10 +124,17 @@ namespace Dice.Presentation
             elapsed += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(elapsed / duration);
             float fadeIn = Mathf.SmoothStep(0, 1, elapsed / Mathf.Min(.1f, duration * .2f));
-            active.Group.alpha = fadeIn * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, 1, progress)));
-            active.Label.alpha = active.LabelAlpha * (1 - active.Group.alpha);
-            active.Group.transform.localScale = Vector3.one * (1 + .1f * Mathf.Sin(progress * Mathf.PI));
+            float alpha = fadeIn * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, 1, progress)));
+            UpdateCue(active, alpha, progress);
+            if (secondary != null) UpdateCue(secondary, alpha, progress);
             if (elapsed >= duration) Clear();
+        }
+
+        private static void UpdateCue(Cue cue, float alpha, float progress)
+        {
+            cue.Group.alpha = alpha;
+            cue.Label.alpha = cue.LabelAlpha * (1 - alpha);
+            cue.Group.transform.localScale = Vector3.one * (1 + .1f * Mathf.Sin(progress * Mathf.PI));
         }
 
         private void OnDisable() => Clear();

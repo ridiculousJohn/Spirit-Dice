@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** The current hand's modifier activations form an ordered, scrollable tray beneath the dice. */
+    /** Ready PlayHand activations form an ordered, scrollable tray beneath the dice. */
     public sealed class SpiritModifierHistoryTray : MonoBehaviour
     {
         public const float TokenSize = 40;
@@ -34,6 +34,7 @@ namespace Dice.Presentation
         public RectTransform Content => content;
         public ScrollRect Scroll => scroll;
         public SpiritModifierHistoryRenderer Renderer { get; private set; }
+        public int ResolvingIndex => Renderer != null ? Renderer.ResolvingIndex : -1;
         public event Action<ModifierContribution, ModifierDefinition> TokenSelected;
 
         private sealed class Token
@@ -217,6 +218,54 @@ namespace Dice.Presentation
                 ModifierContribution contribution = snapshot.ModifierContributions[i];
                 Add(contribution, catalog.GetModifier(contribution.DefinitionId), false);
             }
+        }
+
+        public void SynchronizeReady(IReadOnlyList<ModifierContribution> previewContributions, MechanicalCatalog catalog)
+        {
+            if (previewContributions == null) throw new ArgumentNullException(nameof(previewContributions));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+            if (root == null) throw new InvalidOperationException("Build the modifier tray before synchronizing activations.");
+
+            var ready = new List<ModifierContribution>();
+            foreach (ModifierContribution contribution in previewContributions)
+                if (contribution.Phase == ModifierPhase.PlayHand) ready.Add(contribution);
+            bool matches = contributions.Count == ready.Count;
+            for (int i = 0; matches && i < ready.Count; ++i)
+                matches = Matches(contributions[i], ready[i]);
+            if (matches) return;
+
+            Clear();
+            foreach (ModifierContribution contribution in ready)
+                Add(contribution, catalog.GetModifier(contribution.DefinitionId), false);
+        }
+
+        /** Repeated equal contributions select their occurrence within the same instance. */
+        public bool SetResolving(ModifierContribution contribution, int occurrence = 0)
+        {
+            if (occurrence < 0) throw new ArgumentOutOfRangeException(nameof(occurrence));
+            for (int index = 0; index < contributions.Count; ++index)
+            {
+                if (!Matches(contributions[index], contribution) || occurrence-- > 0) continue;
+                Renderer.SetResolving(index);
+                Reveal(index);
+                return true;
+            }
+            ClearResolving();
+            return false;
+        }
+
+        public void ClearResolving() => Renderer?.SetResolving(-1);
+
+        private void Reveal(int index)
+        {
+            int capacity = Renderer.Capacity;
+            int overflow = contributions.Count - capacity;
+            if (overflow <= 0) return;
+            float first = scroll.horizontalNormalizedPosition * overflow;
+            if (index >= first && index < first + capacity) return;
+            scroll.StopMovement();
+            scroll.horizontalNormalizedPosition = Mathf.Clamp01((index < first ? index : index - capacity + 1f) / overflow);
+            Renderer.SetScroll(scroll.horizontalNormalizedPosition);
         }
 
         private static bool Matches(ModifierContribution first, ModifierContribution second)

@@ -55,6 +55,60 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void ScoringHighlightsAndRerollSelectionRemainIndependent()
+        {
+            tray.SetSelection(1 << 0);
+            tray.SetScoringHighlight((1 << 1) | (1 << 3));
+            AssertHighlightVisuals((1 << 0) | (1 << 1) | (1 << 3));
+
+            tray.SetScoringHighlight(0);
+            AssertHighlightVisuals(1 << 0);
+
+            tray.SetScoringHighlight((1 << 1) | (1 << 3));
+            tray.SetSelection(0);
+            Assert.That(tray.ScoringHighlightMask, Is.EqualTo((1 << 1) | (1 << 3)));
+            AssertHighlightVisuals((1 << 1) | (1 << 3));
+            tray.SetScoringHighlight(0);
+            AssertHighlightVisuals(0);
+        }
+
+        [Test]
+        public void ScoringHighlightsUseOnlyDiceBitsAndClearOnRelease()
+        {
+            tray.SetScoringHighlight(-1);
+            Assert.That(tray.ScoringHighlightMask, Is.EqualTo(DiceValues.AllMask));
+            AssertHighlightVisuals(DiceValues.AllMask);
+            tray.SetSelection(1 << 2);
+            tray.ReleasePresentation();
+            Assert.That(tray.ScoringHighlightMask, Is.Zero);
+            tray.Initialize();
+            AssertHighlightVisuals(0);
+        }
+
+        [Test]
+        public void ClearingScoringFeedbackDoesNotRecreateReleasedRenderObjects()
+        {
+            tray.SetScoringHighlight(DiceValues.AllMask);
+            tray.ReleasePresentation();
+            tray.SetScoringHighlight(0);
+            Assert.That(tray.ScoringHighlightMask, Is.Zero);
+            Assert.That(tray.RenderRoot == null, Is.True);
+        }
+
+        private void AssertHighlightVisuals(int mask)
+        {
+            for (int index = 0; index < DiceValues.Count; ++index)
+            {
+                bool highlighted = (mask & (1 << index)) != 0;
+                Transform die = tray.RenderRoot.Find("Spirit Die " + index);
+                Assert.That(die.Find("Die " + index + " Selection Outline").gameObject.activeSelf,
+                    Is.EqualTo(highlighted), "Outline " + index);
+                Assert.That(tray.RenderRoot.Find("Bay " + index + " Selection Frame").gameObject.activeSelf,
+                    Is.EqualTo(highlighted), "Frame " + index);
+            }
+        }
+
+        [Test]
         public void FinishingAnInterruptedAnimationSettlesSelectedDice()
         {
             tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
