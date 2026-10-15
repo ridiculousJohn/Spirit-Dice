@@ -27,7 +27,7 @@ MonoBehaviour:
       sceneLighting: {fileID: 11400000, guid: "2ced84039759489a83409d353eaa81c6", type: 2}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
-      duration: 2.5
+      duration: 0
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
       foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
@@ -44,13 +44,13 @@ MonoBehaviour:
     - id: "lantern"
       kind: 2
       title: "Around the flame"
-      text: "Small moths circle the lantern. One leaves the light, doubles back, and turns toward the cart."
+      text: "Small moths dart around the lantern. One leaves the light, doubles back, and turns toward the cart."
       continueLabel: "Follow its movement"
       background: {fileID: 0}
       sceneLighting: {fileID: 0}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
-      duration: 2.5
+      duration: 0
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
       foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
@@ -73,6 +73,7 @@ MonoBehaviour:
       sceneLighting: {fileID: 0}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
+      autoAdvance: 1
       duration: 7
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
@@ -96,7 +97,7 @@ MonoBehaviour:
       sceneLighting: {fileID: 0}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
-      duration: 1
+      duration: 0
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
       foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
@@ -119,7 +120,7 @@ MonoBehaviour:
       sceneLighting: {fileID: 0}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
-      duration: 1
+      duration: 0
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
       foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
@@ -142,7 +143,7 @@ MonoBehaviour:
       sceneLighting: {fileID: 0}
       foreground: {fileID: 0}
       audioCue: {fileID: 0}
-      duration: 1
+      duration: 0
       motionFrom: {x: 0, y: 0}
       motionTo: {x: 0, y: 0}
       foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
