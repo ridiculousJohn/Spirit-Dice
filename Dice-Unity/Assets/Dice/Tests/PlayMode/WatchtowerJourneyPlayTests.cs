@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -114,8 +115,9 @@ namespace Dice.Tests
 
             var rule = journey.TablePresentation.RulePresentations.Single();
             Assert.That(rule.RuleId, Is.EqualTo("rule.distinct_faces_multiplier"));
-            Assert.That(rule.Description, Is.EqualTo("Each distinct face in your scored hand adds +1 multiplier."));
-            Assert.That(Find<Text>("JourneyRuleText").text, Does.Contain(rule.DisplayName));
+            Assert.That(Regex.Replace(rule.Description, "<[^>]*>", ""),
+                Is.EqualTo("Each distinct face in your scored hand adds +1 multiplier."));
+            Assert.That(Find<Text>("JourneyRuleName").text, Is.EqualTo(rule.DisplayName));
             Assert.That(Find<Text>("JourneyRuleText").text, Does.Contain(rule.Description));
             Click("JourneyAcceptButton");
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
@@ -164,7 +166,7 @@ namespace Dice.Tests
             Assert.That(view.MultiplierLabel.text, Is.EqualTo(DiagnosticText.Number(scored.Score.Multiplier)));
             Assert.That(scored.Score.Multiplier, Is.EqualTo(scored.Score.CategoryMultiplier +
                 scored.Score.UpgradeMultiplier + scored.Score.ModifierMultiplier + scored.Score.EncounterRuleMultiplier));
-            Assert.That(Find<Text>("ScoreBreakdown").text, Is.EqualTo(DiagnosticText.Number(scored.Score.BaseScore) +
+            Assert.That(Find<Text>("ScoreBreakdown").text, Is.EqualTo("STEP 4 OF 4 - " + DiagnosticText.Number(scored.Score.BaseScore) +
                 " x " + DiagnosticText.Number(scored.Score.Multiplier)));
             yield return CheckPortraitSizes("scored-table");
             yield return WaitForPresentation();

@@ -92,7 +92,7 @@ namespace Dice.Tests
 
             var rule = journey.TablePresentation.RulePresentations.Single();
             Assert.That(rule.RuleId, Is.EqualTo(FirstRerollFreeRuleDefinition.StableId));
-            Assert.That(Find<Text>("JourneyRuleText").text, Does.Contain(rule.DisplayName));
+            Assert.That(Find<Text>("JourneyRuleName").text, Is.EqualTo(rule.DisplayName));
             Assert.That(Find<Text>("JourneyRuleText").text, Does.Contain(rule.Description));
             Assert.That(Find<Text>("JourneyRuleText").text.ToLowerInvariant(), Does.Contain("first reroll"));
             Assert.That(Find<Text>("JourneyRuleText").text.ToLowerInvariant(), Does.Contain("hand"));
@@ -119,8 +119,8 @@ namespace Dice.Tests
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 Assert.That(controller.Snapshot.CurrentDice[index], Is.EqualTo(expected.Snapshot.CurrentDice[index]));
-                Assert.That(view.DiceTray.GetVisibleFace(index), Is.EqualTo(expected.Snapshot.CurrentDice[index]));
             }
+            AssertVisibleDice(expected.Snapshot.CurrentDice);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).VisitedEncounterIds,
                 Does.Contain(journey.EncounterId));
             LogAssert.NoUnexpectedReceived();
@@ -212,8 +212,8 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision));
             Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(saved.RerollsRemaining));
             Assert.That(controller.Snapshot.RerollsSpentOnHand, Is.EqualTo(saved.RerollsSpentOnHand));
-            for (int index = 0; index < DiceValues.Count; ++index)
-                Assert.That(view.DiceTray.GetVisibleFace(index), Is.EqualTo(saved.CurrentDice[index]));
+            AssertVisibleDice(new DiceValues(saved.CurrentDice[0], saved.CurrentDice[1], saved.CurrentDice[2],
+                saved.CurrentDice[3], saved.CurrentDice[4]));
             controller.Save();
             Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(controller.SavePath)),
                 Is.EqualTo(EncounterSaveCodec.Serialize(saved)), "Resume/load must preserve both random stream states.");
@@ -357,6 +357,226 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        [UnityTest]
+        public IEnumerator AuthoredRuleInvitationsFitPortraitSizesBeforeCreatingAnEncounter()
+        {
+            int resolutions = 0;
+            controller.Resolved += _ => ++resolutions;
+            var controls = new InvitationControls(controller.JourneyCatalog);
+            foreach (var authored in controller.JourneyCatalog.Entries)
+            {
+                var invitation = CloneForInvitation(authored);
+                controls.Show(invitation, invitation.Beats.Count - 1);
+                view.BindJourney(controls);
+                yield return WaitForJourney();
+                foreach (var size in InvitationSizes())
+                {
+                    yield return SetPortraitSize(size);
+                    AssertRuleInvitation(invitation);
+                    AssertNoEngine(resolutions);
+                    AssertGameplayVisible(false);
+                    yield return Capture("rules-" + authored.EncounterId + "-" + size.x + "x" + size.y);
+                }
+            }
+            Assert.That(controller.JourneyCatalog.Entries.Count, Is.EqualTo(3));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator RuleRowsResizeForMultipleRulesAndRestoreOrdinaryBeatsWithoutRules()
+        {
+            var authored = controller.JourneyCatalog.Entries[0];
+            var noRules = CloneForInvitation(authored);
+            var noRuleTable = UnityEngine.Object.Instantiate(authored.TablePresentation);
+            SetField(noRuleTable, "rulePresentations", Array.Empty<EncounterRulePresentationAsset>());
+            SetField(noRules, "tablePresentation", noRuleTable);
+            var multiple = CloneForInvitation(authored);
+            var multipleTable = UnityEngine.Object.Instantiate(authored.TablePresentation);
+            SetField(multipleTable, "rulePresentations", new[]
+            {
+                authored.TablePresentation.RulePresentations.Single(),
+                controller.JourneyCatalog.Entries.Single(value => value.EncounterId == "encounter.moth.crossroads")
+                    .TablePresentation.RulePresentations.Single()
+            });
+            SetField(multiple, "tablePresentation", multipleTable);
+            var controls = new InvitationControls(controller.JourneyCatalog);
+            controls.Show(multiple, multiple.Beats.Count - 1);
+            view.BindJourney(controls);
+            yield return WaitForJourney();
+
+            foreach (var size in InvitationSizes())
+            {
+                controls.Show(multiple, multiple.Beats.Count - 1);
+                yield return WaitForJourney();
+                yield return SetPortraitSize(size);
+                AssertRuleInvitation(multiple);
+                yield return Capture("rules-multiple-" + size.x + "x" + size.y);
+                controls.Show(noRules, noRules.Beats.Count - 1);
+                yield return WaitForJourney();
+                AssertOrdinaryNarrative(noRules.Beats.Last());
+                Assert.That(Find<Text>("JourneyRuleName2").gameObject.activeInHierarchy, Is.False);
+                yield return Capture("rules-none-" + size.x + "x" + size.y);
+                controls.Show(multiple, 0);
+                yield return WaitForJourney();
+                AssertOrdinaryNarrative(multiple.Beats[0]);
+                Assert.That(Find<Button>("JourneyAdvanceButton").gameObject.activeInHierarchy, Is.True);
+                Assert.That(Find<Button>("JourneyAcceptButton").gameObject.activeInHierarchy, Is.False);
+                AssertNoEngine(0);
+            }
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        private static Vector2[] InvitationSizes() => new[]
+        {
+            new Vector2(443, 912), new Vector2(443, 960), new Vector2(540, 960)
+        };
+
+        private static EncounterJourneyAsset CloneForInvitation(EncounterJourneyAsset authored)
+        {
+            var clone = UnityEngine.Object.Instantiate(authored);
+            foreach (var beat in clone.Beats) SetField(beat, "duration", 0f);
+            return clone;
+        }
+
+        private IEnumerator SetPortraitSize(Vector2 size)
+        {
+            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            Assert.That(portrait, Is.Not.Null);
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = size;
+            portrait.anchoredPosition = Vector2.zero;
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+        }
+
+        private void AssertRuleInvitation(EncounterJourneyAsset journey)
+        {
+            var narrative = Find<RectTransform>("JourneyNarrative");
+            var body = Find<Text>("JourneyBody");
+            var heading = Find<Text>("JourneyRuleHeading");
+            var scope = Find<Text>("JourneyRuleScope");
+            Assert.That(Find<Text>("JourneyTitle").gameObject.activeInHierarchy, Is.False,
+                "The rule name supplies the invitation title.");
+            Assert.That(body.text, Is.EqualTo(journey.Beats.Last().Text));
+            Assert.That(body.fontStyle, Is.EqualTo(FontStyle.Italic));
+            Assert.That(body.color, Is.EqualTo(heading.color));
+            Assert.That(heading.text, Is.EqualTo(journey.TablePresentation.RulePresentations.Count == 1
+                ? "ENCOUNTER RULE" : "ENCOUNTER RULES"));
+            Assert.That(scope.text, Is.EqualTo("Active throughout this encounter."));
+            var ordered = new List<Rect> { BoundsIn(narrative, body.rectTransform), BoundsIn(narrative, heading.rectTransform) };
+            for (int index = 0; index < journey.TablePresentation.RulePresentations.Count; ++index)
+            {
+                string suffix = index == 0 ? "" : (index + 1).ToString();
+                var rule = journey.TablePresentation.RulePresentations[index];
+                var name = Find<Text>("JourneyRuleName" + suffix);
+                var effect = Find<Text>("JourneyRuleText" + suffix);
+                var icon = Find<Graphic>("JourneyRuleIcon" + suffix);
+                Assert.That(name.text, Is.EqualTo(rule.DisplayName));
+                Assert.That(effect.text, Is.EqualTo(rule.Description));
+                Assert.That(icon.gameObject.activeInHierarchy, Is.True, icon.name);
+                Assert.That(icon.color.a, Is.GreaterThan(0), icon.name);
+                var iconBounds = BoundsIn(narrative, icon.rectTransform);
+                var nameBounds = BoundsIn(narrative, name.rectTransform);
+                Assert.That(iconBounds.width, Is.GreaterThan(0), icon.name);
+                Assert.That(iconBounds.height, Is.GreaterThan(0), icon.name);
+                Assert.That(iconBounds.xMax, Is.LessThanOrEqualTo(nameBounds.xMin + 1),
+                    "The rule icon must leave room for its name.");
+                ordered.Add(Rect.MinMaxRect(iconBounds.xMin, Mathf.Min(iconBounds.yMin, nameBounds.yMin),
+                    nameBounds.xMax, Mathf.Max(iconBounds.yMax, nameBounds.yMax)));
+                ordered.Add(BoundsIn(narrative, effect.rectTransform));
+            }
+            ordered.Add(BoundsIn(narrative, scope.rectTransform));
+            for (int index = 1; index < ordered.Count; ++index)
+                Assert.That(ordered[index].yMax, Is.LessThanOrEqualTo(ordered[index - 1].yMin + 1),
+                    "Narration, rule heading, names, effects, and scope must not overlap.");
+            foreach (var label in narrative.GetComponentsInChildren<Text>())
+            {
+                if (string.IsNullOrWhiteSpace(label.text)) continue;
+                AssertCompleteText(label);
+                AssertInside(narrative, label.rectTransform);
+            }
+            for (int index = 0; index < journey.TablePresentation.RulePresentations.Count; ++index)
+                AssertInside(narrative, Find<Graphic>("JourneyRuleIcon" + (index == 0 ? "" : (index + 1).ToString())).rectTransform);
+            var sequence = (RectTransform)narrative.parent;
+            var panelBounds = BoundsIn(sequence, narrative);
+            var acceptBounds = BoundsIn(sequence, Find<Button>("JourneyAcceptButton").transform as RectTransform);
+            Assert.That(panelBounds.yMin - acceptBounds.yMax, Is.InRange(0, 16),
+                "The measured narrative must sit immediately above Accept.");
+            AssertInside(sequence, narrative);
+            Assert.That(Find<Button>("JourneyAcceptButton").IsInteractable(), Is.True);
+        }
+
+        private void AssertOrdinaryNarrative(EncounterJourneyBeat beat)
+        {
+            var title = Find<Text>("JourneyTitle");
+            var body = Find<Text>("JourneyBody");
+            Assert.That(title.gameObject.activeInHierarchy, Is.True);
+            Assert.That(title.text, Is.EqualTo(beat.Title));
+            Assert.That(body.text, Is.EqualTo(beat.Text));
+            Assert.That(body.fontStyle, Is.EqualTo(FontStyle.Normal));
+            foreach (string name in new[] { "JourneyRuleHeading", "JourneyRuleName", "JourneyRuleText", "JourneyRuleScope" })
+                Assert.That(Find<Text>(name).gameObject.activeInHierarchy, Is.False, name);
+            Assert.That(Find<Graphic>("JourneyRuleIcon").gameObject.activeInHierarchy, Is.False);
+            AssertCompleteText(title);
+            AssertCompleteText(body);
+        }
+
+        private static Rect BoundsIn(RectTransform parent, RectTransform child)
+        {
+            var corners = new Vector3[4];
+            child.GetWorldCorners(corners);
+            Vector2 min = parent.InverseTransformPoint(corners[0]);
+            Vector2 max = min;
+            foreach (var corner in corners)
+            {
+                Vector2 local = parent.InverseTransformPoint(corner);
+                min = Vector2.Min(min, local);
+                max = Vector2.Max(max, local);
+            }
+            return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        private static void AssertInside(RectTransform parent, RectTransform child)
+        {
+            var bounds = BoundsIn(parent, child);
+            Assert.That(bounds.xMin, Is.GreaterThanOrEqualTo(parent.rect.xMin - 1), child.name);
+            Assert.That(bounds.xMax, Is.LessThanOrEqualTo(parent.rect.xMax + 1), child.name);
+            Assert.That(bounds.yMin, Is.GreaterThanOrEqualTo(parent.rect.yMin - 1), child.name);
+            Assert.That(bounds.yMax, Is.LessThanOrEqualTo(parent.rect.yMax + 1), child.name);
+        }
+
+        private sealed class InvitationControls : IEncounterJourneyControls
+        {
+            public EncounterJourneyPhase JourneyPhase => EncounterJourneyPhase.Sequence;
+            public EncounterJourneyCatalogAsset JourneyCatalog { get; }
+            public EncounterJourneyAsset SelectedJourney { get; private set; }
+            public int BeatIndex { get; private set; }
+            public bool CanSkipIntro => false;
+            public bool HasActiveEncounter => false;
+            public bool CanResume => false;
+            public string JourneyStatus => "";
+            public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
+            public event Action JourneyChanged;
+
+            public InvitationControls(EncounterJourneyCatalogAsset catalog) => JourneyCatalog = catalog;
+
+            public void Show(EncounterJourneyAsset journey, int index)
+            {
+                SelectedJourney = journey;
+                BeatIndex = index;
+                JourneyChanged?.Invoke();
+            }
+
+            public void SelectEncounter(string encounterId) { }
+            public void AdvanceJourney() { }
+            public void SkipIntro() { }
+            public void AcceptEncounter() { }
+            public void ReturnToInvestigation() { }
+            public void ResumeEncounter() { }
+        }
+
         private void InstallSyntheticCatalog()
         {
             var losing = new EncounterDefinition("encounter.journey-test.archive",
@@ -436,6 +656,24 @@ namespace Dice.Tests
             Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(controller), Is.Null, "The narrative must not create an engine or consume its random streams.");
             Assert.That(File.Exists(controller.SavePath), Is.False);
+        }
+
+        private void AssertVisibleDice(DiceValues values)
+        {
+            var faceNormals = new[] { Vector3.forward, Vector3.up, Vector3.right,
+                Vector3.left, Vector3.down, Vector3.back };
+            for (int index = 0; index < DiceValues.Count; ++index)
+            {
+                var slot = view.TrayScene.Geometry.DiceSlots[index];
+                var die = slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index);
+                Assert.That(die, Is.Not.Null, "Die " + index);
+                Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
+                Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + index + " result face");
+                var camera = view.DiceTray.RenderCamera;
+                Vector3 towardCamera = camera.orthographic ? -camera.transform.forward
+                    : (camera.transform.position - die.position).normalized;
+                Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0f), "Die " + index + " result visibility");
+            }
         }
 
         private void AssertGameplayVisible(bool visible)

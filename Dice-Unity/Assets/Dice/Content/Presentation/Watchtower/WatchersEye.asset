@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule.distinct_faces_multiplier
   activationPhase: 2
   displayName: The Watcher's Eye
-  description: Each distinct face in your scored hand adds +1 multiplier.
+  description: Each distinct face in your scored hand adds <b>+1 multiplier</b>.
   availableText: Distinct faces add multiplier
   usedText: Distinct faces add multiplier
   icon: {fileID: 0}
