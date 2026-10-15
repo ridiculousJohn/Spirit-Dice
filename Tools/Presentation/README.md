@@ -55,6 +55,18 @@ python Tools/Presentation/author-spirit-presentations.py --write-assets
 
 This writes both hosts and all nine meshes under `Dice-Unity/Assets/Dice/Content/Presentation`. It does not generate or replace artwork. Preserve the existing `.meta` files and review the resulting diff.
 
+## Encounter outcomes
+
+Each journey has inline `victoryPresentation`, `defeatPresentation`, and `abandonPresentation` configurations. Set `enabled` on each outcome that should run a farewell. Choose `hostState`, a nonnegative `holdDuration` before the host gesture, a nonnegative `fadeDuration` afterward, and `showDialogue` to wait for Continue before the summary. Optional `artwork` and `audioCue` provide an ending illustration and a cue at farewell start. Missing or disabled configurations show the summary immediately.
+
+Host motion duration comes from the selected state's authored sequences, independently of the hold and fade. `Victory` (4), `Defeat` (5), and `Farewell` (6) use normalized progress through `SetState(state, progress)`, like Arrival. These outcome sequences cannot loop. `Advance` keeps continuous smoke effects moving while holding the sampled pose; `EntryWeight` blends from an interrupted gesture. A host without the selected sequence contributes zero motion time.
+
+The Lantern Keeper has a 1.4-second victory nod, a gentler 1.2-second defeat tilt, and a subdued 0.5-second farewell. Gold and cyan silhouettes lead the physical head by 0.15 seconds, then settle into the idle pose. `LastLanternJourney.asset` demonstrates enabled configurations for all three outcomes. Reauthor these curves with `author-spirit-presentations.py` into a scratch directory first; copy only the intended sequence blocks when preserving manually edited production curves or layers.
+
+The Watcher uses a deliberate victory head tilt, a quieter opposite tilt on defeat, and a brief farewell settle. Its spectral head anticipates the physical turn while the feet remain planted. `WatchtowerJourney.asset` supplies its outcome timing and highlights `encounter.moth.crossroads` after a first victory. Both hosts use the same ending view and authoring script.
+
+Farewell dialogue uses the journey's `victoryText`, `defeatText`, or `abandonText`. The summary follows the optional dialogue and presents the score, victory clue, and earned unlocks; defeat offers Retry and Return to the trail. `followUpEncounterIds` identifies existing journey IDs to highlight after victory, such as the lantern journey's `encounter.owl.watchtower`. These are trail recommendations: all encounter cards remain selectable, and selecting a highlighted encounter clears its highlight. Keep follow-up IDs unique, different from the source journey, and present in the investigation catalog.
+
 ## Scene light response maps
 
 `author-scene-light-response.py` creates a linear data texture from authored triangles and feathered source masks. It does not read or edit scene artwork. Red contains normalized surface distance; green identifies the visible source and glow. Blue is unused. PNG coordinates in the JSON use a top-left origin. Import these maps with sRGB disabled; the lighting preview loads them as linear data automatically.
