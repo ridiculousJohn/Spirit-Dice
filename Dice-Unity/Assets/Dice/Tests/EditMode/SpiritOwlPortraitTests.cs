@@ -74,6 +74,128 @@ namespace Dice.Tests
             Assert.That(HeadDisplacement("Physical Rest"), Is.GreaterThan(1f));
         }
 
+        [TestCase(SpiritPresentationState.Victory, 1.5f)]
+        [TestCase(SpiritPresentationState.Defeat, 1.2f)]
+        [TestCase(SpiritPresentationState.Farewell, .5f)]
+        public void OutcomeHeadMotionLeadsWithTheSpiritBeforeThePhysicalAcknowledgment(
+            SpiritPresentationState state, float duration)
+        {
+            Assert.That(portrait.GetDuration(state), Is.EqualTo(duration));
+            portrait.SetState(state, .1f / duration);
+            Assert.That(Mathf.Abs(Picture("Spirit Rest").Weights[2]), Is.GreaterThan(.005f));
+            Assert.That(Picture("Physical Rest").Weights[2], Is.Zero.Within(.0001f));
+            Assert.That(Picture("Spirit Rest").color.a, Is.GreaterThan(.03f));
+            portrait.SetState(state, .4f / duration);
+            Assert.That(Mathf.Abs(Picture("Physical Rest").Weights[2]), Is.GreaterThan(.01f));
+            Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
+            Assert.That(Picture("Physical Arrival").color.a, Is.Zero);
+            Assert.That(Picture("Physical Settle").color.a, Is.Zero);
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeSamplingIsNormalizedDeterministicAndDoesNotAdvanceItself(SpiritPresentationState state)
+        {
+            portrait.SetState(state, .4f);
+            Vector2 head = ArtworkPoint("Physical Rest", new Vector2(.53f, .85f));
+            float alpha = Picture("Spirit Rest").color.a;
+            portrait.Advance(10f);
+            Assert.That(portrait.Progress, Is.EqualTo(.4f));
+            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
+            Assert.That(Picture("Spirit Rest").color.a, Is.EqualTo(alpha));
+            portrait.SetState(state, .9f);
+            portrait.SetState(state, .4f);
+            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
+            portrait.ResetPose();
+            portrait.SetState(state, .4f);
+            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
+        }
+
+        [Test]
+        public void OutcomeEntryPreservesIdleAndInterruptedReactionDeformation(
+            [Values(SpiritPresentationState.Victory, SpiritPresentationState.Defeat, SpiritPresentationState.Farewell)]
+            SpiritPresentationState state, [Values(false, true)] bool reacting)
+        {
+            portrait.Advance(3.85f);
+            if (reacting)
+            {
+                portrait.React();
+                portrait.Advance(.4f);
+            }
+            float[][] weights = presentation.Layers.Select(layer => Picture(layer.Id).Weights.ToArray()).ToArray();
+            float[] alphas = presentation.Layers.Select(layer => Picture(layer.Id).color.a).ToArray();
+            Vector2 head = ArtworkPoint("Physical Rest", new Vector2(.53f, .85f));
+
+            portrait.SetState(state, 0f);
+
+            for (int i = 0; i < presentation.Layers.Length; ++i)
+            {
+                var picture = Picture(presentation.Layers[i].Id);
+                Assert.That(picture.color.a, Is.EqualTo(alphas[i]).Within(.0001f), picture.name);
+                for (int channel = 0; channel < weights[i].Length; ++channel)
+                    Assert.That(picture.Weights[channel], Is.EqualTo(weights[i][channel]).Within(.0001f), picture.name);
+            }
+            Assert.That(Vector2.Distance(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), head), Is.LessThan(.001f));
+            Assert.That(portrait.IsReacting, Is.False);
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void EveryOutcomeKeepsThePhysicalFeetGroundedAndTheArtworkTransformsFixed(SpiritPresentationState state)
+        {
+            Vector2[] sizes = presentation.Layers.Select(layer => Picture(layer.Id).rectTransform.sizeDelta).ToArray();
+            for (int sample = 0; sample <= 20; ++sample)
+            {
+                portrait.SetState(state, sample / 20f);
+                for (int i = 0; i < presentation.Layers.Length; ++i)
+                {
+                    var picture = Picture(presentation.Layers[i].Id);
+                    Assert.That(picture.rectTransform.sizeDelta, Is.EqualTo(sizes[i]), picture.name);
+                    Assert.That(picture.rectTransform.localRotation, Is.EqualTo(Quaternion.identity), picture.name);
+                    AssertContact(picture.name, TablePosition);
+                }
+            }
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeTerminalPoseMatchesIdleAndRemainsStable(SpiritPresentationState state)
+        {
+            portrait.Sample(portrait.GetDuration(state));
+            float[][] weights = presentation.Layers.Select(layer => Picture(layer.Id).Weights.ToArray()).ToArray();
+            float[] alphas = presentation.Layers.Select(layer => Picture(layer.Id).color.a).ToArray();
+            portrait.SetState(state, .4f);
+            portrait.SetState(state, 1f);
+            portrait.Advance(20f);
+
+            Assert.That(portrait.State, Is.EqualTo(state));
+            Assert.That(portrait.Progress, Is.EqualTo(1f));
+            for (int i = 0; i < presentation.Layers.Length; ++i)
+            {
+                var picture = Picture(presentation.Layers[i].Id);
+                Assert.That(picture.color.a, Is.EqualTo(alphas[i]).Within(.0001f), picture.name);
+                for (int channel = 0; channel < weights[i].Length; ++channel)
+                    Assert.That(picture.Weights[channel], Is.EqualTo(weights[i][channel]).Within(.0001f), picture.name);
+            }
+            AssertContacts(TablePosition);
+        }
+
+        [Test]
+        public void VictoryAcknowledgmentAndQuieterDefeatTiltInOppositeDirections()
+        {
+            portrait.SetState(SpiritPresentationState.Victory, .5f);
+            float victory = Picture("Physical Rest").Weights[2];
+            Assert.That(victory, Is.GreaterThan(.09f));
+            portrait.ResetPose();
+            portrait.SetState(SpiritPresentationState.Defeat, .5f);
+            float defeat = Picture("Physical Rest").Weights[2];
+            Assert.That(defeat, Is.LessThan(-.05f));
+            Assert.That(Mathf.Abs(defeat), Is.LessThan(victory * .7f));
+        }
+
         [Test]
         public void ArrivalIsDeterministicAfterSeekingResetAndSkipping()
         {

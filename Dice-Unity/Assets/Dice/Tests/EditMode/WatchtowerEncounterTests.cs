@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Dice.Engine;
+using Dice.Presentation;
 using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
@@ -19,6 +20,25 @@ namespace Dice.Tests
             "modifier.player_reroll.exactly_one_selected_matches_selected_count",
             "modifier.player_reroll.high_die_or_straight"
         };
+
+        [Test]
+        public void AuthoredOutcomesHaveHostMotionAndLeadToTheCrossroads()
+        {
+            var journeys = AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset");
+            Assert.DoesNotThrow(() => journeys.Validate(Catalog()));
+            var journey = journeys.Find(EncounterId);
+            Assert.That(journey.FollowUpEncounterIds, Is.EqualTo(new[] { "encounter.moth.crossroads" }));
+            foreach (var outcome in new[] { EncounterOutcome.Won, EncounterOutcome.Lost, EncounterOutcome.Abandoned })
+            {
+                var ending = journey.GetOutcomePresentation(outcome);
+                Assert.That(ending, Is.Not.Null, outcome.ToString());
+                Assert.That(ending.ShowDialogue, Is.EqualTo(outcome != EncounterOutcome.Abandoned));
+                var sequences = journey.TablePresentation.HostPresentation.Sequences.Where(sequence => sequence.State == ending.HostState).ToArray();
+                Assert.That(sequences, Is.Not.Empty, outcome.ToString());
+                Assert.That(sequences.All(sequence => !sequence.Loop && sequence.Duration > 0), Is.True);
+            }
+        }
 
         [Test]
         public void AuthoredEncounterUsesTenProvisionalStagesAndOnlyTheDistinctFaceRule()

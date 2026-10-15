@@ -182,3 +182,29 @@ MonoBehaviour:
   resultContinueLabel: Return to the trail
   completionClueTitle: The northern causeway
   completionClueText: The watcher saw the missing traveler leave the marsh by the northern causeway. Follow the stones beyond the reeds.
+  victoryPresentation:
+    enabled: 1
+    hostState: 4
+    holdDuration: 0.3
+    fadeDuration: 0.35
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  defeatPresentation:
+    enabled: 1
+    hostState: 5
+    holdDuration: 0.2
+    fadeDuration: 0.3
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  abandonPresentation:
+    enabled: 1
+    hostState: 6
+    holdDuration: 0
+    fadeDuration: 0.2
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  followUpEncounterIds:
+  - encounter.moth.crossroads
