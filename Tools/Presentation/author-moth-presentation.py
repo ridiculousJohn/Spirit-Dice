@@ -1,4 +1,4 @@
-"""Author the crossroads moth's layered host and arrival curves.
+"""Author the crossroads moth's layered host and presentation curves.
 
 Python 3.9 or later; no third-party packages. Artwork stays source-aligned at
 1536x1024. The generated assets use the shared spirit renderer and smoke shader.
@@ -17,9 +17,9 @@ FOLDER = A.PRESENTATION / 'MothCrossroads'
 ART = A.ASSETS / 'Art/MothCrossroads'
 
 
-def track(sequence, layer, prop, fn, channel=0, add=False, entry=None):
+def track(sequence, layer, prop, fn, channel=0, add=False, entry=None, tolerance=None):
     item = dict(Layer=layer, Property=prop, Channel=channel, Blend=int(add),
-                Curve=A.curve(fn, sequence['Duration'], .003 if prop == 6 else .02))
+                Curve=A.curve(fn, sequence['Duration'], tolerance if tolerance is not None else .003 if prop == 6 else .02))
     if entry is not None:
         item['EntryWeight'] = A.curve(entry, sequence['Duration'])
     sequence['Tracks'].append(item)
@@ -176,9 +176,58 @@ def author(foot, width):
     for i in (3, 4, 5):
         track(reaction, i, 6, lambda t: .14 * A.turn(t, 0, .35, .65, 1.5), channel=0, add=True)
         track(reaction, i, 6, lambda t: .2 * A.turn(t, 0, .35, .65, 1.5), channel=1, add=True)
+
+    def outcome(name, state, duration):
+        seq = A.sequence(name, state, duration)
+        entry = lambda t: 1 - A.ease(t, 0, .16 if state == 6 else .28)
+
+        def pulse(t):
+            return A.turn(t, .12, .38, .7, 1.15) if state == 4 else 0
+
+        def settle(t):
+            return A.ease(t, 0, .45) if state == 4 else A.ease(t, .1, .95) if state == 5 else A.ease(t, 0, .4)
+
+        def position(t):
+            # The short retreat follows the lantern direction from the rail contact point.
+            return (rail[0] - 2 * settle(t), rail[1] + 5 * settle(t)) if state == 5 else rail
+
+        def scale(t, spectral):
+            return 1 - .02 * settle(t) if state == 5 else 1 + .012 * pulse(t) if spectral else 1
+
+        def rotation(t):
+            return -2.4 * A.ease(t, .6, 1.3) if state == 4 else (1.4 if state == 5 else .6) * settle(t)
+
+        def lift(t, spectral):
+            return ((-.08 * settle(t) + (.28 if spectral else .1) * pulse(t)) if state == 4
+                    else (-.1 if state == 5 else -.04) * settle(t))
+
+        def fold(t, spectral):
+            return (.12 * settle(t) - (.12 * pulse(t) if spectral else 0)) if state == 4 else (.45 if state == 5 else .18) * settle(t)
+
+        for i in (3, 4, 5):
+            spectral = i == 3
+            track(seq, i, 0, lambda t: position(t)[0], entry=entry)
+            track(seq, i, 1, lambda t: position(t)[1], entry=entry)
+            track(seq, i, 2, lambda t, s=spectral: width * scale(t, s), entry=entry)
+            track(seq, i, 3, lambda t, s=spectral: height * scale(t, s), entry=entry)
+            track(seq, i, 4, rotation, entry=entry)
+            track(seq, i, 6, lambda t, s=spectral: lift(t, s), channel=0, entry=entry)
+            track(seq, i, 6, lambda t, s=spectral: fold(t, s), channel=1, entry=entry)
+            track(seq, i, 6, lambda t: 0, channel=2, entry=entry)
+            if spectral:
+                # The cyan edge halo brightens the wings without saturating the smoke alpha.
+                track(seq, i, 5, lambda t: .22 * pulse(t), entry=entry, tolerance=.00015)
+            else:
+                target = .42 if state == 5 else .72 if state == 6 else 1
+                track(seq, i, 5, lambda t, smoke=i == 5, a=target: 1 - (1 - a) * settle(t) if smoke else 1,
+                      entry=entry, tolerance=.00015)
+        return seq
+
     host = A.write_asset(FOLDER / 'MothCrossroadsHost.asset', A.HOST_SCRIPT,
                         dict(ReferenceSize=A.v2(540, 960), Scale=1, Offset=A.v2(0, 0), Layers=layers,
-                             Sequences=[idle, waiting, arrival, reaction], SigilLines=[], SigilWidth=.035))
+                             Sequences=[idle, waiting, arrival, reaction,
+                                        outcome('Victory', 4, 1.6), outcome('Defeat', 5, 1.2),
+                                        outcome('Farewell', 6, .5)], SigilLines=[], SigilWidth=.035))
     print('Host GUID: ' + host)
     print('MothHost.png GUID: ' + texture)
     print('MothWingSmoke.png GUID: ' + smoke)

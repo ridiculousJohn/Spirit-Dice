@@ -166,3 +166,27 @@ MonoBehaviour:
   resultContinueLabel: "Return to the trail"
   completionClueTitle: "A light without a reflection"
   completionClueText: "The traveler followed a blue light down the right-hand road toward the old crossing, beyond a leaning milestone. The moth saw no light fall on the wet ground beneath it."
+  victoryPresentation:
+    enabled: 1
+    hostState: 4
+    holdDuration: 0.25
+    fadeDuration: 0.3
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  defeatPresentation:
+    enabled: 1
+    hostState: 5
+    holdDuration: 0.15
+    fadeDuration: 0.25
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  abandonPresentation:
+    enabled: 1
+    hostState: 6
+    holdDuration: 0
+    fadeDuration: 0.2
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}

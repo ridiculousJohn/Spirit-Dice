@@ -48,11 +48,40 @@ namespace Dice.Tests
                 useAuthoredUnlocks: true);
         }
 
-        private IEnumerator VictoryEnding(string encounterId, string followUpId, string capturePrefix, string motionPhase,
-            bool followUpAtTop, bool useAuthoredUnlocks = false)
+        [UnityTest]
+        public IEnumerator MothVictoryPersistsItsAuthoredGlobalMilestonesAndShowsTheClueWithoutAFabricatedLead()
         {
-            InstallShortEncounter(true, encounterId, useAuthoredUnlocks);
+            yield return VictoryEnding("encounter.moth.crossroads", null, "moth-", "moth-victory", false,
+                useAuthoredUnlocks: true, preserveAuthoredMilestones: true);
+        }
+
+        private IEnumerator VictoryEnding(string encounterId, string followUpId, string capturePrefix, string motionPhase,
+            bool followUpAtTop, bool useAuthoredUnlocks = false, bool preserveAuthoredMilestones = false)
+        {
+            InstallShortEncounter(true, encounterId, useAuthoredUnlocks, preserveAuthoredMilestones);
             yield return EnterEncounter();
+            if (preserveAuthoredMilestones)
+            {
+                var definition = controller.Catalog.GetEncounter(encounterId);
+                var finalMilestone = definition.UnlockMilestones.Last();
+                Assert.That(finalMilestone.StageNumber, Is.EqualTo(definition.Stages.Count));
+                var session = EncounterSession.CreateEncounter(controller.Catalog, encounterId, 60);
+                for (int stage = 1; stage < definition.Stages.Count; ++stage)
+                {
+                    Assert.That(session.Execute(PlayHandAction.Instance, session.Snapshot.Revision).Accepted, Is.True);
+                    Assert.That(session.Snapshot.StageIndex, Is.EqualTo(stage));
+                }
+                EncounterSaveFileStore.Save(controller.SavePath, session.CaptureSave());
+                controller.Load();
+                yield return WaitForPresentation();
+                Assert.That(controller.Snapshot.StageIndex, Is.EqualTo(definition.Stages.Count - 1));
+                var persisted = PlayerProfileFileStore.Load(controller.ProfilePath);
+                foreach (string id in finalMilestone.ModifierIds)
+                    Assert.That(persisted.UnlockedModifierIds, Does.Not.Contain(id), "The final milestone must still be earned.");
+                foreach (string id in definition.UnlockMilestones.Take(definition.UnlockMilestones.Count - 1)
+                    .SelectMany(value => value.ModifierIds))
+                    Assert.That(persisted.UnlockedModifierIds, Does.Contain(id), "Loading must retain earlier milestones.");
+            }
             Coroutine motion = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"))
                 ? null : view.StartCoroutine(CaptureVictoryMotion(motionPhase));
             controller.PlayHand();
@@ -101,12 +130,40 @@ namespace Dice.Tests
             }
             Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("PERMANENTLY UNLOCKED THIS RUN"));
             Assert.That(Find<Text>("EndingUnlocks").text,
-                Does.Contain(useAuthoredUnlocks ? "This spirit's encounters" : "All encounters"));
+                Does.Contain(useAuthoredUnlocks && !preserveAuthoredMilestones ? "This spirit's encounters" : "All encounters"));
             yield return CheckPortraitSizes(capturePrefix + "victory-summary");
             Click("EndingNewRunButton");
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CompletedEncounterIds, Does.Contain(journey.EncounterId));
+            if (string.IsNullOrEmpty(followUpId))
+            {
+                Assert.That(journey.FollowUpEncounterIds, Is.Empty);
+                Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+                Assert.That(view.GetComponentsInChildren<Text>().Where(label => label.name == "ClueNewLead"), Is.Empty);
+                Assert.That(view.GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
+                    .Select(label => label.text), Is.EquivalentTo(controller.JourneyCatalog.Entries.Select(value => value.LocationTitle)));
+                Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).CompletedEncounterIds, Does.Contain(journey.EncounterId));
+                foreach (var definition in unlockDefinitions)
+                {
+                    Assert.That(definition.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Global));
+                    Assert.That(definition.Availability.MatchesEncounter(controller.Catalog.GetEncounter("encounter.fox.introduction")), Is.True);
+                    Assert.That(definition.Availability.MatchesEncounter(controller.Catalog.GetEncounter("encounter.owl.watchtower")), Is.True);
+                    Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(definition.Id));
+                }
+                yield return Capture(capturePrefix + "victory-trail-board");
+                controller.SelectEncounter(journey.EncounterId);
+                while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
+                yield return Until(() => !view.JourneyView.IsAnimating, "replay invitation");
+                controller.AcceptEncounter();
+                yield return WaitForPresentation();
+                Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
+                Assert.That(controller.Snapshot.Revision, Is.Zero);
+                foreach (var definition in unlockDefinitions)
+                    Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(definition.Id), "Replay must inherit permanent progress.");
+                LogAssert.NoUnexpectedReceived();
+                yield break;
+            }
             Assert.That(controller.HighlightedEncounterIds, Does.Contain(followUpId));
             Canvas.ForceUpdateCanvases();
             var followUp = controller.JourneyCatalog.Find(followUpId);
@@ -144,18 +201,40 @@ namespace Dice.Tests
             yield return DefeatEnding("encounter.owl.watchtower", "owl-");
         }
 
-        private IEnumerator DefeatEnding(string encounterId, string capturePrefix)
+        [UnityTest]
+        public IEnumerator MothDefeatPlaysItsWithdrawalAndRetriesWithoutLosingPermanentProgress()
+        {
+            var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
+            string unlockedId = controller.Catalog.Modifiers.First(value =>
+                value.Availability.Access == ModifierAccess.PermanentUnlock &&
+                value.Availability.Scope == ModifierAvailabilityScope.Global).Id;
+            profile.UnlockModifier(unlockedId);
+            PlayerProfileFileStore.Save(controller.ProfilePath, profile);
+            yield return DefeatEnding("encounter.moth.crossroads", "moth-", skipMotion: false);
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(unlockedId));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(unlockedId));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(unlockedId));
+        }
+
+        private IEnumerator DefeatEnding(string encounterId, string capturePrefix, bool skipMotion = true)
         {
             InstallShortEncounter(false, encounterId);
             yield return EnterEncounter();
+            Coroutine motion = skipMotion || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"))
+                ? null : view.StartCoroutine(CaptureVictoryMotion(capturePrefix + "defeat"));
             controller.PlayHand();
             yield return Until(() => view.HostPortrait.State == SpiritPresentationState.Defeat, "defeat motion");
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
             Assert.That(controller.IsBusy, Is.True);
             var previous = controller.Snapshot;
-            Click("EndingSkipButton");
+            float started = Time.realtimeSinceStartup;
+            if (skipMotion) Click("EndingSkipButton");
             yield return Until(() => Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, "defeat dialogue");
             yield return WaitForPresentation();
+            if (!skipMotion)
+                Assert.That(Time.realtimeSinceStartup - started,
+                    Is.GreaterThanOrEqualTo(view.HostPortrait.GetDuration(SpiritPresentationState.Defeat) * .8f));
+            if (motion != null) yield return motion;
             Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.DefeatText));
             Assert.That(Find<Button>("EndingNewRunButton").gameObject.activeInHierarchy, Is.False);
             yield return CheckPortraitSizes(capturePrefix + "defeat-dialogue");
@@ -176,6 +255,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             Assert.That(Find<RectTransform>("EndingView").gameObject.activeInHierarchy, Is.False);
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -191,12 +271,29 @@ namespace Dice.Tests
             yield return AbandonEnding("encounter.owl.watchtower", "owl-");
         }
 
-        private IEnumerator AbandonEnding(string encounterId, string capturePrefix)
+        [UnityTest]
+        public IEnumerator MothAbandonPlaysABriefFarewellAndReturnsWithoutACompletionOrLead()
+        {
+            yield return AbandonEnding("encounter.moth.crossroads", "moth-", observeFarewell: true);
+        }
+
+        private IEnumerator AbandonEnding(string encounterId, string capturePrefix, bool observeFarewell = false)
         {
             InstallShortEncounter(false, encounterId);
             yield return EnterEncounter();
+            Coroutine motion = !observeFarewell || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"))
+                ? null : view.StartCoroutine(CaptureVictoryMotion(capturePrefix + "farewell", showsDialogue: false));
             controller.Abandon();
+            if (observeFarewell)
+            {
+                yield return Until(() => view.HostPortrait.State == SpiritPresentationState.Farewell, "abandon farewell");
+                Assert.That(controller.IsBusy, Is.True);
+                Assert.That(view.HostPortrait.GetDuration(SpiritPresentationState.Farewell),
+                    Is.LessThan(view.HostPortrait.GetDuration(SpiritPresentationState.Defeat)));
+                Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.False);
+            }
             yield return WaitForPresentation();
+            if (motion != null) yield return motion;
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Abandoned));
             Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.AbandonText));
             Assert.That(Find<Text>("EndingTitle").text, Is.Not.EqualTo(journey.DefeatTitle));
@@ -209,13 +306,25 @@ namespace Dice.Tests
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CompletedEncounterIds, Is.Empty);
             Assert.That(controller.CanResume, Is.False);
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
             LogAssert.NoUnexpectedReceived();
         }
 
         [UnityTest]
         public IEnumerator DisablingTheViewDuringItsEndingFadeCancelsMotionAndRestoresOpacity()
         {
-            InstallShortFox(false);
+            yield return CancelEndingDuringFade("encounter.fox.introduction");
+        }
+
+        [UnityTest]
+        public IEnumerator MothEndingCancellationRestoresOpacityAndCannotReopenTheOldResult()
+        {
+            yield return CancelEndingDuringFade("encounter.moth.crossroads");
+        }
+
+        private IEnumerator CancelEndingDuringFade(string encounterId)
+        {
+            InstallShortEncounter(false, encounterId);
             SetField(journey.GetOutcomePresentation(EncounterOutcome.Abandoned), "fadeDuration", 1f);
             yield return EnterEncounter();
             controller.Abandon();
@@ -243,7 +352,8 @@ namespace Dice.Tests
             InstallShortEncounter(winning, "encounter.fox.introduction");
         }
 
-        private void InstallShortEncounter(bool winning, string encounterId, bool useAuthoredUnlocks = false)
+        private void InstallShortEncounter(bool winning, string encounterId, bool useAuthoredUnlocks = false,
+            bool preserveAuthoredMilestones = false)
         {
             var original = controller.Catalog;
             var authored = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == encounterId);
@@ -254,15 +364,20 @@ namespace Dice.Tests
                 SetField(beat, "autoAdvance", false);
             }
             var definition = original.GetEncounter(journey.EncounterId);
-            unlockDefinitions = useAuthoredUnlocks
+            unlockDefinitions = preserveAuthoredMilestones
+                ? definition.UnlockMilestones.SelectMany(value => value.ModifierIds).Distinct().Select(original.GetModifier).ToArray()
+                : useAuthoredUnlocks
                 ? definition.UnlockMilestones.First().ModifierIds.Take(2).Select(original.GetModifier).ToArray()
                 : original.Modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
                     value.Availability.Scope == ModifierAvailabilityScope.Global).Take(2).ToArray();
-            Assert.That(unlockDefinitions.Length, Is.EqualTo(2));
+            if (preserveAuthoredMilestones) Assert.That(unlockDefinitions.Length, Is.GreaterThan(2));
+            else Assert.That(unlockDefinitions.Length, Is.EqualTo(2));
             var shortEncounter = new EncounterDefinition(definition.Id,
-                new[] { new StageDefinition(winning ? 1 : 1000000, 1, 0) }, rules: definition.Rules,
+                Enumerable.Range(0, preserveAuthoredMilestones ? definition.Stages.Count : 1)
+                    .Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)), rules: definition.Rules,
                 spiritId: definition.SpiritId, unlockMilestones: winning
-                    ? new[] { new ModifierUnlockMilestone(1, unlockDefinitions.Select(value => value.Id)) }
+                    ? preserveAuthoredMilestones ? definition.UnlockMilestones.ToArray()
+                        : new[] { new ModifierUnlockMilestone(1, unlockDefinitions.Select(value => value.Id)) }
                     : Array.Empty<ModifierUnlockMilestone>());
             var entries = controller.JourneyCatalog.Entries.Select(value => value == authored ? journey : value).ToArray();
             var mechanical = new MechanicalCatalog("ending-playmode.v1", original.Hands,
@@ -292,7 +407,7 @@ namespace Dice.Tests
             yield return null;
         }
 
-        private IEnumerator CaptureVictoryMotion(string phase)
+        private IEnumerator CaptureVictoryMotion(string phase, bool showsDialogue = true)
         {
             string directory = Path.Combine(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"), phase);
             Directory.CreateDirectory(directory);
@@ -308,7 +423,7 @@ namespace Dice.Tests
                 yield return new WaitForEndOfFrame();
                 double now = Time.realtimeSinceStartupAsDouble;
                 double elapsed = now - started;
-                bool complete = Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy;
+                bool complete = Find<Button>(showsDialogue ? "EndingDialogueContinueButton" : "EndingNewRunButton").gameObject.activeInHierarchy;
                 if (elapsed >= nextCapture || complete)
                 {
                     string filename = string.Format(CultureInfo.InvariantCulture,
@@ -322,7 +437,7 @@ namespace Dice.Tests
                     nextCapture = elapsed + .05;
                 }
                 if (complete) break;
-                Assert.That(elapsed, Is.LessThan(45), "Victory motion did not reach dialogue.");
+                Assert.That(elapsed, Is.LessThan(45), "Outcome motion did not reach its result.");
                 yield return null;
             }
             double deadline = Time.realtimeSinceStartupAsDouble + 15;
@@ -333,7 +448,7 @@ namespace Dice.Tests
                 Assert.That(File.Exists(path), Is.True, path);
                 Assert.That(new FileInfo(path).Length, Is.GreaterThan(0), path);
             }
-            TestContext.WriteLine("Encounter victory motion manifest: " + manifest);
+            TestContext.WriteLine("Encounter outcome motion manifest: " + manifest);
         }
 
         private static IEnumerator Until(Func<bool> ready, string description)

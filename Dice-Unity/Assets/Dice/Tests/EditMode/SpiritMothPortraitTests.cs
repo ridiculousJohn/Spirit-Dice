@@ -145,6 +145,126 @@ namespace Dice.Tests
             Assert.That(counterclockwiseTurns, Is.GreaterThanOrEqualTo(2), "The moth must change its winding direction.");
         }
 
+        [TestCase(SpiritPresentationState.Victory, 1.6f)]
+        [TestCase(SpiritPresentationState.Defeat, 1.2f)]
+        [TestCase(SpiritPresentationState.Farewell, .5f)]
+        public void OutcomesHoldDirectedPosesWhileTheSameWingSmokeContinues(
+            SpiritPresentationState state, float duration)
+        {
+            Assert.That(portrait.GetDuration(state), Is.EqualTo(duration).Within(.001f));
+            Assert.That(presentation.Sequences.Where(sequence => sequence.State == state).All(sequence => !sequence.Loop), Is.True);
+            var smoke = portrait.GetLayer("Wing smoke");
+            Material material = smoke.material;
+            Texture texture = smoke.texture;
+            portrait.SetState(state, .4f);
+            var poses = presentation.Layers.Select(layer => Capture(layer.Id)).ToArray();
+            float effectTime = material.GetFloat("_EffectTime");
+
+            portrait.Advance(3f);
+
+            Assert.That(portrait.Progress, Is.EqualTo(.4f));
+            for (int index = 0; index < poses.Length; ++index) AssertPose(presentation.Layers[index].Id, poses[index]);
+            Assert.That(smoke.material, Is.SameAs(material));
+            Assert.That(smoke.texture, Is.SameAs(texture));
+            Assert.That(material.GetFloat("_EffectTime"), Is.EqualTo(effectTime + 3f).Within(.001f));
+            portrait.SetState(state, .9f);
+            portrait.SetState(state, .4f);
+            for (int index = 0; index < poses.Length; ++index) AssertPose(presentation.Layers[index].Id, poses[index]);
+
+            portrait.SetState(state, 1f);
+            poses = presentation.Layers.Select(layer => Capture(layer.Id)).ToArray();
+            portrait.Advance(20f);
+            Assert.That(portrait.State, Is.EqualTo(state));
+            Assert.That(portrait.Progress, Is.EqualTo(1f));
+            for (int index = 0; index < poses.Length; ++index) AssertPose(presentation.Layers[index].Id, poses[index]);
+            AssertHiddenArrivalLayers();
+        }
+
+        [Test]
+        public void OutcomeEntryPreservesIdleAndInterruptedReaction(
+            [Values(SpiritPresentationState.Victory, SpiritPresentationState.Defeat, SpiritPresentationState.Farewell)]
+            SpiritPresentationState state, [Values(false, true)] bool reacting)
+        {
+            portrait.Advance(3.85f);
+            if (reacting)
+            {
+                portrait.React();
+                portrait.Advance(.4f);
+                Assert.That(portrait.IsReacting, Is.True);
+            }
+            var poses = presentation.Layers.Select(layer => Capture(layer.Id)).ToArray();
+
+            portrait.SetState(state, 0f);
+
+            for (int index = 0; index < poses.Length; ++index) AssertPose(presentation.Layers[index].Id, poses[index]);
+            Assert.That(portrait.IsReacting, Is.False);
+            portrait.SetState(state, 1f);
+            var terminal = Capture("Body");
+            portrait.ResetPose();
+            portrait.SetState(state, 1f);
+            AssertPose("Body", terminal);
+        }
+
+        [Test]
+        public void VictoryBrightensTheSpectralEdgeAndTurnsTowardTheRevealedRoad()
+        {
+            var settled = Capture("Body");
+            float glowPeak = 0f;
+            for (int sample = 0; sample <= 20; ++sample)
+            {
+                portrait.SetState(SpiritPresentationState.Victory, sample / 20f);
+                glowPeak = Mathf.Max(glowPeak, portrait.GetLayer("Spectral arrival").color.a);
+                AssertRegisteredBodyAndSmoke();
+                Assert.That(portrait.GetLayer("Wing smoke").color.a, Is.GreaterThan(.99f));
+                foreach (int index in Enumerable.Range(1, 3))
+                    Assert.That(portrait.GetLayer("Lantern moth " + index).color.a, Is.Zero);
+            }
+            Assert.That(glowPeak, Is.GreaterThan(.15f), "The response needs a visible spectral brightening.");
+            var terminal = Capture("Body");
+            Assert.That(terminal.Position, Is.EqualTo(settled.Position));
+            Assert.That(terminal.Size, Is.EqualTo(settled.Size));
+            Assert.That(Mathf.DeltaAngle(0f, terminal.Rotation.eulerAngles.z), Is.LessThan(-1f));
+            Assert.That(terminal.Weights[0], Is.LessThan(0f), "The wings should settle outward.");
+            AssertHiddenArrivalLayers();
+        }
+
+        [Test]
+        public void DefeatWithdrawsTowardTheLanternAndDimsMoreThanTheBriefFarewell()
+        {
+            var settled = Capture("Body");
+            portrait.SetState(SpiritPresentationState.Defeat, 1f);
+            var defeat = Capture("Body");
+            float defeatSmoke = Capture("Wing smoke").Alpha;
+            AssertRegisteredBodyAndSmoke();
+            Assert.That(Vector2.Distance(defeat.Position, LanternPosition),
+                Is.LessThan(Vector2.Distance(settled.Position, LanternPosition)));
+            Assert.That(defeat.Size.x, Is.LessThan(settled.Size.x));
+            Assert.That(defeat.Weights[1], Is.GreaterThan(.3f));
+            Assert.That(defeat.Alpha, Is.GreaterThan(.99f));
+            Assert.That(defeatSmoke, Is.InRange(.3f, .55f));
+            AssertHiddenArrivalLayers();
+
+            portrait.ResetPose();
+            portrait.SetState(SpiritPresentationState.Farewell, 1f);
+            var farewell = Capture("Body");
+            AssertRegisteredBodyAndSmoke();
+            Assert.That(farewell.Position, Is.EqualTo(settled.Position));
+            Assert.That(farewell.Size, Is.EqualTo(settled.Size));
+            Assert.That(farewell.Weights[1], Is.InRange(.05f, defeat.Weights[1] - .05f));
+            Assert.That(Capture("Wing smoke").Alpha, Is.InRange(defeatSmoke + .1f, .9f));
+            AssertHiddenArrivalLayers();
+        }
+
+        private void AssertRegisteredBodyAndSmoke()
+        {
+            var body = Capture("Body");
+            var smoke = Capture("Wing smoke");
+            Assert.That(smoke.Position, Is.EqualTo(body.Position));
+            Assert.That(smoke.Size, Is.EqualTo(body.Size));
+            Assert.That(Quaternion.Angle(smoke.Rotation, body.Rotation), Is.LessThan(.001f));
+            Assert.That(body.Alpha, Is.GreaterThan(.99f));
+        }
+
         private Pose Capture(string name)
         {
             var image = portrait.GetLayer(name);
