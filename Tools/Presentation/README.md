@@ -27,11 +27,17 @@ Asset edits use Unity's serialized-property Undo and Redo. Placement changes upd
 
 The production body and wing smoke use aligned 1536x1024 canvases. `--foot-x` and `--foot-y` describe their contact point in bottom-left UV coordinates (defaults `0.5`, `0.28`); `--host-width` defaults to 370 in the 540x960 reference portrait. Waiting, Arrival, Idle and Reaction are authored sequences. Arrival lasts seven seconds. The smoke layer uses distortion `0.035`, speed `0.7`, opacity `0.6`, and does not receive scene lighting.
 
+The small moths follow independent closed waypoint schedules with short darts, holds, reversals and banking. Their arrival tracks use `EntryWeight` to start at the currently displayed waiting pose, then decay that offset before the blue layers appear. Entry weights apply to state transitions through the shared host renderer; repeated arrival progress updates retain the original entry pose. The departing moth doubles back before growing toward the rail. Arrival continues directly into dialogue, static narration waits for input without a timed lock, and gameplay fades in for 0.3 seconds before rolling.
+
 Any host layer can enable `Smoke` and supply its own motion mask and repeating flow-noise texture. Missing textures use generated defaults. Import custom mask/noise textures as linear data; smoke artwork uses ordinary color and alpha. Smoke and silhouette materials belong on separate layers. Tint, deformation and timeline opacity still apply to smoke layers.
 
 ## Inn and watchtower
 
 `author-spirit-presentations.py` contains the approved motion formulas for the Lantern Keeper and Watchtower host. It generates two host assets and nine deformation meshes. The game loads the checked-in Unity assets and does not run this script.
+
+The Watchtower arrival registers the face across its painted poses, uses short pose blends, and settles the body above planted feet. Airborne foot positions follow the crouched flight artwork; they are not landing anchors. Landing registration and grounded settling are authored mesh channels. Idle and reaction curves remain independent of the arrival.
+
+Journey beats can enable `Auto Advance` to continue after their motion completes. The Watchtower flight uses this to lead directly into dialogue. The final invitation always waits for acceptance. Table presentation assets expose `Opening Fade Duration`; the Watchtower uses 0.3 seconds to reveal gameplay before the opening roll. Zero leaves the opening immediate. Both settings use the shared journey and presentation code.
 
 Requires Python 3.9 or later, with no third-party packages. Commands below run from the repository root; the script resolves its inputs relative to its own location and also works from another working directory.
 
