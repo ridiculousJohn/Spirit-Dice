@@ -102,6 +102,7 @@ MonoBehaviour:
     scaleTo: 1
     hostState: 2
     hideNarrativeDuringMotion: 1
+    autoAdvance: 1
     backgroundMotionFrom: {x: 0, y: 0}
     backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1

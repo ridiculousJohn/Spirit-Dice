@@ -280,6 +280,16 @@ def author_watchtower():
                       ('Offset', lambda x, y: (head(x, y) * .0015 * contact(x, y) if spectral else 0, 0))]
             # A separate static shape leaves the physical artwork untouched.
             shapes.append(('Drift', lambda x, y: (0, edge(x, y) * .007 * contact(x, y) if spectral else 0)))
+            def registration(x, y):
+                if index == 1:
+                    return ((x - .43) * .10 * head(x, y), (y - .47) * .10 * head(x, y))
+                if index != 2:
+                    return (0, 0)
+                body = 1 - ease(abs(x - .51), .15, .28)
+                return ((x - .51) * .08 * head(x, y),
+                        (.078 * body + (y - .72) * .12 * head(x, y)) * contact(x, y))
+            shapes.append(('Landing Registration', registration))
+            shapes.append(('Grounded Settle', lambda x, y: (0, -.016 * contact(x, y))))
             def mask(x, y):
                 return max(head(x, y), ease(abs(x - .5), .13, .35) * (1 - head(x, y))) * ease(y, foot[1] + .04, foot[1] + .2)
             kind = 'Spirit' if spectral else 'Physical'
@@ -287,7 +297,7 @@ def author_watchtower():
             height = (.31 if index != 1 else .26) * 960 / (1 - foot[1])
             layers.append(layer(kind + ' ' + name, textures[index], mesh_guid, (.5 * 540, .612 * 960), (height * aspect, height),
                                 pivot=foot, color=(.42, .83, 1, .025 if index == 0 else 0) if spectral else (1, 1, 1, 1 if index == 0 else 0),
-                                silhouette=spectral, weights=(0, 0, 0, 0, 0, 1 if spectral else 0)))
+                                silhouette=spectral, weights=(0, 0, 0, 0, 0, 1 if spectral else 0, 1 if index != 0 else 0, 0)))
     breath = sequence('Breathing', 0, 2 * math.pi / 1.2, True)
     feather = sequence('Edge drift', 0, 2 * math.pi / .82, True)
     glance = sequence('Watchful turn', 0, 15.6, True)
@@ -319,7 +329,7 @@ def author_watchtower():
                 .884 + (.612 - .884) * travel - .015 * math.sin(travel * math.pi), travel)
     def weights(t):
         p = t / 4.5
-        opened, landed, folded = ease(p, .18, .29), ease(p, .70, .79), ease(p, .85, 1)
+        opened, landed, folded = ease(p, .22, .26), ease(p, .72, .76), ease(p, .88, .94)
         second, third = opened * (1 - landed), opened * landed * (1 - folded)
         return (1 - second - third, second, third)
     def arrival_tilt(t, spectral):
@@ -333,17 +343,29 @@ def author_watchtower():
         if index == 1:
             width = min((x - .02) / pivots[index][0], (.98 - x) / (1 - pivots[index][0])) * 540
             height = min(height, max(1, width) / aspects[index])
+            face_y = y * 960 + size(t, 0)[1] * (.80 - pivots[0][1] - .016 * settle(t))
+            height = min(height, max(1, .99 * 960 - face_y) / (1 - .47))
         return height * aspects[index], height
+    def settle(t):
+        return turn(t / 4.5, .755, .79, .79, .96)
+    def position(t, index):
+        x, y, _ = approach(t)
+        if index == 1:
+            # Airborne feet follow the crouched pose; its face follows the upright body trajectory.
+            y += (size(t, 0)[1] * (.80 - pivots[0][1])
+                  - size(t, 1)[1] * (.47 - pivots[1][1]) - size(t, 0)[1] * .016 * settle(t)) / 960
+        return x * 540, y * 960
     for i in range(6):
         spectral, index = i < 3, i % 3
-        track(arrival, i, 0, lambda t: approach(t)[0] * 540)
-        track(arrival, i, 1, lambda t: approach(t)[1] * 960)
+        track(arrival, i, 0, lambda t, index=index: position(t, index)[0])
+        track(arrival, i, 1, lambda t, index=index: position(t, index)[1])
         track(arrival, i, 2, lambda t, index=index: size(t, index)[0])
         track(arrival, i, 3, lambda t, index=index: size(t, index)[1])
         track(arrival, i, 5, lambda t, index=index, s=spectral: weights(t)[index] *
               (.025 + min(1, abs(arrival_tilt(t, True) - arrival_tilt(t, False)) / 7) * .3 + abs(edge_motion(t, True) - edge_motion(t, False)) * .12 if s else 1))
         add_angle(arrival, i, lambda t, s=spectral: arrival_tilt(t, s))
         track(arrival, i, 6, lambda t, s=spectral: edge_motion(t, s), channel=3)
+        track(arrival, i, 6, lambda t, index=index: settle(t) if index != 1 else 0, channel=7)
     reaction = sequence('Reaction', 3, 1.8, idle=True, gesture=True)
     def reaction_tilt(t, spectral):
         return -10 * turn(t - (0 if spectral else .18), 0, .3, 1.1, 1.55)

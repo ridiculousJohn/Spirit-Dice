@@ -118,6 +118,36 @@ namespace Dice.Tests
             Assert.That(portrait.IsReacting, Is.False);
         }
 
+        [TestCase(.24f, "Physical Rest", .5f, .80f, "Physical Arrival", .43f, .47f)]
+        [TestCase(.735f, "Physical Arrival", .43f, .47f, "Physical Settle", .51f, .72f)]
+        [TestCase(.90f, "Physical Settle", .51f, .72f, "Physical Rest", .5f, .80f)]
+        public void PoseBlendsRegisterTheFaceAboveThePlantedBody(float progress, string first, float firstX,
+            float firstY, string second, float secondX, float secondY)
+        {
+            portrait.SetState(SpiritPresentationState.Arrival, progress);
+            Assert.That(Picture(first).color.a, Is.GreaterThan(.05f));
+            Assert.That(Picture(second).color.a, Is.GreaterThan(.05f));
+            Assert.That(Vector2.Distance(ArtworkPoint(first, new Vector2(firstX, firstY)),
+                ArtworkPoint(second, new Vector2(secondX, secondY))), Is.LessThan(5f));
+        }
+
+        [Test]
+        public void FoldingKeepsTheChestRegisteredAndRecoversFromASmallGroundedSettle()
+        {
+            portrait.SetState(SpiritPresentationState.Arrival, .90f);
+            Assert.That(Vector2.Distance(ArtworkPoint("Physical Settle", new Vector2(.51f, .43f)),
+                ArtworkPoint("Physical Rest", new Vector2(.5f, .52f))), Is.LessThan(5f));
+            portrait.SetState(SpiritPresentationState.Arrival, .76f);
+            float landingHead = ArtworkPoint("Physical Settle", new Vector2(.51f, .72f)).y;
+            portrait.SetState(SpiritPresentationState.Arrival, .79f);
+            float compressedHead = ArtworkPoint("Physical Settle", new Vector2(.51f, .72f)).y;
+            Assert.That(landingHead - compressedHead, Is.InRange(3f, 6f));
+            AssertContacts(TablePosition);
+            portrait.SetState(SpiritPresentationState.Arrival, 1f);
+            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.5f, .80f)).y - compressedHead,
+                Is.InRange(3f, 6f));
+        }
+
         [TestCase(540f, 960f)]
         [TestCase(443f, 900f)]
         [TestCase(960f, 540f)]
@@ -153,6 +183,9 @@ namespace Dice.Tests
                     new Vector3(picture.rectTransform.rect.xMax, 0f, 0f)));
                 Assert.That(left.x, Is.GreaterThanOrEqualTo(parent.rect.xMin));
                 Assert.That(right.x, Is.LessThanOrEqualTo(parent.rect.xMax));
+                foreach (float edge in new[] { 0f, 1f })
+                    Assert.That(ArtworkPoint("Physical Arrival", new Vector2(edge, 1f)).y,
+                        Is.LessThanOrEqualTo(parent.rect.yMax));
             }
         }
 
@@ -264,6 +297,15 @@ namespace Dice.Tests
                 (contact.y - parent.rect.yMin) / parent.rect.height);
         }
 
+        private Vector2 ArtworkPoint(string name, Vector2 uv)
+        {
+            var picture = Picture(name);
+            var rect = picture.rectTransform;
+            Vector2 point = Vector2.Scale(uv - rect.pivot, rect.rect.size)
+                + picture.EvaluateDisplacement(uv, rect.rect.size);
+            return host.transform.InverseTransformPoint(rect.TransformPoint(point));
+        }
+
         private void AssertContact(string name, Vector2 position)
             => Assert.That(Vector2.Distance(Contact(name), position), Is.LessThan(.00001f), name);
 
@@ -271,6 +313,7 @@ namespace Dice.Tests
         {
             foreach (string name in new[] { "Physical Rest", "Physical Arrival", "Physical Settle" })
             {
+                if (Picture(name).color.a <= .001f) continue;
                 AssertContact(name, position);
                 Assert.That(Picture(name).rectTransform.localRotation, Is.EqualTo(Quaternion.identity));
             }

@@ -21,3 +21,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402004, type: 2}
   roomTableEdge: 0.43
   roomSplit: 0.625
+  openingFadeDuration: 0.3
