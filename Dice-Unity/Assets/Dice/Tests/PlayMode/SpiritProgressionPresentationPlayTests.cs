@@ -78,17 +78,12 @@ namespace Dice.Tests
                 Canvas.ForceUpdateCanvases();
                 var title = Find<Text>(view, "EndingTitle");
                 var detail = Find<Text>(view, "EndingDetail");
-                Assert.That(detail.text, Is.EqualTo("Total score  " + DiagnosticText.Number(controller.Snapshot.TotalScore) +
-                    "\n1 hand played\n0 rerolls spent"));
+                Assert.That(detail.text, Is.EqualTo("Total score  " + DiagnosticText.Number(controller.Snapshot.TotalScore)));
                 AssertCompleteText(title);
                 AssertCompleteText(detail);
                 Assert.That(title.cachedTextGenerator.lineCount, Is.EqualTo(1));
-                Assert.That(detail.cachedTextGenerator.lineCount, Is.EqualTo(3));
-                var divider = view.GetComponentsInChildren<RectTransform>(true)
-                    .Single(value => value.name == "EndingRule");
-                AssertVerticalSeparation(title.rectTransform, detail.rectTransform);
-                AssertVerticalSeparation(detail.rectTransform, divider);
-                AssertVerticalSeparation(divider, (RectTransform)endingScroll.transform);
+                Assert.That(detail.cachedTextGenerator.lineCount, Is.EqualTo(1));
+                AssertVerticalSeparation(title.rectTransform, (RectTransform)endingScroll.transform);
                 AssertVerticalSeparation((RectTransform)endingScroll.transform,
                     Find<Button>(view, "EndingNewRunButton").GetComponent<RectTransform>());
             }

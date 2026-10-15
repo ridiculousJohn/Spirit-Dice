@@ -33,6 +33,9 @@ namespace Dice.Presentation
                     throw new FormatException("Journey encounter IDs must be nonempty and unique.");
                 entry.Validate(catalog);
             }
+            foreach (var entry in entries)
+                foreach (string id in entry.FollowUpEncounterIds)
+                    if (!ids.Contains(id)) throw new FormatException("A follow-up encounter requires an investigation lead in the catalog.");
         }
     }
 }

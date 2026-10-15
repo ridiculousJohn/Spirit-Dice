@@ -227,6 +227,7 @@ namespace Dice.Tests
             public bool CanResume => false;
             public string JourneyStatus => "";
             public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
+            public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
             public event Action JourneyChanged { add { } remove { } }
             public void SelectEncounter(string encounterId) { }
             public void AdvanceJourney() { }
@@ -234,6 +235,7 @@ namespace Dice.Tests
             public void AcceptEncounter() { }
             public void ReturnToInvestigation() { }
             public void ResumeEncounter() { }
+            public void RetryEncounter() { }
         }
     }
 }

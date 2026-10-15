@@ -16,6 +16,7 @@ namespace Dice.Presentation
         bool CanResume { get; }
         string JourneyStatus { get; }
         IReadOnlyList<string> VisitedEncounterIds { get; }
+        IReadOnlyList<string> HighlightedEncounterIds { get; }
 
         event Action JourneyChanged;
         void SelectEncounter(string encounterId);
@@ -24,5 +25,6 @@ namespace Dice.Presentation
         void AcceptEncounter();
         void ReturnToInvestigation();
         void ResumeEncounter();
+        void RetryEncounter();
     }
 }

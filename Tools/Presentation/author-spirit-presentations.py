@@ -241,12 +241,38 @@ def author_lantern():
             if not spectral:
                 track(seq, i, 6, lambda t: gesture(t - .18, .65) * .7, entry=lambda t: 1 - ease(t, 0, .22))
         return seq
+    def outcome(name, state, duration, tilt, dip, shift):
+        seq = sequence(name, state, duration, idle=True)
+        track(seq, 2, 6, lambda t: 0, add=True, entry=lambda t: 1 - ease(t, 0, duration * .3))
+        def pose(t, spectral):
+            delay = 0 if spectral else .15
+            return turn(t - delay, 0, duration * .2, duration * .46, duration - .16)
+        for i in range(3, 9):
+            spectral, front = i < 7, i in (3, 5, 7)
+            entry = lambda t, s=spectral: 1 - ease(t, 0 if s else .15, duration * .2 + (0 if s else .15))
+            track(seq, i, 0, lambda t, s=spectral: shift * pose(t, s), add=True, entry=entry)
+            track(seq, i, 1, lambda t, s=spectral: -dip * pose(t, s), add=True, entry=entry)
+            track(seq, i, 4, lambda t, s=spectral: tilt * pose(t, s), add=True, entry=entry)
+            intensity = .10 if i < 5 else .20
+            track(seq, i, 5, lambda t, s=spectral, f=front, a=intensity:
+                  abs(pose(t, True) - pose(t, False)) * a if s and f else 1 if not s and f else 0,
+                  entry=entry)
+            if not spectral:
+                track(seq, i, 6, lambda t: 0, entry=entry)
+        for i in (0, 1, 2):
+            track(seq, i, 6, lambda t: 0, channel=1, entry=lambda t: 1 - ease(t, 0, duration * .3))
+            if i != 2:
+                track(seq, i, 5, lambda t: 0, entry=lambda t: 1 - ease(t, 0, duration * .3))
+        return seq
     sigil = [(-.42, .42), (-.33, -.05), (-.42, .42), (-.12, .21), (-.12, .21), (.12, .21),
              (.12, .21), (.42, .42), (.42, .42), (.33, -.05), (-.33, -.05), (0, -.42),
              (.33, -.05), (0, -.42), (-.28, .04), (-.08, -.04), (.28, .04), (.08, -.04), (-.05, -.24), (.05, -.24)]
     write_asset(folder / 'LanternKeeperHost.asset', HOST_SCRIPT,
                 dict(ReferenceSize=v2(540, 960), Scale=1.16, Offset=v2(270 - 270 * 1.16, 595.2 - 624 * 1.16),
-                     Layers=layers, Sequences=[breath, accent, sweep, reaction(2, 2), reaction(3, 1.8)],
+                     Layers=layers, Sequences=[breath, accent, sweep, reaction(2, 2), reaction(3, 1.8),
+                                              outcome('Victory', 4, 1.4, -2.2, 4, .5),
+                                              outcome('Defeat', 5, 1.2, 3.5, 1.2, -1),
+                                              outcome('Farewell', 6, .5, -1, 1, .2)],
                      SigilLines=[v2(*v) for v in sigil], SigilWidth=.035))
 
 
@@ -377,9 +403,26 @@ def author_watchtower():
     # The visible spectral layer carries the anticipation alpha; other poses remain transparent.
     track(reaction, 0, 5, lambda t: .025 + min(1, abs(reaction_tilt(t, True) - reaction_tilt(t, False)) / 7) * .3
           + abs(.22 * turn(t, 0, .3, .7, 1.4) - .22 * turn(t - .18, 0, .3, .7, 1.4)) * .12)
+    def outcome(name, state, duration, angle, compression, glow):
+        seq = sequence(name, state, duration, idle=True)
+        def pose(t, spectral):
+            return turn(t - (0 if spectral else .18), 0, duration * .22, duration * .46, duration - .2)
+        for i in range(6):
+            spectral = i < 3
+            entry = lambda t, s=spectral: 1 - ease(t - (0 if s else .18), 0, duration * .22)
+            add_angle(seq, i, lambda t, s=spectral: angle * pose(t, s), entry=entry)
+            track(seq, i, 6, lambda t: 0, add=True, entry=entry)
+            track(seq, i, 6, lambda t: 0, channel=3, add=True, entry=entry)
+            track(seq, i, 6, lambda t, s=spectral: compression * pose(t, s), channel=7, add=True, entry=entry)
+        track(seq, 0, 5, lambda t: abs(pose(t, True) - pose(t, False)) * glow,
+              add=True, entry=lambda t: 1 - ease(t, 0, duration * .22))
+        return seq
     write_asset(folder / 'WatchtowerHost.asset', HOST_SCRIPT,
                 dict(ReferenceSize=v2(540, 960), Scale=1, Offset=v2(0, 0), Layers=layers,
-                     Sequences=[breath, feather, glance, waiting, arrival, reaction], SigilLines=[], SigilWidth=.035))
+                     Sequences=[breath, feather, glance, waiting, arrival, reaction,
+                                outcome('Victory', 4, 1.5, 6, .06, .18),
+                                outcome('Defeat', 5, 1.2, -3.5, 0, .10),
+                                outcome('Farewell', 6, .5, 1.2, .18, .06)], SigilLines=[], SigilWidth=.035))
 
 
 if __name__ == '__main__':

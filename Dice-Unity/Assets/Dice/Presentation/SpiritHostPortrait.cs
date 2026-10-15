@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Dice.Presentation
 {
-    public enum SpiritPresentationState { Idle = 0, Waiting = 1, Arrival = 2, Reaction = 3 }
+    public enum SpiritPresentationState { Idle = 0, Waiting = 1, Arrival = 2, Reaction = 3, Victory = 4, Defeat = 5, Farewell = 6 }
 
     /** A host evaluates authored timelines independently of encounter mechanics. */
     public sealed class SpiritHostPortrait : MonoBehaviour
@@ -24,8 +24,8 @@ namespace Dice.Presentation
         private LayerRuntime[] layers;
         private double[] idleAges;
         private float[][] entryValues;
-        private readonly float[] durations = new float[4];
-        private readonly bool[] includesIdle = new bool[4];
+        private readonly float[] durations = new float[(int)SpiritPresentationState.Farewell + 1];
+        private readonly bool[] includesIdle = new bool[(int)SpiritPresentationState.Farewell + 1];
         private Material silhouetteMaterial;
         private double stateAge;
         // Continuous effects retain their phase across dialogue and pose resets.
@@ -36,10 +36,16 @@ namespace Dice.Presentation
 
         public bool IsReacting => State == SpiritPresentationState.Reaction;
         public SpiritPresentationState State { get; private set; }
-        public float Progress => State == SpiritPresentationState.Arrival ? arrivalProgress
+        public float Progress => SpiritHostPresentationAsset.DirectedState(State) ? arrivalProgress
             : durations[(int)State] > 0f ? Mathf.Clamp01((float)(stateAge / durations[(int)State])) : 0f;
         public float GestureDuration => durations[(int)SpiritPresentationState.Reaction];
         public event Action SpiritGesture;
+
+        public float GetDuration(SpiritPresentationState state)
+        {
+            if (!SpiritHostPresentationAsset.ValidState(state)) throw new ArgumentOutOfRangeException(nameof(state));
+            return durations[(int)state];
+        }
 
         public void SetSceneLighting(SceneLightingState state, Vector3 position)
         {
@@ -190,11 +196,11 @@ namespace Dice.Presentation
                 for (int i = 0; i < entryValues.Length; ++i) Array.Clear(entryValues[i], 0, entryValues[i].Length);
                 CaptureEntryValues(state);
             }
-            if (state == SpiritPresentationState.Arrival) arrivalProgress = progress;
+            if (SpiritHostPresentationAsset.DirectedState(state)) arrivalProgress = progress;
             ApplyPose();
             if (!Visible) return;
             if (changed) EmitStartGestures(state);
-            else if (state == SpiritPresentationState.Arrival && progress > previousProgress)
+            else if (SpiritHostPresentationAsset.DirectedState(state) && progress > previousProgress)
             {
                 for (int i = 0; i < presentation.Sequences.Length; ++i)
                 {
@@ -222,7 +228,7 @@ namespace Dice.Presentation
         {
             if (!Visible || !SpiritHostPresentationAsset.Finite(deltaTime) || deltaTime < 0f) return;
             effectAge += deltaTime;
-            if (State == SpiritPresentationState.Arrival)
+            if (SpiritHostPresentationAsset.DirectedState(State))
             {
                 ApplyPose();
                 return;
@@ -320,9 +326,9 @@ namespace Dice.Presentation
             {
                 SpiritPresentationSequence sequence = presentation.Sequences[i];
                 if (sequence.State != state) continue;
-                double age = State == SpiritPresentationState.Arrival ? arrivalProgress * durations[(int)SpiritPresentationState.Arrival]
+                double age = SpiritHostPresentationAsset.DirectedState(State) ? arrivalProgress * durations[(int)State]
                     : state == SpiritPresentationState.Idle ? idleAges[i] : stateAge;
-                float time = state == SpiritPresentationState.Arrival ? arrivalProgress * sequence.Duration
+                float time = SpiritHostPresentationAsset.DirectedState(state) ? arrivalProgress * sequence.Duration
                     : sequence.Loop ? (float)(age % sequence.Duration) : (float)Math.Min(age, sequence.Duration);
                 for (int j = 0; j < sequence.Tracks.Length; ++j)
                 {

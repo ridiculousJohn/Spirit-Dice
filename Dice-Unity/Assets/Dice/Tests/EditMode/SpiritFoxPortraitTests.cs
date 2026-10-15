@@ -71,6 +71,94 @@ namespace Dice.Tests
                 Is.LessThan(0.001f));
         }
 
+        [TestCase(SpiritPresentationState.Victory, 1.4f)]
+        [TestCase(SpiritPresentationState.Defeat, 1.2f)]
+        [TestCase(SpiritPresentationState.Farewell, .5f)]
+        public void OutcomeSpiritLeadsPhysicalHeadByTheAuthoredDelay(SpiritPresentationState state, float duration)
+        {
+            Vector2 initialPhysical = physicalHead.anchoredPosition;
+            Vector2 initialSpirit = spiritHead.anchoredPosition;
+            portrait.SetState(state, .1f / duration);
+            float physicalTravel = Vector2.Distance(initialPhysical, physicalHead.anchoredPosition);
+            float spectralTravel = Vector2.Distance(initialSpirit, spiritHead.anchoredPosition);
+            Assert.That(portrait.GetDuration(state), Is.EqualTo(duration));
+            Assert.That(spectralTravel, Is.GreaterThan(physicalTravel + .1f));
+            Assert.That(portrait.GetLayer("Cyan Front").color.a, Is.GreaterThan(.01f));
+            Assert.That(portrait.GetLayer("Gold Front").color.a, Is.GreaterThan(.005f));
+
+            portrait.SetState(state, .4f / duration);
+            Assert.That(Vector2.Distance(initialPhysical, physicalHead.anchoredPosition), Is.GreaterThan(.3f));
+            Assert.That(portrait.State, Is.EqualTo(state));
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeEntryPreservesAnInterruptedScoredReaction(SpiritPresentationState state)
+        {
+            portrait.React();
+            portrait.Advance(.4f);
+            Vector2 physicalPose = physicalHead.anchoredPosition;
+            Vector2 spectralPose = spiritHead.anchoredPosition;
+            Quaternion physicalRotation = physicalHead.localRotation;
+            float alpha = portrait.GetLayer("Cyan Front").color.a;
+            float tail = portrait.GetLayer("Body").Weights[1];
+            float breath = portrait.GetLayer("Body").Weights[0];
+
+            portrait.SetState(state, 0f);
+
+            Assert.That(Vector2.Distance(physicalHead.anchoredPosition, physicalPose), Is.LessThan(.0001f));
+            Assert.That(Vector2.Distance(spiritHead.anchoredPosition, spectralPose), Is.LessThan(.0001f));
+            Assert.That(Quaternion.Angle(physicalHead.localRotation, physicalRotation), Is.LessThan(.001f));
+            Assert.That(portrait.GetLayer("Cyan Front").color.a, Is.EqualTo(alpha).Within(.0001f));
+            Assert.That(portrait.GetLayer("Body").Weights[1], Is.EqualTo(tail).Within(.0001f));
+            Assert.That(portrait.GetLayer("Body").Weights[0], Is.EqualTo(breath).Within(.0001f));
+            Assert.That(portrait.IsReacting, Is.False);
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeReturnsToIdlePoseAndHoldsWhenAdvanced(SpiritPresentationState state)
+        {
+            portrait.Sample(portrait.GetDuration(state));
+            Vector2 expectedPhysical = physicalHead.anchoredPosition;
+            Quaternion expectedRotation = physicalHead.localRotation;
+            Vector2 expectedBody = body.anchoredPosition;
+            float expectedBreath = portrait.GetLayer("Body").Weights[0];
+
+            portrait.SetState(state, .5f);
+            Assert.That(Vector2.Distance(expectedPhysical, physicalHead.anchoredPosition), Is.GreaterThan(.2f));
+            Vector2 midpoint = physicalHead.anchoredPosition;
+            portrait.Advance(10f);
+            Assert.That(physicalHead.anchoredPosition, Is.EqualTo(midpoint));
+            portrait.SetState(state, 1f);
+            portrait.Advance(50f);
+
+            Assert.That(portrait.State, Is.EqualTo(state));
+            Assert.That(portrait.Progress, Is.EqualTo(1f));
+            Assert.That(Vector2.Distance(physicalHead.anchoredPosition, expectedPhysical), Is.LessThan(.001f));
+            Assert.That(Quaternion.Angle(physicalHead.localRotation, expectedRotation), Is.LessThan(.001f));
+            Assert.That(Vector2.Distance(physicalHead.anchoredPosition, spiritHead.anchoredPosition), Is.LessThan(.001f));
+            Assert.That(portrait.GetLayer("Cyan Front").color.a, Is.Zero.Within(.0001f));
+            Assert.That(portrait.GetLayer("Gold Front").color.a, Is.Zero.Within(.0001f));
+            Assert.That(portrait.GetLayer("Physical Turn").color.a, Is.Zero.Within(.0001f));
+            Assert.That(body.anchoredPosition, Is.EqualTo(expectedBody));
+            Assert.That(portrait.GetLayer("Body").Weights[0], Is.EqualTo(expectedBreath).Within(.0001f));
+        }
+
+        [Test]
+        public void VictoryNodsAndDefeatUsesAGentlerTilt()
+        {
+            portrait.SetState(SpiritPresentationState.Victory, .5f);
+            float victoryY = physicalHead.anchoredPosition.y;
+            Assert.That(Mathf.DeltaAngle(0f, physicalHead.localEulerAngles.z), Is.LessThan(-1f));
+            portrait.ResetPose();
+            portrait.SetState(SpiritPresentationState.Defeat, .5f);
+            Assert.That(Mathf.DeltaAngle(0f, physicalHead.localEulerAngles.z), Is.GreaterThan(2f));
+            Assert.That(physicalHead.anchoredPosition.y, Is.GreaterThan(victoryY + 2f));
+        }
+
         [Test]
         public void ScoredReactionOverridesAnOngoingIdleGesture()
         {

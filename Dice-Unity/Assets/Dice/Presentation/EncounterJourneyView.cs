@@ -40,6 +40,7 @@ namespace Dice.Presentation
         private Button resumeButton;
         private Button loadButton;
         private RectTransform clueContent;
+        private ScrollRect clueScroll;
         private readonly List<GameObject> clueCards = new List<GameObject>();
         private Action<SpiritPresentationState, float> hostState;
         private CanvasGroup narrativeGroup;
@@ -78,7 +79,7 @@ namespace Dice.Presentation
                 new Vector2(.04f, .917f), new Vector2(.96f, .982f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             investigationDescription = SpiritUi.Label("InvestigationSubtitle", board, "", 18,
                 new Vector2(.06f, .85f), new Vector2(.94f, .92f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            SpiritUi.Scroll("InvestigationClues", board, new Vector2(.015f, .24f), new Vector2(.985f, .845f), out clueContent);
+            clueScroll = SpiritUi.Scroll("InvestigationClues", board, new Vector2(.015f, .24f), new Vector2(.985f, .845f), out clueContent);
             var layout = clueContent.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 16;
             layout.padding = new RectOffset(6, 6, 6, 6);
@@ -210,6 +211,7 @@ namespace Dice.Presentation
             clueCards.Clear();
             if (controls.JourneyCatalog == null) return;
             int index = 0;
+            RectTransform firstHighlight = null;
             foreach (var journey in controls.JourneyCatalog.Entries)
             {
                 if (journey == null) continue;
@@ -219,6 +221,20 @@ namespace Dice.Presentation
                 var button = cardImage.gameObject.AddComponent<SpiritUiButtonVisual>();
                 button.targetGraphic = cardImage;
                 var theme = SpiritUi.GetTheme(transform);
+                bool highlighted = false;
+                foreach (string id in controls.HighlightedEncounterIds)
+                    if (id == journey.EncounterId) { highlighted = true; break; }
+                if (highlighted)
+                {
+                    var outline = cardImage.gameObject.AddComponent<Outline>();
+                    outline.effectColor = theme.amber;
+                    outline.effectDistance = new Vector2(3, -3);
+                    var marker = SpiritUi.Label("ClueNewLead", button.transform, "NEW LEAD", 14,
+                        new Vector2(.055f, .94f), new Vector2(.945f, 1), TextAnchor.MiddleCenter, theme.amber);
+                    marker.rectTransform.offsetMin = new Vector2(12, 0);
+                    marker.rectTransform.offsetMax = new Vector2(-12, 0);
+                    if (firstHighlight == null) firstHighlight = cardImage.rectTransform;
+                }
                 var colors = button.colors;
                 colors.normalColor = Color.white;
                 colors.highlightedColor = colors.selectedColor = theme != null ? theme.highlightedTint : new Color(1.10f, 1.08f, 1.01f, 1);
@@ -269,6 +285,17 @@ namespace Dice.Presentation
                     discoveredText.resizeTextMinSize = 17;
                     discoveredText.resizeTextMaxSize = 19;
                 }
+            }
+            if (firstHighlight != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(clueContent);
+                float scrollableHeight = clueContent.rect.height - clueScroll.viewport.rect.height;
+                var cardTop = clueContent.InverseTransformPoint(firstHighlight.TransformPoint(
+                    new Vector3(0, firstHighlight.rect.yMax, 0)));
+                clueScroll.StopMovement();
+                clueScroll.verticalNormalizedPosition = scrollableHeight > 0 ?
+                    1 - Mathf.Clamp01(-cardTop.y / scrollableHeight) : 1;
             }
         }
 

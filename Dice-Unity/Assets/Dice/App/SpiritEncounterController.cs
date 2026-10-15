@@ -32,6 +32,7 @@ namespace Dice.App
         private PlayerProfile profile;
         private bool profileDirty;
         private bool directGameplay;
+        private readonly List<string> highlightedEncounterIds = new List<string>();
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -46,6 +47,7 @@ namespace Dice.App
         public IReadOnlyList<string> CompletedEncounterIds => profile?.CompletedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public string ProfileStatusMessage { get; private set; } = string.Empty;
         public IReadOnlyList<string> VisitedEncounterIds => profile?.VisitedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<string> HighlightedEncounterIds => highlightedEncounterIds;
         public EncounterJourneyPhase JourneyPhase { get; private set; } = EncounterJourneyPhase.Playing;
         public EncounterJourneyCatalogAsset JourneyCatalog => journeyCatalog;
         public EncounterJourneyAsset SelectedJourney { get; private set; }
@@ -179,6 +181,7 @@ namespace Dice.App
             var selected = journeyCatalog.Find(id);
             if (selected == null) { SetJourneyStatus("The encounter has no investigation lead."); return; }
             SelectedJourney = selected;
+            highlightedEncounterIds.Remove(id);
             BeatIndex = 0;
             JourneyPhase = EncounterJourneyPhase.Sequence;
             SetJourneyStatus(string.Empty);
@@ -242,6 +245,18 @@ namespace Dice.App
             BeatIndex = -1;
             SetJourneyStatus(string.Empty);
             StateChanged?.Invoke();
+        }
+
+        public void RetryEncounter()
+        {
+            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Playing || Snapshot == null ||
+                Snapshot.Outcome == EncounterOutcome.None || journeyCatalog == null) return;
+            var selected = journeyCatalog.Find(Snapshot.EncounterId);
+            if (selected == null) return;
+            SelectedJourney = selected;
+            BeatIndex = selected.Beats.Count - 1;
+            JourneyPhase = EncounterJourneyPhase.Sequence;
+            SetJourneyStatus(string.Empty);
         }
 
         private void SetJourneyStatus(string message)
@@ -379,7 +394,7 @@ namespace Dice.App
             if (!resolution.Accepted) return;
             IsBusy = true;
             Snapshot = resolution.Snapshot;
-            RecordProgression(Snapshot);
+            RecordProgression(Snapshot, true);
             foreach (var ruleEvent in resolution.Events)
             {
                 if (ruleEvent is DiceRolledEvent || ruleEvent is HandScoredEvent) SelectedMask = 0;
@@ -486,11 +501,23 @@ namespace Dice.App
                     yield return modifier.Id;
         }
 
-        private void RecordProgression(EncounterSnapshot snapshot)
+        private void RecordProgression(EncounterSnapshot snapshot, bool highlightFollowUps = false)
         {
             if (profile == null) return;
             foreach (string id in snapshot.UnlockedModifierIds) profileDirty |= profile.UnlockModifier(id);
-            if (snapshot.Outcome == EncounterOutcome.Won) profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);
+            if (snapshot.Outcome == EncounterOutcome.Won)
+            {
+                bool firstVictory = !profile.CompletedEncounterIds.Contains(snapshot.EncounterId);
+                if (firstVictory && highlightFollowUps)
+                {
+                    var journey = journeyCatalog?.Find(snapshot.EncounterId);
+                    if (journey != null)
+                        foreach (string id in journey.FollowUpEncounterIds)
+                            if (!profile.VisitedEncounterIds.Contains(id) && !profile.CompletedEncounterIds.Contains(id) &&
+                                !highlightedEncounterIds.Contains(id)) highlightedEncounterIds.Add(id);
+                }
+                profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);
+            }
             PersistProfile();
         }
 

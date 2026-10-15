@@ -105,6 +105,26 @@ namespace Dice.Tests
             }
             var mechanical = TestContent.BuildStandardCatalog();
             Assert.DoesNotThrow(() => authored.Validate(mechanical));
+            Assert.That(directJourney.FollowUpEncounterIds, Is.EqualTo(new[] { "encounter.owl.watchtower" }));
+            Assert.That(directJourney.ResultContinueLabel, Is.EqualTo("Return to the trail"));
+            var victory = directJourney.GetOutcomePresentation(EncounterOutcome.Won);
+            Assert.That(victory, Is.Not.Null);
+            Assert.That((int)victory.HostState, Is.EqualTo(4));
+            Assert.That(victory.HoldDuration, Is.EqualTo(.25f));
+            Assert.That(victory.FadeDuration, Is.EqualTo(.3f));
+            Assert.That(victory.ShowDialogue, Is.True);
+            var defeat = directJourney.GetOutcomePresentation(EncounterOutcome.Lost);
+            Assert.That(defeat, Is.Not.Null);
+            Assert.That((int)defeat.HostState, Is.EqualTo(5));
+            Assert.That(defeat.HoldDuration, Is.EqualTo(.2f));
+            Assert.That(defeat.FadeDuration, Is.EqualTo(.3f));
+            Assert.That(defeat.ShowDialogue, Is.True);
+            var abandon = directJourney.GetOutcomePresentation(EncounterOutcome.Abandoned);
+            Assert.That(abandon, Is.Not.Null);
+            Assert.That((int)abandon.HostState, Is.EqualTo(6));
+            Assert.That(abandon.HoldDuration, Is.Zero);
+            Assert.That(abandon.FadeDuration, Is.EqualTo(.2f));
+            Assert.That(abandon.ShowDialogue, Is.False);
             Assert.That(controller.InitializeJourney(mechanical, authored, savePath), Is.True, controller.JourneyStatus);
             Assert.That(controller.Catalog, Is.SameAs(mechanical));
             Assert.That(controller.Snapshot, Is.Null);
@@ -343,6 +363,135 @@ namespace Dice.Tests
             Set(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
             Set(journey.TablePresentation, "rulePresentations", new[] { rule });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [Test]
+        public void OutcomePresentationIsOptionalAndEnabledPerOutcome()
+        {
+            var journey = journeys.Entries[0];
+            foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
+                Assert.That(journey.GetOutcomePresentation(outcome), Is.Null);
+            var presentation = new EncounterOutcomePresentation();
+            Assert.That(presentation.HoldDuration, Is.Zero);
+            Assert.That(presentation.FadeDuration, Is.EqualTo(.3f));
+            Assert.That(presentation.ShowDialogue, Is.False);
+            Set(journey, "victoryPresentation", presentation);
+            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won), Is.Null);
+            Set(presentation, "enabled", true);
+            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won), Is.SameAs(presentation));
+            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
+            Set(presentation, "holdDuration", float.NaN);
+            Assert.Throws<FormatException>(() => journey.Validate(catalog));
+            Set(presentation, "holdDuration", 0f);
+            Set(presentation, "fadeDuration", -1f);
+            Assert.Throws<FormatException>(() => journey.Validate(catalog));
+        }
+
+        [TestCase("duplicate")]
+        [TestCase("self")]
+        [TestCase("missing")]
+        public void FollowUpReferencesMustBeUniqueOtherCatalogJourneys(string invalid)
+        {
+            Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+            Set(journeys.Entries[0], "followUpEncounterIds", invalid == "duplicate" ? new[] { SecondId, SecondId } :
+                new[] { invalid == "self" ? FirstId : "encounter.missing" });
+            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [Test]
+        public void RetryRequiresCompletedPresentationAndWaitsAtSameInvitation()
+        {
+            controller.InitializeJourney(catalog, journeys, savePath);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.RetryEncounter();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+            controller.Resolved += resolution => { };
+            controller.Abandon();
+            var completed = controller.Snapshot;
+            object application = Get(controller, "application");
+            byte[] profileBytes = File.ReadAllBytes(controller.ProfilePath);
+            controller.RetryEncounter();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+            controller.CompletePresentation();
+            controller.RetryEncounter();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(FirstId));
+            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.Beats.Count - 1));
+            Assert.That(controller.Snapshot, Is.SameAs(completed));
+            Assert.That(Get(controller, "application"), Is.SameAs(application));
+            Assert.That(File.ReadAllBytes(controller.ProfilePath), Is.EqualTo(profileBytes));
+            controller.AcceptEncounter();
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
+            Assert.That(controller.Snapshot.TotalHandsPlayed, Is.Zero);
+            Assert.That(controller.VisitedEncounterIds, Is.EqualTo(new[] { FirstId }));
+        }
+
+        [Test]
+        public void FirstVictoryHighlightsUnvisitedFollowUpsUntilSelectedAndRepeatVictoryDoesNotRepeatThem()
+        {
+            InitializeWinningJourney();
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.PlayHand();
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(controller.HighlightedEncounterIds, Is.EqualTo(new[] { SecondId }));
+            Assert.That(controller.CompletedEncounterIds, Is.EqualTo(new[] { FirstId }));
+            controller.ReturnToInvestigation();
+            Assert.That(controller.HighlightedEncounterIds, Is.EqualTo(new[] { SecondId }));
+            controller.SelectEncounter(SecondId);
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            controller.ReturnToInvestigation();
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.PlayHand();
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void FirstVictoryDoesNotHighlightVisitedOrCompletedFollowUps(bool completed)
+        {
+            var profile = new PlayerProfile();
+            if (completed) profile.CompleteEncounter(SecondId);
+            else profile.VisitEncounter(SecondId);
+            string profilePath = Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json");
+            PlayerProfileFileStore.Save(profilePath, profile);
+            InitializeWinningJourney();
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.PlayHand();
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            controller.ReturnToInvestigation();
+            controller.SelectEncounter(SecondId);
+            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+        }
+
+        [Test]
+        public void LoadingCompletedEncounterRecordsProgressWithoutCreatingNewLeadHighlights()
+        {
+            InitializeWinningJourney();
+            var existing = new EncounterApplication(controller.Catalog, FirstId, 17);
+            existing.Submit(PlayHandAction.Instance, existing.Snapshot.Revision);
+            Assert.That(existing.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            EncounterSaveFileStore.Save(savePath, existing.CaptureSave());
+            controller.Load();
+            Assert.That(controller.CompletedEncounterIds, Is.EqualTo(new[] { FirstId }));
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            controller.ReturnToInvestigation();
+            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+        }
+
+        private void InitializeWinningJourney()
+        {
+            var winningCatalog = new MechanicalCatalog("test.journey-outcome.v1", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
+                new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
+            });
+            Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
         }
 
         private EncounterJourneyAsset Journey(string id, string location, string spirit)

@@ -143,6 +143,7 @@ namespace Dice.Presentation
                 Require(ValidState(sequence.State), "Sequence " + sequence.Id + " has invalid State.");
                 Require(Finite(sequence.Duration) && sequence.Duration > 0f, "Sequence " + sequence.Id + " Duration must be positive and finite.");
                 Require(sequence.State != SpiritPresentationState.Reaction || !sequence.Loop, "Reaction sequences cannot loop.");
+                Require(sequence.State < SpiritPresentationState.Victory || !sequence.Loop, "Outcome sequences cannot loop.");
                 if (sequence.GestureTimes != null)
                     foreach (float time in sequence.GestureTimes)
                         Require(Finite(time) && time >= 0f && time <= sequence.Duration, "GestureTimes must be within their sequence duration.");
@@ -173,7 +174,9 @@ namespace Dice.Presentation
                     && Finite(key.inWeight) && Finite(key.outWeight), "Curve keys contain invalid values.");
         }
 
-        internal static bool ValidState(SpiritPresentationState state) => state >= SpiritPresentationState.Idle && state <= SpiritPresentationState.Reaction;
+        internal static bool ValidState(SpiritPresentationState state) => state >= SpiritPresentationState.Idle && state <= SpiritPresentationState.Farewell;
+        internal static bool DirectedState(SpiritPresentationState state) => state == SpiritPresentationState.Arrival
+            || state >= SpiritPresentationState.Victory && state <= SpiritPresentationState.Farewell;
         internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         internal static bool Finite(Vector2 value) => Finite(value.x) && Finite(value.y);
         internal static void Require(bool condition, string message)

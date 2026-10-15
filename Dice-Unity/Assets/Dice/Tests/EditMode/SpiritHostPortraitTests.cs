@@ -130,6 +130,97 @@ namespace Dice.Tests
             Assert.That(portrait.Progress, Is.EqualTo(.4f));
         }
 
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeSeeksEachSequenceByNormalizedProgressAndHoldsItsTerminalPose(SpiritPresentationState state)
+        {
+            Array.Resize(ref presentation.Sequences, presentation.Sequences.Length + 2);
+            presentation.Sequences[presentation.Sequences.Length - 2] = Sequence("Outcome head", state, 4f, false,
+                Track(1, SpiritPortraitProperty.PositionY, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 90f, 4f, 110f)));
+            presentation.Sequences[presentation.Sequences.Length - 1] = Sequence("Outcome accent", state, 2f, false,
+                Track(0, SpiritPortraitProperty.Rotation, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 0f, 2f, 8f)));
+            Build();
+
+            Assert.That(portrait.GetDuration(state), Is.EqualTo(4f));
+            portrait.SetState(state, .25f);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.EqualTo(95f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(2f).Within(.0001f));
+            portrait.Advance(20f);
+            Assert.That(portrait.Progress, Is.EqualTo(.25f));
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.EqualTo(95f).Within(.0001f));
+            portrait.SetState(state, 2f);
+            portrait.Advance(20f);
+            Assert.That(portrait.State, Is.EqualTo(state));
+            Assert.That(portrait.Progress, Is.EqualTo(1f));
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.EqualTo(110f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(8f).Within(.0001f));
+            portrait.SetState(state, -.1f);
+            Assert.That(portrait.Progress, Is.Zero);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.EqualTo(90f));
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void OutcomeEntryWeightsPreserveReactionPoseAndDecayDuringDirectedSampling(SpiritPresentationState state)
+        {
+            var track = Track(1, SpiritPortraitProperty.PositionX, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, 0f, 2f, 8f));
+            track.EntryWeight = AnimationCurve.Linear(0f, 1f, 2f, 0f);
+            Array.Resize(ref presentation.Sequences, presentation.Sequences.Length + 1);
+            presentation.Sequences[presentation.Sequences.Length - 1] = Sequence("Outcome", state, 2f, false, track);
+            Build();
+            portrait.React();
+            portrait.Advance(.75f);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionX), Is.EqualTo(73f).Within(.0001f));
+
+            portrait.SetState(state, 0f);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionX), Is.EqualTo(73f).Within(.0001f));
+            portrait.React();
+            Assert.That(portrait.State, Is.EqualTo(state));
+            portrait.SetState(state, .5f);
+            portrait.Advance(2f);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionX), Is.EqualTo(75.5f).Within(.0001f));
+            portrait.SetState(state, 1f);
+            Assert.That(Value(1, SpiritPortraitProperty.PositionX), Is.EqualTo(78f).Within(.0001f));
+        }
+
+        [Test]
+        public void DirectedOutcomeKeepsContinuousSmokeTimeAdvancing()
+        {
+            presentation.SmokeShader = Shader.Find("Dice/Spirit Smoke");
+            presentation.Layers[0].Smoke.Enabled = true;
+            Build();
+            portrait.Advance(.5f);
+            Material material = portrait.GetLayer("Distant Lantern").material;
+            portrait.SetState(SpiritPresentationState.Victory, .4f);
+            portrait.Advance(.25f);
+            Assert.That(portrait.Progress, Is.EqualTo(.4f));
+            Assert.That(material.GetFloat("_EffectTime"), Is.EqualTo(.75f).Within(.0001f));
+        }
+
+        [Test]
+        public void MissingOutcomeDurationsReturnZeroAndExistingDurationsRemainAvailable()
+        {
+            Build();
+            Assert.That(portrait.GetDuration(SpiritPresentationState.Victory), Is.Zero);
+            Assert.That(portrait.GetDuration(SpiritPresentationState.Defeat), Is.Zero);
+            Assert.That(portrait.GetDuration(SpiritPresentationState.Farewell), Is.Zero);
+            Assert.That(portrait.GetDuration(SpiritPresentationState.Arrival), Is.EqualTo(5f));
+            Assert.That(portrait.GetDuration(SpiritPresentationState.Reaction), Is.EqualTo(portrait.GestureDuration));
+            Assert.Throws<ArgumentOutOfRangeException>(() => portrait.GetDuration((SpiritPresentationState)7));
+        }
+
+        [TestCase(SpiritPresentationState.Victory)]
+        [TestCase(SpiritPresentationState.Defeat)]
+        [TestCase(SpiritPresentationState.Farewell)]
+        public void LoopingOutcomeSequencesAreRejected(SpiritPresentationState state)
+        {
+            presentation.Sequences[3].State = state;
+            presentation.Sequences[3].Loop = true;
+            Assert.Throws<InvalidOperationException>(() => presentation.Validate());
+        }
+
         [Test]
         public void ArrivalEntryWeightsPreserveWaitingPoseAndDecayToAuthoredPose(
             [Values(.35f, 1.7f, 7.35f)] float waitingAge, [Values(false, true)] bool includeIdle)

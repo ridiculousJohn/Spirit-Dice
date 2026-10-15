@@ -10,6 +10,35 @@ namespace Dice.Presentation
     public enum EncounterJourneyTransition { Fade, PartingPanels }
 
     [Serializable]
+    public sealed class EncounterOutcomePresentation
+    {
+        [SerializeField] private bool enabled;
+        [SerializeField] private SpiritPresentationState hostState;
+        [SerializeField] private float holdDuration;
+        [SerializeField] private float fadeDuration = .3f;
+        [SerializeField] private bool showDialogue;
+        [SerializeField] private Texture2D artwork;
+        [SerializeField] private AudioClip audioCue;
+
+        public SpiritPresentationState HostState => hostState;
+        public float HoldDuration => holdDuration;
+        public float FadeDuration => fadeDuration;
+        public bool ShowDialogue => showDialogue;
+        public Texture2D Artwork => artwork;
+        public AudioClip AudioCue => audioCue;
+        internal bool Enabled => enabled;
+
+        internal void Validate()
+        {
+            if (!Enum.IsDefined(typeof(SpiritPresentationState), hostState) ||
+                hostState == SpiritPresentationState.Reaction ||
+                float.IsNaN(holdDuration) || float.IsInfinity(holdDuration) || holdDuration < 0 ||
+                float.IsNaN(fadeDuration) || float.IsInfinity(fadeDuration) || fadeDuration < 0)
+                throw new FormatException("Encounter outcome presentation data is invalid.");
+        }
+    }
+
+    [Serializable]
     public sealed class EncounterJourneyBeat
     {
         [SerializeField] private string id;
@@ -82,6 +111,10 @@ namespace Dice.Presentation
         [SerializeField] private string resultContinueLabel;
         [SerializeField] private string completionClueTitle;
         [SerializeField, TextArea] private string completionClueText;
+        [SerializeField] private EncounterOutcomePresentation victoryPresentation;
+        [SerializeField] private EncounterOutcomePresentation defeatPresentation;
+        [SerializeField] private EncounterOutcomePresentation abandonPresentation;
+        [SerializeField] private string[] followUpEncounterIds = Array.Empty<string>();
 
         public string EncounterId => encounterId;
         public string LocationTitle => locationTitle;
@@ -98,12 +131,32 @@ namespace Dice.Presentation
         public string ResultContinueLabel => resultContinueLabel;
         public string CompletionClueTitle => completionClueTitle;
         public string CompletionClueText => completionClueText;
+        public IReadOnlyList<string> FollowUpEncounterIds => followUpEncounterIds;
+
+        public EncounterOutcomePresentation GetOutcomePresentation(EncounterOutcome outcome)
+        {
+            switch (outcome)
+            {
+                case EncounterOutcome.Won: return victoryPresentation?.Enabled == true ? victoryPresentation : null;
+                case EncounterOutcome.Lost: return defeatPresentation?.Enabled == true ? defeatPresentation : null;
+                case EncounterOutcome.Abandoned: return abandonPresentation?.Enabled == true ? abandonPresentation : null;
+                default: return null;
+            }
+        }
 
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (!IsStableId(encounterId)) throw new FormatException("A journey requires a valid encounter ID.");
             var definition = catalog.GetEncounter(encounterId);
+            victoryPresentation?.Validate();
+            defeatPresentation?.Validate();
+            abandonPresentation?.Validate();
+            if (followUpEncounterIds == null) throw new FormatException("Journey follow-up encounters require an array.");
+            var followUpIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in followUpEncounterIds)
+                if (!IsStableId(id) || id == encounterId || !followUpIds.Add(id))
+                    throw new FormatException("Journey follow-up encounter IDs must be valid, unique, and different from the journey.");
             if (string.IsNullOrWhiteSpace(locationTitle) || string.IsNullOrWhiteSpace(spiritName) ||
                 string.IsNullOrWhiteSpace(leadText))
                 throw new FormatException("An encounter journey requires its location, host, and investigation lead.");

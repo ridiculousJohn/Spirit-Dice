@@ -76,7 +76,7 @@ namespace Dice.Presentation
         private SceneLightingMaterial sceneLightingMaterial;
         private Text encounterTitle;
         private Text menuTitle;
-        private Button endingContinueButton;
+        private SpiritEncounterEndingView endingView;
         private Button investigationButton;
         private SpiritEncounterAudio encounterAudio;
         private SpiritActionModifierCue actionModifierCue;
@@ -112,10 +112,6 @@ namespace Dice.Presentation
         private Image ruleSpiritIcon;
         private Graphic ruleSpiritSigil;
         private RectTransform ruleSpiritSigilRoot;
-        private Text endingTitle;
-        private Text endingDetail;
-        private Text endingUnlocks;
-        private RectTransform endingUnlockContent;
         private Text profileSummary;
         private Text charmTitle;
         private Text charmDetail;
@@ -937,22 +933,12 @@ namespace Dice.Presentation
 
         private void BuildEnding()
         {
-            endingPanel = SpiritUi.Panel("EndingPanel", portrait, new Vector2(.045f, .075f), new Vector2(.955f, .625f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
-            endingTitle = SpiritUi.Heading("EndingTitle", endingPanel, "", 42, new Vector2(0, .84f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            var endingRule = SpiritUi.Rect("EndingRule", endingPanel, new Vector2(.1f, .45f), new Vector2(.9f, .48f));
-            SpiritUi.Decorate(endingRule);
-            endingDetail = SpiritUi.Label("EndingDetail", endingPanel, "", 19, new Vector2(.05f, .49f), new Vector2(.95f, .84f),
-                TextAnchor.MiddleCenter);
-            SpiritUi.Scroll("EndingUnlockScroll", endingPanel, new Vector2(.05f, .29f), new Vector2(.95f, .44f),
-                out endingUnlockContent);
-            endingUnlocks = SpiritUi.Label("EndingUnlocks", endingUnlockContent, "", 16, Vector2.zero, Vector2.one,
-                TextAnchor.UpperLeft, SpiritUi.GetTheme(transform).amber);
-            endingContinueButton = SpiritUi.Button("EndingNewRunButton", endingPanel, "Return to the table", new Vector2(.1f, .08f), new Vector2(.9f, .27f),
-                () => { if (!Busy) { if (journeyControls != null) journeyControls.ReturnToInvestigation(); else controls.StartNew(); } }, true);
+            endingView = gameObject.AddComponent<SpiritEncounterEndingView>();
+            endingView.Build(portrait,
+                () => { if (!Busy) { if (journeyControls != null) journeyControls.ReturnToInvestigation(); else controls.StartNew(); } },
+                () => { if (!Busy) { if (journeyControls != null) journeyControls.RetryEncounter(); else controls.StartNew(); } });
+            endingPanel = endingView.Root;
         }
-
         private void BuildCharms()
         {
             charmsPanel = SpiritUi.Panel("CharmsOverlay", portrait, Vector2.zero, Vector2.one,
@@ -1190,22 +1176,9 @@ namespace Dice.Presentation
             else if (!completed) RenderRewards(snapshot);
             else
             {
-                var journey = journeyControls?.SelectedJourney;
-                endingTitle.text = journey == null ? snapshot.Outcome.ToString() :
-                    snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryTitle : journey.DefeatTitle;
-                string endingText = journey == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryText :
-                    snapshot.Outcome == EncounterOutcome.Abandoned ? journey.AbandonText : journey.DefeatText;
-                endingDetail.text = (string.IsNullOrWhiteSpace(endingText) ? "" : endingText + "\n\n") +
-                    "Total score  " + DiagnosticText.Number(snapshot.TotalScore) + "\n" +
-                    snapshot.TotalHandsPlayed + (snapshot.TotalHandsPlayed == 1 ? " hand played\n" : " hands played\n") +
-                    snapshot.TotalRerollsSpent + (snapshot.TotalRerollsSpent == 1 ? " reroll spent" : " rerolls spent");
-                endingDetail.resizeTextForBestFit = journey != null;
-                endingDetail.resizeTextMinSize = 16;
-                endingDetail.resizeTextMaxSize = 19;
-                SpiritUi.SetButtonLabel(endingContinueButton, journey == null ? "Return to the table" : journey.ResultContinueLabel);
-                endingUnlocks.text = UnlockSummary(snapshot.NewlyUnlockedModifierIds);
-                endingUnlockContent.sizeDelta = new Vector2(endingUnlockContent.sizeDelta.x,
-                    Mathf.Max(80, endingUnlocks.preferredHeight + 12));
+                SetGameplayVisible(false);
+                endingPanel.gameObject.SetActive(true);
+                endingView.Render(snapshot, journeyControls?.SelectedJourney, UnlockSummary(snapshot.NewlyUnlockedModifierIds));
             }
             if (IsCharmsOpen) RenderCharms();
             if (IsHandRanksOpen) RenderHandRanks();
@@ -1228,6 +1201,7 @@ namespace Dice.Presentation
         private void ResetPresentation(bool resetHost = true)
         {
             StopAllCoroutines();
+            endingView?.Reset();
             SetOpeningOpacity(1);
             (activeRoll as IDisposable)?.Dispose();
             activeRoll = null;
@@ -1459,8 +1433,12 @@ namespace Dice.Presentation
                     targetLabel.text = "0";
                     targetCaption.text = "STAGE CLEARED";
                     encounterAudio.Play(SpiritAudioCue.StageClear);
-                    hostPortrait?.React();
-                    yield return new WaitForSecondsRealtime(hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
+                    if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
+                        journeyControls?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
+                    {
+                        hostPortrait?.React();
+                        yield return new WaitForSecondsRealtime(hostPortrait != null ? hostPortrait.GestureDuration : 1.8f);
+                    }
                 }
                 else if (ruleEvent is StageStartedEvent stage)
                 {
@@ -1487,6 +1465,8 @@ namespace Dice.Presentation
                 }
                 else if (ruleEvent is ModifierUnlockedEvent unlocked)
                 {
+                    if (resolution.Snapshot.Phase == EncounterPhase.Completed &&
+                        journeyControls?.SelectedJourney?.GetOutcomePresentation(resolution.Snapshot.Outcome) != null) continue;
                     var definition = controls.Catalog.GetModifier(unlocked.ModifierId);
                     stageIntroTitle.text = HasPendingProgress ? "CHARM UNLOCKED - SAVE PENDING" : "CHARM UNLOCKED";
                     stageIntroDetail.fontSize = 16;
@@ -1517,6 +1497,14 @@ namespace Dice.Presentation
                     if (resource.Resource == ResourceKind.Rerolls && resource.Cause != ResourceChangeCause.ModifierEffect)
                         selectionLabel.text = resource.After + " rerolls remaining";
                 }
+            }
+            if (resolution.Snapshot.Phase == EncounterPhase.Completed)
+            {
+                endingView.Render(resolution.Snapshot, journeyControls?.SelectedJourney,
+                    UnlockSummary(resolution.Snapshot.NewlyUnlockedModifierIds));
+                yield return endingView.Present(hostPortrait, SetOpeningOpacity,
+                    () => { SetGameplayVisible(false); endingPanel.gameObject.SetActive(true); },
+                    clip => encounterAudio.PlayJourneyCue(clip));
             }
             presentedSnapshot = resolution.Snapshot;
             presenting = false;
@@ -1757,9 +1745,13 @@ namespace Dice.Presentation
         {
             if (ids.Count == 0) return "No new charms unlocked this run.";
             var names = new List<string>();
-            foreach (string id in ids) names.Add(CharmName(controls.Catalog.GetModifier(id)));
+            foreach (string id in ids)
+            {
+                var definition = controls.Catalog.GetModifier(id);
+                names.Add(CharmName(definition) + "\n" + AvailabilityScopeText(definition));
+            }
             return (HasPendingProgress ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
-                string.Join("\n", names);
+                "Available in future reward pools.\n\n" + string.Join("\n\n", names);
         }
 
         private bool HasPendingProgress => controls is ISpiritProgressionControls progression &&
