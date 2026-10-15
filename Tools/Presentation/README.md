@@ -1,5 +1,23 @@
 # Spirit presentation authoring
 
+## Modifier families and categories
+
+Each `ModifierPresentationAsset` supplies its family artwork and references a shared `ModifierCategoryPresentationAsset`. The four category assets in `Assets/Dice/Presentation/Shared` author the UI accent, ink on bone, and secondary symbol: teal plus for Base, red cross for Mult, purple plus/cross for Base + Mult, and gold circular arrow for Rerolls. Change these assets to restyle categories; runtime presentation does not infer categories from identifier suffixes or contribution amounts.
+
+All variants of a family use the same artwork. All 74 standard families have bespoke icons: seven existing code-authored drawings, including Twin Knots, and 67 SVG-authored sprite assets. Unregistered custom content can still use the provisional sigil fallback. Reward cards, owned charms, inspection, action cues and ready tray dice use the same category reference. The category mark is separate from the charm's activation-status badge and gold selection frame. Modifier dice retain neutral bone, with colored ink and a small symbol on the top face. The four inert Sleeping Stone variants have their own artwork but no category.
+
+Category assets are explicit dependencies of the Addressable modifier presentation assets. No Resources lookup or separate startup discovery is needed. Mechanical modifier assets remain independent of this styling.
+
+Reward description trigger phrases use `SpiritUiTheme` colors independently of effect categories: green for playing a hand, amber for rerolling, and blue for the initial roll. Condition keywords use the theme's standard gold. Icons and effect text retain their category colors.
+
+### Family icon sources
+
+`modifier-icons/catalog.json` maps each of the 67 SVG sources to its mechanical family identity and existing display name. The drawings were authored for this project; no external icon pack is used. Each source has a 64-unit viewBox, transparent background, white 3.2-unit rounded strokes and a six-unit safe inset. Keep silhouettes distinct and check at 32 pixels. Category symbols and colors belong to the shared presentation assets, not these sources.
+
+Run `python Tools/Presentation/render-modifier-icons.py` from the repository root with Python 3.10+ and Pillow installed. It writes PNG previews and a labeled contact sheet into a fresh ignored `Docs/work/modifier-icons-*` directory. `--output` selects another fresh directory under `Docs/work`. The renderer supports absolute SVG M/L/C/Q/Z paths, circles, ellipses, rectangles, lines, polylines, polygons and inherited group paint; it rejects unsupported styling instead of silently dropping it.
+
+`--write-assets` also writes the 256-pixel PNG sprites under `Dice-Unity/Assets/Dice/Art/ModifierFamilies` and assigns each to its four presentation assets. It preserves existing asset GUIDs and importer metadata. This intentionally replaces authored PNGs and icon references for those families; review the intended sources before running it. Unity uses ordinary explicitly referenced sprites loaded as Addressables dependencies, with no SVG package or runtime rasterizer for these assets. Import sprites uncompressed with alpha transparency, no mipmaps, bilinear filtering and clamped edges.
+
 ## Encounter trays
 
 The Watchtower tray uses mottled stone for its rails and recessed bays. The Crossroads tray uses faded,
@@ -25,7 +43,7 @@ Asset edits use Unity's serialized-property Undo and Redo. Placement changes upd
 
 `author-moth-presentation.py` authors the moth host and deformation mesh using the same layer/timeline format. Its default output is a new ignored `Docs/work/moth-authoring-*` directory; `--write-assets` writes only `MothCrossroadsHost.asset` and `MothBodyMesh.asset`. It requires Python 3.9 or later with no third-party packages and imports the shared authoring helpers beside it.
 
-The production body and wing smoke use aligned 1536x1024 canvases. `--foot-x` and `--foot-y` describe their contact point in bottom-left UV coordinates (defaults `0.5`, `0.28`); `--host-width` defaults to 370 in the 540x960 reference portrait. Waiting, Arrival, Idle and Reaction are authored sequences. Arrival lasts seven seconds. The smoke layer uses distortion `0.035`, speed `0.7`, opacity `0.6`, and does not receive scene lighting.
+The production body and wing smoke use aligned 1536x1024 canvases. `--foot-x` and `--foot-y` describe their contact point in bottom-left UV coordinates (defaults `0.5`, `0.28`); `--host-width` defaults to 370 in the 540x960 reference portrait. Waiting, Arrival, Idle, Reaction, Victory, Defeat and Farewell are authored sequences. Arrival lasts seven seconds. The smoke layer uses distortion `0.035`, speed `0.7`, opacity `0.6`, and does not receive scene lighting.
 
 The small moths follow independent closed waypoint schedules with short darts, holds, reversals and banking. Their arrival tracks use `EntryWeight` to start at the currently displayed waiting pose, then decay that offset before the blue layers appear. Entry weights apply to state transitions through the shared host renderer; repeated arrival progress updates retain the original entry pose. The departing moth doubles back before growing toward the rail. Arrival continues directly into dialogue, static narration waits for input without a timed lock, and gameplay fades in for 0.3 seconds before rolling.
 
@@ -64,6 +82,10 @@ Host motion duration comes from the selected state's authored sequences, indepen
 The Lantern Keeper has a 1.4-second victory nod, a gentler 1.2-second defeat tilt, and a subdued 0.5-second farewell. Gold and cyan silhouettes lead the physical head by 0.15 seconds, then settle into the idle pose. `LastLanternJourney.asset` demonstrates enabled configurations for all three outcomes. Reauthor these curves with `author-spirit-presentations.py` into a scratch directory first; copy only the intended sequence blocks when preserving manually edited production curves or layers.
 
 The Watcher uses a deliberate victory head tilt, a quieter opposite tilt on defeat, and a brief farewell settle. Its spectral head anticipates the physical turn while the feet remain planted. `WatchtowerJourney.asset` supplies its outcome timing and highlights `encounter.moth.crossroads` after a first victory. Both hosts use the same ending view and authoring script.
+
+The Lightkeeper's outcome curves are authored by `author-moth-presentation.py`. Victory settles the body and turns toward the right-hand road, with a brief cyan halo from the existing spectral layer. Defeat folds the wings, dims the smoke and withdraws slightly toward the lantern. Farewell is a short, subdued fold. Entry weights preserve continuity from an interrupted reaction; the final poses hold while the independent smoke clock continues. These curves leave the smoke material's baseline settings unchanged. Generate into scratch and transfer only the intended outcome sequence blocks when preserving manual production asset edits.
+
+`MothCrossroadsJourney.asset` enables the three outcomes, with dialogue for victory and defeat and a direct summary after the brief abandon motion. Its existing clue points toward the old crossing. It has no follow-up encounter ID because that destination is not yet playable.
 
 Farewell dialogue uses the journey's `victoryText`, `defeatText`, or `abandonText`. The summary follows the optional dialogue and presents the score, victory clue, and earned unlocks; defeat offers Retry and Return to the trail. `followUpEncounterIds` identifies existing journey IDs to highlight after victory, such as the lantern journey's `encounter.owl.watchtower`. These are trail recommendations: all encounter cards remain selectable, and selecting a highlighted encounter clears its highlight. Keep follow-up IDs unique, different from the source journey, and present in the investigation catalog.
 
