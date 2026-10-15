@@ -10,6 +10,7 @@ namespace Dice.Presentation
         private Text body;
         private Image icon;
         private SpiritModifierSigilGraphic sigil;
+        private SpiritModifierCategoryBadge category;
         private RectTransform scroll;
         private RectTransform statusRow;
         private Text status;
@@ -18,12 +19,14 @@ namespace Dice.Presentation
         private bool arranging;
 
         internal void Initialize(Text title, Text body, Image icon, RectTransform scroll,
-            RectTransform statusRow, Text status, SpiritCharmStatusBadge badge, SpiritModifierSigilGraphic sigil)
+            RectTransform statusRow, Text status, SpiritCharmStatusBadge badge, SpiritModifierSigilGraphic sigil,
+            SpiritModifierCategoryBadge category)
         {
             this.title = title;
             this.body = body;
             this.icon = icon;
             this.sigil = sigil;
+            this.category = category;
             this.scroll = scroll;
             this.statusRow = statusRow;
             this.status = status;
@@ -58,6 +61,7 @@ namespace Dice.Presentation
             icon.rectTransform.anchoredPosition = new Vector2(42, -36);
             sigil.rectTransform.anchorMin = sigil.rectTransform.anchorMax = icon.rectTransform.anchorMin;
             sigil.rectTransform.anchoredPosition = icon.rectTransform.anchoredPosition;
+            category.Align(icon.rectTransform);
             float bodyTop = 14 + Mathf.Max(titleHeight, hasIcon ? 44 : 0) + 8;
             float bodyHeight = SpiritCharmCardLayout.TextHeight(body, size.x - 32);
             SpiritCharmCardLayout.Place(body, 16, 16, bodyTop, bodyHeight);

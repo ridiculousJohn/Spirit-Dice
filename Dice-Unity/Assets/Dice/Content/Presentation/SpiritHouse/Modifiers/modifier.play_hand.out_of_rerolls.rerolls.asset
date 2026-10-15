@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 54dc2b0182d0574458935808e98ca7c5, type: 2}
   displayName: Empty Cup / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: b8f2f6564b2051cb8460efbd5b3abbf8, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

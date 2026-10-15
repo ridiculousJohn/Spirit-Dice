@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e296eb9ddea908746bc137ebc2257394, type: 2}
   displayName: Joined Roots / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

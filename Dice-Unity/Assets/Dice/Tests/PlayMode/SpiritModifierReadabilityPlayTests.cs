@@ -208,6 +208,10 @@ namespace Dice.Tests
                 card.RenderModifier(definition, 1, 1);
                 yield return null;
                 Canvas.ForceUpdateCanvases();
+                var theme = card.GetComponentInParent<SpiritUiContext>().Theme;
+                Assert.That(Find<Text>(card, "Condition").text, Does.StartWith("<b><color=#" +
+                    ColorUtility.ToHtmlStringRGB(theme.GetModifierTriggerColor(definition.Phase)) + ">"));
+                Assert.That(Find<Text>(card, "Effects").color, Is.EqualTo(SpiritModifierIcons.GetEffectColor(definition)));
                 foreach (string name in new[] { "Title", "Effects", "Condition" })
                 {
                     var label = Find<Text>(card, name);
@@ -294,9 +298,10 @@ namespace Dice.Tests
                 Assert.That(image.gameObject.activeInHierarchy, Is.True);
                 Assert.That(image.sprite, Is.SameAs(SpiritModifierIcons.GetSprite(definition)));
                 Assert.That(Find<Text>(card, "Title").text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
+                var theme = card.GetComponentInParent<SpiritUiContext>().Theme;
                 Assert.That(Find<Text>(card, "Condition").text,
                     Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition,
-                        card.GetComponentInParent<SpiritUiContext>().Theme.amber)));
+                        theme.amber, theme.GetModifierTriggerColor(definition.Phase))));
             }
             yield return Capture("rewards");
             AssertCardTextVisible(view);

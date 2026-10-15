@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b44a264f02a2c5f4589a03ca2b015255, type: 2}
   displayName: Climbing Vine / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 50b329c50d695a1bb47514b6bb64ca45, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

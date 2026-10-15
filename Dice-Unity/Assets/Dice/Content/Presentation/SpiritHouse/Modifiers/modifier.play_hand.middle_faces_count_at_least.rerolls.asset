@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ec3f466aff72e284b9e82384eb9dab77, type: 2}
   displayName: Gathered Ferns / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a0603af9c8b4575c94569b0593c9414b, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

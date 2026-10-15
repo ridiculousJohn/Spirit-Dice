@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 1fdaea1d4703498499e7f0bbfa3edc8c, type: 2}
   displayName: Counting Lantern / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f5449072bed15678883d4e095da3592a, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

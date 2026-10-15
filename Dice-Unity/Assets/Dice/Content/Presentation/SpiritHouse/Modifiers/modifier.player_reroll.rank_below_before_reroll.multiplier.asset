@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 6e7b7d92c4121f04a93671ab0375ed33, type: 2}
   displayName: Falling Leaf / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 79d57455a98f5fb5a8e2fb456d1e774d, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

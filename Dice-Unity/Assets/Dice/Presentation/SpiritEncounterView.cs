@@ -122,8 +122,11 @@ namespace Dice.Presentation
         private Text selectionLabel;
         private SpiritUiOrnament modifierEmblem;
         private Image modifierActivationIcon;
+        private SpiritModifierSigilGraphic modifierActivationSigil;
+        private SpiritModifierCategoryBadge modifierActivationCategory;
         private Image charmDetailIcon;
         private SpiritModifierSigilGraphic charmDetailSigil;
+        private SpiritModifierCategoryBadge charmDetailCategory;
         private CounterHighlight baseScoreHighlight;
         private CounterHighlight multiplierHighlight;
         private CounterHighlight rerollsHighlight;
@@ -156,6 +159,7 @@ namespace Dice.Presentation
             internal Text Effect;
             internal Image Icon;
             internal SpiritModifierSigilGraphic Sigil;
+            internal SpiritModifierCategoryBadge Category;
             internal SpiritCharmCardLayout Layout;
             internal SpiritCharmStatusBadge Badge;
             internal SpiritCharmSelectionGraphic SelectionOutline;
@@ -169,6 +173,7 @@ namespace Dice.Presentation
             internal Text Label;
             internal Text Caption;
             internal Image Icon;
+            internal Color Color;
             internal Vector2 OriginalInset;
         }
 
@@ -706,6 +711,8 @@ namespace Dice.Presentation
             modifierEmblem.raycastTarget = false;
             modifierActivationIcon = MakeIcon("ModifierActivationIcon", modifierEmblem.transform,
                 new Vector2(.5f, .5f), 32);
+            modifierActivationSigil = MakeCharmSigil("ModifierActivationSigil", modifierActivationIcon);
+            modifierActivationCategory = SpiritModifierCategoryBadge.Create("ModifierActivationCategory", modifierActivationIcon);
             modifierEmblem.gameObject.SetActive(false);
             var score = SpiritUi.Panel("ScorePreview", playingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .435f),
                 SpiritUi.GetTheme(transform).panelColor, 0, true);
@@ -865,18 +872,25 @@ namespace Dice.Presentation
         private void ShowActivationIcon(ModifierDefinition definition)
         {
             modifierActivationIcon.sprite = SpiritModifierIcons.GetSprite(definition);
+            Color color = SpiritModifierIcons.GetEffectColor(definition);
+            modifierActivationIcon.color = modifierActivationSigil.color = color;
             modifierActivationIcon.gameObject.SetActive(modifierActivationIcon.sprite != null);
-            modifierEmblem.enabled = modifierActivationIcon.sprite == null;
+            modifierActivationSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            modifierActivationSigil.gameObject.SetActive(modifierActivationIcon.sprite == null);
+            modifierActivationCategory.Render(definition);
+            modifierEmblem.enabled = false;
             modifierEmblem.gameObject.SetActive(true);
         }
 
         private static void SetCardIcon(Card card, ModifierDefinition definition)
         {
             card.Icon.sprite = definition == null ? null : SpiritModifierIcons.GetSprite(definition);
+            card.Icon.color = card.Sigil.color = definition == null ? Color.white : SpiritModifierIcons.GetEffectColor(definition);
             bool visible = card.Icon.sprite != null;
             card.Icon.gameObject.SetActive(visible);
             if (definition != null) card.Sigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
             card.Sigil.gameObject.SetActive(definition != null && !visible);
+            card.Category.Render(definition);
         }
 
         private static SpiritModifierSigilGraphic MakeCharmSigil(string name, Image icon)
@@ -963,6 +977,7 @@ namespace Dice.Presentation
             charmDetailIcon = MakeIcon("CharmDetailIcon", details.transform, new Vector2(0, .86f), 44);
             charmDetailIcon.rectTransform.anchoredPosition = new Vector2(42, 0);
             charmDetailSigil = MakeCharmSigil("CharmDetailSigil", charmDetailIcon);
+            charmDetailCategory = SpiritModifierCategoryBadge.Create("CharmDetailCategory", charmDetailIcon);
             charmDetail = SpiritUi.Label("CharmDetailBody", details.transform, "Clear a stage to choose a charm.", 17,
                 Vector2.zero, new Vector2(1, .72f));
             foreach (var text in new[] { charmTitle, charmDetail })
@@ -979,7 +994,7 @@ namespace Dice.Presentation
             charmDetailStatusRow.gameObject.SetActive(false);
             charmDetailsLayout = details.gameObject.AddComponent<SpiritCharmDetailsLayout>();
             charmDetailsLayout.Initialize(charmTitle, charmDetail, charmDetailIcon, (RectTransform)scroll.transform,
-                charmDetailStatusRow, charmDetailStatus, charmDetailBadge, charmDetailSigil);
+                charmDetailStatusRow, charmDetailStatus, charmDetailBadge, charmDetailSigil, charmDetailCategory);
             charmsPanel.gameObject.SetActive(false);
         }
 
@@ -1225,6 +1240,8 @@ namespace Dice.Presentation
             modifierActivationIcon.gameObject.SetActive(false);
             modifierActivationIcon.rectTransform.localScale = Vector3.one;
             modifierActivationIcon.color = Color.white;
+            modifierActivationSigil.gameObject.SetActive(false);
+            modifierActivationCategory.Render(null);
             foreach (var highlight in new[] { baseScoreHighlight, multiplierHighlight, rerollsHighlight, handsHighlight })
                 ResetCounterHighlight(highlight);
             selectionLabel.text = "";
@@ -1536,7 +1553,7 @@ namespace Dice.Presentation
         }
 
         private void ShowModifierGrants(long instanceId, int stageIndex, int handIndex, Resolution resolution,
-            Sprite sprite, List<CounterHighlight> highlights)
+            ModifierDefinition definition, List<CounterHighlight> highlights)
         {
             foreach (var ruleEvent in resolution.Events)
                 if (ruleEvent is ResourceChangedEvent resource && resource.Cause == ResourceChangeCause.ModifierEffect &&
@@ -1544,8 +1561,8 @@ namespace Dice.Presentation
                 {
                     ShowResource(resource);
                     if (resource.After == resource.Before) continue;
-                    if (resource.Resource == ResourceKind.Rerolls) AddCounterHighlight(highlights, rerollsHighlight, sprite);
-                    else if (resource.Resource == ResourceKind.Hands) AddCounterHighlight(highlights, handsHighlight, sprite);
+                    if (resource.Resource == ResourceKind.Rerolls) AddCounterHighlight(highlights, rerollsHighlight, definition);
+                    else if (resource.Resource == ResourceKind.Hands) AddCounterHighlight(highlights, handsHighlight, definition);
                 }
         }
 
@@ -1561,7 +1578,7 @@ namespace Dice.Presentation
             if (!banked) ModifierHistory.SetResolving(contribution);
             ShowActivationIcon(definition);
             categoryLabel.text = CharmName(definition);
-            selectionLabel.color = SpiritUi.GetTheme(transform).amber;
+            selectionLabel.color = SpiritModifierIcons.GetEffectColor(definition);
             selectionLabel.text = CharmName(definition) + "\n" +
                 ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
                 (banked ? " (banked)" : " (on play)");
@@ -1589,20 +1606,22 @@ namespace Dice.Presentation
                 showReroll |= definition.Phase != ModifierPhase.PlayHand;
             }
             actionModifierCue.Show(definition, ScoreStepDuration + ModifierStepHold, showReroll, showPlay);
-            var sprite = SpiritModifierIcons.GetSprite(definition);
             var highlights = new List<CounterHighlight>();
-            if (contribution.BaseScore != 0) AddCounterHighlight(highlights, baseScoreHighlight, sprite);
-            if (contribution.Multiplier != 0) AddCounterHighlight(highlights, multiplierHighlight, sprite);
-            ShowModifierGrants(contribution.InstanceId, stageIndex, handIndex, resolution, sprite, highlights);
+            if (contribution.BaseScore != 0) AddCounterHighlight(highlights, baseScoreHighlight, definition);
+            if (contribution.Multiplier != 0) AddCounterHighlight(highlights, multiplierHighlight, definition);
+            ShowModifierGrants(contribution.InstanceId, stageIndex, handIndex, resolution, definition, highlights);
             yield return AnimateScore(displayedBaseScore, displayedMultiplier,
                 checked(displayedBaseScore + contribution.BaseScore), checked(displayedMultiplier + contribution.Multiplier),
                 ScoreStepDuration, highlights);
         }
 
-        private static void AddCounterHighlight(List<CounterHighlight> highlights, CounterHighlight highlight, Sprite sprite)
+        private static void AddCounterHighlight(List<CounterHighlight> highlights, CounterHighlight highlight, ModifierDefinition definition)
         {
             if (highlights.Contains(highlight)) return;
+            var sprite = SpiritModifierIcons.GetSprite(definition);
+            highlight.Color = SpiritModifierIcons.GetEffectColor(definition);
             highlight.Icon.sprite = sprite;
+            highlight.Icon.color = highlight.Color;
             highlight.Icon.gameObject.SetActive(sprite != null);
             if (sprite != null) highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset + new Vector2(22, 0);
             highlights.Add(highlight);
@@ -1650,7 +1669,7 @@ namespace Dice.Presentation
                     foreach (var highlight in highlights)
                     {
                         float pulse = Mathf.Sin(progress * Mathf.PI);
-                        highlight.Label.color = Color.Lerp(SpiritUi.GetTheme(transform).cream, SpiritUi.GetTheme(transform).amber, pulse);
+                        highlight.Label.color = Color.Lerp(SpiritUi.GetTheme(transform).cream, highlight.Color, pulse);
                         highlight.Label.rectTransform.localScale = Vector3.one * (1 + .07f * pulse);
                         highlight.Icon.rectTransform.localScale = Vector3.one * (1 + .1f * pulse);
                     }
@@ -1803,6 +1822,7 @@ namespace Dice.Presentation
             card.Icon = MakeIcon("CharmIcon", image.transform, new Vector2(0, .83f), 36);
             card.Icon.rectTransform.anchoredPosition = new Vector2(42, 0);
             card.Sigil = MakeCharmSigil("CharmSigil", card.Icon);
+            card.Category = SpiritModifierCategoryBadge.Create("CharmCategory", card.Icon);
             card.Body = SpiritUi.Label("Condition", image.transform, "", 17,
                 new Vector2(0, .40f), new Vector2(1, .70f));
             card.Effect = SpiritUi.Label("Effects", image.transform, "", 17, new Vector2(0, .20f), new Vector2(1, .4f),
@@ -1823,7 +1843,7 @@ namespace Dice.Presentation
                 card.Body.fontSize = 15;
                 card.Effect.fontSize = 16;
                 card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
-                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil);
+                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil, card.Category);
                 card.Badge = SpiritCharmStatusBadge.Create(image.transform);
                 card.SelectionOutline = SpiritUi.Full("SelectionOutline", image.transform).gameObject.AddComponent<SpiritCharmSelectionGraphic>();
                 card.SelectionOutline.color = new Color32(255, 215, 119, 255);
@@ -2030,6 +2050,7 @@ namespace Dice.Presentation
                     card.Title.text = CharmName(definition);
                     card.Body.text = SpiritModifierPresentation.GetConditionText(definition);
                     card.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
+                    card.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
                     card.Badge.Render(CharmStatus(instance, definition));
                 }
                 charmGrid.RefreshLayout();
@@ -2059,12 +2080,17 @@ namespace Dice.Presentation
                 if (instance.InstanceId != selectedCharm) continue;
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                 charmDetailIcon.sprite = SpiritModifierIcons.GetSprite(definition);
+                Color color = SpiritModifierIcons.GetEffectColor(definition);
+                charmDetailIcon.color = charmDetailSigil.color = color;
                 charmDetailIcon.gameObject.SetActive(charmDetailIcon.sprite != null);
                 charmDetailSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
                 charmDetailSigil.gameObject.SetActive(charmDetailIcon.sprite == null);
+                charmDetailCategory.Render(definition);
                 charmTitle.text = CharmName(definition);
+                charmDetail.supportRichText = true;
                 charmDetail.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
-                    SpiritModifierPresentation.GetEffectText(definition) + "\n" +
+                    "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" +
+                    SpiritModifierPresentation.GetEffectText(definition) + "</color>\n" +
                     SpiritModifierPresentation.GetTimingText(definition) + "\n" +
                     AvailabilityText(definition);
                 var status = CharmStatus(instance, definition);
@@ -2084,6 +2110,7 @@ namespace Dice.Presentation
             charmDetailIcon.sprite = null;
             charmDetailIcon.gameObject.SetActive(false);
             charmDetailSigil.gameObject.SetActive(false);
+            charmDetailCategory.Render(null);
             charmDetail.text = "Clear a stage to choose a charm.";
             charmDetailStatusRow.gameObject.SetActive(false);
             charmDetailsLayout.RefreshLayout();

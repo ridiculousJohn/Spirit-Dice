@@ -12,6 +12,8 @@ namespace Dice.Presentation
             internal CanvasGroup Group;
             internal Image Artwork;
             internal SpiritModifierSigilGraphic Sigil;
+            internal SpiritModifierCategoryBadge Category;
+            internal Outline Border;
             internal Graphic HostSigil;
             internal CanvasGroup Label;
             internal float LabelAlpha;
@@ -41,7 +43,8 @@ namespace Dice.Presentation
         {
             if (definition == null) { Clear(); return; }
             Show(SpiritModifierIcons.GetSprite(definition), definition.Phase, displayDuration,
-                SpiritModifierIcons.GetSigilSeed(definition));
+                SpiritModifierIcons.GetSigilSeed(definition), definition.Phase != ModifierPhase.PlayHand,
+                definition.Phase == ModifierPhase.PlayHand, definition);
         }
 
         public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0)
@@ -51,11 +54,11 @@ namespace Dice.Presentation
         {
             if (definition == null) { Clear(); return; }
             Show(SpiritModifierIcons.GetSprite(definition), definition.Phase, displayDuration,
-                SpiritModifierIcons.GetSigilSeed(definition), showReroll, showPlay);
+                SpiritModifierIcons.GetSigilSeed(definition), showReroll, showPlay, definition);
         }
 
         private void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed,
-            bool showReroll, bool showPlay)
+            bool showReroll, bool showPlay, ModifierDefinition definition = null)
         {
             Clear();
             if (reroll == null || play == null || (!showReroll && !showPlay)) return;
@@ -63,14 +66,18 @@ namespace Dice.Presentation
             secondary = showReroll && showPlay ? play : null;
             ActivePhase = phase;
             ActiveSprite = sprite;
-            Prepare(active, sprite, sigilSeed);
-            if (secondary != null) Prepare(secondary, sprite, sigilSeed);
+            Prepare(active, sprite, sigilSeed, definition);
+            if (secondary != null) Prepare(secondary, sprite, sigilSeed, definition);
             duration = Mathf.Max(.01f, displayDuration);
             elapsed = 0;
         }
 
-        private static void Prepare(Cue cue, Sprite sprite, uint sigilSeed)
+        private static void Prepare(Cue cue, Sprite sprite, uint sigilSeed, ModifierDefinition definition)
         {
+            Color color = definition == null ? SpiritUi.GetTheme(cue.Group.transform).cream :
+                SpiritModifierIcons.GetEffectColor(definition);
+            cue.Artwork.color = cue.Sigil.color = cue.Border.effectColor = color;
+            cue.Category.Render(definition);
             cue.Artwork.sprite = sprite;
             cue.Artwork.gameObject.SetActive(sprite != null);
             cue.Sigil.Seed = sigilSeed;
@@ -110,6 +117,12 @@ namespace Dice.Presentation
         {
             if (active != null && active.Label != null) active.Label.alpha = active.LabelAlpha;
             if (secondary != null && secondary.Label != null) secondary.Label.alpha = secondary.LabelAlpha;
+            foreach (var cue in new[] { reroll, play })
+            {
+                if (cue == null) continue;
+                cue.Category.Render(null);
+                cue.Artwork.color = cue.Sigil.color = cue.Border.effectColor = SpiritUi.GetTheme(cue.Group.transform).cream;
+            }
             if (reroll != null) reroll.Group.gameObject.SetActive(false);
             if (play != null) play.Group.gameObject.SetActive(false);
             active = null;
@@ -170,11 +183,14 @@ namespace Dice.Presentation
             Stretch(sigil.rectTransform, 4);
             sigil.color = SpiritUi.GetTheme(button.transform).amber;
             sigil.raycastTarget = false;
+            var category = SpiritModifierCategoryBadge.Create("CharmCategory", artwork);
             // A separate opacity group leaves the button's disabled and hover tints under Selectable's control.
             var label = button.GetComponentInChildren<Text>().gameObject;
             var labelGroup = label.GetComponent<CanvasGroup>();
             if (labelGroup == null) labelGroup = label.AddComponent<CanvasGroup>();
-            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, Label = labelGroup };
+            (button as SpiritUiButtonVisual)?.ExcludeContentFromTint(rect);
+            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, Category = category,
+                Border = border, Label = labelGroup };
         }
 
         private static void Stretch(RectTransform rect, float inset)

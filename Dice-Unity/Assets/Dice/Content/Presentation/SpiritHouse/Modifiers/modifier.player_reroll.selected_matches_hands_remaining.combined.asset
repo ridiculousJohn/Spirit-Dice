@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 90a5dbde57595b04f8890a8ba154038e, type: 2}
   displayName: Handful of Seeds / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 9d89383b13505a0db99957107e613b1e, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

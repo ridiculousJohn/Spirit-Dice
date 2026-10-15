@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0ed8d064ee6178b4a81bf721877ea4f8, type: 2}
   displayName: Twin Bowls / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: eddc68de510254cd9deb728ac247abc7, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

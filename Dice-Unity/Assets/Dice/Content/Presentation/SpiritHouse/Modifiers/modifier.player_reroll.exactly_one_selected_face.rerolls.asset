@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
   displayName: Single Firefly / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 67362e19221f5bb1b5044eb3fc2569f2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

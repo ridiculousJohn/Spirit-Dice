@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 064acae17de9cf443b7491acb579ac80, type: 2}
   displayName: Leaping Stones / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: dfb21e9dcfb05b699ffbb5a7f3e34295, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: bd2515facbab8a64d86f171912e98f87, type: 2}
   displayName: Full Seed Pouch / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: b40fc5c56b205965b2238706a796c978, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

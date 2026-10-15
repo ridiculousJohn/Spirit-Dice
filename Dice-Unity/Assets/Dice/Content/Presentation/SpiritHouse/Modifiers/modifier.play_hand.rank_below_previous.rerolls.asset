@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 07819b9c4bdf782409a83a49cbd8ea14, type: 2}
   displayName: Descending Stream / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f74e87086cb457a48c5762ffd335f2e2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

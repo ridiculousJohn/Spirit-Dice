@@ -135,6 +135,15 @@ namespace Dice.Presentation
         internal static Sprite GetIcon(string id)
             => TryGetEntry(id, out Entry entry) ? entry.Asset.Icon : null;
 
+        public static ModifierCategoryPresentationAsset GetCategory(ModifierDefinition definition)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            return GetCategory(definition.Id);
+        }
+
+        internal static ModifierCategoryPresentationAsset GetCategory(string id)
+            => TryGetEntry(id, out Entry entry) ? entry.Asset.Category : null;
+
         internal static bool TryGetArtwork(string id, out ModifierArtworkKind artwork)
         {
             artwork = TryGetEntry(id, out Entry entry) ? entry.Asset.Artwork : ModifierArtworkKind.None;
@@ -144,7 +153,7 @@ namespace Dice.Presentation
         private static bool TryGetEntry(string id, out Entry entry)
         {
             entry = null;
-            return activeTheme != null && activeTheme.Entries.TryGetValue(id, out entry);
+            return activeTheme != null && id != null && activeTheme.Entries.TryGetValue(id, out entry);
         }
 
         private static bool TryFormatTemplate(string template, IModifierCondition condition, out string text)

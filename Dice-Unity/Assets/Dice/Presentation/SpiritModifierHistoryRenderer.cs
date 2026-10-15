@@ -179,9 +179,9 @@ namespace Dice.Presentation
             material.SetFloat("_Seed", entries.Count * 17.31f);
             Texture2D bone = trayPresentation.BoneTexture;
             if (bone != null) material.SetTexture("_SurfaceTexture", bone);
-            Color ink = SpiritModifierIcons.GetEffectColor(contribution);
-            material.SetColor("_FaceIconColor", new Color(ink.r * .45f, ink.g * .45f, ink.b * .45f, 1));
+            material.SetColor("_FaceIconColor", SpiritModifierIcons.GetInkColor(definition));
             SetIcon(material, definition);
+            SetCategory(material, definition);
             SetClip(material);
             Transform die = Child("Spirit Modifier Die " + entries.Count, contentRoot).transform;
             die.localScale = Vector3.one * ContentDieSize;
@@ -307,19 +307,7 @@ namespace Dice.Presentation
             Sprite sprite = SpiritModifierIcons.GetSprite(definition);
             if (sprite != null)
             {
-                Vector2 min = Vector2.one;
-                Vector2 max = Vector2.zero;
-                foreach (Vector2 uv in sprite.uv) { min = Vector2.Min(min, uv); max = Vector2.Max(max, uv); }
-                material.SetTexture("_FaceIcon", sprite.texture);
-                material.SetVector("_FaceIconRect", new Vector4(min.x, min.y, max.x - min.x, max.y - min.y));
-                Vector4 transform = new Vector4(1, 1, 0, 0);
-                if (sprite.packed)
-                {
-                    if (sprite.packingRotation == SpritePackingRotation.FlipHorizontal) transform.x = -1;
-                    if (sprite.packingRotation == SpritePackingRotation.FlipVertical) transform.y = -1;
-                    if (sprite.packingRotation == SpritePackingRotation.Rotate180) { transform.x = -1; transform.y = -1; }
-                }
-                material.SetVector("_FaceIconUVTransform", transform);
+                SetSprite(material, sprite, "_FaceIcon", "_FaceIconRect", "_FaceIconUVTransform");
             }
             else
             {
@@ -333,6 +321,33 @@ namespace Dice.Presentation
                 material.SetTexture("_FaceIcon", icon);
                 material.SetVector("_FaceIconRect", new Vector4(0, 0, 1, 1));
             }
+        }
+
+        private static void SetCategory(Material material, ModifierDefinition definition)
+        {
+            Sprite sprite = SpiritModifierIcons.GetCategorySprite(definition);
+            bool visible = SpiritModifierIcons.GetCategorySymbol(definition) != ModifierCategorySymbol.None && sprite != null;
+            material.SetFloat("_ShowCategory", visible ? 1 : 0);
+            if (!visible) return;
+            material.SetColor("_CategoryColor", SpiritModifierIcons.GetInkColor(definition));
+            SetSprite(material, sprite, "_CategoryIcon", "_CategoryIconRect", "_CategoryIconUVTransform");
+        }
+
+        private static void SetSprite(Material material, Sprite sprite, string texture, string rect, string uvTransform)
+        {
+            Vector2 min = Vector2.one;
+            Vector2 max = Vector2.zero;
+            foreach (Vector2 uv in sprite.uv) { min = Vector2.Min(min, uv); max = Vector2.Max(max, uv); }
+            material.SetTexture(texture, sprite.texture);
+            material.SetVector(rect, new Vector4(min.x, min.y, max.x - min.x, max.y - min.y));
+            Vector4 transform = new Vector4(1, 1, 0, 0);
+            if (sprite.packed)
+            {
+                if (sprite.packingRotation == SpritePackingRotation.FlipHorizontal) transform.x = -1;
+                if (sprite.packingRotation == SpritePackingRotation.FlipVertical) transform.y = -1;
+                if (sprite.packingRotation == SpritePackingRotation.Rotate180) { transform.x = -1; transform.y = -1; }
+            }
+            material.SetVector(uvTransform, transform);
         }
 
         private void BuildTray(Mesh boxMesh)

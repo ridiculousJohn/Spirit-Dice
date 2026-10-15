@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
   displayName: Lone Mountain / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 58020fe66d555849b6f4af60fc79838e, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

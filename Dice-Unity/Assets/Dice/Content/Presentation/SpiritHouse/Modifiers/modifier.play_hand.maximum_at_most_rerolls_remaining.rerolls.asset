@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
   displayName: Low Roof / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 63ca1f4174ad57a4afc8af5769785f8a, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a670805d95355ab46917a58f95a2e867, type: 2}
   displayName: Nestled Twins / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a02087bed68851f689d87efdfc151fb6, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

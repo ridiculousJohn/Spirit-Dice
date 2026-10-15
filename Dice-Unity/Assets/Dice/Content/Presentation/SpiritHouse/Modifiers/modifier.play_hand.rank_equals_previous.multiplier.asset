@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
   displayName: Returning Echo / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: be89a1a6b5275b5b956eb1f1f1210b5a, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

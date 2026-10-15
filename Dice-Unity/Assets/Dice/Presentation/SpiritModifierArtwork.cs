@@ -7,6 +7,7 @@ namespace Dice.Presentation
     internal static class SpiritModifierArtwork
     {
         private static readonly Dictionary<ModifierArtworkKind, Sprite> sprites = new Dictionary<ModifierArtworkKind, Sprite>();
+        private static readonly Dictionary<ModifierCategorySymbol, Sprite> categorySprites = new Dictionary<ModifierCategorySymbol, Sprite>();
 
         static SpiritModifierArtwork()
         {
@@ -38,6 +39,7 @@ namespace Dice.Presentation
                 case ModifierArtworkKind.QuietGrove: QuietGrove(drawing); break;
                 case ModifierArtworkKind.OneSpark: OneSpark(drawing); break;
                 case ModifierArtworkKind.LoneWatcher: LoneWatcher(drawing); break;
+                case ModifierArtworkKind.TwinKnots: TwinKnots(drawing); break;
             }
             Texture2D texture = drawing.CreateTexture(kind.ToString());
             sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
@@ -45,6 +47,43 @@ namespace Dice.Presentation
             sprite.name = "Spirit Charm " + kind;
             sprite.hideFlags = HideFlags.DontSave;
             sprites[kind] = sprite;
+            return sprite;
+        }
+
+        internal static Sprite GetCategorySprite(ModifierCategorySymbol symbol)
+        {
+            if (symbol == ModifierCategorySymbol.None) return null;
+            if (categorySprites.TryGetValue(symbol, out Sprite sprite) && sprite != null) return sprite;
+            var drawing = new Drawing();
+            switch (symbol)
+            {
+                case ModifierCategorySymbol.Base:
+                    drawing.Line(14, 32, 50, 32);
+                    drawing.Line(32, 14, 32, 50);
+                    break;
+                case ModifierCategorySymbol.Multiplier:
+                    drawing.Line(18, 18, 46, 46);
+                    drawing.Line(18, 46, 46, 18);
+                    break;
+                case ModifierCategorySymbol.Combined:
+                    drawing.Line(7, 32, 27, 32);
+                    drawing.Line(17, 22, 17, 42);
+                    drawing.Line(36, 22, 56, 42);
+                    drawing.Line(36, 42, 56, 22);
+                    break;
+                case ModifierCategorySymbol.Rerolls:
+                    drawing.Arc(32, 32, 21, -135, 155);
+                    drawing.Line(12.97f, 40.87f, 13, 52);
+                    drawing.Line(12.97f, 40.87f, 24, 45);
+                    break;
+                default: return null;
+            }
+            Texture2D texture = drawing.CreateTexture("Category " + symbol);
+            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
+                0, SpriteMeshType.FullRect);
+            sprite.name = "Spirit Charm Category " + symbol;
+            sprite.hideFlags = HideFlags.DontSave;
+            categorySprites[symbol] = sprite;
             return sprite;
         }
 
@@ -110,6 +149,20 @@ namespace Dice.Presentation
             drawing.Path(43, 32, 47, 36, 51, 32, 47, 28, 43, 32);
         }
 
+        private static void TwinKnots(Drawing drawing)
+        {
+            // Gaps at the crossings separate the over and under strands of both loops.
+            drawing.Curve(28, 41, 14, 59, 2, 38, 16, 25);
+            drawing.Curve(16, 25, 29, 10, 45, 28, 32, 39);
+            drawing.Curve(36, 23, 50, 5, 62, 26, 48, 39);
+            drawing.Curve(48, 39, 35, 54, 19, 36, 32, 25);
+            drawing.Line(23, 47, 39, 19);
+            drawing.Line(25, 45, 29, 38);
+            drawing.Line(35, 27, 41, 17);
+            drawing.Path(16, 25, 10, 14, 16, 16);
+            drawing.Path(48, 39, 54, 50, 48, 48);
+        }
+
         private static void Release()
         {
             foreach (Sprite sprite in sprites.Values)
@@ -120,6 +173,14 @@ namespace Dice.Presentation
                 DestroyResource(texture);
             }
             sprites.Clear();
+            foreach (Sprite sprite in categorySprites.Values)
+            {
+                if (sprite == null) continue;
+                Texture2D texture = sprite.texture;
+                DestroyResource(sprite);
+                DestroyResource(texture);
+            }
+            categorySprites.Clear();
         }
 
         private static void DestroyResource(Object resource)

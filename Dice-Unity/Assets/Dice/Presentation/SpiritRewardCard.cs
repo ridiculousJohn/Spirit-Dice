@@ -18,6 +18,7 @@ namespace Dice.Presentation
         private Text upgradedValues;
         private Image charmIcon;
         private SpiritModifierSigilGraphic charmSigil;
+        private SpiritModifierCategoryBadge charmCategory;
         private SpiritHandPatternGraphic handPattern;
         private Image upgradeDivider;
         private Image upgradeSelectionMarker;
@@ -110,6 +111,7 @@ namespace Dice.Presentation
             card.charmSigil.rectTransform.sizeDelta = iconRect.sizeDelta;
             card.charmSigil.color = SpiritUi.GetTheme(parent).amber;
             card.charmSigil.raycastTarget = false;
+            card.charmCategory = SpiritModifierCategoryBadge.Create("CharmCategory", card.charmIcon);
             var patternRect = SpiritUi.Rect("HandPattern", card.transform, new Vector2(0, 1), new Vector2(0, 1));
             patternRect.pivot = new Vector2(0, 1);
             patternRect.anchoredPosition = new Vector2(14, -45);
@@ -156,18 +158,22 @@ namespace Dice.Presentation
             status.text = "";
             status.gameObject.SetActive(false);
             charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
+            Color categoryColor = SpiritModifierIcons.GetEffectColor(definition);
+            charmIcon.color = charmSigil.color = effects.color = categoryColor;
             charmIcon.gameObject.SetActive(charmIcon.sprite != null);
             charmSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
             charmSigil.gameObject.SetActive(charmIcon.sprite == null);
+            charmCategory.Render(definition);
             title.text = SpiritModifierPresentation.GetName(definition);
-            condition.text = GetModifierDescription(definition, SpiritUi.GetTheme(transform).amber);
+            var theme = SpiritUi.GetTheme(transform);
+            condition.text = GetModifierDescription(definition, theme.amber, theme.GetModifierTriggerColor(definition.Phase));
             effects.text = "<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>";
             effects.supportRichText = true;
             UpdateModifierLayout();
             SetModifierSelected(false);
         }
 
-        public static string GetModifierDescription(ModifierDefinition definition, Color highlight)
+        public static string GetModifierDescription(ModifierDefinition definition, Color highlight, Color? triggerHighlight = null)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             string timing;
@@ -183,7 +189,8 @@ namespace Dice.Presentation
             description = Regex.Replace(description,
                 @"\b(?:\d+|High Die|Two Pair|Pair|Straight|rerolled|rerolls?|hands?|initial roll|previous played hand)\b",
                 match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
-            string text = "<b><color=#" + color + ">" + timing + "</color></b>: " + description;
+            string triggerColor = ColorUtility.ToHtmlStringRGB(triggerHighlight ?? highlight);
+            string text = "<b><color=#" + triggerColor + ">" + timing + "</color></b>: " + description;
             if (definition.ActivationLimit == ModifierActivationLimit.OncePerStage)
                 text += " <b>Once per stage.</b>";
             else if (definition.ActivationLimit == ModifierActivationLimit.OncePerHand && definition.Phase != ModifierPhase.PlayHand)
@@ -228,6 +235,8 @@ namespace Dice.Presentation
             SetUpgradeVisibility(true);
             charmIcon.gameObject.SetActive(false);
             charmSigil.gameObject.SetActive(false);
+            charmCategory.Render(null);
+            effects.color = SpiritUi.GetTheme(transform).amber;
             handPattern.Category = hand.Category;
             title.text = DiagnosticText.Humanize(hand.Category.ToString());
             condition.alignment = TextAnchor.MiddleRight;

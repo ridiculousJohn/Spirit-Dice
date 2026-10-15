@@ -546,9 +546,10 @@ namespace Dice.Tests
                 Assert.That(card.GetComponent<SpiritRewardCard>(), Is.Not.Null);
                 var definition = controller.Catalog.GetModifier(offer.Options[index].DefinitionId);
                 Assert.That(CardLabel(card, "Title").text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
-                var context = card.GetComponentInParent<SpiritUiContext>();
+                var theme = card.GetComponentInParent<SpiritUiContext>().Theme;
                 Assert.That(CardLabel(card, "Condition").text,
-                    Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition, context.Theme.amber)));
+                    Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition, theme.amber,
+                        theme.GetModifierTriggerColor(definition.Phase))));
                 Assert.That(CardLabel(card, "Effects").text, Is.EqualTo("<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>"));
                 Assert.That(CardLabel(card, "Status").gameObject.activeSelf, Is.False);
                 Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.EqualTo(index == selectedIndex));

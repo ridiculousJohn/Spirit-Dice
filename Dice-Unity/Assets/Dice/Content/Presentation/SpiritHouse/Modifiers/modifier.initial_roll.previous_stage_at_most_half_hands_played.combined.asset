@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ff02d39bdd4cf7349a4764e30aef12dc, type: 2}
   displayName: Spare Candle / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f1149d7f4502532094c863c456cf317b, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

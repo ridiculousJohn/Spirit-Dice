@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 089cf1156a4946a4592644af1eccc4e5, type: 2}
   displayName: Patient Mill / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f6a239815302542a9c132513d020106a, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

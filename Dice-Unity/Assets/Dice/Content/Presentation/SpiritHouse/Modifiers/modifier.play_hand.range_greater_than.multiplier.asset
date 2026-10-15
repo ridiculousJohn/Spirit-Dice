@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d628157fa072a3349a1788c63ad19971, type: 2}
   displayName: Wide Valley / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 370bbad52bff57c8a2ca042c0bca0114, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

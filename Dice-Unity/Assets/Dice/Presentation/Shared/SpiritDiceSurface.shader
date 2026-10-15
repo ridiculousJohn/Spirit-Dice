@@ -10,6 +10,11 @@ Shader "Dice/Spirit Dice Surface"
         _FaceIconUVTransform ("Top Face Icon UV Transform", Vector) = (1,1,0,0)
         _FaceIconColor ("Top Face Ink", Color) = (0.04,0.03,0.02,1)
         _ShowFaceIcon ("Show Top Face Icon", Float) = 0
+        _ShowCategory ("Show Top Face Category", Float) = 0
+        _CategoryIcon ("Top Face Category Glyph", 2D) = "white" {}
+        _CategoryIconRect ("Category Glyph UV Rect", Vector) = (0,0,1,1)
+        _CategoryIconUVTransform ("Category Glyph UV Transform", Vector) = (1,1,0,0)
+        _CategoryColor ("Category Ink", Color) = (0.04,0.03,0.02,1)
         _ClipWorldX ("World X Clip Bounds", Vector) = (0,0,0,0)
         _ClipLocalX ("Bay Local X Clip Bounds", Vector) = (0,0,0,0)
         _SurfaceKind ("Surface Kind", Float) = 0
@@ -65,6 +70,10 @@ Shader "Dice/Spirit Dice Surface"
                 float4 _FaceIconUVTransform;
                 half4 _FaceIconColor;
                 float _ShowFaceIcon;
+                float _ShowCategory;
+                float4 _CategoryIconRect;
+                float4 _CategoryIconUVTransform;
+                half4 _CategoryColor;
                 float4 _ClipWorldX;
                 float4 _ClipLocalX;
                 float4x4 _ClipWorldToLocal;
@@ -94,6 +103,8 @@ Shader "Dice/Spirit Dice Surface"
             SAMPLER(sampler_SurfaceTexture);
             TEXTURE2D(_FaceIcon);
             SAMPLER(sampler_FaceIcon);
+            TEXTURE2D(_CategoryIcon);
+            SAMPLER(sampler_CategoryIcon);
 
             struct Attributes
             {
@@ -234,13 +245,30 @@ Shader "Dice/Spirit Dice Surface"
                     roughness = lerp(0.38, 0.63, pigment);
                     if (_ShowFaceIcon > 0.5 && input.face > 1.5 && input.face < 2.5)
                     {
-                        float2 iconUV = input.uv / 0.68 + 0.5;
+                        float category = step(0.5, _ShowCategory);
+                        float2 iconUV = (input.uv - float2(0, 0.09) * category) / lerp(0.68, 0.50, category) + 0.5;
                         float inside = step(0, iconUV.x) * step(iconUV.x, 1) * step(0, iconUV.y) * step(iconUV.y, 1);
                         iconUV = (saturate(iconUV) - 0.5) * _FaceIconUVTransform.xy + 0.5;
                         half4 icon = SAMPLE_TEXTURE2D(_FaceIcon, sampler_FaceIcon,
                             _FaceIconRect.xy + iconUV * _FaceIconRect.zw);
                         half ink = icon.a * inside;
                         albedo = lerp(albedo, _FaceIconColor.rgb * (0.84 + fine * 0.24), ink);
+                        cavity = lerp(cavity, 0.72, ink);
+                        roughness = lerp(roughness, 0.67, ink);
+                    }
+                    if (_ShowCategory > 0.5 && input.face > 1.5 && input.face < 2.5)
+                    {
+                        float2 categoryUV = (input.uv - float2(0.20, -0.28)) / 0.21 + 0.5;
+                        float inside = step(0, categoryUV.x) * step(categoryUV.x, 1)
+                            * step(0, categoryUV.y) * step(categoryUV.y, 1);
+                        categoryUV = (saturate(categoryUV) - 0.5) * _CategoryIconUVTransform.xy + 0.5;
+                        half glyph = SAMPLE_TEXTURE2D(_CategoryIcon, sampler_CategoryIcon,
+                            _CategoryIconRect.xy + categoryUV * _CategoryIconRect.zw).a * inside;
+                        float2 bar = abs(input.uv - float2(-0.13, -0.2925)) - float2(0.15, 0.0275);
+                        float edge = max(bar.x, bar.y);
+                        half accent = 1 - smoothstep(-fwidth(edge), fwidth(edge), edge);
+                        half ink = max(glyph, accent);
+                        albedo = lerp(albedo, _CategoryColor.rgb * (0.84 + fine * 0.24), ink);
                         cavity = lerp(cavity, 0.72, ink);
                         roughness = lerp(roughness, 0.67, ink);
                     }

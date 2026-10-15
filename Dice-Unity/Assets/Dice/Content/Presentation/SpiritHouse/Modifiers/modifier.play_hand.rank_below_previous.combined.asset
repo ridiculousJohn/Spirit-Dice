@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: bdf2f1d7514ba2841a544755a49300de, type: 2}
   displayName: Descending Stream / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f74e87086cb457a48c5762ffd335f2e2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

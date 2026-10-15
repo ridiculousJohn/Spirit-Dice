@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: dbebd752cb30c6f4cb9a39a21b414f64, type: 2}
   displayName: Paired Gloves / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8e1b1c5390e5556eb0d3a34da3c2fa34, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

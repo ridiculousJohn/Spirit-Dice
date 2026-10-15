@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 12c5c4e6e39a89d478f4aa7c49047a5f, type: 2}
   displayName: Solitary Blossom / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 20e759c998545a349dda79437898907d, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

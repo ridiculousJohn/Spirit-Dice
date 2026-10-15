@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ffaf613f40d05bc439903b593a5cac05, type: 2}
   displayName: Nestled Twins / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a02087bed68851f689d87efdfc151fb6, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

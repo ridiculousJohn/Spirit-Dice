@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
   displayName: Balanced Scales / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: ed2ed3bcc40457f0a15e5cd692d2b0c2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

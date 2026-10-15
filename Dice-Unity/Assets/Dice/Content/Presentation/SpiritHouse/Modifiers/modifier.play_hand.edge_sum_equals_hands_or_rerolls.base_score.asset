@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 954e840d9cb6d9c488b0e294b7848b42, type: 2}
   displayName: Gatekeeper's Bowl / Base
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 10eb5672133e57068f2fd242479096d6, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

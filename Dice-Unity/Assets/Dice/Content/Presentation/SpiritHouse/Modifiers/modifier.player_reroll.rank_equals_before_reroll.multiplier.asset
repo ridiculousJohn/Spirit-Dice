@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
   displayName: Still Reflection / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 51879f5dcdbe51f19e7ed067e47deaea, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

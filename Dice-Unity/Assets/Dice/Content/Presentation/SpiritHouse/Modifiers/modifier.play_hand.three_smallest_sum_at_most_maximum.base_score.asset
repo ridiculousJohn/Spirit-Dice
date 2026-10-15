@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
   displayName: Great Oak / Base
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 63d45ee2bc1c5cbc83d4434ac87978b5, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

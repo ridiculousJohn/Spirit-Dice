@@ -11,14 +11,17 @@ namespace Dice.Presentation
         private Text effects;
         private Image icon;
         private SpiritModifierSigilGraphic sigil;
+        private SpiritModifierCategoryBadge category;
 
-        internal void Initialize(Text title, Text condition, Text effects, Image icon, SpiritModifierSigilGraphic sigil)
+        internal void Initialize(Text title, Text condition, Text effects, Image icon, SpiritModifierSigilGraphic sigil,
+            SpiritModifierCategoryBadge category)
         {
             this.title = title;
             this.condition = condition;
             this.effects = effects;
             this.icon = icon;
             this.sigil = sigil;
+            this.category = category;
             foreach (var label in new[] { title, condition, effects }) label.resizeTextForBestFit = false;
         }
 
@@ -32,6 +35,7 @@ namespace Dice.Presentation
             icon.rectTransform.anchoredPosition = new Vector2(34, -32);
             sigil.rectTransform.anchorMin = sigil.rectTransform.anchorMax = icon.rectTransform.anchorMin;
             sigil.rectTransform.anchoredPosition = icon.rectTransform.anchoredPosition;
+            category.Align(icon.rectTransform);
             float top = 14 + Mathf.Max(titleHeight, hasIcon ? 36 : 0) + 8;
             foreach (var label in new[] { condition, effects })
             {

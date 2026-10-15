@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0f4ce5ee620e8a04b8f42e9b24b9fdce, type: 2}
   displayName: Worn Pebble / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 149e681a96d95333b9233900d8426b04, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

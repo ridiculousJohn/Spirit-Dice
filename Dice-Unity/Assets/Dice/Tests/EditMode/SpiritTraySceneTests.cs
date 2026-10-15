@@ -63,6 +63,79 @@ namespace Dice.Tests
                     Assert.That(authored.Contains(material), Is.False, "Scene lighting must not mutate authored materials.");
         }
 
+        [TestCase(Lantern)]
+        [TestCase(Watchtower)]
+        [TestCase(Moth)]
+        public void ModifierCategoriesUseAuthoredInkAndSeparateGlyphsWithoutTintingBoneOrNumberedDice(string path)
+        {
+            var catalog = TestContent.BuildStandardCatalog();
+            var assets = AssetDatabase.FindAssets("t:ModifierPresentationAsset", new[] { "Assets/Dice/Content" })
+                .Select(guid => AssetDatabase.LoadAssetAtPath<ModifierPresentationAsset>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
+            using var theme = SpiritModifierPresentation.InstallTheme(assets, catalog);
+            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path);
+            var scene = CreateScene(table.TrayPresentation);
+            var dice = AddDice(scene);
+            var history = AddHistory(scene);
+            var lighting = new SceneLightingState();
+            lighting.Sample(table.SceneLighting, 3.47);
+            history.SetSceneLighting(lighting);
+            var colors = new List<Color>();
+            var glyphs = new List<Texture>();
+            foreach (var symbol in new[] { ModifierCategorySymbol.Base, ModifierCategorySymbol.Multiplier,
+                ModifierCategorySymbol.Combined, ModifierCategorySymbol.Rerolls })
+            {
+                var definition = catalog.Modifiers.First(value => SpiritModifierIcons.GetCategorySymbol(value) == symbol);
+                var activated = new ModifierDefinition(definition.Id, definition.FamilyId, ModifierPhase.InitialRoll,
+                    new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+                var encounter = new EncounterDefinition("test.category.ink", new[] { new StageDefinition(1000000, 3, 3) },
+                    startingModifiers: new[] { activated.Id });
+                var mechanical = new MechanicalCatalog("test.category.ink", TestContent.Hands(), new[] { encounter }, new[] { activated });
+                var contribution = EncounterSession.CreateEncounter(mechanical, encounter.Id, 60).Snapshot.ModifierContributions[0];
+                history.Add(contribution, definition, false);
+                var material = history.GetDieRenderer(history.Count - 1).sharedMaterial;
+                var sprite = SpiritModifierIcons.GetCategorySprite(definition);
+                Assert.That(sprite, Is.Not.Null, definition.Id);
+                Assert.That(Vector4.Distance(material.GetColor("_BaseColor"), new Color(1, .97f, .9f)), Is.LessThan(.00001f));
+                Assert.That(Vector4.Distance(material.GetColor("_FaceIconColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
+                Assert.That(Vector4.Distance(material.GetColor("_CategoryColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
+                Assert.That(material.GetFloat("_ShowCategory"), Is.EqualTo(1));
+                Assert.That(material.GetTexture("_CategoryIcon"), Is.SameAs(sprite.texture));
+                Assert.That(material.GetTexture("_FaceIcon"), Is.Not.SameAs(sprite.texture), "Family artwork keeps its own identity.");
+                Vector2 min = sprite.uv.Aggregate(Vector2.one, Vector2.Min);
+                Vector2 max = sprite.uv.Aggregate(Vector2.zero, Vector2.Max);
+                Assert.That(material.GetVector("_CategoryIconRect"), Is.EqualTo(new Vector4(min.x, min.y, max.x - min.x, max.y - min.y)));
+                Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.EqualTo(table.SceneLighting != null ? 1 : 0));
+                colors.Add(material.GetColor("_CategoryColor"));
+                glyphs.Add(material.GetTexture("_CategoryIcon"));
+            }
+            Assert.That(colors.Distinct().Count(), Is.EqualTo(4));
+            Assert.That(glyphs.Distinct().Count(), Is.EqualTo(4));
+            history.SetResolving(1);
+            Assert.That(Vector4.Distance(history.GetDieRenderer(1).sharedMaterial.GetColor("_CategoryColor"), colors[1]), Is.LessThan(.00001f));
+            history.SetResolving(-1);
+            Assert.That(scene.Geometry.DiceSlots.Length, Is.EqualTo(DiceValues.Count));
+            var numberedDice = scene.Geometry.DiceSlots.Select((slot, index) =>
+                slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index)
+                    .GetComponent<MeshRenderer>()).ToArray();
+            Assert.That(numberedDice.Length, Is.EqualTo(5));
+            foreach (var renderer in numberedDice)
+                Assert.That(renderer.sharedMaterial.GetFloat("_ShowCategory"), Is.Zero, renderer.name);
+        }
+
+        [Test]
+        public void UnauthoredModifierKeepsItsFamilySigilAndHidesCategoryMarks()
+        {
+            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
+            var history = AddHistory(scene);
+            var contribution = Contribution(out ModifierDefinition definition);
+            history.Add(contribution, definition, false);
+            var material = history.GetDieRenderer(0).sharedMaterial;
+            Assert.That(material.GetFloat("_ShowCategory"), Is.Zero);
+            Assert.That(material.GetFloat("_ShowFaceIcon"), Is.EqualTo(1));
+            Assert.That(material.GetTexture("_FaceIcon"), Is.Not.Null);
+            Assert.That(Vector4.Distance(material.GetColor("_FaceIconColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
+        }
+
         [TestCase(Lantern, false)]
         [TestCase(Lantern, true)]
         [TestCase(Watchtower, false)]

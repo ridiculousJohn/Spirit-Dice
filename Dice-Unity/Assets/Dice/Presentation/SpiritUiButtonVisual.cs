@@ -7,10 +7,18 @@ namespace Dice.Presentation
     public sealed class SpiritUiButtonVisual : Button
     {
         private Graphic[] content;
+        private Transform untintedContent;
+
+        internal void ExcludeContentFromTint(Transform root)
+        {
+            untintedContent = root;
+            CaptureContent();
+        }
 
         internal void CaptureContent()
         {
-            content = GetComponentsInChildren<Graphic>(true);
+            content = System.Array.FindAll(GetComponentsInChildren<Graphic>(true),
+                graphic => untintedContent == null || !graphic.transform.IsChildOf(untintedContent));
             DoStateTransition(currentSelectionState, true);
         }
 

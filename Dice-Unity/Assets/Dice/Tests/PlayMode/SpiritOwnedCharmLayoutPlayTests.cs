@@ -29,8 +29,8 @@ namespace Dice.Tests
             var definitions = controller.Catalog.Modifiers.OrderBy(definition =>
                 definition.Id == family + ".multiplier" ? 0 : definition.Id == family + ".combined" ? 1 : 2).ToArray();
             Assert.That(definitions.Length, Is.EqualTo(296));
-            Assert.That(definitions.Any(definition => SpiritModifierIcons.GetSprite(definition) == null), Is.True);
-            Assert.That(definitions.Any(definition => SpiritModifierIcons.GetSprite(definition) != null), Is.True);
+            Assert.That(definitions.All(definition => SpiritModifierIcons.GetSprite(definition) != null), Is.True,
+                "Every standard family supplies authored artwork.");
             var encounter = new EncounterDefinition("encounter.owned-charm-layout",
                 new[] { new StageDefinition(1000000000, 3, 3) },
                 startingModifiers: definitions.Select(definition => definition.Id));
@@ -87,7 +87,9 @@ namespace Dice.Tests
                     card.onClick.Invoke();
                     Canvas.ForceUpdateCanvases();
                     Assert.That(detailTitle.text, Is.EqualTo(title.text));
-                    Assert.That(detailBody.text, Is.EqualTo(condition.text + "\n" + effects.text + "\n" +
+                    string effectColor = ColorUtility.ToHtmlStringRGB(SpiritModifierIcons.GetEffectColor(definition));
+                    Assert.That(detailBody.text, Is.EqualTo(condition.text + "\n<color=#" + effectColor + ">" +
+                        effects.text + "</color>\n" +
                         SpiritModifierPresentation.GetTimingText(definition) + "\n" +
                         AvailabilityText(definition, controller.Snapshot)));
                     AssertDetailStatus(view, controller, snapshot.Modifiers[index], definition, badge);
@@ -256,7 +258,8 @@ namespace Dice.Tests
             var body = Find<Text>(view, "CharmDetailBody");
             Assert.That(title.text, Is.EqualTo(SpiritModifierPresentation.GetName(definition)));
             Assert.That(body.text, Is.EqualTo(SpiritModifierPresentation.GetConditionText(definition) + "\n" +
-                SpiritModifierPresentation.GetEffectText(definition) + "\n" +
+                "<color=#" + ColorUtility.ToHtmlStringRGB(SpiritModifierIcons.GetEffectColor(definition)) + ">" +
+                SpiritModifierPresentation.GetEffectText(definition) + "</color>\n" +
                 SpiritModifierPresentation.GetTimingText(definition) + "\n" +
                 AvailabilityText(definition, controller.Snapshot)));
             AssertCompleteText(title, definition.Id + "/detail title");

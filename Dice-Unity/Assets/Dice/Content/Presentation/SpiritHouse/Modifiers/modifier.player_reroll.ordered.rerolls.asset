@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 4743975650b03dc4dbc8cb15073127a3, type: 2}
   displayName: Winding Stair / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 9069dfd6eb175e90b730e6a5f996b2df, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

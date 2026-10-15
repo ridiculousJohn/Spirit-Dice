@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 9bac75a166f988e4ab6357f9de012c9c, type: 2}
   displayName: Measured Bundle / Base + Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 326aebd9010b5f06a77b99ad76b87f12, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

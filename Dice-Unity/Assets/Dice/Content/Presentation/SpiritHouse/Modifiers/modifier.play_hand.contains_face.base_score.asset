@@ -17,4 +17,5 @@ MonoBehaviour:
   icon: {fileID: 0}
   conditionTemplate: 
   conditionTypeName: 
-  artwork: 0
+  artwork: 5
+  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a5be23f86efcca44d97daaad22a647ce, type: 2}
   displayName: Two Gateposts / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8d405e5a27e35f0c83358a641000d63d, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

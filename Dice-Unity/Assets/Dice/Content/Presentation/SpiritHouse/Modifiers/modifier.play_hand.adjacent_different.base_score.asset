@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f04333ac60e438a4a87e9626cea69a48, type: 2}
   displayName: Mixed Pebbles / Base
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a1954908afb45448aadd77a30f4764c2, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

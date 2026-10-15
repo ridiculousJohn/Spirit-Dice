@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
@@ -37,7 +38,8 @@ namespace Dice.Tests
             "modifier.player_reroll.last_reroll_on_last_hand.combined",
             "modifier.play_hand.no_extreme_faces.base_score",
             "modifier.play_hand.contains_face.multiplier",
-            "modifier.play_hand.middle_unique.combined"
+            "modifier.play_hand.middle_unique.combined",
+            "modifier.play_hand.two_pair.base_score"
         };
 
         [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair / Base", typeof(InitialPairCondition),
@@ -104,7 +106,9 @@ namespace Dice.Tests
                 Assert.That(SpiritModifierPresentation.GetEffectText(definition),
                     Is.EqualTo(DiagnosticText.DescribeEffects(definition).Replace("+1 rerolls", "+1 reroll")), definition.Id);
                 Assert.That(SpiritModifierPresentation.GetTimingText(definition), Is.Not.Null.And.Not.Empty, definition.Id);
-                Assert.That(SpiritModifierIcons.GetSprite(definition), Is.Null, definition.Id);
+                var presentation = themeAssets.Single(asset => asset.Modifier.Id == definition.Id);
+                Assert.That(SpiritModifierIcons.GetSprite(definition) != null,
+                    Is.EqualTo(presentation.Icon != null || presentation.Artwork != ModifierArtworkKind.None), definition.Id);
             }
 
             foreach (string id in AuthoredIds)
@@ -319,7 +323,7 @@ namespace Dice.Tests
                 Assert.That(SpiritModifierIcons.GetSprite(definition), Is.SameAs(familyReplacement));
                 SpiritModifierIcons.RegisterIcon(definition.FamilyId, null);
                 Assert.That(SpiritModifierIcons.GetSprite(definition), Is.SameAs(original));
-                Assert.That(SpiritModifierIcons.GetSprite(sibling), Is.Null);
+                Assert.That(SpiritModifierIcons.GetSprite(sibling), Is.SameAs(original));
             }
             finally
             {
@@ -335,6 +339,221 @@ namespace Dice.Tests
         {
             Assert.That(themeAssets.Length, Is.EqualTo(catalog.Modifiers.Count));
             CollectionAssert.AreEquivalent(TestContent.ModifierAssets(), themeAssets.Select(asset => asset.Modifier));
+        }
+
+        [Test]
+        public void AuthoredCategoryReferencesMatchActualNonzeroMechanicalEffectsAcrossTheCatalog()
+        {
+            var shared = new Dictionary<ModifierCategorySymbol, ModifierCategoryPresentationAsset>();
+            int inertCount = 0;
+            foreach (var definition in catalog.Modifiers)
+            {
+                var effects = definition.Effects.Where(effect => effect.Amount != 0)
+                    .Select(effect => effect.Kind).Distinct().ToArray();
+                var authored = themeAssets.Single(asset => asset.Modifier.Id == definition.Id);
+                var category = SpiritModifierPresentation.GetCategory(definition);
+                Assert.That(category, Is.SameAs(authored.Category), definition.Id);
+                if (effects.Length == 0)
+                {
+                    // Sleeping Stone has no effects, so its inert variants have no category mark.
+                    Assert.That(category, Is.Null, definition.Id);
+                    Assert.That(SpiritModifierIcons.GetCategorySymbol(definition), Is.EqualTo(ModifierCategorySymbol.None));
+                    Assert.That(SpiritModifierIcons.GetCategorySprite(definition), Is.Null);
+                    ++inertCount;
+                    continue;
+                }
+                ModifierCategorySymbol expected;
+                if (effects.Length == 2)
+                {
+                    CollectionAssert.AreEquivalent(new[] { ModifierEffectKind.AddBaseScore, ModifierEffectKind.AddMultiplier },
+                        effects, definition.Id);
+                    expected = ModifierCategorySymbol.Combined;
+                }
+                else
+                {
+                    Assert.That(effects.Length, Is.EqualTo(1), definition.Id);
+                    switch (effects[0])
+                    {
+                        case ModifierEffectKind.AddBaseScore: expected = ModifierCategorySymbol.Base; break;
+                        case ModifierEffectKind.AddMultiplier: expected = ModifierCategorySymbol.Multiplier; break;
+                        case ModifierEffectKind.AddRerolls: expected = ModifierCategorySymbol.Rerolls; break;
+                        default: throw new InvalidOperationException("Unknown mechanical effect in category test.");
+                    }
+                }
+                Assert.That(category, Is.Not.Null, definition.Id);
+                Assert.That(category.Symbol, Is.EqualTo(expected), definition.Id);
+                Assert.That(SpiritModifierIcons.GetCategorySymbol(definition), Is.EqualTo(expected), definition.Id);
+                Assert.That(SpiritModifierIcons.GetEffectColor(definition), Is.EqualTo(category.AccentColor), definition.Id);
+                Assert.That(SpiritModifierIcons.GetInkColor(definition), Is.EqualTo(category.InkColor), definition.Id);
+                Assert.That(AssetDatabase.GetAssetPath(category), Does.StartWith("Assets/Dice/Presentation/Shared/"));
+                if (shared.TryGetValue(expected, out var existing)) Assert.That(category, Is.SameAs(existing), definition.Id);
+                else shared.Add(expected, category);
+            }
+            Assert.That(inertCount, Is.EqualTo(4));
+            Assert.That(shared.Count, Is.EqualTo(4));
+            Assert.That(shared.Values.Select(value => value.AccentColor).Distinct().Count(), Is.EqualTo(4));
+            Assert.That(shared.Values.Select(value => value.InkColor).Distinct().Count(), Is.EqualTo(4));
+            foreach (var category in shared.Values)
+            {
+                Color.RGBToHSV(category.AccentColor, out _, out _, out float accentValue);
+                Color.RGBToHSV(category.InkColor, out _, out float inkSaturation, out float inkValue);
+                Assert.That(accentValue, Is.GreaterThan(.8f), category.name);
+                Assert.That(inkValue, Is.InRange(.45f, .75f), category.name);
+                Assert.That(inkSaturation, Is.GreaterThan(.55f), category.name);
+            }
+        }
+
+        [Test]
+        public void EveryFamilyUsesOneArtworkAcrossAllFourVariants()
+        {
+            var familySprites = new HashSet<Sprite>();
+            var images = new List<Color32[]>();
+            foreach (var family in catalog.Modifiers.GroupBy(definition => definition.FamilyId))
+            {
+                var entries = family.Select(definition => themeAssets.Single(asset => asset.Modifier.Id == definition.Id)).ToArray();
+                Assert.That(entries.Select(asset => asset.Artwork).Distinct().Count(), Is.EqualTo(1), family.Key);
+                Assert.That(entries.Select(asset => asset.Icon).Distinct().Count(), Is.EqualTo(1), family.Key);
+                var sprite = SpiritModifierIcons.GetSprite(family.First());
+                Assert.That(sprite, Is.Not.Null, family.Key + " requires authored artwork.");
+                Assert.That(familySprites.Add(sprite), Is.True, family.Key + " shares another family's sprite.");
+                var pixels = ReadPixels(sprite.texture);
+                Assert.That(pixels.Any(pixel => pixel.a > 128), Is.True, family.Key);
+                Assert.That(pixels.Any(pixel => pixel.a == 0), Is.True, family.Key);
+                Assert.That(images.All(image => !image.SequenceEqual(pixels)), Is.True, family.Key + " duplicates another drawing.");
+                images.Add(pixels);
+                if (entries[0].Icon != null)
+                {
+                    var importer = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(sprite));
+                    Assert.That(importer.textureType, Is.EqualTo(TextureImporterType.Sprite));
+                    Assert.That(importer.mipmapEnabled, Is.False);
+                    Assert.That(importer.textureCompression, Is.EqualTo(TextureImporterCompression.Uncompressed));
+                }
+                foreach (var definition in family)
+                    Assert.That(SpiritModifierIcons.GetSprite(definition), Is.SameAs(sprite), definition.Id);
+            }
+            var knots = themeAssets.Where(asset => asset.Modifier.Build().Condition is TwoPairCondition).ToArray();
+            Assert.That(knots.Length, Is.EqualTo(4));
+            foreach (var asset in knots)
+                Assert.That(asset.Artwork, Is.EqualTo(ModifierArtworkKind.TwinKnots), asset.Modifier.Id);
+        }
+
+        [Test]
+        public void CategoryGlyphsUseDistinctCachedWhiteInkWithTransparentSpace()
+        {
+            var definitions = catalog.Modifiers.Where(definition => SpiritModifierPresentation.GetCategory(definition) != null)
+                .GroupBy(SpiritModifierIcons.GetCategorySymbol).Select(group => group.First()).ToArray();
+            Assert.That(definitions.Length, Is.EqualTo(4));
+            var images = new List<Color32[]>();
+            var sprites = new HashSet<Sprite>();
+            foreach (var definition in definitions)
+            {
+                var sprite = SpiritModifierIcons.GetCategorySprite(definition);
+                Assert.That(sprite, Is.Not.Null, definition.Id);
+                Assert.That(sprites.Add(sprite), Is.True, definition.Id);
+                Assert.That(sprite.hideFlags, Is.EqualTo(HideFlags.DontSave));
+                Assert.That(sprite.texture.hideFlags, Is.EqualTo(HideFlags.DontSave));
+                foreach (var sibling in catalog.Modifiers.Where(value =>
+                    SpiritModifierIcons.GetCategorySymbol(value) == SpiritModifierIcons.GetCategorySymbol(definition)))
+                    Assert.That(SpiritModifierIcons.GetCategorySprite(sibling), Is.SameAs(sprite), sibling.Id);
+                var pixels = ReadPixels(sprite.texture);
+                Assert.That(pixels.Any(pixel => pixel.a > 0), Is.True, definition.Id);
+                Assert.That(pixels.Any(pixel => pixel.a == 0), Is.True, definition.Id);
+                Assert.That(pixels.Where(pixel => pixel.a > 0).All(pixel => pixel.r == 255 && pixel.g == 255 && pixel.b == 255),
+                    Is.True, definition.Id);
+                Assert.That(images.All(image => !image.SequenceEqual(pixels)), Is.True, definition.Id);
+                images.Add(pixels);
+            }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CategoryLookupUsesTheInstalledAssetEvenWhenEffectsAndIdentitySuggestAnotherRole(bool missingCategory)
+        {
+            var authored = themeAssets.Single(asset => asset.Modifier.Id == AuthoredIds[0]);
+            var replacement = UnityEngine.Object.Instantiate(authored);
+            var otherCategory = themeAssets.Single(asset =>
+                asset.Modifier.Id == "modifier.initial_roll.initial_pair.rerolls").Category;
+            IDisposable newerTheme = null;
+            try
+            {
+                var serialized = new SerializedObject(replacement);
+                serialized.FindProperty("category").objectReferenceValue = missingCategory ? null : otherCategory;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                newerTheme = SpiritModifierPresentation.InstallTheme(
+                    themeAssets.Select(asset => asset == authored ? replacement : asset), catalog);
+                var original = catalog.GetModifier(authored.Modifier.Id);
+                var changed = new ModifierDefinition(original.Id, original.FamilyId, original.Phase, original.Condition,
+                    new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 999) });
+                Assert.That(SpiritModifierPresentation.GetCategory(changed), Is.SameAs(missingCategory ? null : otherCategory));
+                if (missingCategory)
+                {
+                    var unknown = new ModifierDefinition("custom.base_score", "custom", ModifierPhase.PlayHand,
+                        new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 10) });
+                    Assert.That(SpiritModifierIcons.GetEffectColor(changed), Is.EqualTo(SpiritModifierIcons.GetEffectColor(unknown)));
+                    Assert.That(SpiritModifierIcons.GetInkColor(changed), Is.EqualTo(SpiritModifierIcons.GetInkColor(unknown)));
+                    Assert.That(SpiritModifierIcons.GetCategorySymbol(changed), Is.EqualTo(ModifierCategorySymbol.None));
+                    Assert.That(SpiritModifierIcons.GetCategorySprite(changed), Is.Null);
+                }
+                else
+                {
+                    Assert.That(SpiritModifierIcons.GetEffectColor(changed), Is.EqualTo(otherCategory.AccentColor));
+                    Assert.That(SpiritModifierIcons.GetInkColor(changed), Is.EqualTo(otherCategory.InkColor));
+                    Assert.That(SpiritModifierIcons.GetCategorySymbol(changed), Is.EqualTo(otherCategory.Symbol));
+                }
+            }
+            finally
+            {
+                newerTheme?.Dispose();
+                UnityEngine.Object.DestroyImmediate(replacement);
+            }
+        }
+
+        [Test]
+        public void ContributionColorUsesTheAuthoredDefinitionCategoryRegardlessOfContributionAmounts()
+        {
+            foreach (var definition in catalog.Modifiers)
+            {
+                var contribution = (ModifierContribution)Activator.CreateInstance(typeof(ModifierContribution),
+                    BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { 1L, definition, 0L, 999L, 0 }, null);
+                Assert.That(SpiritModifierIcons.GetEffectColor(contribution),
+                    Is.EqualTo(SpiritModifierIcons.GetEffectColor(definition)), definition.Id);
+            }
+            Assert.That(SpiritModifierIcons.GetEffectColor(default(ModifierContribution)),
+                Is.EqualTo((Color)new Color32(239, 224, 190, 255)));
+        }
+
+        [Test]
+        public void MissingThemeReturnsNeutralCategoryPresentation()
+        {
+            theme.Dispose();
+            foreach (var definition in catalog.Modifiers)
+            {
+                Assert.That(SpiritModifierPresentation.GetCategory(definition), Is.Null, definition.Id);
+                Assert.That(SpiritModifierIcons.GetCategorySymbol(definition), Is.EqualTo(ModifierCategorySymbol.None));
+                Assert.That(SpiritModifierIcons.GetCategorySprite(definition), Is.Null);
+                Assert.That(SpiritModifierIcons.GetEffectColor(definition), Is.EqualTo((Color)new Color32(239, 224, 190, 255)));
+                Assert.That(SpiritModifierIcons.GetInkColor(definition), Is.EqualTo((Color)new Color32(70, 52, 35, 255)));
+            }
+        }
+
+        [Test]
+        public void ArtworkLifecycleReleasesCategoryAndFamilySpritesAndTheirTextures()
+        {
+            var definition = catalog.GetModifier(AuthoredIds[0]);
+            var familySprite = SpiritModifierIcons.GetSprite(definition);
+            var categorySprite = SpiritModifierIcons.GetCategorySprite(definition);
+            var familyTexture = familySprite.texture;
+            var categoryTexture = categorySprite.texture;
+            var artworkType = typeof(SpiritModifierIcons).Assembly.GetType("Dice.Presentation.SpiritModifierArtwork");
+            artworkType.GetMethod("Release", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+            Assert.That(familySprite == null, Is.True);
+            Assert.That(categorySprite == null, Is.True);
+            Assert.That(familyTexture == null, Is.True);
+            Assert.That(categoryTexture == null, Is.True);
+            Assert.That(SpiritModifierIcons.GetSprite(definition), Is.Not.Null);
+            Assert.That(SpiritModifierIcons.GetCategorySprite(definition), Is.Not.Null);
+            Assert.That(ReferenceEquals(SpiritModifierIcons.GetSprite(definition), familySprite), Is.False);
+            Assert.That(ReferenceEquals(SpiritModifierIcons.GetCategorySprite(definition), categorySprite), Is.False);
         }
 
         [Test]

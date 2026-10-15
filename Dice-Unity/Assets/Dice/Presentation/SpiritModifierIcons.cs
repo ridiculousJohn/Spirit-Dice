@@ -41,14 +41,31 @@ namespace Dice.Presentation
             return value;
         }
 
+        public static Color GetEffectColor(ModifierDefinition definition)
+        {
+            var category = SpiritModifierPresentation.GetCategory(definition);
+            return category != null ? category.AccentColor : new Color32(239, 224, 190, 255);
+        }
+
+        public static Color GetInkColor(ModifierDefinition definition)
+        {
+            var category = SpiritModifierPresentation.GetCategory(definition);
+            return category != null ? category.InkColor : new Color32(70, 52, 35, 255);
+        }
+
+        public static ModifierCategorySymbol GetCategorySymbol(ModifierDefinition definition)
+        {
+            var category = SpiritModifierPresentation.GetCategory(definition);
+            return category != null ? category.Symbol : ModifierCategorySymbol.None;
+        }
+
+        public static Sprite GetCategorySprite(ModifierDefinition definition)
+            => SpiritModifierArtwork.GetCategorySprite(GetCategorySymbol(definition));
+
         public static Color GetEffectColor(ModifierContribution contribution)
         {
-            int kinds = (contribution.BaseScore != 0 ? 1 : 0) + (contribution.Multiplier != 0 ? 1 : 0) +
-                (contribution.Rerolls != 0 ? 1 : 0);
-            if (kinds > 1) return new Color32(174, 116, 31, 255);
-            if (contribution.Multiplier != 0) return new Color32(106, 64, 143, 255);
-            if (contribution.Rerolls != 0) return new Color32(38, 111, 137, 255);
-            return new Color32(57, 108, 66, 255);
+            var category = SpiritModifierPresentation.GetCategory(contribution.DefinitionId);
+            return category != null ? category.AccentColor : new Color32(239, 224, 190, 255);
         }
 
         private static Sprite FindSprite(string id)

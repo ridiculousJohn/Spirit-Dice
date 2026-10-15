@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
   displayName: Narrow Bridge / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: edfeb47ece3c5f25812f625104752942, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

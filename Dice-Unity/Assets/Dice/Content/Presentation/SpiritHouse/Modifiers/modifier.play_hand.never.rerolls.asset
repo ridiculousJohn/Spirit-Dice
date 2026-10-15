@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a4809a433d068c54189945b5e2aeb77d, type: 2}
   displayName: Sleeping Stone / Rerolls
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e4dfb2c9fcfb52c48e0129b1e2fbc0ff, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 0}

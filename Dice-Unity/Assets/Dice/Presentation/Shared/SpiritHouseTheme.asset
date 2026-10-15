@@ -66,6 +66,9 @@ MonoBehaviour:
   cream: {r: 0.965, g: 0.906, b: 0.745, a: 1}
   muted: {r: 0.749, g: 0.733, b: 0.635, a: 1}
   amber: {r: 0.824, g: 0.651, b: 0.345, a: 1}
+  playHandTrigger: {r: 0.6431373, g: 0.7960784, b: 0.5450981, a: 1}
+  rerollTrigger: {r: 0.9215686, g: 0.7490196, b: 0.3647059, a: 1}
+  initialRollTrigger: {r: 0.5607843, g: 0.7529412, b: 0.8627451, a: 1}
   panelColor: {r: 0.098, g: 0.141, b: 0.114, a: 1}
   highlightedTint: {r: 1.1, g: 1.08, b: 1.01, a: 1}
   pressedTint: {r: 0.76, g: 0.71, b: 0.58, a: 1}

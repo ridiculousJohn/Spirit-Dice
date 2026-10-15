@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3efb02beaaa789640851f90a59be194a, type: 2}
   displayName: Bundled Reeds / Base
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: c26105a247a75d8b9128774b40fef374, type: 3}
   conditionTemplate: 
   conditionTypeName: 
   artwork: 0
+  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}
