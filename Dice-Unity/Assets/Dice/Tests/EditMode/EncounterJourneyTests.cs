@@ -111,6 +111,26 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void AutomaticContinuationIsOptInAndAdvancingNeverAcceptsAnInvitation()
+        {
+            var journey = journeys.Entries[0];
+            Assert.That(journey.Beats.All(beat => !beat.AutoAdvance), Is.True);
+            Set(journey.Beats[0], "autoAdvance", true);
+            Set(journey.Beats[journey.Beats.Count - 1], "autoAdvance", true);
+            Assert.That(journey.Beats[0].AutoAdvance, Is.True);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AdvanceJourney();
+            controller.AdvanceJourney();
+            Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+            Assert.That(controller.Snapshot, Is.Null);
+            Assert.That(controller.VisitedEncounterIds, Is.Empty);
+            controller.AcceptEncounter();
+            Assert.That(controller.Snapshot, Is.Not.Null);
+        }
+
+        [Test]
         public void InitializationFailuresExposeMessageWithoutCreatingApplication()
         {
             Set(journeys.Entries[0], "beats", Array.Empty<EncounterJourneyBeat>());

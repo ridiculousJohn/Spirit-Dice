@@ -326,7 +326,7 @@ namespace Dice.Presentation
             rightPanel.uvRect = new Rect(previousUv.x + previousUv.width * .5f, previousUv.y,
                 previousUv.width * .5f, previousUv.height);
             if (beat.AudioCue != null) audio?.PlayJourneyCue(beat.AudioCue);
-            StartCoroutine(AnimateBeat(beat, parting));
+            StartCoroutine(AnimateBeat(journey, index, parting));
         }
 
         private InvitationRuleView CreateInvitationRule(Text effect, string suffix)
@@ -477,23 +477,37 @@ namespace Dice.Presentation
             rect.sizeDelta = new Vector2(width, height);
         }
 
-        private IEnumerator AnimateBeat(EncounterJourneyBeat beat, bool parting)
+        private IEnumerator AnimateBeat(EncounterJourneyAsset journey, int index, bool parting)
         {
+            var beat = journey.Beats[index];
             IsAnimating = true;
             SetButtons(false);
             float duration = Mathf.Max(0, beat.Duration);
             float age = 0;
+            // Let Refresh finish recording this beat before an immediate continuation can refresh it.
+            if (duration == 0 && beat.AutoAdvance)
+            {
+                ApplyMotion(beat, 0, parting);
+                yield return null;
+            }
             while (age < duration)
             {
                 ApplyMotion(beat, duration > 0 ? age / duration : 1, parting);
                 age += Time.unscaledDeltaTime;
                 yield return null;
             }
+            if (controls == null || controls.JourneyPhase != EncounterJourneyPhase.Sequence ||
+                controls.SelectedJourney != journey || controls.BeatIndex != index || activeBeat != beat) yield break;
             ApplyMotion(beat, 1, parting);
             leftPanel.gameObject.SetActive(false);
             rightPanel.gameObject.SetActive(false);
             ClearPartingLighting();
             IsAnimating = false;
+            if (beat.AutoAdvance && index + 1 < journey.Beats.Count)
+            {
+                controls.AdvanceJourney();
+                yield break;
+            }
             narrativeGroup.alpha = 1;
             SetButtons(true);
         }
@@ -502,7 +516,8 @@ namespace Dice.Presentation
         {
             float eased = Mathf.SmoothStep(0, 1, value);
             hostState?.Invoke(beat.HostState, value);
-            narrativeGroup.alpha = beat.HideNarrativeDuringMotion ? Mathf.Clamp01((value - .9f) * 10f) : 1;
+            narrativeGroup.alpha = beat.HideNarrativeDuringMotion ?
+                beat.AutoAdvance ? 0 : Mathf.Clamp01((value - .9f) * 10f) : 1;
             background.rectTransform.anchoredPosition = Vector2.Scale(
                 Vector2.Lerp(beat.BackgroundMotionFrom, beat.BackgroundMotionTo, eased), artwork.rect.size);
             background.rectTransform.localScale = Vector3.one * Mathf.Lerp(beat.BackgroundScaleFrom, beat.BackgroundScaleTo, eased);

@@ -81,6 +81,7 @@ namespace Dice.Presentation
         private SpiritEncounterAudio encounterAudio;
         private SpiritActionModifierCue actionModifierCue;
         private CanvasGroup inputGroup;
+        private readonly List<CanvasGroup> openingGroups = new List<CanvasGroup>();
         private Text stageLabel;
         private Text targetLabel;
         private Text targetCaption;
@@ -273,7 +274,7 @@ namespace Dice.Presentation
             if (journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
             {
                 bool canceled = presenting;
-                ResetPresentation();
+                ResetPresentation(false);
                 if (canceled) controls?.CompletePresentation();
                 charmsPanel.gameObject.SetActive(false);
                 handRanksPanel.Root.gameObject.SetActive(false);
@@ -541,6 +542,10 @@ namespace Dice.Presentation
             handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
             handRanksPanel.Build(portrait, ShowTable);
             BuildMenu();
+            foreach (var element in new Transform[] { playingPanel, targetPanel, handsPanel, rerollsPanel,
+                stageLabel.transform, statusLabel.transform, resourcesLabel.transform, CharmsButton.transform,
+                HandRanksButton.transform, menuButton.transform, investigationButton.transform })
+                openingGroups.Add(element.gameObject.AddComponent<CanvasGroup>());
             JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
             JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
             ConfigureTable(tablePresentation);
@@ -1220,14 +1225,15 @@ namespace Dice.Presentation
             MultiplierLabel.text = DiagnosticText.Number(multiplier);
         }
 
-        private void ResetPresentation()
+        private void ResetPresentation(bool resetHost = true)
         {
             StopAllCoroutines();
+            SetOpeningOpacity(1);
             (activeRoll as IDisposable)?.Dispose();
             activeRoll = null;
             presenting = false;
             presentationSnapshot = null;
-            hostPortrait?.ResetPose();
+            if (resetHost) hostPortrait?.ResetPose();
             ResetTransientVisuals();
         }
 
@@ -1307,10 +1313,29 @@ namespace Dice.Presentation
             charmsPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             menuPanel.gameObject.SetActive(false);
-            StartCoroutine(PresentEvents(resolution));
+            float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
+                ? Mathf.Clamp(configuredTable.OpeningFadeDuration, 0, 2) : 0;
+            if (openingFade > 0) SetOpeningOpacity(0);
+            StartCoroutine(PresentEvents(resolution, openingFade));
         }
 
-        private IEnumerator PresentEvents(Resolution resolution)
+        private void SetOpeningOpacity(float opacity)
+        {
+            foreach (var group in openingGroups)
+                if (group != null) group.alpha = opacity;
+        }
+
+        private IEnumerator FadeOpening(float duration)
+        {
+            for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
+            {
+                SetOpeningOpacity(Mathf.SmoothStep(0, 1, elapsed / duration));
+                yield return null;
+            }
+            SetOpeningOpacity(1);
+        }
+
+        private IEnumerator PresentEvents(Resolution resolution, float openingFade)
         {
             // The committed snapshot may include a new hand; only event dice are shown until presentation completes.
             foreach (var ruleEvent in resolution.Events)
@@ -1337,6 +1362,8 @@ namespace Dice.Presentation
                     endingPanel.gameObject.SetActive(false);
                     if (rolled.Before.HasValue) DiceTray.SetValues(rolled.Before.Value);
                     SetDiceSelection(rolled.SelectedMask);
+                    if (openingFade > 0 && rolled.Kind == RollKind.Initial)
+                        yield return FadeOpening(openingFade);
                     int rollMask = rolled.Kind == RollKind.Initial ? DiceValues.AllMask : rolled.SelectedMask;
                     int diceCount = 0;
                     for (int die = 0; die < DiceValues.Count; die++)

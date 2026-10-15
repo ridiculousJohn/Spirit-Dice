@@ -131,6 +131,71 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void ArrivalEntryWeightsPreserveWaitingPoseAndDecayToAuthoredPose(
+            [Values(.35f, 1.7f, 7.35f)] float waitingAge, [Values(false, true)] bool includeIdle)
+        {
+            presentation.Sequences[0].Tracks = new[]
+            {
+                Track(0, SpiritPortraitProperty.PositionX, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 20f, 2f, 40f)),
+                Track(0, SpiritPortraitProperty.PositionY, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, 4f, 2f, 12f)),
+                Track(0, SpiritPortraitProperty.Rotation, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, -10f, 2f, 10f)),
+                Track(0, SpiritPortraitProperty.Deformation, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, .1f, 2f, .9f))
+            };
+            presentation.Sequences[1].Tracks = Array.Empty<SpiritPortraitTrack>();
+            SpiritPresentationSequence arrival = presentation.Sequences[2];
+            arrival.IncludeIdle = includeIdle;
+            arrival.Tracks = new[]
+            {
+                Track(0, SpiritPortraitProperty.PositionX, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 50f, 5f, 90f)),
+                Track(0, SpiritPortraitProperty.PositionY, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, 10f, 5f, 30f)),
+                Track(0, SpiritPortraitProperty.Rotation, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 25f, 5f, 5f)),
+                Track(0, SpiritPortraitProperty.Deformation, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, .3f, 5f, .8f)),
+                Track(1, SpiritPortraitProperty.PositionY, SpiritTrackBlend.Replace, AnimationCurve.Linear(0f, 0f, 5f, 200f))
+            };
+            for (int i = 0; i < 4; ++i) arrival.Tracks[i].EntryWeight = AnimationCurve.Linear(0f, 1f, 2f, 0f);
+            Build();
+            portrait.SetState(SpiritPresentationState.Waiting, 0f);
+            portrait.Advance(waitingAge);
+            float x = Value(0, SpiritPortraitProperty.PositionX);
+            float y = Value(0, SpiritPortraitProperty.PositionY);
+            float rotation = Value(0, SpiritPortraitProperty.Rotation);
+            float deformation = Value(0, SpiritPortraitProperty.Deformation);
+
+            portrait.SetState(SpiritPresentationState.Arrival, 0f);
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(x).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.PositionY), Is.EqualTo(y).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(rotation).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Deformation), Is.EqualTo(deformation).Within(.0001f));
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.Zero);
+
+            portrait.SetState(SpiritPresentationState.Arrival, .2f);
+            float expectedY = (includeIdle ? 28f : 20f) + 14f + (y - (includeIdle ? 24f : 20f) - 10f) * .5f;
+            float expectedDeformation = (includeIdle ? .5f : 0f) + .4f + (deformation - (includeIdle ? .1f : 0f) - .3f) * .5f;
+            for (int i = 0; i < 3; ++i)
+            {
+                portrait.SetState(SpiritPresentationState.Arrival, .2f);
+                portrait.Advance(.5f);
+                Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(58f + (x - 50f) * .5f).Within(.0001f));
+                Assert.That(Value(0, SpiritPortraitProperty.PositionY), Is.EqualTo(expectedY).Within(.0001f));
+                Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(21f + (rotation - 25f) * .5f).Within(.0001f));
+                Assert.That(Value(0, SpiritPortraitProperty.Deformation), Is.EqualTo(expectedDeformation).Within(.0001f));
+            }
+
+            portrait.SetState(SpiritPresentationState.Arrival, .4f);
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(66f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.PositionY), Is.EqualTo(includeIdle ? 42f : 38f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(17f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Deformation), Is.EqualTo(includeIdle ? .6f : .5f).Within(.0001f));
+
+            portrait.SetState(SpiritPresentationState.Arrival, 1f);
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(90f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.PositionY), Is.EqualTo(includeIdle ? 58f : 50f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Rotation), Is.EqualTo(5f).Within(.0001f));
+            Assert.That(Value(0, SpiritPortraitProperty.Deformation), Is.EqualTo(includeIdle ? 1.3f : .8f).Within(.0001f));
+            Assert.That(Value(1, SpiritPortraitProperty.PositionY), Is.EqualTo(200f).Within(.0001f));
+        }
+
+        [Test]
         public void ArrivalGesturesFollowForwardSeeksWithoutReplayingSkippedMarkers()
         {
             presentation.Sequences[2].GestureOnStart = true;
@@ -217,6 +282,34 @@ namespace Dice.Tests
             Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(43f).Within(.0001f));
             Assert.That(portrait.GetLayer("Distant Lantern").rectTransform.anchoredPosition.x,
                 Is.EqualTo(43f).Within(.0001f));
+        }
+
+        [Test]
+        public void ReactionEntryWeightsPreserveInterruptedPoseWhenIdleRestarts()
+        {
+            presentation.Sequences[0].Tracks[0].Curve = AnimationCurve.Linear(0f, 3f, 2f, 7f);
+            presentation.Sequences[0].RestartOnReaction = true;
+            SpiritPresentationSequence reaction = presentation.Sequences[3];
+            reaction.IncludeIdle = true;
+            var track = Track(0, SpiritPortraitProperty.PositionX, SpiritTrackBlend.Add,
+                AnimationCurve.Linear(0f, 2f, reaction.Duration, 10f));
+            track.EntryWeight = AnimationCurve.Linear(0f, 1f, reaction.Duration, 0f);
+            reaction.Tracks = new[] { track };
+            Build();
+            portrait.Advance(.75f);
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(14.5f).Within(.0001f));
+
+            portrait.React();
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(14.5f).Within(.0001f));
+            portrait.Advance(.5f);
+            float interrupted = Value(0, SpiritPortraitProperty.PositionX);
+            Assert.That(interrupted, Is.EqualTo(14f + 2f + 8f * .5f / reaction.Duration
+                - .5f * (1f - .5f / reaction.Duration)).Within(.0001f));
+            portrait.React();
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(interrupted).Within(.0001f));
+            portrait.Advance(reaction.Duration);
+            Assert.That(portrait.IsReacting, Is.False);
+            Assert.That(Value(0, SpiritPortraitProperty.PositionX), Is.EqualTo(15.5f).Within(.0001f));
         }
 
         [Test]

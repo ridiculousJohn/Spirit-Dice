@@ -18,6 +18,7 @@ namespace Dice.Presentation
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
         [SerializeField, Range(0, 1)] private float roomTableEdge = .5323f;
         [SerializeField, Range(0, 1)] private float roomSplit = .625f;
+        [SerializeField, Range(0, 2)] private float openingFadeDuration;
 
         public string DisplayTitle => displayTitle;
         public Texture2D RoomTexture => roomTexture;
@@ -29,5 +30,6 @@ namespace Dice.Presentation
         public IReadOnlyList<EncounterRulePresentationAsset> RulePresentations => rulePresentations ?? Array.Empty<EncounterRulePresentationAsset>();
         public float RoomTableEdge => roomTableEdge;
         public float RoomSplit => roomSplit;
+        public float OpeningFadeDuration => openingFadeDuration;
     }
 }

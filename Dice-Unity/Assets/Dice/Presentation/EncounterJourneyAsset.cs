@@ -31,6 +31,7 @@ namespace Dice.Presentation
         [SerializeField] private float scaleTo = 1;
         [SerializeField, FormerlySerializedAs("hostPose")] private SpiritPresentationState hostState;
         [SerializeField] private bool hideNarrativeDuringMotion;
+        [SerializeField] private bool autoAdvance;
         [SerializeField] private Vector2 backgroundMotionFrom;
         [SerializeField] private Vector2 backgroundMotionTo;
         [SerializeField] private float backgroundScaleFrom = 1;
@@ -55,6 +56,7 @@ namespace Dice.Presentation
         public float ScaleTo => scaleTo;
         public SpiritPresentationState HostState => hostState;
         public bool HideNarrativeDuringMotion => hideNarrativeDuringMotion;
+        public bool AutoAdvance => autoAdvance;
         public Vector2 BackgroundMotionFrom => backgroundMotionFrom;
         public Vector2 BackgroundMotionTo => backgroundMotionTo;
         public float BackgroundScaleFrom => backgroundScaleFrom;

@@ -132,27 +132,12 @@ namespace Dice.Presentation
         public void React()
         {
             if (!Visible || State != SpiritPresentationState.Idle && State != SpiritPresentationState.Reaction || GestureDuration <= 0f) return;
-            for (int i = 0; i < layers.Length; ++i)
-                Array.Copy(layers[i].Values, layers[i].EntryPose, layers[i].Values.Length);
+            CaptureEntryPose();
             for (int i = 0; i < presentation.Sequences.Length; ++i)
                 if (presentation.Sequences[i].State == SpiritPresentationState.Idle && presentation.Sequences[i].RestartOnReaction)
                     idleAges[i] = 0d;
 
-            // Additive entry values exclude the baseline that the reaction will evaluate again.
-            ResetValues(true);
-            if (includesIdle[(int)SpiritPresentationState.Reaction]) SampleSequences(SpiritPresentationState.Idle, true);
-            for (int i = 0; i < presentation.Sequences.Length; ++i)
-            {
-                SpiritPresentationSequence sequence = presentation.Sequences[i];
-                if (sequence.State != SpiritPresentationState.Reaction) continue;
-                for (int j = 0; j < sequence.Tracks.Length; ++j)
-                {
-                    SpiritPortraitTrack track = sequence.Tracks[j];
-                    int value = ValueIndex(track.Property, track.Channel);
-                    entryValues[i][j] = layers[track.Layer].EntryPose[value] - track.Curve.Evaluate(0f)
-                        - (track.Blend == SpiritTrackBlend.Add ? layers[track.Layer].EntryBaseline[value] : 0f);
-                }
-            }
+            CaptureEntryValues(SpiritPresentationState.Reaction);
             State = SpiritPresentationState.Reaction;
             stateAge = 0d;
             ApplyPose();
@@ -197,10 +182,13 @@ namespace Dice.Presentation
             float previousProgress = arrivalProgress;
             if (changed)
             {
+                CaptureEntryPose();
                 State = state;
                 stateAge = 0d;
+                arrivalProgress = 0f;
                 Array.Clear(idleAges, 0, idleAges.Length);
                 for (int i = 0; i < entryValues.Length; ++i) Array.Clear(entryValues[i], 0, entryValues[i].Length);
+                CaptureEntryValues(state);
             }
             if (state == SpiritPresentationState.Arrival) arrivalProgress = progress;
             ApplyPose();
@@ -299,6 +287,31 @@ namespace Dice.Presentation
         {
             for (int i = 0; i < layers.Length; ++i)
                 Array.Copy(layers[i].Defaults, baseline ? layers[i].EntryBaseline : layers[i].Values, layers[i].Defaults.Length);
+        }
+
+        private void CaptureEntryPose()
+        {
+            for (int i = 0; i < layers.Length; ++i)
+                Array.Copy(layers[i].Values, layers[i].EntryPose, layers[i].Values.Length);
+        }
+
+        private void CaptureEntryValues(SpiritPresentationState state)
+        {
+            // Additive entry values exclude the baseline that the destination will evaluate again.
+            ResetValues(true);
+            if (state != SpiritPresentationState.Idle && includesIdle[(int)state]) SampleSequences(SpiritPresentationState.Idle, true);
+            for (int i = 0; i < presentation.Sequences.Length; ++i)
+            {
+                SpiritPresentationSequence sequence = presentation.Sequences[i];
+                if (sequence.State != state) continue;
+                for (int j = 0; j < sequence.Tracks.Length; ++j)
+                {
+                    SpiritPortraitTrack track = sequence.Tracks[j];
+                    int value = ValueIndex(track.Property, track.Channel);
+                    entryValues[i][j] = layers[track.Layer].EntryPose[value] - track.Curve.Evaluate(0f)
+                        - (track.Blend == SpiritTrackBlend.Add ? layers[track.Layer].EntryBaseline[value] : 0f);
+                }
+            }
         }
 
         private void SampleSequences(SpiritPresentationState state, bool baseline)
