@@ -243,10 +243,12 @@ Shader "Dice/Spirit Dice Surface"
                     albedo = lerp(albedo, half3(0.022, 0.017, 0.011) * (0.8 + fine * 0.4), pigment);
                     cavity = lerp(1, 0.68, pigment);
                     roughness = lerp(0.38, 0.63, pigment);
+                    // Top-face mesh V points toward the player; artwork reads away from them.
+                    float2 artworkUV = float2(input.uv.x, -input.uv.y);
                     if (_ShowFaceIcon > 0.5 && input.face > 1.5 && input.face < 2.5)
                     {
                         float category = step(0.5, _ShowCategory);
-                        float2 iconUV = (input.uv - float2(0, 0.09) * category) / lerp(0.68, 0.50, category) + 0.5;
+                        float2 iconUV = (artworkUV - float2(0, 0.09) * category) / lerp(0.68, 0.50, category) + 0.5;
                         float inside = step(0, iconUV.x) * step(iconUV.x, 1) * step(0, iconUV.y) * step(iconUV.y, 1);
                         iconUV = (saturate(iconUV) - 0.5) * _FaceIconUVTransform.xy + 0.5;
                         half4 icon = SAMPLE_TEXTURE2D(_FaceIcon, sampler_FaceIcon,
@@ -258,13 +260,13 @@ Shader "Dice/Spirit Dice Surface"
                     }
                     if (_ShowCategory > 0.5 && input.face > 1.5 && input.face < 2.5)
                     {
-                        float2 categoryUV = (input.uv - float2(0.20, -0.28)) / 0.21 + 0.5;
+                        float2 categoryUV = (artworkUV - float2(0.20, -0.28)) / 0.21 + 0.5;
                         float inside = step(0, categoryUV.x) * step(categoryUV.x, 1)
                             * step(0, categoryUV.y) * step(categoryUV.y, 1);
                         categoryUV = (saturate(categoryUV) - 0.5) * _CategoryIconUVTransform.xy + 0.5;
                         half glyph = SAMPLE_TEXTURE2D(_CategoryIcon, sampler_CategoryIcon,
                             _CategoryIconRect.xy + categoryUV * _CategoryIconRect.zw).a * inside;
-                        float2 bar = abs(input.uv - float2(-0.13, -0.2925)) - float2(0.15, 0.0275);
+                        float2 bar = abs(artworkUV - float2(-0.13, -0.2925)) - float2(0.15, 0.0275);
                         float edge = max(bar.x, bar.y);
                         half accent = 1 - smoothstep(-fwidth(edge), fwidth(edge), edge);
                         half ink = max(glyph, accent);

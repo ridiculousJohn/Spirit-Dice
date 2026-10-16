@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dice.Engine;
@@ -9,6 +10,8 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -134,6 +137,140 @@ namespace Dice.Tests
             Assert.That(material.GetFloat("_ShowFaceIcon"), Is.EqualTo(1));
             Assert.That(material.GetTexture("_FaceIcon"), Is.Not.Null);
             Assert.That(Vector4.Distance(material.GetColor("_FaceIconColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
+        }
+
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void TopFaceArtworkKeepsItsUpperLeftAwayFromThePlayer(bool category, bool glyphOnly)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
+                Assert.Ignore("Top-face orientation pixels require a real graphics device.");
+            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
+            var history = AddHistory(scene);
+            var contribution = Contribution(out ModifierDefinition definition);
+            var icon = new Texture2D(8, 8, TextureFormat.RGBA32, false, true)
+                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            resources.Add(icon);
+            var pixels = new Color[64];
+            for (int y = 4; y < 8; ++y)
+                for (int x = 0; x < 4; ++x) pixels[y * 8 + x] = Color.white;
+            icon.SetPixels(pixels);
+            icon.Apply();
+            var sprite = Sprite.Create(icon, new Rect(0, 0, 8, 8), Vector2.one * .5f, 8);
+            resources.Add(sprite);
+            Sprite previous = SpiritModifierIcons.GetSprite(definition);
+            try
+            {
+                SpiritModifierIcons.RegisterIcon(definition.Id, sprite);
+                history.Add(contribution, definition, false);
+            }
+            finally { SpiritModifierIcons.RegisterIcon(definition.Id, previous); }
+            var renderer = history.GetDieRenderer(0);
+            foreach (var other in scene.RenderRoot.GetComponentsInChildren<MeshRenderer>()) other.enabled = other == renderer;
+            Material material = renderer.sharedMaterial;
+            Assert.That(ShaderUtil.ShaderHasError(material.shader), Is.False);
+            material.SetColor("_BaseColor", Color.white);
+            material.SetTexture("_SurfaceTexture", Texture2D.whiteTexture);
+            material.SetColor("_FaceIconColor", Color.black);
+            material.SetFloat("_ShowFaceIcon", glyphOnly ? 0 : 1);
+            material.SetFloat("_ShowCategory", category ? 1 : 0);
+            material.SetTexture("_CategoryIcon", icon);
+            material.SetVector("_CategoryIconRect", new Vector4(0, 0, 1, 1));
+            material.SetVector("_CategoryIconUVTransform", new Vector4(1, 1, 0, 0));
+            material.SetColor("_CategoryColor", Color.black);
+            material.SetFloat("_SceneLightingEnabled", 1);
+            material.SetVector("_SceneLightingAmbient", Vector4.one);
+            material.SetVector("_SceneLightingKeyColor", Vector4.zero);
+            Transform die = history.GetDieTransform(0);
+            var camera = Root("Top-face orientation camera").AddComponent<Camera>();
+            camera.scene = preview;
+            camera.overrideSceneCullingMask = EditorSceneManager.GetSceneCullingMask(preview);
+            camera.enabled = false;
+            camera.transform.position = die.TransformPoint(new Vector3(0, 3, -4));
+            camera.transform.LookAt(die.TransformPoint(new Vector3(0, .5f, 0)), die.up);
+            camera.orthographic = true;
+            camera.orthographicSize = die.TransformVector(Vector3.right).magnitude * .75f;
+            camera.aspect = 1;
+            camera.nearClipPlane = .01f;
+            camera.farClipPlane = 20;
+            camera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.magenta;
+            camera.allowHDR = camera.allowMSAA = false;
+            camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
+            var target = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            resources.Add(target);
+            target.Create();
+            camera.targetTexture = target;
+            RenderPipelineAsset previousPipeline = QualitySettings.renderPipeline;
+            try
+            {
+                var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/SpiritPrototypePipeline.asset");
+                Assert.That(pipeline, Is.Not.Null);
+                QualitySettings.renderPipeline = pipeline;
+                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
+                Assert.That(RenderPipeline.SupportsRenderRequest(camera, request), Is.True);
+                RenderPipeline.SubmitRenderRequest(camera, request);
+            }
+            finally { QualitySettings.renderPipeline = previousPipeline; }
+            var readback = new Texture2D(256, 256, TextureFormat.RGBAFloat, false, true);
+            resources.Add(readback);
+            RenderTexture previousTarget = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = target;
+                readback.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
+                readback.Apply();
+            }
+            finally { RenderTexture.active = previousTarget; }
+
+            float centerX = glyphOnly ? .20f : 0;
+            float centerZ = glyphOnly ? -.28f : category ? .09f : 0;
+            float offset = glyphOnly ? .0315f : category ? .125f : .17f;
+            Color inkSample = Pixel(centerX - offset, centerZ + offset);
+            if (inkSample.maxColorComponent >= .15f)
+            {
+                var rendered = readback.GetPixels();
+                TestContext.WriteLine("Top-face sample " + inkSample + "; opposite " + Pixel(centerX + offset, centerZ - offset) +
+                    "; background pixels " + rendered.Count(value => value.r > .9f && value.g < .1f && value.b > .9f) +
+                    "; dark pixels " + rendered.Count(value => value.r < .15f && value.g < .15f && value.b < .15f));
+                string directory = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
+                    "top-face-orientation", Guid.NewGuid().ToString("N")));
+                Directory.CreateDirectory(directory);
+                var diagnostic = new Texture2D(256, 256, TextureFormat.RGBA32, false, true);
+                resources.Add(diagnostic);
+                diagnostic.SetPixels(rendered);
+                diagnostic.Apply();
+                string path = Path.Combine(directory, "category-" + category + "-glyph-" + glyphOnly + ".png");
+                File.WriteAllBytes(path, diagnostic.EncodeToPNG());
+                TestContext.WriteLine("Top-face diagnostic: " + path);
+            }
+            Assert.That(Pixel(centerX - offset, centerZ + offset).maxColorComponent, Is.LessThan(.15f),
+                "The texture's upper-left quadrant belongs on the far-left part of the physical top face.");
+            AssertBone(Pixel(centerX - offset, centerZ - offset));
+            AssertBone(Pixel(centerX + offset, centerZ + offset));
+            AssertBone(Pixel(centerX + offset, centerZ - offset));
+            if (glyphOnly)
+            {
+                Assert.That(Pixel(-.13f, -.2925f).maxColorComponent, Is.LessThan(.15f), "The category bar belongs on the player edge.");
+                AssertBone(Pixel(-.13f, .2925f));
+            }
+
+            Color Pixel(float x, float z)
+            {
+                Vector3 viewport = camera.WorldToViewportPoint(die.TransformPoint(new Vector3(x, .5f, z)));
+                Assert.That(viewport.x, Is.InRange(0f, 1f));
+                Assert.That(viewport.y, Is.InRange(0f, 1f));
+                return readback.GetPixel(Mathf.FloorToInt(viewport.x * 256), Mathf.FloorToInt(viewport.y * 256));
+            }
+
+            void AssertBone(Color value)
+            {
+                Assert.That(value.r, Is.GreaterThan(.75f));
+                Assert.That(value.g, Is.GreaterThan(.75f));
+                Assert.That(value.b, Is.GreaterThan(.75f));
+            }
         }
 
         [TestCase(Lantern, false)]
