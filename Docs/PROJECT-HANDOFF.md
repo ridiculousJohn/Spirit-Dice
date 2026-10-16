@@ -1,127 +1,80 @@
-# Spirit Dice project handoff
+# Spirit Dice: start here
 
-Updated October 15, 2026. This is the current continuation brief. Historical validation counts describe specific passes, not a fresh full-suite run. Inspect relevant code and assets before editing; do not reconstruct behavior from older proposals alone.
+Verified October 15, 2026 against code baseline `2f7fc06` (`Fix modifier die artwork orientation`). The working tree was clean before this document update. Check current Git status; this is not a claim about later edits or remote synchronization.
 
-## Current state and continuation
+## What to do next
 
-- Three encounters are playable: The Last Lantern (fox), The Watchtower (owl), and The Unmarked Fork (moth). Their approaches, arrivals, rules, gameplay and progression are authored through shared systems.
-- John accepted the current arrival motion and pacing, including the moths' erratic flight. All three spirits now have authored victory, defeat and farewell sequences using the shared ending system. The moth ending pass is implemented and validated, awaiting John's visual review.
-- The latest Android development APK was built and installed as an update on John's phone on October 14. Startup was visually checked at the encounter-selection screen. It includes the fox/owl endings but predates the October 15 moth endings. This establishes installation and startup, not a complete device playthrough of all encounters or their endings.
-- The latest implementation commits are `96f1264` (moth endings) and `c8f2b7d` (bespoke family artwork, category styling and trigger colors), following `868028f` (ending documentation). These are local commit references, not a claim that they have been pushed; inspect fresh Git status before continuing.
-- John accepted the category styling and the separate consistent trigger-phrase colors. Shared category presentation assets drive rewards, owned charms, details, action cues and the ready tray. Focused regressions pass and phone captures were reviewed. No Android rebuild or installation was requested for this pass.
-- John accepted the bespoke family artwork. All 67 remaining families now have individual SVG-authored sprites, referenced explicitly by their four presentation variants. Together with the seven existing drawings, all 74 standard families have bespoke artwork. Phone/card/tray validation passes. The authoring audit left an ignored `Tools/Presentation/__pycache__/render-modifier-icons.cpython-312.pyc` file untouched.
-- Balance measurement is deferred. Targets and tier assignments remain provisional. John is prioritizing presentation and reusable encounter authoring.
+**No implementation task is currently authorized. Wait for John's next request.** Historical proposals and missing features are not assignments.
 
-## Project and operating instructions
+For that request:
 
-- Root: `C:/Users/jsp73/Projects/Dice`; Unity project: `Dice-Unity`; branch: `main`; origin: `git@github.com:ridiculousJohn/Spirit-Dice.git`.
-- Unity: `6000.6.5f1`, installed at `C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe`.
+1. Inspect the relevant implementation and authored assets. Explain current behavior, the concrete problem, and the smallest proposed change. Identify who owns state and when it is saved where relevant.
+2. Wait for an explicit implementation directive unless the request already contains one. Agreement with an observation or design discussion is not permission to edit.
+3. Keep the work within that scope. Report incidental problems separately; do not silently add systems, defensive machinery, or unrelated fixes. Establish a failure's cause before choosing a remedy.
+4. Run relevant checks, inspect the results, and state what changed and what remains unverified. Do not turn a focused task into an open-ended validation project.
+
+## Workspace and working rules
+
+- Repository: `C:/Users/jsp73/Projects/Dice`; project: `Dice-Unity`; branch: `main`.
+- Unity: `6000.6.5f1`; editor: `C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe`.
 - Main scene: `Dice-Unity/Assets/Scenes/SpiritHousePrototype.unity`.
-- Read John's global instructions at `C:/Users/jsp73/.codex/AGENTS.md` and [Tools/README.md](../Tools/README.md). John is a Unity expert. Explain the relevant decision directly; do not teach programming fundamentals.
-- Propose nontrivial changes before editing unless John has explicitly directed implementation. An explicit fix/implement request already authorizes that work. Preserve existing identifiers and use ASCII comments and string literals. Always spell out checkpoint.
-- Never restore, revert, reset, delete, discard or otherwise roll back any workspace change without John's explicit authorization for that exact action. This includes changes from tests, importers and builds. All changes are user-owned. Inspect fresh Git status, preserve unexpected changes and report them. Do not create worktrees unless requested.
-- Prefer GPT-6 Astra orchestration and GPT-6.1 Sol with high reasoning for bounded implementation/test assignments. Delegation is authorized within approved work; the orchestrator reviews and verifies integration. A recorded preference does not change the active model.
-- Run Unity tests through the existing NUnit assemblies and CLI. Dice-Unity must be closed first; ask John to save and close it if needed. Do not close his editor or substitute editor-menu tests. Other Unity projects may remain open. Never run concurrent Unity processes against this project.
-- Unity CLI launches on this machine require `exec_command` with `sandbox_permissions: "require_escalated"` for licensing IPC/profile access. Use that exception on the first attempt; leave ordinary edits sandboxed and do not change global permissions or licensing files. Launch background processes hidden, retain their PID/log, and verify results XML and process completion.
-- Rendered PlayMode tests need graphics and omit `-batchmode` when using `WaitForEndOfFrame`. Use `DICE_SPIRIT_CAPTURE_ROOT` for optional captures. Tests must isolate gameplay profiles and saves. Details and commands are in Tools/README.md.
+- Read `C:/Users/jsp73/.codex/AGENTS.md` and [Tools/README.md](../Tools/README.md). John is a Unity expert. Explain decisions without teaching programming fundamentals.
+- Preserve identifiers and useful comments; use ASCII in comments and strings. No worktrees unless requested.
+- All changes are user-owned, including tool-generated changes. Never restore, delete, or discard any without explicit authorization for that action. Inspect fresh Git status and report unexpected changes.
+- Delegation is authorized within approved work. Prefer GPT-6.1 Sol with high reasoning for bounded coding/tests; the orchestrator owns architecture, integration, and review. Recording a model preference does not change the active model.
 
-## Architecture and design constraints
+## Implemented game
 
-The mechanical baseline is Dice of Kalma, presented as an investigation through spirits and places. Encounters need not be houses. A spirit may return with different story, rules and difficulty. Keep the journey at night; the traveler's relationship to the player and the mysterious light's identity remain open.
+Three ten-stage encounters use shared investigation, arrival, invitation, gameplay, and ending systems:
 
-Mechanics, content, progression and presentation remain separate. Mechanical content does not include names, icons, dialogue, artwork or audio. The engine must support another skin or a larger game. Encounter behavior and journey sequencing are authored data; do not add shared-controller branches for particular spirits or encounter IDs.
-
-Each modifier has an individual mechanical ScriptableObject and a separate presentation asset. Addressables discovers labeled assets at startup. Preserve the per-condition classes; do not reintroduce central condition-evaluation switches or large presentation lookup dictionaries. Encounters reference shared modifier identities, effects, tiers and eligibility requirements. Do not duplicate modifiers or retier them to customize an encounter without discussion.
-
-No project assets belong in Resources. Use explicit serialized references or Addressables. Shared UI, tray, shader, font and audio assets live under `Assets/Dice/Presentation/Shared`. Scene, theme, host and lighting assets carry explicit dependencies; new previews must do the same. Both modifier loaders tolerate handles invalidated by Addressables shutdown and release valid owned handles once.
-
-Save/profile serialization uses Newtonsoft JSON. Ordinary new runs receive fresh seeds; fixed seeds are an explicit debug option. Resume preserves RNG state and pending offers. Permanent unlocks, visits and completion history live separately from a run save; loading an older run must not erase profile progress.
-
-## Encounters and progression
-
-| Encounter | Rule and authored state |
+| Encounter | Always-active rule |
 | --- | --- |
-| The Last Lantern / fox | Ten stages. The Host's Courtesy makes the first reroll of each hand spend no paid reroll. Large seated host, rain, warm room and spectral anticipation. Complete arrival and outcome presentation. |
-| The Watchtower / owl | `encounter.owl.watchtower`, `spirit.owl`. Ten provisional stages. The Watcher's Eye adds one multiplier per distinct scored face, separately from charm contributions; rerolls do not bank it. Owl descends from the upper opening onto the table with planted feet and a settling motion. Complete arrival and outcome presentation. |
-| The Unmarked Fork / moth | `encounter.moth.crossroads`, `spirit.moth`, hosted by The Lightkeeper. Lantern's Favor cycles favored faces 1 through 6 by persisted encounter-wide hand count and adds +2 multiplier per matching scored die. Rerolls do not advance the face. Complete arrival and outcome presentation. |
+| The Last Lantern / fox | First reroll of each hand spends no paid reroll. |
+| The Watchtower / owl | Adds one multiplier per distinct scored face. |
+| The Unmarked Fork / moth | Favored face cycles from 1 through 6 by encounter hand count; matching scored dice add +2 multiplier each. |
 
-- Milestones at stages 3, 6 and 10 permanently unlock modifier families. Unlocks survive defeat/restart and join eligible reward pools; they are not automatically equipped. The fox unlocks all four variants of Open Gate, Still Reflection and Rising Sun respectively, scoped to fox encounters.
-- Global, spirit and encounter unlock scopes, encounter-exclusive pools, tier-weighted offers and always-active encounter rules are implemented. Eligibility still requires membership in the encounter's pool.
-- The owl has ten initial families and three owl-scoped milestone families. The moth uses nine starter families and four permanent-unlock families. Its three milestone families use existing global unlocks; the existing no-dice-rerolled family retains its original unlock requirement.
-- Charms shows modifiers owned in the current run, not every permanently unlocked modifier. There is no permanent collection screen yet. An ending reporting no new unlocks can be correct when the profile already owns the milestone unlocks.
-- The ordinary 25-stage encounter remains available for diagnostics/direct initialization; it is not the first fox journey's ten-stage configuration.
-- The fox's first-victory lead points to the Watchtower; the owl's points to the moth. These highlight unvisited, uncompleted leads rather than locking encounters. The moth's clue points toward the old crossing beyond a leaning milestone; that location is not playable yet.
+The standard 25-stage encounter remains separate. Targets and tier weights are provisional; no balance study is claimed.
 
-## Journey and endings
+Rewards use authored encounter pools, eligibility scopes, and tier weighting. Stages 3, 6, and 10 grant authored permanent unlock lists, including all four variants of their milestone families. Unlocks survive defeat and enter eligible future rewards; they are not automatically equipped. Charms shows the current run's owned modifiers.
 
-The shared journey covers investigation selection, approach, arrival, dialogue/bargain, rule invitation and acceptance with one animated opening roll. Returning visits can skip to the invitation. Active runs can return to the board and resume. Authored automatic continuation handles landing-to-dialogue; gameplay fades in for 0.3 seconds before the opening roll on the polished owl/moth tables.
+Scoring presents dice sum, complete upgraded hand-rank values, qualifying modifiers, then Base times Mult. Roll-triggered bonuses can accumulate beforehand. The small tray previews qualifying Play Hand modifiers; it is not a history tray. Tapping a tile opens and highlights its owned charm. Transient action-button cues show activations.
 
-Invitations distinguish muted spoken narration from the rule: small encounter-rule heading, authored icon or host sigil, rule name once, prominent left-aligned effect description and quiet scope note. Content is measured at the available width, with acceptance beneath it. Any rich-text emphasis belongs in presentation data, not rule-ID checks.
+Charm and hand-upgrade rewards require selection then confirmation. Family variants share artwork; category icons/colors distinguish Base, Mult, combined, and reroll effects. Trigger phrase colors are independent of effect category. The baseline includes corrected modifier-die icon orientation.
 
-`SpiritEncounterEndingView` sequences final scoring, authored host reaction, gameplay fade, skippable response, then a compact clue/unlock summary. Optional journey outcome data specifies host state, hold/fade timing, dialogue and optional art/audio. Fox victory uses a nod; owl victory uses an attentive tilt with spectral anticipation. Defeat uses a quieter response. Abandon uses a brief farewell without defeat dialogue. Retry returns to the invitation and waits for acceptance before creating a run.
+## Code and content entry points
 
-The moth's 1.6-second victory settles and turns toward the right-hand road with a brief cyan edge halo. Its 1.2-second defeat folds the wings, dims the smoke and withdraws slightly toward the lantern; its farewell lasts 0.5 seconds. Existing body/smoke layers stay aligned, entry blending preserves interrupted reactions, and the smoke clock continues while final poses hold. The journey's existing dialogue and clue remain intact, with no follow-up ID for the unimplemented old crossing. This pass required only authored presentation data and generator changes, not shared runtime changes.
+Paths below are relative to `Dice-Unity/Assets/Dice`.
 
-Final-stage unlocks appear in the result summary; mid-encounter unlocks retain their popups. The summary reports new unlocks for this run while permanent profile unlocks survive. Journeys without outcome configuration retain direct summaries. See [presentation authoring](../Tools/Presentation/README.md) for configuration and tests.
-
-## Gameplay presentation
-
-- Scoring starts with zero Base, Mult and Total. Roll-triggered bonuses accumulate during the hand. Play Hand highlights all dice while counting their raw sum, highlights the dice forming the rank while adding its complete upgraded base and multiplier, resolves each qualifying modifier, then computes Base times Mult and applies it to the goal. A hand upgrade is not a separate modifier step. Do not infer chained or post-total activations without reference evidence.
-- The smaller 3D tray previews qualifying PlayHand modifiers from the engine's non-mutating preview, including resource-only grants. It updates after rolls, preserves duplicate owned instances and scrolls. Tapping a tile opens the exact owned charm, scrolls its card into view and marks it with a persistent gold frame and brief pulse. During scoring, the resolving tile highlights. This tray is not a history of roll-triggered effects.
-- Transient icons communicate activation over action buttons. Reroll grants route to Reroll; score effects route by trigger. Mixed effects may cue both buttons. Presentation supports routing hand grants to Play Hand, but the engine currently implements Base, Mult and reroll effects, not extra-hand effects.
-- Choose a charm fits three compact choices at validated phone sizes: icon, distinct variant name, effects and inline timing/condition wording. Omit redundant once-per-hand wording for PlayHand. Tap to highlight, then Select to confirm. Refresh displays affordable refresh count, replaces the offer and clears selection. Larger authored offers scroll.
-- Trigger phrase colors are independent of effect category: green for playing a hand, amber for rerolling, blue for initial roll, authored in `SpiritUiTheme`. Condition highlights use standard gold; icons and effect text retain category colors. Four focused PlayMode cases passed after this adjustment, including every catalog modifier and narrow reward layouts; captures/report: `Docs/work/modifier-trigger-colors-2fad1d98b4884a8da45bd76ddd6585c3`.
-- Hand upgrade rewards use compact rows with a five-dice example, level, base and multiplier. Selection previews increments inline; Upgrade confirms. Selection is presentation-only and clears on offer replacement/load. Larger offers scroll. `SpiritHandPatternGraphic`, `SpiritRewardCard` and `SpiritEncounterView` implement the shared presentation.
-- Charms cards wrap full rules/effects and use corner state badges: ready check, waiting hourglass, activated circle, roll-evaluation arrow, inactive pause and kept/uninspected diamond fallback. Detail status is separate from rule wording. Activation counts are not shown; authored modifiers use once-per-hand limits, while the engine also supports once-per-stage and unlimited. Charms activate automatically.
-- All variants of a family share artwork across rewards, owned charms and tray tiles. All 74 standard families have bespoke icons; unknown custom content retains the provisional fallback. The 67 SVG sources and catalog are under `Tools/Presentation/modifier-icons`, generated sprite assets under `Assets/Dice/Art/ModifierFamilies`; see the presentation authoring README for regeneration. Four shared category presentation assets supply teal plus (Base), red cross (Mult), purple plus/cross (Base + Mult), and gold circular arrow (Rerolls). Category ink and accents are consistent across UI and neutral bone modifier dice; status badges and gold selection remain independent. The four inert Sleeping Stone variants have bespoke artwork but no category. Charms and Hand Ranks are separate screens; Clues draws behind them and Menu.
-
-## Visual and audio authoring
-
-The accepted look is portrait-oriented painted scenery/hosts with physical rounded bone-like 3D dice and deep perspective bays. Each encounter references its own tray presentation and geometry prefab: fox wood, owl stone, moth weathered cart materials. Dice and modifier bays share an automatically framed camera whose viewing angle matches the static background. Fixed geometry/animation bounds prevent framing changes during play.
-
-Use `Dice > Tray Composition Preview`: Position, Size and Viewing angle control the complete tray image; the persistent preview uses ordinary serialized-property Undo. Its gameplay UI overlay is enabled by default and shares real HUD construction. `Show gameplay UI` and `Preview options > UI theme` control it. Do not introduce competing size/height constraints or encounter-specific tray code. The fox background's gentler perspective adjustment was accepted; preserve authored composition settings unless asked to change them.
-
-All hosts use `SpiritHostPortrait` and `SpiritHostPresentationAsset`. Layers define texture, pivot, reference-canvas placement, tint, optional silhouette and deformation mesh. Sequences author Idle, Waiting, Arrival, Reaction, Victory, Defeat and Farewell. Arrival and ending states use normalized progress; idle loops and gesture markers remain data. Entry-weight curves preserve interrupted-pose continuity. Keep planted contacts intact and do not add animal-specific renderer classes.
-
-The moth uses separate solid-body and wing-smoke textures. Three small warm moths dart, hover and reverse independently. Arrival preserves their visible entry poses; one departs, doubles back, becomes spectral blue and grows toward the cart rail before settling. Smoke has its own effect clock, respects timeline tint/alpha and uses linear noise/masks. Accepted baseline: distortion `0.035`, speed `0.7`, opacity `0.6`; smoke is self-lit while the body receives scene lighting.
-
-Optional four-light composition shares a sampled lighting state across backgrounds, host tint and 3D bays. Distance/source maps approximate spill; moving shadows are not reconstructed. `Dice > Encounter Lighting Preview` uses authored assets. `Dice > Lighting Preview` and `Dice > Spirit Smoke Preview` are local-art exploration tools.
-
-Window/card frames use nine-slicing. `SpiritPanelSurface.mat` samples independent `SpiritPanelCloth.png` at a fixed UI scale while retaining frame alpha/gold trim. `SpiritUiTheme.Frame.surfaceMaterial` allows replacement artwork to supply its own surface; do not force tiled frame rendering.
-
-Rain is a real recording at reduced volume. Fox movement uses three quiet randomized whooshes without immediate repeats when possible. The owl retains shared game cues; bespoke marsh ambience and stone footsteps remain unauthored.
-
-Asset entry points are under `Dice-Unity/Assets/Dice/Content/Presentation/SpiritHouse`, `Watchtower` and `MothCrossroads`; artwork is under the corresponding `Assets/Dice/Art` directories. Fox entry points include `SpiritJourneyCatalog.asset`, `LastLanternJourney.asset`, `LastLanternTable.asset` and `LanternKeeperHost.asset`. Use [Tools/Presentation/README.md](../Tools/Presentation/README.md) for scripts and current regeneration contracts; do not run older scratch generators against production assets.
-
-## Latest build and validation evidence
-
-The October 14 Android build used Unity `6000.6.5f1` and `Dice.Editor.SpiritAndroidBuild.Build`: ARM64, IL2CPP, development APK, package `net.ridiculousgaming.diceprototype`. The build reported three warnings, zero errors and Unity exit code 0. It was installed with `adb install -r`, then launched and visually checked. No app-data clear or uninstall was performed. Temporary Resources test metadata and a preloaded-asset setting appeared during the build; the build lifecycle removed those changes itself, and Git status was clean afterward. Do not assume future generated changes can be manually discarded.
-
-Local output: `Docs/work/android-endings-2a20892ceba147dda1a95cce1afe6aaf/` contains `Spirit-Dice.apk`, `unity-build.log` and `installed-screen.png`. This is ignored evidence, unavailable in a fresh clone. For a new build, set `DICE_ANDROID_BUILD_PATH` to a new absolute APK path and launch with `-buildTarget Android -executeMethod Dice.Editor.SpiritAndroidBuild.Build`. The builder refuses an existing output path. Check the connected device instead of assuming the previous serial is still present.
-
-Completed focused validation is summarized below. Counts overlap across passes and must not be summed into a full-suite claim. All listed reports are historical and under ignored `Docs/work`; current regression source lives in `Assets/Dice/Tests/EditMode` and `PlayMode`. The Android build above includes the October 14 committed state, superseding older notes saying those changes had not yet been built for Android. It does not include the October 15 moth ending pass.
-
-| Pass | Recorded result and local evidence |
+| Responsibility | Start here |
 | --- | --- |
-| Bespoke family artwork, October 15 | 95 EditMode cases passed. Sixteen distinct PlayMode scenarios passed across runs; the first run passed 15/16, then both inventory cases passed after updating its assumption that standard families included placeholders. Coverage includes unique nonempty art for all 74 families, shared variant references, imported sprite settings, Addressables, compact cards, cues, custom fallback and rendered trays across three encounters. Reports: `family-artwork-edit-f26d258ce1244d90aca2961aa3d92463`, `family-artwork-render-6c4ac7fa2b6948b09c8c02d99f5115f2`, `family-artwork-inventory-4875fe806feb4e70aa9033e437d0c1d3`. Full 67-icon source contact sheet: `modifier-icons-33109e98f2474751a3f725bb03071406/family-contact-sheet.png`. |
-| Modifier categories, October 15 | 110 distinct focused EditMode cases passed across corrections; 18 distinct PlayMode scenarios passed across runs, with all ten affected scenarios passing after the final cue-tint fix. Covers all 296 presentation mappings, family artwork, neutral bone/category ink, fallback themes, Addressables, compact rewards, owned details, selection and button reuse. Reviewed all four Twin Knots variants at 540x960 and 443x960 across the three tables. Final reports: `modifier-category-edit-final-1520986df9ff464a9e2ffe21a50b661f` (108/110 before correcting two lighting-mode expectations), `modifier-category-tray-final-fb19c1358e3f4cbbac1c3a8b87023598` (all three corrected tray cases), `modifier-category-render-2d8a5f24ebcb49ffb60573dc49febc71` (17/18 before correcting an old rich-text assertion), `modifier-category-render-final-703966acda4140d380ef76532f1046a3` (10/10 affected cases and final captures). Cue subtrees remain untinted when action buttons disable or recapture content. QualitySettings unchanged. |
-| Moth endings, October 15 | 101 focused EditMode cases passed; all 18 moth portrait cases passed again after refining glow curve interpolation. Twelve rendered PlayMode scenarios passed, covering all three spirits' endings, moth arrival, actual global milestones at stages 3/6/10, save/load/replay/retry persistence, cancellation and no fabricated follow-up lead. Captures reviewed at 443x912 and 540x960. Reports: `moth-ending-edit-614b75010314426592e3dd7b71b7acac`, `moth-ending-edit-refined-4f54d64bff604dd3a0f3a43e888ce7ae`, `moth-ending-render-9930ebb3e99d4600ab4bf7ba2777a2c5`. The render directory includes screenshots and `motion/moth-victory`, `moth-defeat`, `moth-farewell` frame manifests, review sheets and MP4s. |
-| Watchtower endings, October 14 | 99 EditMode cases and nine rendered PlayMode scenarios. Covers owl-scoped unlock persistence, outcome motion, retry/abandon, moth lead, fox regressions and owl arrival. `owl-ending-edit-1521e5ae017f4e63ac08fba1aa674eea`, `owl-ending-render-abff6aa0750349d6bfa4f74b9e8ebe0d`. |
-| Shared endings and fox, October 14 | 89 EditMode cases and 13 distinct rendered scenarios across corrections. Covers phase sequencing, profile continuity, fallback journeys, long results and lead scrolling. `ending-edit-a6c1bc6196d947ceb154c42e5977712d`, `ending-render-3cd2da62e95f4173a757a69b061afbaf`, `ending-render-81ff2891b9324abfbd6de975bfd75db6`, `ending-render-4bf6b178ec5640e2a498a512bd0ea332`, `ending-lead-d249edd28dbc482186eaaf81bcb12cff`. |
-| Moth motion/pacing, October 14 | 90 EditMode cases and five rendered scenarios, including arbitrary arrival entry continuity and fox/owl regressions. `moth-polish-a593b43a36dc40fbb23b0f66420cd185`, `moth-polish-render-4b49c679f7d24d3091558682234173dd`. |
-| Watchtower arrival polish, October 14 | 58 EditMode cases and seven distinct rendered scenarios across focused reruns. `watchtower-polish-5d29000fee7b4ee4ac040996f5f31f0d`, `watchtower-polish-rerun-2d015e1259ec408fb44d4020694a236c`. |
-| Charm/scoring polish | 102 EditMode cases and 12 rendered scenarios; focused refresh rerun and duplicate-instance focus test also passed. `unity-tests/e363a9fee7cb4c92bb225274fc0736b3`, `unity-tests/49a40157168348eb8ef6c48b1826cded`, `unity-tests/13038f859c0b418b8772c03335aa55e8`, `unity-tests/bdb31a6d2b5f489f804b1d1684499ccc`, `unity-tests/19aaaa5e13ce47ce997ad3ec727aad61`. |
-| Earlier infrastructure/UI | Explicit-reference migration: 1,189/1,192 initial EditMode cases, then a passing 21-case fixture correction rerun; ten rendered cases across runs. Tray composition, framing/Undo, panel surfaces, invitations and compact hand upgrades had targeted rendered coverage. Detailed run history is retained in the handoff at commit `868028f`; it is historical evidence, not current pending work. |
+| State and action resolution | `Engine/EncounterSession.cs` |
+| Conditions and rewards | `Engine/Conditions/`, `Engine/ModifierDefinitions.cs`, `Engine/RewardGenerator.cs` |
+| Authored mechanics and discovery | `UnityContent/ModifierAsset.cs`, `UnityContent/MechanicalCatalogAsset.cs`, `UnityContent/ModifierAssetLoader.cs` |
+| Application and persistence | `App/SpiritEncounterController.cs`, `App/EncounterApplication.cs`, `App/PlayerProfile.cs`, App codecs/file stores |
+| Gameplay, journey, ending UI | `Presentation/SpiritEncounterView.cs`, `Presentation/EncounterJourneyView.cs`, `Presentation/SpiritEncounterEndingView.cs` |
+| Host and table rendering | `Presentation/SpiritHostPortrait.cs`, `Presentation/SpiritHostPresentationAsset.cs`, `Presentation/EncounterTablePresentationAsset.cs`, `Presentation/SpiritDiceTray.cs` |
 
-Rendered checks cover narrow phone layouts including 443x912, 443x960 and 540x960 as relevant to each pass. Recent ending/motion runs verified Unity exit and unchanged QualitySettings. There has been no measured completion-rate study or comprehensive Android performance pass.
+Keep mechanics, mechanical content, progression, and presentation separate. Mechanical content must not acquire display names, artwork, dialogue, or audio. Each modifier has its own mechanical ScriptableObject and separate presentation asset. Conditions have individual evaluation classes. Do not introduce central evaluation switches or presentation lookup dictionaries.
 
-## Open work and references
+Use explicit references or Addressables; no project assets in Resources. Discovery labels are `dice.modifiers` and `dice.theme.spirit-house.modifiers`.
 
-Still unimplemented or undecided: permanent unlocked-modifier collection, consumables/loadout and transaction-safe consumption, physical victory tokens, authored rematches, later spirits/locations, extra-hand modifier effects, and bespoke owl ambience. These are proposals or gaps, not authorized assignments. Further visual/audio polish remains open; preserve accepted pacing until feedback warrants a change.
+Newtonsoft JSON profiles use format 1 and store permanent unlocks, visits, and completions. Separate run saves use format 3 and preserve RNG state and pending offers. Loading a run must not erase permanent progress. New runs use fresh seeds; fixed seeds are a debug option.
 
-- [Reference inventory](Reference/README.md), [tools](../Tools/README.md), [audio provenance](Reference/Audio/README.md) and [presentation authoring](../Tools/Presentation/README.md) are the durable starting points.
-- [First fox/progression proposal](outputs/dice-first-fox-encounter-proposal.md) separates configuration from future ideas. [Night-road brainstorm](outputs/dice-night-road-brainstorm.md) retains unresolved narrative options; moth setting/rule are now implemented.
-- [Engine architecture](outputs/dice-engine-architecture-proposal.md), [modifier implementation](outputs/dice-modifier-implementation.md), [rewards](outputs/dice-reward-implementation.md) and [save/resume](outputs/dice-save-resume-implementation.md) record intent and implementation-era details. Current code takes precedence over historical status paragraphs.
-- [Reference design](outputs/dice-of-kalma-design-reference.html), [extracted data](outputs/dice-of-kalma-design-data.json) and [lighting notes](outputs/dice-scene-lighting-prototype.md) preserve supporting evidence.
+## Presentation authoring
 
-Production assets use Git/LFS. Reusable authoring scripts belong under Tools; durable inputs and source records under Docs/Reference. Docs/work, art iterations, test renders, auditions, logs, tool downloads and dependency caches stay local and ignored. Watchtower source/iteration directories under Docs/outputs/watchtower-* are local-only; production artwork is tracked. Do not relocate experiments to evade ignore rules. History was rewritten before the current commits, so older recorded hashes may not resolve; inspect the current Git log. Do not infer current remote synchronization from historical cleanup notes.
+Portrait painted backgrounds/hosts combine with physical 3D dice and bays. Encounters author their materials, geometry, camera composition, lighting, and host sequences. Shared runtime code must not branch on specific spirits or encounter IDs.
+
+Assets are under `Content/Presentation/SpiritHouse`, `Watchtower`, and `MothCrossroads`. Use `Dice > Tray Composition Preview` with its gameplay UI overlay for perspective and placement. Preserve accepted composition and pacing unless asked to change them.
+
+Read [Tools/Presentation/README.md](../Tools/Presentation/README.md) for authoring and regeneration. Do not run historical scratch generators against production assets.
+
+## Validation and delivery
+
+- Follow [Tools/README.md](../Tools/README.md). Ask John to save and close Dice-Unity before CLI tests if open. Leave other projects alone.
+- Launch Unity with `require_escalated` for licensing access, hidden, and track its PID. Never run two editors against this project. Verify results XML and process exit.
+- Rendered checks need graphics; omit `-batchmode` for `WaitForEndOfFrame` tests. Use isolated test profiles, never the player's saves.
+- Tests are in `Tests/EditMode` and `Tests/PlayMode`. Check affected behavior and portrait layout as needed. Historical results do not validate current edits.
+- Generated output belongs in ignored `Docs/work`; durable source/assets belong in the repository. Unexpected output still requires authorization before deletion.
+- Build/install Android only when requested. Check the actual device; do not assume its installed app matches current source.
+
+For reference mechanics, use [the extracted design](outputs/dice-of-kalma-design-reference.html) and [reference inventory](Reference/README.md). Historical proposals are background, not current requirements or authorization. Inspect code before relying on their implementation claims.
