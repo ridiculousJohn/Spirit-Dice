@@ -28,6 +28,8 @@ namespace Dice.Presentation
         public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
 
         public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
+        public bool IsCharmPopupOpen => charmPopupOverlay != null && charmPopupOverlay.gameObject.activeSelf;
+        public long CharmPopupInstanceId { get; private set; } = -1;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
         public SpiritDiceTray DiceTray { get; private set; }
         public SpiritTrayScene TrayScene { get; private set; }
@@ -57,6 +59,10 @@ namespace Dice.Presentation
         private RectTransform stageIntroPanel;
         private RectTransform endingPanel;
         private RectTransform charmsPanel;
+        private RectTransform charmPopupOverlay;
+        private RectTransform charmPopupPanel;
+        private Card charmPopup;
+        private Text charmPopupStatus;
         private RectTransform menuPanel;
         private SpiritHandRanksPanel handRanksPanel;
         private RectTransform rewardContent;
@@ -446,6 +452,7 @@ namespace Dice.Presentation
             if (size == previousPortraitSize) return;
             previousPortraitSize = size;
             if (rewardsPanel.gameObject.activeSelf) UpdateRewardLayout();
+            if (IsCharmPopupOpen) LayoutCharmPopup();
         }
 
         private void UpdateSceneLighting()
@@ -553,6 +560,7 @@ namespace Dice.Presentation
             collectionView = gameObject.AddComponent<SpiritCollectionView>();
             collectionView.Build(portrait, () => collectionView.Hide());
             JourneyView.SetCollectionAction(ShowCollection);
+            BuildCharmPopup();
             ConfigureTable(tablePresentation);
             if (EventSystem.current == null)
             {
@@ -680,11 +688,7 @@ namespace Dice.Presentation
             ModifierHistory.Build(trayRect);
             ModifierHistory.TokenSelected += (contribution, definition) =>
             {
-                if (Busy) return;
-                selectedCharm = contribution.InstanceId;
-                ShowCharms();
-                foreach (var card in charmCards)
-                    if (card.InstanceId == selectedCharm) card.SelectionOutline.Pulse();
+                ShowCharmPopup(contribution.InstanceId);
             };
             PositionTrays();
             BuildPlayingHud();
@@ -1002,6 +1006,107 @@ namespace Dice.Presentation
             charmsPanel.gameObject.SetActive(false);
         }
 
+        private void BuildCharmPopup()
+        {
+            var backdrop = SpiritUi.Panel("CharmPopupOverlay", canvas.transform, Vector2.zero, Vector2.one,
+                new Color(0, 0, 0, .62f));
+            charmPopupOverlay = backdrop.rectTransform;
+            var dismiss = backdrop.gameObject.AddComponent<Button>();
+            dismiss.targetGraphic = backdrop;
+            dismiss.transition = Selectable.Transition.None;
+            dismiss.navigation = new Navigation { mode = Navigation.Mode.None };
+            // Dismiss on release so the pointer's click remains owned by the overlay.
+            dismiss.onClick.AddListener(CloseCharmPopup);
+            var theme = SpiritUi.GetTheme(transform);
+            charmPopupPanel = SpiritUi.Panel("CharmPopupPanel", charmPopupOverlay,
+                new Vector2(.5f, .5f), new Vector2(.5f, .5f), theme.panelColor, 0, true).rectTransform;
+            charmPopup = new Card();
+            charmPopup.Title = SpiritUi.Heading("CharmPopupTitle", charmPopupPanel, "", 25, Vector2.zero, Vector2.one);
+            charmPopup.Title.resizeTextForBestFit = false;
+            charmPopup.Icon = MakeIcon("CharmPopupIcon", charmPopupPanel, new Vector2(0, 1), 52);
+            charmPopup.Icon.rectTransform.anchoredPosition = new Vector2(50, -50);
+            charmPopup.Sigil = MakeCharmSigil("CharmPopupSigil", charmPopup.Icon);
+            charmPopup.Category = SpiritModifierCategoryBadge.Create("CharmPopupCategory", charmPopup.Icon);
+            charmPopup.Effect = SpiritUi.Label("CharmPopupEffect", charmPopupPanel, "", 22,
+                Vector2.zero, Vector2.one);
+            charmPopup.Body = SpiritUi.Label("CharmPopupDescription", charmPopupPanel, "", 18,
+                Vector2.zero, Vector2.one);
+            charmPopup.Body.supportRichText = true;
+            charmPopupStatus = SpiritUi.Label("CharmPopupStatus", charmPopupPanel, "", 16,
+                Vector2.zero, Vector2.one);
+            charmPopup.Badge = SpiritCharmStatusBadge.Create(charmPopupPanel);
+            var closeCharmPopupButton = SpiritUi.Button("CloseCharmPopupButton", charmPopupPanel, "Close",
+                new Vector2(.3f, 0), new Vector2(.7f, 0), CloseCharmPopup);
+            var closeRect = (RectTransform)closeCharmPopupButton.transform;
+            closeRect.offsetMin = new Vector2(0, 18);
+            closeRect.offsetMax = new Vector2(0, 62);
+            charmPopupOverlay.gameObject.SetActive(false);
+        }
+
+        public void ShowCharmPopup(long instanceId)
+        {
+            if (Busy || controls.Snapshot == null || controls.Snapshot.Phase != EncounterPhase.Playing ||
+                journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing) return;
+            foreach (var instance in controls.Snapshot.Modifiers)
+            {
+                if (instance.InstanceId != instanceId) continue;
+                var definition = controls.Catalog.GetModifier(instance.DefinitionId);
+                CharmPopupInstanceId = instanceId;
+                SetCardIcon(charmPopup, definition);
+                charmPopup.Title.text = CharmName(definition);
+                charmPopup.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
+                charmPopup.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
+                var theme = SpiritUi.GetTheme(transform);
+                charmPopup.Body.text = SpiritRewardCard.GetModifierDescription(definition, theme.amber,
+                    theme.GetModifierTriggerColor(definition.Phase));
+                var status = CharmStatus(instance, definition);
+                charmPopup.Badge.Render(status);
+                charmPopupStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase);
+                charmPopupStatus.color = charmPopup.Badge.Icon.color;
+                charmPopupStatus.gameObject.SetActive(!string.IsNullOrEmpty(charmPopupStatus.text));
+                charmPopup.Badge.gameObject.SetActive(charmPopupStatus.gameObject.activeSelf);
+                charmsPanel.gameObject.SetActive(false);
+                handRanksPanel.Root.gameObject.SetActive(false);
+                menuPanel.gameObject.SetActive(false);
+                charmPopupOverlay.SetAsLastSibling();
+                charmPopupOverlay.gameObject.SetActive(true);
+                Canvas.ForceUpdateCanvases();
+                LayoutCharmPopup();
+                return;
+            }
+        }
+
+        public void CloseCharmPopup()
+        {
+            if (charmPopupOverlay != null) charmPopupOverlay.gameObject.SetActive(false);
+            CharmPopupInstanceId = -1;
+        }
+
+        private void LayoutCharmPopup()
+        {
+            float width = portrait.rect.width * .84f;
+            float titleHeight = SpiritCharmCardLayout.TextHeight(charmPopup.Title, width - 118);
+            SpiritCharmCardLayout.Place(charmPopup.Title, 94, 24, 24, titleHeight);
+            float top = 24 + Mathf.Max(52, titleHeight) + 16;
+            foreach (var label in new[] { charmPopup.Effect, charmPopup.Body })
+            {
+                float height = SpiritCharmCardLayout.TextHeight(label, width - 48);
+                SpiritCharmCardLayout.Place(label, 24, 24, top, height);
+                top += height + 12;
+            }
+            if (charmPopupStatus.gameObject.activeSelf)
+            {
+                float height = Mathf.Max(24, SpiritCharmCardLayout.TextHeight(charmPopupStatus, width - 84));
+                SpiritCharmCardLayout.Place(charmPopupStatus, 60, 24, top, height);
+                var badgeRect = (RectTransform)charmPopup.Badge.transform;
+                badgeRect.anchorMin = badgeRect.anchorMax = new Vector2(0, 1);
+                badgeRect.pivot = new Vector2(0, 1);
+                badgeRect.anchoredPosition = new Vector2(24, -top);
+                top += height + 12;
+            }
+            charmPopupPanel.sizeDelta = new Vector2(width, top + 74);
+        }
+
         private void BuildMenu()
         {
             menuPanel = SpiritUi.Panel("MenuOverlay", portrait, Vector2.zero, Vector2.one, new Color(0, 0, 0, .86f)).rectTransform;
@@ -1047,6 +1152,7 @@ namespace Dice.Presentation
         public void ShowCharms()
         {
             if (Busy) return;
+            CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             RenderCharms();
@@ -1081,6 +1187,7 @@ namespace Dice.Presentation
         public void ShowHandRanks()
         {
             if (Busy) return;
+            CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
             charmsPanel.gameObject.SetActive(false);
             RenderHandRanks();
@@ -1096,6 +1203,7 @@ namespace Dice.Presentation
         public void ShowTable()
         {
             if (Busy) return;
+            CloseCharmPopup();
             charmsPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
         }
@@ -1103,6 +1211,7 @@ namespace Dice.Presentation
         private void ToggleMenu()
         {
             if (Busy) return;
+            CloseCharmPopup();
             charmsPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             menuPanel.gameObject.SetActive(!menuPanel.gameObject.activeSelf);
@@ -1131,6 +1240,7 @@ namespace Dice.Presentation
             var snapshot = controls.Snapshot;
             if (snapshot == null)
             {
+                CloseCharmPopup();
                 RenderEncounterRule(null);
                 inputGroup.interactable = false;
                 ModifierHistory.SetInteractable(false);
@@ -1221,6 +1331,7 @@ namespace Dice.Presentation
 
         private void ResetPresentation(bool resetHost = true)
         {
+            CloseCharmPopup();
             StopAllCoroutines();
             endingView?.Reset();
             SetOpeningOpacity(1);
@@ -1303,6 +1414,7 @@ namespace Dice.Presentation
         {
             if (resolution == null) return;
             if (!resolution.Accepted) { Refresh(); return; }
+            CloseCharmPopup();
             presenting = true;
             presentationSnapshot = resolution.Snapshot;
             inputGroup.interactable = false;
@@ -1870,6 +1982,7 @@ namespace Dice.Presentation
         public void ShowCollection()
         {
             if (Busy || controls?.Catalog == null || collectionView == null) return;
+            CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
             collectionView.Show(controls.Catalog,
                 (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),

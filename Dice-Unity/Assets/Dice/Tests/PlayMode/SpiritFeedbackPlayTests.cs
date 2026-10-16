@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -239,93 +240,45 @@ namespace Dice.Tests
             var selectedContribution = view.ModifierHistory.Contributions[lastIndex];
             var selectedDefinition = controller.Catalog.GetModifier(selectedContribution.DefinitionId);
             ClickHistoryDie(view.ModifierHistory, lastIndex);
-            Assert.That(view.IsCharmsOpen, Is.True);
-            Assert.That(FindLabel(view, "CharmDetailTitle").text,
+            Assert.That(view.IsCharmsOpen, Is.False);
+            Assert.That(view.IsCharmPopupOpen, Is.True);
+            Assert.That(view.CharmPopupInstanceId, Is.EqualTo(selectedContribution.InstanceId),
+                "The popup must inspect the tapped duplicate instance.");
+            Assert.That(FindLabel(view, "CharmPopupTitle").text,
                 Is.EqualTo(SpiritModifierPresentation.GetName(selectedDefinition)));
-            Assert.That(FindLabel(view, "CharmDetailBody").text,
+            Assert.That(FindLabel(view, "CharmPopupEffect").text,
                 Does.Contain(SpiritModifierPresentation.GetEffectText(selectedDefinition)));
-            int selectedOwnedIndex = -1;
-            for (int index = 0; index < controller.Snapshot.Modifiers.Count; ++index)
-                if (controller.Snapshot.Modifiers[index].InstanceId == selectedContribution.InstanceId)
-                    selectedOwnedIndex = index;
-            Assert.That(selectedOwnedIndex, Is.GreaterThanOrEqualTo(0));
-            Button selectedOwnedCard = null;
-            foreach (var button in view.GetComponentsInChildren<Button>(true))
-                if (button.name == "OwnedCharm" + (selectedOwnedIndex + 1)) selectedOwnedCard = button;
-            Assert.That(selectedOwnedCard, Is.Not.Null);
-            Assert.That(selectedOwnedCard.GetComponent<Image>().color,
-                Is.EqualTo((Color)new Color32(255, 232, 179, 255)), "The tapped duplicate instance must be selected.");
-            var selectedOutline = selectedOwnedCard.transform.Find("SelectionOutline")
-                .GetComponent<SpiritCharmSelectionGraphic>();
-            Assert.That(selectedOutline, Is.Not.Null);
-            Assert.That(selectedOutline.gameObject.activeSelf, Is.True);
-            Assert.That(selectedOutline.IsPulsing, Is.True,
-                "Opening a ready modifier must immediately pulse its exact owned instance.");
-            var ownedCards = selectedOwnedCard.transform.parent.GetComponentsInChildren<Button>(true);
-            foreach (var card in ownedCards)
-            {
-                var outline = card.transform.Find("SelectionOutline").GetComponent<SpiritCharmSelectionGraphic>();
-                Assert.That(outline.gameObject.activeSelf, Is.EqualTo(card == selectedOwnedCard),
-                    "Only the selected owned instance may display a selection outline.");
-                if (card != selectedOwnedCard) Assert.That(outline.IsPulsing, Is.False);
-            }
-            var ownedScroll = selectedOwnedCard.GetComponentInParent<ScrollRect>();
-            Assert.That(ownedScroll, Is.Not.Null);
-            var selectedCorners = new Vector3[4];
-            selectedOwnedCard.GetComponent<RectTransform>().GetWorldCorners(selectedCorners);
-            for (int index = 0; index < selectedCorners.Length; ++index)
-                selectedCorners[index] = ownedScroll.viewport.InverseTransformPoint(selectedCorners[index]);
-            var ownedViewport = ownedScroll.viewport.rect;
-            Assert.That(selectedCorners[0].x, Is.GreaterThanOrEqualTo(ownedViewport.xMin - .5f));
-            Assert.That(selectedCorners[2].x, Is.LessThanOrEqualTo(ownedViewport.xMax + .5f));
-            if (selectedCorners[1].y - selectedCorners[0].y <= ownedViewport.height + .5f)
-            {
-                Assert.That(selectedCorners[0].y, Is.GreaterThanOrEqualTo(ownedViewport.yMin - .5f),
-                    "Opening a ready modifier must synchronously scroll its full card into view.");
-                Assert.That(selectedCorners[1].y, Is.LessThanOrEqualTo(ownedViewport.yMax + .5f));
-            }
-            else
-            {
-                Assert.That(selectedCorners[1].y, Is.EqualTo(ownedViewport.yMax).Within(.5f),
-                    "A card taller than the viewport must align its top with the viewport.");
-            }
             yield return Capture("history-selected-charm");
-            yield return new WaitForSecondsRealtime(1f);
-            Assert.That(selectedOutline.IsPulsing, Is.False);
-            Assert.That(selectedOutline.gameObject.activeSelf, Is.True,
-                "The selected outline must remain visible after its brief pulse settles.");
-            Assert.That(selectedOutline.color, Is.EqualTo((Color)new Color32(255, 215, 119, 255)));
-            Assert.That(selectedOwnedCard.GetComponent<Image>().color,
-                Is.EqualTo((Color)new Color32(255, 232, 179, 255)));
-
+            long revision = controller.Snapshot.Revision;
+            var selection = controller.SelectedMask;
+            ClickPopupAt(view, ((RectTransform)view.PlayButton.transform).position);
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision));
+            Assert.That(controller.SelectedMask, Is.EqualTo(selection));
+            Assert.That(controller.IsBusy, Is.False);
+            ClickHistoryDie(view.ModifierHistory, lastIndex);
+            ClickPopupAt(view, ((RectTransform)view.RerollButton.transform).position);
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision));
+            Assert.That(controller.SelectedMask, Is.EqualTo(selection));
+            ClickHistoryDie(view.ModifierHistory, lastIndex);
+            ClickPopupAt(view, FindLabel(view, "CharmPopupDescription").rectTransform.position);
+            ClickHistoryDie(view.ModifierHistory, lastIndex);
+            var close = FindLabel(view, "CharmPopupTitle").transform.parent
+                .GetComponentsInChildren<Button>();
+            Assert.That(close, Has.Length.EqualTo(1));
+            ClickPopupAt(view, ((RectTransform)close[0].transform).position);
+            ClickHistoryDie(view.ModifierHistory, lastIndex);
+            view.ShowHandRanks();
+            Assert.That(view.IsCharmPopupOpen, Is.False);
             view.ShowTable();
             ClickHistoryDie(view.ModifierHistory, lastIndex);
-            Assert.That(selectedOutline.IsPulsing, Is.True);
-            Button otherOwnedCard = null;
-            foreach (var card in ownedCards)
-                if (card.name == "OwnedCharm1") otherOwnedCard = card;
-            Assert.That(otherOwnedCard, Is.Not.Null);
-            Assert.That(otherOwnedCard, Is.Not.SameAs(selectedOwnedCard));
-            otherOwnedCard.onClick.Invoke();
-            Assert.That(selectedOutline.gameObject.activeSelf, Is.False);
-            Assert.That(selectedOutline.IsPulsing, Is.False,
-                "Selecting another owned instance must stop the previous pulse immediately.");
-            foreach (var card in ownedCards)
-                Assert.That(card.transform.Find("SelectionOutline").gameObject.activeSelf,
-                    Is.EqualTo(card == otherOwnedCard));
-            Assert.That(otherOwnedCard.GetComponent<Image>().color,
-                Is.EqualTo((Color)new Color32(255, 232, 179, 255)));
-
-            view.ShowTable();
-            ClickHistoryDie(view.ModifierHistory, lastIndex);
-            Assert.That(selectedOutline.IsPulsing, Is.True);
-            view.ShowTable();
-            Assert.That(selectedOutline.IsPulsing, Is.False,
-                "Closing Charms must stop an in-progress selection pulse.");
             view.ShowCharms();
-            Assert.That(selectedOutline.IsPulsing, Is.False,
-                "Reopening Charms must not resume or replay a stale selection pulse.");
-            Assert.That(selectedOutline.gameObject.activeSelf, Is.True);
+            Assert.That(view.IsCharmPopupOpen, Is.False);
+            Assert.That(view.IsCharmsOpen, Is.True,
+                "The Charms button must still open the complete owned list.");
+            int ownedCount = 0;
+            foreach (var button in view.GetComponentsInChildren<Button>())
+                if (button.name.StartsWith("OwnedCharm", StringComparison.Ordinal)) ++ownedCount;
+            Assert.That(ownedCount, Is.EqualTo(controller.Snapshot.Modifiers.Count));
             Assert.That(view.ModifierHistory.Count, Is.EqualTo(readyCount), "Inspecting a token must not replay its activation.");
             view.ShowTable();
             Assert.That(view.IsCharmsOpen, Is.False);
@@ -339,6 +292,63 @@ namespace Dice.Tests
                 "Save/load status must not overlap the modifier history.");
             yield return CaptureHistoryTexture(renderer, "history-3d-restored-detail");
             yield return Capture("history-overflow-latest");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator CharmPopupFitsLongAuthoredRulesAtPortraitSizes()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var view = controller.GetComponent<SpiritEncounterView>();
+            var definitions = controller.Catalog.Modifiers.OrderByDescending(definition =>
+                SpiritModifierPresentation.GetConditionText(definition).Length).Take(4).ToArray();
+            var encounter = new EncounterDefinition("encounter.popup-layout",
+                new[] { new StageDefinition(1000000000, 3, 3) },
+                startingModifiers: definitions.Select(definition => definition.Id));
+            var catalog = new MechanicalCatalog("popup-layout.v1", controller.Catalog.Hands,
+                new[] { encounter }, definitions);
+            string save = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
+                "spirit-file-tests", Guid.NewGuid().ToString("N"), "popup.json"));
+            controller.Initialize(catalog, encounter.Id, 60, save);
+            yield return null;
+            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
+            {
+                portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+                portrait.sizeDelta = size;
+                portrait.anchoredPosition = Vector2.zero;
+                yield return null;
+                foreach (var instance in controller.Snapshot.Modifiers)
+                {
+                    view.ShowCharmPopup(instance.InstanceId);
+                    Canvas.ForceUpdateCanvases();
+                    Assert.That(view.IsCharmPopupOpen, Is.True);
+                    Assert.That(view.IsCharmsOpen, Is.False);
+                    var title = FindLabel(view, "CharmPopupTitle");
+                    var panel = (RectTransform)title.transform.parent;
+                    Assert.That(panel.rect.width, Is.LessThan(size.x));
+                    Assert.That(panel.rect.height, Is.LessThan(size.y * .8f),
+                        "A single charm must remain a compact inspection panel.");
+                    foreach (var name in new[] { "CharmPopupTitle", "CharmPopupEffect", "CharmPopupDescription", "CharmPopupStatus" })
+                    {
+                        var label = FindLabel(view, name);
+                        if (!label.gameObject.activeSelf) continue;
+                        Assert.That(label.preferredHeight, Is.LessThanOrEqualTo(label.rectTransform.rect.height + 1), name);
+                        var corners = new Vector3[4];
+                        label.rectTransform.GetWorldCorners(corners);
+                        foreach (var corner in corners)
+                            Assert.That(panel.rect.Contains(panel.InverseTransformPoint(corner)), Is.True, name);
+                    }
+                    yield return Capture("charm-popup-" + size.x + "-" + instance.InstanceId);
+                    ClickPopupAt(view, title.rectTransform.position);
+                }
+            }
+            view.ShowCharmPopup(controller.Snapshot.Modifiers[0].InstanceId);
+            controller.PlayHand();
+            Assert.That(view.IsCharmPopupOpen, Is.False, "Resolution must clear the inspected charm.");
+            yield return WaitForPresentation(controller);
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -850,6 +860,28 @@ namespace Dice.Tests
                 "The pointer target must follow the die's position in the render texture.");
             pointer.pointerCurrentRaycast = hits[0];
             ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+        }
+
+        private static void ClickPopupAt(SpiritEncounterView view, Vector3 position)
+        {
+            Canvas.ForceUpdateCanvases();
+            var pointer = new PointerEventData(EventSystem.current)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, position),
+                button = PointerEventData.InputButton.Left,
+                pointerId = -1
+            };
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            Assert.That(hits.Count, Is.GreaterThan(0));
+            var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
+            Assert.That(handler.name, Is.EqualTo("CharmPopupOverlay").Or.EqualTo("CloseCharmPopupButton"),
+                "The popup must consume taps over itself and underlying gameplay controls.");
+            pointer.pointerCurrentRaycast = hits[0];
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerDownHandler);
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+            Assert.That(view.IsCharmPopupOpen, Is.False);
         }
 
         private static IEnumerator CaptureHistoryTexture(SpiritModifierHistoryRenderer renderer, string name)
