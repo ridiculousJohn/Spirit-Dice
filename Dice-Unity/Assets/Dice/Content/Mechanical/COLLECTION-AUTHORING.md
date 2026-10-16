@@ -9,6 +9,28 @@ milestone families; these lists are provisional.
 Each milestone retains its four legacy `modifierIds` for validating existing run
 saves. Those IDs do not select the contents of new unlock offers.
 
+## Family discovery and story grants
+
+Create a `Dice/Progression Reward` asset with independent `discoveredFamilyIds`
+and `grantedModifierIds` lists. Discovering a family reveals its variants and
+allows its entries in authored unlock lists to be offered. Granting an individual
+charm permanently owns it and also discovers its family. Neither operation equips
+the charm or inserts it into an encounter's ordinary pool.
+
+Reference the asset from an encounter journey beat's `progressionReward` or the
+journey's `completionReward`. Beat rewards apply when continuing past the beat,
+including skipped beats, and invitation rewards apply on acceptance. Completion
+rewards apply on victory. Replaying these events is safe: discoveries and ownership
+are sets, so they do not accumulate duplicates. Other story systems can call
+`SpiritEncounterController.ApplyProgressionReward` with a built definition.
+
+The three authored invitation rewards under `ProgressionRewards` reveal each
+encounter's existing three unlock families. Their direct grant lists are empty.
+For a guide who gives protection before a region, author both discovery and grant
+lists, and include the granted charms in that region's ordinary run pools so they
+can appear during play. Starter and previously owned families need no explicit
+discovery reward. Permanent Collection excludes inert and encounter-only content.
+
 All ordinary modifiers have global availability. Permanent unlock requirements
 remain on existing variants, including combined and reroll variants that are not
 currently awarded by these lists. Existing authored ordinary reward pools retain

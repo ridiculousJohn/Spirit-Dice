@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Dice.Engine;
+using Dice.UnityContent;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -51,6 +52,7 @@ namespace Dice.Presentation
         [SerializeField] private Texture2D foreground;
         [SerializeField] private AudioClip audioCue;
         [SerializeField] private float duration = 1;
+        [SerializeField] private ProgressionRewardAsset progressionReward;
         [SerializeField] private Vector2 motionFrom;
         [SerializeField] private Vector2 motionTo;
         [SerializeField] private Rect foregroundRect = new Rect(0, 0, 1, 1);
@@ -76,6 +78,7 @@ namespace Dice.Presentation
         public Texture2D Foreground => foreground;
         public AudioClip AudioCue => audioCue;
         public float Duration => duration;
+        public ProgressionRewardAsset ProgressionReward => progressionReward;
         public Vector2 MotionFrom => motionFrom;
         public Vector2 MotionTo => motionTo;
         public Rect ForegroundRect => foregroundRect;
@@ -111,6 +114,7 @@ namespace Dice.Presentation
         [SerializeField] private string resultContinueLabel;
         [SerializeField] private string completionClueTitle;
         [SerializeField, TextArea] private string completionClueText;
+        [SerializeField] private ProgressionRewardAsset completionReward;
         [SerializeField] private EncounterOutcomePresentation victoryPresentation;
         [SerializeField] private EncounterOutcomePresentation defeatPresentation;
         [SerializeField] private EncounterOutcomePresentation abandonPresentation;
@@ -131,6 +135,7 @@ namespace Dice.Presentation
         public string ResultContinueLabel => resultContinueLabel;
         public string CompletionClueTitle => completionClueTitle;
         public string CompletionClueText => completionClueText;
+        public ProgressionRewardAsset CompletionReward => completionReward;
         public IReadOnlyList<string> FollowUpEncounterIds => followUpEncounterIds;
 
         public EncounterOutcomePresentation GetOutcomePresentation(EncounterOutcome outcome)
@@ -149,6 +154,7 @@ namespace Dice.Presentation
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (!IsStableId(encounterId)) throw new FormatException("A journey requires a valid encounter ID.");
             var definition = catalog.GetEncounter(encounterId);
+            completionReward?.Build(catalog);
             victoryPresentation?.Validate();
             defeatPresentation?.Validate();
             abandonPresentation?.Validate();
@@ -180,6 +186,7 @@ namespace Dice.Presentation
                     throw new FormatException("Journey beat animation data is invalid.");
                 if (beat.Kind == EncounterJourneyBeatKind.Invitation) ++invitations;
                 beat.SceneLighting?.Validate();
+                beat.ProgressionReward?.Build(catalog);
             }
             if (invitations != 1 || beats[beats.Length - 1].Kind != EncounterJourneyBeatKind.Invitation)
                 throw new FormatException("The final journey beat must be its only invitation.");

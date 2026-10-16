@@ -45,6 +45,8 @@ namespace Dice.App
         public string SavePath { get; private set; }
         public string ProfilePath { get; private set; }
         public IReadOnlyList<string> ProfileUnlockedModifierIds => profile?.UnlockedModifierIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<string> ProfileDiscoveredFamilyIds => profile != null && Catalog != null
+            ? KnownDiscoveredFamilies(Catalog) : (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> CompletedEncounterIds => profile?.CompletedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public string ProfileStatusMessage { get; private set; } = string.Empty;
         public IReadOnlyList<string> VisitedEncounterIds => profile?.VisitedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
@@ -138,7 +140,8 @@ namespace Dice.App
         {
             if (IsBusy) return;
             if (!PrepareProfile(savePath)) return;
-            var next = new EncounterApplication(catalog, encounterId, seed, KnownUnlockedModifiers(catalog));
+            var next = new EncounterApplication(catalog, encounterId, seed, KnownUnlockedModifiers(catalog),
+                KnownDiscoveredFamilies(catalog));
             Catalog = catalog;
             this.encounterId = encounterId;
             this.seed = seed;
@@ -192,6 +195,7 @@ namespace Dice.App
         {
             if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null ||
                 BeatIndex >= SelectedJourney.Beats.Count - 1) return;
+            if (!ApplyJourneyRewards(BeatIndex)) return;
             ++BeatIndex;
             SetJourneyStatus(string.Empty);
         }
@@ -199,6 +203,7 @@ namespace Dice.App
         public void SkipIntro()
         {
             if (IsBusy || !CanSkipIntro) return;
+            if (!ApplyJourneyRewards(SelectedJourney.Beats.Count - 2)) return;
             BeatIndex = SelectedJourney.Beats.Count - 1;
             SetJourneyStatus(string.Empty);
         }
@@ -212,9 +217,11 @@ namespace Dice.App
                 SelectedJourney.Validate(Catalog);
                 if (useFixedSeed) ParseFixedSeed();
                 if (!PersistProfile()) { SetJourneyStatus(ProfileStatusMessage); return; }
+                if (!ApplyJourneyRewards(BeatIndex)) return;
                 if (!PersistVisit(SelectedJourney.EncounterId)) { SetJourneyStatus(ProfileStatusMessage); return; }
                 ulong nextSeed = SelectSeed();
-                var next = new EncounterApplication(Catalog, SelectedJourney.EncounterId, nextSeed, KnownUnlockedModifiers(Catalog));
+                var next = new EncounterApplication(Catalog, SelectedJourney.EncounterId, nextSeed, KnownUnlockedModifiers(Catalog),
+                    ProfileDiscoveredFamilyIds);
                 encounterId = SelectedJourney.EncounterId;
                 seed = nextSeed;
                 JourneyPhase = EncounterJourneyPhase.Playing;
@@ -368,6 +375,7 @@ namespace Dice.App
                     return;
                 }
                 next.MergeUnlockedModifiers(KnownUnlockedModifiers(Catalog));
+                next.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
                 var restoredJourney = journeyCatalog?.Find(next.Snapshot.EncounterId);
                 if (journeyCatalog != null && !directGameplay && restoredJourney == null)
                 {
@@ -508,6 +516,17 @@ namespace Dice.App
                     yield return modifier.Id;
         }
 
+        private IReadOnlyList<string> KnownDiscoveredFamilies(MechanicalCatalog catalog)
+        {
+            var discovered = new HashSet<string>(profile.GetDiscoveredFamilyIds(catalog), StringComparer.Ordinal);
+            var known = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var modifier in catalog.Modifiers)
+                if (discovered.Contains(modifier.FamilyId)) known.Add(modifier.FamilyId);
+            var result = new List<string>(known);
+            result.Sort(StringComparer.Ordinal);
+            return result;
+        }
+
         private void RecordProgression(EncounterSnapshot snapshot, bool highlightFollowUps = false)
         {
             if (profile == null) return;
@@ -524,8 +543,60 @@ namespace Dice.App
                                 !highlightedEncounterIds.Contains(id)) highlightedEncounterIds.Add(id);
                 }
                 profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);
+                var completionReward = journeyCatalog?.Find(snapshot.EncounterId)?.CompletionReward;
+                if (completionReward != null)
+                    profileDirty |= profile.ApplyReward(completionReward.Build(Catalog), Catalog);
             }
             PersistProfile();
+        }
+
+        public bool ApplyProgressionReward(ProgressionRewardDefinition reward)
+        {
+            if (IsBusy || Catalog == null || profile == null) return false;
+            if (!PersistProfile()) { SetStatus(ProfileStatusMessage); return false; }
+            try
+            {
+                var nextProfile = new PlayerProfile();
+                nextProfile.Merge(profile);
+                if (!nextProfile.ApplyReward(reward, Catalog)) return true;
+                PlayerProfileFileStore.Save(ProfilePath, nextProfile);
+                profile = nextProfile;
+                application?.MergeUnlockedModifiers(KnownUnlockedModifiers(Catalog));
+                application?.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
+                if (application != null)
+                {
+                    Snapshot = application.Snapshot;
+                    CachePreview();
+                }
+                ProfileStatusMessage = string.Empty;
+                StateChanged?.Invoke();
+                return true;
+            }
+            catch (Exception exception) when (IsExpectedFailure(exception))
+            {
+                ProfileStatusMessage = "Cannot award story progress: " + exception.Message;
+                SetStatus(ProfileStatusMessage);
+                return false;
+            }
+        }
+
+        private bool ApplyJourneyRewards(int throughBeat)
+        {
+            try
+            {
+                // Include skipped beats and retries; discovery and ownership are idempotent grants.
+                for (int index = 0; index <= throughBeat; ++index)
+                {
+                    var reward = SelectedJourney.Beats[index].ProgressionReward;
+                    if (reward != null && !ApplyProgressionReward(reward.Build(Catalog))) return false;
+                }
+                return true;
+            }
+            catch (Exception exception) when (IsExpectedFailure(exception))
+            {
+                SetJourneyStatus("Cannot award story progress: " + exception.Message);
+                return false;
+            }
         }
 
         private bool PersistProfile()

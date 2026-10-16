@@ -81,6 +81,7 @@ namespace Dice.Engine
         public ReadOnlyCollection<HandCategory> RecentHandUpgrades { get; }
         public ReadOnlyCollection<string> UnlockedModifierIds { get; }
         public ReadOnlyCollection<string> NewlyUnlockedModifierIds { get; }
+        public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
 
         internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
         {
@@ -129,6 +130,7 @@ namespace Dice.Engine
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();
             UnlockedModifierIds = new List<string>(state.UnlockedModifierIds).AsReadOnly();
             NewlyUnlockedModifierIds = new List<string>(state.NewlyUnlockedModifierIds).AsReadOnly();
+            DiscoveredFamilyIds = new List<string>(state.DiscoveredFamilyIds).AsReadOnly();
         }
     }
 

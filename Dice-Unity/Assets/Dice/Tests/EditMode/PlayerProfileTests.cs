@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using Dice.App;
+using Dice.Engine;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -9,6 +10,112 @@ namespace Dice.Tests
 {
     public sealed class PlayerProfileTests
     {
+        [Test]
+        public void DiscoveryIsPersistedMergedAndIndependentOfIndividualOwnership()
+        {
+            var profile = new PlayerProfile();
+            Assert.That(profile.DiscoverFamily("family.future"), Is.True);
+            Assert.That(profile.DiscoverFamily("family.future"), Is.False);
+            Assert.That(profile.UnlockedModifierIds, Is.Empty);
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.future" }));
+            Assert.That(restored.Merge(profile), Is.False);
+            var merged = new PlayerProfile();
+            Assert.That(merged.Merge(restored), Is.True);
+            Assert.That(merged.DiscoveredFamilyIds, Is.EqualTo(restored.DiscoveredFamilyIds));
+        }
+
+        [Test]
+        public void LegacyProfileRetainsUnknownIdsAndInfersStarterAndOwnedFamilies()
+        {
+            byte[] legacy = Encoding.UTF8.GetBytes("{\"ProfileFormatVersion\":1,\"UnlockedModifierIds\":[\"owned\",\"future\"]," +
+                "\"CompletedEncounterIds\":[\"encounter.future\"]}");
+            var profile = PlayerProfileCodec.Deserialize(legacy);
+            Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
+            Assert.That(profile.GetDiscoveredFamilyIds(RewardCatalog()), Is.EquivalentTo(new[] { "family.starter", "family.owned" }));
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "owned", "future" }));
+            Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
+            Assert.That(restored.GetDiscoveredFamilyIds(RewardCatalog()), Is.EqualTo(profile.GetDiscoveredFamilyIds(RewardCatalog())));
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(profile)));
+            Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(3));
+            document["ProfileFormatVersion"] = 2;
+            Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
+        }
+
+        [Test]
+        public void RewardsDiscoverAndGrantExplicitIndividualsIdempotently()
+        {
+            var catalog = RewardCatalog();
+            var profile = new PlayerProfile();
+            var discovered = new[] { "family.revealed" };
+            var granted = new[] { "owned" };
+            var reward = new ProgressionRewardDefinition(discovered, granted);
+            discovered[0] = "unknown";
+            granted[0] = "unknown";
+            Assert.That(profile.ApplyReward(reward, catalog), Is.True);
+            Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "owned" }));
+            Assert.That(profile.DiscoveredFamilyIds, Is.EquivalentTo(new[] { "family.revealed", "family.owned" }));
+            Assert.That(profile.GetDiscoveredFamilyIds(catalog), Is.EquivalentTo(new[] { "family.revealed", "family.owned", "family.starter" }));
+            Assert.That(profile.ApplyReward(reward, catalog), Is.False);
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.ApplyReward(reward, catalog), Is.False);
+            Assert.That(restored.UnlockedModifierIds, Does.Not.Contain("owned.variant"));
+        }
+
+        [TestCase("family")]
+        [TestCase("modifier")]
+        [TestCase("encounter")]
+        [TestCase("inert")]
+        [TestCase("never")]
+        [TestCase("starter")]
+        public void InvalidRewardRejectsAllProgressBeforeMutation(string invalid)
+        {
+            var profile = new PlayerProfile();
+            string[] discoveries = { invalid == "family" ? "unknown.family" : "family.revealed" };
+            string[] grants = { "owned", invalid == "family" ? "owned.variant" : invalid == "modifier" ? "unknown" : invalid };
+            var reward = new ProgressionRewardDefinition(discoveries, grants);
+            Assert.Throws<ArgumentException>(() => profile.ApplyReward(reward, RewardCatalog()));
+            Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
+            Assert.That(profile.UnlockedModifierIds, Is.Empty);
+        }
+
+        [TestCase("missing")]
+        [TestCase("duplicate")]
+        [TestCase("invalid")]
+        public void InvalidDiscoveryProfileFieldsAreRejected(string invalid)
+        {
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
+            if (invalid == "missing") document.Remove("DiscoveredFamilyIds");
+            if (invalid == "duplicate") document["DiscoveredFamilyIds"] = new JArray("family", "family");
+            if (invalid == "invalid") document["DiscoveredFamilyIds"] = new JArray("family\ninvalid");
+            Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
+        }
+
+        private static MechanicalCatalog RewardCatalog()
+        {
+            var modifiers = new[]
+            {
+                RewardModifier("starter", "family.starter", ModifierAccess.Starter),
+                RewardModifier("owned", "family.owned"), RewardModifier("owned.variant", "family.owned"),
+                RewardModifier("revealed", "family.revealed"),
+                RewardModifier("encounter", "family.encounter", scope: ModifierAvailabilityScope.Encounter),
+                RewardModifier("inert", "family.inert", inert: true), RewardModifier("never", "family.never", never: true)
+            };
+            return new MechanicalCatalog("profile.rewards", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) })
+            }, modifiers);
+        }
+
+        private static ModifierDefinition RewardModifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock,
+            ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, bool inert = false, bool never = false)
+            => new ModifierDefinition(id, family, ModifierPhase.PlayHand,
+                new ModifierCondition(never ? ModifierConditionKind.Never : ModifierConditionKind.Always),
+                inert ? Array.Empty<ModifierEffect>() : new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) },
+                availability: new ModifierAvailabilityDefinition(scope: scope,
+                    scopeId: scope == ModifierAvailabilityScope.Encounter ? TestContent.EncounterId : null, access: access));
+
         [Test]
         public void RoundTripKeepsUnknownIdsAndProgressIsIdempotent()
         {

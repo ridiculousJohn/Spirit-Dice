@@ -6,16 +6,28 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
+    public enum SpiritCollectionFilter
+    {
+        Owned,
+        Discovered,
+        All
+    }
+
     /** Browses authored charm families using permanent profile progress without mutating it. */
     public sealed class SpiritCollectionView : MonoBehaviour
     {
         private readonly List<SpiritModifierFamilyRow> rows = new List<SpiritModifierFamilyRow>();
+        private readonly List<SpiritModifierFamilyRow> rowPool = new List<SpiritModifierFamilyRow>();
+        private readonly List<List<ModifierDefinition>> families = new List<List<ModifierDefinition>>();
         private readonly HashSet<string> unlockedIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> ownedFamilyIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<string> discoveredFamilyIds = new HashSet<string>(StringComparer.Ordinal);
         private MechanicalCatalog catalog;
         private EncounterJourneyCatalogAsset journeys;
         private RectTransform content;
         private ScrollRect scroll;
         private Text summary;
+        private Text filterLabel;
         private Text detailTitle;
         private Text detailEffect;
         private Text detailSource;
@@ -24,6 +36,7 @@ namespace Dice.Presentation
         public bool IsVisible => Root != null && Root.gameObject.activeSelf;
         public string SelectedModifierId { get; private set; }
         public IReadOnlyList<SpiritModifierFamilyRow> Rows => rows;
+        public SpiritCollectionFilter Filter { get; private set; }
 
         public void Build(RectTransform parent, Action close)
         {
@@ -50,7 +63,18 @@ namespace Dice.Presentation
             closeButton.CaptureContent();
             summary = SpiritUi.Label("CollectionSummary", Root, "", 17,
                 new Vector2(.03f, .855f), new Vector2(.97f, .915f), TextAnchor.MiddleLeft, theme.muted);
-            scroll = SpiritUi.Scroll("CollectionFamilies", Root, new Vector2(.015f, .275f), new Vector2(.985f, .855f), out content);
+            var filterImage = SpiritUi.Panel("CollectionFilterButton", Root,
+                new Vector2(.03f, .795f), new Vector2(.40f, .85f), theme.panelColor, 5);
+            var filterBorder = filterImage.gameObject.AddComponent<Outline>();
+            filterBorder.effectColor = closeBorder.effectColor;
+            filterBorder.effectDistance = closeBorder.effectDistance;
+            var filterButton = filterImage.gameObject.AddComponent<SpiritUiButtonVisual>();
+            filterButton.targetGraphic = filterImage;
+            filterButton.onClick.AddListener(() => SetFilter((SpiritCollectionFilter)(((int)Filter + 1) % 3)));
+            filterLabel = SpiritUi.Heading("CollectionFilterButtonLabel", filterImage.transform, "Owned", 20,
+                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, theme.cream);
+            filterButton.CaptureContent();
+            scroll = SpiritUi.Scroll("CollectionFamilies", Root, new Vector2(.015f, .275f), new Vector2(.985f, .79f), out content);
             var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.spacing = 10;
             layout.padding = new RectOffset(5, 5, 5, 5);
@@ -77,27 +101,37 @@ namespace Dice.Presentation
         }
 
         public void Show(MechanicalCatalog mechanicalCatalog, IReadOnlyList<string> profileUnlockedModifierIds,
-            EncounterJourneyCatalogAsset journeyCatalog = null)
+            EncounterJourneyCatalogAsset journeyCatalog = null, IReadOnlyList<string> profileDiscoveredFamilyIds = null)
         {
             if (mechanicalCatalog == null) throw new ArgumentNullException(nameof(mechanicalCatalog));
             if (Root == null) throw new InvalidOperationException("Build the collection before opening it.");
             catalog = mechanicalCatalog;
             journeys = journeyCatalog;
             unlockedIds.Clear();
+            ownedFamilyIds.Clear();
+            discoveredFamilyIds.Clear();
             if (profileUnlockedModifierIds != null)
                 foreach (string id in profileUnlockedModifierIds) unlockedIds.Add(id);
-            var families = new Dictionary<string, List<ModifierDefinition>>(StringComparer.Ordinal);
+            if (profileDiscoveredFamilyIds != null)
+                foreach (string id in profileDiscoveredFamilyIds) discoveredFamilyIds.Add(id);
+            var grouped = new Dictionary<string, List<ModifierDefinition>>(StringComparer.Ordinal);
             int permanentCount = 0;
             int unlockedCount = 0;
             int starterCount = 0;
             foreach (var definition in catalog.Modifiers)
             {
-                if (!families.TryGetValue(definition.FamilyId, out var family))
+                if (!definition.RewardEligible || definition.Availability.Access == ModifierAccess.EncounterExclusive) continue;
+                if (!grouped.TryGetValue(definition.FamilyId, out var family))
                 {
                     family = new List<ModifierDefinition>();
-                    families.Add(definition.FamilyId, family);
+                    grouped.Add(definition.FamilyId, family);
                 }
                 family.Add(definition);
+                if (definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id))
+                {
+                    ownedFamilyIds.Add(definition.FamilyId);
+                    discoveredFamilyIds.Add(definition.FamilyId);
+                }
                 if (definition.Availability.Access == ModifierAccess.PermanentUnlock)
                 {
                     ++permanentCount;
@@ -105,31 +139,58 @@ namespace Dice.Presentation
                 }
                 else if (definition.Availability.Access == ModifierAccess.Starter) ++starterCount;
             }
-            var ordered = new List<List<ModifierDefinition>>(families.Values);
-            ordered.Sort((left, right) => StringComparer.Ordinal.Compare(
+            families.Clear();
+            families.AddRange(grouped.Values);
+            families.Sort((left, right) => StringComparer.Ordinal.Compare(
                 SpiritModifierFamilyRow.GetFamilyName(left[0]), SpiritModifierFamilyRow.GetFamilyName(right[0])));
-            while (rows.Count < ordered.Count)
-                rows.Add(SpiritModifierFamilyRow.Create("CollectionFamily" + rows.Count, content));
-            bool selectionExists = false;
-            for (int index = 0; index < rows.Count; ++index)
-            {
-                rows[index].gameObject.SetActive(index < ordered.Count);
-                if (index >= ordered.Count) continue;
-                ordered[index].Sort((left, right) => VariantOrder(left).CompareTo(VariantOrder(right)));
-                rows[index].Render(ordered[index], StatusText, Select,
-                    definition => definition.Availability.Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(definition.Id));
-                foreach (var definition in ordered[index])
-                    if (definition.Id == SelectedModifierId) selectionExists = true;
-            }
+            foreach (var family in families)
+                family.Sort((left, right) => VariantOrder(left).CompareTo(VariantOrder(right)));
             summary.text = "Collected " + unlockedCount + " / " + permanentCount + "  |  Available at start " + starterCount;
             Root.gameObject.SetActive(true);
             Root.SetAsLastSibling();
-            if (!selectionExists) SelectedModifierId = ordered.Count > 0 ? ordered[0][0].Id : null;
+            SetFilter(SpiritCollectionFilter.Owned);
+        }
+
+        public void SetFilter(SpiritCollectionFilter filter)
+        {
+            if (!Enum.IsDefined(typeof(SpiritCollectionFilter), filter)) throw new ArgumentOutOfRangeException(nameof(filter));
+            if (catalog == null) throw new InvalidOperationException("Open the collection before selecting a filter.");
+            Filter = filter;
+            filterLabel.text = filter.ToString();
+            rows.Clear();
+            bool selectionExists = false;
+            string firstSelectableId = null;
+            foreach (var family in families)
+            {
+                string familyId = family[0].FamilyId;
+                bool discovered = discoveredFamilyIds.Contains(familyId);
+                if (filter == SpiritCollectionFilter.Owned && !ownedFamilyIds.Contains(familyId) ||
+                    filter == SpiritCollectionFilter.Discovered && !discovered) continue;
+                int index = rows.Count;
+                if (index == rowPool.Count)
+                    rowPool.Add(SpiritModifierFamilyRow.Create("CollectionFamily" + index, content));
+                var row = rowPool[index];
+                row.gameObject.SetActive(true);
+                rows.Add(row);
+                if (!discovered)
+                {
+                    row.RenderUndiscovered(familyId);
+                    continue;
+                }
+                row.Render(family, StatusText, Select,
+                    definition => definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id));
+                if (firstSelectableId == null) firstSelectableId = family[0].Id;
+                foreach (var definition in family)
+                    if (definition.Id == SelectedModifierId) selectionExists = true;
+            }
+            for (int index = rows.Count; index < rowPool.Count; ++index) rowPool[index].gameObject.SetActive(false);
+            if (!selectionExists) SelectedModifierId = firstSelectableId;
             if (SelectedModifierId != null) Select(catalog.GetModifier(SelectedModifierId));
             else
             {
-                detailTitle.text = "No charms";
-                detailEffect.text = detailSource.text = "";
+                detailTitle.text = filter == SpiritCollectionFilter.All && rows.Count > 0 ? "Undiscovered families" : "No " + filter.ToString().ToLowerInvariant() + " families";
+                detailEffect.text = "";
+                detailSource.text = "Discover charm families during play to reveal their effects and sources.";
             }
             Canvas.ForceUpdateCanvases();
             scroll.StopMovement();
@@ -143,6 +204,10 @@ namespace Dice.Presentation
 
         private void Select(ModifierDefinition definition)
         {
+            bool visible = false;
+            foreach (var row in rows)
+                if (!row.IsUndiscovered && row.FamilyId == definition.FamilyId) visible = true;
+            if (!visible) return;
             SelectedModifierId = definition.Id;
             detailTitle.text = SpiritModifierPresentation.GetName(definition) + " - " + StatusText(definition);
             detailEffect.text = SpiritModifierPresentation.GetEffectText(definition);
@@ -167,6 +232,7 @@ namespace Dice.Presentation
             EncounterJourneyCatalogAsset journeyCatalog = null)
         {
             var unlockSources = new List<string>();
+            var giftSources = new List<string>();
             var rewardSources = new List<string>();
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
@@ -180,6 +246,17 @@ namespace Dice.Presentation
                         stages.Add(milestone.StageNumber.ToString());
                 if (stages.Count > 0)
                     unlockSources.Add(name + " - after stage" + (stages.Count > 1 ? "s " : " ") + string.Join(", ", stages));
+                if (journey != null)
+                {
+                    foreach (var beat in journey.Beats)
+                        if (beat.ProgressionReward != null && beat.ProgressionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
+                        {
+                            giftSources.Add(name + " - story");
+                            break;
+                        }
+                    if (journey.CompletionReward != null && journey.CompletionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
+                        giftSources.Add(name + " - completion");
+                }
                 if (definition.RewardEligible && definition.Availability.MatchesEncounter(encounter) &&
                     IsRewardSource(definition.Id, encounter, mechanicalCatalog))
                     rewardSources.Add(name);
@@ -189,8 +266,9 @@ namespace Dice.Presentation
                 return "Encounter only; never permanently collected.\nRun charm pool: " + rewards + ".";
             if (definition.Availability.Access == ModifierAccess.Starter)
                 return "Available from the start.\nRun charm pool: " + rewards + ".";
-            return (unlockSources.Count > 0 ? "Unlock choice: " + string.Join("; ", unlockSources) : "Not obtainable yet") +
-                ".\nOnce unlocked, run charm pool: " + rewards + ".";
+            string source = unlockSources.Count > 0 ? "Unlock choice: " + string.Join("; ", unlockSources) : "";
+            if (giftSources.Count > 0) source += (source.Length > 0 ? ".\n" : "") + "Gift: " + string.Join("; ", giftSources);
+            return (source.Length > 0 ? source : "Not obtainable yet") + ".\nOnce unlocked, run charm pool: " + rewards + ".";
         }
 
         private static bool IsRewardSource(string modifierId, EncounterDefinition encounter, MechanicalCatalog mechanicalCatalog)

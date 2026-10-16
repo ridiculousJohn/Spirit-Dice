@@ -4,6 +4,58 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
+    public sealed class ProgressionRewardDefinition
+    {
+        public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
+        public ReadOnlyCollection<string> GrantedModifierIds { get; }
+
+        public ProgressionRewardDefinition(IEnumerable<string> discoveredFamilyIds, IEnumerable<string> grantedModifierIds)
+        {
+            DiscoveredFamilyIds = CopyIds(discoveredFamilyIds, nameof(discoveredFamilyIds));
+            GrantedModifierIds = CopyIds(grantedModifierIds, nameof(grantedModifierIds));
+        }
+
+        public void Validate(MechanicalCatalog catalog)
+        {
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+            var families = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var modifier in catalog.Modifiers) families.Add(modifier.FamilyId);
+            foreach (string id in DiscoveredFamilyIds)
+                if (!families.Contains(id))
+                    throw new ArgumentException("A discovered family is missing from the catalog.", nameof(catalog));
+            foreach (string id in GrantedModifierIds)
+            {
+                ModifierDefinition modifier;
+                try { modifier = catalog.GetModifier(id); }
+                catch (KeyNotFoundException exception)
+                {
+                    throw new ArgumentException("A granted modifier is missing from the catalog.", nameof(catalog), exception);
+                }
+                if (modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
+                    modifier.Availability.Scope == ModifierAvailabilityScope.Encounter ||
+                    !modifier.RewardEligible || modifier.Effects.Count == 0 || modifier.Condition is NeverCondition)
+                    throw new ArgumentException("Progression grants require playable permanent modifiers outside encounter scope.", nameof(catalog));
+            }
+        }
+
+        private static ReadOnlyCollection<string> CopyIds(IEnumerable<string> source, string parameter)
+        {
+            if (source == null) throw new ArgumentNullException(parameter);
+            var entries = new List<string>(source);
+            var unique = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in entries)
+            {
+                DefinitionValidation.RequireId(id, parameter);
+                if (id.Trim() != id || id.Length > 256)
+                    throw new ArgumentException("Progression IDs must be trimmed and at most 256 characters.", parameter);
+                foreach (char value in id)
+                    if (char.IsControl(value)) throw new ArgumentException("Progression IDs cannot contain control characters.", parameter);
+                if (!unique.Add(id)) throw new ArgumentException("Progression IDs must be unique.", parameter);
+            }
+            return entries.AsReadOnly();
+        }
+    }
+
     public sealed class ModifierRewardPoolDefinition
     {
         public string Id { get; }

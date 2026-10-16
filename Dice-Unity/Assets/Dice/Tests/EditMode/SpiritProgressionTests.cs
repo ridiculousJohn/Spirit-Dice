@@ -37,6 +37,8 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.Save();
             string olderSavePath = Path.Combine(Path.GetDirectoryName(savePath), "older-run.json");
             File.Copy(savePath, olderSavePath);
@@ -76,6 +78,8 @@ namespace Dice.Tests
         public void FinalWinImmediatelyPersistsUnlockAndUniqueCompletion()
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.Resolved += resolution =>
             {
                 if (resolution.Snapshot.Outcome == EncounterOutcome.Won)
@@ -113,6 +117,8 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
@@ -134,6 +140,8 @@ namespace Dice.Tests
         public void FailedUnlockRunWriteDefersProfileAndBlocksFurtherActionsUntilSaved()
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
@@ -182,6 +190,8 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(profilePath, profile);
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.Snapshot.UnlockedModifierIds, Is.Empty);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.PlayHand();
             ChooseUnlock();
             profile = PlayerProfileFileStore.Load(profilePath);

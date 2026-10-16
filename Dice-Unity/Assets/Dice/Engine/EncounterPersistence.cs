@@ -40,6 +40,8 @@ namespace Dice.Engine
                 PendingUpgradeCategories = state.PendingUpgradeCategories?.ToArray(),
                 UnlockedModifierIds = state.UnlockedModifierIds.ToArray(),
                 NewlyUnlockedModifierIds = state.NewlyUnlockedModifierIds.ToArray(),
+                DiscoveredFamilyIds = state.DiscoveredFamilyIds.ToArray(),
+                PendingUnlockOfferDiscoveredFamilyIds = state.PendingUnlockOfferDiscoveredFamilyIds?.ToArray(),
                 PendingModifierOfferUsesLegacyEligibility = state.PendingModifierOfferUsesLegacyEligibility,
                 PendingModifierOfferUsesEncounterAdditions = state.PendingModifierOfferUsesEncounterAdditions,
                 PendingModifierOfferUnlockedIds = state.PendingModifierOfferUnlockedIds?.ToArray(),
@@ -97,7 +99,8 @@ namespace Dice.Engine
             bool legacy = save.SaveFormatVersion == 1;
             if (save.SaveFormatVersion < 1 || save.SaveFormatVersion > EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
-            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : save.SaveFormatVersion == 3 ? 5 : EncounterSession.RulesVersion))
+            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : save.SaveFormatVersion == 3 ? 5 :
+                save.SaveFormatVersion == 4 ? 6 : EncounterSession.RulesVersion))
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -199,6 +202,7 @@ namespace Dice.Engine
             };
             state.PendingModifierOfferUsesEncounterAdditions = save.SaveFormatVersion >= 4 && save.PendingModifierOfferUsesEncounterAdditions;
             ValidateUnlocks(catalog, definition, save, state);
+            ValidateDiscoveries(catalog, save, state);
             ValidateHistory(definition, save, state, postPlay);
             ValidateDiceHistory(state, postPlay);
             var definitions = new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
@@ -259,6 +263,42 @@ namespace Dice.Engine
                 state.PendingModifierOfferUnlockedIds = new List<string>(save.PendingModifierOfferUnlockedIds);
             }
             else Require(save.PendingModifierOfferUnlockedIds == null, "Pending offer unlocks require a generated modifier offer.");
+        }
+
+        private static void ValidateDiscoveries(MechanicalCatalog catalog, EncounterSaveData save, EncounterState state)
+        {
+            var families = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var modifier in catalog.Modifiers) families.Add(modifier.FamilyId);
+            if (save.SaveFormatVersion < 5)
+            {
+                // Existing runs retain every family that was eligible when their offers were generated.
+                foreach (var modifier in catalog.Modifiers)
+                    if (!state.DiscoveredFamilyIds.Contains(modifier.FamilyId)) state.DiscoveredFamilyIds.Add(modifier.FamilyId);
+                if (state.Phase == EncounterPhase.ChoosingUnlock)
+                    state.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(state.DiscoveredFamilyIds);
+                return;
+            }
+            Require(save.DiscoveredFamilyIds != null, "Discovered family IDs are missing.");
+            var discovered = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in save.DiscoveredFamilyIds)
+            {
+                Require(id != null && discovered.Add(id), "Discovered family IDs must be valid and unique.");
+                if (!families.Contains(id))
+                    throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "A discovered family is missing from the catalog.");
+            }
+            state.DiscoveredFamilyIds = new List<string>(save.DiscoveredFamilyIds);
+            foreach (string id in state.UnlockedModifierIds)
+                Require(discovered.Contains(catalog.GetModifier(id).FamilyId), "An owned modifier requires a discovered family.");
+            if (state.Phase == EncounterPhase.ChoosingUnlock)
+            {
+                Require(save.PendingUnlockOfferDiscoveredFamilyIds != null, "Pending unlock discovery IDs are missing.");
+                var pending = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string id in save.PendingUnlockOfferDiscoveredFamilyIds)
+                    Require(id != null && discovered.Contains(id) && pending.Add(id),
+                        "Pending unlock discoveries must be unique and currently discovered.");
+                state.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(save.PendingUnlockOfferDiscoveredFamilyIds);
+            }
+            else Require(save.PendingUnlockOfferDiscoveredFamilyIds == null, "Pending unlock discoveries require an unlock offer.");
         }
 
         private static void ValidateHistory(EncounterDefinition definition, EncounterSaveData save, EncounterState state, bool postPlay)
@@ -515,7 +555,7 @@ namespace Dice.Engine
                 options.Add(new RewardOption(option.OptionId, option.DefinitionId, option.HasCategory ? (HandCategory?)option.Category : null));
             }
             if (choosingModifier) ValidateModifierOptions(catalog, definition, state, options);
-            else if (choosingUnlock) ValidateUnlockOptions(definition, state, options);
+            else if (choosingUnlock) ValidateUnlockOptions(catalog, definition, state, options);
             else
             {
                 var categories = new List<HandCategory>();
@@ -573,17 +613,19 @@ namespace Dice.Engine
             Require(nextOption == options.Count, "Modifier offer contains an extra option.");
         }
 
-        private static void ValidateUnlockOptions(EncounterDefinition definition, EncounterState state, List<RewardOption> options)
+        private static void ValidateUnlockOptions(MechanicalCatalog catalog, EncounterDefinition definition, EncounterState state, List<RewardOption> options)
         {
             Require(HasUnlockMilestone(definition, state.StageIndex + 1), "An unlock offer requires a cleared milestone.");
             var candidates = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in definition.UnlockRewardModifierIds)
-                if (!state.UnlockedModifierIds.Contains(id)) candidates.Add(id);
+                if (!state.UnlockedModifierIds.Contains(id) &&
+                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(id).FamilyId)) candidates.Add(id);
             var offered = new HashSet<string>(StringComparer.Ordinal);
             foreach (var option in options)
             {
-                Require(definition.UnlockRewardModifierIds.Contains(option.DefinitionId) && offered.Add(option.DefinitionId),
-                    "Unlock options must be distinct entries from the authored unlock pool.");
+                Require(definition.UnlockRewardModifierIds.Contains(option.DefinitionId) && offered.Add(option.DefinitionId) &&
+                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(option.DefinitionId).FamilyId),
+                    "Unlock options must be distinct entries from discovered families in the authored unlock pool.");
                 // Profile progress can have been committed before the corresponding run save was written.
                 candidates.Add(option.DefinitionId);
             }

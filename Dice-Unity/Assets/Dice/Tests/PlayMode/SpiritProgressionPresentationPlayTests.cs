@@ -30,6 +30,7 @@ namespace Dice.Tests
             string path = ContentReady.SpiritSavePath();
             var profile = new PlayerProfile();
             profile.UnlockModifier(definition.Id);
+            profile.DiscoverFamily(definition.FamilyId);
             PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), "spirit-profile.json"), profile);
             controller.Initialize(catalog, encounter.Id, 60, path);
             var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
@@ -74,6 +75,8 @@ namespace Dice.Tests
             string path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-progression-presentation-tests", Guid.NewGuid().ToString("N"), "encounter.json"));
             controller.Initialize(catalog, encounter.Id, 60, path);
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                definitions.Select(value => value.FamilyId).Distinct(), Array.Empty<string>())), Is.True);
             var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(443, 912);

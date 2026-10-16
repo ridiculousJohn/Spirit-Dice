@@ -1871,7 +1871,8 @@ namespace Dice.Presentation
             menuPanel.gameObject.SetActive(false);
             collectionView.Show(controls.Catalog,
                 (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
-                journeyControls?.JourneyCatalog);
+                journeyControls?.JourneyCatalog,
+                (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<string>());
         }
 
         private void RenderRewards(EncounterSnapshot snapshot)

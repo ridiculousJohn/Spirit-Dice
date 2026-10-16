@@ -136,6 +136,7 @@ MonoBehaviour:
       backgroundScaleTo: 1
     - id: "invitation"
       kind: 3
+      progressionReward: {fileID: 11400000, guid: 4764478fb74a452fbaea5f9c17091d96, type: 2}
       title: "Lantern's Favor"
       text: "Watch where the light falls. What it favors now will change with your next hand."
       continueLabel: "Accept the bargain"

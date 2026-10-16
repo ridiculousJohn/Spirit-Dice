@@ -28,6 +28,7 @@ namespace Dice.Presentation
         private Action<ModifierDefinition> selected;
 
         public string FamilyId { get; private set; }
+        public bool IsUndiscovered { get; private set; }
 
         public static SpiritModifierFamilyRow Create(string name, Transform parent)
         {
@@ -105,6 +106,7 @@ namespace Dice.Presentation
             if (definitions == null || definitions.Count == 0 || definitions.Count > variants.Count)
                 throw new ArgumentException("A family row requires one to four variants.", nameof(definitions));
             var first = definitions[0];
+            IsUndiscovered = false;
             FamilyId = first.FamilyId;
             familyName.text = GetFamilyName(first);
             var theme = SpiritUi.GetTheme(transform);
@@ -143,6 +145,25 @@ namespace Dice.Presentation
             LayoutRow();
         }
 
+        public void RenderUndiscovered(string familyId)
+        {
+            FamilyId = familyId;
+            IsUndiscovered = true;
+            selected = null;
+            familyName.text = "Undiscovered family";
+            condition.text = "Locked";
+            icon.gameObject.SetActive(false);
+            sigil.gameObject.SetActive(false);
+            foreach (var item in variants)
+            {
+                item.Definition = null;
+                item.Effect.text = item.State.text = "";
+                item.Selection.enabled = false;
+                item.Button.gameObject.SetActive(false);
+            }
+            LayoutRow();
+        }
+
         public void SetSelected(string modifierId)
         {
             foreach (var item in variants)
@@ -172,6 +193,13 @@ namespace Dice.Presentation
 
         private void LayoutRow()
         {
+            if (IsUndiscovered)
+            {
+                Place(familyName, 16, 16, 8, 34);
+                Place(condition, 16, 16, 42, 26);
+                GetComponent<LayoutElement>().preferredHeight = 78;
+                return;
+            }
             float width = ((RectTransform)transform).rect.width;
             if (width <= 0) width = 400;
             var settings = condition.GetGenerationSettings(new Vector2(Mathf.Max(1, width - 32), 0));

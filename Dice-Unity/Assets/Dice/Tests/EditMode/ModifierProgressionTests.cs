@@ -10,6 +10,122 @@ namespace Dice.Tests
 {
     public sealed class ModifierProgressionTests
     {
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(4)]
+        public void ExplicitFamilyDiscoveryGatesMilestoneIndividualsAndKeepsEmptyContinue(int discoveredCount)
+        {
+            var modifiers = Enumerable.Range(0, 5).Select(i => Modifier("unlock." + i,
+                access: ModifierAccess.PermanentUnlock)).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var discoveries = modifiers.Take(discoveredCount).Select(value => value.FamilyId).ToArray();
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
+                discoveredFamilyIds: discoveries);
+            var result = session.Execute(PlayHandAction.Instance, 0);
+            var offer = result.Snapshot.PendingReward;
+            Assert.That(offer.Options.Count, Is.EqualTo(Math.Min(3, discoveredCount)));
+            Assert.That(offer.Options.All(value => discoveries.Contains(catalog.GetModifier(value.DefinitionId).FamilyId)), Is.True);
+            Assert.That(result.Snapshot.UnlockedModifierIds, Is.Empty);
+            var restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(discoveries));
+            Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
+            EncounterAction choice = discoveredCount == 0 ? (EncounterAction)new AcknowledgeModifierUnlockAction(offer.OfferId) :
+                new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId);
+            Assert.That(restored.Session.Execute(choice, restored.Session.Snapshot.Revision).Accepted, Is.True);
+            Assert.That(EncounterSession.RestoreEncounter(catalog, restored.Session.CaptureSave()).Success, Is.True);
+        }
+
+        [Test]
+        public void OwnedIndividualDiscoversItsFamilyAndOnlyUnownedVariantsAreOffered()
+        {
+            var modifiers = Enumerable.Range(0, 5).Select(i => new ModifierDefinition("unlock." + i, "family.shared",
+                ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
+                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
+                new[] { modifiers[0].Id }, Array.Empty<string>());
+            var snapshot = session.Execute(PlayHandAction.Instance, 0).Snapshot;
+            Assert.That(snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.shared" }));
+            Assert.That(snapshot.PendingReward.Options.Count, Is.EqualTo(3));
+            Assert.That(snapshot.PendingReward.Options.Any(value => value.DefinitionId == modifiers[0].Id), Is.False);
+        }
+
+        [Test]
+        public void DiscoveryMergeRetainsPendingOfferAndInvalidMergeIsAtomic()
+        {
+            var modifiers = Enumerable.Range(0, 5).Select(i => Modifier("unlock." + i,
+                access: ModifierAccess.PermanentUnlock)).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
+                discoveredFamilyIds: new[] { modifiers[0].FamilyId });
+            session.Execute(PlayHandAction.Instance, 0);
+            var offer = session.Snapshot.PendingReward;
+            Assert.Throws<ArgumentException>(() => session.AddDiscoveredFamilies(new[] { modifiers[1].FamilyId, "unknown" }));
+            Assert.That(session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { modifiers[0].FamilyId }));
+            session.AddDiscoveredFamilies(modifiers.Select(value => value.FamilyId));
+            var restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
+            Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds.Count, Is.EqualTo(5));
+            var select = new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId);
+            Assert.That(restored.Session.Execute(select, restored.Session.Snapshot.Revision).Accepted, Is.True);
+            Assert.That(EncounterSession.RestoreEncounter(catalog, restored.Session.CaptureSave()).Success, Is.True);
+        }
+
+        [Test]
+        public void FormatFourPendingUnlockMigratesWithAllFamiliesAndIdenticalChoices()
+        {
+            var modifiers = Enumerable.Range(0, 5).Select(i => Modifier("unlock." + i,
+                access: ModifierAccess.PermanentUnlock)).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12);
+            session.Execute(PlayHandAction.Instance, 0);
+            var offer = session.Snapshot.PendingReward;
+            var document = JObject.Parse(System.Text.Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            document[nameof(EncounterSaveData.SaveFormatVersion)] = 4;
+            document[nameof(EncounterSaveData.RulesVersion)] = 6;
+            document.Remove(nameof(EncounterSaveData.DiscoveredFamilyIds));
+            document.Remove(nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds));
+            var restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
+            Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds, Is.EquivalentTo(modifiers.Select(value => value.FamilyId)));
+            restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(restored.Session.CaptureSave())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
+        }
+
+        [Test]
+        public void CurrentSaveRejectsUnknownDiscoveryAndUnlockFromAnUndiscoveredFamily()
+        {
+            var modifiers = new[] { Modifier("visible", access: ModifierAccess.PermanentUnlock),
+                Modifier("hidden", access: ModifierAccess.PermanentUnlock) };
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
+                discoveredFamilyIds: new[] { modifiers[0].FamilyId });
+            session.Execute(PlayHandAction.Instance, 0);
+            var save = session.CaptureSave();
+            save.DiscoveredFamilyIds = new[] { "unknown.family" };
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
+            save = session.CaptureSave();
+            save.PendingReward.Options[0].DefinitionId = modifiers[1].Id;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
+            save = session.CaptureSave();
+            save.PendingUnlockOfferDiscoveredFamilyIds = null;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
+        }
+
         private static ModifierDefinition Modifier(string id, int tier = 1,
             ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, string scopeId = null,
             ModifierAccess access = ModifierAccess.Starter, bool rewardEligible = true)

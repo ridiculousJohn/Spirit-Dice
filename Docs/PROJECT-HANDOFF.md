@@ -1,12 +1,12 @@
 # Spirit Dice: start here
 
-Updated October 16, 2026 for the collection and individual unlock pass. Check current Git status; this is not a claim about remote synchronization.
+Updated October 16, 2026 for family discovery and story progression rewards. Check current Git status; this is not a claim about remote synchronization.
 
 ## What to do next
 
 John authorized collection and individual unlocks (pass 1). Player-built decks are a separate future pass, not authorized by this implementation. Android builds remain deferred.
 
-Pass 1 is implemented and validated, and John has playtested it successfully. Collection is accessible on the investigation board and in the gameplay menu.
+John playtested the individual collection/unlock pass successfully. Family discovery, story grants, and Collection filters are now implemented. Deck building remains deferred; its future ordinary pool replaces the encounter-authored ordinary pool, while encounter additions remain separate.
 
 For that request:
 
@@ -43,7 +43,9 @@ Stages 3, 6, and 10 offer up to three unowned individual charms from the encount
 
 Fox currently awards six Base/Mult variants of Open Gate, Still Reflection and Rising Sun. Owl/moth use six Base/Mult variants of their established milestone families, provisionally. Combined/reroll variants remain collected if already owned; otherwise they await future unlock sources. Edit explicit lists to tune rewards, not code. See [collection authoring](../Dice-Unity/Assets/Dice/Content/Mechanical/COLLECTION-AUTHORING.md).
 
-Collection is available from the investigation board and gameplay menu. One row shows each family's shared trigger and four effect variants; locked variants are dimmed but inspectable. It reads existing profile progress without writing it. Charms remains the current run's equipped modifiers.
+Collection is available from the investigation board and gameplay menu. Its filter cycles Owned (default), Discovered, and All. Owned includes starter families and families with an owned variant. Discovered also shows explicitly revealed families without owned variants. All includes compact anonymous locked rows for undiscovered families. Discovered rows show the shared trigger and four variants; locked variants remain inspectable. Inert and encounter-only families are excluded from permanent Collection. Charms remains the current run's equipped modifiers.
+
+Family discovery is separate from individual ownership. Starter and already-owned families are implicitly discovered; an individual grant also discovers its family. New unlock offers require the family to be discovered. Each existing encounter's invitation discovers its three authored unlock families without granting charms. `ProgressionRewardAsset` has explicit discovered family and granted modifier lists. Journeys optionally reference these assets on beats and on victory; future story systems can call `SpiritEncounterController.ApplyProgressionReward`. Beat rewards apply on continuation, skipping, and acceptance; repeated grants are idempotent. A failed story grant save blocks continuation without changing ownership. These rewards do not equip charms or change the run pool.
 
 Only the moth currently supplies encounter-specific additions: Lantern Seekers, four variants triggering on at least two dice matching the favored face. Its optional introduction explains these additions before starting; fox/owl skip it. Provisional effects are +10 Base, +2 Mult, +5 Base/+1 Mult, and +1 reroll. Artwork reuses Last Lantern until dedicated artwork is requested.
 
@@ -68,7 +70,7 @@ Keep mechanics, mechanical content, progression, and presentation separate. Mech
 
 Use explicit references or Addressables; no project assets in Resources. Discovery labels are `dice.modifiers` and `dice.theme.spirit-house.modifiers`.
 
-Newtonsoft JSON profiles remain format 1 and store permanent unlocks, visits, and completions. Separate run saves use format 4/rules 6 and preserve RNG state and pending offers, with formats 1-3 migration. Loading a run must not erase permanent progress. New runs use fresh seeds; fixed seeds are a debug option. No deck/profile-format-2 system is implemented in this checkout.
+Newtonsoft JSON profiles use format 3 and migrate format 1, retaining unlocks, visits, and completions while adding discovered families. Historical deck-format-2 profiles remain unsupported. Separate run saves use format 5/rules 7 and preserve RNG state, discovery, and pending offers, with formats 1-4 migration. Older runs retain their previous family eligibility; this does not reveal the entire permanent Collection. Loading a run must not erase permanent progress. New runs use fresh seeds; fixed seeds are a debug option. No deck system is implemented.
 
 ## Presentation authoring
 
@@ -79,6 +81,8 @@ Assets are under `Content/Presentation/SpiritHouse`, `Watchtower`, and `MothCros
 Read [Tools/Presentation/README.md](../Tools/Presentation/README.md) for authoring and regeneration. Do not run historical scratch generators against production assets.
 
 ## Validation and delivery
+
+October 16 family discovery validation: 1,435/1,435 full EditMode tests passed, then 37/37 focused journey/progression tests passed after the final active-run grant refresh. Rendered Collection/unlock/ending checks passed 15/15, with 443/540 portrait captures inspected. Evidence is retained in ignored `Docs/work/family-discovery-edit-86f162ed97c84a449cb66de5936c4dc5`, `family-discovery-final-da109d41175748df9b76d47b55f61d22`, and `family-discovery-play-c663f5fa913a4f5cb8c2a929d19fa143`. All Unity runs exited successfully. No Android build was made.
 
 October 16 collection validation: full EditMode run followed by targeted repairs/reruns leaves 1,394 distinct EditMode cases and 22 exercised PlayMode cases passing on their latest results. This includes unlock persistence/save-failure recovery, exhausted lists, endings, Addressables, and collection/intro portrait layouts at 443 and 540 pixels wide. Final layout evidence is in ignored `Docs/work/collection-layout-93f0d098975547938faf9537ae8dec93`; focused EditMode evidence is in `Docs/work/collection-edit-final-2fd1bc85841c4426a5564be5e99967d4`. No Android build was made.
 

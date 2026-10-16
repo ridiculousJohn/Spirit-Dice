@@ -153,6 +153,7 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: invitation
     kind: 3
+    progressionReward: {fileID: 11400000, guid: 2faba870df3948c9a29d09c0565c465e, type: 2}
     title: The Watcher's Eye
     text: There is more to a handful of dice than what repeats.
     continueLabel: Accept the bargain

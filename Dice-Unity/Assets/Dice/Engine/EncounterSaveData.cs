@@ -5,7 +5,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 4;
+        public const int CurrentFormatVersion = 5;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -53,6 +53,8 @@ namespace Dice.Engine
         public HandCategory[] PendingUpgradeCategories;
         public string[] UnlockedModifierIds;
         public string[] NewlyUnlockedModifierIds;
+        public string[] DiscoveredFamilyIds;
+        public string[] PendingUnlockOfferDiscoveredFamilyIds;
         public bool PendingModifierOfferUsesLegacyEligibility;
         public bool PendingModifierOfferUsesEncounterAdditions;
         public string[] PendingModifierOfferUnlockedIds;

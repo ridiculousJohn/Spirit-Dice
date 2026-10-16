@@ -87,6 +87,13 @@ namespace Dice.App
                     }
                     if (formatVersion < 4 && document[nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions)] == null)
                         document.Add(nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions), false);
+                    if (formatVersion < 5)
+                    {
+                        if (document[nameof(EncounterSaveData.DiscoveredFamilyIds)] == null)
+                            document.Add(nameof(EncounterSaveData.DiscoveredFamilyIds), JValue.CreateNull());
+                        if (document[nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds)] == null)
+                            document.Add(nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds), JValue.CreateNull());
+                    }
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
                     if (save == null) throw new FormatException("The save payload is missing.");

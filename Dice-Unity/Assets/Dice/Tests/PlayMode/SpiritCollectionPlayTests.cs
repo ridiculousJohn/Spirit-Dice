@@ -27,6 +27,8 @@ namespace Dice.Tests
             var collection = view.GetComponent<SpiritCollectionView>();
             Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
             var permanent = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
+                value.RewardEligible && !controller.Catalog.Modifiers.Any(other => other.FamilyId == value.FamilyId &&
+                    other.RewardEligible && other.Availability.Access == ModifierAccess.Starter) &&
                 controller.Catalog.Encounters.Any(encounter => encounter.UnlockRewardModifierIds.Contains(value.Id)));
             foreach (int width in new[] { 443, 540 })
             {
@@ -35,16 +37,26 @@ namespace Dice.Tests
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 Assert.That(collection.IsVisible, Is.True);
-                Assert.That(collection.Rows.Count, Is.EqualTo(controller.Catalog.Modifiers.Select(value => value.FamilyId).Distinct().Count()));
+                Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
+                Assert.That(collection.Rows.Select(row => row.FamilyId), Is.EquivalentTo(controller.Catalog.Modifiers
+                    .Where(value => value.RewardEligible && value.Availability.Access == ModifierAccess.Starter)
+                    .Select(value => value.FamilyId).Distinct()));
                 Assert.That(Find<Text>(collection, "CollectionSummary").text, Does.StartWith("Collected 0 / "));
+                AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
+                yield return Capture(view, "owned-default", width);
+                Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Discovered));
+                Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.All));
+                Assert.That(collection.Rows.Count, Is.EqualTo(controller.Catalog.Modifiers
+                    .Where(value => value.RewardEligible && value.Availability.Access != ModifierAccess.EncounterExclusive)
+                    .Select(value => value.FamilyId).Distinct().Count()));
                 var row = collection.Rows.Single(value => value.FamilyId == permanent.FamilyId);
-                var lockedButton = row.GetComponentsInChildren<Button>().First(button =>
-                    Find<Text>(button, "VariantState").text == "Locked");
-                Assert.That(lockedButton.interactable, Is.True);
-                Assert.That(lockedButton.GetComponent<CanvasGroup>().alpha, Is.LessThan(.5f));
-                lockedButton.onClick.Invoke();
-                Assert.That(Find<Text>(collection, "CollectionDetailTitle").text, Does.EndWith(" - Locked"));
-                Assert.That(Find<Text>(collection, "CollectionDetailSource").text, Does.Contain("Unlock choice:"));
+                Assert.That(row.IsUndiscovered, Is.True);
+                Assert.That(row.GetComponentsInChildren<Button>(), Is.Empty);
+                Assert.That(Find<Text>(row, "FamilyCondition").text, Is.EqualTo("Locked"));
+                Assert.That(Find<Text>(row, "FamilyName").text, Is.EqualTo("Undiscovered family"));
+                Assert.That(collection.SelectedModifierId, Is.Not.EqualTo(permanent.Id));
                 ScrollToRow(Find<ScrollRect>(collection, "CollectionFamilies"), (RectTransform)row.transform);
                 yield return null;
                 Canvas.ForceUpdateCanvases();
@@ -52,7 +64,8 @@ namespace Dice.Tests
                     foreach (var text in family.GetComponentsInChildren<Text>()) AssertCompleteText(text);
                 AssertCompleteText(Find<Text>(collection, "CollectionSummary"));
                 AssertCompleteText(Find<Text>(collection, "CollectionDetailTitle"));
-                yield return Capture(view, "locked", width);
+                AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
+                yield return Capture(view, "all-undiscovered", width);
                 Find<Button>(view, "CloseCollectionButton").onClick.Invoke();
                 Assert.That(collection.IsVisible, Is.False);
                 Assert.That(controller.Snapshot, Is.Null);
@@ -76,6 +89,7 @@ namespace Dice.Tests
                 Find<Button>(view, "CollectionButton").onClick.Invoke();
                 yield return null;
                 Assert.That(collection.IsVisible, Is.True);
+                Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
                 Assert.That(Find<Text>(collection, "CollectionSummary").text, Does.StartWith("Collected 1 / "));
                 var row = collection.Rows.Single(value => value.FamilyId == permanent.FamilyId);
                 var unlockedButton = row.GetComponentsInChildren<Button>().Single(button =>
@@ -87,6 +101,13 @@ namespace Dice.Tests
                 ScrollToRow(Find<ScrollRect>(collection, "CollectionFamilies"), (RectTransform)row.transform);
                 yield return null;
                 yield return Capture(view, "unlocked-menu", width);
+                Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Discovered));
+                Assert.That(collection.Rows.All(family => !family.IsUndiscovered), Is.True);
+                Assert.That(collection.SelectedModifierId, Is.EqualTo(permanent.Id));
+                Canvas.ForceUpdateCanvases();
+                AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
+                yield return Capture(view, "discovered-menu", width);
                 Find<Button>(view, "CloseCollectionButton").onClick.Invoke();
                 Assert.That(File.ReadAllText(controller.ProfilePath), Is.EqualTo(persistedProfile));
             }

@@ -7,6 +7,7 @@ using System.Text;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityEditor;
@@ -18,6 +19,8 @@ namespace Dice.Tests
     {
         private const string FirstId = "encounter.harbor";
         private const string SecondId = "encounter.observatory";
+        private const string GiftId = "modifier.story-gift";
+        private const string GiftFamily = "family.story-gift";
         private readonly List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
         private GameObject host;
         private SpiritEncounterController controller;
@@ -43,7 +46,10 @@ namespace Dice.Tests
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1000000, 5, 3) }),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1, 2, 3, StageExitBehavior.AwaitRewards),
                     new StageDefinition(1000000, 5, 3) }, rewardPolicy: policy)
-            }, new[] { modifier }, new[] { new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id }) });
+            }, new[] { modifier, new ModifierDefinition(GiftId, GiftFamily, ModifierPhase.PlayHand,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 5) },
+                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) },
+                new[] { new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id }) });
             journeys = Create<EncounterJourneyCatalogAsset>();
             Set(journeys, "entries", new[] { Journey(FirstId, "Harbor", "Ferryman"), Journey(SecondId, "Observatory", "Astronomer") });
             string directory = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..", "Docs", "work",
@@ -128,6 +134,107 @@ namespace Dice.Tests
             Assert.That(controller.InitializeJourney(mechanical, authored, savePath), Is.True, controller.JourneyStatus);
             Assert.That(controller.Catalog, Is.SameAs(mechanical));
             Assert.That(controller.Snapshot, Is.Null);
+        }
+
+        [Test]
+        public void StoryBeatDiscoversFamilyAndInvitationGrantsCharmBeforeStarting()
+        {
+            Set(journeys.Entries[0].Beats[0], "progressionReward", Reward(true, false));
+            Set(journeys.Entries[0].Beats[3], "progressionReward", Reward(false, true));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(FirstId);
+            Assert.That(controller.ProfileDiscoveredFamilyIds, Does.Not.Contain(GiftFamily));
+            controller.AdvanceJourney();
+            Assert.That(controller.ProfileDiscoveredFamilyIds, Does.Contain(GiftFamily));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).DiscoveredFamilyIds, Does.Contain(GiftFamily));
+            controller.AdvanceJourney();
+            controller.AdvanceJourney();
+            controller.AcceptEncounter();
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamily));
+            controller.ReturnToInvestigation();
+            controller.SelectEncounter(FirstId);
+            controller.SkipIntro();
+            controller.AcceptEncounter();
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+        }
+
+        [Test]
+        public void SkippingVisitedIntroAppliesItsStoryRewards()
+        {
+            var savedProfile = new PlayerProfile();
+            savedProfile.VisitEncounter(FirstId);
+            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json"), savedProfile);
+            Set(journeys.Entries[0].Beats[1], "progressionReward", Reward(true, true));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(FirstId);
+            controller.SkipIntro();
+            Assert.That(controller.BeatIndex, Is.EqualTo(3));
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).DiscoveredFamilyIds, Does.Contain(GiftFamily));
+        }
+
+        [Test]
+        public void FailedStoryRewardSaveLeavesBeatAndOwnershipUnchangedUntilRetry()
+        {
+            Set(journeys.Entries[0].Beats[0], "progressionReward", Reward(true, true));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            PlayerProfileFileStore.Save(controller.ProfilePath, new PlayerProfile());
+            controller.SelectEncounter(FirstId);
+            using (var lockedProfile = new FileStream(controller.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                controller.AdvanceJourney();
+                Assert.That(controller.BeatIndex, Is.Zero);
+                Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+                Assert.That(controller.ProfileDiscoveredFamilyIds, Does.Not.Contain(GiftFamily));
+                Assert.That(controller.JourneyStatus, Does.Contain("Cannot award story progress"));
+            }
+            controller.AdvanceJourney();
+            Assert.That(controller.BeatIndex, Is.EqualTo(1));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(GiftId));
+        }
+
+        [Test]
+        public void VictoryAwardsAuthoredCompletionRewardAndReloadIsIdempotent()
+        {
+            var winningCatalog = new MechanicalCatalog("test.story-reward.v1", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
+                new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
+            }, catalog.Modifiers);
+            Set(journeys.Entries[0], "completionReward", Reward(true, true));
+            Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.CompletePresentation();
+            controller.PlayHand();
+            controller.CompletePresentation();
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            controller.Save();
+            controller.Load();
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+        }
+
+        private ProgressionRewardAsset Reward(bool discover, bool grant)
+        {
+            var reward = Create<ProgressionRewardAsset>();
+            Set(reward, "discoveredFamilyIds", discover ? new[] { GiftFamily } : Array.Empty<string>());
+            Set(reward, "grantedModifierIds", grant ? new[] { GiftId } : Array.Empty<string>());
+            return reward;
+        }
+
+        [Test]
+        public void DirectStoryGrantUpdatesAnActiveRunWithoutEquippingTheCharm()
+        {
+            controller.Initialize(catalog, FirstId, 17, savePath);
+            Assert.That(controller.ApplyProgressionReward(Reward(false, true).Build(catalog)), Is.True);
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamily));
+            Assert.That(controller.Snapshot.Modifiers.Select(modifier => modifier.DefinitionId), Does.Not.Contain(GiftId));
+            Assert.That(controller.ApplyProgressionReward(Reward(false, true).Build(catalog)), Is.True);
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
         }
 
         [Test]

@@ -68,6 +68,7 @@ MonoBehaviour:
     hostState: 0
   - id: invitation
     kind: 3
+    progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
     title: The Host's Courtesy
     text: Your first mistake costs you nothing.
     continueLabel: Accept the bargain
