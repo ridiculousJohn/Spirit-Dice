@@ -99,10 +99,14 @@ namespace Dice.Engine
 
         private static List<string> EligibleModifiers(MechanicalCatalog catalog, ModifierRewardPoolDefinition pool,
             HashSet<string> owned, HashSet<string> excluded, HashSet<string> currentFamilies,
-            EncounterDefinition encounter, ISet<string> unlocked)
+            EncounterDefinition encounter, ISet<string> unlocked, bool includeEncounterModifiers)
         {
             var candidates = new List<string>();
-            foreach (string id in pool.ModifierIds)
+            var ids = new List<string>(pool.ModifierIds);
+            if (includeEncounterModifiers && encounter != null)
+                foreach (string id in encounter.EncounterModifierIds)
+                    if (!ids.Contains(id)) ids.Add(id);
+            foreach (string id in ids)
             {
                 var modifier = catalog.GetModifier(id);
                 if (modifier.RewardEligible && modifier.Availability.IsAvailable(encounter, unlocked, id) &&
@@ -114,9 +118,10 @@ namespace Dice.Engine
 
         internal static List<string> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<string> owned,
-            HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked)
+            HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked,
+            bool includeEncounterModifiers = true)
             => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, owned,
-                new HashSet<string>(StringComparer.Ordinal), currentFamilies, encounter, unlocked));
+                new HashSet<string>(StringComparer.Ordinal), currentFamilies, encounter, unlocked, includeEncounterModifiers));
 
         internal static string EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy, int incomingStageNumber,
             ModifierRewardPoolDefinition pool, EncounterDefinition encounter, ISet<string> unlocked)

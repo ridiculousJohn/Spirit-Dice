@@ -15,6 +15,30 @@ MonoBehaviour:
   m_GroupName: Spirit House Modifier Presentation
   m_GUID: 6583e98f0921e5543802fcfc4f6e5e26
   m_SerializeEntries:
+  - m_GUID: 10b5d3f239f341fe8ebd23e32cf40104
+    m_Address: theme.spirit-house.modifier.play_hand.favored_face_count_at_least.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 05c36837260945c18a70bc105ade7400
+    m_Address: theme.spirit-house.modifier.play_hand.favored_face_count_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b03e7504710745e0896a8a875a366c6f
+    m_Address: theme.spirit-house.modifier.play_hand.favored_face_count_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ee8e0b95553c4dbab0efc39115cb5c61
+    m_Address: theme.spirit-house.modifier.play_hand.favored_face_count_at_least.rerolls
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 031ae50c3ff380241bcc1f7ae49c4787
     m_Address: theme.spirit-house.modifier.initial_roll.previous_stage_exhausted_hands.base_score
     m_ReadOnly: 0

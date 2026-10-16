@@ -12,6 +12,43 @@ namespace Dice.Tests
         private const string EncounterId = "encounter.moth.crossroads";
         private const string RuleId = CyclingFavoredFaceMultiplierRuleDefinition.StableId;
 
+        [TestCase("base_score", 1, 0, 0, 0)]
+        [TestCase("base_score", 2, 10, 0, 0)]
+        [TestCase("multiplier", 1, 0, 0, 0)]
+        [TestCase("multiplier", 2, 0, 2, 0)]
+        [TestCase("combined", 1, 0, 0, 0)]
+        [TestCase("combined", 2, 5, 1, 0)]
+        [TestCase("rerolls", 1, 0, 0, 0)]
+        [TestCase("rerolls", 2, 0, 0, 1)]
+        public void LanternSeekersUseTheScoredFavoredFaceInInspectionPreviewAndPlay(
+            string role, int matches, int baseScore, int multiplier, int rerolls)
+        {
+            var authored = TestContent.BuildStandardCatalog();
+            string id = "modifier.play_hand.favored_face_count_at_least." + role;
+            var definition = authored.GetModifier(id);
+            var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 8, 3) },
+                startingModifiers: new[] { id }, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition() });
+            var catalog = new MechanicalCatalog("test.moth.charms", authored.Hands, new[] { encounter }, new[] { definition });
+            var original = EncounterSession.CreateEncounter(catalog, EncounterId, 27);
+            for (int hand = 0; hand < 4; ++hand) Execute(original, PlayHandAction.Instance);
+            var save = original.CaptureSave();
+            save.CurrentDice = matches == 2 ? new[] { 5, 5, 1, 2, 3 } : new[] { 5, 1, 2, 3, 4 };
+            save.InitialDice = (int[])save.CurrentDice.Clone();
+            var session = Restore(catalog, save);
+            Assert.That(session.Snapshot.EncounterRules.Single().FavoredFace, Is.EqualTo(5));
+            Assert.That(session.InspectModifiersForPlayHand().Single().ConditionMet, Is.EqualTo(matches >= 2));
+            var preview = session.PreviewHandResolution();
+            EncounterPersistenceTests.AssertGraphEqual(save, session.CaptureSave());
+            Assert.That(preview.Score.ModifierBaseScore, Is.EqualTo(baseScore));
+            Assert.That(preview.Score.ModifierMultiplier, Is.EqualTo(multiplier));
+            Assert.That(preview.Score.EncounterRuleMultiplier, Is.EqualTo(matches * 2));
+            Assert.That(preview.RerollsRemaining, Is.EqualTo(save.RerollsRemaining + rerolls));
+            var result = Execute(session, PlayHandAction.Instance);
+            Assert.That(result.Events.OfType<ModifierActivatedEvent>().Count(), Is.EqualTo(matches >= 2 ? 1 : 0));
+            Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.HandScore, Is.EqualTo(preview.Score.HandScore));
+            Assert.That(session.Snapshot.EncounterRules.Single().FavoredFace, Is.EqualTo(6));
+        }
+
         [TestCase(0)]
         [TestCase(1)]
         [TestCase(2)]
@@ -105,21 +142,15 @@ namespace Dice.Tests
             var encounter = catalog.GetEncounter(EncounterId);
             Assert.That(encounter.Rules.Select(value => value.Id), Is.EqualTo(new[] { RuleId }));
             Assert.That(encounter.UnlockMilestones, Is.Not.Empty);
-            foreach (var milestone in encounter.UnlockMilestones)
+            Assert.That(encounter.UnlockRewardModifierIds.Count, Is.EqualTo(6));
+            foreach (string id in encounter.UnlockRewardModifierIds)
             {
-                Assert.That(milestone.ModifierIds, Is.Not.Empty);
-                var families = milestone.ModifierIds.Select(id => catalog.GetModifier(id).FamilyId).Distinct().ToArray();
-                Assert.That(milestone.ModifierIds, Is.EquivalentTo(catalog.Modifiers
-                    .Where(value => families.Contains(value.FamilyId)).Select(value => value.Id)));
-                foreach (string id in milestone.ModifierIds)
-                {
                     var modifier = catalog.GetModifier(id);
                     Assert.That(id, Does.Not.StartWith("modifier.moth."));
                     Assert.That(modifier.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Global));
                     Assert.That(modifier.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
                     Assert.That(modifier.Availability.MatchesEncounter(catalog.GetEncounter("encounter.owl.watchtower")), Is.True);
                     Assert.That(modifier.Availability.MatchesEncounter(catalog.GetEncounter("encounter.fox.introduction")), Is.True);
-                }
             }
             foreach (string poolId in encounter.RewardPolicy.ModifierLayouts.SelectMany(value => value.PoolIds).Distinct())
             {
@@ -142,16 +173,22 @@ namespace Dice.Tests
             var source = authored.GetEncounter(EncounterId);
             var encounter = new EncounterDefinition(EncounterId,
                 source.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
-                source.StartingUpgrades, source.StartingModifiers, source.RewardPolicy, source.Rules, source.SpiritId, source.UnlockMilestones);
+                source.StartingUpgrades, source.StartingModifiers, source.RewardPolicy, source.Rules, source.SpiritId,
+                source.UnlockMilestones, source.EncounterModifierIds, source.UnlockRewardModifierIds);
             var catalog = new MechanicalCatalog("test.moth.progression", authored.Hands, new[] { encounter }, authored.Modifiers, authored.RewardPools);
             var session = EncounterSession.CreateEncounter(catalog, EncounterId, 27);
             for (int cleared = 1; cleared <= source.Stages.Count; ++cleared)
             {
                 Assert.That(session.Snapshot.EncounterRules.Single().FavoredFace, Is.EqualTo((cleared - 1) % 6 + 1));
                 Execute(session, PlayHandAction.Instance);
-                var unlocked = source.UnlockMilestones.Where(value => value.StageNumber <= cleared)
-                    .SelectMany(value => value.ModifierIds).Distinct().ToArray();
-                Assert.That(session.Snapshot.UnlockedModifierIds, Is.EquivalentTo(unlocked));
+                if (session.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
+                {
+                    var unlock = session.Snapshot.PendingReward;
+                    session = Restore(catalog, session.CaptureSave());
+                    Execute(session, new SelectModifierUnlockAction(unlock.OfferId, unlock.Options[0].OptionId));
+                }
+                var unlocked = session.Snapshot.UnlockedModifierIds;
+                Assert.That(unlocked.Count, Is.EqualTo(source.UnlockMilestones.Count(value => value.StageNumber <= cleared)));
                 session = Restore(catalog, session.CaptureSave());
                 if (cleared == source.Stages.Count) break;
 

@@ -42,6 +42,25 @@ namespace Dice.Tests
             "modifier.play_hand.two_pair.base_score"
         };
 
+        [TestCase("base_score")]
+        [TestCase("multiplier")]
+        [TestCase("combined")]
+        [TestCase("rerolls")]
+        public void LanternSeekersUseTheirOwnNameAndSharedLanternArtworkWithStandardCategories(string role)
+        {
+            var presentation = themeAssets.Single(asset => asset.Modifier.Id ==
+                "modifier.play_hand.favored_face_count_at_least." + role);
+            var lantern = themeAssets.Single(asset => asset.Modifier.Id ==
+                "modifier.player_reroll.last_reroll_on_last_hand." + role);
+            Assert.That(presentation.DisplayName, Does.StartWith("Lantern Seekers / "));
+            Assert.That(presentation.Artwork, Is.EqualTo(lantern.Artwork));
+            Assert.That(presentation.Category, Is.SameAs(lantern.Category));
+            Assert.That(SpiritModifierIcons.GetSprite(presentation.Modifier.Build()),
+                Is.SameAs(SpiritModifierIcons.GetSprite(lantern.Modifier.Build())));
+            Assert.That(SpiritModifierPresentation.GetConditionText(presentation.Modifier.Build()),
+                Is.EqualTo("At least 2 dice show the favored face."));
+        }
+
         [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair / Base", typeof(InitialPairCondition),
             "Your initial roll is a Pair.", "+10 base score", "On the initial roll / Once per hand")]
         [TestCase("modifier.player_reroll.selected_face_unchanged.rerolls", "Second Chance / Rerolls", typeof(SelectedFaceUnchangedCondition),
@@ -124,7 +143,7 @@ namespace Dice.Tests
         public void EveryStandardFamilyHasOneDistinctThematicName()
         {
             var families = Catalog().Modifiers.GroupBy(definition => definition.FamilyId).ToArray();
-            Assert.That(families.Length, Is.EqualTo(74));
+            Assert.That(families.Length, Is.EqualTo(75));
             var names = new HashSet<string>(StringComparer.Ordinal);
             foreach (var family in families)
             {
@@ -160,12 +179,12 @@ namespace Dice.Tests
         public void AuthoredVariantNamesIdentifyTheirEffectRole(string role, string label)
         {
             var variants = Catalog().Modifiers.Where(value => value.Id.EndsWith("." + role, StringComparison.Ordinal)).ToArray();
-            Assert.That(variants.Length, Is.EqualTo(74));
+            Assert.That(variants.Length, Is.EqualTo(75));
             foreach (var definition in variants)
                 Assert.That(SpiritModifierPresentation.GetName(definition), Does.EndWith(" / " + label), definition.Id);
             Assert.That(SpiritModifierPresentation.GetName(Catalog().GetModifier(
                 "modifier.play_hand.edge_sum_equals_either." + role)), Is.EqualTo("Two Gateposts / " + label));
-            Assert.That(Catalog().Modifiers.Select(SpiritModifierPresentation.GetName).Distinct().Count(), Is.EqualTo(296));
+            Assert.That(Catalog().Modifiers.Select(SpiritModifierPresentation.GetName).Distinct().Count(), Is.EqualTo(300));
         }
 
         [Test]
@@ -408,7 +427,11 @@ namespace Dice.Tests
         {
             var familySprites = new HashSet<Sprite>();
             var images = new List<Color32[]>();
-            foreach (var family in catalog.Modifiers.GroupBy(definition => definition.FamilyId))
+            var families = catalog.Modifiers.Where(definition =>
+                    definition.FamilyId != "modifier.play_hand.favored_face_count_at_least")
+                .GroupBy(definition => definition.FamilyId).ToArray();
+            Assert.That(families.Length, Is.EqualTo(74));
+            foreach (var family in families)
             {
                 var entries = family.Select(definition => themeAssets.Single(asset => asset.Modifier.Id == definition.Id)).ToArray();
                 Assert.That(entries.Select(asset => asset.Artwork).Distinct().Count(), Is.EqualTo(1), family.Key);

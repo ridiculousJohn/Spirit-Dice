@@ -85,6 +85,8 @@ namespace Dice.App
                         if (document[nameof(EncounterSaveData.PendingModifierOfferUnlockedIds)] == null)
                             document.Add(nameof(EncounterSaveData.PendingModifierOfferUnlockedIds), JValue.CreateNull());
                     }
+                    if (formatVersion < 4 && document[nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions)] == null)
+                        document.Add(nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions), false);
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
                     if (save == null) throw new FormatException("The save payload is missing.");

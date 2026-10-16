@@ -39,6 +39,7 @@ namespace Dice.Presentation
             {
                 case NoDiceRerolledCondition _: return "No rerolls spent on this hand.";
                 case ContainsFaceCondition value: return "At least one die shows " + value.Parameter + ".";
+                case FavoredFaceCountAtLeastCondition value: return "At least " + value.Parameter + " dice show the favored face.";
                 case ExactlyOneSelectedFaceCondition value: return "Exactly one rerolled die shows " + value.Parameter + ".";
                 case OutOfRerollsCondition _: return "No rerolls remain.";
                 case RangeLessThanCondition value: return "Largest minus smallest face is less than " + value.Parameter + ".";

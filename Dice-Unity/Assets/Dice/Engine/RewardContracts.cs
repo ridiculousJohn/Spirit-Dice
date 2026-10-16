@@ -4,7 +4,24 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
-    public enum RewardKind { Modifier, HandUpgrade }
+    public enum RewardKind { Modifier, HandUpgrade, ModifierUnlock }
+
+    public sealed class SelectModifierUnlockAction : EncounterAction
+    {
+        public long OfferId { get; }
+        public long OptionId { get; }
+        public SelectModifierUnlockAction(long offerId, long optionId)
+        {
+            OfferId = offerId;
+            OptionId = optionId;
+        }
+    }
+
+    public sealed class AcknowledgeModifierUnlockAction : EncounterAction
+    {
+        public long OfferId { get; }
+        public AcknowledgeModifierUnlockAction(long offerId) => OfferId = offerId;
+    }
 
     public sealed class RefreshModifierOfferAction : EncounterAction
     {

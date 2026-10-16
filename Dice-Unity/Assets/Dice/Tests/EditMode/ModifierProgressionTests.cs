@@ -24,12 +24,15 @@ namespace Dice.Tests
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] modifiers, RewardPolicyDefinition policy = null,
             IEnumerable<ModifierUnlockMilestone> milestones = null, string fallback = null, int stages = 2,
-            string encounterId = TestContent.EncounterId, string spiritId = "fox")
+            string encounterId = TestContent.EncounterId, string spiritId = "fox",
+            IEnumerable<string> encounterModifierIds = null, IEnumerable<string> unlockRewardModifierIds = null)
             => new MechanicalCatalog("progression.tests", TestContent.Hands(), new[]
             {
                 new EncounterDefinition(encounterId, Enumerable.Range(0, stages)
                     .Select(_ => new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards)),
-                    rewardPolicy: policy ?? Policy(), spiritId: spiritId, unlockMilestones: milestones)
+                    rewardPolicy: policy ?? Policy(), spiritId: spiritId, unlockMilestones: milestones,
+                    encounterModifierIds: encounterModifierIds, unlockRewardModifierIds: unlockRewardModifierIds ??
+                        milestones?.SelectMany(value => value.ModifierIds).Distinct())
             }, modifiers, new[] { new ModifierRewardPoolDefinition("pool",
                 modifiers.Where(modifier => modifier.Id != fallback).Select(modifier => modifier.Id), fallback) });
 
@@ -97,8 +100,11 @@ namespace Dice.Tests
             {
                 new ModifierUnlockMilestone(1, new[] { "global", "fox.unlock", "introduction.unlock" })
             });
-            var session = EncounterSession.CreateEncounter(introduction, TestContent.EncounterId, 10);
+            var session = EncounterSession.CreateEncounter(introduction, TestContent.EncounterId, 10,
+                modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock).Select(value => value.Id));
             var cleared = session.Execute(PlayHandAction.Instance, 0).Snapshot;
+            var acknowledge = cleared.PendingReward;
+            cleared = session.Execute(new AcknowledgeModifierUnlockAction(acknowledge.OfferId), cleared.Revision).Snapshot;
             Assert.That(cleared.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EquivalentTo(modifiers.Select(modifier => modifier.Id)));
 
@@ -180,15 +186,26 @@ namespace Dice.Tests
                 new ModifierUnlockMilestone(2, new[] { "final" }) });
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
             var clear = session.Execute(PlayHandAction.Instance, 0);
-            Assert.That(clear.Snapshot.PendingReward.Options.Select(option => option.DefinitionId), Is.EqualTo(new[] { "first" }));
+            Assert.That(clear.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            Assert.That(clear.Snapshot.PendingReward.Options.Select(option => option.DefinitionId), Is.EquivalentTo(new[] { "first", "final" }));
+            Assert.That(clear.Events.OfType<ModifierUnlockedEvent>(), Is.Empty);
+            var unlock = clear.Snapshot.PendingReward;
+            clear = session.Execute(new SelectModifierUnlockAction(unlock.OfferId,
+                unlock.Options.Single(value => value.DefinitionId == "first").OptionId), session.Snapshot.Revision);
             Assert.That(clear.Events.OfType<ModifierUnlockedEvent>().Single().ModifierId, Is.EqualTo("first"));
-            Assert.That(clear.Events.ToList().FindIndex(value => value is ModifierUnlockedEvent),
-                Is.LessThan(clear.Events.ToList().FindIndex(value => value is RewardOfferedEvent)));
+            Assert.That(clear.Snapshot.Modifiers, Is.Empty);
             var offer = session.Snapshot.PendingReward;
             session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), session.Snapshot.Revision);
             offer = session.Snapshot.PendingReward;
             session.Execute(new SelectHandUpgradeAction(offer.OfferId, offer.Options[0].OptionId), session.Snapshot.Revision);
             var final = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
+            Assert.That(final.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
+            unlock = final.Snapshot.PendingReward;
+            Assert.That(unlock.Options.Single().DefinitionId, Is.EqualTo("final"));
+            var pendingFinal = EncounterSession.RestoreEncounter(catalog, session.CaptureSave());
+            Assert.That(pendingFinal.Success, Is.True, pendingFinal.Detail);
+            Assert.That(pendingFinal.Session.Snapshot.PendingReward.Equals(unlock), Is.True);
+            final = session.Execute(new SelectModifierUnlockAction(unlock.OfferId, unlock.Options[0].OptionId), session.Snapshot.Revision);
             Assert.That(final.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             Assert.That(final.Snapshot.NewlyUnlockedModifierIds, Is.EqualTo(new[] { "first", "final" }));
             Assert.That(final.Events.OfType<ModifierUnlockedEvent>().Single().ModifierId, Is.EqualTo("final"));
@@ -219,6 +236,156 @@ namespace Dice.Tests
             Assert.That(first.Snapshot.PendingReward.Options.Select(option => option.DefinitionId), Is.EqualTo(new[] { "strong" }));
             Assert.That(EncounterSaveCodec.Serialize(restored.Session.CaptureSave()), Is.EqualTo(EncounterSaveCodec.Serialize(original.CaptureSave())));
             Assert.That(second.Accepted, Is.True);
+        }
+
+        [TestCase(0)]
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(7)]
+        public void UnlockOfferUsesDistinctUnownedIndividualsAndRequiresExplicitChoice(int remaining)
+        {
+            var modifiers = Enumerable.Range(0, 8).Select(i => new ModifierDefinition("charm." + i, "shared.family",
+                ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
+                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var owned = modifiers.Take(8 - remaining).Select(value => value.Id).ToArray();
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14, owned);
+            var clear = session.Execute(PlayHandAction.Instance, 0);
+            var offer = clear.Snapshot.PendingReward;
+            Assert.That(offer.Kind, Is.EqualTo(RewardKind.ModifierUnlock));
+            Assert.That(offer.Options.Count, Is.EqualTo(Math.Min(3, remaining)));
+            Assert.That(offer.Options.Select(value => value.DefinitionId).Distinct().Count(), Is.EqualTo(offer.Options.Count));
+            Assert.That(offer.Options.All(value => !owned.Contains(value.DefinitionId)), Is.True);
+            Assert.That(clear.Snapshot.UnlockedModifierIds, Is.EqualTo(owned));
+            Assert.That(session.Execute(new RefreshModifierOfferAction(offer.OfferId), session.Snapshot.Revision).Rejection,
+                Is.EqualTo(CommandRejection.InvalidPhase));
+            var bytes = EncounterSaveCodec.Serialize(session.CaptureSave());
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(bytes));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(EncounterSaveCodec.Serialize(restored.Session.CaptureSave()), Is.EqualTo(bytes));
+            EncounterAction action = remaining == 0 ? (EncounterAction)new AcknowledgeModifierUnlockAction(offer.OfferId) :
+                new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId);
+            var result = session.Execute(action, session.Snapshot.Revision);
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(result.Snapshot.UnlockedModifierIds.Count, Is.EqualTo(owned.Length + (remaining == 0 ? 0 : 1)));
+            Assert.That(result.Snapshot.Modifiers, Is.Empty);
+        }
+
+        [Test]
+        public void UnlockOfferSurvivesProfileMergeWithoutRerollingOrDuplicatingProgress()
+        {
+            var modifiers = Enumerable.Range(0, 4).Select(i => Modifier("unlock." + i, access: ModifierAccess.PermanentUnlock)).ToArray();
+            var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: modifiers.Select(value => value.Id));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 8);
+            session.Execute(PlayHandAction.Instance, 0);
+            var offer = session.Snapshot.PendingReward;
+            session.AddUnlockedModifiers(new[] { offer.Options[0].DefinitionId });
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
+            var chosen = restored.Session.Execute(new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId),
+                restored.Session.Snapshot.Revision);
+            Assert.That(chosen.Accepted, Is.True);
+            Assert.That(chosen.Events.OfType<ModifierUnlockedEvent>(), Is.Empty);
+            Assert.That(chosen.Snapshot.UnlockedModifierIds.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void EncounterAdditionsJoinOrdinaryPoolAndKeepTierRulesAndSavedEligibility()
+        {
+            var starter = Modifier("starter");
+            var addition = Modifier("addition", 2, ModifierAvailabilityScope.Encounter, TestContent.EncounterId,
+                ModifierAccess.EncounterExclusive);
+            var policy = Policy(rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) });
+            var encounter = new EncounterDefinition(TestContent.EncounterId,
+                new[] { new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards), new StageDefinition(1, 2, 1) },
+                rewardPolicy: policy, encounterModifierIds: new[] { addition.Id });
+            var catalog = new MechanicalCatalog("additions", TestContent.Hands(), new[] { encounter }, new[] { starter, addition },
+                new[] { new ModifierRewardPoolDefinition("pool", new[] { starter.Id }) });
+            Assert.That(Generate(catalog).ModifierIds, Is.EqualTo(new[] { addition.Id }));
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
+            session.Execute(PlayHandAction.Instance, 0);
+            var restored = EncounterSession.RestoreEncounter(catalog, session.CaptureSave());
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            var offer = restored.Session.Snapshot.PendingReward;
+            restored.Session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), restored.Session.Snapshot.Revision);
+            Assert.That(EncounterSession.RestoreEncounter(catalog, restored.Session.CaptureSave()).Success, Is.True);
+        }
+
+        [Test]
+        public void FormatThreePendingOfferRetainsItsPoolBeforeRefreshAddsEncounterModifiers()
+        {
+            var starter = Modifier("starter");
+            var addition = Modifier("addition", 2, ModifierAvailabilityScope.Encounter, TestContent.EncounterId,
+                ModifierAccess.EncounterExclusive);
+            var policy = Policy(milestones: new[] { new ModifierTierMilestone(2, 2) });
+            var stages = new[] { new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards), new StageDefinition(1, 2, 1) };
+            var pool = new ModifierRewardPoolDefinition("pool", new[] { starter.Id });
+            var originalCatalog = new MechanicalCatalog("legacy.additions", TestContent.Hands(),
+                new[] { new EncounterDefinition(TestContent.EncounterId, stages, rewardPolicy: policy) }, new[] { starter, addition }, new[] { pool });
+            var session = EncounterSession.CreateEncounter(originalCatalog, TestContent.EncounterId, 3);
+            session.Execute(PlayHandAction.Instance, 0);
+            var document = JObject.Parse(System.Text.Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            document[nameof(EncounterSaveData.SaveFormatVersion)] = 3;
+            document[nameof(EncounterSaveData.RulesVersion)] = 5;
+            document.Remove(nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions));
+            var catalog = new MechanicalCatalog("legacy.additions", TestContent.Hands(),
+                new[] { new EncounterDefinition(TestContent.EncounterId, stages, rewardPolicy: policy,
+                    encounterModifierIds: new[] { addition.Id }) }, new[] { starter, addition }, new[] { pool });
+            var restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            var offer = restored.Session.Snapshot.PendingReward;
+            Assert.That(offer.Options.Single().DefinitionId, Is.EqualTo(starter.Id));
+            restored = EncounterSession.RestoreEncounter(catalog, restored.Session.CaptureSave());
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            restored.Session.Execute(new RefreshModifierOfferAction(offer.OfferId), restored.Session.Snapshot.Revision);
+            Assert.That(restored.Session.Snapshot.PendingReward.Options.Single().DefinitionId, Is.EqualTo(addition.Id));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void FinalUnlockWithoutOrdinaryRewardsCanResumeBeforeCompleting(bool collected)
+        {
+            var modifier = Modifier("last", access: ModifierAccess.PermanentUnlock);
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+                unlockMilestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: new[] { modifier.Id });
+            var catalog = new MechanicalCatalog("final.unlock", TestContent.Hands(), new[] { encounter }, new[] { modifier });
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 4,
+                collected ? new[] { modifier.Id } : Array.Empty<string>());
+            session.Execute(PlayHandAction.Instance, 0);
+            Assert.That(session.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
+            var restored = EncounterSession.RestoreEncounter(catalog,
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            var offer = restored.Session.Snapshot.PendingReward;
+            EncounterAction action = collected ? (EncounterAction)new AcknowledgeModifierUnlockAction(offer.OfferId) :
+                new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId);
+            var result = restored.Session.Execute(action, restored.Session.Snapshot.Revision);
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(result.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(EncounterSession.RestoreEncounter(catalog, restored.Session.CaptureSave()).Success, Is.True);
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        public void AbandonPendingUnlockRetainsRestorableTerminalState(int stages)
+        {
+            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+                0, 1, 2, 1, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
+            var catalog = Catalog(new[] { Modifier("unlock", access: ModifierAccess.PermanentUnlock) }, policy,
+                new[] { new ModifierUnlockMilestone(1, new[] { "unlock" }) }, stages: stages);
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 2);
+            session.Execute(PlayHandAction.Instance, 0);
+            session.Execute(AbandonEncounterAction.Instance, session.Snapshot.Revision);
+            var restored = EncounterSession.RestoreEncounter(catalog, session.CaptureSave());
+            Assert.That(restored.Success, Is.True, restored.Detail);
+            Assert.That(restored.Session.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Abandoned));
+            Assert.That(restored.Session.Snapshot.UnlockedModifierIds, Is.Empty);
         }
 
         [TestCase(1, 3)]
@@ -283,8 +450,11 @@ namespace Dice.Tests
                 int.MaxValue, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy, new[] { new ModifierUnlockMilestone(1, new[] { "locked" }) });
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 5);
-            Assert.Throws<OverflowException>(() => session.Execute(PlayHandAction.Instance, 0));
-            Assert.That(session.Snapshot.Revision, Is.Zero);
+            session.Execute(PlayHandAction.Instance, 0);
+            var offer = session.Snapshot.PendingReward;
+            Assert.Throws<OverflowException>(() => session.Execute(new SelectModifierUnlockAction(offer.OfferId,
+                offer.Options[0].OptionId), session.Snapshot.Revision));
+            Assert.That(session.Snapshot.Revision, Is.EqualTo(1));
             Assert.That(session.Snapshot.UnlockedModifierIds, Is.Empty);
             Assert.That(session.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
             Assert.Throws<ArgumentException>(() => session.AddUnlockedModifiers(new[] { "locked", "starter" }));

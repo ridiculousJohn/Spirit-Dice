@@ -10,8 +10,20 @@ namespace Dice.Tests
 {
     public sealed class ProgressionContentTests
     {
+        [TestCase("encounter.owl.watchtower", "edge_pair_sums_equal", "alternating_parity", "ordered")]
+        [TestCase("encounter.moth.crossroads", "contains_rerolls_remaining", "every_die_rerolled", "maximum_at_most_rerolls_remaining")]
+        public void ProvisionalSpiritUnlockListsOfferOnlyBaseAndMultOfThreeAuthoredFamilies(
+            string encounterId, string first, string second, string third)
+        {
+            var encounter = Catalog().GetEncounter(encounterId);
+            Assert.That(encounter.UnlockRewardModifierIds, Is.EquivalentTo(new[] { first, second, third }
+                .SelectMany(family => new[] { "modifier.play_hand." + family + ".base_score",
+                    "modifier.play_hand." + family + ".multiplier" })));
+            Assert.That(encounter.UnlockMilestones.Select(value => value.StageNumber), Is.EqualTo(new[] { 3, 6, 10 }));
+        }
+
         [Test]
-        public void AuthoredFoxMilestonesUnlockAllFourVariantsOnlyForFoxEncounters()
+        public void AuthoredFoxMilestonesShareSixGlobalPermanentUnlockCandidates()
         {
             var catalog = Catalog();
             var encounter = catalog.GetEncounter("encounter.fox.introduction");
@@ -19,16 +31,18 @@ namespace Dice.Tests
             Assert.That(encounter.UnlockMilestones.Select(value => value.StageNumber), Is.EqualTo(new[] { 3, 6, 10 }));
             string[] families = { "modifier.initial_roll.first_hand", "modifier.player_reroll.rank_equals_before_reroll",
                 "modifier.initial_roll.initial_rank_above_previous" };
-            for (int i = 0; i < families.Length; ++i)
+            Assert.That(encounter.UnlockRewardModifierIds, Is.EquivalentTo(families.SelectMany(family =>
+                new[] { family + ".base_score", family + ".multiplier" })));
+            Assert.That(encounter.UnlockMilestones.All(value => value.ModifierIds.Count == 4), Is.True);
+            foreach (string family in families)
             {
-                var modifiers = encounter.UnlockMilestones[i].ModifierIds.Select(catalog.GetModifier).ToArray();
+                var modifiers = catalog.Modifiers.Where(value => value.FamilyId == family).ToArray();
                 Assert.That(modifiers.Length, Is.EqualTo(4));
-                Assert.That(modifiers.All(value => value.FamilyId == families[i]), Is.True);
                 foreach (var modifier in modifiers)
                 {
                     Assert.That(modifier.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
-                    Assert.That(modifier.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
-                    Assert.That(modifier.Availability.ScopeId, Is.EqualTo(encounter.SpiritId));
+                    Assert.That(modifier.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Global));
+                    Assert.That(modifier.Availability.ScopeId, Is.Null);
                     string role = modifier.Id.Substring(modifier.FamilyId.Length + 1);
                     Assert.That(catalog.GetRewardPool("reward_pool.fox.introduction." + role).ModifierIds,
                         Does.Contain(modifier.Id));
@@ -37,18 +51,21 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void NewPlayerHasFortyFourGeneralStartersAndEncounterScopedExclusives()
+        public void OrdinaryModifiersAreGlobalAndOnlyLanternSeekersAreEncounterExclusive()
         {
             var catalog = Catalog();
             var functional = catalog.Modifiers.Where(value => value.RewardEligible).ToArray();
-            Assert.That(functional.Count(value => value.Availability.Access == ModifierAccess.Starter), Is.EqualTo(44));
+            Assert.That(functional.Count(value => value.Availability.Access == ModifierAccess.Starter), Is.EqualTo(72));
             var exclusive = functional.Where(value => value.Availability.Access == ModifierAccess.EncounterExclusive).ToArray();
-            Assert.That(exclusive.Length, Is.EqualTo(28));
-            var foxExclusive = exclusive.Where(value => value.Availability.ScopeId == "encounter.fox.introduction").ToArray();
-            Assert.That(foxExclusive.Length, Is.EqualTo(4));
-            Assert.That(foxExclusive.All(value => value.FamilyId == "modifier.initial_roll.initial_pair"), Is.True);
+            Assert.That(exclusive.Length, Is.EqualTo(4));
+            Assert.That(exclusive.All(value => value.FamilyId == "modifier.play_hand.favored_face_count_at_least"), Is.True);
             Assert.That(exclusive.All(value => value.Availability.Scope == ModifierAvailabilityScope.Encounter), Is.True);
-            Assert.That(exclusive.Count(value => value.Availability.ScopeId == "encounter.owl.watchtower"), Is.EqualTo(24));
+            Assert.That(exclusive.All(value => value.Availability.ScopeId == "encounter.moth.crossroads"), Is.True);
+            Assert.That(catalog.Modifiers.Except(exclusive).All(value => value.Availability.Scope == ModifierAvailabilityScope.Global), Is.True);
+            Assert.That(catalog.GetEncounter("encounter.moth.crossroads").EncounterModifierIds,
+                Is.EquivalentTo(exclusive.Select(value => value.Id)));
+            Assert.That(catalog.GetEncounter("encounter.fox.introduction").EncounterModifierIds, Is.Empty);
+            Assert.That(catalog.GetEncounter("encounter.owl.watchtower").EncounterModifierIds, Is.Empty);
             Assert.That(functional.All(value => value.Availability.PowerTier >= 1 && value.Availability.PowerTier <= 3), Is.True);
         }
 

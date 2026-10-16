@@ -26,6 +26,6 @@ MonoBehaviour:
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
-  access: 2
-  availabilityScope: 2
-  availabilityScopeId: encounter.owl.watchtower
+  access: 0
+  availabilityScope: 0
+  availabilityScopeId:

@@ -77,6 +77,7 @@ namespace Dice.Presentation
         private Text encounterTitle;
         private Text menuTitle;
         private SpiritEncounterEndingView endingView;
+        private SpiritCollectionView collectionView;
         private Button investigationButton;
         private SpiritEncounterAudio encounterAudio;
         private SpiritActionModifierCue actionModifierCue;
@@ -549,6 +550,9 @@ namespace Dice.Presentation
                 openingGroups.Add(element.gameObject.AddComponent<CanvasGroup>());
             JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
             JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
+            collectionView = gameObject.AddComponent<SpiritCollectionView>();
+            collectionView.Build(portrait, () => collectionView.Hide());
+            JourneyView.SetCollectionAction(ShowCollection);
             ConfigureTable(tablePresentation);
             if (EventSystem.current == null)
             {
@@ -1012,9 +1016,10 @@ namespace Dice.Presentation
                 });
             profileSummary = SpiritUi.Label("ProfileSummary", panel.transform, "", 14, new Vector2(.05f, .67f),
                 new Vector2(.95f, .80f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            MenuAction(panel.transform, "SaveRunButton", "Save run", .54f, () => controls.Save());
-            MenuAction(panel.transform, "LoadRunButton", "Load run", .41f, () => controls.Load());
-            MenuAction(panel.transform, "NewRunButton", "New run", .28f, () => controls.StartNew());
+            MenuAction(panel.transform, "CollectionButton", "Collection", .55f, ShowCollection);
+            MenuAction(panel.transform, "SaveRunButton", "Save run", .45f, () => controls.Save());
+            MenuAction(panel.transform, "LoadRunButton", "Load run", .35f, () => controls.Load());
+            MenuAction(panel.transform, "NewRunButton", "New run", .25f, () => controls.StartNew());
             MenuAction(panel.transform, "AbandonRunButton", "Abandon run", .15f, () => controls.Abandon());
             SpiritUi.Button("CloseMenuButton", panel.transform, "Back to table", new Vector2(.05f, .02f), new Vector2(.95f, .13f), ToggleMenu);
             if (encounterAudio.Theme != null && encounterAudio.Theme.credits != null)
@@ -1029,7 +1034,7 @@ namespace Dice.Presentation
 
         private void MenuAction(Transform parent, string name, string title, float y, Action action)
         {
-            SpiritUi.Button(name, parent, title, new Vector2(.05f, y), new Vector2(.95f, y + .12f), () =>
+            SpiritUi.Button(name, parent, title, new Vector2(.05f, y), new Vector2(.95f, y + .09f), () =>
             {
                 if (Busy) return;
                 menuPanel.gameObject.SetActive(false);
@@ -1150,8 +1155,9 @@ namespace Dice.Presentation
             else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
             bool choosingUpgrade = snapshot.Phase == EncounterPhase.ChoosingHandUpgrade;
-            targetPanel.gameObject.SetActive(!choosingUpgrade);
-            statusLabel.gameObject.SetActive(!choosingUpgrade);
+            bool choosingUnlock = snapshot.Phase == EncounterPhase.ChoosingUnlock;
+            targetPanel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
+            statusLabel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
             playingPanel.gameObject.SetActive(playing);
             rewardsPanel.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
@@ -1160,7 +1166,7 @@ namespace Dice.Presentation
             targetCaption.text = playing ? "TO CLEAR" : completed ? "TOTAL SCORE" : "STAGE CLEARED";
             handsPanel.gameObject.SetActive(playing);
             rerollsPanel.gameObject.SetActive(playing);
-            resourcesLabel.gameObject.SetActive(!playing && !choosingUpgrade);
+            resourcesLabel.gameObject.SetActive(!playing && !choosingUpgrade && !choosingUnlock);
             SetResources(snapshot.HandsRemaining, snapshot.RerollsRemaining);
             RenderEncounterRule(snapshot);
             resourcesLabel.text = playing ? snapshot.HandsRemaining + " hands left  /  " + snapshot.RerollsRemaining + " rerolls left" :
@@ -1859,20 +1865,34 @@ namespace Dice.Presentation
             return card;
         }
 
+        public void ShowCollection()
+        {
+            if (Busy || controls?.Catalog == null || collectionView == null) return;
+            menuPanel.gameObject.SetActive(false);
+            collectionView.Show(controls.Catalog,
+                (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
+                journeyControls?.JourneyCatalog);
+        }
+
         private void RenderRewards(EncounterSnapshot snapshot)
         {
             var offer = snapshot.PendingReward;
             bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
-            rewardTitle.text = handUpgrade ? "Choose a hand to upgrade" : "Choose a charm";
+            bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
+            bool exhausted = unlock && offer.Options.Count == 0;
+            rewardTitle.text = handUpgrade ? "Choose a hand to upgrade" : exhausted ? "All charms collected" :
+                unlock ? "Unlock a charm" : "Choose a charm";
             rewardStep.gameObject.SetActive(false);
-            rewardInstruction.gameObject.SetActive(false);
+            rewardInstruction.gameObject.SetActive(unlock);
             upcomingStage.gameObject.SetActive(false);
             upgradeHandButton.gameObject.SetActive(offer != null);
-            SpiritUi.SetButtonLabel(upgradeHandButton, handUpgrade ? "Upgrade" : "Select");
+            SpiritUi.SetButtonLabel(upgradeHandButton, handUpgrade ? "Upgrade" : exhausted ? "Continue" : unlock ? "Unlock" : "Select");
             rewardStep.text = offer == null ? "REWARDS COMPLETE" : offer.Kind == RewardKind.Modifier ?
                 "CHARM CHOICE" : "HAND UPGRADE CHOICE";
             rewardInstruction.text = offer == null ? "Preparing the next stage" : offer.Kind == RewardKind.Modifier ?
                 "Choose one free charm to keep for this run" : "Choose one hand upgrade\nScroll to see all choices";
+            if (unlock) rewardInstruction.text = exhausted ? "You own every charm this encounter awards." :
+                "Choose one to add permanently to your collection.";
             var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
             int nextStageIndex = offer?.TargetStageIndex ?? snapshot.StageIndex + 1;
             if (nextStageIndex < encounter.Stages.Count)
@@ -1892,6 +1912,7 @@ namespace Dice.Presentation
             if (renderedOffer == offerId) return;
             renderedOffer = offerId;
             ClearRewardSelection();
+            upgradeHandButton.interactable = exhausted;
             int count = offer?.Options.Count ?? 0;
             while (rewardCards.Count < count)
                 rewardCards.Add(SpiritRewardCard.Create("RewardCard" + (rewardCards.Count + 1), rewardContent,
@@ -1902,7 +1923,7 @@ namespace Dice.Presentation
                 card.Button.gameObject.SetActive(i < count);
                 if (i >= count) continue;
                 var option = offer.Options[i];
-                if (offer.Kind == RewardKind.Modifier)
+                if (offer.Kind == RewardKind.Modifier || unlock)
                 {
                     var definition = controls.Catalog.GetModifier(option.DefinitionId);
                     card.RenderModifier(definition, offer.OfferId, option.OptionId);
@@ -1940,9 +1961,15 @@ namespace Dice.Presentation
 
         private void ConfirmHandUpgrade()
         {
-            if (Busy || selectedUpgradeOption < 0) return;
+            if (Busy) return;
             var offer = controls.Snapshot?.PendingReward;
             if (offer == null || offer.OfferId != renderedOffer) return;
+            if (offer.Kind == RewardKind.ModifierUnlock && offer.Options.Count == 0)
+            {
+                controls.ChooseReward(offer.OfferId, 0);
+                return;
+            }
+            if (selectedUpgradeOption < 0) return;
             foreach (var option in offer.Options)
             {
                 if (option.OptionId != selectedUpgradeOption) continue;
@@ -1968,12 +1995,13 @@ namespace Dice.Presentation
         {
             var offer = controls.Snapshot?.PendingReward;
             bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
+            bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
             var scrollRect = (RectTransform)rewardScroll.transform;
             var layout = rewardContent.GetComponent<VerticalLayoutGroup>();
             layout.spacing = 6;
             rewardScroll.vertical = handUpgrade;
             rewardsPanel.anchorMin = new Vector2(.025f, .065f);
-            rewardsPanel.anchorMax = new Vector2(.975f, .80f);
+            rewardsPanel.anchorMax = new Vector2(.975f, unlock ? .85f : .80f);
             rewardsPanel.offsetMin = rewardsPanel.offsetMax = Vector2.zero;
             if (handUpgrade)
             {
@@ -1998,6 +2026,11 @@ namespace Dice.Presentation
             }
             else
             {
+                if (unlock && offer.Options.Count == 0)
+                {
+                    rewardsPanel.anchorMin = new Vector2(.025f, .28f);
+                    rewardsPanel.anchorMax = new Vector2(.975f, .65f);
+                }
                 rewardTitle.rectTransform.anchorMin = new Vector2(0, 1);
                 rewardTitle.rectTransform.anchorMax = Vector2.one;
                 rewardTitle.rectTransform.offsetMin = new Vector2(20, -64);
@@ -2005,7 +2038,14 @@ namespace Dice.Presentation
                 scrollRect.anchorMin = Vector2.zero;
                 scrollRect.anchorMax = Vector2.one;
                 scrollRect.offsetMin = new Vector2(20, 76);
-                scrollRect.offsetMax = new Vector2(-20, -72);
+                scrollRect.offsetMax = new Vector2(-20, unlock ? -110 : -72);
+                if (unlock)
+                {
+                    rewardInstruction.rectTransform.anchorMin = new Vector2(0, 1);
+                    rewardInstruction.rectTransform.anchorMax = Vector2.one;
+                    rewardInstruction.rectTransform.offsetMin = new Vector2(24, -106);
+                    rewardInstruction.rectTransform.offsetMax = new Vector2(-24, -64);
+                }
                 var refreshRect = (RectTransform)RefreshButton.transform;
                 refreshRect.anchorMin = Vector2.zero;
                 refreshRect.anchorMax = new Vector2(.5f, 0);
@@ -2016,9 +2056,15 @@ namespace Dice.Presentation
                 confirmRect.anchorMax = new Vector2(1, 0);
                 confirmRect.offsetMin = new Vector2(6, 14);
                 confirmRect.offsetMax = new Vector2(-20, 66);
+                if (unlock)
+                {
+                    confirmRect.anchorMin = confirmRect.anchorMax = new Vector2(.5f, 0);
+                    confirmRect.sizeDelta = new Vector2(220, 52);
+                    confirmRect.anchoredPosition = new Vector2(0, 40);
+                }
                 if (offer != null)
                 {
-                    float availableHeight = rewardsPanel.rect.height - 148 - layout.padding.vertical -
+                    float availableHeight = rewardsPanel.rect.height - (unlock ? 186 : 148) - layout.padding.vertical -
                         Mathf.Max(0, offer.Options.Count - 1) * layout.spacing;
                     float cardHeight = offer.Options.Count > 3 ? 180 :
                         Mathf.Clamp(availableHeight / Mathf.Max(1, offer.Options.Count), 160, 180);

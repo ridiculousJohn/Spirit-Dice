@@ -27,5 +27,5 @@ MonoBehaviour:
   rewardEligible: 1
   powerTier: 1
   access: 1
-  availabilityScope: 1
-  availabilityScopeId: spirit.fox
+  availabilityScope: 0
+  availabilityScopeId:

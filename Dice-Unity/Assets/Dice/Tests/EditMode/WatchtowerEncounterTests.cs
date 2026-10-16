@@ -65,7 +65,7 @@ namespace Dice.Tests
         [TestCase("multiplier")]
         [TestCase("combined")]
         [TestCase("rerolls")]
-        public void PoolsContainTenUsableFamiliesAndThreeScopedMilestoneFamilies(string role)
+        public void PoolsContainTenUsableFamiliesAndThreeGlobalUnlockFamilies(string role)
         {
             var catalog = Catalog();
             var encounter = catalog.GetEncounter(EncounterId);
@@ -78,17 +78,18 @@ namespace Dice.Tests
             Assert.That(encounter.UnlockMilestones.Select(value => value.StageNumber), Is.EqualTo(new[] { 3, 6, 10 }));
             string[] milestones = { "modifier.play_hand.edge_pair_sums_equal", "modifier.play_hand.alternating_parity",
                 "modifier.play_hand.ordered" };
-            for (int i = 0; i < milestones.Length; ++i)
+            Assert.That(encounter.UnlockRewardModifierIds, Is.EquivalentTo(milestones.SelectMany(family =>
+                new[] { family + ".base_score", family + ".multiplier" })));
+            foreach (string family in milestones)
             {
-                var members = encounter.UnlockMilestones[i].ModifierIds.Select(catalog.GetModifier).ToArray();
+                var members = catalog.Modifiers.Where(value => value.FamilyId == family).ToArray();
                 Assert.That(members.Length, Is.EqualTo(4));
-                Assert.That(members.All(value => value.FamilyId == milestones[i]), Is.True);
                 foreach (var member in members)
                 {
                     Assert.That(member.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
-                    Assert.That(member.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
-                    Assert.That(member.Availability.ScopeId, Is.EqualTo("spirit.owl"));
-                    Assert.That(member.Availability.MatchesEncounter(catalog.GetEncounter("encounter.fox.introduction")), Is.False);
+                    Assert.That(member.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Global));
+                    Assert.That(member.Availability.ScopeId, Is.Null);
+                    Assert.That(member.Availability.MatchesEncounter(catalog.GetEncounter("encounter.fox.introduction")), Is.True);
                 }
             }
         }
@@ -178,15 +179,21 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(EncounterId,
                 source.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls,
                     stage.ExitBehavior)), source.StartingUpgrades, source.StartingModifiers, source.RewardPolicy,
-                source.Rules, source.SpiritId, source.UnlockMilestones);
+                source.Rules, source.SpiritId, source.UnlockMilestones, source.EncounterModifierIds, source.UnlockRewardModifierIds);
             var catalog = new MechanicalCatalog("test.owl.progression", authored.Hands, new[] { encounter },
                 authored.Modifiers, authored.RewardPools);
             var session = EncounterSession.CreateEncounter(catalog, EncounterId, seed);
             for (int cleared = 1; cleared <= 10; ++cleared)
             {
                 Execute(session, PlayHandAction.Instance);
-                foreach (var milestone in encounter.UnlockMilestones.Where(value => value.StageNumber <= cleared))
-                    Assert.That(milestone.ModifierIds.Except(session.Snapshot.UnlockedModifierIds), Is.Empty);
+                if (session.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
+                {
+                    var unlock = session.Snapshot.PendingReward;
+                    session = Restore(catalog, session.CaptureSave());
+                    Execute(session, new SelectModifierUnlockAction(unlock.OfferId, unlock.Options[0].OptionId));
+                }
+                Assert.That(session.Snapshot.UnlockedModifierIds.Count,
+                    Is.EqualTo(encounter.UnlockMilestones.Count(value => value.StageNumber <= cleared)));
                 var restored = Restore(catalog, session.CaptureSave());
                 EncounterPersistenceTests.AssertGraphEqual(session.CaptureSave(), restored.CaptureSave());
                 session = restored;
@@ -201,7 +208,7 @@ namespace Dice.Tests
                 Execute(session, new SelectHandUpgradeAction(offer.OfferId, offer.Options[0].OptionId));
             }
             Assert.That(session.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-            Assert.That(session.Snapshot.UnlockedModifierIds.Count, Is.EqualTo(12));
+            Assert.That(session.Snapshot.UnlockedModifierIds.Count, Is.EqualTo(3));
             Assert.That(session.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
         }
 

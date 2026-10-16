@@ -41,6 +41,7 @@ namespace Dice.Engine
                 UnlockedModifierIds = state.UnlockedModifierIds.ToArray(),
                 NewlyUnlockedModifierIds = state.NewlyUnlockedModifierIds.ToArray(),
                 PendingModifierOfferUsesLegacyEligibility = state.PendingModifierOfferUsesLegacyEligibility,
+                PendingModifierOfferUsesEncounterAdditions = state.PendingModifierOfferUsesEncounterAdditions,
                 PendingModifierOfferUnlockedIds = state.PendingModifierOfferUnlockedIds?.ToArray(),
                 Modifiers = new EncounterSaveModifierData[state.Modifiers.Length],
                 ModifierContributions = new EncounterSaveContributionData[state.ModifierContributions.Count]
@@ -96,7 +97,7 @@ namespace Dice.Engine
             bool legacy = save.SaveFormatVersion == 1;
             if (save.SaveFormatVersion < 1 || save.SaveFormatVersion > EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
-            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : EncounterSession.RulesVersion))
+            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : save.SaveFormatVersion == 3 ? 5 : EncounterSession.RulesVersion))
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -126,6 +127,8 @@ namespace Dice.Engine
         {
             Require(Enum.IsDefined(typeof(EncounterPhase), save.Phase) && Enum.IsDefined(typeof(EncounterOutcome), save.Outcome),
                 "Phase or outcome is invalid.");
+            Require(save.SaveFormatVersion >= 4 || save.Phase != EncounterPhase.ChoosingUnlock,
+                "Legacy saves cannot contain unlock choices.");
             Require(save.Revision >= 0 && save.StageIndex >= 0 && save.StageIndex < definition.Stages.Count,
                 "Revision or stage index is invalid.");
             var stage = definition.Stages[save.StageIndex];
@@ -148,7 +151,8 @@ namespace Dice.Engine
             bool completed = save.Phase == EncounterPhase.Completed;
             Require(completed == (save.Outcome != EncounterOutcome.None), "Phase and outcome disagree.");
             bool postPlay = save.Phase == EncounterPhase.AwaitingRewards || save.Phase == EncounterPhase.ChoosingModifier ||
-                save.Phase == EncounterPhase.ChoosingHandUpgrade || (completed && save.Outcome != EncounterOutcome.Abandoned) ||
+                save.Phase == EncounterPhase.ChoosingHandUpgrade || save.Phase == EncounterPhase.ChoosingUnlock ||
+                (completed && save.Outcome != EncounterOutcome.Abandoned) ||
                 (completed && save.RemainingThreshold == 0);
             Require(save.HandIndex == save.HandsPlayedInStage - (postPlay ? 1 : 0), "Hand index disagrees with played hands.");
             Require(save.HandsPlayedInStage == 0 ? save.RemainingThreshold == stage.Threshold : save.RemainingThreshold < stage.Threshold,
@@ -159,9 +163,12 @@ namespace Dice.Engine
                 Require(save.RemainingThreshold == 0 && save.StageIndex == definition.Stages.Count - 1, "Winning state is inconsistent.");
             if (save.Outcome == EncounterOutcome.Lost)
                 Require(save.RemainingThreshold > 0 && save.HandsRemaining == 0, "Losing state is inconsistent.");
+            bool abandonedUnlock = completed && save.Outcome == EncounterOutcome.Abandoned &&
+                HasUnlockMilestone(definition, save.StageIndex + 1);
             if (postPlay && save.Outcome != EncounterOutcome.Won && save.Outcome != EncounterOutcome.Lost)
-                Require(save.RemainingThreshold == 0 && save.StageIndex < definition.Stages.Count - 1 &&
-                    stage.ExitBehavior == StageExitBehavior.AwaitRewards, "Reward boundary is inconsistent.");
+                Require(save.RemainingThreshold == 0 && (save.Phase == EncounterPhase.ChoosingUnlock || abandonedUnlock ||
+                    (save.StageIndex < definition.Stages.Count - 1 && stage.ExitBehavior == StageExitBehavior.AwaitRewards)),
+                    "Reward boundary is inconsistent.");
             Require(save.HandUpgrades != null && save.HandUpgrades.Length == HandDefinition.CategoryCount &&
                 save.Modifiers != null && save.ModifierContributions != null && save.ExcludedRewardFamilies != null &&
                 save.RecentHandUpgrades != null, "A required save array is missing.");
@@ -190,6 +197,7 @@ namespace Dice.Engine
                 RecentHandUpgrades = new List<HandCategory>(save.RecentHandUpgrades),
                 PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories)
             };
+            state.PendingModifierOfferUsesEncounterAdditions = save.SaveFormatVersion >= 4 && save.PendingModifierOfferUsesEncounterAdditions;
             ValidateUnlocks(catalog, definition, save, state);
             ValidateHistory(definition, save, state, postPlay);
             ValidateDiceHistory(state, postPlay);
@@ -233,7 +241,8 @@ namespace Dice.Engine
                 Require(id != null && unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
                 bool reached = false;
                 foreach (var milestone in definition.UnlockMilestones)
-                    if (milestone.StageNumber <= clearedStageNumber && milestone.ModifierIds.Contains(id)) reached = true;
+                    if (milestone.StageNumber <= clearedStageNumber &&
+                        (milestone.ModifierIds.Contains(id) || definition.UnlockRewardModifierIds.Contains(id))) reached = true;
                 Require(reached, "An earned unlock requires a cleared milestone.");
             }
             state.UnlockedModifierIds = new List<string>(save.UnlockedModifierIds);
@@ -423,14 +432,16 @@ namespace Dice.Engine
             var policy = definition.RewardPolicy;
             bool choosingModifier = state.Phase == EncounterPhase.ChoosingModifier;
             bool choosingUpgrade = state.Phase == EncounterPhase.ChoosingHandUpgrade;
-            Require((save.PendingReward != null) == (choosingModifier || choosingUpgrade), "Pending offer disagrees with phase.");
+            bool choosingUnlock = state.Phase == EncounterPhase.ChoosingUnlock;
+            Require((save.PendingReward != null) == (choosingModifier || choosingUpgrade || choosingUnlock), "Pending offer disagrees with phase.");
             Require((state.PendingUpgradeCategories != null) == choosingModifier, "Cached upgrade choices disagree with phase.");
             Require(state.Phase != EncounterPhase.AwaitingRewards || policy == null, "A reward policy cannot await external rewards.");
             Require(!(choosingModifier || choosingUpgrade) || policy != null, "Reward selection requires a policy.");
             long previousRewardStages = 0;
             for (int i = 0; i < state.StageIndex; ++i)
                 if (definition.Stages[i].ExitBehavior == StageExitBehavior.AwaitRewards) ++previousRewardStages;
-            bool currentRewardStage = postPlay && state.StageIndex < definition.Stages.Count - 1 && state.RemainingThreshold == 0;
+            bool currentRewardStage = postPlay && !choosingUnlock && state.StageIndex < definition.Stages.Count - 1 &&
+                state.RemainingThreshold == 0 && definition.Stages[state.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards;
             long maximumAcquisitions = policy == null ? 0 : previousRewardStages +
                 (currentRewardStage && (choosingUpgrade || state.Outcome == EncounterOutcome.Abandoned) ? 1 : 0);
             Require(state.Modifiers.Length - definition.StartingModifiers.Count <= maximumAcquisitions,
@@ -453,14 +464,17 @@ namespace Dice.Engine
                 Require(recentCounts[i] <= state.HandUpgrades[i] - definition.StartingUpgrades[i],
                     "Recent upgrade history disagrees with upgrade counts.");
             if (policy == null)
-                Require(state.RewardRefreshes == 0 && state.NextOfferId == 1 && state.NextOptionId == 1 &&
+                Require(state.RewardRefreshes == 0 &&
                     state.ExcludedRewardFamilies.Count == 0, "Reward data requires a policy.");
             else
             {
                 long grants = previousRewardStages + (currentRewardStage ? 1 : 0);
                 long availableRefreshes = policy.StartingRefreshes + grants * policy.RefreshesPerClear;
-                Require(state.RewardRefreshes <= availableRefreshes &&
-                    (availableRefreshes - state.RewardRefreshes) % policy.RefreshCost == 0,
+                long spent = availableRefreshes - state.RewardRefreshes;
+                bool beforeUnlockChoice = state.Outcome == EncounterOutcome.Abandoned && currentRewardStage &&
+                    HasUnlockMilestone(definition, state.StageIndex + 1) &&
+                    spent >= policy.RefreshesPerClear && (spent - policy.RefreshesPerClear) % policy.RefreshCost == 0;
+                Require(spent >= 0 && (spent % policy.RefreshCost == 0 || beforeUnlockChoice),
                     "Refresh resources disagree with reward economy.");
                 var acquiredIds = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var pool in catalog.RewardPools)
@@ -468,6 +482,7 @@ namespace Dice.Engine
                     foreach (string id in pool.ModifierIds) acquiredIds.Add(id);
                     if (pool.FallbackModifierId != null) acquiredIds.Add(pool.FallbackModifierId);
                 }
+                foreach (string id in definition.EncounterModifierIds) acquiredIds.Add(id);
                 for (int i = definition.StartingModifiers.Count; i < state.Modifiers.Length; ++i)
                     Require(acquiredIds.Contains(state.Modifiers[i].DefinitionId), "Acquired modifier is absent from reward pools.");
             }
@@ -477,16 +492,16 @@ namespace Dice.Engine
             if (choosingModifier) ValidateUpgradeCategories(catalog, definition, state, state.PendingUpgradeCategories);
             if (save.PendingReward == null) return;
             var source = save.PendingReward;
-            Require(source.Kind == (choosingModifier ? RewardKind.Modifier : RewardKind.HandUpgrade) &&
+            Require(source.Kind == (choosingModifier ? RewardKind.Modifier : choosingUnlock ? RewardKind.ModifierUnlock : RewardKind.HandUpgrade) &&
                 source.TargetStageIndex == state.StageIndex + 1 && source.OfferId > 0 &&
-                source.OfferId == state.NextOfferId - 1 && source.Options != null && source.Options.Length > 0 &&
+                source.OfferId == state.NextOfferId - 1 && source.Options != null && (source.Options.Length > 0 || choosingUnlock) &&
                 state.NextOptionId > source.Options.Length, "Pending offer metadata is inconsistent.");
             var options = new List<RewardOption>();
             foreach (var option in source.Options)
             {
                 Require(option != null && option.OptionId == state.NextOptionId - source.Options.Length + options.Count,
                     "Reward option identity or order is invalid.");
-                if (choosingModifier)
+                if (choosingModifier || choosingUnlock)
                 {
                     Require(!option.HasCategory && option.Category == default, "A modifier option cannot contain a hand category.");
                     GetModifier(definitions, option.DefinitionId);
@@ -500,6 +515,7 @@ namespace Dice.Engine
                 options.Add(new RewardOption(option.OptionId, option.DefinitionId, option.HasCategory ? (HandCategory?)option.Category : null));
             }
             if (choosingModifier) ValidateModifierOptions(catalog, definition, state, options);
+            else if (choosingUnlock) ValidateUnlockOptions(definition, state, options);
             else
             {
                 var categories = new List<HandCategory>();
@@ -526,7 +542,8 @@ namespace Dice.Engine
                 if (!state.PendingModifierOfferUsesLegacyEligibility)
                 {
                     var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
-                    var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.StageIndex + 2, pool, owned, offered, definition, unlocked);
+                    var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.StageIndex + 2, pool, owned, offered,
+                        definition, unlocked, state.PendingModifierOfferUsesEncounterAdditions);
                     string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.StageIndex + 2, pool, definition, unlocked);
                     if (eligible.Count == 0 && fallback == null) continue;
                     Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
@@ -554,6 +571,30 @@ namespace Dice.Engine
                 offered.Add(modifier.FamilyId);
             }
             Require(nextOption == options.Count, "Modifier offer contains an extra option.");
+        }
+
+        private static void ValidateUnlockOptions(EncounterDefinition definition, EncounterState state, List<RewardOption> options)
+        {
+            Require(HasUnlockMilestone(definition, state.StageIndex + 1), "An unlock offer requires a cleared milestone.");
+            var candidates = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in definition.UnlockRewardModifierIds)
+                if (!state.UnlockedModifierIds.Contains(id)) candidates.Add(id);
+            var offered = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var option in options)
+            {
+                Require(definition.UnlockRewardModifierIds.Contains(option.DefinitionId) && offered.Add(option.DefinitionId),
+                    "Unlock options must be distinct entries from the authored unlock pool.");
+                // Profile progress can have been committed before the corresponding run save was written.
+                candidates.Add(option.DefinitionId);
+            }
+            Require(options.Count == Math.Min(3, candidates.Count), "Unlock offer has an incorrect option count.");
+        }
+
+        private static bool HasUnlockMilestone(EncounterDefinition definition, int stageNumber)
+        {
+            foreach (var milestone in definition.UnlockMilestones)
+                if (milestone.StageNumber == stageNumber) return true;
+            return false;
         }
 
         private static void ValidateUpgradeCategories(MechanicalCatalog catalog, EncounterDefinition definition,

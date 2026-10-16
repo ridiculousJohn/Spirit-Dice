@@ -213,6 +213,9 @@ namespace Dice.Tests
                 return new RerollDiceAction(mask);
             }
             var offer = snapshot.PendingReward;
+            if (snapshot.Phase == EncounterPhase.ChoosingUnlock)
+                return offer.Options.Count == 0 ? new AcknowledgeModifierUnlockAction(offer.OfferId) :
+                    new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId);
             if (snapshot.Phase == EncounterPhase.ChoosingModifier)
             {
                 var selected = offer.Options.OrderByDescending(option =>
@@ -230,9 +233,12 @@ namespace Dice.Tests
         {
             if (action is RerollDiceAction reroll) return "R," + reroll.SelectedMask;
             if (action is PlayHandAction) return "P," + before.StageIndex;
-            long optionId = action is SelectModifierAction modifier ? modifier.OptionId : ((SelectHandUpgradeAction)action).OptionId;
+            if (action is AcknowledgeModifierUnlockAction) return "A," + before.PendingReward.OfferId;
+            long optionId = action is SelectModifierAction modifier ? modifier.OptionId :
+                action is SelectModifierUnlockAction unlock ? unlock.OptionId : ((SelectHandUpgradeAction)action).OptionId;
             var selected = before.PendingReward.Options.Single(option => option.OptionId == optionId);
-            return (action is SelectModifierAction ? "M," : "U,") + before.PendingReward.OfferId + "," + optionId
+            return (action is SelectModifierAction ? "M," : action is SelectModifierUnlockAction ? "L," : "U,")
+                + before.PendingReward.OfferId + "," + optionId
                 + "," + selected.DefinitionId;
         }
 

@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
-    public enum EncounterPhase { Playing, AwaitingRewards, Completed, ChoosingModifier, ChoosingHandUpgrade }
+    public enum EncounterPhase { Playing, AwaitingRewards, Completed, ChoosingModifier, ChoosingHandUpgrade, ChoosingUnlock }
     public enum EncounterOutcome { None, Won, Lost, Abandoned }
     public enum CommandRejection
     {

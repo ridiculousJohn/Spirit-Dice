@@ -89,10 +89,10 @@ namespace Dice.Engine
             return Array.AsReadOnly(values);
         }
 
-        internal static void Resolve(EncounterState state, MechanicalCatalog catalog, StageDefinition stage,
+        internal static void Resolve(EncounterState state, MechanicalCatalog catalog, EncounterDefinition encounter,
             ModifierPhase phase, List<RuleEvent> events)
         {
-            var context = CreateContext(state, stage, state.HandsRemaining);
+            var context = CreateContext(state, encounter, state.HandsRemaining);
             var contributions = new List<ModifierContribution>();
 
             // Predicates observe one phase snapshot; resource grants cannot change later eligibility.
@@ -140,11 +140,11 @@ namespace Dice.Engine
         }
 
         internal static ReadOnlyCollection<ModifierInspection> InspectForPlayHand(EncounterState state,
-            MechanicalCatalog catalog, StageDefinition stage)
+            MechanicalCatalog catalog, EncounterDefinition encounter)
         {
             bool playing = state.Phase == EncounterPhase.Playing;
             // PlayHand predicates see the hands spent on submission and resources before any phase effects.
-            var context = playing ? CreateContext(state, stage, state.HandsRemaining - 1) : default;
+            var context = playing ? CreateContext(state, encounter, state.HandsRemaining - 1) : default;
             var values = new ModifierInspection[state.Modifiers.Length];
             for (int i = 0; i < values.Length; ++i)
             {
@@ -167,11 +167,19 @@ namespace Dice.Engine
             return Array.AsReadOnly(values);
         }
 
-        private static ModifierContext CreateContext(EncounterState state, StageDefinition stage, int handsRemaining)
-            => new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
+        private static ModifierContext CreateContext(EncounterState state, EncounterDefinition encounter, int handsRemaining)
+        {
+            int? favoredFace = null;
+            foreach (var rule in encounter.Rules)
+            {
+                int face = rule.FavoredFace(state.TotalHandsPlayed);
+                if (face != 0) { favoredFace = face; break; }
+            }
+            return new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
                 state.PreviousPlayedDice, state.LatestRerollMask, state.EverRerolledMask, state.RerollsSpentOnHand,
-                handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, stage.StartingHands,
-                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining);
+                handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, encounter.Stages[state.StageIndex].StartingHands,
+                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining, favoredFace);
+        }
 
         private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)
             => (definition.ActivationLimit != ModifierActivationLimit.OncePerHand || instance.ActivationsThisHand == 0) &&

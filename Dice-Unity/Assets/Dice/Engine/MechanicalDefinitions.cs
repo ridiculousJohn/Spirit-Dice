@@ -90,7 +90,6 @@ namespace Dice.Engine
                 DefinitionValidation.RequireId(id, nameof(modifierIds));
                 if (!unique.Add(id)) throw new ArgumentException("Unlock IDs must be unique.", nameof(modifierIds));
             }
-            if (ids.Count == 0) throw new ArgumentException("An unlock milestone requires modifiers.", nameof(modifierIds));
             StageNumber = stageNumber;
             ModifierIds = ids.AsReadOnly();
         }
@@ -106,11 +105,14 @@ namespace Dice.Engine
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
         public string SpiritId { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
+        public ReadOnlyCollection<string> EncounterModifierIds { get; }
+        public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
 
         public EncounterDefinition(string id, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
-            IEnumerable<ModifierUnlockMilestone> unlockMilestones = null)
+            IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
+            IEnumerable<string> unlockRewardModifierIds = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -142,6 +144,20 @@ namespace Dice.Engine
                 if (milestone == null || milestone.StageNumber > Stages.Count || !milestoneStages.Add(milestone.StageNumber))
                     throw new ArgumentException("Unlock stages must be unique and within the encounter.", nameof(unlockMilestones));
             UnlockMilestones = milestones.AsReadOnly();
+            EncounterModifierIds = CopyUniqueIds(encounterModifierIds, nameof(encounterModifierIds));
+            UnlockRewardModifierIds = CopyUniqueIds(unlockRewardModifierIds, nameof(unlockRewardModifierIds));
+        }
+
+        private static ReadOnlyCollection<string> CopyUniqueIds(IEnumerable<string> source, string parameter)
+        {
+            var ids = new List<string>(source ?? Array.Empty<string>());
+            var unique = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in ids)
+            {
+                DefinitionValidation.RequireId(id, parameter);
+                if (!unique.Add(id)) throw new ArgumentException("Modifier IDs must be unique.", parameter);
+            }
+            return ids.AsReadOnly();
         }
     }
 
@@ -154,6 +170,7 @@ namespace Dice.Engine
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
         public ReadOnlyCollection<ModifierRewardPoolDefinition> RewardPools { get; }
+        public ReadOnlyCollection<EncounterDefinition> Encounters { get; }
 
         public MechanicalCatalog(string version, IEnumerable<HandDefinition> hands, IEnumerable<EncounterDefinition> encounters,
             IEnumerable<ModifierDefinition> modifiers = null, IEnumerable<ModifierRewardPoolDefinition> rewardPools = null)
@@ -199,6 +216,7 @@ namespace Dice.Engine
                 }
             RewardPools = poolList.AsReadOnly();
             this.encounters = new Dictionary<string, EncounterDefinition>(StringComparer.Ordinal);
+            var encounterList = new List<EncounterDefinition>();
             foreach (var encounter in encounters)
             {
                 if (encounter == null || this.encounters.ContainsKey(encounter.Id))
@@ -215,16 +233,27 @@ namespace Dice.Engine
                             modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
                             !modifier.Availability.MatchesEncounter(encounter))
                             throw new ArgumentException("Milestones must reference permanent unlocks within the encounter scope.", nameof(encounters));
+                foreach (string modifierId in encounter.UnlockRewardModifierIds)
+                    if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
+                        modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
+                        !modifier.RewardEligible || !modifier.Availability.MatchesEncounter(encounter))
+                        throw new ArgumentException("Unlock rewards must reference eligible permanent unlocks within the encounter scope.", nameof(encounters));
+                foreach (string modifierId in encounter.EncounterModifierIds)
+                    if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
+                        !modifier.RewardEligible || !modifier.Availability.MatchesEncounter(encounter))
+                        throw new ArgumentException("Encounter additions must reference eligible modifiers within the encounter scope.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
                         foreach (string poolId in layout.PoolIds)
                             if (!rewardPoolsById.ContainsKey(poolId))
                                 throw new ArgumentException("A reward layout references a missing pool.", nameof(encounters));
                 this.encounters.Add(encounter.Id, encounter);
+                encounterList.Add(encounter);
             }
             if (this.encounters.Count == 0) throw new ArgumentException("At least one encounter is required.", nameof(encounters));
             Version = version;
             Hands = Array.AsReadOnly(byCategory);
+            Encounters = encounterList.AsReadOnly();
         }
 
         public HandDefinition GetHand(HandCategory category)

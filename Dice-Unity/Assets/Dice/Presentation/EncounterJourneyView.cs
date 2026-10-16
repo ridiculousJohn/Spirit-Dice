@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Dice.Engine;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,6 +40,12 @@ namespace Dice.Presentation
         private Button returnButton;
         private Button resumeButton;
         private Button loadButton;
+        private Action showCollection;
+        private Button collectionButton;
+        private RectTransform encounterCharms;
+        private RectTransform encounterCharmContent;
+        private ScrollRect encounterCharmScroll;
+        private readonly List<SpiritModifierFamilyRow> encounterCharmRows = new List<SpiritModifierFamilyRow>();
         private RectTransform clueContent;
         private ScrollRect clueScroll;
         private readonly List<GameObject> clueCards = new List<GameObject>();
@@ -93,7 +100,9 @@ namespace Dice.Presentation
             resumeButton = SpiritUi.Button("ResumeEncounterButton", board, "Continue at the table",
                 new Vector2(.035f, .09f), new Vector2(.965f, .165f), () => controls.ResumeEncounter(), true);
             loadButton = SpiritUi.Button("LoadJourneyButton", board, "Load saved encounter",
-                new Vector2(.035f, .012f), new Vector2(.965f, .087f), () => encounterControls?.Load());
+                new Vector2(.035f, .012f), new Vector2(.58f, .087f), () => encounterControls?.Load());
+            collectionButton = SpiritUi.Button("InvestigationCollectionButton", board, "Collection",
+                new Vector2(.58f, .012f), new Vector2(.965f, .087f), () => showCollection?.Invoke());
 
             sequence = SpiritUi.Full("JourneySequence", root);
             var blocker = sequence.gameObject.AddComponent<Image>();
@@ -145,14 +154,83 @@ namespace Dice.Presentation
             advanceButton = SpiritUi.Button("JourneyAdvanceButton", sequence, "Continue",
                 new Vector2(.035f, .065f), new Vector2(.965f, .145f), () => controls.AdvanceJourney(), true);
             acceptButton = SpiritUi.Button("JourneyAcceptButton", sequence, "Accept",
-                new Vector2(.035f, .065f), new Vector2(.965f, .145f), () => controls.AcceptEncounter(), true);
+                new Vector2(.035f, .065f), new Vector2(.965f, .145f), ShowEncounterCharms, true);
             returnButton = SpiritUi.Button("JourneyReturnButton", sequence, "Back to clues",
                 new Vector2(.035f, .003f), new Vector2(.505f, .064f), () => controls.ReturnToInvestigation());
             skipButton = SpiritUi.Button("JourneySkipButton", sequence, "Skip to invitation",
                 new Vector2(.505f, .003f), new Vector2(.965f, .064f), () => controls.SkipIntro());
             journeyStatus = SpiritUi.Label("JourneyStatus", sequence, "", 16,
                 new Vector2(.05f, .895f), new Vector2(.95f, .945f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+            BuildEncounterCharms();
             root.gameObject.SetActive(false);
+        }
+
+        public void SetCollectionAction(Action openCollection)
+        {
+            showCollection = openCollection;
+        }
+
+        private void BuildEncounterCharms()
+        {
+            var theme = SpiritUi.GetTheme(transform);
+            encounterCharms = SpiritUi.Panel("EncounterCharmsIntroduction", sequence, Vector2.zero, Vector2.one,
+                new Color(theme.panelColor.r, theme.panelColor.g, theme.panelColor.b, 1)).rectTransform;
+            SpiritUi.Panel("EncounterCharmsFrame", encounterCharms, Vector2.zero, Vector2.one,
+                theme.panelColor, 0, true).raycastTarget = false;
+            SpiritUi.Heading("EncounterCharmsTitle", encounterCharms, "ENCOUNTER CHARMS", 29,
+                new Vector2(.035f, .89f), new Vector2(.965f, .985f), TextAnchor.MiddleCenter, theme.amber);
+            SpiritUi.Label("EncounterCharmsScope", encounterCharms,
+                "These charms can appear in charm choices during this encounter. They are not added to your permanent collection.", 19,
+                new Vector2(.045f, .735f), new Vector2(.955f, .89f), TextAnchor.MiddleLeft, theme.muted);
+            encounterCharmScroll = SpiritUi.Scroll("EncounterCharmFamilies", encounterCharms,
+                new Vector2(.015f, .19f), new Vector2(.985f, .735f), out encounterCharmContent);
+            var layout = encounterCharmContent.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 12;
+            layout.padding = new RectOffset(5, 5, 5, 5);
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            encounterCharmContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            SpiritUi.Button("BeginEncounterButton", encounterCharms, "Begin encounter",
+                new Vector2(.035f, .09f), new Vector2(.965f, .17f), () => controls.AcceptEncounter(), true);
+            SpiritUi.Button("BackToInvitationButton", encounterCharms, "Back to invitation",
+                new Vector2(.035f, .012f), new Vector2(.965f, .085f), () => encounterCharms.gameObject.SetActive(false));
+            encounterCharms.gameObject.SetActive(false);
+        }
+
+        private void ShowEncounterCharms()
+        {
+            var journey = controls?.SelectedJourney;
+            if (journey == null || encounterControls?.Catalog == null) return;
+            var encounter = encounterControls.Catalog.GetEncounter(journey.EncounterId);
+            if (encounter.EncounterModifierIds.Count == 0)
+            {
+                controls.AcceptEncounter();
+                return;
+            }
+            CancelAnimation();
+            var families = new Dictionary<string, List<ModifierDefinition>>(StringComparer.Ordinal);
+            foreach (string id in encounter.EncounterModifierIds)
+            {
+                var definition = encounterControls.Catalog.GetModifier(id);
+                if (!families.TryGetValue(definition.FamilyId, out var family))
+                {
+                    family = new List<ModifierDefinition>();
+                    families.Add(definition.FamilyId, family);
+                }
+                family.Add(definition);
+            }
+            while (encounterCharmRows.Count < families.Count)
+                encounterCharmRows.Add(SpiritModifierFamilyRow.Create("EncounterCharmFamily" + encounterCharmRows.Count, encounterCharmContent));
+            int index = 0;
+            foreach (var family in families.Values) encounterCharmRows[index++].Render(family);
+            for (int rowIndex = 0; rowIndex < encounterCharmRows.Count; ++rowIndex)
+                encounterCharmRows[rowIndex].gameObject.SetActive(rowIndex < families.Count);
+            encounterCharms.gameObject.SetActive(true);
+            encounterCharms.SetAsLastSibling();
+            Canvas.ForceUpdateCanvases();
+            encounterCharmScroll.StopMovement();
+            encounterCharmScroll.verticalNormalizedPosition = 1;
         }
 
         public void Bind(IEncounterJourneyControls journey, ISpiritEncounterControls encounter)
@@ -161,6 +239,7 @@ namespace Dice.Presentation
             ClearSceneLighting();
             controls = journey;
             encounterControls = encounter;
+            encounterCharms.gameObject.SetActive(false);
             hasRendered = false;
         }
 
@@ -192,6 +271,7 @@ namespace Dice.Presentation
                 boardStatus.text = controls.JourneyStatus;
                 resumeButton.gameObject.SetActive(controls.CanResume);
                 loadButton.interactable = encounterControls != null && !encounterControls.IsBusy;
+                collectionButton.interactable = showCollection != null;
             }
             else if (journey != null && index >= 0 && index < journey.Beats.Count)
             {
@@ -301,6 +381,7 @@ namespace Dice.Presentation
 
         private void ShowBeat(EncounterJourneyAsset journey, int index)
         {
+            encounterCharms.gameObject.SetActive(false);
             bool continuingJourney = hasRendered && renderedJourney == journey && renderedPhase == EncounterJourneyPhase.Sequence;
             Texture2D previous = continuingJourney ? background.texture as Texture2D : null;
             Rect previousUv = background.uvRect;

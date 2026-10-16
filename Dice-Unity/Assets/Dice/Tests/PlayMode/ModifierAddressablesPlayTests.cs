@@ -17,7 +17,7 @@ namespace Dice.Tests
 {
     public sealed class ModifierAddressablesPlayTests
     {
-        private const int ModifierCount = 296;
+        private const int ModifierCount = 300;
 
         [Test]
         public void DisposingOwnersAfterAddressablesInvalidatesTheirOperationsDoesNotReleaseAgain()

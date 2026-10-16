@@ -31,6 +31,7 @@ namespace Dice.App
         private IDisposable presentationTheme;
         private PlayerProfile profile;
         private bool profileDirty;
+        private bool unlockSavePending;
         private bool directGameplay;
         private readonly List<string> highlightedEncounterIds = new List<string>();
 
@@ -324,7 +325,11 @@ namespace Dice.App
 
         public void ChooseReward(long offerId, long optionId)
         {
-            EncounterAction action = Snapshot?.Phase == EncounterPhase.ChoosingHandUpgrade
+            EncounterAction action = Snapshot?.Phase == EncounterPhase.ChoosingUnlock
+                ? (Snapshot.PendingReward.Options.Count == 0
+                    ? (EncounterAction)new AcknowledgeModifierUnlockAction(offerId)
+                    : new SelectModifierUnlockAction(offerId, optionId))
+                : Snapshot?.Phase == EncounterPhase.ChoosingHandUpgrade
                 ? (EncounterAction)new SelectHandUpgradeAction(offerId, optionId)
                 : new SelectModifierAction(offerId, optionId);
             Submit(action);
@@ -392,8 +397,10 @@ namespace Dice.App
         public void Present(Resolution resolution)
         {
             if (!resolution.Accepted) return;
+            bool wasChoosingUnlock = Snapshot?.Phase == EncounterPhase.ChoosingUnlock;
             IsBusy = true;
             Snapshot = resolution.Snapshot;
+            if (wasChoosingUnlock || Snapshot.Phase == EncounterPhase.ChoosingUnlock) unlockSavePending = true;
             RecordProgression(Snapshot, true);
             foreach (var ruleEvent in resolution.Events)
             {
@@ -523,6 +530,21 @@ namespace Dice.App
 
         private bool PersistProfile()
         {
+            if (unlockSavePending)
+            {
+                // Commit the consumed offer before profile progress so a retry cannot grant two choices.
+                try
+                {
+                    EncounterSaveFileStore.Save(SavePath, application.CaptureSave());
+                    unlockSavePending = false;
+                    ProfileStatusMessage = string.Empty;
+                }
+                catch (Exception exception) when (IsExpectedFailure(exception))
+                {
+                    ProfileStatusMessage = "Progress is pending: cannot save the unlock choice. " + exception.Message;
+                    return false;
+                }
+            }
             if (!profileDirty) return true;
             try
             {

@@ -235,6 +235,14 @@ MonoBehaviour:
       exitBehavior: 1
   - id: encounter.fox.introduction
     spiritId: spirit.fox
+    unlockRewardModifierIds:
+    - modifier.initial_roll.first_hand.base_score
+    - modifier.initial_roll.first_hand.multiplier
+    - modifier.player_reroll.rank_equals_before_reroll.base_score
+    - modifier.player_reroll.rank_equals_before_reroll.multiplier
+    - modifier.initial_roll.initial_rank_above_previous.base_score
+    - modifier.initial_roll.initial_rank_above_previous.multiplier
+    encounterModifierIds: []
     unlockMilestones:
     - stageNumber: 3
       modifierIds:
@@ -351,6 +359,14 @@ MonoBehaviour:
       exitBehavior: 1
   - id: encounter.owl.watchtower
     spiritId: spirit.owl
+    unlockRewardModifierIds:
+    - modifier.play_hand.edge_pair_sums_equal.base_score
+    - modifier.play_hand.edge_pair_sums_equal.multiplier
+    - modifier.play_hand.alternating_parity.base_score
+    - modifier.play_hand.alternating_parity.multiplier
+    - modifier.play_hand.ordered.base_score
+    - modifier.play_hand.ordered.multiplier
+    encounterModifierIds: []
     unlockMilestones:
     - stageNumber: 3
       modifierIds:
@@ -467,6 +483,18 @@ MonoBehaviour:
       exitBehavior: 1
   - id: encounter.moth.crossroads
     spiritId: spirit.moth
+    unlockRewardModifierIds:
+    - modifier.play_hand.contains_rerolls_remaining.base_score
+    - modifier.play_hand.contains_rerolls_remaining.multiplier
+    - modifier.play_hand.every_die_rerolled.base_score
+    - modifier.play_hand.every_die_rerolled.multiplier
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    encounterModifierIds:
+    - modifier.play_hand.favored_face_count_at_least.base_score
+    - modifier.play_hand.favored_face_count_at_least.multiplier
+    - modifier.play_hand.favored_face_count_at_least.combined
+    - modifier.play_hand.favored_face_count_at_least.rerolls
     unlockMilestones:
     - stageNumber: 3
       modifierIds:

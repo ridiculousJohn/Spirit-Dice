@@ -16,6 +16,45 @@ namespace Dice.Tests
     public sealed class SpiritProgressionPresentationPlayTests
     {
         [UnityTest]
+        public IEnumerator ExhaustedUnlockListShowsContinueAndCompletesTheEncounter()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit(false);
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var view = controller.GetComponent<SpiritEncounterView>();
+            var definition = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock);
+            var encounter = new EncounterDefinition("encounter.collected", new[] { new StageDefinition(1, 1, 0) },
+                unlockMilestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                unlockRewardModifierIds: new[] { definition.Id });
+            var catalog = new MechanicalCatalog("collected.test", controller.Catalog.Hands, new[] { encounter }, new[] { definition });
+            string path = ContentReady.SpiritSavePath();
+            var profile = new PlayerProfile();
+            profile.UnlockModifier(definition.Id);
+            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), "spirit-profile.json"), profile);
+            controller.Initialize(catalog, encounter.Id, 60, path);
+            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = new Vector2(443, 912);
+            controller.PlayHand();
+            float deadline = Time.realtimeSinceStartup + 30;
+            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            Assert.That(Find<Text>(view, "RewardTitle").text, Is.EqualTo("All charms collected"));
+            var confirm = Find<Button>(view, "UpgradeHandButton");
+            Assert.That(confirm.interactable, Is.True);
+            Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo("Continue"));
+            yield return Capture("progression-collected-443");
+            confirm.onClick.Invoke();
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
+            deadline = Time.realtimeSinceStartup + 30;
+            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
         public IEnumerator MilestonePopupResultsAndMenuShowPermanentProgressAtNarrowPortraitSize()
         {
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
@@ -28,7 +67,8 @@ namespace Dice.Tests
             Assert.That(definitions.Length, Is.GreaterThanOrEqualTo(4));
             var encounter = new EncounterDefinition("encounter.progression-presentation",
                 new[] { new StageDefinition(1, 1, 0) }, unlockMilestones:
-                new[] { new ModifierUnlockMilestone(1, definitions.Select(value => value.Id)) });
+                new[] { new ModifierUnlockMilestone(1, definitions.Select(value => value.Id)) },
+                unlockRewardModifierIds: definitions.Select(value => value.Id));
             var catalog = new MechanicalCatalog("progression-presentation.v1", controller.Catalog.Hands,
                 new[] { encounter }, definitions);
             string path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
@@ -40,17 +80,27 @@ namespace Dice.Tests
             portrait.anchoredPosition = Vector2.zero;
             yield return null;
             controller.PlayHand();
-            var popupTitle = Find<Text>(view, "StageIntroTitle");
             float deadline = Time.realtimeSinceStartup + 40;
+            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            var offer = controller.Snapshot.PendingReward;
+            Assert.That(offer.Options.Count, Is.EqualTo(3));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+            var choice = catalog.GetModifier(offer.Options[0].DefinitionId);
+            yield return Capture("progression-offer-443");
+            controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
+            var popupTitle = Find<Text>(view, "StageIntroTitle");
+            deadline = Time.realtimeSinceStartup + 40;
             while ((!popupTitle.gameObject.activeInHierarchy || popupTitle.text != "CHARM UNLOCKED") &&
                 Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(popupTitle.gameObject.activeInHierarchy, Is.True);
             Assert.That(popupTitle.text, Is.EqualTo("CHARM UNLOCKED"));
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds.Count,
-                Is.EqualTo(definitions.Length), "Progress must be committed before the popup plays.");
+                Is.EqualTo(1), "The selected unlock must be committed before the popup plays.");
             var popupDetail = Find<Text>(view, "StageIntroDetail");
-            Assert.That(popupDetail.text, Does.Contain(SpiritModifierPresentation.GetName(definitions[0])));
+            Assert.That(popupDetail.text, Does.Contain(SpiritModifierPresentation.GetName(choice)));
             Assert.That(popupDetail.text, Does.Contain("Permanently unlocked / All encounters"));
             Canvas.ForceUpdateCanvases();
             AssertCompleteText(popupTitle);
@@ -61,8 +111,7 @@ namespace Dice.Tests
             yield return null;
             var endingUnlocks = Find<Text>(view, "EndingUnlocks");
             Assert.That(endingUnlocks.gameObject.activeInHierarchy, Is.True);
-            foreach (var definition in definitions)
-                Assert.That(endingUnlocks.text, Does.Contain(SpiritModifierPresentation.GetName(definition)));
+            Assert.That(endingUnlocks.text, Does.Contain(SpiritModifierPresentation.GetName(choice)));
             Canvas.ForceUpdateCanvases();
             AssertCompleteText(endingUnlocks);
             var endingScroll = Find<ScrollRect>(view, "EndingUnlockScroll");
@@ -94,7 +143,7 @@ namespace Dice.Tests
             yield return null;
             var summary = Find<Text>(view, "ProfileSummary");
             Assert.That(summary.gameObject.activeInHierarchy, Is.True);
-            Assert.That(summary.text, Is.EqualTo(definitions.Length + " charms permanently unlocked\n1 encounter completed"));
+            Assert.That(summary.text, Is.EqualTo("1 charm permanently unlocked\n1 encounter completed"));
             AssertCompleteText(summary);
             var abandon = Find<Button>(view, "AbandonRunButton");
             var back = Find<Button>(view, "CloseMenuButton");

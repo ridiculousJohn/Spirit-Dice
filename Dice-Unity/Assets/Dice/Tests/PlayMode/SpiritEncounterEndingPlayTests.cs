@@ -69,6 +69,12 @@ namespace Dice.Tests
                 for (int stage = 1; stage < definition.Stages.Count; ++stage)
                 {
                     Assert.That(session.Execute(PlayHandAction.Instance, session.Snapshot.Revision).Accepted, Is.True);
+                    if (session.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
+                    {
+                        var offer = session.Snapshot.PendingReward;
+                        Assert.That(session.Execute(new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId),
+                            session.Snapshot.Revision).Accepted, Is.True);
+                    }
                     Assert.That(session.Snapshot.StageIndex, Is.EqualTo(stage));
                 }
                 EncounterSaveFileStore.Save(controller.SavePath, session.CaptureSave());
@@ -76,15 +82,31 @@ namespace Dice.Tests
                 yield return WaitForPresentation();
                 Assert.That(controller.Snapshot.StageIndex, Is.EqualTo(definition.Stages.Count - 1));
                 var persisted = PlayerProfileFileStore.Load(controller.ProfilePath);
-                foreach (string id in finalMilestone.ModifierIds)
-                    Assert.That(persisted.UnlockedModifierIds, Does.Not.Contain(id), "The final milestone must still be earned.");
-                foreach (string id in definition.UnlockMilestones.Take(definition.UnlockMilestones.Count - 1)
-                    .SelectMany(value => value.ModifierIds))
+                Assert.That(controller.Snapshot.NewlyUnlockedModifierIds.Count, Is.EqualTo(definition.UnlockMilestones.Count - 1));
+                Assert.That(persisted.UnlockedModifierIds.Count, Is.EqualTo(definition.UnlockMilestones.Count - 1));
+                foreach (string id in controller.Snapshot.NewlyUnlockedModifierIds)
                     Assert.That(persisted.UnlockedModifierIds, Does.Contain(id), "Loading must retain earlier milestones.");
             }
+            controller.PlayHand();
+            yield return WaitForPresentation();
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
+            Assert.That(view.HostPortrait.State, Is.Not.EqualTo(SpiritPresentationState.Victory));
+            var finalOffer = controller.Snapshot.PendingReward;
+            Assert.That(finalOffer.Options.Count, Is.InRange(1, 3));
+            Assert.That(finalOffer.Options.All(option => !controller.ProfileUnlockedModifierIds.Contains(option.DefinitionId)), Is.True);
+            var pendingSave = EncounterSaveFileStore.Load(controller.SavePath);
+            Assert.That(pendingSave.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            Assert.That(pendingSave.PendingReward.Options.Select(option => option.DefinitionId),
+                Is.EqualTo(finalOffer.Options.Select(option => option.DefinitionId)));
+            Click("RewardCard1");
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None), "Selecting a card still requires confirmation.");
             Coroutine motion = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"))
                 ? null : view.StartCoroutine(CaptureVictoryMotion(motionPhase));
-            controller.PlayHand();
+            Click("UpgradeHandButton");
+            unlockDefinitions = controller.Snapshot.NewlyUnlockedModifierIds.Select(controller.Catalog.GetModifier).ToArray();
+            Assert.That(unlockDefinitions.Length, Is.EqualTo(preserveAuthoredMilestones ?
+                controller.Catalog.GetEncounter(encounterId).UnlockMilestones.Count : 1));
             float motionDeadline = Time.realtimeSinceStartup + 45;
             while (view.HostPortrait.State != SpiritPresentationState.Victory && Time.realtimeSinceStartup < motionDeadline)
             {
@@ -129,8 +151,7 @@ namespace Dice.Tests
                 Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(definition.Id));
             }
             Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("PERMANENTLY UNLOCKED THIS RUN"));
-            Assert.That(Find<Text>("EndingUnlocks").text,
-                Does.Contain(useAuthoredUnlocks && !preserveAuthoredMilestones ? "This spirit's encounters" : "All encounters"));
+            Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("All encounters"));
             yield return CheckPortraitSizes(capturePrefix + "victory-summary");
             Click("EndingNewRunButton");
             yield return null;
@@ -250,6 +271,12 @@ namespace Dice.Tests
             Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
             Assert.That(controller.Snapshot, Is.SameAs(previous), "Retry must wait for invitation acceptance.");
             Click("JourneyAcceptButton");
+            yield return null;
+            if (Find<RectTransform>("EncounterCharmsIntroduction").gameObject.activeInHierarchy)
+            {
+                Assert.That(controller.Snapshot, Is.SameAs(previous), "The encounter starts after its charm introduction.");
+                Click("BeginEncounterButton");
+            }
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot, Is.Not.SameAs(previous));
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
@@ -364,13 +391,11 @@ namespace Dice.Tests
                 SetField(beat, "autoAdvance", false);
             }
             var definition = original.GetEncounter(journey.EncounterId);
-            unlockDefinitions = preserveAuthoredMilestones
-                ? definition.UnlockMilestones.SelectMany(value => value.ModifierIds).Distinct().Select(original.GetModifier).ToArray()
-                : useAuthoredUnlocks
-                ? definition.UnlockMilestones.First().ModifierIds.Take(2).Select(original.GetModifier).ToArray()
+            unlockDefinitions = useAuthoredUnlocks
+                ? definition.UnlockRewardModifierIds.Select(original.GetModifier).ToArray()
                 : original.Modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
                     value.Availability.Scope == ModifierAvailabilityScope.Global).Take(2).ToArray();
-            if (preserveAuthoredMilestones) Assert.That(unlockDefinitions.Length, Is.GreaterThan(2));
+            if (useAuthoredUnlocks) Assert.That(unlockDefinitions.Length, Is.GreaterThan(2));
             else Assert.That(unlockDefinitions.Length, Is.EqualTo(2));
             var shortEncounter = new EncounterDefinition(definition.Id,
                 Enumerable.Range(0, preserveAuthoredMilestones ? definition.Stages.Count : 1)
@@ -378,7 +403,8 @@ namespace Dice.Tests
                 spiritId: definition.SpiritId, unlockMilestones: winning
                     ? preserveAuthoredMilestones ? definition.UnlockMilestones.ToArray()
                         : new[] { new ModifierUnlockMilestone(1, unlockDefinitions.Select(value => value.Id)) }
-                    : Array.Empty<ModifierUnlockMilestone>());
+                    : Array.Empty<ModifierUnlockMilestone>(), encounterModifierIds: definition.EncounterModifierIds,
+                unlockRewardModifierIds: unlockDefinitions.Select(value => value.Id));
             var entries = controller.JourneyCatalog.Entries.Select(value => value == authored ? journey : value).ToArray();
             var mechanical = new MechanicalCatalog("ending-playmode.v1", original.Hands,
                 entries.Select(value => value == journey ? shortEncounter : original.GetEncounter(value.EncounterId)),

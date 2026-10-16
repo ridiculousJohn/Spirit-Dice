@@ -70,7 +70,7 @@ namespace Dice.Engine
         EdgePairDifferencesEqual = 63, InteriorContainsPair = 64,
         OddSumGreaterThanEvenSum = 65, SumPrime = 66, EdgesMatchInterior = 67,
         UniqueCountLessThanRerollsSpent = 68, NoExtremeFaces = 69, MiddleFacesCountAtLeast = 70,
-        MiddleHand = 71, InteriorPairMatchesEdge = 72, Always = 73
+        MiddleHand = 71, InteriorPairMatchesEdge = 72, Always = 73, FavoredFaceCountAtLeast = 74
     }
 
     public readonly struct ModifierEffect
@@ -102,6 +102,7 @@ namespace Dice.Engine
                 case ModifierConditionKind.ExactlyOneSelectedFace: parameter = parameter == 0 ? 1 : parameter; break;
                 case ModifierConditionKind.ContainsUpperFace: parameter = parameter == 0 ? 6 : parameter; break;
                 case ModifierConditionKind.ExactlyOneFace: parameter = parameter == 0 ? 2 : parameter; break;
+                case ModifierConditionKind.FavoredFaceCountAtLeast: parameter = parameter == 0 ? 2 : parameter; break;
                 case ModifierConditionKind.RangeLessThan:
                 case ModifierConditionKind.RangeGreaterThan:
                 case ModifierConditionKind.SelectedMatchingGroupAtLeast:
@@ -137,6 +138,7 @@ namespace Dice.Engine
                         throw new ArgumentOutOfRangeException(nameof(parameter)); break;
                 case ModifierConditionKind.SelectedMatchingGroupAtLeast:
                 case ModifierConditionKind.MiddleFacesCountAtLeast:
+                case ModifierConditionKind.FavoredFaceCountAtLeast:
                     if (parameter < 1 || parameter > DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(parameter)); break;
                 case ModifierConditionKind.SumDivisibleBy:
                 case ModifierConditionKind.PositiveRerollsDivisibleBy:
@@ -205,10 +207,11 @@ namespace Dice.Engine
         public int StartingHands { get; }
         public int? PreviousStageStartingHands { get; }
         public int? PreviousStageHandsRemaining { get; }
+        public int? FavoredFace { get; }
         public ModifierContext(DiceValues currentDice, DiceValues initialDice, DiceValues? beforeRerollDice,
             DiceValues? previousPlayedDice, int selectedMask, int everRerolledMask, int rerollsSpentOnHand,
             int handsRemaining, int rerollsRemaining, int handsPlayedInStage, int startingHands,
-            int? previousStageStartingHands, int? previousStageHandsRemaining)
+            int? previousStageStartingHands, int? previousStageHandsRemaining, int? favoredFace = null)
         {
             if (!currentDice.IsValid || !initialDice.IsValid ||
                 (beforeRerollDice.HasValue && !beforeRerollDice.Value.IsValid) ||
@@ -233,6 +236,8 @@ namespace Dice.Engine
             StartingHands = startingHands;
             PreviousStageStartingHands = previousStageStartingHands;
             PreviousStageHandsRemaining = previousStageHandsRemaining;
+            if (favoredFace < 1 || favoredFace > 6) throw new ArgumentOutOfRangeException(nameof(favoredFace));
+            FavoredFace = favoredFace;
         }
     }
 }

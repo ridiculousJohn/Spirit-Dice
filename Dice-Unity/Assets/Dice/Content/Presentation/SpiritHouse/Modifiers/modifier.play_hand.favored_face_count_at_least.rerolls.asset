@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9614d3db08e47179e43d5b63841ca85, type: 3}
+  m_Name: modifier.play_hand.favored_face_count_at_least.rerolls
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
+  modifier: {fileID: 11400000, guid: 0dc76eeed9084bb68adc4798b800ddec, type: 2}
+  displayName: Lantern Seekers / Rerolls
+  icon: {fileID: 0}
+  conditionTemplate: 
+  conditionTypeName: 
+  artwork: 3
+  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

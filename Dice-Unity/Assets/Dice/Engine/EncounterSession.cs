@@ -6,7 +6,7 @@ namespace Dice.Engine
 {
     public sealed class EncounterSession
     {
-        public const int RulesVersion = 5;
+        public const int RulesVersion = 6;
         private readonly MechanicalCatalog catalog;
         private readonly EncounterDefinition definition;
         private EncounterState state;
@@ -88,6 +88,8 @@ namespace Dice.Engine
             else if (action is RefreshModifierOfferAction) RefreshModifierOffer(next, events);
             else if (action is SelectModifierAction modifier) SelectModifier(next, modifier.OptionId, events);
             else if (action is SelectHandUpgradeAction upgrade) SelectHandUpgrade(next, upgrade.OptionId, events);
+            else if (action is SelectModifierUnlockAction unlock) SelectModifierUnlock(next, unlock.OptionId, events);
+            else if (action is AcknowledgeModifierUnlockAction) ContinueAfterUnlock(next, events);
             else Complete(next, EncounterOutcome.Abandoned, events);
             next.Revision = checked(state.Revision + 1);
             var snapshot = new EncounterSnapshot(next, definition, catalog.Version);
@@ -100,7 +102,7 @@ namespace Dice.Engine
 
         /** Inspect PlayHand eligibility without applying effects, consuming resources, or advancing random streams. */
         public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand()
-            => ModifierResolver.InspectForPlayHand(state, catalog, definition.Stages[state.StageIndex]);
+            => ModifierResolver.InspectForPlayHand(state, catalog, definition);
 
         public HandPreview PreviewHandResolution()
         {
@@ -117,7 +119,7 @@ namespace Dice.Engine
             --next.HandsRemaining;
             events.Add(new ResourceChangedEvent(next, ResourceKind.Hands, ResourceChangeCause.PlayHand,
                 beforeHands, next.HandsRemaining));
-            ModifierResolver.Resolve(next, catalog, definition.Stages[next.StageIndex], ModifierPhase.PlayHand, events);
+            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, events);
             long ruleMultiplier = 0;
             foreach (var rule in definition.Rules)
             {
@@ -147,6 +149,14 @@ namespace Dice.Engine
                 return ValidateRewardSelection(EncounterPhase.ChoosingModifier, modifier.OfferId, modifier.OptionId);
             if (action is SelectHandUpgradeAction upgrade)
                 return ValidateRewardSelection(EncounterPhase.ChoosingHandUpgrade, upgrade.OfferId, upgrade.OptionId);
+            if (action is SelectModifierUnlockAction unlock)
+                return ValidateRewardSelection(EncounterPhase.ChoosingUnlock, unlock.OfferId, unlock.OptionId);
+            if (action is AcknowledgeModifierUnlockAction acknowledge)
+            {
+                var rejection = ValidateRewardOffer(EncounterPhase.ChoosingUnlock, acknowledge.OfferId);
+                if (rejection != CommandRejection.None) return rejection;
+                return state.PendingReward.Options.Count == 0 ? CommandRejection.None : CommandRejection.InvalidRewardOption;
+            }
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
             if (action is PlayHandAction) return CommandRejection.None;
             if (action is RerollDiceAction reroll)
@@ -199,6 +209,7 @@ namespace Dice.Engine
             var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.StageIndex + 1,
                 owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds, next.StageIndex + 2);
             next.PendingModifierOfferUsesLegacyEligibility = false;
+            next.PendingModifierOfferUsesEncounterAdditions = true;
             next.PendingModifierOfferUnlockedIds = new List<string>(next.UnlockedModifierIds);
             next.ExcludedRewardFamilies = new List<string>(generated.ExcludedFamilyIds);
             // Upgrade choices are fixed before any modifier refresh can consume the reward stream.
@@ -249,6 +260,7 @@ namespace Dice.Engine
         {
             next.PendingModifierOfferUnlockedIds = null;
             next.PendingModifierOfferUsesLegacyEligibility = false;
+            next.PendingModifierOfferUsesEncounterAdditions = false;
             var categories = next.PendingUpgradeCategories
                 ?? throw new InvalidOperationException("The hand-upgrade choices have not been generated.");
             var options = new List<RewardOption>();
@@ -305,7 +317,8 @@ namespace Dice.Engine
             long id = next.NextOfferId;
             next.NextOfferId = checked(id + 1);
             next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options);
-            next.Phase = kind == RewardKind.Modifier ? EncounterPhase.ChoosingModifier : EncounterPhase.ChoosingHandUpgrade;
+            next.Phase = kind == RewardKind.Modifier ? EncounterPhase.ChoosingModifier :
+                kind == RewardKind.ModifierUnlock ? EncounterPhase.ChoosingUnlock : EncounterPhase.ChoosingHandUpgrade;
             events.Add(new RewardOfferedEvent(next, next.PendingReward, isRefresh));
         }
 
@@ -348,7 +361,7 @@ namespace Dice.Engine
             next.CurrentDice = Roll(next, DiceValues.AllMask);
             next.InitialDice = next.CurrentDice;
             events.Add(new DiceRolledEvent(next, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask));
-            ModifierResolver.Resolve(next, catalog, definition.Stages[next.StageIndex], ModifierPhase.InitialRoll, events);
+            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, events);
         }
 
         private static DiceValues Roll(EncounterState next, int selectedMask)
@@ -385,7 +398,7 @@ namespace Dice.Engine
             for (int i = 0; i < DiceValues.Count; ++i)
                 if (before[i] != next.CurrentDice[i]) next.LatestChangedMask |= 1 << i;
             events.Add(new DiceRolledEvent(next, RollKind.PlayerReroll, before, selectedMask, next.LatestChangedMask));
-            ModifierResolver.Resolve(next, catalog, definition.Stages[next.StageIndex], ModifierPhase.PlayerReroll, events);
+            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, events);
         }
 
         private void Play(EncounterState next, List<RuleEvent> events)
@@ -404,18 +417,7 @@ namespace Dice.Engine
             if (next.RemainingThreshold == 0)
             {
                 events.Add(new StageClearedEvent(next));
-                UnlockModifiers(next, events);
-                if (next.StageIndex == definition.Stages.Count - 1)
-                {
-                    Complete(next, EncounterOutcome.Won, events);
-                    return;
-                }
-                if (definition.Stages[next.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards)
-                {
-                    BeginRewards(next, events);
-                    return;
-                }
-                AdvanceStage(next, events);
+                if (!OfferModifierUnlocks(next, events)) ContinueAfterUnlock(next, events);
             }
             else if (next.HandsRemaining == 0)
             {
@@ -435,21 +437,50 @@ namespace Dice.Engine
             next.PendingReward = null;
             next.PendingUpgradeCategories = null;
             next.PendingModifierOfferUsesLegacyEligibility = false;
+            next.PendingModifierOfferUsesEncounterAdditions = false;
             next.PendingModifierOfferUnlockedIds = null;
             events.Add(new EncounterCompletedEvent(next));
         }
 
-        private void UnlockModifiers(EncounterState next, List<RuleEvent> events)
+        private bool OfferModifierUnlocks(EncounterState next, List<RuleEvent> events)
         {
+            bool milestoneReached = false;
             foreach (var milestone in definition.UnlockMilestones)
-                if (milestone.StageNumber == next.StageIndex + 1)
-                    foreach (string id in milestone.ModifierIds)
-                        if (!next.UnlockedModifierIds.Contains(id))
-                        {
-                            next.UnlockedModifierIds.Add(id);
-                            next.NewlyUnlockedModifierIds.Add(id);
-                            events.Add(new ModifierUnlockedEvent(next, catalog.GetModifier(id)));
-                        }
+                if (milestone.StageNumber == next.StageIndex + 1) milestoneReached = true;
+            if (!milestoneReached) return false;
+            var candidates = new List<string>();
+            foreach (string id in definition.UnlockRewardModifierIds)
+                if (!next.UnlockedModifierIds.Contains(id)) candidates.Add(id);
+            var options = new List<RewardOption>();
+            while (options.Count < 3 && candidates.Count > 0)
+            {
+                int index = next.RewardRandom.NextInt(candidates.Count);
+                options.Add(new RewardOption(AllocateOptionId(next), candidates[index]));
+                candidates.RemoveAt(index);
+            }
+            SetOffer(next, RewardKind.ModifierUnlock, options, false, events);
+            return true;
+        }
+
+        private void SelectModifierUnlock(EncounterState next, long optionId, List<RuleEvent> events)
+        {
+            RewardOption option = GetSelectedOption(next, optionId);
+            events.Add(new RewardSelectedEvent(next, next.PendingReward, option));
+            if (!next.UnlockedModifierIds.Contains(option.DefinitionId))
+            {
+                next.UnlockedModifierIds.Add(option.DefinitionId);
+                next.NewlyUnlockedModifierIds.Add(option.DefinitionId);
+                events.Add(new ModifierUnlockedEvent(next, catalog.GetModifier(option.DefinitionId)));
+            }
+            ContinueAfterUnlock(next, events);
+        }
+
+        private void ContinueAfterUnlock(EncounterState next, List<RuleEvent> events)
+        {
+            next.PendingReward = null;
+            if (next.StageIndex == definition.Stages.Count - 1) Complete(next, EncounterOutcome.Won, events);
+            else if (definition.Stages[next.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards) BeginRewards(next, events);
+            else AdvanceStage(next, events);
         }
     }
 
@@ -497,6 +528,7 @@ namespace Dice.Engine
         internal List<string> UnlockedModifierIds = new List<string>();
         internal List<string> NewlyUnlockedModifierIds = new List<string>();
         internal bool PendingModifierOfferUsesLegacyEligibility;
+        internal bool PendingModifierOfferUsesEncounterAdditions;
         internal List<string> PendingModifierOfferUnlockedIds;
 
         internal EncounterState Copy()

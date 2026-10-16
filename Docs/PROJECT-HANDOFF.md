@@ -1,10 +1,12 @@
 # Spirit Dice: start here
 
-Verified October 15, 2026 against code baseline `2f7fc06` (`Fix modifier die artwork orientation`). The working tree was clean before this document update. Check current Git status; this is not a claim about later edits or remote synchronization.
+Updated October 16, 2026 for the collection and individual unlock pass. Check current Git status; this is not a claim about remote synchronization.
 
 ## What to do next
 
-**No implementation task is currently authorized. Wait for John's next request.** Historical proposals and missing features are not assignments.
+John authorized collection and individual unlocks (pass 1). Player-built decks are a separate future pass, not authorized by this implementation. Android builds remain deferred.
+
+Pass 1 is implemented and validated, and John has playtested it successfully. Collection is accessible on the investigation board and in the gameplay menu.
 
 For that request:
 
@@ -35,7 +37,15 @@ Three ten-stage encounters use shared investigation, arrival, invitation, gamepl
 
 The standard 25-stage encounter remains separate. Targets and tier weights are provisional; no balance study is claimed.
 
-Rewards use authored encounter pools, eligibility scopes, and tier weighting. Stages 3, 6, and 10 grant authored permanent unlock lists, including all four variants of their milestone families. Unlocks survive defeat and enter eligible future rewards; they are not automatically equipped. Charms shows the current run's owned modifiers.
+Run charm choices use the encounter's authored ordinary pools plus optional `EncounterModifierIds`, with tier weighting retained. Player-built decks can later replace the ordinary pool. Ordinary charms have global scope; pool membership still determines where they can appear.
+
+Stages 3, 6, and 10 offer up to three unowned individual charms from the encounter's separate `UnlockRewardModifierIds` list. Choose one permanent unlock, not an entire family. Empty lists show "All charms collected" and require Continue. The final unlock choice precedes victory and the ending. Pending choices and their continuation are saved automatically; selected unlocks persist in the profile and are not automatically equipped. Existing unlocks are preserved. Legacy milestone IDs remain solely for old-save validation.
+
+Fox currently awards six Base/Mult variants of Open Gate, Still Reflection and Rising Sun. Owl/moth use six Base/Mult variants of their established milestone families, provisionally. Combined/reroll variants remain collected if already owned; otherwise they await future unlock sources. Edit explicit lists to tune rewards, not code. See [collection authoring](../Dice-Unity/Assets/Dice/Content/Mechanical/COLLECTION-AUTHORING.md).
+
+Collection is available from the investigation board and gameplay menu. One row shows each family's shared trigger and four effect variants; locked variants are dimmed but inspectable. It reads existing profile progress without writing it. Charms remains the current run's equipped modifiers.
+
+Only the moth currently supplies encounter-specific additions: Lantern Seekers, four variants triggering on at least two dice matching the favored face. Its optional introduction explains these additions before starting; fox/owl skip it. Provisional effects are +10 Base, +2 Mult, +5 Base/+1 Mult, and +1 reroll. Artwork reuses Last Lantern until dedicated artwork is requested.
 
 Scoring presents dice sum, complete upgraded hand-rank values, qualifying modifiers, then Base times Mult. Roll-triggered bonuses can accumulate beforehand. The small tray previews qualifying Play Hand modifiers; it is not a history tray. Tapping a tile opens and highlights its owned charm. Transient action-button cues show activations.
 
@@ -58,7 +68,7 @@ Keep mechanics, mechanical content, progression, and presentation separate. Mech
 
 Use explicit references or Addressables; no project assets in Resources. Discovery labels are `dice.modifiers` and `dice.theme.spirit-house.modifiers`.
 
-Newtonsoft JSON profiles use format 1 and store permanent unlocks, visits, and completions. Separate run saves use format 3 and preserve RNG state and pending offers. Loading a run must not erase permanent progress. New runs use fresh seeds; fixed seeds are a debug option.
+Newtonsoft JSON profiles remain format 1 and store permanent unlocks, visits, and completions. Separate run saves use format 4/rules 6 and preserve RNG state and pending offers, with formats 1-3 migration. Loading a run must not erase permanent progress. New runs use fresh seeds; fixed seeds are a debug option. No deck/profile-format-2 system is implemented in this checkout.
 
 ## Presentation authoring
 
@@ -69,6 +79,8 @@ Assets are under `Content/Presentation/SpiritHouse`, `Watchtower`, and `MothCros
 Read [Tools/Presentation/README.md](../Tools/Presentation/README.md) for authoring and regeneration. Do not run historical scratch generators against production assets.
 
 ## Validation and delivery
+
+October 16 collection validation: full EditMode run followed by targeted repairs/reruns leaves 1,394 distinct EditMode cases and 22 exercised PlayMode cases passing on their latest results. This includes unlock persistence/save-failure recovery, exhausted lists, endings, Addressables, and collection/intro portrait layouts at 443 and 540 pixels wide. Final layout evidence is in ignored `Docs/work/collection-layout-93f0d098975547938faf9537ae8dec93`; focused EditMode evidence is in `Docs/work/collection-edit-final-2fd1bc85841c4426a5564be5e99967d4`. No Android build was made.
 
 - Follow [Tools/README.md](../Tools/README.md). Ask John to save and close Dice-Unity before CLI tests if open. Leave other projects alone.
 - Launch Unity with `require_escalated` for licensing access, hidden, and track its PID. Never run two editors against this project. Verify results XML and process exit.
