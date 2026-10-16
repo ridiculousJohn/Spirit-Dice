@@ -261,6 +261,19 @@ namespace Dice.Presentation
                     IsRewardSource(definition.Id, encounter, mechanicalCatalog))
                     rewardSources.Add(name);
             }
+            if (journeyCatalog != null)
+                foreach (var journey in journeyCatalog.Entries)
+                {
+                    if (journey == null || !journey.IsStoryOnly) continue;
+                    foreach (var beat in journey.Beats)
+                        if (beat.ProgressionReward != null && beat.ProgressionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
+                        {
+                            giftSources.Add(journey.LocationTitle + " - story");
+                            break;
+                        }
+                    if (journey.CompletionReward != null && journey.CompletionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
+                        giftSources.Add(journey.LocationTitle + " - completion");
+                }
             string rewards = rewardSources.Count > 0 ? string.Join(", ", rewardSources) : "Not offered in current encounters";
             if (definition.Availability.Access == ModifierAccess.EncounterExclusive)
                 return "Encounter only; never permanently collected.\nRun charm pool: " + rewards + ".";

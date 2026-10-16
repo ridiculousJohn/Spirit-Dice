@@ -15,30 +15,6 @@ MonoBehaviour:
   m_GroupName: Dice Modifiers
   m_GUID: fe8ae7113a6551043b9b596cbc5eb7a0
   m_SerializeEntries:
-  - m_GUID: d6bffd73f10944cd9ff44dbe5eda0669
-    m_Address: modifier.play_hand.favored_face_count_at_least.base_score
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - dice.modifiers
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: aa83094f29ee45619007f23322156d0f
-    m_Address: modifier.play_hand.favored_face_count_at_least.combined
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - dice.modifiers
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4d776a2f625a4b16adce09a547516b3b
-    m_Address: modifier.play_hand.favored_face_count_at_least.multiplier
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - dice.modifiers
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0dc76eeed9084bb68adc4798b800ddec
-    m_Address: modifier.play_hand.favored_face_count_at_least.rerolls
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - dice.modifiers
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 00fe034e3e0b1e440822eb30511dfc9b
     m_Address: modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
     m_ReadOnly: 0
@@ -161,6 +137,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0dc07f246a1831843b1ab495db59da55
     m_Address: modifier.play_hand.no_extreme_faces.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0dc76eeed9084bb68adc4798b800ddec
+    m_Address: modifier.play_hand.favored_face_count_at_least.rerolls
     m_ReadOnly: 0
     m_SerializedLabels:
     - dice.modifiers
@@ -629,6 +611,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 4d28d1e7806f77748a6d4d02e3a19f21
     m_Address: modifier.play_hand.contains_rerolls_remaining.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d776a2f625a4b16adce09a547516b3b
+    m_Address: modifier.play_hand.favored_face_count_at_least.multiplier
     m_ReadOnly: 0
     m_SerializedLabels:
     - dice.modifiers
@@ -1227,6 +1215,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - dice.modifiers
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aa83094f29ee45619007f23322156d0f
+    m_Address: modifier.play_hand.favored_face_count_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: aadb6fa8f52cac7488356d0cb094357a
     m_Address: modifier.play_hand.middle_faces_count_at_least.multiplier
     m_ReadOnly: 0
@@ -1511,6 +1505,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d628157fa072a3349a1788c63ad19971
     m_Address: modifier.play_hand.range_greater_than.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d6bffd73f10944cd9ff44dbe5eda0669
+    m_Address: modifier.play_hand.favored_face_count_at_least.base_score
     m_ReadOnly: 0
     m_SerializedLabels:
     - dice.modifiers

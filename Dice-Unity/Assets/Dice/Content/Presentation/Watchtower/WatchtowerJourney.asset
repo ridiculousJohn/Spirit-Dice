@@ -110,7 +110,7 @@ MonoBehaviour:
   - id: witness
     kind: 2
     title: The Watcher
-    text: I saw someone cross the marsh. You followed their footsteps. Tell me - what else did you notice?
+    text: I saw your traveler cross the marsh behind a blue light. The reeds bent under their feet. The light did not stir them.
     continueLabel: Listen
     background: {fileID: 0}
     foreground: {fileID: 0}
@@ -132,7 +132,7 @@ MonoBehaviour:
   - id: bargain
     kind: 2
     title: A game of attention
-    text: Sit. Show me what you see, and I will tell you what I saw.
+    text: Something was wrong with that light. Sit. Show me what you see, and I will tell you where it led them.
     continueLabel: Hear the terms
     background: {fileID: 0}
     foreground: {fileID: 0}
@@ -151,11 +151,21 @@ MonoBehaviour:
     backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
+  - id: discovery
+    kind: 2
+    title: The watcher's patterns
+    text: This bargain reveals Balanced Scales, Woven Mat, and Stepping Stones. Their charms reward patterns an impatient eye misses.
+    continueLabel: Hear the terms
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   - id: invitation
     kind: 3
     progressionReward: {fileID: 11400000, guid: 2faba870df3948c9a29d09c0565c465e, type: 2}
     title: The Watcher's Eye
-    text: There is more to a handful of dice than what repeats.
+    text: There is more to see than what repeats. Show me what makes each face different.
     continueLabel: Accept the bargain
     background: {fileID: 0}
     foreground: {fileID: 0}
@@ -176,13 +186,13 @@ MonoBehaviour:
     backgroundScaleTo: 1
   tablePresentation: {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402002, type: 2}
   victoryTitle: What the watcher saw
-  victoryText: You saw what the others overlooked. The traveler left the marsh by the northern causeway. Follow the stones beyond the reeds.
+  victoryText: The blue light went north along the causeway. Your traveler followed, calling to someone I could not see. Beyond the reeds, a moth keeps the fork. Ask what reached the other side.
   defeatTitle: Look again
   defeatText: There is more here than you have seen. Come back when you are ready to look again.
   abandonText: The watcher folds its wings and waits beside the empty chair.
   resultContinueLabel: Return to the trail
   completionClueTitle: The northern causeway
-  completionClueText: The watcher saw the missing traveler leave the marsh by the northern causeway. Follow the stones beyond the reeds.
+  completionClueText: The traveler followed a blue light north along the causeway, calling to someone unseen. Find the moth at the fork beyond the reeds.
   victoryPresentation:
     enabled: 1
     hostState: 4
@@ -209,3 +219,6 @@ MonoBehaviour:
     audioCue: {fileID: 0}
   followUpEncounterIds:
   - encounter.moth.crossroads
+  requiredCompletedEncounterIds:
+  - encounter.fox.introduction
+  requiredCompletedStoryIds: []

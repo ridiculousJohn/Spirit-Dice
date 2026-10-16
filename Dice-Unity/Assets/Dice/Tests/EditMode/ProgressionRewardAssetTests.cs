@@ -108,7 +108,8 @@ namespace Dice.Tests
             Assert.That(definition.DiscoveredFamilyIds, Has.Count.EqualTo(3));
             Assert.That(definition.DiscoveredFamilyIds, Is.EquivalentTo(encounter.UnlockRewardModifierIds
                 .Select(id => authoredCatalog.GetModifier(id).FamilyId).Distinct()));
-            Assert.That(definition.GrantedModifierIds, Is.Empty);
+            Assert.That(definition.GrantedModifierIds, Is.EqualTo(rewardName == "FoxFamilyDiscovery"
+                ? new[] { "modifier.initial_roll.first_hand.base_score" } : Array.Empty<string>()));
         }
 
         private ProgressionRewardAsset Reward(string[] families, string[] modifiers)

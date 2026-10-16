@@ -53,8 +53,8 @@ MonoBehaviour:
   - id: bargain
     kind: 2
     title: The Lantern Keeper
-    text: They sheltered here. I remember where they went. Win, and I will tell you.
-    continueLabel: Hear the terms
+    text: They sheltered here. I know where they went. Spirits trade knowledge through bargains. Win our game, and my answer is yours.
+    continueLabel: Ask about the charms
     background: {fileID: 0}
     foreground: {fileID: 0}
     duration: 5
@@ -66,11 +66,32 @@ MonoBehaviour:
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+  - id: discovery
+    kind: 2
+    title: What a bargain reveals
+    text: Accept to discover Open Gate, Still Reflection, and Rising Sun. Discovery reveals a family's charms; owning a charm lets it appear in future offers.
+    continueLabel: Hear the gift
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: gift
+    kind: 2
+    title: A gift for the road
+    text: 'Take {charm}. May it open the way when your next bargain begins.'
+    charm: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    continueLabel: Hear the terms
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   - id: invitation
     kind: 3
     progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
     title: The Host's Courtesy
-    text: Your first mistake costs you nothing.
+    text: Your first mistake costs you nothing. Accept, and we begin.
     continueLabel: Accept the bargain
     background: {fileID: 0}
     foreground: {fileID: 0}
@@ -118,3 +139,5 @@ MonoBehaviour:
     audioCue: {fileID: 0}
   followUpEncounterIds:
   - encounter.owl.watchtower
+  requiredCompletedEncounterIds: []
+  requiredCompletedStoryIds: []

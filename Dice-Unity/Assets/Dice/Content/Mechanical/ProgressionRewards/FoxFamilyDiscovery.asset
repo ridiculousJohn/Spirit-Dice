@@ -16,4 +16,5 @@ MonoBehaviour:
   - modifier.initial_roll.first_hand
   - modifier.player_reroll.rank_equals_before_reroll
   - modifier.initial_roll.initial_rank_above_previous
-  grantedModifierIds: []
+  grantedModifierIds:
+  - modifier.initial_roll.first_hand.base_score

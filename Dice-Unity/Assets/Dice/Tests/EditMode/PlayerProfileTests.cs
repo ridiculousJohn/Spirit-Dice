@@ -38,9 +38,70 @@ namespace Dice.Tests
             Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
             Assert.That(restored.GetDiscoveredFamilyIds(RewardCatalog()), Is.EqualTo(profile.GetDiscoveredFamilyIds(RewardCatalog())));
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(profile)));
-            Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(3));
+            Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(4));
             document["ProfileFormatVersion"] = 2;
             Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
+        }
+
+        [Test]
+        public void VersionThreeProgressMigratesWithoutLosingUnknownIds()
+        {
+            var legacy = new JObject
+            {
+                ["ProfileFormatVersion"] = 3,
+                ["DiscoveredFamilyIds"] = new JArray("family.future"),
+                ["UnlockedModifierIds"] = new JArray("modifier.future"),
+                ["CompletedEncounterIds"] = new JArray("encounter.future"),
+                ["VisitedEncounterIds"] = new JArray("encounter.visited")
+            };
+            var profile = PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(legacy.ToString()));
+            Assert.That(profile.CompletedStoryIds, Is.Empty);
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.future" }));
+            Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "modifier.future" }));
+            Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
+            Assert.That(restored.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.visited" }));
+        }
+
+        [Test]
+        public void StoryCompletionIsPersistedMergedAndIndependentOfEncounters()
+        {
+            var profile = new PlayerProfile();
+            Assert.That(profile.CompleteStory("story.future"), Is.True);
+            Assert.That(profile.CompleteStory("story.future"), Is.False);
+            Assert.That(profile.CompletedEncounterIds, Is.Empty);
+            Assert.That(profile.VisitedEncounterIds, Is.Empty);
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.CompletedStoryIds, Is.EqualTo(new[] { "story.future" }));
+            var merged = new PlayerProfile();
+            Assert.That(merged.Merge(restored), Is.True);
+            Assert.That(merged.CompletedStoryIds, Is.EqualTo(restored.CompletedStoryIds));
+            Assert.That(merged.Merge(restored), Is.False);
+            string path = ArtifactPath();
+            PlayerProfileFileStore.Save(path, restored);
+            var additional = new PlayerProfile();
+            additional.CompleteStory("story.another");
+            PlayerProfileFileStore.Save(path, additional);
+            Assert.That(PlayerProfileFileStore.Load(path).CompletedStoryIds,
+                Is.EquivalentTo(new[] { "story.future", "story.another" }));
+        }
+
+        [TestCase("missing")]
+        [TestCase("null")]
+        [TestCase("number")]
+        [TestCase("duplicate")]
+        [TestCase("blank")]
+        [TestCase("control")]
+        public void InvalidStoryCompletionFieldsAreRejected(string invalid)
+        {
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
+            if (invalid == "missing") document.Remove("CompletedStoryIds");
+            if (invalid == "null") document["CompletedStoryIds"] = JValue.CreateNull();
+            if (invalid == "number") document["CompletedStoryIds"] = new JArray(42);
+            if (invalid == "duplicate") document["CompletedStoryIds"] = new JArray("story.a", "story.a");
+            if (invalid == "blank") document["CompletedStoryIds"] = new JArray(" ");
+            if (invalid == "control") document["CompletedStoryIds"] = new JArray("story.\ninvalid");
+            Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
         }
 
         [Test]

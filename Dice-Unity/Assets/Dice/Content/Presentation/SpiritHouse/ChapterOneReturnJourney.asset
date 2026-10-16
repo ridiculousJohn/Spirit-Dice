@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
+  m_Name: ChapterOneReturnJourney
+  m_EditorClassIdentifier:
+  encounterId:
+  storyId: story.fox.chapter-one-return
+  locationTitle: Return to the Last Lantern
+  spiritName: The Lantern Keeper
+  leadText: The traveler is alive beyond the old bridge. Bring the moth's message to the fox and prepare for the crossing.
+  cardArtwork: {fileID: 2800000, guid: 74eb1ce65d124aa9823839f4404df805, type: 3}
+  beats:
+  - id: report
+    kind: 2
+    title: A message brought home
+    text: You tell the fox what the moth saw. He sets down his cup. Alive, then. Beyond the old bridge. You have brought back more than a rumor.
+    continueLabel: Ask about the bridge
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: boundary
+    kind: 2
+    title: The far arch
+    text: That bridge marks a boundary. Beyond it, a familiar voice can lead you astray. Remember who sent you, and do not follow a light merely because it waits.
+    continueLabel: Ask for help
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: shelter
+    kind: 2
+    title: Protection for the road
+    text: 'Take {charm}. It will provide you shelter for the road ahead.'
+    charm: {fileID: 11400000, guid: c9c616a498b9c264a9a9394603f4577f, type: 2}
+    continueLabel: Take the second charm
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: stone
+    kind: 2
+    title: A mark to remember
+    text: 'And take {charm}. When the road grows strange, let it remind you where you stand.'
+    charm: {fileID: 11400000, guid: 0703508354705dd4b8fc8ba48c2ca01e, type: 2}
+    continueLabel: Prepare for the crossing
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: preparations
+    kind: 2
+    title: Gifts for the old road
+    text: These marks belong to you now. When a spirit offers them, you may call upon them. There are other charms in each family; keep watch for those as you travel.
+    continueLabel: Finish the preparations
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: chapter-complete
+    kind: 2
+    title: Chapter 1 complete
+    text: The traveler is alive. You know where the old road crosses the boundary, and the fox has helped you prepare. The next chapter lies beyond the bridge.
+    continueLabel: Return to the trail
+    duration: 1
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    autoAdvance: 0
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
+  completionClueTitle: Chapter 1 complete
+  completionClueText: The traveler is alive beyond the old bridge. The fox's gifts are yours. You are ready for the next crossing, in Chapter 2.
+  completionReward: {fileID: 11400000, guid: e0348ba120f24b89987fbe2e4c031691, type: 2}
+  followUpEncounterIds: []
+  requiredCompletedEncounterIds:
+  - encounter.moth.crossroads
+  requiredCompletedStoryIds: []

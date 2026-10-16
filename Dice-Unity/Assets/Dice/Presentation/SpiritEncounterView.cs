@@ -1310,6 +1310,8 @@ namespace Dice.Presentation
             charmsPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             menuPanel.gameObject.SetActive(false);
+            if (resolution.Snapshot.Phase == EncounterPhase.Completed && rewardsPanel.gameObject.activeSelf)
+                SetGameplayVisible(false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
                 ? Mathf.Clamp(configuredTable.OpeningFadeDuration, 0, 2) : 0;
             if (openingFade > 0) SetOpeningOpacity(0);

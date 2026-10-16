@@ -30,6 +30,15 @@ namespace Dice.Presentation
         private readonly List<InvitationRuleView> invitationRules = new List<InvitationRuleView>();
         private int invitationRuleCount;
         private float invitationWidth;
+        private RectTransform charmDetail;
+        private RectTransform charmDivider;
+        private RectTransform charmIconRoot;
+        private Image charmIcon;
+        private SpiritModifierSigilGraphic charmSigil;
+        private Text charmName;
+        private Text charmEffect;
+        private Text charmCondition;
+        private float charmWidth;
         private Text journeyStatus;
         private Text boardStatus;
         private Text investigationTitle;
@@ -56,6 +65,7 @@ namespace Dice.Presentation
         private EncounterJourneyCatalogAsset renderedCatalog;
         private EncounterJourneyPhase renderedPhase;
         private bool hasRendered;
+        private string renderedBoardProgress;
         private EncounterJourneyBeat activeBeat;
         private SceneLightingAsset previousSceneLighting;
         private SceneLightingState sceneLightingState = new SceneLightingState();
@@ -151,6 +161,7 @@ namespace Dice.Presentation
                 Vector2.zero, Vector2.one, TextAnchor.UpperLeft, theme.muted);
             invitationRules.Add(CreateInvitationRule(rules, ""));
             SetInvitationRulesVisible(false);
+            BuildCharmDetail();
             advanceButton = SpiritUi.Button("JourneyAdvanceButton", sequence, "Continue",
                 new Vector2(.035f, .065f), new Vector2(.965f, .145f), () => controls.AdvanceJourney(), true);
             acceptButton = SpiritUi.Button("JourneyAcceptButton", sequence, "Accept",
@@ -168,6 +179,32 @@ namespace Dice.Presentation
         public void SetCollectionAction(Action openCollection)
         {
             showCollection = openCollection;
+        }
+
+        private void BuildCharmDetail()
+        {
+            var theme = SpiritUi.GetTheme(transform);
+            charmDetail = SpiritUi.Rect("JourneyCharmDetail", narrative, Vector2.zero, Vector2.one);
+            var dividerColor = theme.muted;
+            dividerColor.a = .25f;
+            charmDivider = SpiritUi.Panel("JourneyCharmDivider", charmDetail, Vector2.zero, Vector2.one,
+                dividerColor).rectTransform;
+            charmDivider.GetComponent<Image>().raycastTarget = false;
+            charmIconRoot = SpiritUi.Rect("JourneyCharmIconRoot", charmDetail, Vector2.zero, Vector2.one);
+            charmIcon = SpiritUi.Full("JourneyCharmIcon", charmIconRoot).gameObject.AddComponent<Image>();
+            charmIcon.preserveAspect = true;
+            charmIcon.raycastTarget = false;
+            charmSigil = SpiritUi.Full("JourneyCharmSigil", charmIconRoot).gameObject.AddComponent<SpiritModifierSigilGraphic>();
+            charmSigil.raycastTarget = false;
+            charmName = SpiritUi.Heading("JourneyCharmName", charmDetail, "", 24,
+                Vector2.zero, Vector2.one, TextAnchor.UpperLeft, theme.amber);
+            charmName.resizeTextForBestFit = false;
+            charmEffect = SpiritUi.Label("JourneyCharmEffect", charmDetail, "", 21,
+                Vector2.zero, Vector2.one, TextAnchor.UpperLeft);
+            charmCondition = SpiritUi.Label("JourneyCharmCondition", charmDetail, "", 19,
+                Vector2.zero, Vector2.one, TextAnchor.UpperLeft);
+            charmEffect.supportRichText = charmCondition.supportRichText = true;
+            charmDetail.gameObject.SetActive(false);
         }
 
         private void BuildEncounterCharms()
@@ -201,7 +238,7 @@ namespace Dice.Presentation
         private void ShowEncounterCharms()
         {
             var journey = controls?.SelectedJourney;
-            if (journey == null || encounterControls?.Catalog == null) return;
+            if (journey == null || journey.IsStoryOnly || encounterControls?.Catalog == null) return;
             var encounter = encounterControls.Catalog.GetEncounter(journey.EncounterId);
             if (encounter.EncounterModifierIds.Count == 0)
             {
@@ -267,7 +304,9 @@ namespace Dice.Presentation
                 ClearSceneLighting();
                 investigationTitle.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Title : "INVESTIGATION";
                 investigationDescription.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Description : "";
-                if (changed) BuildClues();
+                string boardProgress = BoardProgress();
+                if (changed || renderedBoardProgress != boardProgress) BuildClues();
+                renderedBoardProgress = boardProgress;
                 boardStatus.text = controls.JourneyStatus;
                 resumeButton.gameObject.SetActive(controls.CanResume);
                 loadButton.interactable = encounterControls != null && !encounterControls.IsBusy;
@@ -294,7 +333,7 @@ namespace Dice.Presentation
             RectTransform firstHighlight = null;
             foreach (var journey in controls.JourneyCatalog.Entries)
             {
-                if (journey == null) continue;
+                if (journey == null || !controls.IsJourneyAvailable(journey.Id)) continue;
                 var selected = journey;
                 var cardImage = SpiritUi.Panel("ClueButton" + index++, clueContent, Vector2.zero, Vector2.one,
                     SpiritUi.GetTheme(transform).panelColor, 0, true);
@@ -303,7 +342,7 @@ namespace Dice.Presentation
                 var theme = SpiritUi.GetTheme(transform);
                 bool highlighted = false;
                 foreach (string id in controls.HighlightedEncounterIds)
-                    if (id == journey.EncounterId) { highlighted = true; break; }
+                    if (id == journey.Id) { highlighted = true; break; }
                 if (highlighted)
                 {
                     var outline = cardImage.gameObject.AddComponent<Outline>();
@@ -322,7 +361,7 @@ namespace Dice.Presentation
                 colors.disabledColor = theme != null ? theme.disabledTint : new Color(.46f, .47f, .43f, .88f);
                 colors.fadeDuration = .12f;
                 button.colors = colors;
-                button.onClick.AddListener(() => controls.SelectEncounter(selected.EncounterId));
+                button.onClick.AddListener(() => controls.SelectEncounter(selected.Id));
                 clueCards.Add(button.gameObject);
                 button.gameObject.AddComponent<LayoutElement>().preferredHeight = 430;
                 var artworkFrame = SpiritUi.Rect("ClueArtworkFrame", button.transform, new Vector2(.055f, .46f), new Vector2(.945f, .94f));
@@ -334,8 +373,11 @@ namespace Dice.Presentation
                 var aspect = image.gameObject.AddComponent<AspectRatioFitter>();
                 aspect.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
                 aspect.aspectRatio = journey.CardArtwork != null ? (float)journey.CardArtwork.width / journey.CardArtwork.height : 1;
-                SpiritUi.Heading("ClueTitle", button.transform, journey.LocationTitle, 26,
+                var clueTitle = SpiritUi.Heading("ClueTitle", button.transform, journey.LocationTitle, 26,
                     new Vector2(.055f, .33f), new Vector2(.945f, .45f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
+                clueTitle.resizeTextForBestFit = true;
+                clueTitle.resizeTextMinSize = 21;
+                clueTitle.resizeTextMaxSize = 26;
                 var lead = SpiritUi.Label("ClueLead", button.transform, journey.LeadText, 19,
                     new Vector2(.055f, .09f), new Vector2(.945f, .32f), TextAnchor.MiddleCenter);
                 lead.resizeTextForBestFit = true;
@@ -345,10 +387,17 @@ namespace Dice.Presentation
                 foreach (string visitedId in controls.VisitedEncounterIds)
                     if (visitedId == journey.EncounterId) { visited = true; break; }
                 bool completed = false;
-                if (encounterControls is ISpiritProgressionControls progression)
+                if (journey.IsStoryOnly)
+                {
+                    foreach (string completedId in controls.CompletedStoryIds)
+                        if (completedId == journey.Id) { completed = true; break; }
+                }
+                else if (encounterControls is ISpiritProgressionControls progression)
                     foreach (string completedId in progression.CompletedEncounterIds)
                         if (completedId == journey.EncounterId) { completed = true; break; }
-                SpiritUi.Label("ClueState", button.transform, visited ? "VISITED - RETURN TO THE TABLE" : "FOLLOW THIS LEAD", 14,
+                string state = journey.IsStoryOnly ? completed ? "READ AGAIN" : "FOLLOW THIS LEAD" :
+                    visited ? "VISITED - RETURN TO THE TABLE" : "FOLLOW THIS LEAD";
+                SpiritUi.Label("ClueState", button.transform, state, 14,
                     new Vector2(.055f, .027f), new Vector2(.945f, .09f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
                 button.CaptureContent();
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))
@@ -377,6 +426,19 @@ namespace Dice.Presentation
                 clueScroll.verticalNormalizedPosition = scrollableHeight > 0 ?
                     1 - Mathf.Clamp01(-cardTop.y / scrollableHeight) : 1;
             }
+        }
+
+        private string BoardProgress()
+        {
+            var available = new List<string>();
+            if (controls.JourneyCatalog != null)
+                foreach (var journey in controls.JourneyCatalog.Entries)
+                    if (journey != null && controls.IsJourneyAvailable(journey.Id)) available.Add(journey.Id);
+            return string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
+                "\n\n" + string.Join("\n", controls.CompletedStoryIds) + "\n\n" +
+                string.Join("\n", controls.HighlightedEncounterIds) + "\n\n" +
+                (encounterControls is ISpiritProgressionControls progression ?
+                    string.Join("\n", progression.CompletedEncounterIds) : "");
         }
 
         private void ShowBeat(EncounterJourneyAsset journey, int index)
@@ -408,8 +470,10 @@ namespace Dice.Presentation
             activeBeat = beat;
             title.text = beat.Title;
             body.text = beat.Text;
-            bool invitation = beat.Kind == EncounterJourneyBeatKind.Invitation;
+            bool invitation = !journey.IsStoryOnly && beat.Kind == EncounterJourneyBeatKind.Invitation;
+            ConfigureCharm(beat);
             ConfigureInvitation(journey.TablePresentation, invitation);
+            if (charmDetail.gameObject.activeSelf && invitationRuleCount == 0) LayoutCharmNarrative();
             advanceButton.gameObject.SetActive(!invitation);
             acceptButton.gameObject.SetActive(invitation);
             SpiritUi.SetButtonLabel(invitation ? acceptButton : advanceButton,
@@ -442,19 +506,42 @@ namespace Dice.Presentation
             var theme = SpiritUi.GetTheme(transform);
             var row = new InvitationRuleView
             {
-                Name = SpiritUi.Heading("JourneyRuleName" + suffix, narrative, "", 28,
+                Name = SpiritUi.Heading("JourneyRuleName" + suffix, narrative, "", 24,
                     Vector2.zero, Vector2.one, TextAnchor.UpperLeft, theme.amber),
-                Effect = effect != null ? effect : SpiritUi.Label("JourneyRuleText" + suffix, narrative, "", 24,
+                Effect = effect != null ? effect : SpiritUi.Label("JourneyRuleText" + suffix, narrative, "", 21,
                     Vector2.zero, Vector2.one, TextAnchor.UpperLeft),
                 IconRoot = SpiritUi.Rect("JourneyRuleIconRoot" + suffix, narrative, Vector2.zero, Vector2.one)
             };
             row.Name.resizeTextForBestFit = false;
             row.Effect.resizeTextForBestFit = false;
             row.Effect.supportRichText = true;
-            row.Effect.fontSize = 24;
+            row.Effect.fontSize = 21;
             row.Effect.alignment = TextAnchor.UpperLeft;
             row.Effect.color = theme.cream;
             return row;
+        }
+
+        private void ConfigureCharm(EncounterJourneyBeat beat)
+        {
+            bool visible = beat.Charm != null && encounterControls?.Catalog != null;
+            charmDetail.gameObject.SetActive(visible);
+            if (!visible) return;
+            var definition = encounterControls.Catalog.GetModifier(beat.Charm.Id);
+            var theme = SpiritUi.GetTheme(transform);
+            string name = SpiritModifierPresentation.GetName(definition);
+            body.supportRichText = true;
+            body.text = body.text.Replace("{charm}", "<b><color=#" + ColorUtility.ToHtmlStringRGB(theme.amber) +
+                ">" + SpiritModifierFamilyRow.GetFamilyName(definition) + "</color></b>");
+            charmName.text = name;
+            charmEffect.text = "<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>";
+            charmEffect.color = SpiritModifierIcons.GetEffectColor(definition);
+            charmCondition.text = SpiritRewardCard.GetModifierDescription(definition, theme.amber,
+                theme.GetModifierTriggerColor(definition.Phase));
+            charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
+            charmIcon.color = charmSigil.color = SpiritModifierIcons.GetEffectColor(definition);
+            charmIcon.gameObject.SetActive(charmIcon.sprite != null);
+            charmSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            charmSigil.gameObject.SetActive(charmIcon.sprite == null);
         }
 
         private void ConfigureInvitation(EncounterTablePresentationAsset table, bool invitation)
@@ -497,11 +584,12 @@ namespace Dice.Presentation
             ruleHeading.text = invitationRuleCount > 1 ? "ENCOUNTER RULES" : "ENCOUNTER RULE";
             SetInvitationRulesVisible(showRules);
             title.gameObject.SetActive(!showRules);
+            title.resizeTextForBestFit = !charmDetail.gameObject.activeSelf;
             var theme = SpiritUi.GetTheme(transform);
-            body.fontSize = showRules ? 19 : 23;
-            body.fontStyle = showRules ? FontStyle.Italic : FontStyle.Normal;
-            body.color = showRules ? theme.muted : theme.cream;
-            body.alignment = showRules ? TextAnchor.UpperLeft : TextAnchor.MiddleCenter;
+            body.fontSize = 23;
+            body.fontStyle = FontStyle.Normal;
+            body.color = theme.cream;
+            body.alignment = TextAnchor.MiddleCenter;
             body.resizeTextForBestFit = !showRules;
             if (showRules)
             {
@@ -517,6 +605,11 @@ namespace Dice.Presentation
                 narrative.anchorMin = new Vector2(.035f, .145f);
                 narrative.anchorMax = new Vector2(.965f, .57f);
                 narrative.offsetMin = narrative.offsetMax = Vector2.zero;
+                title.rectTransform.anchorMin = new Vector2(.035f, .79f);
+                title.rectTransform.anchorMax = new Vector2(.965f, .98f);
+                title.rectTransform.pivot = new Vector2(.5f, .5f);
+                title.rectTransform.offsetMin = new Vector2(12, 0);
+                title.rectTransform.offsetMax = new Vector2(-12, 0);
                 body.rectTransform.anchorMin = new Vector2(.04f, .065f);
                 body.rectTransform.anchorMax = new Vector2(.96f, .79f);
                 body.rectTransform.pivot = new Vector2(.5f, .5f);
@@ -568,7 +661,55 @@ namespace Dice.Presentation
             }
             height = PreferredHeight(ruleScope, width);
             PlaceInvitationElement(ruleScope.rectTransform, padding, top, width, height);
-            narrative.sizeDelta = new Vector2(0, top + height + padding);
+            top += height;
+            if (charmDetail.gameObject.activeSelf)
+            {
+                top += 18;
+                top += LayoutCharmDetail(padding, top, width);
+            }
+            narrative.sizeDelta = new Vector2(0, top + padding);
+        }
+
+        private void LayoutCharmNarrative()
+        {
+            charmWidth = narrative.rect.width;
+            narrative.anchorMin = new Vector2(.035f, .145f);
+            narrative.anchorMax = new Vector2(.965f, .145f);
+            narrative.pivot = new Vector2(.5f, 0);
+            narrative.anchoredPosition = Vector2.zero;
+            const float padding = 24;
+            float width = Mathf.Max(1, charmWidth - padding * 2);
+            float top = padding;
+            float height = PreferredHeight(title, width);
+            PlaceInvitationElement(title.rectTransform, padding, top, width, height);
+            top += height + 12;
+            body.resizeTextForBestFit = false;
+            height = PreferredHeight(body, width);
+            PlaceInvitationElement(body.rectTransform, padding, top, width, height);
+            top += height + 18;
+            top += LayoutCharmDetail(padding, top, width);
+            narrative.sizeDelta = new Vector2(0, top + padding);
+        }
+
+        private float LayoutCharmDetail(float left, float top, float width)
+        {
+            PlaceInvitationElement(charmDivider, 0, 0, width, 1);
+            const float contentTop = 16;
+            const float iconSize = 50;
+            const float iconSpace = 62;
+            float nameHeight = PreferredHeight(charmName, width - iconSpace);
+            float effectHeight = PreferredHeight(charmEffect, width - iconSpace);
+            float headerHeight = Mathf.Max(iconSize, nameHeight + 4 + effectHeight);
+            PlaceInvitationElement(charmIconRoot, 0, contentTop + (headerHeight - iconSize) * .5f, iconSize, iconSize);
+            PlaceInvitationElement(charmName.rectTransform, iconSpace, contentTop, width - iconSpace, nameHeight);
+            PlaceInvitationElement(charmEffect.rectTransform, iconSpace, contentTop + nameHeight + 4,
+                width - iconSpace, effectHeight);
+            float conditionTop = contentTop + headerHeight + 10;
+            float conditionHeight = PreferredHeight(charmCondition, width);
+            PlaceInvitationElement(charmCondition.rectTransform, 0, conditionTop, width, conditionHeight);
+            float height = conditionTop + conditionHeight;
+            PlaceInvitationElement(charmDetail, left, top, width, height);
+            return height;
         }
 
         private static float PreferredHeight(Text text, float width)
@@ -589,7 +730,7 @@ namespace Dice.Presentation
         {
             var beat = journey.Beats[index];
             IsAnimating = true;
-            SetButtons(false);
+            SetButtons(true);
             float duration = Mathf.Max(0, beat.Duration);
             float age = 0;
             // Let Refresh finish recording this beat before an immediate continuation can refresh it.
@@ -680,6 +821,8 @@ namespace Dice.Presentation
         {
             if (invitationRuleCount > 0 && activeBeat?.Kind == EncounterJourneyBeatKind.Invitation &&
                 !Mathf.Approximately(invitationWidth, narrative.rect.width)) LayoutInvitation();
+            else if (charmDetail != null && charmDetail.gameObject.activeSelf && invitationRuleCount == 0 &&
+                !Mathf.Approximately(charmWidth, narrative.rect.width)) LayoutCharmNarrative();
             double time = Time.unscaledTimeAsDouble;
             var asset = activeBeat?.SceneLighting;
             sceneLightingState.Sample(asset, time);

@@ -17,6 +17,8 @@ namespace Dice.Presentation
         string JourneyStatus { get; }
         IReadOnlyList<string> VisitedEncounterIds { get; }
         IReadOnlyList<string> HighlightedEncounterIds { get; }
+        IReadOnlyList<string> CompletedStoryIds { get; }
+        bool IsJourneyAvailable(string id);
 
         event Action JourneyChanged;
         void SelectEncounter(string encounterId);

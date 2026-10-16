@@ -43,7 +43,7 @@ namespace Dice.Tests
             var sampleCatalog = new MechanicalCatalog("artwork.samples", standard.Hands, new[] { sample }, activated);
             var contributions = EncounterSession.CreateEncounter(sampleCatalog, sample.Id, 60).Snapshot.ModifierContributions;
             int tableIndex = 0;
-            foreach (var journey in controller.JourneyCatalog.Entries)
+            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
                 var encounter = new EncounterDefinition(journey.EncounterId, new[] { new StageDefinition(1000000, 3, 3) });
                 controller.Initialize(new MechanicalCatalog("artwork.table", standard.Hands,
@@ -84,10 +84,10 @@ namespace Dice.Tests
             Assert.That(SpiritModifierIcons.GetSprite(definitions[0]), Is.Not.Null);
             Assert.That(definitions.Select(SpiritModifierIcons.GetCategorySprite).Distinct().Count(), Is.EqualTo(4));
             Assert.That(definitions.Select(SpiritModifierIcons.GetEffectColor).Distinct().Count(), Is.EqualTo(4));
-            Assert.That(controller.JourneyCatalog.Entries.Count, Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
 
             int tableIndex = 0;
-            foreach (var journey in controller.JourneyCatalog.Entries)
+            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
                 var encounter = new EncounterDefinition(journey.EncounterId,
                     new[] { new StageDefinition(1000000000, 3, 3) }, startingModifiers: Ids);

@@ -82,6 +82,7 @@ namespace Dice.Tests
             controller.AcceptEncounter();
             yield return Wait(controller);
             string persistedProfile = File.ReadAllText(controller.ProfilePath);
+            int collectedCount = controller.ProfileUnlockedModifierIds.Count;
             foreach (int width in new[] { 443, 540 })
             {
                 Resize(view, width);
@@ -90,7 +91,7 @@ namespace Dice.Tests
                 yield return null;
                 Assert.That(collection.IsVisible, Is.True);
                 Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
-                Assert.That(Find<Text>(collection, "CollectionSummary").text, Does.StartWith("Collected 1 / "));
+                Assert.That(Find<Text>(collection, "CollectionSummary").text, Does.StartWith("Collected " + collectedCount + " / "));
                 var row = collection.Rows.Single(value => value.FamilyId == permanent.FamilyId);
                 var unlockedButton = row.GetComponentsInChildren<Button>().Single(button =>
                     Find<Text>(button, "VariantState").text == "Unlocked");
@@ -122,7 +123,8 @@ namespace Dice.Tests
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
             var journey = controller.JourneyCatalog.Entries.Single(value =>
-                controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count > 0);
+                !value.IsStoryOnly && controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count > 0);
+            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
             foreach (int width in new[] { 443, 540 })
             {
@@ -163,7 +165,7 @@ namespace Dice.Tests
             Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
             controller.ReturnToInvestigation();
             var ordinary = controller.JourneyCatalog.Entries.First(value =>
-                controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count == 0);
+                !value.IsStoryOnly && controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count == 0);
             controller.SelectEncounter(ordinary.EncounterId);
             AdvanceToInvitation(controller);
             Find<Button>(view, "JourneyAcceptButton").onClick.Invoke();

@@ -20,6 +20,7 @@ namespace Dice.App
                 ["DiscoveredFamilyIds"] = new JArray(profile.DiscoveredFamilyIds),
                 ["UnlockedModifierIds"] = new JArray(profile.UnlockedModifierIds),
                 ["CompletedEncounterIds"] = new JArray(profile.CompletedEncounterIds),
+                ["CompletedStoryIds"] = new JArray(profile.CompletedStoryIds),
                 ["VisitedEncounterIds"] = new JArray(profile.VisitedEncounterIds)
             };
             byte[] bytes = TextEncoding.GetBytes(document.ToString(Formatting.Indented));
@@ -46,16 +47,19 @@ namespace Dice.App
                     if (version == null || version.Type != JTokenType.Integer)
                         throw new FormatException("The profile format version must be an integer.");
                     long formatVersion = version.Value<long>();
-                    if (formatVersion != 1 && formatVersion != PlayerProfile.CurrentFormatVersion)
+                    if (formatVersion != 1 && formatVersion != 3 && formatVersion != PlayerProfile.CurrentFormatVersion)
                         throw new NotSupportedException("The profile format version is unsupported.");
                     foreach (var property in document.Properties())
                         if (property.Name != "ProfileFormatVersion" && property.Name != "UnlockedModifierIds" &&
                             property.Name != "CompletedEncounterIds" && property.Name != "VisitedEncounterIds" &&
-                            !(formatVersion == PlayerProfile.CurrentFormatVersion && property.Name == "DiscoveredFamilyIds"))
+                            !(formatVersion >= 3 && property.Name == "DiscoveredFamilyIds") &&
+                            !(formatVersion == PlayerProfile.CurrentFormatVersion && property.Name == "CompletedStoryIds"))
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
-                    if (formatVersion == PlayerProfile.CurrentFormatVersion)
+                    if (formatVersion >= 3)
                         ReadIds(document["DiscoveredFamilyIds"], profile.DiscoverFamily);
+                    if (formatVersion == PlayerProfile.CurrentFormatVersion)
+                        ReadIds(document["CompletedStoryIds"], profile.CompleteStory);
                     ReadIds(document["UnlockedModifierIds"], profile.UnlockModifier);
                     ReadIds(document["CompletedEncounterIds"], profile.CompleteEncounter);
                     // Version one profiles written before journey tracking have no visit field.

@@ -15,7 +15,7 @@ MonoBehaviour:
   ruleId: rule.cycling_favored_face_multiplier
   activationPhase: 2
   displayName: Lantern's Favor
-  description: "Each die matching the favored face adds <b>+2 multiplier</b> when you play a hand.\n\nThe favored face cycles from 1 through 6, advancing after each played hand throughout the encounter."
+  description: "Each die matching the favored face adds <b>+2 multiplier</b> when you play a hand.\n\nThe favored face cycles from 1 through 6 after each played hand."
   availableText: "Face {face}: +2 per match"
   usedText: "Face {face}: +2 per match"
   icon: {fileID: 0}

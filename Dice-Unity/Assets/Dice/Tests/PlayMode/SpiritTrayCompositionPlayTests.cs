@@ -24,12 +24,13 @@ namespace Dice.Tests
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = controller.GetComponent<SpiritEncounterView>();
-            Assert.That(controller.JourneyCatalog.Entries.Count, Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
             Camera previousCamera = null;
             RenderTexture previousTexture = null;
-            foreach (var journey in controller.JourneyCatalog.Entries)
+            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
                 controller.ReturnToInvestigation();
+                ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
                 controller.SelectEncounter(journey.EncounterId);
                 while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                     controller.AdvanceJourney();

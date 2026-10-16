@@ -48,6 +48,7 @@ namespace Dice.App
         public IReadOnlyList<string> ProfileDiscoveredFamilyIds => profile != null && Catalog != null
             ? KnownDiscoveredFamilies(Catalog) : (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> CompletedEncounterIds => profile?.CompletedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<string> CompletedStoryIds => profile?.CompletedStoryIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public string ProfileStatusMessage { get; private set; } = string.Empty;
         public IReadOnlyList<string> VisitedEncounterIds => profile?.VisitedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> HighlightedEncounterIds => highlightedEncounterIds;
@@ -59,7 +60,8 @@ namespace Dice.App
         public bool HasActiveEncounter => application != null && Snapshot != null && Snapshot.Outcome == EncounterOutcome.None;
         public bool CanResume => HasActiveEncounter && !IsBusy && JourneyPhase == EncounterJourneyPhase.Investigation;
         public bool CanSkipIntro => JourneyPhase == EncounterJourneyPhase.Sequence && SelectedJourney != null &&
-            BeatIndex < SelectedJourney.Beats.Count - 1 && profile != null && profile.VisitedEncounterIds.Contains(SelectedJourney.EncounterId);
+            !SelectedJourney.IsStoryOnly && BeatIndex < SelectedJourney.Beats.Count - 1 && profile != null &&
+            profile.VisitedEncounterIds.Contains(SelectedJourney.EncounterId);
 
         public event Action StateChanged;
         public event Action<Resolution> Resolved;
@@ -184,6 +186,7 @@ namespace Dice.App
             if (IsBusy || Catalog == null || journeyCatalog == null || JourneyPhase != EncounterJourneyPhase.Investigation) return;
             var selected = journeyCatalog.Find(id);
             if (selected == null) { SetJourneyStatus("The encounter has no investigation lead."); return; }
+            if (!IsJourneyAvailable(id)) { SetJourneyStatus("Follow the current lead before visiting this location."); return; }
             SelectedJourney = selected;
             highlightedEncounterIds.Remove(id);
             BeatIndex = 0;
@@ -193,8 +196,12 @@ namespace Dice.App
 
         public void AdvanceJourney()
         {
-            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null ||
-                BeatIndex >= SelectedJourney.Beats.Count - 1) return;
+            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null) return;
+            if (BeatIndex == SelectedJourney.Beats.Count - 1)
+            {
+                if (SelectedJourney.IsStoryOnly) CompleteStoryJourney();
+                return;
+            }
             if (!ApplyJourneyRewards(BeatIndex)) return;
             ++BeatIndex;
             SetJourneyStatus(string.Empty);
@@ -210,7 +217,7 @@ namespace Dice.App
 
         public void AcceptEncounter()
         {
-            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null ||
+            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null || SelectedJourney.IsStoryOnly ||
                 SelectedJourney.Beats[BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) return;
             try
             {
@@ -242,6 +249,46 @@ namespace Dice.App
             SelectedJourney = null;
             BeatIndex = -1;
             SetJourneyStatus(string.Empty);
+        }
+
+        public bool IsJourneyAvailable(string id)
+        {
+            var journey = journeyCatalog?.Find(id);
+            if (journey == null || profile == null) return false;
+            if (journey.IsStoryOnly ? profile.CompletedStoryIds.Contains(journey.StoryId) :
+                profile.CompletedEncounterIds.Contains(journey.EncounterId) || profile.VisitedEncounterIds.Contains(journey.EncounterId)) return true;
+            foreach (string required in journey.RequiredCompletedEncounterIds)
+                if (!profile.CompletedEncounterIds.Contains(required)) return false;
+            foreach (string required in journey.RequiredCompletedStoryIds)
+                if (!profile.CompletedStoryIds.Contains(required)) return false;
+            return true;
+        }
+
+        private void CompleteStoryJourney()
+        {
+            if (!PersistProfile()) { SetJourneyStatus(ProfileStatusMessage); return; }
+            try
+            {
+                var nextProfile = new PlayerProfile();
+                nextProfile.Merge(profile);
+                foreach (var beat in SelectedJourney.Beats)
+                    if (beat.ProgressionReward != null) nextProfile.ApplyReward(beat.ProgressionReward.Build(Catalog), Catalog);
+                if (SelectedJourney.CompletionReward != null)
+                    nextProfile.ApplyReward(SelectedJourney.CompletionReward.Build(Catalog), Catalog);
+                nextProfile.CompleteStory(SelectedJourney.StoryId);
+                PlayerProfileFileStore.Save(ProfilePath, nextProfile);
+                profile = nextProfile;
+                ProfileStatusMessage = string.Empty;
+                application?.MergeUnlockedModifiers(KnownUnlockedModifiers(Catalog));
+                application?.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
+                if (application != null) Snapshot = application.Snapshot;
+                ReturnToInvestigation();
+            }
+            catch (Exception exception) when (IsExpectedFailure(exception))
+            {
+                ProfileStatusMessage = "Cannot finish the story: " + exception.Message;
+                SetJourneyStatus(ProfileStatusMessage);
+            }
         }
 
         public void ResumeEncounter()

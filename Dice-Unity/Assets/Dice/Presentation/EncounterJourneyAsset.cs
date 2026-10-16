@@ -53,6 +53,7 @@ namespace Dice.Presentation
         [SerializeField] private AudioClip audioCue;
         [SerializeField] private float duration = 1;
         [SerializeField] private ProgressionRewardAsset progressionReward;
+        [SerializeField] private ModifierAsset charm;
         [SerializeField] private Vector2 motionFrom;
         [SerializeField] private Vector2 motionTo;
         [SerializeField] private Rect foregroundRect = new Rect(0, 0, 1, 1);
@@ -79,6 +80,7 @@ namespace Dice.Presentation
         public AudioClip AudioCue => audioCue;
         public float Duration => duration;
         public ProgressionRewardAsset ProgressionReward => progressionReward;
+        public ModifierAsset Charm => charm;
         public Vector2 MotionFrom => motionFrom;
         public Vector2 MotionTo => motionTo;
         public Rect ForegroundRect => foregroundRect;
@@ -100,6 +102,7 @@ namespace Dice.Presentation
     public sealed class EncounterJourneyAsset : ScriptableObject
     {
         [SerializeField] private string encounterId;
+        [SerializeField] private string storyId = string.Empty;
         [SerializeField] private string locationTitle;
         [SerializeField] private string spiritName;
         [SerializeField, TextArea] private string leadText;
@@ -119,7 +122,12 @@ namespace Dice.Presentation
         [SerializeField] private EncounterOutcomePresentation defeatPresentation;
         [SerializeField] private EncounterOutcomePresentation abandonPresentation;
         [SerializeField] private string[] followUpEncounterIds = Array.Empty<string>();
+        [SerializeField] private string[] requiredCompletedEncounterIds = Array.Empty<string>();
+        [SerializeField] private string[] requiredCompletedStoryIds = Array.Empty<string>();
 
+        public string Id => IsStoryOnly ? storyId : encounterId;
+        public bool IsStoryOnly => !string.IsNullOrEmpty(storyId);
+        public string StoryId => storyId;
         public string EncounterId => encounterId;
         public string LocationTitle => locationTitle;
         public string SpiritName => spiritName;
@@ -137,6 +145,8 @@ namespace Dice.Presentation
         public string CompletionClueText => completionClueText;
         public ProgressionRewardAsset CompletionReward => completionReward;
         public IReadOnlyList<string> FollowUpEncounterIds => followUpEncounterIds;
+        public IReadOnlyList<string> RequiredCompletedEncounterIds => requiredCompletedEncounterIds;
+        public IReadOnlyList<string> RequiredCompletedStoryIds => requiredCompletedStoryIds;
 
         public EncounterOutcomePresentation GetOutcomePresentation(EncounterOutcome outcome)
         {
@@ -152,8 +162,10 @@ namespace Dice.Presentation
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (!IsStableId(encounterId)) throw new FormatException("A journey requires a valid encounter ID.");
-            var definition = catalog.GetEncounter(encounterId);
+            if (!IsStableId(Id)) throw new FormatException("A journey requires a valid ID.");
+            if (IsStoryOnly && !string.IsNullOrEmpty(encounterId))
+                throw new FormatException("A story journey cannot specify an encounter ID.");
+            var definition = IsStoryOnly ? null : catalog.GetEncounter(encounterId);
             completionReward?.Build(catalog);
             victoryPresentation?.Validate();
             defeatPresentation?.Validate();
@@ -161,8 +173,11 @@ namespace Dice.Presentation
             if (followUpEncounterIds == null) throw new FormatException("Journey follow-up encounters require an array.");
             var followUpIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in followUpEncounterIds)
-                if (!IsStableId(id) || id == encounterId || !followUpIds.Add(id))
+                if (!IsStableId(id) || id == Id || !followUpIds.Add(id))
                     throw new FormatException("Journey follow-up encounter IDs must be valid, unique, and different from the journey.");
+            ValidatePrerequisiteIds(requiredCompletedEncounterIds);
+            ValidatePrerequisiteIds(requiredCompletedStoryIds);
+            foreach (string id in requiredCompletedEncounterIds) catalog.GetEncounter(id);
             if (string.IsNullOrWhiteSpace(locationTitle) || string.IsNullOrWhiteSpace(spiritName) ||
                 string.IsNullOrWhiteSpace(leadText))
                 throw new FormatException("An encounter journey requires its location, host, and investigation lead.");
@@ -187,8 +202,11 @@ namespace Dice.Presentation
                 if (beat.Kind == EncounterJourneyBeatKind.Invitation) ++invitations;
                 beat.SceneLighting?.Validate();
                 beat.ProgressionReward?.Build(catalog);
+                if (beat.Charm != null) catalog.GetModifier(beat.Charm.Id);
             }
-            if (invitations != 1 || beats[beats.Length - 1].Kind != EncounterJourneyBeatKind.Invitation)
+            if (IsStoryOnly && (invitations != 0 || beats[beats.Length - 1].AutoAdvance))
+                throw new FormatException("A story journey requires no invitations and an explicit final continue action.");
+            if (!IsStoryOnly && (invitations != 1 || beats[beats.Length - 1].Kind != EncounterJourneyBeatKind.Invitation))
                 throw new FormatException("The final journey beat must be its only invitation.");
             if (tablePresentation == null) throw new FormatException("An encounter journey requires table presentation.");
             tablePresentation.SceneLighting?.Validate();
@@ -204,10 +222,20 @@ namespace Dice.Presentation
                 if (rule == null || string.IsNullOrWhiteSpace(rule.RuleId) || !ruleIds.Add(rule.RuleId))
                     throw new FormatException("Journey rule presentations must be nonnull and unique.");
             }
+            if (IsStoryOnly) return;
             if (ruleIds.Count != definition.Rules.Count)
                 throw new FormatException("Journey rule presentation does not match the encounter rules.");
             foreach (var rule in definition.Rules)
                 if (!ruleIds.Contains(rule.Id)) throw new FormatException("An encounter rule is missing its presentation.");
+        }
+
+        private void ValidatePrerequisiteIds(string[] prerequisiteIds)
+        {
+            if (prerequisiteIds == null) throw new FormatException("Journey completion prerequisites require an array.");
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string id in prerequisiteIds)
+                if (!IsStableId(id) || id == Id || !ids.Add(id))
+                    throw new FormatException("Journey completion prerequisite IDs must be valid, unique, and different from the journey.");
         }
 
         private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&

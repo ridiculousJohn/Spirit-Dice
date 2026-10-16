@@ -7,13 +7,15 @@ namespace Dice.App
 {
     public sealed class PlayerProfile
     {
-        public const int CurrentFormatVersion = 3;
+        public const int CurrentFormatVersion = 4;
         private readonly List<string> discoveredFamilyIds = new List<string>();
         private readonly List<string> unlockedModifierIds = new List<string>();
         private readonly List<string> completedEncounterIds = new List<string>();
+        private readonly List<string> completedStoryIds = new List<string>();
         private readonly List<string> visitedEncounterIds = new List<string>();
         public ReadOnlyCollection<string> UnlockedModifierIds { get; }
         public ReadOnlyCollection<string> CompletedEncounterIds { get; }
+        public ReadOnlyCollection<string> CompletedStoryIds { get; }
         public ReadOnlyCollection<string> VisitedEncounterIds { get; }
         public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
 
@@ -21,12 +23,14 @@ namespace Dice.App
         {
             UnlockedModifierIds = unlockedModifierIds.AsReadOnly();
             CompletedEncounterIds = completedEncounterIds.AsReadOnly();
+            CompletedStoryIds = completedStoryIds.AsReadOnly();
             VisitedEncounterIds = visitedEncounterIds.AsReadOnly();
             DiscoveredFamilyIds = discoveredFamilyIds.AsReadOnly();
         }
 
         public bool UnlockModifier(string id) => Add(unlockedModifierIds, id);
         public bool CompleteEncounter(string id) => Add(completedEncounterIds, id);
+        public bool CompleteStory(string id) => Add(completedStoryIds, id);
         public bool VisitEncounter(string id) => Add(visitedEncounterIds, id);
         public bool DiscoverFamily(string id) => Add(discoveredFamilyIds, id);
 
@@ -65,6 +69,7 @@ namespace Dice.App
             foreach (string id in other.DiscoveredFamilyIds) changed |= DiscoverFamily(id);
             foreach (string id in other.UnlockedModifierIds) changed |= UnlockModifier(id);
             foreach (string id in other.CompletedEncounterIds) changed |= CompleteEncounter(id);
+            foreach (string id in other.CompletedStoryIds) changed |= CompleteStory(id);
             foreach (string id in other.VisitedEncounterIds) changed |= VisitEncounter(id);
             return changed;
         }

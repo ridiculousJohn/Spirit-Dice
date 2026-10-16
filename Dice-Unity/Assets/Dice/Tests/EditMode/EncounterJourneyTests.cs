@@ -226,6 +226,108 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void PrerequisitesGateNewLeadsButPreservePreviouslyVisitedEncounters()
+        {
+            Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.IsJourneyAvailable(FirstId), Is.True);
+            Assert.That(controller.IsJourneyAvailable(SecondId), Is.False);
+            controller.SelectEncounter(SecondId);
+            Assert.That(controller.SelectedJourney, Is.Null);
+            var saved = new PlayerProfile();
+            saved.VisitEncounter(SecondId);
+            PlayerProfileFileStore.Save(controller.ProfilePath, saved);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.IsJourneyAvailable(SecondId), Is.True);
+            saved.CompleteEncounter(FirstId);
+            PlayerProfileFileStore.Save(controller.ProfilePath, saved);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(SecondId);
+            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+        }
+
+        [Test]
+        public void StoryCompletionPersistsRewardsWithoutStartingOrSavingAnEncounter()
+        {
+            var story = AddStory();
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(story.Id);
+            Assert.That(controller.CanSkipIntro, Is.False);
+            controller.AcceptEncounter();
+            Assert.That(controller.Snapshot, Is.Null);
+            controller.AdvanceJourney();
+            Assert.That(controller.CompletedStoryIds, Is.Empty);
+            controller.AdvanceJourney();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(controller.Snapshot, Is.Null);
+            Assert.That(File.Exists(savePath), Is.False);
+            var saved = PlayerProfileFileStore.Load(controller.ProfilePath);
+            Assert.That(saved.CompletedStoryIds, Is.EqualTo(new[] { story.StoryId }));
+            Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamily));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(story.Id);
+            controller.AdvanceJourney();
+            controller.AdvanceJourney();
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(controller.CompletedStoryIds, Is.EqualTo(new[] { story.StoryId }));
+        }
+
+        [Test]
+        public void StoryCompletionRetainsAnExistingRunAndItsSave()
+        {
+            var story = AddStory();
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.CompletePresentation();
+            controller.Save();
+            byte[] savedRun = File.ReadAllBytes(savePath);
+            var before = controller.Snapshot;
+            controller.ReturnToInvestigation();
+            controller.SelectEncounter(story.Id);
+            controller.AdvanceJourney();
+            controller.AdvanceJourney();
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(before.EncounterId));
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(before.Revision));
+            Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(savedRun));
+            Assert.That(controller.CanResume, Is.True);
+        }
+
+        [Test]
+        public void FailedStoryCompletionSaveRetainsTheFinalBeatAndDoesNotGrantRewards()
+        {
+            var story = AddStory();
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            PlayerProfileFileStore.Save(controller.ProfilePath, new PlayerProfile());
+            controller.SelectEncounter(story.Id);
+            controller.AdvanceJourney();
+            using (var lockedProfile = new FileStream(controller.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                controller.AdvanceJourney();
+                Assert.That(controller.BeatIndex, Is.EqualTo(1));
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+                Assert.That(controller.CompletedStoryIds, Is.Empty);
+                Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+                Assert.That(controller.JourneyStatus, Does.Contain("Cannot finish the story"));
+            }
+            controller.AdvanceJourney();
+            Assert.That(controller.CompletedStoryIds, Does.Contain(story.StoryId));
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
+        }
+
+        private EncounterJourneyAsset AddStory()
+        {
+            var story = Journey("", "A return visit", "The guide");
+            Set(story, "storyId", "story.return");
+            Set(story, "beats", new[] { Beat("report", EncounterJourneyBeatKind.Dialogue),
+                Beat("prepare", EncounterJourneyBeatKind.Dialogue) });
+            Set(story, "completionReward", Reward(true, true));
+            Set(journeys, "entries", new[] { journeys.Entries[0], journeys.Entries[1], story });
+            return story;
+        }
+
+        [Test]
         public void DirectStoryGrantUpdatesAnActiveRunWithoutEquippingTheCharm()
         {
             controller.Initialize(catalog, FirstId, 17, savePath);

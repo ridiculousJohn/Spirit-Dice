@@ -91,7 +91,7 @@ MonoBehaviour:
     - id: "witness"
       kind: 2
       title: "The Lightkeeper"
-      text: "You followed the stones. The one you seek followed a light. I remember it passing here."
+      text: "Your traveler came through here. The blue light waited at the old crossing. I went close enough to hear them speak."
       continueLabel: "Ask which road"
       background: {fileID: 0}
       sceneLighting: {fileID: 0}
@@ -114,7 +114,7 @@ MonoBehaviour:
     - id: "bargain"
       kind: 2
       title: "What the light remembers"
-      text: "The lantern draws us close, but its favor never rests. Keep pace with it, and I will show you the road they took."
+      text: "Win my bargain, and I will tell you what happened at the crossing. Keep pace with the lantern. Its favor never rests."
       continueLabel: "Hear the terms"
       background: {fileID: 0}
       sceneLighting: {fileID: 0}
@@ -134,11 +134,21 @@ MonoBehaviour:
       backgroundMotionTo: {x: 0, y: 0}
       backgroundScaleFrom: 1
       backgroundScaleTo: 1
+    - id: "discovery"
+      kind: 2
+      title: "What the lantern reveals"
+      text: "This bargain reveals Stored Acorn, Turning Wheel, and Low Roof. Their charms ask you to weigh what you spend against what you keep."
+      continueLabel: "Hear the terms"
+      duration: 0
+      scaleFrom: 1
+      scaleTo: 1
+      backgroundScaleFrom: 1
+      backgroundScaleTo: 1
     - id: "invitation"
       kind: 3
       progressionReward: {fileID: 11400000, guid: 4764478fb74a452fbaea5f9c17091d96, type: 2}
       title: "Lantern's Favor"
-      text: "Watch where the light falls. What it favors now will change with your next hand."
+      text: "The favored face changes with your next hand. Watch where the light falls."
       continueLabel: "Accept the bargain"
       background: {fileID: 0}
       sceneLighting: {fileID: 0}
@@ -159,14 +169,14 @@ MonoBehaviour:
       backgroundScaleFrom: 1
       backgroundScaleTo: 1
   tablePresentation: {fileID: 11400000, guid: "11aef833f59245afbc56b0b313422f71", type: 2}
-  victoryTitle: "The road to the old crossing"
-  victoryText: "The light they followed was blue. It crossed the fork without lighting the mud beneath it. Your traveler stopped, then followed it down the right-hand road. Beyond the leaning milestone, that road reaches the old crossing."
+  victoryTitle: "Across the boundary"
+  victoryText: "Your traveler was alive. They asked me to tell anyone searching that they had crossed the old bridge. I saw them step through its far arch; the road beyond vanished. Take their message to the fox. You will need his help."
   defeatTitle: "The light moves on"
   defeatText: "You held your gaze where the light had been. Rest a while. The roads will still be here."
   abandonText: "The lightkeeper settles beside the lantern. Both roads disappear into the night."
   resultContinueLabel: "Return to the trail"
-  completionClueTitle: "A light without a reflection"
-  completionClueText: "The traveler followed a blue light down the right-hand road toward the old crossing, beyond a leaning milestone. The moth saw no light fall on the wet ground beneath it."
+  completionClueTitle: "Alive beyond the boundary"
+  completionClueText: "The moth spoke with the traveler and witnessed their crossing. Beyond the old bridge's far arch, the road vanished. Return to the fox with their message."
   victoryPresentation:
     enabled: 1
     hostState: 4
@@ -191,3 +201,8 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
+  followUpEncounterIds:
+  - story.fox.chapter-one-return
+  requiredCompletedEncounterIds:
+  - encounter.owl.watchtower
+  requiredCompletedStoryIds: []

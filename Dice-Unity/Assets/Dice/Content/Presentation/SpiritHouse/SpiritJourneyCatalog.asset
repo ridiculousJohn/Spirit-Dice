@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 766b061477f54728a0140896d888c775, type: 3}
   m_Name: SpiritJourneyCatalog
   m_EditorClassIdentifier: 
-  title: FOLLOW THE TRAIL
-  description: Every spirit remembers something. Follow a lead and hear its terms.
+  title: THE OLD ROAD
+  description: A missing traveler. Three witnesses. A road beyond the rain.
   entries:
   - {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df803, type: 2}
   - {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402003, type: 2}
   - {fileID: 11400000, guid: 4171040a8638595cb32e8b4cae729972, type: 2}
+  - {fileID: 11400000, guid: e774c29f8c2e411b953f9dfca49d077b, type: 2}

@@ -228,6 +228,8 @@ namespace Dice.Tests
             public string JourneyStatus => "";
             public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
+            public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
+            public bool IsJourneyAvailable(string id) => true;
             public event Action JourneyChanged { add { } remove { } }
             public void SelectEncounter(string encounterId) { }
             public void AdvanceJourney() { }

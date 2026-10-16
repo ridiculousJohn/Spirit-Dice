@@ -30,6 +30,7 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
             view = controller.GetComponent<SpiritEncounterView>();
             journey = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == EncounterId);
             SetField(controller, "useFixedSeed", true);
@@ -59,7 +60,7 @@ namespace Dice.Tests
             }
 
             Assert.That(journey.Beats.Select(beat => beat.Id), Is.EqualTo(new[]
-                { "causeway", "lantern", "arrival", "witness", "bargain", "invitation" }));
+                { "causeway", "lantern", "arrival", "witness", "bargain", "discovery", "invitation" }));
             Assert.That(journey.Beats.Where(beat => beat.AutoAdvance).Select(beat => beat.Id),
                 Is.EqualTo(new[] { "arrival" }));
             Assert.That(journey.Beats.Where(beat => beat.Id != "arrival").All(beat => beat.Duration == 0), Is.True);
@@ -112,7 +113,7 @@ namespace Dice.Tests
             Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.EqualTo(1).Within(.001f));
             yield return CaptureMotion("witness", 2f, null, null, () => AssertNoEngine(resolutions));
 
-            foreach (string phase in new[] { "bargain", "invitation" })
+            foreach (string phase in new[] { "bargain", "discovery", "invitation" })
             {
                 yield return CaptureMotion(phase, 2f, () => Click("JourneyAdvanceButton"),
                     () => view.JourneyView.IsAnimating, () =>

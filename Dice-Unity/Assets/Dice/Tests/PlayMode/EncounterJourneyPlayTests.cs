@@ -42,10 +42,13 @@ namespace Dice.Tests
             Assert.That(journey.EncounterId, Is.EqualTo("encounter.fox.introduction"));
             Assert.That(journey.LocationTitle, Is.EqualTo("The Last Lantern"));
             Assert.That(journey.LeadText, Is.EqualTo("A missing traveler was last seen following a lantern through the rain. The light is still burning."));
-            Assert.That(journey.Beats.Count, Is.EqualTo(4));
-            Assert.That(journey.Beats.Select(value => value.Id), Is.EqualTo(new[] { "approach", "arrival", "bargain", "invitation" }));
-            Assert.That(journey.Beats[2].Text, Is.EqualTo("They sheltered here. I remember where they went. Win, and I will tell you."));
-            Assert.That(journey.Beats[3].Text, Is.EqualTo("Your first mistake costs you nothing."));
+            Assert.That(journey.Beats.Count, Is.EqualTo(6));
+            Assert.That(journey.Beats.Select(value => value.Id),
+                Is.EqualTo(new[] { "approach", "arrival", "bargain", "discovery", "gift", "invitation" }));
+            Assert.That(journey.Beats.Single(value => value.Id == "bargain").Text,
+                Is.EqualTo("They sheltered here. I know where they went. Spirits trade knowledge through bargains. Win our game, and my answer is yours."));
+            Assert.That(journey.Beats.Single(value => value.Id == "invitation").Text,
+                Is.EqualTo("Your first mistake costs you nothing. Accept, and we begin."));
             Assert.That(journey.Beats.Select(value => value.Kind), Does.Contain(EncounterJourneyBeatKind.Arrival));
             Assert.That(journey.Beats.Select(value => value.Kind), Does.Contain(EncounterJourneyBeatKind.Dialogue));
             AssertNoEngine(resolutions);
@@ -73,7 +76,7 @@ namespace Dice.Tests
                 Assert.That(view.JourneyView.VisibleBeatIndex, Is.EqualTo(index));
                 var beat = journey.Beats[index];
                 Assert.That(Find<Text>("JourneyTitle").text, Is.EqualTo(beat.Title));
-                Assert.That(Find<Text>("JourneyBody").text, Is.EqualTo(beat.Text));
+                ChapterJourneyPlayTests.AssertCharmPresentation(view, beat, controller.Catalog);
                 Assert.That(controller.CanSkipIntro, Is.False);
                 Assert.That(Find<Button>("JourneySkipButton").gameObject.activeInHierarchy, Is.False);
                 AssertNoEngine(resolutions);
@@ -123,6 +126,35 @@ namespace Dice.Tests
             AssertVisibleDice(expected.Snapshot.CurrentDice);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).VisitedEncounterIds,
                 Does.Contain(journey.EncounterId));
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator IntroButtonsAdvanceImmediatelyAndAcceptStartsOnlyOneEncounter()
+        {
+            var journey = controller.JourneyCatalog.Entries[0];
+            int resolutions = 0;
+            controller.Resolved += _ => ++resolutions;
+            Click("ClueButton0");
+            for (int index = 0; index < journey.Beats.Count - 1; ++index)
+            {
+                yield return null;
+                Assert.That(controller.BeatIndex, Is.EqualTo(index));
+                Assert.That(view.JourneyView.IsAnimating, Is.True);
+                Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
+                Click("JourneyAdvanceButton");
+            }
+            yield return null;
+            Assert.That(view.JourneyView.IsAnimating, Is.True);
+            Assert.That(Find<Button>("JourneyAcceptButton").IsInteractable(), Is.True);
+            Click("JourneyAcceptButton");
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+            Assert.That(resolutions, Is.EqualTo(1));
+            yield return WaitForPresentation();
+            Assert.That(view.JourneyView.IsAnimating, Is.False);
+            Assert.That(resolutions, Is.EqualTo(1), "Interrupted intro beats must not continue after acceptance.");
+            Assert.That(controller.Snapshot.Revision, Is.Zero);
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain("modifier.initial_roll.first_hand.base_score"));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -363,7 +395,7 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             var controls = new InvitationControls(controller.JourneyCatalog);
-            foreach (var authored in controller.JourneyCatalog.Entries)
+            foreach (var authored in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
                 var invitation = CloneForInvitation(authored);
                 controls.Show(invitation, invitation.Beats.Count - 1);
@@ -378,7 +410,7 @@ namespace Dice.Tests
                     yield return Capture("rules-" + authored.EncounterId + "-" + size.x + "x" + size.y);
                 }
             }
-            Assert.That(controller.JourneyCatalog.Entries.Count, Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -460,8 +492,9 @@ namespace Dice.Tests
             Assert.That(Find<Text>("JourneyTitle").gameObject.activeInHierarchy, Is.False,
                 "The rule name supplies the invitation title.");
             Assert.That(body.text, Is.EqualTo(journey.Beats.Last().Text));
-            Assert.That(body.fontStyle, Is.EqualTo(FontStyle.Italic));
-            Assert.That(body.color, Is.EqualTo(heading.color));
+            Assert.That(body.fontStyle, Is.EqualTo(FontStyle.Normal));
+            Assert.That(body.color, Is.EqualTo(body.GetComponentInParent<SpiritUiContext>().Theme.cream));
+            Assert.That(body.fontSize, Is.EqualTo(23));
             Assert.That(heading.text, Is.EqualTo(journey.TablePresentation.RulePresentations.Count == 1
                 ? "ENCOUNTER RULE" : "ENCOUNTER RULES"));
             Assert.That(scope.text, Is.EqualTo("Active throughout this encounter."));
@@ -475,6 +508,7 @@ namespace Dice.Tests
                 var icon = Find<Graphic>("JourneyRuleIcon" + suffix);
                 Assert.That(name.text, Is.EqualTo(rule.DisplayName));
                 Assert.That(effect.text, Is.EqualTo(rule.Description));
+                Assert.That(effect.fontSize, Is.LessThan(body.fontSize), "Narration must remain more prominent than rule details.");
                 Assert.That(icon.gameObject.activeInHierarchy, Is.True, icon.name);
                 Assert.That(icon.color.a, Is.GreaterThan(0), icon.name);
                 var iconBounds = BoundsIn(narrative, icon.rectTransform);
@@ -559,6 +593,8 @@ namespace Dice.Tests
             public string JourneyStatus => "";
             public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
+            public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
+            public bool IsJourneyAvailable(string id) => true;
             public event Action JourneyChanged;
 
             public InvitationControls(EncounterJourneyCatalogAsset catalog) => JourneyCatalog = catalog;
@@ -730,6 +766,9 @@ namespace Dice.Tests
                 portrait.anchoredPosition = Vector2.zero;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
+                if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
+                    ChapterJourneyPlayTests.AssertCharmPresentation(view,
+                        controller.SelectedJourney.Beats[controller.BeatIndex], controller.Catalog);
                 foreach (var label in view.GetComponentsInChildren<Text>())
                 {
                     if (!label.isActiveAndEnabled || string.IsNullOrWhiteSpace(label.text)) continue;
