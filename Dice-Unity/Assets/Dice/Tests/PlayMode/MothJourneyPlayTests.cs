@@ -105,7 +105,8 @@ namespace Dice.Tests
                     {
                         Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Arrival));
                         Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero);
-                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.False);
+                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True,
+                            "Continue stays available while the arrival plays.");
                     }
                     else Assert.That(journey.Beats[controller.BeatIndex].Id, Is.EqualTo("witness"));
                 });
@@ -130,9 +131,14 @@ namespace Dice.Tests
             bool observedRoll = false;
             bool observedFade = false;
             var openingGroup = Find<CanvasGroup>("TargetPanel");
+            Click("JourneyAcceptButton");
+            Assert.That(Find<RectTransform>("EncounterCharmsIntroduction").gameObject.activeInHierarchy, Is.True);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+            AssertNoEngine(resolutions);
+            yield return WaitUntilClickable("BeginEncounterButton");
             yield return CaptureMotion("opening", .5f, () =>
             {
-                Click("JourneyAcceptButton");
+                Click("BeginEncounterButton");
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
                 Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(EncounterId));
                 Assert.That(controller.Snapshot.Revision, Is.Zero);
@@ -283,9 +289,30 @@ namespace Dice.Tests
             Assert.That(button.gameObject.activeInHierarchy, Is.True, name);
             Assert.That(button.IsInteractable(), Is.True, name);
             Assert.That(EventSystem.current, Is.Not.Null);
+            var handler = TopClickHandler(button, out var pointer, out var hit);
+            Assert.That(hit.gameObject, Is.Not.Null, name);
+            Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + name);
+            pointer.pointerCurrentRaycast = hit;
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+        }
+
+        // Newly shown graphics are skipped by GraphicRaycaster until the canvas assigns their depth when rendering.
+        private IEnumerator WaitUntilClickable(string name)
+        {
+            var button = Find<Button>(name);
+            float deadline = Time.realtimeSinceStartup + 1;
+            while (TopClickHandler(button, out _, out _) != button.gameObject)
+            {
+                Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline), name + " never became clickable.");
+                yield return null;
+            }
+        }
+
+        private static GameObject TopClickHandler(Button button, out PointerEventData pointer, out RaycastResult hit)
+        {
             Canvas.ForceUpdateCanvases();
             var rect = (RectTransform)button.transform;
-            var pointer = new PointerEventData(EventSystem.current)
+            pointer = new PointerEventData(EventSystem.current)
             {
                 position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center)),
                 button = PointerEventData.InputButton.Left,
@@ -293,11 +320,8 @@ namespace Dice.Tests
             };
             var hits = new List<RaycastResult>();
             EventSystem.current.RaycastAll(pointer, hits);
-            Assert.That(hits, Is.Not.Empty, name);
-            var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
-            Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + name);
-            pointer.pointerCurrentRaycast = hits[0];
-            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+            hit = hits.Count > 0 ? hits[0] : default;
+            return hits.Count > 0 ? ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject) : null;
         }
 
         private static void SetField(object target, string name, object value)

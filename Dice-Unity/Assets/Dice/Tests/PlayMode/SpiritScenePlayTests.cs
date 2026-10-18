@@ -155,7 +155,8 @@ namespace Dice.Tests
                 "spirit-file-tests", Guid.NewGuid().ToString("N")));
             string savePath = Path.Combine(artifactRoot, "playmode-encounter.json");
             controller.Initialize(controller.Catalog, "encounter.standard", 60, savePath);
-            var expected = EncounterSession.CreateEncounter(controller.Catalog, "encounter.standard", 60);
+            var expected = EncounterSession.CreateEncounter(controller.Catalog, "encounter.standard", 60,
+                discoveredFamilyIds: controller.ProfileDiscoveredFamilyIds);
             int resolutions = 0;
             controller.Resolved += resolution => ++resolutions;
             yield return null;

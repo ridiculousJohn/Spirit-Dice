@@ -94,8 +94,8 @@ namespace Dice.Tests
                     var owl = Owl();
                     Assert.That(owl.State, Is.EqualTo(SpiritPresentationState.Arrival));
                     Assert.That(owl.GetLayer("Physical Arrival").color.a, Is.GreaterThan(.1f));
-                    Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.False,
-                        "The descent must finish before the next dialogue.");
+                    Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True,
+                        "Continue stays available during the descent.");
                     Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero,
                         "The flight has the chamber to itself.");
                     yield return CheckPortraitSizes("flight");
@@ -104,7 +104,7 @@ namespace Dice.Tests
                     {
                         Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero,
                             "The flight must not reveal an empty plaque before its dialogue.");
-                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.False);
+                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
                         yield return null;
                     }
                     Assert.That(controller.BeatIndex, Is.EqualTo(index + 1),
