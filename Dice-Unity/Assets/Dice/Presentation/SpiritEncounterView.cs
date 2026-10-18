@@ -27,10 +27,13 @@ namespace Dice.Presentation
         public SpiritUiTheme UiTheme => uiTheme;
         public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
 
-        public bool IsCharmsOpen => charmsPanel != null && charmsPanel.gameObject.activeSelf;
-        public bool IsCharmPopupOpen => charmPopupOverlay != null && charmPopupOverlay.gameObject.activeSelf;
-        public long CharmPopupInstanceId { get; private set; } = -1;
+        public bool IsCharmsOpen => OwnedCharmsPanel != null && OwnedCharmsPanel.Root.gameObject.activeSelf;
+        public bool IsCharmPopupOpen => CharmPopup != null && CharmPopup.IsOpen;
+        public long CharmPopupInstanceId => CharmPopup != null ? CharmPopup.InstanceId : -1;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
+        public SpiritRewardsPanel RewardsPanel { get; private set; }
+        public SpiritOwnedCharmsPanel OwnedCharmsPanel { get; private set; }
+        public SpiritCharmPopup CharmPopup { get; private set; }
         public SpiritDiceTray DiceTray { get; private set; }
         public SpiritTrayScene TrayScene { get; private set; }
         public SpiritModifierHistoryTray ModifierHistory { get; private set; }
@@ -38,7 +41,7 @@ namespace Dice.Presentation
         public Button RerollButton { get; private set; }
         public Button CharmsButton { get; private set; }
         public Button HandRanksButton { get; private set; }
-        public Button RefreshButton { get; private set; }
+        public Button RefreshButton => RewardsPanel != null ? RewardsPanel.RefreshButton : null;
         public Text BaseScoreLabel { get; private set; }
         public Text MultiplierLabel { get; private set; }
         public Text HandScoreLabel { get; private set; }
@@ -55,24 +58,10 @@ namespace Dice.Presentation
         private RectTransform diceTrayFrame;
         private RawImage trayImage;
         private Vector2 previousPortraitSize;
-        private RectTransform rewardsPanel;
         private RectTransform stageIntroPanel;
         private RectTransform endingPanel;
-        private RectTransform charmsPanel;
-        private RectTransform charmPopupOverlay;
-        private RectTransform charmPopupPanel;
-        private Card charmPopup;
-        private Text charmPopupStatus;
         private RectTransform menuPanel;
         private SpiritHandRanksPanel handRanksPanel;
-        private RectTransform rewardContent;
-        private ScrollRect rewardScroll;
-        private Button upgradeHandButton;
-        private long selectedUpgradeOption = -1;
-        private RectTransform charmContent;
-        private ScrollRect charmScroll;
-        private SpiritCharmGridLayout charmGrid;
-        private SpiritCharmDetailsLayout charmDetailsLayout;
         private SpiritHostPortrait hostPortrait;
         private IEncounterJourneyControls journeyControls;
         private EncounterTablePresentationAsset configuredTable;
@@ -100,10 +89,6 @@ namespace Dice.Presentation
         private Text categoryLabel;
         private Text scoreDetail;
         private Text statusLabel;
-        private Text rewardTitle;
-        private Text rewardInstruction;
-        private Text rewardStep;
-        private Text upcomingStage;
         private Text stageIntroTitle;
         private Text stageIntroDetail;
         private CanvasGroup encounterRuleGroup;
@@ -120,20 +105,12 @@ namespace Dice.Presentation
         private Graphic ruleSpiritSigil;
         private RectTransform ruleSpiritSigilRoot;
         private Text profileSummary;
-        private Text charmTitle;
-        private Text charmDetail;
-        private RectTransform charmDetailStatusRow;
-        private Text charmDetailStatus;
-        private SpiritCharmStatusBadge charmDetailBadge;
         private Text charmCount;
         private Text selectionLabel;
         private SpiritUiOrnament modifierEmblem;
         private Image modifierActivationIcon;
         private SpiritModifierSigilGraphic modifierActivationSigil;
         private SpiritModifierCategoryBadge modifierActivationCategory;
-        private Image charmDetailIcon;
-        private SpiritModifierSigilGraphic charmDetailSigil;
-        private SpiritModifierCategoryBadge charmDetailCategory;
         private CounterHighlight baseScoreHighlight;
         private CounterHighlight multiplierHighlight;
         private CounterHighlight rerollsHighlight;
@@ -142,11 +119,6 @@ namespace Dice.Presentation
         private Button menuButton;
         private readonly List<Button> diceButtons = new List<Button>();
         private readonly List<GameObject> diceSelectionLabels = new List<GameObject>();
-        private readonly List<SpiritRewardCard> rewardCards = new List<SpiritRewardCard>();
-        private readonly List<Card> charmCards = new List<Card>();
-        private long renderedOffer = -1;
-        private long renderedCharmsRevision = -1;
-        private long selectedCharm = -1;
         private ScoreBreakdown lastScore;
         private EncounterSnapshot presentedSnapshot;
         private EncounterSnapshot presentationSnapshot;
@@ -157,23 +129,6 @@ namespace Dice.Presentation
         private Rect previousSafeArea;
         private Vector2 previousScreenSize;
         private SpiritHostPresentationAsset compositionHost;
-
-        private sealed class Card
-        {
-            internal Button Button;
-            internal Text Title;
-            internal Text Body;
-            internal Text Effect;
-            internal Image Icon;
-            internal SpiritModifierSigilGraphic Sigil;
-            internal SpiritModifierCategoryBadge Category;
-            internal SpiritCharmCardLayout Layout;
-            internal SpiritCharmStatusBadge Badge;
-            internal SpiritCharmSelectionGraphic SelectionOutline;
-            internal long OfferId;
-            internal long OptionId;
-            internal long InstanceId;
-        }
 
         private sealed class CounterHighlight
         {
@@ -259,6 +214,8 @@ namespace Dice.Presentation
             if (canceledPresentation) controls?.CompletePresentation();
             controls = nextControls;
             if (canvas == null) Build();
+            RewardsPanel.Bind(controls);
+            OwnedCharmsPanel.Bind(controls);
             presentedSnapshot = null;
             hostPortrait?.ResetPose();
             controls.StateChanged += Refresh;
@@ -284,7 +241,7 @@ namespace Dice.Presentation
                 bool canceled = presenting;
                 ResetPresentation(false);
                 if (canceled) controls?.CompletePresentation();
-                charmsPanel.gameObject.SetActive(false);
+                OwnedCharmsPanel.Root.gameObject.SetActive(false);
                 handRanksPanel.Root.gameObject.SetActive(false);
                 menuPanel.gameObject.SetActive(false);
                 SetGameplayVisible(false);
@@ -306,7 +263,7 @@ namespace Dice.Presentation
 
         private void SetGameplayVisible(bool visible)
         {
-            foreach (var rect in new[] { playingPanel, rewardsPanel, endingPanel, targetPanel, handsPanel, rerollsPanel })
+            foreach (var rect in new[] { playingPanel, RewardsPanel.Root, endingPanel, targetPanel, handsPanel, rerollsPanel })
                 rect.gameObject.SetActive(visible);
             stageLabel.gameObject.SetActive(visible);
             statusLabel.gameObject.SetActive(visible);
@@ -451,8 +408,8 @@ namespace Dice.Presentation
             Vector2 size = portrait.rect.size;
             if (size == previousPortraitSize) return;
             previousPortraitSize = size;
-            if (rewardsPanel.gameObject.activeSelf) UpdateRewardLayout();
-            if (IsCharmPopupOpen) LayoutCharmPopup();
+            if (RewardsPanel.Root.gameObject.activeSelf) RewardsPanel.UpdateLayout();
+            if (IsCharmPopupOpen) CharmPopup.Layout();
         }
 
         private void UpdateSceneLighting()
@@ -544,10 +501,13 @@ namespace Dice.Presentation
             BuildHeader();
 
             BuildPlaying();
-            BuildRewards();
+            RewardsPanel = gameObject.AddComponent<SpiritRewardsPanel>();
+            RewardsPanel.Build(portrait, () => Busy);
+            BuildStageIntro();
             BuildEnding();
             BuildFooter();
-            BuildCharms();
+            OwnedCharmsPanel = gameObject.AddComponent<SpiritOwnedCharmsPanel>();
+            OwnedCharmsPanel.Build(portrait, ShowTable, () => Busy);
             handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
             handRanksPanel.Build(portrait, ShowTable);
             BuildMenu();
@@ -560,7 +520,8 @@ namespace Dice.Presentation
             collectionView = gameObject.AddComponent<SpiritCollectionView>();
             collectionView.Build(portrait, () => collectionView.Hide());
             JourneyView.SetCollectionAction(ShowCollection);
-            BuildCharmPopup();
+            CharmPopup = gameObject.AddComponent<SpiritCharmPopup>();
+            CharmPopup.Build(canvas.transform, portrait);
             ConfigureTable(tablePresentation);
             if (EventSystem.current == null)
             {
@@ -717,9 +678,9 @@ namespace Dice.Presentation
             modifierEmblem.kind = "charm";
             modifierEmblem.color = SpiritUi.GetTheme(transform).amber;
             modifierEmblem.raycastTarget = false;
-            modifierActivationIcon = MakeIcon("ModifierActivationIcon", modifierEmblem.transform,
+            modifierActivationIcon = SpiritCharmVisuals.MakeIcon("ModifierActivationIcon", modifierEmblem.transform,
                 new Vector2(.5f, .5f), 32);
-            modifierActivationSigil = MakeCharmSigil("ModifierActivationSigil", modifierActivationIcon);
+            modifierActivationSigil = SpiritCharmVisuals.MakeSigil("ModifierActivationSigil", modifierActivationIcon);
             modifierActivationCategory = SpiritModifierCategoryBadge.Create("ModifierActivationCategory", modifierActivationIcon);
             modifierEmblem.gameObject.SetActive(false);
             var score = SpiritUi.Panel("ScorePreview", playingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .435f),
@@ -850,22 +811,10 @@ namespace Dice.Presentation
             return value;
         }
 
-        private static Image MakeIcon(string name, Transform parent, Vector2 anchor, float size)
-        {
-            var rect = SpiritUi.Rect(name, parent, anchor, anchor);
-            rect.sizeDelta = new Vector2(size, size);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.color = Color.white;
-            image.preserveAspect = true;
-            image.raycastTarget = false;
-            image.gameObject.SetActive(false);
-            return image;
-        }
-
         private static CounterHighlight MakeCounterHighlight(string name, Text label, bool scoreCounter)
         {
             var caption = scoreCounter ? label.transform.parent.Find(label.name + "Caption").GetComponent<Text>() : label;
-            var icon = MakeIcon(name, label.transform.parent,
+            var icon = SpiritCharmVisuals.MakeIcon(name, label.transform.parent,
                 scoreCounter ? new Vector2(.17f, .7f) : new Vector2(0, .5f), 22);
             if (!scoreCounter) icon.rectTransform.anchoredPosition = new Vector2(19, 0);
             return new CounterHighlight
@@ -890,60 +839,8 @@ namespace Dice.Presentation
             modifierEmblem.gameObject.SetActive(true);
         }
 
-        private static void SetCardIcon(Card card, ModifierDefinition definition)
+        private void BuildStageIntro()
         {
-            card.Icon.sprite = definition == null ? null : SpiritModifierIcons.GetSprite(definition);
-            card.Icon.color = card.Sigil.color = definition == null ? Color.white : SpiritModifierIcons.GetEffectColor(definition);
-            bool visible = card.Icon.sprite != null;
-            card.Icon.gameObject.SetActive(visible);
-            if (definition != null) card.Sigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
-            card.Sigil.gameObject.SetActive(definition != null && !visible);
-            card.Category.Render(definition);
-        }
-
-        private static SpiritModifierSigilGraphic MakeCharmSigil(string name, Image icon)
-        {
-            var rect = SpiritUi.Rect(name, icon.transform.parent, icon.rectTransform.anchorMin, icon.rectTransform.anchorMax);
-            rect.pivot = icon.rectTransform.pivot;
-            rect.anchoredPosition = icon.rectTransform.anchoredPosition;
-            rect.sizeDelta = icon.rectTransform.sizeDelta;
-            var sigil = rect.gameObject.AddComponent<SpiritModifierSigilGraphic>();
-            sigil.color = SpiritUi.GetTheme(icon.transform).amber;
-            sigil.raycastTarget = false;
-            sigil.gameObject.SetActive(false);
-            return sigil;
-        }
-
-        private void BuildRewards()
-        {
-            rewardsPanel = SpiritUi.Panel("RewardsPanel", portrait, new Vector2(.025f, .065f), new Vector2(.975f, .80f),
-                new Color32(20, 32, 27, 255), 0, true).rectTransform;
-            rewardTitle = SpiritUi.Heading("RewardTitle", rewardsPanel, "STAGE CLEARED", 25, new Vector2(0, .94f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            rewardStep = SpiritUi.Label("RewardStep", rewardsPanel, "", 14, new Vector2(.04f, .885f), new Vector2(.96f, .94f),
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            rewardInstruction = SpiritUi.Label("RewardInstruction", rewardsPanel, "", 17, new Vector2(.04f, .80f), new Vector2(.96f, .885f),
-                TextAnchor.MiddleCenter);
-            rewardScroll = SpiritUi.Scroll("RewardScroll", rewardsPanel, new Vector2(.015f, .15f), new Vector2(.985f, .80f), out rewardContent);
-            var layout = rewardContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 10;
-            layout.padding = new RectOffset(4, 4, 4, 4);
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            rewardContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            upcomingStage = SpiritUi.Label("UpcomingStage", rewardsPanel, "", 14, new Vector2(.04f, .08f), new Vector2(.96f, .15f),
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            RefreshButton = SpiritUi.Button("RefreshRewardsButton", rewardsPanel, "Refresh choices", new Vector2(.035f, 0), new Vector2(.965f, .075f),
-                () => { if (!Busy) { ClearRewardSelection(); controls.RefreshRewards(); } });
-            var refreshLabel = RefreshButton.GetComponentInChildren<Text>();
-            refreshLabel.rectTransform.anchorMin = new Vector2(.19f, .08f);
-            refreshLabel.rectTransform.anchorMax = new Vector2(.81f, .92f);
-            refreshLabel.resizeTextMinSize = 12;
-            refreshLabel.resizeTextMaxSize = 18;
-            upgradeHandButton = SpiritUi.Button("UpgradeHandButton", rewardsPanel, "Upgrade",
-                Vector2.zero, Vector2.one, ConfirmHandUpgrade);
-            upgradeHandButton.gameObject.SetActive(false);
             stageIntroPanel = SpiritUi.Panel("StageIntroPanel", portrait, new Vector2(.06f, .37f), new Vector2(.94f, .57f),
                 SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
             stageIntroTitle = SpiritUi.Heading("StageIntroTitle", stageIntroPanel, "", 28,
@@ -961,87 +858,6 @@ namespace Dice.Presentation
                 () => { if (!Busy) { if (journeyControls != null) journeyControls.RetryEncounter(); else controls.StartNew(); } });
             endingPanel = endingView.Root;
         }
-        private void BuildCharms()
-        {
-            charmsPanel = SpiritUi.Panel("CharmsOverlay", portrait, Vector2.zero, Vector2.one,
-                new Color32(20, 32, 27, 255), 0, true).rectTransform;
-            SpiritUi.Heading("CharmsTitle", charmsPanel, "YOUR CHARMS", 29, new Vector2(.03f, .9f), new Vector2(.73f, .98f));
-            SpiritUi.Button("CloseCharmsButton", charmsPanel, "Close", new Vector2(.75f, .9f), new Vector2(.98f, .98f), ShowTable);
-            SpiritUi.Label("CharmsSubtitle", charmsPanel, "Kept for this run. Tap a charm to inspect it.", 18,
-                new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted);
-            var scroll = SpiritUi.Scroll("OwnedCharmScroll", charmsPanel, new Vector2(0, .34f), new Vector2(1, .84f), out charmContent);
-            charmScroll = scroll;
-            var layout = charmContent.gameObject.AddComponent<GridLayoutGroup>();
-            layout.cellSize = new Vector2(235, 156);
-            layout.spacing = new Vector2(12, 12);
-            layout.padding = new RectOffset(5, 5, 5, 5);
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = 2;
-            charmContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            charmGrid = charmContent.gameObject.AddComponent<SpiritCharmGridLayout>();
-            var details = SpiritUi.Panel("CharmDetails", charmsPanel, new Vector2(.02f, .04f), new Vector2(.98f, .33f),
-                SpiritUi.GetTheme(transform).panelColor, 6, true);
-            charmTitle = SpiritUi.Heading("CharmDetailTitle", details.transform, "No charms yet", 23, new Vector2(0, .72f), Vector2.one);
-            charmDetailIcon = MakeIcon("CharmDetailIcon", details.transform, new Vector2(0, .86f), 44);
-            charmDetailIcon.rectTransform.anchoredPosition = new Vector2(42, 0);
-            charmDetailSigil = MakeCharmSigil("CharmDetailSigil", charmDetailIcon);
-            charmDetailCategory = SpiritModifierCategoryBadge.Create("CharmDetailCategory", charmDetailIcon);
-            charmDetail = SpiritUi.Label("CharmDetailBody", details.transform, "Clear a stage to choose a charm.", 17,
-                Vector2.zero, new Vector2(1, .72f));
-            foreach (var text in new[] { charmTitle, charmDetail })
-            {
-                text.rectTransform.offsetMin = new Vector2(24, 5);
-                text.rectTransform.offsetMax = new Vector2(-24, -5);
-            }
-            charmDetailStatusRow = SpiritUi.Rect("CharmDetailStatusRow", details.transform, Vector2.zero, Vector2.one);
-            charmDetailStatus = SpiritUi.Label("CharmDetailStatus", charmDetailStatusRow, "", 17,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleLeft);
-            charmDetailStatus.resizeTextForBestFit = false;
-            charmDetailBadge = SpiritCharmStatusBadge.Create(charmDetailStatusRow);
-            ((RectTransform)charmDetailBadge.transform).anchoredPosition = Vector2.zero;
-            charmDetailStatusRow.gameObject.SetActive(false);
-            charmDetailsLayout = details.gameObject.AddComponent<SpiritCharmDetailsLayout>();
-            charmDetailsLayout.Initialize(charmTitle, charmDetail, charmDetailIcon, (RectTransform)scroll.transform,
-                charmDetailStatusRow, charmDetailStatus, charmDetailBadge, charmDetailSigil, charmDetailCategory);
-            charmsPanel.gameObject.SetActive(false);
-        }
-
-        private void BuildCharmPopup()
-        {
-            var backdrop = SpiritUi.Panel("CharmPopupOverlay", canvas.transform, Vector2.zero, Vector2.one,
-                new Color(0, 0, 0, .62f));
-            charmPopupOverlay = backdrop.rectTransform;
-            var dismiss = backdrop.gameObject.AddComponent<Button>();
-            dismiss.targetGraphic = backdrop;
-            dismiss.transition = Selectable.Transition.None;
-            dismiss.navigation = new Navigation { mode = Navigation.Mode.None };
-            // Dismiss on release so the pointer's click remains owned by the overlay.
-            dismiss.onClick.AddListener(CloseCharmPopup);
-            var theme = SpiritUi.GetTheme(transform);
-            charmPopupPanel = SpiritUi.Panel("CharmPopupPanel", charmPopupOverlay,
-                new Vector2(.5f, .5f), new Vector2(.5f, .5f), theme.panelColor, 0, true).rectTransform;
-            charmPopup = new Card();
-            charmPopup.Title = SpiritUi.Heading("CharmPopupTitle", charmPopupPanel, "", 25, Vector2.zero, Vector2.one);
-            charmPopup.Title.resizeTextForBestFit = false;
-            charmPopup.Icon = MakeIcon("CharmPopupIcon", charmPopupPanel, new Vector2(0, 1), 52);
-            charmPopup.Icon.rectTransform.anchoredPosition = new Vector2(50, -50);
-            charmPopup.Sigil = MakeCharmSigil("CharmPopupSigil", charmPopup.Icon);
-            charmPopup.Category = SpiritModifierCategoryBadge.Create("CharmPopupCategory", charmPopup.Icon);
-            charmPopup.Effect = SpiritUi.Label("CharmPopupEffect", charmPopupPanel, "", 22,
-                Vector2.zero, Vector2.one);
-            charmPopup.Body = SpiritUi.Label("CharmPopupDescription", charmPopupPanel, "", 18,
-                Vector2.zero, Vector2.one);
-            charmPopup.Body.supportRichText = true;
-            charmPopupStatus = SpiritUi.Label("CharmPopupStatus", charmPopupPanel, "", 16,
-                Vector2.zero, Vector2.one);
-            charmPopup.Badge = SpiritCharmStatusBadge.Create(charmPopupPanel);
-            var closeCharmPopupButton = SpiritUi.Button("CloseCharmPopupButton", charmPopupPanel, "Close",
-                new Vector2(.3f, 0), new Vector2(.7f, 0), CloseCharmPopup);
-            var closeRect = (RectTransform)closeCharmPopupButton.transform;
-            closeRect.offsetMin = new Vector2(0, 18);
-            closeRect.offsetMax = new Vector2(0, 62);
-            charmPopupOverlay.gameObject.SetActive(false);
-        }
 
         public void ShowCharmPopup(long instanceId)
         {
@@ -1051,60 +867,18 @@ namespace Dice.Presentation
             {
                 if (instance.InstanceId != instanceId) continue;
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
-                CharmPopupInstanceId = instanceId;
-                SetCardIcon(charmPopup, definition);
-                charmPopup.Title.text = CharmName(definition);
-                charmPopup.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-                charmPopup.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
-                var theme = SpiritUi.GetTheme(transform);
-                charmPopup.Body.text = SpiritRewardCard.GetModifierDescription(definition, theme.amber,
-                    theme.GetModifierTriggerColor(definition.Phase));
-                var status = CharmStatus(instance, definition);
-                charmPopup.Badge.Render(status);
-                charmPopupStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase);
-                charmPopupStatus.color = charmPopup.Badge.Icon.color;
-                charmPopupStatus.gameObject.SetActive(!string.IsNullOrEmpty(charmPopupStatus.text));
-                charmPopup.Badge.gameObject.SetActive(charmPopupStatus.gameObject.activeSelf);
-                charmsPanel.gameObject.SetActive(false);
+                OwnedCharmsPanel.Root.gameObject.SetActive(false);
                 handRanksPanel.Root.gameObject.SetActive(false);
                 menuPanel.gameObject.SetActive(false);
-                charmPopupOverlay.SetAsLastSibling();
-                charmPopupOverlay.gameObject.SetActive(true);
-                Canvas.ForceUpdateCanvases();
-                LayoutCharmPopup();
+                CharmPopup.Show(instanceId, definition, SpiritCharmVisuals.Status(controls, instance, definition),
+                    controls.Snapshot.Phase);
                 return;
             }
         }
 
         public void CloseCharmPopup()
         {
-            if (charmPopupOverlay != null) charmPopupOverlay.gameObject.SetActive(false);
-            CharmPopupInstanceId = -1;
-        }
-
-        private void LayoutCharmPopup()
-        {
-            float width = portrait.rect.width * .84f;
-            float titleHeight = SpiritCharmCardLayout.TextHeight(charmPopup.Title, width - 118);
-            SpiritCharmCardLayout.Place(charmPopup.Title, 94, 24, 24, titleHeight);
-            float top = 24 + Mathf.Max(52, titleHeight) + 16;
-            foreach (var label in new[] { charmPopup.Effect, charmPopup.Body })
-            {
-                float height = SpiritCharmCardLayout.TextHeight(label, width - 48);
-                SpiritCharmCardLayout.Place(label, 24, 24, top, height);
-                top += height + 12;
-            }
-            if (charmPopupStatus.gameObject.activeSelf)
-            {
-                float height = Mathf.Max(24, SpiritCharmCardLayout.TextHeight(charmPopupStatus, width - 84));
-                SpiritCharmCardLayout.Place(charmPopupStatus, 60, 24, top, height);
-                var badgeRect = (RectTransform)charmPopup.Badge.transform;
-                badgeRect.anchorMin = badgeRect.anchorMax = new Vector2(0, 1);
-                badgeRect.pivot = new Vector2(0, 1);
-                badgeRect.anchoredPosition = new Vector2(24, -top);
-                top += height + 12;
-            }
-            charmPopupPanel.sizeDelta = new Vector2(width, top + 74);
+            if (CharmPopup != null) CharmPopup.Close();
         }
 
         private void BuildMenu()
@@ -1155,33 +929,7 @@ namespace Dice.Presentation
             CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
-            RenderCharms();
-            charmsPanel.gameObject.SetActive(true);
-            ScrollToSelectedCharm();
-        }
-
-        private void ScrollToSelectedCharm()
-        {
-            Canvas.ForceUpdateCanvases();
-            charmGrid.RefreshLayout();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(charmContent);
-            Canvas.ForceUpdateCanvases();
-            charmScroll.StopMovement();
-            foreach (var card in charmCards)
-            {
-                if (card.InstanceId != selectedCharm || !card.Button.gameObject.activeSelf) continue;
-                var viewport = charmScroll.viewport;
-                var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(viewport, card.Button.transform);
-                float overflow = charmContent.rect.height - viewport.rect.height;
-                if (overflow <= 0) return;
-                float shift = 0;
-                if (bounds.max.y > viewport.rect.yMax || bounds.size.y > viewport.rect.height)
-                    shift = viewport.rect.yMax - bounds.max.y;
-                else if (bounds.min.y < viewport.rect.yMin)
-                    shift = viewport.rect.yMin - bounds.min.y;
-                charmScroll.verticalNormalizedPosition = Mathf.Clamp01(charmScroll.verticalNormalizedPosition - shift / overflow);
-                return;
-            }
+            OwnedCharmsPanel.Show();
         }
 
         public void ShowHandRanks()
@@ -1189,7 +937,7 @@ namespace Dice.Presentation
             if (Busy) return;
             CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
-            charmsPanel.gameObject.SetActive(false);
+            OwnedCharmsPanel.Root.gameObject.SetActive(false);
             RenderHandRanks();
             handRanksPanel.Root.gameObject.SetActive(true);
         }
@@ -1204,7 +952,7 @@ namespace Dice.Presentation
         {
             if (Busy) return;
             CloseCharmPopup();
-            charmsPanel.gameObject.SetActive(false);
+            OwnedCharmsPanel.Root.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
         }
 
@@ -1212,7 +960,7 @@ namespace Dice.Presentation
         {
             if (Busy) return;
             CloseCharmPopup();
-            charmsPanel.gameObject.SetActive(false);
+            OwnedCharmsPanel.Root.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             menuPanel.gameObject.SetActive(!menuPanel.gameObject.activeSelf);
         }
@@ -1245,7 +993,7 @@ namespace Dice.Presentation
                 inputGroup.interactable = false;
                 ModifierHistory.SetInteractable(false);
                 playingPanel.gameObject.SetActive(false);
-                rewardsPanel.gameObject.SetActive(false);
+                RewardsPanel.Root.gameObject.SetActive(false);
                 endingPanel.gameObject.SetActive(false);
                 statusLabel.text = controls.StatusMessage;
                 return;
@@ -1255,8 +1003,8 @@ namespace Dice.Presentation
                 ResetPresentation();
                 hostPortrait?.ResetPose();
                 lastScore = null;
-                renderedOffer = -2;
-                renderedCharmsRevision = -1;
+                RewardsPanel.Invalidate();
+                OwnedCharmsPanel.Invalidate();
                 presentedSnapshot = snapshot;
             }
             bool playing = snapshot.Phase == EncounterPhase.Playing;
@@ -1269,7 +1017,7 @@ namespace Dice.Presentation
             targetPanel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
             statusLabel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
             playingPanel.gameObject.SetActive(playing);
-            rewardsPanel.gameObject.SetActive(!playing && !completed);
+            RewardsPanel.Root.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
             stageLabel.text = "STAGE " + (snapshot.StageIndex + 1) + " / " + snapshot.StageCount;
             targetLabel.text = DiagnosticText.Number(completed ? snapshot.TotalScore : snapshot.RemainingThreshold);
@@ -1304,14 +1052,14 @@ namespace Dice.Presentation
                 selectionLabel.text += "\n" + (ModifierHistory.Count == 0 ? "No charms ready on play" :
                     ModifierHistory.Count + (ModifierHistory.Count == 1 ? " charm ready" : " charms ready") + " - tap to inspect");
             }
-            else if (!completed) RenderRewards(snapshot);
+            else if (!completed) RewardsPanel.Render(snapshot);
             else
             {
                 SetGameplayVisible(false);
                 endingPanel.gameObject.SetActive(true);
                 endingView.Render(snapshot, journeyControls?.SelectedJourney, UnlockSummary(snapshot.NewlyUnlockedModifierIds));
             }
-            if (IsCharmsOpen) RenderCharms();
+            if (IsCharmsOpen) OwnedCharmsPanel.Render();
             if (IsHandRanksOpen) RenderHandRanks();
         }
 
@@ -1419,10 +1167,10 @@ namespace Dice.Presentation
             presentationSnapshot = resolution.Snapshot;
             inputGroup.interactable = false;
             ModifierHistory.SetInteractable(false);
-            charmsPanel.gameObject.SetActive(false);
+            OwnedCharmsPanel.Root.gameObject.SetActive(false);
             handRanksPanel.Root.gameObject.SetActive(false);
             menuPanel.gameObject.SetActive(false);
-            if (resolution.Snapshot.Phase == EncounterPhase.Completed && rewardsPanel.gameObject.activeSelf)
+            if (resolution.Snapshot.Phase == EncounterPhase.Completed && RewardsPanel.Root.gameObject.activeSelf)
                 SetGameplayVisible(false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
                 ? Mathf.Clamp(configuredTable.OpeningFadeDuration, 0, 2) : 0;
@@ -1469,7 +1217,7 @@ namespace Dice.Presentation
                     ModifierHistory.Clear();
                     DiceTray.SetScoringHighlight(0);
                     playingPanel.gameObject.SetActive(true);
-                    rewardsPanel.gameObject.SetActive(false);
+                    RewardsPanel.Root.gameObject.SetActive(false);
                     endingPanel.gameObject.SetActive(false);
                     if (rolled.Before.HasValue) DiceTray.SetValues(rolled.Before.Value);
                     SetDiceSelection(rolled.SelectedMask);
@@ -1587,7 +1335,7 @@ namespace Dice.Presentation
                     resourcesLabel.gameObject.SetActive(false);
                     SetResources(stage.Hands, stage.Rerolls);
                     playingPanel.gameObject.SetActive(false);
-                    rewardsPanel.gameObject.SetActive(false);
+                    RewardsPanel.Root.gameObject.SetActive(false);
                     endingPanel.gameObject.SetActive(false);
                     stageIntroTitle.text = stageLabel.text;
                     stageIntroDetail.fontSize = 19;
@@ -1608,7 +1356,8 @@ namespace Dice.Presentation
                     stageIntroTitle.text = HasPendingProgress ? "CHARM UNLOCKED - SAVE PENDING" : "CHARM UNLOCKED";
                     stageIntroDetail.fontSize = 16;
                     stageIntroDetail.text = CharmName(definition) + "\n" +
-                        (HasPendingProgress ? "Unlock save pending / " + AvailabilityScopeText(definition) : AvailabilityText(definition));
+                        (HasPendingProgress ? "Unlock save pending / " + SpiritCharmVisuals.AvailabilityScopeText(definition) :
+                        SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot));
                     stageIntroPanel.gameObject.SetActive(true);
                     yield return new WaitForSecondsRealtime(1.1f);
                     stageIntroPanel.gameObject.SetActive(false);
@@ -1862,24 +1611,6 @@ namespace Dice.Presentation
         private static string CharmName(ModifierDefinition definition)
             => SpiritModifierPresentation.GetName(definition);
 
-        private string AvailabilityText(ModifierDefinition definition)
-        {
-            var availability = definition.Availability;
-            var unlocked = new HashSet<string>(controls.Snapshot.UnlockedModifierIds, StringComparer.Ordinal);
-            string access = availability.Access == ModifierAccess.PermanentUnlock ?
-                (unlocked.Contains(definition.Id) ? "Permanently unlocked" : "Requires permanent unlock") :
-                availability.Access == ModifierAccess.EncounterExclusive ? "Encounter exclusive" : "Available from the start";
-            return access + " / " + AvailabilityScopeText(definition);
-        }
-
-        private static string AvailabilityScopeText(ModifierDefinition definition)
-        {
-            var availability = definition.Availability;
-            string scope = availability.Scope == ModifierAvailabilityScope.Global ? "All encounters" :
-                availability.Scope == ModifierAvailabilityScope.Spirit ? "This spirit's encounters" : "This encounter";
-            return scope + " / Tier " + availability.PowerTier;
-        }
-
         private string UnlockSummary(IReadOnlyList<string> ids)
         {
             if (ids.Count == 0) return "No new charms unlocked this run.";
@@ -1887,7 +1618,7 @@ namespace Dice.Presentation
             foreach (string id in ids)
             {
                 var definition = controls.Catalog.GetModifier(id);
-                names.Add(CharmName(definition) + "\n" + AvailabilityScopeText(definition));
+                names.Add(CharmName(definition) + "\n" + SpiritCharmVisuals.AvailabilityScopeText(definition));
             }
             return (HasPendingProgress ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
                 "Available in future reward pools.\n\n" + string.Join("\n\n", names);
@@ -1930,55 +1661,6 @@ namespace Dice.Presentation
             ruleSpiritSweep.gameObject.SetActive(false);
         }
 
-        private Card MakeCard(string name, Transform parent, bool owned)
-        {
-            var image = SpiritUi.Panel(name, parent, Vector2.zero, Vector2.one, SpiritUi.GetTheme(transform).panelColor, 0, true);
-            var button = image.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            var card = new Card { Button = button };
-            if (!owned) image.gameObject.AddComponent<LayoutElement>().preferredHeight = 155;
-            card.Title = SpiritUi.Heading("Title", image.transform, "", owned ? 17 : 18,
-                new Vector2(0, .70f), new Vector2(1, .96f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).cream);
-            card.Icon = MakeIcon("CharmIcon", image.transform, new Vector2(0, .83f), 36);
-            card.Icon.rectTransform.anchoredPosition = new Vector2(42, 0);
-            card.Sigil = MakeCharmSigil("CharmSigil", card.Icon);
-            card.Category = SpiritModifierCategoryBadge.Create("CharmCategory", card.Icon);
-            card.Body = SpiritUi.Label("Condition", image.transform, "", 17,
-                new Vector2(0, .40f), new Vector2(1, .70f));
-            card.Effect = SpiritUi.Label("Effects", image.transform, "", 17, new Vector2(0, .20f), new Vector2(1, .4f),
-                TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).amber);
-            foreach (var text in new[] { card.Title, card.Body, card.Effect })
-            {
-                text.rectTransform.offsetMin = new Vector2(24, 5);
-                text.rectTransform.offsetMax = new Vector2(-24, -5);
-                text.resizeTextForBestFit = true;
-                text.resizeTextMinSize = 14;
-                text.resizeTextMaxSize = text.fontSize;
-            }
-            card.Title.resizeTextForBestFit = true;
-            card.Title.resizeTextMinSize = 14;
-            card.Title.resizeTextMaxSize = owned ? 17 : 18;
-            if (owned)
-            {
-                card.Body.fontSize = 15;
-                card.Effect.fontSize = 16;
-                card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
-                card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil, card.Category);
-                card.Badge = SpiritCharmStatusBadge.Create(image.transform);
-                card.SelectionOutline = SpiritUi.Full("SelectionOutline", image.transform).gameObject.AddComponent<SpiritCharmSelectionGraphic>();
-                card.SelectionOutline.color = new Color32(255, 215, 119, 255);
-                card.SelectionOutline.raycastTarget = false;
-                card.SelectionOutline.gameObject.SetActive(false);
-            }
-            button.onClick.AddListener(() =>
-            {
-                if (Busy) return;
-                if (owned) { selectedCharm = card.InstanceId; RenderCharmDetail(); }
-                else controls.ChooseReward(card.OfferId, card.OptionId);
-            });
-            return card;
-        }
-
         public void ShowCollection()
         {
             if (Busy || controls?.Catalog == null || collectionView == null) return;
@@ -1988,294 +1670,6 @@ namespace Dice.Presentation
                 (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
                 journeyControls?.JourneyCatalog,
                 (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<string>());
-        }
-
-        private void RenderRewards(EncounterSnapshot snapshot)
-        {
-            var offer = snapshot.PendingReward;
-            bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
-            bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
-            bool exhausted = unlock && offer.Options.Count == 0;
-            rewardTitle.text = handUpgrade ? "Choose a hand to upgrade" : exhausted ? "All charms collected" :
-                unlock ? "Unlock a charm" : "Choose a charm";
-            rewardStep.gameObject.SetActive(false);
-            rewardInstruction.gameObject.SetActive(unlock);
-            upcomingStage.gameObject.SetActive(false);
-            upgradeHandButton.gameObject.SetActive(offer != null);
-            SpiritUi.SetButtonLabel(upgradeHandButton, handUpgrade ? "Upgrade" : exhausted ? "Continue" : unlock ? "Unlock" : "Select");
-            rewardStep.text = offer == null ? "REWARDS COMPLETE" : offer.Kind == RewardKind.Modifier ?
-                "CHARM CHOICE" : "HAND UPGRADE CHOICE";
-            rewardInstruction.text = offer == null ? "Preparing the next stage" : offer.Kind == RewardKind.Modifier ?
-                "Choose one free charm to keep for this run" : "Choose one hand upgrade\nScroll to see all choices";
-            if (unlock) rewardInstruction.text = exhausted ? "You own every charm this encounter awards." :
-                "Choose one to add permanently to your collection.";
-            var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
-            int nextStageIndex = offer?.TargetStageIndex ?? snapshot.StageIndex + 1;
-            if (nextStageIndex < encounter.Stages.Count)
-            {
-                var nextStage = encounter.Stages[nextStageIndex];
-                upcomingStage.text = "NEXT STAGE " + (nextStageIndex + 1) + " / " + snapshot.StageCount +
-                    " - CLEAR " + DiagnosticText.Number(nextStage.Threshold);
-            }
-            else upcomingStage.text = "";
-            bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
-            RefreshButton.gameObject.SetActive(canRefresh);
-            int cost = encounter.RewardPolicy?.RefreshCost ?? 1;
-            RefreshButton.interactable = canRefresh && snapshot.RewardRefreshes >= cost;
-            SpiritUi.SetButtonLabel(RefreshButton, cost > 0
-                ? "Refresh (" + (snapshot.RewardRefreshes / cost) + ")" : "Refresh");
-            long offerId = offer?.OfferId ?? -1;
-            if (renderedOffer == offerId) return;
-            renderedOffer = offerId;
-            ClearRewardSelection();
-            upgradeHandButton.interactable = exhausted;
-            int count = offer?.Options.Count ?? 0;
-            while (rewardCards.Count < count)
-                rewardCards.Add(SpiritRewardCard.Create("RewardCard" + (rewardCards.Count + 1), rewardContent,
-                    ChooseReward));
-            for (int i = 0; i < rewardCards.Count; ++i)
-            {
-                var card = rewardCards[i];
-                card.Button.gameObject.SetActive(i < count);
-                if (i >= count) continue;
-                var option = offer.Options[i];
-                if (offer.Kind == RewardKind.Modifier || unlock)
-                {
-                    var definition = controls.Catalog.GetModifier(option.DefinitionId);
-                    card.RenderModifier(definition, offer.OfferId, option.OptionId);
-                }
-                else if (option.Category.HasValue)
-                {
-                    var hand = controls.Catalog.GetHand(option.Category.Value);
-                    int level = snapshot.HandUpgrades[(int)option.Category.Value];
-                    card.RenderHandUpgrade(hand, level, offer.OfferId, option.OptionId);
-                }
-            }
-            rewardContent.anchoredPosition = Vector2.zero;
-            UpdateRewardLayout();
-        }
-
-        private void ChooseReward(long offerId, long optionId)
-        {
-            if (Busy) return;
-            var offer = controls.Snapshot?.PendingReward;
-            if (offer == null || offer.OfferId != offerId || renderedOffer != offerId) return;
-            foreach (var option in offer.Options)
-            {
-                if (option.OptionId != optionId) continue;
-                selectedUpgradeOption = optionId;
-                for (int i = 0; i < offer.Options.Count; ++i)
-                {
-                    bool selected = offer.Options[i].OptionId == optionId;
-                    if (offer.Kind == RewardKind.HandUpgrade) rewardCards[i].SetHandUpgradeSelected(selected);
-                    else rewardCards[i].SetModifierSelected(selected);
-                }
-                upgradeHandButton.interactable = true;
-                return;
-            }
-        }
-
-        private void ConfirmHandUpgrade()
-        {
-            if (Busy) return;
-            var offer = controls.Snapshot?.PendingReward;
-            if (offer == null || offer.OfferId != renderedOffer) return;
-            if (offer.Kind == RewardKind.ModifierUnlock && offer.Options.Count == 0)
-            {
-                controls.ChooseReward(offer.OfferId, 0);
-                return;
-            }
-            if (selectedUpgradeOption < 0) return;
-            foreach (var option in offer.Options)
-            {
-                if (option.OptionId != selectedUpgradeOption) continue;
-                long optionId = selectedUpgradeOption;
-                ClearRewardSelection();
-                controls.ChooseReward(offer.OfferId, optionId);
-                return;
-            }
-        }
-
-        private void ClearRewardSelection()
-        {
-            selectedUpgradeOption = -1;
-            upgradeHandButton.interactable = false;
-            foreach (var card in rewardCards)
-            {
-                card.SetModifierSelected(false);
-                card.SetHandUpgradeSelected(false);
-            }
-        }
-
-        private void UpdateRewardLayout()
-        {
-            var offer = controls.Snapshot?.PendingReward;
-            bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
-            bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
-            var scrollRect = (RectTransform)rewardScroll.transform;
-            var layout = rewardContent.GetComponent<VerticalLayoutGroup>();
-            layout.spacing = 6;
-            rewardScroll.vertical = handUpgrade;
-            rewardsPanel.anchorMin = new Vector2(.025f, .065f);
-            rewardsPanel.anchorMax = new Vector2(.975f, unlock ? .85f : .80f);
-            rewardsPanel.offsetMin = rewardsPanel.offsetMax = Vector2.zero;
-            if (handUpgrade)
-            {
-                // Keep the panel fitted to its choices, with scrolling available for larger authored offers.
-                float contentHeight = layout.padding.vertical + Mathf.Max(0, offer.Options.Count - 1) * layout.spacing;
-                for (int i = 0; i < offer.Options.Count; ++i)
-                    contentHeight += rewardCards[i].GetComponent<LayoutElement>().preferredHeight;
-                rewardsPanel.anchorMax = new Vector2(.975f, .065f);
-                rewardsPanel.offsetMax = new Vector2(0, Mathf.Min(contentHeight + 148, portrait.rect.height * .735f));
-                rewardTitle.rectTransform.anchorMin = new Vector2(0, 1);
-                rewardTitle.rectTransform.anchorMax = Vector2.one;
-                rewardTitle.rectTransform.offsetMin = new Vector2(20, -64);
-                rewardTitle.rectTransform.offsetMax = new Vector2(-20, -12);
-                scrollRect.anchorMin = Vector2.zero;
-                scrollRect.anchorMax = Vector2.one;
-                scrollRect.offsetMin = new Vector2(20, 76);
-                scrollRect.offsetMax = new Vector2(-20, -72);
-                var confirmRect = (RectTransform)upgradeHandButton.transform;
-                confirmRect.anchorMin = confirmRect.anchorMax = new Vector2(.5f, 0);
-                confirmRect.sizeDelta = new Vector2(220, 52);
-                confirmRect.anchoredPosition = new Vector2(0, 40);
-            }
-            else
-            {
-                if (unlock && offer.Options.Count == 0)
-                {
-                    rewardsPanel.anchorMin = new Vector2(.025f, .28f);
-                    rewardsPanel.anchorMax = new Vector2(.975f, .65f);
-                }
-                rewardTitle.rectTransform.anchorMin = new Vector2(0, 1);
-                rewardTitle.rectTransform.anchorMax = Vector2.one;
-                rewardTitle.rectTransform.offsetMin = new Vector2(20, -64);
-                rewardTitle.rectTransform.offsetMax = new Vector2(-20, -12);
-                scrollRect.anchorMin = Vector2.zero;
-                scrollRect.anchorMax = Vector2.one;
-                scrollRect.offsetMin = new Vector2(20, 76);
-                scrollRect.offsetMax = new Vector2(-20, unlock ? -110 : -72);
-                if (unlock)
-                {
-                    rewardInstruction.rectTransform.anchorMin = new Vector2(0, 1);
-                    rewardInstruction.rectTransform.anchorMax = Vector2.one;
-                    rewardInstruction.rectTransform.offsetMin = new Vector2(24, -106);
-                    rewardInstruction.rectTransform.offsetMax = new Vector2(-24, -64);
-                }
-                var refreshRect = (RectTransform)RefreshButton.transform;
-                refreshRect.anchorMin = Vector2.zero;
-                refreshRect.anchorMax = new Vector2(.5f, 0);
-                refreshRect.offsetMin = new Vector2(20, 14);
-                refreshRect.offsetMax = new Vector2(-6, 66);
-                var confirmRect = (RectTransform)upgradeHandButton.transform;
-                confirmRect.anchorMin = new Vector2(.5f, 0);
-                confirmRect.anchorMax = new Vector2(1, 0);
-                confirmRect.offsetMin = new Vector2(6, 14);
-                confirmRect.offsetMax = new Vector2(-20, 66);
-                if (unlock)
-                {
-                    confirmRect.anchorMin = confirmRect.anchorMax = new Vector2(.5f, 0);
-                    confirmRect.sizeDelta = new Vector2(220, 52);
-                    confirmRect.anchoredPosition = new Vector2(0, 40);
-                }
-                if (offer != null)
-                {
-                    float availableHeight = rewardsPanel.rect.height - (unlock ? 186 : 148) - layout.padding.vertical -
-                        Mathf.Max(0, offer.Options.Count - 1) * layout.spacing;
-                    float cardHeight = offer.Options.Count > 3 ? 180 :
-                        Mathf.Clamp(availableHeight / Mathf.Max(1, offer.Options.Count), 160, 180);
-                    for (int i = 0; i < offer.Options.Count; ++i)
-                        rewardCards[i].GetComponent<LayoutElement>().preferredHeight = cardHeight;
-                    rewardScroll.vertical = cardHeight * offer.Options.Count > availableHeight + .5f;
-                }
-            }
-        }
-
-        private void RenderCharms()
-        {
-            var snapshot = controls.Snapshot;
-            if (snapshot == null) return;
-            if (renderedCharmsRevision != snapshot.Revision)
-            {
-                renderedCharmsRevision = snapshot.Revision;
-                while (charmCards.Count < snapshot.Modifiers.Count)
-                    charmCards.Add(MakeCard("OwnedCharm" + (charmCards.Count + 1), charmContent, true));
-                for (int i = 0; i < charmCards.Count; ++i)
-                {
-                    var card = charmCards[i];
-                    card.Button.gameObject.SetActive(i < snapshot.Modifiers.Count);
-                    if (i >= snapshot.Modifiers.Count) continue;
-                    var instance = snapshot.Modifiers[i];
-                    var definition = controls.Catalog.GetModifier(instance.DefinitionId);
-                    card.InstanceId = instance.InstanceId;
-                    SetCardIcon(card, definition);
-                    card.Title.text = CharmName(definition);
-                    card.Body.text = SpiritModifierPresentation.GetConditionText(definition);
-                    card.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-                    card.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
-                    card.Badge.Render(CharmStatus(instance, definition));
-                }
-                charmGrid.RefreshLayout();
-            }
-            if (snapshot.Modifiers.Count > 0 && !ContainsCharm(snapshot, selectedCharm)) selectedCharm = snapshot.Modifiers[0].InstanceId;
-            RenderCharmDetail();
-        }
-
-        private static bool ContainsCharm(EncounterSnapshot snapshot, long instanceId)
-        {
-            foreach (var modifier in snapshot.Modifiers) if (modifier.InstanceId == instanceId) return true;
-            return false;
-        }
-
-        private SpiritCharmStatusPresentation CharmStatus(ModifierInstanceSnapshot instance, ModifierDefinition definition)
-        {
-            ModifierInspection inspection = null;
-            foreach (var candidate in controls.ModifierInspections)
-                if (candidate.InstanceId == instance.InstanceId) { inspection = candidate; break; }
-            return SpiritCharmStatusPresentation.Create(instance, definition, controls.Snapshot.Phase, inspection);
-        }
-
-        private void RenderCharmDetail()
-        {
-            foreach (var instance in controls.Snapshot.Modifiers)
-            {
-                if (instance.InstanceId != selectedCharm) continue;
-                var definition = controls.Catalog.GetModifier(instance.DefinitionId);
-                charmDetailIcon.sprite = SpiritModifierIcons.GetSprite(definition);
-                Color color = SpiritModifierIcons.GetEffectColor(definition);
-                charmDetailIcon.color = charmDetailSigil.color = color;
-                charmDetailIcon.gameObject.SetActive(charmDetailIcon.sprite != null);
-                charmDetailSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
-                charmDetailSigil.gameObject.SetActive(charmDetailIcon.sprite == null);
-                charmDetailCategory.Render(definition);
-                charmTitle.text = CharmName(definition);
-                charmDetail.supportRichText = true;
-                charmDetail.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
-                    "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" +
-                    SpiritModifierPresentation.GetEffectText(definition) + "</color>\n" +
-                    SpiritModifierPresentation.GetTimingText(definition) + "\n" +
-                    AvailabilityText(definition);
-                var status = CharmStatus(instance, definition);
-                charmDetailBadge.Render(status);
-                charmDetailStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase);
-                charmDetailStatus.color = charmDetailBadge.Icon.color;
-                charmDetailStatusRow.gameObject.SetActive(true);
-                charmDetailsLayout.RefreshLayout();
-                foreach (var card in charmCards)
-                {
-                    card.Button.GetComponent<Image>().color = card.InstanceId == selectedCharm ? new Color32(255, 232, 179, 255) : Color.white;
-                    card.SelectionOutline.gameObject.SetActive(card.InstanceId == selectedCharm);
-                }
-                return;
-            }
-            charmTitle.text = "No charms yet";
-            charmDetailIcon.sprite = null;
-            charmDetailIcon.gameObject.SetActive(false);
-            charmDetailSigil.gameObject.SetActive(false);
-            charmDetailCategory.Render(null);
-            charmDetail.text = "Clear a stage to choose a charm.";
-            charmDetailStatusRow.gameObject.SetActive(false);
-            charmDetailsLayout.RefreshLayout();
         }
     }
 }

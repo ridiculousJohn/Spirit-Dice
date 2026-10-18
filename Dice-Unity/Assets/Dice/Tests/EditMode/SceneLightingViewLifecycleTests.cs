@@ -49,7 +49,7 @@ namespace Dice.Tests
             Set(view, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
                 "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset"));
             Invoke(view, "Build");
-            Field<RectTransform>(view, "rewardsPanel").gameObject.SetActive(false);
+            view.RewardsPanel.Root.gameObject.SetActive(false);
             SceneManager.MoveGameObjectToScene(view.DiceTray.RenderRoot.gameObject, preview);
             SceneManager.MoveGameObjectToScene(view.ModifierHistory.Renderer.RenderRoot.gameObject, preview);
             view.DiceTray.RenderCamera.scene = preview;
