@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Charm icon construction and text shared by the gameplay view, owned charms panel, and charm popup. */
+    /** Charm icon construction and text shared by the gameplay view, its panels, and score playback. */
     internal static class SpiritCharmVisuals
     {
         internal static Image MakeIcon(string name, Transform parent, Vector2 anchor, float size)
@@ -71,6 +71,23 @@ namespace Dice.Presentation
             string scope = availability.Scope == ModifierAvailabilityScope.Global ? "All encounters" :
                 availability.Scope == ModifierAvailabilityScope.Spirit ? "This spirit's encounters" : "This encounter";
             return scope + " / Tier " + availability.PowerTier;
+        }
+
+        internal static bool HasPendingProgress(ISpiritEncounterControls controls) =>
+            controls is ISpiritProgressionControls progression &&
+            progression.ProfileStatusMessage.StartsWith("Progress is pending:", StringComparison.Ordinal);
+
+        internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<string> ids)
+        {
+            if (ids.Count == 0) return "No new charms unlocked this run.";
+            var names = new List<string>();
+            foreach (string id in ids)
+            {
+                var definition = controls.Catalog.GetModifier(id);
+                names.Add(SpiritModifierPresentation.GetName(definition) + "\n" + AvailabilityScopeText(definition));
+            }
+            return (HasPendingProgress(controls) ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
+                "Available in future reward pools.\n\n" + string.Join("\n\n", names);
         }
     }
 }
