@@ -135,8 +135,6 @@ namespace Dice.Tests
             var left = Field<RawImage>(view, "leftPanel");
             var right = Field<RawImage>(view, "rightPanel");
             Material approachMaterial = background.material;
-            Rect uv = new Rect(.1f, .2f, .8f, .6f);
-            background.uvRect = uv;
             controls.BeatIndex = 1;
             view.Refresh();
             Invoke(view, "LateUpdate");
@@ -144,8 +142,8 @@ namespace Dice.Tests
                 left.material == approachMaterial && right.material == approachMaterial && background.material != approachMaterial,
                 "Departing panels did not retain the previous beat's compositor independently.");
             Require(left.texture == first.BaseTexture && background.texture == second.BaseTexture &&
-                left.uvRect == new Rect(.1f, .2f, .4f, .6f) && right.uvRect == new Rect(.5f, .2f, .4f, .6f),
-                "Departing panels lost their matching texture or cropped UVs.");
+                left.uvRect == new Rect(0, 0, .5f, 1) && right.uvRect == new Rect(.5f, 0, .5f, 1),
+                "Departing panels lost their matching texture or half of the image.");
             var currentState = Field<SceneLightingState>(view, "sceneLightingState");
             var previousState = Field<SceneLightingState>(view, "previousSceneLightingState");
             Require(currentState.Asset == second && previousState.Asset == first && currentState.SampleTime == previousState.SampleTime,

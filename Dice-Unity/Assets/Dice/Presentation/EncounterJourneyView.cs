@@ -240,7 +240,6 @@ namespace Dice.Presentation
             EncounterCharms.Hide();
             bool continuingJourney = hasRendered && renderedJourney == journey && renderedPhase == EncounterJourneyPhase.Sequence;
             Texture2D previous = continuingJourney ? background.texture as Texture2D : null;
-            Rect previousUv = background.uvRect;
             var previousLighting = continuingJourney ? activeBeat?.SceneLighting : null;
             CancelAnimation();
             var beat = journey.Beats[index];
@@ -288,9 +287,8 @@ namespace Dice.Presentation
             rightPanel.gameObject.SetActive(parting);
             leftPanel.texture = rightPanel.texture = previous;
             leftPanel.material = rightPanel.material = previousSceneLightingMaterial?.Material;
-            leftPanel.uvRect = new Rect(previousUv.x, previousUv.y, previousUv.width * .5f, previousUv.height);
-            rightPanel.uvRect = new Rect(previousUv.x + previousUv.width * .5f, previousUv.y,
-                previousUv.width * .5f, previousUv.height);
+            leftPanel.uvRect = new Rect(0, 0, .5f, 1);
+            rightPanel.uvRect = new Rect(.5f, 0, .5f, 1);
             if (beat.AudioCue != null) audio?.PlayJourneyCue(beat.AudioCue);
             StartCoroutine(AnimateBeat(journey, index, parting));
         }
