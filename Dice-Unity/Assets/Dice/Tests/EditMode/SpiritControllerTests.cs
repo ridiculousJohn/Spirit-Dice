@@ -318,15 +318,18 @@ namespace Dice.Tests
         {
             controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 42, savePath);
             controller.Save();
+            Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
             var previous = EncounterSaveFileStore.Load(savePath);
             var unityRandomState = UnityEngine.Random.state;
             for (int run = 0; run < 2; ++run)
             {
                 controller.StartNew();
+                Assert.That(controller.StatusMessage, Does.StartWith("Started encounter with seed "), controller.StatusMessage);
                 Assert.That(controller.Snapshot.Revision, Is.Zero);
                 Assert.That(controller.IsBusy, Is.False);
                 Assert.That(UnityEngine.Random.state, Is.EqualTo(unityRandomState));
                 controller.Save();
+                Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
                 var current = EncounterSaveFileStore.Load(savePath);
                 Assert.That(current.DiceRandomState, Is.Not.EqualTo(previous.DiceRandomState));
                 Assert.That(current.RewardRandomState, Is.Not.EqualTo(previous.RewardRandomState));

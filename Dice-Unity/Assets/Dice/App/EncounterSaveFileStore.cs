@@ -10,17 +10,7 @@ namespace Dice.App
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("A save path is required.", nameof(path));
             byte[] bytes = EncounterSaveCodec.Serialize(save);
-            string fullPath = Path.GetFullPath(path);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-            string temporaryPath = fullPath + ".tmp-" + Guid.NewGuid().ToString("N");
-            using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                stream.Write(bytes, 0, bytes.Length);
-                stream.Flush(true);
-            }
-            // Commit only a complete file, retaining the previous successful save for recovery.
-            if (File.Exists(fullPath)) File.Replace(temporaryPath, fullPath, fullPath + ".bak");
-            else File.Move(temporaryPath, fullPath);
+            SaveFileCommit.Write(path, bytes);
         }
 
         public static EncounterSaveData Load(string path)

@@ -40,15 +40,7 @@ namespace Dice.App
             // Read before writing so corrupt profiles remain available for recovery.
             profile.Merge(LoadOrCreate(fullPath));
             byte[] bytes = PlayerProfileCodec.Serialize(profile);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-            string temporaryPath = fullPath + ".tmp-" + Guid.NewGuid().ToString("N");
-            using (var stream = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                stream.Write(bytes, 0, bytes.Length);
-                stream.Flush(true);
-            }
-            if (File.Exists(fullPath)) File.Replace(temporaryPath, fullPath, fullPath + ".bak");
-            else File.Move(temporaryPath, fullPath);
+            SaveFileCommit.Write(fullPath, bytes);
         }
 
         private static void ValidatePath(string path)
