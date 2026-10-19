@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Updated October 19, 2026 for the encounter and journey view splits, test repairs, and an initialization ordering fix; the first chapter's encounter and story sequence are unchanged since October 16. Check current Git status; this is not a claim about remote synchronization.
+Updated October 19, 2026 for the profile progression extraction, encounter and journey view splits, test repairs, and an initialization ordering fix; the first chapter's encounter and story sequence are unchanged since October 16. Check current Git status; this is not a claim about remote synchronization.
 
 ## What to do next
 
@@ -66,13 +66,15 @@ Paths below are relative to `Dice-Unity/Assets/Dice`.
 | State and action resolution | `Engine/EncounterSession.cs` |
 | Conditions and rewards | `Engine/Conditions/`, `Engine/ModifierDefinitions.cs`, `Engine/RewardGenerator.cs` |
 | Authored mechanics and discovery | `UnityContent/ModifierAsset.cs`, `UnityContent/MechanicalCatalogAsset.cs`, `UnityContent/ModifierAssetLoader.cs` |
-| Application and persistence | `App/SpiritEncounterController.cs`, `App/EncounterApplication.cs`, `App/PlayerProfile.cs`, App codecs/file stores |
+| Application and persistence | `App/SpiritEncounterController.cs`, `App/EncounterApplication.cs`, `App/PlayerProgression.cs`, `App/PlayerProfile.cs`, App codecs/file stores |
 | Gameplay screen | `Presentation/SpiritEncounterView.cs` (lifecycle, tray, table, overlays, refresh), `Presentation/SpiritGameplayHud.cs`, `Presentation/SpiritScorePlayback.cs` |
 | Rewards and charm UI | `Presentation/SpiritRewardsPanel.cs`, `Presentation/SpiritOwnedCharmsPanel.cs`, `Presentation/SpiritCharmPopup.cs`, `Presentation/SpiritCharmVisuals.cs` |
 | Journey and ending UI | `Presentation/EncounterJourneyView.cs` (beats, motion, lighting, invitation layout), `Presentation/SpiritInvestigationBoard.cs`, `Presentation/SpiritEncounterCharmsScreen.cs`, `Presentation/SpiritEncounterEndingView.cs` |
 | Host and table rendering | `Presentation/SpiritHostPortrait.cs`, `Presentation/SpiritHostPresentationAsset.cs`, `Presentation/EncounterTablePresentationAsset.cs`, `Presentation/SpiritDiceTray.cs` |
 
 `SpiritEncounterView` coordinates its screen components rather than drawing them. Add a self-contained panel as a sibling component following `SpiritHandRanksPanel` (`Build`, `Render`, `Root`) instead of growing the view. `SpiritGameplayHud` builds in ordered phases because its widgets interleave with the tray, rewards, and ending under the portrait; the composition preview builds the HUD alone. `SpiritScorePlayback` runs resolution events against the HUD and reads live view state through `ISpiritScorePlaybackHost`. `EncounterJourneyView` follows the same rule: the investigation board and Encounter Charms screen are sibling components, while the view keeps the beat sequence, motion, lighting, and invitation layout. Accept finishes the current beat at its authored final pose (`FinishAnimation`) so Back to invitation returns to that pose; `CancelAnimation` resets motion for a new beat.
+
+`PlayerProgression` owns the loaded profile, catalog-filtered progress, transactional story/reward/visit writes, and pending run-before-profile persistence. It is plain C# with no view, controller, or live application reference. An unlock operation supplies the captured run save and its explicit destination; a successful run write is not repeated when only the profile write needs retrying. The controller still owns the live run, journey navigation, follow-up highlighting, and observer notifications. It merges successful explicit grants into the live run before refreshing observers. Preserve these ownership boundaries when extracting further controller responsibilities.
 
 Keep mechanics, mechanical content, progression, and presentation separate. Mechanical content must not acquire display names, artwork, dialogue, or audio. Each modifier has its own mechanical ScriptableObject and separate presentation asset. Conditions have individual evaluation classes. Do not introduce central evaluation switches or presentation lookup dictionaries.
 
@@ -95,6 +97,8 @@ Intro Continue and Accept buttons are available immediately while authored anima
 Read [Tools/Presentation/README.md](../Tools/Presentation/README.md) for authoring and regeneration. Do not run historical scratch generators against production assets.
 
 ## Validation and delivery
+
+October 19 profile progression extraction: `PlayerProgression` owns profile state and ordered persistence; controller APIs, save formats, journey flow, and notification ordering are retained. Nine direct tests cover profile replacement/merge, catalog projections, transactional write failures, idempotent rewards, and run-save-before-profile retry behavior. A controller regression additionally verifies that failed replacement initialization cannot redirect the active run's unlock saves. Full EditMode passed 1,473/1,473; after adding that regression, the affected controller fixture passed 8/8. Focused rendered PlayMode passed 6/6 for permanent unlock UI, chapter story completion, catalog reinitialization, and return/resume/load. Evidence is in ignored `Docs/work/unity-tests/d5b00da472654854a3964efe51b20358`, `42843265e2c441788ea4586ef803b3fb`, and `b7ef16c2f66c491ebc300caf4ef4642f`. All three Unity runs exited with code 0. No Android build was made.
 
 October 19 journey split, test repairs, and initialization ordering:
 - `19da928` moved the investigation board and Encounter Charms screen out of `EncounterJourneyView` (883 to 691 lines), made Accept finish the beat at its final pose rather than resetting motion, and removed the always-true `SetButtons` parameter and dead theme fallbacks. No visible change today: the moth invitation, the only beat with Encounter Charms, has no motion.

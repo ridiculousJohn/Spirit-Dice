@@ -75,6 +75,40 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void FailedRunReplacementKeepsUnlockSavesAtTheActiveRunPath()
+        {
+            var catalog = Catalog();
+            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            var original = controller.Snapshot;
+            string replacementPath = Path.Combine(Path.GetDirectoryName(savePath), "replacement-run.json");
+            Assert.Throws<System.Collections.Generic.KeyNotFoundException>(() =>
+                controller.Initialize(catalog, "encounter.missing", 42, replacementPath));
+            Assert.That(controller.Snapshot, Is.SameAs(original));
+            Assert.That(controller.SavePath, Is.EqualTo(savePath));
+            Assert.That(File.Exists(replacementPath), Is.False);
+
+            Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
+                new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
+            controller.PlayHand();
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            var pending = EncounterSaveFileStore.Load(savePath);
+            Assert.That(pending.EncounterId, Is.EqualTo(TestContent.EncounterId));
+            Assert.That(pending.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
+            Assert.That(pending.PendingReward.OfferId, Is.EqualTo(controller.Snapshot.PendingReward.OfferId));
+            Assert.That(File.Exists(replacementPath), Is.False);
+
+            ChooseUnlock();
+            var consumed = EncounterSaveFileStore.Load(savePath);
+            Assert.That(controller.SavePath, Is.EqualTo(savePath));
+            Assert.That(consumed.EncounterId, Is.EqualTo(TestContent.EncounterId));
+            Assert.That(consumed.Revision, Is.EqualTo(controller.Snapshot.Revision));
+            Assert.That(consumed.PendingReward, Is.Null);
+            Assert.That(consumed.UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(File.Exists(replacementPath), Is.False);
+        }
+
+        [Test]
         public void FinalWinImmediatelyPersistsUnlockAndUniqueCompletion()
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
