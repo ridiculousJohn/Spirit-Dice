@@ -21,7 +21,7 @@ From the repository root in PowerShell, with the project editor closed:
 ```powershell
 $testOutput = Join-Path (Resolve-Path '.').Path ('Docs/work/unity-tests/' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $testOutput | Out-Null
-& 'C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe' -batchmode -projectPath "$PWD/Dice-Unity" -runTests -testPlatform EditMode -testResults "$testOutput/results.xml" -logFile "$testOutput/unity.log"
+& 'C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe' -batchmode -projectPath "$PWD/Dice-Unity" -runTests -testPlatform EditMode -testResults "$testOutput/results.xml" -logFile "$testOutput/unity.log"
 ```
 
 Use `-testFilter` to select the relevant fixtures, or `-testPlatform PlayMode` for play-mode tests. Omit `-batchmode` for rendered PlayMode checks that use `WaitForEndOfFrame`; these require the editor's rendered frame callback. They still run through the CLI with `-runTests`. Keep graphics enabled for shader and preview tests; `-nographics` cannot validate their GPU output. The XML report records failures and skipped tests. Test output stays under ignored `Docs/work`; tests must not install menu commands, run on editor startup, or depend on local art iterations.

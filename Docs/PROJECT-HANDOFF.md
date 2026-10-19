@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Updated October 19, 2026 for the profile progression extraction, encounter and journey view splits, test repairs, and an initialization ordering fix; the first chapter's encounter and story sequence are unchanged since October 16. Check current Git status; this is not a claim about remote synchronization.
+Updated October 19, 2026 for Unity 6000.6.6f1, the profile progression extraction, encounter and journey view splits, test repairs, and an initialization ordering fix; the first chapter's encounter and story sequence are unchanged since October 16. Check current Git status; this is not a claim about remote synchronization.
 
 ## What to do next
 
@@ -20,7 +20,7 @@ For that request:
 ## Workspace and working rules
 
 - Repository: `C:/Users/jsp73/Projects/Dice`; project: `Dice-Unity`; branch: `main`.
-- Unity: `6000.6.5f1`; editor: `C:/Program Files/Unity/Hub/Editor/6000.6.5f1/Editor/Unity.exe`.
+- Unity: `6000.6.6f1`; editor: `C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe`.
 - Main scene: `Dice-Unity/Assets/Scenes/SpiritHousePrototype.unity`.
 - Read `C:/Users/jsp73/.codex/AGENTS.md` and [Tools/README.md](../Tools/README.md). John is a Unity expert. Explain decisions without teaching programming fundamentals.
 - Preserve identifiers and useful comments; use ASCII in comments and strings. No worktrees unless requested.
