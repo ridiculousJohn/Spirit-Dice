@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -40,14 +41,7 @@ namespace Dice.Tests
                 "Both action buttons must share one modifier cue component.");
             foreach (string id in Ids)
             {
-                var definition = standard.GetModifier(id);
-                var encounter = new EncounterDefinition("encounter.readability",
-                    new[] { new StageDefinition(1000000, id.Contains("last_reroll") ? 1 : 3, 1) },
-                    startingModifiers: new[] { id });
-                var catalog = new MechanicalCatalog("readability.v1", standard.Hands, new[] { encounter },
-                    new[] { definition });
-                EncounterAction action = definition.Phase == ModifierPhase.PlayerReroll
-                    ? (EncounterAction)new RerollDiceAction(1) : PlayHandAction.Instance;
+                var catalog = ReadabilityCatalog(standard, id, out var definition, out var encounter, out var action);
                 ulong seed = FindActivationSeed(catalog, encounter.Id, action, id);
                 var expected = EncounterSession.CreateEncounter(catalog, encounter.Id, seed);
                 var resolution = expected.Execute(action, expected.Snapshot.Revision);
@@ -87,10 +81,6 @@ namespace Dice.Tests
                         if (!observed && cueGroup.alpha > .95f)
                         {
                             AssertActionCue(view, actionCue, definition);
-                            AssertCounterIcon(view, "BaseScoreCharmIcon", definition, activation.Contribution.BaseScore != 0);
-                            AssertCounterIcon(view, "MultiplierCharmIcon", definition, activation.Contribution.Multiplier != 0);
-                            AssertCounterIcon(view, "RerollsCharmIcon", definition, activation.Contribution.Rerolls != 0);
-                            AssertCounterIcon(view, "HandsCharmIcon", definition, false);
                             observed = true;
                             yield return Capture("activation-" + Array.IndexOf(Ids, id));
                         }
@@ -129,6 +119,76 @@ namespace Dice.Tests
             Assert.That(Find<Image>(fallback, "Artwork").gameObject.activeSelf, Is.False);
             actionCue.Clear();
             AssertActionCueCleared(view, actionCue);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /**
+         * Steps playback's contribution animation to its first yield, where every counter highlight is already set,
+         * so the actual icons are inspected without depending on rendered frames, fades, or animation duration.
+         * This verifies how a contribution lights the HUD, not whether Play dispatches the contribution.
+         */
+        [UnityTest]
+        public IEnumerator SteppedCharmActivationsLightOnlyTheAffectedCounterIcons()
+        {
+            var resetTransientVisuals = typeof(SpiritEncounterView).GetMethod("ResetTransientVisuals",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(resetTransientVisuals, Is.Not.Null);
+            string[] counters = { "BaseScoreCharmIcon", "MultiplierCharmIcon", "RerollsCharmIcon", "HandsCharmIcon" };
+            foreach (string id in Ids)
+            {
+                // A fresh scene per charm keeps each run's catalog from meeting the previous run's hand preview.
+                yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+                yield return ContentReady.Spirit();
+                yield return null;
+                var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+                var view = controller.GetComponent<SpiritEncounterView>();
+                var playback = typeof(SpiritEncounterView).GetField("scorePlayback", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(view);
+                Assert.That(playback, Is.Not.Null);
+                var animateContribution = playback.GetType().GetMethod("AnimateContribution",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(animateContribution, Is.Not.Null);
+                var catalog = ReadabilityCatalog(controller.Catalog, id, out var definition, out var encounter, out var action);
+                ulong seed = FindActivationSeed(catalog, encounter.Id, action, id);
+                var session = EncounterSession.CreateEncounter(catalog, encounter.Id, seed);
+                var resolution = session.Execute(action, session.Snapshot.Revision);
+                var activation = resolution.Events.OfType<ModifierActivatedEvent>().Single(value => value.DefinitionId == id);
+                controller.Initialize(catalog, encounter.Id, seed, SavePath());
+                yield return Wait(controller);
+                foreach (string counter in counters)
+                    Assert.That(Find<Image>(view, counter).gameObject.activeSelf, Is.False, id + " starts lit: " + counter);
+
+                bool playHand = definition.Phase == ModifierPhase.PlayHand;
+                var contribution = activation.Contribution;
+                int stageIndex = activation.StageIndex;
+                int handIndex = activation.HandIndex;
+                if (playHand)
+                {
+                    // Playback animates Play Hand charms from the scored hand after readying them on the tray.
+                    var scored = resolution.Events.OfType<HandScoredEvent>().Single();
+                    contribution = scored.Score.ModifierContributions.Single(value =>
+                        value.DefinitionId == id && value.Phase == ModifierPhase.PlayHand);
+                    stageIndex = scored.StageIndex;
+                    handIndex = scored.HandIndex;
+                    view.ModifierHistory.SynchronizeReady(scored.Score.ModifierContributions, catalog);
+                }
+                try
+                {
+                    var step = (IEnumerator)animateContribution.Invoke(playback,
+                        new object[] { contribution, stageIndex, handIndex, resolution, !playHand });
+                    Assert.That(step.MoveNext(), Is.True, id);
+                    Assert.That(step.Current, Is.InstanceOf<IEnumerator>(), id + " must stop at its score animation.");
+                    AssertCounterIcon(view, "BaseScoreCharmIcon", definition, contribution.BaseScore != 0);
+                    AssertCounterIcon(view, "MultiplierCharmIcon", definition, contribution.Multiplier != 0);
+                    AssertCounterIcon(view, "RerollsCharmIcon", definition, contribution.Rerolls != 0);
+                    AssertCounterIcon(view, "HandsCharmIcon", definition, false);
+                }
+                finally
+                {
+                    resetTransientVisuals.Invoke(view, null);
+                    view.ModifierHistory.Clear();
+                }
+            }
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -333,6 +393,18 @@ namespace Dice.Tests
             AssertCardTextVisible(view);
             view.ShowTable();
             LogAssert.NoUnexpectedReceived();
+        }
+
+        private static MechanicalCatalog ReadabilityCatalog(MechanicalCatalog standard, string id,
+            out ModifierDefinition definition, out EncounterDefinition encounter, out EncounterAction action)
+        {
+            definition = standard.GetModifier(id);
+            encounter = new EncounterDefinition("encounter.readability",
+                new[] { new StageDefinition(1000000, id.Contains("last_reroll") ? 1 : 3, 1) },
+                startingModifiers: new[] { id });
+            action = definition.Phase == ModifierPhase.PlayerReroll
+                ? (EncounterAction)new RerollDiceAction(1) : PlayHandAction.Instance;
+            return new MechanicalCatalog("readability.v1", standard.Hands, new[] { encounter }, new[] { definition });
         }
 
         private static ulong FindActivationSeed(MechanicalCatalog catalog, string encounterId, EncounterAction action, string id)
