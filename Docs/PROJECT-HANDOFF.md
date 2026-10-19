@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Updated October 16, 2026 for the first chapter's encounter and story sequence. Check current Git status; this is not a claim about remote synchronization.
+Updated October 19, 2026 for the encounter view split; game behavior and the first chapter's encounter and story sequence are unchanged since October 16. Check current Git status; this is not a claim about remote synchronization.
 
 ## What to do next
 
@@ -67,8 +67,12 @@ Paths below are relative to `Dice-Unity/Assets/Dice`.
 | Conditions and rewards | `Engine/Conditions/`, `Engine/ModifierDefinitions.cs`, `Engine/RewardGenerator.cs` |
 | Authored mechanics and discovery | `UnityContent/ModifierAsset.cs`, `UnityContent/MechanicalCatalogAsset.cs`, `UnityContent/ModifierAssetLoader.cs` |
 | Application and persistence | `App/SpiritEncounterController.cs`, `App/EncounterApplication.cs`, `App/PlayerProfile.cs`, App codecs/file stores |
-| Gameplay, journey, ending UI | `Presentation/SpiritEncounterView.cs`, `Presentation/EncounterJourneyView.cs`, `Presentation/SpiritEncounterEndingView.cs` |
+| Gameplay screen | `Presentation/SpiritEncounterView.cs` (lifecycle, tray, table, overlays, refresh), `Presentation/SpiritGameplayHud.cs`, `Presentation/SpiritScorePlayback.cs` |
+| Rewards and charm UI | `Presentation/SpiritRewardsPanel.cs`, `Presentation/SpiritOwnedCharmsPanel.cs`, `Presentation/SpiritCharmPopup.cs`, `Presentation/SpiritCharmVisuals.cs` |
+| Journey and ending UI | `Presentation/EncounterJourneyView.cs`, `Presentation/SpiritEncounterEndingView.cs` |
 | Host and table rendering | `Presentation/SpiritHostPortrait.cs`, `Presentation/SpiritHostPresentationAsset.cs`, `Presentation/EncounterTablePresentationAsset.cs`, `Presentation/SpiritDiceTray.cs` |
+
+`SpiritEncounterView` coordinates its screen components rather than drawing them. Add a self-contained panel as a sibling component following `SpiritHandRanksPanel` (`Build`, `Render`, `Root`) instead of growing the view. `SpiritGameplayHud` builds in ordered phases because its widgets interleave with the tray, rewards, and ending under the portrait; the composition preview builds the HUD alone. `SpiritScorePlayback` runs resolution events against the HUD and reads live view state through `ISpiritScorePlaybackHost`.
 
 Keep mechanics, mechanical content, progression, and presentation separate. Mechanical content must not acquire display names, artwork, dialogue, or audio. Each modifier has its own mechanical ScriptableObject and separate presentation asset. Conditions have individual evaluation classes. Do not introduce central evaluation switches or presentation lookup dictionaries.
 
@@ -91,6 +95,8 @@ Intro Continue and Accept buttons are available immediately while authored anima
 Read [Tools/Presentation/README.md](../Tools/Presentation/README.md) for authoring and regeneration. Do not run historical scratch generators against production assets.
 
 ## Validation and delivery
+
+October 18 encounter view split: `SpiritEncounterView` was reduced from 2,281 to 884 lines by moving rewards, owned charms, and the charm popup (`ccdcac7`), then the gameplay HUD and score playback (`c4df307`), into their own components. Build order, GameObject names, and the view's public API are unchanged; the unused `Pulse` coroutine and the unused reward branch of the owned-charm card factory were removed. Three PlayMode tests that predated the split and failed identically on `5cc7d40` were updated in `a933918`: moth and owl arrivals now expect Continue to be available during animation, and the scene save comparison uses the controller's discovered families. On the `c4df307` tree, the full EditMode run passed 1,464/1,464 and the full rendered PlayMode run passed 62/62. Evidence is in ignored `Docs/work/unity-tests/16ee684ec49747608adc3d53d5aae363` and `f578602f937c45d2b9a0268fd6c9b49b`; Unity exited with code 0. One earlier EditMode run failed `ConsecutiveDefaultNewRunsUseDifferentDiceAndRewardStreams` because `File.Replace` in `EncounterSaveFileStore` did not swap in a written temporary save (a transient Windows file lock is the likely cause); its rerun passed, and the save race itself is not addressed. No Android build was made. An unrecorded APK, `Docs/work/android-build-a07913f2dd324071844c164d2f5a98b2/SpiritDice.apk` (October 16, 15:11), also exists; its contents and install state are unverified.
 
 October 16 charm popup: 3/3 focused PlayMode checks passed for tray inspection of duplicate instances, dismissal over card/Close/gameplay buttons, overlay transitions, long authored descriptions at 443x912 and 540x960, and the full owned-charms layout. Rendered popup captures were inspected. Evidence is in ignored `Docs/work/charm-popup-97727dfdeb924537a0cde496266bd4d6`; Unity exited with code 0. No Android rebuild was made for this change.
 
