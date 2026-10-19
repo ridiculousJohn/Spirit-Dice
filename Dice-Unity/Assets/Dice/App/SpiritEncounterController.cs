@@ -152,8 +152,8 @@ namespace Dice.App
             SelectedJourney = journeyCatalog?.Find(encounterId);
             JourneyPhase = EncounterJourneyPhase.Playing;
             BeatIndex = -1;
-            JourneyChanged?.Invoke();
             Install(next, "Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
+            JourneyChanged?.Invoke();
         }
 
         public bool InitializeJourney(MechanicalCatalog catalog, EncounterJourneyCatalogAsset journeys, string savePath)

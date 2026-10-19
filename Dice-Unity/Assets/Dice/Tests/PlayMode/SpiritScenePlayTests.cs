@@ -16,6 +16,43 @@ namespace Dice.Tests
 {
     public sealed class SpiritScenePlayTests
     {
+        /** Observers notified during re-initialization must see the new catalog with the new run, never the previous run's ready charms. */
+        [UnityTest]
+        public IEnumerator ReinitializingWithAnotherCatalogRefreshesOnlyTheNewRun()
+        {
+            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return ContentReady.Spirit();
+            yield return null;
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var view = controller.GetComponent<SpiritEncounterView>();
+            var first = AlwaysReadyCatalog(controller.Catalog, "modifier.reinitialize.first");
+            var second = AlwaysReadyCatalog(controller.Catalog, "modifier.reinitialize.second");
+            string artifactRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
+                "spirit-file-tests", Guid.NewGuid().ToString("N")));
+            controller.Initialize(first, "encounter.reinitialize", 60, Path.Combine(artifactRoot, "first.json"));
+            for (int frame = 0; frame < 600 && controller.IsBusy; ++frame) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            Assert.That(view.ModifierHistory.Count, Is.EqualTo(1), "The first run must leave its charm ready on the tray.");
+            // The tray skips catalog lookups when it already matches a preview, so desynchronize it to expose a stale preview.
+            view.ModifierHistory.Clear();
+
+            controller.Initialize(second, "encounter.reinitialize", 60, Path.Combine(artifactRoot, "second.json"));
+            for (int frame = 0; frame < 600 && controller.IsBusy; ++frame) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            Assert.That(controller.Catalog, Is.SameAs(second));
+            Assert.That(controller.Snapshot.Modifiers[0].DefinitionId, Is.EqualTo("modifier.reinitialize.second"));
+            Assert.That(view.ModifierHistory.Count, Is.EqualTo(1), "The new run must ready only its own charm.");
+        }
+
+        private static MechanicalCatalog AlwaysReadyCatalog(MechanicalCatalog standard, string modifierId)
+        {
+            var definition = new ModifierDefinition(modifierId, modifierId, ModifierPhase.PlayHand,
+                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+            var encounter = new EncounterDefinition("encounter.reinitialize", new[] { new StageDefinition(1000000, 3, 3) },
+                startingModifiers: new[] { modifierId });
+            return new MechanicalCatalog("reinitialize." + modifierId, standard.Hands, new[] { encounter }, new[] { definition });
+        }
+
         [UnityTest]
         public IEnumerator ReusableRewardCardComparesUpgradedValuesAndRebindsItsChoice()
         {
