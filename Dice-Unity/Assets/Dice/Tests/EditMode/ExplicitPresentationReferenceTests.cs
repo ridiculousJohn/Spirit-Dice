@@ -24,11 +24,16 @@ namespace Dice.Tests
                 "SpiritUiGreen.png", "SpiritUiAmber.png", "SpiritUiDark.png", "SpiritUiWood.png",
                 "SpiritBoneSurface.png", "SpiritWoodSurface.png",
                 "Fonts/CormorantGaramond-SemiBold.ttf", "Fonts/SourceSans3-Regular.ttf",
-                "SpiritDiceSurface.shader", "SpiritSilhouette.shader", "SpiritSmoke.shader", "SceneLighting.shader"
+                "SpiritDiceSurface.shader", "SpiritSilhouette.shader", "SpiritSmoke.shader"
             };
             foreach (string path in required)
                 Assert.That(dependencies, Does.Contain(SharedPath + path), "Scene dependency: " + path);
             Assert.That(dependencies.Where(IsResourcesPath), Is.Empty);
+
+            string[] applicationDependencies = AssetDatabase.GetDependencies("Assets/Dice/Content/DiceApplicationConfig.asset", true);
+            Assert.That(applicationDependencies, Does.Contain(SharedPath + "SceneLighting.shader"),
+                "The Addressable configuration must retain the journeys' lighting shader.");
+            Assert.That(applicationDependencies.Where(IsResourcesPath), Is.Empty);
 
             var scene = EditorSceneManager.OpenPreviewScene(ScenePath);
             try

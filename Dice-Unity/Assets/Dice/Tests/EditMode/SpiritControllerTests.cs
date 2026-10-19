@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using Dice.App;
 using Dice.Engine;
@@ -8,7 +9,6 @@ using Dice.Presentation;
 using Dice.UnityContent;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using Resolution = Dice.Engine.Resolution;
 
@@ -45,7 +45,7 @@ namespace Dice.Tests
         {
             Assert.That(host.GetComponent<SpiritEncounterView>(), Is.Not.Null);
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.StatusMessage, Does.Contain("catalog"));
+            Assert.That(controller.StatusMessage, Does.Contain("startup"));
             Assert.DoesNotThrow(() => controller.StartNew());
             Assert.DoesNotThrow(() => controller.PlayHand());
             Assert.DoesNotThrow(() => controller.Load());
@@ -350,8 +350,8 @@ namespace Dice.Tests
                 controller.Reroll();
                 AssertSnapshots(expected.Execute(new RerollDiceAction(5), 0).Snapshot);
             }
-            var serialized = new SerializedObject(controller);
-            Assert.That(serialized.FindProperty("useFixedSeed").boolValue, Is.EqualTo(fixedSeed));
+            Assert.That(typeof(SpiritEncounterController).GetField("useFixedSeed",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(controller), Is.EqualTo(fixedSeed));
             if (fixedSeed)
             {
                 controller.StartNew();
@@ -454,10 +454,7 @@ namespace Dice.Tests
 
         private void ConfigureSeedPolicy(bool fixedSeed, string value)
         {
-            var serialized = new SerializedObject(controller);
-            serialized.FindProperty("useFixedSeed").boolValue = fixedSeed;
-            serialized.FindProperty("initialSeed").stringValue = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            controller.ConfigureSeedPolicy(fixedSeed, value);
         }
 
         private void AssertSnapshots(EncounterSnapshot expected)

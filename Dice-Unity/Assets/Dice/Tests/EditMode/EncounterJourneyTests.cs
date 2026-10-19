@@ -195,6 +195,33 @@ namespace Dice.Tests
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(GiftId));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void AdvancingOrSkippingAnIntroPublishesJourneyOnlyAfterApplyingRewards(bool skip)
+        {
+            var profile = new PlayerProfile();
+            profile.VisitEncounter(FirstId);
+            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json"), profile);
+            Set(journeys.Entries[0].Beats[0], "progressionReward", Reward(true, true));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(FirstId);
+            int journeyNotifications = 0;
+            int stateNotifications = 0;
+            controller.JourneyChanged += () =>
+            {
+                ++journeyNotifications;
+                Assert.That(controller.BeatIndex, Is.EqualTo(skip ? 3 : 1));
+                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
+            };
+            controller.StateChanged += () => ++stateNotifications;
+
+            if (skip) controller.SkipIntro();
+            else controller.AdvanceJourney();
+
+            Assert.That(journeyNotifications, Is.EqualTo(1));
+            Assert.That(stateNotifications, Is.Zero);
+        }
+
         [Test]
         public void VictoryAwardsAuthoredCompletionRewardAndReloadIsIdempotent()
         {
@@ -292,6 +319,47 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(before.Revision));
             Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(savedRun));
             Assert.That(controller.CanResume, Is.True);
+        }
+
+        [Test]
+        public void StoryCompletionPublishesRetainedRunRewardsToStateAndJourneyObservers()
+        {
+            var story = AddStory();
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            var retained = controller.Snapshot;
+            controller.ReturnToInvestigation();
+            controller.SelectEncounter(story.Id);
+            controller.AdvanceJourney();
+            int journeyChanges = 0;
+            int stateChanges = 0;
+            Action assertCompletedStory = () =>
+            {
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+                Assert.That(controller.SelectedJourney, Is.Null);
+                Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+                Assert.That(controller.CompletedStoryIds, Does.Contain(story.StoryId));
+                Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(retained.EncounterId));
+                Assert.That(controller.Snapshot.Revision, Is.EqualTo(retained.Revision));
+                Assert.That(controller.Snapshot.CurrentDice, Is.EqualTo(retained.CurrentDice));
+                Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+                Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamily));
+                Assert.That(controller.Preview, Is.Not.Null);
+                Assert.That(controller.Preview.RerollsRemaining, Is.EqualTo(controller.Snapshot.RerollsRemaining));
+                Assert.That(controller.Preview.Modifiers.Select(modifier => modifier.DefinitionId),
+                    Is.EqualTo(controller.Snapshot.Modifiers.Select(modifier => modifier.DefinitionId)));
+                Assert.That(controller.ModifierInspections.Select(inspection => inspection.DefinitionId),
+                    Is.EqualTo(controller.Snapshot.Modifiers.Select(modifier => modifier.DefinitionId)));
+                Assert.That(controller.CanResume, Is.True);
+            };
+            controller.JourneyChanged += () => { ++journeyChanges; assertCompletedStory(); };
+            controller.StateChanged += () => { ++stateChanges; assertCompletedStory(); };
+
+            controller.AdvanceJourney();
+
+            Assert.That(journeyChanges, Is.GreaterThan(0));
+            Assert.That(stateChanges, Is.GreaterThan(0));
         }
 
         [Test]
@@ -421,6 +489,133 @@ namespace Dice.Tests
             Assert.That(snapshot.TotalHandsPlayed, Is.Zero);
             Assert.That(snapshot.TotalRerollsSpent, Is.Zero);
             Assert.That(snapshot.CurrentDice, Is.EqualTo(new EncounterApplication(catalog, id, 17).Snapshot.CurrentDice));
+        }
+
+        [Test]
+        public void ReinitializingJourneyPublishesInvestigationWhileRetainingTheExistingRun()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            var retained = controller.Snapshot;
+            var retainedPreview = controller.Preview;
+            var retainedInspections = controller.ModifierInspections;
+            int journeyChanges = 0;
+            int stateChanges = 0;
+            Action assertInvestigation = () =>
+            {
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+                Assert.That(controller.SelectedJourney, Is.Null);
+                Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+                Assert.That(controller.Snapshot, Is.SameAs(retained));
+                Assert.That(controller.Preview, Is.SameAs(retainedPreview));
+                Assert.That(controller.ModifierInspections, Is.SameAs(retainedInspections));
+                Assert.That(controller.CanResume, Is.True);
+            };
+            controller.JourneyChanged += () => { ++journeyChanges; assertInvestigation(); };
+            controller.StateChanged += () => { ++stateChanges; assertInvestigation(); };
+
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+
+            Assert.That(journeyChanges, Is.GreaterThan(0));
+            Assert.That(stateChanges, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void AcceptingAnotherEncounterPublishesItsRunAndCachesBeforePlayingNotifications()
+        {
+            var observableCatalog = CreateObservableRunCatalog();
+            Assert.That(controller.InitializeJourney(observableCatalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            var previous = controller.Snapshot;
+            var previousPreview = controller.Preview;
+            Assert.That(controller.ModifierInspections, Has.Count.EqualTo(1));
+            controller.ReturnToInvestigation();
+            SelectInvitation(SecondId);
+            var expected = new EncounterApplication(observableCatalog, SecondId, 17);
+            int journeyChanges = 0;
+            int stateChanges = 0;
+            controller.JourneyChanged += () =>
+            {
+                if (controller.JourneyPhase != EncounterJourneyPhase.Playing) return;
+                ++journeyChanges;
+                AssertPublishedRun(expected, previous, previousPreview);
+            };
+            controller.StateChanged += () =>
+            {
+                if (controller.JourneyPhase != EncounterJourneyPhase.Playing) return;
+                ++stateChanges;
+                AssertPublishedRun(expected, previous, previousPreview);
+            };
+
+            controller.AcceptEncounter();
+
+            Assert.That(journeyChanges, Is.GreaterThan(0));
+            Assert.That(stateChanges, Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void LoadingAnotherEncounterPublishesItsRunAndCachesBeforePlayingNotifications()
+        {
+            var observableCatalog = CreateObservableRunCatalog();
+            Assert.That(controller.InitializeJourney(observableCatalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            var previous = controller.Snapshot;
+            var previousPreview = controller.Preview;
+            Assert.That(controller.ModifierInspections, Has.Count.EqualTo(1));
+            var expected = new EncounterApplication(observableCatalog, SecondId, 29);
+            Assert.That(expected.Submit(new RerollDiceAction(1), expected.Snapshot.Revision).Accepted, Is.True);
+            EncounterSaveFileStore.Save(savePath, expected.CaptureSave());
+            int journeyChanges = 0;
+            int stateChanges = 0;
+            int resolutions = 0;
+            controller.Resolved += resolution => ++resolutions;
+            controller.JourneyChanged += () =>
+            {
+                if (controller.JourneyPhase != EncounterJourneyPhase.Playing) return;
+                ++journeyChanges;
+                AssertPublishedRun(expected, previous, previousPreview);
+            };
+            controller.StateChanged += () =>
+            {
+                if (controller.JourneyPhase != EncounterJourneyPhase.Playing) return;
+                ++stateChanges;
+                AssertPublishedRun(expected, previous, previousPreview);
+            };
+
+            controller.Load();
+
+            Assert.That(journeyChanges, Is.GreaterThan(0));
+            Assert.That(stateChanges, Is.GreaterThan(0));
+            Assert.That(resolutions, Is.Zero);
+        }
+
+        private MechanicalCatalog CreateObservableRunCatalog()
+            => new MechanicalCatalog("test.journey-notifications.v1", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(FirstId, new[] { new StageDefinition(1000000, 5, 3) },
+                    startingModifiers: new[] { "modifier.journey-test" }),
+                new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 7) })
+            }, catalog.Modifiers);
+
+        private void AssertPublishedRun(EncounterApplication expected, EncounterSnapshot previous, HandPreview previousPreview)
+        {
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(expected.Snapshot.EncounterId)));
+            Assert.That(controller.Snapshot, Is.Not.SameAs(previous));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(expected.Snapshot.EncounterId));
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(expected.Snapshot.Revision));
+            Assert.That(controller.Snapshot.CurrentDice, Is.EqualTo(expected.Snapshot.CurrentDice));
+            Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(expected.Snapshot.RerollsRemaining));
+            Assert.That(controller.Preview, Is.Not.Null);
+            Assert.That(controller.Preview, Is.Not.SameAs(previousPreview));
+            var expectedPreview = expected.PreviewHandResolution();
+            Assert.That(controller.Preview.RerollsRemaining, Is.EqualTo(expectedPreview.RerollsRemaining));
+            Assert.That(controller.Preview.Modifiers.Select(modifier => modifier.DefinitionId),
+                Is.EqualTo(expectedPreview.Modifiers.Select(modifier => modifier.DefinitionId)));
+            Assert.That(controller.ModifierInspections.Select(inspection => inspection.DefinitionId),
+                Is.EqualTo(expected.InspectModifiersForPlayHand().Select(inspection => inspection.DefinitionId)));
         }
 
         [Test]

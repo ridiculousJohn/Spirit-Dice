@@ -1,7 +1,6 @@
 using System.Linq;
 using Dice.App;
 using Dice.Presentation;
-using Dice.UnityContent;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -73,11 +72,7 @@ namespace Dice.Editor
                 Assign(view, "trayPresentation", trayPresentation);
                 Assign(view, "tablePresentation", AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
                     "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset"));
-                var controller = root.AddComponent<SpiritEncounterController>();
-                Assign(controller, "catalogAsset",
-                    AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset"));
-                Assign(controller, "journeyCatalog", AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
-                    "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset"));
+                root.AddComponent<DiceBootstrap>();
                 EditorSceneManager.SaveScene(scene, ScenePath);
             }
             if (!EditorBuildSettings.scenes.Any(scene => scene.path == ScenePath))

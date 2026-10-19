@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 5111b38d19fa75e4abfa681fe15ee86f
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 14609d3105b84f25b1859c8a4c80dd16
+    m_Address: dice.application
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: a0df579548c46064397d12907ca65fa8, type: 2}
   m_SchemaSet:

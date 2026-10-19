@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 675357730}
   - component: {fileID: 675357729}
   - component: {fileID: 675357728}
+  - component: {fileID: 675357733}
   m_Layer: 0
   m_Name: Spirit Encounter
   m_TagString: Untagged
@@ -151,11 +152,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1aeac6fd17c47d7ba50a0815a592adb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.App::Dice.App.SpiritEncounterController
-  catalogAsset: {fileID: 11400000, guid: cc8a241269354f6db46d60178ddc427d, type: 2}
-  encounterId: encounter.fox.introduction
-  journeyCatalog: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df804, type: 2}
-  initialSeed: 60
-  useFixedSeed: 0
+--- !u!114 &675357733
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 675357727}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7594217e17b4aa49a288a95b21aaaa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Dice.App::Dice.App.DiceBootstrap
 --- !u!114 &675357729
 MonoBehaviour:
   m_ObjectHideFlags: 0

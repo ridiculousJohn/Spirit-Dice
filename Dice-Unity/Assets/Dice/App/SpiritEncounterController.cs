@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -17,22 +16,15 @@ namespace Dice.App
     [RequireComponent(typeof(SpiritEncounterView))]
     public sealed class SpiritEncounterController : MonoBehaviour, ISpiritEncounterControls, ISpiritProgressionControls, IEncounterJourneyControls, IEncounterPresenter
     {
-        [SerializeField] private MechanicalCatalogAsset catalogAsset;
-        [SerializeField] private string modifierPresentationLabel = ModifierPresentationLoader.Label;
-        [SerializeField] private string encounterId;
-        [SerializeField] private EncounterJourneyCatalogAsset journeyCatalog;
-        [SerializeField, Tooltip("Use Initial Seed for repeatable debug runs. Otherwise every new run uses a fresh seed.")]
+        private string encounterId;
         private bool useFixedSeed;
-        [SerializeField] private string initialSeed = "60";
+        private string initialSeed = "60";
         private EncounterApplication application;
         private ulong seed = 60;
         private string cacheStatus = string.Empty;
-        private ModifierAssetLoader modifierAssets;
-        private ModifierPresentationLoader presentationAssets;
-        private IDisposable presentationTheme;
         private readonly PlayerProgression progression = new PlayerProgression();
+        private readonly EncounterJourneyNavigation navigation = new EncounterJourneyNavigation();
         private bool directGameplay;
-        private readonly List<string> highlightedEncounterIds = new List<string>();
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -40,7 +32,7 @@ namespace Dice.App
         public IReadOnlyList<ModifierInspection> ModifierInspections { get; private set; } = Array.Empty<ModifierInspection>();
         public int SelectedMask { get; private set; }
         public bool IsBusy { get; private set; }
-        public string StatusMessage { get; private set; } = "Assign a mechanical catalog to start the encounter.";
+        public string StatusMessage { get; private set; } = "Waiting for application startup.";
         public string SavePath { get; private set; }
         public string ProfilePath => progression.ProfilePath;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
@@ -49,17 +41,17 @@ namespace Dice.App
         public IReadOnlyList<string> CompletedStoryIds => progression.CompletedStoryIds;
         public string ProfileStatusMessage => progression.ProfileStatusMessage;
         public IReadOnlyList<string> VisitedEncounterIds => progression.VisitedEncounterIds;
-        public IReadOnlyList<string> HighlightedEncounterIds => highlightedEncounterIds;
-        public EncounterJourneyPhase JourneyPhase { get; private set; } = EncounterJourneyPhase.Playing;
-        public EncounterJourneyCatalogAsset JourneyCatalog => journeyCatalog;
-        public EncounterJourneyAsset SelectedJourney { get; private set; }
-        public int BeatIndex { get; private set; } = -1;
+        public IReadOnlyList<string> HighlightedEncounterIds => navigation.HighlightedEncounterIds;
+        public EncounterJourneyPhase JourneyPhase => navigation.JourneyPhase;
+        public EncounterJourneyCatalogAsset JourneyCatalog => navigation.JourneyCatalog;
+        public EncounterJourneyAsset SelectedJourney => navigation.SelectedJourney;
+        public int BeatIndex => navigation.BeatIndex;
         public string JourneyStatus { get; private set; } = string.Empty;
         public bool HasActiveEncounter => application != null && Snapshot != null && Snapshot.Outcome == EncounterOutcome.None;
-        public bool CanResume => HasActiveEncounter && !IsBusy && JourneyPhase == EncounterJourneyPhase.Investigation;
-        public bool CanSkipIntro => JourneyPhase == EncounterJourneyPhase.Sequence && SelectedJourney != null &&
-            !SelectedJourney.IsStoryOnly && BeatIndex < SelectedJourney.Beats.Count - 1 && progression.HasProfile &&
-            VisitedEncounterIds.Contains(SelectedJourney.EncounterId);
+        public bool CanResume => !IsBusy && navigation.CanResume(HasActiveEncounter);
+        public bool CanSkipIntro => navigation.CanSkipIntro(JourneyProgress);
+        private EncounterJourneyNavigation.Progress JourneyProgress => new EncounterJourneyNavigation.Progress(
+            progression.HasProfile, VisitedEncounterIds, CompletedEncounterIds, CompletedStoryIds);
 
         public event Action StateChanged;
         public event Action<Resolution> Resolved;
@@ -67,73 +59,28 @@ namespace Dice.App
 
         private void Awake()
         {
-            if (journeyCatalog != null) JourneyPhase = EncounterJourneyPhase.Investigation;
             GetComponent<SpiritEncounterView>().Bind(this);
             GetComponent<SpiritEncounterView>().BindJourney(this);
             SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "spirit-encounter.json");
-            if (catalogAsset == null)
-            {
-                StateChanged?.Invoke();
-                return;
-            }
         }
 
-        private IEnumerator Start()
+        public void ConfigureSeedPolicy(bool useFixedSeed, string initialSeed)
         {
-            if (catalogAsset == null || Catalog != null) yield break;
-            if (string.IsNullOrWhiteSpace(modifierPresentationLabel))
-            {
-                SetStatus("Cannot load charm presentation: A theme label is required.");
-                yield break;
-            }
-            SetStatus("Loading modifiers...");
-            modifierAssets = new ModifierAssetLoader();
-            yield return modifierAssets.Load();
-            if (Catalog != null) { ReleaseContent(); yield break; }
-            if (modifierAssets.Error != null)
-            {
-                SetStatus("Cannot load modifiers: " + modifierAssets.Error.Message);
-                ReleaseContent();
-                yield break;
-            }
-            SetStatus("Loading charm presentation...");
-            presentationAssets = new ModifierPresentationLoader(modifierPresentationLabel);
-            yield return presentationAssets.Load();
-            if (Catalog != null) { ReleaseContent(); yield break; }
-            if (presentationAssets.Error != null)
-            {
-                SetStatus("Cannot load charm presentation: " + presentationAssets.Error.Message);
-                ReleaseContent();
-                yield break;
-            }
-            try
-            {
-                var catalog = catalogAsset.Build(modifierAssets.Assets);
-                presentationTheme = SpiritModifierPresentation.InstallTheme(presentationAssets.Assets, catalog);
-                if (journeyCatalog != null) InitializeJourney(catalog, journeyCatalog, SavePath);
-                else Initialize(catalog, encounterId, SelectSeed(), SavePath);
-            }
-            catch (Exception exception)
-            {
-                SetStatus("Cannot initialize the encounter: " + exception.Message);
-                ReleaseContent();
-            }
+            this.useFixedSeed = useFixedSeed;
+            this.initialSeed = initialSeed;
+        }
+
+        internal bool Initialize(MechanicalCatalog catalog, EncounterJourneyCatalogAsset journeys, string encounterId)
+        {
+            if (Catalog != null || IsBusy) return false;
+            if (journeys != null) return InitializeJourney(catalog, journeys, SavePath);
+            Initialize(catalog, encounterId, SelectSeed(), SavePath);
+            return application != null;
         }
 
         private void OnDestroy()
         {
             application?.AttachPresenter(null);
-            ReleaseContent();
-        }
-
-        private void ReleaseContent()
-        {
-            presentationTheme?.Dispose();
-            presentationTheme = null;
-            presentationAssets?.Dispose();
-            presentationAssets = null;
-            modifierAssets?.Dispose();
-            modifierAssets = null;
         }
 
         public void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string savePath)
@@ -147,9 +94,8 @@ namespace Dice.App
             this.seed = seed;
             SavePath = savePath;
             directGameplay = true;
-            SelectedJourney = journeyCatalog?.Find(encounterId);
-            JourneyPhase = EncounterJourneyPhase.Playing;
-            BeatIndex = -1;
+            navigation.Initialize(JourneyCatalog, encounterId);
+            JourneyStatus = string.Empty;
             Install(next, "Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
             JourneyChanged?.Invoke();
         }
@@ -165,11 +111,13 @@ namespace Dice.App
                     throw new InvalidOperationException("An active encounter requires its original mechanical catalog.");
                 if (!PrepareProfile(savePath)) { SetJourneyStatus(ProfileStatusMessage); return false; }
                 Catalog = catalog;
-                journeyCatalog = journeys;
                 SavePath = savePath;
                 directGameplay = false;
-                SetStatus("Investigation ready.");
-                ReturnToInvestigation();
+                navigation.InitializeJourney(journeys);
+                JourneyStatus = string.Empty;
+                StatusMessage = "Investigation ready.";
+                JourneyChanged?.Invoke();
+                StateChanged?.Invoke();
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
@@ -181,57 +129,46 @@ namespace Dice.App
 
         public void SelectEncounter(string id)
         {
-            if (IsBusy || Catalog == null || journeyCatalog == null || JourneyPhase != EncounterJourneyPhase.Investigation) return;
-            var selected = journeyCatalog.Find(id);
-            if (selected == null) { SetJourneyStatus("The encounter has no investigation lead."); return; }
-            if (!IsJourneyAvailable(id)) { SetJourneyStatus("Follow the current lead before visiting this location."); return; }
-            SelectedJourney = selected;
-            highlightedEncounterIds.Remove(id);
-            BeatIndex = 0;
-            JourneyPhase = EncounterJourneyPhase.Sequence;
+            if (IsBusy || Catalog == null) return;
+            if (!navigation.SelectEncounter(id, JourneyProgress, out string error))
+            {
+                if (error != null) SetJourneyStatus(error);
+                return;
+            }
             SetJourneyStatus(string.Empty);
         }
 
         public void AdvanceJourney()
         {
-            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null) return;
-            if (BeatIndex == SelectedJourney.Beats.Count - 1)
-            {
-                if (SelectedJourney.IsStoryOnly) CompleteStoryJourney();
-                return;
-            }
-            if (!ApplyJourneyRewards(BeatIndex)) return;
-            ++BeatIndex;
-            SetJourneyStatus(string.Empty);
+            if (IsBusy || !navigation.AdvanceJourney(out var transition)) return;
+            ApplyJourneyTransition(transition);
         }
 
         public void SkipIntro()
         {
-            if (IsBusy || !CanSkipIntro) return;
-            if (!ApplyJourneyRewards(SelectedJourney.Beats.Count - 2)) return;
-            BeatIndex = SelectedJourney.Beats.Count - 1;
-            SetJourneyStatus(string.Empty);
+            if (IsBusy || !navigation.SkipIntro(JourneyProgress, out var transition)) return;
+            ApplyJourneyTransition(transition);
         }
 
         public void AcceptEncounter()
         {
-            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null || SelectedJourney.IsStoryOnly ||
-                SelectedJourney.Beats[BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) return;
+            if (IsBusy || !navigation.AcceptEncounter(out var transition)) return;
             try
             {
-                SelectedJourney.Validate(Catalog);
+                transition.Journey.Validate(Catalog);
                 if (useFixedSeed) ParseFixedSeed();
                 if (!progression.PersistProfile()) { SetJourneyStatus(ProfileStatusMessage); return; }
-                if (!ApplyJourneyRewards(BeatIndex)) return;
-                if (!progression.PersistVisit(SelectedJourney.EncounterId)) { SetJourneyStatus(ProfileStatusMessage); return; }
+                if (!ApplyJourneyRewards(transition)) return;
+                if (!progression.PersistVisit(transition.Journey.EncounterId)) { SetJourneyStatus(ProfileStatusMessage); return; }
                 ulong nextSeed = SelectSeed();
-                var next = new EncounterApplication(Catalog, SelectedJourney.EncounterId, nextSeed, progression.KnownUnlockedModifiers(Catalog),
+                var next = new EncounterApplication(Catalog, transition.Journey.EncounterId, nextSeed, progression.KnownUnlockedModifiers(Catalog),
                     ProfileDiscoveredFamilyIds);
-                encounterId = SelectedJourney.EncounterId;
+                encounterId = transition.Journey.EncounterId;
                 seed = nextSeed;
-                JourneyPhase = EncounterJourneyPhase.Playing;
-                SetJourneyStatus(string.Empty);
+                navigation.Commit(transition);
+                JourneyStatus = string.Empty;
                 Install(next, "Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
+                JourneyChanged?.Invoke();
                 Present(next.InitialResolution);
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
@@ -242,66 +179,45 @@ namespace Dice.App
 
         public void ReturnToInvestigation()
         {
-            if (IsBusy || journeyCatalog == null) return;
-            JourneyPhase = EncounterJourneyPhase.Investigation;
-            SelectedJourney = null;
-            BeatIndex = -1;
+            if (IsBusy || !navigation.ReturnToInvestigation()) return;
             SetJourneyStatus(string.Empty);
         }
 
-        public bool IsJourneyAvailable(string id)
-        {
-            var journey = journeyCatalog?.Find(id);
-            if (journey == null || !progression.HasProfile) return false;
-            if (journey.IsStoryOnly ? CompletedStoryIds.Contains(journey.StoryId) :
-                CompletedEncounterIds.Contains(journey.EncounterId) || VisitedEncounterIds.Contains(journey.EncounterId)) return true;
-            foreach (string required in journey.RequiredCompletedEncounterIds)
-                if (!CompletedEncounterIds.Contains(required)) return false;
-            foreach (string required in journey.RequiredCompletedStoryIds)
-                if (!CompletedStoryIds.Contains(required)) return false;
-            return true;
-        }
+        public bool IsJourneyAvailable(string id) => navigation.IsJourneyAvailable(id, JourneyProgress);
 
-        private void CompleteStoryJourney()
+        private void ApplyJourneyTransition(EncounterJourneyNavigation.Transition transition)
         {
-            if (!progression.CompleteStoryJourney(SelectedJourney.StoryId, StoryRewards(), Catalog))
+            if (transition.CompletesStory)
             {
-                SetJourneyStatus(ProfileStatusMessage);
-                return;
+                if (!progression.CompleteStoryJourney(transition.Journey.StoryId,
+                    transition.Rewards.Select(reward => reward.Build(Catalog)), Catalog))
+                {
+                    SetJourneyStatus(ProfileStatusMessage);
+                    return;
+                }
+                MergeProgression();
             }
-            application?.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
-            application?.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
-            if (application != null) Snapshot = application.Snapshot;
-            ReturnToInvestigation();
-        }
-
-        private IEnumerable<ProgressionRewardDefinition> StoryRewards()
-        {
-            foreach (var beat in SelectedJourney.Beats)
-                if (beat.ProgressionReward != null) yield return beat.ProgressionReward.Build(Catalog);
-            if (SelectedJourney.CompletionReward != null) yield return SelectedJourney.CompletionReward.Build(Catalog);
+            else if (!ApplyJourneyRewards(transition)) return;
+            navigation.Commit(transition);
+            SetJourneyStatus(string.Empty);
+            if (transition.CompletesStory) StateChanged?.Invoke();
         }
 
         public void ResumeEncounter()
         {
-            if (!CanResume) return;
-            SelectedJourney = journeyCatalog.Find(Snapshot.EncounterId);
-            if (SelectedJourney == null) { SetJourneyStatus("The active encounter has no investigation lead."); return; }
-            JourneyPhase = EncounterJourneyPhase.Playing;
-            BeatIndex = -1;
+            if (IsBusy) return;
+            if (!navigation.ResumeEncounter(Snapshot?.EncounterId, HasActiveEncounter, out string error))
+            {
+                if (error != null) SetJourneyStatus(error);
+                return;
+            }
             SetJourneyStatus(string.Empty);
             StateChanged?.Invoke();
         }
 
         public void RetryEncounter()
         {
-            if (IsBusy || JourneyPhase != EncounterJourneyPhase.Playing || Snapshot == null ||
-                Snapshot.Outcome == EncounterOutcome.None || journeyCatalog == null) return;
-            var selected = journeyCatalog.Find(Snapshot.EncounterId);
-            if (selected == null) return;
-            SelectedJourney = selected;
-            BeatIndex = selected.Beats.Count - 1;
-            JourneyPhase = EncounterJourneyPhase.Sequence;
+            if (IsBusy || Snapshot == null || !navigation.RetryEncounter(Snapshot.EncounterId, Snapshot.Outcome)) return;
             SetJourneyStatus(string.Empty);
         }
 
@@ -319,10 +235,10 @@ namespace Dice.App
         public void StartNew()
         {
             if (IsBusy) return;
-            if (journeyCatalog != null && !directGameplay) { ReturnToInvestigation(); return; }
+            if (JourneyCatalog != null && !directGameplay) { ReturnToInvestigation(); return; }
             if (Catalog == null)
             {
-                SetStatus("Assign a mechanical catalog to start the encounter.");
+                SetStatus("Application content is not initialized.");
                 return;
             }
             try { Initialize(Catalog, encounterId, SelectSeed(), SavePath); }
@@ -414,18 +330,16 @@ namespace Dice.App
                 }
                 next.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
                 next.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
-                var restoredJourney = journeyCatalog?.Find(next.Snapshot.EncounterId);
-                if (journeyCatalog != null && !directGameplay && restoredJourney == null)
+                if (!navigation.Load(next.Snapshot.EncounterId, JourneyCatalog != null && !directGameplay, out var transition, out string error))
                 {
-                    SetStatus("Cannot load the encounter: no investigation lead exists for the saved encounter.");
+                    SetStatus(error);
                     return;
                 }
                 encounterId = next.Snapshot.EncounterId;
-                SelectedJourney = restoredJourney;
-                JourneyPhase = EncounterJourneyPhase.Playing;
-                BeatIndex = -1;
-                SetJourneyStatus(string.Empty);
+                navigation.Commit(transition);
+                JourneyStatus = string.Empty;
                 Install(next, "Loaded encounter.");
+                JourneyChanged?.Invoke();
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
@@ -536,14 +450,9 @@ namespace Dice.App
         private void RecordProgression(EncounterSnapshot snapshot, bool highlightFollowUps = false, EncounterSaveData unlockSave = null)
         {
             if (!progression.HasProfile) return;
-            var journey = journeyCatalog?.Find(snapshot.EncounterId);
-            if (snapshot.Outcome == EncounterOutcome.Won && highlightFollowUps &&
-                !CompletedEncounterIds.Contains(snapshot.EncounterId) && journey != null)
-            {
-                foreach (string id in journey.FollowUpEncounterIds)
-                    if (!VisitedEncounterIds.Contains(id) && !CompletedEncounterIds.Contains(id) &&
-                        !highlightedEncounterIds.Contains(id)) highlightedEncounterIds.Add(id);
-            }
+            var journey = JourneyCatalog?.Find(snapshot.EncounterId);
+            if (snapshot.Outcome == EncounterOutcome.Won && highlightFollowUps)
+                navigation.RecordVictory(snapshot.EncounterId, JourneyProgress);
             var completionReward = snapshot.Outcome == EncounterOutcome.Won ? journey?.CompletionReward?.Build(Catalog) : null;
             progression.RecordProgression(snapshot, Catalog, completionReward, unlockSave, SavePath);
         }
@@ -557,6 +466,13 @@ namespace Dice.App
                 return false;
             }
             if (!changed) return true;
+            MergeProgression();
+            StateChanged?.Invoke();
+            return true;
+        }
+
+        private void MergeProgression()
+        {
             application?.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
             application?.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
             if (application != null)
@@ -564,19 +480,20 @@ namespace Dice.App
                 Snapshot = application.Snapshot;
                 CachePreview();
             }
-            StateChanged?.Invoke();
-            return true;
         }
 
-        private bool ApplyJourneyRewards(int throughBeat)
+        private bool ApplyJourneyRewards(EncounterJourneyNavigation.Transition transition)
         {
             try
             {
-                // Include skipped beats and retries; discovery and ownership are idempotent grants.
-                for (int index = 0; index <= throughBeat; ++index)
+                foreach (var reward in transition.Rewards)
                 {
-                    var reward = SelectedJourney.Beats[index].ProgressionReward;
-                    if (reward != null && !ApplyProgressionReward(reward.Build(Catalog))) return false;
+                    if (!progression.ApplyProgressionReward(reward.Build(Catalog), Catalog, out bool changed))
+                    {
+                        SetJourneyStatus(ProfileStatusMessage);
+                        return false;
+                    }
+                    if (changed) MergeProgression();
                 }
                 return true;
             }
@@ -587,7 +504,7 @@ namespace Dice.App
             }
         }
 
-        private void SetStatus(string message)
+        internal void SetStatus(string message)
         {
             StatusMessage = message;
             if (JourneyPhase != EncounterJourneyPhase.Playing)

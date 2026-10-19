@@ -4,7 +4,9 @@
   "references": [
     "Dice.Engine",
     "Dice.UnityContent",
-    "Dice.Presentation"
+    "Dice.Presentation",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
   ],
   "autoReferenced": false,
   "overrideReferences": true,
