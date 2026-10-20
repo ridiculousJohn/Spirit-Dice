@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Application.unity
+    guid: 49426a9b2876f4b45bb56121fd90c91c
+  - enabled: 1
     path: Assets/Scenes/SpiritHousePrototype.unity
     guid: 34c01358f03ee9944820d730ab3e38f5
   - enabled: 1

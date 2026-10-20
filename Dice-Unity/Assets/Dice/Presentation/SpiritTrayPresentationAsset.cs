@@ -12,6 +12,7 @@ namespace Dice.Presentation
         public Texture2D WoodTexture;
         /** Geometry and surface anchors are authored together in the encounter's table coordinate space. */
         public SpiritTrayGeometry GeometryPrefab;
+        public SpiritTrayScene RigPrefab;
         [HideInInspector] public Vector3 CameraPosition = new Vector3(0, 8, -6);
         public Vector3 CameraEulerAngles = new Vector3(53.13f, 0, 0);
         public bool Orthographic;

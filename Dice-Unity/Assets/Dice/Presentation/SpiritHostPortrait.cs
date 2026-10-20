@@ -12,6 +12,7 @@ namespace Dice.Presentation
         {
             public SpiritPortraitImage Image;
             public SpiritSmokeMaterial Smoke;
+            public Color Tint;
             public float[] Defaults;
             public float[] Values;
             public float[] EntryPose;
@@ -20,13 +21,17 @@ namespace Dice.Presentation
         }
 
         private SpiritHostPresentationAsset presentation;
-        private RectTransform portraitRoot;
+        [SerializeField] private RectTransform portraitRoot;
+        [SerializeField] private SpiritPortraitImage[] authoredLayers;
+        private bool initialized;
+        private Vector2 referenceSize;
+        private Vector2 portraitOffset;
+        private Vector3 portraitScale;
         private LayerRuntime[] layers;
         private double[] idleAges;
         private float[][] entryValues;
         private readonly float[] durations = new float[(int)SpiritPresentationState.Farewell + 1];
         private readonly bool[] includesIdle = new bool[(int)SpiritPresentationState.Farewell + 1];
-        private Material silhouetteMaterial;
         private double stateAge;
         // Continuous effects retain their phase across dialogue and pose resets.
         private double effectAge;
@@ -58,9 +63,14 @@ namespace Dice.Presentation
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (asset == null) throw new ArgumentNullException(nameof(asset));
-            if (portraitRoot != null) return;
+            if (initialized) return;
+            if (portraitRoot == null || authoredLayers == null || authoredLayers.Length != asset.Layers.Length)
+                throw new InvalidOperationException("The host portrait requires its authored image layers.");
             asset.Validate();
             presentation = asset;
+            referenceSize = portraitRoot.rect.size;
+            portraitOffset = portraitRoot.anchoredPosition;
+            portraitScale = portraitRoot.localScale;
             layers = new LayerRuntime[asset.Layers.Length];
             idleAges = new double[asset.Sequences.Length];
             entryValues = new float[asset.Sequences.Length][];
@@ -73,47 +83,33 @@ namespace Dice.Presentation
                 entryValues[i] = new float[sequence.Tracks.Length];
             }
 
-            portraitRoot = SpiritUi.Rect("Spirit Portrait", parent, Vector2.zero, Vector2.zero);
-            portraitRoot.pivot = Vector2.zero;
-            portraitRoot.sizeDelta = asset.ReferenceSize;
             for (int i = 0; i < layers.Length; ++i)
             {
                 SpiritPortraitLayer source = asset.Layers[i];
-                var rect = SpiritUi.Rect(source.Id, portraitRoot, Vector2.zero, Vector2.zero);
-                rect.pivot = source.Pivot;
-                var image = rect.gameObject.AddComponent<SpiritPortraitImage>();
-                image.Configure(source.Mesh);
-                image.texture = source.Texture;
-                image.raycastTarget = false;
-                if (source.Silhouette)
-                {
-                    if (silhouetteMaterial == null)
-                    {
-                        if (asset.SilhouetteShader == null) throw new InvalidOperationException("Spirit silhouette shader is unavailable.");
-                        silhouetteMaterial = new Material(asset.SilhouetteShader) { name = "Spirit Portrait Silhouette", hideFlags = HideFlags.DontSave };
-                    }
-                    image.material = silhouetteMaterial;
-                }
-                SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled ? new SpiritSmokeMaterial(source.Smoke, asset.SmokeShader) : null;
+                var image = authoredLayers[i];
+                if (image == null) throw new InvalidOperationException("An authored portrait layer is missing.");
+                SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled
+                    ? new SpiritSmokeMaterial(source.Smoke, asset.SmokeShader, image.material) : null;
                 if (smoke != null) image.material = smoke.Material;
-                image.enabled = source.Texture != null && (!source.Silhouette || silhouetteMaterial != null);
-                int channels = source.Mesh != null ? source.Mesh.Shapes.Length : 0;
+                int channels = image.Weights.Count;
+                if (channels != (source.Mesh != null ? source.Mesh.Shapes.Length : 0))
+                    throw new InvalidOperationException("Authored portrait deformation channels must match the animation data.");
                 var defaults = new float[6 + channels];
-                defaults[0] = source.Position.x;
-                defaults[1] = source.Position.y;
-                defaults[2] = source.Size.x;
-                defaults[3] = source.Size.y;
-                defaults[4] = source.Rotation;
-                defaults[5] = source.Tint.a;
-                if (source.Weights != null && source.Weights.Length > 0)
-                    Array.Copy(source.Weights, 0, defaults, 6, channels);
+                defaults[0] = image.rectTransform.anchoredPosition.x;
+                defaults[1] = image.rectTransform.anchoredPosition.y;
+                defaults[2] = image.rectTransform.sizeDelta.x;
+                defaults[3] = image.rectTransform.sizeDelta.y;
+                defaults[4] = Mathf.DeltaAngle(0, image.rectTransform.localEulerAngles.z);
+                defaults[5] = image.color.a;
+                for (int channel = 0; channel < channels; ++channel) defaults[6 + channel] = image.Weights[channel];
                 layers[i] = new LayerRuntime
                 {
-                    Image = image, Smoke = smoke, Defaults = defaults, Values = new float[defaults.Length],
+                    Image = image, Smoke = smoke, Tint = image.color, Defaults = defaults, Values = new float[defaults.Length],
                     EntryPose = new float[defaults.Length], EntryBaseline = new float[defaults.Length],
                     Weights = new float[channels]
                 };
             }
+            initialized = true;
             ResetPose();
         }
 
@@ -211,7 +207,7 @@ namespace Dice.Presentation
             }
         }
 
-        private bool Visible => portraitRoot != null && portraitRoot.gameObject.activeInHierarchy;
+        private bool Visible => initialized && portraitRoot != null && portraitRoot.gameObject.activeInHierarchy;
 
         private void Update() => Advance(Time.unscaledDeltaTime);
 
@@ -263,9 +259,9 @@ namespace Dice.Presentation
         {
             if (presentation == null) return;
             RectTransform parent = (RectTransform)portraitRoot.parent;
-            Vector2 fit = new Vector2(parent.rect.width / presentation.ReferenceSize.x, parent.rect.height / presentation.ReferenceSize.y);
-            portraitRoot.localScale = new Vector3(fit.x * presentation.Scale, fit.y * presentation.Scale, 1f);
-            portraitRoot.anchoredPosition = Vector2.Scale(presentation.Offset, fit);
+            Vector2 fit = new Vector2(parent.rect.width / referenceSize.x, parent.rect.height / referenceSize.y);
+            portraitRoot.localScale = Vector3.Scale(portraitScale, new Vector3(fit.x, fit.y, 1));
+            portraitRoot.anchoredPosition = Vector2.Scale(portraitOffset, fit);
             ResetValues(false);
             if (State == SpiritPresentationState.Idle || includesIdle[(int)State])
                 SampleSequences(SpiritPresentationState.Idle, false);
@@ -278,7 +274,7 @@ namespace Dice.Presentation
                 rect.anchoredPosition = new Vector2(values[0], values[1]);
                 rect.sizeDelta = new Vector2(values[2], values[3]);
                 rect.localRotation = Quaternion.Euler(0f, 0f, values[4]);
-                Color tint = presentation.Layers[i].Tint;
+                Color tint = layer.Tint;
                 if (hasSceneLighting && !presentation.Layers[i].Silhouette && presentation.Layers[i].ReceiveSceneLighting)
                     tint = (tint.linear * sceneLightingTint).gamma;
                 tint.a = Mathf.Clamp01(values[5]);
@@ -387,8 +383,6 @@ namespace Dice.Presentation
                         if (layer.Image != null) layer.Image.material = null;
                         layer.Smoke.Dispose();
                     }
-            if (portraitRoot != null) DestroyOwned(portraitRoot.gameObject);
-            if (silhouetteMaterial != null) DestroyOwned(silhouetteMaterial);
         }
 
         private static void DestroyOwned(UnityEngine.Object owned)

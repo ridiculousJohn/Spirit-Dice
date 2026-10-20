@@ -14,19 +14,24 @@ namespace Dice.Presentation
         private EncounterJourneyCatalogAsset renderedCatalog;
         private IEncounterJourneyControls journeyControls;
         private ISpiritMainMenuControls mainMenuControls;
-        private Text chapterLabel;
+        [SerializeField] private Text chapterLabel;
+        [SerializeField] private SpiritJourneyCard clueCardPrefab;
+        [SerializeField] private SpiritCompletionClue completionCluePrefab;
+        private Action resume;
+        private Action load;
+        private Action openCollection;
 
-        public RectTransform Root { get; private set; }
-        public Text Title { get; private set; }
-        public Text Description { get; private set; }
-        public ScrollRect Scroll { get; private set; }
-        public RectTransform Content { get; private set; }
-        public Text Status { get; private set; }
-        public Button ResumeButton { get; private set; }
-        public Button LoadButton { get; private set; }
-        public Button CollectionButton { get; private set; }
-        public Button ChapterButton { get; private set; }
-        public SpiritChapterSelector ChapterSelector { get; private set; }
+        [field: SerializeField] public RectTransform Root { get; private set; }
+        [field: SerializeField] public Text Title { get; private set; }
+        [field: SerializeField] public Text Description { get; private set; }
+        [field: SerializeField] public ScrollRect Scroll { get; private set; }
+        [field: SerializeField] public RectTransform Content { get; private set; }
+        [field: SerializeField] public Text Status { get; private set; }
+        [field: SerializeField] public Button ResumeButton { get; private set; }
+        [field: SerializeField] public Button LoadButton { get; private set; }
+        [field: SerializeField] public Button CollectionButton { get; private set; }
+        [field: SerializeField] public Button ChapterButton { get; private set; }
+        [field: SerializeField] public SpiritChapterSelector ChapterSelector { get; private set; }
 
         public void Build(RectTransform parent, Action resume, Action load, Action openCollection)
         {
@@ -34,45 +39,22 @@ namespace Dice.Presentation
             if (resume == null) throw new ArgumentNullException(nameof(resume));
             if (load == null) throw new ArgumentNullException(nameof(load));
             if (openCollection == null) throw new ArgumentNullException(nameof(openCollection));
-            if (Root != null) throw new InvalidOperationException("The investigation board has already been built.");
-
-            Root = SpiritUi.Panel("InvestigationBoard", parent, Vector2.zero, Vector2.one,
-                new Color32(17, 28, 23, 255)).rectTransform;
-            Title = SpiritUi.Heading("InvestigationTitle", Root, "INVESTIGATION", 31,
-                new Vector2(.04f, .917f), new Vector2(.96f, .982f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            Description = SpiritUi.Label("InvestigationSubtitle", Root, "", 18,
-                new Vector2(.06f, .85f), new Vector2(.94f, .92f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            Description.resizeTextForBestFit = true;
-            Description.resizeTextMinSize = 14;
-            Description.resizeTextMaxSize = 18;
-            Scroll = SpiritUi.Scroll("InvestigationClues", Root, new Vector2(.015f, .24f), new Vector2(.985f, .845f), out var content);
-            Content = content;
-            var layout = Content.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 16;
-            layout.padding = new RectOffset(6, 6, 6, 6);
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            Content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            Status = SpiritUi.Label("InvestigationStatus", Root, "", 17,
-                new Vector2(.04f, .172f), new Vector2(.96f, .24f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            ResumeButton = SpiritUi.Button("ResumeEncounterButton", Root, "Continue at the table",
-                new Vector2(.035f, .09f), new Vector2(.965f, .165f), () => resume(), true);
-            LoadButton = SpiritUi.Button("LoadJourneyButton", Root, "Load saved encounter",
-                new Vector2(.035f, .012f), new Vector2(.58f, .087f), () =>
-                {
-                    if (mainMenuControls != null) mainMenuControls.ShowMainMenu();
-                    else load();
-                });
-            CollectionButton = SpiritUi.Button("InvestigationCollectionButton", Root, "Collection",
-                new Vector2(.58f, .012f), new Vector2(.965f, .087f), () => openCollection());
-            ChapterButton = SpiritUi.Button("InvestigationChapterButton", Root, "Chapters",
-                new Vector2(.23f, .945f), new Vector2(.77f, .997f), () => ChapterSelector.Show(journeyControls), compact: true);
-            chapterLabel = ChapterButton.GetComponentInChildren<Text>();
-            chapterLabel.resizeTextMaxSize = 17;
-            ChapterButton.gameObject.SetActive(false);
-            ChapterSelector = Root.gameObject.AddComponent<SpiritChapterSelector>();
+            if (Root == null || Title == null || Description == null || Scroll == null || Content == null ||
+                Status == null || ResumeButton == null || LoadButton == null || CollectionButton == null ||
+                ChapterButton == null || ChapterSelector == null || chapterLabel == null ||
+                clueCardPrefab == null || completionCluePrefab == null)
+                throw new InvalidOperationException("The investigation board requires authored UI references.");
+            this.resume = resume;
+            this.load = load;
+            this.openCollection = openCollection;
+            ResumeButton.onClick.RemoveListener(Resume);
+            ResumeButton.onClick.AddListener(Resume);
+            LoadButton.onClick.RemoveListener(Load);
+            LoadButton.onClick.AddListener(Load);
+            CollectionButton.onClick.RemoveListener(OpenCollection);
+            CollectionButton.onClick.AddListener(OpenCollection);
+            ChapterButton.onClick.RemoveListener(OpenChapters);
+            ChapterButton.onClick.AddListener(OpenChapters);
             ChapterSelector.Build(Root);
         }
 
@@ -99,21 +81,24 @@ namespace Dice.Presentation
                 for (int i = 0; i < catalog.Chapters.Count; ++i)
                     if (catalog.Chapters[i] == chapter) { chapterIndex = i + 1; break; }
             chapterLabel.text = chapterIndex > 0 ? "CHAPTER " + chapterIndex + " / Chapters" : "Chapters";
-            Title.rectTransform.anchorMin = new Vector2(.04f, chaptersAvailable ? .883f : .917f);
-            Title.rectTransform.anchorMax = new Vector2(.96f, chaptersAvailable ? .945f : .982f);
-            Description.rectTransform.anchorMin = new Vector2(.06f, chaptersAvailable ? .813f : .85f);
-            Description.rectTransform.anchorMax = new Vector2(.94f, chaptersAvailable ? .884f : .92f);
-            ((RectTransform)Scroll.transform).anchorMax = new Vector2(.985f, chaptersAvailable ? .808f : .845f);
             Title.text = chapter != null ? chapter.Title : catalog != null ? catalog.Title : "INVESTIGATION";
             Description.text = chapter != null ? chapter.Description : catalog != null ? catalog.Description : "";
             string progress = Progress(controls, encounter);
-            if (rebuild || chapterChanged || renderedProgress != progress) BuildClues(controls, encounter);
-            if (chapterChanged)
+            if (rebuild || chapterChanged || renderedProgress != progress)
             {
+                var firstHighlight = BuildClues(controls, encounter);
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
-                Scroll.StopMovement();
-                Scroll.verticalNormalizedPosition = 1;
+                // Highlight focus takes precedence over the chapter's default position at the top.
+                if (firstHighlight != null || chapterChanged)
+                {
+                    Scroll.StopMovement();
+                    float scrollableHeight = Content.rect.height - Scroll.viewport.rect.height;
+                    float cardTop = firstHighlight != null ? Content.InverseTransformPoint(
+                        firstHighlight.TransformPoint(new Vector3(0, firstHighlight.rect.yMax, 0))).y : 0;
+                    Scroll.verticalNormalizedPosition = firstHighlight != null && scrollableHeight > 0 ?
+                        1 - Mathf.Clamp01(-cardTop / scrollableHeight) : 1;
+                }
             }
             renderedProgress = progress;
             renderedChapter = chapter;
@@ -127,65 +112,24 @@ namespace Dice.Presentation
             CollectionButton.interactable = collectionAvailable;
         }
 
-        private void BuildClues(IEncounterJourneyControls controls, ISpiritEncounterControls encounter)
+        private RectTransform BuildClues(IEncounterJourneyControls controls, ISpiritEncounterControls encounter)
         {
             foreach (var card in clueCards) { card.SetActive(false); Destroy(card); }
             clueCards.Clear();
-            if (controls.JourneyCatalog == null) return;
+            if (controls.JourneyCatalog == null) return null;
             int index = 0;
             RectTransform firstHighlight = null;
-            var theme = SpiritUi.GetTheme(transform);
             foreach (var journey in Entries(controls))
             {
                 if (journey == null || !controls.IsJourneyAvailable(journey.Id)) continue;
                 var selected = journey;
-                var cardImage = SpiritUi.Panel("ClueButton" + index++, Content, Vector2.zero, Vector2.one,
-                    theme.panelColor, 0, true);
-                var button = cardImage.gameObject.AddComponent<SpiritUiButtonVisual>();
-                button.targetGraphic = cardImage;
+                var card = Instantiate(clueCardPrefab, Content, false);
+                card.name = "ClueButton" + index++;
+                clueCards.Add(card.gameObject);
                 bool highlighted = false;
                 foreach (string id in controls.HighlightedEncounterIds)
                     if (id == journey.Id) { highlighted = true; break; }
-                if (highlighted)
-                {
-                    var outline = cardImage.gameObject.AddComponent<Outline>();
-                    outline.effectColor = theme.amber;
-                    outline.effectDistance = new Vector2(3, -3);
-                    var marker = SpiritUi.Label("ClueNewLead", button.transform, "NEW LEAD", 14,
-                        new Vector2(.055f, .94f), new Vector2(.945f, 1), TextAnchor.MiddleCenter, theme.amber);
-                    marker.rectTransform.offsetMin = new Vector2(12, 0);
-                    marker.rectTransform.offsetMax = new Vector2(-12, 0);
-                    if (firstHighlight == null) firstHighlight = cardImage.rectTransform;
-                }
-                var colors = button.colors;
-                colors.normalColor = Color.white;
-                colors.highlightedColor = colors.selectedColor = theme.highlightedTint;
-                colors.pressedColor = theme.pressedTint;
-                colors.disabledColor = theme.disabledTint;
-                colors.fadeDuration = .12f;
-                button.colors = colors;
-                button.onClick.AddListener(() => controls.SelectEncounter(selected.Id));
-                clueCards.Add(button.gameObject);
-                button.gameObject.AddComponent<LayoutElement>().preferredHeight = 430;
-                var artworkFrame = SpiritUi.Rect("ClueArtworkFrame", button.transform, new Vector2(.055f, .46f), new Vector2(.945f, .94f));
-                artworkFrame.gameObject.AddComponent<RectMask2D>();
-                var image = SpiritUi.Full("ClueArtwork", artworkFrame).gameObject.AddComponent<RawImage>();
-                image.texture = journey.CardArtwork;
-                image.color = journey.CardArtwork != null ? Color.white : Color.clear;
-                image.raycastTarget = false;
-                var aspect = image.gameObject.AddComponent<AspectRatioFitter>();
-                aspect.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
-                aspect.aspectRatio = journey.CardArtwork != null ? (float)journey.CardArtwork.width / journey.CardArtwork.height : 1;
-                var clueTitle = SpiritUi.Heading("ClueTitle", button.transform, journey.LocationTitle, 26,
-                    new Vector2(.055f, .33f), new Vector2(.945f, .45f), TextAnchor.MiddleCenter, theme.amber);
-                clueTitle.resizeTextForBestFit = true;
-                clueTitle.resizeTextMinSize = 21;
-                clueTitle.resizeTextMaxSize = 26;
-                var lead = SpiritUi.Label("ClueLead", button.transform, journey.LeadText, 19,
-                    new Vector2(.055f, .09f), new Vector2(.945f, .32f), TextAnchor.MiddleCenter);
-                lead.resizeTextForBestFit = true;
-                lead.resizeTextMinSize = 17;
-                lead.resizeTextMaxSize = 19;
+                if (highlighted && firstHighlight == null) firstHighlight = (RectTransform)card.transform;
                 bool visited = false;
                 foreach (string visitedId in controls.VisitedEncounterIds)
                     if (visitedId == journey.EncounterId) { visited = true; break; }
@@ -200,35 +144,28 @@ namespace Dice.Presentation
                         if (completedId == journey.EncounterId) { completed = true; break; }
                 string state = journey.IsStoryOnly ? completed ? "READ AGAIN" : "FOLLOW THIS LEAD" :
                     visited ? "VISITED - RETURN TO THE TABLE" : "FOLLOW THIS LEAD";
-                SpiritUi.Label("ClueState", button.transform, state, 14,
-                    new Vector2(.055f, .027f), new Vector2(.945f, .09f), TextAnchor.MiddleCenter, theme.muted);
-                button.CaptureContent();
+                card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
+                    highlighted, highlighted, true, () => controls.SelectEncounter(selected.Id));
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))
                 {
-                    var discovered = SpiritUi.Panel("CompletionClue", Content, Vector2.zero, Vector2.one,
-                        theme.panelColor, 0, true).rectTransform;
+                    var discovered = Instantiate(completionCluePrefab, Content, false);
                     clueCards.Add(discovered.gameObject);
-                    discovered.gameObject.AddComponent<LayoutElement>().preferredHeight = 180;
-                    SpiritUi.Heading("CompletionClueTitle", discovered, journey.CompletionClueTitle, 24,
-                        new Vector2(.035f, .67f), new Vector2(.965f, .95f), TextAnchor.MiddleCenter, theme.amber);
-                    var discoveredText = SpiritUi.Label("CompletionClueText", discovered, journey.CompletionClueText, 19,
-                        new Vector2(.045f, .06f), new Vector2(.955f, .66f), TextAnchor.MiddleCenter);
-                    discoveredText.resizeTextForBestFit = true;
-                    discoveredText.resizeTextMinSize = 17;
-                    discoveredText.resizeTextMaxSize = 19;
+                    discovered.Bind(journey.CompletionClueTitle, journey.CompletionClueText);
                 }
             }
-            if (firstHighlight != null)
-            {
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
-                float scrollableHeight = Content.rect.height - Scroll.viewport.rect.height;
-                var cardTop = Content.InverseTransformPoint(firstHighlight.TransformPoint(
-                    new Vector3(0, firstHighlight.rect.yMax, 0)));
-                Scroll.StopMovement();
-                Scroll.verticalNormalizedPosition = scrollableHeight > 0 ?
-                    1 - Mathf.Clamp01(-cardTop.y / scrollableHeight) : 1;
-            }
+            return firstHighlight;
+        }
+
+        private void Resume() => resume?.Invoke();
+        private void Load()
+        {
+            if (mainMenuControls != null) mainMenuControls.ShowMainMenu();
+            else load?.Invoke();
+        }
+        private void OpenCollection() => openCollection?.Invoke();
+        private void OpenChapters()
+        {
+            if (journeyControls != null) ChapterSelector.Show(journeyControls);
         }
 
         private static string Progress(IEncounterJourneyControls controls, ISpiritEncounterControls encounter)

@@ -15,11 +15,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator IdleAndSpiritReactionRenderWithoutChangingEncounterState()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var fox = controller.GetComponentInChildren<SpiritHostPortrait>();
+            var fox = ContentReady.EncounterView(controller).GetComponentInChildren<SpiritHostPortrait>();
             Assert.That(fox, Is.Not.Null);
             var snapshot = controller.Snapshot;
             fox.enabled = false;

@@ -121,7 +121,7 @@ namespace Dice.Tests
         [Test]
         public void StartupSceneUsesBootstrapAndControllerHasNoSerializedContentSettings()
         {
-            var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/SpiritHousePrototype.unity");
+            var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/Application.unity");
             try
             {
                 var controllers = scene.GetRootGameObjects()

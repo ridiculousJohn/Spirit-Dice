@@ -24,7 +24,17 @@ namespace Dice.Tests
         public void SetUp()
         {
             host = new GameObject("Diagnostic controller test");
+            host.SetActive(false);
             controller = host.AddComponent<DiagnosticEncounterController>();
+            var prefab = AssetDatabase.LoadAssetAtPath<DiagnosticEncounterView>(
+                "Assets/Dice/Content/Presentation/UI/DiagnosticEncounter.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            var view = UnityEngine.Object.Instantiate(prefab, host.transform, false);
+            using (var serialized = new SerializedObject(controller))
+            {
+                serialized.FindProperty("view").objectReferenceValue = view;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
             artifactRoot = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..",
                 "Docs", "work", "diagnostic-file-tests", Guid.NewGuid().ToString("N")));
             savePath = Path.Combine(artifactRoot, "encounter.json");
@@ -40,7 +50,7 @@ namespace Dice.Tests
         [Test]
         public void MissingCatalogKeepsTheHostUsableAndReportsConfiguration()
         {
-            Assert.That(host.GetComponent<DiagnosticEncounterView>(), Is.Not.Null);
+            Assert.That(host.GetComponent<DiagnosticEncounterView>(), Is.Null, "Controllers do not construct presentation.");
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.StatusMessage, Does.Contain("catalog"));
             Assert.DoesNotThrow(() => controller.StartNew("60"));

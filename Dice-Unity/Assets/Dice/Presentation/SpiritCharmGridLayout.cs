@@ -3,9 +3,9 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** The inventory retains two columns while allowing every card's complete wording to fit. */
-    [RequireComponent(typeof(GridLayoutGroup))]
-    public sealed class SpiritCharmGridLayout : MonoBehaviour
+    /** Fits the authored column count while keeping every card's complete wording visible. */
+    [ExecuteAlways, RequireComponent(typeof(GridLayoutGroup))]
+    public sealed class SpiritCharmGridLayout : MonoBehaviour, ILayoutSelfController
     {
         private float measuredWidth = -1;
         private bool arranging;
@@ -18,6 +18,10 @@ namespace Dice.Presentation
 
         private void OnEnable() => RefreshLayout();
         private void OnRectTransformDimensionsChange() => Arrange();
+        private void OnTransformChildrenChanged() => RefreshLayout();
+        private void OnValidate() => RefreshLayout();
+        public void SetLayoutHorizontal() => RefreshLayout();
+        public void SetLayoutVertical() { }
 
         private void Arrange()
         {
@@ -27,13 +31,17 @@ namespace Dice.Presentation
             if (rect == null || grid == null || rect.rect.width <= 0 || Mathf.Approximately(rect.rect.width, measuredWidth)) return;
             arranging = true;
             measuredWidth = rect.rect.width;
-            float width = (measuredWidth - grid.padding.horizontal - grid.spacing.x) * .5f;
-            float height = 156;
+            int columns = Mathf.Max(1, grid.constraintCount);
+            float width = (measuredWidth - grid.padding.horizontal - grid.spacing.x * (columns - 1)) / columns;
+            float height = 0;
             foreach (Transform child in transform)
             {
                 if (!child.gameObject.activeSelf) continue;
-                var card = child.GetComponent<SpiritCharmCardLayout>();
-                if (card != null) height = Mathf.Max(height, card.Arrange(width));
+                var childRect = child as RectTransform;
+                if (childRect == null) continue;
+                childRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(childRect);
+                height = Mathf.Max(height, LayoutUtility.GetPreferredHeight(childRect));
             }
             grid.cellSize = new Vector2(width, height);
             arranging = false;

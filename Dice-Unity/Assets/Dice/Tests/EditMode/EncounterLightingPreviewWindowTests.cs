@@ -25,9 +25,12 @@ namespace Dice.Tests
             lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
             lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.BaseTexture = texture;
-            table = ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
+            table = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset"));
             Set(table, "roomTexture", texture);
             Set(table, "sceneLighting", lighting);
+            Set(table, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset"));
             window = ScriptableObject.CreateInstance<EncounterLightingPreviewWindow>();
             Set(window, "table", table);
             Set(window, "entry", lighting);

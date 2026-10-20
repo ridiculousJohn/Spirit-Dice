@@ -9,92 +9,33 @@ namespace Dice.Presentation
     /** Lists the charms kept for this run, with details for the selected charm. */
     public sealed class SpiritOwnedCharmsPanel : MonoBehaviour
     {
-        private sealed class Card
-        {
-            internal Button Button;
-            internal Text Title;
-            internal Text Body;
-            internal Text Effect;
-            internal Image Icon;
-            internal SpiritModifierSigilGraphic Sigil;
-            internal SpiritModifierCategoryBadge Category;
-            internal SpiritCharmCardLayout Layout;
-            internal SpiritCharmStatusBadge Badge;
-            internal SpiritCharmSelectionGraphic SelectionOutline;
-            internal long InstanceId;
-        }
-
-        private readonly List<Card> cards = new List<Card>();
+        [SerializeField] private SpiritOwnedCharmCard cardPrefab;
+        private readonly List<SpiritOwnedCharmCard> cards = new List<SpiritOwnedCharmCard>();
         private ISpiritEncounterControls controls;
         private Func<bool> isBusy;
-        private SpiritCharmGridLayout grid;
-        private SpiritCharmDetailsLayout detailsLayout;
+        [SerializeField] private SpiritCharmGridLayout grid;
+        [SerializeField] private SpiritCharmDetailsLayout detailsLayout;
         private long renderedRevision = -1;
 
-        public RectTransform Root { get; private set; }
-        public Button CloseButton { get; private set; }
-        public ScrollRect Scroll { get; private set; }
-        public RectTransform Content { get; private set; }
-        public Text DetailTitle { get; private set; }
-        public Text DetailBody { get; private set; }
-        public Image DetailIcon { get; private set; }
-        public SpiritModifierSigilGraphic DetailSigil { get; private set; }
-        public SpiritModifierCategoryBadge DetailCategory { get; private set; }
-        public RectTransform DetailStatusRow { get; private set; }
-        public Text DetailStatus { get; private set; }
-        public SpiritCharmStatusBadge DetailBadge { get; private set; }
+        public RectTransform Root => (RectTransform)transform;
+        [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public ScrollRect Scroll { get; private set; }
+        [field: SerializeField] public RectTransform Content { get; private set; }
+        [field: SerializeField] public Text DetailTitle { get; private set; }
+        [field: SerializeField] public Text DetailBody { get; private set; }
+        [field: SerializeField] public Image DetailIcon { get; private set; }
+        [field: SerializeField] public SpiritModifierSigilGraphic DetailSigil { get; private set; }
+        [field: SerializeField] public SpiritModifierCategoryBadge DetailCategory { get; private set; }
+        [field: SerializeField] public RectTransform DetailStatusRow { get; private set; }
+        [field: SerializeField] public Text DetailStatus { get; private set; }
+        [field: SerializeField] public SpiritCharmStatusBadge DetailBadge { get; private set; }
         public long SelectedInstanceId { get; private set; } = -1;
 
         public void Build(RectTransform parent, Action close, Func<bool> busy)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (close == null) throw new ArgumentNullException(nameof(close));
-            if (busy == null) throw new ArgumentNullException(nameof(busy));
-            if (Root != null) throw new InvalidOperationException("The owned charms panel has already been built.");
-
-            isBusy = busy;
-            Root = SpiritUi.Panel("CharmsOverlay", parent, Vector2.zero, Vector2.one,
-                new Color32(20, 32, 27, 255), 0, true).rectTransform;
-            SpiritUi.Heading("CharmsTitle", Root, "YOUR CHARMS", 29, new Vector2(.03f, .9f), new Vector2(.73f, .98f));
-            CloseButton = SpiritUi.Button("CloseCharmsButton", Root, "Close", new Vector2(.75f, .9f), new Vector2(.98f, .98f),
-                () => close());
-            SpiritUi.Label("CharmsSubtitle", Root, "Kept for this run. Tap a charm to inspect it.", 18,
-                new Vector2(.03f, .84f), new Vector2(.97f, .9f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).muted);
-            Scroll = SpiritUi.Scroll("OwnedCharmScroll", Root, new Vector2(0, .34f), new Vector2(1, .84f), out var content);
-            Content = content;
-            var layout = Content.gameObject.AddComponent<GridLayoutGroup>();
-            layout.cellSize = new Vector2(235, 156);
-            layout.spacing = new Vector2(12, 12);
-            layout.padding = new RectOffset(5, 5, 5, 5);
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = 2;
-            Content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            grid = Content.gameObject.AddComponent<SpiritCharmGridLayout>();
-            var details = SpiritUi.Panel("CharmDetails", Root, new Vector2(.02f, .04f), new Vector2(.98f, .33f),
-                SpiritUi.GetTheme(transform).panelColor, 6, true);
-            DetailTitle = SpiritUi.Heading("CharmDetailTitle", details.transform, "No charms yet", 23, new Vector2(0, .72f), Vector2.one);
-            DetailIcon = SpiritCharmVisuals.MakeIcon("CharmDetailIcon", details.transform, new Vector2(0, .86f), 44);
-            DetailIcon.rectTransform.anchoredPosition = new Vector2(42, 0);
-            DetailSigil = SpiritCharmVisuals.MakeSigil("CharmDetailSigil", DetailIcon);
-            DetailCategory = SpiritModifierCategoryBadge.Create("CharmDetailCategory", DetailIcon);
-            DetailBody = SpiritUi.Label("CharmDetailBody", details.transform, "Clear a stage to choose a charm.", 17,
-                Vector2.zero, new Vector2(1, .72f));
-            foreach (var text in new[] { DetailTitle, DetailBody })
-            {
-                text.rectTransform.offsetMin = new Vector2(24, 5);
-                text.rectTransform.offsetMax = new Vector2(-24, -5);
-            }
-            DetailStatusRow = SpiritUi.Rect("CharmDetailStatusRow", details.transform, Vector2.zero, Vector2.one);
-            DetailStatus = SpiritUi.Label("CharmDetailStatus", DetailStatusRow, "", 17,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleLeft);
-            DetailStatus.resizeTextForBestFit = false;
-            DetailBadge = SpiritCharmStatusBadge.Create(DetailStatusRow);
-            ((RectTransform)DetailBadge.transform).anchoredPosition = Vector2.zero;
-            DetailStatusRow.gameObject.SetActive(false);
-            detailsLayout = details.gameObject.AddComponent<SpiritCharmDetailsLayout>();
-            detailsLayout.Initialize(DetailTitle, DetailBody, DetailIcon, (RectTransform)Scroll.transform,
-                DetailStatusRow, DetailStatus, DetailBadge, DetailSigil, DetailCategory);
-            Root.gameObject.SetActive(false);
+            isBusy = busy ?? throw new ArgumentNullException(nameof(busy));
+            CloseButton.onClick.RemoveAllListeners();
+            CloseButton.onClick.AddListener(() => close());
         }
 
         public void Bind(ISpiritEncounterControls encounterControls)
@@ -167,40 +108,11 @@ namespace Dice.Presentation
             }
         }
 
-        private Card MakeCard(string name)
+        private SpiritOwnedCharmCard MakeCard(string name)
         {
-            var image = SpiritUi.Panel(name, Content, Vector2.zero, Vector2.one, SpiritUi.GetTheme(transform).panelColor, 0, true);
-            var button = image.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            var card = new Card { Button = button };
-            card.Title = SpiritUi.Heading("Title", image.transform, "", 17,
-                new Vector2(0, .70f), new Vector2(1, .96f), TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).cream);
-            card.Icon = SpiritCharmVisuals.MakeIcon("CharmIcon", image.transform, new Vector2(0, .83f), 36);
-            card.Icon.rectTransform.anchoredPosition = new Vector2(42, 0);
-            card.Sigil = SpiritCharmVisuals.MakeSigil("CharmSigil", card.Icon);
-            card.Category = SpiritModifierCategoryBadge.Create("CharmCategory", card.Icon);
-            card.Body = SpiritUi.Label("Condition", image.transform, "", 17,
-                new Vector2(0, .40f), new Vector2(1, .70f));
-            card.Effect = SpiritUi.Label("Effects", image.transform, "", 17, new Vector2(0, .20f), new Vector2(1, .4f),
-                TextAnchor.MiddleLeft, SpiritUi.GetTheme(transform).amber);
-            foreach (var text in new[] { card.Title, card.Body, card.Effect })
-            {
-                text.rectTransform.offsetMin = new Vector2(24, 5);
-                text.rectTransform.offsetMax = new Vector2(-24, -5);
-                text.resizeTextForBestFit = true;
-                text.resizeTextMinSize = 14;
-                text.resizeTextMaxSize = text.fontSize;
-            }
-            card.Body.fontSize = 15;
-            card.Effect.fontSize = 16;
-            card.Layout = image.gameObject.AddComponent<SpiritCharmCardLayout>();
-            card.Layout.Initialize(card.Title, card.Body, card.Effect, card.Icon, card.Sigil, card.Category);
-            card.Badge = SpiritCharmStatusBadge.Create(image.transform);
-            card.SelectionOutline = SpiritUi.Full("SelectionOutline", image.transform).gameObject.AddComponent<SpiritCharmSelectionGraphic>();
-            card.SelectionOutline.color = new Color32(255, 215, 119, 255);
-            card.SelectionOutline.raycastTarget = false;
-            card.SelectionOutline.gameObject.SetActive(false);
-            button.onClick.AddListener(() =>
+            var card = Instantiate(cardPrefab, Content, false);
+            card.name = name;
+            card.Button.onClick.AddListener(() =>
             {
                 if (isBusy()) return;
                 SelectedInstanceId = card.InstanceId;
@@ -229,7 +141,6 @@ namespace Dice.Presentation
                 DetailSigil.gameObject.SetActive(DetailIcon.sprite == null);
                 DetailCategory.Render(definition);
                 DetailTitle.text = SpiritModifierPresentation.GetName(definition);
-                DetailBody.supportRichText = true;
                 DetailBody.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
                     "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" +
                     SpiritModifierPresentation.GetEffectText(definition) + "</color>\n" +
@@ -243,8 +154,9 @@ namespace Dice.Presentation
                 detailsLayout.RefreshLayout();
                 foreach (var card in cards)
                 {
-                    card.Button.GetComponent<Image>().color = card.InstanceId == SelectedInstanceId ? new Color32(255, 232, 179, 255) : Color.white;
-                    card.SelectionOutline.gameObject.SetActive(card.InstanceId == SelectedInstanceId);
+                    bool selected = card.InstanceId == SelectedInstanceId;
+                    card.Button.targetGraphic.color = selected ? card.SelectedColor : card.NormalColor;
+                    card.SelectionOutline.gameObject.SetActive(selected);
                 }
                 return;
             }

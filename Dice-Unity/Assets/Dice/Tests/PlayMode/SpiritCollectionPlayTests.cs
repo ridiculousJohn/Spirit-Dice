@@ -20,11 +20,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator BoardAndGameplayMenuBrowseProfileCollectionWithoutChangingProgress()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
-            var collection = view.GetComponent<SpiritCollectionView>();
+            var view = ContentReady.EncounterView(controller);
+            var collection = ContentReady.FrontendView(controller).Collection;
             Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
             var permanent = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
                 value.RewardEligible && !controller.Catalog.Modifiers.Any(other => other.FamilyId == value.FamilyId &&
@@ -34,6 +34,8 @@ namespace Dice.Tests
             {
                 Resize(view, width);
                 Find<Button>(view, "InvestigationCollectionButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 Assert.That(collection.IsVisible, Is.True);
@@ -45,8 +47,12 @@ namespace Dice.Tests
                 AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
                 yield return Capture(view, "owned-default", width);
                 Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Discovered));
                 Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.All));
                 Assert.That(collection.Rows.Count, Is.EqualTo(controller.Catalog.Modifiers
                     .Where(value => value.RewardEligible && value.Availability.Access != ModifierAccess.EncounterExclusive)
@@ -67,6 +73,8 @@ namespace Dice.Tests
                 AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
                 yield return Capture(view, "all-undiscovered", width);
                 Find<Button>(view, "CloseCollectionButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(collection.IsVisible, Is.False);
                 Assert.That(controller.Snapshot, Is.Null);
                 Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
@@ -76,18 +84,30 @@ namespace Dice.Tests
             profile.UnlockModifier(permanent.Id);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, controller.SavePath), Is.True);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             var journey = controller.JourneyCatalog.Entries.First();
             controller.SelectEncounter(journey.EncounterId);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             AdvanceToInvitation(controller);
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return Wait(controller);
+            view = ContentReady.EncounterView(controller);
+            collection = view.GetComponentInChildren<SpiritCollectionView>(true);
             string persistedProfile = File.ReadAllText(controller.ProfilePath);
             int collectedCount = controller.ProfileUnlockedModifierIds.Count;
             foreach (int width in new[] { 443, 540 })
             {
                 Resize(view, width);
                 Find<Button>(view, "MenuButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Find<Button>(view, "CollectionButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 yield return null;
                 Assert.That(collection.IsVisible, Is.True);
                 Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
@@ -96,6 +116,8 @@ namespace Dice.Tests
                 var unlockedButton = row.GetComponentsInChildren<Button>().Single(button =>
                     Find<Text>(button, "VariantState").text == "Unlocked");
                 unlockedButton.onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(collection.SelectedModifierId, Is.EqualTo(permanent.Id));
                 Assert.That(unlockedButton.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1));
                 Assert.That(Find<Text>(collection, "CollectionDetailTitle").text, Does.EndWith(" - Unlocked"));
@@ -103,6 +125,8 @@ namespace Dice.Tests
                 yield return null;
                 yield return Capture(view, "unlocked-menu", width);
                 Find<Button>(collection, "CollectionFilterButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(collection.Filter, Is.EqualTo(SpiritCollectionFilter.Discovered));
                 Assert.That(collection.Rows.All(family => !family.IsUndiscovered), Is.True);
                 Assert.That(collection.SelectedModifierId, Is.EqualTo(permanent.Id));
@@ -110,6 +134,8 @@ namespace Dice.Tests
                 AssertCompleteText(Find<Text>(collection, "CollectionFilterButtonLabel"));
                 yield return Capture(view, "discovered-menu", width);
                 Find<Button>(view, "CloseCollectionButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(File.ReadAllText(controller.ProfilePath), Is.EqualTo(persistedProfile));
             }
             LogAssert.NoUnexpectedReceived();
@@ -118,24 +144,28 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator MothRunCharmsFollowTheInvitationAndBeginOnlyAfterExplicitAcceptance()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var journey = controller.JourneyCatalog.Entries.Single(value =>
                 !value.IsStoryOnly && controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count > 0);
             ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
             foreach (int width in new[] { 443, 540 })
             {
-                Resize(view, width);
                 controller.SelectEncounter(journey.EncounterId);
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
+                Resize(view, width);
                 AdvanceToInvitation(controller);
                 yield return null;
-                Assert.That(Find<RectTransform>(view, "EncounterCharmsIntroduction").gameObject.activeInHierarchy, Is.False);
+                Assert.That(Find<RectTransform>(view, "SpiritEncounterCharmsScreen").gameObject.activeInHierarchy, Is.False);
                 Find<Button>(view, "JourneyAcceptButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 yield return null;
-                var introduction = Find<RectTransform>(view, "EncounterCharmsIntroduction");
+                var introduction = Find<RectTransform>(view, "SpiritEncounterCharmsScreen");
                 Assert.That(introduction.gameObject.activeInHierarchy, Is.True);
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
                 Assert.That(controller.Snapshot, Is.Null);
@@ -147,16 +177,29 @@ namespace Dice.Tests
                 foreach (var text in introduction.GetComponentsInChildren<Text>()) AssertCompleteText(text);
                 yield return Capture(view, "moth-introduction", width);
                 Find<Button>(view, "BackToInvitationButton").onClick.Invoke();
-                Assert.That(introduction.gameObject.activeInHierarchy, Is.False);
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
+                Assert.That(view.JourneyView.EncounterCharms.Root, Is.SameAs(introduction));
+                Assert.That(view.JourneyView.EncounterCharms.IsOpen, Is.False);
                 Find<Button>(view, "JourneyAcceptButton").onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Assert.That(introduction.gameObject.activeInHierarchy, Is.True);
                 controller.ReturnToInvestigation();
-                Assert.That(introduction.gameObject.activeInHierarchy, Is.False);
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
+                Assert.That(introduction == null || !introduction.gameObject.activeInHierarchy, Is.True);
             }
             controller.SelectEncounter(journey.EncounterId);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             AdvanceToInvitation(controller);
             Find<Button>(view, "JourneyAcceptButton").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Find<Button>(view, "BeginEncounterButton").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             yield return Wait(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot, Is.Not.Null);
@@ -164,11 +207,17 @@ namespace Dice.Tests
                 .Intersect(encounter.EncounterModifierIds), Is.Empty, "Run charm additions enter the pool without being equipped.");
             Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
             controller.ReturnToInvestigation();
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             var ordinary = controller.JourneyCatalog.Entries.First(value =>
                 !value.IsStoryOnly && controller.Catalog.GetEncounter(value.EncounterId).EncounterModifierIds.Count == 0);
             controller.SelectEncounter(ordinary.EncounterId);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             AdvanceToInvitation(controller);
             Find<Button>(view, "JourneyAcceptButton").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             yield return Wait(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(ordinary.EncounterId));
@@ -183,6 +232,7 @@ namespace Dice.Tests
 
         private static IEnumerator Wait(SpiritEncounterController controller)
         {
+            yield return ContentReady.Routed(controller);
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, controller.StatusMessage);
@@ -190,7 +240,7 @@ namespace Dice.Tests
 
         private static void Resize(SpiritEncounterView view, int width)
         {
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(width, 960);
             portrait.anchoredPosition = Vector2.zero;
@@ -220,7 +270,7 @@ namespace Dice.Tests
         }
 
         private static T Find<T>(Component parent, string name) where T : Component
-            => parent.GetComponentsInChildren<T>(true).Single(component => component.name == name);
+            => (parent != null ? parent : ContentReady.PresentationRoot()).GetComponentsInChildren<T>(true).Single(component => component.name == name);
 
         private static IEnumerator Capture(SpiritEncounterView view, string name, int width)
         {
@@ -229,7 +279,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(output);
             string path = Path.Combine(output, "collection-" + name + "-" + width + "x960.png");
             Assert.That(File.Exists(path), Is.False, "Capture output must be fresh.");
-            var canvas = view.transform.Find("SpiritCanvas").GetComponent<Canvas>();
+            var canvas = ContentReady.PresentationRoot().GetComponentInChildren<Canvas>(true);
             RenderMode previousMode = canvas.renderMode;
             Camera previousCamera = canvas.worldCamera;
             float previousPlane = canvas.planeDistance;

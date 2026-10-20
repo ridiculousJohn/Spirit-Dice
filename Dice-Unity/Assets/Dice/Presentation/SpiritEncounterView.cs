@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
+using UnityEngine.Events;
 using Resolution = Dice.Engine.Resolution;
 
 namespace Dice.Presentation
@@ -13,7 +12,6 @@ namespace Dice.Presentation
     [DisallowMultipleComponent]
     public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost
     {
-        private const float RoomTableEdge = .5323f;
         [SerializeField] private Texture2D roomTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
         [SerializeField] private EncounterTablePresentationAsset tablePresentation;
@@ -27,13 +25,13 @@ namespace Dice.Presentation
         public bool IsCharmPopupOpen => CharmPopup != null && CharmPopup.IsOpen;
         public long CharmPopupInstanceId => CharmPopup != null ? CharmPopup.InstanceId : -1;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
-        public SpiritGameplayHud GameplayHud { get; private set; }
-        public SpiritRewardsPanel RewardsPanel { get; private set; }
-        public SpiritOwnedCharmsPanel OwnedCharmsPanel { get; private set; }
-        public SpiritCharmPopup CharmPopup { get; private set; }
-        public SpiritDiceTray DiceTray { get; private set; }
-        public SpiritTrayScene TrayScene { get; private set; }
-        public SpiritModifierHistoryTray ModifierHistory { get; private set; }
+        [field: SerializeField] public SpiritGameplayHud GameplayHud { get; private set; }
+        [field: SerializeField] public SpiritRewardsPanel RewardsPanel { get; private set; }
+        [field: SerializeField] public SpiritOwnedCharmsPanel OwnedCharmsPanel { get; private set; }
+        [field: SerializeField] public SpiritCharmPopup CharmPopup { get; private set; }
+        [field: SerializeField] public SpiritDiceTray DiceTray { get; private set; }
+        [field: SerializeField] public SpiritTrayScene TrayScene { get; private set; }
+        [field: SerializeField] public SpiritModifierHistoryTray ModifierHistory { get; private set; }
         public Button PlayButton => GameplayHud != null ? GameplayHud.PlayButton : null;
         public Button RerollButton => GameplayHud != null ? GameplayHud.RerollButton : null;
         public Button CharmsButton => GameplayHud != null ? GameplayHud.CharmsButton : null;
@@ -43,40 +41,51 @@ namespace Dice.Presentation
         public Text MultiplierLabel => GameplayHud != null ? GameplayHud.MultiplierLabel : null;
         public Text HandScoreLabel => GameplayHud != null ? GameplayHud.HandScoreLabel : null;
         public EncounterRulePresentationAsset EncounterRulePresentation => encounterRulePresentation;
-        public EncounterJourneyView JourneyView { get; private set; }
+        [field: SerializeField] public EncounterJourneyView JourneyView { get; private set; }
         public SpiritHostPortrait HostPortrait => hostPortrait;
 
         private ISpiritEncounterControls controls;
-        private Canvas canvas;
-        private RectTransform safeArea;
-        private RectTransform portrait;
-        private RectTransform diceTrayFrame;
-        private RawImage trayImage;
+        [SerializeField] private Canvas canvas;
+        [SerializeField] private RectTransform safeArea;
+        [SerializeField] private RectTransform portrait;
+        [SerializeField] private RectTransform diceTrayFrame;
+        [SerializeField] private RawImage trayImage;
         private Vector2 previousPortraitSize;
-        private RectTransform endingPanel;
-        private RectTransform menuPanel;
-        private SpiritHandRanksPanel handRanksPanel;
-        private SpiritHostPortrait hostPortrait;
+        [SerializeField] private RectTransform endingPanel;
+        [SerializeField] private RectTransform menuPanel;
+        [SerializeField] private SpiritHandRanksPanel handRanksPanel;
+        [SerializeField] private SpiritHostPortrait hostPortrait;
         private IEncounterJourneyControls journeyControls;
         private ISpiritMainMenuControls mainMenuControls;
-        private Button mainMenuButton;
+        [SerializeField] private Button mainMenuButton;
         private EncounterTablePresentationAsset configuredTable;
-        private RawImage roomImage;
-        private RawImage tableImage;
+        [SerializeField] private RawImage roomImage;
+        [SerializeField] private RawImage tableImage;
         private readonly SceneLightingState sceneLightingState = new SceneLightingState();
         private SceneLightingMaterial sceneLightingMaterial;
-        private Text menuTitle;
-        private SpiritEncounterEndingView endingView;
-        private SpiritCollectionView collectionView;
-        private SpiritEncounterAudio encounterAudio;
-        private SpiritActionModifierCue actionModifierCue;
+        [SerializeField] private Text menuTitle;
+        [SerializeField] private SpiritEncounterEndingView endingView;
+        [SerializeField] private SpiritCollectionView collectionView;
+        [SerializeField] private SpiritEncounterAudio encounterAudio;
+        [SerializeField] private SpiritActionModifierCue actionModifierCue;
         private SpiritScorePlayback scorePlayback;
-        private CanvasGroup inputGroup;
-        private readonly List<CanvasGroup> openingGroups = new List<CanvasGroup>();
-        private Text profileSummary;
-        private Button soundButton;
-        private readonly List<Button> diceButtons = new List<Button>();
-        private readonly List<GameObject> diceSelectionLabels = new List<GameObject>();
+        [SerializeField] private CanvasGroup inputGroup;
+        [SerializeField] private List<CanvasGroup> openingGroups = new List<CanvasGroup>();
+        [SerializeField] private Text profileSummary;
+        [SerializeField] private Button soundButton;
+        [SerializeField] private List<Button> diceButtons = new List<Button>();
+        [SerializeField] private List<GameObject> diceSelectionLabels = new List<GameObject>();
+        [SerializeField] private SpiritPauseMenu pauseMenu;
+        [SerializeField] private Vector2 portraitReferenceSize = new Vector2(540, 960);
+        [SerializeField] private Vector2 selectionLabelExtent = new Vector2(.43f, .035f);
+
+        public RectTransform Root => (RectTransform)transform;
+        public Canvas Canvas => canvas;
+        public RectTransform Portrait => portrait;
+        public RawImage RoomImage => roomImage;
+        public RawImage TableImage => tableImage;
+        public EncounterTablePresentationAsset TablePresentation => tablePresentation;
+
         private ScoreBreakdown lastScore;
         private EncounterSnapshot presentedSnapshot;
         private EncounterSnapshot presentationSnapshot;
@@ -85,37 +94,28 @@ namespace Dice.Presentation
         private Vector2 previousScreenSize;
         private SpiritHostPresentationAsset compositionHost;
 
-        /** Builds the gameplay HUD on an existing portrait for composition authoring. */
+        /** Binds the authored gameplay HUD for composition inspection. */
         public void BuildCompositionOverlay(RectTransform parent, SpiritUiTheme theme)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (theme == null) throw new ArgumentNullException(nameof(theme));
-            if (portrait != null || canvas != null || controls != null)
-                throw new InvalidOperationException("Build the composition overlay on an unused encounter view.");
+            if (controls != null) throw new InvalidOperationException("The encounter view is bound to a game session.");
+            if (GameplayHud == null || portrait == null || inputGroup == null)
+                throw new InvalidOperationException("The composition overlay requires an authored encounter screen.");
             enabled = false;
             uiTheme = theme;
-            var context = GetComponent<SpiritUiContext>();
-            if (context == null) context = gameObject.AddComponent<SpiritUiContext>();
-            context.Configure(theme);
-            var parentContext = parent.GetComponent<SpiritUiContext>();
-            if (parentContext == null) parentContext = parent.gameObject.AddComponent<SpiritUiContext>();
-            parentContext.Configure(theme);
-            portrait = parent;
-            inputGroup = parent.GetComponent<CanvasGroup>();
-            if (inputGroup == null) inputGroup = parent.gameObject.AddComponent<CanvasGroup>();
             inputGroup.blocksRaycasts = false;
-            GameplayHud = gameObject.AddComponent<SpiritGameplayHud>();
             GameplayHud.BuildHeader(portrait, ToggleMenu);
             GameplayHud.BuildPlayingPanel();
-            BuildPlayingHud();
-            GameplayHud.BuildEncounterRule(diceTrayFrame);
-            BuildFooter();
+            GameplayHud.BuildPlayingHud(Reroll, Play);
+            GameplayHud.BuildEncounterRule(GameplayHud.DiceTrayFrame);
+            GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, ReturnToInvestigation);
         }
 
         /** Representative playing values expose the HUD's occupied space without a game session. */
         public void RefreshCompositionOverlay(EncounterTablePresentationAsset table, DiceValues faces)
         {
-            if (portrait == null || canvas != null || controls != null)
+            if (portrait == null || GameplayHud == null || controls != null)
                 throw new InvalidOperationException("Build the composition overlay before refreshing it.");
             if (!faces.IsValid) throw new ArgumentException("Every die must have a face from 1 to 6.", nameof(faces));
             SpiritHostPresentationAsset host = table != null ? table.HostPresentation : null;
@@ -152,49 +152,46 @@ namespace Dice.Presentation
 
         public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journey)
         {
-            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
+            Unsubscribe();
             journeyControls = journey ?? throw new ArgumentNullException(nameof(journey));
             Bind(encounterControls);
             JourneyView.Bind(journeyControls, controls);
-            journeyControls.JourneyChanged += RefreshJourney;
-            RefreshJourney();
+            Subscribe();
+            if (isActiveAndEnabled) RefreshJourney();
         }
 
         public void Bind(ISpiritEncounterControls encounterControls)
         {
             var nextControls = encounterControls ?? throw new ArgumentNullException(nameof(encounterControls));
-            if (controls != null)
-            {
-                controls.StateChanged -= Refresh;
-                controls.Resolved -= Present;
-            }
+            if (scorePlayback == null) Build();
+            Unsubscribe();
             bool canceledPresentation = presenting;
             ResetPresentation();
             if (canceledPresentation) controls?.CompletePresentation();
             controls = nextControls;
-            if (canvas == null) Build();
             RewardsPanel.Bind(controls);
             OwnedCharmsPanel.Bind(controls);
             presentedSnapshot = null;
             hostPortrait?.ResetPose();
-            controls.StateChanged += Refresh;
-            controls.Resolved += Present;
-            Refresh();
+            Subscribe();
+            if (isActiveAndEnabled) Refresh();
         }
 
         public void BindJourney(IEncounterJourneyControls journey)
         {
-            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
+            Unsubscribe();
             journeyControls = journey ?? throw new ArgumentNullException(nameof(journey));
-            if (canvas == null) Build();
+            if (scorePlayback == null) Build();
             JourneyView.Bind(journeyControls, controls);
-            journeyControls.JourneyChanged += RefreshJourney;
-            RefreshJourney();
+            Subscribe();
+            if (isActiveAndEnabled) RefreshJourney();
         }
 
         private void RefreshJourney()
         {
-            ConfigureTable(journeyControls.SelectedJourney?.TablePresentation ?? tablePresentation);
+            if (!isActiveAndEnabled) return;
+            if (!IsSelectedTable()) return;
+            ConfigureTable(tablePresentation);
             if (journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
             {
                 bool canceled = presenting;
@@ -223,8 +220,7 @@ namespace Dice.Presentation
         public void BindMainMenu(ISpiritMainMenuControls menuControls)
         {
             mainMenuControls = menuControls;
-            if (canvas == null) Build();
-            JourneyView.BindMainMenu(menuControls);
+            if (scorePlayback == null) Build();
             mainMenuButton.gameObject.SetActive(menuControls != null);
         }
 
@@ -232,51 +228,37 @@ namespace Dice.Presentation
         {
             GameplayHud.SetGameplayVisible(visible, journeyControls != null);
             RewardsPanel.Root.gameObject.SetActive(visible);
-            endingPanel.gameObject.SetActive(visible);
         }
 
         private void ConfigureTable(EncounterTablePresentationAsset selectedTable)
         {
-            if (configuredTable == selectedTable && (selectedTable == null || hostPortrait != null || selectedTable.HostPresentation == null)) return;
+            if (selectedTable != tablePresentation)
+                throw new InvalidOperationException("The selected encounter must use its authored table scene.");
+            if (configuredTable == selectedTable) return;
             ClearSceneLighting();
             configuredTable = selectedTable;
-            if (hostPortrait != null) { hostPortrait.gameObject.SetActive(false); Destroy(hostPortrait.gameObject); hostPortrait = null; }
-            if (selectedTable != null)
-            {
-                if (selectedTable.HostPresentation != null)
-                {
-                    hostPortrait = selectedTable.HostPresentation.Create(portrait);
-                    hostPortrait.transform.SetSiblingIndex(tableImage.transform.GetSiblingIndex() + 1);
-                    hostPortrait.SpiritGesture += () => encounterAudio.Play(SpiritAudioCue.Spirit);
-                }
-                encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
-                encounterAudio.SetTheme(selectedTable.AudioTheme);
-            }
-            GameplayHud.ConfigureHostSigils(selectedTable?.HostPresentation);
-            actionModifierCue.ConfigureHost(selectedTable?.HostPresentation);
-            Texture2D texture = selectedTable?.SceneLighting != null ? selectedTable.SceneLighting.BaseTexture :
-                selectedTable != null ? selectedTable.RoomTexture : roomTexture;
-            float edge = selectedTable != null ? selectedTable.RoomTableEdge : RoomTableEdge;
-            float split = selectedTable != null ? selectedTable.RoomSplit : .625f;
-            roomImage.texture = tableImage.texture = texture;
-            roomImage.color = tableImage.color = texture != null ? Color.white : Color.clear;
-            roomImage.uvRect = new Rect(0, edge, 1, 1 - edge);
-            tableImage.uvRect = new Rect(0, 0, 1, edge);
-            roomImage.rectTransform.anchorMin = new Vector2(0, split);
-            tableImage.rectTransform.anchorMax = new Vector2(1, split);
-            GameplayHud.EncounterTitle.text = menuTitle.text = selectedTable != null ? selectedTable.DisplayTitle : "";
-            ConfigureTrays(selectedTable?.TrayPresentation ?? tablePresentation?.TrayPresentation ?? trayPresentation);
+            encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
+            encounterAudio.SetTheme(selectedTable.AudioTheme);
+            GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
+            actionModifierCue.ConfigureHost(selectedTable.HostPresentation);
+            GameplayHud.EncounterTitle.text = menuTitle.text = selectedTable.DisplayTitle;
+            var credits = encounterAudio.Theme?.credits;
+            pauseMenu.Credits.text = credits != null ? credits.text : "";
+            pauseMenu.CreditsBacking.gameObject.SetActive(credits != null);
+            SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
         }
 
         private void ConfigureTrays(SpiritTrayPresentationAsset presentation)
         {
-            if (TrayScene == null || TrayScene.Presentation == presentation) return;
-            DiceTray.ReleasePresentation();
-            ModifierHistory.ReleasePresentation();
-            TrayScene.Configure(presentation);
+            if (TrayScene.Presentation != presentation)
+                throw new InvalidOperationException("The encounter screen must use its authored tray rig.");
             TrayScene.Initialize();
+            DiceTray = TrayScene.DiceTray;
+            if (DiceTray == null || TrayScene.HistoryRenderer == null)
+                throw new InvalidOperationException("The encounter rig requires authored dice and modifier renderers.");
             DiceTray.Configure(presentation, TrayScene);
             DiceTray.Initialize();
+            ModifierHistory.BindRenderer(TrayScene.HistoryRenderer);
             ModifierHistory.Configure(presentation, TrayScene);
             ModifierHistory.Build(trayImage.rectTransform);
             trayImage.texture = TrayScene.Texture;
@@ -285,17 +267,7 @@ namespace Dice.Presentation
 
         private void PositionTrays()
         {
-            if (TrayScene == null || TrayScene.Presentation == null) return;
-            if (portrait.rect.width <= 0 || portrait.rect.height <= 0) return;
-            Rect placement = TrayScene.Presentation.GetCompositionRect(portrait.rect.width / portrait.rect.height);
-            var playingPanel = GameplayHud.PlayingPanel;
-            Vector2 panelMin = playingPanel.anchorMin;
-            Vector2 panelSize = playingPanel.anchorMax - panelMin;
-            diceTrayFrame.anchorMin = new Vector2((placement.xMin - panelMin.x) / panelSize.x,
-                (placement.yMin - panelMin.y) / panelSize.y);
-            diceTrayFrame.anchorMax = new Vector2((placement.xMax - panelMin.x) / panelSize.x,
-                (placement.yMax - panelMin.y) / panelSize.y);
-            diceTrayFrame.offsetMin = diceTrayFrame.offsetMax = Vector2.zero;
+            if (TrayScene == null || TrayScene.Presentation == null || DiceTray == null) return;
             for (int i = 0; i < diceButtons.Count; ++i)
             {
                 Rect bounds = DiceTray.GetSlotViewportRect(i);
@@ -305,8 +277,8 @@ namespace Dice.Presentation
                 hit.offsetMin = hit.offsetMax = Vector2.zero;
                 Vector2 labelCenter = DiceTray.GetSlotLabelViewportPosition(i);
                 var plate = (RectTransform)diceSelectionLabels[i].transform;
-                plate.anchorMin = labelCenter - new Vector2(bounds.width * .43f, .035f);
-                plate.anchorMax = labelCenter + new Vector2(bounds.width * .43f, .035f);
+                plate.anchorMin = labelCenter - new Vector2(bounds.width * selectionLabelExtent.x, selectionLabelExtent.y);
+                plate.anchorMax = labelCenter + new Vector2(bounds.width * selectionLabelExtent.x, selectionLabelExtent.y);
                 plate.offsetMin = plate.offsetMax = Vector2.zero;
             }
         }
@@ -314,14 +286,14 @@ namespace Dice.Presentation
         private void OnDestroy()
         {
             ClearSceneLighting();
-            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
-            if (controls == null) return;
-            controls.StateChanged -= Refresh;
-            controls.Resolved -= Present;
+            if (hostPortrait != null) hostPortrait.SpiritGesture -= PlaySpiritCue;
+            if (ModifierHistory != null) ModifierHistory.TokenSelected -= InspectHistoryToken;
+            Unsubscribe();
         }
 
         private void OnDisable()
         {
+            Unsubscribe();
             ClearSceneLighting();
             bool canceled = presenting;
             ResetPresentation();
@@ -331,9 +303,32 @@ namespace Dice.Presentation
 
         private void OnEnable()
         {
+            Subscribe();
             if (canvas == null) return;
             if (journeyControls != null) RefreshJourney();
             else Refresh();
+        }
+
+        private void Subscribe()
+        {
+            Unsubscribe();
+            if (!isActiveAndEnabled) return;
+            if (controls != null)
+            {
+                controls.StateChanged += Refresh;
+                controls.Resolved += Present;
+            }
+            if (journeyControls != null) journeyControls.JourneyChanged += RefreshJourney;
+        }
+
+        private void Unsubscribe()
+        {
+            if (controls != null)
+            {
+                controls.StateChanged -= Refresh;
+                controls.Resolved -= Present;
+            }
+            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
         }
 
         private void Update()
@@ -344,6 +339,7 @@ namespace Dice.Presentation
 
         private void LateUpdate()
         {
+            if (scorePlayback == null) return;
             UpdateSceneLighting();
             if (portrait == null || diceTrayFrame == null || ModifierHistory == null) return;
             PositionTrays();
@@ -356,7 +352,8 @@ namespace Dice.Presentation
 
         private void UpdateSceneLighting()
         {
-            var asset = configuredTable?.SceneLighting;
+            if (configuredTable == null) return;
+            var asset = configuredTable.SceneLighting;
             sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
             if (asset != null)
             {
@@ -372,23 +369,12 @@ namespace Dice.Presentation
                 sceneLightingMaterial?.Dispose();
                 sceneLightingMaterial = null;
             }
-            Texture2D texture = asset != null ? asset.BaseTexture :
-                configuredTable != null ? configuredTable.RoomTexture : roomTexture;
-            SetBackgroundLighting(roomImage, texture, sceneLightingMaterial?.Material);
-            SetBackgroundLighting(tableImage, texture, sceneLightingMaterial?.Material);
+            roomImage.material = tableImage.material = sceneLightingMaterial?.Material;
             var state = asset != null ? sceneLightingState : null;
             TrayScene?.SetSceneLighting(state);
             DiceTray?.SetSceneLighting(state);
             ModifierHistory?.Renderer?.SetSceneLighting(state);
             hostPortrait?.SetSceneLighting(state, configuredTable != null ? configuredTable.HostLightingPosition : Vector3.zero);
-        }
-
-        private static void SetBackgroundLighting(RawImage image, Texture2D texture, Material material)
-        {
-            if (image == null) return;
-            image.texture = texture;
-            image.color = texture != null ? Color.white : Color.clear;
-            image.material = material;
         }
 
         private void ClearSceneLighting()
@@ -406,75 +392,51 @@ namespace Dice.Presentation
 
         private void Build()
         {
-            var context = GetComponent<SpiritUiContext>() ?? gameObject.AddComponent<SpiritUiContext>();
-            context.Configure(uiTheme);
-            encounterAudio = GetComponent<SpiritEncounterAudio>() ?? gameObject.AddComponent<SpiritEncounterAudio>();
-            encounterAudio.enabled = false;
-            encounterAudio.SetTheme(tablePresentation?.AudioTheme);
-            var canvasRect = SpiritUi.Full("SpiritCanvas", transform);
-            canvas = canvasRect.gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 10;
-            var scaler = canvasRect.gameObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(540, 960);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 1;
-            canvasRect.gameObject.AddComponent<GraphicRaycaster>();
-            SpiritUi.Panel("Letterbox", canvasRect, Vector2.zero, Vector2.one, new Color32(12, 18, 16, 255));
-            safeArea = SpiritUi.Full("SafeArea", canvasRect);
-            portrait = SpiritUi.Rect("Portrait", safeArea, new Vector2(.5f, 0), new Vector2(.5f, 1));
-            SpiritUi.Panel("ForestBackground", portrait, Vector2.zero, Vector2.one, new Color32(20, 29, 25, 255));
-            var room = SpiritUi.Rect("TeaRoom", portrait, new Vector2(0, .625f), Vector2.one)
-                .gameObject.AddComponent<RawImage>();
-            roomImage = room;
-            room.texture = roomTexture;
-            room.uvRect = new Rect(0, RoomTableEdge, 1, 1 - RoomTableEdge);
-            room.color = roomTexture != null ? Color.white : Color.clear;
-            room.raycastTarget = false;
-            inputGroup = portrait.gameObject.AddComponent<CanvasGroup>();
-
-            var table = SpiritUi.Rect("ForegroundTable", portrait, Vector2.zero, new Vector2(1, .625f))
-                .gameObject.AddComponent<RawImage>();
-            tableImage = table;
-            table.texture = roomTexture;
-            table.uvRect = new Rect(0, 0, 1, RoomTableEdge);
-            table.color = roomTexture != null ? Color.white : Color.clear;
-            table.raycastTarget = false;
-            GameplayHud = gameObject.AddComponent<SpiritGameplayHud>();
+            if (uiTheme == null || canvas == null || safeArea == null || portrait == null || inputGroup == null ||
+                roomImage == null || tableImage == null || GameplayHud == null || RewardsPanel == null ||
+                OwnedCharmsPanel == null || handRanksPanel == null || JourneyView == null || collectionView == null ||
+                CharmPopup == null || endingView == null || ModifierHistory == null || actionModifierCue == null ||
+                encounterAudio == null || pauseMenu == null || tablePresentation == null || TrayScene == null || hostPortrait == null)
+                throw new InvalidOperationException("The encounter screen requires authored UI, table, host, audio, and rig references.");
+            if (diceButtons.Count != DiceValues.Count || diceSelectionLabels.Count != DiceValues.Count)
+                throw new InvalidOperationException("The encounter screen requires five authored dice targets and selection labels.");
+            foreach (var button in diceButtons)
+                if (button == null) throw new InvalidOperationException("An authored dice target is missing.");
+            foreach (var label in diceSelectionLabels)
+                if (label == null) throw new InvalidOperationException("An authored dice selection label is missing.");
             GameplayHud.BuildHeader(portrait, ToggleMenu);
-
-            BuildPlaying();
-            RewardsPanel = gameObject.AddComponent<SpiritRewardsPanel>();
-            RewardsPanel.Build(portrait, () => Busy);
+            GameplayHud.BuildPlayingPanel();
+            GameplayHud.BuildPlayingHud(Reroll, Play);
+            GameplayHud.BuildEncounterRule(GameplayHud.DiceTrayFrame);
             GameplayHud.BuildStageIntro();
-            BuildEnding();
-            BuildFooter();
-            OwnedCharmsPanel = gameObject.AddComponent<SpiritOwnedCharmsPanel>();
+            GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, ReturnToInvestigation);
+            diceTrayFrame = GameplayHud.DiceTrayFrame;
+            trayImage = GameplayHud.DiceTrayImage;
+            ConfigureTrays(tablePresentation.TrayPresentation ?? trayPresentation);
+            hostPortrait.Build((RectTransform)hostPortrait.transform, tablePresentation.HostPresentation);
+            hostPortrait.SpiritGesture -= PlaySpiritCue;
+            hostPortrait.SpiritGesture += PlaySpiritCue;
+            ModifierHistory.TokenSelected -= InspectHistoryToken;
+            ModifierHistory.TokenSelected += InspectHistoryToken;
+            UnityAction[] selectDie = { ToggleFirstDie, ToggleSecondDie, ToggleThirdDie, ToggleFourthDie, ToggleFifthDie };
+            for (int i = 0; i < diceButtons.Count; ++i)
+            {
+                diceButtons[i].onClick.RemoveListener(selectDie[i]);
+                diceButtons[i].onClick.AddListener(selectDie[i]);
+            }
+            actionModifierCue.Initialize(RerollButton, PlayButton);
+            RewardsPanel.Build(portrait, () => Busy);
             OwnedCharmsPanel.Build(portrait, ShowTable, () => Busy);
-            handRanksPanel = gameObject.AddComponent<SpiritHandRanksPanel>();
             handRanksPanel.Build(portrait, ShowTable);
+            endingView.Build(portrait, ReturnFromEnding, RetryEncounter);
+            endingPanel = endingView.Root;
             BuildMenu();
-            var hud = GameplayHud;
-            foreach (var element in new Transform[] { hud.PlayingPanel, hud.TargetPanel, hud.HandsPanel, hud.RerollsPanel,
-                hud.StageLabel.transform, hud.StatusLabel.transform, hud.ResourcesLabel.transform, hud.CharmsButton.transform,
-                hud.HandRanksButton.transform, hud.MenuButton.transform, hud.InvestigationButton.transform })
-                openingGroups.Add(element.gameObject.AddComponent<CanvasGroup>());
-            JourneyView = SpiritUi.Full("EncounterJourneyOverlay", portrait).gameObject.AddComponent<EncounterJourneyView>();
-            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait?.SetState(state, progress));
-            collectionView = gameObject.AddComponent<SpiritCollectionView>();
-            collectionView.Build(portrait, () => collectionView.Hide());
-            JourneyView.SetCollectionAction(ShowCollection);
-            CharmPopup = gameObject.AddComponent<SpiritCharmPopup>();
+            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait.SetState(state, progress));
+            collectionView.Build(portrait, HideCollection);
             CharmPopup.Build(canvas.transform, portrait);
             scorePlayback = new SpiritScorePlayback(this, GameplayHud, DiceTray, ModifierHistory, encounterAudio,
                 actionModifierCue, endingView);
             ConfigureTable(tablePresentation);
-            if (EventSystem.current == null)
-            {
-                var eventSystem = new GameObject("SpiritEventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
-                eventSystem.transform.SetParent(transform, false);
-            }
             FitScreen();
         }
 
@@ -486,85 +448,9 @@ namespace Dice.Presentation
             safeArea.anchorMin = new Vector2(previousSafeArea.xMin / Screen.width, previousSafeArea.yMin / Screen.height);
             safeArea.anchorMax = new Vector2(previousSafeArea.xMax / Screen.width, previousSafeArea.yMax / Screen.height);
             safeArea.offsetMin = safeArea.offsetMax = Vector2.zero;
-            float scale = Screen.height / 960f;
-            float width = Mathf.Min(540, previousSafeArea.width / scale);
-            portrait.sizeDelta = new Vector2(width, 0);
-            portrait.anchoredPosition = Vector2.zero;
-        }
-
-        private void BuildPlaying()
-        {
-            var playingPanel = GameplayHud.BuildPlayingPanel();
-            var trayFrame = SpiritUi.Rect("DiceTrayFrame", playingPanel, new Vector2(0, .578f), new Vector2(1, .938f));
-            diceTrayFrame = trayFrame;
-            var trayRect = SpiritUi.Full("DiceTrayImage", trayFrame);
-            trayImage = trayRect.gameObject.AddComponent<RawImage>();
-            var presentation = tablePresentation?.TrayPresentation ?? trayPresentation;
-            TrayScene = gameObject.AddComponent<SpiritTrayScene>();
-            TrayScene.Configure(presentation);
-            TrayScene.Initialize();
-            DiceTray = GetComponent<SpiritDiceTray>() ?? gameObject.AddComponent<SpiritDiceTray>();
-            DiceTray.Configure(presentation, TrayScene);
-            DiceTray.Initialize();
-            trayImage.texture = TrayScene.Texture;
-            trayImage.raycastTarget = false;
-            var hitArea = SpiritUi.Full("DiceTouchTargets", trayRect);
-            float slotWidth = DiceTray.GetSlotViewportPosition(1).x - DiceTray.GetSlotViewportPosition(0).x;
-            for (int i = 0; i < DiceValues.Count; ++i)
-            {
-                int index = i;
-                Vector2 center = DiceTray.GetSlotViewportPosition(i);
-                var hit = SpiritUi.Rect("DieButton" + (i + 1), hitArea,
-                    new Vector2(center.x - slotWidth * .48f, .04f), new Vector2(center.x + slotWidth * .48f, .95f));
-                var image = hit.gameObject.AddComponent<Image>();
-                image.color = Color.clear;
-                var button = hit.gameObject.AddComponent<Button>();
-                button.targetGraphic = image;
-                button.transition = Selectable.Transition.None;
-                button.onClick.AddListener(() => { if (!Busy) controls.ToggleDie(index); });
-                diceButtons.Add(button);
-                Vector2 labelCenter = DiceTray.GetSlotLabelViewportPosition(i);
-                var plate = SpiritUi.Panel("DieRerollPlate" + (i + 1), trayRect,
-                    labelCenter - new Vector2(slotWidth * .43f, .064f),
-                    labelCenter + new Vector2(slotWidth * .43f, .064f), new Color32(38, 26, 12, 245), 0, true);
-                plate.raycastTarget = false;
-                var label = SpiritUi.Label("DieRerollLabel" + (i + 1), plate.transform, "REROLL", 12,
-                    Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
-                diceSelectionLabels.Add(plate.gameObject);
-                plate.gameObject.SetActive(false);
-            }
-            ModifierHistory = trayRect.gameObject.AddComponent<SpiritModifierHistoryTray>();
-            ModifierHistory.Configure(presentation, TrayScene);
-            ModifierHistory.Build(trayRect);
-            ModifierHistory.TokenSelected += (contribution, definition) =>
-            {
-                ShowCharmPopup(contribution.InstanceId);
-            };
-            PositionTrays();
-            BuildPlayingHud();
-            actionModifierCue = gameObject.AddComponent<SpiritActionModifierCue>();
-            actionModifierCue.Initialize(RerollButton, PlayButton);
-            GameplayHud.BuildEncounterRule(diceTrayFrame);
-        }
-
-        private void BuildPlayingHud()
-        {
-            GameplayHud.BuildPlayingHud(() => { if (!Busy) controls.Reroll(); }, () => { if (!Busy) controls.PlayHand(); });
-        }
-
-        private void BuildFooter()
-        {
-            GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, () => { if (!Busy) journeyControls?.ReturnToInvestigation(); });
-        }
-
-        private void BuildEnding()
-        {
-            endingView = gameObject.AddComponent<SpiritEncounterEndingView>();
-            endingView.Build(portrait,
-                () => { if (!Busy) { if (journeyControls != null) journeyControls.ReturnToInvestigation(); else controls.StartNew(); } },
-                () => { if (!Busy) { if (journeyControls != null) journeyControls.RetryEncounter(); else controls.StartNew(); } });
-            endingPanel = endingView.Root;
+            float scale = Screen.height / portraitReferenceSize.y;
+            float width = Mathf.Min(portraitReferenceSize.x, previousSafeArea.width / scale);
+            portrait.sizeDelta = new Vector2(width, portrait.sizeDelta.y);
         }
 
         public void ShowCharmPopup(long instanceId)
@@ -591,49 +477,65 @@ namespace Dice.Presentation
 
         private void BuildMenu()
         {
-            menuPanel = SpiritUi.Panel("MenuOverlay", portrait, Vector2.zero, Vector2.one, new Color(0, 0, 0, .86f)).rectTransform;
-            var panel = SpiritUi.Panel("MenuPanel", menuPanel, new Vector2(.12f, .17f), new Vector2(.88f, .83f), SpiritUi.GetTheme(transform).panelColor, 0, true);
-            menuTitle = SpiritUi.Heading("MenuTitle", panel.transform, "", 28, new Vector2(0, .9f), Vector2.one,
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            soundButton = SpiritUi.Button("SoundButton", panel.transform, encounterAudio.Muted ? "Sound: Off" : "Sound: On",
-                new Vector2(.2f, .8f), new Vector2(.8f, .895f), () =>
-                {
-                    encounterAudio.Muted = !encounterAudio.Muted;
-                    SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
-                });
-            profileSummary = SpiritUi.Label("ProfileSummary", panel.transform, "", 14, new Vector2(.05f, .67f),
-                new Vector2(.95f, .80f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            MenuAction(panel.transform, "CollectionButton", "Collection", .55f, ShowCollection);
-            MenuAction(panel.transform, "SaveRunButton", "Save run", .45f, () => controls.Save());
-            MenuAction(panel.transform, "LoadRunButton", "Load run", .35f, () => controls.Load());
-            MenuAction(panel.transform, "NewRunButton", "New run", .25f, () => controls.StartNew());
-            MenuAction(panel.transform, "AbandonRunButton", "Abandon run", .15f, () => controls.Abandon());
-            mainMenuButton = SpiritUi.Button("ReturnToMainMenuButton", menuPanel, "Main menu",
-                new Vector2(.25f, .85f), new Vector2(.75f, .92f), () =>
-                {
-                    if (!Busy) mainMenuControls?.ShowMainMenu();
-                }, compact: true);
-            mainMenuButton.gameObject.SetActive(false);
-            SpiritUi.Button("CloseMenuButton", panel.transform, "Back to table", new Vector2(.05f, .02f), new Vector2(.95f, .13f), ToggleMenu);
-            if (encounterAudio.Theme != null && encounterAudio.Theme.credits != null)
-            {
-                SpiritUi.Panel("AudioCreditsBacking", menuPanel, new Vector2(.04f, .025f), new Vector2(.96f, .16f),
-                    new Color(.025f, .035f, .025f, .97f));
-                SpiritUi.Label("AudioCredits", menuPanel, encounterAudio.Theme.credits.text, 16,
-                    new Vector2(.05f, .035f), new Vector2(.95f, .155f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).cream);
-            }
+            if (menuPanel == null || menuTitle == null || soundButton == null || profileSummary == null || mainMenuButton == null ||
+                pauseMenu.CollectionButton == null || pauseMenu.SaveButton == null || pauseMenu.LoadButton == null ||
+                pauseMenu.NewRunButton == null || pauseMenu.AbandonButton == null || pauseMenu.CloseButton == null ||
+                pauseMenu.Credits == null || pauseMenu.CreditsBacking == null)
+                throw new InvalidOperationException("The encounter pause menu requires authored UI references.");
+            BindButton(soundButton, ToggleSound);
+            BindButton(pauseMenu.CollectionButton, OpenCollectionFromMenu);
+            BindButton(pauseMenu.SaveButton, SaveRun);
+            BindButton(pauseMenu.LoadButton, LoadRun);
+            BindButton(pauseMenu.NewRunButton, StartRun);
+            BindButton(pauseMenu.AbandonButton, AbandonRun);
+            BindButton(mainMenuButton, ReturnToMainMenu);
+            BindButton(pauseMenu.CloseButton, ToggleMenu);
+            mainMenuButton.gameObject.SetActive(mainMenuControls != null);
             menuPanel.gameObject.SetActive(false);
         }
 
-        private void MenuAction(Transform parent, string name, string title, float y, Action action)
+        private static void BindButton(Button button, UnityAction action)
         {
-            SpiritUi.Button(name, parent, title, new Vector2(.05f, y), new Vector2(.95f, y + .09f), () =>
-            {
-                if (Busy) return;
-                menuPanel.gameObject.SetActive(false);
-                action();
-            });
+            button.onClick.RemoveListener(action);
+            button.onClick.AddListener(action);
         }
+
+        private void Reroll() { if (!Busy) controls.Reroll(); }
+        private void Play() { if (!Busy) controls.PlayHand(); }
+        private void ReturnToInvestigation() { if (!Busy) journeyControls?.ReturnToInvestigation(); }
+        private void HideCollection() => collectionView.Hide();
+        private void PlaySpiritCue() => encounterAudio.Play(SpiritAudioCue.Spirit);
+        private void InspectHistoryToken(ModifierContribution contribution, ModifierDefinition definition)
+            => ShowCharmPopup(contribution.InstanceId);
+        private void ToggleFirstDie() => ToggleDie(0);
+        private void ToggleSecondDie() => ToggleDie(1);
+        private void ToggleThirdDie() => ToggleDie(2);
+        private void ToggleFourthDie() => ToggleDie(3);
+        private void ToggleFifthDie() => ToggleDie(4);
+        private void ToggleDie(int index) { if (!Busy) controls.ToggleDie(index); }
+        private void ReturnFromEnding()
+        {
+            if (Busy) return;
+            if (journeyControls != null) journeyControls.ReturnToInvestigation();
+            else controls.StartNew();
+        }
+        private void RetryEncounter()
+        {
+            if (Busy) return;
+            if (journeyControls != null) journeyControls.RetryEncounter();
+            else controls.StartNew();
+        }
+        private void ToggleSound()
+        {
+            encounterAudio.Muted = !encounterAudio.Muted;
+            SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
+        }
+        private void OpenCollectionFromMenu() { if (!Busy) { menuPanel.gameObject.SetActive(false); ShowCollection(); } }
+        private void SaveRun() { if (!Busy) { menuPanel.gameObject.SetActive(false); controls.Save(); } }
+        private void LoadRun() { if (!Busy) { menuPanel.gameObject.SetActive(false); controls.Load(); } }
+        private void StartRun() { if (!Busy) { menuPanel.gameObject.SetActive(false); controls.StartNew(); } }
+        private void AbandonRun() { if (!Busy) { menuPanel.gameObject.SetActive(false); controls.Abandon(); } }
+        private void ReturnToMainMenu() { if (!Busy) mainMenuControls?.ShowMainMenu(); }
 
         private bool Busy => controls == null || controls.IsBusy || presenting;
 
@@ -679,12 +581,21 @@ namespace Dice.Presentation
             menuPanel.gameObject.SetActive(!menuPanel.gameObject.activeSelf);
         }
 
+        private bool IsSelectedTable()
+        {
+            var selected = journeyControls?.SelectedJourney?.TablePresentation;
+            if (selected == null) return journeyControls?.JourneyPhase == EncounterJourneyPhase.Playing;
+            if (tablePresentation == null) return false;
+            if (selected == tablePresentation) return true;
+            return selected.Scene != null && selected.Scene.RuntimeKeyIsValid() &&
+                selected.Scene.AssetGUID == tablePresentation.Scene?.AssetGUID;
+        }
+
         private void Refresh()
         {
-            if (canvas == null || controls == null) return;
-            bool atMenu = journeyControls != null && journeyControls.JourneyPhase == EncounterJourneyPhase.MainMenu;
-            roomImage.enabled = tableImage.enabled = !atMenu;
-            encounterAudio.enabled = !atMenu;
+            if (!isActiveAndEnabled || canvas == null || controls == null) return;
+            if (journeyControls != null && !IsSelectedTable()) return;
+            encounterAudio.enabled = true;
             if (journeyControls == null) JourneyView.gameObject.SetActive(false);
             if (journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
             {
@@ -801,7 +712,7 @@ namespace Dice.Presentation
             actionModifierCue?.Clear();
             DiceTray?.SetScoringHighlight(0);
             ModifierHistory?.ClearResolving();
-            if (GameplayHud != null) GameplayHud.ResetTransientVisuals();
+            if (GameplayHud != null && scorePlayback != null) GameplayHud.ResetTransientVisuals();
         }
 
         private void SetDiceSelection(int mask)
@@ -833,6 +744,11 @@ namespace Dice.Presentation
         private void Present(Resolution resolution)
         {
             if (resolution == null) return;
+            if (!isActiveAndEnabled)
+            {
+                if (resolution.Accepted) controls?.CompletePresentation();
+                return;
+            }
             if (!resolution.Accepted) { Refresh(); return; }
             CloseCharmPopup();
             presenting = true;

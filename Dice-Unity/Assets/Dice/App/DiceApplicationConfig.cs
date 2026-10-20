@@ -3,6 +3,7 @@ using System.Globalization;
 using Dice.Presentation;
 using Dice.UnityContent;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Dice.App
 {
@@ -10,6 +11,7 @@ namespace Dice.App
     public sealed class DiceApplicationConfig : ScriptableObject
     {
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
+        [SerializeField] private AssetReference frontendScene;
         [SerializeField] private EncounterJourneyCatalogAsset journeyCatalog;
         [SerializeField] private string encounterId;
         [SerializeField] private string modifierLabel = ModifierAssetLoader.Label;
@@ -19,6 +21,7 @@ namespace Dice.App
         [SerializeField] private string initialSeed = "60";
 
         public MechanicalCatalogAsset CatalogAsset => catalogAsset;
+        public AssetReference FrontendScene => frontendScene;
         public EncounterJourneyCatalogAsset JourneyCatalog => journeyCatalog;
         public string EncounterId => encounterId;
         public string ModifierLabel => modifierLabel;

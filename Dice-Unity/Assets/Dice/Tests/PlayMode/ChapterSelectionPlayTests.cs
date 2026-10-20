@@ -18,7 +18,8 @@ namespace Dice.Tests
     public sealed class ChapterSelectionPlayTests
     {
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
+        private SpiritInvestigationBoard Board => ContentReady.FrontendView(controller).Board;
         private EncounterJourneyCatalogAsset catalog;
         private EncounterChapterAsset first;
         private EncounterChapterAsset second;
@@ -29,10 +30,9 @@ namespace Dice.Tests
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            view = controller.GetComponent<SpiritEncounterView>();
             var entries = controller.JourneyCatalog.Entries.ToArray();
             fox = entries.Single(value => value.EncounterId == "encounter.fox.introduction");
             owl = entries.Single(value => value.EncounterId == "encounter.owl.watchtower");
@@ -67,6 +67,7 @@ namespace Dice.Tests
             AssertLeads(fox);
 
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             var locked = Find<Button>("ChapterButton1");
             Assert.That(locked.IsInteractable(), Is.False);
@@ -75,6 +76,7 @@ namespace Dice.Tests
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
             Assert.That(Selector().gameObject.activeInHierarchy, Is.True);
             Click("CloseChapterSelectorButton");
+            yield return ContentReady.Routed();
 
             InitializeProfile(CompletedFox());
             yield return null;
@@ -104,40 +106,51 @@ namespace Dice.Tests
             AssertLeads(owl);
             var lead = Lead(owl);
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(Label(Find<Button>("ChapterButton0"), "ChapterState").text, Is.EqualTo("COMPLETED"));
             Assert.That(Label(Find<Button>("ChapterButton1"), "ChapterState").text, Is.EqualTo("CURRENT"));
             AssertPointerCoveredBySelector(lead);
             Click("CloseChapterSelectorButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(Selector().gameObject.activeInHierarchy, Is.False);
             Assert.That(controller.SelectedChapter, Is.SameAs(second));
             AssertLeads(owl);
 
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Click("ChapterButton0");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(Selector().gameObject.activeInHierarchy, Is.False);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
             AssertHeader(first);
             AssertLeads(fox);
             PointerClick(Lead(fox));
+            yield return ContentReady.Routed(controller);
             yield return null;
             Assert.That(controller.SelectedJourney, Is.SameAs(fox));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(controller.Snapshot, Is.Null);
             Click("JourneyReturnButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.SelectedChapter, Is.SameAs(second));
             Assert.That(Selector().gameObject.activeInHierarchy, Is.False);
 
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
+            var departingSelector = Selector();
             controller.SelectEncounter(owl.Id);
+            yield return ContentReady.Routed(controller);
             yield return null;
-            Assert.That(Selector().gameObject.activeInHierarchy, Is.False);
+            Assert.That(departingSelector == null || !departingSelector.gameObject.activeInHierarchy, Is.True,
+                "Leaving the board must close or unload its selector.");
             Click("JourneyReturnButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(Selector().gameObject.activeInHierarchy, Is.False,
                 "Leaving the board must not reopen its chapter selector on return.");
@@ -151,14 +164,18 @@ namespace Dice.Tests
             InitializeProfile(CompletedFox());
             yield return null;
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Click("ChapterButton0");
+            yield return ContentReady.Routed();
             yield return null;
             PointerClick(Lead(fox));
+            yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
             yield return null;
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False);
@@ -170,26 +187,32 @@ namespace Dice.Tests
             Assert.That(File.Exists(controller.SavePath), Is.True, controller.StatusMessage);
             string savedRun = File.ReadAllText(controller.SavePath);
             Click("ReturnToInvestigationButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.SelectedChapter, Is.SameAs(second));
             Assert.That(controller.CanResume, Is.True);
             AssertLeads(owl);
 
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Click("ChapterButton0");
+            yield return ContentReady.Routed();
             yield return null;
             AssertLeads(fox);
             Click("InvestigationChapterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Find<ScrollRect>("ChapterSelectorScroll").verticalNormalizedPosition = 0;
             yield return null;
             Click("ChapterButton1");
+            yield return ContentReady.Routed();
             yield return null;
             AssertLeads(owl);
             Assert.That(controller.Snapshot, Is.SameAs(snapshot));
             Assert.That(File.ReadAllText(controller.SavePath), Is.EqualTo(savedRun));
             Click("ResumeEncounterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.SelectedJourney, Is.SameAs(fox));
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
@@ -197,7 +220,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.SameAs(snapshot));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.Zero);
             Assert.That(File.ReadAllText(controller.SavePath), Is.EqualTo(savedRun));
             LogAssert.NoUnexpectedReceived();
@@ -209,7 +232,7 @@ namespace Dice.Tests
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
                 InitializeProfile(CompletedFox());
-                var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+                var portrait = ContentReady.Portrait();
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
                 portrait.sizeDelta = size;
                 portrait.anchoredPosition = Vector2.zero;
@@ -224,6 +247,7 @@ namespace Dice.Tests
                 AssertCompleteText(Label(Lead(owl), "ClueState"));
                 yield return Capture("chapter-board-" + (int)size.x);
                 Click("InvestigationChapterButton");
+                yield return ContentReady.Routed();
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 foreach (var label in Selector().GetComponentsInChildren<Text>()) AssertCompleteText(label);
@@ -236,6 +260,7 @@ namespace Dice.Tests
                 }
                 yield return Capture("chapter-selector-" + (int)size.x);
                 Click("ChapterButton0");
+                yield return ContentReady.Routed();
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 AssertHeader(first);
@@ -282,23 +307,48 @@ namespace Dice.Tests
 
         private void AssertLeads(params EncounterJourneyAsset[] expected)
         {
-            var titles = view.GetComponentsInChildren<Text>().Where(value => value.name == "ClueTitle")
-                .Select(value => value.text).ToArray();
+            var titles = Board.Content.GetComponentsInChildren<SpiritJourneyCard>()
+                .Select(value => value.Title.text).ToArray();
             Assert.That(titles, Is.EquivalentTo(expected.Select(value => value.LocationTitle)));
         }
 
-        private Button Lead(EncounterJourneyAsset journey) => view.GetComponentsInChildren<Button>().Single(value =>
-            value.name.StartsWith("ClueButton", StringComparison.Ordinal) &&
-            value.GetComponentsInChildren<Text>().Any(label => label.name == "ClueTitle" && label.text == journey.LocationTitle));
+        private Button Lead(EncounterJourneyAsset journey) => Board.Content.GetComponentsInChildren<SpiritJourneyCard>()
+            .Single(value => value.Title.text == journey.LocationTitle).Button;
 
-        private RectTransform Selector() => Find<RectTransform>("ChapterSelectorOverlay");
+        private RectTransform Selector() => Board.ChapterSelector.Root;
 
-        private static Text Label(Component parent, string name) => parent.GetComponentsInChildren<Text>()
-            .Single(value => value.name == name);
+        private static Text Label(Component parent, string name)
+        {
+            var card = parent.GetComponent<SpiritJourneyCard>();
+            if (card != null)
+            {
+                if (name == "ChapterState" || name == "ClueState") return card.State;
+                if (name == "ClueTitle") return card.Title;
+                if (name == "ClueLead") return card.Description;
+            }
+            return parent.GetComponentsInChildren<Text>().Single(value => value.name == name);
+        }
 
         private T Find<T>(string name) where T : Component
         {
-            var result = view.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            Component reference = null;
+            if (ContentReady.FrontendView(controller) != null)
+            {
+                if (name == "InvestigationTitle") reference = Board.Title;
+                else if (name == "InvestigationSubtitle") reference = Board.Description;
+                else if (name == "InvestigationChapterButton") reference = Board.ChapterButton;
+                else if (name == "CloseChapterSelectorButton") reference = Board.ChapterSelector.CloseButton;
+                else if (name == "ChapterSelectorScroll") reference = Board.ChapterSelector.Scroll;
+                else if (name.StartsWith("ChapterButton", StringComparison.Ordinal))
+                {
+                    int index = int.Parse(name.Substring("ChapterButton".Length));
+                    var cards = Board.ChapterSelector.Content.GetComponentsInChildren<SpiritJourneyCard>();
+                    Assert.That(index, Is.LessThan(cards.Length), name);
+                    reference = cards[index].Button;
+                }
+            }
+            var result = reference as T ?? ContentReady.PresentationRoot(controller)
+                .GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
             Assert.That(result, Is.Not.Null, name);
             return result;
         }

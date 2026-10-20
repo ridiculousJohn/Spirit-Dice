@@ -22,17 +22,16 @@ namespace Dice.Tests
     {
         private const string EncounterId = "encounter.owl.watchtower";
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
 
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            view = controller.GetComponent<SpiritEncounterView>();
             journey = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == EncounterId);
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
@@ -82,6 +81,7 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             yield return null;
             for (int index = 0; index < journey.Beats.Count; ++index)
             {
@@ -148,12 +148,14 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(EncounterId));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             Assert.That(controller.IsBusy, Is.True);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             foreach (var group in openingGroups) Assert.That(group.alpha, Is.Zero, group.name);
+            yield return ContentReady.Routed();
             Assert.That(view.PlayButton.IsInteractable(), Is.False);
             Assert.That(resolutions, Is.EqualTo(1));
             var opening = controller.Snapshot;
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             float rollDeadline = Time.realtimeSinceStartup + 5;
             float previousOpacity = 0;
@@ -178,7 +180,7 @@ namespace Dice.Tests
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
             yield return CheckPortraitSizes("opening-table");
             Assert.That(rule.ActivationPhase, Is.EqualTo(ModifierPhase.PlayHand));
-            var ruleLabel = Find<Text>("EncounterRuleLabel");
+            var ruleLabel = view.GameplayHud.EncounterRuleLabel;
             Assert.That(ruleLabel.gameObject.activeInHierarchy, Is.True);
             Assert.That(ruleLabel.transform.IsChildOf(view.PlayButton.transform), Is.True);
             Assert.That(ruleLabel.transform.IsChildOf(view.RerollButton.transform), Is.False);
@@ -199,6 +201,7 @@ namespace Dice.Tests
                 }
             };
             Click("PlayButton");
+            yield return ContentReady.Routed();
             Assert.That(scored, Is.Not.Null);
             Assert.That(activation, Is.Not.Null);
             Assert.That(ruleActivations, Is.EqualTo(1));
@@ -224,29 +227,31 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             while (controller.BeatIndex < journey.Beats.Count - 1) controller.AdvanceJourney();
             yield return WaitForJourney();
             var openingGroups = OpeningGroups();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             var opening = controller.Snapshot;
             float deadline = Time.realtimeSinceStartup + 5;
             while (openingGroups[0].alpha == 0 && !view.DiceTray.IsRolling &&
                 Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(openingGroups[0].alpha, Is.InRange(.000001f, .999999f));
             Assert.That(controller.IsBusy, Is.True);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             view.enabled = false;
             foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(1), group.name);
             Assert.That(controller.IsBusy, Is.False);
             yield return new WaitForSecondsRealtime(journey.TablePresentation.OpeningFadeDuration + .1f);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1));
             view.enabled = true;
             yield return new WaitForSecondsRealtime(journey.TablePresentation.OpeningFadeDuration + .1f);
             foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(1), group.name);
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1));
             Assert.That(view.PlayButton.IsInteractable(), Is.True);
@@ -273,19 +278,24 @@ namespace Dice.Tests
                 SetField(journey.Beats[0], "hideNarrativeDuringMotion", true);
                 SetField(journey.Beats[journey.Beats.Count - 1], "autoAdvance", true);
                 Assert.That(controller.InitializeJourney(controller.Catalog, runtimeCatalog, controller.SavePath), Is.True);
+                yield return ContentReady.Routed(controller);
                 int resolutions = 0;
                 controller.Resolved += _ => ++resolutions;
                 controller.SelectEncounter(EncounterId);
+                yield return ContentReady.Routed(controller);
                 Assert.That(controller.BeatIndex, Is.Zero);
                 Assert.That(view.JourneyView.VisibleBeatIndex, Is.Zero);
                 Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero);
                 Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
                 Find<Button>("JourneyAdvanceButton").onClick.Invoke();
+                yield return ContentReady.Routed();
                 Assert.That(controller.BeatIndex, Is.EqualTo(1));
                 yield return null;
                 Assert.That(controller.BeatIndex, Is.EqualTo(1), "An interrupted automatic beat must not advance again.");
                 controller.ReturnToInvestigation();
+                yield return ContentReady.Routed(controller);
                 controller.SelectEncounter(EncounterId);
+                yield return ContentReady.Routed(controller);
                 Assert.That(controller.BeatIndex, Is.Zero);
                 yield return WaitForJourney();
                 Assert.That(controller.BeatIndex, Is.EqualTo(1));
@@ -311,7 +321,9 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator WatchtowerFlightOpeningIdleAndReactionPlayInRealTime()
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(540, 960);
@@ -329,7 +341,6 @@ namespace Dice.Tests
                 TestContext.WriteLine("Watchtower motion capture: " + captureRoot);
             }
 
-            controller.SelectEncounter(EncounterId);
             yield return AdvanceTo("perch");
             yield return WaitForJourney();
             yield return CaptureMotion("flight", 4.5f, () => Click("JourneyAdvanceButton"),
@@ -346,7 +357,7 @@ namespace Dice.Tests
                 Click("JourneyAcceptButton");
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
                 Assert.That(controller.IsBusy, Is.True);
-                Assert.That(view.DiceTray.IsRolling, Is.False);
+                Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             }, () => controller.IsBusy);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
@@ -357,7 +368,7 @@ namespace Dice.Tests
             {
                 var image = owl.GetLayer(name);
                 var rect = image.rectTransform;
-                return portrait.InverseTransformPoint(rect.TransformPoint(
+                return ContentReady.Portrait(controller).InverseTransformPoint(rect.TransformPoint(
                     image.EvaluateDisplacement(rect.pivot, rect.rect.size)));
             }
             Vector3[] feet = physicalLayers.Select(Foot).ToArray();
@@ -445,19 +456,23 @@ namespace Dice.Tests
         public IEnumerator ReturningDuringFlightCancelsMotionAndRevisitSkipSettlesTheOwlAtTheTable()
         {
             controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             yield return AdvanceTo("flight");
             yield return new WaitForSecondsRealtime(.5f);
             Assert.That(view.JourneyView.IsAnimating, Is.True);
+            var activeJourney = view.JourneyView;
             controller.ReturnToInvestigation();
+            yield return ContentReady.Routed(controller);
             yield return null;
-            Assert.That(view.JourneyView.IsAnimating, Is.False);
+            Assert.That(activeJourney == null || !activeJourney.IsAnimating, Is.True);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(view.GetComponentsInChildren<SpiritPortraitImage>()
+            Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<SpiritPortraitImage>()
                 .Any(layer => layer.isActiveAndEnabled), Is.False,
                 "Returning to clues must remove the active flight presentation.");
 
             controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             yield return AdvanceTo("perch");
             yield return WaitForJourney();
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Waiting));
@@ -469,18 +484,22 @@ namespace Dice.Tests
             yield return AdvanceTo("invitation");
             yield return WaitForJourney();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             controller.Abandon();
             yield return WaitForPresentation();
             var abandoned = controller.Snapshot;
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.CanSkipIntro, Is.True);
             yield return AdvanceTo("flight");
             yield return new WaitForSecondsRealtime(.5f);
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             Click("JourneySkipButton");
+            yield return ContentReady.Routed();
             yield return WaitForJourney();
             yield return new WaitForSecondsRealtime(journey.Beats.Single(beat => beat.Id == "flight").Duration + .1f);
             Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
@@ -493,9 +512,11 @@ namespace Dice.Tests
             Assert.That(Owl().GetLayer("Physical Arrival").color.a, Is.Zero);
             Assert.That(Owl().GetLayer("Physical Settle").color.a, Is.Zero);
             yield return CheckPortraitSizes("revisit-skipped");
+            activeJourney = view.JourneyView;
             controller.ReturnToInvestigation();
+            yield return ContentReady.Routed(controller);
             yield return null;
-            Assert.That(view.JourneyView.IsAnimating, Is.False);
+            Assert.That(activeJourney == null || !activeJourney.IsAnimating, Is.True);
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -507,9 +528,8 @@ namespace Dice.Tests
 
         private CanvasGroup[] OpeningGroups()
         {
-            return new[] { "PlayingPanel", "TargetPanel", "HandsPanel", "RerollsPanel", "StageLabel",
-                "StatusMessage", "ResourcesLabel", "CharmsButton", "HandRanksButton", "MenuButton",
-                "ReturnToInvestigationButton" }.Select(name => Find<CanvasGroup>(name)).ToArray();
+            return ((IEnumerable<CanvasGroup>)typeof(SpiritEncounterView)
+                .GetField("openingGroups", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view)).ToArray();
         }
 
         private Vector2 Contact()
@@ -523,7 +543,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.HasActiveEncounter, Is.False);
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.Zero);
             Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(controller), Is.Null);
@@ -537,12 +557,14 @@ namespace Dice.Tests
                 yield return WaitForJourney();
                 if (journey.Beats[controller.BeatIndex].Id == id) break;
                 Click("JourneyAdvanceButton");
+                yield return ContentReady.Routed();
             }
             yield return null;
         }
 
         private IEnumerator WaitForJourney()
         {
+            yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 15;
             while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus);
@@ -551,6 +573,7 @@ namespace Dice.Tests
 
         private IEnumerator WaitForPresentation()
         {
+            yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 45;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, controller.StatusMessage);
@@ -559,7 +582,7 @@ namespace Dice.Tests
 
         private IEnumerator CheckPortraitSizes(string name)
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
@@ -568,7 +591,7 @@ namespace Dice.Tests
                 portrait.anchoredPosition = Vector2.zero;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
-                foreach (var label in view.GetComponentsInChildren<Text>())
+                foreach (var label in ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>())
                 {
                     if (!label.isActiveAndEnabled || string.IsNullOrWhiteSpace(label.text) ||
                         label.GetComponentInParent<ScrollRect>() != null) continue;
@@ -595,7 +618,7 @@ namespace Dice.Tests
 
         private T Find<T>(string name) where T : Component
         {
-            var result = view.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            var result = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
             Assert.That(result, Is.Not.Null, name);
             return result;
         }

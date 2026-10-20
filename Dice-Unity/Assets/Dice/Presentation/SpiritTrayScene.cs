@@ -7,18 +7,33 @@ namespace Dice.Presentation
     /** One camera frames both bays through the same table coordinate space. */
     public sealed class SpiritTrayScene : MonoBehaviour
     {
-        private static int sceneOrdinal;
-        private SpiritTrayPresentationAsset presentation;
-        private GameObject renderRoot;
-        private Light light;
+        [SerializeField] private SpiritTrayPresentationAsset presentation;
+        [SerializeField] private GameObject renderRoot;
+        [SerializeField] private Camera renderCamera;
+        [SerializeField] private SpiritTrayGeometry geometry;
+        private bool initialized;
+        [SerializeField] private Light light;
         private readonly List<Material> materials = new List<Material>();
+        private readonly Dictionary<Renderer, Material[]> authoredMaterials = new Dictionary<Renderer, Material[]>();
         private readonly List<Vector3> framingPoints = new List<Vector3>();
         private SceneLightingState sceneLighting;
+        private RenderTexture authoredTarget;
+        private float authoredAspect;
+        private bool authoredStageActive;
         public RenderTexture Texture { get; private set; }
-        public Camera RenderCamera { get; private set; }
+        public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
-        public SpiritTrayGeometry Geometry { get; private set; }
+        public SpiritTrayGeometry Geometry => geometry;
         public SpiritTrayPresentationAsset Presentation => presentation;
+        public SpiritDiceTray DiceTray => GetComponentInChildren<SpiritDiceTray>(true);
+        public SpiritModifierHistoryRenderer HistoryRenderer => GetComponentInChildren<SpiritModifierHistoryRenderer>(true);
+
+        /** Frame the authored geometry when explicitly requested by editor tooling. */
+        public void FrameAuthoredGeometry()
+        {
+            CacheFramingPoints();
+            FrameGeometry();
+        }
 
         public void Configure(SpiritTrayPresentationAsset asset)
         {
@@ -30,81 +45,63 @@ namespace Dice.Presentation
 
         public void Initialize()
         {
-            if (renderRoot != null) return;
-            if (presentation == null) throw new InvalidOperationException("Configure the tray scene before initialization.");
+            if (initialized) return;
+            if (presentation == null || renderRoot == null || RenderCamera == null || Geometry == null)
+                throw new InvalidOperationException("The tray scene requires authored presentation, geometry, root, and camera references.");
             presentation.ValidateScene();
-            renderRoot = new GameObject("Spirit Tray Scene Root");
-            renderRoot.layer = SpiritDiceTray.RenderLayer;
-            renderRoot.transform.position = new Vector3(14000 + sceneOrdinal++ * 100, 0, 0);
-            RebuildGeometry();
-            Texture = new RenderTexture(presentation.TextureSize.x, presentation.TextureSize.y, 24, RenderTextureFormat.ARGB32)
-            {
-                name = "Spirit Shared Tray Texture", antiAliasing = 4,
-                filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
-            };
+            authoredTarget = RenderCamera.targetTexture;
+            authoredAspect = RenderCamera.aspect;
+            authoredStageActive = renderRoot.activeSelf;
+            if (authoredTarget != null)
+                Texture = new RenderTexture(authoredTarget.descriptor)
+                {
+                    filterMode = authoredTarget.filterMode,
+                    wrapModeU = authoredTarget.wrapModeU,
+                    wrapModeV = authoredTarget.wrapModeV,
+                    wrapModeW = authoredTarget.wrapModeW,
+                    anisoLevel = authoredTarget.anisoLevel
+                };
+            else
+                Texture = new RenderTexture(presentation.TextureSize.x, presentation.TextureSize.y, 24, RenderTextureFormat.ARGB32)
+                {
+                    antiAliasing = 4, filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+                };
+            Texture.name = "Spirit Shared Tray Texture";
+            Texture.width = presentation.TextureSize.x;
+            Texture.height = presentation.TextureSize.y;
             Texture.Create();
-            var cameraObject = new GameObject("Spirit Shared Tray Camera");
-            cameraObject.transform.SetParent(renderRoot.transform, false);
-            RenderCamera = cameraObject.AddComponent<Camera>();
-            RenderCamera.clearFlags = CameraClearFlags.SolidColor;
-            RenderCamera.backgroundColor = Color.clear;
-            RenderCamera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
-            RenderCamera.allowHDR = false;
-            RenderCamera.allowMSAA = true;
             RenderCamera.targetTexture = Texture;
-            var lightObject = new GameObject("Spirit Shared Tray Key Light");
-            lightObject.transform.SetParent(renderRoot.transform, false);
-            light = lightObject.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.shadows = LightShadows.Soft;
-            light.shadowStrength = .8f;
-            light.shadowBias = .025f;
-            light.shadowNormalBias = .04f;
-            light.cullingMask = 1 << SpiritDiceTray.RenderLayer;
-            ApplyPresentationSettings();
-            SetSceneLighting(sceneLighting);
+            RenderCamera.aspect = (float)Texture.width / Texture.height;
+            RebuildGeometry();
+            initialized = true;
             renderRoot.SetActive(isActiveAndEnabled);
         }
 
-        /** Refresh projection and lighting while retaining the camera and its shared texture references. */
+        /** Resize render state while retaining the authored camera and lighting. */
         public void ApplyPresentationSettings()
         {
-            if (renderRoot == null) return;
-            presentation.ValidateScene();
-            if (Texture.width != presentation.TextureSize.x || Texture.height != presentation.TextureSize.y)
-            {
-                RenderCamera.targetTexture = null;
-                Texture.Release();
-                Texture.width = presentation.TextureSize.x;
-                Texture.height = presentation.TextureSize.y;
-                Texture.Create();
-                RenderCamera.targetTexture = Texture;
-            }
-            RenderCamera.transform.localRotation = Quaternion.Euler(presentation.CameraEulerAngles);
-            RenderCamera.orthographic = presentation.Orthographic;
-            RenderCamera.fieldOfView = presentation.FieldOfView;
+            if (Texture == null) return;
+            if (Texture.width == presentation.TextureSize.x && Texture.height == presentation.TextureSize.y) return;
+            RenderCamera.targetTexture = null;
+            Texture.Release();
+            Texture.width = presentation.TextureSize.x;
+            Texture.height = presentation.TextureSize.y;
+            Texture.Create();
+            RenderCamera.targetTexture = Texture;
             RenderCamera.aspect = (float)Texture.width / Texture.height;
-            FrameGeometry();
-            light.transform.localRotation = Quaternion.Euler(presentation.FallbackLightEulerAngles);
-            light.color = presentation.FallbackLightColor;
-            light.intensity = presentation.FallbackLightIntensity;
         }
 
-        /** Release bay content before replacing geometry; the scene camera and texture remain available. */
+        /** Bind material instances without replacing the authored geometry. */
         public void RebuildGeometry()
         {
             if (renderRoot == null) return;
             presentation.ValidateScene();
-            if (Geometry != null) Release(Geometry.gameObject);
-            foreach (Material material in materials) Release(material);
-            materials.Clear();
-            Geometry = Instantiate(presentation.GeometryPrefab, renderRoot.transform, false);
-            foreach (Transform child in Geometry.GetComponentsInChildren<Transform>(true))
-                child.gameObject.layer = SpiritDiceTray.RenderLayer;
+            ReleaseMaterialInstances();
             var copies = new Dictionary<Material, Material>();
-            foreach (Renderer renderer in Geometry.GetComponentsInChildren<Renderer>(true))
+            foreach (Renderer renderer in renderRoot.GetComponentsInChildren<Renderer>(true))
             {
                 Material[] surfaces = renderer.sharedMaterials;
+                authoredMaterials[renderer] = (Material[])surfaces.Clone();
                 for (int i = 0; i < surfaces.Length; ++i)
                 {
                     Material source = surfaces[i];
@@ -171,7 +168,7 @@ namespace Dice.Presentation
                             Vector3.Scale(bounds.extents, new Vector3(x, y, z))));
         }
 
-        private void FrameGeometry()
+        public void FrameGeometry()
         {
             const float margin = 1.08f;
             Quaternion rotation = RenderCamera.transform.localRotation;
@@ -244,18 +241,31 @@ namespace Dice.Presentation
 
         public void ReleasePresentation()
         {
-            if (RenderCamera != null) { RenderCamera.enabled = false; RenderCamera.targetTexture = null; }
-            if (Texture != null) { Texture.Release(); Release(Texture); }
-            if (renderRoot != null) renderRoot.SetActive(false);
-            Release(renderRoot);
+            if (Texture != null)
+            {
+                if (RenderCamera != null)
+                {
+                    RenderCamera.targetTexture = authoredTarget;
+                    RenderCamera.aspect = authoredAspect;
+                }
+                Texture.Release();
+                Release(Texture);
+                if (renderRoot != null) renderRoot.SetActive(authoredStageActive);
+            }
+            ReleaseMaterialInstances();
+            framingPoints.Clear();
+            Texture = null;
+            authoredTarget = null;
+            initialized = false;
+        }
+
+        private void ReleaseMaterialInstances()
+        {
+            foreach (var pair in authoredMaterials)
+                if (pair.Key != null) pair.Key.sharedMaterials = pair.Value;
+            authoredMaterials.Clear();
             foreach (Material material in materials) Release(material);
             materials.Clear();
-            framingPoints.Clear();
-            renderRoot = null;
-            RenderCamera = null;
-            Texture = null;
-            Geometry = null;
-            light = null;
         }
 
         private void OnEnable() { if (renderRoot != null) renderRoot.SetActive(true); }

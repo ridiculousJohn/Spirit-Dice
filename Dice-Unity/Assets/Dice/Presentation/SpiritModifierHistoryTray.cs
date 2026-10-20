@@ -16,24 +16,27 @@ namespace Dice.Presentation
         private readonly List<ModifierContribution> contributions = new List<ModifierContribution>();
         private readonly List<Token> tokens = new List<Token>();
         private IReadOnlyList<ModifierContribution> readOnlyContributions;
-        private RectTransform root;
-        private RectTransform content;
-        private ScrollRect scroll;
+        [SerializeField] private RectTransform root;
+        [SerializeField] private RectTransform content;
+        [SerializeField] private ScrollRect scroll;
         private bool interactable = true;
         private bool scrollToLatest;
         private string encounterId;
         private int stageIndex;
         private int handIndex;
         private SpiritTrayScene sharedScene;
-        private RectTransform frame;
-        private RawImage image;
+        [SerializeField] private RectTransform frame;
+        [SerializeField] private RawImage image;
 
         public int Count => contributions.Count;
         public IReadOnlyList<ModifierContribution> Contributions
             => readOnlyContributions ?? (readOnlyContributions = contributions.AsReadOnly());
         public RectTransform Content => content;
         public ScrollRect Scroll => scroll;
-        public SpiritModifierHistoryRenderer Renderer { get; private set; }
+        [SerializeField] private SpiritModifierHistoryRenderer renderer;
+        [SerializeField] private Button tokenPrefab;
+        public SpiritModifierHistoryRenderer Renderer => renderer;
+        public void BindRenderer(SpiritModifierHistoryRenderer value) => renderer = value;
         public int ResolvingIndex => Renderer != null ? Renderer.ResolvingIndex : -1;
         public event Action<ModifierContribution, ModifierDefinition> TokenSelected;
 
@@ -76,56 +79,19 @@ namespace Dice.Presentation
         public void Build(RectTransform parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (root != null)
-            {
-                if (root.parent != parent) throw new InvalidOperationException("The modifier tray already has a parent.");
-                InitializeRenderer();
-                return;
-            }
-
-            if (trayPresentation == null) throw new InvalidOperationException("Configure the modifier tray presentation before building.");
-            trayPresentation.Validate();
-            root = SpiritUi.Full("ModifierHistoryTray", parent);
-            Renderer = gameObject.AddComponent<SpiritModifierHistoryRenderer>();
-
-            frame = SpiritUi.Rect("HistoryScroll", root, new Vector2(.055f, .06f), new Vector2(.945f, .97f));
-            scroll = frame.gameObject.AddComponent<ScrollRect>();
-            var viewport = SpiritUi.Full("Viewport", frame);
-            var hitSurface = viewport.gameObject.AddComponent<Image>();
-            hitSurface.color = Color.clear;
-            viewport.gameObject.AddComponent<RectMask2D>();
-            content = SpiritUi.Rect("Tokens", viewport, Vector2.zero, new Vector2(0, 1));
-            content.pivot = new Vector2(0, .5f);
-            scroll.viewport = viewport;
-            scroll.content = content;
-            scroll.horizontal = true;
-            scroll.vertical = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = TokenSpacing;
-            scroll.decelerationRate = .12f;
+            if (root == null || content == null || scroll == null || frame == null || renderer == null || tokenPrefab == null)
+                throw new InvalidOperationException("The modifier tray requires authored UI and renderer references.");
             InitializeRenderer();
             ResizeContent();
         }
 
         private void InitializeRenderer()
         {
-            if (sharedScene != null) Renderer.Configure(trayPresentation, sharedScene);
-            else Renderer.Configure(trayPresentation);
+            if (sharedScene == null) throw new InvalidOperationException("The modifier tray requires an authored shared scene.");
+            Renderer.Configure(trayPresentation, sharedScene);
             Renderer.Initialize();
-            if (sharedScene == null)
-            {
-                if (image == null) image = root.gameObject.AddComponent<RawImage>();
-                image.texture = Renderer.Texture;
-                image.raycastTarget = false;
-                image.enabled = true;
-                frame.anchorMin = new Vector2(.055f, .06f);
-                frame.anchorMax = new Vector2(.945f, .97f);
-            }
-            else
-            {
-                if (image != null) image.enabled = false;
-                UpdateBayFrame();
-            }
+            if (image != null) image.enabled = false;
+            UpdateBayFrame();
         }
 
         private void UpdateBayFrame()
@@ -173,17 +139,9 @@ namespace Dice.Presentation
                 throw new ArgumentException("The modifier definition must match the activation.", nameof(definition));
 
             Renderer.Add(contribution, definition, animate);
-            var rect = SpiritUi.Rect("ModifierToken" + contributions.Count, content,
-                new Vector2(0, .5f), new Vector2(0, .5f));
-            rect.pivot = new Vector2(.5f, .5f);
-            rect.sizeDelta = new Vector2(TokenSize, TokenSize);
-            var graphic = rect.gameObject.AddComponent<Image>();
-            graphic.color = Color.clear;
-            var button = rect.gameObject.AddComponent<Button>();
-            button.targetGraphic = graphic;
+            var button = Instantiate(tokenPrefab, content, false);
+            var rect = (RectTransform)button.transform;
             button.interactable = interactable;
-            button.navigation = new Navigation { mode = Navigation.Mode.None };
-            button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() => TokenSelected?.Invoke(contribution, definition));
 
             var token = new Token

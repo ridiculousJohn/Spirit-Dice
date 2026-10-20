@@ -8,8 +8,8 @@ namespace Dice.Presentation
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class SpiritHostSigilGraphic : MaskableGraphic
     {
-        private Vector2[] lines = Array.Empty<Vector2>();
-        private float width = .035f;
+        [SerializeField] private Vector2[] lines = Array.Empty<Vector2>();
+        [SerializeField] private float width = .035f;
 
         public void Configure(Vector2[] endpoints, float lineWidth)
         {

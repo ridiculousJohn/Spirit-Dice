@@ -7,8 +7,8 @@ namespace Dice.Presentation
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class SpiritUiOrnament : MaskableGraphic
     {
-        internal string kind;
-        internal bool mirrored;
+        [SerializeField] public string kind;
+        [SerializeField] public bool mirrored;
 
         protected override void OnPopulateMesh(VertexHelper vertices)
         {

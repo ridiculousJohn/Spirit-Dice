@@ -54,8 +54,18 @@ namespace Dice.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
+            var presentationScene = default(Scene);
+            if (host != null)
+            {
+                var router = host.GetComponent<SpiritApplicationPresentation>();
+                if (router != null && router.PresentationRoot != null)
+                    presentationScene = router.PresentationRoot.scene;
+            }
             if (host != null) UnityEngine.Object.Destroy(host);
             yield return null;
+            if (presentationScene.IsValid())
+                yield return WaitUntil(() => !presentationScene.IsValid() || !presentationScene.isLoaded,
+                    "Destroying the application did not unload its owned presentation scene.");
             if (provider != null && provider.IsPending)
             {
                 provider.Complete(authoredHandle.Result);
@@ -92,7 +102,7 @@ namespace Dice.Tests
                 observedSceneLoad = true;
                 firstStartupVisible = sceneBootstrap.StartupView.Root.gameObject.activeInHierarchy;
                 firstPresentationReady = sceneController.PresentationReady;
-                firstGameHierarchyExists = sceneController.transform.Find("SpiritCanvas") != null;
+                firstGameHierarchyExists = sceneController.GetComponent<SpiritApplicationPresentation>().EncounterView != null;
             };
             SceneManager.sceneLoaded += onLoaded;
             try { yield return CreateHost(); }
@@ -109,38 +119,38 @@ namespace Dice.Tests
             provider.Complete(authoredHandle.Result);
             yield return WaitUntil(() => host.GetComponent<SpiritCampaignController>()?.IsInitialized == true,
                 "Startup did not initialize the main menu.");
-            var view = host.GetComponent<SpiritEncounterView>();
-            var menu = view.JourneyView.MainMenu;
+            yield return ContentReady.Routed(controller);
+            var frontend = ContentReady.FrontendView(controller);
+            var menu = ContentReady.FrontendView(controller).MainMenu;
             Assert.That(controller.PresentationReady, Is.True);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False);
             Assert.That(menu.Root.gameObject.activeInHierarchy, Is.True);
             Assert.That(menu.NewGameButton.interactable, Is.True);
-            Assert.That(host.GetComponent<SpiritEncounterAudio>().enabled, Is.False);
-            Assert.That(host.transform.Find("SpiritCanvas/SafeArea/Portrait/TeaRoom")
-                .GetComponent<RawImage>().enabled, Is.False);
-
-            var canvas = host.transform.Find("SpiritCanvas");
-            var hud = view.GameplayHud;
-            var journeyView = view.JourneyView;
+            Assert.That(ContentReady.EncounterView(controller), Is.Null);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<SpiritDiceTray>(), Is.Null);
+            var canvas = frontend.GetComponentInChildren<Canvas>(true);
+            var board = frontend.Board;
             for (int i = 0; i < 2; ++i)
                 Assert.That(controller.InitializeMenu(controller.Catalog, controller.JourneyCatalog, controller.SavePath), Is.True);
-            Assert.That(host.transform.Find("SpiritCanvas"), Is.SameAs(canvas));
-            Assert.That(view.GameplayHud, Is.SameAs(hud));
-            Assert.That(view.JourneyView, Is.SameAs(journeyView));
-            Assert.That(host.GetComponentsInChildren<Canvas>(true).Count(value => value.name == "SpiritCanvas"), Is.EqualTo(1));
+            yield return ContentReady.Routed(controller);
+            Assert.That(ContentReady.FrontendView(controller), Is.SameAs(frontend));
+            Assert.That(frontend.GetComponentInChildren<Canvas>(true), Is.SameAs(canvas));
+            Assert.That(frontend.MainMenu, Is.SameAs(menu));
+            Assert.That(frontend.Board, Is.SameAs(board));
+            Assert.That(frontend.GetComponentsInChildren<Canvas>(true).Length, Is.EqualTo(1));
         }
 
         private void AssertStartupSurface()
         {
-            var view = host.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             Assert.That(controller.PresentationReady, Is.False);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.True);
             Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(controller.StatusMessage));
             Assert.That(host.transform.Find("SpiritCanvas"), Is.Null);
-            Assert.That(view.GameplayHud, Is.Null);
-            Assert.That(view.JourneyView, Is.Null);
-            Assert.That(view.TrayScene, Is.Null);
-            Assert.That(view.ModifierHistory, Is.Null);
+            Assert.That(view, Is.Null);
+            Assert.That(ContentReady.FrontendView(controller), Is.Null);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<SpiritDiceTray>(), Is.Null);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<SpiritModifierHistoryTray>(), Is.Null);
             Assert.That(host.GetComponent<SpiritEncounterAudio>(), Is.Null);
         }
 
@@ -166,9 +176,12 @@ namespace Dice.Tests
             var catalog = new MechanicalCatalog("bootstrap.recovery.v1", hands,
                 new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }) });
             controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
+            RestoreOriginalLocators();
+            ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.PresentationReady, Is.True);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False,
-                "Successful initialization after a load failure must dismiss the error surface immediately.");
+                "Successful initialization dismisses the error surface when its authored scene is ready.");
         }
 
         [UnityTest]
@@ -227,9 +240,11 @@ namespace Dice.Tests
             var snapshot = controller.Snapshot;
             var preview = controller.Preview;
             string status = controller.StatusMessage;
-            Assert.That(controller.PresentationReady, Is.True);
-            Assert.That(host.transform.Find("SpiritCanvas"), Is.Not.Null);
             RestoreOriginalLocators();
+            ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
+            yield return ContentReady.Routed(controller);
+            Assert.That(controller.PresentationReady, Is.True);
+            Assert.That(ContentReady.EncounterView(controller), Is.Not.Null);
             provider.Complete(authoredHandle.Result);
             yield return WaitUntil(() => provider.ReleaseCount == 1, "Superseded startup retained configuration.");
             yield return null;
@@ -248,7 +263,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator DisablingCompletedBootstrapKeepsItsContentAndInstalledThemeAlive()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var sceneController = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var sceneBootstrap = sceneController.GetComponent<DiceBootstrap>();
@@ -296,7 +311,7 @@ namespace Dice.Tests
 
         private IEnumerator CreateHost()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
             host = controller.gameObject;

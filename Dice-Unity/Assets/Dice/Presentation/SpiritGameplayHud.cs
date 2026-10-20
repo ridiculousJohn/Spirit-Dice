@@ -8,121 +8,121 @@ using UnityEngine.UI;
 namespace Dice.Presentation
 {
     /** Counter that a charm's score or resource effect highlights while it animates. */
+    [Serializable]
     internal sealed class SpiritCounterHighlight
     {
-        internal Text Label;
-        internal Text Caption;
-        internal Image Icon;
+        [SerializeField] internal Text Label;
+        [SerializeField] internal Text Caption;
+        [SerializeField] internal Image Icon;
         internal Color Color;
         internal Vector2 OriginalInset;
+        internal Vector3 LabelScale;
+        internal Vector3 IconScale;
     }
 
     /**
      * Gameplay HUD around the dice tray: header, target and resources, score preview, actions, encounter rule,
-     * footer, and stage intro. Build phases run in order because the HUD interleaves with the tray, rewards,
-     * and ending under the shared portrait.
+     * footer, and stage intro. Authored controls bind to the encounter and score playback.
      */
     public sealed class SpiritGameplayHud : MonoBehaviour
     {
-        private RectTransform portrait;
-        private RectTransform diceTrayFrame;
-        private RectTransform rerollActionLabel;
-        private RectTransform playActionLabel;
-        private Vector2 rerollLabelMin;
-        private Vector2 rerollLabelMax;
-        private RectTransform encounterRuleSigilRoot;
-        private Image ruleSpiritIcon;
+        [SerializeField] private RectTransform portrait;
+        public RectTransform Root => portrait;
+        [field: SerializeField] public RectTransform DiceTrayFrame { get; private set; }
+        [field: SerializeField] public RawImage DiceTrayImage { get; private set; }
+        [SerializeField] private RectTransform diceTrayFrame;
+        [SerializeField] private CanvasGroup rerollEncounterRuleGroup;
+        [SerializeField] private Text rerollEncounterRuleLabel;
+        [SerializeField] private Image rerollEncounterRuleIcon;
+        [SerializeField] private CanvasGroup playEncounterRuleGroup;
+        [SerializeField] private Text playEncounterRuleLabel;
+        [SerializeField] private Image playEncounterRuleIcon;
+        [SerializeField] private RectTransform playEncounterRuleSigilRoot;
+        private Graphic rerollEncounterRuleSigil;
+        private Graphic playEncounterRuleSigil;
+        private Action toggleMenu;
+        private Action reroll;
+        private Action play;
+        private Action showCharms;
+        private Action showHandRanks;
+        private Action returnToInvestigation;
+        private bool authoredScalesCaptured;
+        private Vector3 modifierActivationIconScale;
+        private Vector3 selectionLabelScale;
+        private Vector3 scoreDetailScale;
+        private Vector3 baseScoreLabelScale;
+        private Vector3 multiplierLabelScale;
+        private Vector3 handScoreLabelScale;
+        private Vector3 targetLabelScale;
+        [SerializeField] private RectTransform encounterRuleSigilRoot;
+        [SerializeField] private Image ruleSpiritIcon;
         private Graphic ruleSpiritSigil;
-        private RectTransform ruleSpiritSigilRoot;
-        private SpiritModifierSigilGraphic modifierActivationSigil;
-        private SpiritModifierCategoryBadge modifierActivationCategory;
+        [SerializeField] private RectTransform ruleSpiritSigilRoot;
+        [SerializeField] private SpiritModifierSigilGraphic modifierActivationSigil;
+        [SerializeField] private SpiritModifierCategoryBadge modifierActivationCategory;
 
-        public Text EncounterTitle { get; private set; }
-        public Text StageLabel { get; private set; }
-        public Button MenuButton { get; private set; }
-        public RectTransform TargetPanel { get; private set; }
-        public Text TargetLabel { get; private set; }
-        public Text TargetCaption { get; private set; }
-        public RectTransform HandsPanel { get; private set; }
-        public Text HandsLabel { get; private set; }
-        public RectTransform RerollsPanel { get; private set; }
-        public Text RerollsLabel { get; private set; }
-        public Text ResourcesLabel { get; private set; }
-        public RectTransform PlayingPanel { get; private set; }
-        public Text SelectionLabel { get; private set; }
-        public SpiritUiOrnament ModifierEmblem { get; private set; }
-        public Image ModifierActivationIcon { get; private set; }
-        public Text CategoryLabel { get; private set; }
-        public Text ScoreDetail { get; private set; }
-        public Text BaseScoreLabel { get; private set; }
-        public Text MultiplierLabel { get; private set; }
-        public Text HandScoreLabel { get; private set; }
-        public Button RerollButton { get; private set; }
-        public Button PlayButton { get; private set; }
-        public CanvasGroup EncounterRuleGroup { get; private set; }
-        public Text EncounterRuleLabel { get; private set; }
-        public Image EncounterRuleIcon { get; private set; }
+        [field: SerializeField] public Text EncounterTitle { get; private set; }
+        [field: SerializeField] public Text StageLabel { get; private set; }
+        [field: SerializeField] public Button MenuButton { get; private set; }
+        [field: SerializeField] public RectTransform TargetPanel { get; private set; }
+        [field: SerializeField] public Text TargetLabel { get; private set; }
+        [field: SerializeField] public Text TargetCaption { get; private set; }
+        [field: SerializeField] public RectTransform HandsPanel { get; private set; }
+        [field: SerializeField] public Text HandsLabel { get; private set; }
+        [field: SerializeField] public RectTransform RerollsPanel { get; private set; }
+        [field: SerializeField] public Text RerollsLabel { get; private set; }
+        [field: SerializeField] public Text ResourcesLabel { get; private set; }
+        [field: SerializeField] public RectTransform PlayingPanel { get; private set; }
+        [field: SerializeField] public Text SelectionLabel { get; private set; }
+        [field: SerializeField] public SpiritUiOrnament ModifierEmblem { get; private set; }
+        [field: SerializeField] public Image ModifierActivationIcon { get; private set; }
+        [field: SerializeField] public Text CategoryLabel { get; private set; }
+        [field: SerializeField] public Text ScoreDetail { get; private set; }
+        [field: SerializeField] public Text BaseScoreLabel { get; private set; }
+        [field: SerializeField] public Text MultiplierLabel { get; private set; }
+        [field: SerializeField] public Text HandScoreLabel { get; private set; }
+        [field: SerializeField] public Button RerollButton { get; private set; }
+        [field: SerializeField] public Button PlayButton { get; private set; }
+        [field: SerializeField] public CanvasGroup EncounterRuleGroup { get; private set; }
+        [field: SerializeField] public Text EncounterRuleLabel { get; private set; }
+        [field: SerializeField] public Image EncounterRuleIcon { get; private set; }
         public Graphic EncounterRuleSigil { get; private set; }
-        public CanvasGroup RuleSpiritSweep { get; private set; }
-        public RectTransform StageIntroPanel { get; private set; }
-        public Text StageIntroTitle { get; private set; }
-        public Text StageIntroDetail { get; private set; }
-        public Button CharmsButton { get; private set; }
-        public Button HandRanksButton { get; private set; }
-        public Text CharmCount { get; private set; }
-        public Text StatusLabel { get; private set; }
-        public Button InvestigationButton { get; private set; }
+        [field: SerializeField] public CanvasGroup RuleSpiritSweep { get; private set; }
+        [field: SerializeField] public RectTransform StageIntroPanel { get; private set; }
+        [field: SerializeField] public Text StageIntroTitle { get; private set; }
+        [field: SerializeField] public Text StageIntroDetail { get; private set; }
+        [field: SerializeField, Min(1)] public int StageIntroDetailFontSize { get; private set; } = 19;
+        [field: SerializeField] public Button CharmsButton { get; private set; }
+        [field: SerializeField] public Button HandRanksButton { get; private set; }
+        [field: SerializeField] public Text CharmCount { get; private set; }
+        [field: SerializeField] public Text StatusLabel { get; private set; }
+        [field: SerializeField] public Button InvestigationButton { get; private set; }
         public long DisplayedBaseScore { get; private set; }
         public long DisplayedMultiplier { get; private set; }
 
-        internal SpiritCounterHighlight BaseScoreHighlight { get; private set; }
-        internal SpiritCounterHighlight MultiplierHighlight { get; private set; }
-        internal SpiritCounterHighlight RerollsHighlight { get; private set; }
-        internal SpiritCounterHighlight HandsHighlight { get; private set; }
+        [field: SerializeField] internal SpiritCounterHighlight BaseScoreHighlight { get; private set; } = new SpiritCounterHighlight();
+        [field: SerializeField] internal SpiritCounterHighlight MultiplierHighlight { get; private set; } = new SpiritCounterHighlight();
+        [field: SerializeField] internal SpiritCounterHighlight RerollsHighlight { get; private set; } = new SpiritCounterHighlight();
+        [field: SerializeField] internal SpiritCounterHighlight HandsHighlight { get; private set; } = new SpiritCounterHighlight();
 
         public void BuildHeader(RectTransform parent, Action toggleMenu)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (toggleMenu == null) throw new ArgumentNullException(nameof(toggleMenu));
-            if (portrait != null) throw new InvalidOperationException("The gameplay HUD has already been built.");
-
-            portrait = parent;
-            EncounterTitle = SpiritUi.Heading("EncounterTitle", portrait, "", 21,
-                new Vector2(.12f, .963f), new Vector2(.88f, .999f), TextAnchor.MiddleCenter);
-            var headerRule = SpiritUi.Rect("HeaderRule", portrait, new Vector2(.16f, .925f), new Vector2(.84f, .995f));
-            SpiritUi.Decorate(headerRule);
-            StageLabel = SpiritUi.Heading("StageLabel", portrait, "", 16, new Vector2(.15f, .939f), new Vector2(.85f, .963f),
-                TextAnchor.MiddleCenter);
-            MenuButton = SpiritUi.Button("MenuButton", portrait, "Menu", new Vector2(.80f, .932f), new Vector2(.99f, .978f),
-                () => toggleMenu());
-            var menuText = MenuButton.GetComponentInChildren<Text>();
-            menuText.fontSize = menuText.resizeTextMaxSize = 15;
-            menuText.resizeTextMinSize = 12;
-            var target = SpiritUi.Panel("TargetPanel", portrait, new Vector2(.035f, .544f), new Vector2(.965f, .63f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true);
-            TargetPanel = target.rectTransform;
-            TargetLabel = SpiritUi.Heading("TargetLabel", target.transform, "", 56, new Vector2(.2f, .29f), new Vector2(.8f, .99f),
-                TextAnchor.MiddleCenter);
-            TargetCaption = SpiritUi.Heading("ToClearLabel", target.transform, "TO CLEAR", 17,
-                new Vector2(.23f, .1f), new Vector2(.77f, .35f), TextAnchor.MiddleCenter);
-            TargetCaption.rectTransform.offsetMin = new Vector2(12, 0);
-            TargetCaption.rectTransform.offsetMax = new Vector2(-12, 0);
-            HandsPanel = SpiritUi.Panel("HandsPanel", portrait, new Vector2(.12f, .506f), new Vector2(.495f, .542f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
-            HandsLabel = SpiritUi.Heading("HandsRemainingLabel", HandsPanel, "", 20, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleCenter);
-            RerollsPanel = SpiritUi.Panel("RerollsPanel", portrait, new Vector2(.505f, .506f), new Vector2(.88f, .542f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
-            RerollsLabel = SpiritUi.Heading("RerollsRemainingLabel", RerollsPanel, "", 20, Vector2.zero, Vector2.one,
-                TextAnchor.MiddleCenter);
-            ResourcesLabel = SpiritUi.Label("ResourcesLabel", portrait, "", 18, new Vector2(.04f, .503f), new Vector2(.96f, .54f),
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+            if (portrait == null || EncounterTitle == null || StageLabel == null || MenuButton == null ||
+                TargetPanel == null || TargetLabel == null || TargetCaption == null || HandsPanel == null ||
+                HandsLabel == null || RerollsPanel == null || RerollsLabel == null || ResourcesLabel == null)
+                throw new InvalidOperationException("The gameplay HUD requires authored header references.");
+            this.toggleMenu = toggleMenu;
+            MenuButton.onClick.RemoveListener(ToggleMenu);
+            MenuButton.onClick.AddListener(ToggleMenu);
         }
 
-        /** The playing panel also hosts the tray, which the view builds before the rest of the playing HUD. */
+        /** Returns the authored playing area and tray display. */
         public RectTransform BuildPlayingPanel()
         {
-            PlayingPanel = SpiritUi.Rect("PlayingPanel", portrait, new Vector2(0, .065f), new Vector2(1, .55f));
+            if (PlayingPanel == null || DiceTrayFrame == null || DiceTrayImage == null)
+                throw new InvalidOperationException("The gameplay HUD requires an authored playing panel and tray display.");
             return PlayingPanel;
         }
 
@@ -130,104 +130,36 @@ namespace Dice.Presentation
         {
             if (reroll == null) throw new ArgumentNullException(nameof(reroll));
             if (play == null) throw new ArgumentNullException(nameof(play));
-
-            SelectionLabel = SpiritUi.Label("SelectionLabel", PlayingPanel, "Tap dice to select for reroll", 17,
-                new Vector2(.115f, .438f), new Vector2(.97f, .525f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            SelectionLabel.resizeTextForBestFit = true;
-            SelectionLabel.resizeTextMinSize = 14;
-            SelectionLabel.resizeTextMaxSize = 17;
-            SelectionLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
-            SelectionLabel.rectTransform.offsetMin = new Vector2(0, 0);
-            SelectionLabel.rectTransform.offsetMax = new Vector2(0, 0);
-            ModifierEmblem = SpiritUi.Rect("ModifierEmblem", PlayingPanel, new Vector2(.045f, .456f), new Vector2(.105f, .511f))
-                .gameObject.AddComponent<SpiritUiOrnament>();
-            ModifierEmblem.kind = "charm";
-            ModifierEmblem.color = SpiritUi.GetTheme(transform).amber;
-            ModifierEmblem.raycastTarget = false;
-            ModifierActivationIcon = SpiritCharmVisuals.MakeIcon("ModifierActivationIcon", ModifierEmblem.transform,
-                new Vector2(.5f, .5f), 32);
-            modifierActivationSigil = SpiritCharmVisuals.MakeSigil("ModifierActivationSigil", ModifierActivationIcon);
-            modifierActivationCategory = SpiritModifierCategoryBadge.Create("ModifierActivationCategory", ModifierActivationIcon);
-            ModifierEmblem.gameObject.SetActive(false);
-            var score = SpiritUi.Panel("ScorePreview", PlayingPanel, new Vector2(.045f, .19f), new Vector2(.955f, .435f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true);
-            CategoryLabel = SpiritUi.Heading("HandCategory", score.transform, "", 23,
-                new Vector2(.05f, .70f), new Vector2(.95f, .91f), TextAnchor.MiddleCenter);
-            SpiritUi.Decorate(score.transform);
-            var divider = score.transform.Find("GoldDivider").GetComponent<RectTransform>();
-            divider.anchorMin = new Vector2(.07f, .65f);
-            divider.anchorMax = new Vector2(.93f, .67f);
-            var formula = SpiritUi.Rect("ScoreFormula", score.transform, new Vector2(.04f, .20f), new Vector2(.96f, .65f));
-            BaseScoreLabel = BuildScoreCounter("BaseScoreLabel", "BASE", formula, 0, .32f);
-            MultiplierLabel = BuildScoreCounter("MultiplierLabel", "MULT", formula, .34f, .66f);
-            HandScoreLabel = BuildScoreCounter("HandScore", "TOTAL", formula, .68f, 1);
-            BaseScoreHighlight = MakeCounterHighlight("BaseScoreCharmIcon", BaseScoreLabel, true);
-            MultiplierHighlight = MakeCounterHighlight("MultiplierCharmIcon", MultiplierLabel, true);
-            RerollsHighlight = MakeCounterHighlight("RerollsCharmIcon", RerollsLabel, false);
-            HandsHighlight = MakeCounterHighlight("HandsCharmIcon", HandsLabel, false);
-            ScoreDetail = SpiritUi.Label("ScoreBreakdown", score.transform, "ROLL BONUSES BANK HERE", 14,
-                new Vector2(.04f, .06f), new Vector2(.96f, .20f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            ScoreDetail.rectTransform.offsetMin = ScoreDetail.rectTransform.offsetMax = Vector2.zero;
-            ScoreDetail.resizeTextForBestFit = true;
-            ScoreDetail.resizeTextMinSize = 11;
-            ScoreDetail.resizeTextMaxSize = 14;
-            SetScoreValues(0, 0);
-            HandScoreLabel.text = "0";
-            RerollButton = SpiritUi.Button("RerollButton", PlayingPanel, "Reroll", new Vector2(.035f, 0), new Vector2(.49f, .188f),
-                () => reroll());
-            PlayButton = SpiritUi.Button("PlayButton", PlayingPanel, "Play Hand", new Vector2(.51f, 0), new Vector2(.965f, .188f),
-                () => play(), true);
-            foreach (var button in new[] { RerollButton, PlayButton })
-            {
-                var text = button.GetComponentInChildren<Text>();
-                text.fontSize = text.resizeTextMaxSize = 25;
-                text.resizeTextMinSize = 18;
-            }
+            if (SelectionLabel == null || ModifierEmblem == null || ModifierActivationIcon == null ||
+                modifierActivationSigil == null || modifierActivationCategory == null || CategoryLabel == null ||
+                ScoreDetail == null || BaseScoreLabel == null || MultiplierLabel == null || HandScoreLabel == null ||
+                RerollButton == null || PlayButton == null || !Valid(BaseScoreHighlight) || !Valid(MultiplierHighlight) ||
+                !Valid(RerollsHighlight) || !Valid(HandsHighlight))
+                throw new InvalidOperationException("The gameplay HUD requires authored score and action references.");
+            this.reroll = reroll;
+            this.play = play;
+            CaptureAuthoredScales();
+            RerollButton.onClick.RemoveListener(Reroll);
+            RerollButton.onClick.AddListener(Reroll);
+            PlayButton.onClick.RemoveListener(Play);
+            PlayButton.onClick.AddListener(Play);
         }
 
-        /** The rule-spirit sweep crosses the dice tray; without a tray, as in composition authoring, it is omitted. */
+        /** Binds the authored rule display to the tray used by the spirit sweep animation. */
         public void BuildEncounterRule(RectTransform trayFrame)
         {
-            diceTrayFrame = trayFrame;
-            rerollActionLabel = RerollButton.GetComponentInChildren<Text>().rectTransform;
-            playActionLabel = PlayButton.GetComponentInChildren<Text>().rectTransform;
-            rerollLabelMin = rerollActionLabel.anchorMin;
-            rerollLabelMax = rerollActionLabel.anchorMax;
-            var favor = SpiritUi.Rect("EncounterRuleFavor", RerollButton.transform,
-                new Vector2(.08f, .06f), new Vector2(.94f, .35f));
-            EncounterRuleGroup = favor.gameObject.AddComponent<CanvasGroup>();
-            EncounterRuleGroup.interactable = false;
-            EncounterRuleGroup.blocksRaycasts = false;
-            var icon = SpiritUi.Rect("EncounterRuleIcon", favor, new Vector2(0, .5f), new Vector2(0, .5f));
-            icon.sizeDelta = new Vector2(18, 18);
-            icon.anchoredPosition = new Vector2(9, 0);
-            EncounterRuleIcon = icon.gameObject.AddComponent<Image>();
-            EncounterRuleIcon.preserveAspect = true;
-            EncounterRuleIcon.color = SpiritUi.GetTheme(transform).amber;
-            EncounterRuleIcon.raycastTarget = false;
-            encounterRuleSigilRoot = icon;
-            EncounterRuleLabel = SpiritUi.Label("EncounterRuleLabel", favor, "", 14,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            EncounterRuleLabel.rectTransform.offsetMin = new Vector2(21, 0);
-            EncounterRuleLabel.rectTransform.offsetMax = Vector2.zero;
-            EncounterRuleLabel.resizeTextForBestFit = true;
-            EncounterRuleLabel.resizeTextMinSize = 12;
-            EncounterRuleLabel.resizeTextMaxSize = 14;
-            favor.gameObject.SetActive(false);
-
-            if (diceTrayFrame != null) BuildRuleSpiritSweep();
-            RerollButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
+            if (rerollEncounterRuleGroup == null || rerollEncounterRuleLabel == null || rerollEncounterRuleIcon == null ||
+                playEncounterRuleGroup == null || playEncounterRuleLabel == null || playEncounterRuleIcon == null ||
+                encounterRuleSigilRoot == null || playEncounterRuleSigilRoot == null || RuleSpiritSweep == null ||
+                ruleSpiritIcon == null || ruleSpiritSigilRoot == null)
+                throw new InvalidOperationException("The gameplay HUD requires authored encounter rule references.");
+            diceTrayFrame = trayFrame != null ? trayFrame : DiceTrayFrame;
         }
 
         public void BuildStageIntro()
         {
-            StageIntroPanel = SpiritUi.Panel("StageIntroPanel", portrait, new Vector2(.06f, .37f), new Vector2(.94f, .57f),
-                SpiritUi.GetTheme(transform).panelColor, 0, true).rectTransform;
-            StageIntroTitle = SpiritUi.Heading("StageIntroTitle", StageIntroPanel, "", 28,
-                new Vector2(.04f, .55f), new Vector2(.96f, .94f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
-            StageIntroDetail = SpiritUi.Label("StageIntroDetail", StageIntroPanel, "", 19,
-                new Vector2(.04f, .08f), new Vector2(.96f, .55f), TextAnchor.MiddleCenter);
-            StageIntroPanel.gameObject.SetActive(false);
+            if (StageIntroPanel == null || StageIntroTitle == null || StageIntroDetail == null)
+                throw new InvalidOperationException("The gameplay HUD requires an authored stage intro.");
         }
 
         public void BuildFooter(Action showCharms, Action showHandRanks, Action returnToInvestigation)
@@ -235,28 +167,17 @@ namespace Dice.Presentation
             if (showCharms == null) throw new ArgumentNullException(nameof(showCharms));
             if (showHandRanks == null) throw new ArgumentNullException(nameof(showHandRanks));
             if (returnToInvestigation == null) throw new ArgumentNullException(nameof(returnToInvestigation));
-
-            CharmsButton = SpiritUi.Button("CharmsButton", portrait, "CHARMS (0)", new Vector2(.035f, .007f), new Vector2(.49f, .065f),
-                () => showCharms());
-            HandRanksButton = SpiritUi.Button("HandRanksButton", portrait, "HAND RANKS", new Vector2(.51f, .007f), new Vector2(.965f, .065f),
-                () => showHandRanks());
-            foreach (var button in new[] { CharmsButton, HandRanksButton })
-            {
-                var text = button.GetComponentInChildren<Text>();
-                text.fontSize = text.resizeTextMaxSize = 19;
-                text.resizeTextMinSize = 14;
-            }
-            CharmCount = SpiritUi.Label("CharmCount", portrait, "", 15, new Vector2(.35f, .005f), new Vector2(.52f, .065f),
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            CharmCount.gameObject.SetActive(false);
-            StatusLabel = SpiritUi.Label("StatusMessage", portrait, "", 14, new Vector2(.12f, .892f), new Vector2(.88f, .927f),
-                TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
-            InvestigationButton = SpiritUi.Button("ReturnToInvestigationButton", portrait, "Clues",
-                new Vector2(.01f, .932f), new Vector2(.20f, .978f), () => returnToInvestigation());
-            var investigationText = InvestigationButton.GetComponentInChildren<Text>();
-            investigationText.fontSize = investigationText.resizeTextMaxSize = 15;
-            investigationText.resizeTextMinSize = 12;
-            InvestigationButton.gameObject.SetActive(false);
+            if (CharmsButton == null || HandRanksButton == null || CharmCount == null || StatusLabel == null || InvestigationButton == null)
+                throw new InvalidOperationException("The gameplay HUD requires authored footer references.");
+            this.showCharms = showCharms;
+            this.showHandRanks = showHandRanks;
+            this.returnToInvestigation = returnToInvestigation;
+            CharmsButton.onClick.RemoveListener(ShowCharms);
+            CharmsButton.onClick.AddListener(ShowCharms);
+            HandRanksButton.onClick.RemoveListener(ShowHandRanks);
+            HandRanksButton.onClick.AddListener(ShowHandRanks);
+            InvestigationButton.onClick.RemoveListener(ReturnToInvestigation);
+            InvestigationButton.onClick.AddListener(ReturnToInvestigation);
         }
 
         public void SetGameplayVisible(bool visible, bool showInvestigation)
@@ -275,21 +196,31 @@ namespace Dice.Presentation
 
         public void ConfigureEncounterRuleSigil(SpiritHostPresentationAsset presentation)
         {
-            if (EncounterRuleSigil != null)
-            {
-                EncounterRuleSigil.gameObject.SetActive(false);
-                if (Application.isPlaying) Destroy(EncounterRuleSigil.gameObject);
-                else DestroyImmediate(EncounterRuleSigil.gameObject);
-            }
-            EncounterRuleSigil = presentation?.CreateSigil("EncounterRuleSigil", encounterRuleSigilRoot);
+            ReplaceSigil(ref rerollEncounterRuleSigil, presentation, encounterRuleSigilRoot, "EncounterRuleSigil");
+            ReplaceSigil(ref playEncounterRuleSigil, presentation, playEncounterRuleSigilRoot, "PlayEncounterRuleSigil");
+            EncounterRuleSigil = EncounterRuleGroup == playEncounterRuleGroup ? playEncounterRuleSigil : rerollEncounterRuleSigil;
         }
 
         public void ConfigureHostSigils(SpiritHostPresentationAsset presentation)
         {
             ConfigureEncounterRuleSigil(presentation);
-            if (ruleSpiritSigil != null) { ruleSpiritSigil.gameObject.SetActive(false); Destroy(ruleSpiritSigil.gameObject); }
-            ruleSpiritSigil = presentation?.CreateSigil("RuleSpiritSigil", ruleSpiritSigilRoot);
+            ReplaceSigil(ref ruleSpiritSigil, presentation, ruleSpiritSigilRoot, "RuleSpiritSigil");
             if (ruleSpiritSigil != null) ruleSpiritSigil.color = ruleSpiritIcon.color;
+        }
+
+        private void ReplaceSigil(ref Graphic current, SpiritHostPresentationAsset presentation, RectTransform parent, string name)
+        {
+            if (current != null)
+            {
+                current.gameObject.SetActive(false);
+                if (Application.isPlaying) Destroy(current.gameObject);
+                else DestroyImmediate(current.gameObject);
+            }
+            if (presentation == null) { current = null; return; }
+            if (presentation.SigilPrefab == null)
+                throw new InvalidOperationException("The host requires an authored sigil prefab.");
+            current = Instantiate(presentation.SigilPrefab, parent, false);
+            current.name = name;
         }
 
         public void RenderEncounterRule(EncounterSnapshot snapshot, EncounterRulePresentationAsset presentation)
@@ -305,13 +236,12 @@ namespace Dice.Presentation
         public void RenderEncounterRuleBadge(EncounterRulePresentationAsset presentation, bool visible, bool available, string text)
         {
             bool onPlay = presentation != null && presentation.ActivationPhase == ModifierPhase.PlayHand;
-            var ruleButton = onPlay ? PlayButton : RerollButton;
-            EncounterRuleGroup.transform.SetParent(ruleButton.transform, false);
-            EncounterRuleGroup.gameObject.SetActive(visible);
-            rerollActionLabel.anchorMin = visible && !onPlay ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
-            rerollActionLabel.anchorMax = rerollLabelMax;
-            playActionLabel.anchorMin = visible && onPlay ? new Vector2(rerollLabelMin.x, .36f) : rerollLabelMin;
-            playActionLabel.anchorMax = rerollLabelMax;
+            rerollEncounterRuleGroup.gameObject.SetActive(visible && !onPlay);
+            playEncounterRuleGroup.gameObject.SetActive(visible && onPlay);
+            EncounterRuleGroup = onPlay ? playEncounterRuleGroup : rerollEncounterRuleGroup;
+            EncounterRuleLabel = onPlay ? playEncounterRuleLabel : rerollEncounterRuleLabel;
+            EncounterRuleIcon = onPlay ? playEncounterRuleIcon : rerollEncounterRuleIcon;
+            EncounterRuleSigil = onPlay ? playEncounterRuleSigil : rerollEncounterRuleSigil;
             if (visible)
             {
                 EncounterRuleLabel.text = text;
@@ -369,11 +299,12 @@ namespace Dice.Presentation
             if (RuleSpiritSweep != null) RuleSpiritSweep.gameObject.SetActive(false);
             if (StageIntroPanel != null) StageIntroPanel.gameObject.SetActive(false);
             if (ModifierEmblem == null) return;
+            CaptureAuthoredScales();
             ModifierEmblem.gameObject.SetActive(false);
             ModifierEmblem.enabled = true;
             ModifierActivationIcon.sprite = null;
             ModifierActivationIcon.gameObject.SetActive(false);
-            ModifierActivationIcon.rectTransform.localScale = Vector3.one;
+            ModifierActivationIcon.rectTransform.localScale = modifierActivationIconScale;
             ModifierActivationIcon.color = Color.white;
             modifierActivationSigil.gameObject.SetActive(false);
             modifierActivationCategory.Render(null);
@@ -381,18 +312,18 @@ namespace Dice.Presentation
                 ResetCounterHighlight(highlight);
             SelectionLabel.text = "";
             SelectionLabel.color = SpiritUi.GetTheme(transform).muted;
-            SelectionLabel.rectTransform.localScale = Vector3.one;
+            SelectionLabel.rectTransform.localScale = selectionLabelScale;
             ScoreDetail.color = SpiritUi.GetTheme(transform).muted;
-            ScoreDetail.rectTransform.localScale = Vector3.one;
+            ScoreDetail.rectTransform.localScale = scoreDetailScale;
             foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
             {
                 label.color = SpiritUi.GetTheme(transform).cream;
-                label.rectTransform.localScale = Vector3.one;
+                label.rectTransform.localScale = label == BaseScoreLabel ? baseScoreLabelScale : multiplierLabelScale;
             }
             HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
-            HandScoreLabel.rectTransform.localScale = Vector3.one;
+            HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
             TargetLabel.color = SpiritUi.GetTheme(transform).cream;
-            TargetLabel.rectTransform.localScale = Vector3.one;
+            TargetLabel.rectTransform.localScale = targetLabelScale;
         }
 
         internal static void AddCounterHighlight(List<SpiritCounterHighlight> highlights, SpiritCounterHighlight highlight,
@@ -411,6 +342,7 @@ namespace Dice.Presentation
         internal IEnumerator AnimateScore(long beforeBase, long beforeMultiplier, long afterBase, long afterMultiplier, float duration,
             List<SpiritCounterHighlight> highlights = null)
         {
+            CaptureAuthoredScales();
             float elapsed = 0;
             while (elapsed < duration)
             {
@@ -419,20 +351,20 @@ namespace Dice.Presentation
                 if (beforeBase != afterBase)
                 {
                     BaseScoreLabel.color = SpiritUi.GetTheme(transform).amber;
-                    BaseScoreLabel.rectTransform.localScale = Vector3.one * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
+                    BaseScoreLabel.rectTransform.localScale = baseScoreLabelScale * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
                 }
                 if (beforeMultiplier != afterMultiplier)
                 {
                     MultiplierLabel.color = SpiritUi.GetTheme(transform).amber;
-                    MultiplierLabel.rectTransform.localScale = Vector3.one * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
+                    MultiplierLabel.rectTransform.localScale = multiplierLabelScale * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
                 }
                 if (highlights != null)
                     foreach (var highlight in highlights)
                     {
                         float pulse = Mathf.Sin(progress * Mathf.PI);
                         highlight.Label.color = Color.Lerp(SpiritUi.GetTheme(transform).cream, highlight.Color, pulse);
-                        highlight.Label.rectTransform.localScale = Vector3.one * (1 + .07f * pulse);
-                        highlight.Icon.rectTransform.localScale = Vector3.one * (1 + .1f * pulse);
+                        highlight.Label.rectTransform.localScale = highlight.LabelScale * (1 + .07f * pulse);
+                        highlight.Icon.rectTransform.localScale = highlight.IconScale * (1 + .1f * pulse);
                     }
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
@@ -441,7 +373,7 @@ namespace Dice.Presentation
             foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
             {
                 label.color = SpiritUi.GetTheme(transform).cream;
-                label.rectTransform.localScale = Vector3.one;
+                label.rectTransform.localScale = label == BaseScoreLabel ? baseScoreLabelScale : multiplierLabelScale;
             }
             if (highlights != null)
                 foreach (var highlight in highlights) ResetCounterHighlight(highlight);
@@ -449,23 +381,25 @@ namespace Dice.Presentation
 
         public IEnumerator AnimateTotal(long score, float duration)
         {
+            CaptureAuthoredScales();
             float elapsed = 0;
             while (elapsed < duration)
             {
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
                 HandScoreLabel.text = DiagnosticText.Number(Interpolate(0, score, progress));
                 HandScoreLabel.color = SpiritUi.GetTheme(transform).amber;
-                HandScoreLabel.rectTransform.localScale = Vector3.one * (1 + .14f * Mathf.Sin(progress * Mathf.PI));
+                HandScoreLabel.rectTransform.localScale = handScoreLabelScale * (1 + .14f * Mathf.Sin(progress * Mathf.PI));
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
             HandScoreLabel.text = DiagnosticText.Number(score);
             HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
-            HandScoreLabel.rectTransform.localScale = Vector3.one;
+            HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
         }
 
         public IEnumerator AnimateThreshold(long before, long after, float duration)
         {
+            CaptureAuthoredScales();
             float elapsed = 0;
             TargetLabel.text = DiagnosticText.Number(before);
             while (elapsed < duration)
@@ -473,13 +407,13 @@ namespace Dice.Presentation
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
                 TargetLabel.text = DiagnosticText.Number(Interpolate(before, after, progress));
                 TargetLabel.color = SpiritUi.GetTheme(transform).amber;
-                TargetLabel.rectTransform.localScale = Vector3.one * (1 + .06f * Mathf.Sin(progress * Mathf.PI));
+                TargetLabel.rectTransform.localScale = targetLabelScale * (1 + .06f * Mathf.Sin(progress * Mathf.PI));
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
             TargetLabel.text = DiagnosticText.Number(after);
             TargetLabel.color = SpiritUi.GetTheme(transform).cream;
-            TargetLabel.rectTransform.localScale = Vector3.one;
+            TargetLabel.rectTransform.localScale = targetLabelScale;
         }
 
         public IEnumerator AnimateRuleSpirit(Sprite icon, float duration)
@@ -502,57 +436,43 @@ namespace Dice.Presentation
             RuleSpiritSweep.gameObject.SetActive(false);
         }
 
-        private void BuildRuleSpiritSweep()
-        {
-            var sweep = SpiritUi.Rect("RuleSpiritSweep", diceTrayFrame, new Vector2(0, .5f), new Vector2(0, .5f));
-            sweep.sizeDelta = new Vector2(72, 72);
-            RuleSpiritSweep = sweep.gameObject.AddComponent<CanvasGroup>();
-            RuleSpiritSweep.interactable = false;
-            RuleSpiritSweep.blocksRaycasts = false;
-            ruleSpiritIcon = SpiritUi.Full("RuleSpiritArtwork", sweep).gameObject.AddComponent<Image>();
-            ruleSpiritIcon.preserveAspect = true;
-            ruleSpiritIcon.color = new Color(.35f, .9f, .9f, .75f);
-            ruleSpiritIcon.raycastTarget = false;
-            ruleSpiritSigilRoot = sweep;
-            sweep.gameObject.SetActive(false);
-        }
+        private void ToggleMenu() => toggleMenu?.Invoke();
+        private void Reroll() => reroll?.Invoke();
+        private void Play() => play?.Invoke();
+        private void ShowCharms() => showCharms?.Invoke();
+        private void ShowHandRanks() => showHandRanks?.Invoke();
+        private void ReturnToInvestigation() => returnToInvestigation?.Invoke();
 
-        private static Text BuildScoreCounter(string name, string caption, Transform parent, float left, float right)
-        {
-            var cell = SpiritUi.Rect(name + "Cell", parent, new Vector2(left, 0), new Vector2(right, 1));
-            var heading = SpiritUi.Heading(name + "Caption", cell, caption, 16,
-                new Vector2(0, .65f), Vector2.one, TextAnchor.MiddleCenter, SpiritUi.GetTheme(parent).muted);
-            heading.rectTransform.offsetMin = heading.rectTransform.offsetMax = Vector2.zero;
-            var value = SpiritUi.Heading(name, cell, "0", 36,
-                Vector2.zero, new Vector2(1, .68f), TextAnchor.MiddleCenter);
-            value.rectTransform.offsetMin = value.rectTransform.offsetMax = Vector2.zero;
-            value.resizeTextMinSize = 22;
-            return value;
-        }
+        private static bool Valid(SpiritCounterHighlight highlight)
+            => highlight != null && highlight.Label != null && highlight.Caption != null && highlight.Icon != null;
 
-        private static SpiritCounterHighlight MakeCounterHighlight(string name, Text label, bool scoreCounter)
+        private void CaptureAuthoredScales()
         {
-            var caption = scoreCounter ? label.transform.parent.Find(label.name + "Caption").GetComponent<Text>() : label;
-            var icon = SpiritCharmVisuals.MakeIcon(name, label.transform.parent,
-                scoreCounter ? new Vector2(.17f, .7f) : new Vector2(0, .5f), 22);
-            if (!scoreCounter) icon.rectTransform.anchoredPosition = new Vector2(19, 0);
-            return new SpiritCounterHighlight
+            if (authoredScalesCaptured) return;
+            modifierActivationIconScale = ModifierActivationIcon.rectTransform.localScale;
+            selectionLabelScale = SelectionLabel.rectTransform.localScale;
+            scoreDetailScale = ScoreDetail.rectTransform.localScale;
+            baseScoreLabelScale = BaseScoreLabel.rectTransform.localScale;
+            multiplierLabelScale = MultiplierLabel.rectTransform.localScale;
+            handScoreLabelScale = HandScoreLabel.rectTransform.localScale;
+            targetLabelScale = TargetLabel.rectTransform.localScale;
+            foreach (var highlight in new[] { BaseScoreHighlight, MultiplierHighlight, RerollsHighlight, HandsHighlight })
             {
-                Label = label,
-                Caption = caption,
-                Icon = icon,
-                OriginalInset = caption.rectTransform.offsetMin
-            };
+                highlight.OriginalInset = highlight.Caption.rectTransform.offsetMin;
+                highlight.LabelScale = highlight.Label.rectTransform.localScale;
+                highlight.IconScale = highlight.Icon.rectTransform.localScale;
+            }
+            authoredScalesCaptured = true;
         }
 
         private static void ResetCounterHighlight(SpiritCounterHighlight highlight)
         {
             highlight.Label.color = SpiritUi.GetTheme(highlight.Label.transform).cream;
-            highlight.Label.rectTransform.localScale = Vector3.one;
+            highlight.Label.rectTransform.localScale = highlight.LabelScale;
             highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset;
             highlight.Icon.gameObject.SetActive(false);
             highlight.Icon.sprite = null;
-            highlight.Icon.rectTransform.localScale = Vector3.one;
+            highlight.Icon.rectTransform.localScale = highlight.IconScale;
             highlight.Icon.color = Color.white;
         }
 

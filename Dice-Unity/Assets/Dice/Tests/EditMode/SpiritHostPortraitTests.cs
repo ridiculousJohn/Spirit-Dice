@@ -55,7 +55,6 @@ namespace Dice.Tests
                     Track(1, SpiritPortraitProperty.PositionX, SpiritTrackBlend.Add, AnimationCurve.Linear(0f, 0f, 3.25f, 13f)))
             };
             presentation.Sequences[3].GestureOnStart = true;
-            portrait = host.AddComponent<SpiritHostPortrait>();
         }
 
         [TearDown]
@@ -69,7 +68,7 @@ namespace Dice.Tests
         [Test]
         public void ThirdHostBuildsArbitraryAuthoredLayersWithOneRenderer()
         {
-            portrait.Build(host.GetComponent<RectTransform>(), presentation);
+            Build();
             Assert.That(portrait.GetLayer("Distant Lantern").texture, Is.SameAs(Texture2D.whiteTexture));
             Assert.That(portrait.GetLayer("Loose Ribbon").rectTransform.anchoredPosition, Is.EqualTo(new Vector2(70f, 90f)));
             Assert.That(host.GetComponentsInChildren<SpiritPortraitImage>().Length, Is.EqualTo(2));
@@ -460,7 +459,11 @@ namespace Dice.Tests
             Assert.That(host.GetComponentsInChildren<RawImage>().Length, Is.Zero);
         }
 
-        private void Build() => portrait.Build(host.GetComponent<RectTransform>(), presentation);
+        private void Build()
+        {
+            if (portrait == null) portrait = SpiritPortraitTestAuthoring.Create(presentation, host.GetComponent<RectTransform>());
+            portrait.Build((RectTransform)portrait.transform, presentation);
+        }
         private float Value(int layer, SpiritPortraitProperty property) => portrait.ReadLayerValue(layer, property);
 
         private static SpiritPortraitTrack Track(int layer, SpiritPortraitProperty property, SpiritTrackBlend blend,

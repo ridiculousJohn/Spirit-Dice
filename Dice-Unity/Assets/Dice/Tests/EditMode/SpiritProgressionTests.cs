@@ -22,7 +22,6 @@ namespace Dice.Tests
             host = new GameObject("Spirit progression test");
             host.SetActive(false);
             controller = host.AddComponent<SpiritEncounterController>();
-            host.GetComponent<SpiritEncounterView>().enabled = false;
             string directory = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..",
                 "Docs", "work", "spirit-progression-tests", Guid.NewGuid().ToString("N")));
             savePath = Path.Combine(directory, "encounter.json");

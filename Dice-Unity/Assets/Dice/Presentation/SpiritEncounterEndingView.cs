@@ -11,23 +11,23 @@ namespace Dice.Presentation
     {
         private enum EndingPhase { Hidden, PendingSummary, Holding, Reaction, Fading, Dialogue, Summary }
 
-        public RectTransform Root { get; private set; }
+        [field: SerializeField] public RectTransform Root { get; private set; }
 
-        private RectTransform panel;
-        private RectTransform content;
-        private ScrollRect scroll;
-        private Text title;
-        private Text detail;
-        private Text clueTitle;
-        private Text clueText;
-        private Text unlockTitle;
-        private Text unlocks;
-        private RectTransform artworkFrame;
-        private RawImage artwork;
-        private Button returnButton;
-        private Button retryButton;
-        private Button dialogueContinueButton;
-        private Button skipButton;
+        [SerializeField] private RectTransform panel;
+        [SerializeField] private RectTransform content;
+        [SerializeField] private ScrollRect scroll;
+        [SerializeField] private Text title;
+        [SerializeField] private Text detail;
+        [SerializeField] private Text clueTitle;
+        [SerializeField] private Text clueText;
+        [SerializeField] private Text unlockTitle;
+        [SerializeField] private Text unlocks;
+        [SerializeField] private RectTransform artworkFrame;
+        [SerializeField] private RawImage artwork;
+        [SerializeField] private Button returnButton;
+        [SerializeField] private Button retryButton;
+        [SerializeField] private Button dialogueContinueButton;
+        [SerializeField] private Button skipButton;
         private Action returnToTrail;
         private Action retry;
         private Action<float> activeFade;
@@ -37,61 +37,29 @@ namespace Dice.Presentation
         private string unlockSummary;
         private EndingPhase phase;
         private int contextVersion;
-        private Vector2 portraitSize;
+        [SerializeField] private AspectRatioFitter artworkAspect;
+        [SerializeField] private int detailDialogueSize = 23;
+        [SerializeField] private int detailSummarySize = 21;
 
         public void Build(RectTransform parent, Action returnToTrail, Action retry)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (returnToTrail == null) throw new ArgumentNullException(nameof(returnToTrail));
-            if (Root != null) throw new InvalidOperationException("The encounter ending has already been built.");
+            if (Root == null || panel == null || content == null || scroll == null || title == null || detail == null ||
+                clueTitle == null || clueText == null || unlockTitle == null || unlocks == null || artworkFrame == null ||
+                artwork == null || artworkAspect == null || returnButton == null || retryButton == null ||
+                dialogueContinueButton == null || skipButton == null)
+                throw new InvalidOperationException("The encounter ending requires authored UI references.");
             this.returnToTrail = returnToTrail;
             this.retry = retry;
-            var theme = SpiritUi.GetTheme(parent);
-            Root = SpiritUi.Full("EndingView", parent);
-            var group = Root.gameObject.AddComponent<CanvasGroup>();
-            group.ignoreParentGroups = true;
-            var blocker = Root.gameObject.AddComponent<Image>();
-            blocker.color = Color.clear;
-            panel = SpiritUi.Panel("EndingPanel", Root, new Vector2(.045f, .055f), new Vector2(.955f, .62f),
-                theme.panelColor, 0, true).rectTransform;
-            title = SpiritUi.Heading("EndingTitle", panel, "", 35, new Vector2(.025f, .845f), new Vector2(.975f, .98f),
-                TextAnchor.MiddleCenter, theme.amber);
-            title.resizeTextMinSize = 25;
-            scroll = SpiritUi.Scroll("EndingUnlockScroll", panel, new Vector2(.035f, .245f), new Vector2(.965f, .84f), out content);
-            var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(3, 3, 6, 12);
-            layout.spacing = 12;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            artworkFrame = SpiritUi.Full("EndingArtworkFrame", content);
-            artworkFrame.gameObject.AddComponent<LayoutElement>().preferredHeight = 120;
-            artwork = SpiritUi.Full("EndingArtwork", artworkFrame).gameObject.AddComponent<RawImage>();
-            artwork.raycastTarget = false;
-            var aspect = artwork.gameObject.AddComponent<AspectRatioFitter>();
-            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            detail = ContentLabel("EndingDetail", 21, theme.cream);
-            clueTitle = ContentLabel("EndingClueTitle", 24, theme.amber, true);
-            clueText = ContentLabel("EndingClueText", 21, theme.cream);
-            unlockTitle = ContentLabel("EndingUnlockTitle", 17, theme.muted, true);
-            unlocks = ContentLabel("EndingUnlocks", 19, theme.amber);
-            returnButton = SpiritUi.Button("EndingNewRunButton", panel, "Return to the trail",
-                new Vector2(.065f, .045f), new Vector2(.935f, .215f),
-                () => { if (IsSummary) this.returnToTrail(); }, true);
-            var returnLabel = returnButton.GetComponentInChildren<Text>();
-            returnLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
-            returnLabel.rectTransform.anchorMin = new Vector2(.18f, .08f);
-            returnLabel.rectTransform.anchorMax = new Vector2(.82f, .92f);
-            retryButton = SpiritUi.Button("EndingRetryButton", panel, "Retry",
-                new Vector2(.065f, .045f), new Vector2(.495f, .215f),
-                () => { if (IsSummary) this.retry?.Invoke(); });
-            dialogueContinueButton = SpiritUi.Button("EndingDialogueContinueButton", panel, "Continue",
-                new Vector2(.065f, .045f), new Vector2(.935f, .215f),
-                ContinueDialogue, true);
-            skipButton = SpiritUi.Button("EndingSkipButton", Root, "Skip farewell",
-                new Vector2(.55f, .025f), new Vector2(.955f, .1f), Skip);
+            returnButton.onClick.RemoveListener(ReturnToTrail);
+            returnButton.onClick.AddListener(ReturnToTrail);
+            retryButton.onClick.RemoveListener(Retry);
+            retryButton.onClick.AddListener(Retry);
+            dialogueContinueButton.onClick.RemoveListener(ContinueDialogue);
+            dialogueContinueButton.onClick.AddListener(ContinueDialogue);
+            skipButton.onClick.RemoveListener(Skip);
+            skipButton.onClick.AddListener(Skip);
             Reset();
         }
 
@@ -181,6 +149,12 @@ namespace Dice.Presentation
 
         public void Reset()
         {
+            ClearContext();
+            if (Root != null) Root.gameObject.SetActive(false);
+        }
+
+        private void ClearContext()
+        {
             ++contextVersion;
             CancelFade();
             snapshot = null;
@@ -188,7 +162,16 @@ namespace Dice.Presentation
             presentation = null;
             unlockSummary = "";
             phase = EndingPhase.Hidden;
-            if (Root != null) Root.gameObject.SetActive(false);
+        }
+
+        private void ReturnToTrail()
+        {
+            if (IsSummary) returnToTrail?.Invoke();
+        }
+
+        private void Retry()
+        {
+            if (IsSummary) retry?.Invoke();
         }
 
         private bool IsSummary => phase == EndingPhase.PendingSummary || phase == EndingPhase.Summary;
@@ -217,33 +200,7 @@ namespace Dice.Presentation
             fade?.Invoke(1);
         }
 
-        private void OnDisable() => Reset();
-
-        private void LateUpdate()
-        {
-            if (Root != null && Root.gameObject.activeInHierarchy && panel.gameObject.activeSelf &&
-                Root.rect.size != portraitSize) FitPanel();
-        }
-
-        private void FitPanel()
-        {
-            portraitSize = Root.rect.size;
-            if (portraitSize.y <= 0) return;
-            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
-            float height = Mathf.Min(portraitSize.y * .565f, Mathf.Max(360, (content.rect.height + 20) / .595f));
-            panel.anchorMin = new Vector2(.045f, .62f - height / portraitSize.y);
-        }
-
-        private Text ContentLabel(string name, int size, Color color, bool heading = false)
-        {
-            var label = heading ? SpiritUi.Heading(name, content, "", size, Vector2.zero, Vector2.one,
-                TextAnchor.UpperLeft, color) : SpiritUi.Label(name, content, "", size, Vector2.zero, Vector2.one,
-                TextAnchor.UpperLeft, color);
-            label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
-            label.verticalOverflow = VerticalWrapMode.Overflow;
-            label.resizeTextForBestFit = false;
-            return label;
-        }
+        private void OnDisable() => ClearContext();
 
         private string FarewellText => journey == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryText :
             snapshot.Outcome == EncounterOutcome.Abandoned ? journey.AbandonText : journey.DefeatText;
@@ -263,7 +220,6 @@ namespace Dice.Presentation
             retryButton.gameObject.SetActive(canRetry);
             returnButton.interactable = summary;
             retryButton.interactable = canRetry;
-            returnButton.GetComponent<RectTransform>().anchorMin = new Vector2(canRetry ? .505f : .065f, .045f);
             SpiritUi.SetButtonLabel(returnButton, journey != null && !string.IsNullOrWhiteSpace(journey.ResultContinueLabel)
                 ? journey.ResultContinueLabel : "Return to the trail");
             if (!dialogue && !summary) return;
@@ -278,7 +234,7 @@ namespace Dice.Presentation
             else
                 detail.text = (presentation == null && !string.IsNullOrWhiteSpace(FarewellText) ? FarewellText + "\n\n" : "") +
                     "Total score  " + DiagnosticText.Number(snapshot.TotalScore);
-            detail.fontSize = dialogue ? 23 : 21;
+            detail.fontSize = dialogue ? detailDialogueSize : detailSummarySize;
             detail.gameObject.SetActive(!string.IsNullOrWhiteSpace(detail.text));
             bool clue = summary && snapshot.Outcome == EncounterOutcome.Won && journey != null;
             clueTitle.text = clue ? journey.CompletionClueTitle : "";
@@ -293,8 +249,8 @@ namespace Dice.Presentation
             artwork.texture = presentation?.Artwork;
             artworkFrame.gameObject.SetActive(artwork.texture != null);
             if (artwork.texture != null)
-                artwork.GetComponent<AspectRatioFitter>().aspectRatio = (float)artwork.texture.width / artwork.texture.height;
-            FitPanel();
+                artworkAspect.aspectRatio = (float)artwork.texture.width / artwork.texture.height;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
         }
     }
 }

@@ -16,10 +16,16 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            host = new GameObject("Spirit Dice Test");
-            tray = host.AddComponent<SpiritDiceTray>();
-            tray.Configure(AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset"));
+            var presentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset");
+            Assert.That(presentation.RigPrefab, Is.Not.Null);
+            var scene = UnityEngine.Object.Instantiate(presentation.RigPrefab);
+            host = scene.gameObject;
+            scene.RenderCamera.transform.localRotation = Quaternion.Euler(55, 0, 0);
+            scene.FrameAuthoredGeometry();
+            scene.Configure(presentation); scene.Initialize();
+            tray = scene.DiceTray;
+            tray.Configure(presentation, scene);
             tray.Initialize();
         }
 
@@ -92,7 +98,8 @@ namespace Dice.Tests
             tray.ReleasePresentation();
             tray.SetScoringHighlight(0);
             Assert.That(tray.ScoringHighlightMask, Is.Zero);
-            Assert.That(tray.RenderRoot == null, Is.True);
+            Assert.That(tray.RenderRoot, Is.Not.Null);
+            Assert.That(tray.RenderRoot.GetComponentsInChildren<SpiritDiceTray>(true).Length, Is.EqualTo(1));
         }
 
         private void AssertHighlightVisuals(int mask)
@@ -100,10 +107,11 @@ namespace Dice.Tests
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 bool highlighted = (mask & (1 << index)) != 0;
-                Transform die = tray.RenderRoot.Find("Spirit Die " + index);
-                Assert.That(die.Find("Die " + index + " Selection Outline").gameObject.activeSelf,
+                Transform slot = host.GetComponent<SpiritTrayScene>().Geometry.DiceSlots[index];
+                Transform die = slot.Find("Dice Slot Content " + index + "/Die " + index);
+                Assert.That(die.Find("Selection Outline").gameObject.activeSelf,
                     Is.EqualTo(highlighted), "Outline " + index);
-                Assert.That(tray.RenderRoot.Find("Bay " + index + " Selection Frame").gameObject.activeSelf,
+                Assert.That(slot.Find("Dice Slot Content " + index + "/Selection Frame").gameObject.activeSelf,
                     Is.EqualTo(highlighted), "Frame " + index);
             }
         }

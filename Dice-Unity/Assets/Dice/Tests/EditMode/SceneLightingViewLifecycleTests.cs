@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
@@ -42,29 +43,31 @@ namespace Dice.Tests
         [Test]
         public void TableSwitchesAndDisableReleaseSharedLightingAndOwnedMaterial()
         {
-            var root = Root("Table lighting lifecycle", preview, typeof(RectTransform));
-            var view = root.AddComponent<SpiritEncounterView>();
-            Set(view, "uiTheme", AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
-                "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
-            Set(view, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset"));
+            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
+            Assert.That(authoredTable.Scene.RuntimeKeyIsValid(), Is.True);
+            EditorSceneManager.ClosePreviewScene(preview);
+            preview = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(authoredTable.Scene.AssetGUID));
+            var view = preview.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
+            var root = view.gameObject;
             Invoke(view, "Build");
             view.RewardsPanel.Root.gameObject.SetActive(false);
-            SceneManager.MoveGameObjectToScene(view.DiceTray.RenderRoot.gameObject, preview);
-            SceneManager.MoveGameObjectToScene(view.ModifierHistory.Renderer.RenderRoot.gameObject, preview);
+            Assert.That(view.DiceTray.RenderRoot.gameObject.scene, Is.EqualTo(preview));
+            Assert.That(view.ModifierHistory.Renderer.RenderRoot.gameObject.scene, Is.EqualTo(preview));
             view.DiceTray.RenderCamera.scene = preview;
             view.ModifierHistory.Renderer.RenderCamera.scene = preview;
             view.DiceTray.RenderCamera.enabled = false;
             view.ModifierHistory.Renderer.RenderCamera.enabled = false;
-            var lit = UnityEngine.ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
-            var unlit = UnityEngine.ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
+            var lit = UnityEngine.Object.Instantiate(authoredTable);
+            var unlit = UnityEngine.Object.Instantiate(authoredTable);
             resources.Add(lit);
             resources.Add(unlit);
             Set(lit, "sceneLighting", first);
             Set(unlit, "roomTexture", second.BaseTexture);
+            Set(unlit, "sceneLighting", null);
             var room = Field<RawImage>(view, "roomImage");
             var table = Field<RawImage>(view, "tableImage");
-            Invoke(view, "ConfigureTable", lit);
+            ConfigureAuthoredTable(view, lit);
             Rect roomUv = room.uvRect;
             Rect tableUv = table.uvRect;
             Invoke(view, "LateUpdate");
@@ -74,7 +77,7 @@ namespace Dice.Tests
                 "The table's split images did not share their compositor.");
             Require(sampled.Asset == first && room.texture == first.BaseTexture && table.texture == first.BaseTexture,
                 "The table did not bind its sampled lighting base texture.");
-            Require(Field<SceneLightingState>(view.DiceTray, "sceneLighting") == sampled &&
+            Require(Field<SceneLightingState>(view.TrayScene, "sceneLighting") == sampled &&
                 Field<SceneLightingState>(view.ModifierHistory.Renderer, "sceneLighting") == sampled,
                 "The table did not pass one sampled state to both receiver rigs.");
             first.Lights[0].Intensity = .57f;
@@ -82,17 +85,17 @@ namespace Dice.Tests
             Require(Mathf.Abs(material.GetFloat("_LightIntensity0") - .57f) < .00001f,
                 "An unchanged portrait size stopped the table from updating lighting.");
             Require(room.uvRect == roomUv && table.uvRect == tableUv, "Lighting altered the authored split UVs.");
-            Invoke(view, "ConfigureTable", unlit);
+            ConfigureAuthoredTable(view, unlit);
             Require(sampled.Asset == null && sampled.Count == 0 && room.material == room.defaultMaterial &&
                 table.material == table.defaultMaterial && material == null,
                 "Switching to an unlit table retained sampled state or its owned compositor.");
             Invoke(view, "LateUpdate");
             Require(room.texture == second.BaseTexture && table.texture == second.BaseTexture &&
-                Field<SceneLightingState>(view.DiceTray, "sceneLighting") == null &&
+                Field<SceneLightingState>(view.TrayScene, "sceneLighting") == null &&
                 Field<SceneLightingState>(view.ModifierHistory.Renderer, "sceneLighting") == null,
                 "An unlit table retained receiver lighting or the previous room texture.");
             Set(lit, "sceneLighting", second);
-            Invoke(view, "ConfigureTable", lit);
+            ConfigureAuthoredTable(view, lit);
             Invoke(view, "LateUpdate");
             Require(sampled.Asset == second && room.texture == second.BaseTexture,
                 "Switching back to a lit table retained the earlier asset.");
@@ -100,7 +103,7 @@ namespace Dice.Tests
             // Runtime MonoBehaviours do not receive editor lifecycle callbacks automatically.
             Invoke(view, "OnDisable");
             Require(sampled.Asset == null && room.material == room.defaultMaterial &&
-                Field<SceneLightingState>(view.DiceTray, "sceneLighting") == null,
+                Field<SceneLightingState>(view.TrayScene, "sceneLighting") == null,
                 "Disabling the table retained its lighting state.");
             root.SetActive(true);
             Invoke(view, "OnEnable");
@@ -122,11 +125,12 @@ namespace Dice.Tests
             Set(arrival, "duration", 20f);
             Set(journey, "beats", new[] { approach, arrival });
             var controls = new JourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
-            var root = Root("Journey lighting lifecycle", preview, typeof(RectTransform));
+            var prefab = AssetDatabase.LoadAssetAtPath<EncounterJourneyView>("Assets/Dice/Content/Presentation/UI/EncounterJourneyView.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            var view = UnityEngine.Object.Instantiate(prefab);
+            var root = view.gameObject;
+            SceneManager.MoveGameObjectToScene(root, preview);
             root.GetComponent<RectTransform>().sizeDelta = new Vector2(540, 960);
-            var view = root.AddComponent<EncounterJourneyView>();
-            root.AddComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(
-                "Assets/Dice/Presentation/Shared/SpiritHouseTheme.asset"));
             view.Build(null);
             view.Bind(controls, null);
             view.Refresh();
@@ -179,6 +183,15 @@ namespace Dice.Tests
             Require(Field<SceneLightingState>(view, "sceneLightingState").Asset == null &&
                 background.material == background.defaultMaterial,
                 "Returning to investigation retained sequence lighting.");
+        }
+
+        private static void ConfigureAuthoredTable(SpiritEncounterView view, EncounterTablePresentationAsset table)
+        {
+            Set(view, "tablePresentation", table);
+            // The scene authors split background textures while the view binds their sampled lighting.
+            var texture = table.SceneLighting != null ? table.SceneLighting.BaseTexture : table.RoomTexture;
+            view.RoomImage.texture = view.TableImage.texture = texture;
+            Invoke(view, "ConfigureTable", table);
         }
 
         private static SceneLightingAsset Lighting(List<UnityEngine.Object> resources, Color ambient, float intensity)
@@ -243,3 +256,4 @@ namespace Dice.Tests
         }
     }
 }
+

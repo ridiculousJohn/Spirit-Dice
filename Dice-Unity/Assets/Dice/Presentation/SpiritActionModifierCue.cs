@@ -7,20 +7,22 @@ namespace Dice.Presentation
     /** Marks the triggering action and any action resources granted by a modifier. */
     public sealed class SpiritActionModifierCue : MonoBehaviour
     {
+        [System.Serializable]
         private sealed class Cue
         {
-            internal CanvasGroup Group;
-            internal Image Artwork;
-            internal SpiritModifierSigilGraphic Sigil;
-            internal SpiritModifierCategoryBadge Category;
-            internal Outline Border;
-            internal Graphic HostSigil;
-            internal CanvasGroup Label;
-            internal float LabelAlpha;
+            public CanvasGroup Group;
+            public Image Artwork;
+            public SpiritModifierSigilGraphic Sigil;
+            public SpiritModifierCategoryBadge Category;
+            public Outline Border;
+            public Graphic HostSigil;
+            public CanvasGroup Label;
+            public float LabelAlpha;
+            [System.NonSerialized] public Vector3 Scale;
         }
 
-        private Cue reroll;
-        private Cue play;
+        [SerializeField] private Cue reroll;
+        [SerializeField] private Cue play;
         private Cue active;
         private Cue secondary;
         private float elapsed;
@@ -34,8 +36,10 @@ namespace Dice.Presentation
 
         public void Initialize(Button rerollButton, Button playButton)
         {
-            reroll = Create(rerollButton, "RerollModifierCue");
-            play = Create(playButton, "PlayHandModifierCue");
+            if (reroll == null || play == null || reroll.Group == null || play.Group == null)
+                throw new System.InvalidOperationException("Action modifier cues require authored image groups.");
+            reroll.Scale = reroll.Group.transform.localScale;
+            play.Scale = play.Group.transform.localScale;
             Clear();
         }
 
@@ -86,7 +90,7 @@ namespace Dice.Presentation
             cue.Group.gameObject.SetActive(true);
             cue.Group.alpha = 0;
             cue.LabelAlpha = cue.Label.alpha;
-            cue.Group.transform.localScale = Vector3.one;
+            cue.Group.transform.localScale = cue.Scale;
         }
 
         public void ConfigureHost(SpiritHostPresentationAsset presentation)
@@ -95,11 +99,16 @@ namespace Dice.Presentation
             foreach (var cue in new[] { reroll, play })
             {
                 if (cue == null) continue;
-                if (cue.HostSigil != null) { cue.HostSigil.gameObject.SetActive(false); Destroy(cue.HostSigil.gameObject); }
+                if (cue.HostSigil != null)
+                {
+                    cue.HostSigil.gameObject.SetActive(false);
+                    if (Application.isPlaying) Destroy(cue.HostSigil.gameObject);
+                    else DestroyImmediate(cue.HostSigil.gameObject);
+                }
                 cue.HostSigil = presentation?.CreateSigil("HostSigil", (RectTransform)cue.Group.transform);
                 if (cue.HostSigil != null)
                 {
-                    Stretch(cue.HostSigil.rectTransform, 4);
+
                     cue.HostSigil.gameObject.SetActive(false);
                 }
             }
@@ -147,58 +156,10 @@ namespace Dice.Presentation
         {
             cue.Group.alpha = alpha;
             cue.Label.alpha = cue.LabelAlpha * (1 - alpha);
-            cue.Group.transform.localScale = Vector3.one * (1 + .1f * Mathf.Sin(progress * Mathf.PI));
+            cue.Group.transform.localScale = cue.Scale * (1 + .1f * Mathf.Sin(progress * Mathf.PI));
         }
 
         private void OnDisable() => Clear();
 
-        private static Cue Create(Button button, string name)
-        {
-            var root = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup));
-            var rect = (RectTransform)root.transform;
-            rect.SetParent(button.transform, false);
-            rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(44, 44);
-            var group = root.GetComponent<CanvasGroup>();
-            group.interactable = false;
-            group.blocksRaycasts = false;
-            var shadow = new GameObject("Backing", typeof(RectTransform), typeof(Image));
-            var backing = shadow.GetComponent<Image>();
-            backing.transform.SetParent(rect, false);
-            Stretch(backing.rectTransform, 0);
-            backing.color = new Color(.07f, .09f, .07f, .94f);
-            backing.raycastTarget = false;
-            var border = shadow.AddComponent<Outline>();
-            border.effectColor = new Color(.65f, .45f, .2f, .9f);
-            border.effectDistance = new Vector2(1, -1);
-            var artwork = new GameObject("Artwork", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
-            artwork.transform.SetParent(rect, false);
-            Stretch(artwork.rectTransform, 3);
-            artwork.preserveAspect = true;
-            artwork.raycastTarget = false;
-            var sigil = new GameObject("Sigil", typeof(RectTransform), typeof(SpiritModifierSigilGraphic))
-                .GetComponent<SpiritModifierSigilGraphic>();
-            sigil.transform.SetParent(rect, false);
-            Stretch(sigil.rectTransform, 4);
-            sigil.color = SpiritUi.GetTheme(button.transform).amber;
-            sigil.raycastTarget = false;
-            var category = SpiritModifierCategoryBadge.Create("CharmCategory", artwork);
-            // A separate opacity group leaves the button's disabled and hover tints under Selectable's control.
-            var label = button.GetComponentInChildren<Text>().gameObject;
-            var labelGroup = label.GetComponent<CanvasGroup>();
-            if (labelGroup == null) labelGroup = label.AddComponent<CanvasGroup>();
-            (button as SpiritUiButtonVisual)?.ExcludeContentFromTint(rect);
-            return new Cue { Group = group, Artwork = artwork, Sigil = sigil, Category = category,
-                Border = border, Label = labelGroup };
-        }
-
-        private static void Stretch(RectTransform rect, float inset)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(inset, inset);
-            rect.offsetMax = new Vector2(-inset, -inset);
-        }
     }
 }

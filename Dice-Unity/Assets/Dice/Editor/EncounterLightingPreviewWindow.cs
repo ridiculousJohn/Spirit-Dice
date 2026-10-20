@@ -17,7 +17,6 @@ namespace Dice.Editor
         private const string DefaultTablePath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsTable.asset";
         private const string DefaultEntryPath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsEntryLighting.asset";
         private const string PreviewPipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
-        private const string TrayPresentationPath = "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset";
         private const int UiLayer = 30;
         [SerializeField] private EncounterTablePresentationAsset table;
         [SerializeField] private SceneLightingAsset entry;
@@ -25,12 +24,15 @@ namespace Dice.Editor
         [SerializeField] private bool animate = true;
         [SerializeField] private float intensity = 1f;
         [SerializeField] private float poseTime;
+        private SpiritEncounterPreviewScene encounter;
+        private string stagedSceneSettings;
         private Scene previewScene;
         private GameObject stage;
         private Camera camera;
         private RenderTexture output;
         private RawImage roomImage;
         private RawImage tableImage;
+        private SpiritTrayScene trayScene;
         private SpiritDiceTray tray;
         private SpiritModifierHistoryRenderer history;
         private SpiritHostPortrait host;
@@ -140,50 +142,19 @@ namespace Dice.Editor
         private void EnsureStage()
         {
             var selectedLighting = showTable ? table?.SceneLighting : entry;
+            string settings = showTable && table != null ? SpiritEncounterPreviewScene.SourceSettings(table) : null;
             if (stage != null && stagedTable == table && stagedEntry == entry && stagedShowTable == showTable &&
-                sourceLighting == selectedLighting) return;
+                sourceLighting == selectedLighting && stagedSceneSettings == settings) return;
             ReleaseStage();
             if (showTable && table == null) throw new InvalidOperationException("Select an encounter table.");
             if (!showTable && entry == null) throw new InvalidOperationException("Select entry lighting.");
             selectedLighting?.Validate();
             if (showTable) AcquirePipeline();
-            previewScene = EditorSceneManager.NewPreviewScene();
+            stagedSceneSettings = settings;
             stagedTable = table;
             stagedEntry = entry;
             stagedShowTable = showTable;
             sourceLighting = selectedLighting;
-            stage = Object("Encounter Lighting Preview");
-            camera = Object("Encounter Preview Camera").AddComponent<Camera>();
-            camera.scene = previewScene;
-            camera.enabled = false;
-            camera.transform.position = new Vector3(0, 0, -10);
-            camera.orthographic = true;
-            camera.orthographicSize = 480;
-            camera.nearClipPlane = .1f;
-            camera.farClipPlane = 30;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
-            camera.cullingMask = 1 << UiLayer;
-            camera.allowHDR = false;
-            camera.allowMSAA = false;
-            output = new RenderTexture(540, 960, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
-            {
-                name = "Encounter Lighting Preview", hideFlags = HideFlags.HideAndDontSave,
-                filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
-            };
-            output.Create();
-            camera.targetTexture = output;
-            var canvasRoot = Object("Encounter Preview Canvas", typeof(RectTransform)).GetComponent<RectTransform>();
-            canvasRoot.SetParent(stage.transform, false);
-            var canvas = canvasRoot.gameObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceCamera;
-            canvas.worldCamera = camera;
-            canvas.planeDistance = 1;
-            var scaler = canvasRoot.gameObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(540, 960);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 1;
             if (sourceLighting != null)
             {
                 lighting = Instantiate(sourceLighting);
@@ -193,51 +164,59 @@ namespace Dice.Editor
                 for (int i = 0; i < lighting.Lights.Length; ++i) lighting.Lights[i] = Copy(sourceLighting.Lights[i]);
                 compositor = new SceneLightingMaterial(lighting.Shader);
             }
-            if (showTable) BuildTable(canvasRoot);
-            else roomImage = Image("Entry", canvasRoot, Vector2.zero, Vector2.one);
-        }
-
-        private void BuildTable(RectTransform canvasRoot)
-        {
-            var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(TrayPresentationPath);
-            if (trayPresentation == null) throw new InvalidOperationException("The encounter tray presentation is unavailable.");
-            trayPresentation.Validate();
-            roomImage = Image("TeaRoom", canvasRoot, new Vector2(0, table.RoomSplit), Vector2.one);
-            tableImage = Image("ForegroundTable", canvasRoot, Vector2.zero, new Vector2(1, table.RoomSplit));
-            roomImage.uvRect = new Rect(0, table.RoomTableEdge, 1, 1 - table.RoomTableEdge);
-            tableImage.uvRect = new Rect(0, 0, 1, table.RoomTableEdge);
-            if (table.HostPresentation != null)
+            if (showTable)
             {
-                host = table.HostPresentation.Create(canvasRoot);
-                PrepareUi(host.gameObject);
+                encounter = SpiritEncounterPreviewScene.Open(table, false);
+                encounter.ShowHud(false);
+                previewScene = encounter.Scene;
+                stage = encounter.Root;
+                camera = encounter.Camera;
+                output = encounter.Output;
+                roomImage = encounter.View.RoomImage;
+                tableImage = encounter.View.TableImage;
+                trayScene = encounter.View.TrayScene;
+                tray = trayScene.DiceTray;
+                history = trayScene.HistoryRenderer;
+                host = encounter.View.HostPortrait;
+                tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
             }
-            tray = stage.AddComponent<SpiritDiceTray>();
-            tray.Configure(trayPresentation);
-            tray.Initialize();
-            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
-            PrepareRenderer(tray.RenderRoot, tray.RenderCamera);
-            var playing = Rect("PlayingPanel", canvasRoot, new Vector2(0, .065f), new Vector2(1, .55f));
-            var trayFrame = Rect("DiceTrayFrame", playing, new Vector2(0, .578f), new Vector2(1, .938f));
-            var trayImage = Image("DiceTrayImage", trayFrame, Vector2.zero, Vector2.one);
-            trayImage.texture = tray.Texture;
-            var aspect = trayImage.gameObject.AddComponent<AspectRatioFitter>();
-            aspect.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            aspect.aspectRatio = (float)tray.Texture.width / tray.Texture.height;
-            var historyImage = Image("ModifierHistory", playing, new Vector2(.06f, .48f), new Vector2(.94f, .578f));
-            history = stage.AddComponent<SpiritModifierHistoryRenderer>();
-            history.Configure(trayPresentation);
-            history.Initialize();
-            PrepareRenderer(history.RenderRoot, history.RenderCamera);
-            historyImage.texture = history.Texture;
-        }
-
-        private void PrepareRenderer(Transform root, Camera renderCamera)
-        {
-            SceneManager.MoveGameObjectToScene(root.gameObject, previewScene);
-            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-                child.gameObject.hideFlags = HideFlags.HideAndDontSave;
-            renderCamera.scene = previewScene;
-            renderCamera.enabled = false;
+            else
+            {
+                previewScene = EditorSceneManager.NewPreviewScene();
+                stage = Object("Encounter Lighting Preview");
+                camera = Object("Encounter Preview Camera").AddComponent<Camera>();
+                camera.scene = previewScene;
+                camera.enabled = false;
+                camera.transform.position = new Vector3(0, 0, -10);
+                camera.orthographic = true;
+                camera.orthographicSize = 480;
+                camera.nearClipPlane = .1f;
+                camera.farClipPlane = 30;
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
+                camera.cullingMask = 1 << UiLayer;
+                camera.allowHDR = false;
+                camera.allowMSAA = false;
+                output = new RenderTexture(540, 960, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                {
+                    name = "Encounter Lighting Preview", hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+                };
+                output.Create();
+                camera.targetTexture = output;
+                var canvasRoot = Object("Encounter Preview Canvas", typeof(RectTransform)).GetComponent<RectTransform>();
+                canvasRoot.SetParent(stage.transform, false);
+                var canvas = canvasRoot.gameObject.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = camera;
+                canvas.planeDistance = 1;
+                var scaler = canvasRoot.gameObject.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(540, 960);
+                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                scaler.matchWidthOrHeight = 1;
+                roomImage = Image("Entry", canvasRoot, Vector2.zero, Vector2.one);
+            }
         }
 
         private void RenderPreview()
@@ -253,16 +232,15 @@ namespace Dice.Editor
             state.Sample(lighting, time);
             if (lighting != null) compositor.Apply(state);
             Texture2D texture = lighting != null ? lighting.BaseTexture : table?.RoomTexture;
-            BindImage(roomImage, texture);
-            BindImage(tableImage, texture);
+            if (showTable) roomImage.material = tableImage.material = compositor?.Material;
+            else BindImage(roomImage, texture);
             var sampled = lighting != null ? state : null;
             tray?.SetSceneLighting(sampled);
             history?.SetSceneLighting(sampled);
             Canvas.ForceUpdateCanvases();
             if (host != null)
             {
-                host.ResetPose();
-                host.Advance((float)time);
+                host.Sample((float)time);
                 host.SetSceneLighting(sampled, table.HostLightingPosition);
             }
             RenderTexture previous = RenderTexture.active;
@@ -271,7 +249,6 @@ namespace Dice.Editor
             {
                 Canvas.ForceUpdateCanvases();
                 if (tray != null) Render(tray.RenderCamera, tray.Texture);
-                if (history != null) Render(history.RenderCamera, history.Texture);
                 Render(camera, output);
             }
             finally
@@ -356,31 +333,32 @@ namespace Dice.Editor
             return image;
         }
 
-        private static void PrepareUi(GameObject root)
-        {
-            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
-            {
-                child.gameObject.layer = UiLayer;
-                child.gameObject.hideFlags = HideFlags.HideAndDontSave;
-            }
-        }
-
         private void ReleaseStage()
         {
             compositor?.Dispose();
             compositor = null;
-            if (previewScene.IsValid()) EditorSceneManager.ClosePreviewScene(previewScene);
+            if (encounter != null)
+            {
+                encounter.Dispose();
+                encounter = null;
+            }
+            else
+            {
+                if (previewScene.IsValid()) EditorSceneManager.ClosePreviewScene(previewScene);
+                if (output != null) { output.Release(); DestroyImmediate(output); }
+            }
             previewScene = default;
-            if (output != null) { output.Release(); DestroyImmediate(output); }
             if (lighting != null) DestroyImmediate(lighting);
             output = null;
             lighting = sourceLighting = null;
             stage = null;
             camera = null;
             roomImage = tableImage = null;
+            trayScene = null;
             tray = null;
             history = null;
             host = null;
+            stagedSceneSettings = null;
             state.Sample(null, 0);
         }
     }

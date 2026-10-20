@@ -27,7 +27,6 @@ namespace Dice.Tests
             host = new GameObject("Spirit controller test");
             host.SetActive(false);
             controller = host.AddComponent<SpiritEncounterController>();
-            host.GetComponent<SpiritEncounterView>().enabled = false;
             artifactRoot = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..",
                 "Docs", "work", "spirit-file-tests", Guid.NewGuid().ToString("N")));
             savePath = Path.Combine(artifactRoot, "encounter.json");
@@ -66,7 +65,7 @@ namespace Dice.Tests
         [Test]
         public void MissingCatalogLeavesTheHostUsable()
         {
-            Assert.That(host.GetComponent<SpiritEncounterView>(), Is.Not.Null);
+            Assert.That(host.GetComponent<SpiritEncounterView>(), Is.Null, "Controllers do not construct presentation.");
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.StatusMessage, Does.Contain("startup"));
             Assert.DoesNotThrow(() => controller.StartNew());

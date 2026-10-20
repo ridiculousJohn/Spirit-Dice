@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Dice.Presentation
 {
@@ -9,6 +10,7 @@ namespace Dice.Presentation
     public sealed class EncounterTablePresentationAsset : ScriptableObject
     {
         [SerializeField] private string displayTitle;
+        [SerializeField] private AssetReference scene;
         [SerializeField] private Texture2D roomTexture;
         [SerializeField] private SceneLightingAsset sceneLighting;
         [SerializeField] private Vector3 hostLightingPosition = new Vector3(0, 1, 2);
@@ -21,6 +23,7 @@ namespace Dice.Presentation
         [SerializeField, Range(0, 2)] private float openingFadeDuration;
 
         public string DisplayTitle => displayTitle;
+        public AssetReference Scene => scene;
         public Texture2D RoomTexture => roomTexture;
         public SceneLightingAsset SceneLighting => sceneLighting;
         public Vector3 HostLightingPosition => hostLightingPosition;

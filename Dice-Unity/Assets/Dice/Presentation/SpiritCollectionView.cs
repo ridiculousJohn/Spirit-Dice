@@ -22,82 +22,31 @@ namespace Dice.Presentation
         private readonly HashSet<string> unlockedIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> ownedFamilyIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> discoveredFamilyIds = new HashSet<string>(StringComparer.Ordinal);
+        [SerializeField] private Button closeButton;
+        [SerializeField] private Button filterButton;
+        [SerializeField] private SpiritModifierFamilyRow rowPrefab;
         private MechanicalCatalog catalog;
         private EncounterJourneyCatalogAsset journeys;
-        private RectTransform content;
-        private ScrollRect scroll;
-        private Text summary;
-        private Text filterLabel;
-        private Text detailTitle;
-        private Text detailEffect;
-        private Text detailSource;
+        [SerializeField] private RectTransform content;
+        [SerializeField] private ScrollRect scroll;
+        [SerializeField] private Text summary;
+        [SerializeField] private Text filterLabel;
+        [SerializeField] private Text detailTitle;
+        [SerializeField] private Text detailEffect;
+        [SerializeField] private Text detailSource;
 
-        public RectTransform Root { get; private set; }
+        public RectTransform Root => (RectTransform)transform;
         public bool IsVisible => Root != null && Root.gameObject.activeSelf;
         public string SelectedModifierId { get; private set; }
         public IReadOnlyList<SpiritModifierFamilyRow> Rows => rows;
-        public SpiritCollectionFilter Filter { get; private set; }
+        [field: SerializeField] public SpiritCollectionFilter Filter { get; private set; }
 
         public void Build(RectTransform parent, Action close)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (close == null) throw new ArgumentNullException(nameof(close));
-            if (Root != null) throw new InvalidOperationException("The collection has already been built.");
-            var theme = SpiritUi.GetTheme(parent);
-            Root = SpiritUi.Panel("CollectionOverlay", parent, Vector2.zero, Vector2.one,
-                new Color(theme.panelColor.r, theme.panelColor.g, theme.panelColor.b, 1)).rectTransform;
-            SpiritUi.Panel("CollectionFrame", Root, Vector2.zero, Vector2.one,
-                theme.panelColor, 0, true).raycastTarget = false;
-            SpiritUi.Heading("CollectionTitle", Root, "COLLECTION", 29,
-                new Vector2(.03f, .915f), new Vector2(.73f, .99f), TextAnchor.MiddleLeft, theme.amber);
-            var closeImage = SpiritUi.Panel("CloseCollectionButton", Root,
-                new Vector2(.75f, .915f), new Vector2(.98f, .99f), theme.panelColor, 5);
-            var closeBorder = closeImage.gameObject.AddComponent<Outline>();
-            closeBorder.effectColor = new Color(theme.amber.r, theme.amber.g, theme.amber.b, .6f);
-            closeBorder.effectDistance = new Vector2(1, -1);
-            var closeButton = closeImage.gameObject.AddComponent<SpiritUiButtonVisual>();
-            closeButton.targetGraphic = closeImage;
+            closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() => close());
-            SpiritUi.Heading("CloseCollectionButtonLabel", closeImage.transform, "Close", 20,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, theme.cream);
-            closeButton.CaptureContent();
-            summary = SpiritUi.Label("CollectionSummary", Root, "", 17,
-                new Vector2(.03f, .855f), new Vector2(.97f, .915f), TextAnchor.MiddleLeft, theme.muted);
-            var filterImage = SpiritUi.Panel("CollectionFilterButton", Root,
-                new Vector2(.03f, .795f), new Vector2(.40f, .85f), theme.panelColor, 5);
-            var filterBorder = filterImage.gameObject.AddComponent<Outline>();
-            filterBorder.effectColor = closeBorder.effectColor;
-            filterBorder.effectDistance = closeBorder.effectDistance;
-            var filterButton = filterImage.gameObject.AddComponent<SpiritUiButtonVisual>();
-            filterButton.targetGraphic = filterImage;
+            filterButton.onClick.RemoveAllListeners();
             filterButton.onClick.AddListener(() => SetFilter((SpiritCollectionFilter)(((int)Filter + 1) % 3)));
-            filterLabel = SpiritUi.Heading("CollectionFilterButtonLabel", filterImage.transform, "Owned", 20,
-                Vector2.zero, Vector2.one, TextAnchor.MiddleCenter, theme.cream);
-            filterButton.CaptureContent();
-            scroll = SpiritUi.Scroll("CollectionFamilies", Root, new Vector2(.015f, .275f), new Vector2(.985f, .79f), out content);
-            var layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 10;
-            layout.padding = new RectOffset(5, 5, 5, 5);
-            layout.childControlWidth = layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            var detail = SpiritUi.Panel("CollectionDetail", Root, new Vector2(.03f, .025f), new Vector2(.97f, .27f),
-                theme.panelColor, 0, true);
-            detailTitle = SpiritUi.Heading("CollectionDetailTitle", detail.transform, "", 22,
-                new Vector2(.02f, .76f), new Vector2(.98f, .99f), TextAnchor.MiddleLeft, theme.amber);
-            detailEffect = SpiritUi.Label("CollectionDetailEffect", detail.transform, "", 18,
-                new Vector2(.02f, .57f), new Vector2(.98f, .77f));
-            SpiritUi.Scroll("CollectionDetailSources", detail.transform,
-                new Vector2(.02f, .025f), new Vector2(.98f, .57f), out var sourceContent);
-            var sourceLayout = sourceContent.gameObject.AddComponent<VerticalLayoutGroup>();
-            sourceLayout.childControlWidth = sourceLayout.childControlHeight = true;
-            sourceLayout.childForceExpandWidth = true;
-            sourceLayout.childForceExpandHeight = false;
-            sourceContent.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            detailSource = SpiritUi.Label("CollectionDetailSource", sourceContent, "", 17,
-                Vector2.zero, Vector2.one, TextAnchor.UpperLeft, theme.muted);
-            Root.gameObject.SetActive(false);
         }
 
         public void Show(MechanicalCatalog mechanicalCatalog, IReadOnlyList<string> profileUnlockedModifierIds,
@@ -168,7 +117,7 @@ namespace Dice.Presentation
                     filter == SpiritCollectionFilter.Discovered && !discovered) continue;
                 int index = rows.Count;
                 if (index == rowPool.Count)
-                    rowPool.Add(SpiritModifierFamilyRow.Create("CollectionFamily" + index, content));
+                    rowPool.Add(SpiritModifierFamilyRow.Create(rowPrefab, "CollectionFamily" + index, content));
                 var row = rowPool[index];
                 row.gameObject.SetActive(true);
                 rows.Add(row);

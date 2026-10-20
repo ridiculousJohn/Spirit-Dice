@@ -20,11 +20,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ScoringPresentsContributionsInOrderAndRetainsRerollBonuses()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var modifiers = new[]
             {
                 Modifier("bank", ModifierPhase.InitialRoll, new AlwaysCondition(), ModifierEffectKind.AddBaseScore, 7),
@@ -40,6 +40,8 @@ namespace Dice.Tests
             string save = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "feedback.json"));
             controller.Initialize(catalog, encounter.Id, 60, save);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
             var expected = EncounterSession.CreateEncounter(catalog, encounter.Id, 60);
             AssertCounters(view, 7, 0, 0);
@@ -66,6 +68,7 @@ namespace Dice.Tests
             view.Bind(controller);
             AssertCounters(view, 22, 0, 0);
             controller.Load();
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.IsBusy, Is.False);
             AssertCounters(view, 22, 0, 0);
             yield return PlayAndInspect(controller, view, expected, "last-hand");
@@ -77,11 +80,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator InitialBaseAndMultiplierBanksSurviveSelectionLoadAndRebindWithoutPreview()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var modifiers = new[]
             {
                 Modifier("bank-base", ModifierPhase.InitialRoll, new AlwaysCondition(), ModifierEffectKind.AddBaseScore, 10),
@@ -99,6 +102,8 @@ namespace Dice.Tests
             string save = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "banked-feedback.json"));
             controller.Initialize(catalog, encounter.Id, 60, save);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
             var expected = EncounterSession.CreateEncounter(catalog, encounter.Id, 60);
             Assert.That(controller.Preview.Score.HandScore, Is.GreaterThan(0));
@@ -113,6 +118,7 @@ namespace Dice.Tests
             yield return WaitForPresentation(controller);
             AssertCounters(view, 10, 2, 0);
             controller.Load();
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(controller.SelectedMask, Is.Zero);
             Assert.That(controller.Snapshot.Revision, Is.Zero);
@@ -128,11 +134,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ReadyModifiersRetainDuplicateInstancesAndScrollWithoutRollActivations()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var geometry = view.TrayScene.Geometry;
             // Endpoint dice must fully leave the authored bay at opposite ends of the scroll.
             int readyCount = Mathf.CeilToInt((geometry.ModifierWidth * .5f + geometry.ModifierDieSize
@@ -155,6 +161,8 @@ namespace Dice.Tests
             string save = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "history.json"));
             controller.Initialize(catalog, encounter.Id, 60, save);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
             AssertHistory(view, controller.Preview.Score.ModifierContributions);
             Assert.That(view.ModifierHistory.Count, Is.EqualTo(readyCount));
@@ -226,6 +234,7 @@ namespace Dice.Tests
             view.Bind(controller);
             AssertHistory(view, controller.Preview.Score.ModifierContributions);
             controller.Load();
+            yield return ContentReady.Routed(controller);
             AssertHistory(view, controller.Preview.Score.ModifierContributions);
             Assert.That(view.ModifierHistory.Count, Is.EqualTo(readyCount));
             Assert.That(renderer.Count, Is.EqualTo(readyCount));
@@ -244,9 +253,9 @@ namespace Dice.Tests
             Assert.That(view.IsCharmPopupOpen, Is.True);
             Assert.That(view.CharmPopupInstanceId, Is.EqualTo(selectedContribution.InstanceId),
                 "The popup must inspect the tapped duplicate instance.");
-            Assert.That(FindLabel(view, "CharmPopupTitle").text,
+            Assert.That(view.CharmPopup.Title.text,
                 Is.EqualTo(SpiritModifierPresentation.GetName(selectedDefinition)));
-            Assert.That(FindLabel(view, "CharmPopupEffect").text,
+            Assert.That(view.CharmPopup.Effect.text,
                 Does.Contain(SpiritModifierPresentation.GetEffectText(selectedDefinition)));
             yield return Capture("history-selected-charm");
             long revision = controller.Snapshot.Revision;
@@ -260,12 +269,12 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision));
             Assert.That(controller.SelectedMask, Is.EqualTo(selection));
             ClickHistoryDie(view.ModifierHistory, lastIndex);
-            ClickPopupAt(view, FindLabel(view, "CharmPopupDescription").rectTransform.position);
+            ClickPopupAt(view, view.CharmPopup.Description.rectTransform.position);
             ClickHistoryDie(view.ModifierHistory, lastIndex);
-            var close = FindLabel(view, "CharmPopupTitle").transform.parent
-                .GetComponentsInChildren<Button>();
+            var close = view.CharmPopup.Panel.GetComponentsInChildren<Button>();
             Assert.That(close, Has.Length.EqualTo(1));
-            ClickPopupAt(view, ((RectTransform)close[0].transform).position);
+            Assert.That(close[0], Is.SameAs(view.CharmPopup.CloseButton));
+            ClickPopupAt(view, ((RectTransform)view.CharmPopup.CloseButton.transform).position);
             ClickHistoryDie(view.ModifierHistory, lastIndex);
             view.ShowHandRanks();
             Assert.That(view.IsCharmPopupOpen, Is.False);
@@ -275,15 +284,13 @@ namespace Dice.Tests
             Assert.That(view.IsCharmPopupOpen, Is.False);
             Assert.That(view.IsCharmsOpen, Is.True,
                 "The Charms button must still open the complete owned list.");
-            int ownedCount = 0;
-            foreach (var button in view.GetComponentsInChildren<Button>())
-                if (button.name.StartsWith("OwnedCharm", StringComparison.Ordinal)) ++ownedCount;
+            int ownedCount = view.OwnedCharmsPanel.GetComponentsInChildren<SpiritOwnedCharmCard>().Length;
             Assert.That(ownedCount, Is.EqualTo(controller.Snapshot.Modifiers.Count));
             Assert.That(view.ModifierHistory.Count, Is.EqualTo(readyCount), "Inspecting a token must not replay its activation.");
             view.ShowTable();
             Assert.That(view.IsCharmsOpen, Is.False);
             Canvas.ForceUpdateCanvases();
-            var statusRect = FindLabel(view, "StatusMessage").rectTransform;
+            var statusRect = view.GameplayHud.StatusLabel.rectTransform;
             var statusCorners = new Vector3[4];
             var historyCorners = new Vector3[4];
             statusRect.GetWorldCorners(statusCorners);
@@ -298,10 +305,10 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator CharmPopupFitsLongAuthoredRulesAtPortraitSizes()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var definitions = controller.Catalog.Modifiers.OrderByDescending(definition =>
                 SpiritModifierPresentation.GetConditionText(definition).Length).Take(4).ToArray();
             var encounter = new EncounterDefinition("encounter.popup-layout",
@@ -312,8 +319,10 @@ namespace Dice.Tests
             string save = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "popup.json"));
             controller.Initialize(catalog, encounter.Id, 60, save);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var portrait = ContentReady.Portrait();
             foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
             {
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
@@ -326,20 +335,20 @@ namespace Dice.Tests
                     Canvas.ForceUpdateCanvases();
                     Assert.That(view.IsCharmPopupOpen, Is.True);
                     Assert.That(view.IsCharmsOpen, Is.False);
-                    var title = FindLabel(view, "CharmPopupTitle");
-                    var panel = (RectTransform)title.transform.parent;
+                    var title = view.CharmPopup.Title;
+                    var panel = view.CharmPopup.Panel;
                     Assert.That(panel.rect.width, Is.LessThan(size.x));
                     Assert.That(panel.rect.height, Is.LessThan(size.y * .8f),
                         "A single charm must remain a compact inspection panel.");
-                    foreach (var name in new[] { "CharmPopupTitle", "CharmPopupEffect", "CharmPopupDescription", "CharmPopupStatus" })
+                    foreach (var label in new[] { view.CharmPopup.Title, view.CharmPopup.Effect,
+                        view.CharmPopup.Description, view.CharmPopup.Status })
                     {
-                        var label = FindLabel(view, name);
-                        if (!label.gameObject.activeSelf) continue;
-                        Assert.That(label.preferredHeight, Is.LessThanOrEqualTo(label.rectTransform.rect.height + 1), name);
+                        if (!label.gameObject.activeInHierarchy) continue;
+                        Assert.That(label.preferredHeight, Is.LessThanOrEqualTo(label.rectTransform.rect.height + 1), label.name);
                         var corners = new Vector3[4];
                         label.rectTransform.GetWorldCorners(corners);
                         foreach (var corner in corners)
-                            Assert.That(panel.rect.Contains(panel.InverseTransformPoint(corner)), Is.True, name);
+                            Assert.That(panel.rect.Contains(panel.InverseTransformPoint(corner)), Is.True, label.name);
                     }
                     yield return Capture("charm-popup-" + size.x + "-" + instance.InstanceId);
                     ClickPopupAt(view, title.rectTransform.position);
@@ -355,7 +364,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator SoundThemeLoadsAndMuteStopsOnlyEncounterAudio()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var sound = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterAudio>();
@@ -401,6 +410,7 @@ namespace Dice.Tests
                 if (button.name == "SoundButton") toggle = button;
             Assert.That(toggle, Is.Not.Null);
             toggle.onClick.Invoke();
+            yield return ContentReady.Routed();
             Assert.That(sound.Muted, Is.True);
             sound.BeginRoll(2);
             yield return null;
@@ -416,6 +426,7 @@ namespace Dice.Tests
             yield return Capture("rain-credits");
             credits.transform.parent.gameObject.SetActive(false);
             toggle.onClick.Invoke();
+            yield return ContentReady.Routed();
             Assert.That(sound.Muted, Is.False);
             sound.SendMessage("OnApplicationFocus", false);
             foreach (var source in sound.GetComponentsInChildren<AudioSource>()) Assert.That(source.isPlaying, Is.False);
@@ -451,7 +462,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator RecordedRollsAnimateSelectedDiceAndRetainTheResults()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var sound = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterAudio>();
@@ -726,9 +737,7 @@ namespace Dice.Tests
         {
             var normals = new[] { Vector3.forward, Vector3.up, Vector3.right,
                 Vector3.left, Vector3.down, Vector3.back };
-            Transform die = null;
-            foreach (var candidate in tray.RenderRoot.GetComponentsInChildren<Transform>(true))
-                if (candidate.name == "Spirit Die " + index) { die = candidate; break; }
+            var die = ContentReady.Die(tray, index);
             Assert.That(die, Is.Not.Null, "Die " + index);
             Assert.That(Vector3.Dot(die.TransformDirection(normals[face - 1]), Vector3.up), Is.GreaterThan(.95f),
                 "The settled result face must stay upward in slot " + index);
@@ -875,7 +884,7 @@ namespace Dice.Tests
             EventSystem.current.RaycastAll(pointer, hits);
             Assert.That(hits.Count, Is.GreaterThan(0));
             var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
-            Assert.That(handler.name, Is.EqualTo("CharmPopupOverlay").Or.EqualTo("CloseCharmPopupButton"),
+            Assert.That(handler == view.CharmPopup.gameObject || handler == view.CharmPopup.CloseButton.gameObject, Is.True,
                 "The popup must consume taps over itself and underlying gameplay controls.");
             pointer.pointerCurrentRaycast = hits[0];
             ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerDownHandler);

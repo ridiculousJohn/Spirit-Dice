@@ -34,7 +34,6 @@ namespace Dice.Tests
             host = new GameObject("Journey controls test");
             host.SetActive(false);
             controller = host.AddComponent<SpiritEncounterController>();
-            host.GetComponent<SpiritEncounterView>().enabled = false;
             Set(controller, "useFixedSeed", true);
             Set(controller, "initialSeed", "17");
             var modifier = new ModifierDefinition("modifier.journey-test", "family.journey-test", ModifierPhase.PlayHand,

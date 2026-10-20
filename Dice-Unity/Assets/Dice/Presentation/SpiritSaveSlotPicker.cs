@@ -13,21 +13,21 @@ namespace Dice.Presentation
         private PickerMode mode;
         private int replacementSlot;
         private string recoveryCampaignId;
-        private readonly Button[] slotButtons = new Button[3];
-        private readonly Text[] slotSummaries = new Text[3];
+        [SerializeField] private Button[] slotButtons = new Button[3];
+        [SerializeField] private Text[] slotSummaries = new Text[3];
 
-        public RectTransform Root { get; private set; }
-        public Text Title { get; private set; }
-        public Text Subtitle { get; private set; }
-        public Button CloseButton { get; private set; }
-        public Button RecoverSavesButton { get; private set; }
-        public SpiritCampaignRecoveryPicker RecoveryPicker { get; private set; }
+        [field: SerializeField] public RectTransform Root { get; private set; }
+        [field: SerializeField] public Text Title { get; private set; }
+        [field: SerializeField] public Text Subtitle { get; private set; }
+        [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public Button RecoverSavesButton { get; private set; }
+        [field: SerializeField] public SpiritCampaignRecoveryPicker RecoveryPicker { get; private set; }
         public PickerMode Mode => mode;
-        public RectTransform Confirmation { get; private set; }
-        public Text ConfirmationTitle { get; private set; }
-        public Text ConfirmationText { get; private set; }
-        public Button ConfirmReplaceSaveButton { get; private set; }
-        public Button CancelReplaceSaveButton { get; private set; }
+        [field: SerializeField] public RectTransform Confirmation { get; private set; }
+        [field: SerializeField] public Text ConfirmationTitle { get; private set; }
+        [field: SerializeField] public Text ConfirmationText { get; private set; }
+        [field: SerializeField] public Button ConfirmReplaceSaveButton { get; private set; }
+        [field: SerializeField] public Button CancelReplaceSaveButton { get; private set; }
         public System.Collections.Generic.IReadOnlyList<Button> SlotButtons => slotButtons;
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
         public bool IsConfirmingReplacement => Confirmation != null && Confirmation.gameObject.activeSelf;
@@ -35,56 +35,30 @@ namespace Dice.Presentation
         public void Build(RectTransform parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (Root != null) throw new InvalidOperationException("The save slot picker has already been built.");
-
-            var theme = SpiritUi.GetTheme(transform);
-            Root = SpiritUi.Panel("SaveSlotPicker", parent, Vector2.zero, Vector2.one,
-                new Color(0, 0, 0, .78f)).rectTransform;
-            var panel = SpiritUi.Panel("SaveSlotPickerPanel", Root,
-                new Vector2(.065f, .22f), new Vector2(.935f, .78f), theme.panelColor, 0, true).rectTransform;
-            Title = SpiritUi.Heading("SaveSlotPickerTitle", panel, "Save Slots", 28,
-                new Vector2(.04f, .83f), new Vector2(.96f, .97f), TextAnchor.MiddleCenter, theme.amber);
-            Subtitle = SpiritUi.Label("SaveSlotPickerSubtitle", panel, "Choose a save slot.", 18,
-                new Vector2(.04f, .74f), new Vector2(.96f, .84f), TextAnchor.MiddleCenter, theme.muted);
+            if (Root == null || Title == null || Subtitle == null || CloseButton == null ||
+                RecoverSavesButton == null || RecoveryPicker == null || Confirmation == null ||
+                ConfirmationTitle == null || ConfirmationText == null || ConfirmReplaceSaveButton == null ||
+                CancelReplaceSaveButton == null || slotButtons == null || slotSummaries == null ||
+                slotButtons.Length != 3 || slotSummaries.Length != 3)
+                throw new InvalidOperationException("The save slot picker requires authored UI references.");
             for (int i = 0; i < slotButtons.Length; ++i)
-            {
-                int slot = i + 1;
-                float top = .73f - i * .19f;
-                var button = SpiritUi.Button("SaveSlotButton" + slot, panel, "Slot " + slot,
-                    new Vector2(.055f, top - .18f), new Vector2(.945f, top), () => SelectSlot(slot), compact: true);
-                slotButtons[i] = button;
-                var label = button.GetComponentInChildren<Text>();
-                label.rectTransform.anchorMin = new Vector2(.09f, .46f);
-                label.rectTransform.anchorMax = new Vector2(.91f, .89f);
-                var summary = SpiritUi.Label("SaveSlotSummary" + slot, button.transform, "", 16,
-                    new Vector2(.09f, .08f), new Vector2(.91f, .48f), TextAnchor.MiddleCenter, theme.muted);
-                summary.rectTransform.offsetMin = summary.rectTransform.offsetMax = Vector2.zero;
-                summary.resizeTextForBestFit = true;
-                summary.resizeTextMinSize = 12;
-                summary.resizeTextMaxSize = 16;
-                slotSummaries[i] = summary;
-                button.GetComponent<SpiritUiButtonVisual>().CaptureContent();
-            }
-            CloseButton = SpiritUi.Button("CloseSaveSlotPickerButton", panel, "Cancel",
-                new Vector2(.22f, .025f), new Vector2(.78f, .15f), Cancel, compact: true);
-            RecoverSavesButton = SpiritUi.Button("RecoverSavesButton", panel, "Recover saves",
-                new Vector2(.12f, .155f), new Vector2(.88f, .28f), () => RecoveryPicker.Show(), compact: true);
-
-            Confirmation = SpiritUi.Panel("ReplaceSaveConfirmation", Root, Vector2.zero, Vector2.one,
-                new Color(0, 0, 0, .78f)).rectTransform;
-            var confirmationPanel = SpiritUi.Panel("ReplaceSaveConfirmationPanel", Confirmation,
-                new Vector2(.065f, .3f), new Vector2(.935f, .68f), theme.panelColor, 0, true).rectTransform;
-            ConfirmationTitle = SpiritUi.Heading("ReplaceSaveConfirmationTitle", confirmationPanel, "", 28,
-                new Vector2(.04f, .75f), new Vector2(.96f, .96f), TextAnchor.MiddleCenter, theme.amber);
-            ConfirmationText = SpiritUi.Label("ReplaceSaveConfirmationText", confirmationPanel,
-                "This will reset its chapter progress, collected charms, and current encounter.", 20,
-                new Vector2(.055f, .31f), new Vector2(.945f, .76f), TextAnchor.MiddleCenter);
-            ConfirmReplaceSaveButton = SpiritUi.Button("ConfirmReplaceSaveButton", confirmationPanel, "New Game",
-                new Vector2(.04f, .065f), new Vector2(.5f, .28f), ConfirmReplacement, compact: true);
-            CancelReplaceSaveButton = SpiritUi.Button("CancelReplaceSaveButton", confirmationPanel, "Cancel",
-                new Vector2(.5f, .065f), new Vector2(.96f, .28f), CloseConfirmation, compact: true);
-            RecoveryPicker = gameObject.AddComponent<SpiritCampaignRecoveryPicker>();
-            RecoveryPicker.Build(parent);
+                if (slotButtons[i] == null || slotSummaries[i] == null)
+                    throw new InvalidOperationException("The save slot picker requires three authored slots.");
+            RecoveryPicker.Build(Root);
+            slotButtons[0].onClick.RemoveListener(SelectFirstSlot);
+            slotButtons[0].onClick.AddListener(SelectFirstSlot);
+            slotButtons[1].onClick.RemoveListener(SelectSecondSlot);
+            slotButtons[1].onClick.AddListener(SelectSecondSlot);
+            slotButtons[2].onClick.RemoveListener(SelectThirdSlot);
+            slotButtons[2].onClick.AddListener(SelectThirdSlot);
+            CloseButton.onClick.RemoveListener(Cancel);
+            CloseButton.onClick.AddListener(Cancel);
+            RecoverSavesButton.onClick.RemoveListener(OpenRecovery);
+            RecoverSavesButton.onClick.AddListener(OpenRecovery);
+            ConfirmReplaceSaveButton.onClick.RemoveListener(ConfirmReplacement);
+            ConfirmReplaceSaveButton.onClick.AddListener(ConfirmReplacement);
+            CancelReplaceSaveButton.onClick.RemoveListener(CloseConfirmation);
+            CancelReplaceSaveButton.onClick.AddListener(CloseConfirmation);
             Close();
         }
 
@@ -123,10 +97,6 @@ namespace Dice.Presentation
             SpiritUi.SetButtonLabel(RecoverSavesButton, "Recover saves (" + recoveryCount + ")");
             for (int i = 0; i < slotButtons.Length; ++i)
             {
-                float top = .73f - i * (showRecovery ? .15f : .19f);
-                var rect = (RectTransform)slotButtons[i].transform;
-                rect.anchorMin = new Vector2(.055f, top - (showRecovery ? .14f : .18f));
-                rect.anchorMax = new Vector2(.945f, top);
                 int slot = i + 1;
                 var info = GetSlot(slot);
                 SpiritUi.SetButtonLabel(slotButtons[i], "Slot " + slot + (controls.ActiveSaveSlot == slot ? " - Active" : ""));
@@ -239,6 +209,11 @@ namespace Dice.Presentation
             if (mode == PickerMode.Recover) Show(false);
             else Close();
         }
+
+        private void SelectFirstSlot() => SelectSlot(1);
+        private void SelectSecondSlot() => SelectSlot(2);
+        private void SelectThirdSlot() => SelectSlot(3);
+        private void OpenRecovery() => RecoveryPicker.Show();
 
         private void OnDisable()
         {

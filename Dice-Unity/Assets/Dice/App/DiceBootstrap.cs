@@ -10,12 +10,13 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Dice.App
 {
-    [RequireComponent(typeof(SpiritEncounterController))]
     public sealed class DiceBootstrap : MonoBehaviour
     {
         public const string ConfigurationAddress = "dice.application";
 
-        private SpiritEncounterController controller;
+        [SerializeField] private SpiritEncounterController controller;
+        [SerializeField] private SpiritCampaignController campaign;
+        [SerializeField] private SpiritApplicationPresentation presentation;
         private AsyncOperationHandle<DiceApplicationConfig> configurationHandle;
         private bool hasConfigurationHandle;
         private ModifierAssetLoader modifierAssets;
@@ -23,19 +24,13 @@ namespace Dice.App
         private IDisposable presentationTheme;
         private bool retainContent;
 
-        public SpiritStartupView StartupView { get; private set; }
+        [field: SerializeField] public SpiritStartupView StartupView { get; private set; }
 
         private bool StartupObsolete => !isActiveAndEnabled || controller == null || controller.Catalog != null;
 
         private void Awake()
         {
-            controller = GetComponent<SpiritEncounterController>();
-            var startup = new GameObject("Application Startup");
-            startup.transform.SetParent(transform, false);
-            StartupView = startup.AddComponent<SpiritStartupView>();
-            StartupView.Build(GetComponent<SpiritEncounterView>().UiTheme);
             StartupView.ShowStatus(controller.StatusMessage);
-            controller.PresentationInitialized += StartupView.Hide;
         }
 
         private IEnumerator Start()
@@ -155,11 +150,11 @@ namespace Dice.App
                 bool initialized;
                 if (configuration.JourneyCatalog != null)
                 {
-                    var campaign = GetComponent<SpiritCampaignController>() ?? gameObject.AddComponent<SpiritCampaignController>();
                     initialized = campaign.Initialize(catalog, configuration.JourneyCatalog, Path.GetDirectoryName(controller.SavePath));
                 }
                 else initialized = controller.Initialize(catalog, configuration.JourneyCatalog, configuration.EncounterId);
-                if (!initialized || !controller.PresentationReady) SetStartupStatus(controller.StatusMessage);
+                if (initialized) presentation.Initialize(configuration.FrontendScene);
+                else SetStartupStatus(controller.StatusMessage);
             }
             catch (Exception exception)
             {
@@ -181,9 +176,6 @@ namespace Dice.App
         private void OnDestroy()
         {
             ReleaseContent();
-            if (controller != null && StartupView != null)
-                controller.PresentationInitialized -= StartupView.Hide;
-            if (StartupView != null) Destroy(StartupView.gameObject);
         }
 
         private void ReleaseContent()

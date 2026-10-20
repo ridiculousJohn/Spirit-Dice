@@ -21,7 +21,7 @@ namespace Dice.Tests
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<DiagnosticEncounterController>();
             Assert.That(controller, Is.Not.Null);
-            Assert.That(controller.GetComponent<DiagnosticEncounterView>().enabled, Is.True);
+            Assert.That(UnityEngine.Object.FindAnyObjectByType<DiagnosticEncounterView>().enabled, Is.True);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.standard"));
             Assert.That(controller.Snapshot.StageCount, Is.EqualTo(25));
             var artifactRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",

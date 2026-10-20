@@ -8,6 +8,7 @@ using Dice.Presentation;
 using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
@@ -22,7 +23,7 @@ namespace Dice.Tests
         [Test]
         public void DisposingOwnersAfterAddressablesInvalidatesTheirOperationsDoesNotReleaseAgain()
         {
-            using var resourceManager = new ResourceManager();
+            var resourceManager = Addressables.ResourceManager;
             using var mechanics = new ModifierAssetLoader();
             using var presentation = new ModifierPresentationLoader();
             var mechanicsHandle = resourceManager.CreateCompletedOperation<IList<ModifierAsset>>(
@@ -51,7 +52,7 @@ namespace Dice.Tests
         [Test]
         public void DisposingOwnersReleasesTheirValidOperationsExactlyOnce()
         {
-            using var resourceManager = new ResourceManager();
+            var resourceManager = Addressables.ResourceManager;
             using var mechanics = new ModifierAssetLoader();
             using var presentation = new ModifierPresentationLoader();
             var mechanicsHandle = resourceManager.CreateCompletedOperation<IList<ModifierAsset>>(
@@ -88,7 +89,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator LabelsLoadCompleteMechanicsAndThemeWithTheSameMechanicalReferences()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
             float deadline = Time.realtimeSinceStartup + 20;

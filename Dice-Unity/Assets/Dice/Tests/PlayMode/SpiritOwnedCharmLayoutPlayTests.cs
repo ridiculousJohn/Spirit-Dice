@@ -20,11 +20,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator OwnedVariantsAndInspectionsKeepEveryGlyphAtBothPortraitSizes()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             const string family = "modifier.play_hand.edge_sum_equals_either";
             var definitions = controller.Catalog.Modifiers.OrderBy(definition =>
                 definition.Id == family + ".multiplier" ? 0 : definition.Id == family + ".combined" ? 1 : 2).ToArray();
@@ -39,6 +39,8 @@ namespace Dice.Tests
             string savePath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "owned-charms.json"));
             controller.Initialize(catalog, encounter.Id, 60, savePath);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             view.ShowCharms();
             yield return null;
             var snapshot = controller.Snapshot;
@@ -49,10 +51,10 @@ namespace Dice.Tests
             var grid = scroll.content.GetComponent<GridLayoutGroup>();
             Assert.That(grid.constraint, Is.EqualTo(GridLayoutGroup.Constraint.FixedColumnCount));
             Assert.That(grid.constraintCount, Is.EqualTo(2));
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             var detailTitle = Find<Text>(view, "CharmDetailTitle");
             var detailBody = Find<Text>(view, "CharmDetailBody");
-            var reward = SpiritRewardCard.Create("CharmIconComparisonReward", portrait, (offerId, optionId) => { });
+            var reward = SpiritRewardCard.Create(ContentReady.RewardCardPrefab(), "CharmIconComparisonReward", portrait, (offerId, optionId) => { });
             reward.gameObject.SetActive(false);
             var comparedGraphics = new HashSet<bool>();
             foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
@@ -85,6 +87,8 @@ namespace Dice.Tests
                     AssertOwnedGraphic(card, definition, badge);
 
                     card.onClick.Invoke();
+                    yield return ContentReady.Routed();
+                    view = ContentReady.EncounterView(controller);
                     Canvas.ForceUpdateCanvases();
                     Assert.That(detailTitle.text, Is.EqualTo(title.text));
                     string effectColor = ColorUtility.ToHtmlStringRGB(SpiritModifierIcons.GetEffectColor(definition));
@@ -96,13 +100,15 @@ namespace Dice.Tests
                     AssertDetailGraphic(view, definition);
                     if (comparedGraphics.Add(SpiritModifierIcons.GetSprite(definition) != null))
                         AssertRewardGraphic(reward, card, view, definition);
-                    AssertSections((RectTransform)detailTitle.transform.parent,
+                    AssertSections((RectTransform)detailBody.transform.parent,
                         new[] { detailTitle, detailBody }, definition.Id + "/inspection");
                     AssertCompleteText(detailTitle, definition.Id + "/inspection title");
                     AssertCompleteText(detailBody, definition.Id + "/inspection body");
                     Assert.That(scroll.viewport.rect.height, Is.GreaterThan(100), "Inspection must leave a usable inventory viewport.");
                 }
                 cards[0].onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 scroll.verticalNormalizedPosition = 1;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
@@ -126,6 +132,8 @@ namespace Dice.Tests
                 var center = scroll.viewport.InverseTransformPoint(last.TransformPoint(last.rect.center));
                 Assert.That(center.y, Is.InRange(scroll.viewport.rect.yMin, scroll.viewport.rect.yMax));
                 cards[cards.Length - 1].onClick.Invoke();
+                yield return ContentReady.Routed();
+                view = ContentReady.EncounterView(controller);
                 Canvas.ForceUpdateCanvases();
                 Assert.That(detailTitle.text, Is.EqualTo(CardText(cards[cards.Length - 1], "Title").text));
                 yield return Capture("owned-variants-scrolled-" + (int)size.x);
@@ -137,11 +145,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator MixedCharmStatesAndUseCountsStayReadableAndClickableAtBothPortraitSizes()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var definitions = new[]
             {
                 Modifier("ready", ModifierPhase.PlayHand, new AlwaysCondition()),
@@ -159,6 +167,8 @@ namespace Dice.Tests
             string savePath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "owned-charm-status.json"));
             controller.Initialize(catalog, encounter.Id, 60, savePath);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             controller.ToggleDie(0);
             controller.Reroll();
             yield return Wait(controller);
@@ -177,7 +187,7 @@ namespace Dice.Tests
                 "Activated this stage", "After a reroll" };
             var snapshot = controller.Snapshot;
             var scroll = Find<ScrollRect>(view, "OwnedCharmScroll");
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             var symbols = new Dictionary<SpiritCharmStatusState, Vector3[]>();
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
@@ -237,6 +247,8 @@ namespace Dice.Tests
             var emptyCatalog = new MechanicalCatalog("owned-charm-empty.v1", controller.Catalog.Hands,
                 new[] { emptyEncounter }, definitions);
             controller.Initialize(emptyCatalog, emptyEncounter.Id, 60, Path.Combine(Path.GetDirectoryName(savePath), "empty-charms.json"));
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             view.ShowCharms();
             yield return null;
             Assert.That(Find<RectTransform>(view, "CharmDetailStatusRow").gameObject.activeSelf, Is.False);
@@ -290,7 +302,7 @@ namespace Dice.Tests
             var sprite = SpiritModifierIcons.GetSprite(definition);
             Assert.That(image.gameObject.activeSelf, Is.EqualTo(sprite != null), definition.Id + "/" + imageName);
             Assert.That(sigil.gameObject.activeSelf, Is.EqualTo(sprite == null), definition.Id + "/" + sigilName);
-            Assert.That(image.sprite, Is.SameAs(sprite), definition.Id + "/sprite");
+            Assert.That(image.sprite == sprite, Is.True, definition.Id + "/sprite");
             Assert.That(sigil.Seed, Is.EqualTo(SpiritModifierIcons.GetSigilSeed(definition)), definition.Id + "/sigil seed");
             Assert.That(image.raycastTarget, Is.False, definition.Id + " image must permit card inspection.");
             Assert.That(sigil.raycastTarget, Is.False, definition.Id + " sigil must permit card inspection.");
@@ -318,8 +330,8 @@ namespace Dice.Tests
             var detailSigil = Find<SpiritModifierSigilGraphic>(view, "CharmDetailSigil");
             Assert.That(image.gameObject.activeSelf, Is.EqualTo(rewardImage.gameObject.activeSelf), definition.Id);
             Assert.That(sigil.gameObject.activeSelf, Is.EqualTo(rewardSigil.gameObject.activeSelf), definition.Id);
-            Assert.That(image.sprite, Is.SameAs(rewardImage.sprite), definition.Id + "/reward sprite");
-            Assert.That(detailImage.sprite, Is.SameAs(rewardImage.sprite), definition.Id + "/reward detail sprite");
+            Assert.That(image.sprite == rewardImage.sprite, Is.True, definition.Id + "/reward sprite");
+            Assert.That(detailImage.sprite == rewardImage.sprite, Is.True, definition.Id + "/reward detail sprite");
             Assert.That(sigil.Seed, Is.EqualTo(rewardSigil.Seed), definition.Id + "/reward sigil seed");
             Assert.That(detailSigil.Seed, Is.EqualTo(rewardSigil.Seed), definition.Id + "/reward detail sigil seed");
             Assert.That(sigil.color, Is.EqualTo(rewardSigil.color), definition.Id + "/reward sigil color");
@@ -385,11 +397,13 @@ namespace Dice.Tests
             AssertInside(bounds, icon, context + "/icon");
             Assert.That(badge.GetComponentsInChildren<Text>(true), Is.Empty, context + "/badge text");
             Assert.That(badge.Icon.raycastTarget, Is.False, context + " icon must permit card inspection.");
-            foreach (string name in new[] { "Title", "Condition", "Effects", "CharmIcon", "CharmSigil" })
+            var authored = card.GetComponent<SpiritOwnedCharmCard>();
+            Assert.That(authored, Is.Not.Null);
+            foreach (var section in new[] { authored.Title.rectTransform, authored.Body.rectTransform,
+                authored.Effect.rectTransform, authored.Icon.rectTransform, authored.Sigil.rectTransform })
             {
-                var section = card.transform.Find(name) as RectTransform;
-                if (section == null || !section.gameObject.activeSelf) continue;
-                Assert.That(bounds.Overlaps(BoundsIn(panel, section)), Is.False, context + "/" + name + " overlaps badge.");
+                if (!section.gameObject.activeInHierarchy) continue;
+                Assert.That(bounds.Overlaps(BoundsIn(panel, section)), Is.False, context + "/" + section.name + " overlaps badge.");
             }
         }
 
@@ -536,7 +550,7 @@ namespace Dice.Tests
             }
         }
 
-        private static Text CardText(Button card, string name) => card.transform.Find(name).GetComponent<Text>();
+        private static Text CardText(Button card, string name) => card.GetComponentsInChildren<Text>(true).Single(label => label.name == name);
 
         private static string AvailabilityText(ModifierDefinition definition, EncounterSnapshot snapshot)
         {

@@ -12,10 +12,10 @@ using Resolution = Dice.Engine.Resolution;
 
 namespace Dice.App
 {
-    [RequireComponent(typeof(DiagnosticEncounterView))]
     public sealed class DiagnosticEncounterController : MonoBehaviour, IDiagnosticEncounterControls, IEncounterPresenter
     {
         private const int MaximumEventLogEntries = 160;
+        [SerializeField] private DiagnosticEncounterView view;
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
         [SerializeField] private string encounterId = "encounter.standard";
         [SerializeField] private string initialSeed = "60";
@@ -189,7 +189,11 @@ namespace Dice.App
             AppendEvents(resolution);
         }
 
-        private void BindView() => GetComponent<DiagnosticEncounterView>().Bind(this);
+        private void BindView()
+        {
+            if (view == null) throw new InvalidOperationException("The diagnostic controller requires an authored view.");
+            view.Bind(this);
+        }
 
         private void InstallNew(EncounterApplication next, ulong seed)
         {

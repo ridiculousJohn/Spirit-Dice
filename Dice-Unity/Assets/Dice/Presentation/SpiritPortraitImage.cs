@@ -9,16 +9,25 @@ namespace Dice.Presentation
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class SpiritPortraitImage : RawImage
     {
-        private SpiritPortraitMeshAsset mesh;
-        private float[] weights = Array.Empty<float>();
+        [SerializeField] private SpiritPortraitMeshAsset mesh;
+        [SerializeField] private float[] weights = Array.Empty<float>();
         private IReadOnlyList<float> readOnlyWeights = Array.Empty<float>();
-        public IReadOnlyList<float> Weights => readOnlyWeights;
+        public IReadOnlyList<float> Weights => readOnlyWeights.Count == weights.Length ? readOnlyWeights
+            : readOnlyWeights = Array.AsReadOnly(weights);
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            Configure(mesh);
+        }
 
         public void Configure(SpiritPortraitMeshAsset asset)
         {
             if (asset != null) asset.Validate();
+            bool changedMesh = mesh != asset;
             mesh = asset;
-            weights = new float[mesh != null ? mesh.Shapes.Length : 0];
+            int count = mesh != null ? mesh.Shapes.Length : 0;
+            if (changedMesh || weights == null || weights.Length != count) weights = new float[count];
             readOnlyWeights = Array.AsReadOnly(weights);
             SetVerticesDirty();
         }

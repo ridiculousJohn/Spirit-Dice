@@ -17,6 +17,7 @@ namespace Dice.Tests
         private Scene scene;
         private readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
         private SpiritDiceTray tray;
+        private SpiritTrayScene trayScene;
         private SpiritModifierHistoryRenderer history;
         private SpiritHostPortrait host;
         private SceneLightingAsset lighting;
@@ -27,13 +28,16 @@ namespace Dice.Tests
         {
             scene = EditorSceneManager.NewPreviewScene();
             var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Presentation/Shared/SpiritTrayPresentation.asset");
-            tray = Root("Lighting dice").AddComponent<SpiritDiceTray>();
-            tray.Configure(trayPresentation);
+                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset");
+            trayScene = UnityEngine.Object.Instantiate(trayPresentation.RigPrefab);
+            SceneManager.MoveGameObjectToScene(trayScene.gameObject, scene);
+            trayScene.Configure(trayPresentation); trayScene.Initialize();
+            tray = trayScene.DiceTray;
+            tray.Configure(trayPresentation, trayScene);
             tray.Initialize();
             MoveRenderer(tray.RenderRoot, tray.RenderCamera);
-            history = Root("Lighting history").AddComponent<SpiritModifierHistoryRenderer>();
-            history.Configure(trayPresentation);
+            history = trayScene.HistoryRenderer;
+            history.Configure(trayPresentation, trayScene);
             history.Initialize();
             MoveRenderer(history.RenderRoot, history.RenderCamera);
             AddHistory();
@@ -51,7 +55,8 @@ namespace Dice.Tests
                 new SpiritPortraitLayer { Id = "glow", Texture = Texture2D.whiteTexture, Size = new Vector2(16, 16),
                     Tint = new Color(.2f, .4f, .8f, .42f), ReceiveSceneLighting = false }
             };
-            host = presentation.Create(parent);
+            host = SpiritPortraitTestAuthoring.Create(presentation, parent);
+            host.Build((RectTransform)host.transform, presentation);
             lighting = Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
             lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.BaseTexture = Texture2D.whiteTexture;
@@ -86,7 +91,7 @@ namespace Dice.Tests
                 state.Sample(lighting, sample * .419);
                 compositor.Apply(state);
                 Apply(state);
-                Assert.That(Field<SceneLightingState>(tray, "sceneLighting"), Is.SameAs(state));
+                Assert.That(Field<SceneLightingState>(trayScene, "sceneLighting"), Is.SameAs(state));
                 Assert.That(Field<SceneLightingState>(history, "sceneLighting"), Is.SameAs(state));
                 distinctLevels |= Mathf.Abs(state.GetIntensity(0) - state.GetIntensity(1)) > .002f;
                 for (int i = 0; i < state.Count; ++i)
@@ -119,7 +124,8 @@ namespace Dice.Tests
             Assert.That(arrived.GetVector("_SceneLightParameters0").x, Is.EqualTo(state.GetIntensity(0)));
             history.gameObject.SetActive(false);
             Invoke(history, "OnDisable");
-            Assert.That(history.RenderRoot.gameObject.activeSelf, Is.False);
+            Assert.That(history.GetDieTransform(0).gameObject.activeInHierarchy, Is.False);
+            Assert.That(history.RenderRoot.gameObject.activeSelf, Is.True);
             history.gameObject.SetActive(true);
             Invoke(history, "OnEnable");
             Assert.That(history.RenderRoot.gameObject.activeSelf, Is.True);
@@ -194,7 +200,7 @@ namespace Dice.Tests
 
         private void MoveRenderer(Transform root, Camera camera)
         {
-            SceneManager.MoveGameObjectToScene(root.gameObject, scene);
+            SceneManager.MoveGameObjectToScene(root.root.gameObject, scene);
             camera.scene = scene;
             camera.enabled = false;
         }

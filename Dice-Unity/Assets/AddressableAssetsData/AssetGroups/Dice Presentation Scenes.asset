@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Dice Presentation Scenes
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Dice Presentation Scenes
+  m_GUID: 95e13035eda335846900d3ce9bf14dec
+  m_SerializeEntries:
+  - m_GUID: 0ad715e91f47eab4c8ec2e340faa5126
+    m_Address: dice.scene.moth
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 31715bf3ac2f1f8438ec86b01e6963e4
+    m_Address: dice.scene.watchtower
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 530c4a7cb9e70ca44bb7fd539f279636
+    m_Address: dice.scene.frontend
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7742889eed0b464499fc3efaca76eac5
+    m_Address: dice.scene.fox
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: a0df579548c46064397d12907ca65fa8, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 306d57e1591922e4c9e459d60974704e, type: 2}
+    - {fileID: 11400000, guid: 7c1d10b516c70864fbba7777cce02398, type: 2}
+    m_SchemaDisplayOrder:
+    - Dice Presentation Scenes_BundledAssetGroupSchema
+    - Dice Presentation Scenes_ContentUpdateGroupSchema
+  m_IncludeInBuild: 1
+  m_IncludeInBuildMigrated: 1

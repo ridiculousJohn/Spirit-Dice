@@ -11,17 +11,17 @@ namespace Dice.Presentation
         private ISpiritMainMenuControls controls;
         private Action<string> selectCampaign;
         private Action cancel;
-        private readonly Button[] candidateButtons = new Button[3];
-        private readonly Text[] summaries = new Text[3];
-        private readonly Text[] details = new Text[3];
-        private readonly Text[] identifiers = new Text[3];
+        [SerializeField] private Button[] candidateButtons = new Button[3];
+        [SerializeField] private Text[] summaries = new Text[3];
+        [SerializeField] private Text[] details = new Text[3];
+        [SerializeField] private Text[] identifiers = new Text[3];
         private readonly string[] campaignIds = new string[3];
 
-        public RectTransform Root { get; private set; }
-        public Button CloseButton { get; private set; }
-        public Button PreviousPageButton { get; private set; }
-        public Button NextPageButton { get; private set; }
-        public Text PageLabel { get; private set; }
+        [field: SerializeField] public RectTransform Root { get; private set; }
+        [field: SerializeField] public Button CloseButton { get; private set; }
+        [field: SerializeField] public Button PreviousPageButton { get; private set; }
+        [field: SerializeField] public Button NextPageButton { get; private set; }
+        [field: SerializeField] public Text PageLabel { get; private set; }
         public IReadOnlyList<Button> CandidateButtons => candidateButtons;
         public int PageIndex { get; private set; }
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
@@ -29,47 +29,26 @@ namespace Dice.Presentation
         public void Build(RectTransform parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (Root != null) throw new InvalidOperationException("The campaign recovery picker has already been built.");
-
-            var theme = SpiritUi.GetTheme(transform);
-            Root = SpiritUi.Panel("CampaignRecoveryPicker", parent, Vector2.zero, Vector2.one,
-                new Color(0, 0, 0, .78f)).rectTransform;
-            var panel = SpiritUi.Panel("CampaignRecoveryPickerPanel", Root,
-                new Vector2(.065f, .22f), new Vector2(.935f, .90f), theme.panelColor, 0, true).rectTransform;
-            SpiritUi.Heading("CampaignRecoveryPickerTitle", panel, "Recover saves", 28,
-                new Vector2(.04f, .88f), new Vector2(.96f, .98f), TextAnchor.MiddleCenter, theme.amber);
-            SpiritUi.Label("CampaignRecoveryPickerSubtitle", panel, "Choose a campaign to recover.", 18,
-                new Vector2(.04f, .78f), new Vector2(.96f, .88f), TextAnchor.MiddleCenter, theme.muted);
+            if (Root == null || CloseButton == null || PreviousPageButton == null ||
+                NextPageButton == null || PageLabel == null || candidateButtons == null ||
+                summaries == null || details == null || identifiers == null || candidateButtons.Length != 3 ||
+                summaries.Length != 3 || details.Length != 3 || identifiers.Length != 3)
+                throw new InvalidOperationException("The recovery picker requires authored UI references.");
             for (int i = 0; i < candidateButtons.Length; ++i)
-            {
-                int index = i;
-                float top = .77f - i * .19f;
-                var button = SpiritUi.Button("RecoveryCampaignButton" + (i + 1), panel, "",
-                    new Vector2(.055f, top - .18f), new Vector2(.945f, top), () => SelectCandidate(index), compact: true);
-                candidateButtons[i] = button;
-                var summary = button.GetComponentInChildren<Text>();
-                summary.rectTransform.anchorMin = new Vector2(.07f, .54f);
-                summary.rectTransform.anchorMax = new Vector2(.93f, .92f);
-                summary.horizontalOverflow = HorizontalWrapMode.Wrap;
-                summary.resizeTextMinSize = 14;
-                summary.resizeTextMaxSize = 18;
-                summaries[i] = summary;
-                details[i] = SpiritUi.Label("RecoveryCampaignDetails" + (i + 1), button.transform, "", 15,
-                    new Vector2(.07f, .29f), new Vector2(.93f, .54f), TextAnchor.MiddleCenter, theme.muted);
-                details[i].rectTransform.offsetMin = details[i].rectTransform.offsetMax = Vector2.zero;
-                identifiers[i] = SpiritUi.Label("RecoveryCampaignIdentifier" + (i + 1), button.transform, "", 14,
-                    new Vector2(.07f, .06f), new Vector2(.93f, .29f), TextAnchor.MiddleCenter, theme.muted);
-                identifiers[i].rectTransform.offsetMin = identifiers[i].rectTransform.offsetMax = Vector2.zero;
-                button.GetComponent<SpiritUiButtonVisual>().CaptureContent();
-            }
-            PreviousPageButton = SpiritUi.Button("PreviousRecoveryPageButton", panel, "Prev",
-                new Vector2(.045f, .115f), new Vector2(.34f, .205f), () => ChangePage(-1), compact: true);
-            PageLabel = SpiritUi.Label("RecoveryPageLabel", panel, "", 16,
-                new Vector2(.34f, .115f), new Vector2(.66f, .205f), TextAnchor.MiddleCenter, theme.muted);
-            NextPageButton = SpiritUi.Button("NextRecoveryPageButton", panel, "Next",
-                new Vector2(.66f, .115f), new Vector2(.955f, .205f), () => ChangePage(1), compact: true);
-            CloseButton = SpiritUi.Button("CloseCampaignRecoveryPickerButton", panel, "Cancel",
-                new Vector2(.22f, .015f), new Vector2(.78f, .115f), Cancel, compact: true);
+                if (candidateButtons[i] == null || summaries[i] == null || details[i] == null || identifiers[i] == null)
+                    throw new InvalidOperationException("The recovery picker requires three authored candidates.");
+            candidateButtons[0].onClick.RemoveListener(SelectFirstCandidate);
+            candidateButtons[0].onClick.AddListener(SelectFirstCandidate);
+            candidateButtons[1].onClick.RemoveListener(SelectSecondCandidate);
+            candidateButtons[1].onClick.AddListener(SelectSecondCandidate);
+            candidateButtons[2].onClick.RemoveListener(SelectThirdCandidate);
+            candidateButtons[2].onClick.AddListener(SelectThirdCandidate);
+            PreviousPageButton.onClick.RemoveListener(PreviousPage);
+            PreviousPageButton.onClick.AddListener(PreviousPage);
+            NextPageButton.onClick.RemoveListener(NextPage);
+            NextPageButton.onClick.AddListener(NextPage);
+            CloseButton.onClick.RemoveListener(Cancel);
+            CloseButton.onClick.AddListener(Cancel);
             Close();
         }
 
@@ -148,6 +127,12 @@ namespace Dice.Presentation
             Close();
             selectCampaign?.Invoke(campaignId);
         }
+
+        private void SelectFirstCandidate() => SelectCandidate(0);
+        private void SelectSecondCandidate() => SelectCandidate(1);
+        private void SelectThirdCandidate() => SelectCandidate(2);
+        private void PreviousPage() => ChangePage(-1);
+        private void NextPage() => ChangePage(1);
 
         private void OnDisable()
         {

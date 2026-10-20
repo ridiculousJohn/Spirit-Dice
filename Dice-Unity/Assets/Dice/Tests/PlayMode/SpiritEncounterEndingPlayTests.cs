@@ -20,7 +20,7 @@ namespace Dice.Tests
     public sealed class SpiritEncounterEndingPlayTests
     {
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
         private ModifierDefinition[] unlockDefinitions;
         private string[] initialCompletedEncounterIds;
@@ -28,10 +28,9 @@ namespace Dice.Tests
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            view = controller.GetComponent<SpiritEncounterView>();
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
         }
@@ -102,12 +101,12 @@ namespace Dice.Tests
                 Is.EqualTo(finalOffer.Options.Select(option => option.DefinitionId)));
             Click("RewardCard1");
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None), "Selecting a card still requires confirmation.");
-            Assert.That(Find<RectTransform>("RewardsPanel").gameObject.activeInHierarchy, Is.True);
+            Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.True);
             Assert.That(Find<Button>("EndingSkipButton").gameObject.activeInHierarchy, Is.False);
             Coroutine motion = string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT"))
                 ? null : view.StartCoroutine(CaptureVictoryMotion(motionPhase));
             Click("UpgradeHandButton");
-            Assert.That(Find<RectTransform>("RewardsPanel").gameObject.activeInHierarchy, Is.False,
+            Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False,
                 "The confirmed final offer must close before the farewell starts.");
             Assert.That(view.CharmsButton.gameObject.activeInHierarchy, Is.False);
             Assert.That(view.HandRanksButton.gameObject.activeInHierarchy, Is.False);
@@ -117,7 +116,7 @@ namespace Dice.Tests
             float motionDeadline = Time.realtimeSinceStartup + 45;
             while (view.HostPortrait.State != SpiritPresentationState.Victory && Time.realtimeSinceStartup < motionDeadline)
             {
-                Assert.That(Find<RectTransform>("RewardsPanel").gameObject.activeInHierarchy, Is.False);
+                Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False);
                 Assert.That(Find<RectTransform>("StageIntroPanel").gameObject.activeInHierarchy &&
                     Find<Text>("StageIntroTitle").text == "CHARM UNLOCKED", Is.False,
                     "Final-stage unlocks belong in the summary after the host's response.");
@@ -128,7 +127,7 @@ namespace Dice.Tests
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(Find<Button>("EndingNewRunButton").gameObject.activeInHierarchy, Is.False);
             Assert.That(Find<Button>("EndingSkipButton").IsInteractable(), Is.True);
-            Assert.That(Find<RectTransform>("RewardsPanel").gameObject.activeInHierarchy, Is.False,
+            Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False,
                 "Skip farewell must not appear over the offer screen.");
             float duration = view.HostPortrait.GetDuration(SpiritPresentationState.Victory);
             Assert.That(duration, Is.GreaterThan(.1f));
@@ -164,10 +163,11 @@ namespace Dice.Tests
             Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("All encounters"));
             yield return CheckPortraitSizes(capturePrefix + "victory-summary");
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed(controller);
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CompletedEncounterIds, Does.Contain(journey.EncounterId));
-            Assert.That(view.GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
+            Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
                 .Select(label => label.text), Is.EquivalentTo(controller.JourneyCatalog.Entries
                     .Where(value => controller.IsJourneyAvailable(value.Id)).Select(value => value.LocationTitle)));
             if (preserveAuthoredMilestones)
@@ -184,7 +184,7 @@ namespace Dice.Tests
             Assert.That(controller.HighlightedEncounterIds, Does.Contain(followUpId));
             Canvas.ForceUpdateCanvases();
             var followUp = controller.JourneyCatalog.Find(followUpId);
-            var leadTitle = view.GetComponentsInChildren<Text>().Single(label =>
+            var leadTitle = ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Single(label =>
                 label.name == "ClueTitle" && label.text == followUp.LocationTitle);
             var marker = leadTitle.transform.parent.GetComponentsInChildren<Text>().Single(label => label.name == "ClueNewLead");
             Assert.That(marker.text, Is.EqualTo("NEW LEAD"));
@@ -210,6 +210,7 @@ namespace Dice.Tests
             if (preserveAuthoredMilestones)
             {
                 controller.SelectEncounter(journey.EncounterId);
+                yield return ContentReady.Routed(controller);
                 while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
                 yield return Until(() => !view.JourneyView.IsAnimating, "replay invitation");
                 controller.AcceptEncounter();
@@ -272,28 +273,32 @@ namespace Dice.Tests
             Assert.That(Find<Button>("EndingNewRunButton").gameObject.activeInHierarchy, Is.False);
             yield return CheckPortraitSizes(capturePrefix + "defeat-dialogue");
             Click("EndingDialogueContinueButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.DefeatTitle));
             Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False);
             Assert.That(controller.CompletedEncounterIds, Is.EquivalentTo(initialCompletedEncounterIds));
             yield return CheckPortraitSizes(capturePrefix + "defeat-summary");
             Click("EndingRetryButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
             Assert.That(controller.Snapshot, Is.SameAs(previous), "Retry must wait for invitation acceptance.");
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return null;
-            if (Find<RectTransform>("EncounterCharmsIntroduction").gameObject.activeInHierarchy)
+            if (Find<RectTransform>("SpiritEncounterCharmsScreen").gameObject.activeInHierarchy)
             {
                 Assert.That(controller.Snapshot, Is.SameAs(previous), "The encounter starts after its charm introduction.");
                 Click("BeginEncounterButton");
+                yield return ContentReady.Routed();
             }
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot, Is.Not.SameAs(previous));
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
-            Assert.That(Find<RectTransform>("EndingView").gameObject.activeInHierarchy, Is.False);
+            Assert.That(view.GetComponentInChildren<SpiritEncounterEndingView>(true).Root.gameObject.activeInHierarchy, Is.False);
             Assert.That(controller.HighlightedEncounterIds, Is.Empty);
             LogAssert.NoUnexpectedReceived();
         }
@@ -341,6 +346,7 @@ namespace Dice.Tests
             Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False);
             yield return CheckPortraitSizes(capturePrefix + "abandon-summary");
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CompletedEncounterIds, Is.EquivalentTo(initialCompletedEncounterIds));
@@ -368,6 +374,8 @@ namespace Dice.Tests
             yield return EnterEncounter();
             controller.Abandon();
             yield return Until(() => OpeningGroups().Any(group => group.alpha > .05f && group.alpha < .95f), "ending fade");
+            var ending = (SpiritEncounterEndingView)typeof(SpiritEncounterView)
+                .GetField("endingView", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
             Assert.That(controller.IsBusy, Is.True);
             view.enabled = false;
             yield return null;
@@ -378,11 +386,13 @@ namespace Dice.Tests
             Assert.That(Find<Button>("EndingSkipButton").gameObject.activeInHierarchy, Is.False);
             Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.False);
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             yield return new WaitForSecondsRealtime(1.1f);
-            Assert.That(Find<RectTransform>("EndingView").gameObject.activeInHierarchy, Is.False,
+            Assert.That(ending == null || !ending.Root.gameObject.activeInHierarchy, Is.True,
                 "A canceled coroutine must not reopen the old ending.");
+            Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<SpiritEncounterEndingView>(), Is.Empty);
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -439,15 +449,18 @@ namespace Dice.Tests
         private IEnumerator EnterEncounter()
         {
             controller.SelectEncounter(journey.EncounterId);
+            yield return ContentReady.Routed(controller);
             while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
             yield return Until(() => !view.JourneyView.IsAnimating, "invitation");
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
             yield return WaitForPresentation();
             Assert.That(view.HostPortrait, Is.Not.Null);
         }
 
         private IEnumerator WaitForPresentation()
         {
+            yield return ContentReady.Routed();
             yield return Until(() => !controller.IsBusy, "presentation completion");
             yield return null;
         }
@@ -511,7 +524,7 @@ namespace Dice.Tests
 
         private IEnumerator CheckPortraitSizes(string name)
         {
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var portrait = ContentReady.Portrait();
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
@@ -559,7 +572,7 @@ namespace Dice.Tests
 
         private T Find<T>(string name) where T : Component
         {
-            var value = view.GetComponentsInChildren<T>(true).FirstOrDefault(item => item.name == name);
+            var value = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(item => item.name == name);
             Assert.That(value, Is.Not.Null, name);
             return value;
         }

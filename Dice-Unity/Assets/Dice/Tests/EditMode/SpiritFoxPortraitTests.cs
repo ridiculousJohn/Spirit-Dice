@@ -20,12 +20,11 @@ namespace Dice.Tests
             host = new GameObject("Spirit Fox Test", typeof(RectTransform));
             var parent = host.GetComponent<RectTransform>();
             parent.sizeDelta = new Vector2(540f, 960f);
-            portrait = host.AddComponent<SpiritHostPortrait>();
             var presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
                 "Assets/Dice/Content/Presentation/SpiritHouse/LanternKeeperHost.asset");
             Assert.That(presentation, Is.Not.Null);
-            portrait.Build(parent, presentation);
-            portraitRoot = (RectTransform)parent.Find("Spirit Portrait");
+            portrait = presentation.Create(parent);
+            portraitRoot = portrait.GetLayer("Body").rectTransform.parent as RectTransform;
             physicalHead = portrait.GetLayer("Physical Front").rectTransform;
             spiritHead = portrait.GetLayer("Cyan Front").rectTransform;
             body = portrait.GetLayer("Body").rectTransform;

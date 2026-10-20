@@ -11,11 +11,10 @@ namespace Dice.Presentation
     {
         [SerializeField] private SpiritAudioTheme theme;
         [SerializeField] private bool muted;
-        private GameObject sourceOwner;
-        private AudioSource ambienceSource;
-        private AudioSource creakSource;
-        private AudioSource rollSource;
-        private readonly AudioSource[] cueSources = new AudioSource[4];
+        [SerializeField] private AudioSource ambienceSource;
+        [SerializeField] private AudioSource creakSource;
+        [SerializeField] private AudioSource rollSource;
+        [SerializeField] private AudioSource[] cueSources = new AudioSource[4];
         private System.Random cosmeticRandom;
         private bool hasFocus;
         private bool paused;
@@ -55,6 +54,7 @@ namespace Dice.Presentation
 
         private void OnEnable()
         {
+            if (!Application.isPlaying) return;
             hasFocus = Application.isFocused;
             Initialize();
             RefreshPlayback();
@@ -62,26 +62,11 @@ namespace Dice.Presentation
 
         private void Initialize()
         {
-            if (cosmeticRandom == null)
-                cosmeticRandom = new System.Random();
-            if (sourceOwner != null) return;
-
-            sourceOwner = new GameObject("Spirit Audio Sources");
-            sourceOwner.transform.SetParent(transform, false);
-            ambienceSource = CreateSource(true);
-            creakSource = CreateSource(false);
-            rollSource = CreateSource(false);
-            for (int i = 0; i < cueSources.Length; i++) cueSources[i] = CreateSource(false);
-        }
-
-        private AudioSource CreateSource(bool loop)
-        {
-            var source = sourceOwner.AddComponent<AudioSource>();
-            source.playOnAwake = false;
-            source.spatialBlend = 0;
-            source.loop = loop;
-            source.priority = loop ? 192 : 128;
-            return source;
+            if (cosmeticRandom == null) cosmeticRandom = new System.Random();
+            if (ambienceSource == null || creakSource == null || rollSource == null || cueSources.Length == 0)
+                throw new InvalidOperationException("Encounter audio requires authored audio sources.");
+            foreach (AudioSource source in cueSources)
+                if (source == null) throw new InvalidOperationException("An encounter audio cue source is missing.");
         }
 
         /** Returns the visual roll duration even when audio is muted or suspended. */
@@ -217,12 +202,7 @@ namespace Dice.Presentation
 
         private void OnDisable() => StopPlayback();
 
-        private void OnDestroy()
-        {
-            StopPlayback();
-            if (sourceOwner == null) return;
-            if (Application.isPlaying) Destroy(sourceOwner);
-            else DestroyImmediate(sourceOwner);
-        }
+        private void OnDestroy() => StopPlayback();
+
     }
 }

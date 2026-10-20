@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.App;
 using Dice.Engine;
+using Dice.Presentation;
 using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
@@ -18,7 +19,7 @@ namespace Dice.Tests
             var host = new GameObject("Diagnostic victory replay");
             try
             {
-                var controller = host.AddComponent<DiagnosticEncounterController>();
+                var controller = AuthoredController(host);
                 var catalog = LegacyCatalog();
                 controller.Initialize(catalog, "encounter.standard", 60, null);
                 var expected = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
@@ -61,7 +62,7 @@ namespace Dice.Tests
             var host = new GameObject("Diagnostic loss replay");
             try
             {
-                var controller = host.AddComponent<DiagnosticEncounterController>();
+                var controller = AuthoredController(host);
                 controller.Initialize(Catalog(), "encounter.standard", 0, null);
                 for (int i = 0; i < 200 && controller.Snapshot.Phase != EncounterPhase.Completed; ++i)
                 {
@@ -78,6 +79,20 @@ namespace Dice.Tests
                 Assert.That(controller.EventLog.Last(), Does.Contain("Lost"));
             }
             finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
+        private static DiagnosticEncounterController AuthoredController(GameObject host)
+        {
+            host.SetActive(false);
+            var controller = host.AddComponent<DiagnosticEncounterController>();
+            var prefab = AssetDatabase.LoadAssetAtPath<DiagnosticEncounterView>(
+                "Assets/Dice/Content/Presentation/UI/DiagnosticEncounter.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            var view = UnityEngine.Object.Instantiate(prefab, host.transform, false);
+            using var serialized = new SerializedObject(controller);
+            serialized.FindProperty("view").objectReferenceValue = view;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return controller;
         }
 
         [Test]

@@ -19,16 +19,16 @@ namespace Dice.Tests
     {
         private SpiritEncounterController controller;
         private SpiritCampaignController campaign;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private string rootDirectory;
         private string captureRoot;
-        private SpiritMainMenu Menu => view.JourneyView.MainMenu;
+        private SpiritMainMenu Menu => ContentReady.FrontendView(controller).MainMenu;
         private SpiritSaveSlotPicker Picker => Menu.SlotPicker;
 
         [UnitySetUp]
         public IEnumerator MainMenuReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
             float deadline = Time.realtimeSinceStartup + 30;
@@ -44,7 +44,7 @@ namespace Dice.Tests
             Assert.That(controller.Catalog, Is.Not.Null, controller.StatusMessage);
             Assert.That(controller.JourneyCatalog, Is.Not.Null, controller.StatusMessage);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
-            view = controller.GetComponent<SpiritEncounterView>();
+            yield return ContentReady.Routed(controller);
             rootDirectory = campaign.RootDirectory;
             string workRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work")) +
                 Path.DirectorySeparatorChar;
@@ -63,6 +63,7 @@ namespace Dice.Tests
             for (int activation = 0; activation < 2; ++activation)
             {
                 Activate(Menu.NewGameButton);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.IsOpen, Is.True);
                 Assert.That(Picker.IsConfirmingReplacement, Is.False);
                 // Native canvas depth is assigned during rendering, after managed layout and graphic rebuilds.
@@ -74,6 +75,7 @@ namespace Dice.Tests
                     AssertCoveredBy(button, Picker.Root);
 
                 Click(Picker.SlotButtons[0]);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.IsConfirmingReplacement, Is.True);
                 yield return new WaitForEndOfFrame();
                 Assert.That(Picker.Confirmation.GetComponent<Graphic>().depth, Is.GreaterThanOrEqualTo(0));
@@ -81,10 +83,12 @@ namespace Dice.Tests
                 foreach (var button in Picker.SlotButtons.Concat(new[] { Picker.CloseButton }))
                     AssertCoveredBy(button, Picker.Confirmation);
                 Click(Picker.CancelReplaceSaveButton);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.IsConfirmingReplacement, Is.False);
                 Assert.That(Picker.IsOpen, Is.True);
                 yield return new WaitForEndOfFrame();
                 Click(Picker.CloseButton);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.IsOpen, Is.False);
                 yield return new WaitForEndOfFrame();
             }
@@ -105,7 +109,7 @@ namespace Dice.Tests
             Assert.That(Menu.ChapterButton.IsInteractable(), Is.False);
             Assert.That(Menu.NewGameButton.IsInteractable(), Is.True);
             Assert.That(Menu.SlotSelectorButton.IsInteractable(), Is.True);
-            Assert.That(view.JourneyView.Board.Root.gameObject.activeInHierarchy, Is.False);
+            Assert.That(ContentReady.FrontendView(controller).Board.Root.gameObject.activeInHierarchy, Is.False);
             string indexBefore = File.ReadAllText(Path.Combine(rootDirectory, "spirit-slots.json"));
             Activate(Menu.OptionsButton);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
@@ -129,8 +133,8 @@ namespace Dice.Tests
             Assert.That(File.Exists(controller.ProfilePath), Is.True);
             AssertEmptyProfile(PlayerProfileFileStore.Load(controller.ProfilePath));
             Assert.That(File.Exists(controller.SavePath), Is.False);
-            Assert.That(view.JourneyView.Board.Root.gameObject.activeInHierarchy, Is.True);
-            Activate(view.JourneyView.Board.LoadButton);
+            Assert.That(ContentReady.FrontendView(controller).Board.Root.gameObject.activeInHierarchy, Is.True);
+            Activate(ContentReady.FrontendView(controller).Board.LoadButton);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             ReloadCampaign();
             Assert.That(campaign.ActiveSaveSlot, Is.EqualTo(2));
@@ -204,6 +208,7 @@ namespace Dice.Tests
                 foreach (var button in new[] { Menu.ContinueButton, Menu.ChapterButton })
                 {
                     Activate(button);
+                    yield return ContentReady.Routed();
                     Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
                     Assert.That(controller.Snapshot, Is.Null);
                     Assert.That(Menu.Root.gameObject.activeInHierarchy, Is.True);
@@ -216,9 +221,12 @@ namespace Dice.Tests
                 AssertCompleteText(Menu.Status);
                 yield return Capture(corruptProfile ? "corrupt-profile-menu" : "corrupt-run-menu");
                 Activate(Menu.NewGameButton);
+                yield return ContentReady.Routed();
                 Activate(Picker.SlotButtons[0]);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.IsConfirmingReplacement, Is.True);
                 Activate(Picker.ConfirmReplaceSaveButton);
+                yield return ContentReady.Routed();
                 slots.Load();
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
                 Assert.That(controller.Snapshot, Is.Null);
@@ -237,9 +245,11 @@ namespace Dice.Tests
             campaign.NewGame(1);
             var journey = controller.JourneyCatalog.Entries.First(entry => !entry.IsStoryOnly);
             controller.SelectEncounter(journey.Id);
+            yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
             yield return WaitForIdle();
             controller.ToggleDie(0);
             controller.Reroll();
@@ -250,8 +260,10 @@ namespace Dice.Tests
             Assert.That(saved.Revision, Is.EqualTo(expected.Revision));
             Assert.That(saved.CurrentDice, Is.EqualTo(expected.CurrentDice.ToArray()));
             string savedBytes = File.ReadAllText(controller.SavePath);
-            Activate(view.GetComponentsInChildren<Button>(true).Single(button => button.name == "MenuButton"));
-            Activate(view.GetComponentsInChildren<Button>(true).Single(button => button.name == "ReturnToMainMenuButton"));
+            Activate(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Button>(true).Single(button => button.name == "MenuButton"));
+            yield return ContentReady.Routed();
+            Activate(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Button>(true).Single(button => button.name == "ReturnToMainMenuButton"));
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             Assert.That(Menu.Root.gameObject.activeInHierarchy, Is.True);
             ReloadCampaign();
@@ -259,21 +271,23 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             Activate(Menu.ContinueButton);
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(expected.Revision));
             Assert.That(controller.Snapshot.CurrentDice, Is.EqualTo(expected.CurrentDice));
             Assert.That(controller.Snapshot.TotalRerollsSpent, Is.EqualTo(expected.TotalRerollsSpent));
             Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(expected.RerollsRemaining));
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.Zero);
             Assert.That(File.ReadAllText(controller.SavePath), Is.EqualTo(savedBytes));
             LogAssert.NoUnexpectedReceived();
         }
 
-        [Test]
-        public void ChapterOpensSavedEncountersChapterWithResumableRun()
+        [UnityTest]
+        public IEnumerator ChapterOpensSavedEncountersChapterWithResumableRun()
         {
+            yield return ContentReady.Routed(controller);
             var slots = SeedSlots();
             slots.SelectSlot(2);
             var owl = controller.JourneyCatalog.Entries.Single(entry => entry.EncounterId == "encounter.owl.watchtower");
@@ -284,6 +298,7 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             Activate(Menu.ChapterButton);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.SelectedChapter, Is.SameAs(expected));
             Assert.That(controller.SelectedJourney, Is.Null);
@@ -292,13 +307,14 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.CurrentDice.ToArray(), Is.EqualTo(saved.CurrentDice));
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision));
             Assert.That(controller.CanResume, Is.True);
-            Assert.That(view.JourneyView.Board.ResumeButton.gameObject.activeInHierarchy, Is.True);
+            Assert.That(ContentReady.FrontendView(controller).Board.ResumeButton.gameObject.activeInHierarchy, Is.True);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(resolutions, Is.Zero);
             Assert.That(File.ReadAllText(slots.GetSavePath(2)), Is.EqualTo(savedBytes));
-            Assert.That(view.GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
+            Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
                 .Select(label => label.text), Does.Contain(owl.LocationTitle));
-            Activate(view.JourneyView.Board.ResumeButton);
+            Activate(ContentReady.FrontendView(controller).Board.ResumeButton);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.CurrentDice.ToArray(), Is.EqualTo(saved.CurrentDice));
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision));
@@ -307,12 +323,14 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        [Test]
-        public void RejectedMenuInitializationKeepsPreviousCampaignMappingAndRun()
+        [UnityTest]
+        public IEnumerator RejectedMenuInitializationKeepsPreviousCampaignMappingAndRun()
         {
+            yield return ContentReady.Routed(controller);
             SeedSlots();
             ReloadCampaign();
             Activate(Menu.ContinueButton);
+            yield return ContentReady.Routed(controller);
             var snapshot = controller.Snapshot;
             string savePath = controller.SavePath;
             string previousRoot = campaign.RootDirectory;
@@ -359,8 +377,8 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        [Test]
-        public void SlotSelectionLoadsCampaignAndDisablesEmptySlots()
+        [UnityTest]
+        public IEnumerator SlotSelectionLoadsCampaignAndDisablesEmptySlots()
         {
             var slots = SeedSlots();
             slots.SelectSlot(1);
@@ -368,14 +386,17 @@ namespace Dice.Tests
             Activate(Menu.SlotSelectorButton);
             Assert.That(Picker.Title.text, Is.EqualTo("Load Game"));
             Assert.That(Picker.SlotButtons[2].IsInteractable(), Is.False);
-            Activate(Picker.SlotButtons[1]);
+            var picker = Picker;
+            Activate(picker.SlotButtons[1]);
+            yield return ContentReady.Routed(controller);
             Assert.That(campaign.ActiveSaveSlot, Is.EqualTo(2));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(Picker.IsOpen, Is.False);
+            Assert.That(picker == null || !picker.IsOpen, Is.True);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.owl.watchtower"));
             Assert.That(controller.Snapshot.CurrentDice.ToArray(),
                 Is.EqualTo(EncounterSaveFileStore.Load(slots.GetSavePath(2)).CurrentDice));
             campaign.ShowMainMenu();
+            yield return ContentReady.Routed(controller);
             Activate(Menu.SlotSelectorButton);
             Assert.That(Picker.SlotButtons[2].IsInteractable(), Is.False);
             campaign.SelectSaveSlot(3);
@@ -383,6 +404,7 @@ namespace Dice.Tests
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             Activate(Picker.CloseButton);
             Activate(Menu.ContinueButton);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.owl.watchtower"));
             slots.Load();
             Assert.That(slots.ActiveSlot, Is.EqualTo(2));
@@ -416,7 +438,7 @@ namespace Dice.Tests
             ReloadCampaign();
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
-                var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+                var portrait = ContentReady.Portrait();
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
                 portrait.sizeDelta = size;
                 portrait.anchoredPosition = Vector2.zero;
@@ -434,6 +456,7 @@ namespace Dice.Tests
                 }
                 yield return Capture("main-menu-" + (int)size.x);
                 Click(Menu.SlotSelectorButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Assert.That(Picker.Title.text, Is.EqualTo("Load Game"));
                 Assert.That(Picker.SlotButtons[2].IsInteractable(), Is.False);
@@ -441,8 +464,10 @@ namespace Dice.Tests
                 AssertCoveredBy(Menu.ContinueButton, Picker.Root);
                 yield return Capture("load-game-" + (int)size.x);
                 Click(Picker.CloseButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Click(Menu.NewGameButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Canvas.ForceUpdateCanvases();
                 AssertButtonsFit(Picker.SlotButtons.Concat(new[] { Picker.CloseButton }), portrait);
@@ -451,6 +476,7 @@ namespace Dice.Tests
                 AssertCoveredBy(Menu.NewGameButton, Picker.Root);
                 yield return Capture("save-slot-picker-" + (int)size.x);
                 Click(Picker.SlotButtons[0]);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Canvas.ForceUpdateCanvases();
                 AssertCompleteText(Picker.ConfirmationTitle);
@@ -460,8 +486,10 @@ namespace Dice.Tests
                 AssertCoveredBy(Picker.SlotButtons[0], Picker.Confirmation);
                 yield return Capture("replace-save-confirmation-" + (int)size.x);
                 Click(Picker.CancelReplaceSaveButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Click(Picker.CloseButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
             }
             LogAssert.NoUnexpectedReceived();
@@ -546,17 +574,19 @@ namespace Dice.Tests
             var recovery = Picker.RecoveryPicker;
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
-                var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+                var portrait = ContentReady.Portrait();
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
                 portrait.sizeDelta = size;
                 portrait.anchoredPosition = Vector2.zero;
                 Activate(Menu.SlotSelectorButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 AssertButtonsFit(Picker.SlotButtons.Concat(new[] { Picker.CloseButton, Picker.RecoverSavesButton }), portrait);
                 AssertSeparate(Picker.SlotButtons[2], Picker.RecoverSavesButton);
                 AssertSeparate(Picker.RecoverSavesButton, Picker.CloseButton);
                 yield return Capture("load-game-recovery-" + (int)size.x);
                 Click(Picker.RecoverSavesButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 AssertCoveredBy(Picker.SlotButtons[0], recovery.Root);
                 Assert.That(recovery.PageLabel.text, Is.EqualTo("1 / 2"));
@@ -566,29 +596,40 @@ namespace Dice.Tests
                 foreach (var label in recovery.Root.GetComponentsInChildren<Text>()) AssertCompleteText(label);
                 AssertSeparate(recovery.CandidateButtons[2], recovery.PreviousPageButton);
                 Click(recovery.NextPageButton);
+                yield return ContentReady.Routed();
                 Assert.That(recovery.PageLabel.text, Is.EqualTo("2 / 2"));
                 Assert.That(recovery.CandidateButtons.Count(button => button.gameObject.activeSelf), Is.EqualTo(1));
                 Click(recovery.PreviousPageButton);
+                yield return ContentReady.Routed();
                 Click(recovery.CandidateButtons[0]);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Assert.That(Picker.Mode, Is.EqualTo(SpiritSaveSlotPicker.PickerMode.Recover));
                 Click(Picker.SlotButtons[0]);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 AssertCompleteText(Picker.ConfirmationText);
                 AssertCompleteText(Picker.ConfirmationTitle);
                 AssertCoveredBy(Picker.SlotButtons[1], Picker.Confirmation);
                 yield return Capture("recover-replacement-" + (int)size.x);
                 Click(Picker.CancelReplaceSaveButton);
+                yield return ContentReady.Routed();
                 yield return new WaitForEndOfFrame();
                 Click(Picker.CloseButton);
+                yield return ContentReady.Routed();
                 Assert.That(Picker.Mode, Is.EqualTo(SpiritSaveSlotPicker.PickerMode.Select));
                 Click(Picker.CloseButton);
+                yield return ContentReady.Routed();
             }
             string candidateId = campaign.RecoveryCampaigns[0].CampaignId;
             Activate(Menu.SlotSelectorButton);
+            yield return ContentReady.Routed();
             Activate(Picker.RecoverSavesButton);
+            yield return ContentReady.Routed();
             Activate(recovery.CandidateButtons[0]);
+            yield return ContentReady.Routed();
             Activate(Picker.SlotButtons[2]);
+            yield return ContentReady.Routed();
             Assert.That(Picker.IsConfirmingReplacement, Is.False);
             Assert.That(Picker.Mode, Is.EqualTo(SpiritSaveSlotPicker.PickerMode.Select));
             Assert.That(campaign.ActiveSaveSlot, Is.EqualTo(3));
@@ -596,6 +637,7 @@ namespace Dice.Tests
             slots.Load();
             Assert.That(slots.GetSavePath(3), Is.EqualTo(Path.Combine(rootDirectory, candidateId, "spirit-encounter.json")));
             Activate(Picker.SlotButtons[2]);
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.owl.watchtower"));
             LogAssert.NoUnexpectedReceived();

@@ -16,6 +16,7 @@ MonoBehaviour:
   BoneTexture: {fileID: 2800000, guid: 4554059d4d75478c8ea275baa3695ef7, type: 3}
   WoodTexture: {fileID: 2800000, guid: 0edec0dd42ef415bb6a06e07a40e4c5b, type: 3}
   GeometryPrefab: {fileID: 11400000, guid: 619484320c195c42ac263cd67473ca45, type: 3}
+  RigPrefab: {fileID: 1836074315453682720, guid: ed0597d938a20a94f9463a3ac44caac4, type: 3}
   CameraPosition: {x: 0, y: 6.1472707, z: -4.911238}
   CameraEulerAngles: {x: 41.5, y: 0, z: 0}
   Orthographic: 0

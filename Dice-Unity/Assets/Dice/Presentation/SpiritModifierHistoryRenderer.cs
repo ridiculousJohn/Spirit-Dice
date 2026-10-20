@@ -16,24 +16,22 @@ namespace Dice.Presentation
         public const int VisibleCapacity = 9;
         public const float ArrivalDuration = .30f;
         [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
-        private static int rendererOrdinal;
         private readonly List<Entry> entries = new List<Entry>();
         private readonly List<UnityEngine.Object> ownedResources = new List<UnityEngine.Object>();
         private readonly Dictionary<uint, Texture2D> sigils = new Dictionary<uint, Texture2D>();
-        private GameObject renderRoot;
+        [SerializeField] private GameObject renderRoot;
+        [SerializeField] private SpiritModifierToken tokenPrefab;
+        private bool initialized;
         private Transform trayRoot;
         private Camera renderCamera;
         private RenderTexture texture;
         private Mesh bodyMesh;
-        private Mesh shadowMesh;
         private Vector3[] supportPoints;
-        private Material shadowMaterial;
-        private Shader shader;
         private float normalizedScroll;
         private int resolvingIndex = -1;
         private SceneLightingState sceneLighting;
         private SpiritTrayScene sharedScene;
-        private Transform contentRoot;
+        [SerializeField] private Transform contentRoot;
         private Transform LightingRoot => sharedScene != null ? sharedScene.RenderRoot : RenderRoot;
         private Transform BayRoot => sharedScene != null ? sharedScene.Geometry.ModifierRoot : renderRoot.transform;
         private float BayHalfWidth => sharedScene != null ? sharedScene.Geometry.ModifierWidth * .5f : InnerHalfWidth;
@@ -61,13 +59,16 @@ namespace Dice.Presentation
 
         private sealed class Entry
         {
+            internal GameObject Token;
             internal Transform Die;
             internal MeshRenderer Renderer;
             internal MeshRenderer Shadow;
             internal Material Material;
+            internal Material ShadowMaterial;
             internal float Elapsed;
             internal float SupportHeight;
             internal Color BoneColor;
+            internal Vector3 ShadowScale;
         }
 
         public void Configure(SpiritTrayPresentationAsset presentation)
@@ -92,62 +93,16 @@ namespace Dice.Presentation
 
         public void Initialize()
         {
-            if (renderRoot != null) return;
-            if (trayPresentation == null) throw new InvalidOperationException("Configure the modifier history presentation before initialization.");
-            trayPresentation.Validate();
-            shader = trayPresentation.DiceShader;
-            renderRoot = new GameObject("Spirit Modifier History Render Root");
-            renderRoot.layer = SpiritDiceTray.RenderLayer;
-            if (sharedScene != null)
-            {
-                sharedScene.Initialize();
-                renderRoot.transform.SetParent(sharedScene.Geometry.ModifierRoot, false);
-                texture = sharedScene.Texture;
-                renderCamera = sharedScene.RenderCamera;
-                trayRoot = sharedScene.Geometry.ModifierRoot;
-            }
-            else
-            {
-                renderRoot.transform.position = new Vector3(12000 + rendererOrdinal++ * 100, 0, 0);
-                texture = new RenderTexture(1536, 192, 24, RenderTextureFormat.ARGB32)
-                {
-                    name = "Spirit Modifier History Texture",
-                    antiAliasing = 4,
-                    filterMode = FilterMode.Bilinear,
-                    wrapMode = TextureWrapMode.Clamp
-                };
-                texture.Create();
-                renderCamera = Child("Spirit Modifier History Camera", renderRoot.transform).AddComponent<Camera>();
-                renderCamera.transform.localPosition = new Vector3(0, 6.8f, -4.8f);
-                renderCamera.transform.LookAt(renderRoot.transform.position + Vector3.up * .20f);
-                renderCamera.orthographic = false;
-                renderCamera.fieldOfView = 6.9f;
-                renderCamera.aspect = (float)texture.width / texture.height;
-                renderCamera.nearClipPlane = .1f;
-                renderCamera.farClipPlane = 30;
-                renderCamera.clearFlags = CameraClearFlags.SolidColor;
-                renderCamera.backgroundColor = Color.clear;
-                renderCamera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
-                renderCamera.allowHDR = false;
-                renderCamera.allowMSAA = true;
-                renderCamera.targetTexture = texture;
-            }
-            contentRoot = renderRoot.transform;
-
-            bodyMesh = SpiritDiceTray.CreateRoundedCube(false, .18f, 32);
-            bodyMesh.name = "Spirit Modifier Rounded Bone";
-            shadowMesh = SpiritDiceTray.CreateShadowPlane();
-            ownedResources.Add(bodyMesh);
-            ownedResources.Add(shadowMesh);
+            if (initialized) return;
+            if (trayPresentation == null || sharedScene == null || renderRoot == null || contentRoot == null || tokenPrefab == null)
+                throw new InvalidOperationException("The modifier renderer requires an authored shared scene, content root, and token prefab.");
+            sharedScene.Initialize();
+            texture = sharedScene.Texture;
+            renderCamera = sharedScene.RenderCamera;
+            trayRoot = sharedScene.Geometry.ModifierRoot;
+            bodyMesh = tokenPrefab.Body.GetComponent<MeshFilter>().sharedMesh;
             supportPoints = bodyMesh.vertices;
-            shadowMaterial = Surface("Spirit Modifier Contact Shadow", new Color(.025f, .018f, .011f, .66f), 5, true);
-            SetClip(shadowMaterial);
-            if (sharedScene == null)
-            {
-                Mesh boxMesh = SpiritDiceTray.CreateRoundedCube(false, .09f, 8);
-                ownedResources.Add(boxMesh);
-                BuildTray(boxMesh);
-            }
+            initialized = true;
             renderRoot.SetActive(isActiveAndEnabled);
         }
 
@@ -155,12 +110,15 @@ namespace Dice.Presentation
         {
             foreach (Entry entry in entries)
             {
-                entry.Die.gameObject.SetActive(false);
-                entry.Shadow.gameObject.SetActive(false);
-                Release(entry.Die.gameObject);
-                Release(entry.Shadow.gameObject);
+                if (entry.Token != null)
+                {
+                    entry.Token.SetActive(false);
+                    Release(entry.Token);
+                }
                 ownedResources.Remove(entry.Material);
                 Release(entry.Material);
+                ownedResources.Remove(entry.ShadowMaterial);
+                Release(entry.ShadowMaterial);
             }
             entries.Clear();
             normalizedScroll = 0;
@@ -173,26 +131,35 @@ namespace Dice.Presentation
             if (contribution.DefinitionId != definition.Id)
                 throw new ArgumentException("The modifier definition must match the activation.", nameof(definition));
             Initialize();
-            Material material = Surface("Spirit Modifier Bone " + entries.Count, new Color(1, .97f, .9f), 0);
+            SpiritModifierToken token = Instantiate(tokenPrefab, contentRoot, false);
+            Material material = new Material(token.Body.sharedMaterial) { name = "Spirit Modifier Bone " + entries.Count };
+            ownedResources.Add(material);
+            token.Body.sharedMaterial = material;
+            Material shadow = new Material(token.Shadow.sharedMaterial);
+            ownedResources.Add(shadow);
+            token.Shadow.sharedMaterial = shadow;
+            SetClip(shadow);
+            SceneLightingReceiverMaterial.Apply(material, sceneLighting, LightingRoot);
             material.SetFloat("_ShowPips", 0);
             material.SetFloat("_ShowFaceIcon", 1);
             material.SetFloat("_Seed", entries.Count * 17.31f);
-            Texture2D bone = trayPresentation.BoneTexture;
-            if (bone != null) material.SetTexture("_SurfaceTexture", bone);
             material.SetColor("_FaceIconColor", SpiritModifierIcons.GetInkColor(definition));
             SetIcon(material, definition);
             SetCategory(material, definition);
             SetClip(material);
-            Transform die = Child("Spirit Modifier Die " + entries.Count, contentRoot).transform;
-            die.localScale = Vector3.one * ContentDieSize;
+            Transform die = token.Body.transform;
+            die.localScale *= ContentDieSize / DieSize;
             var entry = new Entry
             {
+                Token = token.gameObject,
                 Die = die,
-                Renderer = AddMesh(die.gameObject, bodyMesh, material),
-                Shadow = AddMesh(Child("Modifier Contact Shadow " + entries.Count, contentRoot), shadowMesh, shadowMaterial),
+                Renderer = token.Body,
+                Shadow = token.Shadow,
                 Material = material,
+                ShadowMaterial = shadow,
                 Elapsed = animate ? 0 : ArrivalDuration,
-                BoneColor = material.GetColor("_BaseColor")
+                BoneColor = material.GetColor("_BaseColor"),
+                ShadowScale = token.Shadow.transform.localScale
             };
             entries.Add(entry);
             Position(entry, entries.Count - 1, true);
@@ -287,7 +254,7 @@ namespace Dice.Presentation
                 entry.Die.localRotation = Quaternion.Euler(-14 * remaining, (index % 3 - 1) * 4, 8 * remaining);
                 float minimum = float.MaxValue;
                 foreach (Vector3 point in supportPoints)
-                    minimum = Mathf.Min(minimum, (entry.Die.localRotation * point).y * ContentDieSize);
+                    minimum = Mathf.Min(minimum, (entry.Die.localRotation * Vector3.Scale(point, entry.Die.localScale)).y);
                 entry.SupportHeight = -minimum;
             }
             float overflow = Mathf.Max(0, (entries.Count - Capacity) * ContentSlotSpacing);
@@ -296,7 +263,8 @@ namespace Dice.Presentation
             float lift = .08f * remaining + (index == resolvingIndex ? ContentDieSize * .12f : 0);
             entry.Die.localPosition = new Vector3(x, SurfaceHeight + entry.SupportHeight + lift, 0);
             entry.Shadow.transform.localPosition = new Vector3(x, SurfaceHeight + .003f, 0);
-            entry.Shadow.transform.localScale = new Vector3(ContentDieSize * (1.08f + lift), 1, ContentDieSize * (1.08f + lift));
+            entry.Shadow.transform.localScale = Vector3.Scale(entry.ShadowScale,
+                new Vector3(ContentDieSize * (1.08f + lift), 1, ContentDieSize * (1.08f + lift)));
             var properties = new MaterialPropertyBlock();
             properties.SetFloat("_ShadowLift", lift / .08f);
             entry.Shadow.SetPropertyBlock(properties);
@@ -350,61 +318,7 @@ namespace Dice.Presentation
             material.SetVector(uvTransform, transform);
         }
 
-        private void BuildTray(Mesh boxMesh)
-        {
-            trayRoot = Child("Spirit Modifier Wooden Tray", renderRoot.transform).transform;
-            Texture2D woodTexture = trayPresentation.WoodTexture;
-            Material wood = Surface("Spirit Modifier Worn Walnut", woodTexture != null ? Color.white : new Color(.33f, .145f, .052f), 1);
-            if (woodTexture != null) wood.SetTexture("_SurfaceTexture", woodTexture);
-            Material felt = Surface("Spirit Modifier Deep Green Felt", new Color(.085f, .12f, .067f), 2);
-            Material brass = Surface("Spirit Modifier Aged Brass", new Color(.66f, .43f, .16f), 3);
-            Box("History Tray Foundation", boxMesh, wood, new Vector3(0, -.04f, 0), new Vector3(5.98f, .10f, .76f));
-            Box("History Tray Felt", boxMesh, felt, new Vector3(0, .0175f, 0), new Vector3(5.40f, .035f, .62f));
-            for (int side = -1; side <= 1; side += 2)
-            {
-                Box("History Side Rail " + side, boxMesh, wood, new Vector3(side * 2.84f, .08f, 0), new Vector3(.28f, .19f, .86f));
-                Box("History Side Brass " + side, boxMesh, brass, new Vector3(side * 2.84f, .178f, 0), new Vector3(.014f, .006f, .74f));
-                Box("History End Rail " + side, boxMesh, wood, new Vector3(0, .075f, side * .365f), new Vector3(5.94f, .18f, .13f));
-                Box("History End Brass " + side, boxMesh, brass, new Vector3(0, .168f, side * .365f), new Vector3(5.65f, .006f, .012f));
-            }
-        }
 
-        private void Box(string name, Mesh mesh, Material material, Vector3 position, Vector3 size)
-        {
-            GameObject box = Child(name, trayRoot);
-            box.transform.localPosition = position;
-            bool wood = material.GetFloat("_SurfaceKind") == 1;
-            if (wood && size.z > size.x)
-            {
-                box.transform.localRotation = Quaternion.Euler(0, 90, 0);
-                size = new Vector3(size.z, size.y, size.x);
-            }
-            box.transform.localScale = size;
-            MeshRenderer renderer = AddMesh(box, mesh, material);
-            var properties = new MaterialPropertyBlock();
-            properties.SetVector("_GrainScale", new Vector4(size.x * 2, size.y * 20, size.z * 16, 0));
-            properties.SetFloat("_Seed", position.x * 11.17f + position.z * 31.73f);
-            properties.SetVector("_SurfaceTexture_ST", new Vector4(size.x * .2f, Mathf.Max(size.y, size.z) * 2,
-                position.x * .19f + position.z * .27f, 0));
-            renderer.SetPropertyBlock(properties);
-        }
-
-        private Material Surface(string name, Color color, int kind, bool transparent = false)
-        {
-            var material = new Material(shader) { name = name };
-            material.SetColor("_BaseColor", color);
-            material.SetFloat("_SurfaceKind", kind);
-            if (transparent)
-            {
-                material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-                material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-                material.SetFloat("_ZWrite", 0);
-                material.renderQueue = 3000;
-            }
-            ownedResources.Add(material);
-            SceneLightingReceiverMaterial.Apply(material, sceneLighting, LightingRoot);
-            return material;
-        }
 
         private void SetClip(Material material)
         {
@@ -418,23 +332,7 @@ namespace Dice.Presentation
             }
         }
 
-        private static GameObject Child(string name, Transform parent)
-        {
-            var child = new GameObject(name);
-            child.layer = SpiritDiceTray.RenderLayer;
-            child.transform.SetParent(parent, false);
-            return child;
-        }
 
-        private static MeshRenderer AddMesh(GameObject target, Mesh mesh, Material material)
-        {
-            target.AddComponent<MeshFilter>().sharedMesh = mesh;
-            var renderer = target.AddComponent<MeshRenderer>();
-            renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = false;
-            return renderer;
-        }
 
         private void OnEnable()
         {
@@ -448,21 +346,15 @@ namespace Dice.Presentation
 
         public void ReleasePresentation()
         {
-            if (sharedScene == null && renderCamera != null) { renderCamera.enabled = false; renderCamera.targetTexture = null; }
-            if (sharedScene == null && texture != null) { texture.Release(); Release(texture); }
-            if (renderRoot != null) renderRoot.SetActive(false);
-            Release(renderRoot);
+            Clear();
             foreach (UnityEngine.Object resource in ownedResources) Release(resource);
             ownedResources.Clear();
             sigils.Clear();
-            entries.Clear();
-            resolvingIndex = -1;
             texture = null;
-            renderRoot = null;
             renderCamera = null;
             trayRoot = null;
-            contentRoot = null;
             sharedScene = null;
+            initialized = false;
             normalizedScroll = 0;
         }
 

@@ -18,11 +18,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator FoxFavorPresentsFreeRerollsAndRestoresAvailabilityFromSavesAndNewHands()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var presentation = view.EncounterRulePresentation;
             Assert.That(presentation, Is.Not.Null);
             Assert.That(presentation.RuleId, Is.EqualTo(FirstRerollFreeRuleDefinition.StableId));
@@ -34,13 +34,15 @@ namespace Dice.Tests
             string savePath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "fox-favor.json"));
             controller.Initialize(catalog, encounter.Id, 60, savePath);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
             var cue = view.GetComponent<SpiritActionModifierCue>();
             var fox = view.GetComponentInChildren<SpiritHostPortrait>();
             int gestures = 0;
             fox.SpiritGesture += () => ++gestures;
             AssertFavor(view, presentation, true);
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
             {
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
@@ -69,6 +71,8 @@ namespace Dice.Tests
             controller.ToggleDie(0);
             Assert.That(view.RerollButton.IsInteractable(), Is.True);
             view.RerollButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(1));
             Assert.That(Find<Text>(view, "RerollsRemainingLabel").text, Is.EqualTo("REROLLS  1"));
@@ -77,7 +81,7 @@ namespace Dice.Tests
             Assert.That(cue.IsVisible, Is.True);
             Assert.That(cue.ActivePhase, Is.EqualTo(ModifierPhase.PlayerReroll));
             Assert.That(cue.ActiveSprite, Is.SameAs(presentation.Icon));
-            Assert.That(Find<SpiritHostSigilGraphic>(Find<CanvasGroup>(view, "RerollModifierCue"), "HostSigil")
+            Assert.That(ContentReady.ActionCuePart<SpiritHostSigilGraphic>(view, false, "HostSigil")
                 .gameObject.activeInHierarchy, Is.EqualTo(presentation.Icon == null));
             AssertFavor(view, presentation, false);
             yield return new WaitForSecondsRealtime(.18f);
@@ -91,6 +95,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(1));
 
             controller.Load();
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             AssertFavor(view, presentation, true);
             Assert.That(cue.IsVisible, Is.False);
@@ -100,6 +105,7 @@ namespace Dice.Tests
             yield return Wait(controller);
             controller.Save();
             controller.Load();
+            yield return ContentReady.Routed(controller);
             AssertFavor(view, presentation, false);
             Assert.That(cue.IsVisible, Is.False);
             int beforePaidGesture = gestures;
@@ -122,6 +128,8 @@ namespace Dice.Tests
             controller.ToggleDie(0);
             Assert.That(view.RerollButton.IsInteractable(), Is.True, "The free reroll must remain available with no paid rerolls.");
             view.RerollButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.IsBusy, Is.True);
             yield return Wait(controller);
             Assert.That(controller.Snapshot.RerollsRemaining, Is.Zero);
@@ -129,6 +137,7 @@ namespace Dice.Tests
             AssertFavor(view, presentation, false);
             controller.Save();
             controller.Load();
+            yield return ContentReady.Routed(controller);
             AssertFavor(view, presentation, false);
             controller.ToggleDie(0);
             Assert.That(view.RerollButton.IsInteractable(), Is.False);

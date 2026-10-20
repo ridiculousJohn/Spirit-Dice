@@ -7,7 +7,13 @@ namespace Dice.Presentation
     public sealed class SpiritUiButtonVisual : Button
     {
         private Graphic[] content;
-        private Transform untintedContent;
+        [SerializeField] private Transform untintedContent;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            CaptureContent();
+        }
 
         internal void ExcludeContentFromTint(Transform root)
         {
@@ -15,7 +21,7 @@ namespace Dice.Presentation
             CaptureContent();
         }
 
-        internal void CaptureContent()
+        public void CaptureContent()
         {
             content = System.Array.FindAll(GetComponentsInChildren<Graphic>(true),
                 graphic => untintedContent == null || !graphic.transform.IsChildOf(untintedContent));

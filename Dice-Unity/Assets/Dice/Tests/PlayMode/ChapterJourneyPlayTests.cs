@@ -19,17 +19,16 @@ namespace Dice.Tests
     public sealed class ChapterJourneyPlayTests
     {
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset chapter;
         private int resolutions;
 
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            view = controller.GetComponent<SpiritEncounterView>();
             chapter = controller.JourneyCatalog.Entries.Single(value => value.IsStoryOnly);
             resolutions = 0;
             controller.Resolved += resolution => ++resolutions;
@@ -42,6 +41,7 @@ namespace Dice.Tests
             Assert.That(controller.IsJourneyAvailable(chapter.Id), Is.False);
             Assert.That(ChapterCard(), Is.Null);
             controller.SelectEncounter(chapter.Id);
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             AssertNoEncounter();
 
@@ -86,7 +86,8 @@ namespace Dice.Tests
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
                 InitializeProfile(CompletedPrerequisites(true));
-                var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+                yield return ContentReady.Routed(controller);
+                var portrait = ContentReady.Portrait();
                 portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
                 portrait.sizeDelta = size;
                 portrait.anchoredPosition = Vector2.zero;
@@ -97,6 +98,11 @@ namespace Dice.Tests
                 AssertCompleteText(card.GetComponentsInChildren<Text>().Single(value => value.name == "ClueTitle"));
                 AssertCompleteText(card.GetComponentsInChildren<Text>().Single(value => value.name == "ClueLead"));
                 card.onClick.Invoke();
+                yield return ContentReady.Routed();
+                portrait = ContentReady.Portrait();
+                portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+                portrait.sizeDelta = size;
+                portrait.anchoredPosition = Vector2.zero;
                 Assert.That(controller.SelectedJourney, Is.SameAs(chapter));
                 AssertNoEncounter();
 
@@ -121,6 +127,7 @@ namespace Dice.Tests
                         Assert.That(controller.CompletedStoryIds, Does.Not.Contain(chapter.Id));
                     yield return Capture("chapter-" + (int)size.x + "-" + chapter.Beats[index].Id);
                     Click("JourneyAdvanceButton");
+                    yield return ContentReady.Routed();
                 }
 
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
@@ -138,11 +145,16 @@ namespace Dice.Tests
                 yield return null;
                 Assert.That(ChapterCard().GetComponentsInChildren<Text>().Single(value => value.name == "ClueState").text,
                     Is.EqualTo("READ AGAIN"));
-                Assert.That(view.GetComponentsInChildren<Text>().Any(value => value.name == "CompletionClueText" &&
+                Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Any(value => value.name == "CompletionClueText" &&
                     value.text == chapter.CompletionClueText), Is.True);
 
                 string profileBeforeReplay = File.ReadAllText(controller.ProfilePath);
                 ChapterCard().onClick.Invoke();
+                yield return ContentReady.Routed();
+                portrait = ContentReady.Portrait();
+                portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+                portrait.sizeDelta = size;
+                portrait.anchoredPosition = Vector2.zero;
                 while (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
                 {
                     int index = controller.BeatIndex;
@@ -152,6 +164,7 @@ namespace Dice.Tests
                     if (controller.BeatIndex == index) Click("JourneyAdvanceButton");
                     AssertNoEncounter();
                 }
+                yield return ContentReady.Routed(controller);
                 Assert.That(File.ReadAllText(controller.ProfilePath), Is.EqualTo(profileBeforeReplay));
                 Assert.That(controller.IsJourneyAvailable(chapter.Id), Is.True);
                 AssertNoEncounter();
@@ -177,7 +190,7 @@ namespace Dice.Tests
                 controller.JourneyStatus);
         }
 
-        private Button ChapterCard() => view.GetComponentsInChildren<Button>().FirstOrDefault(value =>
+        private Button ChapterCard() => ContentReady.PresentationRoot(controller).GetComponentsInChildren<Button>().FirstOrDefault(value =>
             value.name.StartsWith("ClueButton", StringComparison.Ordinal) &&
             value.GetComponentsInChildren<Text>().Any(label => label.name == "ClueTitle" && label.text == chapter.LocationTitle));
 
@@ -187,7 +200,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.HasActiveEncounter, Is.False);
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.Zero);
             Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(controller), Is.Null);
@@ -196,7 +209,7 @@ namespace Dice.Tests
 
         private T Find<T>(string name) where T : Component
         {
-            var result = view.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            var result = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
             Assert.That(result, Is.Not.Null, name);
             return result;
         }
@@ -225,9 +238,9 @@ namespace Dice.Tests
 
         internal static void AssertCharmPresentation(SpiritEncounterView view, EncounterJourneyBeat beat, MechanicalCatalog catalog)
         {
-            var labels = view.GetComponentsInChildren<Text>(true);
-            var body = labels.Single(value => value.name == "JourneyBody");
-            var detail = view.GetComponentsInChildren<RectTransform>(true).Single(value => value.name == "JourneyCharmDetail");
+            var sequence = view.JourneyView;
+            var body = sequence.Body;
+            var detail = sequence.CharmDetail;
             Assert.That(detail.gameObject.activeInHierarchy, Is.EqualTo(beat.Charm != null));
             if (beat.Charm == null)
             {
@@ -239,15 +252,16 @@ namespace Dice.Tests
             var theme = body.GetComponentInParent<SpiritUiContext>().Theme;
             Assert.That(body.text, Is.EqualTo(beat.Text.Replace("{charm}", "<b><color=#" +
                 ColorUtility.ToHtmlStringRGB(theme.amber) + ">" + SpiritModifierFamilyRow.GetFamilyName(definition) + "</color></b>")));
-            Assert.That(labels.Single(value => value.name == "JourneyCharmName").text, Is.EqualTo(name));
-            var effect = labels.Single(value => value.name == "JourneyCharmEffect");
+            Assert.That(sequence.CharmName.text, Is.EqualTo(name));
+            var effect = sequence.CharmEffect;
             Assert.That(effect.text, Does.Contain(SpiritModifierPresentation.GetEffectText(definition)));
             Assert.That(effect.color, Is.EqualTo(SpiritModifierIcons.GetEffectColor(definition)));
-            Assert.That(labels.Single(value => value.name == "JourneyCharmCondition").text,
+            Assert.That(sequence.CharmCondition.text,
                 Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition, theme.amber,
                     theme.GetModifierTriggerColor(definition.Phase))));
-            var icon = detail.GetComponentsInChildren<Graphic>().Single(value =>
-                value.name == "JourneyCharmIcon" || value.name == "JourneyCharmSigil");
+            Graphic icon = sequence.CharmIcon.gameObject.activeInHierarchy
+                ? sequence.CharmIcon : sequence.CharmSigil;
+            Assert.That(icon.gameObject.activeInHierarchy, Is.True, "The charm detail requires a visible icon.");
             Assert.That(icon.color, Is.EqualTo(SpiritModifierIcons.GetEffectColor(definition)));
             var bodyCorners = new Vector3[4];
             var detailCorners = new Vector3[4];

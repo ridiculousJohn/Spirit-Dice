@@ -9,41 +9,32 @@ namespace Dice.Presentation
     {
         private ISpiritMainMenuControls controls;
 
-        public RectTransform Root { get; private set; }
-        public Text Title { get; private set; }
-        public Text Status { get; private set; }
-        public Button ContinueButton { get; private set; }
-        public Button ChapterButton { get; private set; }
-        public Button NewGameButton { get; private set; }
-        public Button OptionsButton { get; private set; }
-        public Button SlotSelectorButton { get; private set; }
-        public SpiritSaveSlotPicker SlotPicker { get; private set; }
+        [field: SerializeField] public RectTransform Root { get; private set; }
+        [field: SerializeField] public Text Title { get; private set; }
+        [field: SerializeField] public Text Status { get; private set; }
+        [field: SerializeField] public Button ContinueButton { get; private set; }
+        [field: SerializeField] public Button ChapterButton { get; private set; }
+        [field: SerializeField] public Button NewGameButton { get; private set; }
+        [field: SerializeField] public Button OptionsButton { get; private set; }
+        [field: SerializeField] public Button SlotSelectorButton { get; private set; }
+        [field: SerializeField] public SpiritSaveSlotPicker SlotPicker { get; private set; }
 
         public void Build(RectTransform parent)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (Root != null) throw new InvalidOperationException("The main menu has already been built.");
-
-            var theme = SpiritUi.GetTheme(transform);
-            Root = SpiritUi.Panel("MainMenu", parent, Vector2.zero, Vector2.one,
-                theme.panelColor).rectTransform;
-            Title = SpiritUi.Heading("MainMenuTitle", Root, "Spirit Dice", 48,
-                new Vector2(.06f, .76f), new Vector2(.94f, .89f), TextAnchor.MiddleCenter, theme.amber);
-            ContinueButton = SpiritUi.Button("ContinueGameButton", Root, "Continue",
-                new Vector2(.16f, .65f), new Vector2(.84f, .73f), () => controls?.ContinueGame(), compact: true);
-            SlotSelectorButton = SpiritUi.Button("MainMenuSaveSlotButton", Root, "Load Game",
-                new Vector2(.16f, .55f), new Vector2(.84f, .63f), () => SlotPicker.Show(false), compact: true);
-            ChapterButton = SpiritUi.Button("OpenSavedChapterButton", Root, "Chapter",
-                new Vector2(.16f, .45f), new Vector2(.84f, .53f), () => controls?.OpenSavedChapter(), compact: true);
-            NewGameButton = SpiritUi.Button("NewGameButton", Root, "New Game",
-                new Vector2(.16f, .35f), new Vector2(.84f, .43f), () => SlotPicker.Show(true), compact: true);
-            OptionsButton = SpiritUi.Button("MainMenuOptionsButton", Root, "Options",
-                new Vector2(.16f, .25f), new Vector2(.84f, .33f), () => { }, compact: true);
-            Status = SpiritUi.Label("MainMenuStatus", Root, "", 17,
-                new Vector2(.08f, .12f), new Vector2(.92f, .22f), TextAnchor.MiddleCenter, theme.muted);
-
-            SlotPicker = gameObject.AddComponent<SpiritSaveSlotPicker>();
+            if (Root == null || Title == null || Status == null || ContinueButton == null ||
+                ChapterButton == null || NewGameButton == null || OptionsButton == null ||
+                SlotSelectorButton == null || SlotPicker == null)
+                throw new InvalidOperationException("The main menu requires authored UI references.");
             SlotPicker.Build(Root);
+            ContinueButton.onClick.RemoveListener(ContinueGame);
+            ContinueButton.onClick.AddListener(ContinueGame);
+            SlotSelectorButton.onClick.RemoveListener(SelectSaveSlot);
+            SlotSelectorButton.onClick.AddListener(SelectSaveSlot);
+            ChapterButton.onClick.RemoveListener(OpenChapter);
+            ChapterButton.onClick.AddListener(OpenChapter);
+            NewGameButton.onClick.RemoveListener(StartNewGame);
+            NewGameButton.onClick.AddListener(StartNewGame);
             Hide();
         }
 
@@ -70,6 +61,11 @@ namespace Dice.Presentation
             SlotPicker?.Close();
             if (Root != null) Root.gameObject.SetActive(false);
         }
+
+        private void ContinueGame() => controls?.ContinueGame();
+        private void SelectSaveSlot() => SlotPicker.Show(false);
+        private void OpenChapter() => controls?.OpenSavedChapter();
+        private void StartNewGame() => SlotPicker.Show(true);
 
         private void OnDisable()
         {

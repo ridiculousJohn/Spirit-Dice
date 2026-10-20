@@ -19,15 +19,16 @@ namespace Dice.Tests
     public sealed class EncounterJourneyPlayTests
     {
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private IEncounterJourneyControls presentedJourney;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
 
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            view = controller.GetComponent<SpiritEncounterView>();
+            presentedJourney = null;
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
             yield return null;
@@ -58,6 +59,7 @@ namespace Dice.Tests
             yield return CheckPortraitSizes("investigation");
             yield return Capture("investigation");
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return new WaitForSecondsRealtime(.6f);
             Assert.That(view.JourneyView.IsAnimating, Is.True, "The approach must visibly carry its moving silhouette.");
             yield return Capture("approach-shadow");
@@ -100,6 +102,7 @@ namespace Dice.Tests
             Assert.That(Find<Text>("JourneyRuleText").text.ToLowerInvariant(), Does.Contain("first reroll"));
             Assert.That(Find<Text>("JourneyRuleText").text.ToLowerInvariant(), Does.Contain("hand"));
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
@@ -108,6 +111,7 @@ namespace Dice.Tests
             Assert.That(resolutions, Is.EqualTo(1));
             var opening = controller.Snapshot;
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
             controller.AdvanceJourney();
             controller.SkipIntro();
             Assert.That(controller.Snapshot, Is.SameAs(opening));
@@ -116,6 +120,7 @@ namespace Dice.Tests
             yield return Capture("opening-roll");
             yield return WaitForPresentation();
             controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1), "Repeated acceptance must not roll or create another run.");
             var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, 60);
@@ -136,6 +141,7 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             for (int index = 0; index < journey.Beats.Count - 1; ++index)
             {
                 yield return null;
@@ -143,11 +149,13 @@ namespace Dice.Tests
                 Assert.That(view.JourneyView.IsAnimating, Is.True);
                 Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
                 Click("JourneyAdvanceButton");
+                yield return ContentReady.Routed();
             }
             yield return null;
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             Assert.That(Find<Button>("JourneyAcceptButton").IsInteractable(), Is.True);
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(resolutions, Is.EqualTo(1));
             yield return WaitForPresentation();
@@ -163,34 +171,44 @@ namespace Dice.Tests
         {
             var journey = controller.JourneyCatalog.Entries[0];
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             Assert.That(controller.CanSkipIntro, Is.False);
             controller.SkipIntro();
             Assert.That(controller.BeatIndex, Is.Zero);
+            var departingSequence = view.JourneyView;
             Click("JourneyReturnButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(view.JourneyView.IsAnimating, Is.False, "Returning to clues must cancel the active intro motion.");
+            Assert.That(departingSequence == null || !departingSequence.IsAnimating, Is.True,
+                "Returning to clues must cancel or unload the active intro motion.");
+            Assert.That(view, Is.Null, "Returning to clues must unload the encounter scene.");
             Assert.That(controller.VisitedEncounterIds, Is.Empty);
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return AdvanceToInvitation();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             controller.Abandon();
             yield return WaitForPresentation();
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CanResume, Is.False);
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             Assert.That(controller.CanSkipIntro, Is.True);
             Assert.That(Find<Button>("JourneySkipButton").gameObject.activeInHierarchy, Is.True);
             Assert.That(Find<Button>("JourneySkipButton").IsInteractable(), Is.True);
             Click("JourneySkipButton");
+            yield return ContentReady.Routed();
             yield return WaitForJourney();
             Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
             Assert.That(journey.Beats[controller.BeatIndex].Kind, Is.EqualTo(EncounterJourneyBeatKind.Invitation));
@@ -203,43 +221,53 @@ namespace Dice.Tests
         public IEnumerator ReturnResumeAndLoadRetainTheRunWithoutReplayingItsIntroOrOpeningRoll()
         {
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return AdvanceToInvitation();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             int resolutions = 0;
             controller.Resolved += _ => ++resolutions;
             Click("DieButton1");
+            yield return ContentReady.Routed();
             Click("RerollButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             Click("MenuButton");
+            yield return ContentReady.Routed();
             yield return null;
             Click("SaveRunButton");
+            yield return ContentReady.Routed();
             Assert.That(File.Exists(controller.SavePath), Is.True, controller.StatusMessage);
             var saved = EncounterSaveFileStore.Load(controller.SavePath);
             var beforeReturn = controller.Snapshot;
             int beforeReturnResolutions = resolutions;
             Click("ReturnToInvestigationButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.SameAs(beforeReturn));
             Assert.That(controller.CanResume, Is.True);
             AssertGameplayVisible(false);
             Click("ResumeEncounterButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.Snapshot, Is.SameAs(beforeReturn));
             Assert.That(resolutions, Is.EqualTo(beforeReturnResolutions));
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Click("ReturnToInvestigationButton");
+            yield return ContentReady.Routed();
             yield return null;
             controller.Load();
+            yield return ContentReady.Routed(controller);
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.EqualTo(beforeReturnResolutions));
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision));
             Assert.That(controller.Snapshot.RerollsRemaining, Is.EqualTo(saved.RerollsRemaining));
@@ -257,33 +285,40 @@ namespace Dice.Tests
         public IEnumerator TableModalsCoverCluesAndClosingRestoresItsNavigation()
         {
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return AdvanceToInvitation();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
-            var clues = Find<Button>("ReturnToInvestigationButton");
-            var overlays = new[] { "CharmsOverlay", "HandRanksOverlay", "MenuOverlay" };
+            var overlays = new[] { "SpiritOwnedCharmsPanel", "SpiritHandRanksPanel", "MenuOverlay" };
             var openButtons = new[] { "CharmsButton", "HandRanksButton", "MenuButton" };
             var closeButtons = new[] { "CloseCharmsButton", "CloseHandRanksButton", "CloseMenuButton" };
             var titles = new[] { "CharmsTitle", "HandRanksTitle", "MenuTitle" };
 
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
-                portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-                portrait.sizeDelta = size;
-                portrait.anchoredPosition = Vector2.zero;
-                yield return null;
-                Canvas.ForceUpdateCanvases();
                 for (int index = 0; index < overlays.Length; ++index)
                 {
-                    Click(openButtons[index]);
+                    var portrait = view.Portrait;
+                    var clues = view.GameplayHud.InvestigationButton;
+                    portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+                    portrait.sizeDelta = size;
+                    portrait.anchoredPosition = Vector2.zero;
                     yield return null;
                     Canvas.ForceUpdateCanvases();
-                    var overlay = Find<RectTransform>(overlays[index]);
+                    Click(openButtons[index]);
+                    yield return ContentReady.Routed();
+                    yield return null;
+                    Canvas.ForceUpdateCanvases();
+                    var overlay = index == 0 ? view.OwnedCharmsPanel.Root : index == 1 ?
+                        view.GetComponentInChildren<SpiritHandRanksPanel>(true).Root :
+                        view.GetComponentInChildren<SpiritPauseMenu>(true).Root;
                     var title = Find<Text>(titles[index]);
                     Assert.That(overlay.gameObject.activeInHierarchy, Is.True, overlay.name);
-                    Assert.That(overlay.parent, Is.SameAs(clues.transform.parent), overlay.name);
-                    Assert.That(overlay.GetSiblingIndex(), Is.GreaterThan(clues.transform.GetSiblingIndex()),
+                    Assert.That(overlay.parent, Is.SameAs(portrait), overlay.name);
+                    Assert.That(clues.transform.IsChildOf(view.GameplayHud.Root), Is.True);
+                    Assert.That(view.GameplayHud.Root.parent, Is.SameAs(portrait));
+                    Assert.That(overlay.GetSiblingIndex(), Is.GreaterThan(view.GameplayHud.Root.GetSiblingIndex()),
                         overlay.name + " must draw over the table's Clues button.");
                     Assert.That(overlay.GetComponent<Graphic>().depth, Is.GreaterThan(clues.targetGraphic.depth),
                         overlay.name + " must cover the entire Clues button.");
@@ -305,12 +340,15 @@ namespace Dice.Tests
                     }
                     yield return Capture("modal-" + overlays[index] + "-" + size.x);
                     Click(closeButtons[index]);
+                    yield return ContentReady.Routed();
                     yield return null;
                     Assert.That(overlay.gameObject.activeInHierarchy, Is.False, overlay.name);
                     Click("ReturnToInvestigationButton");
+                    yield return ContentReady.Routed();
                     yield return null;
                     Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
                     Click("ResumeEncounterButton");
+                    yield return ContentReady.Routed();
                     yield return null;
                     Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
                 }
@@ -329,6 +367,7 @@ namespace Dice.Tests
             Find<ScrollRect>("InvestigationClues").verticalNormalizedPosition = 0;
             yield return null;
             Click("ClueButton1");
+            yield return ContentReady.Routed();
             yield return WaitForJourney();
             Assert.That(controller.SelectedJourney, Is.SameAs(second));
             Assert.That(Find<Text>("JourneyTitle").text, Is.EqualTo("The brass stair"));
@@ -336,12 +375,17 @@ namespace Dice.Tests
             Assert.That(ActiveText(), Does.Not.Contain("Lantern"));
             yield return AdvanceToInvitation();
             Assert.That(Find<Text>("JourneyBody").text, Is.EqualTo("Set one constellation in the astrolabe."));
-            Assert.That(view.HostPortrait, Is.Null, "A table without an authored host must not retain the previous host.");
+            Assert.That(view.TablePresentation, Is.SameAs(second.TablePresentation));
+            Assert.That(view.HostPortrait, Is.Not.Null);
+            Assert.That(view.HostPortrait.GetComponentsInChildren<SpiritPortraitImage>(true).Length,
+                Is.EqualTo(second.TablePresentation.HostPresentation.Layers.Length), "The routed scene must display its authored host.");
             yield return CheckPortraitSizes();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.journey-test.observatory"));
             Click("PlayButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo("A chart recovered"));
@@ -351,6 +395,7 @@ namespace Dice.Tests
             yield return CheckPortraitSizes();
             yield return Capture("synthetic-victory");
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CanResume, Is.False);
@@ -369,10 +414,13 @@ namespace Dice.Tests
             yield return null;
             Canvas.ForceUpdateCanvases();
             Click("ClueButton0");
+            yield return ContentReady.Routed();
             yield return AdvanceToInvitation();
             Click("JourneyAcceptButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             Click("PlayButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
             Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo("The tide takes the map"));
@@ -381,6 +429,7 @@ namespace Dice.Tests
             yield return CheckPortraitSizes();
             yield return Capture("synthetic-loss");
             Click("EndingNewRunButton");
+            yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CanResume, Is.False);
@@ -397,9 +446,14 @@ namespace Dice.Tests
             var controls = new InvitationControls(controller.JourneyCatalog);
             foreach (var authored in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
+                ContentReady.SeedJourneyPrerequisites(controller, authored.Id);
+                controller.SelectEncounter(authored.Id);
+                yield return ContentReady.Routed(controller);
                 var invitation = CloneForInvitation(authored);
                 controls.Show(invitation, invitation.Beats.Count - 1);
-                view.BindJourney(controls);
+                presentedJourney = controls;
+                view.JourneyView.Bind(controls, controller);
+                view.JourneyView.Refresh();
                 yield return WaitForJourney();
                 foreach (var size in InvitationSizes())
                 {
@@ -418,6 +472,8 @@ namespace Dice.Tests
         public IEnumerator RuleRowsResizeForMultipleRulesAndRestoreOrdinaryBeatsWithoutRules()
         {
             var authored = controller.JourneyCatalog.Entries[0];
+            controller.SelectEncounter(authored.Id);
+            yield return ContentReady.Routed(controller);
             var noRules = CloneForInvitation(authored);
             var noRuleTable = UnityEngine.Object.Instantiate(authored.TablePresentation);
             SetField(noRuleTable, "rulePresentations", Array.Empty<EncounterRulePresentationAsset>());
@@ -433,7 +489,9 @@ namespace Dice.Tests
             SetField(multiple, "tablePresentation", multipleTable);
             var controls = new InvitationControls(controller.JourneyCatalog);
             controls.Show(multiple, multiple.Beats.Count - 1);
-            view.BindJourney(controls);
+            presentedJourney = controls;
+            view.JourneyView.Bind(controls, controller);
+            view.JourneyView.Refresh();
             yield return WaitForJourney();
 
             foreach (var size in InvitationSizes())
@@ -472,7 +530,7 @@ namespace Dice.Tests
 
         private IEnumerator SetPortraitSize(Vector2 size)
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = size;
@@ -485,7 +543,7 @@ namespace Dice.Tests
 
         private void AssertRuleInvitation(EncounterJourneyAsset journey)
         {
-            var narrative = Find<RectTransform>("JourneyNarrative");
+            var narrative = Find<ScrollRect>("NarrativeScroll").content;
             var body = Find<Text>("JourneyBody");
             var heading = Find<Text>("JourneyRuleHeading");
             var scope = Find<Text>("JourneyRuleScope");
@@ -533,12 +591,13 @@ namespace Dice.Tests
             }
             for (int index = 0; index < journey.TablePresentation.RulePresentations.Count; ++index)
                 AssertInside(narrative, Find<Graphic>("JourneyRuleIcon" + (index == 0 ? "" : (index + 1).ToString())).rectTransform);
-            var sequence = (RectTransform)narrative.parent;
-            var panelBounds = BoundsIn(sequence, narrative);
+            var panel = Find<RectTransform>("JourneyNarrative");
+            var sequence = (RectTransform)panel.parent;
+            var panelBounds = BoundsIn(sequence, panel);
             var acceptBounds = BoundsIn(sequence, Find<Button>("JourneyAcceptButton").transform as RectTransform);
             Assert.That(panelBounds.yMin - acceptBounds.yMax, Is.InRange(0, 16),
                 "The measured narrative must sit immediately above Accept.");
-            AssertInside(sequence, narrative);
+            AssertInside(sequence, panel);
             Assert.That(Find<Button>("JourneyAcceptButton").IsInteractable(), Is.True);
         }
 
@@ -621,18 +680,22 @@ namespace Dice.Tests
 
         private void InstallSyntheticCatalog()
         {
+            var authored = controller.JourneyCatalog.Entries.Where(entry => !entry.IsStoryOnly).ToArray();
+            var tables = authored.Select(entry => entry.TablePresentation).ToArray();
             var losing = new EncounterDefinition("encounter.journey-test.archive",
-                new[] { new StageDefinition(1000000, 1, 0) });
+                new[] { new StageDefinition(1000000, 1, 0) },
+                rules: controller.Catalog.GetEncounter(authored[0].EncounterId).Rules);
             var winning = new EncounterDefinition("encounter.journey-test.observatory",
-                new[] { new StageDefinition(1, 1, 0) });
+                new[] { new StageDefinition(1, 1, 0) },
+                rules: controller.Catalog.GetEncounter(authored[1].EncounterId).Rules);
             var catalog = new MechanicalCatalog("journey-playmode.v1", controller.Catalog.Hands,
                 new[] { losing, winning }, Array.Empty<ModifierDefinition>());
-            var first = CreateJourney(losing.Id, "The Tidal Archive", "The Archivist",
+            var first = CreateJourney(tables[0], losing.Id, "The Tidal Archive", "The Archivist",
                 "A watermarked map carries a name erased from the register.",
                 "The flooded shelf", "Follow the waterline into the archive.",
                 "Place one name in the register.", "A name restored", "The register yields a route.",
                 "The tide takes the map", "The archivist keeps the answer.", "Search the archive");
-            var second = CreateJourney(winning.Id, "The Observatory", "The Astronomer",
+            var second = CreateJourney(tables[1], winning.Id, "The Observatory", "The Astronomer",
                 "A scorched chart records a signal above the clouds.",
                 "The brass stair", "A blue filament leads above the clouds.",
                 "Set one constellation in the astrolabe.", "A chart recovered",
@@ -648,12 +711,10 @@ namespace Dice.Tests
                 controller.JourneyStatus);
         }
 
-        private static EncounterJourneyAsset CreateJourney(string encounterId, string location, string spirit,
+        private static EncounterJourneyAsset CreateJourney(EncounterTablePresentationAsset table, string encounterId, string location, string spirit,
             string lead, string title, string approach, string invitation, string victoryTitle, string victory,
             string defeatTitle, string defeat, string continueLabel)
         {
-            var table = ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
-            SetField(table, "displayTitle", location);
             var journey = ScriptableObject.CreateInstance<EncounterJourneyAsset>();
             SetField(journey, "encounterId", encounterId);
             SetField(journey, "locationTitle", location);
@@ -707,8 +768,9 @@ namespace Dice.Tests
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 var slot = view.TrayScene.Geometry.DiceSlots[index];
-                var die = slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index);
+                var die = ContentReady.Die(view.DiceTray, index);
                 Assert.That(die, Is.Not.Null, "Die " + index);
+                Assert.That(die.IsChildOf(slot), Is.True, "The authored die belongs to its tray slot.");
                 Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
                 Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + index + " result face");
                 var camera = view.DiceTray.RenderCamera;
@@ -720,9 +782,15 @@ namespace Dice.Tests
 
         private void AssertGameplayVisible(bool visible)
         {
+            if (view == null)
+            {
+                Assert.That(visible, Is.False);
+                Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<SpiritGameplayHud>(true), Is.Empty);
+                return;
+            }
             foreach (string name in new[] { "PlayingPanel", "TargetPanel", "HandsPanel", "RerollsPanel" })
                 Assert.That(Find<RectTransform>(name).gameObject.activeInHierarchy, Is.EqualTo(visible), name);
-            if (!visible) Assert.That(view.DiceTray.IsRolling, Is.False);
+            if (!visible) Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
         }
 
         private IEnumerator AdvanceToInvitation()
@@ -731,19 +799,23 @@ namespace Dice.Tests
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
             {
                 Click("JourneyAdvanceButton");
+                yield return ContentReady.Routed();
                 yield return WaitForJourney();
             }
         }
 
         private IEnumerator WaitForJourney()
         {
+            yield return ContentReady.Routed();
+            view.JourneyView.Refresh();
             float deadline = Time.realtimeSinceStartup + 15;
             while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus);
             yield return new WaitForSecondsRealtime(.15f);
-            if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
+            var state = presentedJourney ?? controller;
+            if (state.JourneyPhase == EncounterJourneyPhase.Sequence)
             {
-                bool invitation = controller.SelectedJourney.Beats[controller.BeatIndex].Kind == EncounterJourneyBeatKind.Invitation;
+                bool invitation = state.SelectedJourney.Beats[state.BeatIndex].Kind == EncounterJourneyBeatKind.Invitation;
                 var button = Find<Button>(invitation ? "JourneyAcceptButton" : "JourneyAdvanceButton");
                 Assert.That(button.gameObject.activeInHierarchy, Is.True, button.name);
                 Assert.That(button.IsInteractable(), Is.True, button.name);
@@ -752,16 +824,17 @@ namespace Dice.Tests
 
         private IEnumerator WaitForPresentation()
         {
+            yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 45;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, controller.StatusMessage);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             yield return null;
         }
 
         private IEnumerator CheckPortraitSizes(string captureName = null)
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             foreach (var size in new[] { new Vector2(443, 912), new Vector2(540, 960) })
             {
@@ -773,7 +846,7 @@ namespace Dice.Tests
                 if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
                     ChapterJourneyPlayTests.AssertCharmPresentation(view,
                         controller.SelectedJourney.Beats[controller.BeatIndex], controller.Catalog);
-                foreach (var label in view.GetComponentsInChildren<Text>())
+                foreach (var label in ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>())
                 {
                     if (!label.isActiveAndEnabled || string.IsNullOrWhiteSpace(label.text)) continue;
                     AssertCompleteText(label);
@@ -818,12 +891,23 @@ namespace Dice.Tests
             }
         }
 
-        private string ActiveText() => string.Join("\n", view.GetComponentsInChildren<Text>()
+        private string ActiveText() => string.Join("\n", ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>()
             .Where(label => label.isActiveAndEnabled).Select(label => label.text));
 
         private T Find<T>(string name) where T : Component
         {
-            var result = view.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            foreach (string prefix in new[] { "JourneyRuleName", "JourneyRuleText", "JourneyRuleIcon" })
+            {
+                if (!name.StartsWith(prefix, StringComparison.Ordinal)) continue;
+                int index = name.Length == prefix.Length ? 0 : int.Parse(name.Substring(prefix.Length)) - 1;
+                var rows = view.JourneyView.GetComponentsInChildren<SpiritInvitationRuleView>(true);
+                Assert.That(index, Is.LessThan(rows.Length), name);
+                Component match = prefix == "JourneyRuleIcon" ?
+                    rows[index].IconRoot.GetComponentsInChildren<Graphic>().First(graphic => !(graphic is Text)) :
+                    prefix == "JourneyRuleName" ? rows[index].Title : rows[index].Description;
+                return match as T;
+            }
+            var result = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
             Assert.That(result, Is.Not.Null, name);
             return result;
         }

@@ -69,6 +69,8 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Spirit Host")]
     public sealed class SpiritHostPresentationAsset : ScriptableObject
     {
+        public SpiritHostPortrait PortraitPrefab;
+        public Graphic SigilPrefab;
         public Shader SilhouetteShader;
         public Shader SmokeShader;
         public Vector2 ReferenceSize = new Vector2(540f, 960f);
@@ -84,24 +86,17 @@ namespace Dice.Presentation
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             Validate();
-            var host = SpiritUi.Full("HostPortrait", parent);
-            var portrait = host.gameObject.AddComponent<SpiritHostPortrait>();
-            portrait.Build(host, this);
+            if (PortraitPrefab == null) throw new InvalidOperationException("The host requires an authored portrait prefab.");
+            var portrait = Instantiate(PortraitPrefab, parent, false);
+            portrait.Build((RectTransform)portrait.transform, this);
             return portrait;
         }
 
         public Graphic CreateSigil(string name, RectTransform parent)
         {
-            Graphic sigil;
-            if (SigilLines != null && SigilLines.Length > 0)
-            {
-                var lines = SpiritUi.Full(name, parent).gameObject.AddComponent<SpiritHostSigilGraphic>();
-                lines.Configure(SigilLines, SigilWidth);
-                sigil = lines;
-            }
-            else sigil = SpiritUi.Full(name, parent).gameObject.AddComponent<SpiritModifierSigilGraphic>();
-            sigil.color = SigilColor;
-            sigil.raycastTarget = false;
+            if (SigilPrefab == null) throw new InvalidOperationException("The host requires an authored sigil prefab.");
+            Graphic sigil = Instantiate(SigilPrefab, parent, false);
+            sigil.name = name;
             return sigil;
         }
 

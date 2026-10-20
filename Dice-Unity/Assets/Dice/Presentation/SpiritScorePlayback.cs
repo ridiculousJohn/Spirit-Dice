@@ -200,7 +200,7 @@ namespace Dice.Presentation
                     hud.PlayingPanel.gameObject.SetActive(false);
                     host.HideRewardsAndEnding();
                     hud.StageIntroTitle.text = hud.StageLabel.text;
-                    hud.StageIntroDetail.fontSize = 19;
+                    hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
                     hud.StageIntroDetail.text = "CLEAR " + DiagnosticText.Number(stage.Threshold) + " POINTS\n" +
                         stage.Hands + " hands / " + stage.Rerolls + " rerolls";
                     if (resolution.PreviousRevision >= 0)
@@ -208,21 +208,6 @@ namespace Dice.Presentation
                         hud.StageIntroPanel.gameObject.SetActive(true);
                         yield return new WaitForSecondsRealtime(.9f);
                     }
-                    hud.StageIntroPanel.gameObject.SetActive(false);
-                }
-                else if (ruleEvent is ModifierUnlockedEvent unlocked)
-                {
-                    if (resolution.Snapshot.Phase == EncounterPhase.Completed &&
-                        host.Journey?.SelectedJourney?.GetOutcomePresentation(resolution.Snapshot.Outcome) != null) continue;
-                    var definition = controls.Catalog.GetModifier(unlocked.ModifierId);
-                    bool pending = SpiritCharmVisuals.HasPendingProgress(controls);
-                    hud.StageIntroTitle.text = pending ? "CHARM UNLOCKED - SAVE PENDING" : "CHARM UNLOCKED";
-                    hud.StageIntroDetail.fontSize = 16;
-                    hud.StageIntroDetail.text = CharmName(definition) + "\n" +
-                        (pending ? "Unlock save pending / " + SpiritCharmVisuals.AvailabilityScopeText(definition) :
-                        SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot));
-                    hud.StageIntroPanel.gameObject.SetActive(true);
-                    yield return new WaitForSecondsRealtime(1.1f);
                     hud.StageIntroPanel.gameObject.SetActive(false);
                 }
                 else if (ruleEvent is HandStartedEvent hand)

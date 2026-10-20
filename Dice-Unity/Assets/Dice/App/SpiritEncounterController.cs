@@ -13,7 +13,6 @@ using Resolution = Dice.Engine.Resolution;
 
 namespace Dice.App
 {
-    [RequireComponent(typeof(SpiritEncounterView))]
     public sealed class SpiritEncounterController : MonoBehaviour, ISpiritEncounterControls, ISpiritProgressionControls, IEncounterJourneyControls, IEncounterPresenter
     {
         private string encounterId;
@@ -66,21 +65,12 @@ namespace Dice.App
                 SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "spirit-encounter.json");
         }
 
-        private void OnEnable()
-        {
-            if (Catalog != null) EnsurePresentation();
-        }
-
-        private void EnsurePresentation()
+        public void PresentationDidInitialize()
         {
             if (PresentationReady) return;
-            var view = GetComponent<SpiritEncounterView>();
-            if (!view.isActiveAndEnabled) return;
-            view.Bind(this, this);
             PresentationReady = true;
             PresentationInitialized?.Invoke();
         }
-
         public void ConfigureSeedPolicy(bool useFixedSeed, string initialSeed)
         {
             this.useFixedSeed = useFixedSeed;
@@ -114,7 +104,6 @@ namespace Dice.App
             navigation.Initialize(JourneyCatalog, encounterId);
             JourneyStatus = string.Empty;
             Install(next, "Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
-            EnsurePresentation();
             JourneyChanged?.Invoke();
         }
 
@@ -142,7 +131,6 @@ namespace Dice.App
                 navigation.ShowMainMenu();
                 JourneyStatus = string.Empty;
                 StatusMessage = "Main menu ready.";
-                EnsurePresentation();
                 JourneyChanged?.Invoke();
                 StateChanged?.Invoke();
                 return true;
@@ -179,7 +167,6 @@ namespace Dice.App
                 navigation.InitializeJourney(journeys, JourneyProgress);
                 JourneyStatus = string.Empty;
                 StatusMessage = "Investigation ready.";
-                EnsurePresentation();
                 JourneyChanged?.Invoke();
                 StateChanged?.Invoke();
                 return true;

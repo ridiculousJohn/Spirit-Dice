@@ -11,12 +11,19 @@ namespace Dice.Presentation
         private Texture2D generatedNoise, generatedMask;
         public Material Material { get; private set; }
 
-        public SpiritSmokeMaterial(SpiritPortraitSmoke settings, Shader shader)
+        public SpiritSmokeMaterial(SpiritPortraitSmoke settings, Shader shader, Material authored = null)
         {
             if (settings == null) throw new ArgumentNullException(nameof(settings));
             if (shader == null || !shader.isSupported) throw new InvalidOperationException("Spirit smoke shader is unavailable.");
+            if (authored != null && authored.shader != shader)
+                throw new InvalidOperationException("The authored smoke material must use the host's smoke shader.");
             try
             {
+                if (authored != null)
+                {
+                    Material = new Material(authored) { name = authored.name + " Instance", hideFlags = HideFlags.HideAndDontSave };
+                    return;
+                }
                 Material = new Material(shader) { name = "Spirit Portrait Smoke", hideFlags = HideFlags.HideAndDontSave };
                 Texture2D noise = settings.FlowNoise != null ? settings.FlowNoise : generatedNoise = CreateDataTexture(128, true);
                 Texture2D mask = settings.MotionMask != null ? settings.MotionMask : generatedMask = CreateDataTexture(256, false);

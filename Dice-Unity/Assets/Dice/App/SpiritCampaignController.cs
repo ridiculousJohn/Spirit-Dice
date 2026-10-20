@@ -47,7 +47,6 @@ namespace Dice.App
                 slots = nextSlots;
                 IsInitialized = true;
                 RefreshSlots();
-                GetComponent<SpiritEncounterView>().BindMainMenu(this);
                 controller.SetStatus(recoveredIndex == null ? "Main menu ready." :
                     recoveryCampaigns.Count == 0 ? "Save-slot list recovered." :
                     "Save-slot list recovered. Open Load Game to recover unassigned saves.");

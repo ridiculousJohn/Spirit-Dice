@@ -6,34 +6,9 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Charm icon construction and text shared by the gameplay view, its panels, and score playback. */
+    /** Charm icon state and text shared by the gameplay view, its panels, and score playback. */
     internal static class SpiritCharmVisuals
     {
-        internal static Image MakeIcon(string name, Transform parent, Vector2 anchor, float size)
-        {
-            var rect = SpiritUi.Rect(name, parent, anchor, anchor);
-            rect.sizeDelta = new Vector2(size, size);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.color = Color.white;
-            image.preserveAspect = true;
-            image.raycastTarget = false;
-            image.gameObject.SetActive(false);
-            return image;
-        }
-
-        internal static SpiritModifierSigilGraphic MakeSigil(string name, Image icon)
-        {
-            var rect = SpiritUi.Rect(name, icon.transform.parent, icon.rectTransform.anchorMin, icon.rectTransform.anchorMax);
-            rect.pivot = icon.rectTransform.pivot;
-            rect.anchoredPosition = icon.rectTransform.anchoredPosition;
-            rect.sizeDelta = icon.rectTransform.sizeDelta;
-            var sigil = rect.gameObject.AddComponent<SpiritModifierSigilGraphic>();
-            sigil.color = SpiritUi.GetTheme(icon.transform).amber;
-            sigil.raycastTarget = false;
-            sigil.gameObject.SetActive(false);
-            return sigil;
-        }
-
         internal static void SetIcon(Image icon, SpiritModifierSigilGraphic sigil, SpiritModifierCategoryBadge category,
             ModifierDefinition definition)
         {

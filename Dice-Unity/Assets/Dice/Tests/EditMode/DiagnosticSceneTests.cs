@@ -26,9 +26,9 @@ namespace Dice.Tests
                 }
                 Assert.That(controller, Is.Not.Null);
                 Assert.That(camera, Is.Not.Null);
-                Assert.That(controller.GetComponent<DiagnosticEncounterView>(), Is.Not.Null);
                 using (var serialized = new SerializedObject(controller))
                 {
+                    Assert.That(serialized.FindProperty("view").objectReferenceValue, Is.Not.Null);
                     Assert.That(serialized.FindProperty("catalogAsset").objectReferenceValue,
                         Is.SameAs(AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset")));
                     Assert.That(serialized.FindProperty("encounterId").stringValue, Is.EqualTo("encounter.standard"));

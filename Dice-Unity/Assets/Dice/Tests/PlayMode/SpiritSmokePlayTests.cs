@@ -14,33 +14,27 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator SmokePhaseSurvivesPoseResetsVisibilityAndPresentationStates()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var authoredHost = controller.JourneyCatalog.Entries.Select(entry => entry.TablePresentation?.HostPresentation)
-                .First(asset => asset != null && asset.SmokeShader != null);
+                .First(asset => asset != null && asset.SmokeShader != null && asset.Layers.Any(layer => layer.Smoke != null && layer.Smoke.Enabled));
             var host = new GameObject("Smoke Test", typeof(RectTransform));
-            var presentation = ScriptableObject.CreateInstance<SpiritHostPresentationAsset>();
+            var presentation = Object.Instantiate(authoredHost);
             try
             {
-                presentation.SmokeShader = authoredHost.SmokeShader;
-                var parent = host.GetComponent<RectTransform>();
-                parent.sizeDelta = presentation.ReferenceSize;
-                presentation.Layers = new[]
-                {
-                    new SpiritPortraitLayer { Id = "Smoke", Texture = Texture2D.whiteTexture, Size = new Vector2(40f, 60f),
-                        Tint = new Color(1f, 1f, 1f, .4f), Smoke = new SpiritPortraitSmoke { Enabled = true } },
-                    new SpiritPortraitLayer { Id = "Solid", Texture = Texture2D.whiteTexture, Size = new Vector2(40f, 60f) }
-                };
                 presentation.Sequences = new[]
                 {
                     new SpiritPresentationSequence { Id = "Arrival", State = SpiritPresentationState.Arrival },
                     new SpiritPresentationSequence { Id = "Reaction", State = SpiritPresentationState.Reaction }
                 };
-                var portrait = host.AddComponent<SpiritHostPortrait>();
-                portrait.Build(parent, presentation);
-                var smoke = portrait.GetLayer("Smoke");
-                var solid = portrait.GetLayer("Solid");
+                var parent = host.GetComponent<RectTransform>();
+                parent.sizeDelta = presentation.ReferenceSize;
+                var portrait = presentation.Create(parent);
+                var smokeLayer = presentation.Layers.First(layer => layer.Smoke != null && layer.Smoke.Enabled);
+                var solidLayer = presentation.Layers.First(layer => layer.Smoke == null || !layer.Smoke.Enabled);
+                var smoke = portrait.GetLayer(smokeLayer.Id);
+                var solid = portrait.GetLayer(solidLayer.Id);
                 Assert.That(smoke.material.shader.name, Is.EqualTo("Dice/Spirit Smoke"));
                 Assert.That(solid.material.shader.name, Is.Not.EqualTo(smoke.material.shader.name));
                 portrait.Advance(.25f);
@@ -65,8 +59,8 @@ namespace Dice.Tests
                     portrait.Advance(.5f);
                     portrait.SetVisible(true);
                     Assert.That(smoke.material.GetFloat("_EffectTime"), Is.EqualTo(elapsed).Within(.0001f));
-                    Assert.That(smoke.color.a, Is.EqualTo(presentation.Layers[0].Tint.a));
-                    Assert.That(solid.texture, Is.SameAs(presentation.Layers[1].Texture));
+                    Assert.That(smoke.color.a, Is.EqualTo(smokeLayer.Tint.a));
+                    Assert.That(solid.texture, Is.SameAs(solidLayer.Texture));
                 }
 
                 var owned = smoke.material;
@@ -76,8 +70,8 @@ namespace Dice.Tests
                 yield return null;
                 yield return null;
                 Assert.That(owned == null, Is.True);
-                Assert.That(noise == null && mask == null, Is.True);
-                Assert.That(presentation.Layers[0].Texture != null, Is.True);
+                Assert.That(noise != null && mask != null, Is.True, "Authored smoke textures remain available after a material instance is released.");
+                Assert.That(smokeLayer.Texture != null, Is.True);
             }
             finally
             {

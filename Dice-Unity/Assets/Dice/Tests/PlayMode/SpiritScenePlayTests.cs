@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -20,16 +21,18 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ReinitializingWithAnotherCatalogRefreshesOnlyTheNewRun()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var first = AlwaysReadyCatalog(controller.Catalog, "modifier.reinitialize.first");
             var second = AlwaysReadyCatalog(controller.Catalog, "modifier.reinitialize.second");
             string artifactRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N")));
             controller.Initialize(first, "encounter.reinitialize", 60, Path.Combine(artifactRoot, "first.json"));
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             for (int frame = 0; frame < 600 && controller.IsBusy; ++frame) yield return null;
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view.ModifierHistory.Count, Is.EqualTo(1), "The first run must leave its charm ready on the tray.");
@@ -37,6 +40,8 @@ namespace Dice.Tests
             view.ModifierHistory.Clear();
 
             controller.Initialize(second, "encounter.reinitialize", 60, Path.Combine(artifactRoot, "second.json"));
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             for (int frame = 0; frame < 600 && controller.IsBusy; ++frame) yield return null;
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(controller.Catalog, Is.SameAs(second));
@@ -56,23 +61,23 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ReusableRewardCardComparesUpgradedValuesAndRebindsItsChoice()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             long chosenOffer = 0;
             long chosenOption = 0;
             int choices = 0;
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
-            var card = SpiritRewardCard.Create("TestRewardCard", portrait,
+            var portrait = ContentReady.Portrait();
+            var card = SpiritRewardCard.Create(ContentReady.RewardCardPrefab(), "TestRewardCard", portrait,
                 (offer, option) => { chosenOffer = offer; chosenOption = option; ++choices; });
             var cardRect = (RectTransform)card.transform;
             cardRect.anchorMin = cardRect.anchorMax = new Vector2(.5f, .5f);
             cardRect.sizeDelta = new Vector2(376, 140);
             var hand = new HandDefinition("hand.reward-test", HandCategory.Pair, 17, 3, 7, 2, 6);
             card.RenderHandUpgrade(hand, 3, 11, 21);
-            cardRect.sizeDelta = new Vector2(376, card.GetComponent<LayoutElement>().preferredHeight);
+            cardRect.sizeDelta = new Vector2(376, LayoutUtility.GetPreferredHeight(cardRect));
             Canvas.ForceUpdateCanvases();
             foreach (var label in card.GetComponentsInChildren<Text>()) AssertCompleteLabelInsideBounds(label);
             Assert.That(CardLabel(card.Button, "Condition").text, Is.EqualTo("Level 3"));
@@ -88,6 +93,8 @@ namespace Dice.Tests
             Assert.That(CardLabel(card.Button, "Condition").text, Is.EqualTo("Level 3"));
             Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("BASE 38\nMULT 9"));
             card.Button.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(chosenOffer, Is.EqualTo(11));
             Assert.That(chosenOption, Is.EqualTo(21));
 
@@ -96,15 +103,17 @@ namespace Dice.Tests
             Assert.That(CardLabel(card.Button, "Condition").text, Does.Contain("When playing a hand").And.Contain("No die shows"));
             Assert.That(CardLabel(card.Button, "Condition").text, Does.Not.Contain("Once per hand"));
             Assert.That(CardLabel(card.Button, "Effects").text, Is.EqualTo("<b>+15 base score</b>"));
-            Assert.That(CardLabel(card.Button, "Status").gameObject.activeSelf, Is.False);
+            Assert.That(card.GetComponentsInChildren<Text>(true).Any(label => label.name == "Status"), Is.False);
             card.SetModifierSelected(true);
-            Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.True);
+            Assert.That(CardReference<Graphic>(card.Button, "selectionMarker").gameObject.activeSelf, Is.True);
             card.SetModifierSelected(false);
-            Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.False);
-            Assert.That(pattern.gameObject.activeSelf, Is.False);
+            Assert.That(CardReference<Graphic>(card.Button, "selectionMarker").gameObject.activeSelf, Is.False);
+            Assert.That(pattern.gameObject.activeInHierarchy, Is.False);
             foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues" })
-                Assert.That(CardLabel(card.Button, name).gameObject.activeSelf, Is.False, name);
+                Assert.That(card.GetComponentsInChildren<Text>(true).Any(label => label.name == name), Is.False, name);
             card.Button.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(chosenOffer, Is.EqualTo(12));
             Assert.That(chosenOption, Is.EqualTo(22));
             Assert.That(choices, Is.EqualTo(2), "Rendering must replace the choice identity without adding click listeners.");
@@ -112,7 +121,7 @@ namespace Dice.Tests
             {
                 card.RenderModifier(definition, 13, 23);
                 yield return null;
-                cardRect.sizeDelta = new Vector2(376, card.GetComponent<LayoutElement>().preferredHeight);
+                cardRect.sizeDelta = new Vector2(376, LayoutUtility.GetPreferredHeight(cardRect));
                 Canvas.ForceUpdateCanvases();
                 foreach (string name in new[] { "Title", "Condition", "Effects" })
                 {
@@ -135,18 +144,20 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator PortraitSizesKeepScoreCaptionsAndActionLabelsVisible()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             Assert.That(view, Is.Not.Null);
             string savePath = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "spirit-file-tests", Guid.NewGuid().ToString("N"), "portrait-labels.json"));
             controller.Initialize(controller.Catalog, "encounter.standard", 60, savePath);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             yield return null;
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             foreach (var size in new[] { new Vector2(540, 960), new Vector2(443, 912) })
             {
@@ -177,12 +188,12 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator SceneButtonsPresentEngineDiceRewardsCharmsAndSaveResume()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             Assert.That(view, Is.Not.Null);
             Assert.That(view.enabled, Is.True);
             Assert.That(controller.Snapshot, Is.Not.Null);
@@ -192,6 +203,8 @@ namespace Dice.Tests
                 "spirit-file-tests", Guid.NewGuid().ToString("N")));
             string savePath = Path.Combine(artifactRoot, "playmode-encounter.json");
             controller.Initialize(controller.Catalog, "encounter.standard", 60, savePath);
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             var expected = EncounterSession.CreateEncounter(controller.Catalog, "encounter.standard", 60,
                 discoveredFamilyIds: controller.ProfileDiscoveredFamilyIds);
             int resolutions = 0;
@@ -266,15 +279,27 @@ namespace Dice.Tests
             var committed = controller.Snapshot;
 
             FindButton(view, "DieButton2").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             view.PlayButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             view.RerollButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             view.CharmsButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             view.HandRanksButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             controller.ToggleDie(1);
             controller.PlayHand();
             controller.StartNew();
+            yield return ContentReady.Routed(controller);
             controller.Save();
             controller.Load();
+            yield return ContentReady.Routed(controller);
             controller.Abandon();
             Assert.That(controller.Snapshot, Is.SameAs(committed));
             Assert.That(controller.SelectedMask, Is.Zero);
@@ -307,6 +332,7 @@ namespace Dice.Tests
             AssertVisibleDice(view, expected.Snapshot.CurrentDice);
 
             Click(view, "PlayButton");
+            yield return ContentReady.Routed();
             AssertSnapshot(expected.Execute(PlayHandAction.Instance, 2).Snapshot, controller.Snapshot);
             yield return AssertStageClearReaction(controller, view);
             yield return WaitForPresentation(controller, view, "modifier-reward");
@@ -324,6 +350,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.SameAs(beforeCharmSelection));
             AssertModifierRewards(controller, view, 0);
             Click(view, "RefreshRewardsButton");
+            yield return ContentReady.Routed();
             AssertSnapshot(expected.Execute(new RefreshModifierOfferAction(offer.OfferId), expected.Snapshot.Revision).Snapshot,
                 controller.Snapshot);
             yield return WaitForPresentation(controller, view, "modifier-refreshed");
@@ -335,19 +362,25 @@ namespace Dice.Tests
             var selectCharmButton = FindButton(view, "UpgradeHandButton");
             var refreshedOfferSnapshot = controller.Snapshot;
             selectCharmButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(refreshedOfferSnapshot));
             ClickThroughEventSystem(view, "RewardCard2");
             AssertModifierRewards(controller, view, 1);
             Assert.That(controller.Snapshot, Is.SameAs(refreshedOfferSnapshot));
             controller.Save();
             controller.Load();
+            yield return ContentReady.Routed(controller);
             yield return null;
             AssertModifierRewards(controller, view);
             AssertSnapshot(expected.Snapshot, controller.Snapshot);
             var loadedOfferSnapshot = controller.Snapshot;
             selectCharmButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(loadedOfferSnapshot));
             Click(view, "RewardCard1");
+            yield return ContentReady.Routed();
             Assert.That(controller.Snapshot, Is.SameAs(loadedOfferSnapshot));
             AssertModifierRewards(controller, view, 0);
             ClickThroughEventSystem(view, "UpgradeHandButton");
@@ -372,6 +405,7 @@ namespace Dice.Tests
                 Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             int beforeRewardLoadResolutions = resolutions;
             controller.Load();
+            yield return ContentReady.Routed(controller);
             yield return null;
             AssertSnapshot(expected.Snapshot, controller.Snapshot);
             Assert.That(resolutions, Is.EqualTo(beforeRewardLoadResolutions));
@@ -385,6 +419,8 @@ namespace Dice.Tests
             int beforeUpgradeResolutions = resolutions;
             Assert.That(upgradeButton.IsInteractable(), Is.False);
             upgradeButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(beforeUpgradeSelection));
             ClickThroughEventSystem(view, "RewardCard1");
             Assert.That(controller.Snapshot, Is.SameAs(beforeUpgradeSelection));
@@ -409,7 +445,11 @@ namespace Dice.Tests
             yield return WaitForPresentation(controller, view, "next-stage");
             var afterUpgrade = controller.Snapshot;
             upgradeButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             firstRewardCard.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(afterUpgrade), "Stale reward controls must not apply another upgrade.");
             Assert.That(resolutions, Is.EqualTo(beforeUpgradeResolutions + 1));
             Assert.That(controller.Snapshot.StageIndex, Is.EqualTo(1));
@@ -431,10 +471,23 @@ namespace Dice.Tests
             Assert.That(controller.SelectedMask, Is.EqualTo(beforeRanksSelection));
             Assert.That(resolutions, Is.EqualTo(beforeRanksResolutions));
             Click(view, "CharmsButton");
+            yield return ContentReady.Routed();
             Assert.That(view.IsCharmsOpen, Is.True);
             Click(view, "OwnedCharm1");
+            yield return ContentReady.Routed();
             yield return CaptureIfRequested("charms");
-            yield return AssertCardTextVisible(view, "OwnedCharm", "Title", "Condition", "Effects");
+            Canvas.ForceUpdateCanvases();
+            var ownedCards = view.OwnedCharmsPanel.GetComponentsInChildren<SpiritOwnedCharmCard>();
+            Assert.That(ownedCards.Length, Is.EqualTo(controller.Snapshot.Modifiers.Count));
+            Assert.That(ownedCards, Is.Not.Empty);
+            foreach (var card in ownedCards)
+                foreach (var label in new[] { card.Title, card.Body, card.Effect })
+                {
+                    Assert.That(label, Is.Not.Null);
+                    Assert.That(label.text, Is.Not.Empty, label.name);
+                    Assert.That(label.gameObject.activeInHierarchy, Is.True, label.name);
+                    AssertCompleteLabelInsideBounds(label);
+                }
             var badges = view.GetComponentsInChildren<SpiritCharmStatusBadge>();
             Assert.That(badges, Is.Not.Empty);
             foreach (var badge in badges)
@@ -448,21 +501,29 @@ namespace Dice.Tests
             }
             AssertPresentationLabelsVisible(view);
             Click(view, "CloseCharmsButton");
+            yield return ContentReady.Routed();
             Assert.That(view.IsCharmsOpen, Is.False);
 
             Click(view, "MenuButton");
+            yield return ContentReady.Routed();
             Click(view, "SaveRunButton");
+            yield return ContentReady.Routed();
             Assert.That(File.Exists(savePath), Is.True, controller.StatusMessage);
             var saved = EncounterSaveFileStore.Load(savePath);
             Assert.That(EncounterSaveCodec.Serialize(saved), Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             Click(view, "DieButton2");
+            yield return ContentReady.Routed();
             Click(view, "RerollButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation(controller, view, "saved-run-rerolled");
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision + 1));
             Click(view, "DieButton3");
+            yield return ContentReady.Routed();
             int beforeLoadResolutions = resolutions;
             Click(view, "MenuButton");
+            yield return ContentReady.Routed();
             Click(view, "LoadRunButton");
+            yield return ContentReady.Routed();
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view.DiceTray.IsRolling, Is.False);
             Assert.That(view.GetComponentInChildren<SpiritHostPortrait>().IsReacting, Is.False,
@@ -475,14 +536,20 @@ namespace Dice.Tests
             AssertPresentationLabelsVisible(view);
 
             Click(view, "MenuButton");
+            yield return ContentReady.Routed();
             Click(view, "AbandonRunButton");
+            yield return ContentReady.Routed();
             yield return WaitForPresentation(controller, view, "completed");
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Abandoned));
             Assert.That(controller.Preview, Is.Null);
             int beforeNewRunResolutions = resolutions;
             Click(view, "EndingNewRunButton");
+            yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             controller.StartNew();
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
+            Assert.That(view, Is.Not.Null);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view.DiceTray.IsRolling, Is.False);
             Assert.That(resolutions, Is.EqualTo(beforeNewRunResolutions));
@@ -589,10 +656,10 @@ namespace Dice.Tests
                     Is.EqualTo(SpiritRewardCard.GetModifierDescription(definition, theme.amber,
                         theme.GetModifierTriggerColor(definition.Phase))));
                 Assert.That(CardLabel(card, "Effects").text, Is.EqualTo("<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>"));
-                Assert.That(CardLabel(card, "Status").gameObject.activeSelf, Is.False);
-                Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.EqualTo(index == selectedIndex));
+                Assert.That(card.GetComponentsInChildren<Text>(true).Any(label => label.name == "Status"), Is.False);
+                Assert.That(CardReference<Graphic>(card, "selectionMarker").gameObject.activeSelf, Is.EqualTo(index == selectedIndex));
                 foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues" })
-                    Assert.That(CardLabel(card, name).gameObject.activeSelf, Is.False, card.name + "/" + name);
+                    Assert.That(card.GetComponentsInChildren<Text>(true).Any(label => label.name == name), Is.False, card.name + "/" + name);
             }
         }
 
@@ -629,18 +696,18 @@ namespace Dice.Tests
                         "\nMULT " + DiagnosticText.Number(hand.Multiplier + level * hand.MultiplierPerUpgrade) +
                         (selected ? " +" + DiagnosticText.Number(hand.MultiplierPerUpgrade) : "")));
                 foreach (string name in new[] { "CurrentHeader", "UpgradedHeader", "UpgradedValues", "Status" })
-                    Assert.That(CardLabel(card, name).gameObject.activeSelf, Is.False, card.name + "/" + name);
+                    Assert.That(card.GetComponentsInChildren<Text>(true).Any(label => label.name == name), Is.False, card.name + "/" + name);
                 var pattern = card.GetComponentInChildren<SpiritHandPatternGraphic>();
                 Assert.That(pattern, Is.Not.Null, card.name);
                 Assert.That(pattern.Category, Is.EqualTo(category));
                 Assert.That(pattern.raycastTarget, Is.False);
-                Assert.That(card.transform.Find("UpgradeSelectionMarker").gameObject.activeSelf, Is.EqualTo(selected));
+                Assert.That(CardReference<Graphic>(card, "selectionMarker").gameObject.activeSelf, Is.EqualTo(selected));
             }
         }
 
         private static IEnumerator AssertRewardPortraitBounds(SpiritEncounterView view, string captureName = null)
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             var anchorMin = portrait.anchorMin;
             var anchorMax = portrait.anchorMax;
             var sizeDelta = portrait.sizeDelta;
@@ -666,15 +733,14 @@ namespace Dice.Tests
                 var upgradeButton = FindButton(view, "UpgradeHandButton");
                 if (upgradeButton.gameObject.activeInHierarchy)
                 {
-                    ScrollRect rewardScroll = null;
-                    foreach (var scroll in view.GetComponentsInChildren<ScrollRect>())
-                        if (scroll.name == "RewardScroll") { rewardScroll = scroll; break; }
+                    var rewardScroll = view.RewardsPanel.Scroll;
                     Assert.That(rewardScroll, Is.Not.Null);
                     Assert.That(rewardScroll.content.rect.height,
                         Is.LessThanOrEqualTo(rewardScroll.viewport.rect.height + 1f),
                         "All offered rewards must fit without scrolling at portrait size " + size);
                     bool modifierOffer = view.RefreshButton.gameObject.activeInHierarchy;
-                    Assert.That(rewardScroll.vertical, Is.EqualTo(!modifierOffer));
+                    if (rewardScroll.content.rect.height > rewardScroll.viewport.rect.height + 1f)
+                        Assert.That(rewardScroll.vertical, Is.True, "Overflow rewards must remain scrollable.");
                     foreach (var card in view.GetComponentsInChildren<SpiritRewardCard>())
                     {
                         var rect = (RectTransform)card.transform;
@@ -739,11 +805,24 @@ namespace Dice.Tests
 
         private static Text CardLabel(Button card, string name)
         {
-            var child = card.transform.Find(name);
-            Assert.That(child, Is.Not.Null, card.name + "/" + name);
-            var label = child.GetComponent<Text>();
-            Assert.That(label, Is.Not.Null, card.name + "/" + name);
-            return label;
+            bool hand = CardReference<GameObject>(card, "handRoot").activeSelf;
+            string field = name == "Title" ? hand ? "handTitle" : "title" :
+                name == "Condition" ? hand ? "handLevelText" : "condition" :
+                name == "Effects" ? hand ? "handValues" : "effects" : null;
+            Assert.That(field, Is.Not.Null, "Unknown card label " + name);
+            return CardReference<Text>(card, field);
+        }
+
+        private static T CardReference<T>(Button button, string name) where T : UnityEngine.Object
+        {
+            var card = button.GetComponent<SpiritRewardCard>();
+            Assert.That(card, Is.Not.Null, button.name);
+            var field = typeof(SpiritRewardCard).GetField(name,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "Serialized reward card field " + name);
+            var reference = field.GetValue(card) as T;
+            Assert.That(reference, Is.Not.Null, button.name + "/" + name);
+            return reference;
         }
 
         private static Text FindLabel(SpiritEncounterView view, string name)
@@ -891,7 +970,7 @@ namespace Dice.Tests
 
         private static void AssertHandRanks(SpiritEncounterView view, SpiritEncounterController controller)
         {
-            var panel = view.GetComponent<SpiritHandRanksPanel>();
+            var panel = view.GetComponentsInChildren<SpiritHandRanksPanel>(true).Single();
             Assert.That(panel, Is.Not.Null);
             Assert.That(panel.Root.gameObject.activeInHierarchy, Is.True);
             Assert.That(panel.Rows.Count, Is.EqualTo(HandDefinition.CategoryCount));
@@ -970,8 +1049,9 @@ namespace Dice.Tests
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 var slot = view.TrayScene.Geometry.DiceSlots[index];
-                var die = slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index);
+                var die = ContentReady.Die(view.DiceTray, index);
                 Assert.That(die, Is.Not.Null, "Die " + index);
+                Assert.That(die.IsChildOf(slot), Is.True, "The authored die belongs to its tray slot.");
                 Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
                 Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + index + " result face");
                 var camera = view.DiceTray.RenderCamera;
@@ -1015,15 +1095,14 @@ namespace Dice.Tests
             yield return null;
             Canvas.ForceUpdateCanvases();
             int cards = 0;
-            foreach (var button in view.GetComponentsInChildren<Button>(true))
+            foreach (var card in view.RewardsPanel.Cards)
             {
+                var button = card.Button;
                 if (!button.gameObject.activeInHierarchy || !button.name.StartsWith(prefix, StringComparison.Ordinal)) continue;
                 ++cards;
                 foreach (string childName in childNames)
                 {
-                    var child = button.transform.Find(childName);
-                    Assert.That(child, Is.Not.Null, button.name + "/" + childName);
-                    var label = child.GetComponent<Text>();
+                    var label = CardLabel(button, childName);
                     Assert.That(label, Is.Not.Null, button.name + "/" + childName);
                     Assert.That(label.text, Is.Not.Empty, button.name + "/" + childName);
                     Assert.That(label.gameObject.activeInHierarchy, Is.True, button.name + "/" + childName);

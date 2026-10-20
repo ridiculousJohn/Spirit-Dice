@@ -25,8 +25,7 @@ namespace Dice.Tests
             presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
                 "Assets/Dice/Content/Presentation/Watchtower/WatchtowerHost.asset");
             Assert.That(presentation, Is.Not.Null);
-            portrait = host.AddComponent<SpiritHostPortrait>();
-            portrait.Build(parent, presentation);
+            portrait = presentation.Create(parent);
         }
 
         [TearDown]

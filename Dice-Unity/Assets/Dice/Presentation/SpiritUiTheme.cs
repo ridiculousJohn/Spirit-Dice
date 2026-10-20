@@ -17,39 +17,7 @@ namespace Dice.Presentation
             public Rect spriteRect;
             public Vector4 border = new Vector4(120, 60, 120, 60);
             public float pixelsPerUnitMultiplier = 3;
-            [NonSerialized] private Sprite runtimeSprite;
-
-            internal Sprite GetSprite()
-            {
-                if (sprite != null) return sprite;
-                if (runtimeSprite != null) return runtimeSprite;
-                var source = texture;
-                if (source == null) return null;
-                float scaleX = referenceTextureSize.x > 0 ? source.width / referenceTextureSize.x : 1;
-                float scaleY = referenceTextureSize.y > 0 ? source.height / referenceTextureSize.y : 1;
-                var area = spriteRect.width > 0 && spriteRect.height > 0 ? spriteRect :
-                    new Rect(0, 0, source.width, source.height);
-                if (spriteRect.width > 0 && spriteRect.height > 0)
-                    area = new Rect(area.x * scaleX, area.y * scaleY, area.width * scaleX, area.height * scaleY);
-                var edges = new Vector4(Mathf.Min(border.x * scaleX, area.width * .5f),
-                    Mathf.Min(border.y * scaleY, area.height * .5f), Mathf.Min(border.z * scaleX, area.width * .5f),
-                    Mathf.Min(border.w * scaleY, area.height * .5f));
-                runtimeSprite = Sprite.Create(source, area, new Vector2(.5f, .5f), 100 * scaleY, 0,
-                    SpriteMeshType.FullRect, edges);
-                runtimeSprite.name = source.name + " Frame";
-                runtimeSprite.hideFlags = HideFlags.DontSave;
-                return runtimeSprite;
-            }
-
-            internal void Release()
-            {
-                if (runtimeSprite != null)
-                {
-                    if (Application.isPlaying) Destroy(runtimeSprite);
-                    else DestroyImmediate(runtimeSprite);
-                }
-                runtimeSprite = null;
-            }
+            internal Sprite GetSprite() => sprite;
         }
 
         public Font headingFont;
@@ -80,12 +48,5 @@ namespace Dice.Presentation
             }
         }
 
-        private void OnDisable()
-        {
-            greenFrame?.Release();
-            amberFrame?.Release();
-            darkFrame?.Release();
-            woodFrame?.Release();
-        }
     }
 }

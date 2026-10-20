@@ -31,6 +31,8 @@ namespace Dice.Tests
         [TearDown]
         public void TearDown()
         {
+            foreach (var root in preview.GetRootGameObjects())
+                foreach (var scene in root.GetComponentsInChildren<SpiritTrayScene>(true)) scene.ReleasePresentation();
             if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
             foreach (UnityEngine.Object resource in resources)
                 if (resource != null) UnityEngine.Object.DestroyImmediate(resource);
@@ -64,6 +66,183 @@ namespace Dice.Tests
             foreach (var renderer in scene.Geometry.GetComponentsInChildren<Renderer>())
                 foreach (Material material in renderer.sharedMaterials)
                     Assert.That(authored.Contains(material), Is.False, "Scene lighting must not mutate authored materials.");
+        }
+
+        [Test]
+        public void InitializationAndReleasePreserveAuthoredHierarchyCameraPoseAndSurfaceSources()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
+            var scene = UnityEngine.Object.Instantiate(asset.RigPrefab);
+            SceneManager.MoveGameObjectToScene(scene.gameObject, preview);
+            scene.transform.position = new Vector3(17, 3, -9);
+            scene.RenderCamera.transform.localPosition = new Vector3(2, 11, -13);
+            scene.RenderCamera.transform.localRotation = Quaternion.Euler(37, 14, 9);
+            scene.Geometry.transform.localPosition += new Vector3(.3f, -.2f, .4f);
+            var geometry = scene.Geometry;
+            var camera = scene.RenderCamera;
+            var target = new RenderTexture(camera.targetTexture.descriptor)
+            {
+                filterMode = FilterMode.Point, wrapModeU = TextureWrapMode.Repeat,
+                wrapModeV = TextureWrapMode.Mirror, wrapModeW = TextureWrapMode.Clamp, anisoLevel = 3
+            };
+            resources.Add(target);
+            camera.targetTexture = target;
+            Vector3 position = camera.transform.localPosition;
+            Quaternion rotation = camera.transform.localRotation;
+            Vector3 geometryPosition = geometry.transform.localPosition;
+            int count = scene.GetComponentsInChildren<Transform>(true).Length;
+            var renderer = geometry.GetComponentInChildren<MeshRenderer>();
+            var material = new Material(renderer.sharedMaterial);
+            resources.Add(material);
+            material.SetColor("_BaseColor", new Color(.3f, .4f, .5f));
+            renderer.sharedMaterial = material;
+            for (int i = 0; i < 2; ++i)
+            {
+                scene.Configure(asset); scene.Initialize();
+                Assert.That(scene.Geometry, Is.SameAs(geometry));
+                Assert.That(scene.RenderCamera, Is.SameAs(camera));
+                Assert.That(scene.transform.position, Is.EqualTo(new Vector3(17, 3, -9)));
+                Assert.That(camera.transform.localPosition, Is.EqualTo(position));
+                Assert.That(camera.transform.localRotation, Is.EqualTo(rotation));
+                Assert.That(geometry.transform.localPosition, Is.EqualTo(geometryPosition));
+                Assert.That(scene.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(count));
+                Assert.That(renderer.sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(material.GetColor("_BaseColor")));
+                Assert.That(scene.Texture, Is.Not.SameAs(target));
+                Assert.That(scene.Texture.filterMode, Is.EqualTo(target.filterMode));
+                Assert.That(scene.Texture.wrapModeU, Is.EqualTo(target.wrapModeU));
+                Assert.That(scene.Texture.wrapModeV, Is.EqualTo(target.wrapModeV));
+                Assert.That(scene.Texture.wrapModeW, Is.EqualTo(target.wrapModeW));
+                Assert.That(scene.Texture.anisoLevel, Is.EqualTo(target.anisoLevel));
+                scene.ReleasePresentation();
+                Assert.That(camera.targetTexture, Is.SameAs(target));
+                Assert.That(renderer.sharedMaterial, Is.SameAs(material));
+                Assert.That(material != null && geometry != null && camera != null, Is.True);
+            }
+        }
+
+        [Test]
+        public void ModifierTokensPreserveTheirAuthoredSurfaceTexture()
+        {
+            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
+            var history = AddHistory(scene);
+            var serialized = new SerializedObject(history);
+            var reference = serialized.FindProperty("tokenPrefab");
+            var token = UnityEngine.Object.Instantiate((SpiritModifierToken)reference.objectReferenceValue);
+            SceneManager.MoveGameObjectToScene(token.gameObject, preview);
+            var material = new Material(token.Body.sharedMaterial);
+            var texture = new Texture2D(2, 2);
+            resources.Add(material);
+            resources.Add(texture);
+            material.SetTexture("_SurfaceTexture", texture);
+            token.Body.sharedMaterial = material;
+            reference.objectReferenceValue = token;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            history.Add(Contribution(out ModifierDefinition definition), definition, false);
+            Assert.That(history.GetDieRenderer(0).sharedMaterial, Is.Not.SameAs(material));
+            Assert.That(history.GetDieRenderer(0).sharedMaterial.GetTexture("_SurfaceTexture"), Is.SameAs(texture));
+            Assert.That(material.GetTexture("_SurfaceTexture"), Is.SameAs(texture));
+        }
+
+        [Test]
+        public void HudAnimationAndResetPreserveInitialAuthoredScalesAcrossRebinding()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<SpiritGameplayHud>(
+                "Assets/Dice/Content/Presentation/UI/SpiritGameplayHud.prefab");
+            var hud = UnityEngine.Object.Instantiate(prefab);
+            SceneManager.MoveGameObjectToScene(hud.gameObject, preview);
+            var graphics = new List<Graphic> { hud.ModifierActivationIcon, hud.SelectionLabel, hud.ScoreDetail,
+                hud.BaseScoreLabel, hud.MultiplierLabel, hud.HandScoreLabel, hud.TargetLabel };
+            foreach (string name in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })
+            {
+                object highlight = typeof(SpiritGameplayHud).GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
+                foreach (string field in new[] { "Label", "Icon" })
+                    graphics.Add((Graphic)highlight.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(highlight));
+            }
+            var scales = graphics.Select(value => value.rectTransform).Distinct().Select((rect, index) =>
+            {
+                rect.localScale = new Vector3(.7f + index * .03f, 1.4f + index * .02f, .9f);
+                return rect;
+            }).ToDictionary(rect => rect, rect => rect.localScale);
+            hud.BuildPlayingHud(() => { }, () => { });
+            foreach (var rect in scales.Keys) rect.localScale = Vector3.one * 2;
+            hud.BuildPlayingHud(() => { }, () => { });
+            var total = hud.AnimateTotal(100, 1);
+            Assert.That(total.MoveNext(), Is.True);
+            Assert.That(hud.HandScoreLabel.rectTransform.localScale, Is.EqualTo(scales[hud.HandScoreLabel.rectTransform]));
+            var threshold = hud.AnimateThreshold(100, 200, 1);
+            Assert.That(threshold.MoveNext(), Is.True);
+            Assert.That(hud.TargetLabel.rectTransform.localScale, Is.EqualTo(scales[hud.TargetLabel.rectTransform]));
+            var score = (IEnumerator)typeof(SpiritGameplayHud).GetMethod("AnimateScore", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(hud, new object[] { 0L, 0L, 10L, 2L, 0f, null });
+            Assert.That(score.MoveNext(), Is.False);
+            Assert.That(hud.BaseScoreLabel.rectTransform.localScale, Is.EqualTo(scales[hud.BaseScoreLabel.rectTransform]));
+            Assert.That(hud.MultiplierLabel.rectTransform.localScale, Is.EqualTo(scales[hud.MultiplierLabel.rectTransform]));
+            hud.ResetTransientVisuals();
+            foreach (var pair in scales) Assert.That(pair.Key.localScale, Is.EqualTo(pair.Value), pair.Key.name);
+        }
+
+        [TestCase(.49f)]
+        [TestCase(.63f)]
+        public void ModifierTokensPreserveAuthoredProportionsAndContactAtDifferentTraySizes(float size)
+        {
+            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
+            scene.Geometry.ModifierDieSize = size;
+            var history = AddHistory(scene);
+            using var serialized = new SerializedObject(history);
+            var reference = serialized.FindProperty("tokenPrefab");
+            var token = UnityEngine.Object.Instantiate((SpiritModifierToken)reference.objectReferenceValue);
+            SceneManager.MoveGameObjectToScene(token.gameObject, preview);
+            Vector3 body = new Vector3(.63f, .35f, .42f);
+            Vector3 shadow = new Vector3(1.3f, .8f, .7f);
+            token.Body.transform.localScale = body;
+            token.Shadow.transform.localScale = shadow;
+            reference.objectReferenceValue = token;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var contribution = Contribution(out ModifierDefinition definition);
+            history.Add(contribution, definition, false);
+            Assert.That(history.GetDieTransform(0).localScale, Is.EqualTo(body * (size / .49f)));
+            AssertShadow(0, 0);
+            AssertContact(0, 0);
+            history.SetResolving(0);
+            AssertShadow(0, size * .12f);
+            AssertContact(0, size * .12f);
+            history.Add(contribution, definition, true);
+            AssertShadow(1, .08f);
+            AssertContact(1, .08f);
+            Assert.That(token.Body.transform.localScale, Is.EqualTo(body));
+            Assert.That(token.Shadow.transform.localScale, Is.EqualTo(shadow));
+
+            void AssertShadow(int index, float lift)
+                => Assert.That(history.GetShadowRenderer(index).transform.localScale,
+                    Is.EqualTo(Vector3.Scale(shadow, new Vector3(size * (1.08f + lift), 1, size * (1.08f + lift)))));
+
+            void AssertContact(int index, float lift)
+            {
+                Transform die = history.GetDieTransform(index);
+                float bottom = die.GetComponent<MeshFilter>().sharedMesh.vertices
+                    .Min(point => (die.localRotation * Vector3.Scale(point, die.localScale)).y);
+                Assert.That(die.localPosition.y + bottom, Is.EqualTo(lift).Within(.00001f));
+            }
+        }
+
+        [Test]
+        public void ReenablingAnAncestorRestoresTheAuthoredStageAndBothTrayContents()
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
+            var scene = CreateScene(asset);
+            var dice = AddDice(scene);
+            var history = AddHistory(scene);
+            history.Add(Contribution(out ModifierDefinition definition), definition, false);
+            var parent = Root("Encounter ancestor");
+            scene.transform.SetParent(parent.transform, true);
+            parent.SetActive(false);
+            Assert.That(scene.RenderRoot.gameObject.activeInHierarchy, Is.False);
+            parent.SetActive(true);
+            Assert.That(scene.RenderRoot.gameObject.activeInHierarchy, Is.True);
+            Assert.That(history.GetDieTransform(0).gameObject.activeInHierarchy, Is.True);
+            foreach (var slot in scene.Geometry.DiceSlots)
+                Assert.That(slot.GetComponentInChildren<MeshRenderer>().gameObject.activeInHierarchy, Is.True);
+            Assert.That(dice.RenderCamera, Is.SameAs(scene.RenderCamera));
         }
 
         [TestCase(Lantern)]
@@ -118,7 +297,7 @@ namespace Dice.Tests
             history.SetResolving(-1);
             Assert.That(scene.Geometry.DiceSlots.Length, Is.EqualTo(DiceValues.Count));
             var numberedDice = scene.Geometry.DiceSlots.Select((slot, index) =>
-                slot.Find("Spirit Dice Slot Content " + index + "/Spirit Die " + index)
+                slot.Find("Dice Slot Content " + index + "/Die " + index)
                     .GetComponent<MeshRenderer>()).ToArray();
             Assert.That(numberedDice.Length, Is.EqualTo(5));
             foreach (var renderer in numberedDice)
@@ -318,7 +497,10 @@ namespace Dice.Tests
             asset.CameraPosition = new Vector3(1000, -2000, 500);
             asset.OrthographicSize = .01f;
             asset.FieldOfView = 31;
+            camera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
+            camera.fieldOfView = asset.FieldOfView;
             scene.ApplyPresentationSettings();
+            scene.FrameAuthoredGeometry();
             Assert.That(scene.RenderCamera, Is.SameAs(camera));
             Assert.That(scene.Texture, Is.SameAs(texture));
             Assert.That(texture.IsCreated(), Is.True);
@@ -338,17 +520,18 @@ namespace Dice.Tests
             RenderTexture texture = scene.Texture;
             var rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
             rail.name = "Oversized custom front rail";
-            rail.transform.SetParent(asset.GeometryPrefab.transform, false);
+            rail.transform.SetParent(scene.Geometry.transform, false);
             rail.transform.localPosition = new Vector3(30, -8, -15);
             rail.transform.localRotation = Quaternion.Euler(17, 39, -12);
             rail.transform.localScale = new Vector3(70, 18, 45);
-            asset.GeometryPrefab.transform.localPosition = new Vector3(-13, 4, 21);
-            asset.GeometryPrefab.transform.localRotation = Quaternion.Euler(-12, 18, 9);
-            asset.GeometryPrefab.transform.localScale = new Vector3(1.3f, .8f, 1.7f);
+            scene.Geometry.transform.localPosition = new Vector3(-13, 4, 21);
+            scene.Geometry.transform.localRotation = Quaternion.Euler(-12, 18, 9);
+            scene.Geometry.transform.localScale = new Vector3(1.3f, .8f, 1.7f);
             asset.CameraEulerAngles = new Vector3(49, -23, 11);
             asset.NearClipPlane = .1f;
             asset.FarClipPlane = .2f;
-            scene.RebuildGeometry();
+            camera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
+            scene.FrameAuthoredGeometry();
             Assert.That(scene.RenderCamera, Is.SameAs(camera));
             Assert.That(scene.Texture, Is.SameAs(texture));
             Assert.That(camera.farClipPlane, Is.GreaterThan(asset.FarClipPlane));
@@ -427,7 +610,7 @@ namespace Dice.Tests
             var canvasRoot = Root("History pointer projection", typeof(RectTransform)).GetComponent<RectTransform>();
             canvasRoot.sizeDelta = new Vector2(700, 350);
             canvasRoot.gameObject.AddComponent<Canvas>();
-            var history = Root("History UI").AddComponent<SpiritModifierHistoryTray>();
+            var history = CreateHistoryUi(scene, canvasRoot);
             history.Configure(asset, scene);
             history.Build(canvasRoot);
             ModifierDefinition definition;
@@ -476,7 +659,9 @@ namespace Dice.Tests
             scene.Initialize();
             dice.Configure(second, scene); dice.Initialize();
             history.Configure(second, scene); history.Initialize();
-            Assert.That(oldRoot == null && oldCamera == null && oldTexture == null, Is.True);
+            Assert.That(scene.RenderRoot, Is.SameAs(oldRoot));
+            Assert.That(scene.RenderCamera, Is.SameAs(oldCamera));
+            Assert.That(oldTexture == null, Is.True);
             Camera sharedCamera = scene.RenderCamera;
             RenderTexture sharedTexture = scene.Texture;
             UnityEngine.Object.DestroyImmediate(dice.gameObject);
@@ -500,10 +685,12 @@ namespace Dice.Tests
             var source = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
             var asset = UnityEngine.Object.Instantiate(source);
             resources.Add(asset);
-            var geometry = UnityEngine.Object.Instantiate(source.GeometryPrefab);
-            resources.Add(geometry.gameObject);
+            var rig = UnityEngine.Object.Instantiate(source.RigPrefab);
+            resources.Add(rig.gameObject);
+            asset.RigPrefab = rig;
+            var geometry = rig.Geometry;
             geometry.gameObject.hideFlags = HideFlags.HideAndDontSave;
-            SceneManager.MoveGameObjectToScene(geometry.gameObject, preview);
+            SceneManager.MoveGameObjectToScene(rig.gameObject, preview);
             geometry.gameObject.SetActive(false);
             asset.GeometryPrefab = geometry;
             asset.Orthographic = orthographic;
@@ -523,10 +710,16 @@ namespace Dice.Tests
 
         private SpiritTrayScene CreateScene(SpiritTrayPresentationAsset asset)
         {
-            var scene = Root("Shared tray test").AddComponent<SpiritTrayScene>();
+            var scene = UnityEngine.Object.Instantiate(asset.RigPrefab);
+            scene.gameObject.SetActive(true);
+            SceneManager.MoveGameObjectToScene(scene.gameObject, preview);
             scene.Configure(asset); scene.Initialize();
             scene.Geometry.gameObject.SetActive(true);
-            SceneManager.MoveGameObjectToScene(scene.RenderRoot.gameObject, preview);
+            scene.RenderCamera.orthographic = asset.Orthographic;
+            scene.RenderCamera.fieldOfView = asset.FieldOfView;
+            scene.RenderCamera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
+            scene.RenderCamera.aspect = (float)asset.TextureSize.x / asset.TextureSize.y;
+            scene.FrameAuthoredGeometry();
             scene.RenderCamera.scene = preview;
             scene.RenderCamera.enabled = false;
             return scene;
@@ -534,7 +727,7 @@ namespace Dice.Tests
 
         private SpiritDiceTray AddDice(SpiritTrayScene scene)
         {
-            var dice = Root("Shared dice consumer").AddComponent<SpiritDiceTray>();
+            var dice = scene.DiceTray;
             dice.Configure(scene.Presentation, scene); dice.Initialize();
             return dice;
         }
@@ -612,7 +805,8 @@ namespace Dice.Tests
             Assert.DoesNotThrow(() => history.ClearResolving());
             Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(renderer.RenderRoot, destroyWholeScene ? Is.Null : Is.SameAs(renderRoot));
-            Assert.That(renderer.GetDieTransform(0) == null, Is.True);
+            if (destroyWholeScene) Assert.That(renderer == null, Is.True);
+            else Assert.That(renderer.GetDieTransform(0) == null, Is.True);
         }
 
         private SpiritModifierHistoryTray ReadyTray(out MechanicalCatalog catalog, out EncounterSession session)
@@ -621,7 +815,7 @@ namespace Dice.Tests
             var canvasRoot = Root("Ready tray canvas", typeof(RectTransform)).GetComponent<RectTransform>();
             canvasRoot.sizeDelta = new Vector2(700, 350);
             canvasRoot.gameObject.AddComponent<Canvas>();
-            var history = Root("Ready tray").AddComponent<SpiritModifierHistoryTray>();
+            var history = CreateHistoryUi(scene, canvasRoot);
             history.Configure(scene.Presentation, scene);
             history.Build(canvasRoot);
             var roll = new ModifierDefinition("test.ready.roll", "test.ready.roll", ModifierPhase.InitialRoll,
@@ -637,9 +831,18 @@ namespace Dice.Tests
             return history;
         }
 
+        private SpiritModifierHistoryTray CreateHistoryUi(SpiritTrayScene scene, RectTransform parent)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<SpiritModifierHistoryTray>(
+                "Assets/Dice/Content/Presentation/UI/ModifierHistoryTray.prefab");
+            var history = UnityEngine.Object.Instantiate(prefab, parent, false);
+            history.BindRenderer(scene.HistoryRenderer);
+            return history;
+        }
+
         private SpiritModifierHistoryRenderer AddHistory(SpiritTrayScene scene)
         {
-            var history = Root("Shared history consumer").AddComponent<SpiritModifierHistoryRenderer>();
+            var history = scene.HistoryRenderer;
             history.Configure(scene.Presentation, scene); history.Initialize();
             return history;
         }
@@ -728,7 +931,7 @@ namespace Dice.Tests
 
         private static void AssertProjectedToken(SpiritModifierHistoryTray history, RectTransform image, int index)
         {
-            var token = history.Content.Find("ModifierToken" + index) as RectTransform;
+            var token = history.Content.GetChild(index) as RectTransform;
             Assert.That(token, Is.Not.Null);
             Assert.That(token.gameObject.activeSelf, Is.True);
             Rect projected = history.Renderer.GetDieViewportRect(index);

@@ -29,11 +29,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator RealCharmActivationsLinkTheirIconToOnlyTheAffectedCounters()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var standard = controller.Catalog;
             var actionCue = view.GetComponent<SpiritActionModifierCue>();
             Assert.That(actionCue, Is.Not.Null);
@@ -49,6 +49,8 @@ namespace Dice.Tests
                 actionCue.Show(definition, 1.07f);
                 Assert.That(actionCue.IsVisible, Is.True);
                 controller.Initialize(catalog, encounter.Id, seed, SavePath());
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 AssertActionCueCleared(view, actionCue);
                 yield return null;
                 if (action is RerollDiceAction)
@@ -60,8 +62,7 @@ namespace Dice.Tests
 
                 bool observed = false;
                 var icon = Find<Image>(view, "ModifierActivationIcon");
-                var cueGroup = Find<CanvasGroup>(view, definition.Phase == ModifierPhase.PlayHand
-                    ? "PlayHandModifierCue" : "RerollModifierCue");
+                var cueGroup = ContentReady.ActionCueGroup(view, definition.Phase == ModifierPhase.PlayHand);
                 float deadline = Time.realtimeSinceStartup + 25;
                 while (controller.IsBusy && Time.realtimeSinceStartup < deadline)
                 {
@@ -100,6 +101,7 @@ namespace Dice.Tests
                 actionCue.Show(definition, 1.07f);
                 Assert.That(actionCue.IsVisible, Is.True);
                 controller.Load();
+                yield return ContentReady.Routed(controller);
                 AssertActionCueCleared(view, actionCue);
                 Assert.That(Find<Image>(view, "BaseScoreCharmIcon").gameObject.activeSelf, Is.False);
                 Assert.That(controller.IsBusy, Is.False);
@@ -111,7 +113,7 @@ namespace Dice.Tests
             Assert.That(actionCue.IsVisible, Is.True);
             Assert.That(actionCue.ActivePhase, Is.EqualTo(custom.Phase));
             Assert.That(actionCue.ActiveSprite, Is.Null);
-            var fallback = Find<CanvasGroup>(view, "PlayHandModifierCue");
+            var fallback = ContentReady.ActionCueGroup(view, true);
             var sigil = Find<SpiritModifierSigilGraphic>(fallback, "Sigil");
             Assert.That(sigil.gameObject.activeInHierarchy, Is.True);
             Assert.That(sigil.Seed, Is.EqualTo(SpiritModifierIcons.GetSigilSeed(custom)));
@@ -137,11 +139,11 @@ namespace Dice.Tests
             foreach (string id in Ids)
             {
                 // A fresh scene per charm keeps each run's catalog from meeting the previous run's hand preview.
-                yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+                yield return SceneManager.LoadSceneAsync("Application");
                 yield return ContentReady.Spirit();
                 yield return null;
                 var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-                var view = controller.GetComponent<SpiritEncounterView>();
+                var view = ContentReady.EncounterView(controller);
                 var playback = typeof(SpiritEncounterView).GetField("scorePlayback", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(view);
                 Assert.That(playback, Is.Not.Null);
@@ -154,6 +156,8 @@ namespace Dice.Tests
                 var resolution = session.Execute(action, session.Snapshot.Revision);
                 var activation = resolution.Events.OfType<ModifierActivatedEvent>().Single(value => value.DefinitionId == id);
                 controller.Initialize(catalog, encounter.Id, seed, SavePath());
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 yield return Wait(controller);
                 foreach (string counter in counters)
                     Assert.That(Find<Image>(view, counter).gameObject.activeSelf, Is.False, id + " starts lit: " + counter);
@@ -195,15 +199,15 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ActionCueCrossfadesItsLabelAndRestoresItOnRetriggerAndDisable()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var cue = view.GetComponent<SpiritActionModifierCue>();
-            var playGroup = Find<CanvasGroup>(view, "PlayHandModifierCue");
+            var playGroup = ContentReady.ActionCueGroup(view, true);
             var playLabel = view.PlayButton.GetComponentInChildren<Text>().GetComponent<CanvasGroup>();
-            var rerollGroup = Find<CanvasGroup>(view, "RerollModifierCue");
+            var rerollGroup = ContentReady.ActionCueGroup(view, false);
             var rerollLabel = view.RerollButton.GetComponentInChildren<Text>().GetComponent<CanvasGroup>();
             Assert.That(playLabel, Is.Not.Null);
             Assert.That(rerollLabel, Is.Not.Null);
@@ -250,16 +254,16 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator EveryCharmRuleFitsCompactCardsAtNarrowPortraitWidth()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var view = ContentReady.EncounterView(controller);
+            var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(443, 912);
             portrait.anchoredPosition = Vector2.zero;
-            var card = SpiritRewardCard.Create("CompactCatalogReward", portrait, (offer, option) => { });
+            var card = SpiritRewardCard.Create(ContentReady.RewardCardPrefab(), "CompactCatalogReward", portrait, (offer, option) => { });
             var cardRect = (RectTransform)card.transform;
             cardRect.anchorMin = cardRect.anchorMax = new Vector2(.5f, .5f);
             cardRect.sizeDelta = new Vector2(443 * .95f - 48, 160);
@@ -267,6 +271,8 @@ namespace Dice.Tests
             {
                 card.RenderModifier(definition, 1, 1);
                 yield return null;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(cardRect);
+                cardRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, LayoutUtility.GetPreferredHeight(cardRect));
                 Canvas.ForceUpdateCanvases();
                 var theme = card.GetComponentInParent<SpiritUiContext>().Theme;
                 Assert.That(Find<Text>(card, "Condition").text, Does.StartWith("<b><color=#" +
@@ -289,11 +295,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator LargerCharmOffersKeepReadableRowsAndAllowScrolling()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var standard = controller.Catalog;
             var definitions = standard.Modifiers.Where(definition => definition.RewardEligible &&
                     definition.Availability.Access == ModifierAccess.Starter &&
@@ -310,6 +316,8 @@ namespace Dice.Tests
             var catalog = new MechanicalCatalog("large-reward.v1", standard.Hands, new[] { encounter },
                 definitions, new[] { pool });
             controller.Initialize(catalog, encounter.Id, 60, SavePath());
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             controller.PlayHand();
             yield return Wait(controller);
             Canvas.ForceUpdateCanvases();
@@ -320,7 +328,9 @@ namespace Dice.Tests
             for (int i = 1; i <= 5; ++i)
             {
                 var card = Find<Button>(view, "RewardCard" + i);
-                Assert.That(((RectTransform)card.transform).rect.height, Is.EqualTo(180f).Within(.1f));
+                Assert.That(((RectTransform)card.transform).rect.height, Is.GreaterThanOrEqualTo(180f - .1f));
+                foreach (var label in card.GetComponentsInChildren<Text>())
+                    AssertCompleteRewardLabelInsideBounds(label, "large offer/" + i);
             }
             Assert.That(Find<Button>(view, "UpgradeHandButton").IsInteractable(), Is.False);
             LogAssert.NoUnexpectedReceived();
@@ -329,11 +339,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator RewardAndOwnedCharmCardsShareAuthoredArtworkAndDescriptions()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             yield return null;
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var standard = controller.Catalog;
             var pool = new ModifierRewardPoolDefinition("pool.readability", Ids);
             var policy = new RewardPolicyDefinition("rewards.readability",
@@ -345,6 +355,8 @@ namespace Dice.Tests
             var catalog = new MechanicalCatalog("readability-reward.v1", standard.Hands, new[] { encounter },
                 Ids.Select(standard.GetModifier), new[] { pool });
             controller.Initialize(catalog, encounter.Id, 60, SavePath());
+            yield return ContentReady.Routed(controller);
+            view = ContentReady.EncounterView(controller);
             controller.PlayHand();
             yield return Wait(controller);
             var offer = controller.Snapshot.PendingReward;
@@ -368,22 +380,30 @@ namespace Dice.Tests
             var chosen = catalog.GetModifier(offer.Options[0].DefinitionId);
             var beforeCharmSelection = controller.Snapshot;
             Find<Button>(view, "RewardCard1").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(beforeCharmSelection));
             Assert.That(Find<Button>(view, "UpgradeHandButton").IsInteractable(), Is.True);
             Find<Button>(view, "UpgradeHandButton").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             yield return Wait(controller);
             Assert.That(controller.Snapshot.PendingReward.Kind, Is.EqualTo(RewardKind.HandUpgrade));
-            Assert.That(Find<Image>(Find<Button>(view, "RewardCard1"), "CharmIcon").gameObject.activeSelf, Is.False);
+            Assert.That(Find<Image>(Find<Button>(view, "RewardCard1"), "CharmIcon").gameObject.activeInHierarchy, Is.False);
             yield return Capture("readability-hand-upgrade-unselected");
             var beforeUpgrade = controller.Snapshot;
             var upgradeButton = Find<Button>(view, "UpgradeHandButton");
             Assert.That(upgradeButton.IsInteractable(), Is.False);
             Find<Button>(view, "RewardCard1").onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot, Is.SameAs(beforeUpgrade));
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(upgradeButton.IsInteractable(), Is.True);
             yield return Capture("readability-hand-upgrade-selected");
             upgradeButton.onClick.Invoke();
+            yield return ContentReady.Routed();
+            view = ContentReady.EncounterView(controller);
             yield return Wait(controller);
             view.ShowCharms();
             var owned = Find<Button>(view, "OwnedCharm1");
@@ -430,8 +450,8 @@ namespace Dice.Tests
         {
             bool playHand = definition.Phase == ModifierPhase.PlayHand;
             var button = playHand ? view.PlayButton : view.RerollButton;
-            var active = Find<CanvasGroup>(view, playHand ? "PlayHandModifierCue" : "RerollModifierCue");
-            var inactive = Find<CanvasGroup>(view, playHand ? "RerollModifierCue" : "PlayHandModifierCue");
+            var active = ContentReady.ActionCueGroup(view, playHand);
+            var inactive = ContentReady.ActionCueGroup(view, !playHand);
             Assert.That(cue.IsVisible, Is.True, definition.Id);
             Assert.That(cue.ActivePhase, Is.EqualTo(definition.Phase), definition.Id);
             Assert.That(cue.ActiveSprite, Is.SameAs(SpiritModifierIcons.GetSprite(definition)), definition.Id);
@@ -471,8 +491,8 @@ namespace Dice.Tests
             Assert.That(cue.IsVisible, Is.False);
             Assert.That(cue.ActivePhase, Is.Null);
             Assert.That(cue.ActiveSprite, Is.Null);
-            Assert.That(Find<CanvasGroup>(view, "RerollModifierCue").gameObject.activeSelf, Is.False);
-            Assert.That(Find<CanvasGroup>(view, "PlayHandModifierCue").gameObject.activeSelf, Is.False);
+            Assert.That(ContentReady.ActionCueGroup(view, false).gameObject.activeSelf, Is.False);
+            Assert.That(ContentReady.ActionCueGroup(view, true).gameObject.activeSelf, Is.False);
             foreach (var button in new[] { view.RerollButton, view.PlayButton })
             {
                 var label = button.GetComponentInChildren<Text>().GetComponent<CanvasGroup>();

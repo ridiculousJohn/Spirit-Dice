@@ -28,10 +28,10 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator AuthoredFamilySpritesRenderOnBoneAcrossEncounterTables()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var standard = controller.Catalog;
             var families = standard.Modifiers.GroupBy(value => value.FamilyId)
                 .Select(group => group.First()).OrderBy(value => value.FamilyId).ToArray();
@@ -48,6 +48,8 @@ namespace Dice.Tests
                 var encounter = new EncounterDefinition(journey.EncounterId, new[] { new StageDefinition(1000000, 3, 3) });
                 controller.Initialize(new MechanicalCatalog("artwork.table", standard.Hands,
                     new[] { encounter }, standard.Modifiers), encounter.Id, 60, ContentReady.SpiritSavePath());
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 Resize(view, 443);
                 yield return null;
                 int count = tableIndex++ == 0 ? families.Length : 12;
@@ -73,10 +75,10 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator FourTwinKnotsCategoriesRemainDistinctAcrossOwnedCardsDetailsAndThreeTables()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var standard = controller.Catalog;
             var definitions = Ids.Select(standard.GetModifier).ToArray();
             Assert.That(definitions.Select(value => value.FamilyId).Distinct().Count(), Is.EqualTo(1));
@@ -94,6 +96,8 @@ namespace Dice.Tests
                 var catalog = new MechanicalCatalog("category-tables.v1", standard.Hands, new[] { encounter }, definitions);
                 ulong seed = FindTwoPairSeed(catalog, encounter.Id);
                 controller.Initialize(catalog, encounter.Id, seed, ContentReady.SpiritSavePath());
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 yield return null;
                 Assert.That(controller.Snapshot.Modifiers.Count, Is.EqualTo(4));
                 Assert.That(view.TrayScene.Presentation, Is.SameAs(journey.TablePresentation.TrayPresentation));
@@ -129,6 +133,8 @@ namespace Dice.Tests
                             .Overlaps(BoundsIn(card.transform, (RectTransform)status.transform)), Is.False,
                             "The category mark must leave the status badge independent.");
                         card.onClick.Invoke();
+                        yield return ContentReady.Routed();
+                        view = ContentReady.EncounterView(controller);
                         Canvas.ForceUpdateCanvases();
                         AssertFamilyAndCategory(view, "CharmDetailIcon", "CharmDetailCategory", definition);
                         Assert.That(Find<Text>(view, "CharmDetailBody").text, Does.Contain(
@@ -148,11 +154,11 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator RewardCardsKeepCategoryMarksWhenSelectedAndResetForHandUpgrades()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var view = ContentReady.EncounterView(controller);
+            var portrait = ContentReady.Portrait();
             var overlay = new GameObject("Category Reward Comparison", typeof(RectTransform), typeof(Image));
             var overlayRect = (RectTransform)overlay.transform;
             overlayRect.SetParent(portrait, false);
@@ -161,7 +167,7 @@ namespace Dice.Tests
             overlayRect.offsetMin = overlayRect.offsetMax = Vector2.zero;
             overlay.GetComponent<Image>().color = new Color32(20, 32, 27, 255);
             var cards = Enumerable.Range(0, 3).Select(index =>
-                SpiritRewardCard.Create("CategoryReward" + index, overlay.transform, (offer, option) => { })).ToArray();
+                SpiritRewardCard.Create(ContentReady.RewardCardPrefab(), "CategoryReward" + index, overlay.transform, (offer, option) => { })).ToArray();
             foreach (int width in new[] { 540, 443 })
             {
                 Resize(view, width);
@@ -196,10 +202,10 @@ namespace Dice.Tests
                 }
                 var reused = cards[0];
                 reused.RenderHandUpgrade(controller.Catalog.Hands[0], 0, 2, 1);
-                Assert.That(Find<SpiritModifierCategoryBadge>(reused, "CharmCategory").gameObject.activeSelf, Is.False);
-                Assert.That(Find<Image>(reused, "CharmIcon").gameObject.activeSelf, Is.False);
-                Assert.That(Find<SpiritModifierSigilGraphic>(reused, "CharmSigil").gameObject.activeSelf, Is.False);
-                Assert.That(Find<Text>(reused, "Effects").color, Is.EqualTo(reused.GetComponentInParent<SpiritUiContext>().Theme.amber));
+                Assert.That(Find<SpiritModifierCategoryBadge>(reused, "CharmCategory").gameObject.activeInHierarchy, Is.False);
+                Assert.That(Find<Image>(reused, "CharmIcon").gameObject.activeInHierarchy, Is.False);
+                Assert.That(Find<SpiritModifierSigilGraphic>(reused, "CharmSigil").gameObject.activeInHierarchy, Is.False);
+                Assert.That(Find<Text>(reused, "Values").text, Does.Contain("BASE").And.Contain("MULT"));
                 reused.RenderModifier(controller.Catalog.GetModifier(Ids[3]), 3, 1);
                 AssertFamilyAndCategory(reused, "CharmIcon", "CharmCategory", controller.Catalog.GetModifier(Ids[3]));
             }
@@ -210,10 +216,10 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator BothActionCuesShowCategoriesAndClearTheirStyleForHostAndUnknownArtwork()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             var cue = view.GetComponent<SpiritActionModifierCue>();
             var theme = view.GetComponentInChildren<SpiritUiContext>().Theme;
             foreach (int width in new[] { 540, 443 })
@@ -225,11 +231,12 @@ namespace Dice.Tests
                     cue.Show(definition, 5, true, true);
                     view.RerollButton.interactable = view.PlayButton.interactable = false;
                     yield return new WaitForSecondsRealtime(.15f);
-                    foreach (var name in new[] { "RerollModifierCue", "PlayHandModifierCue" })
+                    foreach (bool playHand in new[] { false, true })
                     {
-                        var group = Find<CanvasGroup>(view, name);
+                        var group = ContentReady.ActionCueGroup(view, playHand);
                         Assert.That(group.gameObject.activeInHierarchy, Is.True);
-                        AssertFamilyAndCategory(group, "Artwork", "CharmCategory", definition);
+                        AssertFamilyAndCategory(ContentReady.ActionCuePart<Image>(view, playHand, "Artwork"),
+                            ContentReady.ActionCuePart<SpiritModifierCategoryBadge>(view, playHand, "Category"), definition);
                         AssertCueTint(group);
                     }
                     foreach (var button in new[] { view.RerollButton, view.PlayButton })
@@ -239,14 +246,13 @@ namespace Dice.Tests
                     controller.ToggleDie(0);
                     view.RerollButton.interactable = view.PlayButton.interactable = true;
                     yield return new WaitForSecondsRealtime(.15f);
-                    foreach (var name in new[] { "RerollModifierCue", "PlayHandModifierCue" })
-                        AssertCueTint(Find<CanvasGroup>(view, name));
+                    foreach (bool playHand in new[] { false, true })
+                        AssertCueTint(ContentReady.ActionCueGroup(view, playHand));
                     view.RerollButton.interactable = view.PlayButton.interactable = false;
                     yield return new WaitForSecondsRealtime(.15f);
                     foreach (var button in new[] { view.RerollButton, view.PlayButton })
                     {
-                        var group = Find<CanvasGroup>(button,
-                            button == view.RerollButton ? "RerollModifierCue" : "PlayHandModifierCue");
+                        var group = ContentReady.ActionCueGroup(view, button == view.PlayButton);
                         AssertCueTint(group);
                         Assert.That(button.GetComponentInChildren<Text>().GetComponent<CanvasGroup>().alpha + group.alpha,
                             Is.EqualTo(1).Within(.001f), "Labels must continue crossfading independently of tint.");
@@ -254,18 +260,19 @@ namespace Dice.Tests
                     yield return Capture(view, "actions-" + index, width);
                     cue.ShowHost(SpiritModifierIcons.GetSprite(definition), ModifierPhase.PlayHand, 5);
                     Assert.That(cue.IsRerollVisible, Is.False);
-                    var host = Find<CanvasGroup>(view, "PlayHandModifierCue");
+                    var host = ContentReady.ActionCueGroup(view, true);
                     Assert.That(Find<Image>(host, "Artwork").color, Is.EqualTo(theme.cream));
-                    Assert.That(Find<SpiritModifierCategoryBadge>(host, "CharmCategory").gameObject.activeSelf, Is.False);
+                    Assert.That(ContentReady.ActionCuePart<SpiritModifierCategoryBadge>(view, true, "Category")
+                        .gameObject.activeSelf, Is.False);
                     cue.Show(SpiritModifierIcons.GetSprite(definition), ModifierPhase.PlayerReroll, 5);
-                    var unknown = Find<CanvasGroup>(view, "RerollModifierCue");
+                    var unknown = ContentReady.ActionCueGroup(view, false);
                     Assert.That(Find<Image>(unknown, "Artwork").color, Is.EqualTo(theme.cream));
-                    Assert.That(Find<SpiritModifierCategoryBadge>(unknown, "CharmCategory").Glyph.sprite, Is.Null);
+                    Assert.That(ContentReady.ActionCuePart<SpiritModifierCategoryBadge>(view, false, "Category").Glyph.sprite, Is.Null);
                     cue.Show(definition, 5, true, true);
                     cue.Clear();
                     Assert.That(cue.IsVisible, Is.False);
-                    foreach (var name in new[] { "RerollModifierCue", "PlayHandModifierCue" })
-                        Assert.That(Find<SpiritModifierCategoryBadge>(Find<CanvasGroup>(view, name), "CharmCategory")
+                    foreach (bool playHand in new[] { false, true })
+                        Assert.That(ContentReady.ActionCuePart<SpiritModifierCategoryBadge>(view, playHand, "Category")
                             .gameObject.activeSelf, Is.False);
                 }
             }
@@ -289,9 +296,10 @@ namespace Dice.Tests
 
         private static void AssertFamilyAndCategory(Component root, string iconName, string categoryName,
             ModifierDefinition definition)
+            => AssertFamilyAndCategory(Find<Image>(root, iconName), Find<SpiritModifierCategoryBadge>(root, categoryName), definition);
+
+        private static void AssertFamilyAndCategory(Image icon, SpiritModifierCategoryBadge category, ModifierDefinition definition)
         {
-            var icon = Find<Image>(root, iconName);
-            var category = Find<SpiritModifierCategoryBadge>(root, categoryName);
             Assert.That(icon.sprite, Is.SameAs(SpiritModifierIcons.GetSprite(definition)));
             Assert.That(icon.color, Is.EqualTo(SpiritModifierIcons.GetEffectColor(definition)));
             Assert.That(category.gameObject.activeInHierarchy, Is.True);
@@ -303,7 +311,7 @@ namespace Dice.Tests
 
         private static void Resize(SpiritEncounterView view, int width)
         {
-            var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+            var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(width, 960);
             portrait.anchoredPosition = Vector2.zero;
@@ -338,7 +346,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
             string path = Path.Combine(root, "category-" + name + "-" + width + "x960.png");
             Assert.That(File.Exists(path), Is.False, "Capture output must be fresh.");
-            var canvas = view.transform.Find("SpiritCanvas").GetComponent<Canvas>();
+            var canvas = ContentReady.PresentationRoot().GetComponentInChildren<Canvas>(true);
             RenderMode previousMode = canvas.renderMode;
             Camera previousCamera = canvas.worldCamera;
             float previousPlane = canvas.planeDistance;

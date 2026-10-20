@@ -46,7 +46,10 @@ namespace Dice.Tests
             ((RectTransform)root.transform).sizeDelta = new Vector2(443, 960);
             var themePath = AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:SpiritUiTheme").First());
             root.GetComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(themePath));
-            view = root.AddComponent<SpiritCollectionView>();
+            var prefab = AssetDatabase.LoadAssetAtPath<SpiritCollectionView>(
+                "Assets/Dice/Content/Presentation/UI/SpiritCollectionView.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            view = UnityEngine.Object.Instantiate(prefab, root.transform, false);
             view.Build((RectTransform)root.transform, () => view.Hide());
         }
 
@@ -142,7 +145,9 @@ namespace Dice.Tests
                 Assert.That(Find<Text>(row, "FamilyName").text, Is.EqualTo("Undiscovered family"));
                 Assert.That(Find<Text>(row, "FamilyCondition").text, Is.EqualTo("Locked"));
                 Assert.That(row.GetComponentsInChildren<Button>(), Is.Empty);
-                Assert.That(row.GetComponent<LayoutElement>().preferredHeight, Is.LessThan(100));
+                var rect = (RectTransform)row.transform;
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
+                Assert.That(LayoutUtility.GetPreferredHeight(rect), Is.LessThan(100));
                 Assert.That(row.GetComponentsInChildren<Text>(true).Where(text => text.name == "VariantEffect" || text.name == "VariantState")
                     .All(text => text.text == ""), Is.True);
                 foreach (var button in row.GetComponentsInChildren<Button>(true)) button.onClick.Invoke();

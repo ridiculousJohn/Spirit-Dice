@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: DiceApplicationConfig
   m_EditorClassIdentifier: Dice.App::Dice.App.DiceApplicationConfig
   catalogAsset: {fileID: 11400000, guid: cc8a241269354f6db46d60178ddc427d, type: 2}
+  frontendScene:
+    m_AssetGUID: 530c4a7cb9e70ca44bb7fd539f279636
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
   journeyCatalog: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df804, type: 2}
   encounterId: encounter.fox.introduction
   modifierLabel: dice.modifiers

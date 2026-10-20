@@ -1,7 +1,7 @@
 {
   "name": "Dice.Editor",
   "rootNamespace": "Dice.Editor",
-  "references": ["Dice.App", "Dice.Engine", "Dice.Presentation", "Dice.UnityContent", "Unity.Addressables.Editor", "Unity.Addressables", "Unity.ResourceManager", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+  "references": ["Dice.App", "Dice.Engine", "Dice.Presentation", "Dice.UnityContent", "Unity.Addressables.Editor", "Unity.Addressables", "Unity.ResourceManager", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime", "Unity.ugui", "Unity.InputSystem"],
   "includePlatforms": ["Editor"],
   "autoReferenced": true
 }

@@ -21,17 +21,16 @@ namespace Dice.Tests
     {
         private const string EncounterId = "encounter.moth.crossroads";
         private SpiritEncounterController controller;
-        private SpiritEncounterView view;
+        private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
 
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            view = controller.GetComponent<SpiritEncounterView>();
             journey = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == EncounterId);
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
@@ -41,7 +40,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator MothCausewayLanternArrivalOpeningIdleAndReactionPlayInRealTime()
         {
-            var portrait = view.transform.Find("SpiritCanvas/SafeArea/Portrait") as RectTransform;
+            var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(540, 960);
@@ -74,6 +73,7 @@ namespace Dice.Tests
             AssertNoEngine(resolutions);
             yield return CaptureMotion("causeway", 3f, () => controller.SelectEncounter(EncounterId),
                 () => view.JourneyView.IsAnimating, () => AssertNoEngine(resolutions));
+            yield return ContentReady.Routed(controller);
             AssertBeat("causeway");
 
             yield return CaptureMotion("lantern", 11.1f, () => Click("JourneyAdvanceButton"),
@@ -132,7 +132,8 @@ namespace Dice.Tests
             bool observedFade = false;
             var openingGroup = Find<CanvasGroup>("TargetPanel");
             Click("JourneyAcceptButton");
-            Assert.That(Find<RectTransform>("EncounterCharmsIntroduction").gameObject.activeInHierarchy, Is.True);
+            yield return ContentReady.Routed();
+            Assert.That(Find<RectTransform>("SpiritEncounterCharmsScreen").gameObject.activeInHierarchy, Is.True);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             AssertNoEngine(resolutions);
             yield return WaitUntilClickable("BeginEncounterButton");
@@ -144,7 +145,7 @@ namespace Dice.Tests
                 Assert.That(controller.Snapshot.Revision, Is.Zero);
                 Assert.That(controller.IsBusy, Is.True);
                 Assert.That(openingGroup.alpha, Is.Zero);
-                Assert.That(view.DiceTray.IsRolling, Is.False);
+                Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
                 observedRoll |= view.DiceTray.IsRolling;
                 var opening = controller.Snapshot;
                 controller.AcceptEncounter();
@@ -155,7 +156,7 @@ namespace Dice.Tests
                 if (openingGroup.alpha > 0 && openingGroup.alpha < 1)
                 {
                     observedFade = true;
-                    Assert.That(view.DiceTray.IsRolling, Is.False);
+                    Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
                     Assert.That(view.PlayButton.IsInteractable(), Is.False);
                 }
                 if (view.DiceTray.IsRolling) Assert.That(openingGroup.alpha, Is.EqualTo(1));
@@ -165,7 +166,7 @@ namespace Dice.Tests
             });
             Assert.That(observedRoll, Is.True, "Accept must visibly present the initial dice roll.");
             Assert.That(observedFade, Is.True, "Gameplay must fade in before the opening roll.");
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(view.PlayButton.IsInteractable(), Is.True);
             var expected = EncounterSession.CreateEncounter(controller.Catalog, EncounterId, 60);
             for (int index = 0; index < DiceValues.Count; ++index)
@@ -269,7 +270,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.HasActiveEncounter, Is.False);
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view.DiceTray.IsRolling, Is.False);
+            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.Zero);
             Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
                 .GetValue(controller), Is.Null);
@@ -278,7 +279,7 @@ namespace Dice.Tests
 
         private T Find<T>(string name) where T : Component
         {
-            var result = view.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            var result = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
             Assert.That(result, Is.Not.Null, name);
             return result;
         }

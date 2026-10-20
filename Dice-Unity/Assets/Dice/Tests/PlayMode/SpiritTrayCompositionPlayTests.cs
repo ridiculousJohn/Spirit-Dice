@@ -20,21 +20,27 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator AllThreeEncounterTablesCaptureGameplayAtBothPortraitWidths()
         {
-            yield return SceneManager.LoadSceneAsync("SpiritHousePrototype");
+            yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = controller.GetComponent<SpiritEncounterView>();
+            var view = ContentReady.EncounterView(controller);
             Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
             Camera previousCamera = null;
             RenderTexture previousTexture = null;
             foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
             {
                 controller.ReturnToInvestigation();
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
                 controller.SelectEncounter(journey.EncounterId);
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                     controller.AdvanceJourney();
                 controller.AcceptEncounter();
+                yield return ContentReady.Routed(controller);
+                view = ContentReady.EncounterView(controller);
                 float deadline = Time.realtimeSinceStartup + 30;
                 while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
                 Assert.That(controller.IsBusy, Is.False);
@@ -50,8 +56,9 @@ namespace Dice.Tests
                 for (int i = 0; i < DiceValues.Count; ++i)
                 {
                     var slot = view.TrayScene.Geometry.DiceSlots[i];
-                    var die = slot.Find("Spirit Dice Slot Content " + i + "/Spirit Die " + i);
+                    var die = ContentReady.Die(view.DiceTray, i);
                     Assert.That(die, Is.Not.Null, "Die " + i);
+                    Assert.That(die.IsChildOf(slot), Is.True, "The authored die belongs to its tray slot.");
                     Vector3 resultNormal = die.TransformDirection(faceNormals[controller.Snapshot.CurrentDice[i] - 1]);
                     // The result faces upward; a shallow camera can favor a side face.
                     Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + i + " result face");
@@ -71,16 +78,17 @@ namespace Dice.Tests
                 for (int i = 0; i < 6; ++i) view.ModifierHistory.Add(contribution, definition, false);
                 foreach (int width in new[] { 540, 443 })
                 {
-                    var portrait = (RectTransform)view.transform.Find("SpiritCanvas/SafeArea/Portrait");
+                    var portrait = ContentReady.Portrait();
                     portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
                     portrait.sizeDelta = new Vector2(width, 960);
                     portrait.anchoredPosition = Vector2.zero;
                     yield return null;
                     Canvas.ForceUpdateCanvases();
-                    var trayImage = view.GetComponentsInChildren<RawImage>(true).Single(image => image.name == "DiceTrayImage");
+                    var trayImage = view.GameplayHud.DiceTrayImage;
                     Assert.That(trayImage.texture, Is.SameAs(view.TrayScene.Texture));
-                    Assert.That(view.ModifierHistory.GetComponentsInChildren<RawImage>(true),
-                        Is.EquivalentTo(new[] { trayImage }));
+                    Assert.That(view.ModifierHistory.GetComponentInParent<RawImage>(), Is.SameAs(trayImage));
+                    Assert.That(view.ModifierHistory.GetComponentsInChildren<RawImage>(true), Is.Empty,
+                        "History hit targets use the shared tray display.");
                     for (int index = 0; index < DiceValues.Count; ++index)
                     {
                         Rect bounds = view.DiceTray.GetSlotViewportRect(index);
@@ -96,10 +104,11 @@ namespace Dice.Tests
                 previousCamera = view.TrayScene.RenderCamera;
                 previousTexture = view.TrayScene.Texture;
             }
-            view.gameObject.SetActive(false);
+            var presentationRoot = ContentReady.Router(controller).PresentationRoot;
+            presentationRoot.SetActive(false);
             yield return null;
             Assert.That(view.TrayScene.RenderRoot.gameObject.activeInHierarchy, Is.False);
-            view.gameObject.SetActive(true);
+            presentationRoot.SetActive(true);
             yield return null;
             Assert.That(view.TrayScene.RenderRoot.gameObject.activeInHierarchy, Is.True);
             Assert.That(view.DiceTray.Texture, Is.SameAs(view.ModifierHistory.Renderer.Texture));
@@ -113,7 +122,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
             string path = Path.Combine(root, "shared-tray-" + encounterId + "-" + width + "x960.png");
             Assert.That(File.Exists(path), Is.False, "Capture output must be fresh.");
-            var canvas = view.transform.Find("SpiritCanvas").GetComponent<Canvas>();
+            var canvas = ContentReady.PresentationRoot().GetComponentInChildren<Canvas>(true);
             RenderMode previousMode = canvas.renderMode;
             Camera previousCamera = canvas.worldCamera;
             float previousPlane = canvas.planeDistance;
