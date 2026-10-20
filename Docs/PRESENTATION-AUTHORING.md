@@ -26,7 +26,7 @@ Duplicate the nearest scene or prefab in Unity, edit the hierarchy, and assign t
 
 Edit saved scenes and prefabs in place through Unity's Inspector or Editor API, including CLI/tool access. Preserve GUIDs, references, and unrelated overrides. Existing assets do not need to be recreated to change their hierarchy, components, layout, or appearance.
 
-The remaining `Spirit*Authoring` scripts and repair commands are migration leftovers, not the source of truth or the ongoing editing workflow. Removal was proposed but has not been implemented or explicitly authorized. They do not run during gameplay, but Dice > Open Application still invokes generation if Application.unity is missing. Do not use that fallback or run generation/repair commands to apply presentation changes. Inspect a missing asset and report it rather than silently recreating it.
+The migration generators, their helpers, and repair commands are removed. Dice > Open Application opens the existing Application.unity scene without generating assets. Inspect a missing asset and report it rather than silently recreating it.
 
 Safe-area fitting, standard Unity layout groups, projected dice hit regions, and animation still adapt at runtime. Their controlling references and parameters are authored. Ordinary binding must preserve Inspector typography and layout settings.
 

@@ -11,10 +11,7 @@ namespace Dice.Editor
         public static void Open()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
-            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) == null) Create();
             EditorSceneManager.OpenScene(ScenePath);
         }
-
-        public static void Create() => SpiritApplicationAuthoring.CreateAssets();
     }
 }

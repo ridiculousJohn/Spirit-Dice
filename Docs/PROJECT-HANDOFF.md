@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Current state: October 19, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
+Current state: October 20, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
 
 ## Working contract
 
@@ -23,10 +23,10 @@ Read [John's global instructions](C:/Users/jsp73/.codex/AGENTS.md), this documen
 - Entry scene: Dice-Unity/Assets/Scenes/Application.unity; menu: Dice > Open Application.
 - The scene/prefab migration and removal of the unsolicited unlock notice are committed in 7d04b58. Check fresh Git status for subsequent work; do not discard any changes.
 - Confirming a permanent charm unlock now proceeds directly to the next offer, with no extra "CHARM UNLOCKED" notice or timed pause. The selected unlock is still persisted.
-- Editor migration generators (Spirit*Authoring, related helpers, and repair commands) still exist. Removal was proposed but has not been implemented or explicitly authorized. They are not the intended editing workflow. Open Application still invokes generation if its scene is missing; do not use that fallback as a repair strategy.
-- No Android build/device validation has been performed for the migration or latest unlock fix. Do not assume the installed app matches the workspace.
+- Editor migration generators (Spirit*Authoring, related helpers, and repair commands) and the modifier snapshot importer are removed. Open Application opens the existing scene without generating assets. Configure Modifier Addressables remains available for authored content and Android builds. Edit authored scenes and prefabs directly; inspect and report missing assets rather than silently recreating them.
+- Android APK built from 04b7c2b with the migration and unlock fix; signature verified. Installed on the connected SM_S947U with app data cleared at John's request, then launched. The process and foreground activity were verified; gameplay has not been visually checked on-device. Do not assume later workspace edits are installed.
 - Player-built decks, further chapters, balance changes, and additional encounters are deferred, not current implementation tasks. Chapter 2 is narrative setup only.
-- This handoff update does not authorize code changes, generator deletion, a commit, or an Android build. Follow John's next request.
+- This handoff update does not authorize further code changes, a commit, or an Android build. Follow John's next request.
 
 ## Architecture and coding boundaries
 
@@ -107,11 +107,14 @@ Follow [Tools/README.md](../Tools/README.md). Before CLI Unity runs, check wheth
 
 Latest relevant evidence is under ignored Docs/work/unity-tests:
 
+- Generator removal: 73/73 targeted EditMode tests passed in generators-removed-a55f046e1be94921956e74ea7783a19e, covering authored presentation assets, explicit references, diagnostic scene, application configuration, modifier Addressables, tray composition previews, and encounter lighting previews. Unity compiled the remaining editor tools successfully. Full suites and Android builds were not rerun for this editor-only removal.
 - Migration EditMode: full run 1,653/1,657, followed by 118/118 targeted checks covering all four failures. No single clean full-suite run is claimed. Evidence: authored-style-final-4e3901d37ef04c968abc437cc0ca2b28 and authored-edit-regressions-5bead733e73c4b2dbcf27302cf9a1823. One filesystem recovery fixture failed moving its temporary directory and passed on rerun; the external cause is unproven.
 - Migration PlayMode: all 89 exercised cases pass on their latest results across full/focused runs. Final evidence: authored-play-ui-final-74c601e298954429a236a75c9aeb3e67 and authored-scene-resume-ca1e9c880cc748e6a767762818713a1a. Rendered portrait captures were inspected for scenes, previews, endings, rewards, hand upgrades, owned charms and Collection. This does not substitute for John's playtest or Android verification.
 - Latest unlock fix: 3/3 progression presentation tests passed in unlock-direct-7e1ec2d311f74de68e820de56169dbf4. The nonfinal unlock test asserts the next offer and available input immediately after confirmation, without yielding a frame, plus persisted ownership. The full suites were not rerun after this narrow change.
 
 Build/install Android only when requested. Generated output stays in ignored Docs/work; unexpected generated changes still require permission before deletion. Historical test results do not validate subsequent edits.
+
+Latest Android artifact: Docs/work/android-build-eb051dca34334e4d97cfc82a36b1ff0e/SpiritDice.apk (219,717,854 bytes), ARM64 IL2CPP development build, package net.ridiculousgaming.diceprototype. Unity 6000.6.6f1 exited 0; APK v2 signature verified. Build log contains SpiritDiceSurface.shader warnings about pow with a potentially negative base. No tracked files were changed by the build. Installation and app-data reset succeeded; launch process and foreground activity were verified, with no error matches in the sampled startup log. On-device gameplay remains unverified.
 
 ## Reference documents
 
