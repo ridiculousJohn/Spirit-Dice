@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace Dice.App
+{
+    /** A validated campaign whose files are not currently assigned to a save slot. */
+    public sealed class CampaignRecoveryInfo
+    {
+        public string CampaignId { get; }
+        public string ProfilePath { get; }
+        public string SavePath { get; }
+        public DateTime LastWriteTimeUtc { get; }
+        public int SuggestedSlot { get; }
+
+        internal CampaignRecoveryInfo(string campaignId, string profilePath, string savePath, DateTime lastWriteTimeUtc, int suggestedSlot)
+        {
+            CampaignId = campaignId;
+            ProfilePath = profilePath;
+            SavePath = savePath;
+            LastWriteTimeUtc = lastWriteTimeUtc;
+            SuggestedSlot = suggestedSlot;
+        }
+    }
+
+    /** Keeps recovery discovery and destructive filesystem operations separate from slot selection. */
+    internal sealed class CampaignRecoveryStore
+    {
+        private const string MetadataFileName = "spirit-campaign.json";
+        private const string BackupPrefix = "spirit-slots.corrupt-";
+        private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
+        private readonly string root;
+
+        internal CampaignRecoveryStore(string root) { this.root = root; }
+
+        internal bool IsSafeCampaignDirectory(string id) => TryAttributes(CampaignDirectory(id), out var attributes) &&
+            (attributes & FileAttributes.Directory) != 0 && (attributes & FileAttributes.ReparsePoint) == 0;
+
+        internal List<CampaignRecoveryInfo> Scan(string[] assigned, out bool foundCampaigns)
+        {
+            foundCampaigns = false;
+            var result = new List<CampaignRecoveryInfo>();
+            if (!TryAttributes(root, out _)) return result;
+            var mapped = new HashSet<string>(assigned, StringComparer.OrdinalIgnoreCase);
+            foreach (string directory in Directory.GetDirectories(root))
+            {
+                string id = Path.GetFileName(directory);
+                if (!IsCampaignId(id)) continue;
+                foundCampaigns = true;
+                if (mapped.Contains(id)) continue;
+                var info = ReadCampaign(id);
+                if (info != null) result.Add(info);
+            }
+            result.Sort((left, right) => string.CompareOrdinal(left.CampaignId, right.CampaignId));
+            return result;
+        }
+
+        internal CampaignRecoveryInfo ReadCampaign(string id)
+        {
+            string directory = CampaignDirectory(id);
+            if (!IsSafeCampaignDirectory(id)) return null;
+            FileAttributes attributes;
+            string profile = Path.Combine(directory, "spirit-profile.json");
+            string save = Path.Combine(directory, "spirit-encounter.json");
+            bool hasProfile = TryAttributes(profile, out attributes);
+            if (hasProfile && (attributes & (FileAttributes.ReparsePoint | FileAttributes.Directory)) != 0) return null;
+            bool hasRun = TryAttributes(save, out attributes);
+            if (hasRun && (attributes & (FileAttributes.ReparsePoint | FileAttributes.Directory)) != 0) return null;
+            if (!hasProfile && !hasRun) return null;
+            try
+            {
+                if (hasProfile) PlayerProfileFileStore.Load(profile);
+                if (hasRun) EncounterSaveFileStore.Load(save);
+            }
+            catch (FormatException) { return null; }
+            catch (NotSupportedException) { return null; }
+            catch (FileNotFoundException) { return null; }
+            catch (DirectoryNotFoundException) { return null; }
+            DateTime written = hasProfile ? File.GetLastWriteTimeUtc(profile) : DateTime.MinValue;
+            if (hasRun && File.GetLastWriteTimeUtc(save) > written) written = File.GetLastWriteTimeUtc(save);
+            return new CampaignRecoveryInfo(id, profile, save, written, ReadSlot(directory));
+        }
+
+        internal string ImportLegacy()
+        {
+            string id;
+            string directory;
+            string staging;
+            do
+            {
+                id = Guid.NewGuid().ToString("N");
+                directory = CampaignDirectory(id);
+                staging = directory + ".importing";
+            }
+            while (TryAttributes(directory, out _) || TryAttributes(staging, out _));
+            Directory.CreateDirectory(staging);
+            // Publish only a complete copy so interrupted imports do not hide the original legacy files.
+            foreach (string name in new[] { "spirit-profile.json", "spirit-encounter.json" })
+            {
+                string source = Path.Combine(root, name);
+                if (File.Exists(source)) File.Copy(source, Path.Combine(staging, name));
+            }
+            if (!string.Equals(Path.GetDirectoryName(Path.GetFullPath(staging)), Path.GetDirectoryName(directory), StringComparison.OrdinalIgnoreCase))
+                throw new IOException("The campaign import directory is outside the save root.");
+            RequireRegularTree(staging);
+            Directory.Move(staging, directory);
+            return id;
+        }
+
+        internal void WriteSlot(string id, int slot)
+        {
+            string directory = CampaignDirectory(id);
+            if (!TryAttributes(directory, out var attributes) || (attributes & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("The campaign directory is unavailable: " + directory);
+            string path = Path.Combine(directory, MetadataFileName);
+            RequireRegularFile(path);
+            RequireRegularFile(path + ".bak");
+            var document = new JObject { ["formatVersion"] = 1, ["slot"] = slot };
+            SaveFileCommit.Write(path, TextEncoding.GetBytes(document.ToString(Formatting.Indented)));
+        }
+
+        internal void BackfillSlot(string id, int slot)
+        {
+            // The committed index remains usable even when auxiliary metadata cannot be repaired.
+            try
+            {
+                string directory = CampaignDirectory(id);
+                if (ReadSlot(directory) != slot) WriteSlot(id, slot);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        internal void DeleteCampaign(string id)
+        {
+            string directory = CampaignDirectory(id);
+            if (!TryAttributes(directory, out _)) return;
+            RequireRegularTree(directory);
+            Directory.Delete(directory, true);
+        }
+
+        internal void PruneCorruptBackups(string keep)
+        {
+            string[] backups;
+            try { backups = Directory.GetFiles(root, BackupPrefix + "*.json"); }
+            catch (IOException) { return; }
+            catch (UnauthorizedAccessException) { return; }
+            foreach (string path in backups)
+            {
+                string name = Path.GetFileName(path);
+                string id = name.Substring(BackupPrefix.Length, name.Length - BackupPrefix.Length - ".json".Length);
+                if (string.Equals(path, keep, StringComparison.OrdinalIgnoreCase) || !IsCampaignId(id)) continue;
+                try
+                {
+                    if (IsRegularFile(path)) File.Delete(path);
+                }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
+        }
+
+        private int ReadSlot(string directory)
+        {
+            string path = Path.Combine(directory, MetadataFileName);
+            if (!IsRegularFile(path)) return 0;
+            try
+            {
+                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    if (stream.Length > 256) return 0;
+                    using (var text = new StreamReader(stream, TextEncoding, true))
+                    using (var reader = new JsonTextReader(text) { MaxDepth = 3, DateParseHandling = DateParseHandling.None })
+                    {
+                        var document = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
+                        if (reader.Read() || document.Count != 2 || document["formatVersion"]?.Type != JTokenType.Integer ||
+                            document["formatVersion"].Value<long>() != 1 || document["slot"]?.Type != JTokenType.Integer) return 0;
+                        long slot = document["slot"].Value<long>();
+                        return slot >= 1 && slot <= CampaignSaveSlots.SlotCount ? (int)slot : 0;
+                    }
+                }
+            }
+            catch (JsonException) { return 0; }
+            catch (DecoderFallbackException) { return 0; }
+            catch (OverflowException) { return 0; }
+            catch (InvalidCastException) { return 0; }
+            catch (FileNotFoundException) { return 0; }
+        }
+
+        private string CampaignDirectory(string id)
+        {
+            if (!IsCampaignId(id)) throw new ArgumentException("A generated campaign identifier is required.", nameof(id));
+            string path = Path.GetFullPath(Path.Combine(root, id));
+            if (!string.Equals(Path.GetDirectoryName(path), root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
+                throw new IOException("The campaign directory is outside the save root.");
+            return path;
+        }
+
+        private static bool IsCampaignId(string id) => id != null && id.Length == 32 && Guid.TryParseExact(id, "N", out Guid value) && value != Guid.Empty;
+
+        private static bool TryAttributes(string path, out FileAttributes attributes)
+        {
+            try { attributes = File.GetAttributes(path); return true; }
+            catch (FileNotFoundException) { attributes = 0; return false; }
+            catch (DirectoryNotFoundException) { attributes = 0; return false; }
+        }
+
+        private static bool IsRegularFile(string path) => TryAttributes(path, out var attributes) &&
+            (attributes & (FileAttributes.ReparsePoint | FileAttributes.Directory)) == 0;
+
+        private static void RequireRegularFile(string path)
+        {
+            if (TryAttributes(path, out var attributes) && (attributes & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("Campaign storage cannot traverse a reparse point: " + path);
+        }
+
+        private static void RequireRegularTree(string directory)
+        {
+            if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+                throw new IOException("A campaign containing reparse points cannot be removed: " + directory);
+            foreach (string entry in Directory.GetFileSystemEntries(directory))
+            {
+                var attributes = File.GetAttributes(entry);
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                    throw new IOException("A campaign containing reparse points cannot be removed: " + entry);
+                if ((attributes & FileAttributes.Directory) != 0) RequireRegularTree(entry);
+            }
+        }
+    }
+}
