@@ -149,12 +149,12 @@ namespace Dice.Presentation
         }
 
         internal static Button Button(string name, Transform parent, string value,
-            Vector2 min, Vector2 max, UnityAction action, bool primary = false)
+            Vector2 min, Vector2 max, UnityAction action, bool primary = false, bool compact = false)
         {
             var theme = GetTheme(parent);
             var image = Panel(name, parent, min, max,
                 primary ? new Color32(89, 73, 44, 255) : theme.panelColor, 5);
-            bool compact = name == "MenuButton" || name == "CloseCharmsButton" || name == "ReturnToInvestigationButton";
+            compact |= name == "MenuButton" || name == "CloseCharmsButton" || name == "ReturnToInvestigationButton";
             bool actionButton = name == "RerollButton" || name == "PlayButton";
             bool footer = name == "CharmsButton" || name == "HandRanksButton";
             var frame = compact || actionButton ? theme.darkFrame : footer ? theme.woodFrame : primary ? theme.amberFrame : theme.greenFrame;

@@ -5,11 +5,16 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Investigation board listing available journeys as clue cards, with resume, load, and Collection actions. */
+    /** Investigation board listing available journeys as clue cards with navigation and Collection actions. */
     public sealed class SpiritInvestigationBoard : MonoBehaviour
     {
         private readonly List<GameObject> clueCards = new List<GameObject>();
         private string renderedProgress;
+        private EncounterChapterAsset renderedChapter;
+        private EncounterJourneyCatalogAsset renderedCatalog;
+        private IEncounterJourneyControls journeyControls;
+        private ISpiritMainMenuControls mainMenuControls;
+        private Text chapterLabel;
 
         public RectTransform Root { get; private set; }
         public Text Title { get; private set; }
@@ -20,6 +25,8 @@ namespace Dice.Presentation
         public Button ResumeButton { get; private set; }
         public Button LoadButton { get; private set; }
         public Button CollectionButton { get; private set; }
+        public Button ChapterButton { get; private set; }
+        public SpiritChapterSelector ChapterSelector { get; private set; }
 
         public void Build(RectTransform parent, Action resume, Action load, Action openCollection)
         {
@@ -35,6 +42,9 @@ namespace Dice.Presentation
                 new Vector2(.04f, .917f), new Vector2(.96f, .982f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).amber);
             Description = SpiritUi.Label("InvestigationSubtitle", Root, "", 18,
                 new Vector2(.06f, .85f), new Vector2(.94f, .92f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
+            Description.resizeTextForBestFit = true;
+            Description.resizeTextMinSize = 14;
+            Description.resizeTextMaxSize = 18;
             Scroll = SpiritUi.Scroll("InvestigationClues", Root, new Vector2(.015f, .24f), new Vector2(.985f, .845f), out var content);
             Content = content;
             var layout = Content.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -50,9 +60,25 @@ namespace Dice.Presentation
             ResumeButton = SpiritUi.Button("ResumeEncounterButton", Root, "Continue at the table",
                 new Vector2(.035f, .09f), new Vector2(.965f, .165f), () => resume(), true);
             LoadButton = SpiritUi.Button("LoadJourneyButton", Root, "Load saved encounter",
-                new Vector2(.035f, .012f), new Vector2(.58f, .087f), () => load());
+                new Vector2(.035f, .012f), new Vector2(.58f, .087f), () =>
+                {
+                    if (mainMenuControls != null) mainMenuControls.ShowMainMenu();
+                    else load();
+                });
             CollectionButton = SpiritUi.Button("InvestigationCollectionButton", Root, "Collection",
                 new Vector2(.58f, .012f), new Vector2(.965f, .087f), () => openCollection());
+            ChapterButton = SpiritUi.Button("InvestigationChapterButton", Root, "Chapters",
+                new Vector2(.23f, .945f), new Vector2(.77f, .997f), () => ChapterSelector.Show(journeyControls), compact: true);
+            chapterLabel = ChapterButton.GetComponentInChildren<Text>();
+            chapterLabel.resizeTextMaxSize = 17;
+            ChapterButton.gameObject.SetActive(false);
+            ChapterSelector = Root.gameObject.AddComponent<SpiritChapterSelector>();
+            ChapterSelector.Build(Root);
+        }
+
+        public void BindMainMenu(ISpiritMainMenuControls menu)
+        {
+            mainMenuControls = menu;
         }
 
         /** Clue cards rebuild when forced or when availability, visits, highlights, or completions change. */
@@ -60,14 +86,44 @@ namespace Dice.Presentation
             bool collectionAvailable)
         {
             if (controls == null) throw new ArgumentNullException(nameof(controls));
-            Title.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Title : "INVESTIGATION";
-            Description.text = controls.JourneyCatalog != null ? controls.JourneyCatalog.Description : "";
+            journeyControls = controls;
+            var catalog = controls.JourneyCatalog;
+            var chapter = controls.SelectedChapter;
+            bool chapterChanged = renderedChapter != chapter || renderedCatalog != catalog;
+            if (rebuild || chapterChanged) ChapterSelector.Close();
+            bool chaptersAvailable = catalog != null && catalog.Chapters != null && catalog.Chapters.Count > 0;
+            ChapterButton.gameObject.SetActive(chaptersAvailable);
+            ChapterButton.interactable = encounter == null || !encounter.IsBusy;
+            int chapterIndex = 0;
+            if (chaptersAvailable)
+                for (int i = 0; i < catalog.Chapters.Count; ++i)
+                    if (catalog.Chapters[i] == chapter) { chapterIndex = i + 1; break; }
+            chapterLabel.text = chapterIndex > 0 ? "CHAPTER " + chapterIndex + " / Chapters" : "Chapters";
+            Title.rectTransform.anchorMin = new Vector2(.04f, chaptersAvailable ? .883f : .917f);
+            Title.rectTransform.anchorMax = new Vector2(.96f, chaptersAvailable ? .945f : .982f);
+            Description.rectTransform.anchorMin = new Vector2(.06f, chaptersAvailable ? .813f : .85f);
+            Description.rectTransform.anchorMax = new Vector2(.94f, chaptersAvailable ? .884f : .92f);
+            ((RectTransform)Scroll.transform).anchorMax = new Vector2(.985f, chaptersAvailable ? .808f : .845f);
+            Title.text = chapter != null ? chapter.Title : catalog != null ? catalog.Title : "INVESTIGATION";
+            Description.text = chapter != null ? chapter.Description : catalog != null ? catalog.Description : "";
             string progress = Progress(controls, encounter);
-            if (rebuild || renderedProgress != progress) BuildClues(controls, encounter);
+            if (rebuild || chapterChanged || renderedProgress != progress) BuildClues(controls, encounter);
+            if (chapterChanged)
+            {
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
+                Scroll.StopMovement();
+                Scroll.verticalNormalizedPosition = 1;
+            }
             renderedProgress = progress;
+            renderedChapter = chapter;
+            renderedCatalog = catalog;
             Status.text = controls.JourneyStatus;
             ResumeButton.gameObject.SetActive(controls.CanResume);
-            LoadButton.interactable = encounter != null && !encounter.IsBusy;
+            bool hasMainMenu = mainMenuControls != null;
+            SpiritUi.SetButtonLabel(LoadButton, hasMainMenu ? "Main menu" : "Load saved encounter");
+            LoadButton.interactable = hasMainMenu ? encounter == null || !encounter.IsBusy :
+                encounter != null && !encounter.IsBusy;
             CollectionButton.interactable = collectionAvailable;
         }
 
@@ -79,7 +135,7 @@ namespace Dice.Presentation
             int index = 0;
             RectTransform firstHighlight = null;
             var theme = SpiritUi.GetTheme(transform);
-            foreach (var journey in controls.JourneyCatalog.Entries)
+            foreach (var journey in Entries(controls))
             {
                 if (journey == null || !controls.IsJourneyAvailable(journey.Id)) continue;
                 var selected = journey;
@@ -179,13 +235,23 @@ namespace Dice.Presentation
         {
             var available = new List<string>();
             if (controls.JourneyCatalog != null)
-                foreach (var journey in controls.JourneyCatalog.Entries)
+                foreach (var journey in Entries(controls))
                     if (journey != null && controls.IsJourneyAvailable(journey.Id)) available.Add(journey.Id);
-            return string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
+            return (controls.SelectedChapter != null ? controls.SelectedChapter.Id : "") + "\n\n" +
+                string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
                 "\n\n" + string.Join("\n", controls.CompletedStoryIds) + "\n\n" +
                 string.Join("\n", controls.HighlightedEncounterIds) + "\n\n" +
                 (encounter is ISpiritProgressionControls progression ?
                     string.Join("\n", progression.CompletedEncounterIds) : "");
+        }
+
+        private static IReadOnlyList<EncounterJourneyAsset> Entries(IEncounterJourneyControls controls)
+        {
+            if (controls.SelectedChapter != null) return controls.SelectedChapter.Entries;
+            if (controls.JourneyCatalog == null ||
+                (controls.JourneyCatalog.Chapters != null && controls.JourneyCatalog.Chapters.Count > 0))
+                return Array.Empty<EncounterJourneyAsset>();
+            return controls.JourneyCatalog.Entries;
         }
     }
 }

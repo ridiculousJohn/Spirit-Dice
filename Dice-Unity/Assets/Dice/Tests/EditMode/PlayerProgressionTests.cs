@@ -25,6 +25,34 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void ClearReleasesProfileAndPendingWritesWithoutTouchingFiles()
+        {
+            var catalog = Catalog();
+            Assert.That(progression.PrepareProfile(savePath), Is.True);
+            Assert.That(progression.PersistVisit("encounter.previous"), Is.True);
+            byte[] profileBytes = File.ReadAllBytes(progression.ProfilePath);
+            var application = WinningApplication(catalog);
+            EncounterSaveFileStore.Save(savePath, new EncounterApplication(catalog, TestContent.EncounterId, 31).CaptureSave());
+            byte[] runBytes = File.ReadAllBytes(savePath);
+            using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, application.CaptureSave(), savePath), Is.False);
+                progression.Clear();
+                Assert.That(progression.PersistProfile(), Is.True);
+                Assert.That(progression.HasProfile, Is.False);
+                Assert.That(progression.ProfilePath, Is.Null);
+                Assert.That(progression.ProfileStatusMessage, Is.Empty);
+                Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
+                Assert.That(progression.VisitedEncounterIds, Is.Empty);
+            }
+            Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(runBytes));
+            Assert.That(File.ReadAllBytes(ProfilePathFor(savePath)), Is.EqualTo(profileBytes));
+            Assert.That(progression.PrepareProfile(savePath), Is.True);
+            Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
+            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous" }));
+        }
+
+        [Test]
         public void PreparationMergesTheSameProfileAndReplacesItWhenTheDirectoryChanges()
         {
             Assert.That(progression.HasProfile, Is.False);
@@ -167,7 +195,7 @@ namespace Dice.Tests
                 Assert.That(PlayerProfileFileStore.Load(originalProfile).UnlockedModifierIds, Is.Empty);
                 Assert.That(progression.PrepareProfile(otherRun), Is.False);
                 Assert.That(progression.ProfilePath, Is.EqualTo(originalProfile));
-                Assert.That(progression.ProfileStatusMessage, Does.Contain("cannot save the unlock choice"));
+                Assert.That(progression.ProfileStatusMessage, Does.Contain("cannot save the encounter"));
             }
 
             Assert.That(progression.PrepareProfile(otherRun), Is.True);

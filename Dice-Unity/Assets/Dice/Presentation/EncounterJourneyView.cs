@@ -12,6 +12,7 @@ namespace Dice.Presentation
     {
         private IEncounterJourneyControls controls;
         private ISpiritEncounterControls encounterControls;
+        private ISpiritMainMenuControls mainMenuControls;
         private RectTransform sequence;
         private RectTransform artwork;
         private RawImage background;
@@ -70,6 +71,7 @@ namespace Dice.Presentation
         public int VisibleBeatIndex { get; private set; } = -1;
         public SpiritInvestigationBoard Board { get; private set; }
         public SpiritEncounterCharmsScreen EncounterCharms { get; private set; }
+        public SpiritMainMenu MainMenu { get; private set; }
 
         public void Build(SpiritEncounterAudio encounterAudio,
             Action<SpiritPresentationState, float> presentHostState = null)
@@ -140,12 +142,21 @@ namespace Dice.Presentation
                 new Vector2(.05f, .895f), new Vector2(.95f, .945f), TextAnchor.MiddleCenter, SpiritUi.GetTheme(transform).muted);
             EncounterCharms = gameObject.AddComponent<SpiritEncounterCharmsScreen>();
             EncounterCharms.Build(sequence, () => controls.AcceptEncounter());
+            MainMenu = gameObject.AddComponent<SpiritMainMenu>();
+            MainMenu.Build(root);
             root.gameObject.SetActive(false);
         }
 
         public void SetCollectionAction(Action openCollection)
         {
             showCollection = openCollection;
+        }
+
+        public void BindMainMenu(ISpiritMainMenuControls menu)
+        {
+            mainMenuControls = menu;
+            MainMenu.Bind(menu);
+            Board.BindMainMenu(menu);
         }
 
         private void BuildCharmDetail()
@@ -195,6 +206,8 @@ namespace Dice.Presentation
             ClearSceneLighting();
             controls = journey;
             encounterControls = encounter;
+            MainMenu.Bind(mainMenuControls);
+            Board.ChapterSelector.Close();
             EncounterCharms.Hide();
             hasRendered = false;
         }
@@ -205,6 +218,7 @@ namespace Dice.Presentation
             var phase = controls.JourneyPhase;
             var journey = controls.SelectedJourney;
             int index = controls.BeatIndex;
+            if (phase != EncounterJourneyPhase.MainMenu) MainMenu.Hide();
             bool changed = !hasRendered || renderedPhase != phase || renderedJourney != journey ||
                 renderedCatalog != controls.JourneyCatalog || VisibleBeatIndex != index;
             gameObject.SetActive(phase != EncounterJourneyPhase.Playing);
@@ -217,7 +231,15 @@ namespace Dice.Presentation
             }
             Board.Root.gameObject.SetActive(phase == EncounterJourneyPhase.Investigation);
             sequence.gameObject.SetActive(phase == EncounterJourneyPhase.Sequence);
-            if (phase == EncounterJourneyPhase.Investigation)
+            if (phase == EncounterJourneyPhase.MainMenu)
+            {
+                CancelAnimation();
+                ClearSceneLighting();
+                EncounterCharms.Hide();
+                Board.ChapterSelector.Close();
+                MainMenu.Render(controls.JourneyStatus);
+            }
+            else if (phase == EncounterJourneyPhase.Investigation)
             {
                 CancelAnimation();
                 ClearSceneLighting();

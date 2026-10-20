@@ -23,6 +23,17 @@ namespace Dice.App
         public IReadOnlyList<string> CompletedStoryIds => profile?.CompletedStoryIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> VisitedEncounterIds => profile?.VisitedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
 
+        /** Releases profile memory after the controller has safely stopped using the current campaign. */
+        public void Clear()
+        {
+            profile = null;
+            profileDirty = false;
+            pendingUnlockSave = null;
+            pendingUnlockSavePath = null;
+            ProfilePath = null;
+            ProfileStatusMessage = string.Empty;
+        }
+
         public bool PrepareProfile(string savePath)
         {
             if (!PersistProfile()) return false;
@@ -145,7 +156,7 @@ namespace Dice.App
                 }
                 catch (Exception exception) when (IsExpectedFailure(exception))
                 {
-                    ProfileStatusMessage = "Progress is pending: cannot save the unlock choice. " + exception.Message;
+                    ProfileStatusMessage = "Progress is pending: cannot save the encounter. " + exception.Message;
                     return false;
                 }
             }

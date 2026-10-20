@@ -44,6 +44,21 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void MainMenuClearsJourneyLocationAndPreservesExistingPhaseValues()
+        {
+            Assert.That((int)EncounterJourneyPhase.Investigation, Is.Zero);
+            Assert.That((int)EncounterJourneyPhase.Sequence, Is.EqualTo(1));
+            Assert.That((int)EncounterJourneyPhase.Playing, Is.EqualTo(2));
+            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            navigation.ShowMainMenu();
+            Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
+            Assert.That(navigation.SelectedJourney, Is.Null);
+            Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
+            Assert.That(navigation.CanResume(true), Is.False);
+            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.False);
+        }
+
+        [Test]
         public void AvailabilityRequiresAProfileAndEveryPrerequisite()
         {
             Set(second, "requiredCompletedEncounterIds", new[] { FirstId });
@@ -264,6 +279,154 @@ namespace Dice.Tests
             navigation.ReturnToInvestigation();
             navigation.RecordVictory(FirstId, new Progress(true, visitedIds, new[] { FirstId, completed.Id }, null));
             Assert.That(navigation.HighlightedEncounterIds, Is.Empty);
+        }
+
+        [Test]
+        public void ChaptersRequireAnAvailableJourneyAndCompletionIncludesEveryStory()
+        {
+            var chapters = Chapters();
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+            Assert.That(navigation.IsChapterAvailable(chapters[0].Id, new Progress(false, null, null, null)), Is.False);
+            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, EmptyProgress()), Is.False);
+            Assert.That(navigation.IsChapterAvailable("chapter.missing", EmptyProgress()), Is.False);
+            Assert.That(navigation.IsChapterCompleted("chapter.missing", EmptyProgress()), Is.False);
+            var afterEncounter = new Progress(true, null, new[] { FirstId }, null);
+            Assert.That(navigation.IsChapterCompleted(chapters[0].Id, afterEncounter), Is.False);
+            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, afterEncounter), Is.False);
+            var afterStory = new Progress(true, null, new[] { FirstId }, new[] { StoryId });
+            Assert.That(navigation.IsChapterCompleted(chapters[0].Id, afterStory), Is.True);
+            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, afterStory), Is.True);
+            Assert.That(navigation.IsChapterCompleted(chapters[1].Id, afterStory), Is.False);
+            Assert.That(navigation.IsChapterCompleted(chapters[0].Id,
+                new Progress(false, null, new[] { FirstId }, new[] { StoryId })), Is.False);
+        }
+
+        [Test]
+        public void DefaultChapterUsesLatestAvailableIncompleteThenLatestCompleted()
+        {
+            var chapters = Chapters();
+            var progress = new Progress(true, null, new[] { FirstId }, new[] { StoryId });
+            navigation.InitializeJourney(catalog, progress);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            navigation.InitializeJourney(catalog, new Progress(true, null, new[] { FirstId, SecondId }, new[] { StoryId }));
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            Set(second, "requiredCompletedStoryIds", Array.Empty<string>());
+            navigation.InitializeJourney(catalog, new Progress(true, null, new[] { FirstId, SecondId }, null));
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]), "An incomplete available chapter takes precedence over completed chapters.");
+        }
+
+        [Test]
+        public void ChapterSelectionIsAvailableOnlyOnTheBoardAndSurvivesBoardRefresh()
+        {
+            var chapters = Chapters();
+            Assert.That(navigation.SelectChapter(chapters[1].Id, EmptyProgress(), out string error), Is.False);
+            Assert.That(error, Is.Not.Empty);
+            Assert.That(navigation.SelectChapter("chapter.missing", EmptyProgress(), out error), Is.False);
+            var progress = new Progress(true, null, new[] { FirstId }, new[] { StoryId });
+            navigation.InitializeJourney(catalog, progress);
+            Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out error), Is.True);
+            Assert.That(error, Is.Null);
+            navigation.ReturnToInvestigation(progress);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+            Assert.That(navigation.SelectEncounter(FirstId, progress, out _), Is.True);
+            Assert.That(navigation.SelectChapter(chapters[1].Id, progress, out _), Is.False);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void EarlierChapterEncountersAndStoriesRemainReplayable(bool storyOnly)
+        {
+            var chapters = Chapters();
+            var progress = new Progress(true, new[] { FirstId }, new[] { FirstId, SecondId }, new[] { StoryId });
+            navigation.InitializeJourney(catalog, progress);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(storyOnly ? StoryId : FirstId, progress, out _), Is.True);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+            Assert.That(navigation.SelectedJourney, Is.SameAs(storyOnly ? story : first));
+            Assert.That(navigation.CanSkipIntro(progress), Is.EqualTo(!storyOnly));
+        }
+
+        [Test]
+        public void StoryCompletionAndEncounterReturnRevealTheCurrentChapter()
+        {
+            var chapters = Chapters();
+            var progress = new Progress(true, null, new[] { FirstId }, null);
+            Assert.That(navigation.SelectEncounter(StoryId, progress, out _), Is.True);
+            Assert.That(navigation.AdvanceJourney(out var beat), Is.True);
+            navigation.Commit(beat);
+            Assert.That(navigation.AdvanceJourney(out var completion), Is.True);
+            var afterStory = new Progress(true, null, new[] { FirstId }, new[] { StoryId });
+            navigation.Commit(completion, afterStory);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            AssertInvestigation();
+            Assert.That(navigation.SelectEncounter(FirstId, afterStory, out _), Is.True);
+            navigation.ReturnToInvestigation(afterStory);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+        }
+
+        [Test]
+        public void LoadAndResumeSelectTheActiveJourneysChapter()
+        {
+            var chapters = Chapters();
+            Assert.That(navigation.Load(SecondId, true, out var load, out _), Is.True);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]), "A load proposal must not change chapter selection.");
+            navigation.Commit(load);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            navigation.ReturnToInvestigation(EmptyProgress());
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+            Assert.That(navigation.ResumeEncounter(SecondId, true, out _), Is.True);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
+            navigation.Initialize(catalog, FirstId);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+        }
+
+        [Test]
+        public void ReinitializationReplacesChapterSelectionAndLegacyCatalogsRemainUsable()
+        {
+            var chapters = Chapters();
+            var replacement = Create<EncounterJourneyCatalogAsset>();
+            Set(replacement, "entries", new[] { first });
+            navigation.InitializeJourney(replacement, EmptyProgress());
+            Assert.That(navigation.SelectedChapter, Is.Null);
+            Assert.That(navigation.SelectChapter(chapters[0].Id, EmptyProgress(), out _), Is.False);
+            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectedChapter, Is.Null);
+            navigation.InitializeJourney(catalog, EmptyProgress());
+            Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
+            navigation.Initialize(null, FirstId);
+            Assert.That(navigation.SelectedChapter, Is.Null);
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ExistingProgressCanKeepALaterChapterAvailable(bool completed)
+        {
+            var chapters = Chapters();
+            var progress = new Progress(true, completed ? null : new[] { SecondId }, completed ? new[] { SecondId } : null, null);
+            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, progress), Is.True);
+            navigation.InitializeJourney(catalog, progress);
+            Assert.That(navigation.SelectedChapter, Is.SameAs(completed ? chapters[0] : chapters[1]));
+        }
+
+        private EncounterChapterAsset[] Chapters()
+        {
+            Set(story, "requiredCompletedEncounterIds", new[] { FirstId });
+            Set(second, "requiredCompletedStoryIds", new[] { StoryId });
+            var chapters = new[] { Chapter("chapter.first", first, story), Chapter("chapter.second", second) };
+            Set(catalog, "chapters", chapters);
+            navigation.InitializeJourney(catalog, EmptyProgress());
+            return chapters;
+        }
+
+        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
+        {
+            var chapter = Create<EncounterChapterAsset>();
+            Set(chapter, "id", id);
+            Set(chapter, "title", id);
+            Set(chapter, "entries", entries);
+            return chapter;
         }
 
         private void ReachInvitation()

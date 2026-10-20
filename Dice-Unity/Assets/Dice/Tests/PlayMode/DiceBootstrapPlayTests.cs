@@ -16,6 +16,7 @@ using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 
 namespace Dice.Tests
 {
@@ -61,8 +62,7 @@ namespace Dice.Tests
                 yield return null;
             }
             if (testLocator != null) Addressables.RemoveResourceLocator(testLocator);
-            if (originalLocators != null)
-                foreach (var locator in originalLocators) Addressables.AddResourceLocator(locator);
+            RestoreOriginalLocators();
             if (provider != null) Addressables.ResourceManager.ResourceProviders.Remove(provider);
             if (configuration != null) UnityEngine.Object.Destroy(configuration);
             if (authoredHandle.IsValid()) Addressables.Release(authoredHandle);
@@ -78,6 +78,73 @@ namespace Dice.Tests
         }
 
         [UnityTest]
+        public IEnumerator PendingStartupDefersPresentationUntilContentIsReady()
+        {
+            InstallPendingConfiguration();
+            bool observedSceneLoad = false;
+            bool firstStartupVisible = false;
+            bool firstPresentationReady = true;
+            bool firstGameHierarchyExists = true;
+            UnityEngine.Events.UnityAction<Scene, LoadSceneMode> onLoaded = (scene, mode) =>
+            {
+                var sceneController = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+                var sceneBootstrap = sceneController.GetComponent<DiceBootstrap>();
+                observedSceneLoad = true;
+                firstStartupVisible = sceneBootstrap.StartupView.Root.gameObject.activeInHierarchy;
+                firstPresentationReady = sceneController.PresentationReady;
+                firstGameHierarchyExists = sceneController.transform.Find("SpiritCanvas") != null;
+            };
+            SceneManager.sceneLoaded += onLoaded;
+            try { yield return CreateHost(); }
+            finally { SceneManager.sceneLoaded -= onLoaded; }
+            Assert.That(observedSceneLoad, Is.True);
+            Assert.That(firstStartupVisible, Is.True, "Startup must have its own surface before content loads.");
+            Assert.That(firstPresentationReady, Is.False);
+            Assert.That(firstGameHierarchyExists, Is.False, "Awake must not construct gameplay presentation.");
+            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
+            AssertStartupSurface();
+            yield return new WaitForEndOfFrame();
+            AssertStartupSurface();
+            RestoreOriginalLocators();
+            provider.Complete(authoredHandle.Result);
+            yield return WaitUntil(() => host.GetComponent<SpiritCampaignController>()?.IsInitialized == true,
+                "Startup did not initialize the main menu.");
+            var view = host.GetComponent<SpiritEncounterView>();
+            var menu = view.JourneyView.MainMenu;
+            Assert.That(controller.PresentationReady, Is.True);
+            Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False);
+            Assert.That(menu.Root.gameObject.activeInHierarchy, Is.True);
+            Assert.That(menu.NewGameButton.interactable, Is.True);
+            Assert.That(host.GetComponent<SpiritEncounterAudio>().enabled, Is.False);
+            Assert.That(host.transform.Find("SpiritCanvas/SafeArea/Portrait/TeaRoom")
+                .GetComponent<RawImage>().enabled, Is.False);
+
+            var canvas = host.transform.Find("SpiritCanvas");
+            var hud = view.GameplayHud;
+            var journeyView = view.JourneyView;
+            for (int i = 0; i < 2; ++i)
+                Assert.That(controller.InitializeMenu(controller.Catalog, controller.JourneyCatalog, controller.SavePath), Is.True);
+            Assert.That(host.transform.Find("SpiritCanvas"), Is.SameAs(canvas));
+            Assert.That(view.GameplayHud, Is.SameAs(hud));
+            Assert.That(view.JourneyView, Is.SameAs(journeyView));
+            Assert.That(host.GetComponentsInChildren<Canvas>(true).Count(value => value.name == "SpiritCanvas"), Is.EqualTo(1));
+        }
+
+        private void AssertStartupSurface()
+        {
+            var view = host.GetComponent<SpiritEncounterView>();
+            Assert.That(controller.PresentationReady, Is.False);
+            Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.True);
+            Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(controller.StatusMessage));
+            Assert.That(host.transform.Find("SpiritCanvas"), Is.Null);
+            Assert.That(view.GameplayHud, Is.Null);
+            Assert.That(view.JourneyView, Is.Null);
+            Assert.That(view.TrayScene, Is.Null);
+            Assert.That(view.ModifierHistory, Is.Null);
+            Assert.That(host.GetComponent<SpiritEncounterAudio>(), Is.Null);
+        }
+
+        [UnityTest]
         public IEnumerator FailedConfigurationLoadLeavesControllerUsable()
         {
             InstallPendingConfiguration();
@@ -90,7 +157,18 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(expectedFailures, Is.Not.Empty);
+            AssertStartupSurface();
             Assert.DoesNotThrow(controller.StartNew);
+
+            var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
+                .Select(category => new HandDefinition("hand.recovery." + (int)category, category, 5, 1, 5, 1, 6));
+            const string encounterId = "encounter.bootstrap.recovery";
+            var catalog = new MechanicalCatalog("bootstrap.recovery.v1", hands,
+                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }) });
+            controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
+            Assert.That(controller.PresentationReady, Is.True);
+            Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False,
+                "Successful initialization after a load failure must dismiss the error surface immediately.");
         }
 
         [UnityTest]
@@ -101,6 +179,7 @@ namespace Dice.Tests
             InstallPendingConfiguration();
             yield return CreateHost();
             yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
+            RestoreOriginalLocators();
             provider.Complete(configuration);
             yield return WaitUntil(() => controller.StatusMessage.StartsWith("Cannot load modifiers"),
                 "Startup did not report the failed content load.");
@@ -110,6 +189,7 @@ namespace Dice.Tests
             Assert.That(controller.JourneyCatalog, Is.Null);
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(expectedFailures, Is.Not.Empty);
+            AssertStartupSurface();
         }
 
         [UnityTest]
@@ -120,6 +200,7 @@ namespace Dice.Tests
             yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             UnityEngine.Object.Destroy(bootstrap);
             yield return null;
+            RestoreOriginalLocators();
             provider.Complete(authoredHandle.Result);
             yield return WaitUntil(() => provider.ReleaseCount == 1, "Destroyed bootstrap retained configuration.");
             yield return null;
@@ -146,6 +227,9 @@ namespace Dice.Tests
             var snapshot = controller.Snapshot;
             var preview = controller.Preview;
             string status = controller.StatusMessage;
+            Assert.That(controller.PresentationReady, Is.True);
+            Assert.That(host.transform.Find("SpiritCanvas"), Is.Not.Null);
+            RestoreOriginalLocators();
             provider.Complete(authoredHandle.Result);
             yield return WaitUntil(() => provider.ReleaseCount == 1, "Superseded startup retained configuration.");
             yield return null;
@@ -155,6 +239,7 @@ namespace Dice.Tests
             Assert.That(controller.SavePath, Is.EqualTo(savePath));
             Assert.That(controller.JourneyCatalog, Is.Null);
             Assert.That(controller.StatusMessage, Is.EqualTo(status));
+            Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False);
             controller.StartNew();
             var expected = EncounterSession.CreateEncounter(catalog, encounterId, 17).Snapshot;
             Assert.That(controller.Snapshot.CurrentDice, Is.EqualTo(expected.CurrentDice));
@@ -200,6 +285,13 @@ namespace Dice.Tests
             testLocator.Add(DiceBootstrap.ConfigurationAddress, new ResourceLocationBase(DiceBootstrap.ConfigurationAddress,
                 failureKey, provider.ProviderId, typeof(DiceApplicationConfig)));
             Addressables.AddResourceLocator(testLocator);
+        }
+
+        private void RestoreOriginalLocators()
+        {
+            if (originalLocators == null) return;
+            foreach (var locator in originalLocators) Addressables.AddResourceLocator(locator);
+            originalLocators = null;
         }
 
         private IEnumerator CreateHost()

@@ -262,6 +262,7 @@ namespace Dice.Tests
             {
                 journey = runtimeJourney;
                 SetField(runtimeCatalog, "entries", runtimeCatalog.Entries.Select(value => value.Id == journey.Id ? journey : value).ToArray());
+                SetField(runtimeCatalog, "chapters", Array.Empty<EncounterChapterAsset>());
                 foreach (var beat in journey.Beats)
                 {
                     SetField(beat, "duration", 0f);

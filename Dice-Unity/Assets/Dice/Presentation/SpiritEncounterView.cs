@@ -58,6 +58,8 @@ namespace Dice.Presentation
         private SpiritHandRanksPanel handRanksPanel;
         private SpiritHostPortrait hostPortrait;
         private IEncounterJourneyControls journeyControls;
+        private ISpiritMainMenuControls mainMenuControls;
+        private Button mainMenuButton;
         private EncounterTablePresentationAsset configuredTable;
         private RawImage roomImage;
         private RawImage tableImage;
@@ -148,6 +150,16 @@ namespace Dice.Presentation
                 button.interactable = true;
         }
 
+        public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journey)
+        {
+            if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
+            journeyControls = journey ?? throw new ArgumentNullException(nameof(journey));
+            Bind(encounterControls);
+            JourneyView.Bind(journeyControls, controls);
+            journeyControls.JourneyChanged += RefreshJourney;
+            RefreshJourney();
+        }
+
         public void Bind(ISpiritEncounterControls encounterControls)
         {
             var nextControls = encounterControls ?? throw new ArgumentNullException(nameof(encounterControls));
@@ -206,6 +218,14 @@ namespace Dice.Presentation
             }
             JourneyView.Refresh();
             Refresh();
+        }
+
+        public void BindMainMenu(ISpiritMainMenuControls menuControls)
+        {
+            mainMenuControls = menuControls;
+            if (canvas == null) Build();
+            JourneyView.BindMainMenu(menuControls);
+            mainMenuButton.gameObject.SetActive(menuControls != null);
         }
 
         private void SetGameplayVisible(bool visible)
@@ -389,6 +409,7 @@ namespace Dice.Presentation
             var context = GetComponent<SpiritUiContext>() ?? gameObject.AddComponent<SpiritUiContext>();
             context.Configure(uiTheme);
             encounterAudio = GetComponent<SpiritEncounterAudio>() ?? gameObject.AddComponent<SpiritEncounterAudio>();
+            encounterAudio.enabled = false;
             encounterAudio.SetTheme(tablePresentation?.AudioTheme);
             var canvasRect = SpiritUi.Full("SpiritCanvas", transform);
             canvas = canvasRect.gameObject.AddComponent<Canvas>();
@@ -587,6 +608,12 @@ namespace Dice.Presentation
             MenuAction(panel.transform, "LoadRunButton", "Load run", .35f, () => controls.Load());
             MenuAction(panel.transform, "NewRunButton", "New run", .25f, () => controls.StartNew());
             MenuAction(panel.transform, "AbandonRunButton", "Abandon run", .15f, () => controls.Abandon());
+            mainMenuButton = SpiritUi.Button("ReturnToMainMenuButton", menuPanel, "Main menu",
+                new Vector2(.25f, .85f), new Vector2(.75f, .92f), () =>
+                {
+                    if (!Busy) mainMenuControls?.ShowMainMenu();
+                }, compact: true);
+            mainMenuButton.gameObject.SetActive(false);
             SpiritUi.Button("CloseMenuButton", panel.transform, "Back to table", new Vector2(.05f, .02f), new Vector2(.95f, .13f), ToggleMenu);
             if (encounterAudio.Theme != null && encounterAudio.Theme.credits != null)
             {
@@ -655,6 +682,10 @@ namespace Dice.Presentation
         private void Refresh()
         {
             if (canvas == null || controls == null) return;
+            bool atMenu = journeyControls != null && journeyControls.JourneyPhase == EncounterJourneyPhase.MainMenu;
+            roomImage.enabled = tableImage.enabled = !atMenu;
+            encounterAudio.enabled = !atMenu;
+            if (journeyControls == null) JourneyView.gameObject.SetActive(false);
             if (journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing)
             {
                 inputGroup.interactable = true;

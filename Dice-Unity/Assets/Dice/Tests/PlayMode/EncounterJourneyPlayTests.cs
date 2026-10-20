@@ -234,7 +234,7 @@ namespace Dice.Tests
             Assert.That(view.DiceTray.IsRolling, Is.False);
             Click("ReturnToInvestigationButton");
             yield return null;
-            Click("LoadJourneyButton");
+            controller.Load();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
@@ -585,6 +585,10 @@ namespace Dice.Tests
         {
             public EncounterJourneyPhase JourneyPhase => EncounterJourneyPhase.Sequence;
             public EncounterJourneyCatalogAsset JourneyCatalog { get; }
+            public EncounterChapterAsset SelectedChapter => null;
+            public bool IsChapterAvailable(string id) => false;
+            public bool IsChapterCompleted(string id) => false;
+            public void SelectChapter(string id) { }
             public EncounterJourneyAsset SelectedJourney { get; private set; }
             public int BeatIndex { get; private set; }
             public bool CanSkipIntro => false;

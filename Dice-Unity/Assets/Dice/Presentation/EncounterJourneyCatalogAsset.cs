@@ -10,30 +10,49 @@ namespace Dice.Presentation
     {
         [SerializeField] private string title;
         [SerializeField, TextArea] private string description;
+        [SerializeField] private EncounterChapterAsset[] chapters = Array.Empty<EncounterChapterAsset>();
         [SerializeField] private EncounterJourneyAsset[] entries = Array.Empty<EncounterJourneyAsset>();
 
         public string Title => title;
         public string Description => description;
-        public IReadOnlyList<EncounterJourneyAsset> Entries => entries;
+        public IReadOnlyList<EncounterChapterAsset> Chapters => chapters;
+        public IReadOnlyList<EncounterJourneyAsset> Entries
+        {
+            get
+            {
+                if (chapters == null || chapters.Length == 0) return entries;
+                var result = new List<EncounterJourneyAsset>();
+                foreach (var chapter in chapters)
+                    if (chapter?.Entries != null) result.AddRange(chapter.Entries);
+                return result;
+            }
+        }
 
         public EncounterJourneyAsset Find(string encounterId)
         {
-            foreach (var entry in entries)
+            foreach (var entry in Entries)
                 if (entry != null && entry.Id == encounterId) return entry;
             return null;
         }
 
         public void Validate(MechanicalCatalog catalog)
         {
-            if (entries == null || entries.Length == 0) throw new FormatException("An investigation requires encounter journeys.");
+            var chapterIds = new HashSet<string>(StringComparer.Ordinal);
+            if (chapters != null)
+                foreach (var chapter in chapters)
+                    if (chapter == null || string.IsNullOrWhiteSpace(chapter.Id) || !chapterIds.Add(chapter.Id) ||
+                        string.IsNullOrWhiteSpace(chapter.Title) || chapter.Entries == null || chapter.Entries.Count == 0)
+                        throw new FormatException("Chapters require unique nonempty IDs, titles, and journey entries.");
+            var journeys = Entries;
+            if (journeys == null || journeys.Count == 0) throw new FormatException("An investigation requires encounter journeys.");
             var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var entry in entries)
+            foreach (var entry in journeys)
             {
                 if (entry == null || string.IsNullOrWhiteSpace(entry.Id) || !ids.Add(entry.Id))
                     throw new FormatException("Journey IDs must be nonempty and unique.");
                 entry.Validate(catalog);
             }
-            foreach (var entry in entries)
+            foreach (var entry in journeys)
             {
                 foreach (string id in entry.FollowUpEncounterIds)
                     if (!ids.Contains(id)) throw new FormatException("A follow-up encounter requires an investigation lead in the catalog.");
@@ -43,7 +62,7 @@ namespace Dice.Presentation
             }
             var visiting = new HashSet<string>(StringComparer.Ordinal);
             var visited = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var entry in entries) ValidatePrerequisiteCycles(entry, visiting, visited);
+            foreach (var entry in journeys) ValidatePrerequisiteCycles(entry, visiting, visited);
         }
 
         private void ValidatePrerequisiteCycles(EncounterJourneyAsset entry, HashSet<string> visiting, HashSet<string> visited)

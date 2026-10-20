@@ -133,6 +133,85 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => Catalog(first, second, third).Validate(catalog));
         }
 
+        [Test]
+        public void ChaptersFlattenInAuthoredOrderAndReplaceLegacyEntries()
+        {
+            var encounter = Journey(EncounterId, false);
+            var story = Journey("story.first", true);
+            var later = Journey("story.second", true);
+            var legacy = Journey("story.legacy", true);
+            var journeys = Catalog(legacy);
+            var firstChapter = Chapter("chapter.first", encounter, story);
+            var secondChapter = Chapter("chapter.second", later);
+            Set(journeys, "chapters", new[] { firstChapter, secondChapter });
+            Assert.That(journeys.Chapters, Is.EqualTo(new[] { firstChapter, secondChapter }));
+            Assert.That(journeys.Entries, Is.EqualTo(new[] { encounter, story, later }));
+            Assert.That(journeys.Find(later.Id), Is.SameAs(later));
+            Assert.That(journeys.Find(legacy.Id), Is.Null);
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+        }
+
+        [TestCase("null")]
+        [TestCase("blank-id")]
+        [TestCase("duplicate-id")]
+        [TestCase("blank-title")]
+        [TestCase("null-entries")]
+        [TestCase("empty-entries")]
+        [TestCase("null-journey")]
+        [TestCase("duplicate-journey")]
+        public void InvalidChaptersAreRejected(string invalid)
+        {
+            var encounter = Journey(EncounterId, false);
+            var story = Journey("story.return", true);
+            var firstChapter = Chapter("chapter.first", encounter);
+            var secondChapter = Chapter("chapter.second", story);
+            if (invalid == "blank-id") Set(firstChapter, "id", " ");
+            if (invalid == "duplicate-id") Set(secondChapter, "id", firstChapter.Id);
+            if (invalid == "blank-title") Set(firstChapter, "title", " ");
+            if (invalid == "null-entries") Set(firstChapter, "entries", null);
+            if (invalid == "empty-entries") Set(firstChapter, "entries", Array.Empty<EncounterJourneyAsset>());
+            if (invalid == "null-journey") Set(firstChapter, "entries", new EncounterJourneyAsset[] { null });
+            if (invalid == "duplicate-journey") Set(secondChapter, "entries", new[] { encounter });
+            var journeys = Catalog();
+            Set(journeys, "chapters", new[] { invalid == "null" ? null : firstChapter, secondChapter });
+            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CrossChapterPrerequisitesRetainReferenceAndCycleValidation(bool cycle)
+        {
+            var encounter = Journey(EncounterId, false);
+            var story = Journey("story.return", true);
+            Set(encounter, "followUpEncounterIds", new[] { story.Id });
+            Set(story, "requiredCompletedEncounterIds", new[] { encounter.Id });
+            var journeys = Catalog();
+            Set(journeys, "chapters", new[] { Chapter("chapter.first", encounter), Chapter("chapter.second", story) });
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+            Set(encounter, "requiredCompletedStoryIds", new[] { cycle ? story.Id : "story.missing" });
+            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [Test]
+        public void EmptyChapterArrayKeepsLegacyCatalogEntries()
+        {
+            var encounter = Journey(EncounterId, false);
+            var journeys = Catalog(encounter);
+            Assert.That(journeys.Chapters, Is.Empty);
+            Assert.That(journeys.Entries, Is.EqualTo(new[] { encounter }));
+            Assert.That(journeys.Find(EncounterId), Is.SameAs(encounter));
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+        }
+
+        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
+        {
+            var chapter = Create<EncounterChapterAsset>();
+            Set(chapter, "id", id);
+            Set(chapter, "title", id);
+            Set(chapter, "entries", entries);
+            return chapter;
+        }
+
         private EncounterJourneyAsset Journey(string id, bool storyOnly)
         {
             var journey = Create<EncounterJourneyAsset>();

@@ -183,7 +183,7 @@ namespace Dice.Tests
             {
                 ChooseUnlock();
                 Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-                Assert.That(controller.StatusMessage, Does.Contain("cannot save the unlock choice"));
+                Assert.That(controller.StatusMessage, Does.Contain("cannot save the encounter"));
                 Assert.That(PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath).UnlockedModifierIds, Is.Empty);
                 var pending = controller.Snapshot;
                 controller.StartNew();

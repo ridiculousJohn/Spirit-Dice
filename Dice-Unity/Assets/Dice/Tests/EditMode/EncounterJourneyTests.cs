@@ -660,7 +660,9 @@ namespace Dice.Tests
             Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.Snapshot, Is.SameAs(pending));
-            Assert.That(File.Exists(savePath), Is.False);
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath));
+            Assert.That(restored.Success, Is.True);
+            EncounterSessionTests.AssertSnapshotsEqual(pending, restored.Session.Snapshot);
         }
 
         [Test]
@@ -896,6 +898,294 @@ namespace Dice.Tests
             });
             Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
             Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
+        }
+
+        [Test]
+        public void MenuInitializationClearsRunAndProfileMemoryWithoutReadingTheSelectedProfile()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.ToggleDie(2);
+            byte[] savedRun = File.ReadAllBytes(savePath);
+            string profilePath = controller.ProfilePath;
+            const string corrupt = "{ broken profile";
+            File.WriteAllText(profilePath, corrupt);
+            int notifications = 0;
+            Action assertMenu = () =>
+            {
+                ++notifications;
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
+                Assert.That(controller.Snapshot, Is.Null);
+                Assert.That(controller.Preview, Is.Null);
+                Assert.That(controller.ModifierInspections, Is.Empty);
+                Assert.That(controller.SelectedMask, Is.Zero);
+                Assert.That(controller.ProfilePath, Is.Null);
+                Assert.That(controller.VisitedEncounterIds, Is.Empty);
+            };
+            controller.JourneyChanged += assertMenu;
+            controller.StateChanged += assertMenu;
+            Assert.That(controller.InitializeMenu(catalog, journeys, savePath), Is.True);
+            controller.JourneyChanged -= assertMenu;
+            controller.StateChanged -= assertMenu;
+            Assert.That(notifications, Is.EqualTo(2));
+            Assert.That(controller.Catalog, Is.SameAs(catalog));
+            Assert.That(controller.JourneyCatalog, Is.SameAs(journeys));
+            Assert.That(File.ReadAllText(profilePath), Is.EqualTo(corrupt));
+            Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(savedRun));
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
+            Assert.That(controller.Snapshot, Is.Null);
+        }
+
+        [Test]
+        public void MenuInitializationDoesNotMergeThePreviousInMemoryProfile()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            string nextSavePath = Path.Combine(Path.GetDirectoryName(savePath), "another-campaign", "encounter.json");
+            Assert.That(controller.InitializeMenu(catalog, journeys, nextSavePath), Is.True);
+            Assert.That(controller.InitializeJourney(catalog, journeys, nextSavePath), Is.True);
+            Assert.That(controller.VisitedEncounterIds, Is.Empty);
+            Assert.That(controller.Snapshot, Is.Null);
+        }
+
+        [Test]
+        public void ShowingMainMenuRetainsTheRunAndProfileWithoutWriting()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.ToggleDie(2);
+            var before = controller.Snapshot;
+            var preview = controller.Preview;
+            var inspections = controller.ModifierInspections;
+            byte[] savedRun = File.ReadAllBytes(savePath);
+            byte[] savedProfile = File.ReadAllBytes(controller.ProfilePath);
+            Assert.That(controller.ShowMainMenu(), Is.True);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
+            Assert.That(controller.SelectedJourney, Is.Null);
+            Assert.That(controller.Snapshot, Is.SameAs(before));
+            Assert.That(controller.Preview, Is.SameAs(preview));
+            Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
+            Assert.That(controller.SelectedMask, Is.EqualTo(4));
+            Assert.That(controller.VisitedEncounterIds, Does.Contain(FirstId));
+            Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(savedRun));
+            Assert.That(File.ReadAllBytes(controller.ProfilePath), Is.EqualTo(savedProfile));
+        }
+
+        [Test]
+        public void MainMenuAndInitializationAreBlockedDuringPresentation()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.Resolved += _ => { };
+            controller.AcceptEncounter();
+            var before = controller.Snapshot;
+            int changes = 0;
+            controller.JourneyChanged += () => ++changes;
+            controller.StateChanged += () => ++changes;
+            Assert.That(controller.ShowMainMenu(), Is.False);
+            Assert.That(controller.InitializeMenu(catalog, journeys, savePath), Is.False);
+            Assert.That(controller.OpenSavedChapter(), Is.False);
+            Assert.That(controller.Snapshot, Is.SameAs(before));
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+            Assert.That(changes, Is.Zero);
+        }
+
+        [Test]
+        public void InvalidMenuContentPreservesTheActiveRunAndProgress()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            var before = controller.Snapshot;
+            var preview = controller.Preview;
+            string profile = controller.ProfilePath;
+            var invalid = Create<EncounterJourneyCatalogAsset>();
+            Assert.That(controller.InitializeMenu(catalog, invalid, savePath), Is.False);
+            Assert.That(controller.Snapshot, Is.SameAs(before));
+            Assert.That(controller.Preview, Is.SameAs(preview));
+            Assert.That(controller.JourneyCatalog, Is.SameAs(journeys));
+            Assert.That(controller.ProfilePath, Is.EqualTo(profile));
+            Assert.That(controller.VisitedEncounterIds, Does.Contain(FirstId));
+        }
+
+        [Test]
+        public void EveryJourneyActionSavesCommittedStateBeforePresentation()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            int resolutions = 0;
+            controller.Resolved += resolution =>
+            {
+                ++resolutions;
+                var loaded = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath));
+                Assert.That(loaded.Success, Is.True);
+                EncounterSessionTests.AssertSnapshotsEqual(resolution.Snapshot, loaded.Session.Snapshot);
+                controller.CompletePresentation();
+            };
+            controller.AcceptEncounter();
+            controller.ToggleDie(0);
+            controller.Reroll();
+            controller.PlayHand();
+            Assert.That(resolutions, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void FailedOrdinaryAutosaveBlocksFurtherActionsUntilSaved()
+        {
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            long revision = controller.Snapshot.Revision;
+            using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                controller.ToggleDie(0);
+                controller.Reroll();
+                Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 1));
+                Assert.That(controller.StatusMessage, Does.Contain("Progress is pending"));
+                controller.PlayHand();
+                Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 1));
+                Assert.That(controller.TrySave(), Is.False);
+            }
+            Assert.That(controller.TrySave(), Is.True);
+            var saved = EncounterSaveFileStore.Load(savePath);
+            Assert.That(saved.Revision, Is.EqualTo(controller.Snapshot.Revision));
+            controller.PlayHand();
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 2));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void OpeningSavedChapterRetainsSavedRunOrSelectsProfileDefault(bool hasRun)
+        {
+            var first = Chapter("chapter.first", journeys.Entries[0]);
+            var second = Chapter("chapter.second", journeys.Entries[1]);
+            Set(journeys, "chapters", new[] { first, second });
+            var profile = new PlayerProfile();
+            profile.CompleteEncounter(FirstId);
+            string profilePath = Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json");
+            PlayerProfileFileStore.Save(profilePath, profile);
+            byte[] runBytes = null;
+            EncounterApplication savedRun = null;
+            if (hasRun)
+            {
+                savedRun = new EncounterApplication(catalog, FirstId, 17);
+                Assert.That(savedRun.Submit(new RerollDiceAction(1), savedRun.Snapshot.Revision).Accepted, Is.True);
+                EncounterSaveFileStore.Save(savePath, savedRun.CaptureSave());
+                runBytes = File.ReadAllBytes(savePath);
+            }
+            byte[] profileBytes = File.ReadAllBytes(profilePath);
+            Assert.That(controller.InitializeMenu(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.SelectedChapter, Is.SameAs(second));
+            int resolutions = 0;
+            controller.Resolved += _ => ++resolutions;
+            Assert.That(controller.OpenSavedChapter(), Is.True);
+            Assert.That(controller.SelectedChapter, Is.SameAs(hasRun ? first : second));
+            if (hasRun) EncounterSessionTests.AssertSnapshotsEqual(savedRun.Snapshot, controller.Snapshot);
+            else Assert.That(controller.Snapshot, Is.Null);
+            Assert.That(controller.HasActiveEncounter, Is.EqualTo(hasRun));
+            Assert.That(controller.CanResume, Is.EqualTo(hasRun));
+            Assert.That(resolutions, Is.Zero);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(File.ReadAllBytes(profilePath), Is.EqualTo(profileBytes));
+            if (hasRun)
+            {
+                Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(runBytes));
+                controller.ResumeEncounter();
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+                Assert.That(resolutions, Is.Zero);
+                controller.ToggleDie(0);
+                controller.Reroll();
+                savedRun.Submit(new RerollDiceAction(1), savedRun.Snapshot.Revision);
+                EncounterSessionTests.AssertSnapshotsEqual(savedRun.Snapshot, controller.Snapshot);
+            }
+            else Assert.That(File.Exists(savePath), Is.False);
+        }
+
+        [TestCase("malformed")]
+        [TestCase("rules")]
+        public void InvalidSavedChapterLeavesNoLiveRunAndCanReturnToMenu(string failure)
+        {
+            Assert.That(controller.InitializeMenu(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Directory.CreateDirectory(Path.GetDirectoryName(savePath));
+            var json = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(new EncounterApplication(catalog, FirstId, 17).CaptureSave())));
+            json["RulesVersion"] = 99;
+            string contents = failure == "malformed" ? "{ broken run" : json.ToString();
+            File.WriteAllText(savePath, contents);
+            Assert.That(controller.OpenSavedChapter(), Is.False);
+            Assert.That(controller.JourneyStatus, Does.Contain("Cannot load"));
+            Assert.That(controller.Snapshot, Is.Null);
+            Assert.That(controller.ShowMainMenu(), Is.True);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
+            Assert.That(File.ReadAllText(savePath), Is.EqualTo(contents));
+        }
+
+        [Test]
+        public void ChapterSelectionPublishesItsLocationAndDefaultsFromSavedProgress()
+        {
+            var first = Chapter("chapter.first", journeys.Entries[0]);
+            var second = Chapter("chapter.second", journeys.Entries[1]);
+            Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            Set(journeys, "chapters", new[] { first, second });
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.SelectedChapter, Is.SameAs(first));
+            controller.SelectChapter(second.Id);
+            Assert.That(controller.SelectedChapter, Is.SameAs(first));
+            Assert.That(controller.JourneyStatus, Is.Not.Empty);
+            var profile = new PlayerProfile();
+            profile.CompleteEncounter(FirstId);
+            PlayerProfileFileStore.Save(controller.ProfilePath, profile);
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            Assert.That(controller.SelectedChapter, Is.SameAs(second));
+            Assert.That(controller.IsChapterAvailable(first.Id), Is.True);
+            Assert.That(controller.IsChapterCompleted(first.Id), Is.True);
+            Assert.That(controller.IsChapterCompleted(second.Id), Is.False);
+            int changes = 0;
+            controller.JourneyChanged += () =>
+            {
+                ++changes;
+                Assert.That(controller.SelectedChapter, Is.SameAs(first));
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            };
+            controller.SelectChapter(first.Id);
+            Assert.That(changes, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void StoryCompletionSelectsTheUnlockedChapterBeforeNotification()
+        {
+            var story = AddStory();
+            var first = Chapter("chapter.first", journeys.Entries[0], story);
+            var second = Chapter("chapter.second", journeys.Entries[1]);
+            Set(journeys.Entries[1], "requiredCompletedStoryIds", new[] { story.Id });
+            Set(journeys, "chapters", new[] { first, second });
+            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
+            controller.SelectEncounter(story.Id);
+            controller.AdvanceJourney();
+            int changes = 0;
+            controller.JourneyChanged += () =>
+            {
+                ++changes;
+                Assert.That(controller.CompletedStoryIds, Does.Contain(story.Id));
+                Assert.That(controller.SelectedChapter, Is.SameAs(second));
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            };
+            controller.AdvanceJourney();
+            Assert.That(changes, Is.EqualTo(1));
+        }
+
+        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
+        {
+            var chapter = Create<EncounterChapterAsset>();
+            Set(chapter, "id", id);
+            Set(chapter, "title", id);
+            Set(chapter, "entries", entries);
+            return chapter;
         }
 
         private EncounterJourneyAsset Journey(string id, string location, string spirit)

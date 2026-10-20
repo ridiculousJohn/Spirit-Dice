@@ -423,6 +423,7 @@ namespace Dice.Tests
                     .Select(value => value == journey ? shortEncounter : original.GetEncounter(value.EncounterId)),
                 original.Modifiers, original.RewardPools);
             var catalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
+            SetField(catalog, "chapters", Array.Empty<EncounterChapterAsset>());
             SetField(catalog, "entries", entries);
             Assert.That(controller.InitializeJourney(mechanical, catalog, controller.SavePath), Is.True, controller.JourneyStatus);
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);

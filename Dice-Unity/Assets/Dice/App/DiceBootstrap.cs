@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.IO;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
@@ -22,15 +23,31 @@ namespace Dice.App
         private IDisposable presentationTheme;
         private bool retainContent;
 
+        public SpiritStartupView StartupView { get; private set; }
+
         private bool StartupObsolete => !isActiveAndEnabled || controller == null || controller.Catalog != null;
+
+        private void Awake()
+        {
+            controller = GetComponent<SpiritEncounterController>();
+            var startup = new GameObject("Application Startup");
+            startup.transform.SetParent(transform, false);
+            StartupView = startup.AddComponent<SpiritStartupView>();
+            StartupView.Build(GetComponent<SpiritEncounterView>().UiTheme);
+            StartupView.ShowStatus(controller.StatusMessage);
+            controller.PresentationInitialized += StartupView.Hide;
+        }
 
         private IEnumerator Start()
         {
-            controller = GetComponent<SpiritEncounterController>();
-            if (StartupObsolete) yield break;
             try
             {
-                controller.SetStatus("Loading application configuration...");
+                if (StartupObsolete)
+                {
+                    if (controller.PresentationReady) StartupView.Hide();
+                    yield break;
+                }
+                SetStartupStatus("Loading application configuration...");
                 if (StartupObsolete || !BeginConfigurationLoad()) yield break;
 
                 // Addressables shutdown can invalidate operations while startup is waiting.
@@ -38,19 +55,19 @@ namespace Dice.App
                 if (StartupObsolete) yield break;
                 if (!configurationHandle.IsValid())
                 {
-                    controller.SetStatus("Cannot load application configuration: The load operation was invalidated.");
+                    SetStartupStatus("Cannot load application configuration: The load operation was invalidated.");
                     yield break;
                 }
                 if (configurationHandle.Status != AsyncOperationStatus.Succeeded || configurationHandle.Result == null)
                 {
-                    controller.SetStatus("Cannot load application configuration: " +
+                    SetStartupStatus("Cannot load application configuration: " +
                         (configurationHandle.OperationException?.Message ?? "The load returned no configuration."));
                     yield break;
                 }
                 DiceApplicationConfig configuration = configurationHandle.Result;
                 if (!ValidateConfiguration(configuration)) yield break;
 
-                controller.SetStatus("Loading modifiers...");
+                SetStartupStatus("Loading modifiers...");
                 if (StartupObsolete) yield break;
                 modifierAssets = new ModifierAssetLoader(configuration.ModifierLabel);
                 IEnumerator modifierLoad = modifierAssets.Load();
@@ -59,11 +76,11 @@ namespace Dice.App
                 if (!ConfigurationStillLoaded()) yield break;
                 if (modifierAssets.Error != null)
                 {
-                    controller.SetStatus("Cannot load modifiers: " + modifierAssets.Error.Message);
+                    SetStartupStatus("Cannot load modifiers: " + modifierAssets.Error.Message);
                     yield break;
                 }
 
-                controller.SetStatus("Loading charm presentation...");
+                SetStartupStatus("Loading charm presentation...");
                 if (StartupObsolete) yield break;
                 presentationAssets = new ModifierPresentationLoader(configuration.ModifierPresentationLabel);
                 IEnumerator presentationLoad = presentationAssets.Load();
@@ -72,7 +89,7 @@ namespace Dice.App
                 if (!ConfigurationStillLoaded()) yield break;
                 if (presentationAssets.Error != null)
                 {
-                    controller.SetStatus("Cannot load charm presentation: " + presentationAssets.Error.Message);
+                    SetStartupStatus("Cannot load charm presentation: " + presentationAssets.Error.Message);
                     yield break;
                 }
                 Initialize(configuration);
@@ -81,6 +98,12 @@ namespace Dice.App
             {
                 if (!retainContent) ReleaseContent();
             }
+        }
+
+        private void SetStartupStatus(string status)
+        {
+            StartupView.ShowStatus(status);
+            controller.SetStatus(status);
         }
 
         private bool BeginConfigurationLoad()
@@ -93,7 +116,7 @@ namespace Dice.App
             }
             catch (Exception exception)
             {
-                controller.SetStatus("Cannot load application configuration: " + exception.Message);
+                SetStartupStatus("Cannot load application configuration: " + exception.Message);
                 return false;
             }
         }
@@ -107,7 +130,7 @@ namespace Dice.App
             }
             catch (Exception exception)
             {
-                controller.SetStatus("Cannot initialize the application: " + exception.Message);
+                SetStartupStatus("Cannot initialize the application: " + exception.Message);
                 return false;
             }
         }
@@ -115,7 +138,7 @@ namespace Dice.App
         private bool ConfigurationStillLoaded()
         {
             if (configurationHandle.IsValid()) return true;
-            controller.SetStatus("Cannot initialize the application: The configuration load operation was invalidated.");
+            SetStartupStatus("Cannot initialize the application: The configuration load operation was invalidated.");
             return false;
         }
 
@@ -129,11 +152,18 @@ namespace Dice.App
                 // Controller events may disable this component while initialization is on the stack.
                 retainContent = true;
                 controller.ConfigureSeedPolicy(configuration.UseFixedSeed, configuration.InitialSeed);
-                controller.Initialize(catalog, configuration.JourneyCatalog, configuration.EncounterId);
+                bool initialized;
+                if (configuration.JourneyCatalog != null)
+                {
+                    var campaign = GetComponent<SpiritCampaignController>() ?? gameObject.AddComponent<SpiritCampaignController>();
+                    initialized = campaign.Initialize(catalog, configuration.JourneyCatalog, Path.GetDirectoryName(controller.SavePath));
+                }
+                else initialized = controller.Initialize(catalog, configuration.JourneyCatalog, configuration.EncounterId);
+                if (!initialized || !controller.PresentationReady) SetStartupStatus(controller.StatusMessage);
             }
             catch (Exception exception)
             {
-                if (controller != null) controller.SetStatus("Cannot initialize the encounter: " + exception.Message);
+                if (controller != null) SetStartupStatus("Cannot initialize the encounter: " + exception.Message);
             }
             finally
             {
@@ -151,6 +181,9 @@ namespace Dice.App
         private void OnDestroy()
         {
             ReleaseContent();
+            if (controller != null && StartupView != null)
+                controller.PresentationInitialized -= StartupView.Hide;
+            if (StartupView != null) Destroy(StartupView.gameObject);
         }
 
         private void ReleaseContent()

@@ -220,6 +220,7 @@ namespace Dice.Tests
             public EncounterJourneyAsset SelectedJourney { get; set; }
             public int BeatIndex { get; set; }
             public EncounterJourneyCatalogAsset JourneyCatalog => null;
+            public EncounterChapterAsset SelectedChapter => null;
             public bool CanSkipIntro => false;
             public bool HasActiveEncounter => false;
             public bool CanResume => false;
@@ -228,7 +229,10 @@ namespace Dice.Tests
             public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
             public bool IsJourneyAvailable(string id) => true;
+            public bool IsChapterAvailable(string id) => false;
+            public bool IsChapterCompleted(string id) => false;
             public event Action JourneyChanged { add { } remove { } }
+            public void SelectChapter(string id) { }
             public void SelectEncounter(string encounterId) { }
             public void AdvanceJourney() { }
             public void SkipIntro() { }

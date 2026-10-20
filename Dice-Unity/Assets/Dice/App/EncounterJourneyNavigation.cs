@@ -13,6 +13,7 @@ namespace Dice.App
         private readonly List<string> highlightedEncounterIds = new List<string>();
 
         public EncounterJourneyCatalogAsset JourneyCatalog { get; private set; }
+        public EncounterChapterAsset SelectedChapter { get; private set; }
         public EncounterJourneyPhase JourneyPhase { get; private set; } = EncounterJourneyPhase.Playing;
         public EncounterJourneyAsset SelectedJourney { get; private set; }
         public int BeatIndex { get; private set; } = -1;
@@ -26,13 +27,63 @@ namespace Dice.App
         public void Initialize(EncounterJourneyCatalogAsset catalog, string encounterId)
         {
             JourneyCatalog = catalog;
+            SelectedChapter = null;
+            highlightedEncounterIds.Clear();
             Commit(new Transition(catalog?.Find(encounterId), EncounterJourneyPhase.Playing, -1));
         }
 
-        public void InitializeJourney(EncounterJourneyCatalogAsset catalog)
+        public void InitializeJourney(EncounterJourneyCatalogAsset catalog, Progress progress = default)
         {
             JourneyCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            ReturnToInvestigation();
+            highlightedEncounterIds.Clear();
+            SelectedChapter = CurrentChapter(progress);
+            Commit(new Transition(null, EncounterJourneyPhase.Investigation, -1));
+        }
+
+        public bool IsChapterAvailable(string id, Progress progress)
+        {
+            var chapter = FindChapter(id);
+            return chapter != null && chapter.Entries.Any(journey => journey != null && IsJourneyAvailable(journey.Id, progress));
+        }
+
+        public void ShowMainMenu()
+        {
+            Commit(new Transition(null, EncounterJourneyPhase.MainMenu, -1));
+        }
+
+        public bool IsChapterCompleted(string id, Progress progress)
+        {
+            var chapter = FindChapter(id);
+            return chapter != null && progress.HasProfile && chapter.Entries.Count > 0 && chapter.Entries.All(journey =>
+                journey != null && (journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
+                    progress.CompletedEncounterIds.Contains(journey.EncounterId)));
+        }
+
+        public bool SelectChapter(string id, Progress progress, out string error)
+        {
+            error = null;
+            if (JourneyPhase != EncounterJourneyPhase.Investigation || JourneyCatalog == null) return false;
+            var chapter = FindChapter(id);
+            if (chapter == null) { error = "The chapter does not exist in the investigation."; return false; }
+            if (!IsChapterAvailable(id, progress)) { error = "Follow the current lead before opening this chapter."; return false; }
+            SelectedChapter = chapter;
+            return true;
+        }
+
+        private EncounterChapterAsset FindChapter(string id) => JourneyCatalog?.Chapters?.FirstOrDefault(chapter => chapter != null && chapter.Id == id);
+
+        private EncounterChapterAsset CurrentChapter(Progress progress)
+        {
+            EncounterChapterAsset latest = null;
+            EncounterChapterAsset incomplete = null;
+            if (JourneyCatalog?.Chapters == null) return null;
+            foreach (var chapter in JourneyCatalog.Chapters)
+            {
+                if (chapter == null || !IsChapterAvailable(chapter.Id, progress)) continue;
+                latest = chapter;
+                if (!IsChapterCompleted(chapter.Id, progress)) incomplete = chapter;
+            }
+            return incomplete ?? latest;
         }
 
         public bool IsJourneyAvailable(string id, Progress progress)
@@ -108,9 +159,11 @@ namespace Dice.App
             return true;
         }
 
-        public bool ReturnToInvestigation()
+        public bool ReturnToInvestigation(Progress? progress = null)
         {
             if (JourneyCatalog == null) return false;
+            if (JourneyPhase != EncounterJourneyPhase.Investigation && progress.HasValue)
+                SelectedChapter = CurrentChapter(progress.Value);
             Commit(new Transition(null, EncounterJourneyPhase.Investigation, -1));
             return true;
         }
@@ -144,9 +197,12 @@ namespace Dice.App
         }
 
         // The controller completes required writes and run preparation before committing, then notifies observers.
-        public void Commit(Transition transition)
+        public void Commit(Transition transition, Progress? progress = null)
         {
             if (transition == null) throw new ArgumentNullException(nameof(transition));
+            if (transition.Phase != EncounterJourneyPhase.Investigation)
+                SelectedChapter = JourneyCatalog?.Chapters?.FirstOrDefault(chapter => chapter != null && chapter.Entries.Contains(transition.Journey));
+            else if (transition.CompletesStory && progress.HasValue) SelectedChapter = CurrentChapter(progress.Value);
             JourneyPhase = transition.Phase;
             SelectedJourney = transition.Phase == EncounterJourneyPhase.Investigation ? null : transition.Journey;
             BeatIndex = transition.BeatIndex;

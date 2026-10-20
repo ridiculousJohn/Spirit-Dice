@@ -41,6 +41,29 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void SaveAndLoadReportMissingApplicationAndCatalog()
+        {
+            Assert.That(controller.TrySave(), Is.False);
+            Assert.That(controller.TryLoad(), Is.False);
+        }
+
+        [Test]
+        public void SaveAndLoadReportSuccessAndWriteFailure()
+        {
+            controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.TrySave(), Is.True);
+            var before = controller.Snapshot;
+            using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                Assert.That(controller.TrySave(), Is.False);
+                Assert.That(controller.TryLoad(), Is.False);
+                Assert.That(controller.Snapshot, Is.SameAs(before));
+            }
+            Assert.That(controller.TryLoad(), Is.True);
+            Assert.That(controller.Snapshot, Is.Not.SameAs(before));
+        }
+
+        [Test]
         public void MissingCatalogLeavesTheHostUsable()
         {
             Assert.That(host.GetComponent<SpiritEncounterView>(), Is.Not.Null);
@@ -133,6 +156,8 @@ namespace Dice.Tests
             controller.Initialize(catalog, TestContent.EncounterId, 42, savePath);
             controller.Save();
             controller.Load();
+            Assert.That(controller.TrySave(), Is.False);
+            Assert.That(controller.TryLoad(), Is.False);
             controller.Abandon();
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(controller.Preview, Is.SameAs(preview));
@@ -250,7 +275,7 @@ namespace Dice.Tests
             var inspections = controller.ModifierInspections;
             int resolutions = 0;
             controller.Resolved += resolution => ++resolutions;
-            controller.Load();
+            Assert.That(controller.TryLoad(), Is.False);
             Assert.That(controller.StatusMessage, Does.Contain("Cannot load"));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(controller.Preview, Is.SameAs(preview));
