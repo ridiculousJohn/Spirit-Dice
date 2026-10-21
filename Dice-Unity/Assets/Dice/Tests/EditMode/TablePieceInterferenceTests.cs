@@ -394,7 +394,7 @@ namespace Dice.Tests
             var merchant = catalog.GetEncounter("encounter.merchant.unquiet_cart");
             var haunting = merchant.Rules.OfType<DieInterferenceRuleDefinition>().Single();
             Assert.That(haunting.Id, Is.EqualTo("rule.merchant.haunting"));
-            Assert.That(haunting.ChancePercent, Is.EqualTo(20));
+            Assert.That(haunting.ChancePercent, Is.EqualTo(70));
             Assert.That(haunting.ForcedRerollWeight, Is.EqualTo(1));
             Assert.That(haunting.FlipWeight, Is.EqualTo(1));
             Assert.That(haunting.AfterPlayerReroll && haunting.AfterPlayHand, Is.True);

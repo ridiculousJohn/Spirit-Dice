@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: af8d077897664c00a10b695d86cb5d95, type: 3}
   m_Name: MerchantHaunting
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   ruleId: rule.merchant.haunting
-  chancePercent: 20
+  chancePercent: 70
   forcedRerollWeight: 1
   flipWeight: 1
   afterPlayerReroll: 1

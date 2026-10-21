@@ -157,7 +157,7 @@ namespace Dice.Tests
             Assert.That(new Vector2Int(plateTexture.width, plateTexture.height), Is.EqualTo(new Vector2Int(941, 1672)));
             var merchant = (RectTransform)animation.transform.parent.Find("Merchant");
             var candle = (RectTransform)animation.transform.parent.Find("Protective Candle");
-            foreach (var layer in new[] { (Group: merchant, Filename: "MerchantHost.png", Count: 4),
+            foreach (var layer in new[] { (Group: merchant, Filename: "MerchantHost.png", Count: 5),
                 (Group: candle, Filename: "ProtectiveCandle.png", Count: 2) })
             {
                 string path = CanopyMotionTests.ArtPath + layer.Filename;
@@ -168,13 +168,14 @@ namespace Dice.Tests
                 RawImage[] parts = layer.Group.GetComponentsInChildren<RawImage>();
                 Assert.That(parts.Length, Is.EqualTo(layer.Count));
                 Assert.That(parts.Select(part => part.name), Is.EquivalentTo(layer.Group == merchant
-                    ? new[] { "Torso", "Head", "Supporting Arm", "Resting Arm" }
+                    ? new[] { "Torso", "Head", "Blink", "Supporting Arm", "Resting Arm" }
                     : new[] { "Body", "Flame" }));
                 foreach (RawImage part in parts)
                 {
                     string expectedPart = layer.Group != merchant ? path
                         : part.name == "Head" ? CanopyMotionTests.ArtPath + "MerchantHeadRepaired.png"
-                        : part.name == "Torso" ? CanopyMotionTests.ArtPath + "MerchantTorsoAnimation.png" : path;
+                        : part.name == "Torso" ? CanopyMotionTests.ArtPath + "MerchantTorsoAnimation.png"
+                        : part.name == "Blink" ? CanopyMotionTests.ArtPath + "MerchantBlinkEyes.png" : path;
                     Assert.That(AssetDatabase.GetAssetPath(part.texture), Is.EqualTo(expectedPart));
                     Assert.That(part.transform.IsChildOf(layer.Group), Is.True);
                     Assert.That(part.gameObject.activeSelf && part.enabled, Is.True);
@@ -232,8 +233,10 @@ namespace Dice.Tests
                 string filename = layer.name.ToLowerInvariant().Replace(' ', '-') + "-hidden.png";
                 var hiddenCapture = RenderPose(camera, canvas, animation.gameObject, 0, output, filename, width, height, scale,
                     hiddenLayer: layer);
-                Assert.That(hiddenCapture.Pixels.Where((pixel, index) => !pixel.Equals(firstCapture.Pixels[index])).Any(),
-                    Is.True, $"Hiding {layer.name} must independently change the assembled scene.");
+                bool changed = hiddenCapture.Pixels.Where((pixel, index) => !pixel.Equals(firstCapture.Pixels[index])).Any();
+                // The closed-eye overlay is transparent at rest and appears only during a blink.
+                if (layer.color.a == 0) Assert.That(changed, Is.False, $"{layer.name} must be invisible at rest.");
+                else Assert.That(changed, Is.True, $"Hiding {layer.name} must independently change the assembled scene.");
             }
             var lightsOff = RenderPose(camera, canvas, animation.gameObject, 0, output, "lights-off.png",
                 width, height, scale, lanternIntensity: 0, candleIntensity: 0);
@@ -339,10 +342,12 @@ namespace Dice.Tests
             ReportSplitComparison(unsplitCapture.Pixels, maskedReference.Pixels, width, height,
                 comparison: "Default UI/white-mask shader on identical source frame");
             // Independent pivots and grid tessellation shift GPU sampling at alpha quantization boundaries.
-            // Native capture measures one outer-hat pixel at three levels; all other unchanged pixels remain within two.
-            ReportSplitComparison(splitCapture.Pixels, maskedReference.Pixels, width, height, 3,
+            // Every merchant layer, including the torso, is tessellated by the shared breathing grid. The minified
+            // 960x540 capture measures four levels at two pixels on the suspender's dark edge inside the torso;
+            // all other sizes remain within three.
+            ReportSplitComparison(splitCapture.Pixels, maskedReference.Pixels, width, height, 4,
                 "Split parts/white-mask source outside declared anatomy repairs and filtered cut edges", splitCapture.RepairExclusion);
-            ReportSplitComparison(splitCapture.Pixels, unsplitCapture.Pixels, width, height, 3,
+            ReportSplitComparison(splitCapture.Pixels, unsplitCapture.Pixels, width, height, 4,
                 "Split parts/default UI source outside declared anatomy repairs and filtered cut edges", splitCapture.RepairExclusion);
         }
 

@@ -47,7 +47,10 @@ namespace Dice.Tests
             Assert.DoesNotThrow(asset.Validate);
             Assert.That(asset.PortraitPrefab, Is.Not.Null);
             Assert.That(asset.Layers.Select(layer => layer.Id),
-                Is.EquivalentTo(new[] { "Torso", "Head", "Resting Arm", "Supporting Arm" }));
+                Is.EquivalentTo(new[] { "Torso", "Head", "Resting Arm", "Supporting Arm", "Blink" }));
+            // One shared field keeps every overlapping layer registered while the figure breathes.
+            Assert.That(asset.Layers.Select(layer => layer.Mesh).Distinct().Count(), Is.EqualTo(1));
+            Assert.That(asset.Layers[0].Mesh, Is.Not.Null);
             var scene = EditorSceneManager.NewPreviewScene();
             try
             {
@@ -63,8 +66,7 @@ namespace Dice.Tests
                     Assert.That(image.texture, Is.SameAs(layer.Texture));
                     Assert.That(image.rectTransform.rect.size, Is.EqualTo(new Vector2(941, 1672)));
                     Assert.That(image.Weights.Count, Is.EqualTo(layer.Mesh != null ? layer.Mesh.Shapes.Length : 0));
-                    if (layer.Id != "Torso")
-                        Assert.That(image.Weights, Is.Not.Empty, layer.Id + " requires authored deformation channels.");
+                    Assert.That(image.Weights, Is.Not.Empty, layer.Id + " requires the shared breathing channel.");
                 }
             }
             finally
@@ -75,6 +77,7 @@ namespace Dice.Tests
 
         [TestCase("MerchantHost.png", "F733AB1D178BAEC18C4AD14E35DAE45E34DBB874ABCEC4DFDC1C8A905745C016")]
         [TestCase("ProtectiveCandle.png", "0C447D1B3E87DA64FDA6CC7D68B7D8AA04BF4C0B04A6C328C3F21669C23A1F46")]
+        [TestCase("MerchantHeadRepaired.png", "1D236128033871ED58C87DB7263A11204658B52134945492A1C9D672A833361E")]
         public void LayerSeparationPreservesTheInstalledSourceFile(string filename, string expectedHash)
         {
             using (SHA256 hash = SHA256.Create())
@@ -267,6 +270,64 @@ namespace Dice.Tests
             }
         }
 
+        [Test]
+        public void BlinkOverlayTransfersOnlyTheEyelidsThroughASoftMaskOnTheFace()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath + "MerchantBlink.mat");
+            Assert.That(material, Is.Not.Null);
+            Assert.That(AssetDatabase.GetAssetPath(material.shader), Is.EqualTo("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader"));
+            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_SourceTex")), Is.EqualTo(CanopyMotionTests.ArtPath + "MerchantBlinkEyes.png"));
+            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_LayerMask")), Is.EqualTo(CanopyMotionTests.ArtPath + "MerchantBlinkMask.png"));
+            Assert.That(material.GetFloat("_InvertMask"), Is.Zero);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(MaterialPath + "MerchantHost.prefab");
+            SpiritPortraitImage blink = prefab.GetComponentsInChildren<SpiritPortraitImage>(true).Single(image => image.name == "Blink");
+            SpiritPortraitImage head = prefab.GetComponentsInChildren<SpiritPortraitImage>(true).Single(image => image.name == "Head");
+            Assert.That(blink.material, Is.SameAs(material));
+            Assert.That(blink.color.a, Is.Zero, "The closed eyes must stay hidden until a blink.");
+            Assert.That(blink.transform.GetSiblingIndex(), Is.EqualTo(head.transform.GetSiblingIndex() + 1), "The blink draws directly above the head.");
+            Assert.That(blink.rectTransform.rect, Is.EqualTo(head.rectTransform.rect));
+            Assert.That(blink.rectTransform.anchoredPosition, Is.EqualTo(head.rectTransform.anchoredPosition));
+            Texture2D eyes = Decode("MerchantBlinkEyes.png"), mask = Decode("MerchantBlinkMask.png"), face = Decode("MerchantHeadCompleteMask.png");
+            try
+            {
+                Assert.That(new Vector2Int(eyes.width, eyes.height), Is.EqualTo(new Vector2Int(mask.width, mask.height)));
+                AssertDataImport("MerchantBlinkMask.png", mask.width, mask.height);
+                Assert.That(AssetDatabase.LoadAssetAtPath<Texture2D>(CanopyMotionTests.ArtPath + "MerchantBlinkEyes.png").wrapMode,
+                    Is.EqualTo(TextureWrapMode.Clamp), "Clamped edges keep the overlay transparent outside its crop.");
+                // The small overlay spans the full source frame through its UV rectangle.
+                Rect uv = blink.uvRect;
+                Assert.That(uv.width * eyes.width, Is.EqualTo(941).Within(.01f));
+                Assert.That(uv.height * eyes.height, Is.EqualTo(1672).Within(.01f));
+                int left = Mathf.RoundToInt(-uv.x * eyes.width), bottom = Mathf.RoundToInt(-uv.y * eyes.height);
+                Assert.That(-uv.x * eyes.width, Is.EqualTo(left).Within(.01f), "The crop must align with source pixels.");
+                Assert.That(-uv.y * eyes.height, Is.EqualTo(bottom).Within(.01f), "The crop must align with source pixels.");
+                Color32[] coverage = mask.GetPixels32(), facePixels = face.GetPixels32();
+                int partial = 0, full = 0, offFace = 0, border = 0;
+                for (int y = 0; y < mask.height; ++y)
+                    for (int x = 0; x < mask.width; ++x)
+                    {
+                        byte alpha = coverage[y * mask.width + x].a;
+                        if (alpha == 0) continue;
+                        if (x == 0 || y == 0 || x == mask.width - 1 || y == mask.height - 1) ++border;
+                        if (alpha == 255) ++full;
+                        else ++partial;
+                        // Texture rows count from the bottom in both the crop and the source frame.
+                        if (facePixels[(bottom + y) * face.width + left + x].a != 255) ++offFace;
+                    }
+                Assert.That(border, Is.Zero, "The mask must vanish at the crop border.");
+                Assert.That(full, Is.GreaterThan(0), "The eyelids must be fully replaced at the blink's peak.");
+                Assert.That(partial, Is.GreaterThan(full / 2), "The transfer must blend through a soft edge.");
+                Assert.That(offFace, Is.Zero, "The eyelid transfer must stay on the completed head.");
+                Assert.That(mask.width * mask.height, Is.LessThan(941 * 1672 / 100), "The eyelid overlay is a small crop.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(eyes);
+                Object.DestroyImmediate(mask);
+                Object.DestroyImmediate(face);
+            }
+        }
+
         private static void AssertDataImport(string filename, int width, int height)
         {
             string path = CanopyMotionTests.ArtPath + filename;
@@ -281,7 +342,7 @@ namespace Dice.Tests
             Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
             Assert.That(texture, Is.Not.Null, path);
             FilterMode filter = filename == "MerchantHeadCompleteMask.png" || filename == "MerchantSupportingForearmAnimationMask.png"
-                ? FilterMode.Bilinear : FilterMode.Point;
+                || filename == "MerchantBlinkMask.png" ? FilterMode.Bilinear : FilterMode.Point;
             Assert.That(texture.filterMode, Is.EqualTo(filter), path);
             Assert.That(texture.wrapMode, Is.EqualTo(TextureWrapMode.Clamp), path);
             Assert.That(texture.width, Is.EqualTo(width), path);

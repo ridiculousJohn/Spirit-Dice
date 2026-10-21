@@ -41,53 +41,113 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void AuthoredMotionMovesHandsAndHeadWhileKeepingAnatomicalAttachmentsFixed()
+        public void BreathingFieldMovesEveryLayerTogetherWhileTableContactsStayFixed()
         {
-            var moving = new[] { "Head", "Resting Arm", "Supporting Arm" };
-            var probes = new[] { new Vector2(350, 600), new Vector2(315, 977), new Vector2(268, 680) };
-            var maxima = new float[moving.Length];
-            float independence = 0;
-            for (int frame = 0; frame <= 24; ++frame)
+            // Living still: no layer moves on its own. Every track deforms through the one shared field,
+            // apart from the blink overlay's opacity.
+            foreach (SpiritPresentationSequence sequence in asset.Sequences)
+                foreach (SpiritPortraitTrack track in sequence.Tracks)
+                    Assert.That(track.Property == SpiritPortraitProperty.Deformation
+                        || track.Property == SpiritPortraitProperty.Alpha && asset.Layers[track.Layer].Id == "Blink", Is.True,
+                        sequence.Id + " must not move or fade " + asset.Layers[track.Layer].Id + " as a rigid part.");
+            float idleDuration = asset.Sequences.Single(sequence => sequence.State == SpiritPresentationState.Idle).Duration;
+            float chestRise = 0, shoulderRise = 0, headRise = 0;
+            var peaks = new List<float>();
+            float previous = float.NegativeInfinity, beforePrevious = float.NegativeInfinity;
+            const float step = 1 / 60f;
+            for (int frame = 0; frame * step < idleDuration; ++frame)
             {
-                host.Sample(frame * .5f);
-                var displacements = new Vector2[moving.Length];
-                for (int part = 0; part < moving.Length; ++part)
-                {
-                    SpiritPortraitImage image = host.GetLayer(moving[part]);
-                    Assert.That(image.Weights, Is.Not.Empty, moving[part]);
-                    displacements[part] = Displacement(image, probes[part]);
-                    maxima[part] = Mathf.Max(maxima[part], displacements[part].magnitude);
-                }
-                independence = Mathf.Max(independence, Vector2.Distance(displacements[0], displacements[2]));
-                AssertAttachmentsAndTopology();
+                host.Sample(frame * step);
+                float chest = Displacement(host.GetLayer("Torso"), Chest).y;
+                if (frame % 6 == 0) AssertRegisteredAttachmentsAndTopology();
+                // A breath's crest counts once; curve tolerance can ripple along its brief hold.
+                if (previous > beforePrevious && previous >= chest && previous > 3
+                    && (peaks.Count == 0 || (frame - 1) * step - peaks[peaks.Count - 1] > 2)) peaks.Add((frame - 1) * step);
+                beforePrevious = previous;
+                previous = chest;
+                chestRise = Mathf.Max(chestRise, chest);
+                shoulderRise = Mathf.Max(shoulderRise, Displacement(host.GetLayer("Torso"), Shoulder).y);
+                headRise = Mathf.Max(headRise, Displacement(host.GetLayer("Head"), Eyes).y);
             }
-            for (int part = 0; part < moving.Length; ++part)
-                Assert.That(maxima[part], Is.GreaterThan(.25f), moving[part] + " must visibly move within the idle loop.");
-            Assert.That(independence, Is.GreaterThan(.25f), "The hand and head must have independent motion.");
-            SampleState(SpiritPresentationState.Reaction, .55f / host.GestureDuration);
-            SpiritPortraitImage hand = host.GetLayer("Supporting Arm");
-            var first = new Vector2(245, 660);
-            var second = new Vector2(285, 680);
-            float originalDistance = Vector2.Distance(first, second);
-            float deformedDistance = Vector2.Distance(new Vector2(first.x, -first.y) + Displacement(hand, first),
-                new Vector2(second.x, -second.y) + Displacement(hand, second));
-            // Blending identity with an 8-degree rotation contracts every chord by this uniform scale.
-            float weight = hand.Weights[0];
-            float scale = Mathf.Sqrt(1 - 2 * weight * (1 - weight) * (1 - Mathf.Cos(8 * Mathf.Deg2Rad)));
-            Assert.That(deformedDistance, Is.EqualTo(originalDistance * scale).Within(.003f),
-                "Releasing the supporting hand must retain its uniformly blended proportions.");
+            // Roughly one percent of the figure's 530 source-pixel height.
+            Assert.That(chestRise, Is.InRange(4f, 8f), "The chest must rise visibly but gently.");
+            Assert.That(shoulderRise, Is.InRange(4f, 8f), "The shoulders must rise with the chest.");
+            Assert.That(headRise, Is.InRange(1f, shoulderRise - .5f), "The head rides the breath but rises less than the shoulders.");
+            Assert.That(peaks.Count, Is.InRange(2, 4), "The idle loop holds a few breaths.");
+            for (int index = 0; index < peaks.Count; ++index)
+            {
+                float interval = (index + 1 < peaks.Count ? peaks[index + 1] : peaks[0] + idleDuration) - peaks[index];
+                Assert.That(interval, Is.InRange(3.8f, 5.6f), "Breaths repeat about every four to five seconds.");
+            }
 
-            foreach (SpiritPresentationState state in new[] { SpiritPresentationState.Reaction,
+            float strongest = 0;
+            for (int frame = 0; frame <= 60; ++frame)
+            {
+                host.Sample(frame / 60f * host.GestureDuration);
+                float idleOnly = Displacement(host.GetLayer("Torso"), Chest).y;
+                SampleState(SpiritPresentationState.Reaction, frame / 60f);
+                strongest = Mathf.Max(strongest, Mathf.Abs(Displacement(host.GetLayer("Torso"), Chest).y - idleOnly));
+                AssertRegisteredAttachmentsAndTopology();
+            }
+            Assert.That(strongest, Is.InRange(1f, 6f), "The reaction is a short, subtle whole-body breath.");
+
+            foreach (SpiritPresentationState state in new[] { SpiritPresentationState.Arrival, SpiritPresentationState.Reaction,
                 SpiritPresentationState.Victory, SpiritPresentationState.Defeat, SpiritPresentationState.Farewell })
             {
                 Assert.That(asset.Sequences.Any(sequence => sequence.State == state && sequence.Tracks.Length > 0), Is.True,
                     state + " requires an authored performance.");
-                Assert.That(host.GetDuration(state), Is.GreaterThan(0), state.ToString());
+                Assert.That(host.GetDuration(state), Is.EqualTo(3).Within(.0001f), state + " keeps its acknowledgment duration.");
                 for (int frame = 0; frame <= 60; ++frame)
                 {
                     SampleState(state, frame / 60f);
-                    AssertAttachmentsAndTopology();
+                    AssertRegisteredAttachmentsAndTopology();
                 }
+            }
+        }
+
+        [Test]
+        public void BlinksAreBriefIrregularAndHiddenAtRest()
+        {
+            SpiritPortraitImage blink = host.GetLayer("Blink");
+            Assert.That(blink, Is.Not.Null);
+            host.Sample(0);
+            Assert.That(blink.color.a, Is.Zero, "The eyes are open at rest.");
+            float idleDuration = asset.Sequences.Single(sequence => sequence.State == SpiritPresentationState.Idle).Duration;
+            var starts = new List<float>();
+            var lengths = new List<float>();
+            float closedSince = -1, peak = 0;
+            const float step = .002f;
+            for (int frame = 0; frame * step < idleDuration; ++frame)
+            {
+                host.Sample(frame * step);
+                float alpha = blink.color.a;
+                foreach (string layer in new[] { "Torso", "Head", "Resting Arm", "Supporting Arm" })
+                    Assert.That(host.GetLayer(layer).color.a, Is.EqualTo(1), layer + " stays opaque.");
+                if (alpha >= .5f && closedSince < 0)
+                {
+                    closedSince = frame * step;
+                    peak = 0;
+                }
+                peak = Mathf.Max(peak, alpha);
+                if (alpha < .5f && closedSince >= 0)
+                {
+                    starts.Add(closedSince);
+                    lengths.Add(frame * step - closedSince);
+                    Assert.That(peak, Is.GreaterThan(.99f), "Each blink fully closes the eyes.");
+                    closedSince = -1;
+                }
+            }
+            Assert.That(closedSince, Is.LessThan(0), "No blink spans the loop seam.");
+            Assert.That(starts.Count, Is.InRange(2, 3), "The idle loop holds two or three blinks.");
+            foreach (float length in lengths)
+                Assert.That(length, Is.InRange(.06f, .16f), "A blink lasts about 120 ms.");
+            float[] gaps = starts.Select((start, index) => (index + 1 < starts.Count ? starts[index + 1] : starts[0] + idleDuration) - start).ToArray();
+            Assert.That(gaps.Max() - gaps.Min(), Is.GreaterThan(.5f), "Blinks fall at uneven intervals.");
+            foreach (float start in starts)
+            {
+                host.Sample(start + .03f);
+                Assert.That(Vector2.Distance(Displacement(blink, Eyes), Displacement(host.GetLayer("Head"), Eyes)), Is.LessThan(.0001f),
+                    "The closed eyes follow the breathing head.");
             }
         }
 
@@ -158,16 +218,19 @@ namespace Dice.Tests
                 }
             foreach (var state in changed)
                 Assert.That(state.Value, Is.True, state.Key + " must change the rendered merchant, independent of background lighting.");
-            if (width == 540 && output != null && Environment.GetEnvironmentVariable("DICE_MERCHANT_MOTION_CAPTURE") == "1")
+            if (width == 941 && output != null && Environment.GetEnvironmentVariable("DICE_MERCHANT_MOTION_CAPTURE") == "1")
             {
+                // A 15 fps recording of one full idle loop, then a reaction that continues from the loop seam.
+                const float rate = 15;
+                float idleDuration = asset.Sequences.Single(sequence => sequence.State == SpiritPresentationState.Idle).Duration;
                 foreach (SpiritPresentationState state in new[] { SpiritPresentationState.Idle, SpiritPresentationState.Reaction })
                 {
                     string frames = Path.Combine(output, "motion", state.ToString().ToLowerInvariant());
                     Directory.CreateDirectory(frames);
-                    int count = Mathf.RoundToInt((state == SpiritPresentationState.Idle ? 12 : host.GestureDuration) * 12);
+                    int count = Mathf.RoundToInt((state == SpiritPresentationState.Idle ? idleDuration : host.GestureDuration) * rate);
                     for (int frame = 0; frame < count; ++frame)
                     {
-                        if (state == SpiritPresentationState.Idle) host.Sample(frame / 12f);
+                        if (state == SpiritPresentationState.Idle) host.Sample(frame / rate);
                         else SampleState(state, frame / (float)count);
                         RenderPose(camera, canvas, lighting, host, width, height, frames, "frame-" + frame.ToString("D4"), true);
                     }
@@ -177,7 +240,7 @@ namespace Dice.Tests
 
             void Capture(string name, SpiritPresentationState state)
             {
-                AssertAttachmentsAndTopology();
+                AssertRegisteredAttachmentsAndTopology();
                 Color32[] pixels = RenderPose(camera, canvas, lighting, host, width, height, output, name);
                 if (!baseline.ContainsKey(state))
                 {
@@ -200,16 +263,38 @@ namespace Dice.Tests
             else host.SetState(state, progress);
         }
 
+        private static readonly Vector2 Chest = new Vector2(380, 820);
+        private static readonly Vector2 Shoulder = new Vector2(520, 690);
+        private static readonly Vector2 Eyes = new Vector2(330, 605);
+        // Points where the forearms, elbows and hands rest on the table.
+        private static readonly Vector2[] TableContacts = { new Vector2(120, 960), new Vector2(315, 977),
+            new Vector2(570, 958), new Vector2(450, 985) };
+        private static readonly Vector2[] FieldProbes = { new Vector2(320, 470), new Vector2(298, 614), new Vector2(262, 680),
+            new Vector2(360, 735), new Vector2(150, 700), new Vector2(520, 670), new Vector2(380, 820),
+            new Vector2(400, 900), new Vector2(165, 924), new Vector2(420, 950) };
+
+        private void AssertRegisteredAttachmentsAndTopology()
+        {
+            SpiritPortraitImage torso = host.GetLayer("Torso");
+            foreach (SpiritPortraitLayer layer in asset.Layers)
+            {
+                SpiritPortraitImage image = host.GetLayer(layer.Id);
+                Assert.That(image.Weights, Is.EqualTo(torso.Weights), layer.Id + " must share the torso's breathing weight.");
+                foreach (Vector2 point in FieldProbes)
+                    Assert.That(Vector2.Distance(Displacement(image, point), Displacement(torso, point)), Is.LessThan(.0001f),
+                        layer.Id + " must stay registered with the torso at " + point);
+            }
+            AssertAttachmentsAndTopology();
+        }
+
         private void AssertAttachmentsAndTopology()
         {
-            AssertPinned("Supporting Arm", new Vector2(165, 924));
-            AssertPinned("Torso", new Vector2(220, 660), new Vector2(160, 750));
-            AssertPinned("Resting Arm", new Vector2(500, 680), new Vector2(570, 955));
-            AssertPinned("Head", new Vector2(370, 770));
+            foreach (SpiritPortraitLayer layer in asset.Layers)
+                AssertPinned(layer.Id, TableContacts);
             foreach (SpiritPortraitLayer layer in asset.Layers)
             {
                 SpiritPortraitMeshAsset mesh = layer.Mesh;
-                if (mesh == null) continue;
+                Assert.That(mesh, Is.Not.Null, layer.Id + " must deform with the shared breathing field.");
                 SpiritPortraitImage image = host.GetLayer(layer.Id);
                 Assert.That(image.Weights.Count, Is.EqualTo(mesh.Shapes.Length), layer.Id);
                 var vertices = new Vector2[(mesh.Columns + 1) * (mesh.Rows + 1)];
@@ -345,7 +430,7 @@ namespace Dice.Tests
                         int row = Mathf.Clamp(Mathf.RoundToInt(point.y), 0, height - 1);
                         if (isolated[row * width + column].a < 240) ++interiorHoles;
                     }
-                Assert.That(interiorHoles, Is.Zero, name + " must retain opaque neck and shirt coverage beneath moving parts.");
+                Assert.That(interiorHoles, Is.Zero, name + " must retain opaque neck and shirt coverage beneath the overlapping parts.");
                 foreach (Vector2 overlap in new[] { new Vector2(294, 713), new Vector2(300, 720), new Vector2(306, 728) })
                 {
                     Vector3 point = camera.WorldToScreenPoint(torso.TransformPoint(new Vector3(
@@ -354,7 +439,7 @@ namespace Dice.Tests
                     int column = Mathf.Clamp(Mathf.RoundToInt(point.x), 0, width - 1);
                     int row = Mathf.Clamp(Mathf.RoundToInt(point.y), 0, height - 1);
                     Assert.That(isolated[row * width + column].a, Is.GreaterThanOrEqualTo(240),
-                        name + " must retain the concealed collar beneath the released cheek at " + overlap);
+                        name + " must retain the concealed collar beneath the cheek and hand at " + overlap);
                 }
                 if (output != null && !motionFrame) SaveCrop("-alpha.png");
                 return isolated;

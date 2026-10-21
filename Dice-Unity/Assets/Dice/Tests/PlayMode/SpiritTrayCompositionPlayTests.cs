@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Dice.App;
@@ -7,6 +8,7 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
@@ -118,6 +120,210 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /** The merchant's candle draws and receives input above the tray and dice targets, below every overlay, and hides with the dice. */
+        [UnityTest]
+        public IEnumerator MerchantCandleDrawsAboveDiceAndBelowOverlays()
+        {
+            const string encounterId = "encounter.merchant.unquiet_cart";
+            const int width = 540;
+            yield return SceneManager.LoadSceneAsync("Application");
+            yield return ContentReady.Spirit(false);
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == encounterId);
+            controller.ReturnToInvestigation();
+            yield return ContentReady.Routed(controller);
+            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
+            controller.SelectEncounter(journey.EncounterId);
+            yield return ContentReady.Routed(controller);
+            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+                controller.AdvanceJourney();
+            controller.AcceptEncounter();
+            yield return ContentReady.Routed(controller);
+            var view = ContentReady.EncounterView(controller);
+            float deadline = Time.realtimeSinceStartup + 30;
+            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(controller.IsBusy, Is.False);
+            yield return null;
+            var portrait = ContentReady.Portrait();
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = new Vector2(width, 960);
+            portrait.anchoredPosition = Vector2.zero;
+
+            var hud = view.GameplayHud;
+            var piece = view.TablePieces.Single();
+            var layer = (RectTransform)piece.transform.parent;
+            Assert.That(layer.parent, Is.SameAs(hud.PlayingPanel), "The piece layer belongs to the gameplay surface.");
+            Assert.That(layer.GetSiblingIndex(), Is.EqualTo(hud.DiceTrayFrame.GetSiblingIndex() + 1),
+                "The piece layer follows the dice tray frame directly.");
+            var dieButtons = Enumerable.Range(1, DiceValues.Count)
+                .Select(index => view.GetComponentsInChildren<Button>(true).Single(value => value.name == "DieButton" + index)).ToArray();
+            var below = new List<Transform> { hud.DiceTrayImage.transform, view.ModifierHistory.transform };
+            below.AddRange(dieButtons.Select(button => button.transform));
+            foreach (var lower in below) AssertDrawsBelow(lower, layer, lower.name);
+            var scorePreview = view.BaseScoreLabel.transform;
+            while (scorePreview.parent != hud.PlayingPanel) scorePreview = scorePreview.parent;
+            var pause = view.GetComponentInChildren<SpiritPauseMenu>(true);
+            var overlays = new Transform[]
+            {
+                hud.StageIntroPanel, view.CharmPopup.Root, pause.transform, view.OwnedCharmsPanel.Root,
+                view.GetComponentInChildren<SpiritHandRanksPanel>(true).transform, view.RewardsPanel.Root,
+                view.GetComponentInChildren<SpiritEncounterEndingView>(true).transform, view.JourneyView.transform,
+                view.GetComponentInChildren<SpiritCollectionView>(true).transform, scorePreview,
+                hud.SelectionLabel.transform, hud.RerollButton.transform, hud.PlayButton.transform,
+                hud.CharmsButton.transform, hud.HandRanksButton.transform, hud.StatusLabel.transform
+            };
+            foreach (var overlay in overlays) AssertDrawsBelow(layer, overlay, overlay.name);
+
+            var bay = PiecePosition.Bay(2);
+            controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(bay));
+            deadline = Time.realtimeSinceStartup + 10;
+            while ((controller.IsBusy || piece.Position != bay) && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(piece.Position, Is.EqualTo(bay));
+            yield return Settle(piece);
+            Canvas.ForceUpdateCanvases();
+            var candle = piece.GetComponentsInChildren<Graphic>().Single(graphic => graphic.raycastTarget);
+            Rect candleRect = WorldRect(candle.rectTransform);
+            yield return Capture(view, encounterId + "-candle-bay3-uncovered", width);
+
+            // The stage intro over the live surface shows the order; playback hides the surface while the intro shows.
+            var snapshot = controller.Snapshot;
+            hud.StageIntroTitle.text = "STAGE 2 / " + snapshot.StageCount;
+            hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
+            hud.StageIntroDetail.text = "CLEAR " + DiagnosticText.Number(snapshot.StartingThreshold) + " POINTS\n" +
+                snapshot.StartingHands + " hands / " + snapshot.StartingRerolls + " rerolls";
+            hud.StageIntroPanel.gameObject.SetActive(true);
+            Canvas.ForceUpdateCanvases();
+            Assert.That(WorldRect(hud.StageIntroPanel).Overlaps(candleRect), Is.True, "The stage intro covers the candle's bay.");
+            yield return Capture(view, encounterId + "-stage-intro-over-candle", width);
+            hud.PlayingPanel.gameObject.SetActive(false);
+            Assert.That(piece.gameObject.activeInHierarchy, Is.False, "The candle hides with the dice tray.");
+            yield return Capture(view, encounterId + "-stage-intro-playback", width, .125f);
+            hud.StageIntroPanel.gameObject.SetActive(false);
+            hud.PlayingPanel.gameObject.SetActive(true);
+            yield return Settle(piece);
+
+            // The merchant starts without charms, so the popup inspects a charm instance from a one-charm session.
+            var charm = controller.Catalog.Modifiers.First();
+            var charmEncounter = new EncounterDefinition("test.capture.candle-popup", new[] { new StageDefinition(1000000, 3, 3) },
+                startingModifiers: new[] { charm.Id });
+            var charmCatalog = new MechanicalCatalog("test.capture.candle-popup", controller.Catalog.Hands,
+                new[] { charmEncounter }, new[] { charm });
+            var instance = EncounterSession.CreateEncounter(charmCatalog, charmEncounter.Id, 60).Snapshot.Modifiers[0];
+            view.CharmPopup.Show(instance.InstanceId, charm,
+                SpiritCharmStatusPresentation.Create(instance, charm, EncounterPhase.Playing, null), EncounterPhase.Playing);
+            Assert.That(view.IsCharmPopupOpen, Is.True);
+            AssertDrawsBelow(layer, view.CharmPopup.Root, "opened charm popup");
+            TestContext.WriteLine("Charm popup panel overlaps the candle: " + WorldRect(view.CharmPopup.Panel).Overlaps(candleRect));
+            yield return Capture(view, encounterId + "-charm-popup-over-candle", width, .05f);
+            view.CloseCharmPopup();
+
+            hud.MenuButton.onClick.Invoke();
+            Assert.That(pause.CloseButton.gameObject.activeInHierarchy, Is.True, "The pause menu opens.");
+            TestContext.WriteLine("Pause menu overlaps the candle: " + WorldRect((RectTransform)pause.transform).Overlaps(candleRect));
+            yield return Capture(view, encounterId + "-pause-menu-over-candle", width, .05f);
+            pause.CloseButton.onClick.Invoke();
+            Assert.That(pause.CloseButton.gameObject.activeInHierarchy, Is.False);
+            yield return Settle(piece);
+
+            // Grabbing the candle and carrying it over a die keeps the drag on the candle and never selects the die.
+            Canvas.ForceUpdateCanvases();
+            Vector3 grabWorld = WorldRect(candle.rectTransform).center;
+            var grab = TopHit(RectTransformUtility.WorldToScreenPoint(null, grabWorld));
+            Assert.That(ExecuteEvents.GetEventHandler<IDragHandler>(grab.gameObject), Is.SameAs(piece.gameObject));
+            var pointer = new PointerEventData(EventSystem.current)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, grabWorld),
+                pressPosition = RectTransformUtility.WorldToScreenPoint(null, grabWorld),
+                button = PointerEventData.InputButton.Left,
+                pointerId = -1,
+                pointerCurrentRaycast = grab,
+                pointerPressRaycast = grab
+            };
+            ExecuteEvents.Execute(piece.gameObject, pointer, ExecuteEvents.initializePotentialDrag);
+            ExecuteEvents.Execute(piece.gameObject, pointer, ExecuteEvents.beginDragHandler);
+            Assert.That(piece.IsDragging, Is.True, "The candle accepts the drag.");
+            Vector3 grabOffset = piece.transform.position - grabWorld;
+            var targetDie = (RectTransform)dieButtons[1].transform;
+            Vector2 dieScreen = RectTransformUtility.WorldToScreenPoint(null, WorldRect(targetDie).center);
+            pointer.position = dieScreen;
+            ExecuteEvents.Execute(piece.gameObject, pointer, ExecuteEvents.dragHandler);
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = dieScreen }, hits);
+            Assert.That(hits, Is.Not.Empty);
+            Assert.That(ExecuteEvents.GetEventHandler<IDragHandler>(hits[0].gameObject), Is.SameAs(piece.gameObject),
+                "The carried candle receives input over the die.");
+            Assert.That(dieButtons.Select(button => button.gameObject),
+                Has.No.Member(ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject)),
+                "A tap or release on the candle never reaches a die target.");
+            Assert.That(hits.Any(hit => ExecuteEvents.GetEventHandler<IPointerClickHandler>(hit.gameObject) == targetDie.gameObject),
+                Is.True, "The die target lies under the carried candle.");
+            yield return Capture(view, encounterId + "-candle-dragged-over-die2", width);
+            // The capture renders through a camera; world positions return to overlay space once the canvas updates.
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            Assert.That(piece.IsDragging, Is.True, "The candle stays in hand through the capture.");
+
+            var destination = PiecePosition.Bay(1);
+            RectTransform trayFrame = hud.DiceTrayImage.rectTransform;
+            Vector3 bayWorld = trayFrame.TransformPoint(SpiritTablePieceLayout.ViewportPoint(trayFrame.rect,
+                view.DiceTray.GetSlotViewportRect(destination.Index), piece.BayPlacement));
+            pointer.position = RectTransformUtility.WorldToScreenPoint(null, bayWorld - grabOffset);
+            ExecuteEvents.Execute(piece.gameObject, pointer, ExecuteEvents.dragHandler);
+            ExecuteEvents.Execute(piece.gameObject, pointer, ExecuteEvents.endDragHandler);
+            Assert.That(piece.IsDragging, Is.False);
+            deadline = Time.realtimeSinceStartup + 10;
+            while ((controller.IsBusy || piece.Position != destination) && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(piece.Position, Is.EqualTo(destination), "Releasing near bay 2 moves the candle there; it rests at " +
+                piece.Position.Kind + " " + piece.Position.Index);
+            Assert.That(controller.SelectedMask, Is.Zero, "Dragging the candle over a die never selects it.");
+            ContentReady.AssertDiceSelection(view, 0, "after the candle drag");
+            yield return Settle(piece);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /** Within one canvas, a later transform in hierarchy order draws and raycasts above an earlier one. */
+        private static void AssertDrawsBelow(Transform lower, Transform upper, string label)
+        {
+            var canvas = lower.GetComponentInParent<Canvas>(true);
+            Assert.That(canvas, Is.Not.Null, label);
+            Assert.That(upper.GetComponentInParent<Canvas>(true), Is.SameAs(canvas), label + " shares the candle's canvas");
+            Assert.That(CompareHierarchyOrder(lower, upper), Is.LessThan(0), lower.name + " must draw below " + label);
+        }
+
+        private static int CompareHierarchyOrder(Transform a, Transform b)
+        {
+            var left = SiblingPath(a);
+            var right = SiblingPath(b);
+            for (int i = 0; i < Mathf.Min(left.Count, right.Count); ++i)
+                if (left[i] != right[i]) return left[i].CompareTo(right[i]);
+            return left.Count.CompareTo(right.Count);
+        }
+
+        private static List<int> SiblingPath(Transform transform)
+        {
+            var path = new List<int>();
+            for (var current = transform; current != null; current = current.parent) path.Add(current.GetSiblingIndex());
+            path.Reverse();
+            return path;
+        }
+
+        private static Rect WorldRect(RectTransform rect)
+        {
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            return Rect.MinMaxRect(corners[0].x, corners[0].y, corners[2].x, corners[2].y);
+        }
+
+        private static RaycastResult TopHit(Vector2 screen)
+        {
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = screen }, hits);
+            Assert.That(hits, Is.Not.Empty, "Nothing receives input at " + screen);
+            return hits[0];
+        }
+
         /** Places each table piece at its neutral spot and on the outer and middle bays at both portrait widths. */
         private static IEnumerator CapturePieces(SpiritEncounterController controller, SpiritEncounterView view, string encounterId)
         {
@@ -207,7 +413,7 @@ namespace Dice.Tests
             Assert.That(stable, Is.EqualTo(3), piece.PieceId + " must settle.");
         }
 
-        private static IEnumerator Capture(SpiritEncounterView view, string encounterId, int width)
+        private static IEnumerator Capture(SpiritEncounterView view, string encounterId, int width, float minimumLitFraction = .25f)
         {
             string root = Environment.GetEnvironmentVariable("DICE_SPIRIT_CAPTURE_ROOT");
             if (string.IsNullOrEmpty(root)) yield break;
@@ -250,8 +456,11 @@ namespace Dice.Tests
                 readback = new Texture2D(width, 960, TextureFormat.RGBA32, false);
                 readback.ReadPixels(new Rect(0, 0, width, 960), 0, 0);
                 readback.Apply();
-                Assert.That(readback.GetPixels32().Count(pixel => pixel.r > 45 || pixel.g > 45 || pixel.b > 45),
-                    Is.GreaterThan(width * 960 / 4), "Gameplay artwork must fill the captured portrait.");
+                int lit = readback.GetPixels32().Count(pixel => pixel.r > 45 || pixel.g > 45 || pixel.b > 45);
+                // A hidden or dimmed play area leaves darker artwork, so those captures pass their own lower fraction.
+                Assert.That(lit, Is.GreaterThan(width * 960 * minimumLitFraction),
+                    minimumLitFraction >= .25f ? "Gameplay artwork must fill the captured portrait."
+                        : "The capture must render the portrait behind the hidden or covered play area.");
                 File.WriteAllBytes(path, readback.EncodeToPNG());
                 TestContext.WriteLine("Tray composition capture: " + path);
             }

@@ -49,6 +49,14 @@ The small moths follow independent closed waypoint schedules with short darts, h
 
 Any host layer can enable `Smoke` and supply its own motion mask and repeating flow-noise texture. Missing textures use generated defaults. Import custom mask/noise textures as linear data; smoke artwork uses ordinary color and alpha. Smoke and silhouette materials belong on separate layers. Tint, deformation and timeline opacity still apply to smoke layers.
 
+## Haunted merchant
+
+`author-merchant-presentation.py` authors the merchant's living-still host using the same layer/timeline format. Its default output is a new ignored `Docs/work/merchant-authoring-*` directory; `--write-assets` writes only `Ambient/MerchantHost.asset` and `Ambient/MerchantBreathMesh.asset`. It requires Python 3.9 or later with no third-party packages, imports the shared authoring helpers beside it, and refuses to run if an artwork `.meta` it references is missing. It does not edit artwork, materials or `MerchantHost.prefab`.
+
+All five merchant layers (torso, head, resting arm, supporting arm, blink) keep the native 941 x 1672 source frame and reference the one `Breath` shape, so the field moves overlapping layers identically and nothing moves as a rigid part. At full weight the field lifts the shoulders and chest 6 native pixels (about 1% of the figure), the head, hat and the hand under the cheek 70% of that, and spreads the chest up to about 1.4 pixels; the lift fades to zero between source rows 760 and 950, leaving forearms, elbows and hands on the table fixed. The 13.8-second idle loop holds three uneven breaths (4.4, 4.9 and 4.5 seconds) and three blinks at 1.55, 5.45 and 11.25 seconds; each blink fades the closed-eye overlay in over 40 ms, holds it and fades out by 140 ms. Arrival, Reaction, Victory, Defeat and Farewell are three-second additive breaths over the continuing idle: a quick intake that settles slightly below rest for Reaction, a relieved breath for Victory, a sigh for Defeat and short settles for Arrival and Farewell. Edit the constants at the top of the script, generate into scratch and compare before writing assets.
+
+The blink overlay samples `MerchantBlinkEyes.png` through `MerchantBlinkMask.png` with the source-masked shader. Both are 136 x 58 crops of source box (264, 576)-(400, 634); the layer's UV rectangle stretches them across the full source frame and clamped, zero-alpha mask edges keep everything outside the crop transparent. Its provenance is recorded in [merchant host layers](../../Docs/Reference/Art/HauntedMerchantHostLayers.md).
+
 ## Inn and watchtower
 
 `author-spirit-presentations.py` contains the approved motion formulas for the Lantern Keeper and Watchtower host. It generates two host assets and nine deformation meshes. The game loads the checked-in Unity assets and does not run this script.
