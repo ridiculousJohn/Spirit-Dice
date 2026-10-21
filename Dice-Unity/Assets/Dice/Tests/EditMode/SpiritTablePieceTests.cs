@@ -220,10 +220,12 @@ namespace Dice.Tests
                 var definition = (PositionInteractionDefinition)encounter.Pieces.Single(value => value.Id == candle.PieceId)
                     .Interactions.Single(value => value.Id == candle.InteractionId);
 
-                // The prop is drawn after the HUD, so it receives drags before the dice touch targets beneath it.
+                // The piece layer belongs to the gameplay surface and follows the dice tray frame directly, so the prop
+                // receives drags before the dice touch targets beneath it and draws below the HUD's popups.
                 Transform frame = candle.transform.parent;
-                Assert.That(frame.parent, Is.SameAs(view.Portrait));
-                Assert.That(frame.GetSiblingIndex(), Is.GreaterThan(view.GameplayHud.transform.GetSiblingIndex()));
+                Assert.That(frame.parent, Is.SameAs(view.GameplayHud.PlayingPanel));
+                Assert.That(frame.GetSiblingIndex(), Is.EqualTo(view.GameplayHud.DiceTrayFrame.GetSiblingIndex() + 1));
+                Assert.That(view.GameplayHud.DiceTrayFrame.parent, Is.SameAs(view.GameplayHud.PlayingPanel));
                 Assert.That(view.GameplayHud.transform.parent, Is.SameAs(view.Portrait));
                 Assert.That(candle.GetComponentsInChildren<Graphic>(true).Any(graphic => graphic.raycastTarget), Is.True);
 

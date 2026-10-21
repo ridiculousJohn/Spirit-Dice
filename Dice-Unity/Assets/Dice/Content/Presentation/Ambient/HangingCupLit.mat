@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 8
+  m_Name: HangingCupLit
+  m_Shader: {fileID: 4800000, guid: 1381d22630ca4363815c8e4751f13ca1, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties:
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SourceTex:
+        m_Texture: {fileID: 2800000, guid: 8c5c9b9bcf87402b9041642508576717, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _LayerMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex0:
+        m_Texture: {fileID: 2800000, guid: 92415700f8894aac89cbdebe59c1a365, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex0:
+        m_Texture: {fileID: 2800000, guid: 501c7bcf77804d4aa512d72d7f32faf8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _InvertMask: 1
+    - _SceneLitMode0: 1
+    - _SceneLitResponseEnabled0: 1
+    - _SceneLitStrength0: 1
+    - _SceneLitIntensity0: 1
+    - _SceneLitDistanceFalloff0: 0.8
+    - _SceneLitSourceResponse0: 0.5
+    - _SceneLitIncludesBase0: 1
+    - _SceneLitConstrainAmbient0: 0
+    - _SceneLitModulateByBase0: 0
+    - _SceneLitMode1: 0
+    - _SceneLitMode2: 0
+    - _SceneLitMode3: 0
+    - _SceneLitWrap: 1
+    - _StencilComp: 8
+    - _Stencil: 0
+    - _StencilOp: 0
+    - _StencilWriteMask: 255
+    - _StencilReadMask: 255
+    - _ColorMask: 15
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitTint0: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitFrameTransform: {r: 1, g: 1, b: 0, a: 0}
+    - _SceneLitDepthRange: {r: 0, g: -1, b: 0, a: 0}
+    - _SceneLitFrameOrigin: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitFrameAxisX: {r: 1, g: 0, b: 0, a: 0}
+    - _SceneLitFrameAxisY: {r: 0, g: 1, b: 0, a: 0}
+    - _SceneLitMapRect: {r: 0.6158444, g: 0.7413125, b: 0.137037, a: 0.115625}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -10,7 +10,7 @@ namespace Dice.Presentation
 {
     /** Portrait encounter surface; controls own rules and persistence, while this view presents ordered events. */
     [DisallowMultipleComponent]
-    public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost
+    public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost, IAmbientLightingTarget
     {
         [SerializeField] private Texture2D roomTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
@@ -84,6 +84,15 @@ namespace Dice.Presentation
         private float[] pieceLightIntensities = Array.Empty<float>();
         private Vector2[] pieceLightUvOffsets = Array.Empty<Vector2>();
         private Vector3[] pieceLightReceivers = Array.Empty<Vector3>();
+        [Tooltip("Scene transforms for the table's ambient prop actors; empty when the encounter authors none.")]
+        [SerializeField] private List<EncounterAmbientPropBinding> ambientProps = new List<EncounterAmbientPropBinding>();
+        private EncounterAmbientActivity ambientActivity;
+        private float[] ambientLightIntensities = Array.Empty<float>();
+        // Play-mode testing multipliers set from the encounter screen inspector; NaN leaves a light to the ambient activity.
+        private float[] testLightOverrides = Array.Empty<float>();
+        private float[] sampledLightIntensities = Array.Empty<float>();
+        private bool applicationFocused = true;
+        private bool applicationPaused;
 
         public RectTransform Root => (RectTransform)transform;
         public Canvas Canvas => canvas;
@@ -248,7 +257,15 @@ namespace Dice.Presentation
                     pieceLight.LightIndex < 0 || pieceLight.LightIndex >= selectedTable.SceneLighting.Lights.Length))
                     throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
             ClearSceneLighting();
+            ambientActivity?.Stop();
             configuredTable = selectedTable;
+            ambientLightIntensities = new float[selectedTable.SceneLighting != null && selectedTable.SceneLighting.Lights != null
+                ? selectedTable.SceneLighting.Lights.Length : 0];
+            for (int i = 0; i < ambientLightIntensities.Length; ++i) ambientLightIntensities[i] = 1f;
+            testLightOverrides = new float[ambientLightIntensities.Length];
+            ReleaseTestLightOverrides();
+            ambientActivity =selectedTable.AmbientActivity != null
+                ? new EncounterAmbientActivity(selectedTable.AmbientActivity, this, ambientProps) : null;
             encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
@@ -310,6 +327,7 @@ namespace Dice.Presentation
 
         private void OnEnable()
         {
+            applicationFocused = Application.isFocused;
             Subscribe();
             if (canvas == null) return;
             if (journeyControls != null) RefreshJourney();
@@ -348,6 +366,8 @@ namespace Dice.Presentation
         {
             if (scorePlayback == null) return;
             PositionTablePieces();
+            // Ambient activity suspends with focus and pause like the encounter's ambient audio.
+            if (ambientActivity != null && applicationFocused && !applicationPaused) ambientActivity.Tick(Time.unscaledDeltaTime);
             UpdateSceneLighting();
             if (portrait == null || diceTrayFrame == null || ModifierHistory == null) return;
             PositionTrays();
@@ -363,7 +383,7 @@ namespace Dice.Presentation
             if (configuredTable == null) return;
             var asset = configuredTable.SceneLighting;
             if (asset != null && configuredTable.PieceLights.Count > 0) SamplePieceLights(asset, configuredTable.PieceLights);
-            else sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
+            else sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble, AmbientLightIntensities(asset));
             if (asset != null)
             {
                 if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
@@ -399,7 +419,7 @@ namespace Dice.Presentation
             }
             for (int i = 0; i < count; ++i)
             {
-                pieceLightIntensities[i] = 1f;
+                pieceLightIntensities[i] = AmbientLightIntensity(i);
                 pieceLightUvOffsets[i] = asset.Lights[i].UvOffset;
                 pieceLightReceivers[i] = asset.Lights[i].ReceiverPosition;
             }
@@ -413,7 +433,7 @@ namespace Dice.Presentation
                 Vector2 delta = RoomTextureCoordinate(piece.transform.position) - pieceLight.ReferencePosition;
                 pieceLightUvOffsets[index] += delta;
                 pieceLightReceivers[index] += pieceLight.ReceiverOffsetX * delta.x + pieceLight.ReceiverOffsetY * delta.y;
-                pieceLightIntensities[index] = piece.LightIntensity;
+                pieceLightIntensities[index] = piece.LightIntensity * AmbientLightIntensity(index);
             }
             sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble, pieceLightIntensities, pieceLightUvOffsets, pieceLightReceivers);
             foreach (var pieceLight in pieceLights)
@@ -424,6 +444,52 @@ namespace Dice.Presentation
                     .SetEmission(Mathf.Clamp01(Mathf.Pow(relativeIntensity, light.SourceResponse)));
             }
         }
+
+        /** A held testing override replaces the ambient activity's multiplier for its light. */
+        private float AmbientLightIntensity(int index) =>
+            index < testLightOverrides.Length && !float.IsNaN(testLightOverrides[index]) ? testLightOverrides[index] :
+            index < ambientLightIntensities.Length ? ambientLightIntensities[index] : 1f;
+
+        /** Per-light multipliers for a table without piece lights; null when the asset's lights differ from the configured table's. */
+        private float[] AmbientLightIntensities(SceneLightingAsset asset)
+        {
+            if (asset == null || asset.Lights == null || asset.Lights.Length != ambientLightIntensities.Length) return null;
+            if (sampledLightIntensities.Length != ambientLightIntensities.Length)
+                sampledLightIntensities = new float[ambientLightIntensities.Length];
+            for (int i = 0; i < sampledLightIntensities.Length; ++i) sampledLightIntensities[i] = AmbientLightIntensity(i);
+            return sampledLightIntensities;
+        }
+
+        /** Lights of the configured table that the play-mode testing controls can hold; zero before a table is configured. */
+        public int TestLightCount => testLightOverrides.Length;
+
+        /** Whether a testing override holds the light; the multiplier is the held one, or the ambient activity's when none holds it. */
+        public bool GetTestLightOverride(int index, out float multiplier)
+        {
+            if (index < 0 || index >= testLightOverrides.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            multiplier = testLightOverrides[index];
+            if (!float.IsNaN(multiplier)) return true;
+            multiplier = AmbientLightIntensity(index);
+            return false;
+        }
+
+        /** Holds the light at this multiplier of its authored intensity, in place of the ambient activity's, until released. */
+        public void SetTestLightOverride(int index, float multiplier)
+        {
+            if (index < 0 || index >= testLightOverrides.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            if (!SceneLightingAsset.Finite(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
+            testLightOverrides[index] = multiplier;
+        }
+
+        /** Returns every light to the ambient activity's multiplier. */
+        public void ReleaseTestLightOverrides()
+        {
+            for (int i = 0; i < testLightOverrides.Length; ++i) testLightOverrides[i] = float.NaN;
+        }
+
+        private void OnApplicationFocus(bool focus) => applicationFocused = focus;
+
+        private void OnApplicationPause(bool pause) => applicationPaused = pause;
 
         /** The room and table images show different slices of one room texture; lights use that texture's coordinates. */
         private Vector2 RoomTextureCoordinate(Vector3 world)
@@ -729,6 +795,7 @@ namespace Dice.Presentation
             RenderProfileSummary();
             if (playing)
             {
+                ambientActivity?.Begin();
                 hud.ModifierEmblem.gameObject.SetActive(false);
                 DiceTray.SetValues(snapshot.CurrentDice);
                 SetDiceSelection(controls.SelectedMask);
@@ -841,6 +908,10 @@ namespace Dice.Presentation
             presenting = false;
             presentationSnapshot = null;
             if (resetHost) hostPortrait?.ResetPose();
+            // Leaving play for the journey lets the haunting settle; every other reset ends it at rest.
+            if (resetHost) ambientActivity?.Stop();
+            else ambientActivity?.Settle();
+            ReleaseTestLightOverrides();
             ResetTransientVisuals();
         }
 
@@ -937,6 +1008,7 @@ namespace Dice.Presentation
         IEncounterJourneyControls ISpiritScorePlaybackHost.Journey => journeyControls;
         SpiritHostPortrait ISpiritScorePlaybackHost.Host => hostPortrait;
         EncounterRulePresentationAsset ISpiritScorePlaybackHost.RulePresentation => encounterRulePresentation;
+        EncounterAmbientActivity ISpiritScorePlaybackHost.Ambient => ambientActivity;
         void ISpiritScorePlaybackHost.SetDiceSelection(int mask) => SetDiceSelection(mask);
         void ISpiritScorePlaybackHost.SetOpeningOpacity(float opacity) => SetOpeningOpacity(opacity);
         void ISpiritScorePlaybackHost.RecordScore(ScoreBreakdown score) => lastScore = score;
@@ -951,6 +1023,22 @@ namespace Dice.Presentation
                     return piece != null && piece.isActiveAndEnabled ? piece.Flare() : 0f;
                 }
             return 0f;
+        }
+
+        int IAmbientLightingTarget.LightCount => ambientLightIntensities.Length;
+
+        float IAmbientLightingTarget.GetLightIntensity(int index)
+        {
+            if (index < 0 || index >= ambientLightIntensities.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            return ambientLightIntensities[index];
+        }
+
+        /** Multiplies the authored light intensity for the ambient activity; piece lights multiply it with their piece's level. */
+        void IAmbientLightingTarget.SetLightIntensity(int index, float multiplier)
+        {
+            if (index < 0 || index >= ambientLightIntensities.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            if (!SceneLightingAsset.Finite(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
+            ambientLightIntensities[index] = multiplier;
         }
 
         void ISpiritScorePlaybackHost.HideRewardsAndEnding()

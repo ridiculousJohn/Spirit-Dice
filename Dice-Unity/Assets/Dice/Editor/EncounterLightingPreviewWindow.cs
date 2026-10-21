@@ -23,6 +23,7 @@ namespace Dice.Editor
         [SerializeField] private bool showTable = true;
         [SerializeField] private bool animate = true;
         [SerializeField] private float intensity = 1f;
+        [SerializeField] private float[] lightMultipliers = Array.Empty<float>();
         [SerializeField] private float poseTime;
         private SpiritEncounterPreviewScene encounter;
         private string stagedSceneSettings;
@@ -36,6 +37,7 @@ namespace Dice.Editor
         private SpiritDiceTray tray;
         private SpiritModifierHistoryRenderer history;
         private SpiritHostPortrait host;
+        private SceneLitImage[] litImages = Array.Empty<SceneLitImage>();
         private SceneLightingAsset lighting;
         private SceneLightingAsset sourceLighting;
         private SceneLightingMaterial compositor;
@@ -107,6 +109,7 @@ namespace Dice.Editor
             entry = (SceneLightingAsset)EditorGUILayout.ObjectField("Entry lighting", entry,
                 typeof(SceneLightingAsset), false);
             intensity = EditorGUILayout.Slider("Intensity multiplier", intensity, 0f, 2f);
+            DrawLightMultipliers(showTable ? table?.SceneLighting : entry);
             bool nextAnimate = EditorGUILayout.Toggle("Animate", animate);
             if (animate && !nextAnimate) poseTime = (float)(EditorApplication.timeSinceStartup - startedAt);
             if (!animate && nextAnimate) startedAt = EditorApplication.timeSinceStartup - poseTime;
@@ -137,6 +140,39 @@ namespace Dice.Editor
                 message = error.Message;
                 GUI.Label(area, message, EditorStyles.wordWrappedLabel);
             }
+        }
+
+        /** Independent per-light multipliers switch one light, such as a lantern, without touching the authored asset. */
+        private void DrawLightMultipliers(SceneLightingAsset selected)
+        {
+            if (selected == null || selected.Lights == null || selected.Lights.Length == 0) return;
+            ResizeMultipliers(selected.Lights.Length);
+            EditorGUILayout.LabelField("Light multipliers", EditorStyles.boldLabel);
+            for (int i = 0; i < selected.Lights.Length; ++i)
+            {
+                Texture2D contribution = selected.Lights[i]?.Contribution;
+                string label = "Light " + i + (contribution != null ? " (" + contribution.name + ")" : "");
+                lightMultipliers[i] = EditorGUILayout.Slider(label, lightMultipliers[i], 0f, 2f);
+            }
+        }
+
+        private void ResizeMultipliers(int count)
+        {
+            if (lightMultipliers != null && lightMultipliers.Length == count) return;
+            var values = new float[count];
+            for (int i = 0; i < count; ++i)
+                values[i] = lightMultipliers != null && i < lightMultipliers.Length ? lightMultipliers[i] : 1f;
+            lightMultipliers = values;
+        }
+
+        private float[] SampledMultipliers()
+        {
+            if (lighting == null) return null;
+            ResizeMultipliers(lighting.Lights.Length);
+            var values = new float[lightMultipliers.Length];
+            for (int i = 0; i < values.Length; ++i)
+                values[i] = float.IsNaN(lightMultipliers[i]) || float.IsInfinity(lightMultipliers[i]) ? 1f : Mathf.Max(0f, lightMultipliers[i]);
+            return values;
         }
 
         private void EnsureStage()
@@ -178,6 +214,7 @@ namespace Dice.Editor
                 tray = trayScene.DiceTray;
                 history = trayScene.HistoryRenderer;
                 host = encounter.View.HostPortrait;
+                litImages = stage.GetComponentsInChildren<SceneLitImage>(true);
                 tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
             }
             else
@@ -229,8 +266,10 @@ namespace Dice.Editor
                         (double)sourceLighting.Lights[i].Intensity * intensity);
                     lighting.Lights[i].FlickerAmount = animate ? sourceLighting.Lights[i].FlickerAmount : 0f;
                 }
-            state.Sample(lighting, time);
+            state.Sample(lighting, time, SampledMultipliers());
             if (lighting != null) compositor.Apply(state);
+            foreach (SceneLitImage image in litImages)
+                if (image != null) image.Bind(lighting != null ? state : null);
             Texture2D texture = lighting != null ? lighting.BaseTexture : table?.RoomTexture;
             if (showTable) roomImage.material = tableImage.material = compositor?.Material;
             else BindImage(roomImage, texture);
@@ -358,6 +397,7 @@ namespace Dice.Editor
             tray = null;
             history = null;
             host = null;
+            litImages = Array.Empty<SceneLitImage>();
             stagedSceneSettings = null;
             state.Sample(null, 0);
         }

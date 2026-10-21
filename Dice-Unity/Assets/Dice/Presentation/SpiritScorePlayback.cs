@@ -14,6 +14,8 @@ namespace Dice.Presentation
         IEncounterJourneyControls Journey { get; }
         SpiritHostPortrait Host { get; }
         EncounterRulePresentationAsset RulePresentation { get; }
+        /** The table's ambient activity, or null when the encounter authors none. */
+        EncounterAmbientActivity Ambient { get; }
         void SetDiceSelection(int mask);
         void HideRewardsAndEnding();
         void SetOpeningOpacity(float opacity);
@@ -107,6 +109,7 @@ namespace Dice.Presentation
                     // Interference lands after the player's roll or before scoring; the die visibly moves even if its face returns.
                     host.Host?.React();
                     encounterAudio.Play(SpiritAudioCue.Disturbance);
+                    host.Ambient?.Disturb();
                     activeRoll = disturbed.Kind == DieInterferenceKind.Flip
                         ? diceTray.Flip(disturbed.Bay, disturbed.After)
                         : diceTray.RollDie(disturbed.Bay, disturbed.After, encounterAudio.BeginRoll(1));
@@ -238,6 +241,7 @@ namespace Dice.Presentation
                 }
                 else if (ruleEvent is HandStartedEvent hand)
                 {
+                    host.Ambient?.Begin();
                     modifierHistory.Clear();
                     hud.RenderEncounterRule(resolution.Snapshot, host.RulePresentation);
                     hud.SetResources(hand.HandsRemaining, hand.RerollsRemaining);
@@ -260,6 +264,9 @@ namespace Dice.Presentation
             }
             if (resolution.Snapshot.Phase == EncounterPhase.Completed)
             {
+                // Defeat ends the haunting with a final knock; victory and abandonment let it settle.
+                if (resolution.Snapshot.Outcome == EncounterOutcome.Lost) host.Ambient?.Knock();
+                else host.Ambient?.Settle();
                 endingView.Render(resolution.Snapshot, host.Journey?.SelectedJourney,
                     SpiritCharmVisuals.UnlockSummary(controls, resolution.Snapshot.NewlyUnlockedModifierIds));
                 yield return endingView.Present(host.Host, host.SetOpeningOpacity, host.ShowEnding,

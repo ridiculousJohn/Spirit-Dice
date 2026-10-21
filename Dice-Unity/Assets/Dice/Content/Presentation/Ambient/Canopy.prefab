@@ -64,6 +64,7 @@ GameObject:
   - component: {fileID: 3001}
   - component: {fileID: 3002}
   - component: {fileID: 3003}
+  - component: {fileID: 3004}
   m_Layer: 5
   m_Name: CanopyArtwork
   m_TagString: Untagged
@@ -131,6 +132,41 @@ MonoBehaviour:
   weights:
   - 0
   - 0
+--- !u!114 &3004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c79bdb8b6b4249bca5e722c864ee5360, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SceneLitImage
+  lighting: {fileID: 11400000, guid: b741c62d32284c5e9eb3f887027d36a8, type: 2}
+  shader: {fileID: 4800000, guid: 1381d22630ca4363815c8e4751f13ca1, type: 3}
+  position: {x: 0, y: 0, z: 0}
+  layer:
+    BaseTexture: {fileID: 2800000, guid: defbe432f68543f7af57dca35392bc5c, type: 3}
+    Lights:
+    - LightIndex: 0
+      Mode: 0
+      Reference: {fileID: 2800000, guid: 394e6b76e9bd4899bcd6df5ce05ffcf0, type: 3}
+      ResponseMap: {fileID: 2800000, guid: 501c7bcf77804d4aa512d72d7f32faf8, type: 3}
+      Strength: 1
+    Depth: {fileID: 0}
+    DepthRange: {x: 0, y: -1}
+    FrameOrigin: {x: 0, y: 0, z: 0}
+    FrameAxisX: {x: 1, y: 0, z: 0}
+    FrameAxisY: {x: 0, y: 1, z: 0}
+    MapRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    Wrap: 1
 --- !u!1 &4000
 GameObject:
   m_ObjectHideFlags: 0

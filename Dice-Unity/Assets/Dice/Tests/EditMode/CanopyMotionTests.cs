@@ -123,7 +123,8 @@ namespace Dice.Tests
             var images = canopy.GetComponentsInChildren<SpiritPortraitImage>();
             Assert.That(images.Length, Is.EqualTo(1));
             Assert.That(canopy.GetComponentsInChildren<MonoBehaviour>(true)
-                .All(component => component is SpiritPortraitImage || component is SpiritPortraitDeformationChannel), Is.True);
+                .All(component => component is SpiritPortraitImage || component is SpiritPortraitDeformationChannel
+                    || component is SceneLitImage), Is.True);
             var mesh = AssetDatabase.LoadAssetAtPath<SpiritPortraitMeshAsset>(MeshPath);
             Assert.That(mesh, Is.Not.Null);
             Assert.DoesNotThrow(mesh.Validate);
@@ -131,12 +132,12 @@ namespace Dice.Tests
             Assert.That(mesh.Rows, Is.EqualTo(192));
             Assert.That(mesh.Shapes.Length, Is.EqualTo(2));
             var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
-            var source = AssetDatabase.LoadAssetAtPath<Texture2D>(ArtPath + "MerchantOriginal.png");
+            var source = AssetDatabase.LoadAssetAtPath<Texture2D>(ArtPath + "Relight/CanopyUnlit.png");
             var layerMask = AssetDatabase.LoadAssetAtPath<Texture2D>(ArtPath + "CanopyOriginalOverhangMask.png");
             Assert.That(material, Is.Not.Null);
             Assert.That(source, Is.Not.Null);
             Assert.That(layerMask, Is.Not.Null);
-            Assert.That(AssetDatabase.GetAssetPath(material.shader), Is.EqualTo("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader"));
+            Assert.That(AssetDatabase.GetAssetPath(material.shader), Is.EqualTo("Assets/Dice/Presentation/Shared/SceneLitImage.shader"));
             Assert.That(material.GetTexture("_SourceTex"), Is.SameAs(source));
             Assert.That(material.GetTexture("_LayerMask"), Is.SameAs(layerMask));
             Assert.That(material.GetFloat("_InvertMask"), Is.EqualTo(0));
@@ -227,6 +228,7 @@ namespace Dice.Tests
                 material.SetTexture("_SourceTex", source);
                 material.SetTexture("_LayerMask", mask);
                 material.SetFloat("_InvertMask", 0);
+                material.SetFloat("_SceneLitIntensity0", 0);
                 SceneManager.MoveGameObjectToScene(cameraObject, preview);
                 SceneManager.MoveGameObjectToScene(imageObject, preview);
                 var camera = cameraObject.GetComponent<Camera>();

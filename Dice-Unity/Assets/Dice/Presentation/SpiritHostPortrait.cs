@@ -12,6 +12,8 @@ namespace Dice.Presentation
         {
             public SpiritPortraitImage Image;
             public SpiritSmokeMaterial Smoke;
+            public SceneLitLayerMaterial Lit;
+            public Material AuthoredMaterial;
             public Color Tint;
             public float[] Defaults;
             public float[] Values;
@@ -38,6 +40,8 @@ namespace Dice.Presentation
         private float arrivalProgress;
         private Color sceneLightingTint = Color.white;
         private bool hasSceneLighting;
+        private SceneLightingState sceneLighting;
+        private Vector3 sceneLightingPosition;
 
         public bool IsReacting => State == SpiritPresentationState.Reaction;
         public SpiritPresentationState State { get; private set; }
@@ -56,7 +60,27 @@ namespace Dice.Presentation
         {
             hasSceneLighting = state != null && state.Asset != null;
             sceneLightingTint = state != null ? state.EvaluateReceiver(position, Vector3.back) : Color.white;
+            sceneLighting = hasSceneLighting ? state : null;
+            sceneLightingPosition = position;
+            ApplyLitLayers();
             ApplyPose();
+        }
+
+        /** Lit layers use the shared sample per pixel; without one they show their authored material. */
+        private void ApplyLitLayers()
+        {
+            if (layers == null) return;
+            foreach (LayerRuntime layer in layers)
+            {
+                if (layer.Lit == null) continue;
+                Material material = layer.AuthoredMaterial;
+                if (sceneLighting != null)
+                {
+                    layer.Lit.Apply(sceneLighting, sceneLightingPosition, layer.Image.uvRect);
+                    material = layer.Lit.Material;
+                }
+                if (layer.Image.material != material) layer.Image.material = material;
+            }
         }
 
         public void Build(RectTransform parent, SpiritHostPresentationAsset asset)
@@ -91,6 +115,8 @@ namespace Dice.Presentation
                 SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled
                     ? new SpiritSmokeMaterial(source.Smoke, asset.SmokeShader, image.material) : null;
                 if (smoke != null) image.material = smoke.Material;
+                SceneLitLayerMaterial lit = source.Lighting != null && source.Lighting.Configured
+                    ? new SceneLitLayerMaterial(source.Lighting, asset.LitLayerShader, image.material) : null;
                 int channels = image.Weights.Count;
                 if (channels != (source.Mesh != null ? source.Mesh.Shapes.Length : 0))
                     throw new InvalidOperationException("Authored portrait deformation channels must match the animation data.");
@@ -104,12 +130,13 @@ namespace Dice.Presentation
                 for (int channel = 0; channel < channels; ++channel) defaults[6 + channel] = image.Weights[channel];
                 layers[i] = new LayerRuntime
                 {
-                    Image = image, Smoke = smoke, Tint = image.color, Defaults = defaults, Values = new float[defaults.Length],
+                    Image = image, Smoke = smoke, Lit = lit, AuthoredMaterial = image.material, Tint = image.color, Defaults = defaults, Values = new float[defaults.Length],
                     EntryPose = new float[defaults.Length], EntryBaseline = new float[defaults.Length],
                     Weights = new float[channels]
                 };
             }
             initialized = true;
+            ApplyLitLayers();
             ResetPose();
         }
 
@@ -275,7 +302,7 @@ namespace Dice.Presentation
                 rect.sizeDelta = new Vector2(values[2], values[3]);
                 rect.localRotation = Quaternion.Euler(0f, 0f, values[4]);
                 Color tint = layer.Tint;
-                if (hasSceneLighting && !presentation.Layers[i].Silhouette && presentation.Layers[i].ReceiveSceneLighting)
+                if (hasSceneLighting && layer.Lit == null && !presentation.Layers[i].Silhouette && presentation.Layers[i].ReceiveSceneLighting)
                     tint = (tint.linear * sceneLightingTint).gamma;
                 tint.a = Mathf.Clamp01(values[5]);
                 layer.Image.color = tint;
@@ -378,11 +405,18 @@ namespace Dice.Presentation
         {
             if (layers != null)
                 foreach (LayerRuntime layer in layers)
+                {
                     if (layer != null && layer.Smoke != null)
                     {
                         if (layer.Image != null) layer.Image.material = null;
                         layer.Smoke.Dispose();
                     }
+                    if (layer != null && layer.Lit != null)
+                    {
+                        if (layer.Image != null && layer.Image.material == layer.Lit.Material) layer.Image.material = layer.AuthoredMaterial;
+                        layer.Lit.Dispose();
+                    }
+                }
         }
 
         private static void DestroyOwned(UnityEngine.Object owned)

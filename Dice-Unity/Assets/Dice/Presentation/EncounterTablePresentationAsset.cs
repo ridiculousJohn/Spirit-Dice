@@ -38,6 +38,8 @@ namespace Dice.Presentation
         [SerializeField] private SpiritAudioTheme audioTheme;
         [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
+        [Tooltip("Presentation-only light outages and prop jolts while the encounter is played; empty for a still table.")]
+        [SerializeField] private EncounterAmbientActivityAsset ambientActivity;
         [SerializeField, Range(0, 1)] private float roomTableEdge = .5323f;
         [SerializeField, Range(0, 1)] private float roomSplit = .625f;
         [SerializeField, Range(0, 2)] private float openingFadeDuration;
@@ -52,6 +54,7 @@ namespace Dice.Presentation
         public SpiritAudioTheme AudioTheme => audioTheme;
         public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
         public IReadOnlyList<EncounterRulePresentationAsset> RulePresentations => rulePresentations ?? Array.Empty<EncounterRulePresentationAsset>();
+        public EncounterAmbientActivityAsset AmbientActivity => ambientActivity;
         public float RoomTableEdge => roomTableEdge;
         public float RoomSplit => roomSplit;
         public float OpeningFadeDuration => openingFadeDuration;

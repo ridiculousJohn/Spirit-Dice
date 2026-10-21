@@ -13,6 +13,9 @@ namespace Dice.Presentation
         public int Count { get; private set; }
         public double SampleTime { get; private set; }
 
+        /** Raised after every sample so lit images can follow whichever view samples their authored lighting. */
+        public static event Action<SceneLightingState> Sampled;
+
         /** Intensities multiply authored levels; optional UV offsets and receiver positions replace them for this sample. */
         public void Sample(SceneLightingAsset asset, double time, float[] intensityOverrides = null,
             Vector2[] uvOffsets = null, Vector3[] receiverPositions = null)
@@ -44,6 +47,7 @@ namespace Dice.Presentation
                 this.uvOffsets[i] = light == null ? Vector2.zero : uvOffsets != null ? uvOffsets[i] : light.UvOffset;
                 this.receiverPositions[i] = light == null ? Vector3.zero : receiverPositions != null ? receiverPositions[i] : light.ReceiverPosition;
             }
+            Sampled?.Invoke(this);
         }
 
         public float GetIntensity(int index)

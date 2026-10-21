@@ -1,0 +1,1055 @@
+{
+  "source_plates": {
+    "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantAmbientUnlit.png",
+    "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantLanternOnly.png",
+    "size": [
+      941,
+      1672
+    ]
+  },
+  "patched_plates": {
+    "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/MerchantAmbientUnlitPropsRemoved.png",
+    "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/MerchantLanternOnlyPropsRemoved.png",
+    "declared_mask": "Docs/work/merchant-props/masks/props-declared-mask.png",
+    "patch_weight": "Docs/work/merchant-props/masks/props-patch-weight.png"
+  },
+  "coordinates": "plate pixels, top-left origin; pixel (i, j) covers [i, i + 1) x [j, j + 1)",
+  "draw_order": "patched plate, then pieces in draw_order (HangingPot behind HangingPan)",
+  "pieces": [
+    {
+      "name": "HangingPot",
+      "kind": "swing (hang point)",
+      "draw_order": 0,
+      "files": {
+        "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/HangingPotUnlit.png",
+        "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/HangingPotLanternLit.png"
+      },
+      "crop_rect": {
+        "x": 600,
+        "y": 407,
+        "w": 49,
+        "h": 86
+      },
+      "pivot": {
+        "plate": [
+          614.5,
+          411.5
+        ],
+        "in_crop": [
+          14.5,
+          4.5
+        ],
+        "unity_normalized": [
+          0.2959,
+          0.9477
+        ],
+        "note": "top of the hanging ring on the post (hang point)"
+      },
+      "frame_540x960": {
+        "x": 344.315,
+        "y_from_top": 233.684,
+        "w": 28.119,
+        "h": 49.378
+      },
+      "silhouette_height_px": 80.0,
+      "reach_px": 78.41,
+      "motion": {
+        "rotate_degrees": 3.51,
+        "about": "pivot",
+        "max_displacement_px": 4.8,
+        "suggestion": "damped pendulum swing, +-3.5 degrees about the hang point, 0.8..1.2 s per half cycle"
+      },
+      "masks": {
+        "alpha": "alpha channel of the cutout files (identical in both)",
+        "silhouette_primitives": [
+          [
+            "ellipse",
+            [
+              624.6,
+              457.6,
+              21.0,
+              31.6,
+              8.0
+            ]
+          ],
+          [
+            "line",
+            [
+              [
+                614.5,
+                412.0
+              ],
+              [
+                614.8,
+                420.0
+              ],
+              [
+                615.5,
+                428.0
+              ]
+            ],
+            2.4
+          ]
+        ],
+        "declared_patch_mask": "Docs/work/merchant-props/masks/HangingPot-declared.png",
+        "dilation_px": 6,
+        "completed_region": "Docs/work/merchant-props/masks/HangingPot-completed.png",
+        "completed_pixels": 353
+      }
+    },
+    {
+      "name": "HangingPan",
+      "kind": "swing (hang point)",
+      "draw_order": 1,
+      "files": {
+        "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/HangingPanUnlit.png",
+        "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/HangingPanLanternLit.png"
+      },
+      "crop_rect": {
+        "x": 556,
+        "y": 368,
+        "w": 73,
+        "h": 90
+      },
+      "pivot": {
+        "plate": [
+          595.0,
+          373.5
+        ],
+        "in_crop": [
+          39.0,
+          5.5
+        ],
+        "unity_normalized": [
+          0.5342,
+          0.9389
+        ],
+        "note": "top of the ring hooked over the post (hang point)"
+      },
+      "frame_540x960": {
+        "x": 319.065,
+        "y_from_top": 211.292,
+        "w": 41.892,
+        "h": 51.675
+      },
+      "silhouette_height_px": 84.0,
+      "reach_px": 81.35,
+      "motion": {
+        "rotate_degrees": 3.55,
+        "about": "pivot",
+        "max_displacement_px": 5.04,
+        "suggestion": "damped pendulum swing, +-3.5 degrees about the hang point, 0.8..1.2 s per half cycle"
+      },
+      "masks": {
+        "alpha": "alpha channel of the cutout files (identical in both)",
+        "silhouette_primitives": [
+          [
+            "ellipse",
+            [
+              592.8,
+              419.6,
+              32.6,
+              35.6,
+              -18.0
+            ]
+          ],
+          [
+            "line",
+            [
+              [
+                590.5,
+                378.0
+              ],
+              [
+                595.0,
+                373.5
+              ],
+              [
+                600.5,
+                376.0
+              ],
+              [
+                601.0,
+                385.0
+              ]
+            ],
+            3.2
+          ]
+        ],
+        "declared_patch_mask": "Docs/work/merchant-props/masks/HangingPan-declared.png",
+        "dilation_px": 7,
+        "completed_region": null,
+        "completed_pixels": 0
+      }
+    },
+    {
+      "name": "ShelfBottle",
+      "kind": "wobble (base contact)",
+      "draw_order": 2,
+      "files": {
+        "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/ShelfBottleUnlit.png",
+        "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/ShelfBottleLanternLit.png"
+      },
+      "crop_rect": {
+        "x": 212,
+        "y": 320,
+        "w": 35,
+        "h": 67
+      },
+      "pivot": {
+        "plate": [
+          229.5,
+          383.2
+        ],
+        "in_crop": [
+          17.5,
+          63.2
+        ],
+        "unity_normalized": [
+          0.5,
+          0.0567
+        ],
+        "note": "centre of the base where it stands on the shelf",
+        "base_contacts_plate": [
+          [
+            216.6,
+            383.2
+          ],
+          [
+            242.4,
+            383.2
+          ]
+        ]
+      },
+      "frame_540x960": {
+        "x": 121.658,
+        "y_from_top": 183.732,
+        "w": 20.085,
+        "h": 38.469
+      },
+      "silhouette_height_px": 61.0,
+      "reach_px": 62.33,
+      "motion": {
+        "rotate_degrees": 2.76,
+        "about": "left contact for negative angles, right contact for positive",
+        "max_displacement_px": 3.0,
+        "suggestion": "rock +-2.8 degrees on alternating base contacts, 2..4 rocks settling over about 1 s"
+      },
+      "masks": {
+        "alpha": "alpha channel of the cutout files (identical in both)",
+        "silhouette_primitives": [
+          [
+            "poly",
+            [
+              [
+                227.5,
+                323.5
+              ],
+              [
+                234.0,
+                323.5
+              ],
+              [
+                234.2,
+                327.0
+              ],
+              [
+                233.2,
+                328.5
+              ],
+              [
+                233.2,
+                341.0
+              ],
+              [
+                236.5,
+                343.0
+              ],
+              [
+                240.2,
+                346.5
+              ],
+              [
+                242.6,
+                351.0
+              ],
+              [
+                243.4,
+                356.0
+              ],
+              [
+                243.4,
+                378.0
+              ],
+              [
+                242.4,
+                381.5
+              ],
+              [
+                239.0,
+                383.2
+              ],
+              [
+                220.0,
+                383.2
+              ],
+              [
+                216.6,
+                381.5
+              ],
+              [
+                215.6,
+                378.0
+              ],
+              [
+                215.6,
+                356.0
+              ],
+              [
+                216.4,
+                351.0
+              ],
+              [
+                219.0,
+                346.5
+              ],
+              [
+                223.0,
+                343.0
+              ],
+              [
+                228.2,
+                341.0
+              ],
+              [
+                228.2,
+                328.5
+              ],
+              [
+                227.2,
+                327.0
+              ]
+            ]
+          ]
+        ],
+        "declared_patch_mask": "Docs/work/merchant-props/masks/ShelfBottle-declared.png",
+        "dilation_px": 4,
+        "completed_region": null,
+        "completed_pixels": 0
+      }
+    },
+    {
+      "name": "TrunkLid",
+      "kind": "lid (hinge edge)",
+      "draw_order": 3,
+      "files": {
+        "unlit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/TrunkLidUnlit.png",
+        "lantern_lit": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/Props/TrunkLidLanternLit.png"
+      },
+      "crop_rect": {
+        "x": 166,
+        "y": 401,
+        "w": 97,
+        "h": 81
+      },
+      "pivot": {
+        "plate": [
+          213.0,
+          409.0
+        ],
+        "in_crop": [
+          47.0,
+          8.0
+        ],
+        "unity_normalized": [
+          0.4845,
+          0.9012
+        ],
+        "note": "middle of the back (hinge) edge of the lid top",
+        "hinge_edge_plate": [
+          [
+            170.0,
+            411.5
+          ],
+          [
+            257.0,
+            423.0
+          ]
+        ],
+        "front_seam_plate": [
+          [
+            169.5,
+            453.5
+          ],
+          [
+            200.0,
+            455.0
+          ],
+          [
+            216.5,
+            457.0
+          ],
+          [
+            233.0,
+            458.5
+          ],
+          [
+            259.0,
+            462.5
+          ]
+        ]
+      },
+      "frame_540x960": {
+        "x": 95.26,
+        "y_from_top": 230.239,
+        "w": 55.664,
+        "h": 46.507
+      },
+      "silhouette_height_px": 75.0,
+      "reach_px": 70.88,
+      "motion": {
+        "lift_px": 3.0,
+        "max_displacement_px": 3.0,
+        "suggestion": "lift 3.0 px over about 80 ms (optionally tilt up to 2.4 degrees about the hinge edge), drop back in 50 ms, 1..3 thumps"
+      },
+      "masks": {
+        "alpha": "alpha channel of the cutout files (identical in both)",
+        "silhouette_primitives": [
+          [
+            "poly",
+            [
+              [
+                169.5,
+                412.0
+              ],
+              [
+                175.0,
+                408.5
+              ],
+              [
+                196.0,
+                407.5
+              ],
+              [
+                202.0,
+                405.5
+              ],
+              [
+                215.0,
+                404.0
+              ],
+              [
+                227.0,
+                405.0
+              ],
+              [
+                231.0,
+                411.0
+              ],
+              [
+                245.0,
+                417.0
+              ],
+              [
+                256.0,
+                422.5
+              ],
+              [
+                258.5,
+                425.0
+              ],
+              [
+                259.0,
+                462.5
+              ],
+              [
+                233.0,
+                458.5
+              ],
+              [
+                233.0,
+                476.0
+              ],
+              [
+                226.0,
+                478.0
+              ],
+              [
+                217.5,
+                475.0
+              ],
+              [
+                216.5,
+                457.0
+              ],
+              [
+                200.0,
+                455.0
+              ],
+              [
+                169.5,
+                453.5
+              ]
+            ]
+          ]
+        ],
+        "declared_patch_mask": "Docs/work/merchant-props/masks/TrunkLid-declared.png",
+        "dilation_px": 4,
+        "completed_region": null,
+        "completed_pixels": 0
+      }
+    }
+  ],
+  "removals": [
+    {
+      "name": "HangingCage",
+      "reason": "painted cage basket under the HangingCup.prefab cup footprint",
+      "silhouette_primitives": [
+        [
+          "poly",
+          [
+            [
+              638.5,
+              305.0
+            ],
+            [
+              648.5,
+              305.0
+            ],
+            [
+              649.5,
+              320.0
+            ],
+            [
+              648.0,
+              333.0
+            ],
+            [
+              639.5,
+              333.0
+            ],
+            [
+              638.0,
+              320.0
+            ]
+          ]
+        ],
+        [
+          "line",
+          [
+            [
+              644.0,
+              332.0
+            ],
+            [
+              644.0,
+              347.0
+            ]
+          ],
+          2.4
+        ],
+        [
+          "line",
+          [
+            [
+              641.0,
+              330.5
+            ],
+            [
+              622.0,
+              350.5
+            ]
+          ],
+          3.0
+        ],
+        [
+          "line",
+          [
+            [
+              647.0,
+              325.5
+            ],
+            [
+              679.5,
+              350.5
+            ]
+          ],
+          3.6
+        ],
+        [
+          "ellipse",
+          [
+            651.0,
+            350.2,
+            28.6,
+            4.6,
+            0.0
+          ]
+        ],
+        [
+          "line",
+          [
+            [
+              678.5,
+              351.5
+            ],
+            [
+              672.0,
+              376.0
+            ]
+          ],
+          3.0
+        ],
+        [
+          "line",
+          [
+            [
+              625.0,
+              352.5
+            ],
+            [
+              626.0,
+              368.0
+            ]
+          ],
+          2.2
+        ],
+        [
+          "line",
+          [
+            [
+              644.0,
+              352.0
+            ],
+            [
+              644.0,
+              362.0
+            ]
+          ],
+          3.0
+        ],
+        [
+          "poly",
+          [
+            [
+              626,
+              366
+            ],
+            [
+              632,
+              362
+            ],
+            [
+              645,
+              360.2
+            ],
+            [
+              660,
+              361
+            ],
+            [
+              668,
+              364
+            ],
+            [
+              672,
+              369
+            ],
+            [
+              672,
+              398
+            ],
+            [
+              669.5,
+              410
+            ],
+            [
+              669,
+              420
+            ],
+            [
+              661,
+              425
+            ],
+            [
+              640,
+              425.5
+            ],
+            [
+              628.5,
+              423.5
+            ],
+            [
+              625.5,
+              418
+            ],
+            [
+              624,
+              370
+            ]
+          ]
+        ]
+      ],
+      "declared_patch_mask": "Docs/work/merchant-props/masks/HangingCage-declared.png",
+      "dilation_px": 6,
+      "declared_pixels": 6617
+    }
+  ],
+  "regions": {
+    "pots": {
+      "box_xyxy": [
+        520,
+        252,
+        712,
+        540
+      ],
+      "declared_pixels": 14085,
+      "silhouette_pixels": 5751,
+      "removal_only_pixels": 6460,
+      "changed_pixels_unlit": 13427,
+      "changed_pixels_lit": 13770,
+      "rest_vs_plate_inside_silhouettes": {
+        "unlit_max": 97.53333333333333,
+        "unlit_mean": 0.5145639836904482,
+        "lit_max": 114.00392156862746,
+        "lit_mean": 0.5614668060670592
+      },
+      "rest_vs_plate_dilation_ring": {
+        "unlit_max": 122.0,
+        "unlit_mean": 7.858591248665955,
+        "lit_max": 162.0,
+        "lit_mean": 9.501067235859125
+      },
+      "donors": {
+        "clean": {
+          "donor": "Docs/work/merchant-props/donors/pots-remove-all-1.png",
+          "donor_size": [
+            1024,
+            1536
+          ],
+          "target_box_xyxy": [
+            520,
+            252,
+            712,
+            540
+          ],
+          "window_xyxy": [
+            548,
+            292,
+            700,
+            505
+          ],
+          "model": "donor_px = M (p - c) + t; p plate pixel index (top-left origin), donor pixel index",
+          "c": [
+            624.0,
+            398.5
+          ],
+          "M": [
+            [
+              5.322510041525145,
+              -0.0019219315733245762
+            ],
+            [
+              -0.001226514676437417,
+              5.331626562769937
+            ]
+          ],
+          "t": [
+            557.7819637792597,
+            783.5821420417517
+          ],
+          "ncc_initial": 0.8743305391149212,
+          "ncc_registered": 0.892210285336528
+        },
+        "completion": {
+          "donor": "Docs/work/merchant-props/donors/pots-remove-pan-1.png",
+          "donor_size": [
+            1024,
+            1536
+          ],
+          "target_box_xyxy": [
+            520,
+            252,
+            712,
+            540
+          ],
+          "window_xyxy": [
+            548,
+            292,
+            700,
+            505
+          ],
+          "model": "donor_px = M (p - c) + t; p plate pixel index (top-left origin), donor pixel index",
+          "c": [
+            624.0,
+            398.5
+          ],
+          "M": [
+            [
+              5.331019628365334,
+              6.599095660357944e-06
+            ],
+            [
+              1.507705874272971e-05,
+              5.33192678052015
+            ]
+          ],
+          "t": [
+            556.7623307685953,
+            783.4203608116619
+          ],
+          "ncc_initial": 0.982704833010771,
+          "ncc_registered": 0.9828861670304698
+        }
+      },
+      "prompts": [
+        "Docs/work/merchant-props/prompts/pots-remove-all.txt",
+        "Docs/work/merchant-props/prompts/pots-remove-pan.txt"
+      ]
+    },
+    "bottle": {
+      "box_xyxy": [
+        160,
+        280,
+        300,
+        490
+      ],
+      "declared_pixels": 1817,
+      "silhouette_pixels": 1259,
+      "removal_only_pixels": 0,
+      "changed_pixels_unlit": 1559,
+      "changed_pixels_lit": 1781,
+      "rest_vs_plate_inside_silhouettes": {
+        "unlit_max": 9.870588235294118,
+        "unlit_mean": 0.07446931115575699,
+        "lit_max": 18.713725490196083,
+        "lit_mean": 0.18512669563456838
+      },
+      "rest_vs_plate_dilation_ring": {
+        "unlit_max": 47.0,
+        "unlit_mean": 1.8870967741935485,
+        "lit_max": 39.0,
+        "lit_mean": 4.482078853046595
+      },
+      "donors": {
+        "clean": {
+          "donor": "Docs/work/merchant-props/donors/bottle-remove-1.png",
+          "donor_size": [
+            1024,
+            1536
+          ],
+          "target_box_xyxy": [
+            160,
+            280,
+            300,
+            490
+          ],
+          "window_xyxy": [
+            190,
+            300,
+            270,
+            405
+          ],
+          "model": "donor_px = M (p - c) + t; p plate pixel index (top-left origin), donor pixel index",
+          "c": [
+            230.0,
+            352.5
+          ],
+          "M": [
+            [
+              7.306069989967037,
+              0.004023738348257826
+            ],
+            [
+              -0.001419773925435848,
+              7.313791111467118
+            ]
+          ],
+          "t": [
+            515.1083111701157,
+            533.2487932362937
+          ],
+          "ncc_initial": 0.9935682692748675,
+          "ncc_registered": 0.9939663583747228
+        }
+      },
+      "prompts": [
+        "Docs/work/merchant-props/prompts/bottle-remove.txt"
+      ]
+    },
+    "trunk": {
+      "box_xyxy": [
+        140,
+        360,
+        290,
+        585
+      ],
+      "declared_pixels": 5666,
+      "silhouette_pixels": 4658,
+      "removal_only_pixels": 0,
+      "changed_pixels_unlit": 5409,
+      "changed_pixels_lit": 5653,
+      "rest_vs_plate_inside_silhouettes": {
+        "unlit_max": 53.68235294117647,
+        "unlit_mean": 0.3041497234359609,
+        "lit_max": 106.36470588235294,
+        "lit_mean": 0.6651411444784012
+      },
+      "rest_vs_plate_dilation_ring": {
+        "unlit_max": 60.0,
+        "unlit_mean": 4.780753968253968,
+        "lit_max": 116.0,
+        "lit_mean": 13.443452380952381
+      },
+      "donors": {
+        "clean": {
+          "donor": "Docs/work/merchant-props/donors/trunk-lid-remove-1.png",
+          "donor_size": [
+            1024,
+            1536
+          ],
+          "target_box_xyxy": [
+            140,
+            360,
+            290,
+            585
+          ],
+          "window_xyxy": [
+            150,
+            392,
+            275,
+            492
+          ],
+          "model": "donor_px = M (p - c) + t; p plate pixel index (top-left origin), donor pixel index",
+          "c": [
+            212.5,
+            442.0
+          ],
+          "M": [
+            [
+              6.822146169659902,
+              0.0059885750063719215
+            ],
+            [
+              0.002261698551323592,
+              6.827027299972516
+            ]
+          ],
+          "t": [
+            498.80831521052596,
+            562.632307384653
+          ],
+          "ncc_initial": 0.9758243979016941,
+          "ncc_registered": 0.9844124226846692
+        }
+      },
+      "prompts": [
+        "Docs/work/merchant-props/prompts/trunk-lid-remove.txt"
+      ]
+    }
+  },
+  "hanging_cup": {
+    "source": "MerchantEncounter.unity HangingCup instance (540 x 960 frame (370, 144) from top-left), HangingCup.prefab Cup rect 74 x 111 pivot (0.506, 0.94), HangingCupSwing.anim +-3 degrees",
+    "hang_point_plate": [
+      644.76,
+      250.8
+    ],
+    "rest_alpha_bounds_plate_xyxy": [
+      609,
+      248,
+      678,
+      422
+    ],
+    "painted_cup_in_plates": false,
+    "finding": "No cup or mug is painted at or near the cup position in either plate. The cup hangs directly over the painted cage basket (strap, bail and body, plate x 618..681, y 302..426), so the scene showed two hanging vessels in one place. The cage is removed from both patched plates as a removal for the cup, not a movable prop.",
+    "overlap_pixels_alpha_gt_0.1": {
+      "HangingPot": {
+        "rest": 0,
+        "swing_extremes": 0,
+        "silhouette": 2239
+      },
+      "HangingCage": {
+        "rest": 3092,
+        "swing_extremes": 3806,
+        "silhouette": 4264
+      },
+      "HangingPan": {
+        "rest": 0,
+        "swing_extremes": 187,
+        "silhouette": 3865
+      },
+      "ShelfBottle": {
+        "rest": 0,
+        "swing_extremes": 0,
+        "silhouette": 1259
+      },
+      "TrunkLid": {
+        "rest": 0,
+        "swing_extremes": 0,
+        "silhouette": 4658
+      }
+    }
+  },
+  "verification": {
+    "installed_plates_sha256_before": {
+      "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantAmbientUnlit.png": "c4990686c58efd2291aee9cc75f2b2631ce1c9468b59d1d5c4cfd3d8938563aa",
+      "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantLanternOnly.png": "35ab252d8125e8ec4e5307b6cdf3f61b7996b764da975bf7e5b344f64a50c6d6"
+    },
+    "installed_plates_sha256_after": {
+      "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantAmbientUnlit.png": "c4990686c58efd2291aee9cc75f2b2631ce1c9468b59d1d5c4cfd3d8938563aa",
+      "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantLanternOnly.png": "35ab252d8125e8ec4e5307b6cdf3f61b7996b764da975bf7e5b344f64a50c6d6"
+    },
+    "outside_declared_identical_unlit": true,
+    "outside_declared_identical_lit": true,
+    "declared_pixels": 21568,
+    "changed_pixels_unlit": 20395,
+    "changed_pixels_lit": 21204,
+    "installed_plates_unchanged": true,
+    "alpha_identical_unlit_vs_lit": {
+      "HangingPot": true,
+      "HangingPan": true,
+      "ShelfBottle": true,
+      "TrunkLid": true
+    },
+    "rest_composite_vs_plate": {
+      "note": "max over RGB channels per pixel, 0..255; pieces composited over the patched plates at rest",
+      "full_frame": {
+        "pixels": 1573352,
+        "unlit_max": 220,
+        "unlit_mean": 0.1374,
+        "lit_max": 194,
+        "lit_mean": 0.1432
+      },
+      "silhouettes_full_coverage": {
+        "pixels": 10819,
+        "unlit_max": 1,
+        "unlit_mean": 0.0009,
+        "lit_max": 2,
+        "lit_mean": 0.0012
+      },
+      "silhouettes_all": {
+        "pixels": 11668,
+        "unlit_max": 98,
+        "unlit_mean": 0.3831,
+        "lit_max": 114,
+        "lit_mean": 0.5622
+      },
+      "dilation_ring_outside_silhouettes": {
+        "pixels": 3440,
+        "unlit_max": 122,
+        "unlit_mean": 5.9881,
+        "lit_max": 162,
+        "lit_mean": 9.8422
+      },
+      "cup_removal_HangingCage": {
+        "pixels": 6460,
+        "unlit_max": 220,
+        "unlit_mean": 29.5769,
+        "lit_max": 194,
+        "lit_mean": 28.6158
+      }
+    }
+  },
+  "script": "Tools/Presentation/cut-merchant-props.py",
+  "work_folder": "Docs/work/merchant-props"
+}

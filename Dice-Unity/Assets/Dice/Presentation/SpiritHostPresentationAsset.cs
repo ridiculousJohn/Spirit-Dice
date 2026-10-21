@@ -38,6 +38,8 @@ namespace Dice.Presentation
         public bool ReceiveSceneLighting = true;
         public SpiritPortraitSmoke Smoke = new SpiritPortraitSmoke();
         public float[] Weights = Array.Empty<float>();
+        [Tooltip("Optional per-pixel scene lighting from unlit, reference and depth textures. Layers without lights keep the uniform receiver tint.")]
+        public SceneLitLayer Lighting = new SceneLitLayer();
     }
 
     [Serializable]
@@ -73,6 +75,8 @@ namespace Dice.Presentation
         public Graphic SigilPrefab;
         public Shader SilhouetteShader;
         public Shader SmokeShader;
+        [Tooltip("Lit-layer shader for lit layers whose authored material does not already use one.")]
+        public Shader LitLayerShader;
         public Vector2 ReferenceSize = new Vector2(540f, 960f);
         public float Scale = 1f;
         public Vector2 Offset;
@@ -123,6 +127,13 @@ namespace Dice.Presentation
                         "Layer " + layer.Id + " smoke motion must be finite, with nonnegative speed.");
                     Require(Finite(layer.Smoke.Opacity) && layer.Smoke.Opacity >= 0f && layer.Smoke.Opacity <= 1f,
                         "Layer " + layer.Id + " smoke opacity must be between zero and one.");
+                }
+                if (layer.Lighting != null && layer.Lighting.Configured)
+                {
+                    Require(!layer.Silhouette && (layer.Smoke == null || !layer.Smoke.Enabled) && layer.ReceiveSceneLighting,
+                        "Layer " + layer.Id + " per-pixel lighting requires a scene-lit layer without silhouette or smoke materials.");
+                    try { layer.Lighting.Validate(); }
+                    catch (InvalidOperationException error) { Require(false, "Layer " + layer.Id + ": " + error.Message); }
                 }
                 if (layer.Mesh != null) layer.Mesh.Validate();
                 int channels = layer.Mesh != null && layer.Mesh.Shapes != null ? layer.Mesh.Shapes.Length : 0;

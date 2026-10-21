@@ -8,7 +8,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 8
   m_Name: CanopyRoofSource
-  m_Shader: {fileID: 4800000, guid: 22d03ee7f6e94daca44bf6ff9637e112, type: 3}
+  m_Shader: {fileID: 4800000, guid: 1381d22630ca4363815c8e4751f13ca1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -28,16 +28,37 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SourceTex:
-        m_Texture: {fileID: 2800000, guid: d7f60e26749f4d9e8dccfd49e234dc2c, type: 3}
+        m_Texture: {fileID: 2800000, guid: defbe432f68543f7af57dca35392bc5c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _LayerMask:
         m_Texture: {fileID: 2800000, guid: 9417d196434b42689c010735c5722417, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex0:
+        m_Texture: {fileID: 2800000, guid: 394e6b76e9bd4899bcd6df5ce05ffcf0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex0:
+        m_Texture: {fileID: 2800000, guid: 501c7bcf77804d4aa512d72d7f32faf8, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _InvertMask: 1
+    - _SceneLitMode0: 1
+    - _SceneLitResponseEnabled0: 1
+    - _SceneLitStrength0: 1
+    - _SceneLitIntensity0: 1
+    - _SceneLitDistanceFalloff0: 0.8
+    - _SceneLitSourceResponse0: 0.5
+    - _SceneLitIncludesBase0: 1
+    - _SceneLitConstrainAmbient0: 0
+    - _SceneLitModulateByBase0: 0
+    - _SceneLitMode1: 0
+    - _SceneLitMode2: 0
+    - _SceneLitMode3: 0
+    - _SceneLitWrap: 1
     - _StencilComp: 8
     - _Stencil: 0
     - _StencilOp: 0
@@ -47,5 +68,12 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitTint0: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitFrameTransform: {r: 1, g: 1, b: 0, a: 0}
+    - _SceneLitDepthRange: {r: 0, g: -1, b: 0, a: 0}
+    - _SceneLitFrameOrigin: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitFrameAxisX: {r: 1, g: 0, b: 0, a: 0}
+    - _SceneLitFrameAxisY: {r: 0, g: 1, b: 0, a: 0}
+    - _SceneLitMapRect: {r: 0, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

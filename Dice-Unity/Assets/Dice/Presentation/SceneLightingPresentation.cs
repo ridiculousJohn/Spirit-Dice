@@ -53,6 +53,8 @@ namespace Dice.Presentation
         [SerializeField] private SceneLightingSourceBinding[] bindings = Array.Empty<SceneLightingSourceBinding>();
         [SerializeField] private SceneLightingImageReceiver[] receivers = Array.Empty<SceneLightingImageReceiver>();
         [SerializeField] private SceneLightingHostReceiver[] hosts = Array.Empty<SceneLightingHostReceiver>();
+        [Tooltip("Images lit per pixel by this sample, taking precedence over other views sampling the same asset.")]
+        [SerializeField] private SceneLitImage[] litImages = Array.Empty<SceneLitImage>();
         private readonly SceneLightingState state = new SceneLightingState();
         private readonly Dictionary<RawImage, Color> originalColors = new Dictionary<RawImage, Color>();
         private SceneLightingMaterial compositor;
@@ -66,7 +68,8 @@ namespace Dice.Presentation
         public SceneLightingState State => state;
 
         public void Configure(SceneLightingAsset asset, RawImage image, SceneLightingSourceBinding[] sources,
-            SceneLightingImageReceiver[] imageReceivers = null, SceneLightingHostReceiver[] hostReceivers = null)
+            SceneLightingImageReceiver[] imageReceivers = null, SceneLightingHostReceiver[] hostReceivers = null,
+            SceneLitImage[] litLayers = null)
         {
             Release();
             lightingAsset = asset;
@@ -74,6 +77,7 @@ namespace Dice.Presentation
             bindings = sources ?? Array.Empty<SceneLightingSourceBinding>();
             receivers = imageReceivers ?? Array.Empty<SceneLightingImageReceiver>();
             hosts = hostReceivers ?? Array.Empty<SceneLightingHostReceiver>();
+            litImages = litLayers ?? Array.Empty<SceneLitImage>();
             if (isActiveAndEnabled) ApplyAtTime(Time.unscaledTimeAsDouble);
         }
 
@@ -154,6 +158,12 @@ namespace Dice.Presentation
             {
                 if (receiver == null || receiver.Image == null) continue;
                 Color original = OriginalColor(receiver.Image);
+                // Images lit per pixel already receive these lights and keep their authored color.
+                if (receiver.Image.TryGetComponent(out SceneLitImage lit) && lit.isActiveAndEnabled && lit.Layer != null && lit.Layer.Configured)
+                {
+                    receiver.Image.color = original;
+                    continue;
+                }
                 Vector2 delta = receiver.Source != null ? GetSourceOffset(receiver.Source, receiver.ReferencePosition) : Vector2.zero;
                 Vector3 position = receiver.Position + receiver.ReceiverOffsetX * delta.x + receiver.ReceiverOffsetY * delta.y;
                 Color color = (original.linear * state.EvaluateReceiver(position, receiver.Normal)).gamma;
@@ -168,6 +178,9 @@ namespace Dice.Presentation
                 receiver.Portrait.Build((RectTransform)receiver.Portrait.transform, receiver.Presentation);
                 receiver.Portrait.SetSceneLighting(state, receiver.Position);
             }
+            if (litImages != null)
+                foreach (SceneLitImage image in litImages)
+                    if (image != null) image.Bind(state);
         }
 
         private Color OriginalColor(RawImage image)
@@ -246,6 +259,7 @@ namespace Dice.Presentation
             originalColors.Clear();
             foreach (SceneLightingHostReceiver receiver in hosts)
                 if (receiver != null && receiver.Portrait != null) receiver.Portrait.SetSceneLighting(null, receiver.Position);
+            SceneLitImage.Release(state);
             compositor?.Dispose();
             compositor = null;
             configuredBackground = null;

@@ -152,7 +152,7 @@ namespace Dice.Tests
             RawImage[] images = canvas.GetComponentsInChildren<RawImage>(true);
             Assert.That(images.All(image => image.texture != null && !image.raycastTarget), Is.True);
             Assert.That(AssetDatabase.GetAssetPath(animation.transform.parent.GetComponent<RawImage>().texture),
-                Is.EqualTo(CanopyMotionTests.ArtPath + "MerchantAmbientUnlit.png"));
+                Is.EqualTo(CanopyMotionTests.ArtPath + "Props/MerchantAmbientUnlitPropsRemoved.png"));
             Texture plateTexture = animation.transform.parent.GetComponent<RawImage>().texture;
             Assert.That(new Vector2Int(plateTexture.width, plateTexture.height), Is.EqualTo(new Vector2Int(941, 1672)));
             var merchant = (RectTransform)animation.transform.parent.Find("Merchant");
@@ -458,7 +458,7 @@ namespace Dice.Tests
                     changedReferenceMaterial = true;
                     plateImage.material = null;
                     plateImage.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(CanopyMotionTests.ArtPath +
-                        (referenceTexture ?? "MerchantAmbientUnlit.png"));
+                        (referenceTexture ?? "Props/MerchantAmbientUnlitPropsRemoved.png"));
                     Assert.That(plateImage.texture, Is.Not.Null);
                     foreach (RawImage image in overlays) image.enabled = false;
                 }

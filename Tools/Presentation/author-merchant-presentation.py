@@ -34,6 +34,19 @@ HEAD_GROUP = ((338, 615, 95, 110), (318, 540, 175, 112), (262, 680, 55, 55))
 CHEST = (360, 820, 260, 170)
 
 IDLE_BREATHS = ((4.4, 1.0), (4.9, .86), (4.5, .94))
+
+# Per-pixel lighting. The source frame registers to the background plate at plate px = (0.9136 x + 21, 0.94 y + 28.8),
+# top-left origin. The candle's piece light maps plate UV (bottom-left) to the receiver rig as x = -3.4 + 10 (u - 0.163656),
+# y = -1.5 + 8 (v - 0.336124) (MerchantUnquietCartTable.asset), and frame positions are relative to its host lighting
+# position (0, 1, 0).
+PLATE = (941, 1672)
+REGISTRATION = (.9136, 21, .94, 28.8)
+CANDLE_RIG = ((.163656, .336124), (-3.4, -1.5), (10, 8))
+HOST_LIGHTING_POSITION = (0, 1, 0)
+# Rig Z at depth 0 (torso back) and depth 1 (hands on the table); the candle sits at Z -1 in front of the table.
+DEPTH_RANGE = (3.5, 1.5)
+# Scales the candle's receiver light (intensity 8 x receiver intensity 0.1) to the painted candle warmth on the hands and forearms.
+CANDLE_STRENGTH = 50
 IDLE_BLINKS = (1.55, 5.45, 11.25)
 
 
@@ -88,23 +101,58 @@ def texture_guid(name):
     return A.guid(ART / name)
 
 
+def frame_mapping():
+    """Receiver rig position of the source frame's bottom-left corner and its full-width and full-height axes."""
+    (reference_u, reference_v), (rig_x, rig_y), (scale_x, scale_y) = CANDLE_RIG
+    sx, ox, sy, oy = REGISTRATION
+    origin_u = ox / PLATE[0]
+    origin_v = 1 - (sy * SOURCE[1] + oy) / PLATE[1]
+    origin = (rig_x + scale_x * (origin_u - reference_u) - HOST_LIGHTING_POSITION[0],
+              rig_y + scale_y * (origin_v - reference_v) - HOST_LIGHTING_POSITION[1], -HOST_LIGHTING_POSITION[2])
+    axis_x = scale_x * sx * SOURCE[0] / PLATE[0]
+    axis_y = scale_y * sy * SOURCE[1] / PLATE[1]
+    return origin, axis_x, axis_y
+
+
+def lighting(unlit, lantern_lit):
+    """Lantern 0 by reference through the merchant-frame response; candle 1 computed from depth."""
+    relight = 'Relight/'
+    origin, axis_x, axis_y = frame_mapping()
+    return dict(
+        BaseTexture=A.ref(texture_guid(relight + unlit), 2800000, 3),
+        Lights=[dict(LightIndex=0, Mode=0, Reference=A.ref(texture_guid(relight + lantern_lit), 2800000, 3),
+                     ResponseMap=A.ref(texture_guid(relight + 'MerchantLanternResponseHost.png'), 2800000, 3), Strength=1),
+                dict(LightIndex=1, Mode=1, Reference=A.ref(None), ResponseMap=A.ref(None), Strength=CANDLE_STRENGTH)],
+        Depth=A.ref(texture_guid(relight + 'MerchantDepth.png'), 2800000, 3),
+        DepthRange=A.v2(*DEPTH_RANGE),
+        FrameOrigin=A.Flow(x=origin[0], y=origin[1], z=origin[2]),
+        FrameAxisX=A.Flow(x=axis_x, y=0, z=0),
+        FrameAxisY=A.Flow(x=0, y=axis_y, z=0),
+        MapRect=dict(serializedVersion=2, x=0, y=0, width=1, height=1),
+        Wrap=1)
+
+
 def author():
     mesh = A.mesh(FOLDER / 'MerchantBreathMesh.asset', COLUMNS, ROWS, [('Breath', breathing_field)])
 
-    def layer(name, texture, position, color=(1, 1, 1, 1)):
+    def layer(name, texture, position, color=(1, 1, 1, 1), lit=None):
         item = A.layer(name, texture_guid(texture), mesh, position, SOURCE,
                        pivot=(position[0] / SOURCE[0], position[1] / SOURCE[1]), color=color, weights=(0,))
         item['ReceiveSceneLighting'] = True
         item['Smoke'] = dict(Enabled=False, MotionMask=A.ref(None), FlowNoise=A.ref(None),
                              Distortion=.035, Speed=.7, Opacity=.6, Flow=A.v2(0, .018))
+        item['Lighting'] = lighting(*lit)
         return item
 
     # Layer order matches the prefab's authored layers; the blink overlay draws directly above the head.
-    layers = [layer('Torso', 'MerchantTorsoAnimation.png', (385, 697)),
-              layer('Head', 'MerchantHeadRepaired.png', (370, 934)),
-              layer('Resting Arm', 'MerchantHost.png', (500, 992)),
-              layer('Supporting Arm', 'MerchantHost.png', (220, 972)),
-              layer('Blink', 'MerchantBlinkEyes.png', (370, 934), color=(1, 1, 1, 0))]
+    layers = [layer('Torso', 'MerchantTorsoAnimation.png', (385, 697),
+                    lit=('MerchantTorsoAnimationUnlit.png', 'MerchantTorsoAnimationLanternLit.png')),
+              layer('Head', 'MerchantHeadRepaired.png', (370, 934),
+                    lit=('MerchantHeadRepairedUnlit.png', 'MerchantHeadRepairedLanternLit.png')),
+              layer('Resting Arm', 'MerchantHost.png', (500, 992), lit=('MerchantHostUnlit.png', 'MerchantHostLanternLit.png')),
+              layer('Supporting Arm', 'MerchantHost.png', (220, 972), lit=('MerchantHostUnlit.png', 'MerchantHostLanternLit.png')),
+              layer('Blink', 'MerchantBlinkEyes.png', (370, 934), color=(1, 1, 1, 0),
+                    lit=('MerchantBlinkEyesUnlit.png', 'MerchantBlinkEyesLanternLit.png'))]
     blink_layer = 4
     bodies = range(len(layers))
 
@@ -143,6 +191,7 @@ def author():
         PortraitPrefab=A.ref(A.guid(FOLDER / 'MerchantHost.prefab'), 1002, 3),
         SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/MerchantHostSigil.prefab'), 6469703378660953074, 3),
         SilhouetteShader=A.ref(None), SmokeShader=A.ref(None),
+        LitLayerShader=A.ref(A.guid(A.ASSETS / 'Presentation/Shared/SceneLitImage.shader'), 4800000, 3),
         ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=layers, Sequences=sequences,
         SigilLines=[], SigilWidth=.035))
     print('Host GUID: ' + host)

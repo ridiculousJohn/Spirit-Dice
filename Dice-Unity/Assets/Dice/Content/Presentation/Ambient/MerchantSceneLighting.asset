@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: MerchantSceneLighting
   m_EditorClassIdentifier:
   Shader: {fileID: 4800000, guid: 56e01f30524756ed6f7d40b98a2655af, type: 3}
-  BaseTexture: {fileID: 2800000, guid: 614a298f27aa41178b23abc809b90fb9, type: 3}
+  BaseTexture: {fileID: 2800000, guid: 35fb93797f05470f84009e695b7755c1, type: 3}
   Lights:
-  - Contribution: {fileID: 2800000, guid: a763a02cb36a4693987eb6bc00644b62, type: 3}
+  - Contribution: {fileID: 2800000, guid: 68f6852712e84117afee23b7d0f665ba, type: 3}
     ResponseMap: {fileID: 2800000, guid: 501c7bcf77804d4aa512d72d7f32faf8, type: 3}
     Tint: {r: 1, g: 1, b: 1, a: 1}
     Intensity: 1

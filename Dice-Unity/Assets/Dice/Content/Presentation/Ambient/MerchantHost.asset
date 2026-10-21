@@ -17,6 +17,7 @@ MonoBehaviour:
   SigilColor: {r: 0.82352941, g: 0.65098039, b: 0.34509804, a: 1}
   PortraitPrefab: {fileID: 1002, guid: "7a5c2d399f435d488c072697eea35d64", type: 3}
   SigilPrefab: {fileID: 6469703378660953074, guid: "95544163f33c4391b3816ffb65cc92e7", type: 3}
+  LitLayerShader: {fileID: 4800000, guid: "1381d22630ca4363815c8e4751f13ca1", type: 3}
   ReferenceSize: {x: 941, y: 1672}
   Scale: 1
   Offset: {x: 0, y: 0}
@@ -41,6 +42,31 @@ MonoBehaviour:
         Speed: 0.7
         Opacity: 0.6
         Flow: {x: 0, y: 0.018}
+      Lighting:
+        BaseTexture: {fileID: 2800000, guid: "d89ac900ebf548f7b83085c2f8335b0d", type: 3}
+        Lights:
+          - LightIndex: 0
+            Mode: 0
+            Reference: {fileID: 2800000, guid: "97029aae77ee43a78a4a74575299026c", type: 3}
+            ResponseMap: {fileID: 2800000, guid: "39abe382089d449cba21b4828e5951ce", type: 3}
+            Strength: 1
+          - LightIndex: 1
+            Mode: 1
+            Reference: {fileID: 0}
+            ResponseMap: {fileID: 0}
+            Strength: 50
+        Depth: {fileID: 2800000, guid: "53ffc798778a42e3bdbcc6b133618a57", type: 3}
+        DepthRange: {x: 3.5, y: 1.5}
+        FrameOrigin: {x: -4.8133932, y: -4.846791, z: 0}
+        FrameAxisX: {x: 9.136, y: 0, z: 0}
+        FrameAxisY: {x: 0, y: 7.52, z: 0}
+        MapRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        Wrap: 1
     - Id: "Head"
       Texture: {fileID: 2800000, guid: "3d9a9d61a3e449d998988fc8daacbb2a", type: 3}
       Mesh: {fileID: 11400000, guid: "1ce14a9ed3fd5725b455f9acbcaaa7ba", type: 2}
@@ -61,6 +87,31 @@ MonoBehaviour:
         Speed: 0.7
         Opacity: 0.6
         Flow: {x: 0, y: 0.018}
+      Lighting:
+        BaseTexture: {fileID: 2800000, guid: "4ad6f3e142664a1dbeacc4df64d77e74", type: 3}
+        Lights:
+          - LightIndex: 0
+            Mode: 0
+            Reference: {fileID: 2800000, guid: "9a6f8e22f7e140e1bbe233df4ab72653", type: 3}
+            ResponseMap: {fileID: 2800000, guid: "39abe382089d449cba21b4828e5951ce", type: 3}
+            Strength: 1
+          - LightIndex: 1
+            Mode: 1
+            Reference: {fileID: 0}
+            ResponseMap: {fileID: 0}
+            Strength: 50
+        Depth: {fileID: 2800000, guid: "53ffc798778a42e3bdbcc6b133618a57", type: 3}
+        DepthRange: {x: 3.5, y: 1.5}
+        FrameOrigin: {x: -4.8133932, y: -4.846791, z: 0}
+        FrameAxisX: {x: 9.136, y: 0, z: 0}
+        FrameAxisY: {x: 0, y: 7.52, z: 0}
+        MapRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        Wrap: 1
     - Id: "Resting Arm"
       Texture: {fileID: 2800000, guid: "f498baacf913477eb3000eee91689d57", type: 3}
       Mesh: {fileID: 11400000, guid: "1ce14a9ed3fd5725b455f9acbcaaa7ba", type: 2}
@@ -81,6 +132,31 @@ MonoBehaviour:
         Speed: 0.7
         Opacity: 0.6
         Flow: {x: 0, y: 0.018}
+      Lighting:
+        BaseTexture: {fileID: 2800000, guid: "0cfb84b131434e3f8f1873d7af6fbd64", type: 3}
+        Lights:
+          - LightIndex: 0
+            Mode: 0
+            Reference: {fileID: 2800000, guid: "de3b8e3c57b14e2db4c39446ae232f94", type: 3}
+            ResponseMap: {fileID: 2800000, guid: "39abe382089d449cba21b4828e5951ce", type: 3}
+            Strength: 1
+          - LightIndex: 1
+            Mode: 1
+            Reference: {fileID: 0}
+            ResponseMap: {fileID: 0}
+            Strength: 50
+        Depth: {fileID: 2800000, guid: "53ffc798778a42e3bdbcc6b133618a57", type: 3}
+        DepthRange: {x: 3.5, y: 1.5}
+        FrameOrigin: {x: -4.8133932, y: -4.846791, z: 0}
+        FrameAxisX: {x: 9.136, y: 0, z: 0}
+        FrameAxisY: {x: 0, y: 7.52, z: 0}
+        MapRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        Wrap: 1
     - Id: "Supporting Arm"
       Texture: {fileID: 2800000, guid: "f498baacf913477eb3000eee91689d57", type: 3}
       Mesh: {fileID: 11400000, guid: "1ce14a9ed3fd5725b455f9acbcaaa7ba", type: 2}
@@ -101,6 +177,31 @@ MonoBehaviour:
         Speed: 0.7
         Opacity: 0.6
         Flow: {x: 0, y: 0.018}
+      Lighting:
+        BaseTexture: {fileID: 2800000, guid: "0cfb84b131434e3f8f1873d7af6fbd64", type: 3}
+        Lights:
+          - LightIndex: 0
+            Mode: 0
+            Reference: {fileID: 2800000, guid: "de3b8e3c57b14e2db4c39446ae232f94", type: 3}
+            ResponseMap: {fileID: 2800000, guid: "39abe382089d449cba21b4828e5951ce", type: 3}
+            Strength: 1
+          - LightIndex: 1
+            Mode: 1
+            Reference: {fileID: 0}
+            ResponseMap: {fileID: 0}
+            Strength: 50
+        Depth: {fileID: 2800000, guid: "53ffc798778a42e3bdbcc6b133618a57", type: 3}
+        DepthRange: {x: 3.5, y: 1.5}
+        FrameOrigin: {x: -4.8133932, y: -4.846791, z: 0}
+        FrameAxisX: {x: 9.136, y: 0, z: 0}
+        FrameAxisY: {x: 0, y: 7.52, z: 0}
+        MapRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        Wrap: 1
     - Id: "Blink"
       Texture: {fileID: 2800000, guid: "0efa2c8fdda84fc68e3cc2d30486b7d1", type: 3}
       Mesh: {fileID: 11400000, guid: "1ce14a9ed3fd5725b455f9acbcaaa7ba", type: 2}
@@ -121,6 +222,31 @@ MonoBehaviour:
         Speed: 0.7
         Opacity: 0.6
         Flow: {x: 0, y: 0.018}
+      Lighting:
+        BaseTexture: {fileID: 2800000, guid: "057a62d6bab14fcda6f9c980a473abcf", type: 3}
+        Lights:
+          - LightIndex: 0
+            Mode: 0
+            Reference: {fileID: 2800000, guid: "c4e15db445ea45a2a01eba8e66f360ac", type: 3}
+            ResponseMap: {fileID: 2800000, guid: "39abe382089d449cba21b4828e5951ce", type: 3}
+            Strength: 1
+          - LightIndex: 1
+            Mode: 1
+            Reference: {fileID: 0}
+            ResponseMap: {fileID: 0}
+            Strength: 50
+        Depth: {fileID: 2800000, guid: "53ffc798778a42e3bdbcc6b133618a57", type: 3}
+        DepthRange: {x: 3.5, y: 1.5}
+        FrameOrigin: {x: -4.8133932, y: -4.846791, z: 0}
+        FrameAxisX: {x: 9.136, y: 0, z: 0}
+        FrameAxisY: {x: 0, y: 7.52, z: 0}
+        MapRect:
+          serializedVersion: 2
+          x: 0
+          y: 0
+          width: 1
+          height: 1
+        Wrap: 1
   Sequences:
     - Id: "Living still"
       State: 0

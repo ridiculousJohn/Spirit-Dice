@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab911ba188c74560b38bb0ed4261a80d, type: 3}
+  m_Name: MerchantAmbientActivity
+  m_EditorClassIdentifier: 
+  lights:
+  - LightIndex: 0
+    IdleInterval:
+      Min: 20
+      Max: 40
+    DarkDuration:
+      Min: 1.5
+      Max: 4
+    SputterFlickers:
+      Min: 10
+      Max: 16
+    StutterFlickers:
+      Min: 6
+      Max: 10
+    FlickerDuration:
+      Min: 0.06
+      Max: 0.3
+    DimLevel:
+      Min: 0
+      Max: 0.35
+    BrightLevel:
+      Min: 0.35
+      Max: 1
+  props:
+  - Id: hanging-cup
+    Motion: {fileID: 11400000, guid: 3b8233c179714ceb86b50af890271cea, type: 2}
+    Strength: 1
+    IdleInterval:
+      Min: 15
+      Max: 35
+    IdleStrength:
+      Min: 0.3
+      Max: 0.7
+  - Id: hanging-pot
+    Motion: {fileID: 11400000, guid: 6a520b843f4e45e3952ca552ba16824b, type: 2}
+    Strength: 1
+    IdleInterval:
+      Min: 18
+      Max: 32
+    IdleStrength:
+      Min: 0.3
+      Max: 0.4
+  - Id: hanging-pan
+    Motion: {fileID: 11400000, guid: 878fa2f0c6cf4d5cb25c911dd77476c9, type: 2}
+    Strength: 1
+    IdleInterval:
+      Min: 20
+      Max: 36
+    IdleStrength:
+      Min: 0.3
+      Max: 0.4
+  - Id: shelf-bottle
+    Motion: {fileID: 11400000, guid: 17c45225e467430086f251e0db606413, type: 2}
+    Strength: 1
+    IdleInterval:
+      Min: 24
+      Max: 44
+    IdleStrength:
+      Min: 0.2
+      Max: 0.28
+  - Id: trunk-lid
+    Motion: {fileID: 11400000, guid: d1959d87e42b4adaa22c81e62b3e2bb7, type: 2}
+    Strength: 1
+    IdleInterval:
+      Min: 30
+      Max: 50
+    IdleStrength:
+      Min: 0.25
+      Max: 0.34
+  disturbanceStrength: 1
+  defeatStrength: 2
+  lightRecovery: 1
+  settleTime: 0.35
