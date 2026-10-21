@@ -16,14 +16,23 @@ namespace Dice.Presentation
         public AudioClip[] spiritClips;
         public AudioClip score;
         public AudioClip stageClear;
+        [Tooltip("Optional interference sounds, such as a giggle when a die is disturbed; chosen without immediate repeats.")]
+        public AudioClip[] disturbanceClips;
+        [Tooltip("Optional sounds, such as a grumble, when protection repels interference; chosen without immediate repeats.")]
+        public AudioClip[] disturbanceBlockedClips;
         public AudioClip ambience;
         public AudioClip creak;
+        [Tooltip("Optional one-shots, such as a distant giggle, played at random intervals during the encounter and not tied to any event; chosen without immediate repeats.")]
+        public AudioClip[] ambientOneShotClips;
         public TextAsset credits;
 
         [Range(0, 1)] public float ambienceVolume = .24f;
         [Range(0, 1)] public float effectsVolume = .65f;
         [Range(0, 1)] public float creakVolume = .16f;
+        [Range(0, 1)] public float ambientOneShotVolume = .3f;
         [Min(1)] public float minimumCreakInterval = 17;
         [Min(1)] public float maximumCreakInterval = 38;
+        [Min(1)] public float minimumAmbientOneShotInterval = 25;
+        [Min(1)] public float maximumAmbientOneShotInterval = 60;
     }
 }

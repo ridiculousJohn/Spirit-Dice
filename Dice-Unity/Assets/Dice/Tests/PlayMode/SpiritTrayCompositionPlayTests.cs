@@ -24,7 +24,7 @@ namespace Dice.Tests
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = ContentReady.EncounterView(controller);
-            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(4));
             Camera previousCamera = null;
             RenderTexture previousTexture = null;
             foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
@@ -101,6 +101,9 @@ namespace Dice.Tests
                     }
                     yield return Capture(view, journey.EncounterId, width);
                 }
+                if (view.TablePieces.Count > 0) yield return CapturePieces(controller, view, journey.EncounterId);
+                // Selection refreshes the history from the run, so these captures follow the history captures.
+                yield return CaptureSelection(controller, view, journey.EncounterId);
                 previousCamera = view.TrayScene.RenderCamera;
                 previousTexture = view.TrayScene.Texture;
             }
@@ -113,6 +116,95 @@ namespace Dice.Tests
             Assert.That(view.TrayScene.RenderRoot.gameObject.activeInHierarchy, Is.True);
             Assert.That(view.DiceTray.Texture, Is.SameAs(view.ModifierHistory.Renderer.Texture));
             LogAssert.NoUnexpectedReceived();
+        }
+
+        /** Places each table piece at its neutral spot and on the outer and middle bays at both portrait widths. */
+        private static IEnumerator CapturePieces(SpiritEncounterController controller, SpiritEncounterView view, string encounterId)
+        {
+            var trayImage = view.GameplayHud.DiceTrayImage;
+            foreach (var piece in view.TablePieces)
+                foreach (var position in new[] { PiecePosition.Neutral, PiecePosition.Bay(0), PiecePosition.Bay(2), PiecePosition.Bay(4) })
+                {
+                    if (piece.Position != position)
+                    {
+                        controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
+                        float deadline = Time.realtimeSinceStartup + 10;
+                        while ((controller.IsBusy || piece.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
+                    }
+                    Assert.That(piece.Position, Is.EqualTo(position), piece.PieceId);
+                    foreach (int width in new[] { 540, 443 })
+                    {
+                        var portrait = ContentReady.Portrait();
+                        portrait.sizeDelta = new Vector2(width, 960);
+                        yield return Settle(piece);
+                        Canvas.ForceUpdateCanvases();
+                        RectTransform frame = trayImage.rectTransform;
+                        Vector2 local = frame.InverseTransformPoint(piece.transform.position);
+                        if (position.Kind == PiecePositionKind.DiceBay)
+                        {
+                            Rect slot = view.DiceTray.GetSlotViewportRect(position.Index);
+                            Vector2 expected = SpiritTablePieceLayout.ViewportPoint(frame.rect, slot, piece.BayPlacement);
+                            Assert.That(Vector2.Distance(local, expected), Is.LessThan(.5f), piece.PieceId + " rests at its bay point");
+                            // A 2D prop cannot pass behind a 3D die, so it stands above the die and below the resource row.
+                            Assert.That(local.y, Is.GreaterThanOrEqualTo(frame.rect.yMin + frame.rect.height * slot.yMax),
+                                piece.PieceId + " base must clear the top of die " + (position.Index + 1) + " at " + width);
+                            var corners = new Vector3[4];
+                            ((RectTransform)piece.transform).GetWorldCorners(corners);
+                            float pieceTop = frame.InverseTransformPoint(corners[1]).y;
+                            view.GameplayHud.HandsPanel.GetWorldCorners(corners);
+                            float resourcesBottom = frame.InverseTransformPoint(corners[0]).y;
+                            Assert.That(pieceTop, Is.LessThanOrEqualTo(resourcesBottom),
+                                piece.PieceId + " must stay below the hands and rerolls row at " + width);
+                        }
+                        else
+                            for (int bay = 0; bay < DiceValues.Count; ++bay)
+                            {
+                                Rect slot = view.DiceTray.GetSlotViewportRect(bay);
+                                float left = frame.rect.xMin + frame.rect.width * slot.xMin;
+                                float right = frame.rect.xMin + frame.rect.width * slot.xMax;
+                                Assert.That(local.x < left || local.x > right, Is.True,
+                                    piece.PieceId + " neutral spot must not stand above bay " + (bay + 1) + " at " + width);
+                            }
+                        string label = position.Kind == PiecePositionKind.Neutral ? "neutral" : "bay" + (position.Index + 1);
+                        yield return Capture(view, encounterId + "-" + piece.PieceId + "-" + label, width);
+                    }
+                }
+        }
+
+        /** Selects an outer and the middle die, the widest and narrowest slots, at both portrait widths. */
+        private static IEnumerator CaptureSelection(SpiritEncounterController controller, SpiritEncounterView view, string encounterId)
+        {
+            const int selectedMask = 1 << 0 | 1 << 2;
+            controller.ToggleDie(0);
+            controller.ToggleDie(2);
+            Assert.That(controller.SelectedMask, Is.EqualTo(selectedMask));
+            foreach (int width in new[] { 540, 443 })
+            {
+                var portrait = ContentReady.Portrait();
+                portrait.sizeDelta = new Vector2(width, 960);
+                yield return null;
+                ContentReady.AssertDiceSelection(view, selectedMask, "at " + width);
+                yield return Capture(view, encounterId + "-selected", width);
+            }
+            controller.ToggleDie(0);
+            controller.ToggleDie(2);
+            Assert.That(controller.SelectedMask, Is.Zero);
+            yield return null;
+        }
+
+        /** Waits until the prop has eased into its bound position for the current layout. */
+        private static IEnumerator Settle(SpiritTablePieceView piece)
+        {
+            Vector3 previous = piece.transform.position;
+            int stable = 0;
+            float deadline = Time.realtimeSinceStartup + 5;
+            while (stable < 3 && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+                stable = (piece.transform.position - previous).sqrMagnitude < 1e-6f ? stable + 1 : 0;
+                previous = piece.transform.position;
+            }
+            Assert.That(stable, Is.EqualTo(3), piece.PieceId + " must settle.");
         }
 
         private static IEnumerator Capture(SpiritEncounterView view, string encounterId, int width)

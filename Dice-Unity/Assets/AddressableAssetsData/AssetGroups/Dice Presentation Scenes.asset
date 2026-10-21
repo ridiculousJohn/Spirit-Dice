@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2067e3d148bb4ba3ac4aecfaf5e824ac
+    m_Address: dice.scene.merchant
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 31715bf3ac2f1f8438ec86b01e6963e4
     m_Address: dice.scene.watchtower
     m_ReadOnly: 0

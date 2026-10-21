@@ -1,0 +1,338 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
+  m_Name: MerchantJourney
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
+  encounterId: encounter.merchant.unquiet_cart
+  storyId: 
+  locationTitle: "The Unquiet Cart"
+  spiritName: "The Merchant"
+  leadText: "The traveler's trail leaves the road beyond the old bridge, where a merchant's cart stands beside dark water."
+  cardArtwork: {fileID: 2800000, guid: d7f60e26749f4d9e8dccfd49e234dc2c, type: 3}
+  beats:
+  - id: road
+    kind: 0
+    title: "The Unquiet Cart"
+    text: "The road narrows beside dark water. A merchant's cart stands beneath a sagging canvas cover. A hanging cup turns against the breeze as you approach."
+    continueLabel: "Approach the cart"
+    background: {fileID: 2800000, guid: 067cb65055264a0984a07c5e7fe760e7, type: 3}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: witness
+    kind: 1
+    title: "The Merchant"
+    text: "Looking for someone? Yes, they passed this way. Left the road and went into the marsh."
+    continueLabel: "Ask about the path"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 3
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 2
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: wares
+    kind: 2
+    title: "The path they took"
+    text: "I know the path they took. But I can't leave my wares with this thing awake."
+    continueLabel: "Ask what is awake"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: knock
+    kind: 2
+    title: "Beneath the table"
+    text: "Something knocks beneath the table. He presses a hand against it."
+    continueLabel: "Wait for him to explain"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: bargain
+    kind: 2
+    title: "What it wants"
+    text: "It likes watching us play. Likes cheating more. Beat me despite its meddling, and it sulks for a while. Long enough for me to show you the way."
+    continueLabel: "Ask how to stop it"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: candle
+    kind: 2
+    title: "A short candle"
+    text: "He takes a short candle from beside a wooden chest."
+    continueLabel: "Watch the flame"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: ward
+    kind: 2
+    title: "The Merchant's Candle"
+    text: "This keeps its fingers off things. Set it beside what you want left alone."
+    continueLabel: "Ask about the charms"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: discovery
+    kind: 2
+    title: "What the wares reveal"
+    text: "This bargain reveals Draining Bowl, Returning Echo, and Counted Coins. Their charms reward a trader's habits: careful counting and repeating what worked."
+    continueLabel: "Hear the terms"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: invitation
+    kind: 3
+    title: "The Unquiet Cart"
+    text: "It is already listening. Accept, and we begin."
+    continueLabel: "Accept the bargain"
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 0
+    progressionReward: {fileID: 11400000, guid: 92928a9e4c3c4f7782923990e254c24f, type: 2}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  tablePresentation: {fileID: 11400000, guid: 9b5e590776ad40cc9ff5b6dd060c37a6, type: 2}
+  victoryTitle: "Quiet. At last."
+  victoryText: "Come. There's dry ground around the great tree. That's where I saw your traveler heading."
+  defeatTitle: "Pleased with itself, isn't it?"
+  defeatText: "Take a breath. We can try again."
+  abandonText: "The merchant keeps a hand pressed to the table. Beneath it, something waits for the next game."
+  resultContinueLabel: "Return to the trail"
+  completionClueTitle: "Dry ground by the great tree"
+  completionClueText: "The traveler left the road and entered the swamp, heading for the dry ground around the great tree. The merchant knows the way through."
+  completionReward: {fileID: 0}
+  victoryPresentation:
+    enabled: 1
+    hostState: 4
+    holdDuration: 0.25
+    fadeDuration: 0.3
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  defeatPresentation:
+    enabled: 1
+    hostState: 5
+    holdDuration: 0.15
+    fadeDuration: 0.25
+    showDialogue: 1
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  abandonPresentation:
+    enabled: 1
+    hostState: 6
+    holdDuration: 0
+    fadeDuration: 0.2
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  followUpEncounterIds: []
+  requiredCompletedEncounterIds: []
+  requiredCompletedStoryIds:
+  - story.fox.chapter-one-return

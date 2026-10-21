@@ -9,7 +9,7 @@ namespace Dice.Engine
     public enum CommandRejection
     {
         None, StaleRevision, InvalidAction, EncounterCompleted, InvalidPhase, InvalidDiceSelection, NoRerollsRemaining,
-        InvalidOffer, InvalidRewardOption, InsufficientRewardRefreshes
+        InvalidOffer, InvalidRewardOption, InsufficientRewardRefreshes, InvalidPiece, PieceUnavailable, InvalidPieceInput
     }
     public enum RollKind { Initial, PlayerReroll }
     public enum ResourceKind { Hands, Rerolls, RewardRefreshes }
@@ -63,6 +63,9 @@ namespace Dice.Engine
         public int LatestRerollMask { get; }
         public int LatestChangedMask { get; }
         public int EverRerolledMask { get; }
+        /** Dice changed by interference during this hand; they do not count as rerolled or changed for charms. */
+        public int DisturbedMask { get; }
+        public ReadOnlyCollection<PieceInteractionSnapshot> PieceInteractions { get; }
         public int RerollsSpentOnHand { get; }
         public int HandsPlayedInStage { get; }
         public int? PreviousStageStartingHands { get; }
@@ -112,6 +115,8 @@ namespace Dice.Engine
             LatestRerollMask = state.LatestRerollMask;
             LatestChangedMask = state.LatestChangedMask;
             EverRerolledMask = state.EverRerolledMask;
+            DisturbedMask = state.DisturbedMask;
+            PieceInteractions = TablePieceStates.Capture(definition, state);
             RerollsSpentOnHand = state.RerollsSpentOnHand;
             HandsPlayedInStage = state.HandsPlayedInStage;
             PreviousStageStartingHands = state.PreviousStageStartingHands;

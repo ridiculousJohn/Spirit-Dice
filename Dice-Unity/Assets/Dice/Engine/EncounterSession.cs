@@ -6,7 +6,8 @@ namespace Dice.Engine
 {
     public sealed class EncounterSession
     {
-        public const int RulesVersion = 7;
+        public const int RulesVersion = 8;
+        internal const ulong RuleRandomSalt = 0x6a09e667f3bcc909UL;
         private readonly MechanicalCatalog catalog;
         private readonly EncounterDefinition definition;
         private EncounterState state;
@@ -24,8 +25,11 @@ namespace Dice.Engine
                 HandUpgrades = new List<int>(definition.StartingUpgrades).ToArray(),
                 DiceRandom = new DeterministicRandom(seed),
                 RewardRandom = new DeterministicRandom(seed ^ 0xd1b54a32d192ed03UL),
+                // Only rules that disturb dice draw from this stream; other encounters keep it empty.
+                RuleRandom = new DeterministicRandom(EncounterRuleResolver.CanDisturbDice(definition) ? seed ^ RuleRandomSalt : 0),
                 RewardRefreshes = definition.RewardPolicy?.StartingRefreshes ?? 0,
-                Modifiers = new ModifierInstanceState[definition.StartingModifiers.Count]
+                Modifiers = new ModifierInstanceState[definition.StartingModifiers.Count],
+                PieceStates = TablePieceStates.Initial(definition)
             };
             for (int i = 0; i < state.Modifiers.Length; ++i)
                 state.Modifiers[i] = new ModifierInstanceState
@@ -118,6 +122,7 @@ namespace Dice.Engine
             else if (action is SelectHandUpgradeAction upgrade) SelectHandUpgrade(next, upgrade.OptionId, events);
             else if (action is SelectModifierUnlockAction unlock) SelectModifierUnlock(next, unlock.OptionId, events);
             else if (action is AcknowledgeModifierUnlockAction) ContinueAfterUnlock(next, events);
+            else if (action is InteractWithPieceAction interaction) InteractWithPiece(next, interaction, events);
             else Complete(next, EncounterOutcome.Abandoned, events);
             next.Revision = checked(state.Revision + 1);
             var snapshot = new EncounterSnapshot(next, definition, catalog.Version);
@@ -187,6 +192,14 @@ namespace Dice.Engine
             }
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
             if (action is PlayHandAction) return CommandRejection.None;
+            if (action is InteractWithPieceAction interaction)
+            {
+                if (!TablePieceStates.TryFind(definition, interaction.PieceId, interaction.InteractionId, out int slot,
+                    out var piece)) return CommandRejection.InvalidPiece;
+                if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
+                return piece.Accepts(state.PieceStates[slot], interaction.Input)
+                    ? CommandRejection.None : CommandRejection.InvalidPieceInput;
+            }
             if (action is RerollDiceAction reroll)
             {
                 if (reroll.SelectedMask <= 0 || (reroll.SelectedMask & ~DiceValues.AllMask) != 0)
@@ -385,6 +398,8 @@ namespace Dice.Engine
             next.LatestRerollMask = 0;
             next.LatestChangedMask = 0;
             next.EverRerolledMask = 0;
+            next.DisturbedMask = 0;
+            next.LatestDisturbedMask = 0;
             next.DiceBeforeLastReroll = null;
             events.Add(new HandStartedEvent(next));
             next.CurrentDice = Roll(next, DiceValues.AllMask);
@@ -427,11 +442,25 @@ namespace Dice.Engine
             for (int i = 0; i < DiceValues.Count; ++i)
                 if (before[i] != next.CurrentDice[i]) next.LatestChangedMask |= 1 << i;
             events.Add(new DiceRolledEvent(next, RollKind.PlayerReroll, before, selectedMask, next.LatestChangedMask));
+            // Interference targets kept dice, then reroll charms observe the disturbed faces.
+            EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayerReroll,
+                DiceValues.AllMask & ~selectedMask, events);
             ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, events);
+        }
+
+        private void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
+        {
+            TablePieceStates.TryFind(definition, action.PieceId, action.InteractionId, out int slot, out var interaction);
+            var before = next.PieceStates[slot];
+            var after = interaction.Apply(before, action.Input);
+            next.PieceStates[slot] = after;
+            events.Add(new PieceInteractionChangedEvent(next, action.PieceId, action.InteractionId, before, after));
         }
 
         private void Play(EncounterState next, List<RuleEvent> events)
         {
+            // Committed hands may be disturbed before scoring; previews never are.
+            EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
             ScoreBreakdown score = ResolvePlayedHand(next, events);
             next.TotalScore = checked(next.TotalScore + score.HandScore);
             next.TotalHandsPlayed = checked(next.TotalHandsPlayed + 1);
@@ -536,6 +565,8 @@ namespace Dice.Engine
         internal int LatestRerollMask;
         internal int LatestChangedMask;
         internal int EverRerolledMask;
+        internal int DisturbedMask;
+        internal int LatestDisturbedMask;
         internal int RerollsSpentOnHand;
         internal int RerollsSpentInStage;
         internal int FreeRerollsUsedInStage;
@@ -553,6 +584,8 @@ namespace Dice.Engine
         internal long ModifierMultiplier;
         internal List<ModifierContribution> ModifierContributions = new List<ModifierContribution>();
         internal DeterministicRandom RewardRandom;
+        internal DeterministicRandom RuleRandom;
+        internal PieceInteractionState[] PieceStates = Array.Empty<PieceInteractionState>();
         internal int RewardRefreshes;
         internal RewardOffer PendingReward;
         internal long NextOfferId = 1;
@@ -575,6 +608,7 @@ namespace Dice.Engine
             copy.Modifiers = new ModifierInstanceState[Modifiers.Length];
             for (int i = 0; i < Modifiers.Length; ++i) copy.Modifiers[i] = Modifiers[i].Copy();
             copy.ModifierContributions = new List<ModifierContribution>(ModifierContributions);
+            copy.PieceStates = (PieceInteractionState[])PieceStates.Clone();
             copy.ExcludedRewardFamilies = new List<string>(ExcludedRewardFamilies);
             copy.RecentHandUpgrades = new List<HandCategory>(RecentHandUpgrades);
             copy.PendingUpgradeCategories = PendingUpgradeCategories == null ? null : new List<HandCategory>(PendingUpgradeCategories);

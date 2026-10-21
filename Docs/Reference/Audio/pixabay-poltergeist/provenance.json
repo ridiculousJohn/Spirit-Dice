@@ -1,0 +1,112 @@
+{
+  "title": "Poltergeist giggles and grumble",
+  "license": "Pixabay Content License",
+  "license_url": "https://pixabay.com/service/license-summary/",
+  "license_terms": "Free for commercial use; attribution not required.",
+  "processor": "Tools/Audio/process_poltergeist_audio.ps1",
+  "ffmpeg": "N-122467-gc3d3377fe1-20260116",
+  "processing": "Mono 44.1 kHz; highpass 170 Hz; lowpass 6200 Hz; chorus 0.7:0.9:38|57:0.32|0.26:0.30|0.42:1.2|1.9; 1.6 second pad; aecho 0.85:0.9 with taps 47|89|141|197|263|347|449 ms and decays 0.46|0.38|0.31|0.25|0.19|0.14|0.09; trailing silence below -62 dB trimmed with a 0.35 second fade out; 8 ms fade in; peak-normalized to the target level; signed 16-bit PCM WAV.",
+  "runtime_folder": "Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/Poltergeist",
+  "sources": [
+    {
+      "title": "Giggle",
+      "author": "u_39er8q3as7",
+      "source": "https://pixabay.com/sound-effects/people-giggle-339074/",
+      "download": "u_39er8q3as7-giggle-339074.mp3",
+      "sha256": "a0d5058f6f57c2ea762c947b9e32b68faaa9e0f8604ad1e1766d0a1c52e767f4"
+    },
+    {
+      "title": "Giggle",
+      "author": "voiceofruthie",
+      "source": "https://pixabay.com/sound-effects/people-giggle-338193/",
+      "download": "voiceofruthie-giggle-338193.mp3",
+      "sha256": "16e5fc331ed64dda59c8ae34af1237597c6e48fc11abca195680c0c366ef114e"
+    },
+    {
+      "title": "Hmph!",
+      "author": "voiceofruthie",
+      "source": "https://pixabay.com/sound-effects/people-hmph-338183/",
+      "download": "voiceofruthie-hmph-338183.mp3",
+      "sha256": "962272f36320e0cb91e630ffdc84af4c04f59f5dad84cff3e4b3bbc721e0ae79"
+    },
+    {
+      "title": "small giggle",
+      "author": "freesound_community",
+      "source": "https://pixabay.com/sound-effects/people-small-giggle-85632/",
+      "download": "freesound_community-small-giggle-85632.mp3",
+      "sha256": "9d428db9ba0e3a15119495bc2772259c0271a01ee8f7dec02ce4541929d989b6"
+    },
+    {
+      "title": "small giggle",
+      "author": "freesound_community",
+      "source": "https://pixabay.com/sound-effects/people-small-giggle-104591/",
+      "download": "freesound_community-small-giggle-104591.mp3",
+      "sha256": "6e3996c72bf77c198772c9051cb272bcb3ae74b5a08dec7bb0dfe69d712b2c4b"
+    },
+    {
+      "title": "Child Giggle",
+      "author": "freesound_community",
+      "source": "https://pixabay.com/sound-effects/people-child-giggle-81205/",
+      "download": "freesound_community-child-giggle-81205.mp3",
+      "sha256": "d417ccd0f14c33e15d1eaffa7de6de1dd8ace18505568cd217906df03ad4b121"
+    }
+  ],
+  "clips": [
+    {
+      "file": "poltergeist_giggle_01.wav",
+      "use": "Die disturbance",
+      "download": "u_39er8q3as7-giggle-339074.mp3",
+      "target_peak_dbfs": -6,
+      "gain_db": 7.3,
+      "duration_seconds": 2.294,
+      "sha256": "d8bc028f1e3cbaedf7589eeb37822dad6a943cc5ebf1f689bfc0dd60d19fd094"
+    },
+    {
+      "file": "poltergeist_giggle_02.wav",
+      "use": "Die disturbance",
+      "download": "voiceofruthie-giggle-338193.mp3",
+      "target_peak_dbfs": -6,
+      "gain_db": 1.6,
+      "duration_seconds": 2.579,
+      "sha256": "fb0c2c6cb80deb2f63a933f0af2027f85aeb0549726183c0d941a20c10f0fdca"
+    },
+    {
+      "file": "poltergeist_grumble_01.wav",
+      "use": "Disturbance blocked by the candle",
+      "download": "voiceofruthie-hmph-338183.mp3",
+      "target_peak_dbfs": -6,
+      "gain_db": 13.7,
+      "duration_seconds": 0.8,
+      "sha256": "a2fd39b4f183ea13c7233536465533037712cc26da61500e8f629e96ec501d1f"
+    },
+    {
+      "file": "poltergeist_ambient_giggle_01.wav",
+      "use": "Random ambient one-shot",
+      "download": "freesound_community-small-giggle-85632.mp3",
+      "target_peak_dbfs": -12,
+      "gain_db": 3.6,
+      "duration_seconds": 0.756,
+      "sha256": "551c9881502db2b3c1c8bfa7f48e4b5d63a66f8a57dcfc5f72f3d256620f8740"
+    },
+    {
+      "file": "poltergeist_ambient_giggle_02.wav",
+      "use": "Random ambient one-shot",
+      "download": "freesound_community-small-giggle-104591.mp3",
+      "target_peak_dbfs": -12,
+      "gain_db": -4.0,
+      "duration_seconds": 0.75,
+      "sha256": "e27670baf2117a5488abadba7d2fd3d1bddc8df2a0547eee86e5f1f137ccacf4"
+    },
+    {
+      "file": "poltergeist_ambient_giggle_03.wav",
+      "use": "Random ambient one-shot",
+      "download": "freesound_community-child-giggle-81205.mp3",
+      "source_trim_seconds": [1.12, 1.72],
+      "source_trim_reason": "Removes leading room noise and trailing crackle.",
+      "target_peak_dbfs": -12,
+      "gain_db": -5.9,
+      "duration_seconds": 0.923,
+      "sha256": "f081830dc2d331c7e9f5550ae7b33d6eafbfaffdd605dfa9886df1cf6dd5b1ac"
+    }
+  ]
+}

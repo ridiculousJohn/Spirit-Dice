@@ -136,6 +136,32 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void MerchantJourneyValidatesWithItsTableRulesAndCandlePieceLight()
+        {
+            var merchant = AssetDatabase.LoadAssetAtPath<EncounterJourneyAsset>(
+                "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantJourney.asset");
+            var authored = AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset");
+            Assert.That(merchant, Is.Not.Null);
+            Assert.That(authored.Entries, Does.Contain(merchant));
+            var mechanical = TestContent.BuildStandardCatalog();
+            Assert.DoesNotThrow(() => merchant.Validate(mechanical));
+            Assert.DoesNotThrow(() => authored.Validate(mechanical));
+            var table = merchant.TablePresentation;
+            Assert.That(AssetDatabase.GetAssetPath(table),
+                Is.EqualTo("Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset"));
+            Assert.That(AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID), Is.EqualTo("Assets/Scenes/MerchantEncounter.unity"));
+            Assert.That(table.HostPresentation.SigilPrefab, Is.Not.Null, "The gameplay HUD requires the host's sigil.");
+            var encounter = mechanical.GetEncounter(merchant.EncounterId);
+            Assert.That(table.RulePresentations.Select(rule => rule.RuleId), Is.EqualTo(encounter.Rules.Select(rule => rule.Id)));
+            var light = table.PieceLights.Single();
+            Assert.That(light.LightIndex, Is.InRange(0, table.SceneLighting.Lights.Length - 1));
+            var piece = encounter.Pieces.Single(value => value.Id == light.PieceId);
+            Assert.That(piece.Interactions.Single(value => value.Id == light.InteractionId), Is.InstanceOf<PositionInteractionDefinition>());
+            Assert.That(controller.InitializeJourney(mechanical, authored, savePath), Is.True, controller.JourneyStatus);
+        }
+
+        [Test]
         public void StoryBeatDiscoversFamilyAndInvitationGrantsCharmBeforeStarting()
         {
             Set(journeys.Entries[0].Beats[0], "progressionReward", Reward(true, false));

@@ -22,6 +22,7 @@ namespace Dice.Tests
         private const string Lantern = "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset";
         private const string Watchtower = "Assets/Dice/Content/Presentation/Watchtower/WatchtowerTable.asset";
         private const string Moth = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsTable.asset";
+        private const string Merchant = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset";
         private Scene preview;
         private readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
 
@@ -42,6 +43,7 @@ namespace Dice.Tests
         [TestCase(Lantern)]
         [TestCase(Watchtower)]
         [TestCase(Moth)]
+        [TestCase(Merchant)]
         public void AuthoredTablesUseOneCameraAndTextureForBothBays(string path)
         {
             var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path);
@@ -458,6 +460,8 @@ namespace Dice.Tests
         [TestCase(Watchtower, true)]
         [TestCase(Moth, false)]
         [TestCase(Moth, true)]
+        [TestCase(Merchant, false)]
+        [TestCase(Merchant, true)]
         public void AutomaticFramingContainsEveryAuthoredMeshCornerAndBay(string path, bool orthographic)
         {
             var source = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path).TrayPresentation;

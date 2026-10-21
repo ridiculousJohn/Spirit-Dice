@@ -29,6 +29,12 @@ python Tools/Audio/generate_spirit_audio.py --output Dice-Unity/Assets/Dice/Pres
 
 The generators reproduce the synthetic cues only. Recorded dice WAVs are copied unchanged from their credited source pack. The rain provenance records its source hash and the 0.8-second equal-power tail/head crossfade applied to the runtime loop. Production recordings are already checked into `Dice-Unity`; the source links and attribution records support future replacement or processing work. Validators, verification reports, contact analyses, and downloaded audition material remain in ignored local working directories. Audition the clips and the encounter at the target device volume.
 
+## Poltergeist clips
+
+The merchant encounter's poltergeist uses six processed Pixabay recordings in `Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/Poltergeist`, assigned in `MerchantAudio.asset`. `poltergeist_giggle_01.wav` and `poltergeist_giggle_02.wav` are the `disturbanceClips` played when a die is disturbed; `poltergeist_grumble_01.wav` is the `disturbanceBlockedClips` entry played when the candle repels a disturbance. `poltergeist_ambient_giggle_01.wav` to `_03.wav` are `ambientOneShotClips`, played at random intervals during the encounter and not tied to any event. Every list selects a random clip without immediate repeats, using cosmetic randomness only.
+
+The recordings are under the Pixabay Content License: free commercial use, no attribution required. `pixabay-poltergeist/provenance.json` records each source page, author, download hash, trim, gain, duration, and runtime clip hash. `Tools/Audio/process_poltergeist_audio.ps1` is the recipe: mono 44.1 kHz, a 170 Hz highpass and 6200 Hz lowpass, a light chorus, a 1.6-second pad feeding a seven-tap echo tail, trailing silence trimmed with a 0.35-second fade out, an 8 ms fade in, and peak normalization to -6 dBFS for the event clips or -12 dBFS for the ambient giggles. The "Child Giggle" source is trimmed to seconds 1.12-1.72 to remove room noise and crackle. The script reads the raw downloads from ignored `Docs/work/audio-downloads/poltergeist-giggles` by default, writes to ignored `Docs/work/audio-generated/poltergeist-giggles` with a JSON report, requires ffmpeg and ffprobe on PATH, and refuses to replace existing outputs. Use `-Source` and `-Output` to choose other folders; compare the report hashes with the provenance record to verify a rebuild.
+
 Runtime checks for the integrated scene:
 
 1. Roll repeatedly and listen for bone variation and wood landings without harsh peaks.

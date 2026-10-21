@@ -1,0 +1,64 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8fe009afd60405b9a183e7e7b0a6149, type: 3}
+  m_Name: MerchantAudio
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritAudioTheme
+  rollClips:
+  - {fileID: 8300000, guid: 07cb5ff0f79f413cb057577b58f6ea9b, type: 3}
+  - {fileID: 8300000, guid: 91688e8a7a9e41a7a8043ec8ab56d57c, type: 3}
+  - {fileID: 8300000, guid: 7e07504efbbd4c388bac12d59e39346c, type: 3}
+  - {fileID: 8300000, guid: f5f444402b224891a916be38205028a5, type: 3}
+  - {fileID: 8300000, guid: 7295bcef526a49baa961b107b8b9155b, type: 3}
+  rollContactTracks:
+  - recordingStartTime: 0.012222
+    contactTimes: [0.0319, 0.1417, 0.2355, 0.3253, 0.3831, 0.445, 0.5108, 0.5647, 0.6146]
+    settleTime: 0.1
+  - recordingStartTime: 0.478912
+    contactTimes: [0.4889, 0.5368, 0.6166, 0.6625, 0.7124, 0.7822, 0.8201, 0.858]
+    settleTime: 0.1
+  - recordingStartTime: 1.198277
+    contactTimes: [1.2152, 1.2671, 1.317, 1.3749, 1.4288, 1.4886, 1.5265, 1.5644]
+    settleTime: 0.1
+  - recordingStartTime: 1.061088
+    contactTimes: [1.0716, 1.1234, 1.1893, 1.2452, 1.317, 1.3649, 1.4148, 1.4507, 1.4926, 1.5425]
+    settleTime: 0.1
+  - recordingStartTime: 0.752358
+    contactTimes: [0.7623, 0.8082, 0.86, 0.896, 0.9459, 1.0077, 1.0815, 1.1494, 1.1933, 1.2651]
+    settleTime: 0.1
+  rollLaunchTime: 0.15
+  spirit: {fileID: 8300000, guid: 23aba9c1ca204b7ab963f93ff51cc292, type: 3}
+  spiritClips:
+  - {fileID: 8300000, guid: 23aba9c1ca204b7ab963f93ff51cc292, type: 3}
+  - {fileID: 8300000, guid: 4bebcc6513f14b40b5bc330c0895f77c, type: 3}
+  - {fileID: 8300000, guid: 4594dfc3a05547edb0a6bfd35c79012f, type: 3}
+  score: {fileID: 8300000, guid: b84699ef9b4c42b5bfc60b29ece30a84, type: 3}
+  stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
+  disturbanceClips:
+  - {fileID: 8300000, guid: 0be961a8625248afbc830db2c0f61ec1, type: 3}
+  - {fileID: 8300000, guid: 82694c1e33144cda86edd593f7bb7450, type: 3}
+  disturbanceBlockedClips:
+  - {fileID: 8300000, guid: 7ee59dffd1694ce28e94311bc1191f24, type: 3}
+  ambience: {fileID: 0}
+  creak: {fileID: 0}
+  ambientOneShotClips:
+  - {fileID: 8300000, guid: eab02a49246d4068961577b05e146889, type: 3}
+  - {fileID: 8300000, guid: 1cc583a8ad1c4e60b79d7b69e9779117, type: 3}
+  - {fileID: 8300000, guid: 47eba34444064a2dbe8900d8c3e356d8, type: 3}
+  credits: {fileID: 4900000, guid: a9ff53d5f1f641608da38a309e46eee6, type: 3}
+  ambienceVolume: 0.25
+  effectsVolume: 0.65
+  creakVolume: 0.16
+  ambientOneShotVolume: 0.3
+  minimumCreakInterval: 17
+  maximumCreakInterval: 38
+  minimumAmbientOneShotInterval: 25
+  maximumAmbientOneShotInterval: 60

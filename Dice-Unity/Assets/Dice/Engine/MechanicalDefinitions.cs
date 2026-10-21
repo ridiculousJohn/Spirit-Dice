@@ -107,12 +107,13 @@ namespace Dice.Engine
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
         public ReadOnlyCollection<string> EncounterModifierIds { get; }
         public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
+        public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
 
         public EncounterDefinition(string id, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
             IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
-            IEnumerable<string> unlockRewardModifierIds = null)
+            IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -146,6 +147,13 @@ namespace Dice.Engine
             UnlockMilestones = milestones.AsReadOnly();
             EncounterModifierIds = CopyUniqueIds(encounterModifierIds, nameof(encounterModifierIds));
             UnlockRewardModifierIds = CopyUniqueIds(unlockRewardModifierIds, nameof(unlockRewardModifierIds));
+            var pieceList = pieces == null ? new List<TablePieceDefinition>() : new List<TablePieceDefinition>(pieces);
+            var pieceIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var piece in pieceList)
+                if (piece == null || !pieceIds.Add(piece.Id))
+                    throw new ArgumentException("Table piece IDs must be unique and nonnull.", nameof(pieces));
+            Pieces = pieceList.AsReadOnly();
+            foreach (var rule in Rules) rule.ValidateDefinition(this);
         }
 
         private static ReadOnlyCollection<string> CopyUniqueIds(IEnumerable<string> source, string parameter)

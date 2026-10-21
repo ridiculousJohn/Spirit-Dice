@@ -143,6 +143,22 @@ namespace Dice.Tests
                 foreach (string id in discoveries) Assert.That(saved.DiscoveredFamilyIds, Does.Contain(id));
                 AssertNoEncounter();
                 yield return null;
+                // Completing the story unlocks the following chapter, which the board opens as the latest available
+                // incomplete chapter; the story remains readable from its own chapter.
+                var storyChapter = StoryChapter();
+                var unlocked = controller.JourneyCatalog.Chapters.Where(value => value != null && value != storyChapter &&
+                    value.Entries.Any(journey => journey != null && journey.RequiredCompletedStoryIds.Contains(chapter.Id))).ToArray();
+                Assert.That(unlocked, Is.Not.Empty, "The story must unlock a following chapter.");
+                Assert.That(unlocked, Does.Contain(controller.SelectedChapter));
+                Assert.That(controller.IsChapterAvailable(controller.SelectedChapter.Id), Is.True);
+                Assert.That(controller.IsChapterCompleted(controller.SelectedChapter.Id), Is.False);
+                Assert.That(controller.IsChapterCompleted(storyChapter.Id), Is.True);
+                Assert.That(ChapterCard(), Is.Null, "The completed story belongs to its own chapter's board.");
+                controller.SelectChapter(storyChapter.Id);
+                yield return ContentReady.Routed();
+                yield return null;
+                Assert.That(controller.SelectedChapter, Is.SameAs(storyChapter));
+                Assert.That(ChapterCard(), Is.Not.Null);
                 Assert.That(ChapterCard().GetComponentsInChildren<Text>().Single(value => value.name == "ClueState").text,
                     Is.EqualTo("READ AGAIN"));
                 Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Any(value => value.name == "CompletionClueText" &&
@@ -175,7 +191,7 @@ namespace Dice.Tests
         private PlayerProfile CompletedPrerequisites(bool includeMoth)
         {
             var profile = new PlayerProfile();
-            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))
+            foreach (var journey in StoryChapter().Entries.Where(value => !value.IsStoryOnly))
                 if (includeMoth || journey.EncounterId != "encounter.moth.crossroads")
                     profile.CompleteEncounter(journey.EncounterId);
             foreach (string id in chapter.RequiredCompletedStoryIds) profile.CompleteStory(id);
@@ -189,6 +205,9 @@ namespace Dice.Tests
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, path), Is.True,
                 controller.JourneyStatus);
         }
+
+        private EncounterChapterAsset StoryChapter() =>
+            controller.JourneyCatalog.Chapters.Single(value => value != null && value.Entries.Contains(chapter));
 
         private Button ChapterCard() => ContentReady.PresentationRoot(controller).GetComponentsInChildren<Button>().FirstOrDefault(value =>
             value.name.StartsWith("ClueButton", StringComparison.Ordinal) &&

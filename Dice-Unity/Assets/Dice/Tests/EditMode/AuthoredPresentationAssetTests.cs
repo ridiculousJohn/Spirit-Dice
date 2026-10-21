@@ -212,6 +212,7 @@ namespace Dice.Tests
         [TestCase("FoxEncounter", "SpiritHouse/LastLanternTable")]
         [TestCase("WatchtowerEncounter", "Watchtower/WatchtowerTable")]
         [TestCase("MothEncounter", "MothCrossroads/MothCrossroadsTable")]
+        [TestCase("MerchantEncounter", "HauntedMerchant/MerchantUnquietCartTable")]
         public void EncounterScenesContainTheirAuthoredTableHostAndSharedCameraTarget(string name, string tablePath)
         {
             string path = "Assets/Scenes/" + name + ".unity";
@@ -255,6 +256,14 @@ namespace Dice.Tests
                 Assert.That(popupLayout, Is.Not.Null);
                 using var serializedLayout = new SerializedObject(popupLayout);
                 Assert.That(serializedLayout.FindProperty("widthReference").objectReferenceValue, Is.SameAs(view.Portrait));
+                foreach (var piece in view.TablePieces)
+                {
+                    Assert.That(piece, Is.Not.Null, "Table piece props are authored in the encounter scene.");
+                    Assert.That(piece.transform.IsChildOf(view.Portrait), Is.True, piece.name);
+                }
+                foreach (var pieceLight in table.PieceLights)
+                    Assert.That(view.TablePieces.Any(piece => piece.PieceId == pieceLight.PieceId &&
+                        piece.InteractionId == pieceLight.InteractionId), Is.True, "Piece light " + pieceLight.PieceId);
             }
             finally { EditorSceneManager.ClosePreviewScene(scene); }
         }
@@ -361,6 +370,7 @@ namespace Dice.Tests
         [TestCase("SpiritEncounterCharmsScreen")]
         [TestCase("SpiritHandRanksPanel")]
         [TestCase("EncounterJourneyView")]
+        [TestCase("SpiritTablePieceView")]
         public void RuntimeScreensBindAuthoredObjectsWithoutConstructingTheirUi(string name)
         {
             string source = File.ReadAllText(Path.Combine(Application.dataPath, "Dice", "Presentation", name + ".cs"));

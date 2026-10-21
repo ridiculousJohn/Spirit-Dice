@@ -45,6 +45,8 @@ namespace Dice.Tests
         [TestCase("Watchtower/WatchtowerTable.asset", true)]
         [TestCase("MothCrossroads/MothCrossroadsTable.asset", false)]
         [TestCase("MothCrossroads/MothCrossroadsTable.asset", true)]
+        [TestCase("HauntedMerchant/MerchantUnquietCartTable.asset", false)]
+        [TestCase("HauntedMerchant/MerchantUnquietCartTable.asset", true)]
         public void AuthoredTablePreviewRendersSplitArtworkAndSharedRuntimeBaysAtBothWidths(string path, bool narrow)
         {
             var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>("Assets/Dice/Content/Presentation/" + path);

@@ -464,7 +464,7 @@ namespace Dice.Tests
                     yield return Capture("rules-" + authored.EncounterId + "-" + size.x + "x" + size.y);
                 }
             }
-            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(4));
             LogAssert.NoUnexpectedReceived();
         }
 

@@ -19,6 +19,8 @@ namespace Dice.Presentation
         void SetOpeningOpacity(float opacity);
         void ShowEnding();
         void RecordScore(ScoreBreakdown score);
+        /** Shows the table piece that repelled an interference attempt and returns how long its reaction lasts. */
+        float ShowProtection(DisturbanceBlockedEvent blocked);
         void FinishPresentation(Resolution resolution);
     }
 
@@ -28,6 +30,7 @@ namespace Dice.Presentation
         private const float ScoreStepDuration = .52f;
         private const float ScoreStepHold = .35f;
         private const float ModifierStepHold = .55f;
+        private const float DisturbanceHold = .3f;
         private readonly ISpiritScorePlaybackHost host;
         private readonly SpiritGameplayHud hud;
         private readonly SpiritDiceTray diceTray;
@@ -60,6 +63,7 @@ namespace Dice.Presentation
         internal IEnumerator Play(Resolution resolution, float openingFade)
         {
             var controls = host.Controls;
+            bool rollDisturbed = false;
             // The committed snapshot may include a new hand; only event dice are shown until presentation completes.
             foreach (var ruleEvent in resolution.Events)
             {
@@ -94,7 +98,29 @@ namespace Dice.Presentation
                     activeRoll = diceTray.Roll(rolled.After, rollMask, rollTiming);
                     yield return activeRoll;
                     activeRoll = null;
-                    hud.SetScore(controls.Preview?.Score, false);
+                    // The preview already includes a disturbance that follows this roll; its category waits for that die.
+                    rollDisturbed = DisturbedAfter(resolution, rolled);
+                    hud.SetScore(rollDisturbed ? null : controls.Preview?.Score, false);
+                }
+                else if (ruleEvent is DieDisturbedEvent disturbed)
+                {
+                    // Interference lands after the player's roll or before scoring; the die visibly moves even if its face returns.
+                    host.Host?.React();
+                    encounterAudio.Play(SpiritAudioCue.Disturbance);
+                    activeRoll = disturbed.Kind == DieInterferenceKind.Flip
+                        ? diceTray.Flip(disturbed.Bay, disturbed.After)
+                        : diceTray.RollDie(disturbed.Bay, disturbed.After, encounterAudio.BeginRoll(1));
+                    yield return activeRoll;
+                    activeRoll = null;
+                    if (rollDisturbed) hud.SetScore(controls.Preview?.Score, false);
+                    rollDisturbed = false;
+                    yield return new WaitForSecondsRealtime(DisturbanceHold);
+                }
+                else if (ruleEvent is DisturbanceBlockedEvent blocked)
+                {
+                    host.Host?.React();
+                    encounterAudio.Play(SpiritAudioCue.DisturbanceBlocked);
+                    yield return new WaitForSecondsRealtime(Mathf.Max(host.ShowProtection(blocked), DisturbanceHold));
                 }
                 else if (ruleEvent is ModifierActivatedEvent activated && activated.Phase != ModifierPhase.PlayHand)
                 {
@@ -221,7 +247,7 @@ namespace Dice.Presentation
                     hud.ModifierEmblem.gameObject.SetActive(false);
                     hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
                     hud.SelectionLabel.text = "NEW HAND";
-                    hud.ScoreDetail.text = "ROLL BONUSES BANK HERE";
+                    hud.ScoreDetail.text = "";
                     if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(.16f);
                 }
                 else if (ruleEvent is ResourceChangedEvent resource)
@@ -250,6 +276,12 @@ namespace Dice.Presentation
                 yield return null;
             }
             host.SetOpeningOpacity(1);
+        }
+
+        private static bool DisturbedAfter(Resolution resolution, DiceRolledEvent rolled)
+        {
+            int next = resolution.Events.IndexOf(rolled) + 1;
+            return next > 0 && next < resolution.Events.Count && resolution.Events[next] is DieDisturbedEvent;
         }
 
         private static bool IsModifierGrant(ResourceChangedEvent resource, Resolution resolution)

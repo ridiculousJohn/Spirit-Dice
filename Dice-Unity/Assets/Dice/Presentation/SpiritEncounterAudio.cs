@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Dice.Presentation
 {
-    public enum SpiritAudioCue { Roll, Spirit, Score, StageClear }
+    public enum SpiritAudioCue { Roll, Spirit, Score, StageClear, Disturbance, DisturbanceBlocked }
 
     /** Owns cosmetic audio sources and suspension without altering global audio or game randomness. */
     [DisallowMultipleComponent]
@@ -19,8 +19,12 @@ namespace Dice.Presentation
         private bool hasFocus;
         private bool paused;
         private float nextCreak;
+        private float nextAmbientOneShot;
         private int nextCueSource;
         private AudioClip lastSpiritClip;
+        private AudioClip lastDisturbanceClip;
+        private AudioClip lastBlockedClip;
+        private AudioClip lastAmbientOneShotClip;
 
         public SpiritAudioTheme Theme => theme;
         public void SetTheme(SpiritAudioTheme selectedTheme)
@@ -29,6 +33,9 @@ namespace Dice.Presentation
             StopPlayback();
             theme = selectedTheme;
             lastSpiritClip = null;
+            lastDisturbanceClip = null;
+            lastBlockedClip = null;
+            lastAmbientOneShotClip = null;
             RefreshPlayback();
         }
 
@@ -45,6 +52,7 @@ namespace Dice.Presentation
         }
 
         private bool CanPlay => isActiveAndEnabled && !muted && hasFocus && !paused && theme != null;
+        private bool HasAmbientOneShots => theme != null && theme.ambientOneShotClips != null && theme.ambientOneShotClips.Length > 0;
 
         private void Awake()
         {
@@ -107,6 +115,8 @@ namespace Dice.Presentation
                 case SpiritAudioCue.Spirit: clip = ChooseSpiritClip(); break;
                 case SpiritAudioCue.Score: clip = theme.score; break;
                 case SpiritAudioCue.StageClear: clip = theme.stageClear; break;
+                case SpiritAudioCue.Disturbance: clip = lastDisturbanceClip = ChooseClip(theme.disturbanceClips, lastDisturbanceClip, null, cosmeticRandom); break;
+                case SpiritAudioCue.DisturbanceBlocked: clip = lastBlockedClip = ChooseClip(theme.disturbanceBlockedClips, lastBlockedClip, null, cosmeticRandom); break;
                 default: return;
             }
             PlayClip(clip);
@@ -114,23 +124,42 @@ namespace Dice.Presentation
 
         private AudioClip ChooseSpiritClip()
         {
-            AudioClip selected = null;
-            int candidates = 0;
-            if (theme.spiritClips != null)
-            {
-                // Reservoir selection skips empty slots and the previous clip without allocating a list.
-                foreach (var clip in theme.spiritClips)
-                    if (clip != null && clip != lastSpiritClip && cosmeticRandom.Next(++candidates) == 0)
-                        selected = clip;
-                if (selected == null)
-                    foreach (var clip in theme.spiritClips)
-                        if (clip != null) { selected = clip; break; }
-            }
-            lastSpiritClip = selected != null ? selected : theme.spirit;
+            lastSpiritClip = ChooseClip(theme.spiritClips, lastSpiritClip, theme.spirit, cosmeticRandom);
             return lastSpiritClip;
         }
 
+        /** Picks a random assigned clip other than the previous one unless it is the only one; returns fallback when none are assigned. */
+        public static AudioClip ChooseClip(AudioClip[] clips, AudioClip previous, AudioClip fallback, System.Random random)
+        {
+            AudioClip selected = null;
+            int candidates = 0;
+            if (clips != null)
+            {
+                // Reservoir selection skips empty slots and the previous clip without allocating a list.
+                foreach (var clip in clips)
+                    if (clip != null && clip != previous && random.Next(++candidates) == 0)
+                        selected = clip;
+                if (selected == null)
+                    foreach (var clip in clips)
+                        if (clip != null) { selected = clip; break; }
+            }
+            return selected != null ? selected : fallback;
+        }
+
+        /** Returns the delay before a scheduled room one-shot: uniform between the authored bounds, at least one second. */
+        public static float NextInterval(float minimumInterval, float maximumInterval, System.Random random)
+        {
+            float minimum = Mathf.Max(1, minimumInterval);
+            float maximum = Mathf.Max(minimum, maximumInterval);
+            return minimum + (float)random.NextDouble() * (maximum - minimum);
+        }
+
         private void PlayClip(AudioClip clip)
+        {
+            if (CanPlay) PlayClip(clip, theme.effectsVolume);
+        }
+
+        private void PlayClip(AudioClip clip, float volume)
         {
             if (!CanPlay || clip == null) return;
 
@@ -145,25 +174,41 @@ namespace Dice.Presentation
             nextCueSource = (selected + 1) % cueSources.Length;
             source.Stop();
             source.clip = clip;
-            source.volume = Mathf.Clamp01(theme.effectsVolume);
+            source.volume = Mathf.Clamp01(volume);
             source.Play();
         }
 
         private void Update()
         {
-            if (!CanPlay || theme.creak == null || Time.unscaledTime < nextCreak) return;
-            creakSource.clip = theme.creak;
-            creakSource.volume = Mathf.Clamp01(theme.creakVolume);
-            creakSource.Play();
-            ScheduleCreak();
+            if (!CanPlay) return;
+            if (theme.creak != null && Time.unscaledTime >= nextCreak)
+            {
+                creakSource.clip = theme.creak;
+                creakSource.volume = Mathf.Clamp01(theme.creakVolume);
+                creakSource.Play();
+                ScheduleCreak();
+            }
+            if (HasAmbientOneShots && Time.unscaledTime >= nextAmbientOneShot)
+            {
+                lastAmbientOneShotClip = ChooseClip(theme.ambientOneShotClips, lastAmbientOneShotClip, null, cosmeticRandom);
+                // Ambient one-shots use the bounded cue voices, so mute and suspension stop them with the other cues.
+                PlayClip(lastAmbientOneShotClip, theme.ambientOneShotVolume);
+                ScheduleAmbientOneShot();
+            }
         }
 
         private void ScheduleCreak()
         {
             if (theme == null || cosmeticRandom == null) return;
-            float minimum = Mathf.Max(1, theme.minimumCreakInterval);
-            float maximum = Mathf.Max(minimum, theme.maximumCreakInterval);
-            nextCreak = Time.unscaledTime + minimum + (float)cosmeticRandom.NextDouble() * (maximum - minimum);
+            nextCreak = Time.unscaledTime + NextInterval(theme.minimumCreakInterval, theme.maximumCreakInterval, cosmeticRandom);
+        }
+
+        private void ScheduleAmbientOneShot()
+        {
+            // Themes without ambient one-shots leave the cosmetic random sequence to the creak.
+            if (!HasAmbientOneShots || cosmeticRandom == null) return;
+            nextAmbientOneShot = Time.unscaledTime + NextInterval(theme.minimumAmbientOneShotInterval,
+                theme.maximumAmbientOneShotInterval, cosmeticRandom);
         }
 
         private void RefreshPlayback()
@@ -178,6 +223,7 @@ namespace Dice.Presentation
             }
             if (ambienceSource.clip != null && !ambienceSource.isPlaying) ambienceSource.Play();
             ScheduleCreak();
+            ScheduleAmbientOneShot();
         }
 
         private void StopPlayback()

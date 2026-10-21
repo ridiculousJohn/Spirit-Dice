@@ -193,6 +193,62 @@ namespace Dice.Presentation
             }
         }
 
+        /** Rolls one die to a face; the other dice keep their current pose. */
+        public IEnumerator RollDie(int index, int face, SpiritRollTiming timing)
+        {
+            if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            return Roll(new DiceValues(face, face, face, face, face), 1 << index, timing);
+        }
+
+        /** Turns one die over to a face with a short hop, honoring the same cancellation rules as Roll. */
+        public IEnumerator Flip(int index, int face, float duration = .5f)
+        {
+            if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            if (face < 1 || face > 6) throw new ArgumentOutOfRangeException(nameof(face));
+            if (float.IsNaN(duration) || duration < 0f) throw new ArgumentOutOfRangeException(nameof(duration));
+            Initialize();
+            if (IsRolling) throw new InvalidOperationException("A dice roll is already running.");
+            rollingMask = 1 << index;
+            int version = presentationVersion;
+            Quaternion startRotation = dice[index].localRotation;
+            Quaternion endRotation = RotationForFace(face, index);
+            double start = Time.unscaledTimeAsDouble;
+
+            IsRolling = true;
+            try
+            {
+                while (true)
+                {
+                    if (version != presentationVersion) yield break;
+                    float progress = duration > 0f ? Mathf.Clamp01((float)(Time.unscaledTimeAsDouble - start) / duration) : 1f;
+                    // Opposite faces differ by a half turn about a horizontal axis, so the slerp tumbles the die over.
+                    Quaternion rotation = Quaternion.Slerp(startRotation, endRotation, Mathf.SmoothStep(0f, 1f, progress));
+                    float lift = Mathf.Sin(progress * Mathf.PI) * .45f;
+                    dice[index].localRotation = rotation;
+                    Vector3 position = SlotPosition(index);
+                    position.y = (sharedScene != null ? 0 : FeltHeight) + (SupportHeight(rotation) + lift) * DieScale;
+                    dice[index].localPosition = position;
+                    SetShadowHeight(index, lift / .34f);
+                    if (progress >= 1f) break;
+                    yield return null;
+                }
+            }
+            finally
+            {
+                if (version == presentationVersion)
+                {
+                    if (dice[index] != null)
+                    {
+                        dice[index].localRotation = endRotation;
+                        dice[index].localPosition = SlotPosition(index);
+                        SetShadowHeight(index, 0f);
+                    }
+                    rollingMask = 0;
+                    IsRolling = false;
+                }
+            }
+        }
+
         public int GetVisibleFace(int index)
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Dice.Engine
 {
@@ -18,6 +19,15 @@ namespace Dice.Engine
         internal virtual int MaximumFreeRerollsPerHand => 0;
         internal virtual long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => 0;
         internal virtual int FavoredFace(long totalHandsPlayed) => 0;
+        internal virtual void ValidateDefinition(EncounterDefinition encounter) { }
+        internal virtual bool CanDisturbDice => false;
+
+        /** Returns true when this rule attempted a disturbance, whether it changed a die or was blocked. */
+        internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, InterferenceTrigger trigger,
+            int eligibleMask, List<RuleEvent> events) => false;
+
+        internal virtual bool ProtectsBay(EncounterDefinition encounter, EncounterState state, int bay, DieInterferenceKind kind)
+            => false;
     }
 
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
@@ -117,6 +127,30 @@ namespace Dice.Engine
             int maximum = 0;
             foreach (var rule in definition.Rules) maximum += rule.MaximumFreeRerollsPerHand;
             return maximum;
+        }
+
+        internal static bool CanDisturbDice(EncounterDefinition definition)
+        {
+            foreach (var rule in definition.Rules)
+                if (rule.CanDisturbDice) return true;
+            return false;
+        }
+
+        internal static void Interfere(EncounterDefinition definition, EncounterState state, InterferenceTrigger trigger,
+            int eligibleMask, List<RuleEvent> events)
+        {
+            state.LatestDisturbedMask = 0;
+            // At most one disturbance attempt resolves for each committed action.
+            foreach (var rule in definition.Rules)
+                if (rule.Interfere(definition, state, trigger, eligibleMask, events)) return;
+        }
+
+        internal static EncounterRuleDefinition Protector(EncounterDefinition definition, EncounterState state, int bay,
+            DieInterferenceKind kind)
+        {
+            foreach (var rule in definition.Rules)
+                if (rule.ProtectsBay(definition, state, bay, kind)) return rule;
+            return null;
         }
     }
 }

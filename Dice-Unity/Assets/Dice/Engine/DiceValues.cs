@@ -46,6 +46,14 @@ namespace Dice.Engine
         public bool IsValid => IsFace(first) && IsFace(second) && IsFace(third) && IsFace(fourth) && IsFace(fifth);
         public int[] ToArray() => new[] { first, second, third, fourth, fifth };
 
+        internal DiceValues With(int index, int face)
+        {
+            int[] faces = ToArray();
+            if ((uint)index >= Count) throw new ArgumentOutOfRangeException(nameof(index));
+            faces[index] = face;
+            return new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]);
+        }
+
         public bool Equals(DiceValues other) => first == other.first && second == other.second &&
             third == other.third && fourth == other.fourth && fifth == other.fifth;
         public override bool Equals(object obj) => obj is DiceValues other && Equals(other);

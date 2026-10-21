@@ -129,5 +129,35 @@ namespace Dice.Tests
             Assert.That(tray.IsRolling, Is.False);
             Assert.That(tray.GetVisibleFace(2), Is.EqualTo(4));
         }
+
+        [Test]
+        public void DisturbanceAnimationsMoveOnlyTheTargetDie()
+        {
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            IEnumerator flip = tray.Flip(1, 7 - 2, 0f);
+            Assert.That(flip.MoveNext(), Is.False);
+            Assert.That(tray.IsRolling, Is.False);
+            // A timing that started long ago lands the forced reroll on its first step.
+            IEnumerator roll = tray.RollDie(3, 6, new SpiritRollTiming(0f, null, 0f, Time.unscaledTimeAsDouble - 10, 0));
+            Assert.That(roll.MoveNext(), Is.False);
+            Assert.That(tray.IsRolling, Is.False);
+            int[] expected = { 1, 5, 3, 6, 5 };
+            for (int index = 0; index < DiceValues.Count; index++)
+                Assert.That(tray.GetVisibleFace(index), Is.EqualTo(expected[index]), "Slot " + index);
+        }
+
+        [Test]
+        public void InterruptedFlipSettlesOnItsFaceAndBlocksOverlappingRolls()
+        {
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            IEnumerator flip = tray.Flip(4, 2, 10f);
+            Assert.That(flip.MoveNext(), Is.True);
+            Assert.That(tray.IsRolling, Is.True);
+            Assert.Throws<InvalidOperationException>(() => tray.SetValues(new DiceValues(1, 1, 1, 1, 1)));
+            ((IDisposable)flip).Dispose();
+            Assert.That(tray.IsRolling, Is.False);
+            Assert.That(tray.GetVisibleFace(4), Is.EqualTo(2));
+            Assert.That(tray.GetVisibleFace(0), Is.EqualTo(1));
+        }
     }
 }

@@ -112,6 +112,94 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void TablePieceLightsFollowTheirPropThroughTheSplitRoomTexture()
+        {
+            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
+                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
+            EditorSceneManager.ClosePreviewScene(preview);
+            preview = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(authoredTable.Scene.AssetGUID));
+            var view = preview.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
+            var prop = new GameObject("Candle", typeof(RectTransform));
+            prop.transform.SetParent(view.Portrait, false);
+            var piece = prop.AddComponent<SpiritTablePieceView>();
+            Set(piece, "pieceId", "piece.test.candle");
+            Set(piece, "interactionId", "position");
+            Field<List<SpiritTablePieceView>>(view, "tablePieces").Add(piece);
+            Invoke(view, "Build");
+            // A preview scene neither sizes nor scales its overlay canvas; the portrait takes its reference size as in the composition preview.
+            view.Canvas.transform.localScale = Vector3.one;
+            view.Portrait.anchorMin = view.Portrait.anchorMax = new Vector2(.5f, .5f);
+            view.Portrait.sizeDelta = new Vector2(540, 960);
+            foreach (var rect in view.GetComponentsInChildren<RectTransform>(true)) rect.ForceUpdateRectTransforms();
+            view.RewardsPanel.Root.gameObject.SetActive(false);
+            view.DiceTray.RenderCamera.scene = preview;
+            view.ModifierHistory.Renderer.RenderCamera.scene = preview;
+            view.DiceTray.RenderCamera.enabled = false;
+            view.ModifierHistory.Renderer.RenderCamera.enabled = false;
+            first.Lights[0].UvOffset = new Vector2(.01f, .02f);
+            first.Lights[0].ReceiverPosition = new Vector3(1, 2, 3);
+            var reference = new Vector2(.25f, .3f);
+            var bound = UnityEngine.Object.Instantiate(authoredTable);
+            var unbound = UnityEngine.Object.Instantiate(authoredTable);
+            resources.Add(bound);
+            resources.Add(unbound);
+            Set(bound, "sceneLighting", first);
+            Set(bound, "pieceLights", new[]
+            {
+                new EncounterTablePieceLight
+                {
+                    LightIndex = 0, PieceId = "piece.test.candle", InteractionId = "position", ReferencePosition = reference,
+                    ReceiverOffsetX = new Vector3(10, 0, 0), ReceiverOffsetY = new Vector3(0, 8, 0)
+                }
+            });
+            Set(unbound, "sceneLighting", first);
+            var room = Field<RawImage>(view, "roomImage");
+            var table = Field<RawImage>(view, "tableImage");
+            var sampled = Field<SceneLightingState>(view, "sceneLightingState");
+            ConfigureAuthoredTable(view, bound);
+
+            // A prop on the table image samples the table's slice of the room texture.
+            Place(prop, table, new Vector2(.25f, .1f));
+            Invoke(view, "LateUpdate");
+            AssertPieceLight(sampled, table, new Vector2(.25f, .1f), reference);
+
+            // A prop above the table samples the room image's slice.
+            Place(prop, room, new Vector2(.75f, .9f));
+            Assert.That(table.rectTransform.rect.Contains(table.rectTransform.InverseTransformPoint(prop.transform.position)), Is.False,
+                "The room sample point must not be covered by the table image.");
+            Invoke(view, "LateUpdate");
+            AssertPieceLight(sampled, room, new Vector2(.75f, .9f), reference);
+
+            prop.SetActive(false);
+            Invoke(view, "LateUpdate");
+            Require(sampled.GetIntensity(0) == 0f, "A hidden prop retained its light.");
+            prop.SetActive(true);
+
+            // Tables without piece lights keep every authored light position.
+            ConfigureAuthoredTable(view, unbound);
+            Invoke(view, "LateUpdate");
+            Require(sampled.Asset == first && sampled.GetUvOffset(0) == new Vector2(.01f, .02f) &&
+                sampled.GetReceiverPosition(0) == new Vector3(1, 2, 3), "An unbound light moved.");
+        }
+
+        private static void Place(GameObject prop, RawImage image, Vector2 normalized)
+        {
+            Rect rect = image.rectTransform.rect;
+            prop.transform.position = image.rectTransform.TransformPoint(
+                new Vector3(rect.xMin + rect.width * normalized.x, rect.yMin + rect.height * normalized.y, 0));
+        }
+
+        private static void AssertPieceLight(SceneLightingState sampled, RawImage image, Vector2 normalized, Vector2 reference)
+        {
+            Vector2 delta = image.uvRect.min + Vector2.Scale(image.uvRect.size, normalized) - reference;
+            Require((sampled.GetUvOffset(0) - (new Vector2(.01f, .02f) + delta)).magnitude < .001f,
+                "The light did not follow the prop: " + sampled.GetUvOffset(0));
+            Require((sampled.GetReceiverPosition(0) - new Vector3(1 + 10 * delta.x, 2 + 8 * delta.y, 3)).magnitude < .01f,
+                "The receiver light did not follow the prop: " + sampled.GetReceiverPosition(0));
+            Require(sampled.GetIntensity(0) > 0f, "A resting prop dimmed its light.");
+        }
+
+        [Test]
         public void JourneyPanelsRetainPriorLightingAndReleaseItWhenCanceledOrCompleted()
         {
             var journey = UnityEngine.ScriptableObject.CreateInstance<EncounterJourneyAsset>();

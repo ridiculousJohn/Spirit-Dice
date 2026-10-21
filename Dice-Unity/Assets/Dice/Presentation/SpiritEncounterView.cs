@@ -74,10 +74,16 @@ namespace Dice.Presentation
         [SerializeField] private Text profileSummary;
         [SerializeField] private Button soundButton;
         [SerializeField] private List<Button> diceButtons = new List<Button>();
-        [SerializeField] private List<GameObject> diceSelectionLabels = new List<GameObject>();
         [SerializeField] private SpiritPauseMenu pauseMenu;
         [SerializeField] private Vector2 portraitReferenceSize = new Vector2(540, 960);
-        [SerializeField] private Vector2 selectionLabelExtent = new Vector2(.43f, .035f);
+        [Tooltip("Authored props for the encounter's positioned table pieces; empty when the encounter places none.")]
+        [SerializeField] private List<SpiritTablePieceView> tablePieces = new List<SpiritTablePieceView>();
+        private readonly Rect[] pieceSlotRects = new Rect[DiceValues.Count];
+        private readonly Vector3[] pieceBayPoints = new Vector3[DiceValues.Count];
+        private bool pieceSlotsMeasured;
+        private float[] pieceLightIntensities = Array.Empty<float>();
+        private Vector2[] pieceLightUvOffsets = Array.Empty<Vector2>();
+        private Vector3[] pieceLightReceivers = Array.Empty<Vector3>();
 
         public RectTransform Root => (RectTransform)transform;
         public Canvas Canvas => canvas;
@@ -85,6 +91,7 @@ namespace Dice.Presentation
         public RawImage RoomImage => roomImage;
         public RawImage TableImage => tableImage;
         public EncounterTablePresentationAsset TablePresentation => tablePresentation;
+        public IReadOnlyList<SpiritTablePieceView> TablePieces => tablePieces;
 
         private ScoreBreakdown lastScore;
         private EncounterSnapshot presentedSnapshot;
@@ -138,8 +145,8 @@ namespace Dice.Presentation
             hud.CategoryLabel.text = DiagnosticText.Humanize(HandEvaluator.Evaluate(faces).ToString()).ToUpperInvariant();
             hud.SetScoreValues(0, 0);
             hud.HandScoreLabel.text = "0";
-            hud.SelectionLabel.text = "Tap dice to select for reroll";
-            hud.ScoreDetail.text = "ROLL BONUSES BANK HERE";
+            hud.SelectionLabel.text = "";
+            hud.ScoreDetail.text = "";
             hud.StatusLabel.text = "COMPOSITION PREVIEW";
             hud.InvestigationButton.gameObject.SetActive(table != null);
             string ruleText = rule != null ? rule.AvailableText?.Replace("{face}",
@@ -235,6 +242,11 @@ namespace Dice.Presentation
             if (selectedTable != tablePresentation)
                 throw new InvalidOperationException("The selected encounter must use its authored table scene.");
             if (configuredTable == selectedTable) return;
+            foreach (var pieceLight in selectedTable.PieceLights)
+                if (pieceLight == null || FindTablePiece(pieceLight.PieceId, pieceLight.InteractionId) == null ||
+                    selectedTable.SceneLighting != null && (selectedTable.SceneLighting.Lights == null ||
+                    pieceLight.LightIndex < 0 || pieceLight.LightIndex >= selectedTable.SceneLighting.Lights.Length))
+                    throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
             ClearSceneLighting();
             configuredTable = selectedTable;
             encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
@@ -275,11 +287,6 @@ namespace Dice.Presentation
                 hit.anchorMin = bounds.min;
                 hit.anchorMax = bounds.max;
                 hit.offsetMin = hit.offsetMax = Vector2.zero;
-                Vector2 labelCenter = DiceTray.GetSlotLabelViewportPosition(i);
-                var plate = (RectTransform)diceSelectionLabels[i].transform;
-                plate.anchorMin = labelCenter - new Vector2(bounds.width * selectionLabelExtent.x, selectionLabelExtent.y);
-                plate.anchorMax = labelCenter + new Vector2(bounds.width * selectionLabelExtent.x, selectionLabelExtent.y);
-                plate.offsetMin = plate.offsetMax = Vector2.zero;
             }
         }
 
@@ -340,6 +347,7 @@ namespace Dice.Presentation
         private void LateUpdate()
         {
             if (scorePlayback == null) return;
+            PositionTablePieces();
             UpdateSceneLighting();
             if (portrait == null || diceTrayFrame == null || ModifierHistory == null) return;
             PositionTrays();
@@ -354,7 +362,8 @@ namespace Dice.Presentation
         {
             if (configuredTable == null) return;
             var asset = configuredTable.SceneLighting;
-            sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
+            if (asset != null && configuredTable.PieceLights.Count > 0) SamplePieceLights(asset, configuredTable.PieceLights);
+            else sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble);
             if (asset != null)
             {
                 if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
@@ -377,8 +386,58 @@ namespace Dice.Presentation
             hostPortrait?.SetSceneLighting(state, configuredTable != null ? configuredTable.HostLightingPosition : Vector3.zero);
         }
 
+        /** Lights bound to table pieces follow their props; every other light keeps its authored position. */
+        private void SamplePieceLights(SceneLightingAsset asset, IReadOnlyList<EncounterTablePieceLight> pieceLights)
+        {
+            asset.Validate();
+            int count = asset.Lights.Length;
+            if (pieceLightIntensities.Length != count)
+            {
+                pieceLightIntensities = new float[count];
+                pieceLightUvOffsets = new Vector2[count];
+                pieceLightReceivers = new Vector3[count];
+            }
+            for (int i = 0; i < count; ++i)
+            {
+                pieceLightIntensities[i] = 1f;
+                pieceLightUvOffsets[i] = asset.Lights[i].UvOffset;
+                pieceLightReceivers[i] = asset.Lights[i].ReceiverPosition;
+            }
+            foreach (var pieceLight in pieceLights)
+            {
+                var piece = FindTablePiece(pieceLight.PieceId, pieceLight.InteractionId);
+                if (piece == null || pieceLight.LightIndex < 0 || pieceLight.LightIndex >= count)
+                    throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
+                int index = pieceLight.LightIndex;
+                if (!piece.gameObject.activeInHierarchy) { pieceLightIntensities[index] = 0f; continue; }
+                Vector2 delta = RoomTextureCoordinate(piece.transform.position) - pieceLight.ReferencePosition;
+                pieceLightUvOffsets[index] += delta;
+                pieceLightReceivers[index] += pieceLight.ReceiverOffsetX * delta.x + pieceLight.ReceiverOffsetY * delta.y;
+                pieceLightIntensities[index] = piece.LightIntensity;
+            }
+            sceneLightingState.Sample(asset, Time.unscaledTimeAsDouble, pieceLightIntensities, pieceLightUvOffsets, pieceLightReceivers);
+            foreach (var pieceLight in pieceLights)
+            {
+                SceneLightLayer light = asset.Lights[pieceLight.LightIndex];
+                float relativeIntensity = light.Intensity > 0f ? sceneLightingState.GetIntensity(pieceLight.LightIndex) / light.Intensity : 0f;
+                FindTablePiece(pieceLight.PieceId, pieceLight.InteractionId)
+                    .SetEmission(Mathf.Clamp01(Mathf.Pow(relativeIntensity, light.SourceResponse)));
+            }
+        }
+
+        /** The room and table images show different slices of one room texture; lights use that texture's coordinates. */
+        private Vector2 RoomTextureCoordinate(Vector3 world)
+        {
+            RectTransform front = tableImage.rectTransform;
+            RectTransform back = roomImage.rectTransform;
+            return SpiritTablePieceLayout.TextureCoordinate(front.InverseTransformPoint(world), front.rect, tableImage.uvRect,
+                back.InverseTransformPoint(world), back.rect, roomImage.uvRect);
+        }
+
         private void ClearSceneLighting()
         {
+            foreach (var piece in tablePieces)
+                if (piece != null) piece.RestoreEmission();
             if (roomImage != null) roomImage.material = null;
             if (tableImage != null) tableImage.material = null;
             sceneLightingMaterial?.Dispose();
@@ -398,12 +457,15 @@ namespace Dice.Presentation
                 CharmPopup == null || endingView == null || ModifierHistory == null || actionModifierCue == null ||
                 encounterAudio == null || pauseMenu == null || tablePresentation == null || TrayScene == null || hostPortrait == null)
                 throw new InvalidOperationException("The encounter screen requires authored UI, table, host, audio, and rig references.");
-            if (diceButtons.Count != DiceValues.Count || diceSelectionLabels.Count != DiceValues.Count)
-                throw new InvalidOperationException("The encounter screen requires five authored dice targets and selection labels.");
+            if (diceButtons.Count != DiceValues.Count)
+                throw new InvalidOperationException("The encounter screen requires five authored dice targets.");
             foreach (var button in diceButtons)
                 if (button == null) throw new InvalidOperationException("An authored dice target is missing.");
-            foreach (var label in diceSelectionLabels)
-                if (label == null) throw new InvalidOperationException("An authored dice selection label is missing.");
+            foreach (var piece in tablePieces)
+            {
+                if (piece == null) throw new InvalidOperationException("An authored table piece is missing.");
+                piece.Initialize(CanMovePiece, RequestPieceMove);
+            }
             GameplayHud.BuildHeader(portrait, ToggleMenu);
             GameplayHud.BuildPlayingPanel();
             GameplayHud.BuildPlayingHud(Reroll, Play);
@@ -637,6 +699,7 @@ namespace Dice.Presentation
                 OwnedCharmsPanel.Invalidate();
                 presentedSnapshot = snapshot;
             }
+            BindTablePieces(snapshot);
             bool playing = snapshot.Phase == EncounterPhase.Playing;
             if (playing && controls.Preview != null)
                 ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog);
@@ -673,14 +736,11 @@ namespace Dice.Presentation
                 hud.SetScore(score, false);
                 hud.SetScoreValues(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier);
                 hud.HandScoreLabel.text = "0";
-                hud.ScoreDetail.text = "ROLL BONUSES BANK HERE";
+                hud.ScoreDetail.text = "";
                 hud.PlayButton.interactable = true;
                 hud.RerollButton.interactable = controls.SelectedMask != 0 && snapshot.CanReroll;
-                int selected = 0;
-                for (int i = 0; i < DiceValues.Count; ++i) if ((controls.SelectedMask & (1 << i)) != 0) ++selected;
-                hud.SelectionLabel.text = selected == 0 ? "Tap dice to select for reroll" : selected + " selected for reroll";
-                hud.SelectionLabel.text += "\n" + (ModifierHistory.Count == 0 ? "No charms ready on play" :
-                    ModifierHistory.Count + (ModifierHistory.Count == 1 ? " charm ready" : " charms ready") + " - tap to inspect");
+                // Idle play shows no instruction or selection count; the tray highlight marks the reroll selection.
+                hud.SelectionLabel.text = "";
             }
             else if (!completed) RewardsPanel.Render(snapshot);
             else
@@ -692,6 +752,83 @@ namespace Dice.Presentation
             }
             if (IsCharmsOpen) OwnedCharmsPanel.Render();
             if (IsHandRanksOpen) RenderHandRanks();
+        }
+
+        private void BindTablePieces(EncounterSnapshot snapshot)
+        {
+            if (tablePieces.Count == 0) return;
+            var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
+            foreach (var piece in tablePieces)
+            {
+                var interaction = FindPieceInteraction(snapshot, piece);
+                var definition = FindPositionDefinition(encounter, piece);
+                if (interaction?.State is PiecePositionState state && definition != null) piece.Bind(state.Position, definition);
+                else piece.Unbind();
+            }
+        }
+
+        /** Bay snap points follow the tray's resting dice slots, measured like the authored dice touch targets. */
+        private void PositionTablePieces()
+        {
+            if (tablePieces.Count == 0 || DiceTray == null || trayImage == null) return;
+            // Rolling dice would carry a bay's piece with them; resting slot bounds do not depend on the face shown.
+            if (!pieceSlotsMeasured || !DiceTray.IsRolling)
+            {
+                for (int bay = 0; bay < DiceValues.Count; ++bay) pieceSlotRects[bay] = DiceTray.GetSlotViewportRect(bay);
+                pieceSlotsMeasured = true;
+            }
+            RectTransform frame = trayImage.rectTransform;
+            foreach (var piece in tablePieces)
+            {
+                for (int bay = 0; bay < DiceValues.Count; ++bay)
+                    pieceBayPoints[bay] = frame.TransformPoint(
+                        SpiritTablePieceLayout.ViewportPoint(frame.rect, pieceSlotRects[bay], piece.BayPlacement));
+                piece.Layout(pieceBayPoints);
+            }
+        }
+
+        /** Pieces move whenever the game accepts input during a hand and the piece's interaction is available. */
+        private bool CanMovePiece(SpiritTablePieceView piece)
+        {
+            if (Busy || !isActiveAndEnabled || controls.Snapshot == null || controls.Snapshot.Phase != EncounterPhase.Playing ||
+                journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing) return false;
+            var interaction = FindPieceInteraction(controls.Snapshot, piece);
+            return interaction != null && interaction.IsAvailable;
+        }
+
+        private bool RequestPieceMove(SpiritTablePieceView piece, PiecePosition position)
+        {
+            if (!CanMovePiece(piece)) return false;
+            controls.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
+            return true;
+        }
+
+        private SpiritTablePieceView FindTablePiece(string pieceId, string interactionId)
+        {
+            foreach (var piece in tablePieces)
+                if (piece != null && string.Equals(piece.PieceId, pieceId, StringComparison.Ordinal) &&
+                    string.Equals(piece.InteractionId, interactionId, StringComparison.Ordinal)) return piece;
+            return null;
+        }
+
+        private static PieceInteractionSnapshot FindPieceInteraction(EncounterSnapshot snapshot, SpiritTablePieceView piece)
+        {
+            foreach (var interaction in snapshot.PieceInteractions)
+                if (string.Equals(interaction.PieceId, piece.PieceId, StringComparison.Ordinal) &&
+                    string.Equals(interaction.InteractionId, piece.InteractionId, StringComparison.Ordinal)) return interaction;
+            return null;
+        }
+
+        private static PositionInteractionDefinition FindPositionDefinition(EncounterDefinition encounter, SpiritTablePieceView piece)
+        {
+            foreach (var candidate in encounter.Pieces)
+            {
+                if (!string.Equals(candidate.Id, piece.PieceId, StringComparison.Ordinal)) continue;
+                foreach (var interaction in candidate.Interactions)
+                    if (string.Equals(interaction.Id, piece.InteractionId, StringComparison.Ordinal))
+                        return interaction as PositionInteractionDefinition;
+            }
+            return null;
         }
 
         private void ResetPresentation(bool resetHost = true)
@@ -718,8 +855,6 @@ namespace Dice.Presentation
         private void SetDiceSelection(int mask)
         {
             DiceTray.SetSelection(mask);
-            for (int index = 0; index < diceSelectionLabels.Count; ++index)
-                diceSelectionLabels[index].SetActive((mask & (1 << index)) != 0);
             SpiritUi.SetButtonLabel(RerollButton, "Reroll");
         }
 
@@ -805,6 +940,18 @@ namespace Dice.Presentation
         void ISpiritScorePlaybackHost.SetDiceSelection(int mask) => SetDiceSelection(mask);
         void ISpiritScorePlaybackHost.SetOpeningOpacity(float opacity) => SetOpeningOpacity(opacity);
         void ISpiritScorePlaybackHost.RecordScore(ScoreBreakdown score) => lastScore = score;
+
+        float ISpiritScorePlaybackHost.ShowProtection(DisturbanceBlockedEvent blocked)
+        {
+            // A ward names the piece it protects with; that piece's prop shows the repelled attempt.
+            foreach (var rule in controls.Catalog.GetEncounter(controls.Snapshot.EncounterId).Rules)
+                if (rule is BayWardRuleDefinition ward && string.Equals(ward.Id, blocked.ProtectingRuleId, StringComparison.Ordinal))
+                {
+                    var piece = FindTablePiece(ward.PieceId, ward.InteractionId);
+                    return piece != null && piece.isActiveAndEnabled ? piece.Flare() : 0f;
+                }
+            return 0f;
+        }
 
         void ISpiritScorePlaybackHost.HideRewardsAndEnding()
         {

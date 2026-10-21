@@ -118,6 +118,26 @@ namespace Dice.Tests
             return dice[index];
         }
 
+        /** Selected dice show the tray's authored outline and frame; no plaque or REROLL caption marks the selection. */
+        internal static void AssertDiceSelection(SpiritEncounterView view, int selectedMask, string context)
+        {
+            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var outlines = (GameObject[])typeof(SpiritDiceTray).GetField("selectionOutlines", flags).GetValue(view.DiceTray);
+            var frames = (GameObject[])typeof(SpiritDiceTray).GetField("selectionFrames", flags).GetValue(view.DiceTray);
+            Assert.That(outlines, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
+            Assert.That(frames, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
+            for (int index = 0; index < Dice.Engine.DiceValues.Count; ++index)
+            {
+                bool selected = (selectedMask & (1 << index)) != 0;
+                Assert.That(outlines[index].activeInHierarchy, Is.EqualTo(selected), "Selection outline " + index + " " + context);
+                Assert.That(frames[index].activeInHierarchy, Is.EqualTo(selected), "Selection frame " + index + " " + context);
+            }
+            foreach (Transform child in view.GetComponentsInChildren<Transform>(true))
+                Assert.That(child.name, Does.Not.StartWith("DieReroll"), "Selected dice have no plaque " + context);
+            foreach (UnityEngine.UI.Text text in view.GetComponentsInChildren<UnityEngine.UI.Text>())
+                Assert.That(text.text, Is.Not.EqualTo("REROLL"), text.name + " must not caption the selection " + context);
+        }
+
         internal static string SpiritSavePath() => Path.GetFullPath(Path.Combine(Application.dataPath,
             "..", "..", "Docs", "work", "journey-file-tests", Guid.NewGuid().ToString("N"), "encounter.json"));
 

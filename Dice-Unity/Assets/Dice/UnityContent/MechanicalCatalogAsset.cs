@@ -43,7 +43,7 @@ namespace Dice.UnityContent
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
                     source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
                     string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones),
-                    source.encounterModifierIds, source.unlockRewardModifierIds);
+                    source.encounterModifierIds, source.unlockRewardModifierIds, BuildPieces(source.pieces));
             }
             var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
             for (int i = 0; i < modifierAssets.Count; ++i)
@@ -69,6 +69,25 @@ namespace Dice.UnityContent
             {
                 var source = sources[i] ?? throw new InvalidOperationException("An encounter rule asset is missing.");
                 definitions[i] = source.Build();
+            }
+            return definitions;
+        }
+
+        private static TablePieceDefinition[] BuildPieces(PieceData[] sources)
+        {
+            if (sources == null) throw new InvalidOperationException("Table pieces are missing.");
+            var definitions = new TablePieceDefinition[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                var source = sources[i] ?? throw new InvalidOperationException("A table piece entry is missing.");
+                if (source.interactions == null) throw new InvalidOperationException("Table piece interactions are missing.");
+                var interactions = new PieceInteractionDefinition[source.interactions.Length];
+                for (int j = 0; j < interactions.Length; ++j)
+                {
+                    var interaction = source.interactions[j] ?? throw new InvalidOperationException("A piece interaction asset is missing.");
+                    interactions[j] = interaction.Build();
+                }
+                definitions[i] = new TablePieceDefinition(source.id, interactions);
             }
             return definitions;
         }
@@ -145,6 +164,14 @@ namespace Dice.UnityContent
             public StageData[] stages = Array.Empty<StageData>();
             public RewardPolicyData rewardPolicy;
             public EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
+            public PieceData[] pieces = Array.Empty<PieceData>();
+        }
+
+        [Serializable]
+        private sealed class PieceData
+        {
+            public string id;
+            public PieceInteractionAsset[] interactions = Array.Empty<PieceInteractionAsset>();
         }
 
         [Serializable]

@@ -86,7 +86,7 @@ namespace Dice.Tests
             Assert.That(SpiritModifierIcons.GetSprite(definitions[0]), Is.Not.Null);
             Assert.That(definitions.Select(SpiritModifierIcons.GetCategorySprite).Distinct().Count(), Is.EqualTo(4));
             Assert.That(definitions.Select(SpiritModifierIcons.GetEffectColor).Distinct().Count(), Is.EqualTo(4));
-            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(3));
+            Assert.That(controller.JourneyCatalog.Entries.Count(value => !value.IsStoryOnly), Is.EqualTo(4));
 
             int tableIndex = 0;
             foreach (var journey in controller.JourneyCatalog.Entries.Where(value => !value.IsStoryOnly))

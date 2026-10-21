@@ -23,6 +23,7 @@ namespace Dice.Engine
                 PreviousPlayedDice = state.PreviousPlayedDice?.ToArray(),
                 LatestRerollMask = state.LatestRerollMask, LatestChangedMask = state.LatestChangedMask,
                 EverRerolledMask = state.EverRerolledMask, RerollsSpentOnHand = state.RerollsSpentOnHand,
+                DisturbedMask = state.DisturbedMask, LatestDisturbedMask = state.LatestDisturbedMask,
                 RerollsSpentInStage = state.RerollsSpentInStage, FreeRerollsUsedInStage = state.FreeRerollsUsedInStage,
                 HandsPlayedInStage = state.HandsPlayedInStage,
                 HasPreviousStage = state.PreviousStageStartingHands.HasValue,
@@ -33,6 +34,8 @@ namespace Dice.Engine
                 TotalFreeRerollsUsed = state.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])state.HandUpgrades.Clone(),
                 DiceRandomState = state.DiceRandom.State, RewardRandomState = state.RewardRandom.State,
+                RuleRandomState = state.RuleRandom.State,
+                Pieces = CapturePieces(definition, state),
                 ModifierBaseScore = state.ModifierBaseScore, ModifierMultiplier = state.ModifierMultiplier,
                 RewardRefreshes = state.RewardRefreshes, NextOfferId = state.NextOfferId, NextOptionId = state.NextOptionId,
                 ExcludedRewardFamilies = state.ExcludedRewardFamilies.ToArray(),
@@ -100,7 +103,7 @@ namespace Dice.Engine
             if (save.SaveFormatVersion < 1 || save.SaveFormatVersion > EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
             if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : save.SaveFormatVersion == 3 ? 5 :
-                save.SaveFormatVersion == 4 ? 6 : EncounterSession.RulesVersion))
+                save.SaveFormatVersion == 4 ? 6 : save.SaveFormatVersion == 5 ? 7 : EncounterSession.RulesVersion))
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -186,6 +189,7 @@ namespace Dice.Engine
                 PreviousPlayedDice = save.PreviousPlayedDice == null ? (DiceValues?)null : ReadDice(save.PreviousPlayedDice),
                 LatestRerollMask = save.LatestRerollMask, LatestChangedMask = save.LatestChangedMask,
                 EverRerolledMask = save.EverRerolledMask, RerollsSpentOnHand = save.RerollsSpentOnHand,
+                DisturbedMask = save.DisturbedMask, LatestDisturbedMask = save.LatestDisturbedMask,
                 RerollsSpentInStage = save.RerollsSpentInStage, FreeRerollsUsedInStage = save.FreeRerollsUsedInStage,
                 HandsPlayedInStage = save.HandsPlayedInStage,
                 PreviousStageStartingHands = save.HasPreviousStage ? (int?)save.PreviousStageStartingHands : null,
@@ -194,6 +198,7 @@ namespace Dice.Engine
                 TotalFreeRerollsUsed = save.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])save.HandUpgrades.Clone(), DiceRandom = new DeterministicRandom(save.DiceRandomState),
                 RewardRandom = new DeterministicRandom(save.RewardRandomState), RewardRefreshes = save.RewardRefreshes,
+                RuleRandom = RestoreRuleRandom(definition, save),
                 NextOfferId = save.NextOfferId, NextOptionId = save.NextOptionId,
                 Modifiers = new ModifierInstanceState[save.Modifiers.Length],
                 ExcludedRewardFamilies = new List<string>(save.ExcludedRewardFamilies),
@@ -204,7 +209,9 @@ namespace Dice.Engine
             ValidateUnlocks(catalog, definition, save, state);
             ValidateDiscoveries(catalog, save, state);
             ValidateHistory(definition, save, state, postPlay);
+            ValidateDisturbances(definition, save, state, postPlay);
             ValidateDiceHistory(state, postPlay);
+            state.PieceStates = RestorePieces(definition, save);
             var definitions = new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
             var families = new HashSet<string>(StringComparer.Ordinal);
             foreach (var modifier in catalog.Modifiers) { definitions.Add(modifier.Id, modifier); families.Add(modifier.FamilyId); }
@@ -346,20 +353,95 @@ namespace Dice.Engine
             Require(state.PreviousPlayedDice.HasValue == (state.TotalHandsPlayed != 0), "Previous played dice presence is inconsistent.");
             if (postPlay) Require(state.PreviousPlayedDice.HasValue && state.PreviousPlayedDice.Value == state.CurrentDice,
                 "Played dice do not match the last hand.");
+            // Disturbed dice change outside player rerolls, so their faces are excluded from reroll history checks.
+            int undisturbed = DiceValues.AllMask & ~state.DisturbedMask;
             if (state.RerollsSpentOnHand == 0)
                 Require(!state.DiceBeforeLastReroll.HasValue && state.LatestRerollMask == 0 && state.LatestChangedMask == 0 &&
-                    state.EverRerolledMask == 0 && state.CurrentDice == state.InitialDice, "Initial hand dice history is inconsistent.");
+                    state.EverRerolledMask == 0 && (DifferentFaces(state.CurrentDice, state.InitialDice) & undisturbed) == 0,
+                    "Initial hand dice history is inconsistent.");
             else
             {
                 Require(state.DiceBeforeLastReroll.HasValue && state.LatestRerollMask != 0, "Rerolled hand history is missing.");
-                int changed = 0;
-                for (int i = 0; i < DiceValues.Count; ++i)
-                    if (state.DiceBeforeLastReroll.Value[i] != state.CurrentDice[i]) changed |= 1 << i;
-                Require(changed == state.LatestChangedMask, "Changed mask disagrees with rerolled dice.");
+                int changed = DifferentFaces(state.DiceBeforeLastReroll.Value, state.CurrentDice);
+                Require((changed & undisturbed) == (state.LatestChangedMask & undisturbed), "Changed mask disagrees with rerolled dice.");
             }
             for (int i = 0; i < DiceValues.Count; ++i)
-                if ((state.EverRerolledMask & (1 << i)) == 0)
+                if (((state.EverRerolledMask | state.DisturbedMask) & (1 << i)) == 0)
                     Require(state.InitialDice[i] == state.CurrentDice[i], "An untouched die differs from its initial face.");
+        }
+
+        private static int DifferentFaces(DiceValues left, DiceValues right)
+        {
+            int mask = 0;
+            for (int i = 0; i < DiceValues.Count; ++i)
+                if (left[i] != right[i]) mask |= 1 << i;
+            return mask;
+        }
+
+        private static void ValidateDisturbances(EncounterDefinition definition, EncounterSaveData save, EncounterState state, bool postPlay)
+        {
+            Require((state.DisturbedMask & ~DiceValues.AllMask) == 0 && (state.LatestDisturbedMask & ~state.DisturbedMask) == 0 &&
+                (state.LatestDisturbedMask & (state.LatestDisturbedMask - 1)) == 0, "Disturbed dice masks are inconsistent.");
+            if (state.DisturbedMask == 0) return;
+            Require(save.SaveFormatVersion >= 6 && EncounterRuleResolver.CanDisturbDice(definition),
+                "Disturbed dice require an interference rule.");
+            // Before a hand is played, the latest disturbance followed a reroll and could only target a kept die.
+            Require(postPlay || (state.LatestDisturbedMask & state.LatestRerollMask) == 0,
+                "A reroll disturbance must target a kept die.");
+            int disturbed = 0;
+            for (int i = 0; i < DiceValues.Count; ++i)
+                if ((state.DisturbedMask & (1 << i)) != 0) ++disturbed;
+            // Each committed action resolves at most one disturbance.
+            Require(disturbed <= (long)state.RerollsSpentOnHand + (postPlay ? 1 : 0),
+                "Disturbed dice exceed the hand's committed actions.");
+        }
+
+        /** Dice interference is the rule stream's only consumer; a new consumer must widen this check. */
+        private static DeterministicRandom RestoreRuleRandom(EncounterDefinition definition, EncounterSaveData save)
+        {
+            bool used = EncounterRuleResolver.CanDisturbDice(definition);
+            if (save.SaveFormatVersion >= 6)
+            {
+                Require(used || save.RuleRandomState == 0, "Only interference rules may advance the rule stream.");
+                return new DeterministicRandom(save.RuleRandomState);
+            }
+            // Earlier formats had no rule stream; derive one only for an encounter that now draws from it.
+            return new DeterministicRandom(used ? save.DiceRandomState ^ EncounterSession.RuleRandomSalt : 0);
+        }
+
+        private static EncounterSavePieceData[] CapturePieces(EncounterDefinition definition, EncounterState state)
+        {
+            var values = new List<EncounterSavePieceData>();
+            int slot = 0;
+            foreach (var piece in definition.Pieces)
+                foreach (var interaction in piece.Interactions)
+                    values.Add(new EncounterSavePieceData
+                    {
+                        PieceId = piece.Id, InteractionId = interaction.Id, Values = interaction.Capture(state.PieceStates[slot++])
+                    });
+            return values.ToArray();
+        }
+
+        private static PieceInteractionState[] RestorePieces(EncounterDefinition definition, EncounterSaveData save)
+        {
+            var initial = TablePieceStates.Initial(definition);
+            if (save.SaveFormatVersion < 6)
+            {
+                Require(save.Pieces == null || save.Pieces.Length == 0, "Earlier saves cannot contain table pieces.");
+                return initial;
+            }
+            Require(save.Pieces != null && save.Pieces.Length == initial.Length, "Table piece states disagree with the encounter.");
+            var states = new PieceInteractionState[initial.Length];
+            int slot = 0;
+            foreach (var piece in definition.Pieces)
+                foreach (var interaction in piece.Interactions)
+                {
+                    var source = save.Pieces[slot];
+                    Require(source != null && source.PieceId == piece.Id && source.InteractionId == interaction.Id &&
+                        interaction.TryRestore(source.Values, out states[slot]), "A table piece state is invalid.");
+                    ++slot;
+                }
+            return states;
         }
 
         private static void ValidateModifiers(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,

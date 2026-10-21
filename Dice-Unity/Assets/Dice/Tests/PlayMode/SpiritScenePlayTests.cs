@@ -212,7 +212,7 @@ namespace Dice.Tests
             yield return null;
             AssertSnapshot(expected.Snapshot, controller.Snapshot);
             AssertVisibleDice(view, expected.Snapshot.CurrentDice);
-            AssertRerollPlates(view, 0);
+            ContentReady.AssertDiceSelection(view, 0, "");
             for (int frame = 0; frame < 3; ++frame) yield return null;
             AssertTrayRendered(view);
             foreach (var image in view.GetComponentsInChildren<Image>())
@@ -249,7 +249,7 @@ namespace Dice.Tests
             ClickThroughEventSystem(view, "DieButton4");
             yield return CaptureIfRequested("selected-slots");
             Assert.That(controller.SelectedMask, Is.EqualTo(9));
-            AssertRerollPlates(view, 9);
+            ContentReady.AssertDiceSelection(view, 9, "");
             Assert.That(view.RerollButton.GetComponentInChildren<Text>().text, Is.EqualTo("Reroll"),
                 "Selecting dice must preserve the reroll action label.");
             Assert.That(view.PlayButton.GetComponentInChildren<Text>().text, Is.EqualTo("Play Hand"));
@@ -310,7 +310,7 @@ namespace Dice.Tests
             yield return CaptureIfRequested("rolling");
             yield return WaitForPresentation(controller, view, "rerolled");
             AssertVisibleDice(view, expected.Snapshot.CurrentDice);
-            AssertRerollPlates(view, 0);
+            ContentReady.AssertDiceSelection(view, 0, "");
             Assert.That(controller.Preview.Score.HandScore, Is.EqualTo(152));
             Assert.That(view.BaseScoreLabel.text, Is.EqualTo("0"));
             Assert.That(view.MultiplierLabel.text, Is.EqualTo("0"));
@@ -1058,35 +1058,6 @@ namespace Dice.Tests
                 Vector3 towardCamera = camera.orthographic ? -camera.transform.forward
                     : (camera.transform.position - die.position).normalized;
                 Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0f), "Die " + index + " result visibility");
-            }
-        }
-
-        private static void AssertRerollPlates(SpiritEncounterView view, int selectedMask)
-        {
-            Canvas.ForceUpdateCanvases();
-            var transforms = view.GetComponentsInChildren<Transform>(true);
-            for (int index = 0; index < DiceValues.Count; ++index)
-            {
-                string plateName = "DieRerollPlate" + (index + 1);
-                Transform plate = null;
-                foreach (var candidate in transforms)
-                    if (candidate.name == plateName) { plate = candidate; break; }
-                Assert.That(plate, Is.Not.Null, plateName);
-                bool selected = (selectedMask & (1 << index)) != 0;
-                Assert.That(plate.gameObject.activeSelf, Is.EqualTo(selected), plateName);
-                if (!selected) continue;
-                Assert.That(plate.gameObject.activeInHierarchy, Is.True, plateName);
-                string labelName = "DieRerollLabel" + (index + 1);
-                var child = plate.Find(labelName);
-                Assert.That(child, Is.Not.Null, labelName);
-                var label = child.GetComponent<Text>();
-                Assert.That(label, Is.Not.Null, labelName);
-                Assert.That(label.text, Is.EqualTo("REROLL"), labelName);
-                Assert.That(label.gameObject.activeInHierarchy, Is.True, labelName);
-                var generator = label.cachedTextGenerator;
-                Assert.That(generator.Populate(label.text, label.GetGenerationSettings(label.rectTransform.rect.size)),
-                    Is.True, labelName);
-                Assert.That(generator.vertexCount, Is.GreaterThan(4), labelName + " generated no visible glyphs within its rect.");
             }
         }
 

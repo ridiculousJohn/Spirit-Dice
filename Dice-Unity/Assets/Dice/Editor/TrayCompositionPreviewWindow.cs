@@ -189,8 +189,8 @@ namespace Dice.Editor
                 new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4])).ToString()).ToUpperInvariant();
             hud.SetScoreValues(0, 0);
             hud.HandScoreLabel.text = "0";
-            hud.SelectionLabel.text = "Tap dice to select for reroll";
-            hud.ScoreDetail.text = "ROLL BONUSES BANK HERE";
+            hud.SelectionLabel.text = "";
+            hud.ScoreDetail.text = "";
             hud.StatusLabel.text = "COMPOSITION PREVIEW";
             var rule = table.RulePresentations.Count > 0 ? table.RulePresentations[0] : null;
             string ruleText = rule != null ? rule.AvailableText?.Replace("{face}",
