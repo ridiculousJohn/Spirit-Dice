@@ -1,0 +1,7 @@
+{
+  "source": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantCleanRoofPlate.png",
+  "output": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantRegisteredRoofPlate.png",
+  "reference": "Docs/Reference/Art/HauntedMerchantRegisteredRoofPlate.png",
+  "anchors": [[106,0,0],[125,0,0],[163,32,35],[219,67,73],[270,98,105],[325,130,139],[380,154,167],[429,173,191],[478,192,208],[525,205,224],[574,217,233],[590,219,232],[600,219,234],[605,218,230],[610,215,215],[627,222,222]],
+  "lowerLimits": [[106,1000],[525,1000],[574,260],[590,250],[600,246],[605,244],[610,243],[627,243]]
+}

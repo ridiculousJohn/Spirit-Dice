@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="112" result="Passed" total="112" passed="112" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:20Z" duration="114.0349151">
+  <test-suite type="TestSuite" id="1000" name="Dice-Unity" fullname="Dice-Unity" runstate="Runnable" testcasecount="1708" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:20Z" duration="114.034915" total="112" passed="112" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2934" name="Dice.Tests.EditMode.dll" fullname="C:/Users/jsp73/Projects/Dice/Dice-Unity/Library/ScriptAssemblies/Dice.Tests.EditMode.dll" runstate="Runnable" testcasecount="1707" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:20Z" duration="114.017976" total="112" passed="112" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="15408" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2935" name="Dice" fullname="Dice" runstate="Runnable" testcasecount="1707" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:20Z" duration="114.011508" total="112" passed="112" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2936" name="Tests" fullname="Dice.Tests" runstate="Runnable" testcasecount="1707" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:20Z" duration="114.005724" total="112" passed="112" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="AmbientMotionTests" fullname="Dice.Tests.AmbientMotionTests" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:20:18Z" duration="111.603805" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1003" name="AnimationBindingSwingsTheImageAroundAFixedPin" fullname="Dice.Tests.AmbientMotionTests.AnimationBindingSwingsTheImageAroundAFixedPin" methodname="AnimationBindingSwingsTheImageAroundAFixedPin" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="277026674" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:18:26Z" duration="0.036420" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1006" name="CleanRoofPlateMatchesThePreservedReferenceFile" fullname="Dice.Tests.AmbientMotionTests.CleanRoofPlateMatchesThePreservedReferenceFile" methodname="CleanRoofPlateMatchesThePreservedReferenceFile" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="1556304397" result="Passed" start-time="2026-10-20 23:18:26Z" end-time="2026-10-20 23:18:27Z" duration="0.341659" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="LoopJoinsAtTheSamePoseAndAngularVelocity" fullname="Dice.Tests.AmbientMotionTests.LoopJoinsAtTheSamePoseAndAngularVelocity" methodname="LoopJoinsAtTheSamePoseAndAngularVelocity" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="2002755911" result="Passed" start-time="2026-10-20 23:18:27Z" end-time="2026-10-20 23:18:27Z" duration="0.001584" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1002" name="PrefabUsesAuthoredNativeAutoplayWithoutRuntimeScripts" fullname="Dice.Tests.AmbientMotionTests.PrefabUsesAuthoredNativeAutoplayWithoutRuntimeScripts" methodname="PrefabUsesAuthoredNativeAutoplayWithoutRuntimeScripts" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="285746390" result="Passed" start-time="2026-10-20 23:18:27Z" end-time="2026-10-20 23:18:27Z" duration="0.003318" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1013" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-20 23:18:27Z" end-time="2026-10-20 23:20:18Z" duration="111.201430" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1007" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(540,960,1.0f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(540,960,1.0f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="678282178" result="Passed" start-time="2026-10-20 23:18:27Z" end-time="2026-10-20 23:18:39Z" duration="12.127920" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 540x960: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Default UI/white-mask shader on identical source frame comparison 540x960: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 540x960: 119 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 540x960: 119 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+]]></output>
+              </test-case>
+              <test-case id="1008" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(720,960,0.8f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(720,960,0.8f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="1413815437" result="Passed" start-time="2026-10-20 23:18:39Z" end-time="2026-10-20 23:18:56Z" duration="17.710231" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 720x960: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Default UI/white-mask shader on identical source frame comparison 720x960: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 720x960: 43 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 720x960: 43 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+]]></output>
+              </test-case>
+              <test-case id="1009" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(540,1200,1.1f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(540,1200,1.1f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="1143921911" result="Passed" start-time="2026-10-20 23:18:56Z" end-time="2026-10-20 23:19:12Z" duration="15.798087" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 540x1200: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Default UI/white-mask shader on identical source frame comparison 540x1200: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 540x1200: 128 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 540x1200: 128 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+]]></output>
+              </test-case>
+              <test-case id="1010" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(960,540,0.5f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(960,540,0.5f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="662880563" result="Passed" start-time="2026-10-20 23:19:12Z" end-time="2026-10-20 23:19:24Z" duration="12.206605" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 960x540: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Default UI/white-mask shader on identical source frame comparison 960x540: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 960x540: 48 differing RGB pixels, maximum channel difference 1, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 960x540: 48 differing RGB pixels, maximum channel difference 1, allowed maximum 2.
+]]></output>
+              </test-case>
+              <test-case id="1011" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(960,960,1.0f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(960,960,1.0f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="685854930" result="Passed" start-time="2026-10-20 23:19:24Z" end-time="2026-10-20 23:19:44Z" duration="19.524667" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 960x960: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Default UI/white-mask shader on identical source frame comparison 960x960: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 960x960: 119 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 960x960: 119 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+]]></output>
+              </test-case>
+              <test-case id="1012" name="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(941,1672,1.741667f)" fullname="Dice.Tests.AmbientMotionTests.PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences(941,1672,1.741667f)" methodname="PreviewSceneRendersBothExtremaWithLinkedPrefabAndCompleteReferences" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="580729174" result="Passed" start-time="2026-10-20 23:19:44Z" end-time="2026-10-20 23:20:18Z" duration="33.823624" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Background-only/clean plate comparison 941x1672: 0 differing pixels, 0 over two RGB units, 0 over eight RGB units, maximum channel difference 0, mean absolute RGB error 0.0000.
+Complete composite/unmodified original comparison 941x1672: 1570612 differing pixels, 1524023 over two RGB units, 1287686 over eight RGB units, maximum channel difference 251, mean absolute RGB error 15.6293.
+Default UI/white-mask shader on identical source frame comparison 941x1672: 0 differing RGB pixels, maximum channel difference 0, allowed maximum 0.
+Split parts/white-mask source with independent authored pivots comparison 941x1672: 323 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+Split parts/default UI source with independent authored pivots comparison 941x1672: 323 differing RGB pixels, maximum channel difference 2, allowed maximum 2.
+]]></output>
+              </test-case>
+            </test-suite>
+            <test-case id="1005" name="ReusedInstancesShareTheClipAndKeepIndependentTransformState" fullname="Dice.Tests.AmbientMotionTests.ReusedInstancesShareTheClipAndKeepIndependentTransformState" methodname="ReusedInstancesShareTheClipAndKeepIndependentTransformState" classname="Dice.Tests.AmbientMotionTests" runstate="Runnable" seed="1492462984" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.002408" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1133" name="CanopyMotionTests" fullname="Dice.Tests.CanopyMotionTests" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" testcasecount="19" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.656107" total="19" passed="19" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1148" name="AuthoredMotionHasQuietIntervalsShortBurstsAndDistinctChannelTiming" fullname="Dice.Tests.CanopyMotionTests.AuthoredMotionHasQuietIntervalsShortBurstsAndDistinctChannelTiming" methodname="AuthoredMotionHasQuietIntervalsShortBurstsAndDistinctChannelTiming" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="381247267" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.005286" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1145" name="FractionalMaskCoverageMatchesDefaultUiAlphaBlending" fullname="Dice.Tests.CanopyMotionTests.FractionalMaskCoverageMatchesDefaultUiAlphaBlending" methodname="FractionalMaskCoverageMatchesDefaultUiAlphaBlending" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1700972006" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.021151" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1144" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.097298" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1136" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(450,330)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(450,330)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="744969796" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.011478" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1137" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(475,325)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(475,325)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="858575739" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.008723" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1138" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(500,315)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(500,315)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1654508451" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.016036" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1139" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(535,302)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(535,302)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="658557694" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.007988" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1140" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(429,175)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(429,175)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="620967014" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.015646" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1141" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(478,194)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(478,194)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1891571725" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.008027" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1142" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(525,207)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(525,207)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1508535548" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.015685" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1143" name="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(574,219)" fullname="Dice.Tests.CanopyMotionTests.FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask(574,219)" methodname="FrontAndRearAttachmentPixelsRemainInTheOriginalClothMask" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="778982996" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.007939" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1150" name="InstancesShareAuthoredAssetsAndKeepIndependentAnimationAndMeshState" fullname="Dice.Tests.CanopyMotionTests.InstancesShareAuthoredAssetsAndKeepIndependentAnimationAndMeshState" methodname="InstancesShareAuthoredAssetsAndKeepIndependentAnimationAndMeshState" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1352523282" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.028791" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1149" name="LoopJoinsWithMatchingWeightsMeshAndVelocity" fullname="Dice.Tests.CanopyMotionTests.LoopJoinsWithMatchingWeightsMeshAndVelocity" methodname="LoopJoinsWithMatchingWeightsMeshAndVelocity" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1658452829" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.013871" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1146" name="NativeAnimationSampleAppliesEveryScalarCallbackAndChangesEachRenderedMesh" fullname="Dice.Tests.CanopyMotionTests.NativeAnimationSampleAppliesEveryScalarCallbackAndChangesEachRenderedMesh" methodname="NativeAnimationSampleAppliesEveryScalarCallbackAndChangesEachRenderedMesh" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="250962140" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.121364" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1134" name="OverhangPreservesOriginalPixelsAndRoofPlateChangesOnlyTheSelectedCloth" fullname="Dice.Tests.CanopyMotionTests.OverhangPreservesOriginalPixelsAndRoofPlateChangesOnlyTheSelectedCloth" methodname="OverhangPreservesOriginalPixelsAndRoofPlateChangesOnlyTheSelectedCloth" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="56152649" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.190064" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Original scene provenance: 70564 moving pixels, 0 source errors, 0 alpha errors, 0 outside plate errors, 70555 hidden fill pixels.
+]]></output>
+            </test-case>
+            <test-case id="1135" name="PrefabUsesNativeAutoplayAndOneRegisteredFringeImageWithTwoScalarBindings" fullname="Dice.Tests.CanopyMotionTests.PrefabUsesNativeAutoplayAndOneRegisteredFringeImageWithTwoScalarBindings" methodname="PrefabUsesNativeAutoplayAndOneRegisteredFringeImageWithTwoScalarBindings" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="165825762" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.008706" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1154" name="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation" fullname="Dice.Tests.CanopyMotionTests.SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.014127" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1151" name="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(1)" fullname="Dice.Tests.CanopyMotionTests.SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(1)" methodname="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="936227544" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.005859" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1152" name="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(3)" fullname="Dice.Tests.CanopyMotionTests.SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(3)" methodname="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1548365980" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.002576" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1153" name="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(7)" fullname="Dice.Tests.CanopyMotionTests.SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation(7)" methodname="SingleWeightUpdatesPreserveArbitraryOtherChannelsAndRejectInvalidInputsWithoutMutation" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1633366284" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.002800" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1147" name="SupportedRoofAndUndersideStayFixedAcrossTheLoop" fullname="Dice.Tests.CanopyMotionTests.SupportedRoofAndUndersideStayFixedAcrossTheLoop" methodname="SupportedRoofAndUndersideStayFixedAcrossTheLoop" classname="Dice.Tests.CanopyMotionTests" runstate="Runnable" seed="1261265443" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.032399" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="1568" name="MerchantLayerTests" fullname="Dice.Tests.MerchantLayerTests" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:19Z" duration="0.703414" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="ParameterizedMethod" id="1581" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:19Z" duration="0.098280" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1574" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantTorso&quot;,385,850)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantTorso&quot;,385,850)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="70225269" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.008503" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1575" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantHead&quot;,350,600)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantHead&quot;,350,600)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="441021179" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.010671" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1576" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantSupportingArm&quot;,230,830)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantSupportingArm&quot;,230,830)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1472071399" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.015978" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1577" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantRestingArm&quot;,540,800)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;MerchantRestingArm&quot;,540,800)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="803182825" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.011454" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1578" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleBody&quot;,600,700)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleBody&quot;,600,700)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="180825799" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.017120" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1579" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleFlame&quot;,590,200)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleFlame&quot;,590,200)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="210784521" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:18Z" duration="0.009017" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1580" name="AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleBody&quot;,578,450)" fullname="Dice.Tests.MerchantLayerTests.AnatomicalSamplesBelongToTheirIndependentlySelectablePart(&quot;CandleBody&quot;,578,450)" methodname="AnatomicalSamplesBelongToTheirIndependentlySelectablePart" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="995755221" result="Passed" start-time="2026-10-20 23:20:18Z" end-time="2026-10-20 23:20:19Z" duration="0.018634" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="1573" name="LayerSeparationPreservesTheInstalledSourceFile" fullname="Dice.Tests.MerchantLayerTests.LayerSeparationPreservesTheInstalledSourceFile" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.083486" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1571" name="LayerSeparationPreservesTheInstalledSourceFile(&quot;MerchantHost.png&quot;,&quot;F733AB1D178BAEC18C4AD14E35DAE45E34DBB874ABCEC4DFDC1C8A905745C016&quot;)" fullname="Dice.Tests.MerchantLayerTests.LayerSeparationPreservesTheInstalledSourceFile(&quot;MerchantHost.png&quot;,&quot;F733AB1D178BAEC18C4AD14E35DAE45E34DBB874ABCEC4DFDC1C8A905745C016&quot;)" methodname="LayerSeparationPreservesTheInstalledSourceFile" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1778212500" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.025696" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1572" name="LayerSeparationPreservesTheInstalledSourceFile(&quot;ProtectiveCandle.png&quot;,&quot;0C447D1B3E87DA64FDA6CC7D68B7D8AA04BF4C0B04A6C328C3F21669C23A1F46&quot;)" fullname="Dice.Tests.MerchantLayerTests.LayerSeparationPreservesTheInstalledSourceFile(&quot;ProtectiveCandle.png&quot;,&quot;0C447D1B3E87DA64FDA6CC7D68B7D8AA04BF4C0B04A6C328C3F21669C23A1F46&quot;)" methodname="LayerSeparationPreservesTheInstalledSourceFile" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1984066564" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.056226" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="1570" name="MerchantLayersUseTheExistingHostPresentationContract" fullname="Dice.Tests.MerchantLayerTests.MerchantLayersUseTheExistingHostPresentationContract" methodname="MerchantLayersUseTheExistingHostPresentationContract" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="2084702034" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.004083" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1569" name="MovableCandleFootprintHasDarkBordersAndIndependentLightReferences" fullname="Dice.Tests.MerchantLayerTests.MovableCandleFootprintHasDarkBordersAndIndependentLightReferences" methodname="MovableCandleFootprintHasDarkBordersAndIndependentLightReferences" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1178472843" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.140832" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="1584" name="OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame" fullname="Dice.Tests.MerchantLayerTests.OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.372574" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1582" name="OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame(&quot;MerchantHost.png&quot;,System.String[])" fullname="Dice.Tests.MerchantLayerTests.OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame(&quot;MerchantHost.png&quot;,System.String[])" methodname="OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1722630741" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.206023" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1583" name="OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame(&quot;ProtectiveCandle.png&quot;,System.String[])" fullname="Dice.Tests.MerchantLayerTests.OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame(&quot;ProtectiveCandle.png&quot;,System.String[])" methodname="OwnershipMasksPartitionTheCompleteUnmodifiedSourceFrame" classname="Dice.Tests.MerchantLayerTests" runstate="Runnable" seed="1111957412" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.152773" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestFixture" id="2444" name="SceneLightFlickerTests" fullname="Dice.Tests.SceneLightFlickerTests" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.026035" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2445" name="AbsoluteTimeSamplesAreDeterministicRegardlessOfCallOrder" fullname="Dice.Tests.SceneLightFlickerTests.AbsoluteTimeSamplesAreDeterministicRegardlessOfCallOrder" methodname="AbsoluteTimeSamplesAreDeterministicRegardlessOfCallOrder" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="1827760491" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.001335" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2446" name="DifferentSeedsProduceIndependentFlicker" fullname="Dice.Tests.SceneLightFlickerTests.DifferentSeedsProduceIndependentFlicker" methodname="DifferentSeedsProduceIndependentFlicker" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="2139791601" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000395" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2453" name="DisabledFlickerPreservesAuthoredIntensity" fullname="Dice.Tests.SceneLightFlickerTests.DisabledFlickerPreservesAuthoredIntensity" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.007797" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2450" name="DisabledFlickerPreservesAuthoredIntensity(2.0f,0.0f,1.0f)" fullname="Dice.Tests.SceneLightFlickerTests.DisabledFlickerPreservesAuthoredIntensity(2.0f,0.0f,1.0f)" methodname="DisabledFlickerPreservesAuthoredIntensity" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="1495866909" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000450" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2451" name="DisabledFlickerPreservesAuthoredIntensity(2.0f,0.3f,0.0f)" fullname="Dice.Tests.SceneLightFlickerTests.DisabledFlickerPreservesAuthoredIntensity(2.0f,0.3f,0.0f)" methodname="DisabledFlickerPreservesAuthoredIntensity" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="60900404" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000113" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2452" name="DisabledFlickerPreservesAuthoredIntensity(0.0f,0.3f,1.0f)" fullname="Dice.Tests.SceneLightFlickerTests.DisabledFlickerPreservesAuthoredIntensity(0.0f,0.3f,1.0f)" methodname="DisabledFlickerPreservesAuthoredIntensity" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="204681560" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000076" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2449" name="FlickerDoesNotAdvanceUnityRandomState" fullname="Dice.Tests.SceneLightFlickerTests.FlickerDoesNotAdvanceUnityRandomState" methodname="FlickerDoesNotAdvanceUnityRandomState" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="646178331" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000587" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2447" name="FlickerStaysWithinAuthoredBounds" fullname="Dice.Tests.SceneLightFlickerTests.FlickerStaysWithinAuthoredBounds" methodname="FlickerStaysWithinAuthoredBounds" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="260877132" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000452" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2448" name="NearbyTimeSamplesRemainContinuous" fullname="Dice.Tests.SceneLightFlickerTests.NearbyTimeSamplesRemainContinuous" methodname="NearbyTimeSamplesRemainContinuous" classname="Dice.Tests.SceneLightFlickerTests" runstate="Runnable" seed="2142406929" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.000714" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="2454" name="SceneLightingPresentationTests" fullname="Dice.Tests.SceneLightingPresentationTests" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.041543" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2457" name="DisableRestoresOriginalImageStateAndReenableRebuildsTheSameInstanceSettings" fullname="Dice.Tests.SceneLightingPresentationTests.DisableRestoresOriginalImageStateAndReenableRebuildsTheSameInstanceSettings" methodname="DisableRestoresOriginalImageStateAndReenableRebuildsTheSameInstanceSettings" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="1263179157" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.004786" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2458" name="EmissionTracksRelativeFlickerAndOverridesForStrongPaintedLights" fullname="Dice.Tests.SceneLightingPresentationTests.EmissionTracksRelativeFlickerAndOverridesForStrongPaintedLights" methodname="EmissionTracksRelativeFlickerAndOverridesForStrongPaintedLights" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="428222819" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.001832" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2456" name="InactiveSourceAndExplicitZeroExtinguishOnlyTheirOwnLightAndEmission" fullname="Dice.Tests.SceneLightingPresentationTests.InactiveSourceAndExplicitZeroExtinguishOnlyTheirOwnLightAndEmission" methodname="InactiveSourceAndExplicitZeroExtinguishOnlyTheirOwnLightAndEmission" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="617720377" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.001318" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2461" name="InstanceOverrideArraysAreCopiedAndMalformedInputDoesNotReplaceTheCurrentSample" fullname="Dice.Tests.SceneLightingPresentationTests.InstanceOverrideArraysAreCopiedAndMalformedInputDoesNotReplaceTheCurrentSample" methodname="InstanceOverrideArraysAreCopiedAndMalformedInputDoesNotReplaceTheCurrentSample" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="2061445927" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.002297" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2460" name="MovableImageReceiverEvaluatesLightingAtItsCurrentSourcePosition" fullname="Dice.Tests.SceneLightingPresentationTests.MovableImageReceiverEvaluatesLightingAtItsCurrentSourcePosition" methodname="MovableImageReceiverEvaluatesLightingAtItsCurrentSourcePosition" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="1358761047" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.002064" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2455" name="MovingSourceUpdatesContributionResponseAndReceiverWithoutChangingTheAsset" fullname="Dice.Tests.SceneLightingPresentationTests.MovingSourceUpdatesContributionResponseAndReceiverWithoutChangingTheAsset" methodname="MovingSourceUpdatesContributionResponseAndReceiverWithoutChangingTheAsset" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="1095661224" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.001679" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2459" name="NativeHostReceivesTheSharedSampleAndClearsLightingWithoutResettingItsPoseState" fullname="Dice.Tests.SceneLightingPresentationTests.NativeHostReceivesTheSharedSampleAndClearsLightingWithoutResettingItsPoseState" methodname="NativeHostReceivesTheSharedSampleAndClearsLightingWithoutResettingItsPoseState" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="89864265" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.004739" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2462" name="TranslatedFootprintPreservesBaseDetailAndMovesTheResponseMapWithIt" fullname="Dice.Tests.SceneLightingPresentationTests.TranslatedFootprintPreservesBaseDetailAndMovesTheResponseMapWithIt" methodname="TranslatedFootprintPreservesBaseDetailAndMovesTheResponseMapWithIt" classname="Dice.Tests.SceneLightingPresentationTests" runstate="Runnable" seed="1493536794" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.018081" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="2463" name="SceneLightingReceiverIntegrationTests" fullname="Dice.Tests.SceneLightingReceiverIntegrationTests" classname="Dice.Tests.SceneLightingReceiverIntegrationTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.200486" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2464" name="CompositorHostDiceAndHistoryUseOneSampleAndRigLocalLightCoordinates" fullname="Dice.Tests.SceneLightingReceiverIntegrationTests.CompositorHostDiceAndHistoryUseOneSampleAndRigLocalLightCoordinates" methodname="CompositorHostDiceAndHistoryUseOneSampleAndRigLocalLightCoordinates" classname="Dice.Tests.SceneLightingReceiverIntegrationTests" runstate="Runnable" seed="1811185171" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.145436" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2465" name="RemovingLightsClearsSlotsAndNewHistoryKeepsTheCurrentSampleAcrossReenable" fullname="Dice.Tests.SceneLightingReceiverIntegrationTests.RemovingLightsClearsSlotsAndNewHistoryKeepsTheCurrentSampleAcrossReenable" methodname="RemovingLightsClearsSlotsAndNewHistoryKeepsTheCurrentSampleAcrossReenable" classname="Dice.Tests.SceneLightingReceiverIntegrationTests" runstate="Runnable" seed="1451491378" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.049729" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="2466" name="SceneLightingShaderTests" fullname="Dice.Tests.SceneLightingShaderTests" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="49" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:20Z" duration="0.286053" total="49" passed="49" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2472" name="AllSlotsAddTheirIndependentlyScaledContributions" fullname="Dice.Tests.SceneLightingShaderTests.AllSlotsAddTheirIndependentlyScaledContributions" methodname="AllSlotsAddTheirIndependentlyScaledContributions" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="333008074" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.007663" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2516" name="AmbientConstraintRequiresAFullReferenceAndClearsWhenDisabled" fullname="Dice.Tests.SceneLightingShaderTests.AmbientConstraintRequiresAFullReferenceAndClearsWhenDisabled" methodname="AmbientConstraintRequiresAFullReferenceAndClearsWhenDisabled" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="2104093939" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.008596" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2473" name="AuthoredTintAndColorTexturesAreConvertedToLinear" fullname="Dice.Tests.SceneLightingShaderTests.AuthoredTintAndColorTexturesAreConvertedToLinear" methodname="AuthoredTintAndColorTexturesAreConvertedToLinear" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="797408331" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.003597" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2519" name="ChangingResponseMapReplacesThePreviousResponse" fullname="Dice.Tests.SceneLightingShaderTests.ChangingResponseMapReplacesThePreviousResponse" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.014264" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2517" name="ChangingResponseMapReplacesThePreviousResponse(False)" fullname="Dice.Tests.SceneLightingShaderTests.ChangingResponseMapReplacesThePreviousResponse(False)" methodname="ChangingResponseMapReplacesThePreviousResponse" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="2066940143" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.005555" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2518" name="ChangingResponseMapReplacesThePreviousResponse(True)" fullname="Dice.Tests.SceneLightingShaderTests.ChangingResponseMapReplacesThePreviousResponse(True)" methodname="ChangingResponseMapReplacesThePreviousResponse" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1867460669" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.005598" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="2515" name="ConstrainedAmbientReconstructsReferencesBeforeExtraction" fullname="Dice.Tests.SceneLightingShaderTests.ConstrainedAmbientReconstructsReferencesBeforeExtraction" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.033128" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2511" name="ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.0f,0.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.0f,0.0f)" methodname="ConstrainedAmbientReconstructsReferencesBeforeExtraction" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1985344844" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.005693" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2512" name="ConstrainedAmbientReconstructsReferencesBeforeExtraction(1.0f,0.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ConstrainedAmbientReconstructsReferencesBeforeExtraction(1.0f,0.0f)" methodname="ConstrainedAmbientReconstructsReferencesBeforeExtraction" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="113315295" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.012347" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2513" name="ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.0f,1.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.0f,1.0f)" methodname="ConstrainedAmbientReconstructsReferencesBeforeExtraction" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="379296154" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.007130" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2514" name="ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.25f,0.4f)" fullname="Dice.Tests.SceneLightingShaderTests.ConstrainedAmbientReconstructsReferencesBeforeExtraction(0.25f,0.4f)" methodname="ConstrainedAmbientReconstructsReferencesBeforeExtraction" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1592301958" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.005045" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="2471" name="EachSlotUsesItsOwnContributionAndResponseMap" fullname="Dice.Tests.SceneLightingShaderTests.EachSlotUsesItsOwnContributionAndResponseMap" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.018345" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2467" name="EachSlotUsesItsOwnContributionAndResponseMap(0)" fullname="Dice.Tests.SceneLightingShaderTests.EachSlotUsesItsOwnContributionAndResponseMap(0)" methodname="EachSlotUsesItsOwnContributionAndResponseMap" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="923638882" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.003964" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2468" name="EachSlotUsesItsOwnContributionAndResponseMap(1)" fullname="Dice.Tests.SceneLightingShaderTests.EachSlotUsesItsOwnContributionAndResponseMap(1)" methodname="EachSlotUsesItsOwnContributionAndResponseMap" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="322351482" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.003324" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2469" name="EachSlotUsesItsOwnContributionAndResponseMap(2)" fullname="Dice.Tests.SceneLightingShaderTests.EachSlotUsesItsOwnContributionAndResponseMap(2)" methodname="EachSlotUsesItsOwnContributionAndResponseMap" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="249082746" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.004957" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2470" name="EachSlotUsesItsOwnContributionAndResponseMap(3)" fullname="Dice.Tests.SceneLightingShaderTests.EachSlotUsesItsOwnContributionAndResponseMap(3)" methodname="EachSlotUsesItsOwnContributionAndResponseMap" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1662201888" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.003292" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="2509" name="FullReferenceSubtractsAmbientAndClampsNegativeChannels" fullname="Dice.Tests.SceneLightingShaderTests.FullReferenceSubtractsAmbientAndClampsNegativeChannels" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:20Z" duration="0.014855" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2506" name="FullReferenceSubtractsAmbientAndClampsNegativeChannels(0.0f)" fullname="Dice.Tests.SceneLightingShaderTests.FullReferenceSubtractsAmbientAndClampsNegativeChannels(0.0f)" methodname="FullReferenceSubtractsAmbientAndClampsNegativeChannels" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="811334163" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.003811" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2507" name="FullReferenceSubtractsAmbientAndClampsNegativeChannels(0.5f)" fullname="Dice.Tests.SceneLightingShaderTests.FullReferenceSubtractsAmbientAndClampsNegativeChannels(0.5f)" methodname="FullReferenceSubtractsAmbientAndClampsNegativeChannels" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1657929130" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:19Z" duration="0.002967" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2508" name="FullReferenceSubtractsAmbientAndClampsNegativeChannels(1.0f)" fullname="Dice.Tests.SceneLightingShaderTests.FullReferenceSubtractsAmbientAndClampsNegativeChannels(1.0f)" methodname="FullReferenceSubtractsAmbientAndClampsNegativeChannels" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="649237325" result="Passed" start-time="2026-10-20 23:20:19Z" end-time="2026-10-20 23:20:20Z" duration="0.005721" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2474" name="LowIntensityUsesLinearDistanceAndSourceMaskWithoutChangingHue" fullname="Dice.Tests.SceneLightingShaderTests.LowIntensityUsesLinearDistanceAndSourceMaskWithoutChangingHue" methodname="LowIntensityUsesLinearDistanceAndSourceMaskWithoutChangingHue" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="548551809" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.004053" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2505" name="MissingResponseMapRetainsLinearIntensityScaling" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.079782" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2489" name="MissingResponseMapRetainsLinearIntensityScaling(0.0f,0.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.0f,0.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1851681961" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.007362" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2490" name="MissingResponseMapRetainsLinearIntensityScaling(0.0f,0.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.0f,0.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1047980483" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003964" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2491" name="MissingResponseMapRetainsLinearIntensityScaling(0.0f,4.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.0f,4.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="799612615" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.002968" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2492" name="MissingResponseMapRetainsLinearIntensityScaling(0.0f,4.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.0f,4.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="380154609" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003072" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2493" name="MissingResponseMapRetainsLinearIntensityScaling(0.25f,0.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.25f,0.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="888058432" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.005033" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2494" name="MissingResponseMapRetainsLinearIntensityScaling(0.25f,0.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.25f,0.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1785567418" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003314" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2495" name="MissingResponseMapRetainsLinearIntensityScaling(0.25f,4.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.25f,4.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1662981935" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003048" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2496" name="MissingResponseMapRetainsLinearIntensityScaling(0.25f,4.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(0.25f,4.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1459755923" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003511" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2497" name="MissingResponseMapRetainsLinearIntensityScaling(1.0f,0.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(1.0f,0.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1958610490" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.002698" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2498" name="MissingResponseMapRetainsLinearIntensityScaling(1.0f,0.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(1.0f,0.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="311265121" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.006101" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2499" name="MissingResponseMapRetainsLinearIntensityScaling(1.0f,4.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(1.0f,4.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="697835185" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003102" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2500" name="MissingResponseMapRetainsLinearIntensityScaling(1.0f,4.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(1.0f,4.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1537981291" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003057" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2501" name="MissingResponseMapRetainsLinearIntensityScaling(2.5f,0.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(2.5f,0.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1829363043" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003080" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2502" name="MissingResponseMapRetainsLinearIntensityScaling(2.5f,0.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(2.5f,0.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1344843718" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003090" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2503" name="MissingResponseMapRetainsLinearIntensityScaling(2.5f,4.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(2.5f,4.0f,0.1f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="394994889" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.005324" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2504" name="MissingResponseMapRetainsLinearIntensityScaling(2.5f,4.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.MissingResponseMapRetainsLinearIntensityScaling(2.5f,4.0f,2.0f)" methodname="MissingResponseMapRetainsLinearIntensityScaling" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="948600649" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.006837" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2510" name="ReferenceResponsePreservesTheExtractedHue" fullname="Dice.Tests.SceneLightingShaderTests.ReferenceResponsePreservesTheExtractedHue" methodname="ReferenceResponsePreservesTheExtractedHue" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1262521006" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.004888" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-suite type="ParameterizedMethod" id="2487" name="ResponseEndpointsRemainFinite" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.057834" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2475" name="ResponseEndpointsRemainFinite(0.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(0.0f,0.1f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1194482560" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003481" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2476" name="ResponseEndpointsRemainFinite(0.0f,0.5f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(0.0f,0.5f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="593009590" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.006581" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2477" name="ResponseEndpointsRemainFinite(0.0f,1.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(0.0f,1.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="765489736" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003547" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2478" name="ResponseEndpointsRemainFinite(0.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(0.0f,2.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="341952017" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003712" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2479" name="ResponseEndpointsRemainFinite(1.0f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(1.0f,0.1f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="289675880" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.005881" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2480" name="ResponseEndpointsRemainFinite(1.0f,0.5f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(1.0f,0.5f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="2063559437" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003277" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2481" name="ResponseEndpointsRemainFinite(1.0f,1.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(1.0f,1.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1270856068" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.002506" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2482" name="ResponseEndpointsRemainFinite(1.0f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(1.0f,2.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="2071616335" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003003" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2483" name="ResponseEndpointsRemainFinite(2.5f,0.1f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(2.5f,0.1f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="466823792" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.002878" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2484" name="ResponseEndpointsRemainFinite(2.5f,0.5f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(2.5f,0.5f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="575007862" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.005764" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2485" name="ResponseEndpointsRemainFinite(2.5f,1.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(2.5f,1.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1383462963" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003114" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2486" name="ResponseEndpointsRemainFinite(2.5f,2.0f)" fullname="Dice.Tests.SceneLightingShaderTests.ResponseEndpointsRemainFinite(2.5f,2.0f)" methodname="ResponseEndpointsRemainFinite" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="193821273" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003279" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-suite type="ParameterizedMethod" id="2522" name="SwitchingAssetsOrRemovingLayersClearsUnusedSlots" fullname="Dice.Tests.SceneLightingShaderTests.SwitchingAssetsOrRemovingLayersClearsUnusedSlots" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.016880" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="2520" name="SwitchingAssetsOrRemovingLayersClearsUnusedSlots(False)" fullname="Dice.Tests.SceneLightingShaderTests.SwitchingAssetsOrRemovingLayersClearsUnusedSlots(False)" methodname="SwitchingAssetsOrRemovingLayersClearsUnusedSlots" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="553449306" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.006162" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="2521" name="SwitchingAssetsOrRemovingLayersClearsUnusedSlots(True)" fullname="Dice.Tests.SceneLightingShaderTests.SwitchingAssetsOrRemovingLayersClearsUnusedSlots(True)" methodname="SwitchingAssetsOrRemovingLayersClearsUnusedSlots" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="2082376823" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.008952" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+            </test-suite>
+            <test-case id="2488" name="ZeroIntensityWithZeroFalloffProducesOnlyAmbient" fullname="Dice.Tests.SceneLightingShaderTests.ZeroIntensityWithZeroFalloffProducesOnlyAmbient" methodname="ZeroIntensityWithZeroFalloffProducesOnlyAmbient" classname="Dice.Tests.SceneLightingShaderTests" runstate="Runnable" seed="1334255914" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.003573" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+          </test-suite>
+          <test-suite type="TestFixture" id="2523" name="SceneLightingViewLifecycleTests" fullname="Dice.Tests.SceneLightingViewLifecycleTests" classname="Dice.Tests.SceneLightingViewLifecycleTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.236977" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="2525" name="JourneyPanelsRetainPriorLightingAndReleaseItWhenCanceledOrCompleted" fullname="Dice.Tests.SceneLightingViewLifecycleTests.JourneyPanelsRetainPriorLightingAndReleaseItWhenCanceledOrCompleted" methodname="JourneyPanelsRetainPriorLightingAndReleaseItWhenCanceledOrCompleted" classname="Dice.Tests.SceneLightingViewLifecycleTests" runstate="Runnable" seed="785218397" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.104782" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="2524" name="TableSwitchesAndDisableReleaseSharedLightingAndOwnedMaterial" fullname="Dice.Tests.SceneLightingViewLifecycleTests.TableSwitchesAndDisableReleaseSharedLightingAndOwnedMaterial" methodname="TableSwitchesAndDisableReleaseSharedLightingAndOwnedMaterial" classname="Dice.Tests.SceneLightingViewLifecycleTests" runstate="Runnable" seed="617131364" result="Passed" start-time="2026-10-20 23:20:20Z" end-time="2026-10-20 23:20:20Z" duration="0.129953" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: C:/Users/jsp73/AppData/LocalLow/DefaultCompany/Dice-Unity\TestResults.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

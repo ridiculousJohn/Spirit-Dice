@@ -1,0 +1,614 @@
+{
+  "version": 1,
+  "maskDirectory": "Dice-Unity/Assets/Dice/Art/HauntedMerchant",
+  "coordinateSystem": "Native source pixels, origin top-left; sample pixel centers. Later polygons take ownership over earlier polygons; layer zero owns the remainder.",
+  "notes": "Base polygons and maskGuid values retain the original binary point-filtered source partition as provenance. Installed rendering uses each layer's renderSource/renderMask where supplied. Complete head and torso masks intentionally overlap moving parts; the supporting render mask contains only bare hand and forearm, with the fixed upper sleeve merged into torso coverage. Original source files remain unchanged.",
+  "groups": [
+    {
+      "name": "Merchant",
+      "source": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantHost.png",
+      "sourceGuid": "f498baacf913477eb3000eee91689d57",
+      "width": 941,
+      "height": 1672,
+      "prefab": "MerchantHost",
+      "presentation": "MerchantHost",
+      "layers": [
+        {
+          "name": "MerchantTorso",
+          "id": "Torso",
+          "pivot": [
+            385,
+            975
+          ],
+          "polygon": [],
+          "maskGuid": "30757e7b4382e5f8155ca70bdfb30028",
+          "materialGuid": "1a464510e62361d1a8eea2835aeb8f2d",
+          "renderSource": "MerchantTorsoAnimation.png",
+          "renderSourceGuid": "61244e069b4b49639a57e06296f3b00a",
+          "renderMask": "MerchantTorsoAnimationMask.png",
+          "renderMaskGuid": "8921150f431b434689bf0c36a5c57b51",
+          "motion": "Static torso, including the fixed upper supporting sleeve and concealed garment backing."
+        },
+        {
+          "name": "MerchantHead",
+          "id": "Head",
+          "pivot": [
+            370,
+            738
+          ],
+          "polygon": [
+            [
+              80,
+              400
+            ],
+            [
+              530,
+              400
+            ],
+            [
+              530,
+              625
+            ],
+            [
+              447,
+              637
+            ],
+            [
+              427,
+              643
+            ],
+            [
+              421,
+              661
+            ],
+            [
+              425,
+              687
+            ],
+            [
+              422,
+              711
+            ],
+            [
+              412,
+              731
+            ],
+            [
+              397,
+              744
+            ],
+            [
+              380,
+              754
+            ],
+            [
+              360,
+              753
+            ],
+            [
+              342,
+              744
+            ],
+            [
+              326,
+              734
+            ],
+            [
+              309,
+              718
+            ],
+            [
+              300,
+              699
+            ],
+            [
+              220,
+              665
+            ],
+            [
+              80,
+              660
+            ]
+          ],
+          "maskGuid": "8b65d933326be2a13b9fe55424ee9b35",
+          "materialGuid": "051888dccbd343f20ec71f37af435c3c",
+          "renderSource": "MerchantHeadRepaired.png",
+          "renderSourceGuid": "3d9a9d61a3e449d998988fc8daacbb2a",
+          "renderMask": "MerchantHeadCompleteMask.png",
+          "renderMaskGuid": "ddd1c2dae8c34f2bbd42701ea782b552",
+          "renderMaskFilter": "Bilinear",
+          "mesh": "MerchantHeadMesh.asset",
+          "shapes": ["Nod", "Tilt"],
+          "motion": "Rigid face and hat above a lower-neck blend over source y730..760; full nod moves the face approximately ten native pixels."
+        },
+        {
+          "name": "MerchantRestingArm",
+          "id": "Resting Arm",
+          "pivot": [
+            500,
+            680
+          ],
+          "polygon": [
+            [
+              500,
+              635
+            ],
+            [
+              720,
+              635
+            ],
+            [
+              720,
+              1040
+            ],
+            [
+              250,
+              1040
+            ],
+            [
+              265,
+              983
+            ],
+            [
+              279,
+              972
+            ],
+            [
+              298,
+              961
+            ],
+            [
+              318,
+              949
+            ],
+            [
+              346,
+              947
+            ],
+            [
+              372,
+              946
+            ],
+            [
+              398,
+              943
+            ],
+            [
+              424,
+              940
+            ],
+            [
+              450,
+              935
+            ],
+            [
+              470,
+              930
+            ],
+            [
+              484,
+              919
+            ],
+            [
+              498,
+              912
+            ],
+            [
+              507,
+              911
+            ],
+            [
+              499,
+              895
+            ],
+            [
+              504,
+              880
+            ],
+            [
+              506,
+              864
+            ],
+            [
+              499,
+              845
+            ],
+            [
+              498,
+              821
+            ],
+            [
+              492,
+              797
+            ],
+            [
+              489,
+              772
+            ],
+            [
+              485,
+              749
+            ],
+            [
+              482,
+              723
+            ],
+            [
+              484,
+              703
+            ],
+            [
+              490,
+              680
+            ]
+          ],
+          "maskGuid": "876f7ddd5777ea72265cb7972de86aae",
+          "materialGuid": "ad3f76e09f486f1e3d194233ccd948e8",
+          "mesh": "MerchantRestingArmMesh.asset",
+          "shapes": ["Lift"],
+          "motionPivot": [570, 955],
+          "motion": "Upper shoulder remains fixed; lower forearm lifts about seven native pixels at the hand with a y860..920 blend."
+        },
+        {
+          "name": "MerchantSupportingArm",
+          "id": "Supporting Arm",
+          "pivot": [
+            220,
+            700
+          ],
+          "polygon": [
+            0,
+            660,
+            [
+              212,
+              660
+            ],
+            [
+              220,
+              659
+            ],
+            [
+              224,
+              653
+            ],
+            [
+              230,
+              649
+            ],
+            [
+              239,
+              646
+            ],
+            [
+              245,
+              643
+            ],
+            [
+              253,
+              642
+            ],
+            [
+              260,
+              641
+            ],
+            [
+              265,
+              640
+            ],
+            [
+              270,
+              641
+            ],
+            [
+              274,
+              643
+            ],
+            [
+              277,
+              646
+            ],
+            [
+              279,
+              649
+            ],
+            [
+              285,
+              649
+            ],
+            [
+              290,
+              651
+            ],
+            [
+              295,
+              654
+            ],
+            [
+              298,
+              657
+            ],
+            [
+              301,
+              662
+            ],
+            [
+              303,
+              667
+            ],
+            [
+              305,
+              673
+            ],
+            [
+              306,
+              678
+            ],
+            [
+              305,
+              680
+            ],
+            [
+              307,
+              682
+            ],
+            [
+              307,
+              687
+            ],
+            [
+              306,
+              691
+            ],
+            [
+              304,
+              695
+            ],
+            [
+              302,
+              697
+            ],
+            [
+              303,
+              702
+            ],
+            [
+              306,
+              708
+            ],
+            [
+              308,
+              713
+            ],
+            [
+              309,
+              718
+            ],
+            [
+              306,
+              729
+            ],
+            [
+              302,
+              740
+            ],
+            [
+              295,
+              758
+            ],
+            [
+              283,
+              788
+            ],
+            [
+              273,
+              816
+            ],
+            [
+              261,
+              845
+            ],
+            [
+              251,
+              875
+            ],
+            [
+              247,
+              904
+            ],
+            [
+              246,
+              920
+            ],
+            [
+              239,
+              938
+            ],
+            [
+              229,
+              958
+            ],
+            [
+              218,
+              980
+            ],
+            [
+              0,
+              1040
+            ]
+          ],
+          "maskGuid": "4663542678b93a75c1e8f2dd09a6d49f",
+          "materialGuid": "d8fe6bc90f51f97562c4ae8fa66a24fb",
+          "renderSource": "MerchantHost.png",
+          "renderSourceGuid": "f498baacf913477eb3000eee91689d57",
+          "renderMask": "MerchantSupportingForearmAnimationMask.png",
+          "renderMaskGuid": "f74b8c1271b44cc983a8e21ff2bd4510",
+          "renderMaskFilter": "Bilinear",
+          "mesh": "MerchantSupportingArmMesh.asset",
+          "shapes": ["Release"],
+          "motionPivot": [165, 924],
+          "motion": "Bare hand and forearm rotate rigidly to the elbow, with cuff flex over y940..980. Reaction hand release is approximately 31 native pixels; combined idle and gesture rotation remains within eight screen degrees. Upper sleeve renders in static Torso."
+        }
+      ],
+      "prefabGuid": "7a5c2d399f435d488c072697eea35d64",
+      "presentationGuid": "0cdb1ba11f1bea50c8b5c0c33a8bfeaa",
+      "headRepair": {
+        "donor": "Docs/Reference/Art/HauntedMerchantHeadRepairDonor.png",
+        "source": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantHeadRepaired.png",
+        "repairMask": "MerchantHeadRepairMask.png",
+        "completeMask": "MerchantHeadCompleteMask.png",
+        "originalToDonor": [
+          1.755,
+          -0.005,
+          -167.15,
+          -0.001,
+          1.728,
+          -388.87
+        ],
+        "contactShadowRadius": 5
+      },
+      "torsoRepair": {
+        "donor": "Docs/Reference/Art/HauntedMerchantTorsoRepairDonor.png",
+        "generation": "Built-in imagegen exec-5e272e9d-4cda-4e12-9725-c036ec264eea.png",
+        "prompt": "Remove head/hat and bare hands/forearms; reconstruct covered shirt, suspenders and neck behind moving parts; retain native 941 x 1672 frame, identity, lighting and transparency.",
+        "source": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantTorsoAnimation.png",
+        "sourceGuid": "61244e069b4b49639a57e06296f3b00a",
+        "repairMask": "MerchantTorsoAnimationRepairMask.png",
+        "repairMaskGuid": "7156a7153c824cd2b82b4b1b5f1a46ca",
+        "completeMask": "MerchantTorsoAnimationMask.png",
+        "completeMaskGuid": "8921150f431b434689bf0c36a5c57b51",
+        "supportingForearmMask": "MerchantSupportingForearmAnimationMask.png",
+        "supportingForearmMaskGuid": "f74b8c1271b44cc983a8e21ff2bd4510",
+        "concealedPixels": 45637,
+        "originalAlphaUnchanged": true,
+        "originalVisibleTorsoRgbaUnchanged": true,
+        "registration": "Enlarged donor sampled through source-to-donor scaling/translation plus local shoulder and upper-sleeve adjustments, then blended only inside declared concealed garment coverage. The completed source and coverage masks are saved assets."
+      },
+      "motion": {
+        "runtime": "Existing SpiritHostPortrait with SpiritHostPresentationAsset timelines and SpiritPortraitImage mesh shapes; no additional controller.",
+        "meshGrid": [64, 112],
+        "verticesPerMovingLayer": 7345,
+        "meshCoordinates": "Normalized bottom-left UV displacement, scaled by each native 941 x 1672 layer rectangle.",
+        "idle": {"id": "Quiet attention", "durationSeconds": 12, "loop": true},
+        "acknowledgments": [
+          {"id": "Arrival acknowledgment", "state": "Arrival", "durationSeconds": 3},
+          {"id": "Release and nod", "state": "Reaction", "durationSeconds": 3},
+          {"id": "Victory acknowledgment", "state": "Victory", "durationSeconds": 3},
+          {"id": "Defeat acknowledgment", "state": "Defeat", "durationSeconds": 3},
+          {"id": "Farewell acknowledgment", "state": "Farewell", "durationSeconds": 3}
+        ],
+        "sequencing": "Supporting hand clears before the nod; head settles before the hand returns. Reaction overlays continuous idle and returns to it; directed states use existing normalized progress sampling.",
+        "limits": "Bounded head nod/tilt and forearm motion only; no broad head turns, finger articulation or arbitrary poses. Encounter gameplay registration remains separate."
+      }
+    },
+    {
+      "name": "Candle",
+      "source": "Dice-Unity/Assets/Dice/Art/HauntedMerchant/ProtectiveCandle.png",
+      "sourceGuid": "c32cdefc48884cc1b27432ecee08f4d3",
+      "width": 1142,
+      "height": 1377,
+      "prefab": "CandleParts",
+      "layers": [
+        {
+          "name": "CandleBody",
+          "id": "Body",
+          "pivot": [
+            585,
+            1050
+          ],
+          "polygon": [],
+          "maskGuid": "826959ebce151eb799507f6aa83d0907",
+          "materialGuid": "26af573514c0c8507a45d2bd305cb660"
+        },
+        {
+          "name": "CandleFlame",
+          "id": "Flame",
+          "pivot": [
+            585,
+            434
+          ],
+          "polygon": [
+            [
+              470,
+              0
+            ],
+            [
+              690,
+              0
+            ],
+            [
+              690,
+              429
+            ],
+            [
+              634,
+              438
+            ],
+            [
+              605,
+              439
+            ],
+            [
+              599,
+              425
+            ],
+            [
+              589,
+              412
+            ],
+            [
+              580,
+              397
+            ],
+            [
+              582,
+              377
+            ],
+            [
+              588,
+              348
+            ],
+            [
+              578,
+              352
+            ],
+            [
+              566,
+              368
+            ],
+            [
+              558,
+              383
+            ],
+            [
+              553,
+              397
+            ],
+            [
+              554,
+              417
+            ],
+            [
+              565,
+              432
+            ],
+            [
+              566,
+              435
+            ],
+            [
+              520,
+              434
+            ],
+            [
+              470,
+              410
+            ]
+          ],
+          "maskGuid": "843f8ebbdc4b986d390a192e1796993c",
+          "materialGuid": "60dcd898d4854addf95def29d08ecdc6"
+        }
+      ],
+      "prefabGuid": "6bf44ff42d8fa50590803decbd2703f5"
+    }
+  ]
+}
