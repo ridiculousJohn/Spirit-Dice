@@ -10,6 +10,10 @@ namespace Dice.Presentation
         public Texture2D Contribution;
         [Tooltip("Aligned linear data texture: R is normalized authored surface distance; G is the source/glow mask. Disable sRGB when importing.")]
         public Texture2D ResponseMap;
+        [Tooltip("Translate this light's contribution and response together in normalized image coordinates.")]
+        public Vector2 UvOffset;
+        [Tooltip("Multiply the light contribution by ambient RGB so translated illumination preserves painted surface detail.")]
+        public bool ModulateByBaseColor;
         public Color Tint = Color.white;
         [Min(0f)] public float Intensity = 1f;
         [Tooltip("Extra artistic surface falloff below full intensity, increasing with the response map's distance. Requires a response map.")]
@@ -56,6 +60,8 @@ namespace Dice.Presentation
                 SceneLightLayer light = Lights[i];
                 if (light == null || light.Contribution == null)
                     throw new InvalidOperationException("Scene lighting layers require contribution textures.");
+                if (!Finite(light.UvOffset.x) || !Finite(light.UvOffset.y))
+                    throw new InvalidOperationException("Scene light UV offsets must be finite.");
                 if (!Finite(light.Intensity) || light.Intensity < 0f || !Finite(light.FlickerAmount)
                     || light.FlickerAmount < 0f || light.FlickerAmount > 1f
                     || !Finite(light.FlickerSpeed) || light.FlickerSpeed < 0f)

@@ -28,6 +28,14 @@ Shader "Dice/Scene Lighting"
         _SceneLightConstrainAmbient1 ("Light 1 Constrains Ambient", Float) = 0
         _SceneLightConstrainAmbient2 ("Light 2 Constrains Ambient", Float) = 0
         _SceneLightConstrainAmbient3 ("Light 3 Constrains Ambient", Float) = 0
+        _SceneLightUvOffset0 ("Light 0 UV Offset", Vector) = (0,0,0,0)
+        _SceneLightUvOffset1 ("Light 1 UV Offset", Vector) = (0,0,0,0)
+        _SceneLightUvOffset2 ("Light 2 UV Offset", Vector) = (0,0,0,0)
+        _SceneLightUvOffset3 ("Light 3 UV Offset", Vector) = (0,0,0,0)
+        _SceneLightModulateByBase0 ("Light 0 Modulates Base", Float) = 0
+        _SceneLightModulateByBase1 ("Light 1 Modulates Base", Float) = 0
+        _SceneLightModulateByBase2 ("Light 2 Modulates Base", Float) = 0
+        _SceneLightModulateByBase3 ("Light 3 Modulates Base", Float) = 0
         _SceneLightTint0 ("Light 0 Linear Tint", Vector) = (1,1,1,1)
         _SceneLightTint1 ("Light 1 Linear Tint", Vector) = (1,1,1,1)
         _SceneLightTint2 ("Light 2 Linear Tint", Vector) = (1,1,1,1)
@@ -86,6 +94,8 @@ Shader "Dice/Scene Lighting"
         float _SceneLightDistanceFalloff0, _SceneLightDistanceFalloff1, _SceneLightDistanceFalloff2, _SceneLightDistanceFalloff3;
         float _SceneLightSourceResponse0, _SceneLightSourceResponse1, _SceneLightSourceResponse2, _SceneLightSourceResponse3;
         float _SceneLightConstrainAmbient0, _SceneLightConstrainAmbient1, _SceneLightConstrainAmbient2, _SceneLightConstrainAmbient3;
+        float4 _SceneLightUvOffset0, _SceneLightUvOffset1, _SceneLightUvOffset2, _SceneLightUvOffset3;
+        float _SceneLightModulateByBase0, _SceneLightModulateByBase1, _SceneLightModulateByBase2, _SceneLightModulateByBase3;
         fixed4 _Color;
         float4 _ClipRect;
 
@@ -120,32 +130,41 @@ Shader "Dice/Scene Lighting"
             return lerp(surfaceScale, sourceScale, saturate(response.g));
         }
 
-        float3 Contribution(float3 sampled, float3 ambient, float includesBase, float3 tint, float intensity)
+        float InsideImage(float2 uv)
         {
-            return max(sampled - ambient * includesBase, 0.0) * tint * intensity;
+            return step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+        }
+
+        float3 Contribution(float3 sampled, float3 ambient, float includesBase, float3 tint, float intensity, float modulate)
+        {
+            return max(sampled - ambient * includesBase, 0.0) * tint * intensity * lerp(float3(1,1,1), ambient, modulate);
         }
 
         float4 Compose(float2 uv)
         {
             float4 source = tex2D(_BaseTex, uv);
             float3 ambient = DecodeColor(source.rgb);
-            float3 sampled0 = DecodeColor(tex2D(_LightTex0, uv).rgb);
-            float3 sampled1 = DecodeColor(tex2D(_LightTex1, uv).rgb);
-            float3 sampled2 = DecodeColor(tex2D(_LightTex2, uv).rgb);
-            float3 sampled3 = DecodeColor(tex2D(_LightTex3, uv).rgb);
+            float2 uv0 = uv - _SceneLightUvOffset0.xy;
+            float2 uv1 = uv - _SceneLightUvOffset1.xy;
+            float2 uv2 = uv - _SceneLightUvOffset2.xy;
+            float2 uv3 = uv - _SceneLightUvOffset3.xy;
+            float3 sampled0 = DecodeColor(tex2D(_LightTex0, uv0).rgb) * InsideImage(uv0);
+            float3 sampled1 = DecodeColor(tex2D(_LightTex1, uv1).rgb) * InsideImage(uv1);
+            float3 sampled2 = DecodeColor(tex2D(_LightTex2, uv2).rgb) * InsideImage(uv2);
+            float3 sampled3 = DecodeColor(tex2D(_LightTex3, uv3).rgb) * InsideImage(uv3);
             // All references subtract the same ambient, constrained before any contribution is separated.
             if (_LightReference0 > 0.5 && _SceneLightConstrainAmbient0 > 0.5) ambient = min(ambient, sampled0);
             if (_LightReference1 > 0.5 && _SceneLightConstrainAmbient1 > 0.5) ambient = min(ambient, sampled1);
             if (_LightReference2 > 0.5 && _SceneLightConstrainAmbient2 > 0.5) ambient = min(ambient, sampled2);
             if (_LightReference3 > 0.5 && _SceneLightConstrainAmbient3 > 0.5) ambient = min(ambient, sampled3);
-            float scale0 = ResponseScale(_LightIntensity0, tex2D(_SceneLightResponseTex0, uv).rg, _SceneLightResponseEnabled0, _SceneLightDistanceFalloff0, _SceneLightSourceResponse0);
-            float scale1 = ResponseScale(_LightIntensity1, tex2D(_SceneLightResponseTex1, uv).rg, _SceneLightResponseEnabled1, _SceneLightDistanceFalloff1, _SceneLightSourceResponse1);
-            float scale2 = ResponseScale(_LightIntensity2, tex2D(_SceneLightResponseTex2, uv).rg, _SceneLightResponseEnabled2, _SceneLightDistanceFalloff2, _SceneLightSourceResponse2);
-            float scale3 = ResponseScale(_LightIntensity3, tex2D(_SceneLightResponseTex3, uv).rg, _SceneLightResponseEnabled3, _SceneLightDistanceFalloff3, _SceneLightSourceResponse3);
-            float3 light = Contribution(sampled0, ambient, _LightReference0, _SceneLightTint0.rgb, scale0);
-            light += Contribution(sampled1, ambient, _LightReference1, _SceneLightTint1.rgb, scale1);
-            light += Contribution(sampled2, ambient, _LightReference2, _SceneLightTint2.rgb, scale2);
-            light += Contribution(sampled3, ambient, _LightReference3, _SceneLightTint3.rgb, scale3);
+            float scale0 = ResponseScale(_LightIntensity0, tex2D(_SceneLightResponseTex0, uv0).rg, _SceneLightResponseEnabled0, _SceneLightDistanceFalloff0, _SceneLightSourceResponse0);
+            float scale1 = ResponseScale(_LightIntensity1, tex2D(_SceneLightResponseTex1, uv1).rg, _SceneLightResponseEnabled1, _SceneLightDistanceFalloff1, _SceneLightSourceResponse1);
+            float scale2 = ResponseScale(_LightIntensity2, tex2D(_SceneLightResponseTex2, uv2).rg, _SceneLightResponseEnabled2, _SceneLightDistanceFalloff2, _SceneLightSourceResponse2);
+            float scale3 = ResponseScale(_LightIntensity3, tex2D(_SceneLightResponseTex3, uv3).rg, _SceneLightResponseEnabled3, _SceneLightDistanceFalloff3, _SceneLightSourceResponse3);
+            float3 light = Contribution(sampled0, ambient, _LightReference0, _SceneLightTint0.rgb, scale0, _SceneLightModulateByBase0);
+            light += Contribution(sampled1, ambient, _LightReference1, _SceneLightTint1.rgb, scale1, _SceneLightModulateByBase1);
+            light += Contribution(sampled2, ambient, _LightReference2, _SceneLightTint2.rgb, scale2, _SceneLightModulateByBase2);
+            light += Contribution(sampled3, ambient, _LightReference3, _SceneLightTint3.rgb, scale3, _SceneLightModulateByBase3);
             float3 color = ambient + light;
             #ifdef UNITY_COLORSPACE_GAMMA
             color = LinearToGammaSpace(color);

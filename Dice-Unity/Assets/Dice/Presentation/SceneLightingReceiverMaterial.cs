@@ -44,7 +44,7 @@ namespace Dice.Presentation
                     material.SetVector(ParametersIds[i], Vector4.zero);
                     continue;
                 }
-                Vector3 position = renderRoot.TransformPoint(light.ReceiverPosition);
+                Vector3 position = renderRoot.TransformPoint(state.GetReceiverPosition(i));
                 Color color = light.ReceiverColor.linear;
                 material.SetVector(PositionIds[i], new Vector4(position.x, position.y, position.z, light.ReceiverRange));
                 material.SetVector(ColorIds[i], new Vector4(color.r, color.g, color.b, 0f));

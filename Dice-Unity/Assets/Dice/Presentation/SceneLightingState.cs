@@ -7,22 +7,42 @@ namespace Dice.Presentation
     public sealed class SceneLightingState
     {
         private readonly float[] intensities = new float[SceneLightingAsset.MaximumLights];
+        private readonly Vector2[] uvOffsets = new Vector2[SceneLightingAsset.MaximumLights];
+        private readonly Vector3[] receiverPositions = new Vector3[SceneLightingAsset.MaximumLights];
         public SceneLightingAsset Asset { get; private set; }
         public int Count { get; private set; }
         public double SampleTime { get; private set; }
 
-        public void Sample(SceneLightingAsset asset, double time)
+        /** Intensities multiply authored levels; optional UV offsets and receiver positions replace them for this sample. */
+        public void Sample(SceneLightingAsset asset, double time, float[] intensityOverrides = null,
+            Vector2[] uvOffsets = null, Vector3[] receiverPositions = null)
         {
             if (double.IsNaN(time) || double.IsInfinity(time)) throw new ArgumentOutOfRangeException(nameof(time));
             asset?.Validate();
+            int count = asset != null ? asset.Lights.Length : 0;
+            if (intensityOverrides != null && intensityOverrides.Length != count
+                || uvOffsets != null && uvOffsets.Length != count
+                || receiverPositions != null && receiverPositions.Length != count)
+                throw new ArgumentException("Scene lighting overrides must match the light count.");
+            for (int i = 0; i < count; ++i)
+            {
+                if (intensityOverrides != null && (!SceneLightingAsset.Finite(intensityOverrides[i]) || intensityOverrides[i] < 0f)
+                    || uvOffsets != null && (!SceneLightingAsset.Finite(uvOffsets[i].x) || !SceneLightingAsset.Finite(uvOffsets[i].y))
+                    || receiverPositions != null && (!SceneLightingAsset.Finite(receiverPositions[i].x)
+                        || !SceneLightingAsset.Finite(receiverPositions[i].y) || !SceneLightingAsset.Finite(receiverPositions[i].z)))
+                    throw new ArgumentException("Scene lighting overrides must be finite and intensities nonnegative.");
+            }
             Asset = asset;
             SampleTime = time;
             Count = asset != null ? asset.Lights.Length : 0;
             for (int i = 0; i < intensities.Length; ++i)
             {
                 SceneLightLayer light = i < Count ? asset.Lights[i] : null;
-                intensities[i] = light == null ? 0f : SceneLightFlicker.EvaluateIntensity(time,
-                    light.Intensity, light.FlickerAmount, light.FlickerSpeed, light.Seed);
+                float multiplier = intensityOverrides != null && i < Count ? intensityOverrides[i] : 1f;
+                intensities[i] = light == null ? 0f : (float)Math.Min(float.MaxValue, (double)SceneLightFlicker.EvaluateIntensity(time,
+                    light.Intensity, light.FlickerAmount, light.FlickerSpeed, light.Seed) * multiplier);
+                this.uvOffsets[i] = light == null ? Vector2.zero : uvOffsets != null ? uvOffsets[i] : light.UvOffset;
+                this.receiverPositions[i] = light == null ? Vector3.zero : receiverPositions != null ? receiverPositions[i] : light.ReceiverPosition;
             }
         }
 
@@ -30,6 +50,18 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= Count) throw new ArgumentOutOfRangeException(nameof(index));
             return intensities[index];
+        }
+
+        public Vector2 GetUvOffset(int index)
+        {
+            if (index < 0 || index >= Count) throw new ArgumentOutOfRangeException(nameof(index));
+            return uvOffsets[index];
+        }
+
+        public Vector3 GetReceiverPosition(int index)
+        {
+            if (index < 0 || index >= Count) throw new ArgumentOutOfRangeException(nameof(index));
+            return receiverPositions[index];
         }
 
         /** Approximate a flat painted receiver using the same local-space lights as the 3D trays. */
@@ -44,7 +76,7 @@ namespace Dice.Presentation
                 SceneLightLayer light = Asset.Lights[i];
                 float intensity = intensities[i];
                 if (intensity <= 0f || light.ReceiverIntensity <= 0f) continue;
-                Vector3 offset = light.ReceiverPosition - position;
+                Vector3 offset = receiverPositions[i] - position;
                 float distanceSquared = offset.sqrMagnitude;
                 float distance = Mathf.Sqrt(distanceSquared);
                 float normalizedDistance = Mathf.Clamp01(distance / light.ReceiverRange);

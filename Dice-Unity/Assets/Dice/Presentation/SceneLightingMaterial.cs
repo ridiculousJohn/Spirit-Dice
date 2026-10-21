@@ -17,6 +17,8 @@ namespace Dice.Presentation
         private static readonly int[] DistanceFalloffIds = CreateIds("_SceneLightDistanceFalloff");
         private static readonly int[] SourceResponseIds = CreateIds("_SceneLightSourceResponse");
         private static readonly int[] ConstrainAmbientIds = CreateIds("_SceneLightConstrainAmbient");
+        private static readonly int[] UvOffsetIds = CreateIds("_SceneLightUvOffset");
+        private static readonly int[] ModulateIds = CreateIds("_SceneLightModulateByBase");
         public Material Material { get; private set; }
 
         public SceneLightingMaterial(Shader shader)
@@ -61,6 +63,8 @@ namespace Dice.Presentation
                     Material.SetFloat(DistanceFalloffIds[i], 0f);
                     Material.SetFloat(SourceResponseIds[i], 1f);
                     Material.SetFloat(ConstrainAmbientIds[i], 0f);
+                    Material.SetVector(UvOffsetIds[i], Vector4.zero);
+                    Material.SetFloat(ModulateIds[i], 0f);
                     continue;
                 }
                 float intensity = state != null ? state.GetIntensity(i) : SceneLightFlicker.EvaluateIntensity(time, light.Intensity,
@@ -77,6 +81,9 @@ namespace Dice.Presentation
                 Material.SetFloat(DistanceFalloffIds[i], light.DistanceFalloff);
                 Material.SetFloat(SourceResponseIds[i], light.SourceResponse);
                 Material.SetFloat(ConstrainAmbientIds[i], light.ContributionIncludesBase && light.ConstrainAmbientToReference ? 1f : 0f);
+                Vector2 offset = state != null ? state.GetUvOffset(i) : light.UvOffset;
+                Material.SetVector(UvOffsetIds[i], new Vector4(offset.x, offset.y, 0f, 0f));
+                Material.SetFloat(ModulateIds[i], light.ModulateByBaseColor ? 1f : 0f);
             }
         }
 
