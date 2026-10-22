@@ -57,6 +57,10 @@ All five merchant layers (torso, head, resting arm, supporting arm, blink) keep 
 
 The blink overlay samples `MerchantBlinkEyes.png` through `MerchantBlinkMask.png` with the source-masked shader. Both are 136 x 58 crops of source box (264, 576)-(400, 634); the layer's UV rectangle stretches them across the full source frame and clamped, zero-alpha mask edges keep everything outside the crop transparent. Its provenance is recorded in [merchant host layers](../../Docs/Reference/Art/HauntedMerchantHostLayers.md).
 
+### Candle light footprint
+
+`author-candle-light-footprint.py` derives the merchant candle's centered light footprint and response map (`Art/HauntedMerchant/CandleLightFootprintCentered.png` and `CandleLightResponseCentered.png`) from the preserved sources `Docs/Reference/Art/HauntedMerchantCandleFootprintSource.png` and `HauntedMerchantCandleResponseSource.png`. It scales both about the candle point (the response map's distance minimum) by `REACH` (0.8, a tighter pool) with bilinear sampling; texels from outside the source read as unlit, and the script refuses a result with a lit border. It requires Python 3.9 or later with no third-party packages. The default writes a fresh ignored `Docs/work/candle-footprint-*` directory; `--output` chooses an unused directory under `Docs/work`; `--write-assets` replaces the two installed PNGs and keeps their `.meta` files. Source files are only read, so repeated runs give the same textures.
+
 ## Inn and watchtower
 
 `author-spirit-presentations.py` contains the approved motion formulas for the Lantern Keeper and Watchtower host. It generates two host assets and nine deformation meshes. The game loads the checked-in Unity assets and does not run this script.

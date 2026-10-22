@@ -82,7 +82,7 @@ namespace Dice.Presentation
         }
     }
 
-    /** A scene prop, bound by ID in the encounter scene, that its motion kind jolts on idle timers and disturbances. */
+    /** A scene prop, bound by ID in the encounter scene, that its motion kind jolts on idle timers and disturbances, with optional sounds per kind of jolt. */
     [Serializable]
     public sealed class AmbientPropActor
     {
@@ -96,6 +96,15 @@ namespace Dice.Presentation
         public AmbientRange IdleInterval = new AmbientRange(15f, 35f);
         [Tooltip("Fraction of the prop's strength used by an idle jolt.")]
         public AmbientRange IdleStrength = new AmbientRange(.3f, .7f);
+        [Tooltip("Optional sounds for idle jolts; chosen randomly without immediate repeats.")]
+        public AudioClip[] IdleClips = Array.Empty<AudioClip>();
+        [Range(0, 1)] public float IdleVolume = .3f;
+        [Tooltip("Optional sounds when a poltergeist disturbance jolts this prop; chosen randomly without immediate repeats.")]
+        public AudioClip[] HitClips = Array.Empty<AudioClip>();
+        [Range(0, 1)] public float HitVolume = .5f;
+        [Tooltip("Optional sounds for this prop's final knock on defeat; the hit clips play when none are assigned.")]
+        public AudioClip[] DefeatClips = Array.Empty<AudioClip>();
+        [Range(0, 1)] public float DefeatVolume = .6f;
 
         internal void Validate()
         {
@@ -106,10 +115,13 @@ namespace Dice.Presentation
             IdleInterval.Validate(nameof(IdleInterval));
             IdleStrength.Validate(nameof(IdleStrength));
             if (IdleInterval.Min <= 0f) throw new InvalidOperationException("Ambient prop " + Id + " requires a positive idle interval.");
+            if (!EncounterAmbientActivityAsset.ValidVolume(IdleVolume) || !EncounterAmbientActivityAsset.ValidVolume(HitVolume) ||
+                !EncounterAmbientActivityAsset.ValidVolume(DefeatVolume))
+                throw new InvalidOperationException("Ambient prop " + Id + " requires volumes between zero and one.");
         }
     }
 
-    /** Presentation-only haunting authored per encounter table: light outages and prop jolts with no effect on play. */
+    /** Presentation-only haunting authored per encounter table: light outages, prop jolts and their sounds with no effect on play. */
     [CreateAssetMenu(menuName = "Dice/Presentation/Encounter Ambient Activity")]
     public sealed class EncounterAmbientActivityAsset : ScriptableObject
     {
@@ -123,6 +135,9 @@ namespace Dice.Presentation
         [SerializeField, Min(0)] private float lightRecovery = 1f;
         [Tooltip("Time constant in seconds at which moving props damp to rest on victory.")]
         [SerializeField, Min(.01f)] private float settleTime = .35f;
+        [Tooltip("Optional sounds played once on each poltergeist disturbance, beside the jolted prop's hit; chosen randomly without immediate repeats.")]
+        [SerializeField] private AudioClip[] burstClips = Array.Empty<AudioClip>();
+        [SerializeField, Range(0, 1)] private float burstVolume = .4f;
 
         public IReadOnlyList<AmbientLightActor> Lights => lights ?? Array.Empty<AmbientLightActor>();
         public IReadOnlyList<AmbientPropActor> Props => props ?? Array.Empty<AmbientPropActor>();
@@ -130,6 +145,10 @@ namespace Dice.Presentation
         public float DefeatStrength => defeatStrength;
         public float LightRecovery => lightRecovery;
         public float SettleTime => settleTime;
+        public AudioClip[] BurstClips => burstClips;
+        public float BurstVolume => burstVolume;
+
+        internal static bool ValidVolume(float volume) => SceneLightingAsset.Finite(volume) && volume >= 0f && volume <= 1f;
 
         public void Validate()
         {
@@ -153,6 +172,7 @@ namespace Dice.Presentation
                 !SceneLightingAsset.Finite(lightRecovery) || lightRecovery < 0f ||
                 !SceneLightingAsset.Finite(settleTime) || settleTime <= 0f)
                 throw new InvalidOperationException("Ambient activity strengths and timings must be finite and nonnegative.");
+            if (!ValidVolume(burstVolume)) throw new InvalidOperationException("The ambient burst volume must be between zero and one.");
         }
     }
 }

@@ -16,26 +16,33 @@ namespace Dice.Presentation
 
     /**
      * Runs an encounter's ambient activity on its own clock and presentation random, never the engine's streams.
-     * Lights and props idle on their schedules from the first hand; disturbances add a stutter and a jolt;
+     * Lights and props idle on their schedules from the first hand; disturbances add a stutter, a burst sound and a jolt;
      * victory settles everything and defeat knocks one prop, after which the activity stops at rest.
+     * Struck props play their authored sound for the kind of jolt through the optional sound target.
      */
     public sealed class EncounterAmbientActivity
     {
         private enum State { Stopped, Running, Ending }
+        private enum Jolt { Idle, Hit, Defeat }
 
         private readonly EncounterAmbientActivityAsset asset;
         private readonly IAmbientLightingTarget lighting;
+        private readonly IAmbientSoundTarget sound;
         private readonly LightActorState[] lights;
         private readonly PropActorState[] props;
         private System.Random random = new System.Random(0);
+        // Sound choices draw from their own random so authored clips never change the lights' and props' sequence.
+        private System.Random soundRandom = new System.Random(1);
+        private AudioClip lastBurstClip;
         private State state;
         private double time;
 
         public EncounterAmbientActivity(EncounterAmbientActivityAsset asset, IAmbientLightingTarget lighting,
-            IReadOnlyList<EncounterAmbientPropBinding> bindings)
+            IReadOnlyList<EncounterAmbientPropBinding> bindings, IAmbientSoundTarget sound = null)
         {
             this.asset = asset != null ? asset : throw new ArgumentNullException(nameof(asset));
             this.lighting = lighting ?? throw new ArgumentNullException(nameof(lighting));
+            this.sound = sound;
             asset.Validate();
             lights = new LightActorState[asset.Lights.Count];
             for (int i = 0; i < lights.Length; ++i)
@@ -86,10 +93,16 @@ namespace Dice.Presentation
             if (state == State.Running) return;
             Stop();
             random = new System.Random(seed);
+            soundRandom = new System.Random(unchecked(seed * 31 + 17));
+            lastBurstClip = null;
             time = 0;
             state = State.Running;
             foreach (var light in lights) light.NextIdle = time + light.Actor.IdleInterval.Pick(random);
-            foreach (var prop in props) prop.NextIdle = time + prop.Actor.IdleInterval.Pick(random);
+            foreach (var prop in props)
+            {
+                prop.NextIdle = time + prop.Actor.IdleInterval.Pick(random);
+                prop.LastIdleClip = prop.LastHitClip = null;
+            }
         }
 
         /** Advances the activity clock; idle events fall due at their scheduled times even across long steps. */
@@ -108,25 +121,35 @@ namespace Dice.Presentation
             }
             foreach (var prop in props)
             {
+                bool struck = false;
                 while (state == State.Running && time >= prop.NextIdle)
                 {
                     prop.Motion.Strike(prop.NextIdle, prop.Actor.Strength * prop.Actor.IdleStrength.Pick(random));
                     prop.NextIdle += prop.Actor.IdleInterval.Pick(random);
+                    struck = true;
                 }
+                // Idle jolts that fall due together in one long step sound once.
+                if (struck) PlayJolt(prop, Jolt.Idle);
                 prop.Motion.Apply(time);
             }
             if (state == State.Ending && IsAtRest) state = State.Stopped;
         }
 
-        /** A poltergeist disturbance: lights not already out stutter briefly and one random prop jolts. */
+        /** A poltergeist disturbance: lights not already out stutter briefly, the burst sounds once and one random prop jolts. */
         public void Disturb()
         {
             if (state != State.Running) return;
             foreach (var light in lights)
                 if (light.Steps.Count == 0) Play(light, Stutter(light.Actor), false, time);
+            if (sound != null)
+            {
+                lastBurstClip = SpiritEncounterAudio.ChooseClip(asset.BurstClips, lastBurstClip, null, soundRandom);
+                if (lastBurstClip != null) sound.PlayAmbientSound(lastBurstClip, asset.BurstVolume);
+            }
             if (props.Length == 0) return;
             var prop = props[random.Next(props.Length)];
             prop.Motion.Strike(time, prop.Actor.Strength * asset.DisturbanceStrength);
+            PlayJolt(prop, Jolt.Hit);
         }
 
         /** Victory: pending outages cancel, lights return steadily to full, props damp to rest and idle events stop. */
@@ -147,6 +170,7 @@ namespace Dice.Presentation
             if (props.Length == 0) return;
             var prop = props[random.Next(props.Length)];
             prop.Motion.Strike(time, prop.Actor.Strength * asset.DefeatStrength);
+            PlayJolt(prop, Jolt.Defeat);
         }
 
         /** Ends the activity at once: every light at exactly full intensity and every prop at its base pose. */
@@ -163,6 +187,33 @@ namespace Dice.Presentation
                 lighting.SetLightIntensity(light.Actor.LightIndex, 1f);
             }
             foreach (var prop in props) prop.Motion.Rest();
+        }
+
+        /** Plays one of the prop's clips for the kind of jolt, other than the one it played last for that kind. */
+        private void PlayJolt(PropActorState prop, Jolt jolt)
+        {
+            if (sound == null) return;
+            var actor = prop.Actor;
+            AudioClip clip;
+            float volume;
+            switch (jolt)
+            {
+                case Jolt.Idle:
+                    clip = prop.LastIdleClip = SpiritEncounterAudio.ChooseClip(actor.IdleClips, prop.LastIdleClip, null, soundRandom);
+                    volume = actor.IdleVolume;
+                    break;
+                case Jolt.Hit:
+                    clip = prop.LastHitClip = SpiritEncounterAudio.ChooseClip(actor.HitClips, prop.LastHitClip, null, soundRandom);
+                    volume = actor.HitVolume;
+                    break;
+                default:
+                    // The knock happens once, so only the hit fallback needs to avoid a repeat.
+                    clip = SpiritEncounterAudio.ChooseClip(actor.DefeatClips, null, null, soundRandom);
+                    if (clip == null) clip = SpiritEncounterAudio.ChooseClip(actor.HitClips, prop.LastHitClip, null, soundRandom);
+                    volume = actor.DefeatVolume;
+                    break;
+            }
+            if (clip != null) sound.PlayAmbientSound(clip, volume);
         }
 
         private void RecoverLights()
@@ -272,6 +323,8 @@ namespace Dice.Presentation
             public readonly AmbientPropActor Actor;
             public readonly AmbientMotion Motion;
             public double NextIdle;
+            public AudioClip LastIdleClip;
+            public AudioClip LastHitClip;
 
             public PropActorState(AmbientPropActor actor, AmbientMotion motion)
             {

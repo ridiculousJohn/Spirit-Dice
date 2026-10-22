@@ -10,6 +10,7 @@ namespace Dice.Tests
     public sealed class SpiritEncounterAudioTests
     {
         private const string MerchantAudioPath = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantAudio.asset";
+        private const string ScreenPrefabPath = "Assets/Dice/Content/Presentation/UI/SpiritEncounterScreen.prefab";
         private readonly List<Object> resources = new List<Object>();
 
         [TearDown]
@@ -110,6 +111,66 @@ namespace Dice.Tests
             Assert.That(theme, Is.Not.Null);
             Assert.That(theme.ambientOneShotClips == null || theme.ambientOneShotClips.Length == 0, Is.True,
                 "Themes without authored ambient one-shots keep their previous audio.");
+        }
+
+        [Test]
+        public void EncounterScreenAuthorsPropVoicesApartFromTheCueVoices()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScreenPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var serialized = new SerializedObject(prefab.GetComponentsInChildren<SpiritEncounterAudio>(true).Single());
+            AudioSource[] Sources(string name)
+            {
+                var property = serialized.FindProperty(name);
+                return Enumerable.Range(0, property.arraySize)
+                    .Select(index => (AudioSource)property.GetArrayElementAtIndex(index).objectReferenceValue).ToArray();
+            }
+            var props = Sources("propSources");
+            var cues = Sources("cueSources");
+            var others = new[] { "ambienceSource", "creakSource", "rollSource" }
+                .Select(name => (AudioSource)serialized.FindProperty(name).objectReferenceValue).ToArray();
+            Assert.That(props, Has.Length.InRange(2, 3), "Prop sounds have a small voice pool of their own.");
+            Assert.That(props, Has.None.Null);
+            Assert.That(props.Distinct().Count(), Is.EqualTo(props.Length));
+            Assert.That(props.Intersect(cues.Concat(others)), Is.Empty, "Prop voices never share the cue, ambience, creak or roll voices.");
+            foreach (var source in props)
+            {
+                Assert.That(source.playOnAwake, Is.False, source.name);
+                Assert.That(source.loop, Is.False, source.name);
+                Assert.That(source.spatialBlend, Is.EqualTo(cues[0].spatialBlend), source.name + " plays flat like the cues.");
+                Assert.That(source.outputAudioMixerGroup, Is.SameAs(cues[0].outputAudioMixerGroup), source.name);
+            }
+        }
+
+        [Test]
+        public void VoicePoolPlaysOnlyItsOwnVoicesInRotation()
+        {
+            var root = new GameObject("Voices");
+            resources.Add(root);
+            AudioSource Source(string name)
+            {
+                var child = new GameObject(name);
+                child.transform.SetParent(root.transform, false);
+                var source = child.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                return source;
+            }
+            var cues = Enumerable.Range(0, 4).Select(index => Source("Cue " + index)).ToArray();
+            var props = Enumerable.Range(0, 3).Select(index => Source("Prop " + index)).ToArray();
+            // A long clip keeps any voice the editor really plays busy for the whole loop.
+            var clip = AudioClip.Create("knock", 44100 * 5, 1, 44100, false);
+            resources.Add(clip);
+            int next = 0;
+            for (int play = 0; play < 9; play++)
+            {
+                var source = SpiritEncounterAudio.PlayOnVoice(props, ref next, clip, 1.5f);
+                Assert.That(source, Is.SameAs(props[play % props.Length]), "Voices rotate through the pool.");
+                Assert.That(source.clip, Is.SameAs(clip));
+                Assert.That(source.volume, Is.EqualTo(1f), "Volumes clamp to one.");
+                Assert.That(next, Is.EqualTo((play + 1) % props.Length));
+            }
+            foreach (var source in props) source.Stop();
+            Assert.That(cues.All(source => source.clip == null && !source.isPlaying), Is.True, "The cue voices are never touched.");
         }
 
         private AudioClip Clip(string name)

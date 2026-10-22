@@ -7,7 +7,7 @@ namespace Dice.Presentation
 
     /** Owns cosmetic audio sources and suspension without altering global audio or game randomness. */
     [DisallowMultipleComponent]
-    public sealed class SpiritEncounterAudio : MonoBehaviour
+    public sealed class SpiritEncounterAudio : MonoBehaviour, IAmbientSoundTarget
     {
         [SerializeField] private SpiritAudioTheme theme;
         [SerializeField] private bool muted;
@@ -15,12 +15,15 @@ namespace Dice.Presentation
         [SerializeField] private AudioSource creakSource;
         [SerializeField] private AudioSource rollSource;
         [SerializeField] private AudioSource[] cueSources = new AudioSource[4];
+        [Tooltip("Voices for ambient prop and burst sounds, kept apart from the cue voices so a busy room never drops a scoring cue.")]
+        [SerializeField] private AudioSource[] propSources = new AudioSource[3];
         private System.Random cosmeticRandom;
         private bool hasFocus;
         private bool paused;
         private float nextCreak;
         private float nextAmbientOneShot;
         private int nextCueSource;
+        private int nextPropSource;
         private AudioClip lastSpiritClip;
         private AudioClip lastDisturbanceClip;
         private AudioClip lastBlockedClip;
@@ -71,10 +74,14 @@ namespace Dice.Presentation
         private void Initialize()
         {
             if (cosmeticRandom == null) cosmeticRandom = new System.Random();
-            if (ambienceSource == null || creakSource == null || rollSource == null || cueSources.Length == 0)
+            if (ambienceSource == null || creakSource == null || rollSource == null || cueSources == null || cueSources.Length == 0
+                || propSources == null || propSources.Length == 0)
                 throw new InvalidOperationException("Encounter audio requires authored audio sources.");
             foreach (AudioSource source in cueSources)
                 if (source == null) throw new InvalidOperationException("An encounter audio cue source is missing.");
+            foreach (AudioSource source in propSources)
+                if (source == null || Array.IndexOf(cueSources, source) >= 0)
+                    throw new InvalidOperationException("Encounter audio prop sources must be authored apart from the cue sources.");
         }
 
         /** Returns the visual roll duration even when audio is muted or suspended. */
@@ -162,20 +169,33 @@ namespace Dice.Presentation
         private void PlayClip(AudioClip clip, float volume)
         {
             if (!CanPlay || clip == null) return;
+            PlayOnVoice(cueSources, ref nextCueSource, clip, volume);
+        }
 
-            // Reuse a free voice first; a fixed pool bounds overlapping cosmetic cues.
-            int selected = nextCueSource;
-            for (int i = 0; i < cueSources.Length; i++)
+        /** Plays an ambient prop or burst sound on the prop voices, under the same mute and suspension as every cue. */
+        public void PlayAmbientSound(AudioClip clip, float volume)
+        {
+            if (!CanPlay || clip == null) return;
+            PlayOnVoice(propSources, ref nextPropSource, clip, volume);
+        }
+
+        /** Plays the clip on one of the voices and returns it; nextVoice advances past the voice used. */
+        public static AudioSource PlayOnVoice(AudioSource[] voices, ref int nextVoice, AudioClip clip, float volume)
+        {
+            // Reuse a free voice first; a fixed pool bounds overlapping cosmetic sounds.
+            int selected = nextVoice % voices.Length;
+            for (int i = 0; i < voices.Length; i++)
             {
-                int candidate = (nextCueSource + i) % cueSources.Length;
-                if (!cueSources[candidate].isPlaying) { selected = candidate; break; }
+                int candidate = (nextVoice + i) % voices.Length;
+                if (!voices[candidate].isPlaying) { selected = candidate; break; }
             }
-            var source = cueSources[selected];
-            nextCueSource = (selected + 1) % cueSources.Length;
+            var source = voices[selected];
+            nextVoice = (selected + 1) % voices.Length;
             source.Stop();
             source.clip = clip;
             source.volume = Mathf.Clamp01(volume);
             source.Play();
+            return source;
         }
 
         private void Update()
@@ -232,6 +252,7 @@ namespace Dice.Presentation
             if (creakSource != null) creakSource.Stop();
             if (rollSource != null) rollSource.Stop();
             foreach (var source in cueSources) if (source != null) source.Stop();
+            if (propSources != null) foreach (var source in propSources) if (source != null) source.Stop();
         }
 
         private void OnApplicationFocus(bool focus)

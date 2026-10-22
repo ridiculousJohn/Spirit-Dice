@@ -265,7 +265,7 @@ namespace Dice.Presentation
             testLightOverrides = new float[ambientLightIntensities.Length];
             ReleaseTestLightOverrides();
             ambientActivity =selectedTable.AmbientActivity != null
-                ? new EncounterAmbientActivity(selectedTable.AmbientActivity, this, ambientProps) : null;
+                ? new EncounterAmbientActivity(selectedTable.AmbientActivity, this, ambientProps, encounterAudio) : null;
             encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);

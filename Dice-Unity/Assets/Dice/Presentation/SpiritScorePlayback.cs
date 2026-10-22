@@ -33,6 +33,8 @@ namespace Dice.Presentation
         private const float ScoreStepHold = .35f;
         private const float ModifierStepHold = .55f;
         private const float DisturbanceHold = .3f;
+        // A committed hand pauses before interference that precedes its scoring, so the poltergeist reads as interrupting it.
+        private const float PlayHandDisturbanceBeat = .25f;
         private readonly ISpiritScorePlaybackHost host;
         private readonly SpiritGameplayHud hud;
         private readonly SpiritDiceTray diceTray;
@@ -107,6 +109,8 @@ namespace Dice.Presentation
                 else if (ruleEvent is DieDisturbedEvent disturbed)
                 {
                     // Interference lands after the player's roll or before scoring; the die visibly moves even if its face returns.
+                    HandScoredEvent disturbedHand = ScoredAfter(resolution, disturbed);
+                    if (disturbedHand != null) yield return new WaitForSecondsRealtime(PlayHandDisturbanceBeat);
                     host.Host?.React();
                     encounterAudio.Play(SpiritAudioCue.Disturbance);
                     host.Ambient?.Disturb();
@@ -115,12 +119,15 @@ namespace Dice.Presentation
                         : diceTray.RollDie(disturbed.Bay, disturbed.After, encounterAudio.BeginRoll(1));
                     yield return activeRoll;
                     activeRoll = null;
-                    if (rollDisturbed) hud.SetScore(controls.Preview?.Score, false);
+                    // The rank follows the landed die: the hand about to be scored, or the preview after a reroll.
+                    if (disturbedHand != null) hud.SetScore(disturbedHand.Score, false);
+                    else if (rollDisturbed) hud.SetScore(controls.Preview?.Score, false);
                     rollDisturbed = false;
                     yield return new WaitForSecondsRealtime(DisturbanceHold);
                 }
                 else if (ruleEvent is DisturbanceBlockedEvent blocked)
                 {
+                    if (ScoredAfter(resolution, blocked) != null) yield return new WaitForSecondsRealtime(PlayHandDisturbanceBeat);
                     host.Host?.React();
                     encounterAudio.Play(SpiritAudioCue.DisturbanceBlocked);
                     yield return new WaitForSecondsRealtime(Mathf.Max(host.ShowProtection(blocked), DisturbanceHold));
@@ -289,6 +296,17 @@ namespace Dice.Presentation
         {
             int next = resolution.Events.IndexOf(rolled) + 1;
             return next > 0 && next < resolution.Events.Count && resolution.Events[next] is DieDisturbedEvent;
+        }
+
+        /** The hand scored after an interference event in the same action, or null when no hand is scored before the next roll. */
+        private static HandScoredEvent ScoredAfter(Resolution resolution, RuleEvent interference)
+        {
+            for (int next = resolution.Events.IndexOf(interference) + 1; next > 0 && next < resolution.Events.Count; next++)
+            {
+                if (resolution.Events[next] is DiceRolledEvent) return null;
+                if (resolution.Events[next] is HandScoredEvent scored) return scored;
+            }
+            return null;
         }
 
         private static bool IsModifierGrant(ResourceChangedEvent resource, Resolution resolution)

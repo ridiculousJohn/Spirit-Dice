@@ -27,11 +27,13 @@ namespace Dice.Presentation
         [SerializeField] private Graphic[] emissiveImages = Array.Empty<Graphic>();
         [Tooltip("Optional part scaled while the piece repels interference, such as the flame.")]
         [SerializeField] private RectTransform flareTarget;
-        [Tooltip("Optional authored effect, such as sparks, shown only while the piece flares.")]
+        [Tooltip("Optional authored effect, such as sparks, shown only while the piece flares; it restarts each time it is enabled.")]
         [SerializeField] private GameObject flareEffect;
         [SerializeField, Min(.05f)] private float flareDuration = .7f;
-        [Tooltip("Peak scale of the flare target.")]
+        [Tooltip("Peak width scale of the flare target.")]
         [SerializeField, Min(1)] private float flareScale = 1.35f;
+        [Tooltip("Peak height scale of the flare target; below the width scale, the flare widens rather than reaching upward.")]
+        [SerializeField, Min(1)] private float flareHeightScale = 1.35f;
         [Tooltip("Peak multiplier applied to the bound scene light while flaring.")]
         [SerializeField, Min(1)] private float flareLightIntensity = 2.2f;
 
@@ -59,6 +61,12 @@ namespace Dice.Presentation
         public PiecePosition Position => position;
         /** Multiplies the bound scene light; above one only while flaring. */
         public float LightIntensity => 1f + (flareLightIntensity - 1f) * FlarePulse();
+        /** Peak scale of the flare target over its authored scale. */
+        public Vector2 FlarePeakScale => new Vector2(flareScale, flareHeightScale);
+        public RectTransform FlareTarget => flareTarget;
+        public GameObject FlareEffect => flareEffect;
+        public float FlareDuration => flareDuration;
+        public bool IsFlaring => !float.IsNegativeInfinity(flareStart);
 
         public void Initialize(Func<SpiritTablePieceView, bool> canMovePiece,
             Func<SpiritTablePieceView, PiecePosition, bool> requestMove)
@@ -106,7 +114,12 @@ namespace Dice.Presentation
         {
             if (flareTarget != null && float.IsNegativeInfinity(flareStart)) flareBaseScale = flareTarget.localScale;
             flareStart = Time.unscaledTime;
-            if (flareEffect != null) flareEffect.SetActive(true);
+            if (flareEffect != null)
+            {
+                // A repeated flare restarts the effect from its first frame.
+                flareEffect.SetActive(false);
+                flareEffect.SetActive(true);
+            }
             return flareDuration;
         }
 
@@ -227,7 +240,10 @@ namespace Dice.Presentation
         {
             if (float.IsNegativeInfinity(flareStart)) return;
             if (Time.unscaledTime - flareStart >= flareDuration) { EndFlare(); return; }
-            if (flareTarget != null) flareTarget.localScale = flareBaseScale * (1f + (flareScale - 1f) * FlarePulse());
+            if (flareTarget == null) return;
+            float pulse = FlarePulse();
+            flareTarget.localScale = new Vector3(flareBaseScale.x * (1f + (flareScale - 1f) * pulse),
+                flareBaseScale.y * (1f + (flareHeightScale - 1f) * pulse), flareBaseScale.z);
         }
 
         private void EndFlare()

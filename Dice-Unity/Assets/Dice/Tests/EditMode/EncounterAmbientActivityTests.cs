@@ -24,6 +24,8 @@ namespace Dice.Tests
         private const string RelightFolder = "Assets/Dice/Art/HauntedMerchant/Relight/";
         private const string ResponsePath = "Assets/Dice/Art/HauntedMerchant/MerchantLanternResponse.png";
         private const string LitShaderPath = "Assets/Dice/Presentation/Shared/SceneLitImage.shader";
+        private const string PropAudioFolder = "Assets/Dice/Presentation/Shared/SpiritAudio/MerchantProps/";
+        private const string MerchantAudioPath = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantAudio.asset";
         private const float PlateWidth = 941f, PlateHeight = 1672f;
         private static readonly (string Id, string Name)[] PropActors =
         {
@@ -220,6 +222,217 @@ namespace Dice.Tests
             Assert.That(props.All(prop => prop.localRotation == Quaternion.identity), Is.True, "The knock happens once.");
             Assert.That(lighting.Writes.Count, Is.EqualTo(writes));
         }
+
+        [Test]
+        public void PropSoundsPlayFromTheStrikesTierWithoutImmediateRepeats()
+        {
+            var idle = Clips("idle", 3);
+            var hit = Clips("hit", 3);
+            var defeat = Clips("defeat", 2);
+            var actor = PropActor("cup", Swing(10f), new AmbientRange(1f, 1f));
+            actor.IdleClips = idle;
+            actor.IdleVolume = .2f;
+            actor.HitClips = hit;
+            actor.HitVolume = .5f;
+            actor.DefeatClips = defeat;
+            actor.DefeatVolume = .8f;
+            var asset = Activity(Array.Empty<AmbientLightActor>(), new[] { actor });
+            var lighting = new RecordingLighting(0);
+            var sound = new RecordingSound();
+            var activity = new EncounterAmbientActivity(asset, lighting, new[] { Binding("cup", Prop("Cup")) }, sound);
+            activity.Begin(31);
+            Run(activity, lighting, 120.5f);
+            Assert.That(sound.Plays.Count, Is.InRange(118, 121), "Each idle jolt sounds once.");
+            AssertTier(sound.Plays, idle, .2f, "Idle");
+            Assert.That(idle.All(clip => sound.Plays.Count(play => play.Clip == clip) > 20), Is.True, "Idle jolts reach every idle clip.");
+
+            sound.Plays.Clear();
+            for (int i = 0; i < 60; ++i) activity.Disturb();
+            Assert.That(sound.Plays, Has.Count.EqualTo(60), "Each disturbance jolt sounds once.");
+            AssertTier(sound.Plays, hit, .5f, "Hit");
+            Assert.That(hit.All(clip => sound.Plays.Any(play => play.Clip == clip)), Is.True, "Disturbances reach every hit clip.");
+
+            sound.Plays.Clear();
+            activity.Knock();
+            Assert.That(sound.Plays, Has.Count.EqualTo(1), "The final knock sounds once.");
+            AssertTier(sound.Plays, defeat, .8f, "Defeat");
+            activity.Disturb();
+            activity.Knock();
+            Run(activity, lighting, 30f);
+            Assert.That(sound.Plays, Has.Count.EqualTo(1), "Nothing sounds after the knock.");
+        }
+
+        [Test]
+        public void DefeatFallsBackToTheHitClipsAndPropsWithoutClipsStaySilent()
+        {
+            var hit = Clips("hit", 2);
+            var voiced = PropActor("a", Swing(10f));
+            voiced.HitClips = hit;
+            voiced.DefeatVolume = .7f;
+            var sound = new RecordingSound();
+            var lighting = new RecordingLighting(0);
+            var activity = new EncounterAmbientActivity(Activity(Array.Empty<AmbientLightActor>(), new[] { voiced }), lighting,
+                new[] { Binding("a", Prop("a")) }, sound);
+            activity.Begin(8);
+            activity.Disturb();
+            activity.Knock();
+            Assert.That(sound.Plays, Has.Count.EqualTo(2));
+            Assert.That(hit, Has.Member(sound.Plays[1].Clip), "A prop without defeat clips knocks with a hit clip.");
+            Assert.That(sound.Plays[1].Clip, Is.Not.SameAs(sound.Plays[0].Clip), "The knock does not repeat the last hit.");
+            Assert.That(sound.Plays[1].Volume, Is.EqualTo(.7f), "The knock plays at the defeat volume.");
+
+            var silent = new RecordingSound();
+            var quiet = new EncounterAmbientActivity(Activity(Array.Empty<AmbientLightActor>(),
+                new[] { PropActor("b", Swing(10f), new AmbientRange(1f, 2f)) }), lighting, new[] { Binding("b", Prop("b")) }, silent);
+            quiet.Begin(8);
+            Run(quiet, lighting, 20f);
+            quiet.Disturb();
+            quiet.Knock();
+            Assert.That(silent.Plays, Is.Empty, "Props and activities without clips stay silent.");
+        }
+
+        [Test]
+        public void EachDisturbancePlaysOneBurstBesideTheJoltedPropsHit()
+        {
+            var bursts = Clips("burst", 3);
+            var hit = Clips("hit", 2);
+            string[] ids = { "a", "b", "c" };
+            var actors = ids.Select(id => PropActor(id, Swing(10f))).ToArray();
+            foreach (var actor in actors) actor.HitClips = hit;
+            var asset = Activity(Array.Empty<AmbientLightActor>(), actors);
+            Set(asset, "burstClips", bursts);
+            Set(asset, "burstVolume", .25f);
+            var lighting = new RecordingLighting(0);
+            var sound = new RecordingSound();
+            var activity = new EncounterAmbientActivity(asset, lighting, ids.Select(id => Binding(id, Prop(id))).ToArray(), sound);
+            activity.Disturb();
+            Assert.That(sound.Plays, Is.Empty, "Nothing sounds before the first hand.");
+            activity.Begin(77);
+            var burstPlays = new List<(AudioClip Clip, float Volume)>();
+            for (int i = 0; i < 40; ++i)
+            {
+                int before = sound.Plays.Count;
+                activity.Disturb();
+                var played = sound.Plays.Skip(before).ToList();
+                Assert.That(played.Count(play => bursts.Contains(play.Clip)), Is.EqualTo(1), "One burst per disturbance.");
+                Assert.That(played.Count(play => hit.Contains(play.Clip)), Is.EqualTo(1), "The jolted prop sounds its hit.");
+                Assert.That(played, Has.Count.EqualTo(2));
+                burstPlays.AddRange(played.Where(play => bursts.Contains(play.Clip)));
+                Run(activity, lighting, .5f);
+            }
+            AssertTier(burstPlays, bursts, .25f, "Burst");
+            Assert.That(bursts.All(clip => burstPlays.Any(play => play.Clip == clip)), Is.True, "Bursts reach every clip.");
+
+            var empty = new RecordingSound();
+            var bare = Activity(Array.Empty<AmbientLightActor>(), Array.Empty<AmbientPropActor>());
+            Set(bare, "burstClips", bursts);
+            var room = new EncounterAmbientActivity(bare, lighting, Array.Empty<EncounterAmbientPropBinding>(), empty);
+            room.Begin(3);
+            room.Disturb();
+            Assert.That(empty.Plays, Has.Count.EqualTo(1), "A disturbance bursts even with no props to jolt.");
+            room.Settle();
+            room.Disturb();
+            Assert.That(empty.Plays, Has.Count.EqualTo(1), "No bursts after the encounter ends.");
+        }
+
+        [Test]
+        public void SoundChoicesLeaveTheLightsAndPropsOnTheirSeededSchedule()
+        {
+            var light = new AmbientLightActor { LightIndex = 0, IdleInterval = new AmbientRange(2f, 3f) };
+            var actor = PropActor("cup", Swing(10f), new AmbientRange(1f, 2f));
+            actor.IdleClips = Clips("idle", 3);
+            actor.HitClips = Clips("hit", 3);
+            var asset = Activity(new[] { light }, new[] { actor });
+            Set(asset, "burstClips", Clips("burst", 2));
+            List<(double Time, int Index, float Value)> Record(IAmbientSoundTarget target, List<float> angles)
+            {
+                var prop = Prop("Cup");
+                var lighting = new RecordingLighting(1);
+                var activity = new EncounterAmbientActivity(asset, lighting, new[] { Binding("cup", prop) }, target);
+                activity.Begin(2024);
+                for (int second = 0; second < 40; ++second)
+                {
+                    if (second % 7 == 3) activity.Disturb();
+                    Run(activity, lighting, 1f);
+                    angles.Add(prop.localEulerAngles.z);
+                }
+                return lighting.Writes;
+            }
+            var sound = new RecordingSound();
+            List<float> silentAngles = new List<float>(), voicedAngles = new List<float>();
+            var silent = Record(null, silentAngles);
+            var voiced = Record(sound, voicedAngles);
+            Assert.That(sound.Plays.Count, Is.GreaterThan(20));
+            Assert.That(voiced, Is.EqualTo(silent), "Sound choices never draw from the lights' random.");
+            Assert.That(voicedAngles, Is.EqualTo(silentAngles), "Sound choices never draw from the props' random.");
+        }
+
+        [Test]
+        public void MerchantPropsSoundWithTheInstalledClipsQuieterWhenIdle()
+        {
+            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(TablePath);
+            var activity = table.AmbientActivity;
+            Assert.DoesNotThrow(activity.Validate);
+            string[] Names(string prefix, int count) => Enumerable.Range(1, count).Select(index => $"{prefix}_{index:D2}").ToArray();
+            var cookware = (Idle: Names("merchant_cookware_idle", 4), Hit: Names("merchant_cookware_hit", 6), Defeat: new string[0]);
+            var expected = new Dictionary<string, (string[] Idle, string[] Hit, string[] Defeat)>
+            {
+                ["hanging-cup"] = cookware, ["hanging-pot"] = cookware, ["hanging-pan"] = cookware,
+                ["shelf-bottle"] = (Names("merchant_bottle_idle", 2), Names("merchant_bottle_hit", 1), new string[0]),
+                ["trunk-lid"] = (Names("merchant_lid_idle", 2), Names("merchant_lid_hit", 2), Names("merchant_lid_defeat", 1)),
+            };
+            Assert.That(activity.Props.Select(actor => actor.Id), Is.EquivalentTo(expected.Keys));
+            var referenced = new HashSet<AudioClip>();
+            float idlePeak = 0f, hitPeak = 1f;
+            foreach (var actor in activity.Props)
+            {
+                var clips = expected[actor.Id];
+                Assert.That(actor.IdleClips.Select(clip => clip.name), Is.EqualTo(clips.Idle), actor.Id);
+                Assert.That(actor.HitClips.Select(clip => clip.name), Is.EqualTo(clips.Hit), actor.Id);
+                Assert.That(actor.DefeatClips.Select(clip => clip.name), Is.EqualTo(clips.Defeat), actor.Id);
+                Assert.That(actor.IdleVolume, Is.GreaterThan(0f).And.LessThan(actor.HitVolume), actor.Id + " idles quieter than it is hit.");
+                Assert.That(actor.DefeatVolume, Is.GreaterThanOrEqualTo(actor.HitVolume), actor.Id);
+                referenced.UnionWith(actor.IdleClips.Concat(actor.HitClips).Concat(actor.DefeatClips));
+                foreach (var clip in actor.IdleClips) idlePeak = Mathf.Max(idlePeak, Peak(clip));
+                foreach (var clip in actor.HitClips) hitPeak = Mathf.Min(hitPeak, Peak(clip));
+            }
+            Assert.That(idlePeak, Is.LessThan(hitPeak / 2f), "Idle clips are normalized well below the hits.");
+            Assert.That(activity.BurstClips.Select(clip => clip.name), Is.EqualTo(Names("poltergeist_burst", 3)));
+            referenced.UnionWith(activity.BurstClips);
+            var giggles = AssetDatabase.LoadAssetAtPath<SpiritAudioTheme>(MerchantAudioPath);
+            Assert.That(activity.BurstVolume, Is.GreaterThan(0f).And.LessThan(giggles.effectsVolume), "Bursts sit under the giggles.");
+            Assert.That(activity.BurstClips.Max(Peak), Is.LessThan(giggles.disturbanceClips.Min(Peak)));
+            foreach (var clip in referenced)
+            {
+                Assert.That(AssetDatabase.GetAssetPath(clip), Does.StartWith(PropAudioFolder), clip.name);
+                Assert.That(clip.channels, Is.EqualTo(1), clip.name);
+                Assert.That(clip.frequency, Is.EqualTo(44100), clip.name);
+                Assert.That(clip.length, Is.InRange(.2f, 2.5f), clip.name);
+            }
+            var installed = Directory.GetFiles(PropAudioFolder, "*.wav").Select(file => Path.GetFileNameWithoutExtension(file));
+            Assert.That(referenced.Select(clip => clip.name), Is.EquivalentTo(installed), "The merchant uses every installed prop clip.");
+        }
+
+        private static void AssertTier(IReadOnlyList<(AudioClip Clip, float Volume)> plays, AudioClip[] tier, float volume, string name)
+        {
+            for (int i = 0; i < plays.Count; ++i)
+            {
+                Assert.That(tier, Has.Member(plays[i].Clip), name + " plays its own clips.");
+                Assert.That(plays[i].Volume, Is.EqualTo(volume), name + " volume");
+                if (i > 0) Assert.That(plays[i].Clip, Is.Not.SameAs(plays[i - 1].Clip), name + " never repeats a clip immediately.");
+            }
+        }
+
+        private static float Peak(AudioClip clip)
+        {
+            Assert.That(clip.LoadAudioData(), Is.True, clip.name);
+            var samples = new float[clip.samples * clip.channels];
+            Assert.That(clip.GetData(samples, 0), Is.True, clip.name);
+            return samples.Max(Mathf.Abs);
+        }
+
+        private AudioClip[] Clips(string prefix, int count)
+            => Enumerable.Range(1, count).Select(index => Track(AudioClip.Create(prefix + index, 4410, 1, 44100, false))).ToArray();
 
         private static IEnumerable<TestCaseData> MotionKinds()
         {
@@ -1011,6 +1224,17 @@ namespace Dice.Tests
 
         private static void Set(object target, string name, object value)
             => target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
+
+        private sealed class RecordingSound : IAmbientSoundTarget
+        {
+            public readonly List<(AudioClip Clip, float Volume)> Plays = new List<(AudioClip Clip, float Volume)>();
+
+            public void PlayAmbientSound(AudioClip clip, float volume)
+            {
+                Assert.That(clip, Is.Not.Null);
+                Plays.Add((clip, volume));
+            }
+        }
 
         private sealed class RecordingLighting : IAmbientLightingTarget
         {

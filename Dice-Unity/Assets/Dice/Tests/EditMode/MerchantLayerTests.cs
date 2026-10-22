@@ -39,6 +39,81 @@ namespace Dice.Tests
             finally { Object.DestroyImmediate(footprint); }
         }
 
+        /**
+         * The installed footprint and response map are the preserved sources scaled by 0.8 about the candle point
+         * (Tools/Presentation/author-candle-light-footprint.py): a tighter pool, unchanged at the flame, whose brightest
+         * texels and distance minimum stay on the candle. The candle's receiver range shrinks with it.
+         */
+        [Test]
+        public void CandleLightIsATighterPoolOfItsPreservedSourceAboutTheCandlePoint()
+        {
+            const float reach = .8f;
+            string sources = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Docs/Reference/Art/"));
+            Texture2D source = DecodeFile(sources + "HauntedMerchantCandleFootprintSource.png");
+            Texture2D sourceResponse = DecodeFile(sources + "HauntedMerchantCandleResponseSource.png");
+            Texture2D footprint = Decode("CandleLightFootprintCentered.png");
+            Texture2D response = Decode("CandleLightResponseCentered.png");
+            try
+            {
+                foreach (Texture2D texture in new[] { source, sourceResponse, footprint, response })
+                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(941, 1672)));
+                Color32[] before = source.GetPixels32(), after = footprint.GetPixels32();
+                Color32[] beforeDistance = sourceResponse.GetPixels32(), afterDistance = response.GetPixels32();
+                Vector2Int candle = Minimum(beforeDistance, source.width);
+                Assert.That(Minimum(afterDistance, footprint.width), Is.EqualTo(candle), "The distance minimum stays on the candle.");
+                int row = candle.y * source.width;
+                Assert.That(after[row + candle.x].r, Is.EqualTo(before[row + candle.x].r), "The light at the flame is unchanged.");
+                Assert.That(after.Max(pixel => pixel.r), Is.EqualTo(before.Max(pixel => pixel.r)), "The pool is not brighter at its center.");
+                // Every level of the pool reaches 0.8 as far sideways, toward the viewer and toward the cart.
+                foreach (int level in new[] { 192, 128, 64, 16 })
+                {
+                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 1, 0, level),
+                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 1, 0, level)).Within(2f), "right " + level);
+                    Assert.That(Reach(after, footprint.width, footprint.height, candle, -1, 0, level),
+                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, -1, 0, level)).Within(2f), "left " + level);
+                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 0, -1, level),
+                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 0, -1, level)).Within(2f), "near " + level);
+                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 0, 1, level),
+                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 0, 1, level)).Within(2f), "far " + level);
+                }
+                // The authored distance reaches one at the scaled reach, so dimming falls off over the tighter pool.
+                Assert.That(Reach(afterDistance, response.width, response.height, candle, 1, 0, 255, true),
+                    Is.EqualTo(reach * Reach(beforeDistance, response.width, response.height, candle, 1, 0, 255, true)).Within(2f));
+                for (int index = 0; index < after.Length; ++index)
+                    Assert.That(after[index].r == after[index].g && after[index].g == after[index].b, Is.True, "The footprint stays gray.");
+            }
+            finally
+            {
+                foreach (Texture2D texture in new[] { source, sourceResponse, footprint, response }) Object.DestroyImmediate(texture);
+            }
+            var lighting = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(MaterialPath + "MerchantSceneLighting.asset");
+            Assert.That(lighting.Lights[1].ReceiverRange, Is.EqualTo(8f),
+                "The candle's computed light on the merchant and dice falls off over a range two thirds of the lantern's.");
+            Assert.That(lighting.Lights[0].ReceiverRange, Is.EqualTo(12f));
+        }
+
+        /** The flare clearance check in MerchantDisturbancePlayTests measures the flame from its topmost visible row. */
+        [Test]
+        public void CandleFlameTopsOutAtTheRowItsFlareClearanceAssumes()
+        {
+            Texture2D source = Decode("ProtectiveCandle.png"), mask = Decode("CandleFlameMask.png");
+            try
+            {
+                Color32[] pixels = source.GetPixels32(), owned = mask.GetPixels32();
+                int top = -1;
+                for (int y = source.height - 1; y >= 0 && top < 0; --y)
+                    for (int x = 0; x < source.width; ++x)
+                        if (owned[y * source.width + x].a == 255 && pixels[y * source.width + x].a > 0) { top = y; break; }
+                Assert.That(source.height, Is.EqualTo(1377));
+                Assert.That(source.height - 1 - top, Is.EqualTo(15), "Topmost visible flame row, counted from the top.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(mask);
+            }
+        }
+
         [Test]
         public void MerchantLayersUseTheExistingHostPresentationContract()
         {
@@ -349,11 +424,40 @@ namespace Dice.Tests
             Assert.That(texture.height, Is.EqualTo(height), path);
         }
 
-        private static Texture2D Decode(string filename)
+        private static Texture2D Decode(string filename) => DecodeFile(CanopyMotionTests.ArtPath + filename);
+
+        private static Texture2D DecodeFile(string path)
         {
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, true);
-            Assert.That(texture.LoadImage(File.ReadAllBytes(CanopyMotionTests.ArtPath + filename)), Is.True, filename);
+            Assert.That(texture.LoadImage(File.ReadAllBytes(path)), Is.True, path);
             return texture;
+        }
+
+        /** Centroid texel of the lowest red values, rounded down, in bottom-up texture rows. */
+        private static Vector2Int Minimum(Color32[] pixels, int width)
+        {
+            byte lowest = pixels.Min(pixel => pixel.r);
+            long x = 0, y = 0, count = 0;
+            for (int index = 0; index < pixels.Length; ++index)
+            {
+                if (pixels[index].r != lowest) continue;
+                x += index % width;
+                y += index / width;
+                ++count;
+            }
+            return new Vector2Int((int)(x / count), (int)(y / count));
+        }
+
+        /** Texels from the candle along one axis until red falls below the level (or rises to it, for distance). */
+        private static float Reach(Color32[] pixels, int width, int height, Vector2Int from, int dx, int dy, int level, bool rising = false)
+        {
+            for (int step = 0; ; ++step)
+            {
+                int x = from.x + dx * step, y = from.y + dy * step;
+                if (x < 0 || y < 0 || x >= width || y >= height) return step;
+                byte value = pixels[y * width + x].r;
+                if (rising ? value >= level : value < level) return step;
+            }
         }
     }
 }

@@ -45,6 +45,22 @@ MonoBehaviour:
     IdleStrength:
       Min: 0.9
       Max: 1.25
+    IdleClips:
+    - {fileID: 8300000, guid: c82f8ed47e744eba9805563702a45d52, type: 3}
+    - {fileID: 8300000, guid: 572a138524514dee8282afc9af7ddd1e, type: 3}
+    - {fileID: 8300000, guid: f3c6b19dc30a45d7b55dc33f41a6100e, type: 3}
+    - {fileID: 8300000, guid: 46bd04655e134a2c9cbc1bb2a1135a00, type: 3}
+    IdleVolume: 0.4
+    HitClips:
+    - {fileID: 8300000, guid: 1d3946671c1741cd853eb29637f0bf82, type: 3}
+    - {fileID: 8300000, guid: 784af68bdd994f4899967b7ffc078c42, type: 3}
+    - {fileID: 8300000, guid: f5da19c5a2394c9fbebc1cdddeed0c46, type: 3}
+    - {fileID: 8300000, guid: 5227cac5f74045a68b1a4e2469dd400b, type: 3}
+    - {fileID: 8300000, guid: 744f9a27fd294b09a67f4700445478eb, type: 3}
+    - {fileID: 8300000, guid: 8b83059a214f40b4a7c647f07cb6566c, type: 3}
+    HitVolume: 0.55
+    DefeatClips: []
+    DefeatVolume: 0.7
   - Id: hanging-pot
     Motion: {fileID: 11400000, guid: 6a520b843f4e45e3952ca552ba16824b, type: 2}
     Strength: 1
@@ -54,6 +70,22 @@ MonoBehaviour:
     IdleStrength:
       Min: 0.8
       Max: 1.1
+    IdleClips:
+    - {fileID: 8300000, guid: c82f8ed47e744eba9805563702a45d52, type: 3}
+    - {fileID: 8300000, guid: 572a138524514dee8282afc9af7ddd1e, type: 3}
+    - {fileID: 8300000, guid: f3c6b19dc30a45d7b55dc33f41a6100e, type: 3}
+    - {fileID: 8300000, guid: 46bd04655e134a2c9cbc1bb2a1135a00, type: 3}
+    IdleVolume: 0.45
+    HitClips:
+    - {fileID: 8300000, guid: 1d3946671c1741cd853eb29637f0bf82, type: 3}
+    - {fileID: 8300000, guid: 784af68bdd994f4899967b7ffc078c42, type: 3}
+    - {fileID: 8300000, guid: f5da19c5a2394c9fbebc1cdddeed0c46, type: 3}
+    - {fileID: 8300000, guid: 5227cac5f74045a68b1a4e2469dd400b, type: 3}
+    - {fileID: 8300000, guid: 744f9a27fd294b09a67f4700445478eb, type: 3}
+    - {fileID: 8300000, guid: 8b83059a214f40b4a7c647f07cb6566c, type: 3}
+    HitVolume: 0.6
+    DefeatClips: []
+    DefeatVolume: 0.7
   - Id: hanging-pan
     Motion: {fileID: 11400000, guid: 878fa2f0c6cf4d5cb25c911dd77476c9, type: 2}
     Strength: 1
@@ -63,6 +95,22 @@ MonoBehaviour:
     IdleStrength:
       Min: 0.8
       Max: 1.1
+    IdleClips:
+    - {fileID: 8300000, guid: c82f8ed47e744eba9805563702a45d52, type: 3}
+    - {fileID: 8300000, guid: 572a138524514dee8282afc9af7ddd1e, type: 3}
+    - {fileID: 8300000, guid: f3c6b19dc30a45d7b55dc33f41a6100e, type: 3}
+    - {fileID: 8300000, guid: 46bd04655e134a2c9cbc1bb2a1135a00, type: 3}
+    IdleVolume: 0.45
+    HitClips:
+    - {fileID: 8300000, guid: 1d3946671c1741cd853eb29637f0bf82, type: 3}
+    - {fileID: 8300000, guid: 784af68bdd994f4899967b7ffc078c42, type: 3}
+    - {fileID: 8300000, guid: f5da19c5a2394c9fbebc1cdddeed0c46, type: 3}
+    - {fileID: 8300000, guid: 5227cac5f74045a68b1a4e2469dd400b, type: 3}
+    - {fileID: 8300000, guid: 744f9a27fd294b09a67f4700445478eb, type: 3}
+    - {fileID: 8300000, guid: 8b83059a214f40b4a7c647f07cb6566c, type: 3}
+    HitVolume: 0.6
+    DefeatClips: []
+    DefeatVolume: 0.7
   - Id: shelf-bottle
     Motion: {fileID: 11400000, guid: 17c45225e467430086f251e0db606413, type: 2}
     Strength: 1
@@ -72,6 +120,15 @@ MonoBehaviour:
     IdleStrength:
       Min: 0.75
       Max: 1.04
+    IdleClips:
+    - {fileID: 8300000, guid: 784d2a4e5f5d439885642e4187f1da9d, type: 3}
+    - {fileID: 8300000, guid: e41a778f75f54e8583b0734acf2e6529, type: 3}
+    IdleVolume: 0.45
+    HitClips:
+    - {fileID: 8300000, guid: 851ffab9f33c4a80ac18396adf59fb37, type: 3}
+    HitVolume: 0.5
+    DefeatClips: []
+    DefeatVolume: 0.65
   - Id: trunk-lid
     Motion: {fileID: 11400000, guid: d1959d87e42b4adaa22c81e62b3e2bb7, type: 2}
     Strength: 1
@@ -81,7 +138,23 @@ MonoBehaviour:
     IdleStrength:
       Min: 0.7
       Max: 1.0
+    IdleClips:
+    - {fileID: 8300000, guid: 8154f630056b42e196b138b514cfa009, type: 3}
+    - {fileID: 8300000, guid: ac3399a1300641f6b73ff2ced63ec767, type: 3}
+    IdleVolume: 0.45
+    HitClips:
+    - {fileID: 8300000, guid: ca38ed66ac144fbe84e1a1c0b065ce47, type: 3}
+    - {fileID: 8300000, guid: 187a07d84feb4bafafdd701c4b1c70fa, type: 3}
+    HitVolume: 0.6
+    DefeatClips:
+    - {fileID: 8300000, guid: a4bd6e7ccdf24af8bddc0f0722b5eb10, type: 3}
+    DefeatVolume: 0.6
   disturbanceStrength: 1.6
   defeatStrength: 2.5
   lightRecovery: 1
   settleTime: 0.35
+  burstClips:
+  - {fileID: 8300000, guid: 0e8fe596b3884fcb8180e912f3206e9b, type: 3}
+  - {fileID: 8300000, guid: 87ae5d5eb1ad47d29e4a88abdc925c9c, type: 3}
+  - {fileID: 8300000, guid: 771e30edd36c4a64bac6b5b3f4a42d69, type: 3}
+  burstVolume: 0.45

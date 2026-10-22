@@ -1,0 +1,409 @@
+{
+  "title": "Haunted merchant prop sounds and poltergeist bursts",
+  "license": "Pixabay Content License",
+  "license_url": "https://pixabay.com/service/license-summary/",
+  "license_terms": "Free for commercial use; attribution not required.",
+  "processor": "Tools/Audio/process_merchant_prop_audio.ps1",
+  "ffmpeg": "N-122467-gc3d3377fe1-20260116",
+  "processing": "Each clip sliced from its recording at the source range (starts a few milliseconds before the measured onset), 3 ms fade in and the listed fade out; mono 44.1 kHz; brought to -3 dBFS; highpass 60 Hz; lowpass 9000 Hz; 0.6 second pad; aecho 0.9:0.8 with taps 19|31|47|67|89|113|151|197|241|293|353 ms and decays 0.30|0.25|0.21|0.17|0.13|0.10|0.07|0.05|0.04|0.03|0.02; no chorus; trailing silence below -60 dB trimmed with a 0.12 second fade out; peak-normalized to the tier level (idle -18, hit -9, defeat -6, burst -14 dBFS); signed 16-bit PCM WAV.",
+  "runtime_folder": "Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/MerchantProps",
+  "sources": [
+    {
+      "title": "Small Metal Pots Rattling",
+      "author": "freesound_community",
+      "original_author": "CapsLok (Freesound)",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-small-metal-pots-rattling-76063/",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "sha256": "3234eeffb31c323fefe0b4b6cdc3cfbe8e7832b66d2f331d5ff0080084c46e20"
+    },
+    {
+      "title": "Empty Mug Table Foley Wobble 1",
+      "author": "floraphonic",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-empty-mug-table-foley-wobble-1-239010/",
+      "download": "floraphonic-empty-mug-table-foley-wobble-1-239010.mp3",
+      "sha256": "20ec4439c7c4a2d4a604bbff81fde3d13038d3ed1a07ec823316b86be0944ce7"
+    },
+    {
+      "title": "Lid of chest hitting_northern87",
+      "author": "freesound_community",
+      "original_author": "northern87 (Freesound)",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-lid-of-chest-hitting-northern87-81041/",
+      "download": "freesound_community-lid-of-chest-hitting_northern87-81041.mp3",
+      "sha256": "be4883165f6160c8d6ef1756cf6240b51a143cf194519904aa3f1e9ca2eb3bcf"
+    },
+    {
+      "title": "Chest Slam",
+      "author": "freesound_community",
+      "original_author": "TNTdude7 (Freesound)",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-chest-slam-85122/",
+      "download": "freesound_community-chest-slam-85122.mp3",
+      "sha256": "0fcf893ad32e5bb65dec291f8d94f6850489f15a3e8ec9d78d2f8f02941f3957"
+    },
+    {
+      "title": "Loud Rumbling Noise",
+      "author": "Alex_Jauk",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-loud-rumbling-noise-199419/",
+      "download": "alex_jauk-loud-rumbling-noise-199419.mp3",
+      "sha256": "699e09c1bef2b189c250972646551c461630c8bdcd427939cc564d692267e949"
+    }
+  ],
+  "clips": [
+    {
+      "file": "merchant_cookware_idle_01.wav",
+      "use": "Idle jolt of the hanging cup, pot and pan",
+      "tier": "idle",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        3.885,
+        4.2
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -18,
+      "gain_db": 1.6,
+      "duration_seconds": 0.4,
+      "peak_dbfs": -17.95,
+      "rms_dbfs": -36.72,
+      "sha256": "33e90f9acf12175d544f532e468ac2f4f4c22962570d350ab53b038bbf571595"
+    },
+    {
+      "file": "merchant_cookware_idle_02.wav",
+      "use": "Idle jolt of the hanging cup, pot and pan",
+      "tier": "idle",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        4.268,
+        4.58
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -18,
+      "gain_db": 0.5,
+      "duration_seconds": 0.38,
+      "peak_dbfs": -17.95,
+      "rms_dbfs": -41.01,
+      "sha256": "b2860c6f547b78de8692815775097c2a767db1671aaf82ee9beb6d34feb36d0b"
+    },
+    {
+      "file": "merchant_cookware_idle_03.wav",
+      "use": "Idle jolt of the hanging cup, pot and pan",
+      "tier": "idle",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        5.066,
+        5.375
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -18,
+      "gain_db": 1.4,
+      "duration_seconds": 0.402,
+      "peak_dbfs": -17.99,
+      "rms_dbfs": -39.58,
+      "sha256": "91e83a2b5e0093c9b3042c7a682f3ea663d7a7c1aa02bf53ab01c4b58ed88274"
+    },
+    {
+      "file": "merchant_cookware_idle_04.wav",
+      "use": "Idle jolt of the hanging cup, pot and pan",
+      "tier": "idle",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        10.404,
+        10.73
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -18,
+      "gain_db": 1.1,
+      "duration_seconds": 0.401,
+      "peak_dbfs": -18.03,
+      "rms_dbfs": -40.87,
+      "sha256": "befea1f95e4d3ed5e6a3d128a8165389ea3715640d6f6dbb15f77374ad6bb166"
+    },
+    {
+      "file": "merchant_cookware_hit_01.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        0.402,
+        0.76
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -9,
+      "gain_db": -0.4,
+      "duration_seconds": 0.395,
+      "peak_dbfs": -9.0,
+      "rms_dbfs": -31.34,
+      "sha256": "5db3a5cf1efa8c84160273b83de4f2f45555b8cf7d94a33756cd717c05b5501f"
+    },
+    {
+      "file": "merchant_cookware_hit_02.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        5.56,
+        6.1
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -9,
+      "gain_db": -5.5,
+      "duration_seconds": 0.453,
+      "peak_dbfs": -9.01,
+      "rms_dbfs": -33.72,
+      "sha256": "0a47dd41120190c58c80d647c644560d6c3d85655149ac5f0b9dbf0d5d228691"
+    },
+    {
+      "file": "merchant_cookware_hit_03.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        10.01,
+        10.4
+      ],
+      "fade_out_seconds": 0.04,
+      "target_peak_dbfs": -9,
+      "gain_db": -1.5,
+      "duration_seconds": 0.381,
+      "peak_dbfs": -8.99,
+      "rms_dbfs": -33.51,
+      "sha256": "ffe7a4590c8b6b16f536f35b70c8fcae028cf0a53771c3225cf176589630865f"
+    },
+    {
+      "file": "merchant_cookware_hit_04.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        11.442,
+        12.1
+      ],
+      "fade_out_seconds": 0.08,
+      "target_peak_dbfs": -9,
+      "gain_db": -4.0,
+      "duration_seconds": 0.395,
+      "peak_dbfs": -9.0,
+      "rms_dbfs": -29.76,
+      "sha256": "883026e4e9ff0b451deb968ad7d033e82adb7677983b9c892a0a9a395476e49a"
+    },
+    {
+      "file": "merchant_cookware_hit_05.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        7.092,
+        7.78
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -9,
+      "gain_db": -3.5,
+      "duration_seconds": 0.821,
+      "peak_dbfs": -8.97,
+      "rms_dbfs": -34.39,
+      "sha256": "8fb60a9ca3420d89e2b52eba6599a6997bfeddcff4164e3e0cf5bfe30cff9f35"
+    },
+    {
+      "file": "merchant_cookware_hit_06.wav",
+      "use": "Disturbance jolt of the hanging cup, pot and pan; their defeat knock",
+      "tier": "hit",
+      "download": "freesound_community-small-metal-pots-rattling-76063.mp3",
+      "source_range_seconds": [
+        8.554,
+        8.93
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -9,
+      "gain_db": 1.4,
+      "duration_seconds": 0.455,
+      "peak_dbfs": -9.0,
+      "rms_dbfs": -33.47,
+      "sha256": "c1945e356cd8ebaabff50bb663b5792e34b64d20589971bca0e15227f9e4c09b"
+    },
+    {
+      "file": "merchant_bottle_idle_01.wav",
+      "use": "Idle wobble of the shelf bottle",
+      "tier": "idle",
+      "download": "floraphonic-empty-mug-table-foley-wobble-1-239010.mp3",
+      "source_range_seconds": [
+        0.232,
+        0.745
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -18,
+      "gain_db": -19.4,
+      "duration_seconds": 0.835,
+      "peak_dbfs": -18.03,
+      "rms_dbfs": -35.38,
+      "sha256": "0dcc72bf1cde38c97d2f2e08ab4ab3e7784d53838e9821fd41cfa980e1b21a04"
+    },
+    {
+      "file": "merchant_bottle_idle_02.wav",
+      "use": "Idle wobble of the shelf bottle",
+      "tier": "idle",
+      "download": "floraphonic-empty-mug-table-foley-wobble-1-239010.mp3",
+      "source_range_seconds": [
+        0.232,
+        0.52
+      ],
+      "fade_out_seconds": 0.04,
+      "target_peak_dbfs": -18,
+      "gain_db": -19.4,
+      "duration_seconds": 0.605,
+      "peak_dbfs": -18.03,
+      "rms_dbfs": -36.39,
+      "sha256": "b48b7fd43a76e62139f404050091e596c2228023fc36799c729ed242d077e56f"
+    },
+    {
+      "file": "merchant_bottle_hit_01.wav",
+      "use": "Disturbance wobble of the shelf bottle; its defeat knock",
+      "tier": "hit",
+      "download": "floraphonic-empty-mug-table-foley-wobble-1-239010.mp3",
+      "source_range_seconds": [
+        0.232,
+        2.13
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -9,
+      "gain_db": -10.4,
+      "duration_seconds": 2.147,
+      "peak_dbfs": -9.03,
+      "rms_dbfs": -23.91,
+      "sha256": "435a7f0aecf8b91e7a0a2c5ac0c10c42d4dca5701d15f024475444753dbb52e4"
+    },
+    {
+      "file": "merchant_lid_idle_01.wav",
+      "use": "Idle thump of the trunk lid",
+      "tier": "idle",
+      "download": "freesound_community-lid-of-chest-hitting_northern87-81041.mp3",
+      "source_range_seconds": [
+        0.178,
+        0.46
+      ],
+      "fade_out_seconds": 0.05,
+      "target_peak_dbfs": -18,
+      "gain_db": -8.8,
+      "duration_seconds": 0.404,
+      "peak_dbfs": -18.01,
+      "rms_dbfs": -37.48,
+      "sha256": "f065f587a939c5ed4c0b8547b8361af5c7ddbe8fb5f9f7128bc766724f910852"
+    },
+    {
+      "file": "merchant_lid_idle_02.wav",
+      "use": "Idle thump of the trunk lid",
+      "tier": "idle",
+      "download": "freesound_community-lid-of-chest-hitting_northern87-81041.mp3",
+      "source_range_seconds": [
+        1.238,
+        1.43
+      ],
+      "fade_out_seconds": 0.04,
+      "target_peak_dbfs": -18,
+      "gain_db": -15.8,
+      "duration_seconds": 0.429,
+      "peak_dbfs": -17.96,
+      "rms_dbfs": -44.06,
+      "sha256": "22838273a5d4ff5c5e5d3ea299a5b1d275fa6dba9928eeb81e492af628bd646a"
+    },
+    {
+      "file": "merchant_lid_hit_01.wav",
+      "use": "Disturbance thump of the trunk lid",
+      "tier": "hit",
+      "download": "freesound_community-lid-of-chest-hitting_northern87-81041.mp3",
+      "source_range_seconds": [
+        1.238,
+        1.62
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -9,
+      "gain_db": -6.8,
+      "duration_seconds": 0.504,
+      "peak_dbfs": -8.96,
+      "rms_dbfs": -35.32,
+      "sha256": "a97d2cdf3cb97afbfad5a09d0f0212a70176ef24f7cdc7eae5773b370bffb743"
+    },
+    {
+      "file": "merchant_lid_hit_02.wav",
+      "use": "Disturbance thump of the trunk lid",
+      "tier": "hit",
+      "download": "freesound_community-lid-of-chest-hitting_northern87-81041.mp3",
+      "source_range_seconds": [
+        2.735,
+        3.15
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -9,
+      "gain_db": -4.3,
+      "duration_seconds": 0.45,
+      "peak_dbfs": -9.03,
+      "rms_dbfs": -28.93,
+      "sha256": "156659890941e8bc9db72255d9ab87439f97168ac7ba54c438350949ff60d18e"
+    },
+    {
+      "file": "merchant_lid_defeat_01.wav",
+      "use": "Defeat knock of the trunk lid",
+      "tier": "defeat",
+      "download": "freesound_community-chest-slam-85122.mp3",
+      "source_range_seconds": [
+        0.355,
+        0.85
+      ],
+      "fade_out_seconds": 0.06,
+      "target_peak_dbfs": -6,
+      "gain_db": -9.0,
+      "duration_seconds": 0.571,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -19.53,
+      "sha256": "574a70bdf37a75b624deb95159a3dfe12b78427cb7f34ace3ad84a3db2821ef6"
+    },
+    {
+      "file": "poltergeist_burst_01.wav",
+      "use": "Burst on each poltergeist disturbance",
+      "tier": "burst",
+      "download": "alex_jauk-loud-rumbling-noise-199419.mp3",
+      "source_range_seconds": [
+        0.012,
+        0.605
+      ],
+      "fade_out_seconds": 0.08,
+      "target_peak_dbfs": -14,
+      "gain_db": -13.4,
+      "duration_seconds": 0.875,
+      "peak_dbfs": -14.05,
+      "rms_dbfs": -30.03,
+      "sha256": "5242d51cb800f22d64a9312db920fb7a48aabd21a0f4e81cf1e0626227b8822a"
+    },
+    {
+      "file": "poltergeist_burst_02.wav",
+      "use": "Burst on each poltergeist disturbance",
+      "tier": "burst",
+      "download": "alex_jauk-loud-rumbling-noise-199419.mp3",
+      "source_range_seconds": [
+        0.605,
+        1.31
+      ],
+      "fade_out_seconds": 0.08,
+      "target_peak_dbfs": -14,
+      "gain_db": -16.3,
+      "duration_seconds": 0.958,
+      "peak_dbfs": -14.01,
+      "rms_dbfs": -32.43,
+      "sha256": "335a5fccd518e29cfbe00bba0f8aeb91740b41dce8c57a6cb65ed5db54c11c5d"
+    },
+    {
+      "file": "poltergeist_burst_03.wav",
+      "use": "Burst on each poltergeist disturbance",
+      "tier": "burst",
+      "download": "alex_jauk-loud-rumbling-noise-199419.mp3",
+      "source_range_seconds": [
+        1.31,
+        2.04
+      ],
+      "fade_out_seconds": 0.1,
+      "target_peak_dbfs": -14,
+      "gain_db": -12.5,
+      "duration_seconds": 0.941,
+      "peak_dbfs": -13.96,
+      "rms_dbfs": -30.94,
+      "sha256": "fedc1ecad13db9e1c5224c9d67f8783833131a242cd8b4828ce7fe653832780d"
+    }
+  ]
+}

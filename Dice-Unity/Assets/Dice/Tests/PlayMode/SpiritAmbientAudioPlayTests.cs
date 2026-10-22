@@ -15,7 +15,26 @@ namespace Dice.Tests
         private GameObject root;
         private SpiritEncounterAudio sound;
         private AudioSource[] cues;
+        private AudioSource[] props;
         private AudioClip[] ambientClips;
+        private GameObject listener;
+
+        /**
+         * Playing voices log a warning without an audio listener. One listener serves the whole fixture, apart from
+         * each test's root, unless an earlier fixture's scene already supplies one.
+         */
+        [OneTimeSetUp]
+        public void ProvideListener()
+        {
+            if (Object.FindAnyObjectByType<AudioListener>() == null)
+                listener = new GameObject("AmbientAudioTestListener", typeof(AudioListener));
+        }
+
+        [OneTimeTearDown]
+        public void RemoveListener()
+        {
+            if (listener != null) Object.Destroy(listener);
+        }
 
         [SetUp]
         public void SetUp()
@@ -29,6 +48,8 @@ namespace Dice.Tests
             Set("rollSource", Source("Roll"));
             cues = Enumerable.Range(0, 4).Select(index => Source("Cue" + index)).ToArray();
             Set("cueSources", cues);
+            props = Enumerable.Range(0, 3).Select(index => Source("Prop" + index)).ToArray();
+            Set("propSources", props);
             ambientClips = Enumerable.Range(1, 3).Select(index => Clip("ambient-" + index)).ToArray();
         }
 
@@ -125,6 +146,38 @@ namespace Dice.Tests
             Due();
             yield return null;
             AssertSilent();
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator PropSoundsUseTheirOwnVoicesAndFollowMuteAndSuspension()
+        {
+            Set("theme", Theme(null));
+            root.SetActive(true);
+            sound.SendMessage("OnApplicationFocus", true);
+            var knock = ambientClips[0];
+            for (int play = 0; play < 5; play++) sound.PlayAmbientSound(knock, .4f);
+            yield return null;
+            Assert.That(props.Count(source => source.isPlaying && source.clip == knock), Is.EqualTo(props.Length),
+                "Overlapping prop sounds fill the prop voices.");
+            Assert.That(props.All(source => Mathf.Approximately(source.volume, .4f)), Is.True);
+            Assert.That(cues.Any(source => source.isPlaying || source.clip != null), Is.False, "Prop sounds never take a cue voice.");
+
+            sound.Muted = true;
+            Assert.That(props.Any(source => source.isPlaying), Is.False, "Muting stops the prop voices.");
+            sound.PlayAmbientSound(knock, .4f);
+            yield return null;
+            Assert.That(props.Any(source => source.isPlaying), Is.False, "Muted prop sounds stay silent.");
+            sound.Muted = false;
+
+            sound.SendMessage("OnApplicationPause", true);
+            sound.PlayAmbientSound(knock, .4f);
+            yield return null;
+            Assert.That(props.Any(source => source.isPlaying), Is.False, "Suspended prop sounds stay silent.");
+            sound.SendMessage("OnApplicationPause", false);
+            sound.PlayAmbientSound(knock, .4f);
+            yield return null;
+            Assert.That(props.Count(source => source.isPlaying), Is.EqualTo(1));
             LogAssert.NoUnexpectedReceived();
         }
 
