@@ -12,9 +12,11 @@ namespace Dice.Presentation
     }
 
     /**
-     * A prop's decaying response to strikes, applied on top of whatever pose the prop holds this frame.
-     * A pose written by anything else (an animation, layout) becomes the new base; otherwise the base is
-     * the pose before the motion started, so the prop always returns exactly to it.
+     * A prop's decaying response to strikes, offset from the rest pose it held when the motion started.
+     * The first strike while the prop is not offset records that rest pose; each frame of the motion writes
+     * the rest pose plus the summed responses, and when the motion ends or rests the rest pose is written back exactly.
+     * A RectTransform's position is held as its anchored position: layout re-derives its local position from that,
+     * with rounding, and moves it with the parent's rect, so the prop and its offset follow the laid-out position.
      */
     public abstract class AmbientMotion
     {
@@ -23,14 +25,14 @@ namespace Dice.Presentation
         private double settleStart = double.NaN;
         private float settleTime;
         private bool applied;
-        private Vector3 basePosition;
-        private Quaternion baseRotation;
-        private Vector3 writtenPosition;
-        private Quaternion writtenRotation;
+        private Vector3 restPosition;
+        private Quaternion restRotation;
+        private readonly RectTransform rect;
 
         protected AmbientMotion(Transform target)
         {
             Target = target != null ? target : throw new ArgumentNullException(nameof(target));
+            rect = target as RectTransform;
         }
 
         public Transform Target { get; }
@@ -44,6 +46,11 @@ namespace Dice.Presentation
         {
             if (!SceneLightingAsset.Finite(strength) || strength < 0f) throw new ArgumentOutOfRangeException(nameof(strength));
             if (strength == 0f) return;
+            if (!applied)
+            {
+                restPosition = Position;
+                restRotation = Target.localRotation;
+            }
             strikes.Add(new Response(time, strength, Duration(strength)));
         }
 
@@ -55,19 +62,15 @@ namespace Dice.Presentation
             settleTime = Mathf.Max(.01f, timeConstant);
         }
 
-        /** Drops every response and restores the base pose at once. */
+        /** Drops every response and restores the rest pose at once. */
         public void Rest()
         {
             strikes.Clear();
             settleStart = double.NaN;
-            if (!applied) return;
-            ReadBase();
-            Target.localPosition = basePosition;
-            Target.localRotation = baseRotation;
-            applied = false;
+            if (applied) ReturnToRest();
         }
 
-        /** Writes the base pose plus the summed responses at the given activity time. */
+        /** Writes the rest pose plus the summed responses at the given activity time, or the rest pose once they end. */
         public void Apply(double time)
         {
             float settle = double.IsNaN(settleStart) ? 1f : Mathf.Exp(-(float)(time - settleStart) / settleTime);
@@ -79,24 +82,18 @@ namespace Dice.Presentation
                 if (elapsed >= strikes[i].Duration || settle < SettledFactor) { strikes.RemoveAt(i); continue; }
                 if (elapsed >= 0f) Evaluate(elapsed, strikes[i].Strength, ref angle, ref offset);
             }
-            if (strikes.Count == 0) settleStart = double.NaN;
-            if (strikes.Count == 0 && !applied) return;
-            ReadBase();
             if (strikes.Count == 0)
             {
-                Target.localPosition = basePosition;
-                Target.localRotation = baseRotation;
-                applied = false;
+                settleStart = double.NaN;
+                if (applied) ReturnToRest();
                 return;
             }
             Quaternion turn = Quaternion.Euler(0f, 0f, angle * settle);
             // Rotating about a local pivot keeps that point fixed in the parent.
             Vector3 pivot = Vector3.Scale(Target.localScale, Pivot(angle * settle));
-            Target.localRotation = baseRotation * turn;
-            Target.localPosition = basePosition + baseRotation * (pivot - turn * pivot) + (Vector3)(offset * settle);
-            // Read back so an unchanged pose next frame compares exactly equal to what was written.
-            writtenRotation = Target.localRotation;
-            writtenPosition = Target.localPosition;
+            Target.localRotation = restRotation * turn;
+            // A parent-local offset moves the anchored position by the same amount as the local position.
+            Position = restPosition + restRotation * (pivot - turn * pivot) + (Vector3)(offset * settle);
             applied = true;
         }
 
@@ -109,12 +106,22 @@ namespace Dice.Presentation
         /** Local point a rotation by the given degrees turns about; the transform's own pivot unless a kind names contact points. */
         protected virtual Vector3 Pivot(float angle) => Vector3.zero;
 
-        private void ReadBase()
+        /** The anchored position of a RectTransform target, else the local position. */
+        private Vector3 Position
         {
-            Vector3 position = Target.localPosition;
-            Quaternion rotation = Target.localRotation;
-            if (!applied || !position.Equals(writtenPosition)) basePosition = position;
-            if (!applied || !rotation.Equals(writtenRotation)) baseRotation = rotation;
+            get => rect != null ? rect.anchoredPosition3D : Target.localPosition;
+            set
+            {
+                if (rect != null) rect.anchoredPosition3D = value;
+                else Target.localPosition = value;
+            }
+        }
+
+        private void ReturnToRest()
+        {
+            Position = restPosition;
+            Target.localRotation = restRotation;
+            applied = false;
         }
 
         /** Seconds until a decay exp(-t / timeConstant) of the amplitude falls below the threshold. */

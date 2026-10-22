@@ -224,64 +224,246 @@ namespace Dice.Tests
         private static IEnumerable<TestCaseData> MotionKinds()
         {
             yield return new TestCaseData("Swing", Vector3.zero, Vector3.zero)
-                .SetName("SwingIsAdditiveOverAnAnimatedPoseAndReturnsToRest");
+                .SetName("SwingMovesWhileStruckAndReturnsExactlyToItsRecordedRest");
             // The default wobble contacts sit a quarter of the width in from each side of the base.
             yield return new TestCaseData("Wobble", new Vector3(-10f, -30f, 0f), new Vector3(10f, -30f, 0f))
-                .SetName("WobbleIsAdditiveOverAnAnimatedPoseAndReturnsToRest");
+                .SetName("WobbleMovesWhileStruckAndReturnsExactlyToItsRecordedRest");
             yield return new TestCaseData("Thump", Vector3.zero, Vector3.zero)
-                .SetName("ThumpIsAdditiveOverAnAnimatedPoseAndReturnsToRest");
+                .SetName("ThumpMovesWhileStruckAndReturnsExactlyToItsRecordedRest");
         }
 
         [TestCaseSource(nameof(MotionKinds))]
-        public void MotionKindIsAdditiveOverAnAnimatedPoseAndReturnsToRest(string kind, Vector3 leftPivot, Vector3 rightPivot)
+        public void MotionKindMovesWhileStruckAndReturnsExactlyToItsRecordedRest(string kind, Vector3 leftPivot, Vector3 rightPivot)
         {
             AmbientMotionAsset asset = kind == "Swing" ? Swing(10f)
                 : kind == "Wobble" ? (AmbientMotionAsset)Track(ScriptableObject.CreateInstance<AmbientWobbleMotionAsset>())
                 : Track(ScriptableObject.CreateInstance<AmbientThumpMotionAsset>());
-            var animated = Prop("Animated");
-            var reference = Prop("Reference");
-            var onAnimated = asset.Create(animated);
-            var onReference = asset.Create(reference);
-            onAnimated.Strike(.1, 1.5f);
-            onReference.Strike(.1, 1.5f);
-            float peakAngle = 0f, peakOffset = 0f, leftmost = 0f, rightmost = 0f;
-            Quaternion animatedRotation = Quaternion.identity;
-            Vector3 animatedPosition = Vector3.zero;
+            var restPosition = new Vector3(12.5f, -40.25f, 0f);
+            var restRotation = Quaternion.Euler(0f, 0f, 7f);
+            // The motion runs out on its own, is damped by a settle, or is dropped by a rest mid-motion.
+            foreach (string ending in new[] { "decay", "settle", "rest" })
+            {
+                var prop = Prop(kind + " " + ending);
+                prop.anchoredPosition3D = restPosition;
+                prop.localRotation = restRotation;
+                var motion = asset.Create(prop);
+                motion.Strike(.1, 1.5f);
+                float peakAngle = 0f, peakOffset = 0f, leftmost = 0f, rightmost = 0f;
+                bool interrupted = false;
+                for (double time = 0; time < 15; time += Step)
+                {
+                    if (!interrupted && ending != "decay" && time >= .3)
+                    {
+                        Assert.That(motion.IsOffset, Is.True, kind + " is mid-motion when it is interrupted.");
+                        if (ending == "settle") motion.Settle(time, .05f);
+                        else
+                        {
+                            motion.Rest();
+                            Assert.That(motion.IsMoving || motion.IsOffset, Is.False, kind + " rests at once.");
+                            Assert.That(Vector3.Distance(prop.anchoredPosition3D, restPosition), Is.LessThan(.0001f), kind + " rest position");
+                            Assert.That(Quaternion.Angle(prop.localRotation, restRotation), Is.LessThan(.0001f), kind + " rest rotation");
+                        }
+                        interrupted = true;
+                    }
+                    motion.Apply(time);
+                    if (!motion.IsOffset) continue;
+
+                    // A counterclockwise turn stands on the left contact, a clockwise one on the right.
+                    float turn = Mathf.DeltaAngle(0f, (Quaternion.Inverse(restRotation) * prop.localRotation).eulerAngles.z);
+                    Vector3 pivot = turn >= 0f ? leftPivot : rightPivot;
+                    leftmost = Mathf.Max(leftmost, turn);
+                    rightmost = Mathf.Min(rightmost, turn);
+                    Vector3 offset = prop.anchoredPosition3D + prop.localRotation * pivot - (restPosition + restRotation * pivot);
+                    peakAngle = Mathf.Max(peakAngle, Mathf.Abs(turn));
+                    peakOffset = Mathf.Max(peakOffset, offset.magnitude);
+                    if (kind == "Thump") Assert.That(offset.y, Is.GreaterThanOrEqualTo(-.0001f), "A thump hops upward.");
+                }
+                Assert.That(peakAngle, Is.GreaterThan(1f), kind + " moves the prop before its " + ending + ".");
+                if (kind != "Thump") Assert.That(peakOffset, Is.LessThan(.001f), kind + " keeps its pivot in place.");
+                if (ending == "decay")
+                {
+                    if (kind != "Thump") Assert.That(leftmost > 1f && rightmost < -1f, Is.True, kind + " turns both ways.");
+                    else Assert.That(peakOffset, Is.GreaterThan(5f));
+                }
+                Assert.That(motion.IsMoving || motion.IsOffset, Is.False, kind + " " + ending);
+                Assert.That(Vector3.Distance(prop.anchoredPosition3D, restPosition), Is.LessThan(.0001f),
+                    kind + " returns to its recorded rest position after its " + ending + ": " + prop.anchoredPosition3D.ToString("F5"));
+                Assert.That(Quaternion.Angle(prop.localRotation, restRotation), Is.LessThan(.0001f),
+                    kind + " returns to its recorded rest rotation after its " + ending + ".");
+
+                // The next motion records the rest pose the prop holds when it starts.
+                var nextPosition = new Vector3(-8f, 21.75f, 0f);
+                var nextRotation = Quaternion.Euler(0f, 0f, -4f);
+                prop.anchoredPosition3D = nextPosition;
+                prop.localRotation = nextRotation;
+                motion.Strike(15, 1.5f);
+                bool moved = false;
+                for (double time = 15; time < 30; time += Step)
+                {
+                    motion.Apply(time);
+                    moved |= Quaternion.Angle(prop.localRotation, nextRotation) > 1f;
+                }
+                Assert.That(moved, Is.True, kind + " moves again.");
+                Assert.That(motion.IsMoving || motion.IsOffset, Is.False);
+                Assert.That(Vector3.Distance(prop.anchoredPosition3D, nextPosition), Is.LessThan(.0001f), kind + " next rest position");
+                Assert.That(Quaternion.Angle(prop.localRotation, nextRotation), Is.LessThan(.0001f), kind + " next rest rotation");
+            }
+        }
+
+        [Test]
+        public void HangingCupRootSwingComposesWithItsPrefabsChildSway()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CupPrefabPath);
+            var clip = prefab.GetComponent<Animation>().clip;
+            Assert.That(clip, Is.Not.Null);
+            var cup = Track(Object.Instantiate(prefab));
+            var reference = Track(Object.Instantiate(prefab));
+            var root = (RectTransform)cup.transform;
+            root.anchoredPosition3D = new Vector3(30f, -50f, 0f);
+            Vector3 restPosition = root.anchoredPosition3D;
+            Quaternion restRotation = root.localRotation;
+            Transform swing = root.Find("Swing"), referenceSwing = reference.transform.Find("Swing");
+            Assert.That(swing, Is.Not.Null, "The prefab's idle sway animates its Swing child.");
+            var motion = Swing(10f).Create(root);
+            motion.Strike(.5, 1.5f);
+            float peakRoot = 0f, peakChild = 0f;
             for (double time = 0; time < 15; time += Step)
             {
-                // An idle animation rewrites the pose every frame before the motion applies.
-                animatedRotation = Quaternion.Euler(0f, 0f, 3f * Mathf.Sin(2f * Mathf.PI * (float)time / 4f));
-                animatedPosition = new Vector3(5f + 2f * Mathf.Sin((float)time), 7f, 0f);
-                animated.localRotation = animatedRotation;
-                animated.localPosition = animatedPosition;
-                onAnimated.Apply(time);
-                onReference.Apply(time);
-
-                // A counterclockwise turn stands on the left contact, a clockwise one on the right.
-                float turn = Mathf.DeltaAngle(0f, reference.localEulerAngles.z);
-                Vector3 pivot = turn >= 0f ? leftPivot : rightPivot;
-                leftmost = Mathf.Max(leftmost, turn);
-                rightmost = Mathf.Min(rightmost, turn);
-                Quaternion offsetRotation = Quaternion.Inverse(animatedRotation) * animated.localRotation;
-                Assert.That(Quaternion.Angle(offsetRotation, reference.localRotation), Is.LessThan(.01f), "Rotation at " + time);
-                Vector3 offset = reference.localPosition + reference.localRotation * pivot - pivot;
-                Vector3 expected = animatedPosition + animatedRotation * pivot + offset;
-                Assert.That(Vector3.Distance(animated.localPosition + animated.localRotation * pivot, expected), Is.LessThan(.001f),
-                    "The motion's pivot follows the animated pose at " + time);
-                peakAngle = Mathf.Max(peakAngle, Quaternion.Angle(Quaternion.identity, reference.localRotation));
-                peakOffset = Mathf.Max(peakOffset, offset.magnitude);
-                if (kind == "Thump") Assert.That(offset.y, Is.GreaterThanOrEqualTo(-.0001f), "A thump hops upward.");
+                // The prefab's clip sways the child every frame while the ambient motion swings the root.
+                float clipTime = (float)(time % clip.length);
+                clip.SampleAnimation(cup, clipTime);
+                motion.Apply(time);
+                clip.SampleAnimation(reference, clipTime);
+                Assert.That(Quaternion.Angle(swing.localRotation, referenceSwing.localRotation), Is.LessThan(.0001f),
+                    "The child keeps the clip's sway at " + time);
+                Assert.That(Vector3.Distance(swing.localPosition, referenceSwing.localPosition), Is.LessThan(.0001f));
+                peakRoot = Mathf.Max(peakRoot, Quaternion.Angle(root.localRotation, restRotation));
+                peakChild = Mathf.Max(peakChild, Quaternion.Angle(swing.localRotation, Quaternion.identity));
             }
-            Assert.That(peakAngle, Is.GreaterThan(1f), kind + " moves the prop.");
-            if (kind != "Thump") Assert.That(leftmost > 1f && rightmost < -1f, Is.True, kind + " turns both ways.");
-            if (kind == "Thump") Assert.That(peakOffset, Is.GreaterThan(5f));
-            else Assert.That(peakOffset, Is.LessThan(.001f), kind + " keeps its pivot in place.");
-            Assert.That(onAnimated.IsMoving || onAnimated.IsOffset || onReference.IsMoving || onReference.IsOffset, Is.False);
-            Assert.That(Quaternion.Angle(animated.localRotation, animatedRotation), Is.LessThan(.0001f),
-                "The animated pose is left as animated.");
-            Assert.That(Vector3.Distance(animated.localPosition, animatedPosition), Is.LessThan(.00001f));
-            Assert.That(reference.localRotation, Is.EqualTo(Quaternion.identity), "A still prop returns exactly to rest.");
-            Assert.That(reference.localPosition, Is.EqualTo(Vector3.zero));
+            Assert.That(peakRoot, Is.GreaterThan(3f), "The strike swings the cup's root.");
+            Assert.That(peakChild, Is.GreaterThan(2f), "The clip sways the child.");
+            Assert.That(motion.IsMoving || motion.IsOffset, Is.False);
+            Assert.That(Vector3.Distance(root.anchoredPosition3D, restPosition), Is.LessThan(.0001f), "The root returns to rest.");
+            Assert.That(Quaternion.Angle(root.localRotation, restRotation), Is.LessThan(.0001f));
+            clip.SampleAnimation(cup, 1f);
+            clip.SampleAnimation(reference, 1f);
+            Assert.That(Quaternion.Angle(swing.localRotation, referenceSwing.localRotation), Is.LessThan(.0001f),
+                "The child holds whatever pose the clip sets.");
+            Assert.That(Quaternion.Angle(swing.localRotation, Quaternion.identity), Is.GreaterThan(2f));
+        }
+
+        [Test]
+        public void MerchantPropsReturnExactlyToRestAfterRepeatedStrikesUnderPerFrameLayout()
+        {
+            // The merchant's scene frame: point anchors with a fractional pivot, so a prop's local position is
+            // re-derived from its anchored position with float rounding whenever its rect transform updates.
+            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(TablePath);
+            var frame = (RectTransform)Track(new GameObject("Merchant Scene", typeof(RectTransform))).transform;
+            frame.anchorMin = frame.anchorMax = Vector2.zero;
+            frame.pivot = new Vector2(87.26366f / 540f, 0f);
+            frame.sizeDelta = new Vector2(540f, 960f);
+            frame.anchoredPosition = new Vector2(87.26366f, 0f);
+            frame.localScale = new Vector3(1.12f, 1.12f, 1f);
+            var placements = new[] { (Id: "shelf-bottle", Anchored: new Vector2(131.700317f, -220.019135f)),
+                (Id: "trunk-lid", Anchored: new Vector2(122.231667f, -234.832535f)) };
+            var props = new List<(AmbientMotion Motion, RectTransform Rect, Vector2 Anchored, float Strength)>();
+            foreach (var placement in placements)
+            {
+                var actor = table.AmbientActivity.Props.Single(candidate => candidate.Id == placement.Id);
+                var rect = Prop(placement.Id);
+                rect.SetParent(frame, false);
+                rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(.5f, 0f);
+                rect.anchoredPosition = placement.Anchored;
+                props.Add((actor.Motion.Create(rect), rect, placement.Anchored, actor.Strength * table.AmbientActivity.DisturbanceStrength));
+            }
+            // A local position written near the bottle's rest often reads back differently once its rect transform updates.
+            var bottle = props[0].Rect;
+            Vector3 restLocal = bottle.localPosition;
+            int rederived = 0;
+            for (int i = 1; i <= 100; ++i)
+            {
+                bottle.localPosition = restLocal + new Vector3(i * .0137f, i * .0291f, 0f);
+                Vector3 written = bottle.localPosition;
+                bottle.ForceUpdateRectTransforms();
+                if (!bottle.localPosition.Equals(written)) ++rederived;
+            }
+            bottle.anchoredPosition = props[0].Anchored;
+            Assert.That(rederived, Is.GreaterThan(0), "The layout update re-derives local positions with rounding.");
+            var drift = new List<string>();
+            double time = 0;
+            for (int round = 0; round < 3; ++round)
+            {
+                foreach (var prop in props) prop.Motion.Strike(time, prop.Strength);
+                for (double end = time + 5; time < end; time += Step)
+                    foreach (var prop in props)
+                    {
+                        prop.Motion.Apply(time);
+                        // The canvas updates every prop's rect transform each frame after the motion writes it.
+                        prop.Rect.ForceUpdateRectTransforms();
+                    }
+                foreach (var prop in props)
+                {
+                    Assert.That(prop.Motion.IsMoving || prop.Motion.IsOffset, Is.False, prop.Rect.name);
+                    float distance = Vector2.Distance(prop.Rect.anchoredPosition, prop.Anchored);
+                    float angle = Quaternion.Angle(prop.Rect.localRotation, Quaternion.identity);
+                    if (distance >= .0001f || angle >= .0001f)
+                        drift.Add($"round {round} {prop.Rect.name} {(prop.Rect.anchoredPosition - prop.Anchored).ToString("F4")} {angle:F4} deg");
+                }
+            }
+            Assert.That(drift, Is.Empty, "Every strike returns the props exactly to their anchored rest pose.");
+        }
+
+        [Test]
+        public void PropsReturnToTheirAnchoredRestPoseWhenTheirFrameResizesMidMotion()
+        {
+            // Like the merchant props: anchored at the top-left corner of a frame that the view resizes to the screen.
+            var frame = (RectTransform)Track(new GameObject("Frame", typeof(RectTransform))).transform;
+            frame.sizeDelta = new Vector2(540f, 960f);
+            var wobbled = Prop("Bottle");
+            var thumped = Prop("Lid");
+            var rest = new Dictionary<RectTransform, Vector2>
+            {
+                [wobbled] = new Vector2(200f, -500f), [thumped] = new Vector2(320f, -700f),
+            };
+            foreach (var prop in rest)
+            {
+                prop.Key.SetParent(frame, false);
+                prop.Key.anchorMin = prop.Key.anchorMax = new Vector2(0f, 1f);
+                prop.Key.pivot = new Vector2(.5f, 0f);
+                prop.Key.anchoredPosition = prop.Value;
+            }
+            var motions = new[]
+            {
+                Track(ScriptableObject.CreateInstance<AmbientWobbleMotionAsset>()).Create(wobbled),
+                Track(ScriptableObject.CreateInstance<AmbientThumpMotionAsset>()).Create(thumped),
+            };
+            foreach (var motion in motions) motion.Strike(.1, 1.5f);
+            bool resized = false;
+            for (double time = 0; time < 5; time += Step)
+            {
+                if (!resized && time >= .2)
+                {
+                    Assert.That(motions.All(motion => motion.IsOffset), Is.True, "Both props are mid-motion when the frame resizes.");
+                    Vector3 before = wobbled.localPosition;
+                    frame.sizeDelta = new Vector2(443f, 900f);
+                    foreach (var rect in frame.GetComponentsInChildren<RectTransform>(true)) rect.ForceUpdateRectTransforms();
+                    Assert.That(Vector3.Distance(wobbled.localPosition - before, new Vector3(48.5f, -30f, 0f)), Is.LessThan(.0001f),
+                        "The resize moves the props' local positions with their corner anchor.");
+                    resized = true;
+                }
+                foreach (var motion in motions) motion.Apply(time);
+            }
+            Assert.That(resized, Is.True);
+            foreach (var motion in motions)
+            {
+                var prop = (RectTransform)motion.Target;
+                Assert.That(motion.IsMoving || motion.IsOffset, Is.False, prop.name);
+                Assert.That(Vector2.Distance(prop.anchoredPosition, rest[prop]), Is.LessThan(.0001f),
+                    prop.name + " returns to its anchored rest position, not one displaced by the resize: " + prop.anchoredPosition.ToString("F4"));
+                Assert.That(prop.anchoredPosition3D.z, Is.EqualTo(0f).Within(.0001f), prop.name);
+                Assert.That(Quaternion.Angle(prop.localRotation, Quaternion.identity), Is.LessThan(.0001f), prop.name);
+            }
         }
 
         [Test]
@@ -367,11 +549,12 @@ namespace Dice.Tests
             float eventsPerSecond = 0f;
             foreach (var actor in activity.Props)
             {
-                // No single prop is busy, but together something moves every several seconds.
-                Assert.That(actor.IdleInterval.Min, Is.GreaterThanOrEqualTo(15f), actor.Id);
+                // Each prop idles every 8 to 20 seconds, so together something moves every few seconds.
+                Assert.That(actor.IdleInterval.Min, Is.GreaterThanOrEqualTo(8f), actor.Id);
+                Assert.That(actor.IdleInterval.Max, Is.LessThanOrEqualTo(20f), actor.Id);
                 eventsPerSecond += 2f / (actor.IdleInterval.Min + actor.IdleInterval.Max);
             }
-            Assert.That(1f / eventsPerSecond, Is.InRange(3f, 8f), "Mean seconds between idle prop events.");
+            Assert.That(1f / eventsPerSecond, Is.InRange(2f, 4f), "Mean seconds between idle prop events.");
             foreach (var (id, name) in PropActors)
             {
                 var actor = activity.Props.Single(candidate => candidate.Id == id);
@@ -388,13 +571,20 @@ namespace Dice.Tests
                 else if (name == "TrunkLid") Assert.That(actor.Motion, Is.InstanceOf<AmbientThumpMotionAsset>(), "The lid thumps.");
                 else Assert.That(actor.Motion, Is.InstanceOf<AmbientSwingMotionAsset>(), name + " swings from its ring.");
 
-                // Idle jolts stay near the cut's suggested motion; a disturbance reads clearly on a phone.
+                // Idle swings and rocks read clearly at 7 to 10 degrees and the lid visibly hops;
+                // a disturbance still hits harder than any idle motion.
                 bool lift = name == "TrunkLid";
                 float suggested = lift ? cut.SuggestedLift * 960f / 1672f : cut.SuggestedDegrees;
+                float idleLow = PeakResponse(actor.Motion, actor.Strength * actor.IdleStrength.Min, lift);
                 float idle = PeakResponse(actor.Motion, actor.Strength * actor.IdleStrength.Max, lift);
                 float disturbance = PeakResponse(actor.Motion, actor.Strength * activity.DisturbanceStrength, lift);
-                Assert.That(idle / suggested, Is.InRange(.5f, 1.1f), name + " idle peak " + idle);
-                Assert.That(disturbance / suggested, Is.GreaterThanOrEqualTo(2.5f), name + " disturbance peak " + disturbance);
+                if (lift) Assert.That(idleLow / suggested, Is.GreaterThanOrEqualTo(2f), name + " idle hop " + idleLow);
+                else
+                {
+                    Assert.That(idleLow, Is.GreaterThanOrEqualTo(7f), name + " idle peak " + idleLow);
+                    Assert.That(idle, Is.LessThanOrEqualTo(10.5f), name + " idle peak " + idle);
+                }
+                Assert.That(disturbance / idle, Is.GreaterThanOrEqualTo(1.3f), name + " disturbance peak " + disturbance);
             }
         }
 
