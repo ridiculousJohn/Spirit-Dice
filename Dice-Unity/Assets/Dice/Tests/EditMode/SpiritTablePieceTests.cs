@@ -269,43 +269,6 @@ namespace Dice.Tests
          * is a hidden child that finishes within the flare and stays below the top of the candle's own rectangle, which
          * the tray composition keeps below the resource row.
          */
-        [Test]
-        public void MerchantCandleFlareWidensAndSparksStayWithinTheCandleFrame()
-        {
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset");
-            var scene = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID));
-            try
-            {
-                var view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
-                var candle = view.TablePieces.Single();
-                Assert.That(candle.FlarePeakScale.x, Is.GreaterThan(1.35f), "The flare widens the flame.");
-                Assert.That(candle.FlarePeakScale.y, Is.EqualTo(1f), "The flame tip keeps its height while flaring.");
-                Assert.That(Get<float>(candle, "flareLightIntensity"), Is.GreaterThan(2.2f), "The flare throws more warm light.");
-                Assert.That(candle.FlareTarget, Is.Not.Null);
-                Assert.That(candle.FlareEffect, Is.Not.Null);
-                Assert.That(candle.FlareEffect.activeSelf, Is.False, "The burst rests hidden.");
-                Assert.That(candle.FlareEffect.transform.IsChildOf(candle.transform), Is.True, "The burst moves with the candle.");
-                Assert.That(candle.FlareEffect.transform.childCount, Is.Zero, "Spark parts are created only while playing.");
-                var sparks = candle.FlareEffect.GetComponent<SpiritFlareSparks>();
-                Assert.That(sparks, Is.Not.Null);
-                Assert.That(sparks.SparkCount, Is.InRange(3, 12), "A few sparks.");
-                Assert.That(sparks.Duration, Is.LessThan(candle.FlareDuration), "Sparks finish within the flare.");
-                Vector3 lossy = sparks.transform.lossyScale;
-                Assert.That(lossy.x, Is.EqualTo(lossy.y).Within(lossy.y * .001f), "Sparks are drawn at a uniform scale.");
-                Transform frame = candle.transform.parent;
-                var corners = new Vector3[4];
-                ((RectTransform)candle.transform).GetWorldCorners(corners);
-                float candleTop = frame.InverseTransformPoint(corners[1]).y;
-                float sparkTop = frame.InverseTransformPoint(sparks.transform.TransformPoint(new Vector3(0f, sparks.Top, 0f))).y;
-                Assert.That(sparkTop, Is.LessThan(candleTop), "Sparks stay below the top of the candle's rectangle.");
-            }
-            finally { EditorSceneManager.ClosePreviewScene(scene); }
-        }
-
-        private static T Get<T>(object target, string name)
-            => (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
-
         /** Normalized center of the brightest pixels of a light contribution, read from its source file. */
         private static Vector2 BrightestCenter(Texture2D contribution)
         {

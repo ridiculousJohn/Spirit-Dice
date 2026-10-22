@@ -784,8 +784,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritFlareSparks
   sparkCount: 10
   sparkSize: 8
-  sparkReach: {x: 40, y: 11.5}
-  sparkLifetime: 0.6
+  sparkReach: {x: 40, y: 11}
+  sparkLifetime: 0.56
   sparkStagger: 0.12
   sparkColor: {r: 1, g: 0.96, b: 0.82, a: 1}
   glowSize: {x: 80, y: 30}
