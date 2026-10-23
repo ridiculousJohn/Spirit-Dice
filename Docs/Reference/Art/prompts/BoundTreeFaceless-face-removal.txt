@@ -1,0 +1,12 @@
+Use case: edit: precise-object-removal, texture continuation
+Asset type: background layer for a 2D game scene (painted digital illustration, close crop of the upper trunk of a huge black swamp tree at night)
+Primary request: Remove the monstrous face from the tree trunk so the trunk becomes plain, ordinary split bark with no face, as if the face had sunk back into the wood.
+Input images: Image 1: edit target
+What to remove (completely): the two glowing green eyes and their dark sockets, the heavy bark brows above them, the nose ridge between them, the cheekbones, and the long gaping split mouth with its jagged bark teeth, its black opening and the green glow inside it.
+Reconstruction: continue the surrounding bark of the same tree across the whole face: long vertical bark plates and ridges running down the trunk, with narrow dark splits and cracks between plates, the same dark grey-brown colour and the same cool dim moonlight from the upper right; the trunk's outline, width and silhouette stay exactly the same. Where the mouth was, the bark closes into ordinary plates with at most a thin dark crack.
+Keep unchanged: the trunk outline and silhouette, the branches, the bark above and below the face, the long pale hanging moss strands on the right side of the trunk, the night sky, clouds and background trees on the right, all colors and the cool dim night lighting.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Avoid: any eyes, face, facial features, mouth, teeth or skull shapes in the bark; any green or yellow glow or light; a hollow or hole; new objects; brightening; text or watermark
+
+Input: Lanczos 1024 x 1536 upscale of Art/BoundTree/BoundTreeOriginal.png box (290, 100)-(710, 730) (working file Docs/work/bound-tree-layers/targets/face-target.png). Donor: Docs/Reference/Art/BoundTreeFacelessDonor.png (the first of two candidates). Transferred by Tools/Presentation/cut-bound-tree-layers.py into Art/BoundTree/BoundTreeFaceless.png within 12 px of the face polygon declared in Docs/Reference/Art/BoundTreeLayers.json; that region with a 2 px soft edge is Art/BoundTree/BoundTreeFaceMask.png.

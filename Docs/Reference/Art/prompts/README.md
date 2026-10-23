@@ -27,3 +27,12 @@ Prompts committed elsewhere:
 - [../HauntedMerchantConceptPrompt.txt](../HauntedMerchantConceptPrompt.txt) -> MerchantOriginal.png, the original scene concept
 - [../HauntedMerchantOriginalOverhangPrompts.md](../HauntedMerchantOriginalOverhangPrompts.md) -> background fill behind the canopy overhang (Docs/Reference/Art/HauntedMerchantOverhangFill.png)
 - [../HauntedMerchantAmbient.md](../HauntedMerchantAmbient.md), "Hanging cup prompt" -> HangingCup.png
+
+## Bound Tree
+
+Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/BoundTree`. The layers are described in [../BoundTreeLayers.md](../BoundTreeLayers.md).
+
+- [BoundTreeNymph-extraction.txt](BoundTreeNymph-extraction.txt) -> Docs/Reference/Art/BoundTreeNymphDonor.png, registered and colour-matched into BoundTreeNymph.png
+- [BoundTreeBackground-nymph-removal.txt](BoundTreeBackground-nymph-removal.txt) -> Docs/Reference/Art/BoundTreeBackgroundDonor.png, transferred into BoundTreeBackground.png
+- [BoundTreeFaceless-face-removal.txt](BoundTreeFaceless-face-removal.txt) -> Docs/Reference/Art/BoundTreeFacelessDonor.png, transferred into BoundTreeFaceless.png
+- [../BoundTreeConceptPrompt.txt](../BoundTreeConceptPrompt.txt) -> BoundTreeOriginal.png, the scene concept
