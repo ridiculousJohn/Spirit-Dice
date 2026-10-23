@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a4a5f344575f100d9cd1acd699ced5, type: 3}
+  m_Name: BoundTreeSceneLighting
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SceneLightingAsset
+  Shader: {fileID: 4800000, guid: 56e01f30524756ed6f7d40b98a2655af, type: 3}
+  BaseTexture: {fileID: 2800000, guid: 2ad73856000f4659bcdae0e525434fa7, type: 3}
+  Lights:
+  - Contribution: {fileID: 2800000, guid: fb1f2175d4ab49aa88f6f639e6e2eec8, type: 3}
+    ResponseMap: {fileID: 2800000, guid: 5e217c7c927a4d5090e026714d1f5b37, type: 3}
+    UvOffset: {x: 0, y: 0}
+    ModulateByBaseColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    Intensity: 1
+    DistanceFalloff: 0.8
+    SourceResponse: 0.5
+    FlickerAmount: 0.12
+    FlickerSpeed: 0.35
+    Seed: 4127
+    ContributionIncludesBase: 1
+    ConstrainAmbientToReference: 0
+    ReceiverPosition: {x: 0, y: 3, z: 2}
+    ReceiverColor: {r: 1, g: 0.64, b: 0.25, a: 1}
+    ReceiverIntensity: 0
+    ReceiverRange: 10
+  - Contribution: {fileID: 2800000, guid: b88cc20bdcba4bdca7e3f2c7d45cf54b, type: 3}
+    ResponseMap: {fileID: 2800000, guid: 5e217c7c927a4d5090e026714d1f5b37, type: 3}
+    UvOffset: {x: 0, y: 0}
+    ModulateByBaseColor: 0
+    Tint: {r: 1, g: 1, b: 1, a: 1}
+    Intensity: 1
+    DistanceFalloff: 0.8
+    SourceResponse: 0.5
+    FlickerAmount: 0
+    FlickerSpeed: 0
+    Seed: 0
+    ContributionIncludesBase: 1
+    ConstrainAmbientToReference: 0
+    ReceiverPosition: {x: 0, y: 3, z: 2}
+    ReceiverColor: {r: 1, g: 0.64, b: 0.25, a: 1}
+    ReceiverIntensity: 0
+    ReceiverRange: 10
+  ReceiverAmbient: {r: 0.22, g: 0.25, b: 0.32, a: 1}
+  ReceiverKeyColor: {r: 0.45, g: 0.5, b: 0.62, a: 1}
+  ReceiverKeyDirection: {x: -0.35, y: 0.8, z: -0.45}

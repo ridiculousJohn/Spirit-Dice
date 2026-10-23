@@ -1,6 +1,6 @@
 # Bound Tree layers
 
-Reference for the tree nymph encounter's scene art: what each texture and mask is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/BoundTree` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts; lighting splits, moss, mist and creature layers are not built yet.
+Reference for the tree nymph encounter's scene art: what each texture and mask is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/BoundTree` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts and their lighting split (see Relighting); moss, mist and creature layers are not built yet.
 
 ## Textures
 
@@ -44,3 +44,98 @@ python Tools/Presentation/cut-bound-tree-layers.py --write-assets  # also replac
 ```
 
 The output folder holds the textures under `layers/`, review images under `review/` (plate, concept beside nymph over plate, nymph on grey and checker, matte, composite error, the nymph moved 4 px left and right, 6 px up and scaled 1.03 about her seat over the plate, faceless trunk, face over faceless at full and half opacity, and a difference image for each transfer with the declared edge in cyan) and `report.json` with the registrations and checks. To change a region, edit its polygon or distances in BoundTreeLayers.json, rebuild into Docs/work and review before writing assets. A replacement donor must be an edit of the same target box at 1024 x 1536 (RGBA with a transparent background for the nymph).
+
+## Relighting
+
+The textures in `Relight` separate the painted lighting into a moonlit ambient base and a reference lit by a strong flare of the spirit's glow, with a response map, following "Relighting sources" in [HauntedMerchantHostLayers.md](HauntedMerchantHostLayers.md). The moon is part of the ambient base. All are 941 x 1672 in the concept frame and register like the layers above.
+
+| Texture | Format | Content |
+| --- | --- | --- |
+| BoundTreeAmbientUnlit.png | RGB | BoundTreeBackground.png under moonlit ambient only: eyes and mouth dark, no glow light on the bark. Changed only within 60 px of the glow source (full weight within 30 px); byte-identical to BoundTreeBackground.png elsewhere. No channel is above BoundTreeBackground.png. |
+| BoundTreeGlowLit.png | RGB | The ambient base plus the flaring glow: the eyes and mouth burning yellow-green, the light on the face, trunk, moss and hanging strands falling off with distance and faintly reaching the roots, leaves and ground around the nymph. Every channel is at least the unlit value. Sky, moon and distant swamp are unchanged. |
+| BoundTreeFacelessUnlit.png | RGB | BoundTreeFaceless.png under ambient only (the faceless trunk has no glow source; victory draws it unlit). Equal to BoundTreeAmbientUnlit.png wherever BoundTreeFaceMask.png alpha is below 1. |
+| BoundTreeNymphUnlit.png | RGBA | The nymph under ambient only. The concept's glow does not reach her, so it equals BoundTreeNymph.png. |
+| BoundTreeNymphGlowLit.png | RGBA | The nymph with the flare's faint yellow-green light from the upper right (head, crown, hands, knees, shins, right shoulder and dress, feet). Alpha equals BoundTreeNymph.png; every channel is at least the unlit value. |
+| BoundTreeGlowResponse.png | RGB, linear data | R: normalized distance from the glow. G: the glow source mask (eyes and split mouth). B: 0. |
+
+Colour textures import like BoundTreeOriginal.png.meta, the nymph pair like BoundTreeNymph.png.meta and the response map like HauntedMerchant/MerchantLanternResponse.png.meta (sRGB off); all bilinear, clamped, uncompressed, without mipmaps or non-power-of-two scaling. Content/Presentation/BoundTree/BoundTreeSceneLighting.asset uses them (see "Scene lighting and preview").
+
+### Conventions
+
+- Lighting pairs follow SceneLighting.shader in linear light: glow 1 = unlit + max(glowlit - unlit, 0) * tint * response scale; glow 0 = unlit. glowlit >= unlit in every channel of every pixel, so glow 1 reproduces the glow-lit texture.
+- Two scene lights share the ambient base BoundTreeAmbientUnlit.png. Light 0, the painted glow: reference BoundTreeBackground.png (the concept's own resting glow; every channel is at least the unlit value), so light 0 at 1 reproduces the concept exactly; the idle pulse varies it around 1. Light 1, the flare: reference BoundTreeGlowLit.png, 0 at rest and raised for reactions. Victory takes both to 0. The nymph has no painted glow, so only light 1 reaches her (BoundTreeNymphUnlit.png is the base, BoundTreeNymphGlowLit.png the light 1 reference). The faceless trunk draws BoundTreeFacelessUnlit.png. Both lights use BoundTreeGlowResponse.png.
+- A single light cannot serve both: the flare paints the eyes as glowing discs and fills the mouth's opening with light where the concept has pinpoint pupils and a dark opening with lit rims, so no fraction of the flare reproduces the concept (best least-squares fraction 0.118; the build report lists the fit per region).
+- Response: R = min(1, hypot((x - 500) / 620, (y - 420) / 860)) in continuous concept pixels (pixel centres at +0.5), the convention of MerchantLanternResponse.png; it is a 2D image-plane distance. G is 1 inside the eye ellipses (centres (441, 244) and (568, 274), radii 17 x 13 and 14 x 10) and the mouth polygon (`CRACK` in the script), falling to 0 over 6 px outside (smoothstep).
+
+### Method
+
+This is the merchant method: each donor is generated from an edit target and registered to the concept frame by an affine fit of locally contrast-normalized, high-passed luminance plus a smooth residual displacement (`register` in author-merchant-relight.py, imported by the script). The illumination change is a linear-light ratio map, ratio = G(w * donor) / G(w * source) per channel with a 3 px Gaussian, with the merchant's highlight cap (1.15 times the donor's local maximum, 9 px window) and saturation cap (1.1 times, floor 0.08). Relit colour is source * ratio, so painted detail is the source's own.
+
+| Donor | Edit target | Transferred into |
+| --- | --- | --- |
+| Docs/Reference/Art/BoundTreeRelightUnlitDonor.png | BoundTreeBackground.png box (290, 100)-(710, 730) | BoundTreeAmbientUnlit.png, BoundTreeFacelessUnlit.png, BoundTreeNymphUnlit.png |
+| Docs/Reference/Art/BoundTreeRelightGlowDonor.png | BoundTreeAmbientUnlit.png box (40, 60)-(800, 1200), with the same box of BoundTreeBackground.png as a reference image for where the glow is | BoundTreeGlowLit.png |
+| Docs/Reference/Art/BoundTreeRelightNymphGlowDonor.png | BoundTreeNymph.png over BoundTreeGlowLit.png, box (96, 576)-(416, 1056) | BoundTreeNymphGlowLit.png |
+
+Each target is a Lanczos 1024 x 1536 upscale of its box. Registration excludes pixels within 10 px of the glow source on the plate (their look changes most) and uses her interior (alpha above 250) for the nymph.
+
+- Drift: a generated edit also shifts the tone of what it should leave alone. Each ratio is divided by the donor's drift, the normalized Gaussian average (40 px, falling back to 160 px) of log ratio over pixels the light cannot change: the unlit donor's box beyond 80 px of the source; for the glow donor the distant swamp and sky left and right of the trunk (boxes (48, 300)-(140, 560), (700, 380)-(792, 700) and (700, 68)-(792, 300)); for the nymph donor the glow-lit plate 3 to 40 px outside her alpha, which her target already shows lit.
+- Unlit: the ratio is at most 1 (removing light only darkens) and fades to 1 between 30 and 60 px from the source; beyond that the plate is copied byte for byte.
+- Faceless: the unlit field (ratio and caps) is harmonically filled in log space over the face transfer region (BoundTreeFaceMask.png alpha 1) from the plate around it and applied to BoundTreeFaceless.png; elsewhere it is the plate's field, so the faceless output equals the unlit plate there.
+- Nymph unlit: the unlit field, which is the identity over her.
+- Glow-lit: the ratio is at least 1 (the glow only adds light) and kept only where its gain has the glow's colour (G / R gain, blurred 4 px, weighted by smoothstep from 0.3 to 0.6; this drops the donor's re-painting of dark roots). It is weighted by 1 - smoothstep((R - 0.55) / 0.45), so the light reaches zero at R = 1, and by a receiver weight that is 0 on the sky, moon and distant swamp: 1 - smoothstep((log2(B / R) - 0.3) / 1.0) on the unlit plate in linear light blurred 2 px (tree, moss, leaves and ground have B / R about 0.3 to 0.8, the distant background about 3), times 0 inside the moon circle at (804, 184), radius 72. Beyond the donor's box the field continues blurred (16 px) and fades to the identity over 60 px. Inside the source mask the registered donor's drift-corrected colour is a floor, so the eyes and mouth emit. Glow-lit = max(relit, unlit) per channel.
+- Nymph glow-lit: the same on her alpha, with her own donor and drift and no receiver weight.
+
+### Rebuilding the relighting
+
+`Tools/Presentation/author-bound-tree-relight.py` (Python 3.10+ with numpy, Pillow and scipy; on this machine `Docs/work/merchant-table-clear/.venv/Scripts/python.exe`) runs from the repository root:
+
+```
+python Tools/Presentation/author-bound-tree-relight.py targets --from <build>/textures  # edit targets under Docs/work/bound-tree-relight/targets
+python Tools/Presentation/author-bound-tree-relight.py build                           # fresh Docs/work/bound-tree-relight-* folder
+python Tools/Presentation/author-bound-tree-relight.py build --write-assets            # also writes Art/BoundTree/Relight
+```
+
+`targets` writes the unlit target and, from the textures in `--from` (default `Art/BoundTree/Relight`), the glow target with its reference image and the nymph target. `build` writes the textures under `textures/`, review images under `review/` (concept, unlit, glow-lit and resting composite, full frame and the face and nymph at 2x; intensity strips at 0, k, 1 and 1.5; the nymph pairs over their plates; the faceless unlit beside the unlit plate; the glow contribution; R and G) and `report.json` (registrations, drift, verification and the resting fit). `--donor-unlit`, `--donor-glow` and `--donor-nymph-glow` substitute a candidate donor; `--save-registered` also writes the registered donors. `--write-assets` keeps existing .meta files and writes a .meta with a fresh GUID for a texture that has none. The prompts are in [prompts/](prompts/README.md); the other candidates and the edit targets are working files under `Docs/work/bound-tree-relight`.
+
+## Scene lighting and preview
+
+`Content/Presentation/BoundTree/BoundTreeSceneLighting.asset` (under `Dice-Unity/Assets/Dice`) lights the scene by the conventions above: shader `Dice/Scene Lighting`, Base Texture `Relight/BoundTreeAmbientUnlit.png`, and two lights sharing `Relight/BoundTreeGlowResponse.png`.
+
+| Setting | Light 0, painted glow | Light 1, flare |
+| --- | --- | --- |
+| Contribution | BoundTreeBackground.png | Relight/BoundTreeGlowLit.png |
+| Response Map | Relight/BoundTreeGlowResponse.png | Relight/BoundTreeGlowResponse.png |
+| Contribution Includes Base | on | on |
+| Constrain Ambient To Reference, Modulate By Base Color | off | off |
+| Tint, Intensity, UV Offset | white, 1, (0, 0) | white, 1, (0, 0) |
+| Distance Falloff, Source Response | 0.8, 0.5 | 0.8, 0.5 |
+| Flicker Amount, Speed, Seed | 0.12, 0.35, 4127 | 0, 0, 0 (no flicker) |
+| Receiver Intensity | 0 | 0 |
+
+- Reproduction: at a sampled intensity of exactly 1 the response scale is 1 for every pixel whatever Distance Falloff and Source Response are, so each light adds max(reference - base, 0) and reproduces its reference: light 0 alone gives BoundTreeBackground.png, light 1 alone BoundTreeGlowLit.png, and both together add the flare to the resting glow. Below 1, Distance Falloff 0.8 dims bark farther from the glow (response R) sooner than bark near it, and Source Response 0.5 keeps the eyes and mouth (response G) burning longer, as for the merchant's lantern.
+- Pulse: light 0's idle pulse is the shared flicker noise, intensity = multiplier * (1 + 0.12 * noise). Its main band changes about every 4 s at speed 0.35, so it swells slowly between about 0.90 and 1.11 and passes through exactly 1. Light 1 has no flicker; its level is exactly its multiplier.
+- Receivers: no flat receivers or computed lights use these lights; their receiver fields, Receiver Ambient and Receiver Key are the class defaults with Receiver Intensity 0.
+
+`Assets/Scenes/BoundTreePreview.unity` is the isolated art preview; it is not registered in the campaign, Addressables or build scenes. It draws, in order:
+
+| Object | Content |
+| --- | --- |
+| Preview Camera | Orthographic size 480, solid dark background, UI layer only. |
+| Bound Tree Preview Canvas | Screen Space - Camera on the preview camera; Canvas Scaler 540 x 960, match 0.5. No raycaster. |
+| Bound Tree Plate | RawImage `Relight/BoundTreeAmbientUnlit.png` filling the 540 x 960 authoring frame, with a SceneLightingPresentation: Lighting Asset BoundTreeSceneLighting.asset, Background this image, Intensity Multipliers [1, 0], Lit Images [Nymph]. It draws the ambient base plus lights 0 and 1. |
+| Bound Tree Plate/Faceless Trunk | RawImage with `Content/Presentation/BoundTree/BoundTreeFaceless.mat` (Source Masked Image: `_SourceTex` Relight/BoundTreeFacelessUnlit.png, `_LayerMask` BoundTreeFaceMask.png, `_InvertMask` 0), unlit, colour alpha 0. |
+| Bound Tree Plate/Nymph | RawImage with `Content/Presentation/BoundTree/BoundTreeNymphLit.mat` (Scene Lit Image) and a SceneLitImage on BoundTreeSceneLighting.asset: Base Texture Relight/BoundTreeNymphUnlit.png, light 1 Reference Relight/BoundTreeNymphGlowLit.png with Relight/BoundTreeGlowResponse.png, no light 0. Her alpha is the base texture's. |
+
+Both children stretch over the plate's rect, so every layer registers to the concept frame like the plate. No image is a raycast target.
+
+To drive it, enter Play mode and select Bound Tree Plate: Scene Lighting Presentation > Intensity Multipliers element 0 is the glow and element 1 the flare (applied every frame; values above 1 brighten further). Faceless Trunk > Raw Image > Color alpha fades the face into the bark. The states of the art plan:
+
+| State | Light 0 | Light 1 | Faceless alpha |
+| --- | --- | --- | --- |
+| Rest | 1 (pulsing) | 0 | 0 |
+| Flare (reaction, defeat) | 1 | raised, 1 matches BoundTreeGlowLit.png | 0 |
+| Glow off | 0 | 0 | 0 |
+| Victory | 0 | 0 | 1 |
+
+The faceless trunk draws unlit, so it matches the bark around it only with both lights at 0; with a light above 0 the face region stays at ambient while the surrounding bark glows. At rest, when the pulse passes 1, the rendered plate with the nymph equals BoundTreeBackground.png with BoundTreeNymph.png over it.

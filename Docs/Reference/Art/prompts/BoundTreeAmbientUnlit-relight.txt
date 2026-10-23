@@ -1,0 +1,13 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game background (painted digital illustration, close crop of the upper trunk of a huge black swamp tree at night with a monstrous face in its bark); the face's glow is added back in-engine as a separate light
+Primary request: Extinguish the spirit's green glow completely, as if the light inside the tree had gone out. The two eyes become dark, unlit hollows: no glowing irises, no bright pupils, no green or yellow light in or around them. The long split mouth becomes a dark, unlit black opening with no glow inside. Remove all the green-yellow light that the glow casts on the jagged bark teeth and rims of the mouth, the brows, the nose ridge, the cheekbones, the bark plates and the moss around the face. Every surface is then lit only by the cool, dim moonlight from the upper right, exactly like the rest of the trunk.
+Input images: Image 1: edit target
+Scene/backdrop: keep the trunk, branches, hanging moss, night sky and background trees exactly as they are
+Subject: the same face in the bark: the same eye sockets, heavy bark brows, nose ridge, cheekbones and long gaping split mouth with its jagged bark teeth, in exactly the same shapes and positions
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: cool, dim blue-grey moonlight from the upper right only; no emission, no glow, no green or yellow light anywhere
+Constraints: change only the illumination. Keep every bark plate, crack, splinter, moss strand and painted detail in place. Keep the face: do not remove or flatten it.
+Avoid: removing or reshaping the face, closing the mouth, adding eyes or pupils, adding light sources, brightening, text or watermark
+
+Input: Docs/work/bound-tree-relight/targets/target-plate-unlit.png (written by Tools/Presentation/author-bound-tree-relight.py targets): Lanczos 1024 x 1536 upscale of Art/BoundTree/BoundTreeBackground.png box (290, 100)-(710, 730). Donor: Docs/Reference/Art/BoundTreeRelightUnlitDonor.png (the first of two candidates; the second, Docs/work/bound-tree-relight/donors/plate-unlit-2.png, drifted further toward blue). Transferred by author-bound-tree-relight.py build into Art/BoundTree/Relight/BoundTreeAmbientUnlit.png within 60 px of the glow source, and through the same field into BoundTreeFacelessUnlit.png and BoundTreeNymphUnlit.png.

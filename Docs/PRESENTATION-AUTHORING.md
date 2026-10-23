@@ -64,6 +64,10 @@ Prepare background pixels behind every moving object, including the area exposed
 
 The loose cloth is animated in this prototype; the reusable cup animation is retained separately. Gameplay haunting reactions and the movable protective candle remain separate systems to implement after the encounter composition is approved. Source notes are recorded in [hanging cup artwork](Reference/Art/HauntedMerchantAmbient.md) and [registered canopy layers](Reference/Art/HauntedMerchantRegisteredCanopy.md).
 
+### Bound tree preview
+
+Open `Assets/Scenes/BoundTreePreview.unity` and enter Play mode to test the tree nymph encounter's lighting. Like the merchant preview it is isolated and not registered in the campaign, Addressables or build scenes, and no layer intercepts pointer input. In the 540 x 960 authoring frame it draws the lit background plate (Bound Tree Plate: SceneLightingPresentation with `Content/Presentation/BoundTree/BoundTreeSceneLighting.asset`, ambient base plus light 0, the painted glow, and light 1, the flare), the unlit faceless trunk through the face mask (Faceless Trunk, colour alpha 0 at rest) and the nymph as a lit layer that receives only light 1 (Nymph, SceneLitImage). Drive them in the Inspector: the plate's Intensity Multipliers (element 0 glow, element 1 flare; rest is 1 and 0) and the Faceless Trunk RawImage's colour alpha (1 for victory, with both lights at 0). Settings, layers and states are under "Scene lighting and preview" in [Bound Tree layers](Reference/Art/BoundTreeLayers.md).
+
 ## Lit layers
 
 A lit layer is a foreground image lit per pixel by the same sampled scene lights as the background, instead of the single uniform receiver tint. It draws with `Shared/SceneLitImage.shader` (`Dice/Scene Lit Image`), which keeps `SourceMaskedImage` sampling (`_SourceTex` at the image's texture coordinates, `_LayerMask`, `_InvertMask`, UV rectangles and portrait deformation meshes) and adds per-light inputs. A `SceneLitLayer` description configures one layer:

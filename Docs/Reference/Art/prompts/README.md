@@ -35,4 +35,7 @@ Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/BoundTree`. The l
 - [BoundTreeNymph-extraction.txt](BoundTreeNymph-extraction.txt) -> Docs/Reference/Art/BoundTreeNymphDonor.png, registered and colour-matched into BoundTreeNymph.png
 - [BoundTreeBackground-nymph-removal.txt](BoundTreeBackground-nymph-removal.txt) -> Docs/Reference/Art/BoundTreeBackgroundDonor.png, transferred into BoundTreeBackground.png
 - [BoundTreeFaceless-face-removal.txt](BoundTreeFaceless-face-removal.txt) -> Docs/Reference/Art/BoundTreeFacelessDonor.png, transferred into BoundTreeFaceless.png
+- [BoundTreeAmbientUnlit-relight.txt](BoundTreeAmbientUnlit-relight.txt) -> Docs/Reference/Art/BoundTreeRelightUnlitDonor.png, transferred into Relight/BoundTreeAmbientUnlit.png, Relight/BoundTreeFacelessUnlit.png and Relight/BoundTreeNymphUnlit.png
+- [BoundTreeGlowLit-relight.txt](BoundTreeGlowLit-relight.txt) -> Docs/Reference/Art/BoundTreeRelightGlowDonor.png, transferred into Relight/BoundTreeGlowLit.png
+- [BoundTreeNymphGlowLit-relight.txt](BoundTreeNymphGlowLit-relight.txt) -> Docs/Reference/Art/BoundTreeRelightNymphGlowDonor.png, transferred into Relight/BoundTreeNymphGlowLit.png
 - [../BoundTreeConceptPrompt.txt](../BoundTreeConceptPrompt.txt) -> BoundTreeOriginal.png, the scene concept

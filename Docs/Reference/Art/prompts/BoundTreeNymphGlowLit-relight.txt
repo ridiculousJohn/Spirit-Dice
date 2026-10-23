@@ -1,0 +1,13 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game character (painted digital illustration); the young woman is cut out and relit in-engine
+Primary request: The tree behind her is lit by a strong yellow-green glow that comes from a monstrous face high up in the trunk, far above and to the right of her (outside the top right of this image); the bark, moss, leaves and ground around her already show it. Add that same faint yellow-green light to the young woman, and change nothing else. It reaches her weakly from the upper right: a soft yellow-green sheen on the top of her head, her hair and leaf crown, the backs of her hands and her right forearm, the tops of her knees and shins, her right shoulder and the right side of her dress, and the tops of her feet. Surfaces facing away from it (the left side of her dress, her left arm, the undersides of her legs, the shadow under her knees) stay in the cool dim moonlight exactly as now. The light on her is no stronger than on the bark right behind her.
+Input images: Image 1: edit target
+Scene/backdrop: keep the tree, bark, moss, roots, leaves, ground and swamp exactly as they are, with their light unchanged
+Subject: the same young woman in exactly the same pose, hugging her knees with her face hidden in her hands, the same leaf crown, long dark hair, grey bark-coloured skin with dark vein markings, tattered pale grey dress, and the thin roots around her wrists and ankles
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: the existing cool moonlight plus a faint yellow-green glow from the upper right; subtle, not glowing, not neon
+Constraints: change only the illumination on her. Keep her identity, pose, every fold, tear, strand of hair, vein marking and painted detail in place.
+Avoid: changing her pose, face, hands, hair or clothing, making her glow, a strong or saturated green, light from below or the left, new light sources, text or watermark
+
+Input: Docs/work/bound-tree-relight/targets/target-nymph-glow.png (written by author-bound-tree-relight.py targets): Art/BoundTree/BoundTreeNymph.png over BoundTreeGlowLit.png, Lanczos 1024 x 1536 upscale of box (96, 576)-(416, 1056). Donor: Docs/Reference/Art/BoundTreeRelightNymphGlowDonor.png (the first of two candidates; the second, Docs/work/bound-tree-relight/donors/nymph-glow-2.png, lit her more weakly than the bark behind her). Transferred by author-bound-tree-relight.py build into Art/BoundTree/Relight/BoundTreeNymphGlowLit.png.
