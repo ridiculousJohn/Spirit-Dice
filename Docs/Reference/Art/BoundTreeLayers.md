@@ -125,9 +125,10 @@ python Tools/Presentation/author-bound-tree-relight.py build --write-assets     
 | Bound Tree Preview Canvas | Screen Space - Camera on the preview camera; Canvas Scaler 540 x 960, match 0.5. No raycaster. |
 | Bound Tree Plate | RawImage `Relight/BoundTreeAmbientUnlit.png` filling the 540 x 960 authoring frame, with a SceneLightingPresentation: Lighting Asset BoundTreeSceneLighting.asset, Background this image, Intensity Multipliers [1, 0], Lit Images [Nymph]. It draws the ambient base plus lights 0 and 1. |
 | Bound Tree Plate/Faceless Trunk | RawImage with `Content/Presentation/BoundTree/BoundTreeFaceless.mat` (Source Masked Image: `_SourceTex` Relight/BoundTreeFacelessUnlit.png, `_LayerMask` BoundTreeFaceMask.png, `_InvertMask` 0), unlit, colour alpha 0. |
-| Bound Tree Plate/Nymph | RawImage with `Content/Presentation/BoundTree/BoundTreeNymphLit.mat` (Scene Lit Image) and a SceneLitImage on BoundTreeSceneLighting.asset: Base Texture Relight/BoundTreeNymphUnlit.png, light 1 Reference Relight/BoundTreeNymphGlowLit.png with Relight/BoundTreeGlowResponse.png, no light 0. Her alpha is the base texture's. |
+| Bound Tree Plate/Nymph | SpiritPortraitImage (a RawImage) with `Content/Presentation/BoundTree/BoundTreeNymphLit.mat` (Scene Lit Image), mesh `NymphBreathMesh.asset`, and a SceneLitImage on BoundTreeSceneLighting.asset: Base Texture Relight/BoundTreeNymphUnlit.png, light 1 Reference Relight/BoundTreeNymphGlowLit.png with Relight/BoundTreeGlowResponse.png, no light 0. Her alpha is the base texture's. A native Animation component plays `NymphSob.anim` on loop (see Nymph motion). |
+| Bound Tree Plate/Nymph/Breath, Nymph/Flinch | SpiritPortraitDeformationChannel on the Nymph image, shape 0 (Breath) and shape 1 (Flinch), weight 0 at rest. |
 
-Both children stretch over the plate's rect, so every layer registers to the concept frame like the plate. No image is a raycast target.
+Faceless Trunk and Nymph stretch over the plate's rect, so every layer registers to the concept frame like the plate. No image is a raycast target.
 
 To drive it, enter Play mode and select Bound Tree Plate: Scene Lighting Presentation > Intensity Multipliers element 0 is the glow and element 1 the flare (applied every frame; values above 1 brighten further). Faceless Trunk > Raw Image > Color alpha fades the face into the bark. The states of the art plan:
 
@@ -139,3 +140,51 @@ To drive it, enter Play mode and select Bound Tree Plate: Scene Lighting Present
 | Victory | 0 | 0 | 1 |
 
 The faceless trunk draws unlit, so it matches the bark around it only with both lights at 0; with a light above 0 the face region stays at ambient while the surrounding bark glows. At rest, when the pulse passes 1, the rendered plate with the nymph equals BoundTreeBackground.png with BoundTreeNymph.png over it.
+
+## Nymph motion
+
+The nymph is one layer, so nothing on her moves independently: one smooth displacement field over the 941 x 1672 frame moves her whole figure and no seam can open. `Content/Presentation/BoundTree/NymphBreathMesh.asset` is a 96 x 168 grid (about 9.8 x 10 concept px per cell) with two shapes, Breath (shape 0) and Flinch (shape 1). `Tools/Presentation/author-bound-tree-presentation.py` generates it; its constants are at the top of the script. The rest pose (both weights 0) is the exhaled source registration, so the rest render equals the lit preview without motion.
+
+Both shapes share two envelopes:
+
+- Rows: full above concept row 735 (the shoulder line), a smooth fade to zero at row 870 (the top of the ankle bindings). Everything from row 870 down, the bindings, dress hem and feet, never moves, so the bindings stay joined to the roots on the plate.
+- Her region: full weight within 16 px outside her silhouette (alpha at or above 0.02, concept box (103, 635)-(377, 997)), falling to zero at 34 px. The inner distance exceeds a cell diagonal, so the grid's bilinear interpolation never reduces the motion of her own pixels; nothing beyond 34 px of her moves. The plate is reconstructed to full weight within 14 px of her, more than her largest displacement.
+
+Soft ellipses (centre, radii; full inside 0.6 of the radius, none beyond 1.5) shape the upper body: head with the hands at her face (288, 695) 62 x 62, shoulders and upper back hump (212, 735) 62 x 44, curve of the back (160, 790) 52 x 72.
+
+| Point (concept px) | Breath at full weight (right, up) | Flinch at full weight (right, up) |
+| --- | --- | --- |
+| Crown (270, 645) | 0, 4.0 | 4.0, -2.2 |
+| Face and hands (300, 715) | 0, 4.0 | 4.0, -2.5 |
+| Shoulder (205, 730) | -0.4, 5.0 | 4.0, 2.5 |
+| Upper back (160, 780) | -1.1, 3.0 | 3.0, -0.5 |
+| Knees (300, 805) | 0, 1.9 | 1.9, -0.5 |
+| Shins (320, 850) | 0, 0.2 | 0.2, -0.1 |
+| Ankle bindings, hem, toes | 0 | 0 |
+
+- Breath: the upper body lifts 4 px (LIFT), the shoulders 25% more (SHOULDER_SHARE, 5 px), and the back rounds up to 1.5 px outward to image left (ROUND). Largest strain on her pixels (Jacobian deviation) 0.07.
+- Flinch: the upper body draws 4 px toward the tree at image right (SHIFT) and 1 px down (DROP), the head tucks a further 1.5 px down (TUCK) and the shoulders hunch 3.5 px up (HUNCH), so the shoulders rise about 2.5 px while the head sinks about 2.5 px. Largest strain 0.13; with Breath also at full, largest displacement 8.4 px and strain 0.17. No sample folds.
+
+The script's report lists these values, the largest displacement on her pixels at or below row 870 (under 0.01 px, inside the one cell row that spans it) and the farthest moving vertex outside her silhouette.
+
+### Clips
+
+Both clips are legacy AnimationClips authored like `CanopyFlutter.anim`: one scalar curve each on a `SpiritPortraitDeformationChannel` weight, keys with flat tangents, so each segment eases in and out. Edit the keys in the Animation window with the Nymph selected.
+
+- `NymphSob.anim` (13.9 s, loop) drives `Breath`: three sobs, each of short catching inhales (a quick rise of about 0.25 s, then a small catch back), a longer shaky exhale that steps down with small reversals, and a pause at rest.
+
+| Sob | Starts | Inhale (time s: weight) | Exhale reaches rest | Pause until |
+| --- | --- | --- | --- | --- |
+| 1 | 0 | 0.30: 0.38, 0.44: 0.33, 0.70: 0.70, 0.83: 0.65, 1.10: 1.00, 1.32: 0.97 | 3.85 (via 0.74, 0.78, 0.48, 0.52, 0.24, 0.27) | 4.90 |
+| 2 | 4.90 | 5.22: 0.46, 5.37: 0.41, 5.64: 0.80, 5.82: 0.78 | 7.75 (via 0.55, 0.59, 0.30, 0.33) | 8.55 |
+| 3 | 8.55 | 8.80: 0.27, 8.92: 0.24, 9.20: 0.56, 9.31: 0.53, 9.62: 0.92, 9.84: 0.90 | 12.95 (via 0.70, 0.74, 0.50, 0.54, 0.31, 0.34, 0.14, 0.16) | 13.90 |
+
+- `NymphFlinch.anim` (2.2 s, Once) drives `Flinch` only: 0 to 1 in 0.12 s, a held tremor (0.94 at 0.38 s, 0.97 at 0.58 s), then a slower recovery (0.62 at 1.05 s, 0.25 at 1.6 s) to 0 at 2.2 s, ending at rest. Because it binds only the Flinch channel, it can play on a higher Animation layer over the looping sob without stopping the breath. What triggers it in the encounter is not decided.
+
+The Nymph's Animation component lists both clips, with `NymphSob` as its default clip: Play Automatically, Wrap Mode Loop, Culling Always Animate.
+
+### Viewing the motion
+
+Enter Play mode in `Assets/Scenes/BoundTreePreview.unity`: the sob starts at once and loops. To see the flinch pose, select `Bound Tree Plate/Nymph/Flinch`, set the Spirit Portrait Deformation Channel's Weight (1 is the full flinch, combined additively with the breath) and then turn the component's enabled checkbox off and on. The channel applies its weight when it is enabled and when an animation samples it; the sob clip does not sample the Flinch channel, so a changed Weight alone shows nothing until the component is re-enabled (measured in the Play-mode check). Set it back to 0 the same way. The same works in Edit Mode but then saves the weight into the scene. In Edit Mode the Animation window can also preview either clip with the Nymph selected.
+
+Captures, difference images and the contact strip of one sob loop are in `Docs/work/bound-tree-nymph-motion/captures`.
