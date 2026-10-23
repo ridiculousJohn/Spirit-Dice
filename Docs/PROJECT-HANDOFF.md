@@ -4,7 +4,7 @@ Current state: October 22, 2026. This is a working contract and current-state su
 
 ## Working contract
 
-Read [John's global instructions](C:/Users/jsp73/.codex/AGENTS.md), this document, [presentation authoring](PRESENTATION-AUTHORING.md), and [Tools/README.md](../Tools/README.md).
+Read this document, [presentation authoring](PRESENTATION-AUTHORING.md), and [Tools/README.md](../Tools/README.md).
 
 - Follow John's approved design. Do not invent screens, confirmation steps, celebrations, delays, rewards, or flow changes. Preserve accepted visuals and pacing unless the requested change requires otherwise.
 - Inspect first; explain the cause and smallest complete proposed fix. Wait for implementation approval unless John has already directed the work. Agreement with an observation is not authorization. Historical proposals are not authorization.
@@ -13,7 +13,6 @@ Read [John's global instructions](C:/Users/jsp73/.codex/AGENTS.md), this documen
 - John is a Unity expert. Use normal Unity mechanisms and explain concrete tradeoffs, not programming fundamentals.
 - All workspace changes are user-owned, including generated assets and test output. Never restore, discard, delete, or roll back changes without explicit authorization for that action. No worktrees unless requested.
 - Preserve existing identifiers and useful comments. Use ASCII comments and strings. Never abbreviate "checkpoint."
-- Prefer Astra for orchestration, architecture, integration, and review; use GPT-6.1 Sol with high reasoning for bounded coding/test assignments. Delegation is authorized within approved work. Assign separate responsibilities and review the combined result.
 - Tests support evidence, not design authority. Check actual player-visible behavior and rendered layouts where relevant. Do not add arbitrary waits to make failures disappear, weaken checks to match a bug, or equate structural assertions with visual correctness. Run appropriate checks, then stop when the requested work is verified.
 
 ## Current workspace and outstanding work
@@ -21,7 +20,7 @@ Read [John's global instructions](C:/Users/jsp73/.codex/AGENTS.md), this documen
 - Root: C:/Users/jsp73/Projects/Dice; Unity project: Dice-Unity; branch: main.
 - Unity: 6000.6.6f1 at C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe.
 - Entry scene: Dice-Unity/Assets/Scenes/Application.unity; menu: Dice > Open Application.
-- Confirming a permanent charm unlock persists the selected unlock and proceeds directly to the next offer, without a separate notice or timed pause.
+- Confirming a permanent charm unlock persists the selected unlock and proceeds directly to the next offer.
 - Open Application opens the existing scene without generating assets. Configure Modifier Addressables supports authored content and Android builds. Edit scenes and prefabs directly; inspect and report missing assets rather than silently recreating them.
 - The installed Android build does not include the merchant encounter. On-device gameplay is not visually verified; do not assume workspace changes are installed.
 - Chapter 2's merchant encounter is playable through the campaign (see "Merchant encounter" below). Assets/Scenes/AmbientMotionPreview.unity is the merchant art preview scene. Player-built decks, equipment and the other Chapter 2 encounters remain future work.
@@ -30,11 +29,11 @@ Read [John's global instructions](C:/Users/jsp73/.codex/AGENTS.md), this documen
 ### Working practices
 
 - Layout or presentation-only changes: verify with one targeted rendered capture of the affected encounter(s) and review the images. Run full EditMode or PlayMode suites only when John asks.
-- Unity CLI runs need the editor closed; John often has it open, so check first and ask. Another project's Unity process ("Darker Realms") may be running: never touch it. Give every CLI test run a timeout.
+- Unity CLI runs need the editor closed; John often has it open, so check first and ask. Give every CLI test run a timeout.
 - Rendered PlayMode tests that wait for rendered frames (WaitForEndOfFrame, e.g. SpiritFeedbackPlayTests) hang under -batchmode; run them windowed. Windowed runs on this machine currently fail on an editor ProjectBrowser/ExposablePopupMenu NullReferenceException counted as an unhandled log; batch-safe fixtures and captures run with -batchmode and graphics. Rendered runs while the machine is in Modern Standby stall frames about 0.5 s and fail timing-sensitive tests; keep the display awake.
 - Quality settings: URP copies the active pipeline asset's MSAA into QualitySettings.antiAliasing, so rendered runs and editor Play sessions leave the Ultra level at 0 (Settings/UniversalRP.asset has MSAA off). It has no rendering effect: gameplay switches to Settings/SpiritPrototypePipeline.asset (MSAA 4) through SpiritPresentationEnvironment in Application.unity, and the dice tray render texture uses 4x anti-aliasing. QualitySettings.asset is kept at Ultra antiAliasing 0.
-- Image generation: a personal Claude Code skill at C:/Users/jsp73/.claude/skills/imagegen drives Codex's built-in image tool via `codex exec` and copies outputs into place. Generated edits drift, so install them only through registration and masked transfer, never wholesale; keep donors and prompts with the art provenance.
-- Testing Chapter 2 locally: campaign slot 1 (C:/Users/jsp73/AppData/LocalLow/DefaultCompany/Dice-Unity/725c2d90af3347b8a515305cd86debdc/spirit-profile.json) marks Owl, Moth and story.fox.chapter-one-return complete with their grants; the original files are backed up in Docs/work/save-backups/slot1-before-chapter2-unlock-20261021-091634.
+- Image generation: use the project's imagegen skill (C:/Users/jsp73/.claude/skills/imagegen), which drives Codex's built-in image tool through `codex exec` and copies the results into the project. Generated edits drift, so install them only through registration and masked transfer, never wholesale; keep donors and prompts with the art provenance.
+- Testing Chapter 2 locally: campaign slot 1 (C:/Users/jsp73/AppData/LocalLow/DefaultCompany/Dice-Unity/725c2d90af3347b8a515305cd86debdc/spirit-profile.json) marks Owl, Moth and story.fox.chapter-one-return complete with their grants.
 - Play-mode lighting control: with the game running in the editor, the encounter screen's Inspector (Editor/SpiritEncounterViewEditor.cs) shows "Testing: scene lights" with an On toggle and a 0-2 slider per scene light (merchant: light 0 lantern, light 1 candle) and "Release overrides". A held override replaces the ambient activity's multiplier; it is not saved and is released when the table is reconfigured or presentation resets. In Edit Mode, Dice > Encounter Lighting Preview has per-light sliders.
 
 ### Merchant encounter (The Unquiet Cart)
@@ -50,10 +49,10 @@ Scene, layout and HUD:
 - Scenes/MerchantEncounter.unity (Addressables group "Dice Presentation Scenes", key dice.scene.merchant), table presentation HauntedMerchant/MerchantUnquietCartTable.asset, merchant-only compact tray (MerchantTrayPresentation.asset, MerchantTrayGeometry.prefab, Rigs/MerchantTrayPresentationRig.prefab and its render texture), MerchantHost.prefab as host, UI/MerchantHostSigil.prefab (the HUD requires a host sigil).
 - The art is zoomed 1.12 so the merchant's face clears the HUD; narrow screens crop the right side. The board is centered, short and spans the table width (bay pitch 1.25, 1024x512 tray texture). The candle's warded positions sit above each die (bayPlacement (0.5, 1.08)), clear of the HANDS/REROLLS row; its neutral home is the table's top-left corner; it is scaled 0.86.
 - The "Merchant Table Pieces" layer is a child of the HUD's PlayingPanel directly after DiceTrayFrame, so the candle draws above the tray and dice, below the score panel, buttons, stage intro and every popup, and hides with the play area. TargetPanel and the HANDS/REROLLS row precede PlayingPanel in the shared HUD, so a candle being dragged across them draws over them; resting positions never touch them. Reordering the shared HUD would fix it but changes draw order in every encounter.
-- HUD in every encounter: no idle selection prompt, charm-count line, "N selected for reroll" or "ROLL BONUSES BANK HERE"; selected dice are marked only by the tray outline and frame highlight (no REROLL plaques); the score panel is shorter (SpiritGameplayHud.prefab ScorePreview top anchor .392). Playback messages remain. Reroll help text may be designed later elsewhere.
+- HUD in every encounter: the selection label is empty while choosing dice; selected dice are marked by the tray outline and frame highlight; the score panel uses SpiritGameplayHud.prefab ScorePreview top anchor .392. Reroll help text may be designed later elsewhere.
 
 Merchant host:
-- Layers (torso, head/hat, two forearms, blink overlay) share one breathing deformation mesh (Ambient/MerchantBreathMesh.asset) through SpiritHostPortrait timelines: a "living still" with gentle breathing and blinks, no rigid part motion. Tools/Presentation/author-merchant-presentation.py generates MerchantHost.asset; re-run it rather than hand-editing. Validate moving poses as well as rest alignment. The old MerchantHeadMesh, MerchantRestingArmMesh and MerchantSupportingArmMesh assets are unreferenced.
+- Layers (torso, head/hat, two forearms, blink overlay) share one breathing deformation mesh (Ambient/MerchantBreathMesh.asset) through SpiritHostPortrait timelines: a "living still" with gentle breathing and blinks. Tools/Presentation/author-merchant-presentation.py generates MerchantHost.asset; re-run it rather than hand-editing. Validate moving poses as well as rest alignment.
 - 2D rigging was considered and deferred: Unity's 2D Animation and 2D PSD Importer packages (not installed) with bones/weights generated by editor script, rendered to a render texture because Sprite Skin does not deform UI images; estimated half a day to a day per character.
 
 Lighting:
@@ -63,7 +62,7 @@ Lighting:
 - The candle's light is a tight pool: CandleLightFootprintCentered.png and CandleLightResponseCentered.png are built by Tools/Presentation/author-candle-light-footprint.py from the preserved sources in Docs/Reference/Art (REACH 0.8); light 1 ReceiverRange 8. The candle body is not lit by the scene lighting.
 
 Props, cup and ambient activity:
-- Movable props (Art/HauntedMerchant/Props, props.json, Tools/Presentation/cut-merchant-props.py): HangingPot and HangingPan (separate swinging pieces, pot drawn first), ShelfBottle (rocks on two base contacts), TrunkLid (thumps on its hinge). The background everywhere uses MerchantAmbientUnlitPropsRemoved.png and MerchantLanternOnlyPropsRemoved.png, which also remove a painted cage basket under the hanging cup; MerchantAmbientUnlit.png and MerchantLanternOnly.png remain as sources. Props are RawImages with SceneLitImage and Ambient/<Name>Lit.mat in both MerchantEncounter.unity and AmbientMotionPreview.unity, drawn before the canopy, cup and merchant.
+- Movable props (Art/HauntedMerchant/Props, props.json, Tools/Presentation/cut-merchant-props.py): HangingPot and HangingPan (separate swinging pieces, pot drawn first), ShelfBottle (rocks on two base contacts), TrunkLid (thumps on its hinge). The background everywhere uses MerchantAmbientUnlitPropsRemoved.png and MerchantLanternOnlyPropsRemoved.png. Props are RawImages with SceneLitImage and Ambient/<Name>Lit.mat in both MerchantEncounter.unity and AmbientMotionPreview.unity, drawn before the canopy, cup and merchant.
 - The hanging cup is lit through a SceneLitImage and HangingCupLit.mat added on its scene instances; HangingCup.prefab stays RawImage-only. Its idle sway animates its Swing child while ambient motion moves its root.
 - Ambient activity is reusable and presentation-only: Presentation/EncounterAmbientActivity.cs (own random, ticked by SpiritEncounterView, pauses on focus loss), EncounterAmbientActivityAsset.cs (light and prop actors, authored on EncounterTablePresentationAsset.ambientActivity; prop actors bind by id in the encounter screen's Ambient Props list), AmbientMotionAsset.cs with Swing/Wobble/Thump kinds. A motion records the prop's rest pose when it starts, writes rest plus offset (RectTransforms as anchored positions) and writes rest back when it ends. Hand start begins the activity; each disturbance makes the lantern stutter and one prop jolt; a blocked attempt adds nothing; victory and abandonment settle everything with the lantern steady; defeat knocks one prop hard and stops. It keeps running through stage intros.
 - Merchant values (HauntedMerchant/MerchantAmbientActivity.asset): lantern outages every 20-40 s, dark 1.5-4 s, sputters of 10-16 flickers of 0.06-0.3 s each way, disturbance stutters of 6-10 flickers; each prop idles every 8-20 s with swings and rocks of about 7-10 degrees and a visible lid hop; disturbance strength 1.6, defeat 2.5. Flicker steps cut between levels; fading between levels is a possible refinement.
@@ -74,7 +73,7 @@ Audio:
 
 Disturbance playback:
 - A forced reroll rolls the die; a flip turns it to the opposite face over 0.5 s; the merchant reacts, a giggle plays, the lantern stutters and a prop jolts. On Play Hand, playback waits 0.25 s after the commit before a disturbance or blocked attempt, and the score panel shows the rank of the hand about to be scored once the disturbed die lands. A reroll's disturbance follows its roll at once.
-- A blocked attempt flares the candle (flame 1.45 wide at full height, light 3x) and plays Flare Sparks (SpiritFlareSparks on the candle: a warm glow and ten near-white sparks thrown mostly sideways), plus the grumble. Small or flame-coloured sparks disappear against the flame at phone size.
+- A blocked attempt flares the candle (flame 1.45 wide at full height, light 3x) and plays Flare Sparks (SpiritFlareSparks on the candle: a warm glow and ten near-white sparks thrown mostly sideways), plus the grumble.
 - Captures: MerchantReviewCapturePlayTests and MerchantDisturbanceCapturePlayTests (flip after reroll, forced reroll on Play Hand, block, candle comparison stills) run only when DICE_SPIRIT_CAPTURE_ROOT is set.
 
 Open items:
@@ -87,7 +86,7 @@ Open items:
 
 Mechanics, mechanical content, progression, presentation, and persistence remain separate. The engine must support a different skin or a larger game. Mechanical content contains rules and values, not display names, artwork, dialogue, or audio.
 
-Each modifier has its own mechanical ScriptableObject and separate presentation asset. Conditions have individual evaluation classes with companion helpers where appropriate. Do not reintroduce central evaluation switches or presentation lookup dictionaries. Use explicit references or Addressables; nothing belongs in Resources. Modifier discovery labels are dice.modifiers and dice.theme.spirit-house.modifiers.
+Each modifier has its own mechanical ScriptableObject and separate presentation asset. Conditions have individual evaluation classes with companion helpers where appropriate. Do not add central evaluation switches or presentation lookup dictionaries. Use explicit references or Addressables; nothing belongs in Resources. Modifier discovery labels are dice.modifiers and dice.theme.spirit-house.modifiers.
 
 Every screen, popup, card, button, host and tray hierarchy is authored in a scene or prefab. Runtime code binds data/state, animates, and instantiates explicitly referenced prefabs for dynamic lists. Do not construct replacement hierarchies, choose styles by object name, or overwrite authored layout/typography during binding. Edit assets in place, preserving GUIDs, references and unrelated overrides. Unity Editor API operations through CLI/tooling are acceptable; retained generators are not necessary.
 
@@ -267,7 +266,7 @@ Scoring accumulates dice sum, complete upgraded hand-rank values, qualifying mod
 
 Use Unity's Application.persistentDataPath. Do not inspect or reject parent directories, redirected profiles or platform-managed links. Deletion checks stay within the application's owned campaign subtree.
 
-Newtonsoft JSON stores campaign indexes, profiles and run saves. Run saves preserve RNG and pending offers; fresh runs choose new seeds, with fixed seeds only for debugging. Loading a run must not erase permanent progress. Keep current codec migrations; do not infer incompatible formats from old discussions.
+Newtonsoft JSON stores campaign indexes, profiles and run saves. Run saves preserve RNG and pending offers; fresh runs choose new seeds, with fixed seeds only for debugging. Loading a run must not erase permanent progress. Keep current codec migrations.
 
 Consumed unlock offers are saved to the run before the profile grant, preventing duplicate choices after interruption. Pending writes must finish before advancing/replacing the run. Autosaved journey actions persist before presentation. Continue restores state without replaying the opening roll or consuming RNG.
 
@@ -288,4 +287,4 @@ Build/install Android only when requested. Generated output stays in ignored Doc
 - [Collection and unlock authoring](../Dice-Unity/Assets/Dice/Content/Mechanical/COLLECTION-AUTHORING.md)
 - [Extracted reference mechanics](outputs/dice-of-kalma-design-reference.html) and [reference inventory](Reference/README.md)
 
-Use Git history for past changes. Do not restore the chronological progress log to this handoff.
+Use Git history for past changes; this handoff holds current state and design only.
