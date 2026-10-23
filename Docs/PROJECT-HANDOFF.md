@@ -138,7 +138,7 @@ Main menu order is **Continue, Load Game, Chapter, New Game, Options**. Continue
 
 ### Chapter 2 and future mechanics
 
-These are design decisions and open directions, not implementation authorization. Chapter 2 follows the return to the fox and the old bridge crossing; its title and final revelation remain open.
+These are design decisions and open directions, not implementation authorization. Chapter 2, THE DROWNED ROAD, follows the return to the fox and the old bridge crossing; its final revelation remains open.
 
 1. Haunted traveling merchant: a merchant has set up his wares cart on a road beside a dark swamp. A poltergeist haunts the cart and interferes while the player plays with him, using the haunting rule below. The merchant leads the player into the swamp afterward. This is the first encounter to develop; the accepted working dialogue and rewards are below.
 2. Bound tree nymph: on a small patch of dry land in the swamp stands a huge black, withered tree. A sobbing dryad/tree nymph sits at its base, trapped and tormented by the evil spirit possessing her tree. She reveals that the spirit is bound by challenge terms; it would not volunteer this information. Once the player challenges it, the spirit must comply and abide by the result. Play against the spirit using binding; victory banishes it, releases the tree and nymph, and lets her provide information needed to continue. The nymph's knowledge makes her an active participant in her rescue.
@@ -251,7 +251,7 @@ Such a deck needs a dependable source of withering outside rot encounters. Sugge
 - Further binding/haunting charm triggers: scoring with bound dice, matching around a bound or disturbed die, playing before binding occurs, or scoring while a charm is suppressed. No families or values are selected.
 - Other haunting suggestions: an apparition moving between bays and disabling the occupied die, a remembered face returning on a later reroll, suppression moving between charms, or fulfilling a visible request to banish a haunting. These are alternatives, not part of the selected poltergeist specification.
 - Protection extensions: temporary additional wards, charm protection, or blocking the next interference. The moving candle is the concrete starting concept.
-- The Chapter 2 outline above selects the merchant, tree nymph/possessing spirit, and a rot encounter in that order. Exact rewards, dialogue, chapter title, and the final revelation remain open; the hag's details are provisional.
+- The Chapter 2 outline above selects the merchant, tree nymph/possessing spirit, and a rot encounter in that order. Exact rewards, dialogue, and the final revelation remain open; the hag's details are provisional.
 
 ### Presentation behavior
 
