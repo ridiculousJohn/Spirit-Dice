@@ -91,7 +91,7 @@ namespace Dice.Tests
             var session = Session(catalog);
             Execute(session, Move(PiecePosition.Bay(3)));
             Execute(session, new RerollDiceAction(5));
-            var restored = Restore(catalog, Decode(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            var restored = Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave())));
             Assert.That(Position(restored), Is.EqualTo(PiecePosition.Bay(3)));
             for (int i = 0; i < 6; ++i)
             {
@@ -239,7 +239,7 @@ namespace Dice.Tests
             var disturbed = result.Events.OfType<DieDisturbedEvent>().Single();
             Assert.That(result.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
             Assert.That(result.Snapshot.DisturbedMask, Is.EqualTo(1 << disturbed.Bay));
-            Restore(catalog, Decode(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave())));
         }
 
         [Test]
@@ -286,7 +286,7 @@ namespace Dice.Tests
                 if (first.Execute(action, first.Snapshot.Revision).Rejection != CommandRejection.None) continue;
                 Execute(second, action);
                 if (restored != null) Execute(restored, action);
-                if (i == 5) restored = Restore(catalog, Decode(EncounterSaveCodec.Serialize(second.CaptureSave())));
+                if (i == 5) restored = Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(second.CaptureSave())));
                 EncounterPersistenceTests.AssertGraphEqual(first.CaptureSave(), second.CaptureSave());
             }
             EncounterPersistenceTests.AssertGraphEqual(first.CaptureSave(), restored.CaptureSave());
@@ -296,15 +296,21 @@ namespace Dice.Tests
         public void RestoreRejectsInconsistentDisturbanceRecords()
         {
             var plain = Catalog(chance: 0, haunting: false);
-            AssertInvalid(plain, Session(plain).CaptureSave(), save => save.DisturbedMask = 1);
+            AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleStates = new[]
+            {
+                new EncounterSaveRuleData { RuleId = HauntingId, State = new DieInterferenceSaveData { DisturbedMask = 1 } }
+            });
             var haunted = Catalog(chance: 100);
             var session = Session(haunted);
             Execute(session, new RerollDiceAction(1));
             Assert.That(session.Snapshot.DisturbedMask, Is.Not.Zero);
-            AssertInvalid(haunted, session.CaptureSave(), save => save.LatestDisturbedMask = save.DisturbedMask == 1 ? 2 : 1);
-            AssertInvalid(haunted, session.CaptureSave(), save => save.DisturbedMask = DiceValues.AllMask);
-            AssertInvalid(haunted, session.CaptureSave(), save => save.DisturbedMask = 32);
-            AssertInvalid(haunted, Session(haunted).CaptureSave(), save => save.DisturbedMask = 1);
+            AssertInvalid(haunted, session.CaptureSave(), save =>
+                Haunting(save).LatestDisturbedMask = Haunting(save).DisturbedMask == 1 ? 2 : 1);
+            AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = DiceValues.AllMask);
+            AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = 32);
+            AssertInvalid(haunted, Session(haunted).CaptureSave(), save => Haunting(save).DisturbedMask = 1);
+            AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
+            AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates[0].State = new DieBindingSaveData());
         }
 
         [Test]
@@ -343,8 +349,8 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.DisturbedMask, Is.Not.Zero);
             AssertInvalid(catalog, session.CaptureSave(), save =>
             {
-                save.LatestRerollMask |= save.DisturbedMask;
-                save.EverRerolledMask |= save.DisturbedMask;
+                save.LatestRerollMask |= Haunting(save).DisturbedMask;
+                save.EverRerolledMask |= Haunting(save).DisturbedMask;
             }, "kept die");
         }
 
@@ -354,16 +360,16 @@ namespace Dice.Tests
             var catalog = Catalog(chance: 0);
             var session = Session(catalog);
             foreach (string field in new[] { nameof(EncounterSaveData.Pieces), nameof(EncounterSaveData.RuleRandomState),
-                nameof(EncounterSaveData.DisturbedMask), nameof(EncounterSaveData.LatestDisturbedMask) })
+                nameof(EncounterSaveData.RuleStates) })
             {
                 var json = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
                 json.Remove(field);
-                Assert.Throws<FormatException>(() => Decode(json), field);
+                Assert.Throws<FormatException>(() => Decode(catalog, json), field);
             }
             var downgraded = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
             downgraded[nameof(EncounterSaveData.SaveFormatVersion)] = 5;
             downgraded[nameof(EncounterSaveData.RulesVersion)] = 7;
-            var result = EncounterSession.RestoreEncounter(catalog, Decode(downgraded));
+            var result = EncounterSession.RestoreEncounter(catalog, Decode(catalog, downgraded));
             Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
         }
 
@@ -381,9 +387,8 @@ namespace Dice.Tests
                 Assert.That(session.Snapshot.PieceInteractions, Is.Empty, id);
                 Assert.That(save.Pieces, Is.Empty, id);
                 Assert.That(save.RuleRandomState, Is.Zero, id);
-                Assert.That(save.DisturbedMask, Is.Zero, id);
-                Assert.That(save.LatestDisturbedMask, Is.Zero, id);
-                Restore(catalog, Decode(EncounterSaveCodec.Serialize(save)));
+                Assert.That(save.RuleStates, Is.Empty, id);
+                Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(save)));
             }
         }
 
@@ -445,11 +450,10 @@ namespace Dice.Tests
             var json = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(original.CaptureSave())));
             json[nameof(EncounterSaveData.SaveFormatVersion)] = 5;
             json[nameof(EncounterSaveData.RulesVersion)] = 7;
-            json.Remove(nameof(EncounterSaveData.DisturbedMask));
-            json.Remove(nameof(EncounterSaveData.LatestDisturbedMask));
+            json.Remove(nameof(EncounterSaveData.RuleStates));
             json.Remove(nameof(EncounterSaveData.RuleRandomState));
             json.Remove(nameof(EncounterSaveData.Pieces));
-            var restored = Restore(catalog, Decode(json));
+            var restored = Restore(catalog, Decode(catalog, json));
             Execute(original, new RerollDiceAction(5));
             Execute(restored, new RerollDiceAction(5));
             Assert.That(restored.Snapshot.CurrentDice, Is.EqualTo(original.Snapshot.CurrentDice));
@@ -512,6 +516,9 @@ namespace Dice.Tests
             if (detail != null) Assert.That(result.Detail, Does.Contain(detail));
         }
 
+        private static DieInterferenceSaveData Haunting(EncounterSaveData save)
+            => (DieInterferenceSaveData)save.RuleStates.Single(value => value.RuleId == HauntingId).State;
+
         private static int CountOf(DiceValues dice, int face)
         {
             int count = 0;
@@ -520,7 +527,7 @@ namespace Dice.Tests
             return count;
         }
 
-        private static EncounterSaveData Decode(byte[] bytes) => EncounterSaveCodec.Deserialize(bytes);
-        private static EncounterSaveData Decode(JObject json) => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(json.ToString()));
+        private static EncounterSaveData Decode(MechanicalCatalog catalog, byte[] bytes) => EncounterSaveCodec.Deserialize(bytes, catalog);
+        private static EncounterSaveData Decode(MechanicalCatalog catalog, JObject json) => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(json.ToString()), catalog);
     }
 }

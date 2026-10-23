@@ -199,7 +199,7 @@ namespace Dice.Tests
             }
 
             Assert.That(progression.PrepareProfile(otherRun), Is.True);
-            Assert.That(EncounterSaveFileStore.Load(savePath).Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
             var savedProfile = PlayerProfileFileStore.Load(originalProfile);
             Assert.That(savedProfile.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
             Assert.That(savedProfile.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
@@ -220,7 +220,7 @@ namespace Dice.Tests
             using (var lockedProfile = new FileStream(progression.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, application.CaptureSave(), savePath), Is.False);
-                Assert.That(EncounterSaveFileStore.Load(savePath).Outcome, Is.EqualTo(EncounterOutcome.Won));
+                Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
                 Assert.That(progression.ProfileStatusMessage, Does.Contain("cannot save player profile"));
                 Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
             }

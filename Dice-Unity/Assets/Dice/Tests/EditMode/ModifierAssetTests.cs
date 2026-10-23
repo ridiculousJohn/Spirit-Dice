@@ -150,6 +150,7 @@ namespace Dice.Tests
             var encounter = encounters.GetArrayElementAtIndex(0);
             encounter.FindPropertyRelative("id").stringValue = "encounter.test";
             encounter.FindPropertyRelative("startingUpgrades").arraySize = HandDefinition.CategoryCount;
+            encounter.FindPropertyRelative("encounterModifiersFirstClearedStageNumber").intValue = 1;
             var stages = encounter.FindPropertyRelative("stages");
             stages.arraySize = 1;
             var stage = stages.GetArrayElementAtIndex(0);

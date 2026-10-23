@@ -738,6 +738,136 @@ MonoBehaviour:
     - id: piece.merchant.candle
       interactions:
       - {fileID: 11400000, guid: f8daef7b2f614458ba4a6d63b4e86d32, type: 2}
+  - id: encounter.nymph.bound_tree
+    spiritId: spirit.nymph
+    unlockRewardModifierIds:
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    - modifier.play_hand.adjacent_difference_at_most.base_score
+    - modifier.play_hand.adjacent_difference_at_most.multiplier
+    - modifier.play_hand.no_dice_rerolled.base_score
+    - modifier.play_hand.no_dice_rerolled.multiplier
+    encounterModifierIds:
+    - modifier.play_hand.bound_face_count_at_least.base_score
+    - modifier.play_hand.bound_face_count_at_least.multiplier
+    - modifier.play_hand.bound_face_count_at_least.combined
+    - modifier.play_hand.bound_face_count_at_least.rerolls
+    encounterModifiersFirstClearedStageNumber: 3
+    unlockMilestones:
+    - stageNumber: 3
+      modifierIds:
+      - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+      - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+      - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+      - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    - stageNumber: 6
+      modifierIds:
+      - modifier.play_hand.adjacent_difference_at_most.base_score
+      - modifier.play_hand.adjacent_difference_at_most.multiplier
+      - modifier.play_hand.adjacent_difference_at_most.combined
+      - modifier.play_hand.adjacent_difference_at_most.rerolls
+    - stageNumber: 10
+      modifierIds:
+      - modifier.play_hand.no_dice_rerolled.base_score
+      - modifier.play_hand.no_dice_rerolled.multiplier
+      - modifier.play_hand.no_dice_rerolled.combined
+      - modifier.play_hand.no_dice_rerolled.rerolls
+    startingModifiers: []
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
+    rules:
+    - {fileID: 11400000, guid: 6c1b0abcfde24a46ae3c523210fc5da9, type: 2}
+    rewardPolicy:
+      id: reward_policy.nymph.bound_tree
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights:
+        - 100
+        - 0
+        - 0
+      - firstIncomingStageNumber: 4
+        tierWeights:
+        - 60
+        - 35
+        - 5
+      - firstIncomingStageNumber: 7
+        tierWeights:
+        - 30
+        - 50
+        - 20
+      - firstIncomingStageNumber: 10
+        tierWeights:
+        - 15
+        - 45
+        - 40
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+      modifierLayouts:
+      - poolIds:
+        - reward_pool.nymph.bound_tree.base_score
+        - reward_pool.nymph.bound_tree.multiplier
+        - reward_pool.nymph.bound_tree.rerolls
+      - poolIds:
+        - reward_pool.nymph.bound_tree.base_score
+        - reward_pool.nymph.bound_tree.multiplier
+        - reward_pool.nymph.bound_tree.combined
+      - poolIds:
+        - reward_pool.nymph.bound_tree.base_score
+        - reward_pool.nymph.bound_tree.multiplier
+        - reward_pool.nymph.bound_tree.combined
+      startingRefreshes: 1
+      refreshesPerClear: 1
+      refreshCost: 1
+      handUpgradeOptionCount: 4
+      upgradeHistory:
+      - maxIncomingStageNumber: 2147483647
+        excludedRecentChoices: 1
+    stages:
+    - threshold: 120
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 170
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 230
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 300
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 380
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 470
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 570
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 680
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 800
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 930
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    pieces: []
   rewardPools:
   - id: reward_pool.base_score
     modifierIds:
@@ -1318,4 +1448,76 @@ MonoBehaviour:
     - modifier.play_hand.sum_less_than_initial.rerolls
     - modifier.play_hand.rank_equals_previous.rerolls
     - modifier.play_hand.sum_divisible_by.rerolls
+    fallbackModifierId:
+  - id: reward_pool.nymph.bound_tree.base_score
+    modifierIds:
+    - modifier.play_hand.contains_face.base_score
+    - modifier.play_hand.contains_upper_face.base_score
+    - modifier.play_hand.range_less_than.base_score
+    - modifier.play_hand.two_pair.base_score
+    - modifier.play_hand.no_extreme_faces.base_score
+    - modifier.play_hand.sum_less_than.base_score
+    - modifier.play_hand.high_die.base_score
+    - modifier.player_reroll.exactly_one_selected_face.base_score
+    - modifier.player_reroll.selected_face_unchanged.base_score
+    - modifier.play_hand.no_dice_rerolled.base_score
+    - modifier.play_hand.contains_rerolls_remaining.base_score
+    - modifier.play_hand.every_die_rerolled.base_score
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
+    - modifier.play_hand.adjacent_difference_at_most.base_score
+    fallbackModifierId:
+  - id: reward_pool.nymph.bound_tree.multiplier
+    modifierIds:
+    - modifier.play_hand.contains_face.multiplier
+    - modifier.play_hand.contains_upper_face.multiplier
+    - modifier.play_hand.range_less_than.multiplier
+    - modifier.play_hand.two_pair.multiplier
+    - modifier.play_hand.no_extreme_faces.multiplier
+    - modifier.play_hand.sum_less_than.multiplier
+    - modifier.play_hand.high_die.multiplier
+    - modifier.player_reroll.exactly_one_selected_face.multiplier
+    - modifier.player_reroll.selected_face_unchanged.multiplier
+    - modifier.play_hand.no_dice_rerolled.multiplier
+    - modifier.play_hand.contains_rerolls_remaining.multiplier
+    - modifier.play_hand.every_die_rerolled.multiplier
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
+    - modifier.play_hand.adjacent_difference_at_most.multiplier
+    fallbackModifierId:
+  - id: reward_pool.nymph.bound_tree.combined
+    modifierIds:
+    - modifier.play_hand.contains_face.combined
+    - modifier.play_hand.contains_upper_face.combined
+    - modifier.play_hand.range_less_than.combined
+    - modifier.play_hand.two_pair.combined
+    - modifier.play_hand.no_extreme_faces.combined
+    - modifier.play_hand.sum_less_than.combined
+    - modifier.play_hand.high_die.combined
+    - modifier.player_reroll.exactly_one_selected_face.combined
+    - modifier.player_reroll.selected_face_unchanged.combined
+    - modifier.play_hand.no_dice_rerolled.combined
+    - modifier.play_hand.contains_rerolls_remaining.combined
+    - modifier.play_hand.every_die_rerolled.combined
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+    - modifier.play_hand.adjacent_difference_at_most.combined
+    fallbackModifierId:
+  - id: reward_pool.nymph.bound_tree.rerolls
+    modifierIds:
+    - modifier.play_hand.contains_face.rerolls
+    - modifier.play_hand.contains_upper_face.rerolls
+    - modifier.play_hand.range_less_than.rerolls
+    - modifier.play_hand.two_pair.rerolls
+    - modifier.play_hand.no_extreme_faces.rerolls
+    - modifier.play_hand.sum_less_than.rerolls
+    - modifier.play_hand.high_die.rerolls
+    - modifier.player_reroll.exactly_one_selected_face.rerolls
+    - modifier.player_reroll.selected_face_unchanged.rerolls
+    - modifier.play_hand.no_dice_rerolled.rerolls
+    - modifier.play_hand.contains_rerolls_remaining.rerolls
+    - modifier.play_hand.every_die_rerolled.rerolls
+    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
+    - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
+    - modifier.play_hand.adjacent_difference_at_most.rerolls
     fallbackModifierId:

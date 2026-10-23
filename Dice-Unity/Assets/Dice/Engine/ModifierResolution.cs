@@ -178,7 +178,8 @@ namespace Dice.Engine
             return new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
                 state.PreviousPlayedDice, state.LatestRerollMask, state.EverRerolledMask, state.RerollsSpentOnHand,
                 handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, encounter.Stages[state.StageIndex].StartingHands,
-                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining, favoredFace);
+                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining, favoredFace,
+                EncounterRuleResolver.BoundDice(encounter, state));
         }
 
         private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)

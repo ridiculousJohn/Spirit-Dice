@@ -239,7 +239,7 @@ namespace Dice.Tests
             Click("SaveRunButton");
             yield return ContentReady.Routed();
             Assert.That(File.Exists(controller.SavePath), Is.True, controller.StatusMessage);
-            var saved = EncounterSaveFileStore.Load(controller.SavePath);
+            var saved = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
             var beforeReturn = controller.Snapshot;
             int beforeReturnResolutions = resolutions;
             Click("ReturnToInvestigationButton");
@@ -275,7 +275,7 @@ namespace Dice.Tests
             AssertVisibleDice(new DiceValues(saved.CurrentDice[0], saved.CurrentDice[1], saved.CurrentDice[2],
                 saved.CurrentDice[3], saved.CurrentDice[4]));
             controller.Save();
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(controller.SavePath)),
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog)),
                 Is.EqualTo(EncounterSaveCodec.Serialize(saved)), "Resume/load must preserve both random stream states.");
             yield return Capture("loaded-table");
             LogAssert.NoUnexpectedReceived();

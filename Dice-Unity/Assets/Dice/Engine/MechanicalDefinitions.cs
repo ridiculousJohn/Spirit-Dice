@@ -106,6 +106,8 @@ namespace Dice.Engine
         public string SpiritId { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
         public ReadOnlyCollection<string> EncounterModifierIds { get; }
+        /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
+        public int EncounterModifiersFirstClearedStageNumber { get; }
         public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
         public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
 
@@ -113,7 +115,8 @@ namespace Dice.Engine
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
             IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
-            IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null)
+            IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
+            int encounterModifiersFirstClearedStageNumber = 1)
         {
             DefinitionValidation.RequireId(id, nameof(id));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -146,6 +149,9 @@ namespace Dice.Engine
                     throw new ArgumentException("Unlock stages must be unique and within the encounter.", nameof(unlockMilestones));
             UnlockMilestones = milestones.AsReadOnly();
             EncounterModifierIds = CopyUniqueIds(encounterModifierIds, nameof(encounterModifierIds));
+            if (encounterModifiersFirstClearedStageNumber < 1 || encounterModifiersFirstClearedStageNumber > Stages.Count)
+                throw new ArgumentOutOfRangeException(nameof(encounterModifiersFirstClearedStageNumber));
+            EncounterModifiersFirstClearedStageNumber = encounterModifiersFirstClearedStageNumber;
             UnlockRewardModifierIds = CopyUniqueIds(unlockRewardModifierIds, nameof(unlockRewardModifierIds));
             var pieceList = pieces == null ? new List<TablePieceDefinition>() : new List<TablePieceDefinition>(pieces);
             var pieceIds = new HashSet<string>(StringComparer.Ordinal);

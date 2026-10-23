@@ -400,7 +400,7 @@ namespace Dice.Tests
             AssertHandUpgradeRewards(controller, view, 0);
             controller.Save();
             Assert.That(File.Exists(savePath), Is.True, controller.StatusMessage);
-            var rewardSave = EncounterSaveFileStore.Load(savePath);
+            var rewardSave = EncounterSaveFileStore.Load(savePath, controller.Catalog);
             Assert.That(EncounterSaveCodec.Serialize(rewardSave),
                 Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             int beforeRewardLoadResolutions = resolutions;
@@ -509,7 +509,7 @@ namespace Dice.Tests
             Click(view, "SaveRunButton");
             yield return ContentReady.Routed();
             Assert.That(File.Exists(savePath), Is.True, controller.StatusMessage);
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, controller.Catalog);
             Assert.That(EncounterSaveCodec.Serialize(saved), Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             Click(view, "DieButton2");
             yield return ContentReady.Routed();
@@ -559,7 +559,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.TotalScore, Is.Zero);
             Assert.That(controller.Snapshot.Modifiers.Count, Is.Zero);
             controller.Save();
-            var newRunSave = EncounterSaveFileStore.Load(savePath);
+            var newRunSave = EncounterSaveFileStore.Load(savePath, controller.Catalog);
             var originalRunSave = EncounterSession.CreateEncounter(controller.Catalog, "encounter.standard", 60).CaptureSave();
             Assert.That(newRunSave.RewardRandomState, Is.Not.EqualTo(originalRunSave.RewardRandomState),
                 "New run must obtain a fresh seed instead of repeating the explicitly initialized run.");

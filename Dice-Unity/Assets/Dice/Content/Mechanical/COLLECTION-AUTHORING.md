@@ -66,3 +66,26 @@ The mechanical condition is `FavoredFaceCountAtLeastCondition`, serialized as
 `conditionKind: 74` with `parameter: 2`. Each modifier and its presentation remain
 separate ScriptableObjects registered in the existing mechanical and presentation
 Addressables groups under their standard discovery labels.
+
+## Tree nymph encounter
+
+`encounter.nymph.bound_tree` authors the Base and Mult variants of Great Oak
+(`modifier.play_hand.three_smallest_sum_at_most_maximum`), Close Branches
+(`modifier.play_hand.adjacent_difference_at_most`) and Unturned Leaf
+(`modifier.play_hand.no_dice_rerolled`) as its six `unlockRewardModifierIds`, with
+unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDiscovery`
+discovers those three families and grants nothing; no journey references it yet.
+
+Its `encounterModifierIds` contains four encounter-exclusive Grafted Branch
+variants. They trigger when at least three dice show the face of a die bound by
+the encounter's binding rule (`rule.nymph.binding`); the bound die counts toward
+the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and
++1 reroll. Each is tier 1 and once per hand. The family provisionally reuses the
+Joined Roots icon and artwork and the standard effect-category assets until
+dedicated art is approved. The mechanical condition is
+`BoundFaceCountAtLeastCondition`, serialized as `conditionKind: 75` with
+`parameter: 3`.
+
+`encounterModifiersFirstClearedStageNumber: 3` makes the stage 3 clear's charm
+offer the first that can contain Grafted Branch. Encounters that do not author
+the field use 1 and can offer their additions from the first clear.

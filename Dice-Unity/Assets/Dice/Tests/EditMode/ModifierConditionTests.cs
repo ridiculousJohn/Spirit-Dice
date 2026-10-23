@@ -142,13 +142,14 @@ namespace Dice.Tests
             var parameterized = ParameterizedConstructors().Select(value => (ModifierConditionKind)value.Arguments[0]);
             var covered = NonDefaultCases().Where(value => (bool)value.Arguments[2] != (bool)value.Arguments[3])
                 .Select(value => ((ModifierCondition)value.Arguments[0]).Kind).Distinct();
-            Assert.That(parameterized.Count(), Is.EqualTo(20));
+            Assert.That(parameterized.Count(), Is.EqualTo(21));
             Assert.That(covered, Is.EquivalentTo(parameterized));
         }
 
         private static IEnumerable<TestCaseData> ParameterizedConstructors()
         {
             yield return Constructor(ModifierConditionKind.FavoredFaceCountAtLeast, (p, q) => new FavoredFaceCountAtLeastCondition(p), () => new FavoredFaceCountAtLeastCondition(), 2, maximum: 5);
+            yield return Constructor(ModifierConditionKind.BoundFaceCountAtLeast, (p, q) => new BoundFaceCountAtLeastCondition(p), () => new BoundFaceCountAtLeastCondition(), 3, maximum: 5);
             yield return Constructor(ModifierConditionKind.ContainsFace, (p, q) => new ContainsFaceCondition(p), () => new ContainsFaceCondition(), 1, maximum: 6);
             yield return Constructor(ModifierConditionKind.ContainsUpperFace, (p, q) => new ContainsUpperFaceCondition(p), () => new ContainsUpperFaceCondition(), 6, maximum: 6);
             yield return Constructor(ModifierConditionKind.ExactlyOneSelectedFace, (p, q) => new ExactlyOneSelectedFaceCondition(p), () => new ExactlyOneSelectedFaceCondition(), 1, maximum: 6);
@@ -178,6 +179,7 @@ namespace Dice.Tests
         private static IEnumerable<TestCaseData> NonDefaultCases()
         {
             yield return NonDefaultCase(ModifierConditionKind.FavoredFaceCountAtLeast, C("22234", favoredFace: 2), false, true, 4);
+            yield return NonDefaultCase(ModifierConditionKind.BoundFaceCountAtLeast, C("22134", bound: 1), true, false, 2);
             yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C("23456"), true, false, 6);
             yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C(), false, true, 6);
             yield return NonDefaultCase(ModifierConditionKind.ContainsUpperFace, C(), true, false, 2);
@@ -403,6 +405,12 @@ namespace Dice.Tests
             yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("23456", favoredFace: 2), false);
             yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("22345", favoredFace: 6), false);
             yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("22345"), false);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 1), true);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 8), false);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 24), false);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 9), true);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234"), false);
+            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("44454", bound: 16), true);
         }
 
         private static TestCaseData Case(ModifierConditionKind kind, ModifierContext context, bool expected,
@@ -413,15 +421,15 @@ namespace Dice.Tests
                     context.RerollsSpentOnHand + "_" + context.EverRerolledMask + "_" +
                     string.Join("", context.InitialDice.ToArray()) + "_" + context.BeforeRerollDice + "_" +
                     context.PreviousPlayedDice + "_" + context.PreviousStageStartingHands + "_" + context.PreviousStageHandsRemaining + "_" +
-                    context.FavoredFace);
+                    context.FavoredFace + "_" + context.BoundMask);
 
         private static ModifierContext C(string dice = "12345", string initial = null, string before = null,
             string previous = null, int selected = 0, int ever = 0, int spent = 0, int hands = 3,
             int rerolls = 3, int played = 0, int starting = 3, int? priorStarting = null, int? priorRemaining = null,
-            int? favoredFace = null)
+            int? favoredFace = null, int bound = 0)
             => new ModifierContext(D(dice), D(initial ?? dice), before == null ? (DiceValues?)null : D(before),
                 previous == null ? (DiceValues?)null : D(previous), selected, ever, spent, hands, rerolls,
-                played, starting, priorStarting, priorRemaining, favoredFace);
+                played, starting, priorStarting, priorRemaining, favoredFace, bound);
 
         private static DiceValues D(string values)
             => new DiceValues(values[0] - '0', values[1] - '0', values[2] - '0', values[3] - '0', values[4] - '0');

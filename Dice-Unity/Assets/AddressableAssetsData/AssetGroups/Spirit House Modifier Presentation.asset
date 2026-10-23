@@ -711,6 +711,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - dice.theme.spirit-house.modifiers
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 599f7f3d0bc94541b097e89499f94e89
+    m_Address: theme.spirit-house.modifier.play_hand.bound_face_count_at_least.combined
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 59edc490ac265624d97e4506ad92d1b2
     m_Address: theme.spirit-house.modifier.play_hand.alternating_parity.base_score
     m_ReadOnly: 0
@@ -861,6 +867,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - dice.theme.spirit-house.modifiers
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 708fd7e14d464bb6b73c4e10f2a9cf30
+    m_Address: theme.spirit-house.modifier.play_hand.bound_face_count_at_least.multiplier
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 70bc6f908fc15fb49aaa1f00bb058c03
     m_Address: theme.spirit-house.modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
     m_ReadOnly: 0
@@ -941,6 +953,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 78c8f8c82b579aa4884b3ce5b0de549a
     m_Address: theme.spirit-house.modifier.play_hand.sum_divisible_by.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 78eebea8163a4719958ec491133c7a08
+    m_Address: theme.spirit-house.modifier.play_hand.bound_face_count_at_least.base_score
     m_ReadOnly: 0
     m_SerializedLabels:
     - dice.theme.spirit-house.modifiers
@@ -1811,6 +1829,12 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ff330541e1ad64346a3971b8ab32a197
     m_Address: theme.spirit-house.modifier.play_hand.contains_face.base_score
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - dice.theme.spirit-house.modifiers
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffc4e6f114b641848050f926644a7c12
+    m_Address: theme.spirit-house.modifier.play_hand.bound_face_count_at_least.rerolls
     m_ReadOnly: 0
     m_SerializedLabels:
     - dice.theme.spirit-house.modifiers

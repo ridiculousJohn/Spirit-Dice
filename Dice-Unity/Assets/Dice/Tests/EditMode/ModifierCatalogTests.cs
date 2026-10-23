@@ -18,15 +18,15 @@ namespace Dice.Tests
         public void ImportedCatalogContainsAllFamiliesAndVariantsWithUniqueMechanicalIdentities()
         {
             var catalog = Catalog();
-            Assert.That(catalog.Modifiers.Count, Is.EqualTo(300));
-            Assert.That(catalog.Modifiers.Select(value => value.Id).Distinct().Count(), Is.EqualTo(300));
-            Assert.That(catalog.Modifiers.Select(value => value.FamilyId).Distinct().Count(), Is.EqualTo(75));
+            Assert.That(catalog.Modifiers.Count, Is.EqualTo(304));
+            Assert.That(catalog.Modifiers.Select(value => value.Id).Distinct().Count(), Is.EqualTo(304));
+            Assert.That(catalog.Modifiers.Select(value => value.FamilyId).Distinct().Count(), Is.EqualTo(76));
             foreach (var family in catalog.Modifiers.GroupBy(value => value.FamilyId))
             {
                 Assert.That(family.Count(), Is.EqualTo(4), family.Key);
                 Assert.That(family.Select(value => value.Id.Substring(value.FamilyId.Length + 1)), Is.EquivalentTo(Roles), family.Key);
             }
-            Assert.That(catalog.Modifiers.Count(value => value.RewardEligible), Is.EqualTo(296));
+            Assert.That(catalog.Modifiers.Count(value => value.RewardEligible), Is.EqualTo(300));
             Assert.That(catalog.GetEncounter("encounter.standard").StartingModifiers, Is.Empty);
         }
 
@@ -86,7 +86,8 @@ namespace Dice.Tests
                 { ModifierConditionKind.SumGreaterThan, new[] { 22, 0 } },
                 { ModifierConditionKind.NoExtremeFaces, new[] { 1, 6 } },
                 { ModifierConditionKind.MiddleFacesCountAtLeast, new[] { 4, 0 } },
-                { ModifierConditionKind.FavoredFaceCountAtLeast, new[] { 2, 0 } }
+                { ModifierConditionKind.FavoredFaceCountAtLeast, new[] { 2, 0 } },
+                { ModifierConditionKind.BoundFaceCountAtLeast, new[] { 3, 0 } }
             };
             var catalog = Catalog();
             var sources = TestContent.ModifierAssets();

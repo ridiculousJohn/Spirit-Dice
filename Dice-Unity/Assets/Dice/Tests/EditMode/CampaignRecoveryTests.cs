@@ -33,7 +33,7 @@ namespace Dice.Tests
             string first = CreateCampaign(1);
             string third = CreateCampaign(3);
             if (corrupt) File.WriteAllText(IndexPath, "invalid index");
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.That(slots.Load() != null, Is.EqualTo(corrupt));
             Assert.That(slots.GetProfilePath(1), Is.EqualTo(ProfilePath(first)));
             Assert.That(slots.HasGame(2), Is.False);
@@ -340,7 +340,7 @@ namespace Dice.Tests
             byte[] legacy = PlayerProfileCodec.Serialize(new PlayerProfile());
             File.WriteAllBytes(legacyPath, legacy);
 
-            var slots = new CampaignSaveSlots(saveRoot);
+            var slots = new CampaignSaveSlots(saveRoot, TestContent.Catalog());
             Assert.That(slots.Load(), Is.Null);
             Assert.That(File.ReadAllBytes(slots.GetProfilePath(1)), Is.EqualTo(legacy));
             Assert.That(slots.StartNewGame(2), Is.Null);
@@ -349,10 +349,10 @@ namespace Dice.Tests
             var save = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave();
             EncounterSaveFileStore.Save(slots.GetSavePath(2), save);
 
-            slots = new CampaignSaveSlots(saveRoot);
+            slots = new CampaignSaveSlots(saveRoot, TestContent.Catalog());
             Assert.That(slots.Load(), Is.Null);
             Assert.That(slots.ActiveSlot, Is.EqualTo(2));
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(slots.GetSavePath(2))),
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(slots.GetSavePath(2), TestContent.Catalog())),
                 Is.EqualTo(EncounterSaveCodec.Serialize(save)));
 
             string index = Path.Combine(saveRoot, "spirit-slots.json");
@@ -408,7 +408,7 @@ namespace Dice.Tests
 
         private CampaignSaveSlots Load()
         {
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             slots.Load();
             return slots;
         }

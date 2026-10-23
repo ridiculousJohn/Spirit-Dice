@@ -23,7 +23,7 @@ namespace Dice.Tests
             save.Revision = (1L << 53) + 1;
             save.NextOfferId = long.MaxValue - 1;
             save.PendingUpgradeCategories = Array.Empty<HandCategory>();
-            var restored = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save));
+            var restored = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), TestContent.Catalog());
             Assert.That(restored.DiceRandomState, Is.EqualTo(ulong.MaxValue));
             Assert.That(restored.RewardRandomState, Is.EqualTo(1UL << 63));
             Assert.That(restored.TotalScore, Is.EqualTo(long.MaxValue));
@@ -40,8 +40,8 @@ namespace Dice.Tests
             var session = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 3);
             byte[] bytes = EncounterSaveCodec.Serialize(session.CaptureSave());
             for (int length = 0; length < bytes.Length; ++length)
-                Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes.Take(length).ToArray()), length.ToString());
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes.Concat(new byte[] { (byte)'{' }).ToArray()));
+                Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes.Take(length).ToArray(), TestContent.Catalog()), length.ToString());
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes.Concat(new byte[] { (byte)'{' }).ToArray(), TestContent.Catalog()));
         }
 
         [Test]
@@ -49,14 +49,14 @@ namespace Dice.Tests
         {
             byte[] bytes = EncounterSaveCodec.Serialize(EncounterSession.CreateEncounter(
                 TestContent.Catalog(), TestContent.EncounterId, 3).CaptureSave());
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes("[]")));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes("[]"), TestContent.Catalog()));
             var invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
             invalid["HasPreviousStage"] = 2;
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString())));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));
             invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
             invalid["SaveFormatVersion"] = 99;
-            Assert.Throws<NotSupportedException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString())));
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(new byte[EncounterSaveCodec.MaximumSaveBytes + 1]));
+            Assert.Throws<NotSupportedException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(new byte[EncounterSaveCodec.MaximumSaveBytes + 1], TestContent.Catalog()));
         }
 
         [Test]
@@ -65,7 +65,7 @@ namespace Dice.Tests
             var catalog = TestContent.Catalog();
             var save = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 8).CaptureSave();
             ++save.RulesVersion;
-            var decoded = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save));
+            var decoded = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog);
             bool success = EncounterApplication.TryRestore(catalog, decoded, out var application, out var result);
             Assert.That(success, Is.False);
             Assert.That(application, Is.Null);
@@ -79,7 +79,7 @@ namespace Dice.Tests
             var catalog = TestContent.Catalog();
             var original = new EncounterApplication(catalog, TestContent.EncounterId, 52);
             Assert.That(original.Submit(new RerollDiceAction(5), 0).Accepted, Is.True);
-            var save = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(original.CaptureSave()));
+            var save = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(original.CaptureSave()), catalog);
             Assert.That(EncounterApplication.TryRestore(catalog, save, out var restored, out var result), Is.True, result.Detail);
             Assert.That(restored.InitialResolution.Events, Is.Empty);
             Assert.That(restored.InitialResolution.PreviousRevision, Is.EqualTo(save.Revision));
@@ -108,16 +108,16 @@ namespace Dice.Tests
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             var first = session.CaptureSave();
             EncounterSaveFileStore.Save(path, first);
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path)), Is.EqualTo(EncounterSaveCodec.Serialize(first)));
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path, catalog)), Is.EqualTo(EncounterSaveCodec.Serialize(first)));
             Assert.That(session.Execute(new RerollDiceAction(3), 0).Accepted, Is.True);
             var second = session.CaptureSave();
             EncounterSaveFileStore.Save(path, second);
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path)), Is.EqualTo(EncounterSaveCodec.Serialize(second)));
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path + ".bak")), Is.EqualTo(EncounterSaveCodec.Serialize(first)));
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path, catalog)), Is.EqualTo(EncounterSaveCodec.Serialize(second)));
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path + ".bak", catalog)), Is.EqualTo(EncounterSaveCodec.Serialize(first)));
             var invalid = session.CaptureSave();
             ++invalid.SaveFormatVersion;
             Assert.Throws<NotSupportedException>(() => EncounterSaveFileStore.Save(path, invalid));
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path)), Is.EqualTo(EncounterSaveCodec.Serialize(second)));
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(path, catalog)), Is.EqualTo(EncounterSaveCodec.Serialize(second)));
             Assert.That(Directory.GetFiles(artifactRoot).Length, Is.EqualTo(2));
             TestContext.WriteLine("Retained save files: " + artifactRoot);
         }

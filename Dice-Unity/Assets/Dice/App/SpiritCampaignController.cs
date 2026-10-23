@@ -35,7 +35,7 @@ namespace Dice.App
             if (controller.IsBusy) return false;
             try
             {
-                var nextSlots = new CampaignSaveSlots(rootDirectory);
+                var nextSlots = new CampaignSaveSlots(rootDirectory, mechanicalCatalog);
                 string recoveredIndex = nextSlots.Load();
                 string nextRoot = Path.GetFullPath(rootDirectory);
                 string nextSavePath = nextSlots.GetSavePath(nextSlots.ActiveSlot) ??

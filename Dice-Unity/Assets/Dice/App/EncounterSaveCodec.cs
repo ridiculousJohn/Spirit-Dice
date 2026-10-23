@@ -17,8 +17,12 @@ namespace Dice.App
     {
         public const int MaximumSaveBytes = 16 * 1024 * 1024;
         private const int MaximumDepth = 64;
+        private const string LegacyDisturbedMask = "DisturbedMask";
+        private const string LegacyLatestDisturbedMask = "LatestDisturbedMask";
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
-        private static readonly JsonSerializerSettings Settings = CreateSettings();
+        private static readonly JsonSerializerSettings Settings = CreateSettings(MissingMemberHandling.Ignore);
+        // A rule state belongs to its rule's save class, so a field that class does not define is rejected.
+        private static readonly JsonSerializerSettings RuleStateSettings = CreateSettings(MissingMemberHandling.Error);
 
         public static byte[] Serialize(EncounterSaveData save)
         {
@@ -39,9 +43,11 @@ namespace Dice.App
             return TextEncoding.GetBytes(text);
         }
 
-        public static EncounterSaveData Deserialize(byte[] bytes)
+        /** The catalog resolves each rule state's type from the rule that owns it. */
+        public static EncounterSaveData Deserialize(byte[] bytes, MechanicalCatalog catalog)
         {
             if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (bytes.Length > MaximumSaveBytes) throw new FormatException("The save exceeds the size limit.");
             try
             {
@@ -97,18 +103,20 @@ namespace Dice.App
                     if (formatVersion < 6)
                     {
                         // Earlier formats had no table pieces, interference or rule stream; restore supplies the stream.
-                        if (document[nameof(EncounterSaveData.DisturbedMask)] == null)
-                            document.Add(nameof(EncounterSaveData.DisturbedMask), 0);
-                        if (document[nameof(EncounterSaveData.LatestDisturbedMask)] == null)
-                            document.Add(nameof(EncounterSaveData.LatestDisturbedMask), 0);
+                        if (document[LegacyDisturbedMask] == null) document.Add(LegacyDisturbedMask, 0);
+                        if (document[LegacyLatestDisturbedMask] == null) document.Add(LegacyLatestDisturbedMask, 0);
                         if (document[nameof(EncounterSaveData.RuleRandomState)] == null)
                             document.Add(nameof(EncounterSaveData.RuleRandomState), 0UL);
                         if (document[nameof(EncounterSaveData.Pieces)] == null)
                             document.Add(nameof(EncounterSaveData.Pieces), JValue.CreateNull());
                     }
+                    if (formatVersion < 7) MigrateDisturbedMasks(document, catalog, serializer);
+                    var ruleStates = ReadRuleStates(document, catalog, serializer);
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
                     if (save == null) throw new FormatException("The save payload is missing.");
+                    for (int i = 0; i < ruleStates.Count; ++i)
+                        if (save.RuleStates[i] != null) save.RuleStates[i].State = ruleStates[i];
                     return save;
                 }
             }
@@ -117,7 +125,7 @@ namespace Dice.App
             catch (OverflowException exception) { throw new FormatException("A save integer is outside its supported range.", exception); }
         }
 
-        private static JsonSerializerSettings CreateSettings()
+        private static JsonSerializerSettings CreateSettings(MissingMemberHandling missingMemberHandling)
         {
             var settings = new JsonSerializerSettings
             {
@@ -127,7 +135,7 @@ namespace Dice.App
                 DateParseHandling = DateParseHandling.None,
                 NullValueHandling = NullValueHandling.Include,
                 DefaultValueHandling = DefaultValueHandling.Include,
-                MissingMemberHandling = MissingMemberHandling.Ignore,
+                MissingMemberHandling = missingMemberHandling,
                 TypeNameHandling = TypeNameHandling.None,
                 MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
                 MaxDepth = MaximumDepth
@@ -135,6 +143,76 @@ namespace Dice.App
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StrictPrimitiveConverter());
             return settings;
+        }
+
+        /** Format 6 kept the haunting's disturbed dice on the shared block; they move into its rule's state. */
+        private static void MigrateDisturbedMasks(JObject document, MechanicalCatalog catalog, JsonSerializer serializer)
+        {
+            int disturbed = TakeLegacyMask(document, LegacyDisturbedMask, serializer);
+            int latest = TakeLegacyMask(document, LegacyLatestDisturbedMask, serializer);
+            if (document[nameof(EncounterSaveData.RuleStates)] == null)
+                document.Add(nameof(EncounterSaveData.RuleStates), new JArray());
+            if (disturbed == 0 && latest == 0) return;
+            // Only the encounter's die-interference rule could have recorded disturbed dice.
+            string ruleId = null;
+            var encounter = FindEncounter(document, catalog);
+            if (encounter != null)
+                foreach (var rule in encounter.Rules)
+                    if (rule.SaveDataType == typeof(DieInterferenceSaveData)) ruleId = rule.Id;
+            if (ruleId == null) throw new FormatException("Disturbed dice require a die-interference rule.");
+            if (!(document[nameof(EncounterSaveData.RuleStates)] is JArray entries))
+                throw new FormatException("Rule states must be an array.");
+            entries.Add(new JObject
+            {
+                { nameof(EncounterSaveRuleData.RuleId), ruleId },
+                { nameof(EncounterSaveRuleData.State), JObject.FromObject(new DieInterferenceSaveData
+                    { DisturbedMask = disturbed, LatestDisturbedMask = latest }, serializer) }
+            });
+        }
+
+        private static int TakeLegacyMask(JObject document, string name, JsonSerializer serializer)
+        {
+            var token = document[name] ?? throw new JsonSerializationException("A required save field is missing: " + name);
+            int value = token.ToObject<int>(serializer);
+            document.Remove(name);
+            return value;
+        }
+
+        /**
+         * Validates each rule state against its owning rule's save type and deserializes it with that type.
+         * States of rules the catalog does not define stay as parsed JSON, which restore rejects.
+         */
+        private static List<object> ReadRuleStates(JObject document, MechanicalCatalog catalog, JsonSerializer serializer)
+        {
+            var values = new List<object>();
+            if (!(document[nameof(EncounterSaveData.RuleStates)] is JArray entries)) return values;
+            var encounter = FindEncounter(document, catalog);
+            foreach (var entry in entries)
+            {
+                var ruleId = (entry as JObject)?[nameof(EncounterSaveRuleData.RuleId)];
+                var state = (entry as JObject)?[nameof(EncounterSaveRuleData.State)];
+                Type type = null;
+                if (encounter != null && ruleId != null && ruleId.Type == JTokenType.String)
+                    foreach (var rule in encounter.Rules)
+                        if (string.Equals(rule.Id, (string)ruleId, StringComparison.Ordinal)) type = rule.SaveDataType;
+                if (type == null || state == null || state.Type == JTokenType.Null)
+                {
+                    values.Add(state == null || state.Type == JTokenType.Null ? null : state);
+                    continue;
+                }
+                ValidateFieldNames(state, type, serializer.ContractResolver);
+                values.Add(state.ToObject(type, JsonSerializer.Create(RuleStateSettings)));
+            }
+            return values;
+        }
+
+        private static EncounterDefinition FindEncounter(JObject document, MechanicalCatalog catalog)
+        {
+            var id = document[nameof(EncounterSaveData.EncounterId)];
+            if (id == null || id.Type != JTokenType.String) return null;
+            foreach (var encounter in catalog.Encounters)
+                if (string.Equals(encounter.Id, (string)id, StringComparison.Ordinal)) return encounter;
+            return null;
         }
 
         private static void ValidateFieldNames(JToken token, Type type, IContractResolver resolver)

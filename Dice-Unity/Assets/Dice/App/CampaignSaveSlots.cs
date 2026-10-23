@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Dice.Engine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -23,12 +24,14 @@ namespace Dice.App
         public int ActiveSlot { get { RequireLoaded(); return activeSlot; } }
         public IReadOnlyList<CampaignRecoveryInfo> RecoveryCampaigns { get { RequireLoaded(); return recoveryCampaigns; } }
 
-        public CampaignSaveSlots(string root)
+        /** The catalog reads run saves when scanning campaigns for recovery. */
+        public CampaignSaveSlots(string root, MechanicalCatalog catalog)
         {
             if (string.IsNullOrWhiteSpace(root)) throw new ArgumentException("A save directory is required.", nameof(root));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             this.root = Path.GetFullPath(root);
             indexPath = Path.Combine(this.root, "spirit-slots.json");
-            recovery = new CampaignRecoveryStore(this.root);
+            recovery = new CampaignRecoveryStore(this.root, catalog);
         }
 
         public string Load()

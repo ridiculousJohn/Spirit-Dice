@@ -62,7 +62,7 @@ namespace Dice.Tests
         [Test]
         public void OperationsRequireALoadedIndex()
         {
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.Throws<InvalidOperationException>(() => { _ = slots.ActiveSlot; });
             Assert.Throws<InvalidOperationException>(() => slots.HasGame(1));
             Assert.Throws<InvalidOperationException>(() => slots.GetSavePath(1));
@@ -102,7 +102,7 @@ namespace Dice.Tests
             {
                 slots.SelectSlot(slot);
                 Assert.That(slots.GetSavePath(slot), Is.EqualTo(paths[slot - 1]));
-                Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(paths[slot - 1])), Is.EqualTo(saves[slot - 1]));
+                Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(paths[slot - 1], TestContent.Catalog())), Is.EqualTo(saves[slot - 1]));
                 var profile = PlayerProfileFileStore.Load(slots.GetProfilePath(slot));
                 Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "modifier." + slot }));
                 Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { "family." + slot }));
@@ -281,7 +281,7 @@ namespace Dice.Tests
             File.WriteAllBytes(legacyRunPath, legacyRun);
             File.WriteAllBytes(legacyProfilePath, legacyProfile);
             File.WriteAllText(IndexPath, "invalid index");
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.That(slots.Load(), Is.Not.Null);
             AssertEmptySlots(slots);
             Assert.That(Directory.GetDirectories(root), Is.Empty);
@@ -391,7 +391,7 @@ namespace Dice.Tests
             byte[] profile = PlayerProfileCodec.Serialize(new PlayerProfile());
             File.WriteAllBytes(legacyProfile, profile);
             Directory.CreateDirectory(IndexPath);
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.Catch<Exception>(() => slots.Load());
             Assert.Throws<InvalidOperationException>(() => { _ = slots.ActiveSlot; });
             Assert.That(File.ReadAllBytes(legacyProfile), Is.EqualTo(profile));
@@ -403,7 +403,7 @@ namespace Dice.Tests
 
         private CampaignSaveSlots Load()
         {
-            var slots = new CampaignSaveSlots(root);
+            var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             slots.Load();
             return slots;
         }

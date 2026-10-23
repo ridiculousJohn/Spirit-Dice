@@ -43,7 +43,8 @@ namespace Dice.UnityContent
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
                     source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
                     string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones),
-                    source.encounterModifierIds, source.unlockRewardModifierIds, BuildPieces(source.pieces));
+                    source.encounterModifierIds, source.unlockRewardModifierIds, BuildPieces(source.pieces),
+                    source.encounterModifiersFirstClearedStageNumber);
             }
             var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
             for (int i = 0; i < modifierAssets.Count; ++i)
@@ -158,6 +159,7 @@ namespace Dice.UnityContent
             public string spiritId;
             public UnlockMilestoneData[] unlockMilestones = Array.Empty<UnlockMilestoneData>();
             public string[] encounterModifierIds = Array.Empty<string>();
+            [Min(1)] public int encounterModifiersFirstClearedStageNumber = 1;
             public string[] unlockRewardModifierIds = Array.Empty<string>();
             public int[] startingUpgrades = new int[HandDefinition.CategoryCount];
             public string[] startingModifiers = Array.Empty<string>();

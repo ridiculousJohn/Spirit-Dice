@@ -339,6 +339,8 @@ namespace Dice.App
         public void ToggleDie(int index)
         {
             if (IsBusy || JourneyPhase != EncounterJourneyPhase.Playing || Snapshot == null || Snapshot.Phase != EncounterPhase.Playing || index < 0 || index >= DiceValues.Count) return;
+            // A locked die cannot be rerolled, so tapping it changes nothing.
+            if ((Snapshot.LockedMask & (1 << index)) != 0) return;
             SelectedMask ^= 1 << index;
             StateChanged?.Invoke();
         }
@@ -394,7 +396,7 @@ namespace Dice.App
             try
             {
                 if (!PrepareProfile(SavePath)) return false;
-                var save = EncounterSaveFileStore.Load(SavePath);
+                var save = EncounterSaveFileStore.Load(SavePath, Catalog);
                 if (!EncounterApplication.TryRestore(Catalog, save, out var next, out var result))
                 {
                     SetStatus("Cannot load the encounter: " + result.Error + ". " + result.Detail);
@@ -430,7 +432,7 @@ namespace Dice.App
                 EncounterApplication restored = null;
                 if (File.Exists(SavePath))
                 {
-                    var save = EncounterSaveFileStore.Load(SavePath);
+                    var save = EncounterSaveFileStore.Load(SavePath, Catalog);
                     if (!EncounterApplication.TryRestore(Catalog, save, out restored, out var result))
                     {
                         SetJourneyStatus("Cannot load the encounter: " + result.Error + ". " + result.Detail);

@@ -685,7 +685,7 @@ namespace Dice.Tests
             Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.Snapshot, Is.SameAs(pending));
-            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath));
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath, catalog));
             Assert.That(restored.Success, Is.True);
             EncounterSessionTests.AssertSnapshotsEqual(pending, restored.Session.Snapshot);
         }
@@ -1046,7 +1046,7 @@ namespace Dice.Tests
             controller.Resolved += resolution =>
             {
                 ++resolutions;
-                var loaded = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath));
+                var loaded = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath, catalog));
                 Assert.That(loaded.Success, Is.True);
                 EncounterSessionTests.AssertSnapshotsEqual(resolution.Snapshot, loaded.Session.Snapshot);
                 controller.CompletePresentation();
@@ -1076,7 +1076,7 @@ namespace Dice.Tests
                 Assert.That(controller.TrySave(), Is.False);
             }
             Assert.That(controller.TrySave(), Is.True);
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, catalog);
             Assert.That(saved.Revision, Is.EqualTo(controller.Snapshot.Revision));
             controller.PlayHand();
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 2));

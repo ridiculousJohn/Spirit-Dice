@@ -13,7 +13,7 @@ namespace Dice.App
             SaveFileCommit.Write(path, bytes);
         }
 
-        public static EncounterSaveData Load(string path)
+        public static EncounterSaveData Load(string path, MechanicalCatalog catalog)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("A save path is required.", nameof(path));
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -28,7 +28,7 @@ namespace Dice.App
                     if (count == 0) throw new FormatException("The save is truncated.");
                     offset += count;
                 }
-                return EncounterSaveCodec.Deserialize(bytes);
+                return EncounterSaveCodec.Deserialize(bytes, catalog);
             }
         }
     }

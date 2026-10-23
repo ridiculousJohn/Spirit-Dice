@@ -61,7 +61,7 @@ namespace Dice.Tests
 
             controller.Save();
             Assert.That(File.Exists(savePath), Is.True, controller.StatusMessage);
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, controller.Catalog);
             controller.SelectAllDice();
             controller.Reroll();
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision + 1));

@@ -29,7 +29,7 @@ namespace Dice.Tests
             Assert.That(offer.Options.All(value => discoveries.Contains(catalog.GetModifier(value.DefinitionId).FamilyId)), Is.True);
             Assert.That(result.Snapshot.UnlockedModifierIds, Is.Empty);
             var restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(discoveries));
             Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
@@ -70,7 +70,7 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { modifiers[0].FamilyId }));
             session.AddDiscoveredFamilies(modifiers.Select(value => value.FamilyId));
             var restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
             Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds.Count, Is.EqualTo(5));
@@ -95,12 +95,12 @@ namespace Dice.Tests
             document.Remove(nameof(EncounterSaveData.DiscoveredFamilyIds));
             document.Remove(nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds));
             var restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
             Assert.That(restored.Session.Snapshot.DiscoveredFamilyIds, Is.EquivalentTo(modifiers.Select(value => value.FamilyId)));
             restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(restored.Session.CaptureSave())));
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(restored.Session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
         }
@@ -344,7 +344,7 @@ namespace Dice.Tests
             Assert.That(original.Snapshot.PendingReward, Is.SameAs(pending));
             Assert.That(original.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
             var bytes = EncounterSaveCodec.Serialize(original.CaptureSave());
-            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(bytes));
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(bytes, catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.PendingReward.Options[0].DefinitionId, Is.EqualTo("weak"));
             var first = original.Execute(new RefreshModifierOfferAction(pending.OfferId), original.Snapshot.Revision);
@@ -378,7 +378,7 @@ namespace Dice.Tests
             Assert.That(session.Execute(new RefreshModifierOfferAction(offer.OfferId), session.Snapshot.Revision).Rejection,
                 Is.EqualTo(CommandRejection.InvalidPhase));
             var bytes = EncounterSaveCodec.Serialize(session.CaptureSave());
-            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(bytes));
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(bytes, catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(EncounterSaveCodec.Serialize(restored.Session.CaptureSave()), Is.EqualTo(bytes));
             EncounterAction action = remaining == 0 ? (EncounterAction)new AcknowledgeModifierUnlockAction(offer.OfferId) :
@@ -399,7 +399,7 @@ namespace Dice.Tests
             session.Execute(PlayHandAction.Instance, 0);
             var offer = session.Snapshot.PendingReward;
             session.AddUnlockedModifiers(new[] { offer.Options[0].DefinitionId });
-            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+            var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             Assert.That(restored.Session.Snapshot.PendingReward.Equals(offer), Is.True);
             var chosen = restored.Session.Execute(new SelectModifierUnlockAction(offer.OfferId, offer.Options[0].OptionId),
@@ -452,7 +452,7 @@ namespace Dice.Tests
                 new[] { new EncounterDefinition(TestContent.EncounterId, stages, rewardPolicy: policy,
                     encounterModifierIds: new[] { addition.Id }) }, new[] { starter, addition }, new[] { pool });
             var restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+                EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             var offer = restored.Session.Snapshot.PendingReward;
             Assert.That(offer.Options.Single().DefinitionId, Is.EqualTo(starter.Id));
@@ -476,7 +476,7 @@ namespace Dice.Tests
             session.Execute(PlayHandAction.Instance, 0);
             Assert.That(session.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None));
             var restored = EncounterSession.RestoreEncounter(catalog,
-                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave())));
+                EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
             var offer = restored.Session.Snapshot.PendingReward;
             EncounterAction action = collected ? (EncounterAction)new AcknowledgeModifierUnlockAction(offer.OfferId) :
@@ -519,9 +519,9 @@ namespace Dice.Tests
             document.Remove(nameof(EncounterSaveData.PendingModifierOfferUsesLegacyEligibility));
             document.Remove(nameof(EncounterSaveData.PendingModifierOfferUnlockedIds));
             var current = Catalog(new[] { Modifier("charm", access: ModifierAccess.PermanentUnlock) });
-            var restored = EncounterSession.RestoreEncounter(current, EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+            var restored = EncounterSession.RestoreEncounter(current, EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString()), current));
             Assert.That(restored.Success, Is.True, restored.Detail);
-            restored = EncounterSession.RestoreEncounter(current, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(restored.Session.CaptureSave())));
+            restored = EncounterSession.RestoreEncounter(current, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(restored.Session.CaptureSave()), current));
             Assert.That(restored.Success, Is.True, restored.Detail);
             var offer = restored.Session.Snapshot.PendingReward;
             Assert.That(restored.Session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), restored.Session.Snapshot.Revision).Accepted, Is.True);
@@ -544,7 +544,7 @@ namespace Dice.Tests
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
             var document = JObject.Parse(System.Text.Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
             document.Remove(nameof(EncounterSaveData.UnlockedModifierIds));
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString())));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString()), catalog));
         }
 
         [Test]

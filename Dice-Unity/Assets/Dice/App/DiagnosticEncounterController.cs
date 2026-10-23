@@ -111,13 +111,14 @@ namespace Dice.App
 
         public void ToggleDie(int index)
         {
-            if (Snapshot == null || Snapshot.Phase != EncounterPhase.Playing || index < 0 || index >= DiceValues.Count) return;
+            if (Snapshot == null || Snapshot.Phase != EncounterPhase.Playing || index < 0 || index >= DiceValues.Count ||
+                (Snapshot.LockedMask & (1 << index)) != 0) return;
             SelectedMask ^= 1 << index;
         }
 
         public void SelectAllDice()
         {
-            if (Snapshot != null && Snapshot.Phase == EncounterPhase.Playing) SelectedMask = DiceValues.AllMask;
+            if (Snapshot != null && Snapshot.Phase == EncounterPhase.Playing) SelectedMask = DiceValues.AllMask & ~Snapshot.LockedMask;
         }
 
         public void ClearDiceSelection() => SelectedMask = 0;
@@ -157,7 +158,7 @@ namespace Dice.App
             }
             try
             {
-                var save = EncounterSaveFileStore.Load(SavePath);
+                var save = EncounterSaveFileStore.Load(SavePath, Catalog);
                 if (!EncounterApplication.TryRestore(Catalog, save, out var next, out var result))
                 {
                     StatusMessage = "Cannot load the encounter: " + result.Error + ". " + result.Detail;

@@ -256,7 +256,7 @@ namespace Dice.Tests
             yield return WaitForIdle();
             Assert.That(File.Exists(controller.SavePath), Is.True, controller.StatusMessage);
             var expected = controller.Snapshot;
-            var saved = EncounterSaveFileStore.Load(controller.SavePath);
+            var saved = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
             Assert.That(saved.Revision, Is.EqualTo(expected.Revision));
             Assert.That(saved.CurrentDice, Is.EqualTo(expected.CurrentDice.ToArray()));
             string savedBytes = File.ReadAllText(controller.SavePath);
@@ -303,7 +303,7 @@ namespace Dice.Tests
             Assert.That(controller.SelectedChapter, Is.SameAs(expected));
             Assert.That(controller.SelectedJourney, Is.Null);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(owl.EncounterId));
-            var saved = EncounterSaveFileStore.Load(slots.GetSavePath(2));
+            var saved = EncounterSaveFileStore.Load(slots.GetSavePath(2), controller.Catalog);
             Assert.That(controller.Snapshot.CurrentDice.ToArray(), Is.EqualTo(saved.CurrentDice));
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision));
             Assert.That(controller.CanResume, Is.True);
@@ -371,7 +371,7 @@ namespace Dice.Tests
             Activate(Picker.SlotButtons[1]);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(controller.Snapshot.CurrentDice.ToArray(),
-                Is.EqualTo(EncounterSaveFileStore.Load(previousRun).CurrentDice));
+                Is.EqualTo(EncounterSaveFileStore.Load(previousRun, controller.Catalog).CurrentDice));
             Assert.That(File.ReadAllBytes(previousRun), Is.EqualTo(runBytes));
             Assert.That(File.ReadAllBytes(previousProfile), Is.EqualTo(profileBytes));
             LogAssert.NoUnexpectedReceived();
@@ -394,7 +394,7 @@ namespace Dice.Tests
             Assert.That(picker == null || !picker.IsOpen, Is.True);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.owl.watchtower"));
             Assert.That(controller.Snapshot.CurrentDice.ToArray(),
-                Is.EqualTo(EncounterSaveFileStore.Load(slots.GetSavePath(2)).CurrentDice));
+                Is.EqualTo(EncounterSaveFileStore.Load(slots.GetSavePath(2), controller.Catalog).CurrentDice));
             campaign.ShowMainMenu();
             yield return ContentReady.Routed(controller);
             Activate(Menu.SlotSelectorButton);
@@ -497,7 +497,7 @@ namespace Dice.Tests
 
         private CampaignSaveSlots SeedSlots()
         {
-            var slots = new CampaignSaveSlots(rootDirectory);
+            var slots = new CampaignSaveSlots(rootDirectory, controller.Catalog);
             slots.Load();
             var fox = controller.JourneyCatalog.Entries.Single(entry => entry.EncounterId == "encounter.fox.introduction");
             var owl = controller.JourneyCatalog.Entries.Single(entry => entry.EncounterId == "encounter.owl.watchtower");
@@ -560,7 +560,7 @@ namespace Dice.Tests
             Assert.That(campaign.RecoveryCampaigns.Count, Is.EqualTo(1));
             Activate(Menu.ContinueButton);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo("encounter.owl.watchtower"));
-            Assert.That(controller.Snapshot.CurrentDice.ToArray(), Is.EqualTo(EncounterSaveFileStore.Load(recoveryRun).CurrentDice));
+            Assert.That(controller.Snapshot.CurrentDice.ToArray(), Is.EqualTo(EncounterSaveFileStore.Load(recoveryRun, controller.Catalog).CurrentDice));
             Assert.That(File.ReadAllBytes(recoveryRun), Is.EqualTo(recoveredBytes));
             LogAssert.NoUnexpectedReceived();
         }

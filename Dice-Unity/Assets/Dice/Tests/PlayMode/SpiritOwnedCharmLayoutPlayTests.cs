@@ -28,7 +28,7 @@ namespace Dice.Tests
             const string family = "modifier.play_hand.edge_sum_equals_either";
             var definitions = controller.Catalog.Modifiers.OrderBy(definition =>
                 definition.Id == family + ".multiplier" ? 0 : definition.Id == family + ".combined" ? 1 : 2).ToArray();
-            Assert.That(definitions.Length, Is.EqualTo(300));
+            Assert.That(definitions.Length, Is.EqualTo(304));
             Assert.That(definitions.All(definition => SpiritModifierIcons.GetSprite(definition) != null), Is.True,
                 "Every standard family supplies authored artwork.");
             var encounter = new EncounterDefinition("encounter.owned-charm-layout",

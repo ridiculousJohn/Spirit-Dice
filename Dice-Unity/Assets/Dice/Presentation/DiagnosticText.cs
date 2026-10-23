@@ -40,6 +40,7 @@ namespace Dice.Presentation
                 case NoDiceRerolledCondition _: return "No rerolls spent on this hand.";
                 case ContainsFaceCondition value: return "At least one die shows " + value.Parameter + ".";
                 case FavoredFaceCountAtLeastCondition value: return "At least " + value.Parameter + " dice show the favored face.";
+                case BoundFaceCountAtLeastCondition value: return "At least " + value.Parameter + " dice show the face of a bound die.";
                 case ExactlyOneSelectedFaceCondition value: return "Exactly one rerolled die shows " + value.Parameter + ".";
                 case OutOfRerollsCondition _: return "No rerolls remain.";
                 case RangeLessThanCondition value: return "Largest minus smallest face is less than " + value.Parameter + ".";
@@ -231,6 +232,8 @@ namespace Dice.Presentation
                 case EncounterCompletedEvent completed:
                     return prefix + Humanize(completed.Outcome.ToString()) + ". Total score " + Number(completed.TotalScore) +
                         "; " + completed.HandsPlayed + " hands played, " + completed.RerollsSpent + " rerolls spent.";
+                case DieMarkedEvent marked: return prefix + "Die " + (marked.Bay + 1) + " marked for binding.";
+                case DieBoundEvent bound: return prefix + "Die " + (bound.Bay + 1) + " bound at " + bound.Face + ".";
                 case RewardsRequiredEvent _: return prefix + "Rewards required before the next stage.";
                 default: return prefix + Humanize(ruleEvent.GetType().Name);
             }

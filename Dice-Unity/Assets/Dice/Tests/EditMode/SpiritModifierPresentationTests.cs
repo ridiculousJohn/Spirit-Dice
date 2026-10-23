@@ -61,6 +61,26 @@ namespace Dice.Tests
                 Is.EqualTo("At least 2 dice show the favored face."));
         }
 
+        [TestCase("base_score", "Base")]
+        [TestCase("multiplier", "Mult")]
+        [TestCase("combined", "Base + Mult")]
+        [TestCase("rerolls", "Rerolls")]
+        public void GraftedBranchUsesItsOwnNameAndSharedJoinedRootsArtworkWithStandardCategories(string role, string suffix)
+        {
+            var presentation = themeAssets.Single(asset => asset.Modifier.Id ==
+                "modifier.play_hand.bound_face_count_at_least." + role);
+            var roots = themeAssets.Single(asset => asset.Modifier.Id ==
+                "modifier.play_hand.interior_equals_neighbor_sum." + role);
+            Assert.That(presentation.DisplayName, Is.EqualTo("Grafted Branch / " + suffix));
+            Assert.That(presentation.Icon, Is.SameAs(roots.Icon));
+            Assert.That(presentation.Artwork, Is.EqualTo(roots.Artwork));
+            Assert.That(presentation.Category, Is.SameAs(roots.Category));
+            Assert.That(SpiritModifierIcons.GetSprite(presentation.Modifier.Build()),
+                Is.SameAs(SpiritModifierIcons.GetSprite(roots.Modifier.Build())));
+            Assert.That(SpiritModifierPresentation.GetConditionText(presentation.Modifier.Build()),
+                Is.EqualTo("At least 3 dice show the face of a bound die."));
+        }
+
         [TestCase("modifier.initial_roll.initial_pair.base_score", "Welcoming Pair / Base", typeof(InitialPairCondition),
             "Your initial roll is a Pair.", "+10 base score", "On the initial roll / Once per hand")]
         [TestCase("modifier.player_reroll.selected_face_unchanged.rerolls", "Second Chance / Rerolls", typeof(SelectedFaceUnchangedCondition),
@@ -143,7 +163,7 @@ namespace Dice.Tests
         public void EveryStandardFamilyHasOneDistinctThematicName()
         {
             var families = Catalog().Modifiers.GroupBy(definition => definition.FamilyId).ToArray();
-            Assert.That(families.Length, Is.EqualTo(75));
+            Assert.That(families.Length, Is.EqualTo(76));
             var names = new HashSet<string>(StringComparer.Ordinal);
             foreach (var family in families)
             {
@@ -166,6 +186,7 @@ namespace Dice.Tests
         [TestCase("modifier.play_hand.edge_pair_sums_equal", "Balanced Scales")]
         [TestCase("modifier.play_hand.out_of_rerolls", "Empty Cup")]
         [TestCase("modifier.play_hand.range_greater_than", "Wide Valley")]
+        [TestCase("modifier.play_hand.no_dice_rerolled", "Unturned Leaf")]
         public void StandardFamiliesUseTheirCuratedNames(string familyId, string expected)
         {
             foreach (var definition in Catalog().Modifiers.Where(value => value.FamilyId == familyId))
@@ -179,12 +200,12 @@ namespace Dice.Tests
         public void AuthoredVariantNamesIdentifyTheirEffectRole(string role, string label)
         {
             var variants = Catalog().Modifiers.Where(value => value.Id.EndsWith("." + role, StringComparison.Ordinal)).ToArray();
-            Assert.That(variants.Length, Is.EqualTo(75));
+            Assert.That(variants.Length, Is.EqualTo(76));
             foreach (var definition in variants)
                 Assert.That(SpiritModifierPresentation.GetName(definition), Does.EndWith(" / " + label), definition.Id);
             Assert.That(SpiritModifierPresentation.GetName(Catalog().GetModifier(
                 "modifier.play_hand.edge_sum_equals_either." + role)), Is.EqualTo("Two Gateposts / " + label));
-            Assert.That(Catalog().Modifiers.Select(SpiritModifierPresentation.GetName).Distinct().Count(), Is.EqualTo(300));
+            Assert.That(Catalog().Modifiers.Select(SpiritModifierPresentation.GetName).Distinct().Count(), Is.EqualTo(304));
         }
 
         [Test]
@@ -428,7 +449,8 @@ namespace Dice.Tests
             var familySprites = new HashSet<Sprite>();
             var images = new List<Color32[]>();
             var families = catalog.Modifiers.Where(definition =>
-                    definition.FamilyId != "modifier.play_hand.favored_face_count_at_least")
+                    definition.FamilyId != "modifier.play_hand.favored_face_count_at_least" &&
+                    definition.FamilyId != "modifier.play_hand.bound_face_count_at_least")
                 .GroupBy(definition => definition.FamilyId).ToArray();
             Assert.That(families.Length, Is.EqualTo(74));
             foreach (var family in families)

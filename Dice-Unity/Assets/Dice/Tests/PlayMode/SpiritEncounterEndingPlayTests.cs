@@ -95,7 +95,7 @@ namespace Dice.Tests
             var finalOffer = controller.Snapshot.PendingReward;
             Assert.That(finalOffer.Options.Count, Is.InRange(1, 3));
             Assert.That(finalOffer.Options.All(option => !controller.ProfileUnlockedModifierIds.Contains(option.DefinitionId)), Is.True);
-            var pendingSave = EncounterSaveFileStore.Load(controller.SavePath);
+            var pendingSave = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
             Assert.That(pendingSave.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
             Assert.That(pendingSave.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EqualTo(finalOffer.Options.Select(option => option.DefinitionId)));

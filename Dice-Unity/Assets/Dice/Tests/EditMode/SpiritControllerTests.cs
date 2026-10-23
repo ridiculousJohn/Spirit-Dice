@@ -76,6 +76,26 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void TappingALockedDieChangesNothing()
+        {
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
+            var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
+            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            int bay = Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, controller.Snapshot.MarkedMask);
+            controller.ToggleDie(bay);
+            controller.Reroll();
+            Assert.That(controller.Snapshot.LockedMask, Is.EqualTo(1 << bay));
+            int changes = 0;
+            controller.StateChanged += () => ++changes;
+            controller.ToggleDie(bay);
+            Assert.That(controller.SelectedMask, Is.Zero);
+            Assert.That(changes, Is.Zero);
+            controller.ToggleDie((bay + 1) % DiceValues.Count);
+            Assert.That(controller.SelectedMask, Is.EqualTo(1 << (bay + 1) % DiceValues.Count));
+        }
+
+        [Test]
         public void NoResolutionSubscriberImmediatelyReleasesPresentation()
         {
             var catalog = TestContent.Catalog();
@@ -219,7 +239,7 @@ namespace Dice.Tests
             controller.RefreshRewards();
             AssertSnapshots(expected.Execute(new RefreshModifierOfferAction(stale.OfferId), 1).Snapshot);
             controller.Save();
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, catalog);
             Assert.That(EncounterSaveCodec.Serialize(saved), Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             var refreshed = controller.Snapshot;
             controller.ChooseReward(stale.OfferId, stale.Options[0].OptionId);
@@ -247,7 +267,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Not.Null);
             Assert.That(resolutions, Is.EqualTo(4));
             controller.Save();
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath + ".bak")),
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath + ".bak", catalog)),
                 Is.EqualTo(EncounterSaveCodec.Serialize(saved)));
         }
 
@@ -343,7 +363,7 @@ namespace Dice.Tests
             controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 42, savePath);
             controller.Save();
             Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
-            var previous = EncounterSaveFileStore.Load(savePath);
+            var previous = EncounterSaveFileStore.Load(savePath, TestContent.Catalog());
             var unityRandomState = UnityEngine.Random.state;
             for (int run = 0; run < 2; ++run)
             {
@@ -354,7 +374,7 @@ namespace Dice.Tests
                 Assert.That(UnityEngine.Random.state, Is.EqualTo(unityRandomState));
                 controller.Save();
                 Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
-                var current = EncounterSaveFileStore.Load(savePath);
+                var current = EncounterSaveFileStore.Load(savePath, TestContent.Catalog());
                 Assert.That(current.DiceRandomState, Is.Not.EqualTo(previous.DiceRandomState));
                 Assert.That(current.RewardRandomState, Is.Not.EqualTo(previous.RewardRandomState));
                 previous = current;
@@ -409,7 +429,7 @@ namespace Dice.Tests
                 controller.RefreshRewards();
                 AssertSnapshots(expected.Execute(new RefreshModifierOfferAction(offer.OfferId), 2).Snapshot);
                 controller.Save();
-                byte[] current = EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath));
+                byte[] current = EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath, catalog));
                 Assert.That(current, Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
                 if (previous != null) Assert.That(current, Is.EqualTo(previous));
                 previous = current;
@@ -449,7 +469,7 @@ namespace Dice.Tests
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             controller.StartNew();
             controller.Save();
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, catalog);
             for (int replay = 0; replay < 2; ++replay)
             {
                 var restored = EncounterSession.RestoreEncounter(catalog, saved);
@@ -473,7 +493,7 @@ namespace Dice.Tests
                 if (replay > 0)
                 {
                     controller.Save();
-                    Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath)),
+                    Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath, catalog)),
                         Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
                 }
             }

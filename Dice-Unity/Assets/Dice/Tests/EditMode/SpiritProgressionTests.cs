@@ -90,14 +90,14 @@ namespace Dice.Tests
                 new[] { "family.permanent" }, Array.Empty<string>())), Is.True);
             controller.PlayHand();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
-            var pending = EncounterSaveFileStore.Load(savePath);
+            var pending = EncounterSaveFileStore.Load(savePath, catalog);
             Assert.That(pending.EncounterId, Is.EqualTo(TestContent.EncounterId));
             Assert.That(pending.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
             Assert.That(pending.PendingReward.OfferId, Is.EqualTo(controller.Snapshot.PendingReward.OfferId));
             Assert.That(File.Exists(replacementPath), Is.False);
 
             ChooseUnlock();
-            var consumed = EncounterSaveFileStore.Load(savePath);
+            var consumed = EncounterSaveFileStore.Load(savePath, catalog);
             Assert.That(controller.SavePath, Is.EqualTo(savePath));
             Assert.That(consumed.EncounterId, Is.EqualTo(TestContent.EncounterId));
             Assert.That(consumed.Revision, Is.EqualTo(controller.Snapshot.Revision));

@@ -22,12 +22,53 @@ namespace Dice.Engine
         internal virtual void ValidateDefinition(EncounterDefinition encounter) { }
         internal virtual bool CanDisturbDice => false;
 
+        /** Rules that draw from the rule random stream; encounters without one keep the stream empty. */
+        internal virtual bool UsesRuleRandom => false;
+
+        /** The rule's own serializable save class, or null for a rule without persisted state. */
+        public virtual Type SaveDataType => null;
+
+        internal virtual EncounterRuleState CreateState() => null;
+
+        /** Returns a new instance of SaveDataType describing the rule's runtime state. */
+        internal virtual object CaptureState(EncounterRuleState state) => null;
+
+        /** Validates a saved state against the restored core encounter state; detail describes a rejection. */
+        internal virtual bool TryRestoreState(EncounterState restored, object saved, bool postPlay, out EncounterRuleState state,
+            out string detail)
+        {
+            state = null;
+            detail = "The rule has no saved state.";
+            return false;
+        }
+
+        /** Runs after the opening roll lands and before initial-roll modifiers resolve. */
+        internal virtual void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events) { }
+
+        /** Runs after rerolled dice land, before interference and reroll modifiers resolve. */
+        internal virtual void PlayerRerollResolved(EncounterState state, EncounterRuleState ruleState, int rerolledMask,
+            List<RuleEvent> events) { }
+
+        /** Dice that cannot be selected for a player reroll. */
+        internal virtual int LockedDiceMask(EncounterRuleState ruleState) => 0;
+        internal virtual int BoundDiceMask(EncounterRuleState ruleState) => 0;
+        internal virtual int MarkedDiceMask(EncounterRuleState ruleState) => 0;
+
+        /** Dice whose faces changed during this hand outside player rerolls. */
+        internal virtual int DiceChangedOutsideRerollsMask(EncounterRuleState ruleState) => 0;
+
         /** Returns true when this rule attempted a disturbance, whether it changed a die or was blocked. */
-        internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, InterferenceTrigger trigger,
-            int eligibleMask, List<RuleEvent> events) => false;
+        internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+            InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events) => false;
 
         internal virtual bool ProtectsBay(EncounterDefinition encounter, EncounterState state, int bay, DieInterferenceKind kind)
             => false;
+    }
+
+    /** Mutable runtime state owned by one encounter rule; copies never share mutable data. */
+    internal abstract class EncounterRuleState
+    {
+        internal abstract EncounterRuleState Copy();
     }
 
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
@@ -129,20 +170,69 @@ namespace Dice.Engine
             return maximum;
         }
 
-        internal static bool CanDisturbDice(EncounterDefinition definition)
+        internal static bool UsesRuleRandom(EncounterDefinition definition)
         {
             foreach (var rule in definition.Rules)
-                if (rule.CanDisturbDice) return true;
+                if (rule.UsesRuleRandom) return true;
             return false;
+        }
+
+        internal static EncounterRuleState[] InitialStates(EncounterDefinition definition)
+        {
+            var states = new EncounterRuleState[definition.Rules.Count];
+            for (int i = 0; i < states.Length; ++i) states[i] = definition.Rules[i].CreateState();
+            return states;
+        }
+
+        internal static void HandStarted(EncounterDefinition definition, EncounterState state, List<RuleEvent> events)
+        {
+            for (int i = 0; i < definition.Rules.Count; ++i) definition.Rules[i].HandStarted(state, state.RuleStates[i], events);
+        }
+
+        internal static void PlayerRerollResolved(EncounterDefinition definition, EncounterState state, int rerolledMask,
+            List<RuleEvent> events)
+        {
+            for (int i = 0; i < definition.Rules.Count; ++i)
+                definition.Rules[i].PlayerRerollResolved(state, state.RuleStates[i], rerolledMask, events);
+        }
+
+        internal static int LockedDice(EncounterDefinition definition, EncounterState state)
+        {
+            int mask = 0;
+            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].LockedDiceMask(state.RuleStates[i]);
+            return mask;
+        }
+
+        internal static int BoundDice(EncounterDefinition definition, EncounterState state)
+        {
+            int mask = 0;
+            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].BoundDiceMask(state.RuleStates[i]);
+            return mask;
+        }
+
+        internal static int MarkedDice(EncounterDefinition definition, EncounterState state)
+        {
+            int mask = 0;
+            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].MarkedDiceMask(state.RuleStates[i]);
+            return mask;
+        }
+
+        internal static int DiceChangedOutsideRerolls(EncounterDefinition definition, EncounterState state)
+        {
+            int mask = 0;
+            for (int i = 0; i < definition.Rules.Count; ++i)
+                mask |= definition.Rules[i].DiceChangedOutsideRerollsMask(state.RuleStates[i]);
+            return mask;
         }
 
         internal static void Interfere(EncounterDefinition definition, EncounterState state, InterferenceTrigger trigger,
             int eligibleMask, List<RuleEvent> events)
         {
-            state.LatestDisturbedMask = 0;
-            // At most one disturbance attempt resolves for each committed action.
-            foreach (var rule in definition.Rules)
-                if (rule.Interfere(definition, state, trigger, eligibleMask, events)) return;
+            // At most one disturbance attempt resolves for each committed action; later rules see no eligible dice.
+            bool attempted = false;
+            for (int i = 0; i < definition.Rules.Count; ++i)
+                if (definition.Rules[i].Interfere(definition, state, state.RuleStates[i], trigger, attempted ? 0 : eligibleMask, events))
+                    attempted = true;
         }
 
         internal static EncounterRuleDefinition Protector(EncounterDefinition definition, EncounterState state, int bay,

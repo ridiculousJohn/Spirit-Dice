@@ -183,8 +183,10 @@ namespace Dice.Presentation
                 {
                     bool selected = (cachedMask & (1 << index)) != 0;
                     if (selected) ++selectedCount;
+                    bool bound = (snapshot.BoundMask & (1 << index)) != 0;
+                    bool marked = (snapshot.MarkedMask & (1 << index)) != 0;
                     dieLabels[index] = "DIE " + (index + 1) + "\n" + snapshot.CurrentDice[index] + "\n" +
-                        (selected ? "REROLL" : "KEEP");
+                        (bound ? "BOUND" : (selected ? "REROLL" : "KEEP") + (marked ? " / MARKED" : ""));
                 }
                 selectionLabel = "Select dice FOR REROLL. " + selectedCount + " selected | mask " + cachedMask +
                     " | rerolls spent on this hand " + snapshot.RerollsSpentOnHand;

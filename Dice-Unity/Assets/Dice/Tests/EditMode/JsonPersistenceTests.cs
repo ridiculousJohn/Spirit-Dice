@@ -22,13 +22,13 @@ namespace Dice.Tests
             json.Remove("RerollsSpentInStage");
             json.Remove("FreeRerollsUsedInStage");
             json.Remove("TotalFreeRerollsUsed");
-            var result = EncounterSession.RestoreEncounter(catalog, Decode(json));
+            var result = EncounterSession.RestoreEncounter(catalog, Decode(json, catalog));
             Assert.That(result.Success, Is.True, result.Detail);
             var resumed = result.Session;
             original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
             resumed.Execute(new RerollDiceAction(3), resumed.Snapshot.Revision);
             EncounterPersistenceTests.AssertGraphEqual(original.CaptureSave(), resumed.CaptureSave());
-            Assert.That(Decode(SaveJson(resumed)).SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
+            Assert.That(Decode(SaveJson(resumed), catalog).SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
         }
 
         [Test]
@@ -38,7 +38,7 @@ namespace Dice.Tests
             var original = EncounterSession.CreateEncounter(catalog, "encounter.fox.introduction", 60);
             Assert.That(original.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);
             Assert.That(original.Snapshot.RerollsRemaining, Is.EqualTo(3));
-            var result = EncounterSession.RestoreEncounter(catalog, Decode(SaveJson(original)));
+            var result = EncounterSession.RestoreEncounter(catalog, Decode(SaveJson(original), catalog));
             Assert.That(result.Success, Is.True, result.Detail);
             Assert.That(result.Session.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
             original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
@@ -108,7 +108,7 @@ namespace Dice.Tests
             var session = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42);
             string text = Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave()));
             text = text.Insert(1, "\"SaveFormatVersion\": 1,");
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text)));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text), TestContent.Catalog()));
         }
 
         [Test]
@@ -119,7 +119,7 @@ namespace Dice.Tests
             string text = Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave()));
             Assert.That(text, Does.Contain("\"OptionId\":"));
             text = text.Replace("\"OptionId\":", "\"OptionId\": 1, \"OptionId\":");
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text)));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text), TestContent.Catalog()));
         }
 
         [TestCase(false)]
@@ -174,7 +174,7 @@ namespace Dice.Tests
             Assert.That(json["DiceRandomState"].Type, Is.EqualTo(JTokenType.Integer));
             Assert.That(json["DiceRandomState"].ToString(), Is.EqualTo("18446744073709551615"));
             Assert.That(json["TotalScore"].ToString(), Is.EqualTo("-9223372036854775808"));
-            var decoded = EncounterSaveCodec.Deserialize(bytes);
+            var decoded = EncounterSaveCodec.Deserialize(bytes, TestContent.Catalog());
             EncounterPersistenceTests.AssertGraphEqual(save, decoded);
         }
 
@@ -188,7 +188,7 @@ namespace Dice.Tests
             byte[] bytes = Encoding.UTF8.GetBytes(text);
             bytes[offset] = 0xc3;
             bytes[offset + 1] = 0x28;
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(bytes, TestContent.Catalog()));
         }
 
         [TestCase("null")]
@@ -197,7 +197,7 @@ namespace Dice.Tests
         [TestCase("\"save\"")]
         public void OnlyAnObjectCanRepresentASave(string text)
         {
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text)));
+            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(text), TestContent.Catalog()));
         }
 
         private static JObject SaveJson(EncounterSession session)
@@ -205,9 +205,9 @@ namespace Dice.Tests
             return JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
         }
 
-        private static EncounterSaveData Decode(JObject json)
+        private static EncounterSaveData Decode(JObject json, MechanicalCatalog catalog = null)
         {
-            return EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(json.ToString()));
+            return EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(json.ToString()), catalog ?? TestContent.Catalog());
         }
 
         private static void AssertRestoresIdentically(EncounterSession session, JObject json)

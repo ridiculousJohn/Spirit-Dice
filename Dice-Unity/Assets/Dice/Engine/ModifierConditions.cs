@@ -86,6 +86,7 @@ namespace Dice.Engine
                 case ModifierConditionKind.MiddleHand: return new MiddleHandCondition();
                 case ModifierConditionKind.InteriorPairMatchesEdge: return new InteriorPairMatchesEdgeCondition();
                 case ModifierConditionKind.FavoredFaceCountAtLeast: return new FavoredFaceCountAtLeastCondition(configuration.Parameter);
+                case ModifierConditionKind.BoundFaceCountAtLeast: return new BoundFaceCountAtLeastCondition(configuration.Parameter);
                 default: throw new ArgumentOutOfRangeException(nameof(configuration));
             }
         }

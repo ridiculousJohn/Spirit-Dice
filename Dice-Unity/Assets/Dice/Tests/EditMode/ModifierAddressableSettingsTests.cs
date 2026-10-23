@@ -25,9 +25,9 @@ namespace Dice.Tests
             AddressableAssetSettings settings = Settings();
             AddressableAssetGroup group = Group(settings, "Dice Modifiers");
             ModifierAsset[] assets = Assets<ModifierAsset>(MechanicalFolder);
-            Assert.That(assets.Length, Is.EqualTo(300));
-            Assert.That(group.entries.Count, Is.EqualTo(300));
-            Assert.That(assets.Select(asset => asset.Id).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(300));
+            Assert.That(assets.Length, Is.EqualTo(304));
+            Assert.That(group.entries.Count, Is.EqualTo(304));
+            Assert.That(assets.Select(asset => asset.Id).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(304));
             Assert.That(LabeledEntries(settings, MechanicalLabel).Select(entry => entry.guid),
                 Is.EquivalentTo(assets.Select(Guid)));
             foreach (ModifierAsset asset in assets)
@@ -48,8 +48,8 @@ namespace Dice.Tests
             AddressableAssetGroup mechanicalGroup = Group(settings, "Dice Modifiers");
             ModifierAsset[] mechanics = Assets<ModifierAsset>(MechanicalFolder);
             ModifierPresentationAsset[] presentations = Assets<ModifierPresentationAsset>(PresentationFolder);
-            Assert.That(presentations.Length, Is.EqualTo(300));
-            Assert.That(group.entries.Count, Is.EqualTo(300));
+            Assert.That(presentations.Length, Is.EqualTo(304));
+            Assert.That(group.entries.Count, Is.EqualTo(304));
             Assert.That(LabeledEntries(settings, PresentationLabel).Select(entry => entry.guid),
                 Is.EquivalentTo(presentations.Select(Guid)));
             var referenced = new HashSet<string>(StringComparer.Ordinal);
@@ -71,8 +71,8 @@ namespace Dice.Tests
             }
             Assert.That(referenced, Is.EquivalentTo(mechanics.Select(Guid)));
             AddressableAssetEntry[] entries = mechanicalGroup.entries.Concat(group.entries).ToArray();
-            Assert.That(entries.Select(entry => entry.guid).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(600));
-            Assert.That(entries.Select(entry => entry.address).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(600));
+            Assert.That(entries.Select(entry => entry.guid).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(608));
+            Assert.That(entries.Select(entry => entry.address).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(608));
         }
 
         [Test]

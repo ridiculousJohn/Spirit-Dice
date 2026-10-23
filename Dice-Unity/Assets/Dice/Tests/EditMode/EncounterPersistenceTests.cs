@@ -361,7 +361,7 @@ namespace Dice.Tests
                 }
                 AssertContinuation(uninterrupted, resumed, action);
                 var save = resumed.CaptureSave();
-                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save)));
+                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
                 AssertGraphEqual(save, resumed.CaptureSave());
                 restoredPhases.Add(resumed.Snapshot.Phase);
             }
@@ -388,7 +388,7 @@ namespace Dice.Tests
                 if (action is RefreshModifierOfferAction) ++refreshes;
                 AssertContinuation(uninterrupted, resumed, action);
                 var save = resumed.CaptureSave();
-                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save)));
+                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
                 AssertGraphEqual(save, resumed.CaptureSave());
                 restoredPhases.Add(resumed.Snapshot.Phase);
             }

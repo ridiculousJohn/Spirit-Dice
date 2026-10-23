@@ -92,6 +92,25 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void LockedDiceCannotBeSelected()
+        {
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
+            var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
+            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            int marked = controller.Snapshot.MarkedMask;
+            controller.ToggleDie(Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, marked));
+            controller.Reroll();
+            Assert.That(controller.Snapshot.LockedMask, Is.EqualTo(marked));
+            controller.ToggleDie(Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, marked));
+            Assert.That(controller.SelectedMask, Is.Zero, "Tapping a bound die changes nothing.");
+            controller.SelectAllDice();
+            Assert.That(controller.SelectedMask, Is.EqualTo(DiceValues.AllMask & ~marked));
+            controller.Reroll();
+            Assert.That(controller.Snapshot.RerollsSpentOnHand, Is.EqualTo(2));
+        }
+
+        [Test]
         public void RejectedActionsPreserveSelectionSnapshotPreviewAndHistory()
         {
             controller.Initialize(TestContent.Catalog(new[] { new StageDefinition(1000000, 3, 0) }),
@@ -206,7 +225,7 @@ namespace Dice.Tests
             controller.PlayHand();
             expected.Execute(PlayHandAction.Instance, 0);
             controller.Save();
-            var saved = EncounterSaveFileStore.Load(savePath);
+            var saved = EncounterSaveFileStore.Load(savePath, catalog);
             Assert.That(EncounterSaveCodec.Serialize(saved), Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             controller.StartNew("8");
             controller.SelectAllDice();
@@ -220,7 +239,7 @@ namespace Dice.Tests
             controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
             AssertSnapshots(expected.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), expected.Snapshot.Revision).Snapshot);
             controller.Save();
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath + ".bak")),
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath + ".bak", catalog)),
                 Is.EqualTo(EncounterSaveCodec.Serialize(saved)));
         }
 
@@ -277,7 +296,7 @@ namespace Dice.Tests
             Assert.That(preview.Modifiers[0].TotalActivations, Is.EqualTo(1));
             Assert.That(controller.EventLog, Is.EqualTo(history));
             controller.Save();
-            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath)),
+            Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(savePath, catalog)),
                 Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             controller.PlayHand();
             AssertSnapshots(expected.Execute(PlayHandAction.Instance, 0).Snapshot);

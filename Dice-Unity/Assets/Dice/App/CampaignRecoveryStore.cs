@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Dice.Engine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -33,8 +34,13 @@ namespace Dice.App
         private const string BackupPrefix = "spirit-slots.corrupt-";
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
         private readonly string root;
+        private readonly MechanicalCatalog catalog;
 
-        internal CampaignRecoveryStore(string root) { this.root = root; }
+        internal CampaignRecoveryStore(string root, MechanicalCatalog catalog)
+        {
+            this.root = root;
+            this.catalog = catalog;
+        }
 
         internal bool IsSafeCampaignDirectory(string id) => TryAttributes(CampaignDirectory(id), out var attributes) &&
             (attributes & FileAttributes.Directory) != 0 && (attributes & FileAttributes.ReparsePoint) == 0;
@@ -73,7 +79,7 @@ namespace Dice.App
             try
             {
                 if (hasProfile) PlayerProfileFileStore.Load(profile);
-                if (hasRun) EncounterSaveFileStore.Load(save);
+                if (hasRun) EncounterSaveFileStore.Load(save, catalog);
             }
             catch (FormatException) { return null; }
             catch (NotSupportedException) { return null; }

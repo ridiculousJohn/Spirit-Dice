@@ -98,12 +98,14 @@ namespace Dice.Engine
         }
 
         private static List<string> EligibleModifiers(MechanicalCatalog catalog, ModifierRewardPoolDefinition pool,
-            HashSet<string> owned, HashSet<string> excluded, HashSet<string> currentFamilies,
+            int incomingStageNumber, HashSet<string> owned, HashSet<string> excluded, HashSet<string> currentFamilies,
             EncounterDefinition encounter, ISet<string> unlocked, bool includeEncounterModifiers)
         {
             var candidates = new List<string>();
             var ids = new List<string>(pool.ModifierIds);
-            if (includeEncounterModifiers && encounter != null)
+            // The offer for an incoming stage follows clearing the stage before it.
+            if (includeEncounterModifiers && encounter != null &&
+                incomingStageNumber - 1 >= encounter.EncounterModifiersFirstClearedStageNumber)
                 foreach (string id in encounter.EncounterModifierIds)
                     if (!ids.Contains(id)) ids.Add(id);
             foreach (string id in ids)
@@ -120,7 +122,7 @@ namespace Dice.Engine
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<string> owned,
             HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked,
             bool includeEncounterModifiers = true)
-            => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, owned,
+            => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, incomingStageNumber, owned,
                 new HashSet<string>(StringComparer.Ordinal), currentFamilies, encounter, unlocked, includeEncounterModifiers));
 
         internal static string EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy, int incomingStageNumber,
