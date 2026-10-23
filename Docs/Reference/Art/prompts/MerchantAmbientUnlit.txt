@@ -1,0 +1,3 @@
+Extinguish lantern and candle illumination, remove the warm candle glare on the table, preserve the scene and cool nighttime ambient illumination.
+
+Input: MerchantBackground.png (941 x 1672). Output: installed as Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantAmbientUnlit.png, then edited by MerchantAmbientUnlit-table-clear.txt; no preserved donor. The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

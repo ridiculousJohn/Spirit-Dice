@@ -1,0 +1,3 @@
+Remove head/hat and bare hands/forearms; reconstruct covered shirt, suspenders and neck behind moving parts; retain native 941 x 1672 frame, identity, lighting and transparency.
+
+Input: MerchantHost.png. Donor: Docs/Reference/Art/HauntedMerchantTorsoRepairDonor.png, transferred into MerchantTorsoAnimation.png inside MerchantTorsoAnimationRepairMask.png. The same text is recorded as torsoRepair.prompt in Docs/Reference/Art/HauntedMerchantParts.json. The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

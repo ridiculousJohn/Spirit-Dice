@@ -1,0 +1,3 @@
+Remove only the seated merchant including hat, head, torso, arms and hands, and the foreground burning wax candle and shallow brass holder. Reconstruct the cart interior and tabletop behind them. Preserve the lantern, bottles, mug, cart, table, swamp, canopy roof, lighting and native full-frame composition. Do not add canopy flaps.
+
+Input: MerchantRegisteredRoofPlate.png (edit target). Output: the intermediate plate corrected by MerchantBackground-correction.txt; no preserved donor. The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

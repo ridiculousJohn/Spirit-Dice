@@ -1,0 +1,13 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game character portrait (painted digital illustration); the man will be cut out and relit in-engine
+Primary request: The seated man is currently lit only by cool dim night ambient. Add the warm light of the lit oil lantern hanging at the upper left of the image so that it illuminates him, and nothing else. The lantern is the only warm light: it sits above and to his left (image left), slightly behind him, so its warm amber light falls on the top and left side of his hat brim and crown, the left side of his face and hair, the top of his raised hand and forearm on the left, his left shoulder and the upper left of his shirt, and fades with distance toward the lower right. Surfaces facing away from the lantern (the right side of his face under the brim, the right shoulder, the undersides of the forearms, the lower right of the shirt) stay in the cool night ambient.
+Input images: Image 1: edit target
+Scene/backdrop: keep the night-time swamp merchant cart and the lit lantern exactly as they are
+Subject: the same weathered middle-aged merchant with a beard, battered brown hat with a small feather, open-collared dirty linen shirt, dark suspenders with brass buckles, cheek resting on his right hand, left forearm and hand resting on the table
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale, pose and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: one warm amber oil-lantern point light from the upper left plus the existing cool moonlit ambient; no light from below, no candle, no warm light from the table or from the front
+Constraints: change only the illumination on the man. Keep his identity, expression, every fold, wrinkle, stain, hair strand, button, buckle and painted detail in place. Keep the background unchanged.
+Avoid: under-lighting from the table, a candle, light from the front or the right, changing his pose, clothing or face, adding text or watermark
+
+Input: Docs/work/merchant-relight/targets/target-lantern-from-unlit-v1-input.png: the unlit merchant composited over MerchantLanternOnly.png, same crop and scale as the unlit target. Donor: Docs/Reference/Art/HauntedMerchantRelightLanternDonor.png (candidate lantern-from-unlit-v1-2 of this prompt). Transferred by author-merchant-relight.py build into Relight/MerchantHostLanternLit.png, MerchantHeadRepairedLanternLit.png, MerchantTorsoAnimationLanternLit.png and MerchantBlinkEyesLanternLit.png.

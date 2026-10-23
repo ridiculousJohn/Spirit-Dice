@@ -1,0 +1,15 @@
+Use case: edit: precise-object-removal, background reconstruction
+Asset type: background plate for a 2D game scene (painted digital illustration, close crop of a night swamp merchant cart)
+Primary request: Remove three hanging objects from the right wooden post and reconstruct what is behind them.
+Input images: Image 1: edit target
+Objects to remove (all three, completely, including their hooks, rings, straps and wire bails):
+1. The round frying pan hanging in front of the post in the middle of the image (its round face with the bright blue rim on its right side, and the small ring at its top that hooks over the post).
+2. The dark round pot hanging just below and to the right of that frying pan (lower middle-right).
+3. The small round cage basket hanging on the right with its flat top rim, its triangular wire bail, the thin rod above it and the dark strap bracket at the top where it hangs from the post arm.
+Reconstruction: continue the diagonal wooden post (pale weathered wood) straight down through the area where the frying pan was, with consistent width, grain and lighting; continue the misty dark blue night swamp background with the same faint tree silhouettes, fog and moss where the cage and the pots were; keep the post's arm/top where the strap hung but without the strap.
+Keep unchanged: the canopy cloth at the top left, the other pans and ladles hanging on the left side of the post, the sack at the bottom left, the post itself, the swamp background on the right, all colors, the cool moonlit night lighting.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Avoid: adding any new objects, new hanging items, hooks, ropes or chains in the removed areas; changing the left pans; brightening; adding text or watermark
+
+Input: Docs/work/merchant-props/targets/pots-target.png: Lanczos 1024 x 1536 upscale of MerchantAmbientUnlit.png box (520, 252)-(712, 540). Donor: Docs/work/merchant-props/donors/pots-remove-all-1.png (working file). Transferred by cut-merchant-props.py into Props/MerchantAmbientUnlitPropsRemoved.png and Props/MerchantLanternOnlyPropsRemoved.png behind the HangingPot and HangingPan pieces and over the removed cage.

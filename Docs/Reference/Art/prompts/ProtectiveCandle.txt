@@ -1,0 +1,3 @@
+Extract the burning ivory candle, wax drips, wick, golden flame and shallow brass holder as one transparent prop. Match source perspective and warm lighting. Exclude merchant, table, bottles, mug, scenery and opaque glow field; retain the complete holder silhouette.
+
+Input: MerchantRegisteredRoofPlate.png (reference), transparent background. Output: installed as Dice-Unity/Assets/Dice/Art/HauntedMerchant/ProtectiveCandle.png (1142 x 1377). The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

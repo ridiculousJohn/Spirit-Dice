@@ -1,0 +1,3 @@
+Remove the remaining brown hat and white feather at x330..402, y447..521; fill that area with the existing dark wooden interior. Preserve the remaining scene.
+
+Input: the output of MerchantBackground-removal.txt. Output: installed as Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantBackground.png (941 x 1672). The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

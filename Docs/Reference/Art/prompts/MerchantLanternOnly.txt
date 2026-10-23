@@ -1,0 +1,3 @@
+Illuminate only the existing lantern and its surrounding cart/roof, preserving the ambient table without candle glare.
+
+Input: the output of MerchantAmbientUnlit.txt. Output: installed as Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantLanternOnly.png, then given the table-clear edit through a gain field (see MerchantAmbientUnlit-table-clear.txt); no preserved donor. The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

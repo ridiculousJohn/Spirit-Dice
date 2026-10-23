@@ -1,0 +1,11 @@
+Use case: edit: precise-object-removal, background reconstruction
+Asset type: background plate for a 2D game scene (painted digital illustration, close crop of shelves inside a night swamp merchant cart)
+Primary request: Remove only the tall green glass bottle standing on the upper shelf in the middle of the image (the one with the thin pale neck and cork, rounded shoulders and the small bright glints), and reconstruct what is behind it.
+Input images: Image 1: edit target
+Reconstruction: continue the dark wooden shelf board under where the bottle stood, the dark interior wall behind it, the jagged blue night-sky gaps between the boards above it, and the dark bottle standing just to its left (complete its right side if it was hidden). The shelf must look natural with nothing standing on that spot.
+Keep unchanged: the pale lidded jar on the far left, the dark bottle on the left, the small brass-topped jar to the right, the vertical post on the left, the canopy cloth at the top, the large trunk with its latch at the bottom, all colors and the cool dim night lighting.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Avoid: adding any new bottle or object in the empty spot, moving the other objects, brightening, adding text or watermark
+
+Input: Docs/work/merchant-props/targets/bottle-target.png: Lanczos 1024 x 1536 upscale of MerchantAmbientUnlit.png box (160, 280)-(300, 490). Donor: Docs/work/merchant-props/donors/bottle-remove-1.png (working file). Transferred by cut-merchant-props.py into both props-removed plates behind the ShelfBottle piece.

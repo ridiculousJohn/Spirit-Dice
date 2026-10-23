@@ -1,0 +1,13 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game background layer (painted digital illustration); the striped cloth canopy will be cut out and relit in-engine
+Primary request: Relight ONLY the striped red-and-cream tattered cloth canopy (the overhang across the top and the torn panels hanging under the roof) so that it is lit by the cool, dim moonlit night ambient of this scene alone. The hanging oil lantern at the left is extinguished. Remove all warm orange/amber lantern light from the cloth, including the glowing orange rims along the torn lower edges and holes.
+Input images: Image 1: edit target
+Scene/backdrop: keep everything else (cart, roof boards, lantern, shelves, cookware, trees, sky, the man's hat at the bottom) exactly as it is; it is already correctly lit by cool moonlight only
+Subject: the same weathered striped cloth: alternating faded red and dirty cream stripes, stains, frayed and torn lower edge with holes and dangling shreds, hanging rear panels
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: soft low cool blue-grey moonlight from above and behind on the right, consistent with the background; low contrast and desaturated; the stripes keep their true red and cream local colors but appear as they would under dim cool night light; no warm highlights or orange glow anywhere on the cloth
+Constraints: change only the illumination on the cloth. Keep every stripe, stain, fold, tear, hole, fringe strand and the exact cloth outline in place. Keep the background unchanged.
+Avoid: changing the cloth's shape, stripes, tears or fringe, adding or removing holes, adding light sources or glow, making the cloth a silhouette, adding text or watermark
+
+Input: Docs/work/merchant-relight/targets/target-canopy-unlit.png: the painted canopy cloth and the unlit merchant over MerchantAmbientUnlit.png, background-frame crop (0, 0)-(720, 520) upscaled 2x. Donor: Docs/Reference/Art/HauntedMerchantRelightCanopyUnlitDonor.png (candidate canopy-unlit-v1-1 of this prompt). Transferred by author-merchant-relight.py build into Relight/CanopyUnlit.png.

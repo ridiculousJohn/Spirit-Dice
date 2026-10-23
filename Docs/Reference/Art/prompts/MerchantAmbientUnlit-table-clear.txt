@@ -1,0 +1,12 @@
+Use case: edit: precise-object-edit
+Asset type: background plate for a 2D game scene (native 941 x 1672 portrait frame)
+Primary request: Remove the props sitting at the far LEFT edge of the wooden tabletop in the lower-left of the image: the tall dark glass bottle, the two metal cups/mugs, and the crumpled grey cloth/rope at the table's left edge. Fill the area where they stood with the same wet dark wooden table planks, so that the left part of the tabletop is clear and empty.
+Input images: Image 1: edit target
+Scene/backdrop: unchanged haunted swamp merchant cart at night
+Composition/framing: keep exactly the same framing, aspect ratio, camera, perspective and scale as Image 1; do not crop, zoom, shift or pad
+Lighting/mood: keep the same cool, dim moonlit night ambient light; the lantern stays unlit; no warm light anywhere
+Color palette: identical to Image 1 (dark desaturated brown-grey wood with cool blue-grey night tint)
+Constraints: Change ONLY the lower-left props region (bottle, cups, cloth). The revealed tabletop must continue the existing horizontal planks seamlessly: same plank widths, same board seams at the same heights, same grain direction, same wet sheen, same color and brightness as the planks immediately to the right. Where the bottle covered the wooden crate behind it, continue that same crate and the crate above it. Keep everything else unchanged: the crates, the hanging rope coil under the cart, the barrel, cart, lantern, canopy, swamp, moon and the rest of the table.
+Avoid: adding any new objects, props, dice, cloth, stains, puddles, light sources, glow, text or watermark
+
+Input: MerchantAmbientUnlit.png as generated from MerchantBackground.png (full 941 x 1672 frame). Donor: Docs/work/merchant-table-clear/donors/unlit_donor-2.png (working file, not preserved in Docs/Reference/Art). Transferred into MerchantAmbientUnlit.png inside the lower-left tabletop polygon (Docs/work/merchant-table-clear/PropsMaskHard.png, 8 px feather). MerchantLanternOnly.png received the same edit through a lantern gain field; no generated lantern-lit pixels are installed, so the matching lit prompt (lit_spec.txt) produced nothing installed and is not kept here.

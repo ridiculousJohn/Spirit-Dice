@@ -1,0 +1,3 @@
+Remove the supporting hand/forearm from the face and reconstruct the hidden cheek, ear, jaw and beard while preserving identity, pose, visible facial features, lighting, transparency and the 941 x 1672 frame.
+
+Input: MerchantHost.png. Donor: Docs/Reference/Art/HauntedMerchantHeadRepairDonor.png, transferred into MerchantHeadRepaired.png inside MerchantHeadRepairMask.png. The text above is a recorded summary of the prompt; the verbatim text is not preserved in the repository or Docs/work.

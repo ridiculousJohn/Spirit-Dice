@@ -1,0 +1,12 @@
+Use case: edit: precise-object-removal, occluded-object completion
+Asset type: background plate for a 2D game scene (painted digital illustration, close crop of a night swamp merchant cart)
+Primary request: Remove only the round frying pan hanging in front of the wooden post in the middle of the image, and complete the objects that it was covering.
+Input images: Image 1: edit target
+Object to remove: the round frying pan in the middle (its round face with the bright blue rim on its right side, and the small ring at its top that hooks over the post).
+Completion: the dark round pot that hangs below and to the right of the frying pan must become fully visible: complete its hidden upper-left part as a smooth continuation of its round dark metal body and rim, with its hanging ring or hook at its top attached to the post. Continue the diagonal wooden post (pale weathered wood) through the area where the frying pan was. Complete the lower-left edge of the round cage basket on the right if it was covered. Continue the other pans on the left and the dark swamp background where they were covered.
+Keep unchanged: the dark round pot's visible part, the round cage basket and its bail, the canopy cloth, the other pans and ladles on the left, the sack at the bottom left, the swamp background, all colors and the cool moonlit night lighting.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Avoid: adding new objects, moving or resizing the pot or the cage, brightening, adding text or watermark
+
+Input: Docs/work/merchant-props/targets/pots-target.png (same target as PropsRemoved-PotPanCage.txt). Donor: Docs/work/merchant-props/donors/pots-remove-pan-1.png (working file). Used by cut-merchant-props.py only to complete the hidden upper left and ring of the pot in Props/HangingPotUnlit.png and HangingPotLanternLit.png (masks/HangingPot-completed.png).

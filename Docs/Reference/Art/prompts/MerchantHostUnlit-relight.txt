@@ -1,0 +1,14 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game character portrait (painted digital illustration); the man will be cut out and relit in-engine
+Primary request: Relight ONLY the seated man so that he is lit by the cool, dim moonlit night ambient of this scene alone. The hanging lantern at the upper left is extinguished and there is no candle or any other warm light source. Remove all warm orange/amber lantern and candle light from his hat, face, hair, beard, hands, forearms, shirt and suspenders.
+Input images: Image 1: edit target
+Scene/backdrop: keep the night-time swamp merchant cart exactly as it is (it is already correctly lit by cool moonlight only)
+Subject: the same weathered middle-aged merchant with a beard, battered brown hat with a small feather, open-collared dirty linen shirt, dark suspenders with brass buckles, cheek resting on his right hand, left forearm and hand resting on the table
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale, pose and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: soft, low, cool blue-grey moonlight from above and slightly behind on the right, consistent with the background; low contrast, desaturated; skin and cloth keep their true local colors but appear as they would under dim cool night light; no warm highlights, no orange rim light, no warm under-lighting from the table
+Color palette: muted, desaturated, cool; same overall darkness as the surrounding cart interior but with the man still clearly readable
+Constraints: change only the illumination on the man. Keep his identity, expression, every fold, wrinkle, stain, hair strand, button, buckle and painted detail in place. Keep the background unchanged.
+Avoid: changing his pose, clothing or face, adding light sources, adding any glow, making him a silhouette, adding text or watermark
+
+Input: Docs/work/merchant-relight/targets/target-unlit.png (written by author-merchant-relight.py targets): MerchantHost.png composited over MerchantAmbientUnlit.png at its registered placement, merchant-frame crop (0, 240)-(760, 1100) upscaled 2x. Donor: Docs/Reference/Art/HauntedMerchantRelightUnlitDonor.png (candidate unlit-v1-1 of this prompt). Transferred by author-merchant-relight.py build into Relight/MerchantHostUnlit.png, MerchantHeadRepairedUnlit.png, MerchantTorsoAnimationUnlit.png and MerchantBlinkEyesUnlit.png.

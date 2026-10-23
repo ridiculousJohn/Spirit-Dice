@@ -1,0 +1,14 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game prop layer (painted digital illustration); the hanging tin cup will be cut out and relit in-engine
+Primary request: Relight ONLY the battered pewter/tin cup and its rope so that they are lit by the cool, dim moonlit night ambient of this scene alone. The oil lantern of the merchant cart (far away, off the image to the upper left) is extinguished and there is no candle or any other warm light. Remove all warm orange/amber light from the cup: the warm glow on its left side and rim, the amber reflections inside the mouth, on the dents and on the base bands.
+Input images: Image 1: edit target
+Scene/backdrop: keep the dark swamp trees, the wooden canopy post, the cloth and the hanging pan behind the cup exactly as they are (they are already correctly lit by cool moonlight only)
+Subject: the same battered, tarnished pewter/tin drinking cup hanging tilted from a rough twine rope knotted to its handle, with the same dents, hammered texture, rim, handle, rivet and base bands
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad; the cup and rope stay exactly where they are
+Lighting/mood: soft, low, cool blue-grey moonlight from above and slightly behind on the right, consistent with the background; low contrast and desaturated; the tarnished metal keeps its dark grey local color with faint cool sheen on its rim and dents; the rope keeps its fibrous tan-brown local color under dim cool light; no warm highlights or orange reflections anywhere
+Color palette: muted, desaturated, cool; similar darkness to the hanging pan and the post behind it, with the cup still clearly readable
+Constraints: change only the illumination on the cup and rope. Keep their exact outline, every dent, scratch, hammered texture, knot and fibre in place. Keep the background unchanged.
+Avoid: changing the cup's shape, tilt or position, adding light sources or glow, making the cup a silhouette, adding text or watermark
+
+Input: Docs/work/merchant-relight/cup/targets/target-cup-unlit.png (written by author-merchant-relight.py cup-targets): the painted HangingCup.png over the unlit scene resampled at the cup's rest rect, cup frame 1024 x 1536. Donor: Docs/Reference/Art/HauntedMerchantRelightCupUnlitDonor.png (candidate cup-unlit-v1-2 of this prompt). Transferred by author-merchant-relight.py cup into Relight/HangingCupUnlit.png.

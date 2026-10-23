@@ -1,0 +1,12 @@
+Use case: edit: precise-object-edit, identity-preserve
+Asset type: closed-eyes blink frame for a 2D game character portrait animation (painted digital illustration, close crop of the face)
+Primary request: Close both of the man's eyes, as at the middle of a natural relaxed blink. Change only the eyelids.
+Input images: Image 1: edit target
+Subject: the same weathered middle-aged merchant with a beard and battered hat, cheek resting on his hand
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale, head position and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: identical warm amber light from the left, same shadows and highlights as Image 1
+Constraints: Change ONLY the two eyes: the upper eyelids come fully down to meet the lower lids, so no iris, pupil or eye white is visible; show a soft closed lid crease with a thin line of dark lashes along each closed lid; the closed eyelid skin matches the surrounding skin color, texture, wrinkles and lighting exactly. Keep the eyebrows, forehead wrinkles, crow's feet, nose, cheeks, beard, mouth, hair, hat, hand, shirt and background exactly as they are. Keep his identity and expression.
+Avoid: squinting, smiling, raised or lowered eyebrows, changing the head pose, smoothing or beautifying the skin, makeup, changing colors, adding any text or watermark
+
+Input: Docs/work/merchant-blink/edit-target.png: a 4x upscale of the visible merchant composite in source box (205, 470)-(465, 730). Donor: Docs/work/merchant-blink/donors/blink-v1-1.png (working file, not preserved in Docs/Reference/Art). Transferred into MerchantBlinkEyes.png (136 x 58 crop of source box (264, 576)-(400, 634)) through MerchantBlinkMask.png.

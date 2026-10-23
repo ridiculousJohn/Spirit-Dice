@@ -1,0 +1,13 @@
+Use case: edit: lighting-weather, identity-preserve
+Asset type: lighting reference for a 2D game prop layer (painted digital illustration); the hanging tin cup will be cut out and relit in-engine
+Primary request: The hanging pewter/tin cup and its rope are currently lit only by the cool dim moonlit night ambient. Add the warm light of the merchant cart's lit oil lantern, and nothing else. The lantern is far away, off the image to the upper left (well above and to the left of the cup, inside the cart), so its warm amber light reaching the cup is weak and soft: a modest warm sheen on the left side of the cup body, the left part of the rim and mouth, the upper left of the dents and base bands, and a faint warm touch on the left side of the rope and knot, fading toward the right. The right side of the cup and the inside of the handle stay in the cool night ambient.
+Input images: Image 1: edit target
+Scene/backdrop: keep the dark swamp trees, the wooden canopy post, the cloth and the hanging pan behind the cup exactly as they are
+Subject: the same battered, tarnished pewter/tin drinking cup hanging tilted from a rough twine rope knotted to its handle, with the same dents, hammered texture, rim, handle, rivet and base bands
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad; the cup and rope stay exactly where they are
+Lighting/mood: one distant warm amber oil-lantern light from the far upper left plus the existing cool moonlit ambient; the warm light is subtle because the lantern is far away; no light from below, the front or the right, no bright glints or glow
+Constraints: change only the illumination on the cup and rope, and only by adding the distant warm lantern light. Keep their exact outline, every dent, scratch, hammered texture, knot and fibre in place. Keep the background unchanged.
+Avoid: making the cup strongly orange or brightly lit, adding a visible light source or glow, light from the right or below, changing the cup's shape, tilt or position, adding text or watermark
+
+Input: Docs/work/merchant-relight/cup/targets/target-cup-lantern-from-unlit.png: HangingCupUnlit.png over the lantern-lit scene at the cup's rest rect, cup frame 1024 x 1536. Donor: Docs/Reference/Art/HauntedMerchantRelightCupLanternDonor.png (candidate cup-lantern-v1-2 of this prompt). Transferred by author-merchant-relight.py cup into Relight/HangingCupLanternLit.png.
