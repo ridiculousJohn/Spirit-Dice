@@ -139,7 +139,7 @@ Main menu order is **Continue, Load Game, Chapter, New Game, Options**. Continue
 These are design decisions and open directions, not implementation authorization. Chapter 2, THE DROWNED ROAD, follows the return to the fox and the old bridge crossing; its final revelation remains open.
 
 1. Haunted traveling merchant: a merchant has set up his wares cart on a road beside a dark swamp. A poltergeist haunts the cart and interferes while the player plays with him, using the haunting rule below. The merchant leads the player into the swamp afterward. This is the first encounter to develop; the accepted working dialogue and rewards are below.
-2. Bound tree nymph: on a small patch of dry land in the swamp stands a huge black, withered tree. A sobbing dryad/tree nymph sits at its base, trapped and tormented by the evil spirit possessing her tree. She reveals that the spirit is bound by challenge terms; it would not volunteer this information. Once the player challenges it, the spirit must comply and abide by the result. Play against the spirit using binding; victory banishes it, releases the tree and nymph, and lets her provide information needed to continue. The nymph's knowledge makes her an active participant in her rescue.
+2. Bound tree nymph: on a small patch of dry land in the swamp stands a huge black, withered tree. A sobbing dryad/tree nymph sits at its base, trapped and tormented by the evil spirit possessing her tree. She reveals that the spirit is bound by challenge terms; it would not volunteer this information. Once the player challenges it, the spirit must comply and abide by the result. Play against the spirit using binding; victory banishes it, releases the tree and nymph, and lets her provide information needed to continue. The nymph's knowledge and her mid-encounter gift of charms make her an active participant in her rescue. The approved design is under "Tree nymph encounter" below.
 3. Rot encounter: the third encounter uses rot. A swamp hag is a favored starting possibility, with a decaying hut, preserved things, and knowledge of the traveler's passage or the route onward. She can be unsettling and transactional rather than another spirit to banish. Her exact identity, location, bargain, and revelation remain open.
 
 Each encounter should advance the search for the traveler as well as lead to the next location. The chapter's final revelation is undecided. Carry-over has no assigned place in this three-encounter outline; do not force it into the chapter or implement it as part of the merchant encounter.
@@ -189,6 +189,40 @@ An interference attempt chooses its target, checks applicable protection, then a
 
 Pre-roll hand preparation is postponed. John rejected candle placement before the opening roll: every bay is equivalent before the dice are seen, so the choice has no strategic value. A shared pre-roll opportunity remains a possible mechanism for carry-over, where the carried die provides information before the roll. Design it with carry-over, not as part of the merchant; carry-over implementation remains outside merchant scope.
 
+#### Tree nymph encounter (The Bound Tree)
+
+John approved this design for the second Chapter 2 encounter. It is not implemented, and this section does not authorize implementation.
+
+Structure and rewards:
+- The player plays the possessing spirit, which is the encounter's host. The nymph is a separate figure in the scene. The merchant leads the player to the edge of the dry ground and returns to his cart.
+- Ten stages with unlock milestones at 3, 6 and 10. John might change all of Chapter 2 to 15 stages; that is undecided. Stage targets use Moth's curve as a placeholder until tuned.
+- Ordinary reward pools copy Moth's ordinary pools plus the three unlock families. The invitation discovers the three unlock families.
+- Unlocks: the Base and Mult variants of Great Oak (the three smallest dice sum to no more than the largest), Close Branches (each pair of neighboring dice differs by at most 1) and Untouched Snow (play a hand without rerolling). Each milestone offers individual charms from that list as usual; combined and reroll variants stay locked without a source. Confirm the condition wording against the condition classes when authoring.
+- Untouched Snow is renamed Unturned Leaf: display names only, identifiers unchanged. Its icon (Art/ModifierFamilies/untouched-snow.png) is a snowflake and needs a new glyph in the same style, distinct from Falling Leaf's.
+
+Binding rule, an always-active encounter rule within the existing rule system like haunting, using the rule random stream:
+- After the opening roll and after each player reroll resolves, the spirit marks one unbound die chosen at random. Marking never changes a face, so the opening roll is still never disturbed. With all five dice bound, nothing is marked.
+- A marked die binds at its result after the next player reroll, whether or not the player selected it. Rerolling it gambles on its final face; leaving it keeps its current face. A mark that bound only rerolled dice would simply be avoided.
+- Bound dice score normally and cannot be selected for reroll. Bindings and any outstanding mark clear when the hand is played.
+- Nothing wards against or releases a binding in this encounter. A once-per-hand un-bind granted by the nymph was considered and set aside; it could be added later without changing the rule.
+- Presentation: a marked die shows a faint creeping-root outline; when it binds, roots close around it and the spirit reacts; bindings release when the hand is played. No text popups. Tapping a bound die does nothing and opens no popup.
+
+Grafted Branch (provisional name), the nymph's encounter-only family:
+- Trigger: at least three dice show the face of a bound die, so a bound die becomes an anchor to build around. The three-dice threshold is provisional until John sees how it plays.
+- Variants as Lantern Seekers: +10 Base, +2 Mult, +5 Base and +1 Mult, +1 reroll; each tier 1 and once per hand. Excluded from permanent Collection. Provisionally reuses an existing family's artwork until dedicated art is approved.
+- The nymph introduces it at the stage 3 clear, after the permanent unlock choice and before that clear's charm offer, which is the first offer that can contain it. The introduction uses the existing encounter-charms screen with a narration line from the nymph above the family, appears on every run, and allows Continue immediately.
+- This needs a first eligible stage for an encounter's additions (defaulting to the first stage, so moth is unchanged) and the first story moment inside an encounter, including resuming a save interrupted on that screen.
+
+Working script (draft accepted; minor lines such as continue labels and abandon text are editable placeholders):
+- Arrival: the merchant leads the player along the hidden path to a rise of dry ground. A huge black tree fills it, its bark split and its branches bare. He stops at the edge. "This is as far as I go. Mind what you say near it." He turns back toward his cart.
+- The nymph: at the base of the tree a young woman sits with her knees drawn up, weeping. Her skin is the grey of old bark. "You shouldn't be here. It hears everything." The tree creaks above her.
+- Reveal: "Something crept into my tree when the water rose. It holds me the way it holds the roots." Then: "Your traveler came this way. I saw where they went, but it won't let me speak of it." Barely a whisper: "It is bound by the old terms. Challenge it, and it must play, and it must honor the result."
+- Challenge: the bark splits into a face. The spirit is patient and possessive. "She talks too much." Then: "Play, then. Whatever you leave in my reach, I keep."
+- Binding rule card: "After each roll, the spirit marks a die. Its next result is bound and cannot be rerolled until the hand is played."
+- Stage 3, on the encounter-charms screen: "It keeps what it takes. So build on what it keeps."
+- Victory: the roots loosen with a sound like a long breath, and the face sinks back into the bark. The nymph stands as the black fades toward silver. "It's gone. It had to keep its word." Then: "Your traveler went deeper, toward the smoke. A woman lives there who keeps things. Whatever she knows, she'll want something for it."
+- Defeat: the roots draw tighter, and the nymph flinches. The spirit: "Again? I have nothing but time." The nymph: "It can't refuse you. Try again."
+
 #### Selected mechanic directions
 
 John selected four encounter mechanic directions: carry-over, binding, rot, and haunting, plus the three carry-over charm families below. These are recorded design directions, not authorization to implement. For carry-over, the proposed flow chooses one die from a played hand to retain its face and position in the next opening roll; the other four roll normally. Rerolling the carried die permanently removes its carried status for that hand, even if the same face returns.
@@ -201,7 +235,7 @@ Names are provisional. Each family can use the usual Base, Mult, combined, and r
 
 John also wants hostile encounter rules for corrupted spirits, ghosts, or a swamp hag. He likes binding and considers the following rot design solid. These are design directions, not implementation authorization.
 
-- Binding supports any number of bound dice. Bound dice score normally but cannot be rerolled; bindings clear when the hand is played. John likes both one binding per hand and one additional binding per reroll, so the encounter controls the binding schedule and count. The proposed affected die is visible before committing the reroll, then binds at its rolled result. Selection and avoidance rules remain unresolved.
+- Binding supports any number of bound dice. Bound dice score normally but cannot be rerolled; bindings clear when the hand is played. John likes both one binding per hand and one additional binding per reroll, so the encounter controls the binding schedule and count. The proposed affected die is visible before committing the reroll, then binds at its rolled result. The tree nymph encounter's schedule, selection and binding behavior are specified under "Tree nymph encounter" above.
 - Rot separates its decay trigger from its endpoint behavior. The current design decays kept dice by one per player reroll. When a die would decay below one, the encounter can wither it, automatically reroll it, clamp it at one, or wrap it to six. Withered dice contribute no value and participate in no hand combinations, including matches with other withered dice; a normal player-selected reroll restores them. Clamp intentionally permits accumulation at one; it is unsuitable when that strategy should be prevented.
 - Resolve each die's decay once per player action. An endpoint reroll has no additional reroll cost and does not trigger more decay. A one rolled at the endpoint survives until the next decay event.
 
@@ -246,10 +280,10 @@ Such a deck needs a dependable source of withering outside rot encounters. Sugge
 
 - Debt: borrow a reroll now in exchange for one fewer next hand.
 - Promises: accept a hand condition for a bonus. Cost-free acceptance with no failure penalty has no reason to be declined; a meaningful commitment or an automatic bonus objective would be needed. Neither version is selected.
-- Further binding/haunting charm triggers: scoring with bound dice, matching around a bound or disturbed die, playing before binding occurs, or scoring while a charm is suppressed. No families or values are selected.
+- Further binding/haunting charm triggers beyond Grafted Branch: scoring with bound dice, matching around a disturbed die, playing before binding occurs, or scoring while a charm is suppressed. No families or values are selected.
 - Other haunting suggestions: an apparition moving between bays and disabling the occupied die, a remembered face returning on a later reroll, suppression moving between charms, or fulfilling a visible request to banish a haunting. These are alternatives, not part of the selected poltergeist specification.
 - Protection extensions: temporary additional wards, charm protection, or blocking the next interference. The moving candle is the concrete starting concept.
-- The Chapter 2 outline above selects the merchant, tree nymph/possessing spirit, and a rot encounter in that order. Exact rewards, dialogue, and the final revelation remain open; the hag's details are provisional.
+- The Chapter 2 outline above selects the merchant, tree nymph/possessing spirit, and a rot encounter in that order. The rot encounter's rewards and dialogue and the chapter's final revelation remain open; the hag's details are provisional beyond the nymph's clue.
 
 ### Presentation behavior
 
