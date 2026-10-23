@@ -1,0 +1,27 @@
+Generated using built-in image_gen. Scene concept for the tree nymph encounter (The Bound Tree), installed as Dice-Unity/Assets/Dice/Art/BoundTree/BoundTreeOriginal.png. Concept only, not separated production art.
+
+Step 1, generation of the edit target (BoundTreeConceptEditTarget.png). Input image: Dice-Unity/Assets/Dice/Art/HauntedMerchant/MerchantOriginal.png as Image 1.
+
+Use case: stylized-concept
+Asset type: portrait scene concept for Spirit Dice, a dark folkloric tabletop dice game. Visual development image for the next encounter on the same swamp journey as Image 1, not a UI screenshot.
+Input images: Image 1: style, rendering and lighting-quality reference only (the previous encounter in the same game). Do not copy its subject, cart, merchant, table or composition.
+Primary request: a huge black withered tree standing on a small rise of dry ground deep in a dark swamp at night. An evil spirit possesses the tree; its face has split open in the bark. A trapped tree nymph sits weeping at the base of the tree.
+Tree and spirit: an enormous ancient trunk with black, split, peeling bark and bare twisted branches; thick roots grip the dry ground and reach down into black water. The spirit's face is formed from the split bark itself in the trunk, at the upper middle of the image, facing the viewer across the playing surface: deep-set hollow eye sockets with a faint cold glow, a long crack for a mouth, an expression that is patient and possessive, menacing but not gory. It is part of the tree, not a separate creature. Make the face clearly legible.
+Nymph: a young woman sitting at the base of the trunk to the left, knees drawn up, head bowed, weeping. Her skin is the grey of old bark; long dark hair tangled with dead leaves and moss. Thin roots wind loosely around her ankles and wrists, binding her to the tree. She wears a simple, modest, faded shift and is fully clothed; not sexualized. She is small relative to the tree and does not cover the spirit's face.
+Playing surface: the lower portion is a broad, flat slab of weathered pale-grey stone at the foot of the tree, its far edge gripped by roots, worn smooth and uncluttered, suitable for game dice and UI.
+Environment: the dry rise is surrounded by black still swamp water, tall black trees, old hanging moss, reeds and low mist over the water, receding into darkness.
+Composition: vertical portrait approximately 9:16, viewed from the player's seated side of the stone. Upper portion holds the trunk with the spirit's face in the upper middle, the nymph at the lower left of the trunk, and the swamp beyond; lower portion is the broad uncluttered stone surface. Clear readable silhouette and atmospheric depth.
+Lighting/mood: cold moonlight filtering through the bare branches; a faint sickly pale-green glow inside the spirit's eyes and deepest bark cracks is the only other light. The rest of the scene is cool dark blue-black and muted swamp green. Sorrowful and oppressive, not horror-gory.
+Style/medium: richly textured painterly realism matching Image 1, a dark storybook game environment, natural proportions, controlled brush texture, evocative cinematic lighting. Detailed but not photographic, not cartoon, not glossy 3D.
+Constraints: only the nymph and the spirit's face in the tree; no merchant, no cart, no other people or creatures. No dice, cards or game pieces, no interface, no words, no logos, no watermark. A single cohesive scene, not a collage or concept sheet.
+
+Step 1, generation of the surface reference (BoundTreeConceptSurfaceReference.png): the same prompt with this playing surface: "the broad, level top of one of the tree's own enormous exposed roots, black bark worn smooth and flat like a natural tabletop, uncluttered, suitable for game dice and UI", viewed from the player's seated side of the root.
+
+Step 2, edit producing BoundTreeOriginal.png. Input images: BoundTreeConceptEditTarget.png as Image 1, BoundTreeConceptSurfaceReference.png as Image 2.
+
+Use case: edit: compositing
+Asset type: portrait scene concept for Spirit Dice, a dark folkloric tabletop dice game.
+Input images: Image 1: edit target. Image 2: reference for the playing surface only.
+Primary request: edit Image 1 in two ways. 1) Replace the cobbled paving stones in the lower part of the image with a playing surface like the one in Image 2: the broad, level top of one of the tree's own enormous exposed roots, dark bark worn smooth and flat like a natural tabletop with a few fine cracks and touches of moss, running from the foot of the trunk toward the viewer and filling the lower portion of the frame edge to edge, uncluttered, suitable for game dice and UI. It must connect naturally to the roots at the base of the trunk in Image 1. 2) Make the moon in the upper right noticeably bigger, about twice its current diameter, in the same position, with its soft moonlit clouds; keep the scene's moonlight consistent with it.
+Constraints: keep everything else in Image 1 unchanged: the tree, its bark, branches and hanging moss, the spirit's face with its glowing eyes and split mouth, the nymph and her pose, clothing, hair and root bindings, the swamp water, background trees and mist, the overall lighting, colors and painterly style, and the 9:16 framing. Do not copy anything from Image 2 except the playing surface.
+Avoid: no paving stones or cobbles, no dice, cards or game pieces, no interface, no words, no logos, no watermark, no extra people or creatures.
