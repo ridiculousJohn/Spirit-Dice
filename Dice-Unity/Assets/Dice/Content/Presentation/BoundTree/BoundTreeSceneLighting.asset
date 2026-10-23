@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: BoundTreeSceneLighting
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SceneLightingAsset
   Shader: {fileID: 4800000, guid: 56e01f30524756ed6f7d40b98a2655af, type: 3}
-  BaseTexture: {fileID: 2800000, guid: 2ad73856000f4659bcdae0e525434fa7, type: 3}
+  BaseTexture: {fileID: 2800000, guid: 5ffe23df8daa4e2ea2eca8fb672412da, type: 3}
   Lights:
-  - Contribution: {fileID: 2800000, guid: fb1f2175d4ab49aa88f6f639e6e2eec8, type: 3}
+  - Contribution: {fileID: 2800000, guid: 0e41705178364c80ab3b2d388533323d, type: 3}
     ResponseMap: {fileID: 2800000, guid: 5e217c7c927a4d5090e026714d1f5b37, type: 3}
     UvOffset: {x: 0, y: 0}
     ModulateByBaseColor: 0
@@ -32,7 +32,7 @@ MonoBehaviour:
     ReceiverColor: {r: 1, g: 0.64, b: 0.25, a: 1}
     ReceiverIntensity: 0
     ReceiverRange: 10
-  - Contribution: {fileID: 2800000, guid: b88cc20bdcba4bdca7e3f2c7d45cf54b, type: 3}
+  - Contribution: {fileID: 2800000, guid: 2663ed4ee6cd4a158e20e362347c4658, type: 3}
     ResponseMap: {fileID: 2800000, guid: 5e217c7c927a4d5090e026714d1f5b37, type: 3}
     UvOffset: {x: 0, y: 0}
     ModulateByBaseColor: 0

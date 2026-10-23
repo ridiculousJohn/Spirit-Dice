@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BoundTreeFaceless
+  m_Name: BoundTreeFace
   m_Shader: {fileID: 4800000, guid: 22d03ee7f6e94daca44bf6ff9637e112, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -32,7 +32,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SourceTex:
-        m_Texture: {fileID: 2800000, guid: e201f2a99ba04143ad48f3b6cfb21f61, type: 3}
+        m_Texture: {fileID: 2800000, guid: fb1f2175d4ab49aa88f6f639e6e2eec8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []

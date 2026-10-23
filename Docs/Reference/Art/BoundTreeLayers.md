@@ -57,13 +57,20 @@ The textures in `Relight` separate the painted lighting into a moonlit ambient b
 | BoundTreeNymphUnlit.png | RGBA | The nymph under ambient only. The concept's glow does not reach her, so it equals BoundTreeNymph.png. |
 | BoundTreeNymphGlowLit.png | RGBA | The nymph with the flare's faint yellow-green light from the upper right (head, crown, hands, knees, shins, right shoulder and dress, feet). Alpha equals BoundTreeNymph.png; every channel is at least the unlit value. |
 | BoundTreeGlowResponse.png | RGB, linear data | R: normalized distance from the glow. G: the glow source mask (eyes and split mouth). B: 0. |
+| BoundTreeFacelessPlateUnlit.png | RGB | The background's ambient base: BoundTreeAmbientUnlit.png with the face region replaced by BoundTreeFacelessUnlit.png through BoundTreeFaceMask.png alpha. |
+| BoundTreeFacelessPlateGlow.png | RGB | The background's light 0 reference: BoundTreeBackground.png with the face region replaced the same way. |
+| BoundTreeFacelessPlateGlowLit.png | RGB | The background's light 1 reference: BoundTreeGlowLit.png with the face region replaced the same way. |
 
-Colour textures import like BoundTreeOriginal.png.meta, the nymph pair like BoundTreeNymph.png.meta and the response map like HauntedMerchant/MerchantLanternResponse.png.meta (sRGB off); all bilinear, clamped, uncompressed, without mipmaps or non-power-of-two scaling. Content/Presentation/BoundTree/BoundTreeSceneLighting.asset uses them (see "Scene lighting and preview").
+Colour textures import like BoundTreeOriginal.png.meta, the nymph pair like BoundTreeNymph.png.meta and the response map like HauntedMerchant/MerchantLanternResponse.png.meta (sRGB off); all bilinear, clamped, uncompressed, without mipmaps or non-power-of-two scaling. Each faceless plate imports like the texture it replaces on the background. Content/Presentation/BoundTree/BoundTreeSceneLighting.asset lights the background with the three faceless plates and the spirit host's face with BoundTreeAmbientUnlit.png, BoundTreeBackground.png and BoundTreeGlowLit.png (see "Scene lighting and preview" and "Spirit host").
+
+### Faceless plates
+
+The background draws the faceless trunk wherever the spirit's face layer is transparent, so the face can fade into the bark without a painted face left behind it. Each plate is lerp(source, BoundTreeFacelessUnlit.png, m) in linear light, m the BoundTreeFaceMask.png alpha including its soft edge, with the source bytes where m is 0 and the faceless bytes where m is 1. Because BoundTreeFacelessUnlit.png equals BoundTreeAmbientUnlit.png wherever m is below 1, the base plate holds exactly one of the two everywhere; each reference stays at or above the base in every channel (checked; none needed raising). With both lights at 0 the background is the faceless trunk under ambient light; inside the face region neither light adds anything, since there each reference equals the base.
 
 ### Conventions
 
 - Lighting pairs follow SceneLighting.shader in linear light: glow 1 = unlit + max(glowlit - unlit, 0) * tint * response scale; glow 0 = unlit. glowlit >= unlit in every channel of every pixel, so glow 1 reproduces the glow-lit texture.
-- Two scene lights share the ambient base BoundTreeAmbientUnlit.png. Light 0, the painted glow: reference BoundTreeBackground.png (the concept's own resting glow; every channel is at least the unlit value), so light 0 at 1 reproduces the concept exactly; the idle pulse varies it around 1. Light 1, the flare: reference BoundTreeGlowLit.png, 0 at rest and raised for reactions. Victory takes both to 0. The nymph has no painted glow, so only light 1 reaches her (BoundTreeNymphUnlit.png is the base, BoundTreeNymphGlowLit.png the light 1 reference). The faceless trunk draws BoundTreeFacelessUnlit.png. Both lights use BoundTreeGlowResponse.png.
+- Two scene lights share the ambient base BoundTreeAmbientUnlit.png. Light 0, the painted glow: reference BoundTreeBackground.png (the concept's own resting glow; every channel is at least the unlit value), so light 0 at 1 reproduces the concept exactly; the idle pulse varies it around 1. Light 1, the flare: reference BoundTreeGlowLit.png, 0 at rest and raised for reactions. Victory takes both to 0. The nymph has no painted glow, so only light 1 reaches her (BoundTreeNymphUnlit.png is the base, BoundTreeNymphGlowLit.png the light 1 reference). The background uses the faceless plates, which hold these textures outside the face region and BoundTreeFacelessUnlit.png inside it; the spirit host's face layer draws the textures above through the face mask. Both lights use BoundTreeGlowResponse.png.
 - A single light cannot serve both: the flare paints the eyes as glowing discs and fills the mouth's opening with light where the concept has pinpoint pupils and a dark opening with lit rims, so no fraction of the flare reproduces the concept (best least-squares fraction 0.118; the build report lists the fit per region).
 - Response: R = min(1, hypot((x - 500) / 620, (y - 420) / 860)) in continuous concept pixels (pixel centres at +0.5), the convention of MerchantLanternResponse.png; it is a 2D image-plane distance. G is 1 inside the eye ellipses (centres (441, 244) and (568, 274), radii 17 x 13 and 14 x 10) and the mouth polygon (`CRACK` in the script), falling to 0 over 6 px outside (smoothstep).
 
@@ -96,15 +103,20 @@ python Tools/Presentation/author-bound-tree-relight.py build                    
 python Tools/Presentation/author-bound-tree-relight.py build --write-assets            # also writes Art/BoundTree/Relight
 ```
 
-`targets` writes the unlit target and, from the textures in `--from` (default `Art/BoundTree/Relight`), the glow target with its reference image and the nymph target. `build` writes the textures under `textures/`, review images under `review/` (concept, unlit, glow-lit and resting composite, full frame and the face and nymph at 2x; intensity strips at 0, k, 1 and 1.5; the nymph pairs over their plates; the faceless unlit beside the unlit plate; the glow contribution; R and G) and `report.json` (registrations, drift, verification and the resting fit). `--donor-unlit`, `--donor-glow` and `--donor-nymph-glow` substitute a candidate donor; `--save-registered` also writes the registered donors. `--write-assets` keeps existing .meta files and writes a .meta with a fresh GUID for a texture that has none. The prompts are in [prompts/](prompts/README.md); the other candidates and the edit targets are working files under `Docs/work/bound-tree-relight`.
+```
+python Tools/Presentation/author-bound-tree-relight.py plates                 # fresh Docs/work/bound-tree-plates-* folder
+python Tools/Presentation/author-bound-tree-relight.py plates --write-assets  # also writes the three faceless plates
+```
+
+`targets` writes the unlit target and, from the textures in `--from` (default `Art/BoundTree/Relight`), the glow target with its reference image and the nymph target. `plates` builds the three faceless plates from the textures in `--from` (default the installed ones) and BoundTreeFaceMask.png, with face-region review images (source, plate and difference) and `report.json` (pixels unchanged where the mask is 0, equal to the faceless texture where it is 1, channel values below the base); `--write-assets` installs them with a `.meta` copied from the texture each replaces and a fresh GUID, keeping an existing `.meta`. Rerun `plates` after rebuilding the relighting. `build` writes the textures under `textures/`, review images under `review/` (concept, unlit, glow-lit and resting composite, full frame and the face and nymph at 2x; intensity strips at 0, k, 1 and 1.5; the nymph pairs over their plates; the faceless unlit beside the unlit plate; the glow contribution; R and G) and `report.json` (registrations, drift, verification and the resting fit). `--donor-unlit`, `--donor-glow` and `--donor-nymph-glow` substitute a candidate donor; `--save-registered` also writes the registered donors. `--write-assets` keeps existing .meta files and writes a .meta with a fresh GUID for a texture that has none. The prompts are in [prompts/](prompts/README.md); the other candidates and the edit targets are working files under `Docs/work/bound-tree-relight`.
 
 ## Scene lighting and preview
 
-`Content/Presentation/BoundTree/BoundTreeSceneLighting.asset` (under `Dice-Unity/Assets/Dice`) lights the scene by the conventions above: shader `Dice/Scene Lighting`, Base Texture `Relight/BoundTreeAmbientUnlit.png`, and two lights sharing `Relight/BoundTreeGlowResponse.png`.
+`Content/Presentation/BoundTree/BoundTreeSceneLighting.asset` (under `Dice-Unity/Assets/Dice`) lights the background by the conventions above: shader `Dice/Scene Lighting`, Base Texture `Relight/BoundTreeFacelessPlateUnlit.png`, and two lights sharing `Relight/BoundTreeGlowResponse.png`. The background plates are the faceless plates; the spirit host's face layer draws the face over them with the same two lights (see Spirit host).
 
 | Setting | Light 0, painted glow | Light 1, flare |
 | --- | --- | --- |
-| Contribution | BoundTreeBackground.png | Relight/BoundTreeGlowLit.png |
+| Contribution | Relight/BoundTreeFacelessPlateGlow.png | Relight/BoundTreeFacelessPlateGlowLit.png |
 | Response Map | Relight/BoundTreeGlowResponse.png | Relight/BoundTreeGlowResponse.png |
 | Contribution Includes Base | on | on |
 | Constrain Ambient To Reference, Modulate By Base Color | off | off |
@@ -113,7 +125,7 @@ python Tools/Presentation/author-bound-tree-relight.py build --write-assets     
 | Flicker Amount, Speed, Seed | 0.12, 0.35, 4127 | 0, 0, 0 (no flicker) |
 | Receiver Intensity | 0 | 0 |
 
-- Reproduction: at a sampled intensity of exactly 1 the response scale is 1 for every pixel whatever Distance Falloff and Source Response are, so each light adds max(reference - base, 0) and reproduces its reference: light 0 alone gives BoundTreeBackground.png, light 1 alone BoundTreeGlowLit.png, and both together add the flare to the resting glow. Below 1, Distance Falloff 0.8 dims bark farther from the glow (response R) sooner than bark near it, and Source Response 0.5 keeps the eyes and mouth (response G) burning longer, as for the merchant's lantern.
+- Reproduction: at a sampled intensity of exactly 1 the response scale is 1 for every pixel whatever Distance Falloff and Source Response are, so each light adds max(reference - base, 0) and reproduces its reference: outside the face region light 0 alone gives BoundTreeBackground.png, light 1 alone BoundTreeGlowLit.png, and both together add the flare to the resting glow. Inside the face region the background stays the faceless trunk under ambient light at every level; the face layer lights the face there. Below 1, Distance Falloff 0.8 dims bark farther from the glow (response R) sooner than bark near it, and Source Response 0.5 keeps the eyes and mouth (response G) burning longer, as for the merchant's lantern.
 - Pulse: light 0's idle pulse is the shared flicker noise, intensity = multiplier * (1 + 0.12 * noise). Its main band changes about every 4 s at speed 0.35, so it swells slowly between about 0.90 and 1.11 and passes through exactly 1. Light 1 has no flicker; its level is exactly its multiplier.
 - Receivers: no flat receivers or computed lights use these lights; their receiver fields, Receiver Ambient and Receiver Key are the class defaults with Receiver Intensity 0.
 
@@ -123,23 +135,60 @@ python Tools/Presentation/author-bound-tree-relight.py build --write-assets     
 | --- | --- |
 | Preview Camera | Orthographic size 480, solid dark background, UI layer only. |
 | Bound Tree Preview Canvas | Screen Space - Camera on the preview camera; Canvas Scaler 540 x 960, match 0.5. No raycaster. |
-| Bound Tree Plate | RawImage `Relight/BoundTreeAmbientUnlit.png` filling the 540 x 960 authoring frame, with a SceneLightingPresentation: Lighting Asset BoundTreeSceneLighting.asset, Background this image, Intensity Multipliers [1, 0], Lit Images [Nymph]. It draws the ambient base plus lights 0 and 1. |
-| Bound Tree Plate/Faceless Trunk | RawImage with `Content/Presentation/BoundTree/BoundTreeFaceless.mat` (Source Masked Image: `_SourceTex` Relight/BoundTreeFacelessUnlit.png, `_LayerMask` BoundTreeFaceMask.png, `_InvertMask` 0), unlit, colour alpha 0. |
+| Bound Tree Plate | RawImage `Relight/BoundTreeFacelessPlateUnlit.png` filling the 540 x 960 authoring frame, with a SceneLightingPresentation: Lighting Asset BoundTreeSceneLighting.asset, Background this image, Intensity Multipliers [1, 0], Hosts [Spirit Host with `BoundTreeHost.asset`, Position (0, 0, 0)], Lit Images [Nymph]. It draws the ambient base plus lights 0 and 1, builds the host and passes it the same lighting sample every frame, the way an encounter view lights its host. |
+| Bound Tree Plate/Spirit Host | Instance of `Content/Presentation/BoundTree/BoundTreeHost.prefab`, its root stretched over the plate's rect (anchors 0 to 1, pivot 0, size 0); the portrait scales its 941 x 1672 frame to the plate. Its Face layer draws the spirit's face lit per pixel (see Spirit host). |
 | Bound Tree Plate/Nymph | SpiritPortraitImage (a RawImage) with `Content/Presentation/BoundTree/BoundTreeNymphLit.mat` (Scene Lit Image), mesh `NymphBreathMesh.asset`, and a SceneLitImage on BoundTreeSceneLighting.asset: Base Texture Relight/BoundTreeNymphUnlit.png, light 1 Reference Relight/BoundTreeNymphGlowLit.png with Relight/BoundTreeGlowResponse.png, no light 0. Her alpha is the base texture's. A native Animation component plays `NymphSob.anim` on loop (see Nymph motion). |
 | Bound Tree Plate/Nymph/Breath, Nymph/Flinch | SpiritPortraitDeformationChannel on the Nymph image, shape 0 (Breath) and shape 1 (Flinch), weight 0 at rest. |
 
-Faceless Trunk and Nymph stretch over the plate's rect, so every layer registers to the concept frame like the plate. No image is a raycast target.
+Spirit Host and Nymph stretch over the plate's rect, so every layer registers to the concept frame like the plate. No image is a raycast target.
 
-To drive it, enter Play mode and select Bound Tree Plate: Scene Lighting Presentation > Intensity Multipliers element 0 is the glow and element 1 the flare (applied every frame; values above 1 brighten further). Faceless Trunk > Raw Image > Color alpha fades the face into the bark. The states of the art plan:
+To drive the lights, enter Play mode and select Bound Tree Plate: Scene Lighting Presentation > Intensity Multipliers element 0 is the glow and element 1 the flare (applied every frame; values above 1 brighten further). The host shows its resting face in Edit and Play mode. No existing component or inspector plays the host's other states: they are reached only through the host API (`SpiritHostPortrait.SetState(state, progress)` for Waiting, Arrival, Victory, Defeat and Farewell, `React()` for Reaction), which the encounter, journey and ending views call. While the host is lit, the portrait rewrites the face's opacity and mesh weights from its current state every time it is posed (each Play-mode frame), so editing them in the Inspector does not hold, and the host's timelines are not Animation clips the Animation window could scrub. The captures below were made by calling that API from a temporary editor script (copy: `Docs/work/bound-tree-host/BoundTreeHostSession.cs.txt`). The lighting levels of the art plan:
 
-| State | Light 0 | Light 1 | Faceless alpha |
+| State | Light 0 | Light 1 | Host state |
 | --- | --- | --- | --- |
-| Rest | 1 (pulsing) | 0 | 0 |
-| Flare (reaction, defeat) | 1 | raised, 1 matches BoundTreeGlowLit.png | 0 |
-| Glow off | 0 | 0 | 0 |
-| Victory | 0 | 0 | 1 |
+| Rest | 1 (pulsing) | 0 | Idle |
+| Flare (reaction, defeat) | 1 | raised, 1 matches BoundTreeGlowLit.png | Reaction or Defeat |
+| Glow off | 0 | 0 | any |
+| Victory | 0 | 0 | Victory, ending faceless |
 
-The faceless trunk draws unlit, so it matches the bark around it only with both lights at 0; with a light above 0 the face region stays at ambient while the surrounding bark glows. At rest, when the pulse passes 1, the rendered plate with the nymph equals BoundTreeBackground.png with BoundTreeNymph.png over it.
+With the face at opacity 0 and both lights at 0 the preview is the faceless trunk under ambient light. At rest, when the pulse passes 1, the rendered plate with the host and the nymph equals BoundTreeBackground.png with BoundTreeNymph.png over it except on the face mask's 2 px soft edge: there the face (opacity m) covers a plate that is itself lerp(BoundTreeBackground.png, BoundTreeFacelessUnlit.png, m), which leaves m (1 - m) (BoundTreeAmbientUnlit.png - BoundTreeBackground.png) in linear light. Against the render before the host (1080 x 1920 captures) this is at most 4 levels on 1713 soft-edge pixels, with at most 1 level of rounding on 469 pixels inside the mask and none outside it.
+
+## Spirit host
+
+The possessing spirit is the encounter's host: `Content/Presentation/BoundTree/BoundTreeHost.asset` (a SpiritHostPresentationAsset) with portrait `BoundTreeHost.prefab`, generated by `Tools/Presentation/author-bound-tree-host.py` with its deformation mesh `BoundTreeFaceMesh.asset`. It follows the merchant host: a full-frame lit layer through a source mask, its timelines on the shared host state API, reauthored by the script rather than edited by hand.
+
+- Prefab: root BoundTreeHost (RectTransform 941 x 1672, anchors and pivot 0, SpiritHostPortrait with Portrait Root `Portrait Layers` and the one authored layer), `Portrait Layers` (941 x 1672 at the root's origin), `Portrait Layers/Face` (SpiritPortraitImage: texture BoundTreeBackground.png, material `BoundTreeFace.mat`, mesh BoundTreeFaceMesh.asset, weights [0, 0], colour white, anchored position (470.5, 836) with pivot 0.5 so its rect covers the frame, no raycast target, cull transparent mesh on).
+- Material: `BoundTreeFace.mat`, Source Masked Image (`_SourceTex` BoundTreeBackground.png, `_LayerMask` BoundTreeFaceMask.png, `_InvertMask` 0); without scene lighting the face shows the painted plate through the mask.
+- Asset: Reference Size 941 x 1672, Scale 1, Offset 0, Lit Layer Shader `Dice/Scene Lit Image`, no silhouette, smoke or sigil prefab (an encounter HUD needs a host sigil; none is authored yet). One layer, Face: Lighting Base Texture Relight/BoundTreeAmbientUnlit.png, light 0 Reference BoundTreeBackground.png and light 1 Reference Relight/BoundTreeGlowLit.png, both by reference with Response Map Relight/BoundTreeGlowResponse.png, no depth, full Map Rect. These are the textures the faceless plates replace in the face region, so at full opacity the face draws what the unbroken plate would, dimming, pulsing and flaring with the background.
+
+### Expressions
+
+Idle has no motion: the face is still bark, and its only life at rest is light 0's glow pulse. Expressions deform the face through BoundTreeFaceMesh.asset, a 128 x 224 grid over the 941 x 1672 frame (about 7.4 px cells) with two shapes. Displacement is weighted by an edge envelope (EDGE): distance inward from the boundary of the mask's alpha-1 region, zero up to 18 px and full from 36 px, evaluated at every vertex. Every vertex within 18 px of the boundary is still, so face pixels within 7.5 px of it (18 px less the cell diagonal) and the whole 2 px soft edge never move, and the face's outline stays exactly over the plate's faceless region.
+
+| Shape | Region | Full weight |
+| --- | --- | --- |
+| Brow (shape 0) | Soft ellipses over the bark plates above each eye: left (445, 214) 60 x 28, right (570, 242) 46 x 24, full inside 0.6 of the radius, none beyond 1.5; the drop fades out from the brow's lower edge to just below the eye's centre (rows 226 to 252 left, 252 to 282 right). | Down 4.5 px at the inner ends (toward the nose), 3 px at the outer ends; the upper half of each eye narrows beneath the brow. |
+| MouthWide (shape 1) | The mouth crack (the glow source polygon). Rows: none above 318, full from 350 to 520, none below 600, so its narrow lower end near the mask's tip stays still. | Each lip moves 4 px outward; the dark opening stretches, the bark beyond each lip moves with it for 4 px and fades to rest over 30 px. A negative weight narrows the crack by the same amount. |
+
+Measured by the script on the rendered grid: largest displacement 4.3 px (Brow) and 4.0 px (MouthWide), none on any pixel at or outside the edge band, nearest moving pixel 9.2 px inside the boundary, largest strain 0.34 (the stretch of the dark crack and the squeeze under the brows), no folds, also with MouthWide at -1.
+
+### States
+
+Waiting and Reaction play in real time; Arrival, Victory, Defeat and Farewell follow the normalized progress their caller sets, so their durations set relative timing. All transitions are eased (smoothstep).
+
+| State | Sequence | Duration | Timeline |
+| --- | --- | --- | --- |
+| Idle | none | - | Rest: opacity 1, weights 0. |
+| Waiting | Faceless bark | 1 s | Opacity 0: the trunk is faceless before the challenge. |
+| Arrival | Face splits open | 2.5 s | Opacity 0 to 1 over 0 to 1.8 s; MouthWide from -1 (the crack narrowed 4 px per lip) to 0 over 0.3 to 2.3 s, so the crack opens as the face appears; Brow 0. |
+| Reaction | Brows drop | 1.4 s | Additive, gesture on start: Brow 0 to 1 over 0 to 0.1 s, held to 0.5 s, back to 0 by 1.3 s; MouthWide 0 to 0.7 over 0 to 0.18 s, back to 0 over 0.35 to 0.95 s. A reaction restarted mid-expression blends from its current pose over 0.1 s. |
+| Victory | Face sinks into the bark | 2.5 s | Opacity 1 to 0 over the whole sequence; an expression in progress relaxes to rest over 0.6 s. Dimming the glow is the scene lighting's part. |
+| Defeat | Satisfied grin | 3 s | MouthWide 0 to 1 over 0.1 to 1.5 s, held to 1.9 s, back to 0 by 3 s; Brow relaxes over 0.6 s; opacity stays 1. |
+| Farewell | Face withdraws | 2.5 s | As Victory: opacity 1 to 0, expressions relax over 0.6 s. |
+
+Waiting and Farewell: journeys show the host during every beat that is not an illustration and give each beat a host state, so the beats before the challenge (the merchant's arrival, the nymph's reveal) use Waiting to show the faceless trunk, and Arrival splits the face open from it. Farewell is an outcome state (the existing journeys use it on abandon); the face withdraws into the bark as on Victory and ends in the same faceless trunk as Waiting, so a later Arrival starts from what is on screen.
+
+Captures of every state, difference images against rest and the measurements are in `Docs/work/bound-tree-host` (`captures/`, `analysis.json`).
 
 ## Nymph motion
 

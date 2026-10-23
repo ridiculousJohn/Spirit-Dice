@@ -11,6 +11,12 @@ Docs/Reference/Art/HauntedMerchantHostLayers.md. Stages:
            and write BoundTreeAmbientUnlit.png, BoundTreeGlowLit.png, BoundTreeFacelessUnlit.png,
            BoundTreeNymphUnlit.png, BoundTreeNymphGlowLit.png and the response map BoundTreeGlowResponse.png, the
            review images and report.json. A missing glow donor skips everything that depends on it.
+  plates   From the textures in --from (default: the installed Relight folder), write the background plates that
+           the spirit host's face layer covers: through BoundTreeFaceMask.png alpha (soft edge included) the face
+           region of the ambient base and of both light references is replaced by BoundTreeFacelessUnlit.png, so the
+           plate shows the faceless trunk wherever the face layer is transparent. BoundTreeFacelessPlateUnlit.png
+           (base), BoundTreeFacelessPlateGlow.png (light 0 reference) and BoundTreeFacelessPlateGlowLit.png (light 1
+           reference), with review images and report.json.
 
 Python 3.10 or later with numpy, Pillow and scipy (on this machine the venv
 Docs/work/merchant-table-clear/.venv/Scripts/python.exe). The registration, ratio-map, highlight-cap and harmonic-fill
@@ -20,13 +26,18 @@ the repository root:
   python Tools/Presentation/author-bound-tree-relight.py targets
   python Tools/Presentation/author-bound-tree-relight.py build                 # fresh Docs/work/bound-tree-relight-*
   python Tools/Presentation/author-bound-tree-relight.py build --write-assets  # also writes Art/BoundTree/Relight
+  python Tools/Presentation/author-bound-tree-relight.py plates                # fresh Docs/work/bound-tree-plates-*
+  python Tools/Presentation/author-bound-tree-relight.py plates --write-assets # also writes the three plates
 
 The default build output is a fresh ignored Docs/work/bound-tree-relight-* directory (textures under textures/,
 review images under review/, report.json); --output chooses an unused directory under Docs/work. --write-assets also
 replaces the six textures in Art/BoundTree/Relight, keeps existing .meta files and writes a .meta with a fresh GUID
 for a texture that has none (colour: BoundTreeOriginal.png.meta, RGBA: BoundTreeNymph.png.meta, response:
 HauntedMerchant/MerchantLanternResponse.png.meta). Source artwork and donors are only read, so repeated runs give
-the same textures.
+the same textures. `plates` writes a fresh Docs/work/bound-tree-plates-* directory (or --output); its --write-assets
+writes the three plates to Art/BoundTree/Relight with a .meta copied, under a fresh GUID, from the texture each
+replaces on the background (BoundTreeAmbientUnlit.png, BoundTreeBackground.png and BoundTreeGlowLit.png) and keeps
+an existing .meta. It only reads the installed textures, so repeated runs give the same plates.
 """
 from pathlib import Path
 import argparse
@@ -649,13 +660,103 @@ def install(disk):
     return {'folder': OUT.relative_to(ROOT).as_posix(), 'created_meta': created}
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Faceless background plates under the spirit host's face layer.
+# Each plate is lerp(source, BoundTreeFacelessUnlit.png, BoundTreeFaceMask.png alpha) in linear light; where the mask
+# is 0 it keeps the source bytes and where it is 1 it holds the faceless bytes. The face layer draws the source
+# textures through the same mask, so at full opacity it covers the faceless region and at 0 the faceless trunk shows.
+PLATES = {
+    # plate: (source texture, its folder); the source's .meta is the plate's import template
+    'BoundTreeFacelessPlateUnlit.png': ('BoundTreeAmbientUnlit.png', 'relight'),
+    'BoundTreeFacelessPlateGlow.png': ('BoundTreeBackground.png', 'art'),
+    'BoundTreeFacelessPlateGlowLit.png': ('BoundTreeGlowLit.png', 'relight'),
+}
+PLATE_BASE = 'BoundTreeFacelessPlateUnlit.png'
+
+
+def faceless_plates(relight_dir):
+    """The three plates (sRGB bytes) and their checks, from the textures in `relight_dir` and Art/BoundTree."""
+    mask = art('BoundTreeFaceMask.png')[..., 3] / 255.0
+    faceless = load(relight_dir / 'BoundTreeFacelessUnlit.png', 'RGB')
+    faceless_lin = to_linear(faceless)
+    m = mask[..., None]
+    sources, plates = {}, {}
+    for name, (source, folder) in PLATES.items():
+        src = load((relight_dir if folder == 'relight' else ART) / source, 'RGB')
+        mixed = np.rint(to_srgb(to_linear(src) * (1 - m) + faceless_lin * m))
+        mixed = np.where(m <= 0, src, np.where(m >= 1, faceless, mixed))
+        sources[name], plates[name] = src, mixed
+    base = plates[PLATE_BASE]
+    report = {'formula': 'plate = lerp(source, BoundTreeFacelessUnlit.png, BoundTreeFaceMask.png alpha) in linear light, '
+                         'source bytes where the mask is 0, faceless bytes where it is 1',
+              'mask_pixels_gt_0': int((mask > 0).sum()), 'mask_pixels_eq_1': int((mask >= 1).sum())}
+    for name in PLATES:
+        if name == PLATE_BASE:
+            continue
+        below = plates[name] < base
+        report[name + ' channel_values_raised_to_base'] = int(below.sum())
+        plates[name] = np.maximum(plates[name], base)
+    for name, plate in plates.items():
+        outside = mask <= 0
+        report[name] = {
+            'source': PLATES[name][0],
+            'pixels_differing_from_source_where_mask_is_0': int((np.any(plate != sources[name], -1) & outside).sum()),
+            'pixels_differing_from_faceless_where_mask_is_1': int((np.any(plate != faceless, -1) & (mask >= 1)).sum()),
+            'pixels_differing_from_source': int(np.any(plate != sources[name], -1).sum()),
+            'channel_values_below_base': int((plate < base).sum())}
+    return plates, sources, faceless, mask, report
+
+
+def stage_plates(args):
+    src = Path(args.source).resolve() if args.source else OUT
+    if args.output:
+        out_dir = (Path.cwd() / args.output).resolve()
+        if WORK.resolve() not in out_dir.parents:
+            raise SystemExit('--output must be under Docs/work.')
+        out_dir.mkdir(parents=True, exist_ok=False)
+    else:
+        WORK.mkdir(parents=True, exist_ok=True)
+        out_dir = Path(tempfile.mkdtemp(prefix='bound-tree-plates-', dir=WORK))
+    plates, sources, faceless, mask, report = faceless_plates(src)
+    report['from'] = src.relative_to(ROOT).as_posix() if ROOT in src.parents else str(src)
+    for name, plate in plates.items():
+        save_png(out_dir / 'textures' / name, plate, 'RGB')
+    rdir = out_dir / 'review'
+    rdir.mkdir(parents=True, exist_ok=True)
+    for name, plate in plates.items():
+        diff = np.abs(plate - sources[name]).max(-1)
+        dimg = to_srgb(np.clip(np.repeat(diff[..., None], 3, -1) / 255.0 * 4, 0, 1))
+        save_png(rdir / name.replace('.png', '-face-2x.png'),
+                 row([label(crop2x(sources[name], FACE_BOX), PLATES[name][0]), label(crop2x(plate, FACE_BOX), name),
+                      label(crop2x(dimg, FACE_BOX), 'difference x4')]), 'RGB')
+    if args.write_assets:
+        used = used_guids()
+        templates = {name: ((OUT if folder == 'relight' else ART) / source).with_suffix('.png.meta')
+                     for name, (source, folder) in PLATES.items()}
+        created = []
+        for name, plate in plates.items():
+            path = save_png(OUT / name, plate, 'RGB')
+            meta = Path(str(path) + '.meta')
+            if not meta.exists():
+                lines = templates[name].read_text(encoding='ascii').splitlines()
+                lines = ['guid: ' + fresh_guid(used) if ln.startswith('guid:') else ln for ln in lines]
+                meta.write_text('\n'.join(lines) + '\n', encoding='ascii', newline='\n')
+                created.append(meta.relative_to(ROOT).as_posix())
+            if not np.array_equal(load(path, 'RGB'), plate):
+                raise SystemExit(f'{path} does not read back equal to the build output.')
+        report['installed'] = {'folder': OUT.relative_to(ROOT).as_posix(), 'created_meta': created}
+    (out_dir / 'report.json').write_text(json.dumps(report, indent=2), encoding='ascii')
+    print(json.dumps(report, indent=2))
+    print(f'Wrote {out_dir}')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('stage', choices=['targets', 'build'])
+    parser.add_argument('stage', choices=['targets', 'build', 'plates'])
     parser.add_argument('--replace', action='store_true', help='targets: allow replacing earlier edit targets.')
-    parser.add_argument('--from', dest='source', help='targets: folder holding a build\'s textures (default: the installed Relight folder).')
-    parser.add_argument('--output', help='build: unused directory under Docs/work (default: a fresh bound-tree-relight-* directory).')
-    parser.add_argument('--write-assets', action='store_true', help='build: also write the textures to Art/BoundTree/Relight.')
+    parser.add_argument('--from', dest='source', help='targets, plates: folder holding a build\'s textures (default: the installed Relight folder).')
+    parser.add_argument('--output', help='build, plates: unused directory under Docs/work (default: a fresh bound-tree-relight-* or bound-tree-plates-* directory).')
+    parser.add_argument('--write-assets', action='store_true', help='build, plates: also write the textures to Art/BoundTree/Relight.')
     parser.add_argument('--save-registered', action='store_true', help='build: also write the registered donors.')
     parser.add_argument('--donor-unlit', help='build: substitute a candidate plate unlit donor.')
     parser.add_argument('--donor-glow', help='build: substitute a candidate plate glow donor.')
@@ -663,6 +764,9 @@ def main():
     args = parser.parse_args()
     if args.stage == 'targets':
         stage_targets(args)
+        return
+    if args.stage == 'plates':
+        stage_plates(args)
         return
     if args.output:
         out_dir = (Path.cwd() / args.output).resolve()

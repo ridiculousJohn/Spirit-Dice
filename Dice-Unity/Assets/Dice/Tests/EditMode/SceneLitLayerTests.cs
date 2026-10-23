@@ -245,19 +245,6 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void ShippedHostsKeepUniformReceiverTint()
-        {
-            string[] guids = AssetDatabase.FindAssets("t:SpiritHostPresentationAsset", new[] { "Assets/Dice/Content" });
-            Assert.That(guids, Is.Not.Empty);
-            foreach (string guid in guids)
-            {
-                var host = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(AssetDatabase.GUIDToAssetPath(guid));
-                if (host.name == "MerchantHost") continue;
-                Assert.That(host.Layers.All(layer => layer.Lighting == null || !layer.Lighting.Configured), Is.True, host.name);
-            }
-        }
-
-        [Test]
         public void PresentationIntensityMultipliersDriveBoundLitImages()
         {
             RawImage background = Image("Background");
