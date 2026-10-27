@@ -169,12 +169,14 @@ namespace Dice.Tests
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
                 .Select(category => new HandDefinition("hand.recovery." + (int)category, category, 5, 1, 5, 1, 6));
             const string encounterId = "encounter.bootstrap.recovery";
+            var table = DirectTable(out var rules);
             var catalog = new MechanicalCatalog("bootstrap.recovery.v1", hands,
-                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }) });
+                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });
             controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
             RestoreOriginalLocators();
             ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
             yield return ContentReady.Routed(controller);
+            Assert.That(ContentReady.EncounterView(controller).TablePresentation, Is.SameAs(table));
             Assert.That(controller.PresentationReady, Is.True);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False,
                 "Successful initialization dismisses the error surface when its authored scene is ready.");
@@ -207,8 +209,9 @@ namespace Dice.Tests
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
                 .Select(category => new HandDefinition("hand.bootstrap." + (int)category, category, 5, 1, 5, 1, 6));
             const string encounterId = "encounter.bootstrap.explicit";
+            var table = DirectTable(out var rules);
             var catalog = new MechanicalCatalog("bootstrap.explicit.v1", hands,
-                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }) });
+                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });
             string savePath = ContentReady.SpiritSavePath();
             controller.ConfigureSeedPolicy(true, "17");
             controller.Initialize(catalog, encounterId, 42, savePath);
@@ -220,6 +223,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             Assert.That(controller.PresentationReady, Is.True);
             Assert.That(ContentReady.EncounterView(controller), Is.Not.Null);
+            Assert.That(ContentReady.EncounterView(controller).TablePresentation, Is.SameAs(table));
             provider.Complete(authoredHandle.Result);
             yield return WaitUntil(() => provider.ReleaseCount == 1, "Superseded startup retained configuration.");
             yield return null;
@@ -267,6 +271,10 @@ namespace Dice.Tests
             Assert.That(sceneController.Snapshot, Is.Not.Null);
             Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
         }
+
+        /** The authored table a run without a journey opens on, and the rules its cards present. */
+        private EncounterTablePresentationAsset DirectTable(out EncounterRuleDefinition[] rules)
+            => ContentReady.DirectTable(authoredHandle.Result, authoredHandle.Result.CatalogAsset.Build().Catalog, out rules);
 
         private void InstallPendingConfiguration()
         {

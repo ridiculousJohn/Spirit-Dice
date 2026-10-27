@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Dice.App;
+using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -118,6 +120,29 @@ namespace Dice.Tests
             Assert.That(dice, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
             Assert.That(dice[index], Is.Not.Null, "Authored die " + index);
             return dice[index];
+        }
+
+        /**
+         * The table a run without a journey opens on, with the rules its cards present as the encounter it presents
+         * defines them. Such a run opens on the application's default encounter scene, the scene of the configured direct
+         * encounter, so an encounter fabricated for it carries these rules for the table's cards to present.
+         */
+        internal static EncounterTablePresentationAsset DirectTable(DiceApplicationConfig configuration, MechanicalCatalog catalog,
+            out EncounterRuleDefinition[] rules)
+        {
+            Assert.That(configuration.JourneyCatalog, Is.Not.Null, "The application configuration has no journey catalog.");
+            var table = configuration.JourneyCatalog.Find(configuration.EncounterId)?.TablePresentation;
+            Assert.That(table, Is.Not.Null, "The configured direct encounter has no journey with an authored table.");
+            var encounter = catalog.GetEncounter(configuration.EncounterId);
+            var presented = new List<EncounterRuleDefinition>();
+            foreach (var card in table.RulePresentations.Where(card => card != null))
+            {
+                var rule = encounter.Rules.FirstOrDefault(value => value.Id == card.RuleId);
+                Assert.That(rule, Is.Not.Null, "The direct encounter lacks the rule its table card " + card.name + " presents.");
+                if (!presented.Contains(rule)) presented.Add(rule);
+            }
+            rules = presented.ToArray();
+            return table;
         }
 
         internal static string SpiritSavePath() => Path.GetFullPath(Path.Combine(Application.dataPath,

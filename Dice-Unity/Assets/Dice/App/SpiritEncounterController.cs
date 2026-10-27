@@ -50,6 +50,9 @@ namespace Dice.App
         public int BeatIndex => navigation.BeatIndex;
         public string JourneyStatus { get; private set; } = string.Empty;
         public bool HasActiveEncounter => application != null && Snapshot != null && Snapshot.Outcome == EncounterOutcome.None;
+        // Read-only test seam: lets EditMode tests check that rejected requests leave the engine and its seed untouched.
+        internal EncounterApplication Application => application;
+        internal ulong Seed => seed;
         public bool CanResume => !IsBusy && navigation.CanResume(HasActiveEncounter);
         public bool CanSkipIntro => navigation.CanSkipIntro(JourneyProgress);
         private EncounterJourneyNavigation.Progress JourneyProgress => new EncounterJourneyNavigation.Progress(

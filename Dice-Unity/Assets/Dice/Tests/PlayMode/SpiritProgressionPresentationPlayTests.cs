@@ -7,6 +7,7 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -23,8 +24,12 @@ namespace Dice.Tests
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var view = ContentReady.EncounterView(controller);
             var definition = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock);
+            var configuration = Addressables.LoadAssetAsync<DiceApplicationConfig>(DiceBootstrap.ConfigurationAddress);
+            yield return configuration;
+            var table = ContentReady.DirectTable(configuration.Result, controller.Catalog, out var rules);
+            Addressables.Release(configuration);
             var encounter = new EncounterDefinition("encounter.collected", new[] { new StageDefinition(1, 1, 0) },
-                unlockMilestones: new[] { new ModifierUnlockMilestone(1, Array.Empty<string>()) },
+                rules: rules, unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: new[] { definition.Id });
             var catalog = new MechanicalCatalog("collected.test", controller.Catalog.Hands, new[] { encounter }, new[] { definition });
             string path = ContentReady.SpiritSavePath();
@@ -35,6 +40,7 @@ namespace Dice.Tests
             controller.Initialize(catalog, encounter.Id, 60, path);
             yield return ContentReady.Routed(controller);
             view = ContentReady.EncounterView(controller);
+            Assert.That(view.TablePresentation, Is.SameAs(table));
             var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(443, 912);
