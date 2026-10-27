@@ -131,14 +131,16 @@ namespace Dice.Presentation
             }
         }
 
-        public void Add(ModifierContribution contribution, ModifierDefinition definition, bool animate)
+        public void Add(ModifierContribution contribution, ModifierPresentationCatalog charms, ModifierDefinition definition,
+            bool animate)
         {
             if (root == null) throw new InvalidOperationException("Build the modifier tray before adding activations.");
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (contribution.DefinitionId != definition.Id)
                 throw new ArgumentException("The modifier definition must match the activation.", nameof(definition));
 
-            Renderer.Add(contribution, definition, animate);
+            Renderer.Add(contribution, charms, definition, animate);
             var button = Instantiate(tokenPrefab, content, false);
             var rect = (RectTransform)button.transform;
             button.interactable = interactable;
@@ -155,7 +157,7 @@ namespace Dice.Presentation
             if (animate) scrollToLatest = true;
         }
 
-        public void Synchronize(EncounterSnapshot snapshot, MechanicalCatalog catalog)
+        public void Synchronize(EncounterSnapshot snapshot, MechanicalCatalog catalog, ModifierPresentationCatalog charms)
         {
             if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
@@ -174,11 +176,12 @@ namespace Dice.Presentation
             for (int i = contributions.Count; i < snapshot.ModifierContributions.Count; ++i)
             {
                 ModifierContribution contribution = snapshot.ModifierContributions[i];
-                Add(contribution, catalog.GetModifier(contribution.DefinitionId), false);
+                Add(contribution, charms, catalog.GetModifier(contribution.DefinitionId), false);
             }
         }
 
-        public void SynchronizeReady(IReadOnlyList<ModifierContribution> previewContributions, MechanicalCatalog catalog)
+        public void SynchronizeReady(IReadOnlyList<ModifierContribution> previewContributions, MechanicalCatalog catalog,
+            ModifierPresentationCatalog charms)
         {
             if (previewContributions == null) throw new ArgumentNullException(nameof(previewContributions));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
@@ -194,7 +197,7 @@ namespace Dice.Presentation
 
             Clear();
             foreach (ModifierContribution contribution in ready)
-                Add(contribution, catalog.GetModifier(contribution.DefinitionId), false);
+                Add(contribution, charms, catalog.GetModifier(contribution.DefinitionId), false);
         }
 
         /** Repeated equal contributions select their occurrence within the same instance. */

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 04dc3b1a65e9fa84c958b65a678d5aaa, type: 2}
   displayName: Mixed Pebbles / Base + Mult
   icon: {fileID: 21300000, guid: a1954908afb45448aadd77a30f4764c2, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Every adjacent pair has different faces.
   artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
   displayName: One Spark / Rerolls
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least one die shows {parameter}.
   artwork: 5
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

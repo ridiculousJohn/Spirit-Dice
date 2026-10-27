@@ -1,0 +1,27 @@
+Generated using built-in image_gen (Codex imagegen skill, 2026-10-26). Root textures for the Bound Tree's binding dice visuals: the raw outputs are BoundTreeDiceRootsRaw.png and BoundTreeDiceTendrilsRaw.png beside this file. Tools/Presentation/build-bound-tree-dice-roots.py builds the installed textures Dice-Unity/Assets/Dice/Art/BoundTree/Dice/BoundTreeDiceRoots.png and BoundTreeDiceTendrils.png from them. Both calls attached Dice-Unity/Assets/Dice/Art/BoundTree/BoundTreeOriginal.png as Image 1.
+
+Roots (bound dice), output BoundTreeDiceRootsRaw.png (1254 x 1254 RGBA, transparent background):
+
+Use case: stylized-concept
+Asset type: game texture for Spirit Dice, a dark folkloric tabletop dice game. A tileable texture strip of roots that is wrapped around the four sides of a small cube-shaped die in a 3D scene, so roots appear to grip and bind the die. Image 1 is the encounter's scene concept.
+Input images: Image 1: style, colour and rendering reference only (the evil spirit's withered black tree whose roots bind a nymph). Do not copy its composition, figures, face or scenery.
+Primary request: a dense mesh of dark gnarled tree roots climbing upward from the bottom edge, in the same painted style as the roots and bark in Image 1.
+Subject: thick black-brown woody roots with split, peeling bark rise from along the entire bottom edge, twist around each other and branch as they climb; they thin into fine creeping tendrils and curling root tips toward the top, with the top quarter holding only sparse thin tips reaching upward. Roots overlap and wrap across one another like they are clutching something. A few faint traces of old moss on the thickest roots.
+Style/medium: richly painted dark fantasy illustration matching Image 1: detailed bark texture, deep shadows, readable silhouettes.
+Composition/framing: square, flat, front-on texture with no perspective and no ground or horizon. The pattern must tile seamlessly left to right: roots leaving the right edge continue exactly at the left edge. Roots fill the full width evenly, densest at the bottom, with gaps between them so the background shows through.
+Lighting/mood: even soft cool moonlight from above with no cast shadows on the background; a very faint sickly yellow-green glow in the deepest bark cracks only.
+Color palette: black, dark umber and charcoal bark with muted swamp-green moss accents; the faint glow is pale yellow-green.
+Constraints: genuinely transparent background (alpha) everywhere outside the roots; no background colour, no vignette, no frame, no border.
+Avoid: no text, no watermark, no die, no faces, no leaves, no ground, no water, no drop shadow.
+
+Tendrils (marked dice), output BoundTreeDiceTendrilsRaw.png (1254 x 1254 RGB, white on black; the build turns brightness into alpha). A first request for pale yellow-green tendrils on a transparent background produced filled blobs with keying artifacts and was not used; this request asks for white line work on black instead:
+
+Use case: stylized-concept
+Asset type: game texture for Spirit Dice, a dark folkloric tabletop dice game. A tileable glow mask of thin creeping root tendrils, wrapped around the four sides of a small cube-shaped die in a 3D scene and added as faint light, marking the die as claimed by a tree spirit. Image 1 is the encounter's scene concept.
+Input images: Image 1: reference only for the organic shape language of its roots. Do not copy its composition, figures, face, scenery or colours.
+Primary request: thin glowing root tendrils creeping upward from the bottom edge on a pure black background.
+Subject: a sparse network of thin, wiry rootlets that start along the whole bottom edge, creep upward while branching and forking, curl at their fine tips and fade out by about two thirds of the height. Every line is thin, from medium-thin near the bottom to hair-fine at the tips, with clear empty black space between lines; no filled areas, no blobs.
+Style/medium: clean hand-drawn glowing line work, like faint luminous veins; each line is brightest along its centre with a very soft narrow glow.
+Composition/framing: square, flat, front-on texture with no perspective. The pattern must tile seamlessly left to right: tendrils leaving the right edge continue exactly at the left edge. Even coverage across the full width.
+Color palette: pure white and light grey lines on a pure black (#000000) background; no other colours.
+Avoid: no text, no watermark, no die, no faces, no leaves, no ground, no thick roots, no filled shapes, no colour, no frame, no border, no vignette.

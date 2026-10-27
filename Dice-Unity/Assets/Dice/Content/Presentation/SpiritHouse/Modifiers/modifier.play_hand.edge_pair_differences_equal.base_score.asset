@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 40612ad948a5ee24ca14285dddbae7bb, type: 2}
   displayName: Twin Footprints / Base
   icon: {fileID: 21300000, guid: 0e2114e4dbd658b6b20628c7b9f42ce8, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Absolute difference of dice 1 and 2 equals that of dice 4 and 5.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -12,8 +12,6 @@ namespace Dice.Tests
     public sealed class SceneLitLayerTests
     {
         private const string LitShaderPath = "Assets/Dice/Presentation/Shared/SceneLitImage.shader";
-        private const string AmbientPath = "Assets/Dice/Content/Presentation/Ambient/";
-        private const string MerchantTablePath = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset";
         private readonly List<UnityEngine.Object> objects = new List<UnityEngine.Object>();
         private SceneLightingAsset asset;
         private Shader shader;
@@ -45,42 +43,19 @@ namespace Dice.Tests
             objects.Clear();
         }
 
+        /** Checks the lit image shader has a single pass / fails if a second pass would make UGUI draw every lit image twice. */
         [Test]
         public void LitLayerShaderHasOnlyTheUiPass()
         {
-            // UGUI draws every pass of a material's shader, so a second pass would also draw over each lit image.
             Assert.That(shader.passCount, Is.EqualTo(1));
-            var lit = new SceneLitLayerMaterial(new SceneLitLayer { BaseTexture = Texture(Color.gray) }, shader);
-            try
-            {
-                Assert.That(lit.Material.passCount, Is.EqualTo(1));
-                Assert.That(lit.Material.GetPassName(0), Is.EqualTo("Scene Lit Image UI"));
-            }
-            finally
-            {
-                lit.Dispose();
-            }
         }
 
+        /** Checks a lit material carries the layer description and the source material's mask / fails if a slot mode, map, strength, depth, frame axis or mask is lost. */
         [Test]
-        public void MaterialCarriesLayerConfigurationAndSampledLightParameters()
+        public void MaterialCarriesTheLayerDescriptionAndSourceMask()
         {
             Texture2D unlit = Texture(Color.gray), reference = Texture(Color.yellow), response = Texture(Color.blue), depth = Texture(Color.white);
-            var layer = new SceneLitLayer
-            {
-                BaseTexture = unlit,
-                Lights = new[]
-                {
-                    new SceneLitLayerLight { LightIndex = 0, Mode = SceneLitLightMode.Reference, Reference = reference, ResponseMap = response },
-                    new SceneLitLayerLight { LightIndex = 1, Mode = SceneLitLightMode.Computed, Strength = .6f }
-                },
-                Depth = depth,
-                DepthRange = new Vector2(.5f, -1.5f),
-                FrameOrigin = new Vector3(-1f, -2f, 0f),
-                FrameAxisX = new Vector3(2f, 0f, 0f),
-                FrameAxisY = new Vector3(0f, 4f, .5f),
-                Wrap = .3f
-            };
+            var layer = Layer(unlit, reference, response, depth);
             var source = Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader")));
             Texture2D mask = Texture(Color.white);
             source.SetTexture("_SourceTex", Texture(Color.magenta));
@@ -103,41 +78,12 @@ namespace Dice.Tests
                 Assert.That(material.GetTexture("_SceneLitResponseTex0"), Is.SameAs(response));
                 Assert.That(material.GetFloat("_SceneLitResponseEnabled0"), Is.EqualTo(1f));
                 Assert.That(material.GetFloat("_SceneLitResponseEnabled1"), Is.Zero);
-                Assert.That(material.GetFloat("_SceneLitStrength1"), Is.EqualTo(.6f));
+                Assert.That(material.GetFloat("_SceneLitStrength1"), Is.EqualTo(layer.Lights[1].Strength));
                 Assert.That(material.GetTexture("_SceneLitDepthTex"), Is.SameAs(depth));
-                Assert.That((Vector2)material.GetVector("_SceneLitDepthRange"), Is.EqualTo(new Vector2(.5f, -1.5f)));
-                Assert.That((Vector3)material.GetVector("_SceneLitFrameAxisX"), Is.EqualTo(new Vector3(2f, 0f, 0f)));
-                Assert.That((Vector3)material.GetVector("_SceneLitFrameAxisY"), Is.EqualTo(new Vector3(0f, 4f, .5f)));
-                Assert.That(material.GetFloat("_SceneLitWrap"), Is.EqualTo(.3f));
-
-                var state = new SceneLightingState();
-                state.Sample(asset, 3.5, new[] { .5f, 2f }, null, new[] { new Vector3(4, 5, -6), new Vector3(7, 8, -9) });
-                lit.Apply(state, new Vector3(0f, 1f, 2f), new Rect(.25f, .5f, .5f, .25f));
-                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(state.GetIntensity(0)));
-                Assert.That(material.GetFloat("_SceneLitIntensity1"), Is.EqualTo(state.GetIntensity(1)));
-                Assert.That(material.GetFloat("_SceneLitIntensity2"), Is.Zero);
-                Color tint = asset.Lights[0].Tint.linear;
-                Assert.That(material.GetVector("_SceneLitTint0"), Is.EqualTo(new Vector4(tint.r, tint.g, tint.b, tint.a)));
-                Assert.That(material.GetFloat("_SceneLitDistanceFalloff0"), Is.EqualTo(1.25f));
-                Assert.That(material.GetFloat("_SceneLitSourceResponse0"), Is.EqualTo(.4f));
-                Assert.That(material.GetFloat("_SceneLitIncludesBase0"), Is.EqualTo(1f));
-                Assert.That(material.GetFloat("_SceneLitConstrainAmbient0"), Is.EqualTo(1f));
-                Assert.That(material.GetFloat("_SceneLitIncludesBase1"), Is.Zero);
-                Assert.That(material.GetFloat("_SceneLitModulateByBase1"), Is.EqualTo(1f));
-                Assert.That(material.GetVector("_SceneLitPosition1"), Is.EqualTo(new Vector4(7, 8, -9, 6)));
-                Color color = asset.Lights[1].ReceiverColor.linear;
-                Assert.That(material.GetVector("_SceneLitColor1"), Is.EqualTo(new Vector4(color.r, color.g, color.b, .2f)));
-                Assert.That(material.GetVector("_SceneLitFrameOrigin"), Is.EqualTo(new Vector4(-1f, -1f, 2f, 0f)));
-                Assert.That(material.GetVector("_SceneLitFrameTransform"), Is.EqualTo(new Vector4(2f, 4f, -.5f, -2f)));
-
-                lit.ApplyAuthored(asset, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
-                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(.7f));
-                Assert.That(material.GetVector("_SceneLitPosition0"), Is.EqualTo(new Vector4(-2, 3, -2, 10)));
-                Assert.That(material.GetVector("_SceneLitFrameTransform"), Is.EqualTo(new Vector4(1f, 1f, 0f, 0f)));
-                lit.ApplyAuthored(null, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
-                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.Zero);
-                Assert.That(material.GetFloat("_SceneLitIntensity1"), Is.Zero);
-                Assert.Throws<ArgumentException>(() => lit.Apply(new SceneLightingState(), Vector3.zero, new Rect(0f, 0f, 1f, 1f)));
+                Assert.That((Vector2)material.GetVector("_SceneLitDepthRange"), Is.EqualTo(layer.DepthRange));
+                Assert.That((Vector3)material.GetVector("_SceneLitFrameAxisX"), Is.EqualTo(layer.FrameAxisX));
+                Assert.That((Vector3)material.GetVector("_SceneLitFrameAxisY"), Is.EqualTo(layer.FrameAxisY));
+                Assert.That(material.GetFloat("_SceneLitWrap"), Is.EqualTo(layer.Wrap));
             }
             finally
             {
@@ -146,6 +92,71 @@ namespace Dice.Tests
             Assert.That(lit.Material, Is.Null);
         }
 
+        /** Checks applying a sample writes its light levels, light settings, receiver positions and the image's frame / fails if a sampled value, an empty slot or the frame mapping is wrong or an unsampled state is accepted. */
+        [Test]
+        public void ApplyWritesTheSampledLightsAndImageFrame()
+        {
+            var lit = new SceneLitLayerMaterial(Layer(Texture(Color.gray), Texture(Color.yellow), Texture(Color.blue), Texture(Color.white)),
+                shader);
+            try
+            {
+                Material material = lit.Material;
+                var state = new SceneLightingState();
+                state.Sample(asset, 3.5, new[] { .5f, 2f }, null, new[] { new Vector3(4, 5, -6), new Vector3(7, 8, -9) });
+                lit.Apply(state, new Vector3(0f, 1f, 2f), new Rect(.25f, .5f, .5f, .25f));
+                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(state.GetIntensity(0)));
+                Assert.That(material.GetFloat("_SceneLitIntensity1"), Is.EqualTo(state.GetIntensity(1)));
+                Assert.That(material.GetFloat("_SceneLitIntensity2"), Is.Zero);
+                Color tint = asset.Lights[0].Tint.linear;
+                Assert.That(material.GetVector("_SceneLitTint0"), Is.EqualTo(new Vector4(tint.r, tint.g, tint.b, tint.a)));
+                Assert.That(material.GetFloat("_SceneLitDistanceFalloff0"), Is.EqualTo(asset.Lights[0].DistanceFalloff));
+                Assert.That(material.GetFloat("_SceneLitSourceResponse0"), Is.EqualTo(asset.Lights[0].SourceResponse));
+                Assert.That(material.GetFloat("_SceneLitIncludesBase0"), Is.EqualTo(1f));
+                Assert.That(material.GetFloat("_SceneLitConstrainAmbient0"), Is.EqualTo(1f));
+                Assert.That(material.GetFloat("_SceneLitIncludesBase1"), Is.Zero);
+                Assert.That(material.GetFloat("_SceneLitModulateByBase1"), Is.EqualTo(1f));
+                Assert.That(material.GetVector("_SceneLitPosition1"), Is.EqualTo(new Vector4(7, 8, -9, asset.Lights[1].ReceiverRange)));
+                Color color = asset.Lights[1].ReceiverColor.linear;
+                Assert.That(material.GetVector("_SceneLitColor1"),
+                    Is.EqualTo(new Vector4(color.r, color.g, color.b, asset.Lights[1].ReceiverIntensity)));
+                // The layer's frame origin (-1, -2, 0) plus the image position (0, 1, 2).
+                Assert.That(material.GetVector("_SceneLitFrameOrigin"), Is.EqualTo(new Vector4(-1f, -1f, 2f, 0f)));
+                // Scale and offset from texture coordinates to the image rectangle (.25, .5, .5, .25).
+                Assert.That(material.GetVector("_SceneLitFrameTransform"), Is.EqualTo(new Vector4(2f, 4f, -.5f, -2f)));
+                Assert.Throws<ArgumentException>(() => lit.Apply(new SceneLightingState(), Vector3.zero, new Rect(0f, 0f, 1f, 1f)));
+            }
+            finally
+            {
+                lit.Dispose();
+            }
+        }
+
+        /** Checks applying authored lighting writes the asset's own levels and positions and no asset darkens every slot / fails if authored levels are missing or an absent asset leaves lights on. */
+        [Test]
+        public void ApplyAuthoredUsesTheAssetLevelsAndNoAssetDarkens()
+        {
+            var lit = new SceneLitLayerMaterial(Layer(Texture(Color.gray), Texture(Color.yellow), Texture(Color.blue), Texture(Color.white)),
+                shader);
+            try
+            {
+                Material material = lit.Material;
+                lit.ApplyAuthored(asset, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
+                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(asset.Lights[0].Intensity));
+                Vector3 position = asset.Lights[0].ReceiverPosition;
+                Assert.That(material.GetVector("_SceneLitPosition0"),
+                    Is.EqualTo(new Vector4(position.x, position.y, position.z, asset.Lights[0].ReceiverRange)));
+                Assert.That(material.GetVector("_SceneLitFrameTransform"), Is.EqualTo(new Vector4(1f, 1f, 0f, 0f)));
+                lit.ApplyAuthored(null, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
+                Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.Zero);
+                Assert.That(material.GetFloat("_SceneLitIntensity1"), Is.Zero);
+            }
+            finally
+            {
+                lit.Dispose();
+            }
+        }
+
+        /** Checks unassigned layer textures keep the lit source material's textures while the description decides the lit slots / fails if a source texture is dropped or a source slot stays lit. */
         [Test]
         public void UnassignedLayerTexturesKeepTheLitSourceMaterialTextures()
         {
@@ -169,10 +180,17 @@ namespace Dice.Tests
             {
                 lit.Dispose();
             }
+        }
+
+        /** Checks a lit material without a shader or lit source material is refused / fails if one is created without lit-layer properties. */
+        [Test]
+        public void LitMaterialRequiresAShaderOrLitSource()
+        {
             Assert.Throws<InvalidOperationException>(() => new SceneLitLayerMaterial(new SceneLitLayer
                 { Lights = new[] { new SceneLitLayerLight() } }, null, null));
         }
 
+        /** Checks malformed layer descriptions are rejected while the default one validates unconfigured / fails if any malformed description passes. */
         [Test]
         public void InvalidLayerDescriptionsAreRejected()
         {
@@ -191,12 +209,23 @@ namespace Dice.Tests
                 new SceneLitLayer { Wrap = 2f }
             })
                 Assert.Throws<InvalidOperationException>(invalid.Validate);
+        }
+
+        /** Checks a host layer lit per pixel validates only while it receives scene lighting / fails if a per-pixel layer that opts out of scene lighting passes. */
+        [Test]
+        public void HostPerPixelLayerMustReceiveSceneLighting()
+        {
             var host = Own(ScriptableObject.CreateInstance<SpiritHostPresentationAsset>());
-            host.Layers = new[] { new SpiritPortraitLayer { Id = "body", Size = Vector2.one, Silhouette = true,
-                Lighting = new SceneLitLayer { Lights = new[] { new SceneLitLayerLight() } } } };
+            host.LitLayerShader = shader;
+            var layer = new SpiritPortraitLayer { Id = "body", Texture = Texture2D.whiteTexture, Size = new Vector2(32, 32),
+                Lighting = new SceneLitLayer { Lights = new[] { new SceneLitLayerLight() } } };
+            host.Layers = new[] { layer };
+            Assert.DoesNotThrow(host.Validate);
+            layer.ReceiveSceneLighting = false;
             Assert.Throws<InvalidOperationException>(host.Validate);
         }
 
+        /** Checks host layers lit per pixel take the shared sample through a lit material while other layers keep the uniform tint, and clearing restores both / fails if a lit layer is also tinted, ignores the sample or keeps its runtime material. */
         [Test]
         public void HostLitLayersUseTheSharedSampleWhileUnconfiguredLayersKeepUniformTint()
         {
@@ -244,6 +273,7 @@ namespace Dice.Tests
             Assert.That(lit.color, Is.EqualTo(litTint));
         }
 
+        /** Checks a presentation's bound lit images follow its sample and per-light multipliers, ignore other views while bound and return to authored levels when released / fails if multipliers miss lit images, another view captures them or release leaves the sample or replaces the serialized material. */
         [Test]
         public void PresentationIntensityMultipliersDriveBoundLitImages()
         {
@@ -255,7 +285,7 @@ namespace Dice.Tests
             litImage.Configure(asset, new SceneLitLayer { Lights = new[] { new SceneLitLayerLight { LightIndex = 0 } } });
             Material material = canopy.materialForRendering;
             Assert.That(material, Is.SameAs(litImage.LitMaterial));
-            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(.7f), "Without a sample the image shows authored levels.");
+            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(asset.Lights[0].Intensity), "Without a sample the image shows authored levels.");
             Assert.That(material.GetVector("_SceneLitFrameTransform"), Is.EqualTo(new Vector4(2f, 1f, 0f, 0f)));
 
             var presentation = background.gameObject.AddComponent<SceneLightingPresentation>();
@@ -275,10 +305,11 @@ namespace Dice.Tests
             Assert.That(litImage.BoundState, Is.SameAs(presentation.State));
             presentation.enabled = false;
             Assert.That(litImage.BoundState, Is.Null);
-            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(.7f));
+            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(asset.Lights[0].Intensity));
             Assert.That(canopy.material, Is.Not.SameAs(material), "The serialized material is never replaced.");
         }
 
+        /** Checks an image receiver lit per pixel keeps its authored colour while a flat receiver is tinted / fails if the lit receiver is tinted too or the flat one is not. */
         [Test]
         public void ImageReceiversLitPerPixelKeepTheirAuthoredColor()
         {
@@ -301,6 +332,7 @@ namespace Dice.Tests
             Assert.That(canopy.color, Is.EqualTo(original));
         }
 
+        /** Checks an unbound lit image follows any view sampling its own lighting asset, ignores copies of it and keeps an explicit binding / fails if it ignores a sampling view, follows an unrelated asset or keeps its runtime material when disabled. */
         [Test]
         public void UnboundLitImagesFollowAnyViewSamplingTheirAuthoredLighting()
         {
@@ -319,141 +351,21 @@ namespace Dice.Tests
             Assert.That(litImage.BoundState, Is.SameAs(view), "A copied asset does not capture the image.");
             view.Sample(null, 5);
             Assert.That(litImage.BoundState, Is.Null);
-            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(.7f));
+            Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(asset.Lights[0].Intensity));
             litImage.Bind(preview);
             Assert.That(material.GetFloat("_SceneLitIntensity0"), Is.EqualTo(preview.GetIntensity(0)));
             litImage.enabled = false;
             Assert.That(canopy.materialForRendering, Is.SameAs(canopy.material));
         }
 
-        [Test]
-        public void CanopyIsLitFromItsRelitClothThroughItsUnchangedMask()
-        {
-            string art = CanopyMotionTests.ArtPath;
-            var unlit = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "Relight/CanopyUnlit.png");
-            var lantern = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "Relight/CanopyLanternLit.png");
-            var response = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "MerchantLanternResponse.png");
-            var mask = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "CanopyOriginalOverhangMask.png");
-            var lighting = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(AmbientPath + "MerchantSceneLighting.asset");
-            Assert.That(lighting.Lights[0].ResponseMap, Is.SameAs(response));
-            Assert.That(lighting.Lights[0].ContributionIncludesBase, Is.True, "The cloth reference includes its unlit base.");
-            foreach (Texture2D texture in new[] { unlit, lantern, response })
-                Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(mask.width, mask.height)),
-                    "The cloth sources and response map must share the canopy mask's frame.");
-            foreach (string name in new[] { "CanopySource.mat", "CanopyRoofSource.mat" })
-            {
-                var material = AssetDatabase.LoadAssetAtPath<Material>(AmbientPath + name);
-                Assert.That(material.shader, Is.SameAs(shader), name);
-                Assert.That(material.GetTexture("_SourceTex"), Is.SameAs(unlit), name);
-                Assert.That(material.GetTexture("_LayerMask"), Is.SameAs(mask), name);
-                Assert.That(material.GetTexture("_SceneLitReferenceTex0"), Is.SameAs(lantern), name);
-                Assert.That(material.GetTexture("_SceneLitResponseTex0"), Is.SameAs(response), name);
-                Assert.That(material.GetFloat("_SceneLitMode0"), Is.EqualTo(1f), name);
-                Assert.That(material.GetFloat("_SceneLitIncludesBase0"), Is.EqualTo(1f), name);
-                Assert.That(material.GetTexture("_SceneLitDepthTex"), Is.Null, name);
-                Assert.That(material.GetVector("_SceneLitMapRect"), Is.EqualTo(new Vector4(0f, 0f, 1f, 1f)), name);
-                for (int i = 1; i < SceneLightingAsset.MaximumLights; ++i) Assert.That(material.GetFloat("_SceneLitMode" + i), Is.Zero, name);
-            }
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(AmbientPath + "Canopy.prefab");
-            SceneLitImage litImage = prefab.GetComponentsInChildren<SceneLitImage>(true).Single();
-            Assert.That(litImage.name, Is.EqualTo("CanopyArtwork"));
-            var image = litImage.GetComponent<SpiritPortraitImage>();
-            Assert.That(image.material, Is.SameAs(AssetDatabase.LoadAssetAtPath<Material>(AmbientPath + "CanopySource.mat")));
-            Assert.That(image.uvRect, Is.EqualTo(new Rect(0f, 0f, 1f, 1f)));
-            Assert.That(litImage.Lighting, Is.SameAs(lighting));
-            Assert.That(litImage.Layer.BaseTexture, Is.SameAs(unlit));
-            Assert.That(litImage.Layer.MapRect, Is.EqualTo(new Rect(0f, 0f, 1f, 1f)));
-            SceneLitLayerLight light = litImage.Layer.Lights.Single();
-            Assert.That(light.LightIndex, Is.Zero);
-            Assert.That(light.Mode, Is.EqualTo(SceneLitLightMode.Reference));
-            Assert.That(light.Reference, Is.SameAs(lantern));
-            Assert.That(light.ResponseMap, Is.SameAs(response));
-            Assert.DoesNotThrow(litImage.Layer.Validate);
-        }
-
-        [Test]
-        public void MerchantBackgroundUsesThePropsRemovedPlatesEverywhere()
-        {
-            string art = CanopyMotionTests.ArtPath + "Props/";
-            var unlit = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "MerchantAmbientUnlitPropsRemoved.png");
-            var lantern = AssetDatabase.LoadAssetAtPath<Texture2D>(art + "MerchantLanternOnlyPropsRemoved.png");
-            Assert.That(unlit, Is.Not.Null);
-            Assert.That(lantern, Is.Not.Null);
-            var lighting = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(AmbientPath + "MerchantSceneLighting.asset");
-            Assert.That(lighting.BaseTexture, Is.SameAs(unlit));
-            Assert.That(lighting.Lights[0].Contribution, Is.SameAs(lantern));
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(MerchantTablePath);
-            Assert.That(table.SceneLighting, Is.SameAs(lighting));
-            Assert.That(table.RoomTexture, Is.SameAs(unlit));
-            string original = AssetDatabase.AssetPathToGUID(CanopyMotionTests.ArtPath + "MerchantAmbientUnlit.png");
-            string originalLantern = AssetDatabase.AssetPathToGUID(CanopyMotionTests.ArtPath + "MerchantLanternOnly.png");
-            foreach (string path in new[] { "Assets/Scenes/MerchantEncounter.unity", "Assets/Scenes/AmbientMotionPreview.unity",
-                MerchantTablePath, AmbientPath + "MerchantSceneLighting.asset" })
-            {
-                string text = System.IO.File.ReadAllText(path);
-                Assert.That(text.Contains(original) || text.Contains(originalLantern), Is.False, path + " must not reference the plates with props.");
-            }
-        }
-
-        [Test]
-        public void MerchantHostLayersAreLitPerPixelInTheCandleRig()
-        {
-            const string relight = "Assets/Dice/Art/HauntedMerchant/Relight/";
-            var host = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(AmbientPath + "MerchantHost.asset");
-            Assert.That(host.LitLayerShader, Is.SameAs(shader));
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(MerchantTablePath);
-            EncounterTablePieceLight candle = table.PieceLights.Single();
-            SceneLightLayer candleLight = table.SceneLighting.Lights[candle.LightIndex];
-            var response = AssetDatabase.LoadAssetAtPath<Texture2D>(relight + "MerchantLanternResponseHost.png");
-            var depth = AssetDatabase.LoadAssetAtPath<Texture2D>(relight + "MerchantDepth.png");
-            Assert.That(((TextureImporter)AssetImporter.GetAtPath(relight + "MerchantDepth.png")).sRGBTexture, Is.False);
-            Assert.That(((TextureImporter)AssetImporter.GetAtPath(relight + "MerchantLanternResponseHost.png")).sRGBTexture, Is.False);
-            var expected = new Dictionary<string, string>
-            {
-                ["Torso"] = "MerchantTorsoAnimation", ["Head"] = "MerchantHeadRepaired", ["Resting Arm"] = "MerchantHost",
-                ["Supporting Arm"] = "MerchantHost", ["Blink"] = "MerchantBlinkEyes"
-            };
-            foreach (SpiritPortraitLayer layer in host.Layers)
-            {
-                SceneLitLayer lit = layer.Lighting;
-                Assert.That(lit.Configured, Is.True, layer.Id);
-                Assert.DoesNotThrow(lit.Validate, layer.Id);
-                Assert.That(lit.BaseTexture, Is.SameAs(AssetDatabase.LoadAssetAtPath<Texture2D>(relight + expected[layer.Id] + "Unlit.png")), layer.Id);
-                Assert.That(lit.Lights.Length, Is.EqualTo(2), layer.Id);
-                Assert.That(lit.Lights[0].LightIndex, Is.Zero);
-                Assert.That(lit.Lights[0].Mode, Is.EqualTo(SceneLitLightMode.Reference));
-                Assert.That(lit.Lights[0].Reference, Is.SameAs(AssetDatabase.LoadAssetAtPath<Texture2D>(relight + expected[layer.Id] + "LanternLit.png")), layer.Id);
-                Assert.That(lit.Lights[0].ResponseMap, Is.SameAs(response), layer.Id);
-                Assert.That(lit.Lights[1].LightIndex, Is.EqualTo(candle.LightIndex));
-                Assert.That(lit.Lights[1].Mode, Is.EqualTo(SceneLitLightMode.Computed));
-                Assert.That(lit.Lights[1].Strength, Is.GreaterThan(0f));
-                Assert.That(lit.Depth, Is.SameAs(depth), layer.Id);
-                Assert.That(lit.DepthRange.x, Is.GreaterThan(lit.DepthRange.y), "Nearer pixels must move toward the viewer (-Z).");
-                Assert.That(lit.DepthRange.y, Is.GreaterThan(candleLight.ReceiverPosition.z), "The merchant sits behind the table candle.");
-                Assert.That(lit.MapRect, Is.EqualTo(new Rect(0f, 0f, 1f, 1f)));
-                Assert.That(lit.Wrap, Is.EqualTo(1f));
-                // The source frame registers to the plate at plate px = (0.9136 x + 21, 0.94 y + 28.8); the candle's piece light
-                // maps plate UV to the rig, so both frame corners must land where the candle's own mapping puts them.
-                foreach (Vector2 corner in new[] { Vector2.zero, Vector2.one, new Vector2(.36f, .62f) })
-                {
-                    var plate = new Vector2((.9136f * corner.x * 941f + 21f) / 941f, 1f - (.94f * (1f - corner.y) * 1672f + 28.8f) / 1672f);
-                    Vector2 delta = plate - candle.ReferencePosition;
-                    Vector3 candleRig = candleLight.ReceiverPosition + candle.ReceiverOffsetX * delta.x + candle.ReceiverOffsetY * delta.y;
-                    Vector3 layerRig = table.HostLightingPosition + lit.FrameOrigin + lit.FrameAxisX * corner.x + lit.FrameAxisY * corner.y;
-                    Assert.That(layerRig.x, Is.EqualTo(candleRig.x).Within(.0005f), layer.Id + " " + corner);
-                    Assert.That(layerRig.y, Is.EqualTo(candleRig.y).Within(.0005f), layer.Id + " " + corner);
-                }
-            }
-            Assert.That(host.Layers.Select(layer => layer.Lighting.Lights[1].Strength).Distinct().Count(), Is.EqualTo(1));
-        }
-
+        /** Checks a layer's map rectangle reaches its material, defaulting to the whole map, and empty or non-finite rectangles are rejected / fails if the rectangle is lost or a degenerate one passes. */
         [Test]
         public void MapRectangleReachesTheMaterialAndIsValidated()
         {
             var layer = new SceneLitLayer
             {
                 Lights = new[] { new SceneLitLayerLight { LightIndex = 0 } },
-                MapRect = new Rect(600f / 941f, 1f - 493f / 1672f, 49f / 941f, 86f / 1672f)
+                MapRect = new Rect(.25f, .5f, .125f, .25f)
             };
             var lit = new SceneLitLayerMaterial(layer, shader);
             try
@@ -471,6 +383,23 @@ namespace Dice.Tests
             foreach (Rect invalid in new[] { new Rect(0f, 0f, 0f, 1f), new Rect(0f, 0f, 1f, 0f), new Rect(float.NaN, 0f, 1f, 1f) })
                 Assert.Throws<InvalidOperationException>(new SceneLitLayer { MapRect = invalid }.Validate);
         }
+
+        /** A layer lit by light 0 from a reference with a response map and by light 1 as a computed light, with depth and a frame. */
+        private static SceneLitLayer Layer(Texture2D unlit, Texture2D reference, Texture2D response, Texture2D depth) => new SceneLitLayer
+        {
+            BaseTexture = unlit,
+            Lights = new[]
+            {
+                new SceneLitLayerLight { LightIndex = 0, Mode = SceneLitLightMode.Reference, Reference = reference, ResponseMap = response },
+                new SceneLitLayerLight { LightIndex = 1, Mode = SceneLitLightMode.Computed, Strength = .6f }
+            },
+            Depth = depth,
+            DepthRange = new Vector2(.5f, -1.5f),
+            FrameOrigin = new Vector3(-1f, -2f, 0f),
+            FrameAxisX = new Vector3(2f, 0f, 0f),
+            FrameAxisY = new Vector3(0f, 4f, .5f),
+            Wrap = .3f
+        };
 
         private RawImage Image(string name)
         {

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 2511d18b47514cd468236eeb80a66b19, type: 2}
   displayName: Lone Watcher / Base
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Die 3 has a face no other die shows.
   artwork: 6
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 2245c543ae8676a46adc383862edb1a7, type: 2}
   displayName: Gathering Basket / Rerolls
   icon: {fileID: 21300000, guid: a59fffbf9d1e5bf6bdf1e6172d06b1d3, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: A rerolled interior die equals the sum of its two neighbors.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

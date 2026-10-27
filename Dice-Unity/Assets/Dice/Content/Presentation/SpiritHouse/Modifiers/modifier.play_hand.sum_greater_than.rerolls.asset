@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: c66334d8c99fcc442ad407fb79f0ecd7, type: 2}
   displayName: Full Basket / Rerolls
   icon: {fileID: 21300000, guid: 12dfd240b92051fba41eafd0771acb79, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Dice sum exceeds {parameter}.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

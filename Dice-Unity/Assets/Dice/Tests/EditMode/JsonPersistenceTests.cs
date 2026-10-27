@@ -11,10 +11,11 @@ namespace Dice.Tests
     public sealed class JsonPersistenceTests
     {
         [Test]
-        public void LegacyStandardJsonResumesAndResavesWithCurrentAccounting()
+        public void LegacyJsonResumesAndResavesWithCurrentAccounting()
         {
-            var catalog = TestContent.BuildStandardCatalog();
-            var original = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            // Legacy saves predate encounter rules, so the fixture encounter has none.
+            var catalog = TestContent.Catalog();
+            var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 60);
             original.Execute(new RerollDiceAction(1), original.Snapshot.Revision);
             var json = SaveJson(original);
             json["SaveFormatVersion"] = 1;
@@ -32,18 +33,21 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void FoxJsonRoundTripPreservesFavorUsageAndFollowingRandomSequence()
+        public void JsonRoundTripPreservesFreeRerollUsageAndFollowingRandomSequence()
         {
-            var catalog = TestContent.BuildStandardCatalog();
-            var original = EncounterSession.CreateEncounter(catalog, "encounter.fox.introduction", 60);
+            var stage = new StageDefinition(1000000, 3, 3);
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { stage },
+                rules: new[] { new FirstRerollFreeRuleDefinition() });
+            var catalog = new MechanicalCatalog("test.json.free_reroll", TestContent.Hands(), new[] { encounter });
+            var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 60);
             Assert.That(original.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);
-            Assert.That(original.Snapshot.RerollsRemaining, Is.EqualTo(3));
+            Assert.That(original.Snapshot.RerollsRemaining, Is.EqualTo(stage.StartingRerolls), "The first reroll is free.");
             var result = EncounterSession.RestoreEncounter(catalog, Decode(SaveJson(original), catalog));
             Assert.That(result.Success, Is.True, result.Detail);
             Assert.That(result.Session.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
             original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
             result.Session.Execute(new RerollDiceAction(3), result.Session.Snapshot.Revision);
-            Assert.That(result.Session.Snapshot.RerollsRemaining, Is.EqualTo(2));
+            Assert.That(result.Session.Snapshot.RerollsRemaining, Is.EqualTo(stage.StartingRerolls - 1));
             EncounterPersistenceTests.AssertGraphEqual(original.CaptureSave(), result.Session.CaptureSave());
         }
 

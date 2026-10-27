@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
   displayName: Quiet Grove / Rerolls
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: No die shows {parameter} or {secondaryParameter}.
   artwork: 4
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

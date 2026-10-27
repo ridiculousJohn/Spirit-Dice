@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using Dice.App;
 using Dice.Engine;
-using Dice.UnityContent;
+using NUnit.Framework;
 using UnityEditor;
 
 namespace Dice.Tests
@@ -9,14 +10,6 @@ namespace Dice.Tests
     internal static class TestContent
     {
         internal const string EncounterId = "encounter.test";
-
-        internal static ModifierAsset[] ModifierAssets() => AssetDatabase.FindAssets("t:ModifierAsset",
-                new[] { "Assets/Dice/Content/Mechanical/Modifiers" })
-            .Select(guid => AssetDatabase.LoadAssetAtPath<ModifierAsset>(AssetDatabase.GUIDToAssetPath(guid)))
-            .OrderBy(asset => asset.Id, System.StringComparer.Ordinal).ToArray();
-
-        internal static MechanicalCatalog BuildStandardCatalog() => AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>(
-            "Assets/Dice/Content/Mechanical/Standard.asset").Build(ModifierAssets());
 
         internal static HandDefinition[] Hands()
         {
@@ -43,5 +36,22 @@ namespace Dice.Tests
 
         internal static EncounterSession Session(ulong seed = 0, IEnumerable<StageDefinition> stages = null)
             => EncounterSession.CreateEncounter(Catalog(stages), EncounterId, seed);
+
+        /**
+         * The one authored encounter table the scene-level tests run on: the first, by asset path, that the authored
+         * journey catalog references whose encounter scene has scene lighting.
+         */
+        internal static string LitTablePath()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>("Assets/Dice/Content/DiceApplicationConfig.asset");
+            Assert.That(config != null && config.JourneyCatalog != null, Is.True, "The application configuration has no journey catalog.");
+            string path = config.JourneyCatalog.Entries
+                .Select(journey => journey != null ? journey.TablePresentation : null)
+                .Where(table => table != null && table.SceneLighting != null && table.Scene.RuntimeKeyIsValid())
+                .Select(table => AssetDatabase.GetAssetPath(table))
+                .OrderBy(value => value, System.StringComparer.Ordinal).FirstOrDefault();
+            Assert.That(path, Is.Not.Null, "The authored journey catalog references no encounter table whose scene has scene lighting.");
+            return path;
+        }
     }
 }

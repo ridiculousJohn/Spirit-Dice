@@ -16,6 +16,5 @@ MonoBehaviour:
   displayName: One Spark / Mult
   icon: {fileID: 0}
   conditionTemplate: At least one die shows {parameter}.
-  conditionTypeName: ContainsFaceCondition
   artwork: 5
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

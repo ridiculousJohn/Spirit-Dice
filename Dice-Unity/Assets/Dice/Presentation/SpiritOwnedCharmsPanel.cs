@@ -70,11 +70,11 @@ namespace Dice.Presentation
                     var instance = snapshot.Modifiers[i];
                     var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                     card.InstanceId = instance.InstanceId;
-                    SpiritCharmVisuals.SetIcon(card.Icon, card.Sigil, card.Category, definition);
-                    card.Title.text = SpiritModifierPresentation.GetName(definition);
-                    card.Body.text = SpiritModifierPresentation.GetConditionText(definition);
-                    card.Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-                    card.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
+                    SpiritCharmVisuals.SetIcon(card.Icon, card.Sigil, card.Category, controls.ModifierPresentation, definition);
+                    card.Title.text = controls.ModifierPresentation.GetName(definition);
+                    card.Body.text = controls.ModifierPresentation.GetConditionText(definition);
+                    card.Effect.text = controls.ModifierPresentation.GetEffectText(definition);
+                    card.Effect.color = controls.ModifierPresentation.GetEffectColor(definition);
                     card.Badge.Render(SpiritCharmVisuals.Status(controls, instance, definition));
                 }
                 grid.RefreshLayout();
@@ -133,18 +133,18 @@ namespace Dice.Presentation
             {
                 if (instance.InstanceId != SelectedInstanceId) continue;
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
-                DetailIcon.sprite = SpiritModifierIcons.GetSprite(definition);
-                Color color = SpiritModifierIcons.GetEffectColor(definition);
+                DetailIcon.sprite = controls.ModifierPresentation.GetIcon(definition);
+                Color color = controls.ModifierPresentation.GetEffectColor(definition);
                 DetailIcon.color = DetailSigil.color = color;
                 DetailIcon.gameObject.SetActive(DetailIcon.sprite != null);
-                DetailSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+                DetailSigil.Seed = controls.ModifierPresentation.GetSigilSeed(definition);
                 DetailSigil.gameObject.SetActive(DetailIcon.sprite == null);
-                DetailCategory.Render(definition);
-                DetailTitle.text = SpiritModifierPresentation.GetName(definition);
-                DetailBody.text = SpiritModifierPresentation.GetConditionText(definition) + "\n" +
+                DetailCategory.Render(controls.ModifierPresentation, definition);
+                DetailTitle.text = controls.ModifierPresentation.GetName(definition);
+                DetailBody.text = controls.ModifierPresentation.GetConditionText(definition) + "\n" +
                     "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" +
-                    SpiritModifierPresentation.GetEffectText(definition) + "</color>\n" +
-                    SpiritModifierPresentation.GetTimingText(definition) + "\n" +
+                    controls.ModifierPresentation.GetEffectText(definition) + "</color>\n" +
+                    controls.ModifierPresentation.GetTimingText(definition) + "\n" +
                     SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot);
                 var status = SpiritCharmVisuals.Status(controls, instance, definition);
                 DetailBadge.Render(status);
@@ -164,7 +164,7 @@ namespace Dice.Presentation
             DetailIcon.sprite = null;
             DetailIcon.gameObject.SetActive(false);
             DetailSigil.gameObject.SetActive(false);
-            DetailCategory.Render(null);
+            DetailCategory.Render(null, null);
             DetailBody.text = "Clear a stage to choose a charm.";
             DetailStatusRow.gameObject.SetActive(false);
             detailsLayout.RefreshLayout();

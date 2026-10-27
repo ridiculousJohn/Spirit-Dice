@@ -13,7 +13,7 @@ namespace Dice.Tests
         private const string BindingId = "rule.test.binding";
         private const string HauntingId = "rule.test.haunting";
         private const string WardId = "rule.test.ward";
-        private const string PieceId = "piece.candle";
+        private const string PieceId = "piece.test";
         private const string InteractionId = "position";
 
         [Test]
@@ -278,9 +278,9 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void FormatSixMerchantDisturbancesMigrateIntoTheHauntingRuleState()
+        public void FormatSixDisturbancesMigrateIntoTheHauntingRuleState()
         {
-            var catalog = MerchantCatalog();
+            var catalog = WardedHauntingCatalog();
             var session = Session(catalog, 5);
             Execute(session, new RerollDiceAction(1));
             Assert.That(session.Snapshot.DisturbedMask, Is.Not.Zero);
@@ -361,17 +361,17 @@ namespace Dice.Tests
             return new MechanicalCatalog("test.binding", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
-        private static MechanicalCatalog MerchantCatalog()
+        private static MechanicalCatalog WardedHauntingCatalog()
         {
-            var candle = new TablePieceDefinition(PieceId, new[]
+            var ward = new TablePieceDefinition(PieceId, new[]
                 { new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 rules: new EncounterRuleDefinition[]
                 {
                     new DieInterferenceRuleDefinition(HauntingId, 100, 1, 1, true, true),
                     new BayWardRuleDefinition(WardId, PieceId, InteractionId, new[] { DieInterferenceKind.ForcedReroll })
-                }, pieces: new[] { candle });
-            return new MechanicalCatalog("test.merchant", TestContent.Hands(), new[] { encounter });
+                }, pieces: new[] { ward });
+            return new MechanicalCatalog("test.haunting", TestContent.Hands(), new[] { encounter });
         }
 
         /** Rewrites a current save as a format 6 document, which kept disturbed dice on the shared block. */

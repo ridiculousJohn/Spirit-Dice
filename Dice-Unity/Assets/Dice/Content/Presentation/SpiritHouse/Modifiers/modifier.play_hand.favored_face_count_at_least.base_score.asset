@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: d6bffd73f10944cd9ff44dbe5eda0669, type: 2}
   displayName: Lantern Seekers / Base
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least {parameter} dice show the favored face.
   artwork: 3
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

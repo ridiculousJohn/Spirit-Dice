@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -29,7 +28,6 @@ namespace Dice.Tests
         private GameObject host;
         private SpiritEncounterController controller;
         private DiceBootstrap bootstrap;
-        private DiceApplicationConfig configuration;
         private Action<AsyncOperationHandle, Exception> previousExceptionHandler;
         private readonly List<Exception> expectedFailures = new List<Exception>();
         private string failureKey;
@@ -74,13 +72,11 @@ namespace Dice.Tests
             if (testLocator != null) Addressables.RemoveResourceLocator(testLocator);
             RestoreOriginalLocators();
             if (provider != null) Addressables.ResourceManager.ResourceProviders.Remove(provider);
-            if (configuration != null) UnityEngine.Object.Destroy(configuration);
             if (authoredHandle.IsValid()) Addressables.Release(authoredHandle);
             ResourceManager.ExceptionHandler = previousExceptionHandler;
             host = null;
             controller = null;
             bootstrap = null;
-            configuration = null;
             provider = null;
             testLocator = null;
             originalLocators = null;
@@ -185,27 +181,6 @@ namespace Dice.Tests
         }
 
         [UnityTest]
-        public IEnumerator FailedModifierLoadReleasesConfigurationWithoutPublishingContent()
-        {
-            configuration = UnityEngine.Object.Instantiate(authoredHandle.Result);
-            Set(configuration, "modifierLabel", failureKey);
-            InstallPendingConfiguration();
-            yield return CreateHost();
-            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
-            RestoreOriginalLocators();
-            provider.Complete(configuration);
-            yield return WaitUntil(() => controller.StatusMessage.StartsWith("Cannot load modifiers"),
-                "Startup did not report the failed content load.");
-            yield return WaitUntil(() => provider.ReleaseCount == 1, "Failed startup retained configuration.");
-            Assert.That(controller.StatusMessage, Does.Contain(failureKey));
-            Assert.That(controller.Catalog, Is.Null);
-            Assert.That(controller.JourneyCatalog, Is.Null);
-            Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(expectedFailures, Is.Not.Empty);
-            AssertStartupSurface();
-        }
-
-        [UnityTest]
         public IEnumerator DestroyingBootstrapDuringPendingConfigurationNeverInitializesController()
         {
             InstallPendingConfiguration();
@@ -270,15 +245,20 @@ namespace Dice.Tests
             Assert.That(sceneBootstrap, Is.Not.Null);
             var catalog = sceneController.Catalog;
             var journeyCatalog = sceneController.JourneyCatalog;
-            var definition = catalog.GetModifier("modifier.initial_roll.initial_pair.base_score");
-            Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo("Welcoming Pair / Base"));
+            // Any modifier: the installed theme must keep presenting it exactly as it did before the bootstrap was disabled.
+            var definition = catalog.Modifiers.First();
+            string name = ContentReady.Charms.GetName(definition);
+            var sprite = ContentReady.Charms.GetIcon(definition);
+            Assert.That(sprite, Is.Not.Null, definition.Id);
             sceneBootstrap.enabled = false;
             yield return null;
             Assert.That(sceneController.Catalog, Is.SameAs(catalog));
             Assert.That(sceneController.JourneyCatalog, Is.SameAs(journeyCatalog));
-            Assert.That(SpiritModifierPresentation.GetName(definition), Is.EqualTo("Welcoming Pair / Base"));
-            Assert.That(SpiritModifierIcons.GetSprite(definition), Is.Not.Null);
-            var journey = journeyCatalog.Entries[0];
+            Assert.That(ContentReady.Charms.GetName(definition), Is.EqualTo(name));
+            Assert.That(ContentReady.Charms.GetIcon(definition), Is.SameAs(sprite));
+            var journey = journeyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly);
+            Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
+            ContentReady.SeedJourneyPrerequisites(sceneController, journey.Id);
             sceneController.SelectEncounter(journey.EncounterId);
             while (sceneController.SelectedJourney.Beats[sceneController.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 sceneController.AdvanceJourney();
@@ -327,13 +307,6 @@ namespace Dice.Tests
                 Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline), failure);
                 yield return null;
             }
-        }
-
-        private static void Set(object target, string name, object value)
-        {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
         }
 
         private sealed class PendingConfigurationProvider : ResourceProviderBase

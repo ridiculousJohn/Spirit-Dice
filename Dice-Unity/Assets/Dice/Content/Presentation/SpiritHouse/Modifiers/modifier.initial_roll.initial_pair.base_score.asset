@@ -16,6 +16,5 @@ MonoBehaviour:
   displayName: Welcoming Pair / Base
   icon: {fileID: 0}
   conditionTemplate: Your initial roll is a Pair.
-  conditionTypeName: InitialPairCondition
   artwork: 1
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

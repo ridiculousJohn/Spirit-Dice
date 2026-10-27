@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
   displayName: Open Gate / Base
   icon: {fileID: 21300000, guid: a1f4804bbf9753938db337d18a05f5d9, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: No hands have been played in this stage.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

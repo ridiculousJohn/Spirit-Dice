@@ -14,6 +14,8 @@ namespace Dice.Presentation
         [SerializeField] private string usedText;
         [SerializeField] private Sprite icon;
         [SerializeField] private ModifierPhase activationPhase = ModifierPhase.PlayerReroll;
+        [Tooltip("Optional visuals the rule shows on the tray's dice, such as marked and bound dice; empty for none.")]
+        [SerializeField] private RuleDiceVisualAsset diceVisual;
 
         public string RuleId => ruleId;
         public string DisplayName => displayName;
@@ -22,6 +24,7 @@ namespace Dice.Presentation
         public string UsedText => usedText;
         public Sprite Icon => icon;
         public ModifierPhase ActivationPhase => activationPhase;
+        public RuleDiceVisualAsset DiceVisual => diceVisual;
 
         public string TextFor(EncounterRuleSnapshot rule)
         {

@@ -12,8 +12,8 @@ namespace Dice.Presentation
         [SerializeField] private ModifierAsset modifier;
         [SerializeField] private string displayName;
         [SerializeField] private Sprite icon;
+        /** The condition's wording; {parameter} and {secondaryParameter} show the referenced modifier's parameters. */
         [SerializeField] private string conditionTemplate;
-        [SerializeField] private string conditionTypeName;
         [SerializeField] private ModifierArtworkKind artwork;
         [SerializeField] private ModifierCategoryPresentationAsset category;
 
@@ -21,7 +21,6 @@ namespace Dice.Presentation
         public string DisplayName => displayName;
         public Sprite Icon => icon;
         public string ConditionTemplate => conditionTemplate;
-        public string ConditionTypeName => conditionTypeName;
         public ModifierArtworkKind Artwork => artwork;
         public ModifierCategoryPresentationAsset Category => category;
     }

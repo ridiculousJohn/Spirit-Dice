@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
   displayName: Lone Mountain / Rerolls
   icon: {fileID: 21300000, guid: 58020fe66d555849b6f4af60fc79838e, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category is High Die.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

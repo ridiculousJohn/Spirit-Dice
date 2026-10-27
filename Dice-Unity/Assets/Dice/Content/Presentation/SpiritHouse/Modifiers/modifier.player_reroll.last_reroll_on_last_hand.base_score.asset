@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 636968cf1002437419a9a1b74f4fd5ed, type: 2}
   displayName: Last Lantern / Base
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: One hand and zero rerolls remain in the evaluation context.
   artwork: 3
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -1,18 +1,24 @@
 # Collection content
 
-`Standard.asset` authors each spirit's six `unlockRewardModifierIds` and its stage
+Content refers to charms by direct references to their `ModifierAsset`s. The engine
+catalog is built from the charms `Standard.asset` references (encounter lists, unlock
+milestones and reward pools, including fallbacks), so a charm referenced nowhere is
+not part of the game. Saves and profiles store charm ids, which resolve through the
+loaded catalog.
+
+`Standard.asset` authors each spirit's six `unlockRewardModifiers` and its stage
 3, 6, and 10 unlock opportunities. Each opportunity chooses one still-locked entry
 from that same list. Fox uses Base and Mult variants of Open Gate, Still Reflection,
 and Rising Sun. Owl and moth use Base and Mult variants of their three established
 milestone families; these lists are provisional.
 
-Each milestone retains its four legacy `modifierIds` for validating existing run
+Each milestone retains its four legacy `modifiers` for validating existing run
 saves. Those IDs do not select the contents of new unlock offers.
 
 ## Family discovery and story grants
 
 Create a `Dice/Progression Reward` asset with independent `discoveredFamilyIds`
-and `grantedModifierIds` lists. Discovering a family reveals its variants and
+and `grantedModifiers` (charm references) lists. Discovering a family reveals its variants and
 allows its entries in authored unlock lists to be offered. Granting an individual
 charm permanently owns it and also discovers its family. Neither operation equips
 the charm or inserts it into an encounter's ordinary pool.
@@ -54,7 +60,7 @@ remain on existing variants, including combined and reroll variants that are not
 currently awarded by these lists. Existing authored ordinary reward pools retain
 their membership.
 
-Moth's `encounterModifierIds` contains four encounter-exclusive Lantern Seekers
+Moth's `encounterModifiers` contains four encounter-exclusive Lantern Seekers
 variants. They trigger when a played hand contains at least two dice showing the
 favored face supplied by the encounter rule. Provisional effects are +10 Base,
 +2 Mult, +5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand.
@@ -64,19 +70,19 @@ approved. The favored-face rule itself still adds +2 Mult per matching scored di
 
 The mechanical condition is `FavoredFaceCountAtLeastCondition`, serialized as
 `conditionKind: 74` with `parameter: 2`. Each modifier and its presentation remain
-separate ScriptableObjects registered in the existing mechanical and presentation
-Addressables groups under their standard discovery labels.
+separate ScriptableObjects: the catalog references the modifier and the modifier skin
+(`Presentation/SpiritHouse/SpiritHouseModifierSkin.asset`) lists its presentation.
 
 ## Tree nymph encounter
 
 `encounter.nymph.bound_tree` authors the Base and Mult variants of Great Oak
 (`modifier.play_hand.three_smallest_sum_at_most_maximum`), Close Branches
 (`modifier.play_hand.adjacent_difference_at_most`) and Unturned Leaf
-(`modifier.play_hand.no_dice_rerolled`) as its six `unlockRewardModifierIds`, with
+(`modifier.play_hand.no_dice_rerolled`) as its six `unlockRewardModifiers`, with
 unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDiscovery`
 discovers those three families and grants nothing; no journey references it yet.
 
-Its `encounterModifierIds` contains four encounter-exclusive Grafted Branch
+Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
 variants. They trigger when at least three dice show the face of a die bound by
 the encounter's binding rule (`rule.nymph.binding`); the bound die counts toward
 the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and

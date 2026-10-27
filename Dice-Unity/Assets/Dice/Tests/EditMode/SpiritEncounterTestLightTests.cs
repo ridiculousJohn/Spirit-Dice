@@ -14,6 +14,7 @@ namespace Dice.Tests
     public sealed class SpiritEncounterTestLightTests
     {
         private const float Tolerance = .00001f;
+        private string tablePath;
         private Scene original, preview;
         private bool originalDirty;
         private readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
@@ -26,14 +27,19 @@ namespace Dice.Tests
         {
             original = SceneManager.GetActiveScene();
             originalDirty = original.isDirty;
-            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
+            tablePath = TestContent.LitTablePath();
+            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            Assert.That(authoredTable, Is.Not.Null, tablePath);
+            Assert.That(authoredTable.Scene.RuntimeKeyIsValid(), Is.True, tablePath + " must reference its encounter scene.");
             preview = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(authoredTable.Scene.AssetGUID));
+            // Opening a preview scene can unload assets held only by test locals, so the table is resolved again.
+            authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            Assert.That(authoredTable, Is.Not.Null, tablePath);
             view = preview.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
-            var prop = new GameObject("Candle", typeof(RectTransform));
+            var prop = new GameObject("Table Piece", typeof(RectTransform));
             prop.transform.SetParent(view.Portrait, false);
             var piece = prop.AddComponent<SpiritTablePieceView>();
-            Set(piece, "pieceId", "piece.test.candle");
+            Set(piece, "pieceId", "piece.test.prop");
             Set(piece, "interactionId", "position");
             Field<List<SpiritTablePieceView>>(view, "tablePieces").Add(piece);
             Invoke(view, "Build");
@@ -57,11 +63,14 @@ namespace Dice.Tests
             {
                 new EncounterTablePieceLight
                 {
-                    LightIndex = 0, PieceId = "piece.test.candle", InteractionId = "position", ReferencePosition = new Vector2(.5f, .5f)
+                    LightIndex = 0, PieceId = "piece.test.prop", InteractionId = "position", ReferencePosition = new Vector2(.5f, .5f)
                 }
             });
             Set(unbound, "sceneLighting", lighting);
             Set(unbound, "pieceLights", Array.Empty<EncounterTablePieceLight>());
+            // The authored resting levels index the authored lights; the synthetic lights rest at full intensity.
+            Set(bound, "restingLightLevels", Array.Empty<float>());
+            Set(unbound, "restingLightLevels", Array.Empty<float>());
             sampled = Field<SceneLightingState>(view, "sceneLightingState");
         }
 
@@ -93,8 +102,12 @@ namespace Dice.Tests
         [Test]
         public void InvalidOverridesAreRejected()
         {
-            Assert.That(view.TestLightCount, Is.EqualTo(0), "An unconfigured view offered lights.");
-            Assert.Throws<ArgumentOutOfRangeException>(() => view.SetTestLightOverride(0, 1f));
+            // Building the view configures it with its authored table, so it offers exactly that table's scene lights.
+            var authored = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            int authoredLights = authored.SceneLighting != null && authored.SceneLighting.Lights != null
+                ? authored.SceneLighting.Lights.Length : 0;
+            Assert.That(view.TestLightCount, Is.EqualTo(authoredLights), "The built view offered lights its authored table lacks.");
+            Assert.Throws<ArgumentOutOfRangeException>(() => view.SetTestLightOverride(authoredLights, 1f));
             ConfigureAuthoredTable(view, bound);
             Assert.That(view.TestLightCount, Is.EqualTo(2));
             view.SetTestLightOverride(1, .75f);
@@ -169,7 +182,7 @@ namespace Dice.Tests
             Invoke(view, "ConfigureTable", table);
         }
 
-        private SceneLightingAsset Lighting(float lantern, float candle)
+        private SceneLightingAsset Lighting(float first, float second)
         {
             var texture = new Texture2D(8, 8, TextureFormat.RGBA32, false);
             var contribution = new Texture2D(8, 8, TextureFormat.RGBA32, false);
@@ -184,8 +197,8 @@ namespace Dice.Tests
             asset.BaseTexture = texture;
             asset.Lights = new[]
             {
-                new SceneLightLayer { Contribution = contribution, Intensity = lantern, FlickerAmount = 0f },
-                new SceneLightLayer { Contribution = contribution, Intensity = candle, FlickerAmount = 0f }
+                new SceneLightLayer { Contribution = contribution, Intensity = first, FlickerAmount = 0f },
+                new SceneLightLayer { Contribution = contribution, Intensity = second, FlickerAmount = 0f }
             };
             resources.Add(asset); resources.Add(texture); resources.Add(contribution);
             return asset;

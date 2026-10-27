@@ -13,15 +13,23 @@ namespace Dice.UnityContent
         [SerializeField] private EncounterData[] encounters = Array.Empty<EncounterData>();
         [SerializeField] private RewardPoolData[] rewardPools = Array.Empty<RewardPoolData>();
 
-        public MechanicalCatalog Build(IEnumerable<ModifierAsset> modifiers)
+        /** Builds the engine catalog from the charms the encounters and reward pools reference. */
+        public MechanicalContent Build()
         {
-            if (modifiers == null) throw new ArgumentNullException(nameof(modifiers));
             if (hands == null || encounters == null || rewardPools == null)
                 throw new InvalidOperationException("Catalog arrays are missing.");
-            var modifierAssets = new List<ModifierAsset>(modifiers);
-            if (modifierAssets.Exists(source => source == null))
-                throw new ArgumentException("A modifier asset is missing.", nameof(modifiers));
-            modifierAssets.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
+            var referenced = new List<ModifierAsset>();
+            var seen = new HashSet<ModifierAsset>();
+            var byId = new Dictionary<string, ModifierAsset>(StringComparer.Ordinal);
+            void Use(ModifierAsset modifier)
+            {
+                if (modifier == null) throw new InvalidOperationException("A charm reference is missing.");
+                if (!seen.Add(modifier)) return;
+                if (byId.TryGetValue(modifier.Id ?? "", out ModifierAsset other))
+                    throw new InvalidOperationException("Two charm assets share the id " + modifier.Id + ": " + other.name + ", " + modifier.name);
+                byId.Add(modifier.Id ?? "", modifier);
+                referenced.Add(modifier);
+            }
             var handDefinitions = new HandDefinition[hands.Length];
             for (int i = 0; i < hands.Length; ++i)
             {
@@ -41,25 +49,54 @@ namespace Dice.UnityContent
                     stages[j] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
                 }
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
-                    source.startingModifiers, BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
-                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones),
-                    source.encounterModifierIds, source.unlockRewardModifierIds, BuildPieces(source.pieces),
+                    Ids(source.startingModifiers, Use), BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
+                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones, Use),
+                    Ids(source.encounterModifiers, Use), Ids(source.unlockRewardModifiers, Use), BuildPieces(source.pieces),
                     source.encounterModifiersFirstClearedStageNumber);
-            }
-            var modifierDefinitions = new ModifierDefinition[modifierAssets.Count];
-            for (int i = 0; i < modifierAssets.Count; ++i)
-            {
-                modifierDefinitions[i] = modifierAssets[i].Build();
             }
             var rewardPoolDefinitions = new ModifierRewardPoolDefinition[rewardPools.Length];
             for (int i = 0; i < rewardPools.Length; ++i)
             {
                 var source = rewardPools[i] ?? throw new InvalidOperationException("A reward pool entry is missing.");
-                rewardPoolDefinitions[i] = new ModifierRewardPoolDefinition(source.id, source.modifierIds,
-                    string.IsNullOrEmpty(source.fallbackModifierId) ? null : source.fallbackModifierId);
+                if (source.fallbackModifier != null) Use(source.fallbackModifier);
+                rewardPoolDefinitions[i] = new ModifierRewardPoolDefinition(source.id, Ids(source.modifiers, Use),
+                    source.fallbackModifier == null ? null : source.fallbackModifier.Id);
             }
-            return new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions,
+            referenced.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
+            var modifierDefinitions = new ModifierDefinition[referenced.Count];
+            var pairs = new KeyValuePair<ModifierAsset, ModifierDefinition>[referenced.Count];
+            for (int i = 0; i < referenced.Count; ++i)
+            {
+                modifierDefinitions[i] = referenced[i].Build();
+                pairs[i] = new KeyValuePair<ModifierAsset, ModifierDefinition>(referenced[i], modifierDefinitions[i]);
+            }
+            var catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions,
                 modifierDefinitions, rewardPoolDefinitions);
+            return new MechanicalContent(catalog, pairs);
+        }
+
+        private static string[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
+        {
+            if (sources == null) throw new InvalidOperationException("A charm list is missing.");
+            var ids = new string[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                use(sources[i]);
+                ids[i] = sources[i].Id;
+            }
+            return ids;
+        }
+
+        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources, Action<ModifierAsset> use)
+        {
+            if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
+            var definitions = new ModifierUnlockMilestone[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+            {
+                var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
+                definitions[i] = new ModifierUnlockMilestone(source.stageNumber, Ids(source.modifiers, use));
+            }
+            return definitions;
         }
 
         private static EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
@@ -89,18 +126,6 @@ namespace Dice.UnityContent
                     interactions[j] = interaction.Build();
                 }
                 definitions[i] = new TablePieceDefinition(source.id, interactions);
-            }
-            return definitions;
-        }
-
-        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
-        {
-            if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
-            var definitions = new ModifierUnlockMilestone[sources.Length];
-            for (int i = 0; i < sources.Length; ++i)
-            {
-                var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
-                definitions[i] = new ModifierUnlockMilestone(source.stageNumber, source.modifierIds);
             }
             return definitions;
         }
@@ -158,11 +183,11 @@ namespace Dice.UnityContent
             public string id;
             public string spiritId;
             public UnlockMilestoneData[] unlockMilestones = Array.Empty<UnlockMilestoneData>();
-            public string[] encounterModifierIds = Array.Empty<string>();
+            public ModifierAsset[] encounterModifiers = Array.Empty<ModifierAsset>();
             [Min(1)] public int encounterModifiersFirstClearedStageNumber = 1;
-            public string[] unlockRewardModifierIds = Array.Empty<string>();
+            public ModifierAsset[] unlockRewardModifiers = Array.Empty<ModifierAsset>();
             public int[] startingUpgrades = new int[HandDefinition.CategoryCount];
-            public string[] startingModifiers = Array.Empty<string>();
+            public ModifierAsset[] startingModifiers = Array.Empty<ModifierAsset>();
             public StageData[] stages = Array.Empty<StageData>();
             public RewardPolicyData rewardPolicy;
             public EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
@@ -180,8 +205,8 @@ namespace Dice.UnityContent
         private sealed class RewardPoolData
         {
             public string id;
-            public string[] modifierIds = Array.Empty<string>();
-            public string fallbackModifierId;
+            public ModifierAsset[] modifiers = Array.Empty<ModifierAsset>();
+            public ModifierAsset fallbackModifier;
         }
 
         [Serializable]
@@ -202,7 +227,7 @@ namespace Dice.UnityContent
         private sealed class UnlockMilestoneData
         {
             public int stageNumber;
-            public string[] modifierIds = Array.Empty<string>();
+            public ModifierAsset[] modifiers = Array.Empty<ModifierAsset>();
         }
 
         [Serializable]

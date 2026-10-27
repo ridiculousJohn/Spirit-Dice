@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 2e34ec1e90ed7054daa272d7165af045, type: 2}
   displayName: Welcoming Pair / Mult
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: The initial roll's category is Pair.
   artwork: 1
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

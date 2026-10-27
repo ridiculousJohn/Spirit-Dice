@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
   displayName: Twin Knots / Base + Mult
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category is Two Pair.
   artwork: 7
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

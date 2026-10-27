@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 2ab41f7121e9e004bbc1ff24b3e8ed93, type: 2}
   displayName: Forked Path / Base
   icon: {fileID: 21300000, guid: 3bbcd2b9675e5c92908d7ada3109334e, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category is High Die or Straight.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

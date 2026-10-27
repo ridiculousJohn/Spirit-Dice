@@ -10,7 +10,7 @@ namespace Dice.Presentation
 {
     /** Portrait encounter surface; controls own rules and persistence, while this view presents ordered events. */
     [DisallowMultipleComponent]
-    public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost, IAmbientLightingTarget
+    public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost, IAmbientLightingTarget, IRuleSceneLights
     {
         [SerializeField] private Texture2D roomTexture;
         [SerializeField] private EncounterRulePresentationAsset encounterRulePresentation;
@@ -27,6 +27,7 @@ namespace Dice.Presentation
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
         [field: SerializeField] public SpiritGameplayHud GameplayHud { get; private set; }
         [field: SerializeField] public SpiritRewardsPanel RewardsPanel { get; private set; }
+        [field: SerializeField] public SpiritEncounterCharmsIntroduction EncounterCharmsIntroduction { get; private set; }
         [field: SerializeField] public SpiritOwnedCharmsPanel OwnedCharmsPanel { get; private set; }
         [field: SerializeField] public SpiritCharmPopup CharmPopup { get; private set; }
         [field: SerializeField] public SpiritDiceTray DiceTray { get; private set; }
@@ -91,6 +92,12 @@ namespace Dice.Presentation
         // Play-mode testing multipliers set from the encounter screen inspector; NaN leaves a light to the ambient activity.
         private float[] testLightOverrides = Array.Empty<float>();
         private float[] sampledLightIntensities = Array.Empty<float>();
+        // Resting multipliers authored on the table; the ambient activity's multipliers scale them.
+        private float[] restingLightLevels = Array.Empty<float>();
+        // Timed raises of lights by the rules' dice visuals, such as the spirit's flare when a die binds.
+        private readonly SceneLightFlares lightFlares = new SceneLightFlares();
+        // Dice visuals of the configured table's rules; null when no rule card references one.
+        private EncounterRuleDiceVisuals ruleDiceVisuals;
         private bool applicationFocused = true;
         private bool applicationPaused;
 
@@ -213,6 +220,8 @@ namespace Dice.Presentation
                 bool canceled = presenting;
                 ResetPresentation(false);
                 if (canceled) controls?.CompletePresentation();
+                // Returning to the table resumes the run, which shows a pending charms introduction again.
+                EncounterCharmsIntroduction.ResetDismissal();
                 OwnedCharmsPanel.Root.gameObject.SetActive(false);
                 handRanksPanel.Root.gameObject.SetActive(false);
                 menuPanel.gameObject.SetActive(false);
@@ -244,6 +253,7 @@ namespace Dice.Presentation
         {
             GameplayHud.SetGameplayVisible(visible, journeyControls != null);
             RewardsPanel.Root.gameObject.SetActive(visible);
+            if (!visible) EncounterCharmsIntroduction.Hide();
         }
 
         private void ConfigureTable(EncounterTablePresentationAsset selectedTable)
@@ -262,11 +272,27 @@ namespace Dice.Presentation
             ambientLightIntensities = new float[selectedTable.SceneLighting != null && selectedTable.SceneLighting.Lights != null
                 ? selectedTable.SceneLighting.Lights.Length : 0];
             for (int i = 0; i < ambientLightIntensities.Length; ++i) ambientLightIntensities[i] = 1f;
+            var resting = selectedTable.RestingLightLevels;
+            if (resting.Count > ambientLightIntensities.Length)
+                throw new InvalidOperationException("Each resting light level requires a scene light.");
+            restingLightLevels = new float[ambientLightIntensities.Length];
+            for (int i = 0; i < restingLightLevels.Length; ++i)
+            {
+                restingLightLevels[i] = i < resting.Count ? resting[i] : 1f;
+                if (!SceneLightingAsset.Finite(restingLightLevels[i]) || restingLightLevels[i] < 0f)
+                    throw new InvalidOperationException("Resting light levels must be finite and nonnegative.");
+            }
+            lightFlares.Resize(ambientLightIntensities.Length);
             testLightOverrides = new float[ambientLightIntensities.Length];
             ReleaseTestLightOverrides();
             ambientActivity =selectedTable.AmbientActivity != null
                 ? new EncounterAmbientActivity(selectedTable.AmbientActivity, this, ambientProps, encounterAudio) : null;
             encounterRulePresentation = selectedTable.RulePresentations.Count > 0 ? selectedTable.RulePresentations[0] : null;
+            ruleDiceVisuals?.Dispose();
+            ruleDiceVisuals = null;
+            ruleDiceVisuals = EncounterRuleDiceVisuals.Create(selectedTable.RulePresentations, () => new RuleDiceVisualContext(
+                DiceTray.Dice, hostPortrait != null ? hostPortrait.React : (Action)null,
+                selectedTable.SceneLighting != null ? this : null));
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
             actionModifierCue.ConfigureHost(selectedTable.HostPresentation);
@@ -309,6 +335,8 @@ namespace Dice.Presentation
 
         private void OnDestroy()
         {
+            ruleDiceVisuals?.Dispose();
+            ruleDiceVisuals = null;
             ClearSceneLighting();
             if (hostPortrait != null) hostPortrait.SpiritGesture -= PlaySpiritCue;
             if (ModifierHistory != null) ModifierHistory.TokenSelected -= InspectHistoryToken;
@@ -445,10 +473,17 @@ namespace Dice.Presentation
             }
         }
 
-        /** A held testing override replaces the ambient activity's multiplier for its light. */
-        private float AmbientLightIntensity(int index) =>
-            index < testLightOverrides.Length && !float.IsNaN(testLightOverrides[index]) ? testLightOverrides[index] :
-            index < ambientLightIntensities.Length ? ambientLightIntensities[index] : 1f;
+        /**
+         * A held testing override replaces the light's multiplier. Otherwise the ambient activity's multiplier scales the
+         * table's resting level, and a rule's flare raises the light to at least its own level while it runs.
+         */
+        private float AmbientLightIntensity(int index)
+        {
+            if (index < testLightOverrides.Length && !float.IsNaN(testLightOverrides[index])) return testLightOverrides[index];
+            if (index >= ambientLightIntensities.Length) return 1f;
+            float level = (index < restingLightLevels.Length ? restingLightLevels[index] : 1f) * ambientLightIntensities[index];
+            return index < lightFlares.Count ? Mathf.Max(level, lightFlares.Level(index, Time.unscaledTimeAsDouble)) : level;
+        }
 
         /** Per-light multipliers for a table without piece lights; null when the asset's lights differ from the configured table's. */
         private float[] AmbientLightIntensities(SceneLightingAsset asset)
@@ -518,7 +553,7 @@ namespace Dice.Presentation
         private void Build()
         {
             if (uiTheme == null || canvas == null || safeArea == null || portrait == null || inputGroup == null ||
-                roomImage == null || tableImage == null || GameplayHud == null || RewardsPanel == null ||
+                roomImage == null || tableImage == null || GameplayHud == null || RewardsPanel == null || EncounterCharmsIntroduction == null ||
                 OwnedCharmsPanel == null || handRanksPanel == null || JourneyView == null || collectionView == null ||
                 CharmPopup == null || endingView == null || ModifierHistory == null || actionModifierCue == null ||
                 encounterAudio == null || pauseMenu == null || tablePresentation == null || TrayScene == null || hostPortrait == null)
@@ -554,6 +589,7 @@ namespace Dice.Presentation
             }
             actionModifierCue.Initialize(RerollButton, PlayButton);
             RewardsPanel.Build(portrait, () => Busy);
+            EncounterCharmsIntroduction.Build();
             OwnedCharmsPanel.Build(portrait, ShowTable, () => Busy);
             handRanksPanel.Build(portrait, ShowTable);
             endingView.Build(portrait, ReturnFromEnding, RetryEncounter);
@@ -592,7 +628,8 @@ namespace Dice.Presentation
                 OwnedCharmsPanel.Root.gameObject.SetActive(false);
                 handRanksPanel.Root.gameObject.SetActive(false);
                 menuPanel.gameObject.SetActive(false);
-                CharmPopup.Show(instanceId, definition, SpiritCharmVisuals.Status(controls, instance, definition),
+                CharmPopup.Show(instanceId, controls.ModifierPresentation, definition,
+                    SpiritCharmVisuals.Status(controls, instance, definition),
                     controls.Snapshot.Phase);
                 return;
             }
@@ -747,11 +784,13 @@ namespace Dice.Presentation
             if (snapshot == null)
             {
                 CloseCharmPopup();
+                ruleDiceVisuals?.Sync(null, false);
                 hud.RenderEncounterRule(null, encounterRulePresentation);
                 inputGroup.interactable = false;
                 ModifierHistory.SetInteractable(false);
                 hud.PlayingPanel.gameObject.SetActive(false);
                 RewardsPanel.Root.gameObject.SetActive(false);
+                EncounterCharmsIntroduction.Hide();
                 endingPanel.gameObject.SetActive(false);
                 hud.StatusLabel.text = controls.StatusMessage;
                 return;
@@ -764,11 +803,16 @@ namespace Dice.Presentation
                 RewardsPanel.Invalidate();
                 OwnedCharmsPanel.Invalidate();
                 presentedSnapshot = snapshot;
+                // A snapshot that was not presented, such as a resumed run, shows its rule dice state at once.
+                ruleDiceVisuals?.Sync(snapshot, false);
+                // It also shows a pending charms introduction again; a presented refresh of the offer does not.
+                EncounterCharmsIntroduction.ResetDismissal();
             }
             BindTablePieces(snapshot);
             bool playing = snapshot.Phase == EncounterPhase.Playing;
             if (playing && controls.Preview != null)
-                ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog);
+                ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog,
+                    controls.ModifierPresentation);
             else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
             bool choosingUpgrade = snapshot.Phase == EncounterPhase.ChoosingHandUpgrade;
@@ -810,7 +854,8 @@ namespace Dice.Presentation
                 hud.SelectionLabel.text = "";
             }
             else if (!completed) RewardsPanel.Render(snapshot);
-            else
+            EncounterCharmsIntroduction.Refresh(controls.Catalog, controls.ModifierPresentation, snapshot, journeyControls?.SelectedJourney);
+            if (completed)
             {
                 SetGameplayVisible(false);
                 endingPanel.gameObject.SetActive(true);
@@ -911,6 +956,7 @@ namespace Dice.Presentation
             // Leaving play for the journey lets the haunting settle; every other reset ends it at rest.
             if (resetHost) ambientActivity?.Stop();
             else ambientActivity?.Settle();
+            lightFlares.Clear();
             ReleaseTestLightOverrides();
             ResetTransientVisuals();
         }
@@ -966,6 +1012,8 @@ namespace Dice.Presentation
             menuPanel.gameObject.SetActive(false);
             if (resolution.Snapshot.Phase == EncounterPhase.Completed && RewardsPanel.Root.gameObject.activeSelf)
                 SetGameplayVisible(false);
+            // An opening resolution may already have been refreshed as the installed state; its events build the rule dice state from nothing.
+            if (resolution.PreviousRevision < 0) ruleDiceVisuals?.Sync(null, false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
                 ? Mathf.Clamp(configuredTable.OpeningFadeDuration, 0, 2) : 0;
             if (openingFade > 0) SetOpeningOpacity(0);
@@ -998,7 +1046,7 @@ namespace Dice.Presentation
             if (Busy || controls?.Catalog == null || collectionView == null) return;
             CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
-            collectionView.Show(controls.Catalog,
+            collectionView.Show(controls.Catalog, controls.ModifierPresentation,
                 (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
                 journeyControls?.JourneyCatalog,
                 (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<string>());
@@ -1009,6 +1057,7 @@ namespace Dice.Presentation
         SpiritHostPortrait ISpiritScorePlaybackHost.Host => hostPortrait;
         EncounterRulePresentationAsset ISpiritScorePlaybackHost.RulePresentation => encounterRulePresentation;
         EncounterAmbientActivity ISpiritScorePlaybackHost.Ambient => ambientActivity;
+        EncounterRuleDiceVisuals ISpiritScorePlaybackHost.RuleDiceVisuals => ruleDiceVisuals;
         void ISpiritScorePlaybackHost.SetDiceSelection(int mask) => SetDiceSelection(mask);
         void ISpiritScorePlaybackHost.SetOpeningOpacity(float opacity) => SetOpeningOpacity(opacity);
         void ISpiritScorePlaybackHost.RecordScore(ScoreBreakdown score) => lastScore = score;
@@ -1041,6 +1090,12 @@ namespace Dice.Presentation
             ambientLightIntensities[index] = multiplier;
         }
 
+        int IRuleSceneLights.LightCount => ambientLightIntensities.Length;
+
+        /** Raises the light above its resting and ambient level for a rule's reaction; presentation resets end the flare. */
+        void IRuleSceneLights.Flare(int index, float peak, float rise, float hold, float fall)
+            => lightFlares.Start(index, peak, rise, hold, fall, Time.unscaledTimeAsDouble);
+
         void ISpiritScorePlaybackHost.HideRewardsAndEnding()
         {
             RewardsPanel.Root.gameObject.SetActive(false);
@@ -1058,6 +1113,8 @@ namespace Dice.Presentation
             presentedSnapshot = resolution.Snapshot;
             presenting = false;
             presentationSnapshot = null;
+            // The events brought the rule dice visuals to this state; settling animates anything they did not.
+            ruleDiceVisuals?.Sync(resolution.Snapshot, true);
             ResetTransientVisuals();
             controls.CompletePresentation();
             Refresh();

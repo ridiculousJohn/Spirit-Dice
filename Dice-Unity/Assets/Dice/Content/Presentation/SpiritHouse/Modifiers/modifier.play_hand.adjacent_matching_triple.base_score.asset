@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: d5df1b3d973e1fd40baf183670d2fa3c, type: 2}
   displayName: Braided Cord / Base
   icon: {fileID: 21300000, guid: 61db2b803ce55e438bfa8bc4fe9efdd1, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Three consecutive dice show the same face.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

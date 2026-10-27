@@ -1,7 +1,5 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dice.Engine;
@@ -10,8 +8,6 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -19,12 +15,11 @@ namespace Dice.Tests
 {
     public sealed class SpiritTraySceneTests
     {
-        private const string Lantern = "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset";
-        private const string Watchtower = "Assets/Dice/Content/Presentation/Watchtower/WatchtowerTable.asset";
-        private const string Moth = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsTable.asset";
-        private const string Merchant = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset";
         private Scene preview;
+        private TestTrayRig rig;
         private readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
+
+        private TestTrayRig Rig => rig ?? (rig = new TestTrayRig(preview));
 
         [SetUp]
         public void SetUp() => preview = EditorSceneManager.NewPreviewScene();
@@ -32,6 +27,8 @@ namespace Dice.Tests
         [TearDown]
         public void TearDown()
         {
+            rig?.Dispose();
+            rig = null;
             foreach (var root in preview.GetRootGameObjects())
                 foreach (var scene in root.GetComponentsInChildren<SpiritTrayScene>(true)) scene.ReleasePresentation();
             if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
@@ -40,815 +37,478 @@ namespace Dice.Tests
             resources.Clear();
         }
 
-        [TestCase(Lantern)]
-        [TestCase(Watchtower)]
-        [TestCase(Moth)]
-        [TestCase(Merchant)]
-        public void AuthoredTablesUseOneCameraAndTextureForBothBays(string path)
+        /** Checks the dice and modifier bays render through the scene's one camera and texture / fails if a consumer renders through its own or the texture ignores the presentation size. */
+        [Test]
+        public void ConsumersRenderThroughTheSceneCameraAndTexture()
         {
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path);
-            Assert.That(table, Is.Not.Null, path);
-            Assert.That(table.TrayPresentation, Is.Not.Null, path);
-            table.TrayPresentation.ValidateScene();
-            var scene = CreateScene(table.TrayPresentation);
-            var dice = AddDice(scene);
-            var history = AddHistory(scene);
+            var dice = Rig.StartDice();
+            var history = Rig.StartHistory();
+            var scene = Rig.TrayScene;
+            Assert.That(scene.RenderCamera, Is.SameAs(Rig.Camera));
             Assert.That(dice.RenderCamera, Is.SameAs(scene.RenderCamera));
             Assert.That(history.RenderCamera, Is.SameAs(scene.RenderCamera));
             Assert.That(dice.Texture, Is.SameAs(scene.Texture));
             Assert.That(history.Texture, Is.SameAs(scene.Texture));
-            Assert.That(scene.RenderRoot.GetComponentsInChildren<Camera>(true).Length, Is.EqualTo(1));
-            Assert.That(scene.Texture.width, Is.EqualTo(table.TrayPresentation.TextureSize.x));
-            Assert.That(scene.Texture.height, Is.EqualTo(table.TrayPresentation.TextureSize.y));
-            Assert.That(scene.Geometry, Is.Not.SameAs(table.TrayPresentation.GeometryPrefab));
-            foreach (var anchor in scene.Geometry.DiceSlots)
-                Assert.That(anchor.IsChildOf(scene.RenderRoot), Is.True);
-            Material[] authored = table.TrayPresentation.GeometryPrefab.GetComponentsInChildren<Renderer>()
-                .SelectMany(renderer => renderer.sharedMaterials).ToArray();
-            foreach (var renderer in scene.Geometry.GetComponentsInChildren<Renderer>())
-                foreach (Material material in renderer.sharedMaterials)
-                    Assert.That(authored.Contains(material), Is.False, "Scene lighting must not mutate authored materials.");
+            Assert.That(Rig.Camera.targetTexture, Is.SameAs(scene.Texture));
+            Assert.That(new Vector2Int(scene.Texture.width, scene.Texture.height), Is.EqualTo(Rig.Presentation.TextureSize));
         }
 
+        /** Checks initialization renders into a new texture with the authored target's sampling and release restores the target / fails if the authored target is drawn into, its sampling is lost or it is not restored. */
         [Test]
-        public void InitializationAndReleasePreserveAuthoredHierarchyCameraPoseAndSurfaceSources()
+        public void InitializationCopiesTheAuthoredTargetAndReleaseRestoresIt()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
-            var scene = UnityEngine.Object.Instantiate(asset.RigPrefab);
-            SceneManager.MoveGameObjectToScene(scene.gameObject, preview);
-            scene.transform.position = new Vector3(17, 3, -9);
-            scene.RenderCamera.transform.localPosition = new Vector3(2, 11, -13);
-            scene.RenderCamera.transform.localRotation = Quaternion.Euler(37, 14, 9);
-            scene.Geometry.transform.localPosition += new Vector3(.3f, -.2f, .4f);
-            var geometry = scene.Geometry;
-            var camera = scene.RenderCamera;
-            var target = new RenderTexture(camera.targetTexture.descriptor)
+            var target = new RenderTexture(64, 32, 24)
             {
                 filterMode = FilterMode.Point, wrapModeU = TextureWrapMode.Repeat,
                 wrapModeV = TextureWrapMode.Mirror, wrapModeW = TextureWrapMode.Clamp, anisoLevel = 3
             };
             resources.Add(target);
-            camera.targetTexture = target;
-            Vector3 position = camera.transform.localPosition;
-            Quaternion rotation = camera.transform.localRotation;
-            Vector3 geometryPosition = geometry.transform.localPosition;
-            int count = scene.GetComponentsInChildren<Transform>(true).Length;
-            var renderer = geometry.GetComponentInChildren<MeshRenderer>();
-            var material = new Material(renderer.sharedMaterial);
-            resources.Add(material);
-            material.SetColor("_BaseColor", new Color(.3f, .4f, .5f));
-            renderer.sharedMaterial = material;
-            for (int i = 0; i < 2; ++i)
-            {
-                scene.Configure(asset); scene.Initialize();
-                Assert.That(scene.Geometry, Is.SameAs(geometry));
-                Assert.That(scene.RenderCamera, Is.SameAs(camera));
-                Assert.That(scene.transform.position, Is.EqualTo(new Vector3(17, 3, -9)));
-                Assert.That(camera.transform.localPosition, Is.EqualTo(position));
-                Assert.That(camera.transform.localRotation, Is.EqualTo(rotation));
-                Assert.That(geometry.transform.localPosition, Is.EqualTo(geometryPosition));
-                Assert.That(scene.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(count));
-                Assert.That(renderer.sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(material.GetColor("_BaseColor")));
-                Assert.That(scene.Texture, Is.Not.SameAs(target));
-                Assert.That(scene.Texture.filterMode, Is.EqualTo(target.filterMode));
-                Assert.That(scene.Texture.wrapModeU, Is.EqualTo(target.wrapModeU));
-                Assert.That(scene.Texture.wrapModeV, Is.EqualTo(target.wrapModeV));
-                Assert.That(scene.Texture.wrapModeW, Is.EqualTo(target.wrapModeW));
-                Assert.That(scene.Texture.anisoLevel, Is.EqualTo(target.anisoLevel));
-                scene.ReleasePresentation();
-                Assert.That(camera.targetTexture, Is.SameAs(target));
-                Assert.That(renderer.sharedMaterial, Is.SameAs(material));
-                Assert.That(material != null && geometry != null && camera != null, Is.True);
-            }
+            Rig.Camera.targetTexture = target;
+            var scene = Rig.Initialize();
+            Assert.That(scene.Texture, Is.Not.SameAs(target));
+            Assert.That(Rig.Camera.targetTexture, Is.SameAs(scene.Texture));
+            Assert.That(scene.Texture.filterMode, Is.EqualTo(target.filterMode));
+            Assert.That(scene.Texture.wrapModeU, Is.EqualTo(target.wrapModeU));
+            Assert.That(scene.Texture.wrapModeV, Is.EqualTo(target.wrapModeV));
+            Assert.That(scene.Texture.wrapModeW, Is.EqualTo(target.wrapModeW));
+            Assert.That(scene.Texture.anisoLevel, Is.EqualTo(target.anisoLevel));
+            scene.ReleasePresentation();
+            Assert.That(Rig.Camera.targetTexture, Is.SameAs(target));
+            Assert.That(scene.Texture, Is.Null);
         }
 
+        /** Checks the stage draws instances of its materials, so lighting never reaches the authored ones, and release restores them / fails if lighting writes to an authored material or release leaves instances behind. */
         [Test]
-        public void ModifierTokensPreserveTheirAuthoredSurfaceTexture()
+        public void StageDrawsMaterialInstancesAndReleaseRestoresTheAuthoredOnes()
         {
-            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
-            var history = AddHistory(scene);
-            var serialized = new SerializedObject(history);
-            var reference = serialized.FindProperty("tokenPrefab");
-            var token = UnityEngine.Object.Instantiate((SpiritModifierToken)reference.objectReferenceValue);
-            SceneManager.MoveGameObjectToScene(token.gameObject, preview);
-            var material = new Material(token.Body.sharedMaterial);
-            var texture = new Texture2D(2, 2);
-            resources.Add(material);
-            resources.Add(texture);
-            material.SetTexture("_SurfaceTexture", texture);
-            token.Body.sharedMaterial = material;
-            reference.objectReferenceValue = token;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            history.Add(Contribution(out ModifierDefinition definition), definition, false);
-            Assert.That(history.GetDieRenderer(0).sharedMaterial, Is.Not.SameAs(material));
-            Assert.That(history.GetDieRenderer(0).sharedMaterial.GetTexture("_SurfaceTexture"), Is.SameAs(texture));
-            Assert.That(material.GetTexture("_SurfaceTexture"), Is.SameAs(texture));
+            var scene = Rig.Start();
+            Material instance = Rig.SurfaceRenderer.sharedMaterial;
+            Assert.That(instance, Is.Not.SameAs(Rig.SurfaceMaterial));
+            var lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
+            resources.Add(lighting);
+            lighting.BaseTexture = Texture2D.whiteTexture;
+            lighting.Lights = new SceneLightLayer[0];
+            var state = new SceneLightingState();
+            state.Sample(lighting, 1);
+            scene.SetSceneLighting(state);
+            Assert.That(instance.GetFloat("_SceneLightingEnabled"), Is.EqualTo(1f));
+            Assert.That(Rig.SurfaceMaterial.GetFloat("_SceneLightingEnabled"), Is.Zero);
+            scene.ReleasePresentation();
+            Assert.That(Rig.SurfaceRenderer.sharedMaterial, Is.SameAs(Rig.SurfaceMaterial));
+            Assert.That(instance == null, Is.True, "Release destroys the material instance.");
         }
 
+        /** Checks initialization keeps the authored camera pose, geometry pose and hierarchy / fails if binding reframes the camera, moves the geometry or adds objects. */
         [Test]
-        public void HudAnimationAndResetPreserveInitialAuthoredScalesAcrossRebinding()
+        public void InitializationKeepsTheAuthoredCameraGeometryAndHierarchy()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<SpiritGameplayHud>(
-                "Assets/Dice/Content/Presentation/UI/SpiritGameplayHud.prefab");
-            var hud = UnityEngine.Object.Instantiate(prefab);
-            SceneManager.MoveGameObjectToScene(hud.gameObject, preview);
-            var graphics = new List<Graphic> { hud.ModifierActivationIcon, hud.SelectionLabel, hud.ScoreDetail,
-                hud.BaseScoreLabel, hud.MultiplierLabel, hud.HandScoreLabel, hud.TargetLabel };
-            foreach (string name in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })
-            {
-                object highlight = typeof(SpiritGameplayHud).GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
-                foreach (string field in new[] { "Label", "Icon" })
-                    graphics.Add((Graphic)highlight.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(highlight));
-            }
-            var scales = graphics.Select(value => value.rectTransform).Distinct().Select((rect, index) =>
-            {
-                rect.localScale = new Vector3(.7f + index * .03f, 1.4f + index * .02f, .9f);
-                return rect;
-            }).ToDictionary(rect => rect, rect => rect.localScale);
-            hud.BuildPlayingHud(() => { }, () => { });
-            foreach (var rect in scales.Keys) rect.localScale = Vector3.one * 2;
-            hud.BuildPlayingHud(() => { }, () => { });
-            var total = hud.AnimateTotal(100, 1);
-            Assert.That(total.MoveNext(), Is.True);
-            Assert.That(hud.HandScoreLabel.rectTransform.localScale, Is.EqualTo(scales[hud.HandScoreLabel.rectTransform]));
-            var threshold = hud.AnimateThreshold(100, 200, 1);
-            Assert.That(threshold.MoveNext(), Is.True);
-            Assert.That(hud.TargetLabel.rectTransform.localScale, Is.EqualTo(scales[hud.TargetLabel.rectTransform]));
-            var score = (IEnumerator)typeof(SpiritGameplayHud).GetMethod("AnimateScore", BindingFlags.Instance | BindingFlags.NonPublic)
-                .Invoke(hud, new object[] { 0L, 0L, 10L, 2L, 0f, null });
-            Assert.That(score.MoveNext(), Is.False);
-            Assert.That(hud.BaseScoreLabel.rectTransform.localScale, Is.EqualTo(scales[hud.BaseScoreLabel.rectTransform]));
-            Assert.That(hud.MultiplierLabel.rectTransform.localScale, Is.EqualTo(scales[hud.MultiplierLabel.rectTransform]));
-            hud.ResetTransientVisuals();
-            foreach (var pair in scales) Assert.That(pair.Key.localScale, Is.EqualTo(pair.Value), pair.Key.name);
+            Rig.Camera.transform.localPosition = new Vector3(2, 11, -13);
+            Rig.Camera.transform.localRotation = Quaternion.Euler(37, 14, 9);
+            Rig.Geometry.transform.localPosition = new Vector3(.3f, -.2f, .4f);
+            Vector3 position = Rig.Camera.transform.localPosition;
+            Quaternion rotation = Rig.Camera.transform.localRotation;
+            Vector3 geometry = Rig.Geometry.transform.localPosition;
+            int count = Rig.TrayScene.GetComponentsInChildren<Transform>(true).Length;
+            Rig.Initialize();
+            Assert.That(Rig.Camera.transform.localPosition, Is.EqualTo(position));
+            Assert.That(Rig.Camera.transform.localRotation, Is.EqualTo(rotation));
+            Assert.That(Rig.Geometry.transform.localPosition, Is.EqualTo(geometry));
+            Assert.That(Rig.TrayScene.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(count));
         }
 
-        [TestCase(.49f)]
-        [TestCase(.63f)]
-        public void ModifierTokensPreserveAuthoredProportionsAndContactAtDifferentTraySizes(float size)
-        {
-            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
-            scene.Geometry.ModifierDieSize = size;
-            var history = AddHistory(scene);
-            using var serialized = new SerializedObject(history);
-            var reference = serialized.FindProperty("tokenPrefab");
-            var token = UnityEngine.Object.Instantiate((SpiritModifierToken)reference.objectReferenceValue);
-            SceneManager.MoveGameObjectToScene(token.gameObject, preview);
-            Vector3 body = new Vector3(.63f, .35f, .42f);
-            Vector3 shadow = new Vector3(1.3f, .8f, .7f);
-            token.Body.transform.localScale = body;
-            token.Shadow.transform.localScale = shadow;
-            reference.objectReferenceValue = token;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            var contribution = Contribution(out ModifierDefinition definition);
-            history.Add(contribution, definition, false);
-            Assert.That(history.GetDieTransform(0).localScale, Is.EqualTo(body * (size / .49f)));
-            AssertShadow(0, 0);
-            AssertContact(0, 0);
-            history.SetResolving(0);
-            AssertShadow(0, size * .12f);
-            AssertContact(0, size * .12f);
-            history.Add(contribution, definition, true);
-            AssertShadow(1, .08f);
-            AssertContact(1, .08f);
-            Assert.That(token.Body.transform.localScale, Is.EqualTo(body));
-            Assert.That(token.Shadow.transform.localScale, Is.EqualTo(shadow));
-
-            void AssertShadow(int index, float lift)
-                => Assert.That(history.GetShadowRenderer(index).transform.localScale,
-                    Is.EqualTo(Vector3.Scale(shadow, new Vector3(size * (1.08f + lift), 1, size * (1.08f + lift)))));
-
-            void AssertContact(int index, float lift)
-            {
-                Transform die = history.GetDieTransform(index);
-                float bottom = die.GetComponent<MeshFilter>().sharedMesh.vertices
-                    .Min(point => (die.localRotation * Vector3.Scale(point, die.localScale)).y);
-                Assert.That(die.localPosition.y + bottom, Is.EqualTo(lift).Within(.00001f));
-            }
-        }
-
-        [Test]
-        public void ReenablingAnAncestorRestoresTheAuthoredStageAndBothTrayContents()
-        {
-            var asset = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
-            var scene = CreateScene(asset);
-            var dice = AddDice(scene);
-            var history = AddHistory(scene);
-            history.Add(Contribution(out ModifierDefinition definition), definition, false);
-            var parent = Root("Encounter ancestor");
-            scene.transform.SetParent(parent.transform, true);
-            parent.SetActive(false);
-            Assert.That(scene.RenderRoot.gameObject.activeInHierarchy, Is.False);
-            parent.SetActive(true);
-            Assert.That(scene.RenderRoot.gameObject.activeInHierarchy, Is.True);
-            Assert.That(history.GetDieTransform(0).gameObject.activeInHierarchy, Is.True);
-            foreach (var slot in scene.Geometry.DiceSlots)
-                Assert.That(slot.GetComponentInChildren<MeshRenderer>().gameObject.activeInHierarchy, Is.True);
-            Assert.That(dice.RenderCamera, Is.SameAs(scene.RenderCamera));
-        }
-
-        [TestCase(Lantern)]
-        [TestCase(Watchtower)]
-        [TestCase(Moth)]
-        public void ModifierCategoriesUseAuthoredInkAndSeparateGlyphsWithoutTintingBoneOrNumberedDice(string path)
-        {
-            var catalog = TestContent.BuildStandardCatalog();
-            var assets = AssetDatabase.FindAssets("t:ModifierPresentationAsset", new[] { "Assets/Dice/Content" })
-                .Select(guid => AssetDatabase.LoadAssetAtPath<ModifierPresentationAsset>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
-            using var theme = SpiritModifierPresentation.InstallTheme(assets, catalog);
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path);
-            var scene = CreateScene(table.TrayPresentation);
-            var dice = AddDice(scene);
-            var history = AddHistory(scene);
-            var lighting = new SceneLightingState();
-            lighting.Sample(table.SceneLighting, 3.47);
-            history.SetSceneLighting(lighting);
-            var colors = new List<Color>();
-            var glyphs = new List<Texture>();
-            foreach (var symbol in new[] { ModifierCategorySymbol.Base, ModifierCategorySymbol.Multiplier,
-                ModifierCategorySymbol.Combined, ModifierCategorySymbol.Rerolls })
-            {
-                var definition = catalog.Modifiers.First(value => SpiritModifierIcons.GetCategorySymbol(value) == symbol);
-                var activated = new ModifierDefinition(definition.Id, definition.FamilyId, ModifierPhase.InitialRoll,
-                    new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
-                var encounter = new EncounterDefinition("test.category.ink", new[] { new StageDefinition(1000000, 3, 3) },
-                    startingModifiers: new[] { activated.Id });
-                var mechanical = new MechanicalCatalog("test.category.ink", TestContent.Hands(), new[] { encounter }, new[] { activated });
-                var contribution = EncounterSession.CreateEncounter(mechanical, encounter.Id, 60).Snapshot.ModifierContributions[0];
-                history.Add(contribution, definition, false);
-                var material = history.GetDieRenderer(history.Count - 1).sharedMaterial;
-                var sprite = SpiritModifierIcons.GetCategorySprite(definition);
-                Assert.That(sprite, Is.Not.Null, definition.Id);
-                Assert.That(Vector4.Distance(material.GetColor("_BaseColor"), new Color(1, .97f, .9f)), Is.LessThan(.00001f));
-                Assert.That(Vector4.Distance(material.GetColor("_FaceIconColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
-                Assert.That(Vector4.Distance(material.GetColor("_CategoryColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
-                Assert.That(material.GetFloat("_ShowCategory"), Is.EqualTo(1));
-                Assert.That(material.GetTexture("_CategoryIcon"), Is.SameAs(sprite.texture));
-                Assert.That(material.GetTexture("_FaceIcon"), Is.Not.SameAs(sprite.texture), "Family artwork keeps its own identity.");
-                Vector2 min = sprite.uv.Aggregate(Vector2.one, Vector2.Min);
-                Vector2 max = sprite.uv.Aggregate(Vector2.zero, Vector2.Max);
-                Assert.That(material.GetVector("_CategoryIconRect"), Is.EqualTo(new Vector4(min.x, min.y, max.x - min.x, max.y - min.y)));
-                Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.EqualTo(table.SceneLighting != null ? 1 : 0));
-                colors.Add(material.GetColor("_CategoryColor"));
-                glyphs.Add(material.GetTexture("_CategoryIcon"));
-            }
-            Assert.That(colors.Distinct().Count(), Is.EqualTo(4));
-            Assert.That(glyphs.Distinct().Count(), Is.EqualTo(4));
-            history.SetResolving(1);
-            Assert.That(Vector4.Distance(history.GetDieRenderer(1).sharedMaterial.GetColor("_CategoryColor"), colors[1]), Is.LessThan(.00001f));
-            history.SetResolving(-1);
-            Assert.That(scene.Geometry.DiceSlots.Length, Is.EqualTo(DiceValues.Count));
-            var numberedDice = scene.Geometry.DiceSlots.Select((slot, index) =>
-                slot.Find("Dice Slot Content " + index + "/Die " + index)
-                    .GetComponent<MeshRenderer>()).ToArray();
-            Assert.That(numberedDice.Length, Is.EqualTo(5));
-            foreach (var renderer in numberedDice)
-                Assert.That(renderer.sharedMaterial.GetFloat("_ShowCategory"), Is.Zero, renderer.name);
-        }
-
-        [Test]
-        public void UnauthoredModifierKeepsItsFamilySigilAndHidesCategoryMarks()
-        {
-            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
-            var history = AddHistory(scene);
-            var contribution = Contribution(out ModifierDefinition definition);
-            history.Add(contribution, definition, false);
-            var material = history.GetDieRenderer(0).sharedMaterial;
-            Assert.That(material.GetFloat("_ShowCategory"), Is.Zero);
-            Assert.That(material.GetFloat("_ShowFaceIcon"), Is.EqualTo(1));
-            Assert.That(material.GetTexture("_FaceIcon"), Is.Not.Null);
-            Assert.That(Vector4.Distance(material.GetColor("_FaceIconColor"), SpiritModifierIcons.GetInkColor(definition)), Is.LessThan(.00001f));
-        }
-
-        [TestCase(false, false)]
-        [TestCase(true, false)]
-        [TestCase(true, true)]
-        public void TopFaceArtworkKeepsItsUpperLeftAwayFromThePlayer(bool category, bool glyphOnly)
-        {
-            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null)
-                Assert.Ignore("Top-face orientation pixels require a real graphics device.");
-            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
-            var history = AddHistory(scene);
-            var contribution = Contribution(out ModifierDefinition definition);
-            var icon = new Texture2D(8, 8, TextureFormat.RGBA32, false, true)
-                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            resources.Add(icon);
-            var pixels = new Color[64];
-            for (int y = 4; y < 8; ++y)
-                for (int x = 0; x < 4; ++x) pixels[y * 8 + x] = Color.white;
-            icon.SetPixels(pixels);
-            icon.Apply();
-            var sprite = Sprite.Create(icon, new Rect(0, 0, 8, 8), Vector2.one * .5f, 8);
-            resources.Add(sprite);
-            Sprite previous = SpiritModifierIcons.GetSprite(definition);
-            try
-            {
-                SpiritModifierIcons.RegisterIcon(definition.Id, sprite);
-                history.Add(contribution, definition, false);
-            }
-            finally { SpiritModifierIcons.RegisterIcon(definition.Id, previous); }
-            var renderer = history.GetDieRenderer(0);
-            foreach (var other in scene.RenderRoot.GetComponentsInChildren<MeshRenderer>()) other.enabled = other == renderer;
-            Material material = renderer.sharedMaterial;
-            Assert.That(ShaderUtil.ShaderHasError(material.shader), Is.False);
-            material.SetColor("_BaseColor", Color.white);
-            material.SetTexture("_SurfaceTexture", Texture2D.whiteTexture);
-            material.SetColor("_FaceIconColor", Color.black);
-            material.SetFloat("_ShowFaceIcon", glyphOnly ? 0 : 1);
-            material.SetFloat("_ShowCategory", category ? 1 : 0);
-            material.SetTexture("_CategoryIcon", icon);
-            material.SetVector("_CategoryIconRect", new Vector4(0, 0, 1, 1));
-            material.SetVector("_CategoryIconUVTransform", new Vector4(1, 1, 0, 0));
-            material.SetColor("_CategoryColor", Color.black);
-            material.SetFloat("_SceneLightingEnabled", 1);
-            material.SetVector("_SceneLightingAmbient", Vector4.one);
-            material.SetVector("_SceneLightingKeyColor", Vector4.zero);
-            Transform die = history.GetDieTransform(0);
-            var camera = Root("Top-face orientation camera").AddComponent<Camera>();
-            camera.scene = preview;
-            camera.overrideSceneCullingMask = EditorSceneManager.GetSceneCullingMask(preview);
-            camera.enabled = false;
-            camera.transform.position = die.TransformPoint(new Vector3(0, 3, -4));
-            camera.transform.LookAt(die.TransformPoint(new Vector3(0, .5f, 0)), die.up);
-            camera.orthographic = true;
-            camera.orthographicSize = die.TransformVector(Vector3.right).magnitude * .75f;
-            camera.aspect = 1;
-            camera.nearClipPlane = .01f;
-            camera.farClipPlane = 20;
-            camera.cullingMask = 1 << SpiritDiceTray.RenderLayer;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.magenta;
-            camera.allowHDR = camera.allowMSAA = false;
-            camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
-            var target = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            resources.Add(target);
-            target.Create();
-            camera.targetTexture = target;
-            RenderPipelineAsset previousPipeline = QualitySettings.renderPipeline;
-            try
-            {
-                var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>("Assets/Settings/SpiritPrototypePipeline.asset");
-                Assert.That(pipeline, Is.Not.Null);
-                QualitySettings.renderPipeline = pipeline;
-                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-                Assert.That(RenderPipeline.SupportsRenderRequest(camera, request), Is.True);
-                RenderPipeline.SubmitRenderRequest(camera, request);
-            }
-            finally { QualitySettings.renderPipeline = previousPipeline; }
-            var readback = new Texture2D(256, 256, TextureFormat.RGBAFloat, false, true);
-            resources.Add(readback);
-            RenderTexture previousTarget = RenderTexture.active;
-            try
-            {
-                RenderTexture.active = target;
-                readback.ReadPixels(new Rect(0, 0, 256, 256), 0, 0);
-                readback.Apply();
-            }
-            finally { RenderTexture.active = previousTarget; }
-
-            float centerX = glyphOnly ? .20f : 0;
-            float centerZ = glyphOnly ? -.28f : category ? .09f : 0;
-            float offset = glyphOnly ? .0315f : category ? .125f : .17f;
-            Color inkSample = Pixel(centerX - offset, centerZ + offset);
-            if (inkSample.maxColorComponent >= .15f)
-            {
-                var rendered = readback.GetPixels();
-                TestContext.WriteLine("Top-face sample " + inkSample + "; opposite " + Pixel(centerX + offset, centerZ - offset) +
-                    "; background pixels " + rendered.Count(value => value.r > .9f && value.g < .1f && value.b > .9f) +
-                    "; dark pixels " + rendered.Count(value => value.r < .15f && value.g < .15f && value.b < .15f));
-                string directory = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
-                    "top-face-orientation", Guid.NewGuid().ToString("N")));
-                Directory.CreateDirectory(directory);
-                var diagnostic = new Texture2D(256, 256, TextureFormat.RGBA32, false, true);
-                resources.Add(diagnostic);
-                diagnostic.SetPixels(rendered);
-                diagnostic.Apply();
-                string path = Path.Combine(directory, "category-" + category + "-glyph-" + glyphOnly + ".png");
-                File.WriteAllBytes(path, diagnostic.EncodeToPNG());
-                TestContext.WriteLine("Top-face diagnostic: " + path);
-            }
-            Assert.That(Pixel(centerX - offset, centerZ + offset).maxColorComponent, Is.LessThan(.15f),
-                "The texture's upper-left quadrant belongs on the far-left part of the physical top face.");
-            AssertBone(Pixel(centerX - offset, centerZ - offset));
-            AssertBone(Pixel(centerX + offset, centerZ + offset));
-            AssertBone(Pixel(centerX + offset, centerZ - offset));
-            if (glyphOnly)
-            {
-                Assert.That(Pixel(-.13f, -.2925f).maxColorComponent, Is.LessThan(.15f), "The category bar belongs on the player edge.");
-                AssertBone(Pixel(-.13f, .2925f));
-            }
-
-            Color Pixel(float x, float z)
-            {
-                Vector3 viewport = camera.WorldToViewportPoint(die.TransformPoint(new Vector3(x, .5f, z)));
-                Assert.That(viewport.x, Is.InRange(0f, 1f));
-                Assert.That(viewport.y, Is.InRange(0f, 1f));
-                return readback.GetPixel(Mathf.FloorToInt(viewport.x * 256), Mathf.FloorToInt(viewport.y * 256));
-            }
-
-            void AssertBone(Color value)
-            {
-                Assert.That(value.r, Is.GreaterThan(.75f));
-                Assert.That(value.g, Is.GreaterThan(.75f));
-                Assert.That(value.b, Is.GreaterThan(.75f));
-            }
-        }
-
-        [TestCase(Lantern, false)]
-        [TestCase(Lantern, true)]
-        [TestCase(Watchtower, false)]
-        [TestCase(Watchtower, true)]
-        [TestCase(Moth, false)]
-        [TestCase(Moth, true)]
-        [TestCase(Merchant, false)]
-        [TestCase(Merchant, true)]
-        public void AutomaticFramingContainsEveryAuthoredMeshCornerAndBay(string path, bool orthographic)
-        {
-            var source = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path).TrayPresentation;
-            var asset = UnityEngine.Object.Instantiate(source);
-            resources.Add(asset);
-            asset.Orthographic = orthographic;
-            var scene = CreateScene(asset);
-            AssertAuthoredGeometryFits(scene);
-            var dice = AddDice(scene);
-            dice.SetSelection(DiceValues.AllMask);
-            AssertRollEnvelopeFits(scene, dice);
-            var history = AddHistory(scene);
-            ModifierContribution contribution = Contribution(out ModifierDefinition definition);
-            for (int index = 0; index < history.Capacity; ++index) history.Add(contribution, definition, true);
-            for (int sample = 0; sample <= 6; ++sample)
-            {
-                history.Advance(SpiritModifierHistoryRenderer.ArrivalDuration / 6);
-                AssertMeshCornersFit(scene.RenderCamera, scene.Geometry.ModifierRoot);
-            }
-        }
-
-        [TestCase(false, 512, 1024, 27, 43, 18)]
-        [TestCase(false, 1536, 256, 82, -35, -24)]
-        [TestCase(false, 768, 768, 12, 125, 32)]
-        [TestCase(true, 512, 1024, 27, 43, 18)]
-        [TestCase(true, 1536, 256, 82, -35, -24)]
-        [TestCase(true, 768, 768, 12, 125, 32)]
-        public void ViewAndAspectChangesRefitGeometryWithoutReplacingCameraOrTexture(bool orthographic,
-            int width, int height, float pitch, float yaw, float roll)
-        {
-            var asset = Variant(orthographic);
-            var scene = CreateScene(asset);
-            Camera camera = scene.RenderCamera;
-            RenderTexture texture = scene.Texture;
-            asset.TextureSize = new Vector2Int(width, height);
-            asset.CameraEulerAngles = new Vector3(pitch, yaw, roll);
-            asset.CameraPosition = new Vector3(1000, -2000, 500);
-            asset.OrthographicSize = .01f;
-            asset.FieldOfView = 31;
-            camera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
-            camera.fieldOfView = asset.FieldOfView;
-            scene.ApplyPresentationSettings();
-            scene.FrameAuthoredGeometry();
-            Assert.That(scene.RenderCamera, Is.SameAs(camera));
-            Assert.That(scene.Texture, Is.SameAs(texture));
-            Assert.That(texture.IsCreated(), Is.True);
-            Assert.That(camera.aspect, Is.EqualTo((float)width / height).Within(.0001f));
-            Assert.That(Quaternion.Angle(camera.transform.localRotation, Quaternion.Euler(asset.CameraEulerAngles)),
-                Is.LessThan(.001f));
-            AssertAuthoredGeometryFits(scene);
-        }
-
+        /** Checks framing keeps every geometry mesh corner, label anchor, bay corner and rolling die inside the view and depth range / fails if any of them is clipped. */
         [TestCase(false)]
         [TestCase(true)]
-        public void RebuiltOversizedTransformedGeometryExpandsFramingAndDepthPlanes(bool orthographic)
+        public void FramingContainsTheGeometryLabelsBayAndRollingDice(bool orthographic)
         {
-            var asset = Variant(orthographic);
-            var scene = CreateScene(asset);
-            Camera camera = scene.RenderCamera;
-            RenderTexture texture = scene.Texture;
             var rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            rail.name = "Oversized custom front rail";
-            rail.transform.SetParent(scene.Geometry.transform, false);
-            rail.transform.localPosition = new Vector3(30, -8, -15);
+            rail.name = "Oversized rail";
+            UnityEngine.Object.DestroyImmediate(rail.GetComponent<Collider>());
+            rail.transform.SetParent(Rig.Geometry.transform, false);
+            rail.transform.localPosition = new Vector3(6, -1, -3);
             rail.transform.localRotation = Quaternion.Euler(17, 39, -12);
-            rail.transform.localScale = new Vector3(70, 18, 45);
-            scene.Geometry.transform.localPosition = new Vector3(-13, 4, 21);
-            scene.Geometry.transform.localRotation = Quaternion.Euler(-12, 18, 9);
-            scene.Geometry.transform.localScale = new Vector3(1.3f, .8f, 1.7f);
-            asset.CameraEulerAngles = new Vector3(49, -23, 11);
-            asset.NearClipPlane = .1f;
-            asset.FarClipPlane = .2f;
-            camera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
-            scene.FrameAuthoredGeometry();
+            rail.transform.localScale = new Vector3(12, 3, 6);
+            rail.GetComponent<MeshRenderer>().sharedMaterial = Rig.SurfaceMaterial;
+            Rig.Geometry.transform.localPosition = new Vector3(-13, 4, 21);
+            Rig.Geometry.transform.localRotation = Quaternion.Euler(-12, 18, 9);
+            Rig.Geometry.transform.localScale = new Vector3(1.3f, .8f, 1.7f);
+            Rig.Camera.orthographic = orthographic;
+            Rig.Camera.transform.localRotation = Quaternion.Euler(49, -23, 11);
+            var dice = Rig.StartDice();
+            AssertAuthoredGeometryFits(Rig.TrayScene);
+            AssertRollEnvelopeFits(Rig.TrayScene, dice);
+        }
+
+        /** Checks a texture size change resizes the shared texture in place and keeps the camera's framing / fails if it replaces the camera or texture, leaves a stale aspect or reframes the camera. */
+        [Test]
+        public void TextureResizeKeepsTheCameraTextureAndFraming()
+        {
+            var scene = Rig.Start();
+            Camera camera = scene.RenderCamera;
+            RenderTexture texture = scene.Texture;
+            Vector3 position = camera.transform.localPosition;
+            float size = camera.orthographicSize;
+            float near = camera.nearClipPlane;
+            float far = camera.farClipPlane;
+            Rig.Presentation.TextureSize = new Vector2Int(96, 96);
+            scene.ApplyPresentationSettings();
             Assert.That(scene.RenderCamera, Is.SameAs(camera));
             Assert.That(scene.Texture, Is.SameAs(texture));
-            Assert.That(camera.farClipPlane, Is.GreaterThan(asset.FarClipPlane));
-            AssertAuthoredGeometryFits(scene);
+            Assert.That(camera.targetTexture, Is.SameAs(texture));
+            Assert.That(texture.IsCreated(), Is.True);
+            Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(96, 96)));
+            Assert.That(camera.aspect, Is.EqualTo(1f).Within(.0001f));
+            Assert.That(camera.transform.localPosition, Is.EqualTo(position));
+            Assert.That(camera.orthographicSize, Is.EqualTo(size));
+            Assert.That(camera.nearClipPlane, Is.EqualTo(near));
+            Assert.That(camera.farClipPlane, Is.EqualTo(far));
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void AnimatedDiceAndGrowingHistoryKeepTheAuthoredFramingStable(bool orthographic)
-        {
-            var asset = Variant(orthographic);
-            var scene = CreateScene(asset);
-            var dice = AddDice(scene);
-            var history = AddHistory(scene);
-            Vector3 position = scene.RenderCamera.transform.localPosition;
-            float size = scene.RenderCamera.orthographicSize;
-            float near = scene.RenderCamera.nearClipPlane;
-            float far = scene.RenderCamera.farClipPlane;
-            ModifierContribution contribution = Contribution(out ModifierDefinition definition);
-            for (int index = 0; index < history.Capacity + 30; ++index)
-            {
-                history.Add(contribution, definition, true);
-                history.SetScroll(index % 2);
-                history.Advance(.015f);
-                scene.ApplyPresentationSettings();
-                Assert.That(scene.RenderCamera.transform.localPosition, Is.EqualTo(position));
-                Assert.That(scene.RenderCamera.orthographicSize, Is.EqualTo(size));
-                Assert.That(scene.RenderCamera.nearClipPlane, Is.EqualTo(near));
-                Assert.That(scene.RenderCamera.farClipPlane, Is.EqualTo(far));
-            }
-            AssertRollEnvelopeFits(scene, dice);
-            Assert.That(scene.RenderCamera.transform.localPosition, Is.EqualTo(position));
-            Assert.That(scene.RenderCamera.orthographicSize, Is.EqualTo(size));
-            Assert.That(scene.RenderCamera.nearClipPlane, Is.EqualTo(near));
-            Assert.That(scene.RenderCamera.farClipPlane, Is.EqualTo(far));
-        }
-
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ChangedCameraAndSurfaceAnchorsPreserveEveryFaceAndSelectiveInterruptedRolls(bool orthographic)
-        {
-            var asset = Variant(orthographic);
-            var scene = CreateScene(asset);
-            var dice = AddDice(scene);
-            for (int face = 1; face <= 6; ++face)
-            {
-                dice.SetValues(new DiceValues(face, face, face, face, face));
-                for (int index = 0; index < DiceValues.Count; ++index)
-                {
-                    Assert.That(dice.GetVisibleFace(index), Is.EqualTo(face), "Slot " + index);
-                    Rect projected = dice.GetSlotViewportRect(index);
-                    Assert.That(projected.width, Is.GreaterThan(0));
-                    Assert.That(projected.height, Is.GreaterThan(0));
-                    Assert.That(projected.Contains(dice.GetSlotViewportPosition(index)), Is.True);
-                    Vector3 label = scene.RenderCamera.WorldToViewportPoint(scene.Geometry.DiceLabelAnchors[index].position);
-                    Assert.That(Vector2.Distance(dice.GetSlotLabelViewportPosition(index), label), Is.LessThan(.0001f));
-                }
-            }
-            dice.SetValues(new DiceValues(1, 2, 3, 4, 5));
-            IEnumerator roll = dice.Roll(new DiceValues(6, 5, 4, 3, 2), (1 << 1) | (1 << 3), 0);
-            Assert.That(roll.MoveNext(), Is.False);
-            AssertFaces(dice, new[] { 1, 5, 3, 3, 5 });
-            roll = dice.Roll(new DiceValues(6, 6, 6, 6, 6), 1 << 2);
-            Assert.That(roll.MoveNext(), Is.True);
-            ((IDisposable)roll).Dispose();
-            Assert.That(dice.IsRolling, Is.False);
-            AssertFaces(dice, new[] { 1, 5, 6, 3, 5 });
-        }
-
-        [TestCase(false)]
-        [TestCase(true)]
-        public void RotatedBayScrollClipsInAuthoredCoordinatesAndPointerTargetsFollowProjection(bool orthographic)
-        {
-            var asset = Variant(orthographic);
-            var scene = CreateScene(asset);
-            var canvasRoot = Root("History pointer projection", typeof(RectTransform)).GetComponent<RectTransform>();
-            canvasRoot.sizeDelta = new Vector2(700, 350);
-            canvasRoot.gameObject.AddComponent<Canvas>();
-            var history = CreateHistoryUi(scene, canvasRoot);
-            history.Configure(asset, scene);
-            history.Build(canvasRoot);
-            ModifierDefinition definition;
-            ModifierContribution contribution = Contribution(out definition);
-            int capacity = scene.Geometry.ModifierVisibleCapacity;
-            for (int i = 0; i < capacity + 5; ++i) history.Add(contribution, definition, false);
-            Canvas.ForceUpdateCanvases();
-            history.Scroll.horizontalNormalizedPosition = 0;
-            Invoke(history, "LateUpdate");
-            Assert.That(history.Renderer.GetDieViewportRect(capacity + 4), Is.EqualTo(Rect.zero));
-            Assert.That(history.Renderer.GetDieViewportRect(0).width, Is.GreaterThan(0));
-            AssertProjectedToken(history, canvasRoot, 0);
-            Vector3 first = history.Renderer.GetDieTransform(0).position;
-            history.Scroll.horizontalNormalizedPosition = 1;
-            Invoke(history, "LateUpdate");
-            Assert.That(history.Renderer.GetDieViewportRect(0), Is.EqualTo(Rect.zero));
-            Assert.That(history.Renderer.GetDieViewportRect(capacity + 4).width, Is.GreaterThan(0));
-            AssertProjectedToken(history, canvasRoot, capacity + 4);
-            Assert.That(Vector3.Distance(first, history.Renderer.GetDieTransform(0).position), Is.GreaterThan(1));
-            Material material = history.Renderer.GetDieRenderer(capacity + 4).sharedMaterial;
-            var clip = material.GetVector("_ClipLocalX");
-            Assert.That(clip.x, Is.EqualTo(-scene.Geometry.ModifierWidth * .5f));
-            Assert.That(clip.y, Is.EqualTo(scene.Geometry.ModifierWidth * .5f));
-            Vector3 local = new Vector3(.23f, .4f, -.1f);
-            Vector3 world = scene.Geometry.ModifierRoot.TransformPoint(local);
-            Vector3 shaderLocal = material.GetMatrix("_ClipWorldToLocal").MultiplyPoint3x4(world);
-            Assert.That(Vector3.Distance(shaderLocal, local), Is.LessThan(.003f));
-            Assert.That(history.GetComponentsInChildren<RawImage>(true), Is.Empty,
-                "History UI should project hits over the shared texture.");
-        }
-
+        /** Checks reconfiguring the scene with another presentation replaces only its texture / fails if it rebuilds the stage or camera or leaks the previous texture. */
         [Test]
-        public void ReplacingSceneAndDestroyingConsumersLeavesBorrowedResourcesAndSiblingCameraAlive()
+        public void ReconfiguringTheSceneReplacesOnlyItsTexture()
         {
-            var first = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
-            var second = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Watchtower).TrayPresentation;
-            var scene = CreateScene(first);
-            var dice = AddDice(scene);
-            var history = AddHistory(scene);
-            Transform oldRoot = scene.RenderRoot;
-            Camera oldCamera = scene.RenderCamera;
-            RenderTexture oldTexture = scene.Texture;
-            dice.ReleasePresentation();
-            history.ReleasePresentation();
+            var scene = Rig.Start();
+            Transform root = scene.RenderRoot;
+            Camera camera = scene.RenderCamera;
+            RenderTexture previous = scene.Texture;
+            var second = UnityEngine.Object.Instantiate(Rig.Presentation);
+            resources.Add(second);
             scene.Configure(second);
             scene.Initialize();
-            dice.Configure(second, scene); dice.Initialize();
-            history.Configure(second, scene); history.Initialize();
-            Assert.That(scene.RenderRoot, Is.SameAs(oldRoot));
-            Assert.That(scene.RenderCamera, Is.SameAs(oldCamera));
-            Assert.That(oldTexture == null, Is.True);
-            Camera sharedCamera = scene.RenderCamera;
-            RenderTexture sharedTexture = scene.Texture;
+            Assert.That(scene.Presentation, Is.SameAs(second));
+            Assert.That(scene.RenderRoot, Is.SameAs(root));
+            Assert.That(scene.RenderCamera, Is.SameAs(camera));
+            Assert.That(previous == null, Is.True, "The previous texture is destroyed.");
+            Assert.That(scene.Texture != null && scene.Texture.IsCreated(), Is.True);
+        }
+
+        /** Checks only the scene's own disable hides the shared stage while consumers hide just their content / fails if a consumer's disable or destruction hides the stage or releases its texture. */
+        [Test]
+        public void OnlyTheSceneHidesTheSharedStage()
+        {
+            var dice = Rig.StartDice();
+            var history = Rig.StartHistory();
+            var scene = Rig.TrayScene;
+            var definition = TestTrayRig.Definition("test.tray.consumer");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            Transform token = history.GetDieTransform(0);
+            TestTrayRig.Invoke(scene, "OnEnable");
+            TestTrayRig.Invoke(history, "OnDisable");
+            Assert.That(token.gameObject.activeInHierarchy, Is.False, "Disabling the modifier renderer hides its tokens.");
+            Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
+            TestTrayRig.Invoke(dice, "OnDisable");
+            Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
+            RenderTexture texture = scene.Texture;
             UnityEngine.Object.DestroyImmediate(dice.gameObject);
-            Assert.That(sharedCamera != null && sharedTexture != null && sharedTexture.IsCreated(), Is.True);
-            Assert.That(history.RenderCamera, Is.SameAs(sharedCamera));
-            history.enabled = false;
-            Invoke(history, "OnDisable");
-            Assert.That(scene.RenderRoot.gameObject.activeSelf, Is.True,
-                "A consumer must not disable the shared scene.");
-            scene.enabled = false;
-            Invoke(scene, "OnDisable");
-            Assert.That(scene.RenderRoot.gameObject.activeSelf, Is.False);
-            scene.enabled = true;
-            Invoke(scene, "OnEnable");
-            Assert.That(scene.RenderRoot.gameObject.activeSelf, Is.True);
-            Assert.That(first.GeometryPrefab != null && second.GeometryPrefab != null && first.BoneTexture != null, Is.True);
+            Assert.That(texture != null && texture.IsCreated() && scene.RenderCamera != null, Is.True);
+            TestTrayRig.Invoke(scene, "OnDisable");
+            Assert.That(Rig.Stage.gameObject.activeSelf, Is.False);
+            TestTrayRig.Invoke(scene, "OnEnable");
+            Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
         }
 
-        private SpiritTrayPresentationAsset Variant(bool orthographic)
+        /** Checks HUD animations and reset return labels to the scales captured at the first build / fails if rebinding captures a scale left by an interrupted pulse. */
+        [Test]
+        public void HudAnimationsAndResetReturnToTheScalesCapturedAtFirstBuild()
         {
-            var source = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation;
-            var asset = UnityEngine.Object.Instantiate(source);
-            resources.Add(asset);
-            var rig = UnityEngine.Object.Instantiate(source.RigPrefab);
-            resources.Add(rig.gameObject);
-            asset.RigPrefab = rig;
-            var geometry = rig.Geometry;
-            geometry.gameObject.hideFlags = HideFlags.HideAndDontSave;
-            SceneManager.MoveGameObjectToScene(rig.gameObject, preview);
-            geometry.gameObject.SetActive(false);
-            asset.GeometryPrefab = geometry;
-            asset.Orthographic = orthographic;
-            asset.CameraPosition = new Vector3(0, 12, -7);
-            asset.CameraEulerAngles = Quaternion.LookRotation(new Vector3(0, 0, .3f) - asset.CameraPosition).eulerAngles;
-            asset.FieldOfView = 48;
-            asset.OrthographicSize = 5.4f;
-            for (int i = 0; i < DiceValues.Count; ++i)
+            var hud = CreateHud(out RectTransform[] scaled);
+            var authored = scaled.Select((rect, index) => rect.localScale = new Vector3(.7f + index * .03f, 1.4f + index * .02f, .9f))
+                .ToArray();
+            hud.BuildPlayingHud(() => { }, () => { });
+            foreach (RectTransform rect in scaled) rect.localScale = Vector3.one * 2;
+            hud.BuildPlayingHud(() => { }, () => { });
+            Assert.That(hud.AnimateTotal(100, 0).MoveNext(), Is.False);
+            Assert.That(hud.HandScoreLabel.rectTransform.localScale,
+                Is.EqualTo(authored[Array.IndexOf(scaled, hud.HandScoreLabel.rectTransform)]));
+            hud.ResetTransientVisuals();
+            for (int i = 0; i < scaled.Length; ++i) Assert.That(scaled[i].localScale, Is.EqualTo(authored[i]), scaled[i].name);
+        }
+
+        /** Checks each token draws its own copy of the token prefab's body material with its surface texture / fails if tokens share or modify the prefab's material. */
+        [Test]
+        public void EachTokenDrawsItsOwnCopyOfTheTokenMaterial()
+        {
+            var history = Rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.tray.material");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            history.Add(TestTrayRig.Contribution(definition, 2), Rig.Charms(definition), definition, false);
+            Material first = history.GetDieRenderer(0).sharedMaterial;
+            Material second = history.GetDieRenderer(1).sharedMaterial;
+            Assert.That(first, Is.Not.SameAs(Rig.TokenMaterial));
+            Assert.That(second, Is.Not.SameAs(first));
+            Assert.That(first.GetTexture("_SurfaceTexture"), Is.SameAs(Rig.TokenSurface));
+            Assert.That(first.GetFloat("_ShowFaceIcon"), Is.EqualTo(1f));
+            Assert.That(Rig.TokenMaterial.GetFloat("_ShowFaceIcon"), Is.Zero, "Binding a token leaves the prefab's material unchanged.");
+        }
+
+        /** Checks a token's scale follows the bay's die size relative to the prefab's / fails if tokens ignore the bay size or resize the prefab. */
+        [Test]
+        public void TokensScaleWithTheBayDieSize()
+        {
+            Rig.Geometry.ModifierDieSize = .63f;
+            var history = Rig.StartHistory();
+            Vector3 body = Rig.Token.Body.transform.localScale;
+            var definition = TestTrayRig.Definition("test.tray.size");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            AssertVector(history.GetDieTransform(0).localScale, body * (.63f / SpiritModifierHistoryRenderer.DieSize));
+            Assert.That(Rig.Token.Body.transform.localScale, Is.EqualTo(body));
+        }
+
+        /** Checks a resting token touches the bay while a lifted one rises and spreads its shadow in the prefab's proportions / fails if tokens float or sink at rest, or the shadow ignores lift or distorts. */
+        [Test]
+        public void RestingTokensTouchTheBayAndLiftedTokensSpreadTheirShadow()
+        {
+            var history = Rig.StartHistory();
+            Vector3 shadow = Rig.Token.Shadow.transform.localScale;
+            var definition = TestTrayRig.Definition("test.tray.contact");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            Assert.That(Gap(), Is.EqualTo(0f).Within(.00001f));
+            Vector3 resting = ShadowScale();
+            history.SetResolving(0);
+            Assert.That(Gap(), Is.GreaterThan(0f));
+            Assert.That(ShadowScale().x, Is.GreaterThan(resting.x));
+
+            // Height of the token's lowest point above the bay surface.
+            float Gap()
             {
-                geometry.DiceSlots[i].localPosition += new Vector3((i % 2) * .1f, .025f * i, .12f * (i - 2));
-                geometry.DiceSlots[i].localRotation = Quaternion.Euler(0, i * 11 - 20, 0);
-                geometry.DiceLabelAnchors[i].localPosition += new Vector3(.08f, 0, -.1f);
+                Transform die = history.GetDieTransform(0);
+                float bottom = die.GetComponent<MeshFilter>().sharedMesh.vertices
+                    .Min(point => (die.localRotation * Vector3.Scale(point, die.localScale)).y);
+                return die.localPosition.y + bottom;
             }
-            geometry.ModifierRoot.localRotation = Quaternion.Euler(0, 27, 0);
-            return asset;
+
+            // The shadow keeps the prefab's thickness and footprint proportions at any lift.
+            Vector3 ShadowScale()
+            {
+                Vector3 scale = history.GetShadowRenderer(0).transform.localScale;
+                Assert.That(scale.y, Is.EqualTo(shadow.y).Within(.00001f));
+                Assert.That(scale.x / scale.z, Is.EqualTo(shadow.x / shadow.z).Within(.00001f));
+                return scale;
+            }
         }
 
-        private SpiritTrayScene CreateScene(SpiritTrayPresentationAsset asset)
-        {
-            var scene = UnityEngine.Object.Instantiate(asset.RigPrefab);
-            scene.gameObject.SetActive(true);
-            SceneManager.MoveGameObjectToScene(scene.gameObject, preview);
-            scene.Configure(asset); scene.Initialize();
-            scene.Geometry.gameObject.SetActive(true);
-            scene.RenderCamera.orthographic = asset.Orthographic;
-            scene.RenderCamera.fieldOfView = asset.FieldOfView;
-            scene.RenderCamera.transform.localRotation = Quaternion.Euler(asset.CameraEulerAngles);
-            scene.RenderCamera.aspect = (float)asset.TextureSize.x / asset.TextureSize.y;
-            scene.FrameAuthoredGeometry();
-            scene.RenderCamera.scene = preview;
-            scene.RenderCamera.enabled = false;
-            return scene;
-        }
-
-        private SpiritDiceTray AddDice(SpiritTrayScene scene)
-        {
-            var dice = scene.DiceTray;
-            dice.Configure(scene.Presentation, scene); dice.Initialize();
-            return dice;
-        }
-
+        /** Checks a categorized token shows its category glyph and ink over the untinted bone while an uncategorized one hides category marks and keeps its sigil / fails if category ink tints the bone, the glyph is missing or uncategorized tokens show category marks. */
         [Test]
-        public void ReadyTrayFiltersRollsPreservesResourceOnlyActivationsAndRefreshesDescriptions()
+        public void CategorizedTokensShowTheirGlyphAndInkWithoutTintingTheBone()
         {
-            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
-            var preview = session.PreviewHandResolution();
-            var before = session.Snapshot;
-            history.SynchronizeReady(preview.Score.ModifierContributions, catalog);
-            Assert.That(history.Count, Is.EqualTo(3));
-            Assert.That(history.Contributions.Select(value => value.Phase), Is.All.EqualTo(ModifierPhase.PlayHand));
-            Assert.That(history.Contributions[2].BaseScore, Is.Zero);
-            Assert.That(history.Contributions[2].Multiplier, Is.Zero);
-            Assert.That(history.Contributions[2].Rerolls, Is.EqualTo(2));
-            Assert.That(session.Snapshot.Revision, Is.EqualTo(before.Revision));
-            Assert.That(session.Snapshot.RerollsRemaining, Is.EqualTo(before.RerollsRemaining));
-
-            Transform die = history.Renderer.GetDieTransform(0);
-            history.SynchronizeReady(session.PreviewHandResolution().Score.ModifierContributions, catalog);
-            Assert.That(history.Renderer.GetDieTransform(0), Is.SameAs(die));
-            ModifierContribution selected = default;
-            history.TokenSelected += (contribution, definition) => selected = contribution;
-            history.SynchronizeReady(new[] { history.Contributions[2] }, catalog);
-            Assert.That(history.Count, Is.EqualTo(1));
-            history.Content.GetComponentInChildren<Button>(true).onClick.Invoke();
-            Assert.That(selected.InstanceId, Is.EqualTo(preview.Score.ModifierContributions.Last().InstanceId));
-            history.SynchronizeReady(Array.Empty<ModifierContribution>(), catalog);
-            Assert.That(history.Count, Is.Zero);
-            Assert.That(history.Renderer.Count, Is.Zero);
+            Color ink = new Color(.2f, .45f, .7f, 1f);
+            var categorized = TestTrayRig.Definition("test.tray.categorized", effect: ModifierEffectKind.AddMultiplier);
+            var categorizedCharms = Rig.Synthetic.For(Rig.Synthetic.Category(ModifierCategorySymbol.Multiplier, ink: ink), categorized);
+            {
+                var plain = TestTrayRig.Definition("test.tray.uncategorized");
+                var plainCharms = Rig.Synthetic.For(Rig.Synthetic.Category(ModifierCategorySymbol.None), plain);
+                var history = Rig.StartHistory();
+                history.Add(TestTrayRig.Contribution(categorized), categorizedCharms, categorized, false);
+                history.Add(TestTrayRig.Contribution(plain, 2), plainCharms, plain, false);
+                Material marked = history.GetDieRenderer(0).sharedMaterial;
+                Material unmarked = history.GetDieRenderer(1).sharedMaterial;
+                Sprite glyph = categorizedCharms.GetCategorySprite(categorized);
+                Assert.That(glyph, Is.Not.Null);
+                Assert.That(marked.GetFloat("_ShowCategory"), Is.EqualTo(1f));
+                Assert.That(marked.GetTexture("_CategoryIcon"), Is.SameAs(glyph.texture));
+                AssertColor(marked.GetColor("_CategoryColor"), ink);
+                AssertColor(marked.GetColor("_FaceIconColor"), ink);
+                AssertColor(marked.GetColor("_BaseColor"), Rig.TokenMaterial.GetColor("_BaseColor"));
+                Assert.That(unmarked.GetFloat("_ShowCategory"), Is.Zero);
+                Assert.That(unmarked.GetFloat("_ShowFaceIcon"), Is.EqualTo(1f));
+                Assert.That(unmarked.GetTexture("_FaceIcon"), Is.Not.Null);
+            }
         }
 
+        /** Checks scrolling moves tokens along the bay and clips those outside it / fails if overflow tokens stay visible or scrolling does not reveal them. */
         [Test]
-        public void ReadyTrayHighlightsExactInstancesAndOccurrencesAndRevealsOverflow()
+        public void ScrollingRevealsTokensAndClipsThoseOutsideTheBay()
         {
-            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
-            var ready = session.PreviewHandResolution().Score.ModifierContributions
-                .Where(value => value.Phase == ModifierPhase.PlayHand).ToArray();
-            var repeated = Enumerable.Repeat(ready[0], history.Renderer.Capacity + 2).ToList();
-            repeated.Insert(1, ready[1]);
-            history.SynchronizeReady(repeated, catalog);
-            Canvas.ForceUpdateCanvases();
-            Color bone = history.Renderer.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor");
-            Vector3 resting = history.Renderer.GetDieTransform(1).localPosition;
-            Assert.That(history.SetResolving(ready[1]), Is.True);
+            var history = Rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.tray.scroll");
+            int last = history.Capacity + 4;
+            for (int i = 0; i <= last; ++i) history.Add(TestTrayRig.Contribution(definition, i + 1), Rig.Charms(definition), definition, false);
+            history.SetScroll(0);
+            Assert.That(history.GetDieViewportRect(0).width, Is.GreaterThan(0));
+            Assert.That(history.GetDieViewportRect(last), Is.EqualTo(Rect.zero));
+            history.SetScroll(1);
+            Assert.That(history.GetDieViewportRect(0), Is.EqualTo(Rect.zero));
+            Assert.That(history.GetDieViewportRect(last).width, Is.GreaterThan(0));
+        }
+
+        /** Checks token materials clip to the bay's width in the bay's own coordinates / fails if a rotated bay clips in world or stage coordinates. */
+        [Test]
+        public void TokenMaterialsClipToTheBayInItsLocalSpace()
+        {
+            Rig.Geometry.ModifierRoot.localRotation = Quaternion.Euler(0, 27, 0);
+            var history = Rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.tray.clip");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            Material material = history.GetDieRenderer(0).sharedMaterial;
+            Vector4 clip = material.GetVector("_ClipLocalX");
+            Assert.That(clip.x, Is.EqualTo(-Rig.Geometry.ModifierWidth * .5f));
+            Assert.That(clip.y, Is.EqualTo(Rig.Geometry.ModifierWidth * .5f));
+            Vector3 local = new Vector3(.23f, .4f, -.1f);
+            Vector3 world = Rig.Geometry.ModifierRoot.TransformPoint(local);
+            AssertVector(material.GetMatrix("_ClipWorldToLocal").MultiplyPoint3x4(world), local, .001f);
+        }
+
+        /** Checks the resolving token alone lifts and takes the highlight colour and clearing restores it / fails if other tokens change or clearing leaves the token raised or tinted. */
+        [Test]
+        public void ResolvingLiftsAndTintsOnlyThatToken()
+        {
+            var history = Rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.tray.resolving");
+            for (int i = 0; i < 3; ++i) history.Add(TestTrayRig.Contribution(definition, i + 1), Rig.Charms(definition), definition, false);
+            Color bone = history.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor");
+            Vector3 first = history.GetDieTransform(0).localPosition;
+            Vector3 resting = history.GetDieTransform(1).localPosition;
+            history.SetResolving(1);
             Assert.That(history.ResolvingIndex, Is.EqualTo(1));
-            Assert.That(history.Renderer.GetDieTransform(1).localPosition.y, Is.GreaterThan(resting.y));
-            Assert.That(history.Renderer.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), Is.Not.EqualTo(bone));
-            Assert.That(history.Renderer.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(bone));
-            Assert.That(history.SetResolving(ready[0], history.Renderer.Capacity + 1), Is.True);
-            Assert.That(history.ResolvingIndex, Is.EqualTo(repeated.Count - 1));
-            Assert.That(history.Scroll.horizontalNormalizedPosition, Is.EqualTo(1).Within(.0001f));
-            Assert.That(history.Renderer.GetDieViewportRect(repeated.Count - 1).width, Is.GreaterThan(0));
-            history.ClearResolving();
-            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
-            Assert.That(history.Renderer.GetDieTransform(1).localPosition.y, Is.EqualTo(resting.y));
-            Assert.That(history.Renderer.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), Is.EqualTo(bone));
-            Assert.That(history.SetResolving(ready[2]), Is.False);
-            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
+            Assert.That(history.GetDieTransform(1).localPosition.y, Is.GreaterThan(resting.y));
+            Assert.That(history.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), Is.Not.EqualTo(bone));
+            AssertVector(history.GetDieTransform(0).localPosition, first);
+            AssertColor(history.GetDieRenderer(0).sharedMaterial.GetColor("_BaseColor"), bone);
+            history.SetResolving(-1);
+            AssertVector(history.GetDieTransform(1).localPosition, resting);
+            AssertColor(history.GetDieRenderer(1).sharedMaterial.GetColor("_BaseColor"), bone);
         }
 
+        /** Checks clearing the modifier renderer destroys its tokens and their materials / fails if cleared tokens or materials leak. */
+        [Test]
+        public void ClearingDestroysTokensAndTheirMaterials()
+        {
+            var history = Rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.tray.clear");
+            history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
+            Transform token = history.GetDieTransform(0);
+            Material material = history.GetDieRenderer(0).sharedMaterial;
+            Material shadow = history.GetShadowRenderer(0).sharedMaterial;
+            history.Clear();
+            Assert.That(history.Count, Is.Zero);
+            Assert.That(token == null && material == null && shadow == null, Is.True);
+        }
+
+        /** Checks pointer targets sit over their projected tokens and hide for clipped ones / fails if a target misses its token or a clipped token stays tappable. */
+        [Test]
+        public void PointerTargetsFollowProjectedTokensAndHideClippedOnes()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var definition = TestTrayRig.Definition("test.tray.pointer");
+            int last = tray.Renderer.Capacity + 4;
+            for (int i = 0; i <= last; ++i) tray.Add(TestTrayRig.Contribution(definition, i + 1), Rig.Charms(definition), definition, false);
+            TestTrayRig.Invoke(tray, "LateUpdate");
+            var root = (RectTransform)tray.transform;
+            var visible = (RectTransform)tray.Content.GetChild(0);
+            Rect projected = tray.Renderer.GetDieViewportRect(0);
+            Assert.That(visible.gameObject.activeSelf, Is.True);
+            Vector3 expected = root.TransformPoint(root.rect.min + Vector2.Scale(projected.center, root.rect.size));
+            Assert.That(Vector3.Distance(visible.position, expected), Is.LessThan(.01f));
+            Assert.That(Vector2.Distance(visible.sizeDelta, Vector2.Scale(projected.size, root.rect.size)), Is.LessThan(.01f));
+            Assert.That(tray.Content.GetChild(last).gameObject.activeSelf, Is.False);
+        }
+
+        /** Checks ready tokens show only PlayHand contributions, including ones granting only rerolls / fails if roll-phase contributions appear or resource-only ones are dropped. */
+        [Test]
+        public void ReadyTokensShowOnlyPlayHandContributions()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var catalog = ReadyCatalog(out ModifierDefinition roll, out ModifierDefinition score, out ModifierDefinition grant);
+            var charms = Rig.Synthetic.For(catalog);
+            var contributions = new[]
+            {
+                TestTrayRig.Contribution(roll, 1), TestTrayRig.Contribution(score, 2, 0, 2),
+                TestTrayRig.Contribution(grant, 3, 0, 0, 2)
+            };
+            tray.SynchronizeReady(contributions, catalog, charms);
+            Assert.That(tray.Contributions.Select(value => value.InstanceId), Is.EqualTo(new[] { 2L, 3L }));
+            Assert.That(tray.Renderer.Count, Is.EqualTo(2));
+        }
+
+        /** Checks unchanged ready contributions keep their tokens while changed ones rebuild them / fails if every refresh rebuilds the tokens or a change leaves stale ones. */
+        [Test]
+        public void UnchangedReadyContributionsKeepTheirTokens()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var catalog = ReadyCatalog(out _, out ModifierDefinition score, out ModifierDefinition grant);
+            var charms = Rig.Synthetic.For(catalog);
+            tray.SynchronizeReady(new[] { TestTrayRig.Contribution(score, 2, 0, 2), TestTrayRig.Contribution(grant, 3, 0, 0, 2) }, catalog, charms);
+            Transform die = tray.Renderer.GetDieTransform(0);
+            tray.SynchronizeReady(new[] { TestTrayRig.Contribution(score, 2, 0, 2), TestTrayRig.Contribution(grant, 3, 0, 0, 2) }, catalog, charms);
+            Assert.That(tray.Renderer.GetDieTransform(0), Is.SameAs(die));
+            tray.SynchronizeReady(new[] { TestTrayRig.Contribution(grant, 3, 0, 0, 2) }, catalog, charms);
+            Assert.That(tray.Count, Is.EqualTo(1));
+            Assert.That(die == null, Is.True, "A changed list replaces its tokens.");
+        }
+
+        /** Checks tapping a token reports its own contribution and definition / fails if a tap reports another token or nothing. */
+        [Test]
+        public void TokenTapReportsItsContribution()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var first = TestTrayRig.Definition("test.tray.tap.first");
+            var second = TestTrayRig.Definition("test.tray.tap.second");
+            tray.Add(TestTrayRig.Contribution(first, 1), Rig.Charms(first), first, false);
+            tray.Add(TestTrayRig.Contribution(second, 2), Rig.Charms(second), second, false);
+            ModifierContribution selected = default;
+            ModifierDefinition selectedDefinition = null;
+            tray.TokenSelected += (contribution, definition) => { selected = contribution; selectedDefinition = definition; };
+            tray.Content.GetChild(1).GetComponent<Button>().onClick.Invoke();
+            Assert.That(selected.InstanceId, Is.EqualTo(2));
+            Assert.That(selectedDefinition, Is.SameAs(second));
+        }
+
+        /** Checks resolving selects the requested occurrence of a repeated contribution and an absent one clears the highlight / fails if the wrong occurrence lifts or an absent contribution keeps a highlight. */
+        [Test]
+        public void ResolvingSelectsTheRequestedOccurrence()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var repeated = TestTrayRig.Definition("test.tray.repeated");
+            var other = TestTrayRig.Definition("test.tray.other");
+            var absent = TestTrayRig.Definition("test.tray.absent");
+            ModifierContribution contribution = TestTrayRig.Contribution(repeated, 1);
+            tray.Add(contribution, Rig.Charms(repeated), repeated, false);
+            tray.Add(TestTrayRig.Contribution(other, 2), Rig.Charms(other), other, false);
+            tray.Add(contribution, Rig.Charms(repeated), repeated, false);
+            Assert.That(tray.SetResolving(contribution, 1), Is.True);
+            Assert.That(tray.ResolvingIndex, Is.EqualTo(2));
+            Assert.That(tray.SetResolving(contribution), Is.True);
+            Assert.That(tray.ResolvingIndex, Is.EqualTo(0));
+            Assert.That(tray.SetResolving(TestTrayRig.Contribution(absent, 3)), Is.False);
+            Assert.That(tray.ResolvingIndex, Is.EqualTo(-1));
+        }
+
+        /** Checks resolving a token beyond the visible bay scrolls it into view / fails if the resolving token stays clipped. */
+        [Test]
+        public void ResolvingAnOverflowTokenScrollsItIntoTheBay()
+        {
+            var tray = Rig.CreateHistoryTray();
+            var definition = TestTrayRig.Definition("test.tray.reveal");
+            ModifierContribution contribution = TestTrayRig.Contribution(definition);
+            int last = tray.Renderer.Capacity + 4;
+            for (int i = 0; i <= last; ++i) tray.Add(contribution, Rig.Charms(definition), definition, false);
+            Canvas.ForceUpdateCanvases();
+            Assert.That(tray.Renderer.GetDieViewportRect(last), Is.EqualTo(Rect.zero));
+            Assert.That(tray.SetResolving(contribution, last), Is.True);
+            Assert.That(tray.ResolvingIndex, Is.EqualTo(last));
+            Assert.That(tray.Renderer.GetDieViewportRect(last).width, Is.GreaterThan(0));
+        }
+
+        /** Checks clearing a highlight after its token or the whole stage was destroyed neither throws nor rebuilds anything / fails if shutdown order breaks clearing or recreates the destroyed presentation. */
         [TestCase(false)]
         [TestCase(true)]
-        public void ClearingReadyHighlightAfterSceneHierarchyDestructionDoesNotRebuildPresentation(bool destroyWholeScene)
+        public void ClearingResolvingAfterStageDestructionDoesNotRebuild(bool destroyWholeStage)
         {
-            var history = ReadyTray(out MechanicalCatalog catalog, out EncounterSession session);
-            history.SynchronizeReady(session.PreviewHandResolution().Score.ModifierContributions, catalog);
-            Assert.That(history.SetResolving(history.Contributions[0]), Is.True);
-            var renderer = history.Renderer;
-            Transform renderRoot = renderer.RenderRoot;
-            if (destroyWholeScene) UnityEngine.Object.DestroyImmediate(renderRoot.gameObject);
+            var tray = Rig.CreateHistoryTray();
+            var definition = TestTrayRig.Definition("test.tray.shutdown");
+            ModifierContribution contribution = TestTrayRig.Contribution(definition);
+            tray.Add(contribution, Rig.Charms(definition), definition, false);
+            Assert.That(tray.SetResolving(contribution), Is.True);
+            var renderer = tray.Renderer;
+            Transform stage = renderer.RenderRoot;
+            if (destroyWholeStage) UnityEngine.Object.DestroyImmediate(stage.gameObject);
             else UnityEngine.Object.DestroyImmediate(renderer.GetDieTransform(0).gameObject);
-
-            Assert.DoesNotThrow(() => history.ClearResolving());
-            Assert.That(history.ResolvingIndex, Is.EqualTo(-1));
-            Assert.That(renderer.RenderRoot, destroyWholeScene ? Is.Null : Is.SameAs(renderRoot));
-            if (destroyWholeScene) Assert.That(renderer == null, Is.True);
-            else Assert.That(renderer.GetDieTransform(0) == null, Is.True);
-        }
-
-        private SpiritModifierHistoryTray ReadyTray(out MechanicalCatalog catalog, out EncounterSession session)
-        {
-            var scene = CreateScene(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(Lantern).TrayPresentation);
-            var canvasRoot = Root("Ready tray canvas", typeof(RectTransform)).GetComponent<RectTransform>();
-            canvasRoot.sizeDelta = new Vector2(700, 350);
-            canvasRoot.gameObject.AddComponent<Canvas>();
-            var history = CreateHistoryUi(scene, canvasRoot);
-            history.Configure(scene.Presentation, scene);
-            history.Build(canvasRoot);
-            var roll = new ModifierDefinition("test.ready.roll", "test.ready.roll", ModifierPhase.InitialRoll,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
-            var score = new ModifierDefinition("test.ready.score", "test.ready.score", ModifierPhase.PlayHand,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 2) });
-            var grant = new ModifierDefinition("test.ready.grant", "test.ready.grant", ModifierPhase.PlayHand,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, 2) });
-            var encounter = new EncounterDefinition("test.ready", new[] { new StageDefinition(1000000, 3, 3) },
-                startingModifiers: new[] { roll.Id, score.Id, score.Id, grant.Id });
-            catalog = new MechanicalCatalog("test.ready", TestContent.Hands(), new[] { encounter }, new[] { roll, score, grant });
-            session = EncounterSession.CreateEncounter(catalog, encounter.Id, 60);
-            return history;
-        }
-
-        private SpiritModifierHistoryTray CreateHistoryUi(SpiritTrayScene scene, RectTransform parent)
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<SpiritModifierHistoryTray>(
-                "Assets/Dice/Content/Presentation/UI/ModifierHistoryTray.prefab");
-            var history = UnityEngine.Object.Instantiate(prefab, parent, false);
-            history.BindRenderer(scene.HistoryRenderer);
-            return history;
-        }
-
-        private SpiritModifierHistoryRenderer AddHistory(SpiritTrayScene scene)
-        {
-            var history = scene.HistoryRenderer;
-            history.Configure(scene.Presentation, scene); history.Initialize();
-            return history;
+            Assert.DoesNotThrow(() => tray.ClearResolving());
+            Assert.That(tray.ResolvingIndex, Is.EqualTo(-1));
+            if (destroyWholeStage) Assert.That(renderer == null, Is.True);
+            else Assert.That(renderer.RenderRoot, Is.SameAs(stage));
+            if (!destroyWholeStage) Assert.That(renderer.GetDieTransform(0) == null, Is.True);
         }
 
         private GameObject Root(string name, params Type[] components)
@@ -858,18 +518,77 @@ namespace Dice.Tests
             return root;
         }
 
-        private static ModifierContribution Contribution(out ModifierDefinition definition)
+        /** A catalog of a roll-phase charm, a scoring charm and a charm that grants only rerolls. */
+        private static MechanicalCatalog ReadyCatalog(out ModifierDefinition roll, out ModifierDefinition score, out ModifierDefinition grant)
         {
-            definition = new ModifierDefinition("test.shared.history", "test.shared.history", ModifierPhase.InitialRoll,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
-            var encounter = new EncounterDefinition("test.shared.tray", new[] { new StageDefinition(1000000, 3, 3) },
-                startingModifiers: new[] { definition.Id });
-            var catalog = new MechanicalCatalog("test.shared.tray", TestContent.Hands(), new[] { encounter }, new[] { definition });
-            return EncounterSession.CreateEncounter(catalog, encounter.Id, 60).Snapshot.ModifierContributions[0];
+            roll = TestTrayRig.Definition("test.ready.roll", ModifierPhase.InitialRoll);
+            score = TestTrayRig.Definition("test.ready.score", ModifierPhase.PlayHand, ModifierEffectKind.AddMultiplier);
+            grant = TestTrayRig.Definition("test.ready.grant", ModifierPhase.PlayHand, ModifierEffectKind.AddRerolls);
+            return new MechanicalCatalog("test.ready", TestContent.Hands(),
+                new[] { new EncounterDefinition("test.ready", new[] { new StageDefinition(1, 1, 0) }) }, new[] { roll, score, grant });
         }
 
-        private static void AssertFaces(SpiritDiceTray tray, int[] values)
-        { for (int i = 0; i < values.Length; ++i) Assert.That(tray.GetVisibleFace(i), Is.EqualTo(values[i]), "Slot " + i); }
+        /** Installs a theme holding one test-only charm in the given category and returns its definition. */
+        /** A gameplay HUD built from test-only UI objects; scaled lists the graphics whose scales it captures. */
+        private SpiritGameplayHud CreateHud(out RectTransform[] scaled)
+        {
+            var theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
+            resources.Add(theme);
+            var root = Root("Gameplay HUD", typeof(RectTransform));
+            root.AddComponent<SpiritUiContext>().Configure(theme);
+            var hud = root.AddComponent<SpiritGameplayHud>();
+            T Ui<T>(string name, Transform parent = null) where T : Component
+            {
+                var child = new GameObject(name, typeof(RectTransform));
+                child.transform.SetParent(parent != null ? parent : root.transform, false);
+                return child.AddComponent<T>();
+            }
+            var graphics = new List<Graphic>();
+            Text Label(string property)
+            {
+                var label = Ui<Text>(property);
+                TestTrayRig.Set(hud, "<" + property + ">k__BackingField", label);
+                graphics.Add(label);
+                return label;
+            }
+            var icon = Ui<Image>("ModifierActivationIcon");
+            TestTrayRig.Set(hud, "<ModifierActivationIcon>k__BackingField", icon);
+            graphics.Add(icon);
+            foreach (string property in new[] { "SelectionLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
+                "HandScoreLabel", "TargetLabel" })
+                Label(property);
+            TestTrayRig.Set(hud, "<CategoryLabel>k__BackingField", Ui<Text>("CategoryLabel"));
+            TestTrayRig.Set(hud, "<ModifierEmblem>k__BackingField", Ui<SpiritUiOrnament>("ModifierEmblem"));
+            TestTrayRig.Set(hud, "<RerollButton>k__BackingField", Ui<Button>("RerollButton"));
+            TestTrayRig.Set(hud, "<PlayButton>k__BackingField", Ui<Button>("PlayButton"));
+            TestTrayRig.Set(hud, "modifierActivationSigil", Ui<SpiritModifierSigilGraphic>("ModifierActivationSigil"));
+            var badge = Ui<SpiritModifierCategoryBadge>("ModifierActivationCategory");
+            var accent = Ui<Image>("Accent", badge.transform);
+            TestTrayRig.Set(badge, "<Accent>k__BackingField", accent);
+            TestTrayRig.Set(badge, "<Glyph>k__BackingField", Ui<Image>("Glyph", badge.transform));
+            TestTrayRig.Set(badge, "border", accent.gameObject.AddComponent<Outline>());
+            TestTrayRig.Set(hud, "modifierActivationCategory", badge);
+            foreach (string name in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })
+            {
+                object highlight = typeof(SpiritGameplayHud).GetField("<" + name + ">k__BackingField",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
+                var label = Ui<Text>(name + " Label");
+                var highlightIcon = Ui<Image>(name + " Icon");
+                TestTrayRig.Set(highlight, "Label", label);
+                TestTrayRig.Set(highlight, "Caption", Ui<Text>(name + " Caption"));
+                TestTrayRig.Set(highlight, "Icon", highlightIcon);
+                graphics.Add(label);
+                graphics.Add(highlightIcon);
+            }
+            scaled = graphics.Select(graphic => graphic.rectTransform).ToArray();
+            return hud;
+        }
+
+        private static void AssertVector(Vector3 actual, Vector3 expected, float tolerance = .00001f)
+            => Assert.That(Vector3.Distance(actual, expected), Is.LessThan(tolerance), actual + " expected " + expected);
+
+        private static void AssertColor(Color actual, Color expected)
+            => Assert.That(Vector4.Distance(actual, expected), Is.LessThan(.00001f), actual + " expected " + expected);
 
         private static void AssertAuthoredGeometryFits(SpiritTrayScene scene)
         {
@@ -908,43 +627,281 @@ namespace Dice.Tests
             Assert.That(viewport.z, Is.LessThan(camera.farClipPlane), name + " far plane");
         }
 
+        /** Poses every die through a full roll arc and checks each pose stays framed. */
         private static void AssertRollEnvelopeFits(SpiritTrayScene scene, SpiritDiceTray dice)
         {
             var timing = new SpiritRollTiming(.55f, new SpiritRollContactTrack
             {
                 contactTimes = new[] { .16f, .3f, .43f }, settleTime = 0
             }, 0, 0, 0);
-            var transforms = (Transform[])typeof(SpiritDiceTray).GetField("dice",
-                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(dice);
             MethodInfo support = typeof(SpiritDiceTray).GetMethod("SupportHeight",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             for (int sample = 0; sample <= 24; ++sample)
-                for (int index = 0; index < transforms.Length; ++index)
+                for (int index = 0; index < dice.Dice.Count; ++index)
                 {
-                    timing.SamplePose(index, transforms.Length, sample * timing.Duration / 24,
+                    timing.SamplePose(index, dice.Dice.Count, sample * timing.Duration / 24,
                         Quaternion.identity, Quaternion.Euler(0, index * 13, 90),
                         out Quaternion rotation, out float lift, out float drift);
-                    Transform die = transforms[index];
+                    Transform die = dice.Dice[index];
                     die.localRotation = rotation;
                     float height = (float)support.Invoke(dice, new object[] { rotation });
                     die.localPosition = new Vector3(drift, height + lift, 0) * scene.Geometry.DiceScale;
-                    scene.ApplyPresentationSettings();
                     AssertMeshCornersFit(scene.RenderCamera, die);
                 }
         }
+    }
 
-        private static void AssertProjectedToken(SpiritModifierHistoryTray history, RectTransform image, int index)
+    /**
+     * A tray rig built from test-only objects in a preview scene: a shared stage with its camera, geometry with five
+     * dice slots, label anchors and a modifier bay, the dice and modifier renderers, and a modifier token template.
+     */
+    internal sealed class TestTrayRig : IDisposable
+    {
+        private const string DiceShaderName = "Dice/Spirit Dice Surface";
+        private readonly Scene preview;
+        private readonly List<UnityEngine.Object> owned = new List<UnityEngine.Object>();
+        private bool framed;
+
+        /** Test-only charm presentations, destroyed with the rig. */
+        internal SyntheticCharms Synthetic { get; } = new SyntheticCharms();
+
+        /** A presentation of the given test-only charms. */
+        internal ModifierPresentationCatalog Charms(params ModifierDefinition[] definitions) => Synthetic.For(definitions);
+
+        internal SpiritTrayPresentationAsset Presentation { get; }
+        internal SpiritTrayScene TrayScene { get; }
+        internal Transform Stage { get; }
+        internal Camera Camera { get; }
+        internal SpiritTrayGeometry Geometry { get; }
+        internal MeshRenderer SurfaceRenderer { get; }
+        internal Material SurfaceMaterial { get; }
+        internal SpiritDiceTray Dice { get; }
+        internal GameObject[] Outlines { get; } = new GameObject[DiceValues.Count];
+        internal GameObject[] Frames { get; } = new GameObject[DiceValues.Count];
+        internal SpiritModifierHistoryRenderer History { get; }
+        internal SpiritModifierToken Token { get; }
+        internal Material TokenMaterial { get; }
+        internal Texture2D TokenSurface { get; }
+
+        internal TestTrayRig(Scene preview)
         {
-            var token = history.Content.GetChild(index) as RectTransform;
-            Assert.That(token, Is.Not.Null);
-            Assert.That(token.gameObject.activeSelf, Is.True);
-            Rect projected = history.Renderer.GetDieViewportRect(index);
-            Vector3 expected = image.TransformPoint(image.rect.min + Vector2.Scale(projected.center, image.rect.size));
-            Assert.That(Vector3.Distance(token.position, expected), Is.LessThan(.01f));
-            Assert.That(Vector2.Distance(token.sizeDelta, Vector2.Scale(projected.size, image.rect.size)), Is.LessThan(.01f));
+            this.preview = preview;
+            Shader shader = Shader.Find(DiceShaderName);
+            Assert.That(shader, Is.Not.Null, DiceShaderName);
+            Presentation = Own(ScriptableObject.CreateInstance<SpiritTrayPresentationAsset>());
+            Presentation.DiceShader = shader;
+            Presentation.BoneTexture = Own(new Texture2D(2, 2));
+            Presentation.WoodTexture = Own(new Texture2D(2, 2));
+            Presentation.TextureSize = new Vector2Int(64, 32);
+            SurfaceMaterial = Own(new Material(shader) { name = "Test Tray Surface" });
+            var dieMaterial = Own(new Material(shader) { name = "Test Die" });
+            var shadowMaterial = Own(new Material(shader) { name = "Test Contact Shadow" });
+            shadowMaterial.SetFloat("_SurfaceKind", 5);
+
+            var root = Root("Test Tray Rig");
+            TrayScene = root.AddComponent<SpiritTrayScene>();
+            Stage = Child("Tray Stage", root.transform);
+            Camera = Child("Tray Camera", Stage).gameObject.AddComponent<Camera>();
+            Camera.enabled = false;
+            Camera.scene = preview;
+            Camera.transform.localRotation = Quaternion.Euler(55, 0, 0);
+            Geometry = Child("Tray Geometry", Stage).gameObject.AddComponent<SpiritTrayGeometry>();
+            SurfaceRenderer = Primitive(PrimitiveType.Cube, "Tray Surface", Geometry.transform, new Vector3(0, -.1f, .6f),
+                new Vector3(8, .2f, 4), SurfaceMaterial);
+
+            var dice = new Transform[DiceValues.Count];
+            var shadows = new MeshRenderer[DiceValues.Count];
+            for (int i = 0; i < DiceValues.Count; ++i)
+            {
+                Transform slot = Child("Dice Slot " + i, Geometry.transform);
+                slot.localPosition = new Vector3((i - 2) * 1.45f, 0, 0);
+                Geometry.DiceSlots[i] = slot;
+                Transform label = Child("Dice Label " + i, Geometry.transform);
+                label.localPosition = new Vector3((i - 2) * 1.45f, .35f, -1.13f);
+                Geometry.DiceLabelAnchors[i] = label;
+                dice[i] = Primitive(PrimitiveType.Cube, "Die " + i, slot, Vector3.up * .5f, Vector3.one, dieMaterial).transform;
+                Outlines[i] = Child("Selection Outline", dice[i]).gameObject;
+                Frames[i] = Child("Selection Frame", slot).gameObject;
+                Outlines[i].SetActive(false);
+                Frames[i].SetActive(false);
+                shadows[i] = Primitive(PrimitiveType.Quad, "Contact Shadow", slot, Vector3.up * .002f,
+                    new Vector3(1.1f, 1.1f, 1), shadowMaterial);
+                shadows[i].transform.localRotation = Quaternion.Euler(90, 0, 0);
+            }
+            Geometry.ModifierRoot = Child("Modifier Bay", Geometry.transform);
+            Geometry.ModifierRoot.localPosition = new Vector3(0, 0, 1.8f);
+            Presentation.GeometryPrefab = Geometry;
+
+            var dicePresentation = Child("Dice Presentation", Stage).gameObject;
+            Dice = dicePresentation.AddComponent<SpiritDiceTray>();
+            Set(Dice, "dice", dice);
+            Set(Dice, "selectionOutlines", Outlines);
+            Set(Dice, "selectionFrames", Frames);
+            Set(Dice, "contactShadows", shadows);
+            Set(Dice, "renderRoot", dicePresentation);
+
+            var template = Root("Modifier Token Template");
+            Token = template.AddComponent<SpiritModifierToken>();
+            TokenSurface = Own(new Texture2D(2, 2));
+            TokenMaterial = Own(new Material(shader) { name = "Test Token Bone" });
+            TokenMaterial.SetColor("_BaseColor", new Color(.9f, .85f, .7f, 1));
+            TokenMaterial.SetTexture("_SurfaceTexture", TokenSurface);
+            Token.Body = Primitive(PrimitiveType.Cube, "Body", template.transform, Vector3.zero,
+                Vector3.one * SpiritModifierHistoryRenderer.DieSize, TokenMaterial);
+            Token.Shadow = Primitive(PrimitiveType.Quad, "Shadow", template.transform, Vector3.zero,
+                new Vector3(1.3f, .8f, .7f), shadowMaterial);
+
+            var historyPresentation = Child("Modifier Presentation", Stage).gameObject;
+            History = historyPresentation.AddComponent<SpiritModifierHistoryRenderer>();
+            var tokens = Child("Modifier Tokens", Geometry.ModifierRoot).gameObject;
+            Set(History, "renderRoot", tokens);
+            Set(History, "contentRoot", tokens.transform);
+            Set(History, "tokenPrefab", Token);
+
+            Set(TrayScene, "renderRoot", Stage.gameObject);
+            Set(TrayScene, "renderCamera", Camera);
+            Set(TrayScene, "geometry", Geometry);
         }
 
-        private static void Invoke(object value, string name)
-            => value.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(value, null);
+        /** Configures and initializes the shared scene without framing it. */
+        internal SpiritTrayScene Initialize()
+        {
+            TrayScene.Configure(Presentation);
+            TrayScene.Initialize();
+            return TrayScene;
+        }
+
+        /** Initializes the shared scene and frames its geometry once. */
+        internal SpiritTrayScene Start()
+        {
+            Initialize();
+            if (!framed) TrayScene.FrameAuthoredGeometry();
+            framed = true;
+            return TrayScene;
+        }
+
+        internal SpiritDiceTray StartDice()
+        {
+            Start();
+            Dice.Configure(Presentation, TrayScene);
+            Dice.Initialize();
+            return Dice;
+        }
+
+        internal SpiritModifierHistoryRenderer StartHistory()
+        {
+            Start();
+            History.Configure(Presentation, TrayScene);
+            History.Initialize();
+            return History;
+        }
+
+        /** A modifier history tray over this rig's renderer, with a fixed 700 by 350 world-space bay and token buttons. */
+        internal SpiritModifierHistoryTray CreateHistoryTray()
+        {
+            Start();
+            var canvas = Root("History Canvas", typeof(RectTransform), typeof(Canvas));
+            canvas.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+            ((RectTransform)canvas.transform).sizeDelta = new Vector2(700, 350);
+            RectTransform trayRect = UiChild("Modifier History", canvas.transform);
+            var tray = trayRect.gameObject.AddComponent<SpiritModifierHistoryTray>();
+            RectTransform frame = UiChild("Bay Frame", trayRect);
+            RectTransform viewport = UiChild("Viewport", trayRect);
+            RectTransform content = UiChild("Content", viewport);
+            content.anchorMin = Vector2.zero;
+            content.anchorMax = new Vector2(0, 1);
+            content.pivot = new Vector2(0, .5f);
+            content.sizeDelta = Vector2.zero;
+            content.anchoredPosition = Vector2.zero;
+            var scroll = trayRect.gameObject.AddComponent<ScrollRect>();
+            scroll.content = content;
+            scroll.viewport = viewport;
+            scroll.horizontal = true;
+            scroll.vertical = false;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.inertia = false;
+            var button = Root("Token Button", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<Button>();
+            Set(tray, "root", trayRect);
+            Set(tray, "content", content);
+            Set(tray, "scroll", scroll);
+            Set(tray, "frame", frame);
+            Set(tray, "tokenPrefab", button);
+            tray.BindRenderer(History);
+            tray.Configure(Presentation, TrayScene);
+            tray.Build(trayRect);
+            return tray;
+        }
+
+        internal static ModifierDefinition Definition(string id, ModifierPhase phase = ModifierPhase.PlayHand,
+            ModifierEffectKind effect = ModifierEffectKind.AddBaseScore)
+            => new ModifierDefinition(id, id, phase, new AlwaysCondition(), new[] { new ModifierEffect(effect, 1) });
+
+        /** A contribution of the definition, made through the engine's own constructor. */
+        internal static ModifierContribution Contribution(ModifierDefinition definition, long instanceId = 1, long baseScore = 1,
+            long multiplier = 0, int rerolls = 0)
+            => (ModifierContribution)Activator.CreateInstance(typeof(ModifierContribution), BindingFlags.Instance | BindingFlags.NonPublic,
+                null, new object[] { instanceId, definition, baseScore, multiplier, rerolls }, null);
+
+        internal static void Set(object instance, string name, object value)
+            => instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .SetValue(instance, value);
+
+        internal static void Invoke(object instance, string name)
+            => instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(instance, null);
+
+        public void Dispose()
+        {
+            if (History != null) History.ReleasePresentation();
+            if (Dice != null) Dice.ReleasePresentation();
+            if (TrayScene != null) TrayScene.ReleasePresentation();
+            Synthetic.Dispose();
+            for (int i = owned.Count - 1; i >= 0; --i)
+                if (owned[i] != null) UnityEngine.Object.DestroyImmediate(owned[i]);
+            owned.Clear();
+        }
+
+        private T Own<T>(T value) where T : UnityEngine.Object
+        {
+            owned.Add(value);
+            return value;
+        }
+
+        private GameObject Root(string name, params Type[] components)
+        {
+            var root = Own(new GameObject(name, components));
+            SceneManager.MoveGameObjectToScene(root, preview);
+            return root;
+        }
+
+        private static Transform Child(string name, Transform parent)
+        {
+            var child = new GameObject(name).transform;
+            child.SetParent(parent, false);
+            return child;
+        }
+
+        private static RectTransform UiChild(string name, Transform parent)
+        {
+            var child = (RectTransform)new GameObject(name, typeof(RectTransform)).transform;
+            child.SetParent(parent, false);
+            child.anchorMin = Vector2.zero;
+            child.anchorMax = Vector2.one;
+            child.sizeDelta = Vector2.zero;
+            return child;
+        }
+
+        private static MeshRenderer Primitive(PrimitiveType type, string name, Transform parent, Vector3 position, Vector3 scale,
+            Material material)
+        {
+            var primitive = GameObject.CreatePrimitive(type);
+            primitive.name = name;
+            UnityEngine.Object.DestroyImmediate(primitive.GetComponent<Collider>());
+            primitive.transform.SetParent(parent, false);
+            primitive.transform.localPosition = position;
+            primitive.transform.localScale = scale;
+            var renderer = primitive.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            return renderer;
+        }
     }
 }

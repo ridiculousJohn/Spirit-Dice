@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: d0114421be6c7f84189c6d105bc537eb, type: 2}
   displayName: Worn Pebble / Rerolls
   icon: {fileID: 21300000, guid: 149e681a96d95333b9233900d8426b04, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Smallest face equals rerolls spent on this hand.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

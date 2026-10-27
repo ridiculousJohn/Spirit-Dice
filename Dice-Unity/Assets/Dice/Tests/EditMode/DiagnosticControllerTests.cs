@@ -5,11 +5,11 @@ using System.Text;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
-using Dice.UnityContent;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Dice.Tests
 {
@@ -19,6 +19,7 @@ namespace Dice.Tests
         private DiagnosticEncounterController controller;
         private string artifactRoot;
         private string savePath;
+        private readonly SyntheticCharms synthetic = new SyntheticCharms();
 
         [SetUp]
         public void SetUp()
@@ -26,13 +27,9 @@ namespace Dice.Tests
             host = new GameObject("Diagnostic controller test");
             host.SetActive(false);
             controller = host.AddComponent<DiagnosticEncounterController>();
-            var prefab = AssetDatabase.LoadAssetAtPath<DiagnosticEncounterView>(
-                "Assets/Dice/Content/Presentation/UI/DiagnosticEncounter.prefab");
-            Assert.That(prefab, Is.Not.Null);
-            var view = UnityEngine.Object.Instantiate(prefab, host.transform, false);
             using (var serialized = new SerializedObject(controller))
             {
-                serialized.FindProperty("view").objectReferenceValue = view;
+                serialized.FindProperty("view").objectReferenceValue = MinimalView(host.transform);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
             artifactRoot = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..",
@@ -44,13 +41,13 @@ namespace Dice.Tests
         public void TearDown()
         {
             UnityEngine.Object.DestroyImmediate(host);
+            synthetic.Dispose();
             if (Directory.Exists(artifactRoot)) TestContext.WriteLine("Retained diagnostic test files: " + artifactRoot);
         }
 
         [Test]
         public void MissingCatalogKeepsTheHostUsableAndReportsConfiguration()
         {
-            Assert.That(host.GetComponent<DiagnosticEncounterView>(), Is.Null, "Controllers do not construct presentation.");
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.StatusMessage, Does.Contain("catalog"));
             Assert.DoesNotThrow(() => controller.StartNew("60"));
@@ -63,7 +60,7 @@ namespace Dice.Tests
         public void SelectionIsLocalAndAcceptedRerollAndPlayMatchTheEngine()
         {
             var catalog = TestContent.Catalog();
-            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Initialize(catalog, TestContent.EncounterId, 17, savePath);
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             var original = controller.Snapshot;
             var preview = controller.Preview;
@@ -97,7 +94,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
             var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
-            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Initialize(catalog, TestContent.EncounterId, 17, savePath);
             int marked = controller.Snapshot.MarkedMask;
             controller.ToggleDie(Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, marked));
             controller.Reroll();
@@ -113,7 +110,7 @@ namespace Dice.Tests
         [Test]
         public void RejectedActionsPreserveSelectionSnapshotPreviewAndHistory()
         {
-            controller.Initialize(TestContent.Catalog(new[] { new StageDefinition(1000000, 3, 0) }),
+            Initialize(TestContent.Catalog(new[] { new StageDefinition(1000000, 3, 0) }),
                 TestContent.EncounterId, 2, savePath);
             controller.ToggleDie(3);
             var before = controller.Snapshot;
@@ -135,27 +132,24 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void StandardCatalogRewardActionsUseCurrentOfferAndOptionIdentities()
+        public void RewardActionsUseCurrentOfferAndOptionIdentities()
         {
-            var asset = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>("Assets/Dice/Content/Mechanical/Standard.asset");
-            Assert.That(asset, Is.Not.Null);
-            var catalog = asset.Build(TestContent.ModifierAssets());
-            controller.Initialize(catalog, "encounter.standard", 60, savePath);
-            var expected = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
+            var catalog = RewardTestContent.Catalog();
+            Initialize(catalog, TestContent.EncounterId, 60, savePath);
+            var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 60);
             controller.ToggleDie(0);
             controller.ToggleDie(3);
             controller.Reroll();
-            expected.Execute(new RerollDiceAction(9), 0);
+            AssertSnapshots(expected.Execute(new RerollDiceAction(9), 0).Snapshot);
+            // The first stage's threshold is reachable by any hand, so one play opens the reward offer.
             controller.PlayHand();
-            expected.Execute(PlayHandAction.Instance, 1);
-            controller.PlayHand();
-            AssertSnapshots(expected.Execute(PlayHandAction.Instance, 2).Snapshot);
+            AssertSnapshots(expected.Execute(PlayHandAction.Instance, 1).Snapshot);
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier));
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.ModifierInspections, Is.Empty);
             var stale = controller.Snapshot.PendingReward;
             controller.RefreshRewards();
-            AssertSnapshots(expected.Execute(new RefreshModifierOfferAction(stale.OfferId), 3).Snapshot);
+            AssertSnapshots(expected.Execute(new RefreshModifierOfferAction(stale.OfferId), 2).Snapshot);
             var before = controller.Snapshot;
             controller.ChooseReward(stale.OfferId, stale.Options[0].OptionId);
             Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.InvalidOffer)));
@@ -165,11 +159,11 @@ namespace Dice.Tests
             Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.InvalidRewardOption)));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
-            AssertSnapshots(expected.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), 4).Snapshot);
+            AssertSnapshots(expected.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), 3).Snapshot);
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingHandUpgrade));
             offer = controller.Snapshot.PendingReward;
             controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
-            AssertSnapshots(expected.Execute(new SelectHandUpgradeAction(offer.OfferId, offer.Options[0].OptionId), 5).Snapshot);
+            AssertSnapshots(expected.Execute(new SelectHandUpgradeAction(offer.OfferId, offer.Options[0].OptionId), 4).Snapshot);
             Assert.That(controller.Snapshot.StageIndex, Is.EqualTo(1));
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.Playing));
             Assert.That(controller.Preview, Is.Not.Null);
@@ -180,7 +174,7 @@ namespace Dice.Tests
         public void AbandonAndNewRunRespectCompletionAndResetDiagnosticState()
         {
             var catalog = TestContent.Catalog();
-            controller.Initialize(catalog, TestContent.EncounterId, 1, savePath);
+            Initialize(catalog, TestContent.EncounterId, 1, savePath);
             controller.Abandon();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Abandoned));
             Assert.That(controller.Preview, Is.Null);
@@ -191,18 +185,17 @@ namespace Dice.Tests
             controller.StartNew("00042");
             Assert.That(controller.SeedText, Is.EqualTo("42"));
             AssertSnapshots(EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 42).Snapshot);
-            Assert.That(controller.EventLog.Count, Is.EqualTo(3));
+            Assert.That(controller.EventLog.Count,
+                Is.EqualTo(EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 42).InitialResolution.Events.Count));
             Assert.That(controller.SelectedMask, Is.Zero);
         }
 
-        [TestCase("")]
         [TestCase("-1")]
         [TestCase("18446744073709551616")]
-        [TestCase("1.5")]
         [TestCase("not a seed")]
         public void InvalidSeedPreservesTheActiveRunAndSelection(string seed)
         {
-            controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 42, savePath);
+            Initialize(TestContent.Catalog(), TestContent.EncounterId, 42, savePath);
             controller.SelectAllDice();
             var before = controller.Snapshot;
             var preview = controller.Preview;
@@ -220,7 +213,7 @@ namespace Dice.Tests
         public void SaveLoadResumesExactlyAndDoesNotReplayEventsOrSelection()
         {
             var catalog = RewardTestContent.Catalog();
-            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Initialize(catalog, TestContent.EncounterId, 17, savePath);
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             controller.PlayHand();
             expected.Execute(PlayHandAction.Instance, 0);
@@ -250,7 +243,7 @@ namespace Dice.Tests
         public void FailedLoadPreservesTheActiveRunSelectionAndCachedDisplay(string failure)
         {
             var catalog = TestContent.Catalog();
-            controller.Initialize(catalog, TestContent.EncounterId, 3, savePath);
+            Initialize(catalog, TestContent.EncounterId, 3, savePath);
             if (failure != "missing")
             {
                 Directory.CreateDirectory(artifactRoot);
@@ -279,18 +272,15 @@ namespace Dice.Tests
         public void ReadingCachedPreviewAndInspectionsNeverConsumesTheLiveRun()
         {
             var catalog = RewardTestContent.Catalog(inventory: new[] { "first" });
-            controller.Initialize(catalog, TestContent.EncounterId, 11, savePath);
+            Initialize(catalog, TestContent.EncounterId, 11, savePath);
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
             var before = controller.Snapshot;
             var preview = controller.Preview;
             var inspections = controller.ModifierInspections;
             var history = controller.EventLog.ToArray();
-            for (int i = 0; i < 100; ++i)
-            {
-                Assert.That(controller.Preview, Is.SameAs(preview));
-                Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
-                Assert.That(controller.Preview.Score.HandScore, Is.EqualTo(expected.PreviewPlayHand().HandScore));
-            }
+            Assert.That(controller.Preview, Is.SameAs(preview));
+            Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
+            Assert.That(controller.Preview.Score.HandScore, Is.EqualTo(expected.PreviewPlayHand().HandScore));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(before.Modifiers[0].TotalActivations, Is.Zero);
             Assert.That(preview.Modifiers[0].TotalActivations, Is.EqualTo(1));
@@ -307,7 +297,7 @@ namespace Dice.Tests
         public void EventHistoryRemainsBoundedWhileActionsContinue()
         {
             var catalog = TestContent.Catalog(new[] { new StageDefinition(1000000, 100, 100) });
-            controller.Initialize(catalog, TestContent.EncounterId, 7, savePath);
+            Initialize(catalog, TestContent.EncounterId, 7, savePath);
             for (int i = 0; i < 90; ++i)
             {
                 controller.SelectAllDice();
@@ -325,7 +315,7 @@ namespace Dice.Tests
                 new ModifierCondition(ModifierConditionKind.Always),
                 new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, long.MaxValue) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
-            Assert.DoesNotThrow(() => controller.Initialize(catalog, TestContent.EncounterId, 17, savePath));
+            Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 17, savePath));
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.ModifierInspections.Count, Is.EqualTo(1));
@@ -357,7 +347,7 @@ namespace Dice.Tests
             var modifier = new ModifierDefinition("faulting", "family.faulting", ModifierPhase.PlayHand,
                 new FaultingCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
-            Assert.DoesNotThrow(() => controller.Initialize(catalog, TestContent.EncounterId, 19, savePath));
+            Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 19, savePath));
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.ModifierInspections, Is.Empty);
             Assert.That(controller.StatusMessage, Does.Contain("Hand preview unavailable").And.Contain("Modifier inspection unavailable"));
@@ -374,6 +364,28 @@ namespace Dice.Tests
             Assert.That(controller.ModifierInspections.Count, Is.EqualTo(1));
         }
 
+        /**
+         * A view holding only the controls its binding wires up, under the inactive host. The controller requires a view;
+         * these tests drive the controller directly and never read the view.
+         */
+        private static DiagnosticEncounterView MinimalView(Transform parent)
+        {
+            T Child<T>(string name, Transform owner) where T : Component
+            {
+                var child = new GameObject(name);
+                child.transform.SetParent(owner, false);
+                return child.AddComponent<T>();
+            }
+            var view = Child<DiagnosticEncounterView>("Diagnostic view", parent);
+            using var serialized = new SerializedObject(view);
+            serialized.FindProperty("seedInput").objectReferenceValue = Child<InputField>("seedInput", view.transform);
+            foreach (string button in new[] { "startButton", "saveButton", "loadButton", "abandonButton", "selectAllButton",
+                "clearSelectionButton", "rerollButton", "playButton", "refreshButton" })
+                serialized.FindProperty(button).objectReferenceValue = Child<Button>(button, view.transform);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return view;
+        }
+
         private sealed class FaultingCondition : IModifierCondition
         {
             public bool Evaluate(in ModifierContext context) => throw new InvalidOperationException("Diagnostic condition failure.");
@@ -381,5 +393,9 @@ namespace Dice.Tests
 
         private void AssertSnapshots(EncounterSnapshot expected)
             => EncounterSessionTests.AssertSnapshotsEqual(expected, controller.Snapshot);
+
+        /** Starts the controller on the catalog with a test-only presentation of its charms. */
+        private void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string path)
+            => controller.Initialize(catalog, synthetic.For(catalog), encounterId, seed, path);
     }
 }

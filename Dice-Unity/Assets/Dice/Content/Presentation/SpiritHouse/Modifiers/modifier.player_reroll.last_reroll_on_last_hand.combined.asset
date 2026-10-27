@@ -16,6 +16,5 @@ MonoBehaviour:
   displayName: Last Lantern / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: Spend your last reroll on your last hand.
-  conditionTypeName: LastRerollOnLastHandCondition
   artwork: 3
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

@@ -1,5 +1,8 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dice.Engine;
 using NUnit.Framework;
 
@@ -280,7 +283,53 @@ namespace Dice.Tests
         internal static void AssertSnapshotsEqual(EncounterSnapshot expected, EncounterSnapshot actual)
         {
             foreach (var property in typeof(EncounterSnapshot).GetProperties())
-                Assert.That(property.GetValue(actual), Is.EqualTo(property.GetValue(expected)), property.Name);
+                AssertValuesEqual(property.GetValue(expected), property.GetValue(actual), property.Name);
+        }
+
+        /**
+         * Compares two values as the encounter reports them: values with their own equality compare directly, collections
+         * item by item, and other objects (such as piece interaction snapshots and their states) property by property.
+         */
+        internal static void AssertValuesEqual(object expected, object actual, string path)
+            => AssertValuesEqual(expected, actual, path, new HashSet<object>(ReferenceComparer.Instance));
+
+        private static void AssertValuesEqual(object expected, object actual, string path, HashSet<object> visiting)
+        {
+            if (ReferenceEquals(expected, actual)) return;
+            if (expected == null || actual == null || expected is string || HasValueEquality(expected.GetType())
+                && !(expected is IEnumerable))
+            {
+                Assert.That(actual, Is.EqualTo(expected), path);
+                return;
+            }
+            Assert.That(actual.GetType(), Is.EqualTo(expected.GetType()), path);
+            if (!visiting.Add(expected)) return;
+            try
+            {
+                if (expected is IEnumerable expectedItems)
+                {
+                    object[] expectedArray = expectedItems.Cast<object>().ToArray();
+                    object[] actualArray = ((IEnumerable)actual).Cast<object>().ToArray();
+                    Assert.That(actualArray.Length, Is.EqualTo(expectedArray.Length), path + " count");
+                    for (int i = 0; i < expectedArray.Length; ++i)
+                        AssertValuesEqual(expectedArray[i], actualArray[i], path + "[" + i + "]", visiting);
+                    return;
+                }
+                foreach (var property in expected.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
+                    if (property.GetIndexParameters().Length == 0)
+                        AssertValuesEqual(property.GetValue(expected), property.GetValue(actual), path + "." + property.Name, visiting);
+            }
+            finally { visiting.Remove(expected); }
+        }
+
+        private static bool HasValueEquality(Type type)
+            => type.IsValueType || type.GetMethod(nameof(Equals), new[] { typeof(object) }).DeclaringType != typeof(object);
+
+        private sealed class ReferenceComparer : IEqualityComparer<object>
+        {
+            internal static readonly ReferenceComparer Instance = new ReferenceComparer();
+            public new bool Equals(object left, object right) => ReferenceEquals(left, right);
+            public int GetHashCode(object value) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(value);
         }
     }
 }

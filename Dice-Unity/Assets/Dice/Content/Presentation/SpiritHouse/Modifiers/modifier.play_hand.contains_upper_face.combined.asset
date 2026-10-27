@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
   displayName: Tall Pine / Base + Mult
   icon: {fileID: 21300000, guid: 0939cdbdbf88547a959f4cbc54778a45, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least one die shows {parameter}.
   artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

@@ -72,9 +72,7 @@ MonoBehaviour:
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
   - {fileID: 11400000, guid: 2f68e0bc38caec845ba20dd42fe2c9a5, type: 2}
-  - {fileID: 11400000, guid: a4ca7521bf924ae4f9527ac0c043c23d, type: 2}
   - {fileID: 11400000, guid: 177d1c34edad21d46ab84d0843c5fa2f, type: 2}
-  - {fileID: 11400000, guid: ed5f17e6df543a540ba700a8d6dd05f3, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
     m_BundleBuildPath: Temp/com.unity.addressables/AssetBundles
@@ -114,8 +112,6 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
-    - dice.modifiers
-    - dice.theme.spirit-house.modifiers
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: e86fd5f6f752b3d4f8571b951670feff, type: 2}

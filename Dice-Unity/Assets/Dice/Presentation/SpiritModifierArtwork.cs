@@ -3,33 +3,56 @@ using UnityEngine;
 
 namespace Dice.Presentation
 {
-    /** Authored line drawings rasterized as white ink for UI tint and dice-surface alpha. */
-    internal static class SpiritModifierArtwork
+    /**
+     * Authored line drawings rasterized as white ink for UI tint and dice-surface alpha. Each instance owns the
+     * sprites it generates and destroys them when disposed.
+     */
+    internal sealed class SpiritModifierArtwork : System.IDisposable
     {
-        private static readonly Dictionary<ModifierArtworkKind, Sprite> sprites = new Dictionary<ModifierArtworkKind, Sprite>();
-        private static readonly Dictionary<ModifierCategorySymbol, Sprite> categorySprites = new Dictionary<ModifierCategorySymbol, Sprite>();
+        private readonly Dictionary<ModifierArtworkKind, Sprite> artworkSprites = new Dictionary<ModifierArtworkKind, Sprite>();
+        private readonly Dictionary<ModifierCategorySymbol, Sprite> symbolSprites = new Dictionary<ModifierCategorySymbol, Sprite>();
 
-        static SpiritModifierArtwork()
+        /** The generated sprite of an artwork kind, created once per instance; null for None. */
+        internal Sprite GetArtworkSprite(ModifierArtworkKind kind)
         {
-            Application.quitting += Release;
-#if UNITY_EDITOR
-            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += Release;
-            UnityEditor.EditorApplication.quitting += Release;
-#endif
+            if (kind == ModifierArtworkKind.None) return null;
+            if (artworkSprites.TryGetValue(kind, out Sprite sprite) && sprite != null) return sprite;
+            sprite = CreateArtworkSprite(kind);
+            artworkSprites[kind] = sprite;
+            return sprite;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetRuntime()
+        /** The generated sprite of a category symbol, created once per instance; null for None. */
+        internal Sprite GetSymbolSprite(ModifierCategorySymbol symbol)
         {
-            Release();
-            Application.quitting -= Release;
-            Application.quitting += Release;
+            if (symbol == ModifierCategorySymbol.None) return null;
+            if (symbolSprites.TryGetValue(symbol, out Sprite sprite) && sprite != null) return sprite;
+            sprite = CreateSymbolSprite(symbol);
+            if (sprite != null) symbolSprites[symbol] = sprite;
+            return sprite;
         }
 
-        internal static Sprite GetSprite(string id)
+        public void Dispose()
         {
-            if (!SpiritModifierPresentation.TryGetArtwork(id, out ModifierArtworkKind kind)) return null;
-            if (sprites.TryGetValue(kind, out Sprite sprite) && sprite != null) return sprite;
+            Release(artworkSprites.Values);
+            artworkSprites.Clear();
+            Release(symbolSprites.Values);
+            symbolSprites.Clear();
+        }
+
+        private static void Release(IEnumerable<Sprite> owned)
+        {
+            foreach (Sprite sprite in owned)
+            {
+                if (sprite == null) continue;
+                Texture2D texture = sprite.texture;
+                DestroyResource(sprite);
+                DestroyResource(texture);
+            }
+        }
+
+        private static Sprite CreateArtworkSprite(ModifierArtworkKind kind)
+        {
             var drawing = new Drawing();
             switch (kind)
             {
@@ -42,18 +65,15 @@ namespace Dice.Presentation
                 case ModifierArtworkKind.TwinKnots: TwinKnots(drawing); break;
             }
             Texture2D texture = drawing.CreateTexture(kind.ToString());
-            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
                 0, SpriteMeshType.FullRect);
             sprite.name = "Spirit Charm " + kind;
             sprite.hideFlags = HideFlags.DontSave;
-            sprites[kind] = sprite;
             return sprite;
         }
 
-        internal static Sprite GetCategorySprite(ModifierCategorySymbol symbol)
+        private static Sprite CreateSymbolSprite(ModifierCategorySymbol symbol)
         {
-            if (symbol == ModifierCategorySymbol.None) return null;
-            if (categorySprites.TryGetValue(symbol, out Sprite sprite) && sprite != null) return sprite;
             var drawing = new Drawing();
             switch (symbol)
             {
@@ -79,11 +99,10 @@ namespace Dice.Presentation
                 default: return null;
             }
             Texture2D texture = drawing.CreateTexture("Category " + symbol);
-            sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(.5f, .5f), 128,
                 0, SpriteMeshType.FullRect);
             sprite.name = "Spirit Charm Category " + symbol;
             sprite.hideFlags = HideFlags.DontSave;
-            categorySprites[symbol] = sprite;
             return sprite;
         }
 
@@ -161,26 +180,6 @@ namespace Dice.Presentation
             drawing.Line(35, 27, 41, 17);
             drawing.Path(16, 25, 10, 14, 16, 16);
             drawing.Path(48, 39, 54, 50, 48, 48);
-        }
-
-        private static void Release()
-        {
-            foreach (Sprite sprite in sprites.Values)
-            {
-                if (sprite == null) continue;
-                Texture2D texture = sprite.texture;
-                DestroyResource(sprite);
-                DestroyResource(texture);
-            }
-            sprites.Clear();
-            foreach (Sprite sprite in categorySprites.Values)
-            {
-                if (sprite == null) continue;
-                Texture2D texture = sprite.texture;
-                DestroyResource(sprite);
-                DestroyResource(texture);
-            }
-            categorySprites.Clear();
         }
 
         private static void DestroyResource(Object resource)

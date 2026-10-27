@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
   displayName: Rising Sun / Mult
   icon: {fileID: 21300000, guid: a13dbc3cdf8c545da3adb9114fb74c60, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Initial roll category ranks above the previous played hand; requires a previous hand.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

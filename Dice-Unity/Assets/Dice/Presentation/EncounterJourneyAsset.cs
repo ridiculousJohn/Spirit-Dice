@@ -114,6 +114,9 @@ namespace Dice.Presentation
         [SerializeField] private string defeatTitle;
         [SerializeField, TextArea] private string defeatText;
         [SerializeField, TextArea] private string abandonText;
+        [Tooltip("Narration above the family list when the encounter introduces its own charms before the first charm offer " +
+            "that can contain them; shown in quotation marks without a speaker. Empty shows no narration.")]
+        [SerializeField, TextArea] private string encounterCharmsIntroductionText;
         [SerializeField] private string resultContinueLabel;
         [SerializeField] private string completionClueTitle;
         [SerializeField, TextArea] private string completionClueText;
@@ -140,6 +143,7 @@ namespace Dice.Presentation
         public string DefeatTitle => defeatTitle;
         public string DefeatText => defeatText;
         public string AbandonText => abandonText;
+        public string EncounterCharmsIntroductionText => encounterCharmsIntroductionText;
         public string ResultContinueLabel => resultContinueLabel;
         public string CompletionClueTitle => completionClueTitle;
         public string CompletionClueText => completionClueText;

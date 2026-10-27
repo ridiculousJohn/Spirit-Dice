@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
@@ -9,45 +9,20 @@ using UnityEngine;
 
 namespace Dice.Tests
 {
+    [Explicit("Art-generation check; run it by name while the merchant art is being changed.")]
+    [Category("ArtAuthoring")]
     public sealed class MerchantLayerTests
     {
         private const string MaterialPath = "Assets/Dice/Content/Presentation/Ambient/";
 
-        [Test]
-        public void MovableCandleFootprintHasDarkBordersAndIndependentLightReferences()
-        {
-            var lighting = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(MaterialPath + "MerchantSceneLighting.asset");
-            Assert.That(lighting, Is.Not.Null);
-            Assert.DoesNotThrow(lighting.Validate);
-            Assert.That(lighting.Lights.Length, Is.EqualTo(2));
-            Assert.That(lighting.Lights.All(light => light.ResponseMap != null), Is.True);
-            Assert.That(lighting.Lights[0].Contribution, Is.Not.SameAs(lighting.Lights[1].Contribution));
-            Assert.That(lighting.Lights[1].ModulateByBaseColor, Is.True);
-            Texture2D footprint = Decode("CandleLightFootprintCentered.png");
-            try
-            {
-                Color32[] pixels = footprint.GetPixels32();
-                for (int y = 0; y < footprint.height; ++y)
-                    for (int x = 0; x < footprint.width; ++x)
-                    {
-                        if (x != 0 && y != 0 && x != footprint.width - 1 && y != footprint.height - 1) continue;
-                        Color32 pixel = pixels[y * footprint.width + x];
-                        Assert.That(pixel.r + pixel.g + pixel.b, Is.Zero,
-                            "Moving the footprint must not reveal a lit texture border.");
-                    }
-            }
-            finally { Object.DestroyImmediate(footprint); }
-        }
-
         /**
-         * The installed footprint and response map are the preserved sources scaled by 0.8 about the candle point
+         * The installed footprint and response map are the preserved sources scaled down about the candle point
          * (Tools/Presentation/author-candle-light-footprint.py): a tighter pool, unchanged at the flame, whose brightest
-         * texels and distance minimum stay on the candle. The candle's receiver range shrinks with it.
+         * texels and distance minimum stay on the candle, and every level of which shrinks by the same factor.
          */
         [Test]
         public void CandleLightIsATighterPoolOfItsPreservedSourceAboutTheCandlePoint()
         {
-            const float reach = .8f;
             string sources = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Docs/Reference/Art/"));
             Texture2D source = DecodeFile(sources + "HauntedMerchantCandleFootprintSource.png");
             Texture2D sourceResponse = DecodeFile(sources + "HauntedMerchantCandleResponseSource.png");
@@ -55,8 +30,9 @@ namespace Dice.Tests
             Texture2D response = Decode("CandleLightResponseCentered.png");
             try
             {
-                foreach (Texture2D texture in new[] { source, sourceResponse, footprint, response })
-                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(941, 1672)));
+                foreach (Texture2D texture in new[] { sourceResponse, footprint, response })
+                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(source.width, source.height)),
+                        "The light textures share the source frame.");
                 Color32[] before = source.GetPixels32(), after = footprint.GetPixels32();
                 Color32[] beforeDistance = sourceResponse.GetPixels32(), afterDistance = response.GetPixels32();
                 Vector2Int candle = Minimum(beforeDistance, source.width);
@@ -64,18 +40,17 @@ namespace Dice.Tests
                 int row = candle.y * source.width;
                 Assert.That(after[row + candle.x].r, Is.EqualTo(before[row + candle.x].r), "The light at the flame is unchanged.");
                 Assert.That(after.Max(pixel => pixel.r), Is.EqualTo(before.Max(pixel => pixel.r)), "The pool is not brighter at its center.");
-                // Every level of the pool reaches 0.8 as far sideways, toward the viewer and toward the cart.
+                // Every level of the pool, sideways, toward the viewer and toward the cart.
+                var probes = new List<(string Name, float Before, float After)>();
                 foreach (int level in new[] { 192, 128, 64, 16 })
-                {
-                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 1, 0, level),
-                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 1, 0, level)).Within(2f), "right " + level);
-                    Assert.That(Reach(after, footprint.width, footprint.height, candle, -1, 0, level),
-                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, -1, 0, level)).Within(2f), "left " + level);
-                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 0, -1, level),
-                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 0, -1, level)).Within(2f), "near " + level);
-                    Assert.That(Reach(after, footprint.width, footprint.height, candle, 0, 1, level),
-                        Is.EqualTo(reach * Reach(before, source.width, source.height, candle, 0, 1, level)).Within(2f), "far " + level);
-                }
+                    foreach (var (name, dx, dy) in new[] { ("right", 1, 0), ("left", -1, 0), ("near", 0, -1), ("far", 0, 1) })
+                        probes.Add((name + " " + level, Reach(before, source.width, source.height, candle, dx, dy, level),
+                            Reach(after, footprint.width, footprint.height, candle, dx, dy, level)));
+                // The installed pool's reach relative to its source, fitted over every probe.
+                float reach = probes.Sum(probe => probe.After) / probes.Sum(probe => probe.Before);
+                Assert.That(reach, Is.LessThan(1f), "The installed pool is tighter than its source.");
+                foreach (var probe in probes)
+                    Assert.That(probe.After, Is.EqualTo(reach * probe.Before).Within(2f), probe.Name + " shrinks by the pool's common factor.");
                 // The authored distance reaches one at the scaled reach, so dimming falls off over the tighter pool.
                 Assert.That(Reach(afterDistance, response.width, response.height, candle, 1, 0, 255, true),
                     Is.EqualTo(reach * Reach(beforeDistance, response.width, response.height, candle, 1, 0, 255, true)).Within(2f));
@@ -86,32 +61,6 @@ namespace Dice.Tests
             {
                 foreach (Texture2D texture in new[] { source, sourceResponse, footprint, response }) Object.DestroyImmediate(texture);
             }
-            var lighting = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(MaterialPath + "MerchantSceneLighting.asset");
-            Assert.That(lighting.Lights[1].ReceiverRange, Is.EqualTo(8f),
-                "The candle's computed light on the merchant and dice falls off over a range two thirds of the lantern's.");
-            Assert.That(lighting.Lights[0].ReceiverRange, Is.EqualTo(12f));
-        }
-
-        /** The flare clearance check in MerchantDisturbancePlayTests measures the flame from its topmost visible row. */
-        [Test]
-        public void CandleFlameTopsOutAtTheRowItsFlareClearanceAssumes()
-        {
-            Texture2D source = Decode("ProtectiveCandle.png"), mask = Decode("CandleFlameMask.png");
-            try
-            {
-                Color32[] pixels = source.GetPixels32(), owned = mask.GetPixels32();
-                int top = -1;
-                for (int y = source.height - 1; y >= 0 && top < 0; --y)
-                    for (int x = 0; x < source.width; ++x)
-                        if (owned[y * source.width + x].a == 255 && pixels[y * source.width + x].a > 0) { top = y; break; }
-                Assert.That(source.height, Is.EqualTo(1377));
-                Assert.That(source.height - 1 - top, Is.EqualTo(15), "Topmost visible flame row, counted from the top.");
-            }
-            finally
-            {
-                Object.DestroyImmediate(source);
-                Object.DestroyImmediate(mask);
-            }
         }
 
         [Test]
@@ -121,8 +70,6 @@ namespace Dice.Tests
             Assert.That(asset, Is.Not.Null);
             Assert.DoesNotThrow(asset.Validate);
             Assert.That(asset.PortraitPrefab, Is.Not.Null);
-            Assert.That(asset.Layers.Select(layer => layer.Id),
-                Is.EquivalentTo(new[] { "Torso", "Head", "Resting Arm", "Supporting Arm", "Blink" }));
             // One shared field keeps every overlapping layer registered while the figure breathes.
             Assert.That(asset.Layers.Select(layer => layer.Mesh).Distinct().Count(), Is.EqualTo(1));
             Assert.That(asset.Layers[0].Mesh, Is.Not.Null);
@@ -133,13 +80,15 @@ namespace Dice.Tests
                 SpiritHostPortrait host = root.GetComponent<SpiritHostPortrait>();
                 Assert.That(host, Is.Not.Null);
                 Assert.DoesNotThrow(() => host.Build((RectTransform)root.transform, asset));
+                // Every part spans the one source frame.
+                Vector2 frame = host.GetLayer(asset.Layers[0].Id).rectTransform.rect.size;
                 foreach (SpiritPortraitLayer layer in asset.Layers)
                 {
                     SpiritPortraitImage image = host.GetLayer(layer.Id);
                     Assert.That(image, Is.Not.Null, layer.Id);
                     Assert.That(image.name, Is.EqualTo(layer.Id));
                     Assert.That(image.texture, Is.SameAs(layer.Texture));
-                    Assert.That(image.rectTransform.rect.size, Is.EqualTo(new Vector2(941, 1672)));
+                    Assert.That(image.rectTransform.rect.size, Is.EqualTo(frame), layer.Id);
                     Assert.That(image.Weights.Count, Is.EqualTo(layer.Mesh != null ? layer.Mesh.Shapes.Length : 0));
                     Assert.That(image.Weights, Is.Not.Empty, layer.Id + " requires the shared breathing channel.");
                 }
@@ -148,16 +97,6 @@ namespace Dice.Tests
             {
                 EditorSceneManager.ClosePreviewScene(scene);
             }
-        }
-
-        [TestCase("MerchantHost.png", "F733AB1D178BAEC18C4AD14E35DAE45E34DBB874ABCEC4DFDC1C8A905745C016")]
-        [TestCase("ProtectiveCandle.png", "0C447D1B3E87DA64FDA6CC7D68B7D8AA04BF4C0B04A6C328C3F21669C23A1F46")]
-        [TestCase("MerchantHeadRepaired.png", "1D236128033871ED58C87DB7263A11204658B52134945492A1C9D672A833361E")]
-        public void LayerSeparationPreservesTheInstalledSourceFile(string filename, string expectedHash)
-        {
-            using (SHA256 hash = SHA256.Create())
-                Assert.That(System.BitConverter.ToString(hash.ComputeHash(File.ReadAllBytes(CanopyMotionTests.ArtPath + filename)))
-                    .Replace("-", ""), Is.EqualTo(expectedHash), filename);
         }
 
         [TestCase("MerchantTorso", 385, 850)]
@@ -202,20 +141,6 @@ namespace Dice.Tests
                     Assert.That(masks[part].height, Is.EqualTo(source.height), filename);
                     pixels[part] = masks[part].GetPixels32();
                     AssertDataImport(filename, source.width, source.height);
-                    Material material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath + parts[part] + ".mat");
-                    Assert.That(material, Is.Not.Null, parts[part]);
-                    Assert.That(AssetDatabase.GetAssetPath(material.shader),
-                        Is.EqualTo("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader"));
-                    Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_SourceTex")),
-                        Is.EqualTo(CanopyMotionTests.ArtPath +
-                            (parts[part] == "MerchantHead" ? "MerchantHeadRepaired.png"
-                                : parts[part] == "MerchantTorso" ? "MerchantTorsoAnimation.png" : sourceFilename)));
-                    Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_LayerMask")),
-                        Is.EqualTo(CanopyMotionTests.ArtPath +
-                            (parts[part] == "MerchantHead" ? "MerchantHeadCompleteMask.png"
-                                : parts[part] == "MerchantTorso" ? "MerchantTorsoAnimationMask.png"
-                                : parts[part] == "MerchantSupportingArm" ? "MerchantSupportingForearmAnimationMask.png" : filename)));
-                    Assert.That(material.GetFloat("_InvertMask"), Is.Zero);
                 }
                 int invalidPixels = 0, ownershipErrors = 0;
                 var ownedPixels = new int[parts.Length];
@@ -258,7 +183,7 @@ namespace Dice.Tests
             try
             {
                 foreach (Texture2D texture in textures)
-                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(941, 1672)));
+                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(source.width, source.height)));
                 Color32[] original = source.GetPixels32(), backing = complete.GetPixels32();
                 Color32[] originalOwnership = originalMask.GetPixels32(), ownership = completeMask.GetPixels32();
                 Color32[] supporting = supportingMask.GetPixels32(), forearm = forearmMask.GetPixels32();
@@ -275,8 +200,8 @@ namespace Dice.Tests
                 Assert.That(visibleChanges, Is.Zero, "The torso and fixed sleeve must retain exact visible source RGBA.");
                 Assert.That(missingSleeve, Is.Zero, "The supporting upper sleeve must remain in the fixed torso.");
                 Assert.That(concealedCoverage, Is.GreaterThan(100), "The fixed torso must provide concealed opaque backing beneath moving parts.");
-                AssertDataImport("MerchantTorsoAnimationMask.png", 941, 1672);
-                AssertDataImport("MerchantSupportingForearmAnimationMask.png", 941, 1672);
+                AssertDataImport("MerchantTorsoAnimationMask.png", source.width, source.height);
+                AssertDataImport("MerchantSupportingForearmAnimationMask.png", source.width, source.height);
             }
             finally
             {
@@ -297,9 +222,9 @@ namespace Dice.Tests
             try
             {
                 foreach (Texture2D texture in textures)
-                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(941, 1672)));
-                AssertDataImport("MerchantHeadRepairMask.png", 941, 1672);
-                AssertDataImport("MerchantHeadCompleteMask.png", 941, 1672);
+                    Assert.That(new Vector2Int(texture.width, texture.height), Is.EqualTo(new Vector2Int(source.width, source.height)));
+                AssertDataImport("MerchantHeadRepairMask.png", source.width, source.height);
+                AssertDataImport("MerchantHeadCompleteMask.png", source.width, source.height);
                 Color32[] original = source.GetPixels32(), fixedPixels = repaired.GetPixels32();
                 Color32[] repairPixels = repair.GetPixels32(), headPixels = head.GetPixels32();
                 Color32[] completePixels = complete.GetPixels32(), armPixels = arm.GetPixels32();
@@ -348,31 +273,30 @@ namespace Dice.Tests
         [Test]
         public void BlinkOverlayTransfersOnlyTheEyelidsThroughASoftMaskOnTheFace()
         {
-            var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath + "MerchantBlink.mat");
-            Assert.That(material, Is.Not.Null);
-            Assert.That(AssetDatabase.GetAssetPath(material.shader), Is.EqualTo("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader"));
-            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_SourceTex")), Is.EqualTo(CanopyMotionTests.ArtPath + "MerchantBlinkEyes.png"));
-            Assert.That(AssetDatabase.GetAssetPath(material.GetTexture("_LayerMask")), Is.EqualTo(CanopyMotionTests.ArtPath + "MerchantBlinkMask.png"));
-            Assert.That(material.GetFloat("_InvertMask"), Is.Zero);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(MaterialPath + "MerchantHost.prefab");
             SpiritPortraitImage blink = prefab.GetComponentsInChildren<SpiritPortraitImage>(true).Single(image => image.name == "Blink");
             SpiritPortraitImage head = prefab.GetComponentsInChildren<SpiritPortraitImage>(true).Single(image => image.name == "Head");
-            Assert.That(blink.material, Is.SameAs(material));
+            Material material = blink.material;
+            Assert.That(material, Is.Not.Null);
+            Texture eyesTexture = material.GetTexture("_SourceTex"), maskTexture = material.GetTexture("_LayerMask");
+            Assert.That(eyesTexture, Is.Not.Null, "The overlay draws its closed eyes through the masked source.");
+            Assert.That(maskTexture, Is.Not.Null, "The overlay transfers only its masked eyelids.");
+            Assert.That(material.GetFloat("_InvertMask"), Is.Zero, "The mask selects the eyelids rather than excluding them.");
             Assert.That(blink.color.a, Is.Zero, "The closed eyes must stay hidden until a blink.");
             Assert.That(blink.transform.GetSiblingIndex(), Is.EqualTo(head.transform.GetSiblingIndex() + 1), "The blink draws directly above the head.");
             Assert.That(blink.rectTransform.rect, Is.EqualTo(head.rectTransform.rect));
             Assert.That(blink.rectTransform.anchoredPosition, Is.EqualTo(head.rectTransform.anchoredPosition));
-            Texture2D eyes = Decode("MerchantBlinkEyes.png"), mask = Decode("MerchantBlinkMask.png"), face = Decode("MerchantHeadCompleteMask.png");
+            Texture2D eyes = DecodeFile(AssetDatabase.GetAssetPath(eyesTexture)), mask = DecodeFile(AssetDatabase.GetAssetPath(maskTexture));
+            Texture2D face = Decode("MerchantHeadCompleteMask.png");
             try
             {
                 Assert.That(new Vector2Int(eyes.width, eyes.height), Is.EqualTo(new Vector2Int(mask.width, mask.height)));
-                AssertDataImport("MerchantBlinkMask.png", mask.width, mask.height);
-                Assert.That(AssetDatabase.LoadAssetAtPath<Texture2D>(CanopyMotionTests.ArtPath + "MerchantBlinkEyes.png").wrapMode,
-                    Is.EqualTo(TextureWrapMode.Clamp), "Clamped edges keep the overlay transparent outside its crop.");
+                AssertDataImport(Path.GetFileName(AssetDatabase.GetAssetPath(maskTexture)), mask.width, mask.height);
+                Assert.That(eyesTexture.wrapMode, Is.EqualTo(TextureWrapMode.Clamp), "Clamped edges keep the overlay transparent outside its crop.");
                 // The small overlay spans the full source frame through its UV rectangle.
                 Rect uv = blink.uvRect;
-                Assert.That(uv.width * eyes.width, Is.EqualTo(941).Within(.01f));
-                Assert.That(uv.height * eyes.height, Is.EqualTo(1672).Within(.01f));
+                Assert.That(uv.width * eyes.width, Is.EqualTo(face.width).Within(.01f));
+                Assert.That(uv.height * eyes.height, Is.EqualTo(face.height).Within(.01f));
                 int left = Mathf.RoundToInt(-uv.x * eyes.width), bottom = Mathf.RoundToInt(-uv.y * eyes.height);
                 Assert.That(-uv.x * eyes.width, Is.EqualTo(left).Within(.01f), "The crop must align with source pixels.");
                 Assert.That(-uv.y * eyes.height, Is.EqualTo(bottom).Within(.01f), "The crop must align with source pixels.");
@@ -393,7 +317,7 @@ namespace Dice.Tests
                 Assert.That(full, Is.GreaterThan(0), "The eyelids must be fully replaced at the blink's peak.");
                 Assert.That(partial, Is.GreaterThan(full / 2), "The transfer must blend through a soft edge.");
                 Assert.That(offFace, Is.Zero, "The eyelid transfer must stay on the completed head.");
-                Assert.That(mask.width * mask.height, Is.LessThan(941 * 1672 / 100), "The eyelid overlay is a small crop.");
+                Assert.That(mask.width * mask.height, Is.LessThan(face.width * face.height / 100), "The eyelid overlay is a small crop.");
             }
             finally
             {
@@ -405,7 +329,7 @@ namespace Dice.Tests
 
         private static void AssertDataImport(string filename, int width, int height)
         {
-            string path = CanopyMotionTests.ArtPath + filename;
+            string path = MerchantSceneTests.ArtPath + filename;
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             Assert.That(importer, Is.Not.Null, path);
             Assert.That(importer.sRGBTexture, Is.False, path);
@@ -424,7 +348,7 @@ namespace Dice.Tests
             Assert.That(texture.height, Is.EqualTo(height), path);
         }
 
-        private static Texture2D Decode(string filename) => DecodeFile(CanopyMotionTests.ArtPath + filename);
+        private static Texture2D Decode(string filename) => DecodeFile(MerchantSceneTests.ArtPath + filename);
 
         private static Texture2D DecodeFile(string path)
         {

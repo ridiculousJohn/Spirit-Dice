@@ -43,10 +43,11 @@ namespace Dice.Presentation
             return row;
         }
 
-        public void Render(IReadOnlyList<ModifierDefinition> definitions,
+        public void Render(ModifierPresentationCatalog charms, IReadOnlyList<ModifierDefinition> definitions,
             Func<ModifierDefinition, string> stateText = null, Action<ModifierDefinition> select = null,
             Func<ModifierDefinition, bool> available = null)
         {
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definitions == null || definitions.Count == 0 || definitions.Count > variants.Length)
                 throw new ArgumentException("A family row requires one to four variants.", nameof(definitions));
             var first = definitions[0];
@@ -54,13 +55,13 @@ namespace Dice.Presentation
             artwork.SetActive(true);
             variantRoot.SetActive(true);
             FamilyId = first.FamilyId;
-            familyName.text = GetFamilyName(first);
+            familyName.text = GetFamilyName(charms, first);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = SpiritRewardCard.GetModifierDescription(first, theme.amber, theme.GetModifierTriggerColor(first.Phase));
-            icon.sprite = SpiritModifierIcons.GetSprite(first);
+            condition.text = SpiritRewardCard.GetModifierDescription(charms, first, theme.amber, theme.GetModifierTriggerColor(first.Phase));
+            icon.sprite = charms.GetIcon(first);
             icon.color = SpiritUi.GetTheme(transform).cream;
             icon.gameObject.SetActive(icon.sprite != null);
-            sigil.Seed = SpiritModifierIcons.GetSigilSeed(first);
+            sigil.Seed = charms.GetSigilSeed(first);
             sigil.gameObject.SetActive(icon.sprite == null);
             selected = select;
             for (int index = 0; index < variants.Length; ++index)
@@ -72,11 +73,11 @@ namespace Dice.Presentation
                 if (definition.FamilyId != FamilyId)
                     throw new ArgumentException("A family row cannot mix families.", nameof(definitions));
                 item.Definition = definition;
-                item.Category.sprite = SpiritModifierIcons.GetCategorySprite(definition);
+                item.Category.sprite = charms.GetCategorySprite(definition);
                 item.Category.color = Color.white;
                 item.Category.gameObject.SetActive(item.Category.sprite != null);
-                item.Effect.text = GetCompactEffect(definition);
-                item.Effect.color = SpiritModifierIcons.GetEffectColor(definition);
+                item.Effect.text = charms.GetCompactEffectText(definition);
+                item.Effect.color = charms.GetEffectColor(definition);
                 item.State.text = stateText?.Invoke(definition) ?? "";
                 item.State.gameObject.SetActive(stateText != null);
                 item.Visibility.alpha = available == null || available(definition) ? 1 : .35f;
@@ -112,21 +113,11 @@ namespace Dice.Presentation
                 item.Selection.enabled = item.Definition != null && item.Definition.Id == modifierId;
         }
 
-        public static string GetFamilyName(ModifierDefinition definition)
+        public static string GetFamilyName(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            string name = SpiritModifierPresentation.GetName(definition);
+            string name = charms.GetName(definition);
             int separator = name.LastIndexOf(" / ", StringComparison.Ordinal);
             return separator < 0 ? name : name.Substring(0, separator);
         }
-
-        private static string GetCompactEffect(ModifierDefinition definition)
-        {
-            var lines = new List<string>();
-            foreach (var effect in definition.Effects)
-                lines.Add("+" + DiagnosticText.Number(effect.Amount) + (definition.Effects.Count > 1 ?
-                    effect.Kind == ModifierEffectKind.AddBaseScore ? " B" : " M" : ""));
-            return string.Join("\n", lines);
-        }
-
     }
 }

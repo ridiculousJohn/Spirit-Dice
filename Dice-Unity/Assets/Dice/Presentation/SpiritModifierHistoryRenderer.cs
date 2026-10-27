@@ -125,8 +125,10 @@ namespace Dice.Presentation
             resolvingIndex = -1;
         }
 
-        public void Add(ModifierContribution contribution, ModifierDefinition definition, bool animate)
+        public void Add(ModifierContribution contribution, ModifierPresentationCatalog charms, ModifierDefinition definition,
+            bool animate)
         {
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (contribution.DefinitionId != definition.Id)
                 throw new ArgumentException("The modifier definition must match the activation.", nameof(definition));
@@ -143,9 +145,9 @@ namespace Dice.Presentation
             material.SetFloat("_ShowPips", 0);
             material.SetFloat("_ShowFaceIcon", 1);
             material.SetFloat("_Seed", entries.Count * 17.31f);
-            material.SetColor("_FaceIconColor", SpiritModifierIcons.GetInkColor(definition));
-            SetIcon(material, definition);
-            SetCategory(material, definition);
+            material.SetColor("_FaceIconColor", charms.GetInkColor(definition));
+            SetIcon(material, charms, definition);
+            SetCategory(material, charms, definition);
             SetClip(material);
             Transform die = token.Body.transform;
             die.localScale *= ContentDieSize / DieSize;
@@ -270,16 +272,16 @@ namespace Dice.Presentation
             entry.Shadow.SetPropertyBlock(properties);
         }
 
-        private void SetIcon(Material material, ModifierDefinition definition)
+        private void SetIcon(Material material, ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            Sprite sprite = SpiritModifierIcons.GetSprite(definition);
+            Sprite sprite = charms.GetIcon(definition);
             if (sprite != null)
             {
                 SetSprite(material, sprite, "_FaceIcon", "_FaceIconRect", "_FaceIconUVTransform");
             }
             else
             {
-                uint seed = SpiritModifierIcons.GetSigilSeed(definition);
+                uint seed = charms.GetSigilSeed(definition);
                 if (!sigils.TryGetValue(seed, out Texture2D icon))
                 {
                     icon = SpiritModifierSigilTexture.Create(seed);
@@ -291,13 +293,13 @@ namespace Dice.Presentation
             }
         }
 
-        private static void SetCategory(Material material, ModifierDefinition definition)
+        private static void SetCategory(Material material, ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            Sprite sprite = SpiritModifierIcons.GetCategorySprite(definition);
-            bool visible = SpiritModifierIcons.GetCategorySymbol(definition) != ModifierCategorySymbol.None && sprite != null;
+            Sprite sprite = charms.GetCategorySprite(definition);
+            bool visible = charms.GetCategorySymbol(definition) != ModifierCategorySymbol.None && sprite != null;
             material.SetFloat("_ShowCategory", visible ? 1 : 0);
             if (!visible) return;
-            material.SetColor("_CategoryColor", SpiritModifierIcons.GetInkColor(definition));
+            material.SetColor("_CategoryColor", charms.GetInkColor(definition));
             SetSprite(material, sprite, "_CategoryIcon", "_CategoryIconRect", "_CategoryIconUVTransform");
         }
 

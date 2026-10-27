@@ -72,66 +72,13 @@ MonoBehaviour:
     maximumUpgrades: 6
   encounters:
   - id: encounter.standard
+    spiritId: 
+    unlockMilestones: []
+    encounterModifiers: []
+    encounterModifiersFirstClearedStageNumber: 1
+    unlockRewardModifiers: []
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
     startingModifiers: []
-    rewardPolicy:
-      id: reward_policy.standard
-      tierRules:
-      - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 9
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 17
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 23
-        tierWeights:
-        - 15
-        - 45
-        - 40
-      tierMilestones:
-      - incomingStageNumber: 9
-        minimumTier: 2
-      - incomingStageNumber: 17
-        minimumTier: 2
-      - incomingStageNumber: 23
-        minimumTier: 3
-      modifierLayouts:
-      - poolIds:
-        - reward_pool.rerolls
-        - reward_pool.rerolls
-        - reward_pool.rerolls
-      - poolIds:
-        - reward_pool.base_score
-        - reward_pool.multiplier
-        - reward_pool.combined
-      - poolIds:
-        - reward_pool.base_score
-        - reward_pool.multiplier
-        - reward_pool.combined
-      - poolIds:
-        - reward_pool.base_score
-        - reward_pool.multiplier
-        - reward_pool.combined
-      startingRefreshes: 1
-      refreshesPerClear: 1
-      refreshCost: 1
-      handUpgradeOptionCount: 4
-      upgradeHistory:
-      - maxIncomingStageNumber: 16
-        excludedRecentChoices: 3
-      - maxIncomingStageNumber: 21
-        excludedRecentChoices: 2
-      - maxIncomingStageNumber: 2147483647
-        excludedRecentChoices: 0
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
     stages:
     - threshold: 160
       startingHands: 3
@@ -233,69 +180,129 @@ MonoBehaviour:
       startingHands: 5
       startingRerolls: 5
       exitBehavior: 1
-  - id: encounter.fox.introduction
-    spiritId: spirit.fox
-    unlockRewardModifierIds:
-    - modifier.initial_roll.first_hand.base_score
-    - modifier.initial_roll.first_hand.multiplier
-    - modifier.player_reroll.rank_equals_before_reroll.base_score
-    - modifier.player_reroll.rank_equals_before_reroll.multiplier
-    - modifier.initial_roll.initial_rank_above_previous.base_score
-    - modifier.initial_roll.initial_rank_above_previous.multiplier
-    encounterModifierIds: []
-    unlockMilestones:
-    - stageNumber: 3
-      modifierIds:
-      - modifier.initial_roll.first_hand.base_score
-      - modifier.initial_roll.first_hand.multiplier
-      - modifier.initial_roll.first_hand.combined
-      - modifier.initial_roll.first_hand.rerolls
-    - stageNumber: 6
-      modifierIds:
-      - modifier.player_reroll.rank_equals_before_reroll.base_score
-      - modifier.player_reroll.rank_equals_before_reroll.multiplier
-      - modifier.player_reroll.rank_equals_before_reroll.combined
-      - modifier.player_reroll.rank_equals_before_reroll.rerolls
-    - stageNumber: 10
-      modifierIds:
-      - modifier.initial_roll.initial_rank_above_previous.base_score
-      - modifier.initial_roll.initial_rank_above_previous.multiplier
-      - modifier.initial_roll.initial_rank_above_previous.combined
-      - modifier.initial_roll.initial_rank_above_previous.rerolls
-    startingModifiers: []
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
-    rules:
-    - {fileID: 11400000, guid: fe318bf39f5245e59ff45614028ed05c, type: 2}
     rewardPolicy:
-      id: reward_policy.fox.introduction
+      id: reward_policy.standard
+      modifierLayouts:
+      - poolIds:
+        - reward_pool.rerolls
+        - reward_pool.rerolls
+        - reward_pool.rerolls
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      - poolIds:
+        - reward_pool.base_score
+        - reward_pool.multiplier
+        - reward_pool.combined
+      startingRefreshes: 1
+      refreshesPerClear: 1
+      refreshCost: 1
+      handUpgradeOptionCount: 4
+      upgradeHistory:
+      - maxIncomingStageNumber: 16
+        excludedRecentChoices: 3
+      - maxIncomingStageNumber: 21
+        excludedRecentChoices: 2
+      - maxIncomingStageNumber: 2147483647
+        excludedRecentChoices: 0
       tierRules:
       - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 4
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 7
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 10
-        tierWeights:
-        - 15
-        - 45
-        - 40
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 9
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 17
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 23
+        tierWeights: 0f0000002d00000028000000i
       tierMilestones:
-      - incomingStageNumber: 4
+      - incomingStageNumber: 9
         minimumTier: 2
-      - incomingStageNumber: 7
+      - incomingStageNumber: 17
         minimumTier: 2
-      - incomingStageNumber: 10
+      - incomingStageNumber: 23
         minimumTier: 3
+    rules: []
+    pieces: []
+  - id: encounter.fox.introduction
+    spiritId: spirit.fox
+    unlockMilestones:
+    - stageNumber: 3
+      modifiers:
+      - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+      - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
+      - {fileID: 11400000, guid: 4ca1b30991b7dba458eecb77910def8b, type: 2}
+      - {fileID: 11400000, guid: 9c38d67a0b8620041a2816daa7d37b09, type: 2}
+    - stageNumber: 6
+      modifiers:
+      - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
+      - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
+      - {fileID: 11400000, guid: c84c761ab8bf6d645aef3b9c6cedf083, type: 2}
+      - {fileID: 11400000, guid: ba7c79c16939ff641aebac2bfa89ab01, type: 2}
+    - stageNumber: 10
+      modifiers:
+      - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
+      - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
+      - {fileID: 11400000, guid: e2279929f2b6dc74a979a856beef4c27, type: 2}
+      - {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
+    encounterModifiers: []
+    encounterModifiersFirstClearedStageNumber: 1
+    unlockRewardModifiers:
+    - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
+    - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
+    - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
+    - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
+    - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+    startingModifiers: []
+    stages:
+    - threshold: 120
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 170
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 230
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 300
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 380
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 470
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 570
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 680
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 800
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    - threshold: 930
+      startingHands: 3
+      startingRerolls: 3
+      exitBehavior: 1
+    rewardPolicy:
+      id: reward_policy.fox.introduction
       modifierLayouts:
       - poolIds:
         - reward_pool.fox.introduction.base_score
@@ -316,6 +323,57 @@ MonoBehaviour:
       upgradeHistory:
       - maxIncomingStageNumber: 2147483647
         excludedRecentChoices: 1
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 4
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 7
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 10
+        tierWeights: 0f0000002d00000028000000i
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+    rules:
+    - {fileID: 11400000, guid: fe318bf39f5245e59ff45614028ed05c, type: 2}
+    pieces: []
+  - id: encounter.owl.watchtower
+    spiritId: spirit.owl
+    unlockMilestones:
+    - stageNumber: 3
+      modifiers:
+      - {fileID: 11400000, guid: 676a870c49a830743ae381a9fda5f904, type: 2}
+      - {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
+      - {fileID: 11400000, guid: c8282098f1896fe4ab825f441045c38b, type: 2}
+      - {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
+    - stageNumber: 6
+      modifiers:
+      - {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
+      - {fileID: 11400000, guid: d33cc2e6604c8dd4ca32799954e90b27, type: 2}
+      - {fileID: 11400000, guid: c59990f49049df44288442476a95156e, type: 2}
+      - {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
+    - stageNumber: 10
+      modifiers:
+      - {fileID: 11400000, guid: 3b063526b75fdde46a306a8068ba6add, type: 2}
+      - {fileID: 11400000, guid: 969570c51392e2b4eb438885716052e5, type: 2}
+      - {fileID: 11400000, guid: 2e97f5010ef9c9842bd97083a4c8bd88, type: 2}
+      - {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
+    encounterModifiers: []
+    encounterModifiersFirstClearedStageNumber: 1
+    unlockRewardModifiers:
+    - {fileID: 11400000, guid: 676a870c49a830743ae381a9fda5f904, type: 2}
+    - {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
+    - {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
+    - {fileID: 11400000, guid: d33cc2e6604c8dd4ca32799954e90b27, type: 2}
+    - {fileID: 11400000, guid: 3b063526b75fdde46a306a8068ba6add, type: 2}
+    - {fileID: 11400000, guid: 969570c51392e2b4eb438885716052e5, type: 2}
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+    startingModifiers: []
     stages:
     - threshold: 120
       startingHands: 3
@@ -357,69 +415,8 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
-  - id: encounter.owl.watchtower
-    spiritId: spirit.owl
-    unlockRewardModifierIds:
-    - modifier.play_hand.edge_pair_sums_equal.base_score
-    - modifier.play_hand.edge_pair_sums_equal.multiplier
-    - modifier.play_hand.alternating_parity.base_score
-    - modifier.play_hand.alternating_parity.multiplier
-    - modifier.play_hand.ordered.base_score
-    - modifier.play_hand.ordered.multiplier
-    encounterModifierIds: []
-    unlockMilestones:
-    - stageNumber: 3
-      modifierIds:
-      - modifier.play_hand.edge_pair_sums_equal.base_score
-      - modifier.play_hand.edge_pair_sums_equal.multiplier
-      - modifier.play_hand.edge_pair_sums_equal.combined
-      - modifier.play_hand.edge_pair_sums_equal.rerolls
-    - stageNumber: 6
-      modifierIds:
-      - modifier.play_hand.alternating_parity.base_score
-      - modifier.play_hand.alternating_parity.multiplier
-      - modifier.play_hand.alternating_parity.combined
-      - modifier.play_hand.alternating_parity.rerolls
-    - stageNumber: 10
-      modifierIds:
-      - modifier.play_hand.ordered.base_score
-      - modifier.play_hand.ordered.multiplier
-      - modifier.play_hand.ordered.combined
-      - modifier.play_hand.ordered.rerolls
-    startingModifiers: []
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
-    rules:
-    - {fileID: 11400000, guid: 57ddf15a05484a56b82e2eca70b60ba4, type: 2}
     rewardPolicy:
       id: reward_policy.owl.watchtower
-      tierRules:
-      - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 4
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 7
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 10
-        tierWeights:
-        - 15
-        - 45
-        - 40
-      tierMilestones:
-      - incomingStageNumber: 4
-        minimumTier: 2
-      - incomingStageNumber: 7
-        minimumTier: 2
-      - incomingStageNumber: 10
-        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.owl.watchtower.base_score
@@ -440,6 +437,61 @@ MonoBehaviour:
       upgradeHistory:
       - maxIncomingStageNumber: 2147483647
         excludedRecentChoices: 1
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 4
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 7
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 10
+        tierWeights: 0f0000002d00000028000000i
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+    rules:
+    - {fileID: 11400000, guid: 57ddf15a05484a56b82e2eca70b60ba4, type: 2}
+    pieces: []
+  - id: encounter.moth.crossroads
+    spiritId: spirit.moth
+    unlockMilestones:
+    - stageNumber: 3
+      modifiers:
+      - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+      - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+      - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
+      - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
+    - stageNumber: 6
+      modifiers:
+      - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+      - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+      - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
+      - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
+    - stageNumber: 10
+      modifiers:
+      - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+      - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+      - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
+      - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
+    encounterModifiers:
+    - {fileID: 11400000, guid: d6bffd73f10944cd9ff44dbe5eda0669, type: 2}
+    - {fileID: 11400000, guid: 4d776a2f625a4b16adce09a547516b3b, type: 2}
+    - {fileID: 11400000, guid: aa83094f29ee45619007f23322156d0f, type: 2}
+    - {fileID: 11400000, guid: 0dc76eeed9084bb68adc4798b800ddec, type: 2}
+    encounterModifiersFirstClearedStageNumber: 1
+    unlockRewardModifiers:
+    - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+    - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+    - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+    - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+    - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+    - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+    startingModifiers: []
     stages:
     - threshold: 120
       startingHands: 3
@@ -481,73 +533,8 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
-  - id: encounter.moth.crossroads
-    spiritId: spirit.moth
-    unlockRewardModifierIds:
-    - modifier.play_hand.contains_rerolls_remaining.base_score
-    - modifier.play_hand.contains_rerolls_remaining.multiplier
-    - modifier.play_hand.every_die_rerolled.base_score
-    - modifier.play_hand.every_die_rerolled.multiplier
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-    encounterModifierIds:
-    - modifier.play_hand.favored_face_count_at_least.base_score
-    - modifier.play_hand.favored_face_count_at_least.multiplier
-    - modifier.play_hand.favored_face_count_at_least.combined
-    - modifier.play_hand.favored_face_count_at_least.rerolls
-    unlockMilestones:
-    - stageNumber: 3
-      modifierIds:
-      - modifier.play_hand.contains_rerolls_remaining.base_score
-      - modifier.play_hand.contains_rerolls_remaining.multiplier
-      - modifier.play_hand.contains_rerolls_remaining.combined
-      - modifier.play_hand.contains_rerolls_remaining.rerolls
-    - stageNumber: 6
-      modifierIds:
-      - modifier.play_hand.every_die_rerolled.base_score
-      - modifier.play_hand.every_die_rerolled.multiplier
-      - modifier.play_hand.every_die_rerolled.combined
-      - modifier.play_hand.every_die_rerolled.rerolls
-    - stageNumber: 10
-      modifierIds:
-      - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-      - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-      - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-      - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
-    startingModifiers: []
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
-    rules:
-    - {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
     rewardPolicy:
       id: reward_policy.moth.crossroads
-      tierRules:
-      - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 4
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 7
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 10
-        tierWeights:
-        - 15
-        - 45
-        - 40
-      tierMilestones:
-      - incomingStageNumber: 4
-        minimumTier: 2
-      - incomingStageNumber: 7
-        minimumTier: 2
-      - incomingStageNumber: 10
-        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.moth.crossroads.base_score
@@ -568,6 +555,57 @@ MonoBehaviour:
       upgradeHistory:
       - maxIncomingStageNumber: 2147483647
         excludedRecentChoices: 1
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 4
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 7
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 10
+        tierWeights: 0f0000002d00000028000000i
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+    rules:
+    - {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
+    pieces: []
+  - id: encounter.merchant.unquiet_cart
+    spiritId: spirit.merchant
+    unlockMilestones:
+    - stageNumber: 3
+      modifiers:
+      - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
+      - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
+      - {fileID: 11400000, guid: faf037042b04e6e4e89ccc2ddb3ae53d, type: 2}
+      - {fileID: 11400000, guid: c2059b6fb13385441af8145c71cd8660, type: 2}
+    - stageNumber: 6
+      modifiers:
+      - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
+      - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
+      - {fileID: 11400000, guid: e82516bd4f6d5314ebb4cea2b02d478e, type: 2}
+      - {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
+    - stageNumber: 10
+      modifiers:
+      - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
+      - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
+      - {fileID: 11400000, guid: e2555e5891db9f94a80b106d385fcb68, type: 2}
+      - {fileID: 11400000, guid: 434e63c4fe92ce344b6db70fb96c6ec6, type: 2}
+    encounterModifiers: []
+    encounterModifiersFirstClearedStageNumber: 1
+    unlockRewardModifiers:
+    - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
+    - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
+    - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
+    - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
+    - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
+    - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+    startingModifiers: []
     stages:
     - threshold: 120
       startingHands: 3
@@ -609,70 +647,8 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
-  - id: encounter.merchant.unquiet_cart
-    spiritId: spirit.merchant
-    unlockRewardModifierIds:
-    - modifier.play_hand.sum_less_than_initial.base_score
-    - modifier.play_hand.sum_less_than_initial.multiplier
-    - modifier.play_hand.rank_equals_previous.base_score
-    - modifier.play_hand.rank_equals_previous.multiplier
-    - modifier.play_hand.sum_divisible_by.base_score
-    - modifier.play_hand.sum_divisible_by.multiplier
-    encounterModifierIds: []
-    unlockMilestones:
-    - stageNumber: 3
-      modifierIds:
-      - modifier.play_hand.sum_less_than_initial.base_score
-      - modifier.play_hand.sum_less_than_initial.multiplier
-      - modifier.play_hand.sum_less_than_initial.combined
-      - modifier.play_hand.sum_less_than_initial.rerolls
-    - stageNumber: 6
-      modifierIds:
-      - modifier.play_hand.rank_equals_previous.base_score
-      - modifier.play_hand.rank_equals_previous.multiplier
-      - modifier.play_hand.rank_equals_previous.combined
-      - modifier.play_hand.rank_equals_previous.rerolls
-    - stageNumber: 10
-      modifierIds:
-      - modifier.play_hand.sum_divisible_by.base_score
-      - modifier.play_hand.sum_divisible_by.multiplier
-      - modifier.play_hand.sum_divisible_by.combined
-      - modifier.play_hand.sum_divisible_by.rerolls
-    startingModifiers: []
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
-    rules:
-    - {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
-    - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
     rewardPolicy:
       id: reward_policy.merchant.unquiet_cart
-      tierRules:
-      - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 4
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 7
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 10
-        tierWeights:
-        - 15
-        - 45
-        - 40
-      tierMilestones:
-      - incomingStageNumber: 4
-        minimumTier: 2
-      - incomingStageNumber: 7
-        minimumTier: 2
-      - incomingStageNumber: 10
-        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.merchant.unquiet_cart.base_score
@@ -693,6 +669,65 @@ MonoBehaviour:
       upgradeHistory:
       - maxIncomingStageNumber: 2147483647
         excludedRecentChoices: 1
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 4
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 7
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 10
+        tierWeights: 0f0000002d00000028000000i
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+    rules:
+    - {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
+    - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
+    pieces:
+    - id: piece.merchant.candle
+      interactions:
+      - {fileID: 11400000, guid: f8daef7b2f614458ba4a6d63b4e86d32, type: 2}
+  - id: encounter.nymph.bound_tree
+    spiritId: spirit.nymph
+    unlockMilestones:
+    - stageNumber: 3
+      modifiers:
+      - {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
+      - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
+      - {fileID: 11400000, guid: 0e43985acf43db647904a9e4c71d6d75, type: 2}
+      - {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
+    - stageNumber: 6
+      modifiers:
+      - {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
+      - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
+      - {fileID: 11400000, guid: 359921b8ca81b0542829cc8a41da090f, type: 2}
+      - {fileID: 11400000, guid: 249c80e6228b78f43b1fc6cdefcea3b5, type: 2}
+    - stageNumber: 10
+      modifiers:
+      - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+      - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+      - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
+      - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
+    encounterModifiers:
+    - {fileID: 11400000, guid: 38929b861b0c4c5caa1fffc496ad2b63, type: 2}
+    - {fileID: 11400000, guid: 0f939e9b5de14cb7a9a55c6348337b0e, type: 2}
+    - {fileID: 11400000, guid: a6e4e6b23c214a29aaf0bbc1d8d79598, type: 2}
+    - {fileID: 11400000, guid: e8421512c77f47399025de9a65be0f92, type: 2}
+    encounterModifiersFirstClearedStageNumber: 3
+    unlockRewardModifiers:
+    - {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
+    - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
+    - {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
+    - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
+    - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+    - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+    startingModifiers: []
     stages:
     - threshold: 120
       startingHands: 3
@@ -734,78 +769,8 @@ MonoBehaviour:
       startingHands: 3
       startingRerolls: 3
       exitBehavior: 1
-    pieces:
-    - id: piece.merchant.candle
-      interactions:
-      - {fileID: 11400000, guid: f8daef7b2f614458ba4a6d63b4e86d32, type: 2}
-  - id: encounter.nymph.bound_tree
-    spiritId: spirit.nymph
-    unlockRewardModifierIds:
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
-    - modifier.play_hand.adjacent_difference_at_most.base_score
-    - modifier.play_hand.adjacent_difference_at_most.multiplier
-    - modifier.play_hand.no_dice_rerolled.base_score
-    - modifier.play_hand.no_dice_rerolled.multiplier
-    encounterModifierIds:
-    - modifier.play_hand.bound_face_count_at_least.base_score
-    - modifier.play_hand.bound_face_count_at_least.multiplier
-    - modifier.play_hand.bound_face_count_at_least.combined
-    - modifier.play_hand.bound_face_count_at_least.rerolls
-    encounterModifiersFirstClearedStageNumber: 3
-    unlockMilestones:
-    - stageNumber: 3
-      modifierIds:
-      - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
-      - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
-      - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
-      - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
-    - stageNumber: 6
-      modifierIds:
-      - modifier.play_hand.adjacent_difference_at_most.base_score
-      - modifier.play_hand.adjacent_difference_at_most.multiplier
-      - modifier.play_hand.adjacent_difference_at_most.combined
-      - modifier.play_hand.adjacent_difference_at_most.rerolls
-    - stageNumber: 10
-      modifierIds:
-      - modifier.play_hand.no_dice_rerolled.base_score
-      - modifier.play_hand.no_dice_rerolled.multiplier
-      - modifier.play_hand.no_dice_rerolled.combined
-      - modifier.play_hand.no_dice_rerolled.rerolls
-    startingModifiers: []
-    startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000
-    rules:
-    - {fileID: 11400000, guid: 6c1b0abcfde24a46ae3c523210fc5da9, type: 2}
     rewardPolicy:
       id: reward_policy.nymph.bound_tree
-      tierRules:
-      - firstIncomingStageNumber: 1
-        tierWeights:
-        - 100
-        - 0
-        - 0
-      - firstIncomingStageNumber: 4
-        tierWeights:
-        - 60
-        - 35
-        - 5
-      - firstIncomingStageNumber: 7
-        tierWeights:
-        - 30
-        - 50
-        - 20
-      - firstIncomingStageNumber: 10
-        tierWeights:
-        - 15
-        - 45
-        - 40
-      tierMilestones:
-      - incomingStageNumber: 4
-        minimumTier: 2
-      - incomingStageNumber: 7
-        minimumTier: 2
-      - incomingStageNumber: 10
-        minimumTier: 3
       modifierLayouts:
       - poolIds:
         - reward_pool.nymph.bound_tree.base_score
@@ -826,698 +791,675 @@ MonoBehaviour:
       upgradeHistory:
       - maxIncomingStageNumber: 2147483647
         excludedRecentChoices: 1
-    stages:
-    - threshold: 120
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 170
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 230
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 300
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 380
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 470
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 570
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 680
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 800
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
-    - threshold: 930
-      startingHands: 3
-      startingRerolls: 3
-      exitBehavior: 1
+      tierRules:
+      - firstIncomingStageNumber: 1
+        tierWeights: 640000000000000000000000i
+      - firstIncomingStageNumber: 4
+        tierWeights: 3c0000002300000005000000i
+      - firstIncomingStageNumber: 7
+        tierWeights: 1e0000003200000014000000i
+      - firstIncomingStageNumber: 10
+        tierWeights: 0f0000002d00000028000000i
+      tierMilestones:
+      - incomingStageNumber: 4
+        minimumTier: 2
+      - incomingStageNumber: 7
+        minimumTier: 2
+      - incomingStageNumber: 10
+        minimumTier: 3
+    rules:
+    - {fileID: 11400000, guid: 6c1b0abcfde24a46ae3c523210fc5da9, type: 2}
     pieces: []
   rewardPools:
   - id: reward_pool.base_score
-    modifierIds:
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
-    - modifier.play_hand.range_less_than.base_score
-    - modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
-    - modifier.player_reroll.selected_matches_hands_remaining.base_score
-    - modifier.play_hand.second_fourth_product_at_least_sum.base_score
-    - modifier.play_hand.sum_less_than_initial.base_score
-    - modifier.player_reroll.rank_equals_before_reroll.base_score
-    - modifier.play_hand.no_dice_rerolled.base_score
-    - modifier.play_hand.adjacent_matching_triple.base_score
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
-    - modifier.play_hand.out_of_rerolls.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    - modifier.player_reroll.adjacent_difference_at_least.base_score
-    - modifier.play_hand.sum_less_than.base_score
-    - modifier.play_hand.interior_contains_pair.base_score
-    - modifier.play_hand.largest_group_equals_hands_or_rerolls.base_score
-    - modifier.player_reroll.selected_matching_group_at_least.base_score
-    - modifier.play_hand.edge_sum_equals_either.base_score
-    - modifier.play_hand.rank_above_previous.base_score
-    - modifier.player_reroll.rank_below_before_reroll.base_score
-    - modifier.initial_roll.initial_rank_above_previous.base_score
-    - modifier.initial_roll.first_hand.base_score
-    - modifier.play_hand.interior_pair_matches_edge.base_score
-    - modifier.play_hand.extreme_equals_hands_remaining.base_score
-    - modifier.play_hand.adjacent_different.base_score
-    - modifier.initial_roll.initial_pair.base_score
-    - modifier.play_hand.adjacent_difference_at_most.base_score
-    - modifier.play_hand.high_die.base_score
-    - modifier.player_reroll.high_die_or_straight.base_score
-    - modifier.play_hand.rank_below_previous.base_score
-    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.base_score
-    - modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
-    - modifier.initial_roll.last_hand.base_score
-    - modifier.play_hand.sum_prime.base_score
-    - modifier.play_hand.edge_pair_differences_equal.base_score
-    - modifier.play_hand.interior_equals_neighbor_difference.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.play_hand.minimum_equals_rerolls_spent.base_score
-    - modifier.play_hand.no_extreme_faces.base_score
-    - modifier.play_hand.hands_remaining_even.base_score
-    - modifier.play_hand.contains_rerolls_remaining.base_score
-    - modifier.play_hand.rerolls_exceed_hands_remaining.base_score
-    - modifier.player_reroll.ordered.base_score
-    - modifier.player_reroll.last_reroll_on_last_hand.base_score
-    - modifier.play_hand.same_parity.base_score
-    - modifier.initial_roll.middle_hand.base_score
-    - modifier.play_hand.edges_match_interior.base_score
-    - modifier.play_hand.interior_equals_neighbor_sum.base_score
-    - modifier.play_hand.sum_divisible_by.base_score
-    - modifier.play_hand.face_equals_position.base_score
-    - modifier.play_hand.two_pair.base_score
-    - modifier.play_hand.alternating_parity.base_score
-    - modifier.play_hand.edge_sum_greater_than_interior.base_score
-    - modifier.play_hand.contains_face.base_score
-    - modifier.play_hand.sum_greater_than.base_score
-    - modifier.play_hand.rerolls_spent_at_least.base_score
-    - modifier.play_hand.unique_count_less_than_rerolls_spent.base_score
-    - modifier.play_hand.interior_sum_divisible_by.base_score
-    - modifier.play_hand.contains_upper_face.base_score
-    - modifier.play_hand.ordered.base_score
-    - modifier.play_hand.odd_sum_greater_than_even_sum.base_score
-    - modifier.play_hand.middle_unique.base_score
-    - modifier.play_hand.middle_equals_odd_count.base_score
-    - modifier.play_hand.edge_pair_sums_equal.base_score
-    - modifier.play_hand.rank_equals_previous.base_score
-    - modifier.play_hand.range_greater_than.base_score
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-    - modifier.play_hand.positive_rerolls_divisible_by.base_score
-    - modifier.play_hand.exactly_one_face.base_score
-    - modifier.player_reroll.selected_sum_equals_either.base_score
-    - modifier.play_hand.every_die_rerolled.base_score
-    - modifier.play_hand.middle_faces_count_at_least.base_score
-    - modifier.initial_roll.previous_stage_exhausted_hands.base_score
-    fallbackModifierId: modifier.play_hand.never.base_score
+    modifiers:
+    - {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
+    - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+    - {fileID: 11400000, guid: 99ad001922f8f90428863e72113295d5, type: 2}
+    - {fileID: 11400000, guid: e573c1bad9ab9f34d95caacebbe531bb, type: 2}
+    - {fileID: 11400000, guid: 6d5cc140596b4a243a1908eafddc0668, type: 2}
+    - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
+    - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
+    - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+    - {fileID: 11400000, guid: d5df1b3d973e1fd40baf183670d2fa3c, type: 2}
+    - {fileID: 11400000, guid: 9cc8cea4a07a7af4d9e0656c59eadcf0, type: 2}
+    - {fileID: 11400000, guid: 86c3e1f28a7f04f4cb14fb4bfc327b42, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    - {fileID: 11400000, guid: 58b708d5156a7a940a85e808b4c1f0aa, type: 2}
+    - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+    - {fileID: 11400000, guid: f1750df61c3e3994389a8855b4ed8b3d, type: 2}
+    - {fileID: 11400000, guid: bff7d34cc060c1849891bad1abd5391d, type: 2}
+    - {fileID: 11400000, guid: 5e7eaed983137a841867ecdaf3276917, type: 2}
+    - {fileID: 11400000, guid: 0716548e5fed3594680ebc8d73ae5c43, type: 2}
+    - {fileID: 11400000, guid: 1bd3c7c554d39e1449aeb214bedae99c, type: 2}
+    - {fileID: 11400000, guid: a1394d0a19e40f743ad86026e6add9e5, type: 2}
+    - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
+    - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    - {fileID: 11400000, guid: c9c616a498b9c264a9a9394603f4577f, type: 2}
+    - {fileID: 11400000, guid: 8ea2e29b269afa44a836e08f3e9c6b37, type: 2}
+    - {fileID: 11400000, guid: f04333ac60e438a4a87e9626cea69a48, type: 2}
+    - {fileID: 11400000, guid: 1631f097356aed6438f3618191cb61c2, type: 2}
+    - {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: 2ab41f7121e9e004bbc1ff24b3e8ed93, type: 2}
+    - {fileID: 11400000, guid: 6e7e9b3aa8c32874bb5c483e8cf0f555, type: 2}
+    - {fileID: 11400000, guid: 954e840d9cb6d9c488b0e294b7848b42, type: 2}
+    - {fileID: 11400000, guid: 1e0bbd40ded2b3342b38de35ca78a727, type: 2}
+    - {fileID: 11400000, guid: d5cf7bb1f77884b4abd08e30e2dc9730, type: 2}
+    - {fileID: 11400000, guid: 347454457226c6c4782b64ef10b5b58c, type: 2}
+    - {fileID: 11400000, guid: 40612ad948a5ee24ca14285dddbae7bb, type: 2}
+    - {fileID: 11400000, guid: 70082ff5ed0299d4b8187b9867352a8d, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: 984c7c2fbf7175847b2cfba0699fbb98, type: 2}
+    - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+    - {fileID: 11400000, guid: 2b300083b73b4d84b82f78cd48f9db21, type: 2}
+    - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+    - {fileID: 11400000, guid: 559fb63ecd56d2641ad00b247e295987, type: 2}
+    - {fileID: 11400000, guid: a8304edcbcf1df4479ebde3434d376ac, type: 2}
+    - {fileID: 11400000, guid: 636968cf1002437419a9a1b74f4fd5ed, type: 2}
+    - {fileID: 11400000, guid: 22b564c7021115144974a32cff5fe691, type: 2}
+    - {fileID: 11400000, guid: 7406a441a1b7c024aa694b7bdd3e438f, type: 2}
+    - {fileID: 11400000, guid: a87dd8734c4211f47be3ba3aea8061e6, type: 2}
+    - {fileID: 11400000, guid: 3d1d81679a2c88c4ba559a9d129b2837, type: 2}
+    - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
+    - {fileID: 11400000, guid: b7775947b3a05904cb7babae1711c995, type: 2}
+    - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+    - {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
+    - {fileID: 11400000, guid: 0c5abe5129dbb7441acf17a0a28d5bbc, type: 2}
+    - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+    - {fileID: 11400000, guid: 157269272abdb5f47b5fd313f5357ab6, type: 2}
+    - {fileID: 11400000, guid: b69a7ad4368e1664f88c700253bdf447, type: 2}
+    - {fileID: 11400000, guid: e0a293f08ad1497478d78cb0d7a31fa9, type: 2}
+    - {fileID: 11400000, guid: 3efb02beaaa789640851f90a59be194a, type: 2}
+    - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+    - {fileID: 11400000, guid: 3b063526b75fdde46a306a8068ba6add, type: 2}
+    - {fileID: 11400000, guid: 84f9cdc08b67ef34b8462879598c016d, type: 2}
+    - {fileID: 11400000, guid: 2511d18b47514cd468236eeb80a66b19, type: 2}
+    - {fileID: 11400000, guid: 3b12467cb8ea0e6498eaf7664e6d7e16, type: 2}
+    - {fileID: 11400000, guid: 676a870c49a830743ae381a9fda5f904, type: 2}
+    - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
+    - {fileID: 11400000, guid: 416b7022488702b47b0868f1cdea1fd2, type: 2}
+    - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+    - {fileID: 11400000, guid: 680fd1906a58a0840b79aea91edf39d9, type: 2}
+    - {fileID: 11400000, guid: 96b5b1373486e5747b653cd78e555e7a, type: 2}
+    - {fileID: 11400000, guid: 7f8cef64f17e21541b26a6c62442c3e9, type: 2}
+    - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+    - {fileID: 11400000, guid: e813234c894fb0b40ae9746c01612788, type: 2}
+    - {fileID: 11400000, guid: e6b2a0162d8ba0541982cb9eebcc077e, type: 2}
+    fallbackModifier: {fileID: 11400000, guid: db3d1d79bec7b5b4cb61a393742a03e4, type: 2}
   - id: reward_pool.multiplier
-    modifierIds:
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
-    - modifier.play_hand.range_less_than.multiplier
-    - modifier.initial_roll.previous_stage_at_most_half_hands_played.multiplier
-    - modifier.player_reroll.selected_matches_hands_remaining.multiplier
-    - modifier.play_hand.second_fourth_product_at_least_sum.multiplier
-    - modifier.play_hand.sum_less_than_initial.multiplier
-    - modifier.player_reroll.rank_equals_before_reroll.multiplier
-    - modifier.play_hand.no_dice_rerolled.multiplier
-    - modifier.play_hand.adjacent_matching_triple.multiplier
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
-    - modifier.play_hand.out_of_rerolls.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    - modifier.player_reroll.adjacent_difference_at_least.multiplier
-    - modifier.play_hand.sum_less_than.multiplier
-    - modifier.play_hand.interior_contains_pair.multiplier
-    - modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
-    - modifier.player_reroll.selected_matching_group_at_least.multiplier
-    - modifier.play_hand.edge_sum_equals_either.multiplier
-    - modifier.play_hand.rank_above_previous.multiplier
-    - modifier.player_reroll.rank_below_before_reroll.multiplier
-    - modifier.initial_roll.initial_rank_above_previous.multiplier
-    - modifier.initial_roll.first_hand.multiplier
-    - modifier.play_hand.interior_pair_matches_edge.multiplier
-    - modifier.play_hand.extreme_equals_hands_remaining.multiplier
-    - modifier.play_hand.adjacent_different.multiplier
-    - modifier.initial_roll.initial_pair.multiplier
-    - modifier.play_hand.adjacent_difference_at_most.multiplier
-    - modifier.play_hand.high_die.multiplier
-    - modifier.player_reroll.high_die_or_straight.multiplier
-    - modifier.play_hand.rank_below_previous.multiplier
-    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.multiplier
-    - modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
-    - modifier.initial_roll.last_hand.multiplier
-    - modifier.play_hand.sum_prime.multiplier
-    - modifier.play_hand.edge_pair_differences_equal.multiplier
-    - modifier.play_hand.interior_equals_neighbor_difference.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.play_hand.minimum_equals_rerolls_spent.multiplier
-    - modifier.play_hand.no_extreme_faces.multiplier
-    - modifier.play_hand.hands_remaining_even.multiplier
-    - modifier.play_hand.contains_rerolls_remaining.multiplier
-    - modifier.play_hand.rerolls_exceed_hands_remaining.multiplier
-    - modifier.player_reroll.ordered.multiplier
-    - modifier.player_reroll.last_reroll_on_last_hand.multiplier
-    - modifier.play_hand.same_parity.multiplier
-    - modifier.initial_roll.middle_hand.multiplier
-    - modifier.play_hand.edges_match_interior.multiplier
-    - modifier.play_hand.interior_equals_neighbor_sum.multiplier
-    - modifier.play_hand.sum_divisible_by.multiplier
-    - modifier.play_hand.face_equals_position.multiplier
-    - modifier.play_hand.two_pair.multiplier
-    - modifier.play_hand.alternating_parity.multiplier
-    - modifier.play_hand.edge_sum_greater_than_interior.multiplier
-    - modifier.play_hand.contains_face.multiplier
-    - modifier.play_hand.sum_greater_than.multiplier
-    - modifier.play_hand.rerolls_spent_at_least.multiplier
-    - modifier.play_hand.unique_count_less_than_rerolls_spent.multiplier
-    - modifier.play_hand.interior_sum_divisible_by.multiplier
-    - modifier.play_hand.contains_upper_face.multiplier
-    - modifier.play_hand.ordered.multiplier
-    - modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
-    - modifier.play_hand.middle_unique.multiplier
-    - modifier.play_hand.middle_equals_odd_count.multiplier
-    - modifier.play_hand.edge_pair_sums_equal.multiplier
-    - modifier.play_hand.rank_equals_previous.multiplier
-    - modifier.play_hand.range_greater_than.multiplier
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-    - modifier.play_hand.positive_rerolls_divisible_by.multiplier
-    - modifier.play_hand.exactly_one_face.multiplier
-    - modifier.player_reroll.selected_sum_equals_either.multiplier
-    - modifier.play_hand.every_die_rerolled.multiplier
-    - modifier.play_hand.middle_faces_count_at_least.multiplier
-    - modifier.initial_roll.previous_stage_exhausted_hands.multiplier
-    fallbackModifierId: modifier.play_hand.never.multiplier
+    modifiers:
+    - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
+    - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+    - {fileID: 11400000, guid: e0ad25eb0e5500c4f8cafa8034d97418, type: 2}
+    - {fileID: 11400000, guid: e1fa233030cff324fa1d0925c30b65f4, type: 2}
+    - {fileID: 11400000, guid: ff2341a7ed159c04481aee12ee1086bd, type: 2}
+    - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
+    - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
+    - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+    - {fileID: 11400000, guid: 51e14458790aefd4c851f2bfe2a194ce, type: 2}
+    - {fileID: 11400000, guid: fd505a63423578f40a75adee370e4f5d, type: 2}
+    - {fileID: 11400000, guid: c6f4fa3a7e5e27344bc1bc2afb7a1b6f, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    - {fileID: 11400000, guid: a5f9a4fcffde5c94a9dbda0e25c08b4d, type: 2}
+    - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+    - {fileID: 11400000, guid: 01ccf671728ae2448a883b91aefc9112, type: 2}
+    - {fileID: 11400000, guid: 2d9a58304b40d8c4ca0e99ef55c23b0f, type: 2}
+    - {fileID: 11400000, guid: 80e76a02d207190478b7fffac2dd62b9, type: 2}
+    - {fileID: 11400000, guid: b6c971c8f51e2e74ab21056533e38c3d, type: 2}
+    - {fileID: 11400000, guid: 6dc4abbe7c5b28e46a556d226bcff9d8, type: 2}
+    - {fileID: 11400000, guid: 6e7b7d92c4121f04a93671ab0375ed33, type: 2}
+    - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
+    - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
+    - {fileID: 11400000, guid: 54e2f47ba9caa154ebf93ca94ff82e26, type: 2}
+    - {fileID: 11400000, guid: 0703508354705dd4b8fc8ba48c2ca01e, type: 2}
+    - {fileID: 11400000, guid: 485139a0215b74742ac42df76e4cdc56, type: 2}
+    - {fileID: 11400000, guid: 2e34ec1e90ed7054daa272d7165af045, type: 2}
+    - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: a9e23629808b97c41947d851484952f1, type: 2}
+    - {fileID: 11400000, guid: e6e643b7c19774e4a9fdc81b145aaad1, type: 2}
+    - {fileID: 11400000, guid: 4719ba75fb319b44693525960ec8efab, type: 2}
+    - {fileID: 11400000, guid: 176099bfb09d96b40b44d7221a4a4121, type: 2}
+    - {fileID: 11400000, guid: 05c2bde6b07155143baed8c45791bb63, type: 2}
+    - {fileID: 11400000, guid: 1f9bca2dbb13ca74bab5b178ca2189fe, type: 2}
+    - {fileID: 11400000, guid: 5b9e7aad1de6e054182e9c4e6058a775, type: 2}
+    - {fileID: 11400000, guid: ca838747ab49cd948b4a62f20c384cd3, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: 0f4ce5ee620e8a04b8f42e9b24b9fdce, type: 2}
+    - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+    - {fileID: 11400000, guid: dbebd752cb30c6f4cb9a39a21b414f64, type: 2}
+    - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+    - {fileID: 11400000, guid: 00fe034e3e0b1e440822eb30511dfc9b, type: 2}
+    - {fileID: 11400000, guid: 2649263da3f073041b2750272a415116, type: 2}
+    - {fileID: 11400000, guid: 5ea36f3a26c32444888c09025c7fddc5, type: 2}
+    - {fileID: 11400000, guid: 6353ea1094ad0894abbc178f5e3b1971, type: 2}
+    - {fileID: 11400000, guid: 68143ef631b36a5408893bad8be3fcc5, type: 2}
+    - {fileID: 11400000, guid: 21031780f8914a4419ed6747b54fa63f, type: 2}
+    - {fileID: 11400000, guid: 706c6e6064574924e822d04270b67ea9, type: 2}
+    - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
+    - {fileID: 11400000, guid: 709956fdb5d06db4180168f86f51084d, type: 2}
+    - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+    - {fileID: 11400000, guid: d33cc2e6604c8dd4ca32799954e90b27, type: 2}
+    - {fileID: 11400000, guid: 755eab8395d15794686ee917bbd126ee, type: 2}
+    - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+    - {fileID: 11400000, guid: 027fbeb951cfda248ae8b45721028643, type: 2}
+    - {fileID: 11400000, guid: 089cf1156a4946a4592644af1eccc4e5, type: 2}
+    - {fileID: 11400000, guid: 3f21655d6220ea24198f33b4f912e73f, type: 2}
+    - {fileID: 11400000, guid: 76673ea16ba82fc4a8ca1960ce107621, type: 2}
+    - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+    - {fileID: 11400000, guid: 969570c51392e2b4eb438885716052e5, type: 2}
+    - {fileID: 11400000, guid: f253f02bc4ab2b54e980b9d6d344a26b, type: 2}
+    - {fileID: 11400000, guid: 51c83caf9c70b404f83c37841b118095, type: 2}
+    - {fileID: 11400000, guid: 2414450bcbcfe04409d69787a3821fe2, type: 2}
+    - {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
+    - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
+    - {fileID: 11400000, guid: d628157fa072a3349a1788c63ad19971, type: 2}
+    - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+    - {fileID: 11400000, guid: eceffb52af06e5049a95f5663720f13a, type: 2}
+    - {fileID: 11400000, guid: 5a5cb6a55e92ee34999bb56a8214af42, type: 2}
+    - {fileID: 11400000, guid: 7f3d859f41b122049955ab52d67d519d, type: 2}
+    - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+    - {fileID: 11400000, guid: aadb6fa8f52cac7488356d0cb094357a, type: 2}
+    - {fileID: 11400000, guid: aa125bd99ab0e78489c8e5fd729a66ce, type: 2}
+    fallbackModifier: {fileID: 11400000, guid: 7f8963ef5aef39d4a9d0ec5411c85e71, type: 2}
   - id: reward_pool.combined
-    modifierIds:
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
-    - modifier.play_hand.range_less_than.combined
-    - modifier.initial_roll.previous_stage_at_most_half_hands_played.combined
-    - modifier.player_reroll.selected_matches_hands_remaining.combined
-    - modifier.play_hand.second_fourth_product_at_least_sum.combined
-    - modifier.play_hand.sum_less_than_initial.combined
-    - modifier.player_reroll.rank_equals_before_reroll.combined
-    - modifier.play_hand.no_dice_rerolled.combined
-    - modifier.play_hand.adjacent_matching_triple.combined
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
-    - modifier.play_hand.out_of_rerolls.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    - modifier.player_reroll.adjacent_difference_at_least.combined
-    - modifier.play_hand.sum_less_than.combined
-    - modifier.play_hand.interior_contains_pair.combined
-    - modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
-    - modifier.player_reroll.selected_matching_group_at_least.combined
-    - modifier.play_hand.edge_sum_equals_either.combined
-    - modifier.play_hand.rank_above_previous.combined
-    - modifier.player_reroll.rank_below_before_reroll.combined
-    - modifier.initial_roll.initial_rank_above_previous.combined
-    - modifier.initial_roll.first_hand.combined
-    - modifier.play_hand.interior_pair_matches_edge.combined
-    - modifier.play_hand.extreme_equals_hands_remaining.combined
-    - modifier.play_hand.adjacent_different.combined
-    - modifier.initial_roll.initial_pair.combined
-    - modifier.play_hand.adjacent_difference_at_most.combined
-    - modifier.play_hand.high_die.combined
-    - modifier.player_reroll.high_die_or_straight.combined
-    - modifier.play_hand.rank_below_previous.combined
-    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.combined
-    - modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
-    - modifier.initial_roll.last_hand.combined
-    - modifier.play_hand.sum_prime.combined
-    - modifier.play_hand.edge_pair_differences_equal.combined
-    - modifier.play_hand.interior_equals_neighbor_difference.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.play_hand.minimum_equals_rerolls_spent.combined
-    - modifier.play_hand.no_extreme_faces.combined
-    - modifier.play_hand.hands_remaining_even.combined
-    - modifier.play_hand.contains_rerolls_remaining.combined
-    - modifier.play_hand.rerolls_exceed_hands_remaining.combined
-    - modifier.player_reroll.ordered.combined
-    - modifier.player_reroll.last_reroll_on_last_hand.combined
-    - modifier.play_hand.same_parity.combined
-    - modifier.initial_roll.middle_hand.combined
-    - modifier.play_hand.edges_match_interior.combined
-    - modifier.play_hand.interior_equals_neighbor_sum.combined
-    - modifier.play_hand.sum_divisible_by.combined
-    - modifier.play_hand.face_equals_position.combined
-    - modifier.play_hand.two_pair.combined
-    - modifier.play_hand.alternating_parity.combined
-    - modifier.play_hand.edge_sum_greater_than_interior.combined
-    - modifier.play_hand.contains_face.combined
-    - modifier.play_hand.sum_greater_than.combined
-    - modifier.play_hand.rerolls_spent_at_least.combined
-    - modifier.play_hand.unique_count_less_than_rerolls_spent.combined
-    - modifier.play_hand.interior_sum_divisible_by.combined
-    - modifier.play_hand.contains_upper_face.combined
-    - modifier.play_hand.ordered.combined
-    - modifier.play_hand.odd_sum_greater_than_even_sum.combined
-    - modifier.play_hand.middle_unique.combined
-    - modifier.play_hand.middle_equals_odd_count.combined
-    - modifier.play_hand.edge_pair_sums_equal.combined
-    - modifier.play_hand.rank_equals_previous.combined
-    - modifier.play_hand.range_greater_than.combined
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-    - modifier.play_hand.positive_rerolls_divisible_by.combined
-    - modifier.play_hand.exactly_one_face.combined
-    - modifier.player_reroll.selected_sum_equals_either.combined
-    - modifier.play_hand.every_die_rerolled.combined
-    - modifier.play_hand.middle_faces_count_at_least.combined
-    - modifier.initial_roll.previous_stage_exhausted_hands.combined
-    fallbackModifierId: modifier.play_hand.never.combined
+    modifiers:
+    - {fileID: 11400000, guid: 0e43985acf43db647904a9e4c71d6d75, type: 2}
+    - {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
+    - {fileID: 11400000, guid: ff02d39bdd4cf7349a4764e30aef12dc, type: 2}
+    - {fileID: 11400000, guid: 90a5dbde57595b04f8890a8ba154038e, type: 2}
+    - {fileID: 11400000, guid: 5a7a1236436149e47a16734a424c915b, type: 2}
+    - {fileID: 11400000, guid: faf037042b04e6e4e89ccc2ddb3ae53d, type: 2}
+    - {fileID: 11400000, guid: c84c761ab8bf6d645aef3b9c6cedf083, type: 2}
+    - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
+    - {fileID: 11400000, guid: 26cf6f230bff10a44835bc78ba963580, type: 2}
+    - {fileID: 11400000, guid: 99733d3ca9acf0547b23f0ede68dab59, type: 2}
+    - {fileID: 11400000, guid: 9fcea7173c002ce4b96d5e0f6d98d017, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    - {fileID: 11400000, guid: 064acae17de9cf443b7491acb579ac80, type: 2}
+    - {fileID: 11400000, guid: 3b1f714f1e75b514e91b807e16a2d500, type: 2}
+    - {fileID: 11400000, guid: a670805d95355ab46917a58f95a2e867, type: 2}
+    - {fileID: 11400000, guid: 9bac75a166f988e4ab6357f9de012c9c, type: 2}
+    - {fileID: 11400000, guid: 63a4d1a40c8e8b84e91e7ae1cdb63140, type: 2}
+    - {fileID: 11400000, guid: 0f2d2bb0911dd7b44b91612b30da4145, type: 2}
+    - {fileID: 11400000, guid: 78327f61a5434eb439b9a3abfd19d50b, type: 2}
+    - {fileID: 11400000, guid: f4a742b413f7ec34bb12c738a55f0d53, type: 2}
+    - {fileID: 11400000, guid: e2279929f2b6dc74a979a856beef4c27, type: 2}
+    - {fileID: 11400000, guid: 4ca1b30991b7dba458eecb77910def8b, type: 2}
+    - {fileID: 11400000, guid: 2f0b650c6fd96c6498d4869fb17a69da, type: 2}
+    - {fileID: 11400000, guid: 12f84913e92769748ba4573cba564eb4, type: 2}
+    - {fileID: 11400000, guid: 04dc3b1a65e9fa84c958b65a678d5aaa, type: 2}
+    - {fileID: 11400000, guid: 4717a9d69ccea8f4e9d6ae432f8a6f37, type: 2}
+    - {fileID: 11400000, guid: 359921b8ca81b0542829cc8a41da090f, type: 2}
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: 5c1fbc1865531a84b87d6aaa0992771e, type: 2}
+    - {fileID: 11400000, guid: bdf2f1d7514ba2841a544755a49300de, type: 2}
+    - {fileID: 11400000, guid: 03a71a354f65b8b4cba7e2559b17cae6, type: 2}
+    - {fileID: 11400000, guid: 4624ac18ab43f3d4b9d11b3c03c24170, type: 2}
+    - {fileID: 11400000, guid: 122d491f0fb91ab4cb8e4ba4a7015e6a, type: 2}
+    - {fileID: 11400000, guid: cea03e9bcfaa5a54ebd5a5adb6c18350, type: 2}
+    - {fileID: 11400000, guid: 87c199eab3bc4f44896eb8a54a20c8f1, type: 2}
+    - {fileID: 11400000, guid: 81625979e9de4ee46a41372b1e538329, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: 045e5ee7068675e44a4259f4eeb06072, type: 2}
+    - {fileID: 11400000, guid: 5bd08cd74982ffb418c2d908c6087091, type: 2}
+    - {fileID: 11400000, guid: 66c0d2fb3e08a304097cd8c6fb968a4a, type: 2}
+    - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
+    - {fileID: 11400000, guid: 964c9e9ff50a60a4cbbd903e080000d1, type: 2}
+    - {fileID: 11400000, guid: 997cb0ca9f77af449993d6c1556c1d5e, type: 2}
+    - {fileID: 11400000, guid: 3298a15fa3568754ea38274f1b28e456, type: 2}
+    - {fileID: 11400000, guid: a41bae1010c70404f86c6e6c98cb7b9f, type: 2}
+    - {fileID: 11400000, guid: fc90129cab41b31449796daf92c98854, type: 2}
+    - {fileID: 11400000, guid: b855721b30ec7db4988d479f165c3b97, type: 2}
+    - {fileID: 11400000, guid: e296eb9ddea908746bc137ebc2257394, type: 2}
+    - {fileID: 11400000, guid: e2555e5891db9f94a80b106d385fcb68, type: 2}
+    - {fileID: 11400000, guid: e424ace3eb8435843a3f51a676ad7352, type: 2}
+    - {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
+    - {fileID: 11400000, guid: c59990f49049df44288442476a95156e, type: 2}
+    - {fileID: 11400000, guid: 281363b302f846040aa1f937c7db45ae, type: 2}
+    - {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
+    - {fileID: 11400000, guid: abf209b1c0af81446bf55994fe0bfb0d, type: 2}
+    - {fileID: 11400000, guid: 2686b92d196223941ac9192e2e7d6c94, type: 2}
+    - {fileID: 11400000, guid: 55d9f7f82bf1ba04883984024d6c6a00, type: 2}
+    - {fileID: 11400000, guid: d8081912eb9efc143a0197b97bd2787d, type: 2}
+    - {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
+    - {fileID: 11400000, guid: 2e97f5010ef9c9842bd97083a4c8bd88, type: 2}
+    - {fileID: 11400000, guid: 30238c9c6024741499d6177cce246bba, type: 2}
+    - {fileID: 11400000, guid: a3a6d67ac31250c4fa7300f3a9d6f62d, type: 2}
+    - {fileID: 11400000, guid: e892c55180ed6e141b609742e5e63991, type: 2}
+    - {fileID: 11400000, guid: c8282098f1896fe4ab825f441045c38b, type: 2}
+    - {fileID: 11400000, guid: e82516bd4f6d5314ebb4cea2b02d478e, type: 2}
+    - {fileID: 11400000, guid: ed2f95ddbfe5c434bbe6bf0528b9456b, type: 2}
+    - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
+    - {fileID: 11400000, guid: f391d996b8ed4504e81716dd9308555e, type: 2}
+    - {fileID: 11400000, guid: 3309fe6738f3db14d9e0d9b452eef648, type: 2}
+    - {fileID: 11400000, guid: 0f82444303cd0834bb2a04709e3bd4b5, type: 2}
+    - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
+    - {fileID: 11400000, guid: cd8100638b830e14a987a05987743c1a, type: 2}
+    - {fileID: 11400000, guid: 8aeb5c7be989aec4686e0fa9368948ce, type: 2}
+    fallbackModifier: {fileID: 11400000, guid: 0a641797fd9e44c4fb75e2e152d28d42, type: 2}
   - id: reward_pool.rerolls
-    modifierIds:
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
-    - modifier.play_hand.range_less_than.rerolls
-    - modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
-    - modifier.player_reroll.selected_matches_hands_remaining.rerolls
-    - modifier.play_hand.second_fourth_product_at_least_sum.rerolls
-    - modifier.play_hand.sum_less_than_initial.rerolls
-    - modifier.player_reroll.rank_equals_before_reroll.rerolls
-    - modifier.play_hand.no_dice_rerolled.rerolls
-    - modifier.play_hand.adjacent_matching_triple.rerolls
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
-    - modifier.play_hand.out_of_rerolls.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    - modifier.player_reroll.adjacent_difference_at_least.rerolls
-    - modifier.play_hand.sum_less_than.rerolls
-    - modifier.play_hand.interior_contains_pair.rerolls
-    - modifier.play_hand.largest_group_equals_hands_or_rerolls.rerolls
-    - modifier.player_reroll.selected_matching_group_at_least.rerolls
-    - modifier.play_hand.edge_sum_equals_either.rerolls
-    - modifier.play_hand.rank_above_previous.rerolls
-    - modifier.player_reroll.rank_below_before_reroll.rerolls
-    - modifier.initial_roll.initial_rank_above_previous.rerolls
-    - modifier.initial_roll.first_hand.rerolls
-    - modifier.play_hand.interior_pair_matches_edge.rerolls
-    - modifier.play_hand.extreme_equals_hands_remaining.rerolls
-    - modifier.play_hand.adjacent_different.rerolls
-    - modifier.initial_roll.initial_pair.rerolls
-    - modifier.play_hand.adjacent_difference_at_most.rerolls
-    - modifier.play_hand.high_die.rerolls
-    - modifier.player_reroll.high_die_or_straight.rerolls
-    - modifier.play_hand.rank_below_previous.rerolls
-    - modifier.play_hand.edge_sum_equals_hands_or_rerolls.rerolls
-    - modifier.player_reroll.selected_interior_equals_neighbor_sum.rerolls
-    - modifier.initial_roll.last_hand.rerolls
-    - modifier.play_hand.sum_prime.rerolls
-    - modifier.play_hand.edge_pair_differences_equal.rerolls
-    - modifier.play_hand.interior_equals_neighbor_difference.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.play_hand.minimum_equals_rerolls_spent.rerolls
-    - modifier.play_hand.no_extreme_faces.rerolls
-    - modifier.play_hand.hands_remaining_even.rerolls
-    - modifier.play_hand.contains_rerolls_remaining.rerolls
-    - modifier.play_hand.rerolls_exceed_hands_remaining.rerolls
-    - modifier.player_reroll.ordered.rerolls
-    - modifier.player_reroll.last_reroll_on_last_hand.rerolls
-    - modifier.play_hand.same_parity.rerolls
-    - modifier.initial_roll.middle_hand.rerolls
-    - modifier.play_hand.edges_match_interior.rerolls
-    - modifier.play_hand.interior_equals_neighbor_sum.rerolls
-    - modifier.play_hand.sum_divisible_by.rerolls
-    - modifier.play_hand.face_equals_position.rerolls
-    - modifier.play_hand.two_pair.rerolls
-    - modifier.play_hand.alternating_parity.rerolls
-    - modifier.play_hand.edge_sum_greater_than_interior.rerolls
-    - modifier.play_hand.contains_face.rerolls
-    - modifier.play_hand.sum_greater_than.rerolls
-    - modifier.play_hand.rerolls_spent_at_least.rerolls
-    - modifier.play_hand.unique_count_less_than_rerolls_spent.rerolls
-    - modifier.play_hand.interior_sum_divisible_by.rerolls
-    - modifier.play_hand.contains_upper_face.rerolls
-    - modifier.play_hand.ordered.rerolls
-    - modifier.play_hand.odd_sum_greater_than_even_sum.rerolls
-    - modifier.play_hand.middle_unique.rerolls
-    - modifier.play_hand.middle_equals_odd_count.rerolls
-    - modifier.play_hand.edge_pair_sums_equal.rerolls
-    - modifier.play_hand.rank_equals_previous.rerolls
-    - modifier.play_hand.range_greater_than.rerolls
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
-    - modifier.play_hand.positive_rerolls_divisible_by.rerolls
-    - modifier.play_hand.exactly_one_face.rerolls
-    - modifier.player_reroll.selected_sum_equals_either.rerolls
-    - modifier.play_hand.every_die_rerolled.rerolls
-    - modifier.play_hand.middle_faces_count_at_least.rerolls
-    - modifier.initial_roll.previous_stage_exhausted_hands.rerolls
-    fallbackModifierId: modifier.play_hand.never.rerolls
+    modifiers:
+    - {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
+    - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+    - {fileID: 11400000, guid: f5d61ddcd2a4c8643af45c70b06d508a, type: 2}
+    - {fileID: 11400000, guid: 5b3dc8a66c410314c989196605563e3a, type: 2}
+    - {fileID: 11400000, guid: 9542d39698b2b7847b7ac46f7c9056a2, type: 2}
+    - {fileID: 11400000, guid: c2059b6fb13385441af8145c71cd8660, type: 2}
+    - {fileID: 11400000, guid: ba7c79c16939ff641aebac2bfa89ab01, type: 2}
+    - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
+    - {fileID: 11400000, guid: c4bd8660ba12e9c409ac8e5e6684f705, type: 2}
+    - {fileID: 11400000, guid: 22506e7cae3192a4fb63f28764a2e12a, type: 2}
+    - {fileID: 11400000, guid: 54dc2b0182d0574458935808e98ca7c5, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    - {fileID: 11400000, guid: 48641385b01342a4bb63d37730c66144, type: 2}
+    - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+    - {fileID: 11400000, guid: ffaf613f40d05bc439903b593a5cac05, type: 2}
+    - {fileID: 11400000, guid: 29778e1e3cfac8e46a51d00784a17619, type: 2}
+    - {fileID: 11400000, guid: 87963be813288e940b2d020d5efd2543, type: 2}
+    - {fileID: 11400000, guid: a5be23f86efcca44d97daaad22a647ce, type: 2}
+    - {fileID: 11400000, guid: b44a264f02a2c5f4589a03ca2b015255, type: 2}
+    - {fileID: 11400000, guid: 315cd53f1ff2721468f46920de6c0907, type: 2}
+    - {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
+    - {fileID: 11400000, guid: 9c38d67a0b8620041a2816daa7d37b09, type: 2}
+    - {fileID: 11400000, guid: c4bfdfe5f1d2a1b429e1a4d3768c8425, type: 2}
+    - {fileID: 11400000, guid: 462ffcd9baeca6147a1a3cfc35c95d62, type: 2}
+    - {fileID: 11400000, guid: f7ac80fd4ecb0a840881c2e67b601c39, type: 2}
+    - {fileID: 11400000, guid: 2947d381c9b45d84ead90fdbc2c33f76, type: 2}
+    - {fileID: 11400000, guid: 249c80e6228b78f43b1fc6cdefcea3b5, type: 2}
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: f848430cdf55c5f4d993794d3d896b7a, type: 2}
+    - {fileID: 11400000, guid: 07819b9c4bdf782409a83a49cbd8ea14, type: 2}
+    - {fileID: 11400000, guid: b13e470c8f6e91e4b8b041c5d102daad, type: 2}
+    - {fileID: 11400000, guid: 2245c543ae8676a46adc383862edb1a7, type: 2}
+    - {fileID: 11400000, guid: 2149383543862434b861e59b764de8d3, type: 2}
+    - {fileID: 11400000, guid: c018a076b7d35c240a7aa847a6127afe, type: 2}
+    - {fileID: 11400000, guid: dedb1f74abc2c9449b78a1869e3ecb76, type: 2}
+    - {fileID: 11400000, guid: 8c889e113ea315f479a694f331e279d7, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: d0114421be6c7f84189c6d105bc537eb, type: 2}
+    - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+    - {fileID: 11400000, guid: 5c317dd4e822a94489399a7e64e9627e, type: 2}
+    - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
+    - {fileID: 11400000, guid: bd2515facbab8a64d86f171912e98f87, type: 2}
+    - {fileID: 11400000, guid: 4743975650b03dc4dbc8cb15073127a3, type: 2}
+    - {fileID: 11400000, guid: ffc5a861df5ef194aa97a443af18664e, type: 2}
+    - {fileID: 11400000, guid: 02b767ac96b5b1148a1b357555a5fc75, type: 2}
+    - {fileID: 11400000, guid: ab37f0a83a18ce447aca5d2fd493e794, type: 2}
+    - {fileID: 11400000, guid: 466ef736cf777a548b0c60766fb0a61c, type: 2}
+    - {fileID: 11400000, guid: 0a2622e9c9f7b6844a0d2eaae63f7468, type: 2}
+    - {fileID: 11400000, guid: 434e63c4fe92ce344b6db70fb96c6ec6, type: 2}
+    - {fileID: 11400000, guid: 125afe35aca937544b02d61bbf26afa0, type: 2}
+    - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+    - {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
+    - {fileID: 11400000, guid: 7e6ee42874db3c641b14a117ed51db8d, type: 2}
+    - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+    - {fileID: 11400000, guid: c66334d8c99fcc442ad407fb79f0ecd7, type: 2}
+    - {fileID: 11400000, guid: 80f5176e8fd41db42a93f180dc9823e6, type: 2}
+    - {fileID: 11400000, guid: 742f226f3d96fb24da6ceac6f13fb0c7, type: 2}
+    - {fileID: 11400000, guid: ceb5e021014b40a4da2b6d4c870afb52, type: 2}
+    - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+    - {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
+    - {fileID: 11400000, guid: a363c28437be755459bc0ef76c0aa46c, type: 2}
+    - {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
+    - {fileID: 11400000, guid: 1fdaea1d4703498499e7f0bbfa3edc8c, type: 2}
+    - {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
+    - {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
+    - {fileID: 11400000, guid: 7309326a631c87645856a88eda5c88f1, type: 2}
+    - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
+    - {fileID: 11400000, guid: ae0240c744e7c434ea4453a36af26a95, type: 2}
+    - {fileID: 11400000, guid: 12c5c4e6e39a89d478f4aa7c49047a5f, type: 2}
+    - {fileID: 11400000, guid: 0ed8d064ee6178b4a81bf721877ea4f8, type: 2}
+    - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
+    - {fileID: 11400000, guid: ec3f466aff72e284b9e82384eb9dab77, type: 2}
+    - {fileID: 11400000, guid: c4e9b216d324167408c8a7dce65b2ae1, type: 2}
+    fallbackModifier: {fileID: 11400000, guid: a4809a433d068c54189945b5e2aeb77d, type: 2}
   - id: reward_pool.fox.introduction.base_score
-    modifierIds:
-    - modifier.initial_roll.first_hand.base_score
-    - modifier.player_reroll.rank_equals_before_reroll.base_score
-    - modifier.initial_roll.initial_rank_above_previous.base_score
-    - modifier.play_hand.contains_face.base_score
-    - modifier.play_hand.contains_upper_face.base_score
-    - modifier.play_hand.no_extreme_faces.base_score
-    - modifier.play_hand.sum_less_than.base_score
-    - modifier.play_hand.sum_greater_than.base_score
-    - modifier.play_hand.range_less_than.base_score
-    - modifier.play_hand.two_pair.base_score
-    - modifier.play_hand.high_die.base_score
-    - modifier.play_hand.middle_unique.base_score
-    - modifier.initial_roll.initial_pair.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
+    - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
+    - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+    - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+    - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+    - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+    - {fileID: 11400000, guid: 157269272abdb5f47b5fd313f5357ab6, type: 2}
+    - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+    - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: 2511d18b47514cd468236eeb80a66b19, type: 2}
+    - {fileID: 11400000, guid: 1631f097356aed6438f3618191cb61c2, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.fox.introduction.multiplier
-    modifierIds:
-    - modifier.initial_roll.first_hand.multiplier
-    - modifier.player_reroll.rank_equals_before_reroll.multiplier
-    - modifier.initial_roll.initial_rank_above_previous.multiplier
-    - modifier.play_hand.contains_face.multiplier
-    - modifier.play_hand.contains_upper_face.multiplier
-    - modifier.play_hand.no_extreme_faces.multiplier
-    - modifier.play_hand.sum_less_than.multiplier
-    - modifier.play_hand.sum_greater_than.multiplier
-    - modifier.play_hand.range_less_than.multiplier
-    - modifier.play_hand.two_pair.multiplier
-    - modifier.play_hand.high_die.multiplier
-    - modifier.play_hand.middle_unique.multiplier
-    - modifier.initial_roll.initial_pair.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
+    - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
+    - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
+    - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+    - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+    - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+    - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+    - {fileID: 11400000, guid: 027fbeb951cfda248ae8b45721028643, type: 2}
+    - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+    - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: 51c83caf9c70b404f83c37841b118095, type: 2}
+    - {fileID: 11400000, guid: 2e34ec1e90ed7054daa272d7165af045, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.fox.introduction.combined
-    modifierIds:
-    - modifier.initial_roll.first_hand.combined
-    - modifier.player_reroll.rank_equals_before_reroll.combined
-    - modifier.initial_roll.initial_rank_above_previous.combined
-    - modifier.play_hand.contains_face.combined
-    - modifier.play_hand.contains_upper_face.combined
-    - modifier.play_hand.no_extreme_faces.combined
-    - modifier.play_hand.sum_less_than.combined
-    - modifier.play_hand.sum_greater_than.combined
-    - modifier.play_hand.range_less_than.combined
-    - modifier.play_hand.two_pair.combined
-    - modifier.play_hand.high_die.combined
-    - modifier.play_hand.middle_unique.combined
-    - modifier.initial_roll.initial_pair.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 4ca1b30991b7dba458eecb77910def8b, type: 2}
+    - {fileID: 11400000, guid: c84c761ab8bf6d645aef3b9c6cedf083, type: 2}
+    - {fileID: 11400000, guid: e2279929f2b6dc74a979a856beef4c27, type: 2}
+    - {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
+    - {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
+    - {fileID: 11400000, guid: 5bd08cd74982ffb418c2d908c6087091, type: 2}
+    - {fileID: 11400000, guid: 3b1f714f1e75b514e91b807e16a2d500, type: 2}
+    - {fileID: 11400000, guid: abf209b1c0af81446bf55994fe0bfb0d, type: 2}
+    - {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
+    - {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: a3a6d67ac31250c4fa7300f3a9d6f62d, type: 2}
+    - {fileID: 11400000, guid: 4717a9d69ccea8f4e9d6ae432f8a6f37, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.fox.introduction.rerolls
-    modifierIds:
-    - modifier.initial_roll.first_hand.rerolls
-    - modifier.player_reroll.rank_equals_before_reroll.rerolls
-    - modifier.initial_roll.initial_rank_above_previous.rerolls
-    - modifier.play_hand.contains_face.rerolls
-    - modifier.play_hand.contains_upper_face.rerolls
-    - modifier.play_hand.no_extreme_faces.rerolls
-    - modifier.play_hand.sum_less_than.rerolls
-    - modifier.play_hand.sum_greater_than.rerolls
-    - modifier.play_hand.range_less_than.rerolls
-    - modifier.play_hand.two_pair.rerolls
-    - modifier.play_hand.high_die.rerolls
-    - modifier.play_hand.middle_unique.rerolls
-    - modifier.initial_roll.initial_pair.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 9c38d67a0b8620041a2816daa7d37b09, type: 2}
+    - {fileID: 11400000, guid: ba7c79c16939ff641aebac2bfa89ab01, type: 2}
+    - {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
+    - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+    - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+    - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+    - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+    - {fileID: 11400000, guid: c66334d8c99fcc442ad407fb79f0ecd7, type: 2}
+    - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+    - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
+    - {fileID: 11400000, guid: 2947d381c9b45d84ead90fdbc2c33f76, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.owl.watchtower.base_score
-    modifierIds:
-    - modifier.play_hand.high_die.base_score
-    - modifier.play_hand.middle_unique.base_score
-    - modifier.play_hand.adjacent_different.base_score
-    - modifier.play_hand.range_greater_than.base_score
-    - modifier.play_hand.exactly_one_face.base_score
-    - modifier.play_hand.face_equals_position.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.base_score
-    - modifier.player_reroll.high_die_or_straight.base_score
-    - modifier.play_hand.edge_pair_sums_equal.base_score
-    - modifier.play_hand.alternating_parity.base_score
-    - modifier.play_hand.ordered.base_score
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: 2511d18b47514cd468236eeb80a66b19, type: 2}
+    - {fileID: 11400000, guid: f04333ac60e438a4a87e9626cea69a48, type: 2}
+    - {fileID: 11400000, guid: 416b7022488702b47b0868f1cdea1fd2, type: 2}
+    - {fileID: 11400000, guid: 96b5b1373486e5747b653cd78e555e7a, type: 2}
+    - {fileID: 11400000, guid: b7775947b3a05904cb7babae1711c995, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    - {fileID: 11400000, guid: 9cc8cea4a07a7af4d9e0656c59eadcf0, type: 2}
+    - {fileID: 11400000, guid: 2ab41f7121e9e004bbc1ff24b3e8ed93, type: 2}
+    - {fileID: 11400000, guid: 676a870c49a830743ae381a9fda5f904, type: 2}
+    - {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
+    - {fileID: 11400000, guid: 3b063526b75fdde46a306a8068ba6add, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.owl.watchtower.multiplier
-    modifierIds:
-    - modifier.play_hand.high_die.multiplier
-    - modifier.play_hand.middle_unique.multiplier
-    - modifier.play_hand.adjacent_different.multiplier
-    - modifier.play_hand.range_greater_than.multiplier
-    - modifier.play_hand.exactly_one_face.multiplier
-    - modifier.play_hand.face_equals_position.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
-    - modifier.player_reroll.high_die_or_straight.multiplier
-    - modifier.play_hand.edge_pair_sums_equal.multiplier
-    - modifier.play_hand.alternating_parity.multiplier
-    - modifier.play_hand.ordered.multiplier
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: 51c83caf9c70b404f83c37841b118095, type: 2}
+    - {fileID: 11400000, guid: 485139a0215b74742ac42df76e4cdc56, type: 2}
+    - {fileID: 11400000, guid: d628157fa072a3349a1788c63ad19971, type: 2}
+    - {fileID: 11400000, guid: 5a5cb6a55e92ee34999bb56a8214af42, type: 2}
+    - {fileID: 11400000, guid: 709956fdb5d06db4180168f86f51084d, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    - {fileID: 11400000, guid: fd505a63423578f40a75adee370e4f5d, type: 2}
+    - {fileID: 11400000, guid: a9e23629808b97c41947d851484952f1, type: 2}
+    - {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
+    - {fileID: 11400000, guid: d33cc2e6604c8dd4ca32799954e90b27, type: 2}
+    - {fileID: 11400000, guid: 969570c51392e2b4eb438885716052e5, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.owl.watchtower.combined
-    modifierIds:
-    - modifier.play_hand.high_die.combined
-    - modifier.play_hand.middle_unique.combined
-    - modifier.play_hand.adjacent_different.combined
-    - modifier.play_hand.range_greater_than.combined
-    - modifier.play_hand.exactly_one_face.combined
-    - modifier.play_hand.face_equals_position.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
-    - modifier.player_reroll.high_die_or_straight.combined
-    - modifier.play_hand.edge_pair_sums_equal.combined
-    - modifier.play_hand.alternating_parity.combined
-    - modifier.play_hand.ordered.combined
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: a3a6d67ac31250c4fa7300f3a9d6f62d, type: 2}
+    - {fileID: 11400000, guid: 04dc3b1a65e9fa84c958b65a678d5aaa, type: 2}
+    - {fileID: 11400000, guid: ed2f95ddbfe5c434bbe6bf0528b9456b, type: 2}
+    - {fileID: 11400000, guid: 3309fe6738f3db14d9e0d9b452eef648, type: 2}
+    - {fileID: 11400000, guid: e424ace3eb8435843a3f51a676ad7352, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    - {fileID: 11400000, guid: 99733d3ca9acf0547b23f0ede68dab59, type: 2}
+    - {fileID: 11400000, guid: 5c1fbc1865531a84b87d6aaa0992771e, type: 2}
+    - {fileID: 11400000, guid: c8282098f1896fe4ab825f441045c38b, type: 2}
+    - {fileID: 11400000, guid: c59990f49049df44288442476a95156e, type: 2}
+    - {fileID: 11400000, guid: 2e97f5010ef9c9842bd97083a4c8bd88, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.owl.watchtower.rerolls
-    modifierIds:
-    - modifier.play_hand.high_die.rerolls
-    - modifier.play_hand.middle_unique.rerolls
-    - modifier.play_hand.adjacent_different.rerolls
-    - modifier.play_hand.range_greater_than.rerolls
-    - modifier.play_hand.exactly_one_face.rerolls
-    - modifier.play_hand.face_equals_position.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    - modifier.player_reroll.exactly_one_selected_matches_selected_count.rerolls
-    - modifier.player_reroll.high_die_or_straight.rerolls
-    - modifier.play_hand.edge_pair_sums_equal.rerolls
-    - modifier.play_hand.alternating_parity.rerolls
-    - modifier.play_hand.ordered.rerolls
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
+    - {fileID: 11400000, guid: f7ac80fd4ecb0a840881c2e67b601c39, type: 2}
+    - {fileID: 11400000, guid: 7309326a631c87645856a88eda5c88f1, type: 2}
+    - {fileID: 11400000, guid: 12c5c4e6e39a89d478f4aa7c49047a5f, type: 2}
+    - {fileID: 11400000, guid: 125afe35aca937544b02d61bbf26afa0, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    - {fileID: 11400000, guid: 22506e7cae3192a4fb63f28764a2e12a, type: 2}
+    - {fileID: 11400000, guid: f848430cdf55c5f4d993794d3d896b7a, type: 2}
+    - {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
+    - {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
+    - {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.moth.crossroads.base_score
-    modifierIds:
-    - modifier.play_hand.contains_face.base_score
-    - modifier.play_hand.contains_upper_face.base_score
-    - modifier.play_hand.range_less_than.base_score
-    - modifier.play_hand.two_pair.base_score
-    - modifier.play_hand.no_extreme_faces.base_score
-    - modifier.play_hand.sum_less_than.base_score
-    - modifier.play_hand.high_die.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.play_hand.no_dice_rerolled.base_score
-    - modifier.play_hand.contains_rerolls_remaining.base_score
-    - modifier.play_hand.every_die_rerolled.base_score
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+    - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+    - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+    - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+    - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+    - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+    - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+    - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+    - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.moth.crossroads.multiplier
-    modifierIds:
-    - modifier.play_hand.contains_face.multiplier
-    - modifier.play_hand.contains_upper_face.multiplier
-    - modifier.play_hand.range_less_than.multiplier
-    - modifier.play_hand.two_pair.multiplier
-    - modifier.play_hand.no_extreme_faces.multiplier
-    - modifier.play_hand.sum_less_than.multiplier
-    - modifier.play_hand.high_die.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.play_hand.no_dice_rerolled.multiplier
-    - modifier.play_hand.contains_rerolls_remaining.multiplier
-    - modifier.play_hand.every_die_rerolled.multiplier
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+    - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+    - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+    - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+    - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+    - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+    - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+    - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+    - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.moth.crossroads.combined
-    modifierIds:
-    - modifier.play_hand.contains_face.combined
-    - modifier.play_hand.contains_upper_face.combined
-    - modifier.play_hand.range_less_than.combined
-    - modifier.play_hand.two_pair.combined
-    - modifier.play_hand.no_extreme_faces.combined
-    - modifier.play_hand.sum_less_than.combined
-    - modifier.play_hand.high_die.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.play_hand.no_dice_rerolled.combined
-    - modifier.play_hand.contains_rerolls_remaining.combined
-    - modifier.play_hand.every_die_rerolled.combined
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
+    - {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
+    - {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
+    - {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
+    - {fileID: 11400000, guid: 5bd08cd74982ffb418c2d908c6087091, type: 2}
+    - {fileID: 11400000, guid: 3b1f714f1e75b514e91b807e16a2d500, type: 2}
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
+    - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
+    - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
+    - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.moth.crossroads.rerolls
-    modifierIds:
-    - modifier.play_hand.contains_face.rerolls
-    - modifier.play_hand.contains_upper_face.rerolls
-    - modifier.play_hand.range_less_than.rerolls
-    - modifier.play_hand.two_pair.rerolls
-    - modifier.play_hand.no_extreme_faces.rerolls
-    - modifier.play_hand.sum_less_than.rerolls
-    - modifier.play_hand.high_die.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.play_hand.no_dice_rerolled.rerolls
-    - modifier.play_hand.contains_rerolls_remaining.rerolls
-    - modifier.play_hand.every_die_rerolled.rerolls
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+    - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+    - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+    - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+    - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+    - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
+    - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
+    - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
+    - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.merchant.unquiet_cart.base_score
-    modifierIds:
-    - modifier.play_hand.contains_face.base_score
-    - modifier.play_hand.contains_upper_face.base_score
-    - modifier.play_hand.range_less_than.base_score
-    - modifier.play_hand.two_pair.base_score
-    - modifier.play_hand.no_extreme_faces.base_score
-    - modifier.play_hand.sum_less_than.base_score
-    - modifier.play_hand.high_die.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.play_hand.no_dice_rerolled.base_score
-    - modifier.play_hand.contains_rerolls_remaining.base_score
-    - modifier.play_hand.every_die_rerolled.base_score
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-    - modifier.play_hand.sum_less_than_initial.base_score
-    - modifier.play_hand.rank_equals_previous.base_score
-    - modifier.play_hand.sum_divisible_by.base_score
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+    - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+    - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+    - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+    - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+    - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+    - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+    - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+    - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+    - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
+    - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
+    - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.merchant.unquiet_cart.multiplier
-    modifierIds:
-    - modifier.play_hand.contains_face.multiplier
-    - modifier.play_hand.contains_upper_face.multiplier
-    - modifier.play_hand.range_less_than.multiplier
-    - modifier.play_hand.two_pair.multiplier
-    - modifier.play_hand.no_extreme_faces.multiplier
-    - modifier.play_hand.sum_less_than.multiplier
-    - modifier.play_hand.high_die.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.play_hand.no_dice_rerolled.multiplier
-    - modifier.play_hand.contains_rerolls_remaining.multiplier
-    - modifier.play_hand.every_die_rerolled.multiplier
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-    - modifier.play_hand.sum_less_than_initial.multiplier
-    - modifier.play_hand.rank_equals_previous.multiplier
-    - modifier.play_hand.sum_divisible_by.multiplier
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+    - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+    - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+    - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+    - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+    - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+    - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+    - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+    - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+    - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
+    - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
+    - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.merchant.unquiet_cart.combined
-    modifierIds:
-    - modifier.play_hand.contains_face.combined
-    - modifier.play_hand.contains_upper_face.combined
-    - modifier.play_hand.range_less_than.combined
-    - modifier.play_hand.two_pair.combined
-    - modifier.play_hand.no_extreme_faces.combined
-    - modifier.play_hand.sum_less_than.combined
-    - modifier.play_hand.high_die.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.play_hand.no_dice_rerolled.combined
-    - modifier.play_hand.contains_rerolls_remaining.combined
-    - modifier.play_hand.every_die_rerolled.combined
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-    - modifier.play_hand.sum_less_than_initial.combined
-    - modifier.play_hand.rank_equals_previous.combined
-    - modifier.play_hand.sum_divisible_by.combined
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
+    - {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
+    - {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
+    - {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
+    - {fileID: 11400000, guid: 5bd08cd74982ffb418c2d908c6087091, type: 2}
+    - {fileID: 11400000, guid: 3b1f714f1e75b514e91b807e16a2d500, type: 2}
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
+    - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
+    - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
+    - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
+    - {fileID: 11400000, guid: faf037042b04e6e4e89ccc2ddb3ae53d, type: 2}
+    - {fileID: 11400000, guid: e82516bd4f6d5314ebb4cea2b02d478e, type: 2}
+    - {fileID: 11400000, guid: e2555e5891db9f94a80b106d385fcb68, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.merchant.unquiet_cart.rerolls
-    modifierIds:
-    - modifier.play_hand.contains_face.rerolls
-    - modifier.play_hand.contains_upper_face.rerolls
-    - modifier.play_hand.range_less_than.rerolls
-    - modifier.play_hand.two_pair.rerolls
-    - modifier.play_hand.no_extreme_faces.rerolls
-    - modifier.play_hand.sum_less_than.rerolls
-    - modifier.play_hand.high_die.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.play_hand.no_dice_rerolled.rerolls
-    - modifier.play_hand.contains_rerolls_remaining.rerolls
-    - modifier.play_hand.every_die_rerolled.rerolls
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
-    - modifier.play_hand.sum_less_than_initial.rerolls
-    - modifier.play_hand.rank_equals_previous.rerolls
-    - modifier.play_hand.sum_divisible_by.rerolls
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+    - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+    - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+    - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+    - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+    - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
+    - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
+    - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
+    - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
+    - {fileID: 11400000, guid: c2059b6fb13385441af8145c71cd8660, type: 2}
+    - {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
+    - {fileID: 11400000, guid: 434e63c4fe92ce344b6db70fb96c6ec6, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.nymph.bound_tree.base_score
-    modifierIds:
-    - modifier.play_hand.contains_face.base_score
-    - modifier.play_hand.contains_upper_face.base_score
-    - modifier.play_hand.range_less_than.base_score
-    - modifier.play_hand.two_pair.base_score
-    - modifier.play_hand.no_extreme_faces.base_score
-    - modifier.play_hand.sum_less_than.base_score
-    - modifier.play_hand.high_die.base_score
-    - modifier.player_reroll.exactly_one_selected_face.base_score
-    - modifier.player_reroll.selected_face_unchanged.base_score
-    - modifier.play_hand.no_dice_rerolled.base_score
-    - modifier.play_hand.contains_rerolls_remaining.base_score
-    - modifier.play_hand.every_die_rerolled.base_score
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.base_score
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.base_score
-    - modifier.play_hand.adjacent_difference_at_most.base_score
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+    - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+    - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+    - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+    - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+    - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+    - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+    - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+    - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+    - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+    - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+    - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+    - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+    - {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
+    - {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.nymph.bound_tree.multiplier
-    modifierIds:
-    - modifier.play_hand.contains_face.multiplier
-    - modifier.play_hand.contains_upper_face.multiplier
-    - modifier.play_hand.range_less_than.multiplier
-    - modifier.play_hand.two_pair.multiplier
-    - modifier.play_hand.no_extreme_faces.multiplier
-    - modifier.play_hand.sum_less_than.multiplier
-    - modifier.play_hand.high_die.multiplier
-    - modifier.player_reroll.exactly_one_selected_face.multiplier
-    - modifier.player_reroll.selected_face_unchanged.multiplier
-    - modifier.play_hand.no_dice_rerolled.multiplier
-    - modifier.play_hand.contains_rerolls_remaining.multiplier
-    - modifier.play_hand.every_die_rerolled.multiplier
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.multiplier
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
-    - modifier.play_hand.adjacent_difference_at_most.multiplier
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+    - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+    - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+    - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+    - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+    - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+    - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+    - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+    - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+    - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+    - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+    - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+    - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+    - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
+    - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.nymph.bound_tree.combined
-    modifierIds:
-    - modifier.play_hand.contains_face.combined
-    - modifier.play_hand.contains_upper_face.combined
-    - modifier.play_hand.range_less_than.combined
-    - modifier.play_hand.two_pair.combined
-    - modifier.play_hand.no_extreme_faces.combined
-    - modifier.play_hand.sum_less_than.combined
-    - modifier.play_hand.high_die.combined
-    - modifier.player_reroll.exactly_one_selected_face.combined
-    - modifier.player_reroll.selected_face_unchanged.combined
-    - modifier.play_hand.no_dice_rerolled.combined
-    - modifier.play_hand.contains_rerolls_remaining.combined
-    - modifier.play_hand.every_die_rerolled.combined
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.combined
-    - modifier.play_hand.adjacent_difference_at_most.combined
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: dd5599d3a00d4384aab9d1d9b4506f7f, type: 2}
+    - {fileID: 11400000, guid: 44e35b0bc5555624b80f01a28550f9da, type: 2}
+    - {fileID: 11400000, guid: 81752b42418e0cb4e8c3ec4c7eba187c, type: 2}
+    - {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
+    - {fileID: 11400000, guid: 5bd08cd74982ffb418c2d908c6087091, type: 2}
+    - {fileID: 11400000, guid: 3b1f714f1e75b514e91b807e16a2d500, type: 2}
+    - {fileID: 11400000, guid: fe67f70bd865564428b81bab7a5037e4, type: 2}
+    - {fileID: 11400000, guid: c83d9385beb479944ba1f9aa276aa490, type: 2}
+    - {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
+    - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
+    - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
+    - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
+    - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
+    - {fileID: 11400000, guid: 0e43985acf43db647904a9e4c71d6d75, type: 2}
+    - {fileID: 11400000, guid: 359921b8ca81b0542829cc8a41da090f, type: 2}
+    fallbackModifier: {fileID: 0}
   - id: reward_pool.nymph.bound_tree.rerolls
-    modifierIds:
-    - modifier.play_hand.contains_face.rerolls
-    - modifier.play_hand.contains_upper_face.rerolls
-    - modifier.play_hand.range_less_than.rerolls
-    - modifier.play_hand.two_pair.rerolls
-    - modifier.play_hand.no_extreme_faces.rerolls
-    - modifier.play_hand.sum_less_than.rerolls
-    - modifier.play_hand.high_die.rerolls
-    - modifier.player_reroll.exactly_one_selected_face.rerolls
-    - modifier.player_reroll.selected_face_unchanged.rerolls
-    - modifier.play_hand.no_dice_rerolled.rerolls
-    - modifier.play_hand.contains_rerolls_remaining.rerolls
-    - modifier.play_hand.every_die_rerolled.rerolls
-    - modifier.play_hand.maximum_at_most_rerolls_remaining.rerolls
-    - modifier.play_hand.three_smallest_sum_at_most_maximum.rerolls
-    - modifier.play_hand.adjacent_difference_at_most.rerolls
-    fallbackModifierId:
+    modifiers:
+    - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+    - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+    - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+    - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+    - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+    - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+    - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+    - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+    - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+    - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
+    - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
+    - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
+    - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
+    - {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
+    - {fileID: 11400000, guid: 249c80e6228b78f43b1fc6cdefcea3b5, type: 2}
+    fallbackModifier: {fileID: 0}

@@ -25,14 +25,9 @@ namespace Dice.Tests
             lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
             lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
             lighting.BaseTexture = texture;
-            table = UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset"));
-            Set(table, "roomTexture", texture);
-            Set(table, "sceneLighting", lighting);
-            Set(table, "trayPresentation", AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset"));
             window = ScriptableObject.CreateInstance<EncounterLightingPreviewWindow>();
-            Set(window, "table", table);
+            // The entry preview never reads a table; table previews select theirs explicitly.
+            Set(window, "table", null);
             Set(window, "entry", lighting);
             Set(window, "animate", false);
         }
@@ -41,14 +36,26 @@ namespace Dice.Tests
         public void TearDown()
         {
             if (window != null) UnityEngine.Object.DestroyImmediate(window);
-            UnityEngine.Object.DestroyImmediate(table);
+            if (table != null) UnityEngine.Object.DestroyImmediate(table);
             UnityEngine.Object.DestroyImmediate(lighting);
             UnityEngine.Object.DestroyImmediate(texture);
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ProductionEntryPreviewRendersSyntheticArtworkAndRestoresTargetAndSrgb(bool nonNullTarget)
+        /** A copy of the authored lit table that keeps its encounter scene and tray but draws this fixture's synthetic lighting. */
+        private void UseTable()
+        {
+            string tablePath = TestContent.LitTablePath();
+            var authored = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            Assert.That(authored, Is.Not.Null, tablePath);
+            table = UnityEngine.Object.Instantiate(authored);
+            Set(table, "roomTexture", texture);
+            Set(table, "sceneLighting", lighting);
+            Set(window, "table", table);
+        }
+
+        /** Checks the entry preview draws its lighting artwork and restores the caller's render target, sRGB write and pipeline / fails if the preview stays dark or leaks render state. */
+        [Test]
+        public void EntryPreviewRendersItsArtworkAndRestoresRenderState()
         {
             Assert.That(SystemInfo.graphicsDeviceType, Is.Not.EqualTo(GraphicsDeviceType.Null), "This test requires graphics-enabled Unity.");
             RenderTexture previous = RenderTexture.active;
@@ -61,10 +68,10 @@ namespace Dice.Tests
                 sentinel.Create();
                 Set(window, "showTable", false);
                 Invoke(window, "EnsureStage");
-                RenderTexture.active = nonNullTarget ? sentinel : null;
+                RenderTexture.active = sentinel;
                 GL.sRGBWrite = !previousSrgb;
                 Invoke(window, "RenderPreview");
-                Assert.That(RenderTexture.active, Is.SameAs(nonNullTarget ? sentinel : null));
+                Assert.That(RenderTexture.active, Is.SameAs(sentinel));
                 Assert.That(GL.sRGBWrite, Is.EqualTo(!previousSrgb));
                 Assert.That(QualitySettings.renderPipeline, Is.SameAs(previousPipeline));
                 var output = Field<RenderTexture>(window, "output");
@@ -87,6 +94,7 @@ namespace Dice.Tests
         [Test]
         public void ProductionTablePreviewKeepsPipelineAcrossStageRebuildAndReleasesOwnedResources()
         {
+            UseTable();
             RenderPipelineAsset previous = QualitySettings.renderPipeline;
             Set(window, "showTable", true);
             Invoke(window, "EnsureStage");

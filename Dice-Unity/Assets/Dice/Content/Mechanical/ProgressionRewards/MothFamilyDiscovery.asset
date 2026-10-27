@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: MothFamilyDiscovery
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   discoveredFamilyIds:
   - modifier.play_hand.contains_rerolls_remaining
   - modifier.play_hand.every_die_rerolled
   - modifier.play_hand.maximum_at_most_rerolls_remaining
-  grantedModifierIds: []
+  grantedModifiers: []

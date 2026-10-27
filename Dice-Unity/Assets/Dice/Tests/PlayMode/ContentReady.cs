@@ -12,7 +12,11 @@ namespace Dice.Tests
 {
     internal static class ContentReady
     {
-        internal static IEnumerator Spirit(bool enterEncounter = true)
+        /**
+         * Loads the authored content and, when entering an encounter, opens the first encounter journey in catalog order
+         * that a fresh profile can play without prerequisites and that has the property the caller requires.
+         */
+        internal static IEnumerator Spirit(bool enterEncounter = true, Func<EncounterJourneyAsset, bool> requirement = null)
         {
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
@@ -32,7 +36,18 @@ namespace Dice.Tests
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.Null);
             if (!enterEncounter) { yield return Routed(controller); yield break; }
-            controller.SelectEncounter(controller.JourneyCatalog.Entries[0].EncounterId);
+            EncounterJourneyAsset journey = null;
+            foreach (var entry in controller.JourneyCatalog.Entries)
+                if (entry != null && !entry.IsStoryOnly && controller.IsJourneyAvailable(entry.Id)
+                    && (requirement == null || requirement(entry)))
+                {
+                    journey = entry;
+                    break;
+                }
+            Assert.That(journey, Is.Not.Null, requirement == null
+                ? "The authored journey catalog has no encounter journey available without prerequisites."
+                : "The authored journey catalog has no encounter journey available without prerequisites with the required property.");
+            controller.SelectEncounter(journey.EncounterId);
             yield return Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
@@ -42,6 +57,21 @@ namespace Dice.Tests
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, "Opening encounter presentation did not complete.");
             Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
+        }
+
+        /**
+         * The application's charm presentation: the authored skin's, loaded with its content, or the test skin a test
+         * installed.
+         */
+        internal static ModifierPresentationCatalog Charms
+        {
+            get
+            {
+                var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+                Assert.That(controller, Is.Not.Null);
+                Assert.That(controller.ModifierPresentation, Is.Not.Null, "The application has not loaded its charm presentation.");
+                return controller.ModifierPresentation;
+            }
         }
 
         internal static SpiritApplicationPresentation Router(SpiritEncounterController controller = null)
@@ -55,22 +85,6 @@ namespace Dice.Tests
 
         internal static SpiritEncounterView EncounterView(SpiritEncounterController controller = null) => Router(controller).EncounterView;
         internal static SpiritFrontendView FrontendView(SpiritEncounterController controller = null) => Router(controller).FrontendView;
-
-        internal static CanvasGroup ActionCueGroup(SpiritEncounterView view, bool playHand)
-            => ActionCuePart<CanvasGroup>(view, playHand, "Group");
-
-        internal static T ActionCuePart<T>(SpiritEncounterView view, bool playHand, string name) where T : Component
-        {
-            var component = view.GetComponent<SpiritActionModifierCue>();
-            Assert.That(component, Is.Not.Null);
-            var field = typeof(SpiritActionModifierCue).GetField(playHand ? "play" : "reroll",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            object cue = field.GetValue(component);
-            Assert.That(cue, Is.Not.Null);
-            var part = (T)cue.GetType().GetField(name).GetValue(cue);
-            Assert.That(part, Is.Not.Null, "Authored action cue " + name);
-            return part;
-        }
 
         internal static Component PresentationRoot(SpiritEncounterController controller = null)
         {
@@ -95,18 +109,6 @@ namespace Dice.Tests
             Assert.That(router.IsReady, Is.True, "The authored presentation scene did not become ready.");
         }
 
-        internal static SpiritRewardCard RewardCardPrefab()
-        {
-#if UNITY_EDITOR
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<SpiritRewardCard>(
-                "Assets/Dice/Content/Presentation/UI/SpiritRewardCard.prefab");
-            Assert.That(prefab, Is.Not.Null);
-            return prefab;
-#else
-            throw new InvalidOperationException("Standalone card authoring tests require the Unity editor asset database.");
-#endif
-        }
-
         internal static Transform Die(SpiritDiceTray tray, int index)
         {
             var field = typeof(SpiritDiceTray).GetField("dice",
@@ -116,26 +118,6 @@ namespace Dice.Tests
             Assert.That(dice, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
             Assert.That(dice[index], Is.Not.Null, "Authored die " + index);
             return dice[index];
-        }
-
-        /** Selected dice show the tray's authored outline and frame; no plaque or REROLL caption marks the selection. */
-        internal static void AssertDiceSelection(SpiritEncounterView view, int selectedMask, string context)
-        {
-            var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
-            var outlines = (GameObject[])typeof(SpiritDiceTray).GetField("selectionOutlines", flags).GetValue(view.DiceTray);
-            var frames = (GameObject[])typeof(SpiritDiceTray).GetField("selectionFrames", flags).GetValue(view.DiceTray);
-            Assert.That(outlines, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
-            Assert.That(frames, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
-            for (int index = 0; index < Dice.Engine.DiceValues.Count; ++index)
-            {
-                bool selected = (selectedMask & (1 << index)) != 0;
-                Assert.That(outlines[index].activeInHierarchy, Is.EqualTo(selected), "Selection outline " + index + " " + context);
-                Assert.That(frames[index].activeInHierarchy, Is.EqualTo(selected), "Selection frame " + index + " " + context);
-            }
-            foreach (Transform child in view.GetComponentsInChildren<Transform>(true))
-                Assert.That(child.name, Does.Not.StartWith("DieReroll"), "Selected dice have no plaque " + context);
-            foreach (UnityEngine.UI.Text text in view.GetComponentsInChildren<UnityEngine.UI.Text>())
-                Assert.That(text.text, Is.Not.EqualTo("REROLL"), text.name + " must not caption the selection " + context);
         }
 
         internal static string SpiritSavePath() => Path.GetFullPath(Path.Combine(Application.dataPath,
@@ -174,19 +156,6 @@ namespace Dice.Tests
                 SeedPrerequisites(profile, journeys, required, visited);
                 profile.CompleteStory(id);
             }
-        }
-
-        internal static IEnumerator Diagnostic()
-        {
-            var controller = UnityEngine.Object.FindAnyObjectByType<DiagnosticEncounterController>();
-            Assert.That(controller, Is.Not.Null);
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.Snapshot == null && Time.realtimeSinceStartup < deadline)
-            {
-                Assert.That(controller.StatusMessage, Does.Not.StartWith("Cannot"));
-                yield return null;
-            }
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
         }
     }
 

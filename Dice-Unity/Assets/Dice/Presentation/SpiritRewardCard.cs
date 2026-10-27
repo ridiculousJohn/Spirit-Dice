@@ -52,45 +52,38 @@ namespace Dice.Presentation
             return card;
         }
 
-        public void RenderModifier(ModifierDefinition definition, long offerId, long optionId)
+        public void RenderModifier(ModifierPresentationCatalog charms, ModifierDefinition definition, long offerId, long optionId)
         {
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             this.offerId = offerId;
             this.optionId = optionId;
             handUpgradeMode = false;
             modifierRoot.SetActive(true);
             handRoot.SetActive(false);
-            SpiritCharmVisuals.SetIcon(charmIcon, charmSigil, charmCategory, definition);
-            title.text = SpiritModifierPresentation.GetName(definition);
+            SpiritCharmVisuals.SetIcon(charmIcon, charmSigil, charmCategory, charms, definition);
+            title.text = charms.GetName(definition);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = GetModifierDescription(definition, theme.amber, theme.GetModifierTriggerColor(definition.Phase));
-            effects.text = "<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>";
-            effects.color = SpiritModifierIcons.GetEffectColor(definition);
+            condition.text = GetModifierDescription(charms, definition, theme.amber, theme.GetModifierTriggerColor(definition.Phase));
+            effects.text = "<b>" + charms.GetEffectText(definition) + "</b>";
+            effects.color = charms.GetEffectColor(definition);
             SetModifierSelected(false);
         }
 
-        public static string GetModifierDescription(ModifierDefinition definition, Color highlight, Color? triggerHighlight = null)
+        public static string GetModifierDescription(ModifierPresentationCatalog charms, ModifierDefinition definition,
+            Color highlight, Color? triggerHighlight = null)
         {
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            string timing;
-            switch (definition.Phase)
-            {
-                case ModifierPhase.InitialRoll: timing = "On initial roll"; break;
-                case ModifierPhase.PlayerReroll: timing = "When rerolling"; break;
-                case ModifierPhase.PlayHand: timing = "When playing a hand"; break;
-                default: timing = DiagnosticText.Humanize(definition.Phase.ToString()); break;
-            }
             string color = ColorUtility.ToHtmlStringRGB(highlight);
-            string description = SpiritModifierPresentation.GetConditionText(definition);
+            string description = charms.GetConditionText(definition);
             description = Regex.Replace(description,
                 @"\b(?:\d+|High Die|Two Pair|Pair|Straight|rerolled|rerolls?|hands?|initial roll|previous played hand)\b",
                 match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
             string triggerColor = ColorUtility.ToHtmlStringRGB(triggerHighlight ?? highlight);
-            string text = "<b><color=#" + triggerColor + ">" + timing + "</color></b>: " + description;
-            if (definition.ActivationLimit == ModifierActivationLimit.OncePerStage)
-                text += " <b>Once per stage.</b>";
-            else if (definition.ActivationLimit == ModifierActivationLimit.OncePerHand && definition.Phase != ModifierPhase.PlayHand)
-                text += " <b>Once per hand.</b>";
+            string text = "<b><color=#" + triggerColor + ">" + charms.GetDescriptionLead(definition) + "</color></b>: " + description;
+            string note = charms.GetDescriptionNote(definition);
+            if (note.Length > 0) text += " <b>" + note + "</b>";
             return text;
         }
 

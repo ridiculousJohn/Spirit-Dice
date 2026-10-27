@@ -463,6 +463,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   view: {fileID: 903299793}
   catalogAsset: {fileID: 11400000, guid: cc8a241269354f6db46d60178ddc427d, type: 2}
+  modifierSkin: {fileID: 0}
   encounterId: encounter.standard
   initialSeed: 60
 --- !u!1001 &903299792

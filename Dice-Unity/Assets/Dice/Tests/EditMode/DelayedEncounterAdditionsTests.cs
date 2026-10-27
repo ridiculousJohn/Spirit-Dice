@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Dice.Engine;
 using NUnit.Framework;
@@ -12,50 +11,16 @@ namespace Dice.Tests
         private const string Other = "other";
         private const string Addition = "addition";
 
-        [Test]
-        public void GeneratedOffersIncludeAdditionsOnlyFromTheAuthoredClearedStage()
+        [TestCase(2, false)]
+        [TestCase(3, true)]
+        public void GeneratedOffersIncludeAdditionsOnlyFromTheAuthoredClearedStage(int clearedStage, bool offered)
         {
             var catalog = Catalog(firstClearedStage: 3, ordinary: new[] { Owned });
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
-            for (int incoming = 2; incoming <= 5; ++incoming)
-            {
-                var random = new DeterministicRandom(7);
-                var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, incoming - 1, new[] { Owned },
-                    Array.Empty<string>(), ref random, encounter, Array.Empty<string>(), incoming);
-                Assert.That(generated.ModifierIds, Is.EqualTo(incoming - 1 >= 3 ? new[] { Addition } : Array.Empty<string>()),
-                    "Offer for incoming stage " + incoming);
-            }
-            var immediate = Catalog(firstClearedStage: 1, ordinary: new[] { Owned });
-            var first = new DeterministicRandom(7);
-            Assert.That(RewardGenerator.GenerateModifiers(immediate, immediate.GetEncounter(TestContent.EncounterId).RewardPolicy, 1,
-                new[] { Owned }, Array.Empty<string>(), ref first, immediate.GetEncounter(TestContent.EncounterId),
-                Array.Empty<string>(), 2).ModifierIds, Is.EqualTo(new[] { Addition }));
-        }
-
-        [Test]
-        public void EncounterOffersSkipAdditionsBeforeTheAuthoredStageAndRestorePendingOffersAfterIt()
-        {
-            var catalog = Catalog(firstClearedStage: 3, ordinary: new[] { Owned, Other });
-            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
-            var offers = new List<string[]>();
-            while (session.Snapshot.StageIndex < 3)
-            {
-                Execute(session, PlayHandAction.Instance);
-                if (session.Snapshot.Phase == EncounterPhase.ChoosingModifier)
-                {
-                    var offer = session.Snapshot.PendingReward;
-                    offers.Add(offer.Options.Select(option => option.DefinitionId).ToArray());
-                    Restore(catalog, session.CaptureSave());
-                    Execute(session, new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId));
-                }
-                else offers.Add(Array.Empty<string>());
-                var upgrade = session.Snapshot.PendingReward;
-                Assert.That(session.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingHandUpgrade));
-                Execute(session, new SelectHandUpgradeAction(upgrade.OfferId, upgrade.Options[0].OptionId));
-            }
-            Assert.That(offers[0], Is.EqualTo(new[] { Other }), "Clearing stage 1 offers only the ordinary pool.");
-            Assert.That(offers[1], Is.Empty, "Clearing stage 2 has no eligible charm.");
-            Assert.That(offers[2], Is.EqualTo(new[] { Addition }), "Clearing stage 3 offers the encounter's additions.");
+            var random = new DeterministicRandom(7);
+            var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, new[] { Owned },
+                Array.Empty<string>(), ref random, encounter, Array.Empty<string>(), clearedStage + 1);
+            Assert.That(generated.ModifierIds, Is.EqualTo(offered ? new[] { Addition } : Array.Empty<string>()));
         }
 
         [Test]
@@ -111,15 +76,6 @@ namespace Dice.Tests
                 new EncounterDefinition("encounter.zero", stages, encounterModifiersFirstClearedStageNumber: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() =>
                 new EncounterDefinition("encounter.beyond", stages, encounterModifiersFirstClearedStageNumber: 3));
-        }
-
-        [Test]
-        public void AuthoredEncountersWithoutTheFieldKeepAdditionsFromTheFirstOffer()
-        {
-            var catalog = TestContent.BuildStandardCatalog();
-            foreach (var encounter in catalog.Encounters.Where(value => value.Id != "encounter.nymph.bound_tree"))
-                Assert.That(encounter.EncounterModifiersFirstClearedStageNumber, Is.EqualTo(1), encounter.Id);
-            Assert.That(catalog.GetEncounter("encounter.nymph.bound_tree").EncounterModifiersFirstClearedStageNumber, Is.EqualTo(3));
         }
 
         private static MechanicalCatalog Catalog(int firstClearedStage, string[] ordinary)

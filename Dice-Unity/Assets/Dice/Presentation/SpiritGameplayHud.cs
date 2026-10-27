@@ -281,15 +281,15 @@ namespace Dice.Presentation
             else if (resource.Resource == ResourceKind.Hands) HandsLabel.text = "HANDS  " + resource.After;
         }
 
-        public void ShowActivationIcon(ModifierDefinition definition)
+        public void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            ModifierActivationIcon.sprite = SpiritModifierIcons.GetSprite(definition);
-            Color color = SpiritModifierIcons.GetEffectColor(definition);
+            ModifierActivationIcon.sprite = charms.GetIcon(definition);
+            Color color = charms.GetEffectColor(definition);
             ModifierActivationIcon.color = modifierActivationSigil.color = color;
             ModifierActivationIcon.gameObject.SetActive(ModifierActivationIcon.sprite != null);
-            modifierActivationSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            modifierActivationSigil.Seed = charms.GetSigilSeed(definition);
             modifierActivationSigil.gameObject.SetActive(ModifierActivationIcon.sprite == null);
-            modifierActivationCategory.Render(definition);
+            modifierActivationCategory.Render(charms, definition);
             ModifierEmblem.enabled = false;
             ModifierEmblem.gameObject.SetActive(true);
         }
@@ -307,7 +307,7 @@ namespace Dice.Presentation
             ModifierActivationIcon.rectTransform.localScale = modifierActivationIconScale;
             ModifierActivationIcon.color = Color.white;
             modifierActivationSigil.gameObject.SetActive(false);
-            modifierActivationCategory.Render(null);
+            modifierActivationCategory.Render(null, null);
             foreach (var highlight in new[] { BaseScoreHighlight, MultiplierHighlight, RerollsHighlight, HandsHighlight })
                 ResetCounterHighlight(highlight);
             SelectionLabel.text = "";
@@ -327,11 +327,11 @@ namespace Dice.Presentation
         }
 
         internal static void AddCounterHighlight(List<SpiritCounterHighlight> highlights, SpiritCounterHighlight highlight,
-            ModifierDefinition definition)
+            ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             if (highlights.Contains(highlight)) return;
-            var sprite = SpiritModifierIcons.GetSprite(definition);
-            highlight.Color = SpiritModifierIcons.GetEffectColor(definition);
+            var sprite = charms.GetIcon(definition);
+            highlight.Color = charms.GetEffectColor(definition);
             highlight.Icon.sprite = sprite;
             highlight.Icon.color = highlight.Color;
             highlight.Icon.gameObject.SetActive(sprite != null);

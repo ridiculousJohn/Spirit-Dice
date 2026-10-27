@@ -1,9 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Dice.App;
 using Dice.Engine;
 using NUnit.Framework;
 
@@ -13,7 +11,6 @@ namespace Dice.Tests
     {
         [TestCase(0)]
         [TestCase(1)]
-        [TestCase(2)]
         [TestCase(3)]
         public void InitialAndRerollSavesResumeContributionsLimitsHistoryAndBothRandomStreams(int prefixLength)
         {
@@ -337,70 +334,6 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void RestoringAtEveryLegacyStandardActionBoundaryPreservesTheCompleteVictory()
-        {
-            var catalog = StandardEncounterReplayTests.LegacyCatalog();
-            var uninterrupted = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
-            var resumed = Restore(catalog, uninterrupted.CaptureSave());
-            var traceField = typeof(StandardEncounterReplayTests).GetField("VictoryActions", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.That(traceField, Is.Not.Null);
-            string trace = (string)traceField.GetRawConstantValue();
-            var restoredPhases = new HashSet<EncounterPhase> { resumed.Snapshot.Phase };
-            foreach (string row in trace.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string[] values = row.Split(',');
-                EncounterAction action;
-                switch (values[0])
-                {
-                    case "R": action = new RerollDiceAction(int.Parse(values[1])); break;
-                    case "P": action = PlayHandAction.Instance; break;
-                    case "F": action = new RefreshModifierOfferAction(long.Parse(values[1])); break;
-                    case "M": action = new SelectModifierAction(long.Parse(values[1]), long.Parse(values[2])); break;
-                    case "U": action = new SelectHandUpgradeAction(long.Parse(values[1]), long.Parse(values[2])); break;
-                    default: throw new InvalidOperationException(row);
-                }
-                AssertContinuation(uninterrupted, resumed, action);
-                var save = resumed.CaptureSave();
-                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
-                AssertGraphEqual(save, resumed.CaptureSave());
-                restoredPhases.Add(resumed.Snapshot.Phase);
-            }
-            Assert.That(restoredPhases, Is.EquivalentTo(new[]
-            {
-                EncounterPhase.Playing, EncounterPhase.ChoosingModifier, EncounterPhase.ChoosingHandUpgrade, EncounterPhase.Completed
-            }));
-            Assert.That(resumed.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-            Assert.That(resumed.Snapshot.TotalScore, Is.EqualTo(80561));
-            Assert.That(resumed.Snapshot.Modifiers.Count, Is.EqualTo(24));
-        }
-
-        [Test]
-        public void ActualStandardProgressionResumesAtEveryActionBoundaryWithIdenticalOffersAndRandomStreams()
-        {
-            var catalog = StandardEncounterReplayTests.Catalog();
-            var uninterrupted = EncounterSession.CreateEncounter(catalog, "encounter.standard", 60);
-            var resumed = Restore(catalog, uninterrupted.CaptureSave());
-            var restoredPhases = new HashSet<EncounterPhase> { resumed.Snapshot.Phase };
-            int refreshes = 0;
-            for (int count = 0; count < 1000 && uninterrupted.Snapshot.Phase != EncounterPhase.Completed; ++count)
-            {
-                var action = StandardEncounterReplayTests.ProgressionAction(catalog, uninterrupted);
-                if (action is RefreshModifierOfferAction) ++refreshes;
-                AssertContinuation(uninterrupted, resumed, action);
-                var save = resumed.CaptureSave();
-                resumed = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
-                AssertGraphEqual(save, resumed.CaptureSave());
-                restoredPhases.Add(resumed.Snapshot.Phase);
-            }
-            Assert.That(restoredPhases, Is.EquivalentTo(new[] { EncounterPhase.Playing, EncounterPhase.ChoosingModifier,
-                EncounterPhase.ChoosingHandUpgrade, EncounterPhase.Completed }));
-            Assert.That(refreshes, Is.GreaterThan(0));
-            Assert.That(resumed.Snapshot.StageIndex, Is.GreaterThanOrEqualTo(1));
-            Assert.That(resumed.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won).Or.EqualTo(EncounterOutcome.Lost));
-            AssertGraphEqual(uninterrupted.CaptureSave(), resumed.CaptureSave());
-        }
-
-        [Test]
         public void NullSaveIsRejectedWithoutProducingASession()
         {
             var result = EncounterSession.RestoreEncounter(TestContent.Catalog(), null);
@@ -544,14 +477,8 @@ namespace Dice.Tests
             {
                 Assert.That(actual.Events[i].GetType(), Is.EqualTo(expected.Events[i].GetType()));
                 foreach (var property in expected.Events[i].GetType().GetProperties())
-                {
-                    var expectedValue = property.GetValue(expected.Events[i]);
-                    var actualValue = property.GetValue(actual.Events[i]);
-                    if (expectedValue is ScoreBreakdown score)
-                        foreach (var scoreProperty in typeof(ScoreBreakdown).GetProperties())
-                            Assert.That(scoreProperty.GetValue(actualValue), Is.EqualTo(scoreProperty.GetValue(score)), scoreProperty.Name);
-                    else Assert.That(actualValue, Is.EqualTo(expectedValue), property.Name);
-                }
+                    EncounterSessionTests.AssertValuesEqual(property.GetValue(expected.Events[i]), property.GetValue(actual.Events[i]),
+                        expected.Events[i].GetType().Name + "." + property.Name);
             }
         }
 

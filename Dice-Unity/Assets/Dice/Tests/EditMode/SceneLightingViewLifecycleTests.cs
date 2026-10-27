@@ -40,14 +40,26 @@ namespace Dice.Tests
             Assert.That(original.isDirty, Is.EqualTo(originalDirty));
         }
 
+        /** Opens the authored lit table's encounter scene in place of the empty preview and returns the table. */
+        private EncounterTablePresentationAsset OpenTableScene()
+        {
+            string tablePath = TestContent.LitTablePath();
+            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            Assert.That(table, Is.Not.Null, tablePath);
+            Assert.That(table.Scene.RuntimeKeyIsValid(), Is.True, tablePath + " must reference its encounter scene.");
+            string scenePath = AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID);
+            EditorSceneManager.ClosePreviewScene(preview);
+            preview = EditorSceneManager.OpenPreviewScene(scenePath);
+            // Opening a preview scene can unload assets held only by test locals, so the table is resolved again.
+            table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
+            Assert.That(table, Is.Not.Null, tablePath);
+            return table;
+        }
+
         [Test]
         public void TableSwitchesAndDisableReleaseSharedLightingAndOwnedMaterial()
         {
-            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
-            Assert.That(authoredTable.Scene.RuntimeKeyIsValid(), Is.True);
-            EditorSceneManager.ClosePreviewScene(preview);
-            preview = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(authoredTable.Scene.AssetGUID));
+            var authoredTable = OpenTableScene();
             var view = preview.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
             var root = view.gameObject;
             Invoke(view, "Build");
@@ -62,6 +74,8 @@ namespace Dice.Tests
             var unlit = UnityEngine.Object.Instantiate(authoredTable);
             resources.Add(lit);
             resources.Add(unlit);
+            UseSyntheticLighting(lit);
+            UseSyntheticLighting(unlit);
             Set(lit, "sceneLighting", first);
             Set(unlit, "roomTexture", second.BaseTexture);
             Set(unlit, "sceneLighting", null);
@@ -114,15 +128,12 @@ namespace Dice.Tests
         [Test]
         public void TablePieceLightsFollowTheirPropThroughTheSplitRoomTexture()
         {
-            var authoredTable = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
-            EditorSceneManager.ClosePreviewScene(preview);
-            preview = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(authoredTable.Scene.AssetGUID));
+            var authoredTable = OpenTableScene();
             var view = preview.GetRootGameObjects().SelectMany(item => item.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
-            var prop = new GameObject("Candle", typeof(RectTransform));
+            var prop = new GameObject("Table Piece", typeof(RectTransform));
             prop.transform.SetParent(view.Portrait, false);
             var piece = prop.AddComponent<SpiritTablePieceView>();
-            Set(piece, "pieceId", "piece.test.candle");
+            Set(piece, "pieceId", "piece.test.prop");
             Set(piece, "interactionId", "position");
             Field<List<SpiritTablePieceView>>(view, "tablePieces").Add(piece);
             Invoke(view, "Build");
@@ -143,12 +154,14 @@ namespace Dice.Tests
             var unbound = UnityEngine.Object.Instantiate(authoredTable);
             resources.Add(bound);
             resources.Add(unbound);
+            UseSyntheticLighting(bound);
+            UseSyntheticLighting(unbound);
             Set(bound, "sceneLighting", first);
             Set(bound, "pieceLights", new[]
             {
                 new EncounterTablePieceLight
                 {
-                    LightIndex = 0, PieceId = "piece.test.candle", InteractionId = "position", ReferencePosition = reference,
+                    LightIndex = 0, PieceId = "piece.test.prop", InteractionId = "position", ReferencePosition = reference,
                     ReceiverOffsetX = new Vector3(10, 0, 0), ReceiverOffsetY = new Vector3(0, 8, 0)
                 }
             });
@@ -271,6 +284,16 @@ namespace Dice.Tests
             Require(Field<SceneLightingState>(view, "sceneLightingState").Asset == null &&
                 background.material == background.defaultMaterial,
                 "Returning to investigation retained sequence lighting.");
+        }
+
+        /** A table copy lit by this fixture's synthetic lights: the authored piece lights, resting levels, ambient
+            light actors and rule light flares index the authored lights, so the copy starts without them. */
+        private static void UseSyntheticLighting(EncounterTablePresentationAsset table)
+        {
+            Set(table, "pieceLights", Array.Empty<EncounterTablePieceLight>());
+            Set(table, "restingLightLevels", Array.Empty<float>());
+            Set(table, "ambientActivity", null);
+            Set(table, "rulePresentations", Array.Empty<EncounterRulePresentationAsset>());
         }
 
         private static void ConfigureAuthoredTable(SpiritEncounterView view, EncounterTablePresentationAsset table)

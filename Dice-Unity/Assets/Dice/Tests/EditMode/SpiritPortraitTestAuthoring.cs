@@ -1,4 +1,3 @@
-using System.Linq;
 using Dice.Presentation;
 using UnityEditor;
 using UnityEngine;
@@ -31,13 +30,9 @@ namespace Dice.Tests
                 image.texture = source.Texture; image.color = source.Tint; image.raycastTarget = false;
                 image.Configure(source.Mesh);
                 if (source.Weights != null && source.Weights.Length == image.Weights.Count) image.SetWeights(source.Weights);
+                // A smoke layer's authored material uses the host's smoke shader, as an authored portrait prefab's does.
                 if (source.Smoke != null && source.Smoke.Enabled)
-                {
-                    var template = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
-                        "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsHost.asset");
-                    image.material = template.PortraitPrefab.GetComponentsInChildren<SpiritPortraitImage>(true)
-                        .First(value => value.material != null && value.material.shader == asset.SmokeShader).material;
-                }
+                    image.material = new Material(asset.SmokeShader) { name = source.Id + " Smoke" };
                 images[i] = image;
             }
             var serialized = new SerializedObject(portrait);

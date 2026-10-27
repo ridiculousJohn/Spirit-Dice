@@ -22,8 +22,10 @@ namespace Dice.Tests
             var router = ContentReady.Router(controller);
             var frontendHandle = SceneHandle(router);
             Assert.That(frontendHandle.IsValid(), Is.True);
-            var journey = controller.JourneyCatalog.Entries.Single(entry =>
-                entry.EncounterId == "encounter.owl.watchtower");
+            var frontendScene = frontendHandle.Result.Scene;
+            // Any encounter journey routes from the frontend scene to its own encounter scene.
+            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(entry => entry != null && !entry.IsStoryOnly);
+            Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
             ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             controller.SelectEncounter(journey.Id);
             yield return ContentReady.Routed(controller);
@@ -33,7 +35,9 @@ namespace Dice.Tests
             var encounterHandle = SceneHandle(router);
             var encounterScene = encounterHandle.Result.Scene;
             Assert.That(encounterScene.isLoaded, Is.True);
-            Assert.That(encounterScene.name, Is.EqualTo("WatchtowerEncounter"));
+            Assert.That(encounterScene, Is.Not.EqualTo(frontendScene), "The journey must route to its encounter scene.");
+            Assert.That(ContentReady.EncounterView(controller).gameObject.scene, Is.EqualTo(encounterScene),
+                "The routed scene holds the encounter view.");
             yield return SceneManager.LoadSceneAsync("Application", LoadSceneMode.Single);
             yield return ContentReady.Spirit(false);
             float deadline = Time.realtimeSinceStartup + 10;

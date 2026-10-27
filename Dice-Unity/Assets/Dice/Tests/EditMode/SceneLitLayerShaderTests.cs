@@ -53,11 +53,11 @@ namespace Dice.Tests
         public void ZeroIntensityRendersExactlyTheUnlitBase()
         {
             Color[] albedo = { new Color(.1f, .2f, .3f, 1f), new Color(.6f, .5f, .4f, .5f), new Color(0f, .9f, .05f, 1f), new Color(.33f, .33f, .7f, .25f) };
-            SceneLightLayer lantern = Light(Solid(new Color(.9f, .8f, .7f, 1f)), Solid(new Color(.3f, .2f, 0f, 1f)), true);
-            SceneLightLayer candle = Light(Solid(Color.white), null, false);
-            candle.ReceiverPosition = new Vector3(.5f, .5f, -.5f);
-            candle.ReceiverIntensity = 4f;
-            SceneLightingAsset asset = Asset(Solid(Color.black), lantern, candle);
+            SceneLightLayer areaLight = Light(Solid(new Color(.9f, .8f, .7f, 1f)), Solid(new Color(.3f, .2f, 0f, 1f)), true);
+            SceneLightLayer pointLight = Light(Solid(Color.white), null, false);
+            pointLight.ReceiverPosition = new Vector3(.5f, .5f, -.5f);
+            pointLight.ReceiverIntensity = 4f;
+            SceneLightingAsset asset = Asset(Solid(Color.black), areaLight, pointLight);
             var layer = new SceneLitLayer
             {
                 BaseTexture = Texture(albedo),
@@ -101,13 +101,13 @@ namespace Dice.Tests
             Color[] ambient = { new Color(.03f, .04f, .05f, 1f), new Color(.2f, .1f, .05f, 1f), new Color(.4f, .3f, .2f, 1f), new Color(.01f, .3f, .02f, 1f) };
             Color[] reference = { new Color(.5f, .3f, .1f, 1f), new Color(.15f, .5f, .1f, 1f), new Color(.6f, .2f, .3f, 1f), new Color(.02f, .1f, .9f, 1f) };
             Color[] response = { new Color(0f, 0f, 0f, 1f), new Color(1f, 0f, 0f, 1f), new Color(.5f, 1f, 0f, 1f), new Color(.25f, .4f, 0f, 1f) };
-            SceneLightLayer lantern = Light(reference, response, true);
-            lantern.Tint = new Color(1f, .8f, .6f, 1f);
-            lantern.FlickerAmount = .15f;
-            lantern.FlickerSpeed = 1.3f;
-            lantern.Seed = 71;
-            lantern.ConstrainAmbientToReference = constrain;
-            SceneLightingAsset asset = Asset(ambient, lantern);
+            SceneLightLayer areaLight = Light(reference, response, true);
+            areaLight.Tint = new Color(1f, .8f, .6f, 1f);
+            areaLight.FlickerAmount = .15f;
+            areaLight.FlickerSpeed = 1.3f;
+            areaLight.Seed = 71;
+            areaLight.ConstrainAmbientToReference = constrain;
+            SceneLightingAsset asset = Asset(ambient, areaLight);
             var state = new SceneLightingState();
             state.Sample(asset, 2.25, new[] { multiplier });
             var background = new SceneLightingMaterial(AssetDatabase.LoadAssetAtPath<Shader>(BackgroundShaderPath));
@@ -116,7 +116,7 @@ namespace Dice.Tests
             var layer = new SceneLitLayer
             {
                 BaseTexture = asset.BaseTexture,
-                Lights = new[] { new SceneLitLayerLight { LightIndex = 0, Reference = lantern.Contribution, ResponseMap = lantern.ResponseMap } }
+                Lights = new[] { new SceneLitLayerLight { LightIndex = 0, Reference = areaLight.Contribution, ResponseMap = areaLight.ResponseMap } }
             };
             SceneLitLayerMaterial lit = Lit(layer);
             lit.Apply(state, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
@@ -136,13 +136,13 @@ namespace Dice.Tests
         public void ComputedPointLightFallsOffWithFrameDistance()
         {
             Color albedo = new Color(.5f, .4f, .3f, 1f);
-            SceneLightLayer candle = Light(Solid(Color.white), null, false);
-            candle.ReceiverPosition = new Vector3(0f, .5f, -1f);
-            candle.ReceiverColor = new Color(1f, .7f, .4f, 1f);
-            candle.ReceiverIntensity = 3f;
-            candle.ReceiverRange = 8f;
-            candle.DistanceFalloff = .5f;
-            SceneLightingAsset asset = Asset(Solid(Color.black), candle);
+            SceneLightLayer pointLight = Light(Solid(Color.white), null, false);
+            pointLight.ReceiverPosition = new Vector3(0f, .5f, -1f);
+            pointLight.ReceiverColor = new Color(1f, .7f, .4f, 1f);
+            pointLight.ReceiverIntensity = 3f;
+            pointLight.ReceiverRange = 8f;
+            pointLight.DistanceFalloff = .5f;
+            SceneLightingAsset asset = Asset(Solid(Color.black), pointLight);
             var layer = new SceneLitLayer
             {
                 BaseTexture = Texture(Solid(albedo)),
@@ -159,7 +159,7 @@ namespace Dice.Tests
             {
                 Vector2 uv = PixelUv(i);
                 Vector3 position = new Vector3(uv.x * 4f, uv.y, 0f);
-                Color expected = albedo + albedo * Point(position, candle, state.GetIntensity(0), layer.Wrap) * .8f;
+                Color expected = albedo + albedo * Point(position, pointLight, state.GetIntensity(0), layer.Wrap) * .8f;
                 AssertChannel(actual[i].r, expected.r, i, "r");
                 AssertChannel(actual[i].g, expected.g, i, "g");
                 AssertChannel(actual[i].b, expected.b, i, "b");
@@ -174,12 +174,12 @@ namespace Dice.Tests
         public void ComputedPointLightBrightensNearerDepth()
         {
             Color albedo = new Color(.4f, .4f, .4f, 1f);
-            SceneLightLayer candle = Light(Solid(Color.white), null, false);
-            candle.ReceiverPosition = new Vector3(0f, 0f, -3f);
-            candle.ReceiverColor = Color.white;
-            candle.ReceiverIntensity = 6f;
-            candle.ReceiverRange = 10f;
-            SceneLightingAsset asset = Asset(Solid(Color.black), candle);
+            SceneLightLayer pointLight = Light(Solid(Color.white), null, false);
+            pointLight.ReceiverPosition = new Vector3(0f, 0f, -3f);
+            pointLight.ReceiverColor = Color.white;
+            pointLight.ReceiverIntensity = 6f;
+            pointLight.ReceiverRange = 10f;
+            SceneLightingAsset asset = Asset(Solid(Color.black), pointLight);
             float[] depth = { 0f, 1f / 3f, 2f / 3f, 1f };
             var layer = new SceneLitLayer
             {
@@ -199,7 +199,7 @@ namespace Dice.Tests
             for (int i = 0; i < actual.Length; ++i)
             {
                 Vector3 position = new Vector3(0f, 0f, Mathf.Lerp(0f, -2f, depth[(i % RenderWidth) / (RenderWidth / SampleCount)]));
-                Color expected = albedo + albedo * Point(position, candle, state.GetIntensity(0), layer.Wrap);
+                Color expected = albedo + albedo * Point(position, pointLight, state.GetIntensity(0), layer.Wrap);
                 AssertChannel(actual[i].r, expected.r, i, "r");
             }
             for (int sample = 1; sample < SampleCount; ++sample)
@@ -217,11 +217,11 @@ namespace Dice.Tests
         public void ResponseAndDepthFollowTheImageRectangleWhileColorFollowsItsUvRectangle()
         {
             Color albedo = new Color(.4f, .4f, .4f, 1f);
-            SceneLightLayer candle = Light(Solid(Color.white), null, false);
-            candle.ReceiverPosition = new Vector3(0f, 0f, -3f);
-            candle.ReceiverColor = Color.white;
-            candle.ReceiverIntensity = 6f;
-            SceneLightingAsset asset = Asset(Solid(Color.black), candle);
+            SceneLightLayer pointLight = Light(Solid(Color.white), null, false);
+            pointLight.ReceiverPosition = new Vector3(0f, 0f, -3f);
+            pointLight.ReceiverColor = Color.white;
+            pointLight.ReceiverIntensity = 6f;
+            SceneLightingAsset asset = Asset(Solid(Color.black), pointLight);
             float[] depth = { 0f, 1f / 3f, 2f / 3f, 1f };
             var layer = new SceneLitLayer
             {
@@ -240,10 +240,10 @@ namespace Dice.Tests
             Color[] actual = RenderLit(lit, layer.BaseTexture);
             // Preview texture u in [0, 0.5) maps to frame u below zero, clamped to the first depth sample.
             Vector3 position = new Vector3(0f, 0f, 0f);
-            Color expected = albedo + albedo * Point(position, candle, state.GetIntensity(0), layer.Wrap);
+            Color expected = albedo + albedo * Point(position, pointLight, state.GetIntensity(0), layer.Wrap);
             AssertChannel(actual[RenderWidth + 1].r, expected.r, RenderWidth + 1, "r");
             position.z = -2f / 3f * 2f;
-            expected = albedo + albedo * Point(position, candle, state.GetIntensity(0), layer.Wrap);
+            expected = albedo + albedo * Point(position, pointLight, state.GetIntensity(0), layer.Wrap);
             // Texture u 0.84375 maps to frame u 0.6875, the third depth sample.
             AssertChannel(actual[RenderWidth + 13].r, expected.r, RenderWidth + 13, "r");
         }
@@ -254,14 +254,14 @@ namespace Dice.Tests
             Color ambient = new Color(.1f, .1f, .1f, 1f);
             Color reference = new Color(.6f, .4f, .2f, 1f);
             float[] distance = { 0f, .25f, .5f, 1f };
-            SceneLightLayer lantern = Light(Solid(reference), new[] { new Color(distance[0], 0f, 0f, 1f), new Color(distance[1], 0f, 0f, 1f),
+            SceneLightLayer areaLight = Light(Solid(reference), new[] { new Color(distance[0], 0f, 0f, 1f), new Color(distance[1], 0f, 0f, 1f),
                 new Color(distance[2], 0f, 0f, 1f), new Color(distance[3], 0f, 0f, 1f) }, true);
-            lantern.DistanceFalloff = 3f;
-            SceneLightingAsset asset = Asset(Solid(ambient), lantern);
+            areaLight.DistanceFalloff = 3f;
+            SceneLightingAsset asset = Asset(Solid(ambient), areaLight);
             var layer = new SceneLitLayer
             {
                 BaseTexture = asset.BaseTexture,
-                Lights = new[] { new SceneLitLayerLight { LightIndex = 0, Reference = lantern.Contribution, ResponseMap = lantern.ResponseMap } },
+                Lights = new[] { new SceneLitLayerLight { LightIndex = 0, Reference = areaLight.Contribution, ResponseMap = areaLight.ResponseMap } },
                 // The image covers the right half of the full-frame map.
                 MapRect = new Rect(.5f, 0f, .5f, 1f)
             };
@@ -275,7 +275,7 @@ namespace Dice.Tests
             {
                 // Image u in [0, 0.5) reads map sample 2 and [0.5, 1) reads sample 3.
                 float r = distance[2 + (i % RenderWidth) / (RenderWidth / 2)];
-                float scale = intensity * Mathf.Pow(Mathf.Min(intensity, 1f), r * lantern.DistanceFalloff);
+                float scale = intensity * Mathf.Pow(Mathf.Min(intensity, 1f), r * areaLight.DistanceFalloff);
                 Color expected = ambient + (reference - ambient) * scale;
                 AssertChannel(actual[i].r, expected.r, i, "r");
                 AssertChannel(actual[i].g, expected.g, i, "g");

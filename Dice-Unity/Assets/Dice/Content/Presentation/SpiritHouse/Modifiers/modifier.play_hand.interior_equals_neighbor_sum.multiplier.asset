@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 706c6e6064574924e822d04270b67ea9, type: 2}
   displayName: Joined Roots / Mult
   icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: An interior die equals the sum of its two neighbors.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

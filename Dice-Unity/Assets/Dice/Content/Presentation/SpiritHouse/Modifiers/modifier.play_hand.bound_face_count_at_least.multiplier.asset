@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 0f939e9b5de14cb7a9a55c6348337b0e, type: 2}
   displayName: Grafted Branch / Mult
   icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least {parameter} dice show the face of a bound die.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 02b767ac96b5b1148a1b357555a5fc75, type: 2}
   displayName: Matching Shells / Rerolls
   icon: {fileID: 21300000, guid: 06aa714b13e95edd89d136c1ab0a84ed, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: All faces are odd, or all faces are even.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

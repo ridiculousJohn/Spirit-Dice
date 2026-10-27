@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 157269272abdb5f47b5fd313f5357ab6, type: 2}
   displayName: Full Basket / Base
   icon: {fileID: 21300000, guid: 12dfd240b92051fba41eafd0771acb79, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Dice sum exceeds {parameter}.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

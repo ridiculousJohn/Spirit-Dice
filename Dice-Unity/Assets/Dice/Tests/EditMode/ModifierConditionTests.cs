@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Dice.Engine;
 using NUnit.Framework;
@@ -9,419 +8,175 @@ namespace Dice.Tests
 {
     public sealed class ModifierConditionTests
     {
-        [TestCaseSource(nameof(Cases))]
-        public void ConditionsMatchIndependentBoundaryWitnesses(ModifierCondition condition, ModifierContext context, bool expected)
+        /**
+         * Checks each condition kind, built by the factory from its descriptor, holds for a fabricated witness and not for a
+         * near miss / fails if a kind evaluates the wrong predicate or ignores its configured parameters.
+         */
+        [TestCaseSource(nameof(Conditions))]
+        public void ConditionHoldsForItsWitnessAndNotForItsNearMiss(ModifierCondition condition, ModifierContext? holds,
+            ModifierContext? fails)
         {
-            Assert.That(ModifierConditions.Create(condition).Evaluate(in context), Is.EqualTo(expected));
-            Assert.That(ModifierConditions.Create(condition.Kind, condition.Parameter, condition.SecondaryParameter)
-                .Evaluate(in context), Is.EqualTo(expected));
+            var evaluator = ModifierConditions.Create(condition);
+            if (holds.HasValue) Assert.That(evaluator.Evaluate(holds.Value), Is.True, "witness");
+            if (fails.HasValue) Assert.That(evaluator.Evaluate(fails.Value), Is.False, "near miss");
         }
 
+        /**
+         * Checks every condition kind gets its own sealed, immutable evaluation class, since conditions are shared across
+         * sessions and evaluated during previews / fails if two kinds share a class or a condition gains mutable state.
+         */
         [Test]
-        public void WitnessesCoverEveryConditionKind()
-        {
-            var covered = Cases().Select(value => ((ModifierCondition)value.Arguments[0]).Kind).Distinct();
-            Assert.That(covered, Is.EquivalentTo(Enum.GetValues(typeof(ModifierConditionKind))));
-        }
-
-        [Test]
-        public void EveryConditionKindCreatesItsOwnSealedEvaluationImplementation()
+        public void EveryConditionKindCreatesItsOwnSealedImmutableEvaluationClass()
         {
             var types = new HashSet<Type>();
             foreach (ModifierConditionKind kind in Enum.GetValues(typeof(ModifierConditionKind)))
             {
-                var condition = ModifierConditions.Create(kind);
-                Type type = condition.GetType();
-                Assert.That(type.Name, Is.EqualTo(kind + "Condition"));
+                Type type = ModifierConditions.Create(kind).GetType();
                 Assert.That(type.IsSealed, Is.True, kind.ToString());
-                Assert.That(type.BaseType, Is.EqualTo(typeof(object)), kind.ToString());
-                Assert.That(type.GetInterfaces(), Does.Contain(typeof(IModifierCondition)), kind.ToString());
-                Assert.That(type.GetMethod(nameof(IModifierCondition.Evaluate)).DeclaringType,
-                    Is.EqualTo(type), kind.ToString());
-                Assert.That(types.Add(type), Is.True, kind.ToString());
-                var defaults = new ModifierCondition(kind);
-                string[] parameters = defaults.Parameter == 0 ? Array.Empty<string>() :
-                    defaults.SecondaryParameter == 0 ? new[] { "Parameter" } :
-                    new[] { "Parameter", "SecondaryParameter" };
-                var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-                Assert.That(properties.Select(value => value.Name), Is.EquivalentTo(parameters), kind.ToString());
-                foreach (var property in properties)
+                Assert.That(types.Add(type), Is.True, kind + " shares its evaluation class with another kind.");
+                for (Type level = type; level != null && level != typeof(object); level = level.BaseType)
                 {
-                    Assert.That(property.DeclaringType, Is.EqualTo(type), kind.ToString());
-                    Assert.That(property.PropertyType, Is.EqualTo(typeof(int)), kind.ToString());
-                    Assert.That(property.CanWrite, Is.False, kind.ToString());
+                    const BindingFlags Declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                        BindingFlags.DeclaredOnly;
+                    foreach (var property in level.GetProperties(Declared))
+                        Assert.That(property.SetMethod, Is.Null, kind + ": " + property.Name);
+                    foreach (var field in level.GetFields(Declared))
+                        Assert.That(field.IsInitOnly, Is.True, kind + ": " + field.Name);
                 }
-                var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                Assert.That(fields.Length, Is.EqualTo(parameters.Length), kind.ToString());
-                Assert.That(fields.All(value => value.FieldType == typeof(int) && value.IsInitOnly),
-                    Is.True, kind.ToString());
             }
         }
 
-        [TestCase(-1)]
-        [TestCase(int.MaxValue)]
-        public void FactoryRejectsUnknownConditionKinds(int value)
+        /** Checks the factory rejects an undefined condition kind / fails if unknown content builds a condition. */
+        [Test]
+        public void FactoryRejectsAnUndefinedConditionKind()
         {
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-                ModifierConditions.Create((ModifierConditionKind)value));
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create((ModifierConditionKind)(-1)));
             Assert.That(exception.ParamName, Is.EqualTo("kind"));
         }
 
-        [Test]
-        public void EveryBuiltInConditionRejectsTheDefaultInvalidContext()
+        /** Checks a descriptor accepts its kind's largest parameter and rejects the next one / fails if out-of-range content loads. */
+        [TestCase(ModifierConditionKind.ContainsFace, 6, 0, 7, 0)]
+        [TestCase(ModifierConditionKind.FavoredFaceCountAtLeast, 5, 0, 6, 0)]
+        [TestCase(ModifierConditionKind.NoExtremeFaces, 1, 6, 1, 7)]
+        [TestCase(ModifierConditionKind.SumLessThan, 1, 0, -1, 0)]
+        public void DescriptorRejectsParametersOutsideItsKindsRange(ModifierConditionKind kind, int validParameter,
+            int validSecondary, int invalidParameter, int invalidSecondary)
         {
-            var context = default(ModifierContext);
-            foreach (ModifierConditionKind kind in Enum.GetValues(typeof(ModifierConditionKind)))
-            {
-                var condition = ModifierConditions.Create(kind);
-                var exception = Assert.Throws<ArgumentException>(() => condition.Evaluate(in context), kind.ToString());
-                Assert.That(exception.ParamName, Is.EqualTo("context"), kind.ToString());
-            }
+            Assert.DoesNotThrow(() => new ModifierCondition(kind, validParameter, validSecondary));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ModifierCondition(kind, invalidParameter, invalidSecondary));
         }
 
-        [TestCaseSource(nameof(ParameterizedConstructors))]
-        public void ParameterizedConstructorsAndFactoriesPreserveDefaultsAndNormalizeZero(
-            ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
-            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter, int maximum)
+        private static IEnumerable<TestCaseData> Conditions()
         {
-            foreach (var condition in new[]
-            {
-                constructDefault(), construct(0, 0), ModifierConditions.Create(kind),
-                construct(0, secondaryParameter), construct(parameter, 0),
-                ModifierConditions.Create(kind, 0, 0), ModifierConditions.Create(new ModifierCondition(kind))
-            })
-            {
-                var type = condition.GetType();
-                Assert.That(type.GetProperty("Parameter").GetValue(condition), Is.EqualTo(parameter));
-                if (secondaryParameter != 0)
-                    Assert.That(type.GetProperty("SecondaryParameter").GetValue(condition),
-                        Is.EqualTo(secondaryParameter));
-            }
+            yield return Pair(ModifierConditionKind.NoDiceRerolled, C(), C(ever: 1, spent: 1));
+            yield return Pair(ModifierConditionKind.ContainsFace, C("23456"), C(), 6);
+            yield return Pair(ModifierConditionKind.ExactlyOneSelectedFace, C("12346", selected: 16), C("12346", selected: 1), 6);
+            yield return Pair(ModifierConditionKind.OutOfRerolls, C(rerolls: 0), C(rerolls: 1));
+            yield return Pair(ModifierConditionKind.RangeLessThan, C("11222"), C("11233"), 2);
+            yield return Pair(ModifierConditionKind.SumLessThanInitial, C("11111", initial: "11112"), C("11112", initial: "11112"));
+            yield return Pair(ModifierConditionKind.LastHand, C(hands: 1), C(hands: 2));
+            yield return Pair(ModifierConditionKind.SelectedFaceUnchanged, C(before: "12346", selected: 1), C(before: "12346", selected: 16));
+            yield return Pair(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22345", selected: 3), C("22345", selected: 1), 2);
+            yield return Pair(ModifierConditionKind.ContainsUpperFace, C(), C("13456"), 2);
+            yield return Pair(ModifierConditionKind.RankBelowPrevious, C("12346", previous: "11234"), C("11234", previous: "12346"));
+            yield return Pair(ModifierConditionKind.RankAbovePrevious, C("11234", previous: "12346"), C("12346", previous: "11234"));
+            yield return Pair(ModifierConditionKind.RankEqualsPrevious, C("11234", previous: "22345"), C("12346", previous: "22345"));
+            yield return Pair(ModifierConditionKind.RankEqualsBeforeReroll, C("11234", before: "22345"), C("12346", before: "22345"));
+            yield return Pair(ModifierConditionKind.SumDivisibleBy, C("11114"), C(), 4);
+            yield return Pair(ModifierConditionKind.EdgePairSumsEqual, C("12312"), C("12313"));
+            yield return Pair(ModifierConditionKind.Ordered, C("11234"), C("12134"));
+            yield return Pair(ModifierConditionKind.HighDie, C("12346"), C("11234"));
+            yield return Pair(ModifierConditionKind.AdjacentDifferent, C("12121"), C("11234"));
+            yield return Pair(ModifierConditionKind.AdjacentMatchingTriple, C("22234"), C("22123"));
+            yield return Pair(ModifierConditionKind.ExactlyOneFace, C(), C("12346"), 5);
+            yield return Pair(ModifierConditionKind.ContainsRerollsRemaining, C(rerolls: 3), C(rerolls: 6));
+            yield return Pair(ModifierConditionKind.SelectedMatchesHandsRemaining, C(selected: 4, hands: 3), C(selected: 1, hands: 3));
+            yield return Pair(ModifierConditionKind.AdjacentDifferenceAtLeast, C("14141"), C("13131"), 3);
+            yield return Pair(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 2), C(rerolls: 3), 2);
+            yield return Pair(ModifierConditionKind.MiddleUnique, C(), C("13345"));
+            yield return Pair(ModifierConditionKind.HighDieOrStraight, C("12346"), C("11234"));
+            yield return Pair(ModifierConditionKind.AlternatingParity, C("12121"), C("12221"));
+            yield return Pair(ModifierConditionKind.InteriorEqualsNeighborSum, C("13245"), C());
+            yield return Pair(ModifierConditionKind.SelectedInteriorEqualsNeighborSum, C("13245", selected: 2), C("13245", selected: 1));
+            yield return Pair(ModifierConditionKind.EveryDieRerolled, C(ever: 31), C(ever: 30));
+            yield return Pair(ModifierConditionKind.ExactlyOneSelectedMatchesSelectedCount, C(selected: 3), C("22345", selected: 3));
+            yield return Pair(ModifierConditionKind.MinimumEqualsRerollsSpent, C("22345", spent: 2), C("22345", spent: 1));
+            yield return Pair(ModifierConditionKind.RerollsExceedHandsRemaining, C(hands: 2, rerolls: 4), C(hands: 2, rerolls: 3));
+            yield return Pair(ModifierConditionKind.MaximumAtMostRerollsRemaining, C(rerolls: 5), C(rerolls: 4));
+            yield return Pair(ModifierConditionKind.LargestGroupEqualsHandsOrRerolls, C("11234", hands: 1, rerolls: 4),
+                C("11234", hands: 2, rerolls: 4));
+            yield return Pair(ModifierConditionKind.EdgeSumEqualsEither, C("12346"), C(), 7, 9);
+            yield return Pair(ModifierConditionKind.FaceEqualsPosition, C("22345"), C("23456"));
+            yield return Pair(ModifierConditionKind.FirstHand, C(played: 0), C(played: 1));
+            yield return Pair(ModifierConditionKind.ExtremeEqualsHandsRemaining, C(hands: 0), C("22346", hands: 2));
+            yield return Pair(ModifierConditionKind.SumLessThan, C("11115"), C("11116"), 10);
+            yield return Pair(ModifierConditionKind.TwoPair, C("11223"), C("11234"));
+            yield return Pair(ModifierConditionKind.SelectedSumEqualsEither, C(selected: 3), C("23456", selected: 10), 3, 5);
+            yield return Pair(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 2), C(spent: 1), 2);
+            yield return Pair(ModifierConditionKind.AdjacentDifferenceAtMost, C("11345"), C("11456"), 2);
+            yield return Pair(ModifierConditionKind.EdgeSumGreaterThanInterior, C("61116"), C("11112"));
+            yield return Pair(ModifierConditionKind.InitialPair, C(initial: "11234"), C(initial: "12345"));
+            yield return Pair(ModifierConditionKind.InitialRankAbovePrevious, C(initial: "11234", previous: "12346"),
+                C(initial: "12346", previous: "11234"));
+            yield return Pair(ModifierConditionKind.RangeGreaterThan, C("12344"), C("11223"), 2);
+            yield return Pair(ModifierConditionKind.PreviousStageExhaustedHands, C(priorStarting: 3, priorRemaining: 0),
+                C(priorStarting: 3, priorRemaining: 1));
+            yield return Pair(ModifierConditionKind.SameParity, C("13513"), C());
+            yield return Pair(ModifierConditionKind.InteriorSumDivisibleBy, C("11341"), C("11261"), 2);
+            yield return Pair(ModifierConditionKind.EdgeSumEqualsHandsOrRerolls, C(hands: 5, rerolls: 4), C(hands: 4, rerolls: 4));
+            yield return Pair(ModifierConditionKind.PreviousStageAtMostHalfHandsPlayed, C(priorStarting: 3, priorRemaining: 2),
+                C(priorStarting: 3, priorRemaining: 1));
+            yield return Pair(ModifierConditionKind.LastRerollOnLastHand, C(hands: 1, rerolls: 0), C(hands: 2, rerolls: 0));
+            yield return Pair(ModifierConditionKind.RankBelowBeforeReroll, C("12346", before: "11234"), C("11234", before: "12346"));
+            yield return Never(C());
+            yield return Pair(ModifierConditionKind.ThreeSmallestSumAtMostMaximum, C("11244"), C("11233"));
+            yield return Pair(ModifierConditionKind.SecondFourthProductAtLeastSum, C("13131"), C("11331"));
+            yield return Pair(ModifierConditionKind.InteriorEqualsNeighborDifference, C("31245"), C("33333"));
+            yield return Pair(ModifierConditionKind.MiddleEqualsOddCount, C("22122"), C("22222"));
+            yield return Pair(ModifierConditionKind.SumGreaterThan, C("55551"), C("55541"), 20);
+            yield return Pair(ModifierConditionKind.HandsRemainingEven, C(hands: 1), C(hands: 2));
+            yield return Pair(ModifierConditionKind.EdgePairDifferencesEqual, C("21345"), C("12346"));
+            yield return Pair(ModifierConditionKind.InteriorContainsPair, C("12234"), C());
+            yield return Pair(ModifierConditionKind.OddSumGreaterThanEvenSum, C("11345"), C("22466"));
+            yield return Pair(ModifierConditionKind.SumPrime, C("11113"), C("11112"));
+            yield return Pair(ModifierConditionKind.EdgesMatchInterior, C("11121"), C("12341"));
+            yield return Pair(ModifierConditionKind.UniqueCountLessThanRerollsSpent, C("11223", spent: 4), C("11223", spent: 3));
+            yield return Pair(ModifierConditionKind.NoExtremeFaces, C("13466"), C("23344"), 2, 5);
+            yield return Pair(ModifierConditionKind.MiddleFacesCountAtLeast, C("33111"), C("31111"), 2);
+            yield return Pair(ModifierConditionKind.MiddleHand, C(hands: 2, starting: 3), C(hands: 3, starting: 3));
+            yield return Pair(ModifierConditionKind.InteriorPairMatchesEdge, C("22235"), C("11225"));
+            yield return Always(C());
+            yield return Pair(ModifierConditionKind.FavoredFaceCountAtLeast, C("22223", favoredFace: 2), C("22234", favoredFace: 2), 4);
+            yield return Pair(ModifierConditionKind.BoundFaceCountAtLeast, C("22134", bound: 1), C("21345", bound: 1), 2);
         }
 
-        [TestCaseSource(nameof(ParameterizedConstructors))]
-        public void ParameterizedConstructorsAndFactoriesRejectInvalidConsumedParameters(
-            ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
-            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter, int maximum)
-        {
-            var largest = construct(maximum, secondaryParameter);
-            Assert.That(largest.GetType().GetProperty("Parameter").GetValue(largest), Is.EqualTo(maximum));
-            Assert.Throws<ArgumentOutOfRangeException>(() => construct(-1, secondaryParameter));
-            Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, -1, secondaryParameter));
-            if (maximum != int.MaxValue)
-            {
-                Assert.Throws<ArgumentOutOfRangeException>(() => construct(maximum + 1, secondaryParameter));
-                Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, maximum + 1, secondaryParameter));
-            }
-            if (secondaryParameter == 0) return;
-            Assert.Throws<ArgumentOutOfRangeException>(() => construct(parameter, -1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, parameter, -1));
-            if (kind == ModifierConditionKind.NoExtremeFaces)
-            {
-                Assert.Throws<ArgumentOutOfRangeException>(() => construct(parameter, 7));
-                Assert.Throws<ArgumentOutOfRangeException>(() => ModifierConditions.Create(kind, parameter, 7));
-            }
-        }
-
-        [TestCaseSource(nameof(NonDefaultCases))]
-        public void ConstructorsAndFactoriesUseNonDefaultParametersInEvaluation(ModifierCondition descriptor,
-            ModifierContext context, bool expected, bool defaultExpected)
-        {
-            ConditionsMatchIndependentBoundaryWitnesses(descriptor, context, expected);
-            var constructorCase = ParameterizedConstructors().Single(value =>
-                (ModifierConditionKind)value.Arguments[0] == descriptor.Kind);
-            var construct = (Func<int, int, IModifierCondition>)constructorCase.Arguments[1];
-            Assert.That(construct(descriptor.Parameter, descriptor.SecondaryParameter).Evaluate(in context),
-                Is.EqualTo(expected));
-            Assert.That(ModifierConditions.Create(descriptor.Kind).Evaluate(in context), Is.EqualTo(defaultExpected));
-        }
-
-        [Test]
-        public void NonDefaultBehaviorWitnessesCoverEveryParameterizedKind()
-        {
-            var parameterized = ParameterizedConstructors().Select(value => (ModifierConditionKind)value.Arguments[0]);
-            var covered = NonDefaultCases().Where(value => (bool)value.Arguments[2] != (bool)value.Arguments[3])
-                .Select(value => ((ModifierCondition)value.Arguments[0]).Kind).Distinct();
-            Assert.That(parameterized.Count(), Is.EqualTo(21));
-            Assert.That(covered, Is.EquivalentTo(parameterized));
-        }
-
-        private static IEnumerable<TestCaseData> ParameterizedConstructors()
-        {
-            yield return Constructor(ModifierConditionKind.FavoredFaceCountAtLeast, (p, q) => new FavoredFaceCountAtLeastCondition(p), () => new FavoredFaceCountAtLeastCondition(), 2, maximum: 5);
-            yield return Constructor(ModifierConditionKind.BoundFaceCountAtLeast, (p, q) => new BoundFaceCountAtLeastCondition(p), () => new BoundFaceCountAtLeastCondition(), 3, maximum: 5);
-            yield return Constructor(ModifierConditionKind.ContainsFace, (p, q) => new ContainsFaceCondition(p), () => new ContainsFaceCondition(), 1, maximum: 6);
-            yield return Constructor(ModifierConditionKind.ContainsUpperFace, (p, q) => new ContainsUpperFaceCondition(p), () => new ContainsUpperFaceCondition(), 6, maximum: 6);
-            yield return Constructor(ModifierConditionKind.ExactlyOneSelectedFace, (p, q) => new ExactlyOneSelectedFaceCondition(p), () => new ExactlyOneSelectedFaceCondition(), 1, maximum: 6);
-            yield return Constructor(ModifierConditionKind.ExactlyOneFace, (p, q) => new ExactlyOneFaceCondition(p), () => new ExactlyOneFaceCondition(), 2, maximum: 6);
-            yield return Constructor(ModifierConditionKind.RangeLessThan, (p, q) => new RangeLessThanCondition(p), () => new RangeLessThanCondition(), 3);
-            yield return Constructor(ModifierConditionKind.RangeGreaterThan, (p, q) => new RangeGreaterThanCondition(p), () => new RangeGreaterThanCondition(), 3);
-            yield return Constructor(ModifierConditionKind.SelectedMatchingGroupAtLeast, (p, q) => new SelectedMatchingGroupAtLeastCondition(p), () => new SelectedMatchingGroupAtLeastCondition(), 3, maximum: 5);
-            yield return Constructor(ModifierConditionKind.MiddleFacesCountAtLeast, (p, q) => new MiddleFacesCountAtLeastCondition(p), () => new MiddleFacesCountAtLeastCondition(), 4, maximum: 5);
-            yield return Constructor(ModifierConditionKind.SumDivisibleBy, (p, q) => new SumDivisibleByCondition(p), () => new SumDivisibleByCondition(), 5);
-            yield return Constructor(ModifierConditionKind.PositiveRerollsDivisibleBy, (p, q) => new PositiveRerollsDivisibleByCondition(p), () => new PositiveRerollsDivisibleByCondition(), 3);
-            yield return Constructor(ModifierConditionKind.InteriorSumDivisibleBy, (p, q) => new InteriorSumDivisibleByCondition(p), () => new InteriorSumDivisibleByCondition(), 3);
-            yield return Constructor(ModifierConditionKind.AdjacentDifferenceAtLeast, (p, q) => new AdjacentDifferenceAtLeastCondition(p), () => new AdjacentDifferenceAtLeastCondition(), 2);
-            yield return Constructor(ModifierConditionKind.AdjacentDifferenceAtMost, (p, q) => new AdjacentDifferenceAtMostCondition(p), () => new AdjacentDifferenceAtMostCondition(), 1);
-            yield return Constructor(ModifierConditionKind.SumLessThan, (p, q) => new SumLessThanCondition(p), () => new SumLessThanCondition(), 15);
-            yield return Constructor(ModifierConditionKind.SumGreaterThan, (p, q) => new SumGreaterThanCondition(p), () => new SumGreaterThanCondition(), 22);
-            yield return Constructor(ModifierConditionKind.RerollsSpentAtLeast, (p, q) => new RerollsSpentAtLeastCondition(p), () => new RerollsSpentAtLeastCondition(), 3);
-            yield return Constructor(ModifierConditionKind.EdgeSumEqualsEither, (p, q) => new EdgeSumEqualsEitherCondition(p, q), () => new EdgeSumEqualsEitherCondition(), 6, 8);
-            yield return Constructor(ModifierConditionKind.SelectedSumEqualsEither, (p, q) => new SelectedSumEqualsEitherCondition(p, q), () => new SelectedSumEqualsEitherCondition(), 8, 10);
-            yield return Constructor(ModifierConditionKind.NoExtremeFaces, (p, q) => new NoExtremeFacesCondition(p, q), () => new NoExtremeFacesCondition(), 1, 6, 6);
-        }
-
-        private static TestCaseData Constructor(ModifierConditionKind kind, Func<int, int, IModifierCondition> construct,
-            Func<IModifierCondition> constructDefault, int parameter, int secondaryParameter = 0, int maximum = int.MaxValue)
-            => new TestCaseData(kind, construct, constructDefault, parameter, secondaryParameter, maximum)
-                .SetName("{m}_" + kind);
-
-        private static IEnumerable<TestCaseData> NonDefaultCases()
-        {
-            yield return NonDefaultCase(ModifierConditionKind.FavoredFaceCountAtLeast, C("22234", favoredFace: 2), false, true, 4);
-            yield return NonDefaultCase(ModifierConditionKind.BoundFaceCountAtLeast, C("22134", bound: 1), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C("23456"), true, false, 6);
-            yield return NonDefaultCase(ModifierConditionKind.ContainsFace, C(), false, true, 6);
-            yield return NonDefaultCase(ModifierConditionKind.ContainsUpperFace, C(), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.ContainsUpperFace, C("13456"), false, true, 2);
-            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneSelectedFace, C("12346", selected: 16), true, false, 6);
-            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneSelectedFace, C("12346", selected: 1), false, true, 6);
-            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneFace, C(), true, true, 5);
-            yield return NonDefaultCase(ModifierConditionKind.ExactlyOneFace, C("12346"), false, true, 5);
-            yield return NonDefaultCase(ModifierConditionKind.RangeLessThan, C("11222"), true, true, 2);
-            yield return NonDefaultCase(ModifierConditionKind.RangeLessThan, C("11233"), false, true, 2);
-            yield return NonDefaultCase(ModifierConditionKind.RangeGreaterThan, C("12344"), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.RangeGreaterThan, C("11223"), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22345", selected: 3), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22345", selected: 1), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.MiddleFacesCountAtLeast, C("33111"), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.MiddleFacesCountAtLeast, C("31111"), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.SumDivisibleBy, C("11114"), true, false, 4);
-            yield return NonDefaultCase(ModifierConditionKind.SumDivisibleBy, C(), false, true, 4);
-            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 2), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 3), false, true, 2);
-            yield return NonDefaultCase(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 0), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.InteriorSumDivisibleBy, C("11341"), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.InteriorSumDivisibleBy, C("11261"), false, true, 2);
-            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtLeast, C("14141"), true, true, 3);
-            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtLeast, C("13131"), false, true, 3);
-            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtMost, C("11345"), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.AdjacentDifferenceAtMost, C("11456"), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.SumLessThan, C("11115"), true, true, 10);
-            yield return NonDefaultCase(ModifierConditionKind.SumLessThan, C("11116"), false, true, 10);
-            yield return NonDefaultCase(ModifierConditionKind.SumGreaterThan, C("55551"), true, false, 20);
-            yield return NonDefaultCase(ModifierConditionKind.SumGreaterThan, C("55541"), false, false, 20);
-            yield return NonDefaultCase(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 2), true, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 1), false, false, 2);
-            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("12346"), true, false, 7, 9);
-            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("32346"), true, false, 7, 9);
-            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C(), false, true, 7, 9);
-            yield return NonDefaultCase(ModifierConditionKind.EdgeSumEqualsEither, C("22346"), false, true, 7, 9);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C(selected: 3), true, false, 3, 5);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C(selected: 6), true, false, 3, 5);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 10), false, true, 3, 5);
-            yield return NonDefaultCase(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 20), false, true, 3, 5);
-            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("13466"), true, false, 2, 5);
-            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("23344"), false, true, 2, 5);
-            yield return NonDefaultCase(ModifierConditionKind.NoExtremeFaces, C("33455"), false, true, 2, 5);
-        }
-
-        private static TestCaseData NonDefaultCase(ModifierConditionKind kind, ModifierContext context,
-            bool expected, bool defaultExpected, int parameter, int secondary = 0)
-            => new TestCaseData(new ModifierCondition(kind, parameter, secondary), context, expected, defaultExpected)
-                .SetName(kind + "_NonDefault_" + string.Join("", context.CurrentDice.ToArray()) + "_" +
-                    context.SelectedMask + "_" + context.RerollsRemaining + "_" + context.RerollsSpentOnHand);
-
+        /** Each condition's witness and near miss as single expectations, for checks that compare imported conditions. */
         internal static IEnumerable<TestCaseData> Cases()
         {
-            yield return Case(ModifierConditionKind.NoDiceRerolled, C(), true);
-            yield return Case(ModifierConditionKind.NoDiceRerolled, C(ever: 1, spent: 1), false);
-            yield return Case(ModifierConditionKind.ContainsFace, C(), true, 1);
-            yield return Case(ModifierConditionKind.ContainsFace, C("23456"), false, 1);
-            yield return Case(ModifierConditionKind.ExactlyOneSelectedFace, C(selected: 1), true, 1);
-            yield return Case(ModifierConditionKind.ExactlyOneSelectedFace, C("11345", selected: 3), false, 1);
-            yield return Case(ModifierConditionKind.OutOfRerolls, C(rerolls: 0), true);
-            yield return Case(ModifierConditionKind.OutOfRerolls, C(rerolls: 1), false);
-            yield return Case(ModifierConditionKind.RangeLessThan, C("22334"), true, 3);
-            yield return Case(ModifierConditionKind.RangeLessThan, C("22335"), false, 3);
-            yield return Case(ModifierConditionKind.SumLessThanInitial, C("11111", initial: "11112"), true);
-            yield return Case(ModifierConditionKind.SumLessThanInitial, C("11112", initial: "11112"), false);
-            yield return Case(ModifierConditionKind.LastHand, C(hands: 1), true);
-            yield return Case(ModifierConditionKind.LastHand, C(hands: 2), false);
-            yield return Case(ModifierConditionKind.SelectedFaceUnchanged, C(before: "12346", selected: 1), true);
-            yield return Case(ModifierConditionKind.SelectedFaceUnchanged, C(before: "12346", selected: 16), false);
-            yield return Case(ModifierConditionKind.SelectedFaceUnchanged, C(before: "12345", selected: 0), false);
-            yield return Case(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22245", selected: 7), true, 3);
-            yield return Case(ModifierConditionKind.SelectedMatchingGroupAtLeast, C("22245", selected: 3), false, 3);
-            yield return Case(ModifierConditionKind.ContainsUpperFace, C("12346"), true, 6);
-            yield return Case(ModifierConditionKind.ContainsUpperFace, C(), false, 6);
-            yield return Case(ModifierConditionKind.RankBelowPrevious, C("12346", previous: "11234"), true);
-            yield return Case(ModifierConditionKind.RankBelowPrevious, C("11234", previous: "12346"), false);
-            yield return Case(ModifierConditionKind.RankAbovePrevious, C("11234", previous: "12346"), true);
-            yield return Case(ModifierConditionKind.RankAbovePrevious, C("12346", previous: "11234"), false);
-            yield return Case(ModifierConditionKind.RankEqualsPrevious, C("11234", previous: "22345"), true);
-            yield return Case(ModifierConditionKind.RankEqualsPrevious, C("12346", previous: "22345"), false);
-            yield return Case(ModifierConditionKind.RankEqualsPrevious, C("12346"), true);
-            yield return Case(ModifierConditionKind.RankEqualsBeforeReroll, C("11234", before: "22345"), true);
-            yield return Case(ModifierConditionKind.RankEqualsBeforeReroll, C("12346", before: "22345"), false);
-            yield return Case(ModifierConditionKind.RankEqualsBeforeReroll, C(), false);
-            yield return Case(ModifierConditionKind.SumDivisibleBy, C(), true, 5);
-            yield return Case(ModifierConditionKind.SumDivisibleBy, C("12346"), false, 5);
-            yield return Case(ModifierConditionKind.EdgePairSumsEqual, C("12312"), true);
-            yield return Case(ModifierConditionKind.EdgePairSumsEqual, C("12313"), false);
-            yield return Case(ModifierConditionKind.Ordered, C("11234"), true);
-            yield return Case(ModifierConditionKind.Ordered, C("54321"), true);
-            yield return Case(ModifierConditionKind.Ordered, C("33333"), true);
-            yield return Case(ModifierConditionKind.Ordered, C("12134"), false);
-            yield return Case(ModifierConditionKind.HighDie, C("12346"), true);
-            yield return Case(ModifierConditionKind.HighDie, C("11234"), false);
-            yield return Case(ModifierConditionKind.AdjacentDifferent, C("12121"), true);
-            yield return Case(ModifierConditionKind.AdjacentDifferent, C("11234"), false);
-            yield return Case(ModifierConditionKind.AdjacentMatchingTriple, C("22234"), true);
-            yield return Case(ModifierConditionKind.AdjacentMatchingTriple, C("22123"), false);
-            yield return Case(ModifierConditionKind.ExactlyOneFace, C(), true, 2);
-            yield return Case(ModifierConditionKind.ExactlyOneFace, C("12245"), false, 2);
-            yield return Case(ModifierConditionKind.ContainsRerollsRemaining, C(rerolls: 3), true);
-            yield return Case(ModifierConditionKind.ContainsRerollsRemaining, C(rerolls: 6), false);
-            yield return Case(ModifierConditionKind.SelectedMatchesHandsRemaining, C(selected: 4, hands: 3), true);
-            yield return Case(ModifierConditionKind.SelectedMatchesHandsRemaining, C(selected: 1, hands: 3), false);
-            yield return Case(ModifierConditionKind.AdjacentDifferenceAtLeast, C("13531"), true, 2);
-            yield return Case(ModifierConditionKind.AdjacentDifferenceAtLeast, C("13532"), false, 2);
-            yield return Case(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 3), true, 3);
-            yield return Case(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 0), false, 3);
-            yield return Case(ModifierConditionKind.PositiveRerollsDivisibleBy, C(rerolls: 4), false, 3);
-            yield return Case(ModifierConditionKind.MiddleUnique, C(), true);
-            yield return Case(ModifierConditionKind.MiddleUnique, C("13345"), false);
-            yield return Case(ModifierConditionKind.HighDieOrStraight, C("12346"), true);
-            yield return Case(ModifierConditionKind.HighDieOrStraight, C(), true);
-            yield return Case(ModifierConditionKind.HighDieOrStraight, C("11234"), false);
-            yield return Case(ModifierConditionKind.AlternatingParity, C("12121"), true);
-            yield return Case(ModifierConditionKind.AlternatingParity, C("12221"), false);
-            yield return Case(ModifierConditionKind.InteriorEqualsNeighborSum, C("13245"), true);
-            yield return Case(ModifierConditionKind.InteriorEqualsNeighborSum, C(), false);
-            yield return Case(ModifierConditionKind.SelectedInteriorEqualsNeighborSum, C("13245", selected: 2), true);
-            yield return Case(ModifierConditionKind.SelectedInteriorEqualsNeighborSum, C("13245", selected: 1), false);
-            yield return Case(ModifierConditionKind.EveryDieRerolled, C(ever: 31), true);
-            yield return Case(ModifierConditionKind.EveryDieRerolled, C(ever: 30), false);
-            yield return Case(ModifierConditionKind.ExactlyOneSelectedMatchesSelectedCount, C(selected: 3), true);
-            yield return Case(ModifierConditionKind.ExactlyOneSelectedMatchesSelectedCount, C("22345", selected: 3), false);
-            yield return Case(ModifierConditionKind.MinimumEqualsRerollsSpent, C("22345", spent: 2), true);
-            yield return Case(ModifierConditionKind.MinimumEqualsRerollsSpent, C("22345", spent: 1), false);
-            yield return Case(ModifierConditionKind.RerollsExceedHandsRemaining, C(hands: 2, rerolls: 4), true);
-            yield return Case(ModifierConditionKind.RerollsExceedHandsRemaining, C(hands: 2, rerolls: 3), false);
-            yield return Case(ModifierConditionKind.MaximumAtMostRerollsRemaining, C(rerolls: 5), true);
-            yield return Case(ModifierConditionKind.MaximumAtMostRerollsRemaining, C(rerolls: 4), false);
-            yield return Case(ModifierConditionKind.LargestGroupEqualsHandsOrRerolls, C("11234", hands: 1, rerolls: 4), true);
-            yield return Case(ModifierConditionKind.LargestGroupEqualsHandsOrRerolls, C("11234", hands: 2, rerolls: 4), false);
-            yield return Case(ModifierConditionKind.EdgeSumEqualsEither, C(), true, 6, 8);
-            yield return Case(ModifierConditionKind.EdgeSumEqualsEither, C("22346"), true, 6, 8);
-            yield return Case(ModifierConditionKind.EdgeSumEqualsEither, C("12346"), false, 6, 8);
-            yield return Case(ModifierConditionKind.FaceEqualsPosition, C("22345"), true);
-            yield return Case(ModifierConditionKind.FaceEqualsPosition, C("23456"), false);
-            yield return Case(ModifierConditionKind.FirstHand, C(played: 0), true);
-            yield return Case(ModifierConditionKind.FirstHand, C(played: 1), false);
-            yield return Case(ModifierConditionKind.ExtremeEqualsHandsRemaining, C(hands: 0), true);
-            yield return Case(ModifierConditionKind.ExtremeEqualsHandsRemaining, C("22346", hands: 2), false);
-            yield return Case(ModifierConditionKind.SumLessThan, C("11116"), true, 15);
-            yield return Case(ModifierConditionKind.SumLessThan, C(), false, 15);
-            yield return Case(ModifierConditionKind.TwoPair, C("11223"), true);
-            yield return Case(ModifierConditionKind.TwoPair, C("11234"), false);
-            yield return Case(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 10), true, 8, 10);
-            yield return Case(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 20), true, 8, 10);
-            yield return Case(ModifierConditionKind.SelectedSumEqualsEither, C("23456", selected: 12), false, 8, 10);
-            yield return Case(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 3), true, 3);
-            yield return Case(ModifierConditionKind.RerollsSpentAtLeast, C(spent: 2), false, 3);
-            yield return Case(ModifierConditionKind.AdjacentDifferenceAtMost, C("11234"), true, 1);
-            yield return Case(ModifierConditionKind.AdjacentDifferenceAtMost, C("11345"), false, 1);
-            yield return Case(ModifierConditionKind.EdgeSumGreaterThanInterior, C("61116"), true);
-            yield return Case(ModifierConditionKind.EdgeSumGreaterThanInterior, C("11112"), false);
-            yield return Case(ModifierConditionKind.InitialPair, C(initial: "11234"), true);
-            yield return Case(ModifierConditionKind.InitialPair, C(initial: "12345"), false);
-            yield return Case(ModifierConditionKind.InitialRankAbovePrevious, C(initial: "11234", previous: "12346"), true);
-            yield return Case(ModifierConditionKind.InitialRankAbovePrevious, C(initial: "12346", previous: "11234"), false);
-            yield return Case(ModifierConditionKind.InitialRankAbovePrevious, C(initial: "11234"), false);
-            yield return Case(ModifierConditionKind.RangeGreaterThan, C("22346"), true, 3);
-            yield return Case(ModifierConditionKind.RangeGreaterThan, C("22345"), false, 3);
-            yield return Case(ModifierConditionKind.PreviousStageExhaustedHands, C(priorStarting: 3, priorRemaining: 0), true);
-            yield return Case(ModifierConditionKind.PreviousStageExhaustedHands, C(priorStarting: 3, priorRemaining: 1), false);
-            yield return Case(ModifierConditionKind.PreviousStageExhaustedHands, C(), false);
-            yield return Case(ModifierConditionKind.SameParity, C("13513"), true);
-            yield return Case(ModifierConditionKind.SameParity, C("24624"), true);
-            yield return Case(ModifierConditionKind.SameParity, C(), false);
-            yield return Case(ModifierConditionKind.InteriorSumDivisibleBy, C("11231"), true, 3);
-            yield return Case(ModifierConditionKind.InteriorSumDivisibleBy, C("11331"), false, 3);
-            yield return Case(ModifierConditionKind.EdgeSumEqualsHandsOrRerolls, C(hands: 5, rerolls: 4), true);
-            yield return Case(ModifierConditionKind.EdgeSumEqualsHandsOrRerolls, C(hands: 4, rerolls: 4), false);
-            yield return Case(ModifierConditionKind.PreviousStageAtMostHalfHandsPlayed, C(priorStarting: 3, priorRemaining: 2), true);
-            yield return Case(ModifierConditionKind.PreviousStageAtMostHalfHandsPlayed, C(priorStarting: 3, priorRemaining: 1), false);
-            yield return Case(ModifierConditionKind.PreviousStageAtMostHalfHandsPlayed, C(priorStarting: 4, priorRemaining: 2), true);
-            yield return Case(ModifierConditionKind.PreviousStageAtMostHalfHandsPlayed, C(), false);
-            yield return Case(ModifierConditionKind.LastRerollOnLastHand, C(hands: 1, rerolls: 0), true);
-            yield return Case(ModifierConditionKind.LastRerollOnLastHand, C(hands: 2, rerolls: 0), false);
-            yield return Case(ModifierConditionKind.LastRerollOnLastHand, C(hands: 1, rerolls: 1), false);
-            yield return Case(ModifierConditionKind.RankBelowBeforeReroll, C("12346", before: "11234"), true);
-            yield return Case(ModifierConditionKind.RankBelowBeforeReroll, C("11234", before: "12346"), false);
-            yield return Case(ModifierConditionKind.RankBelowBeforeReroll, C(), false);
-            yield return Case(ModifierConditionKind.Never, C(), false);
-            yield return Case(ModifierConditionKind.ThreeSmallestSumAtMostMaximum, C("11244"), true);
-            yield return Case(ModifierConditionKind.ThreeSmallestSumAtMostMaximum, C("11233"), false);
-            yield return Case(ModifierConditionKind.SecondFourthProductAtLeastSum, C("13131"), true);
-            yield return Case(ModifierConditionKind.SecondFourthProductAtLeastSum, C("11331"), false);
-            yield return Case(ModifierConditionKind.InteriorEqualsNeighborDifference, C("31245"), true);
-            yield return Case(ModifierConditionKind.InteriorEqualsNeighborDifference, C("33333"), false);
-            yield return Case(ModifierConditionKind.MiddleEqualsOddCount, C("22122"), true);
-            yield return Case(ModifierConditionKind.MiddleEqualsOddCount, C("22222"), false);
-            yield return Case(ModifierConditionKind.SumGreaterThan, C("66661"), true, 22);
-            yield return Case(ModifierConditionKind.SumGreaterThan, C("66622"), false, 22);
-            yield return Case(ModifierConditionKind.HandsRemainingEven, C(hands: 0), false);
-            yield return Case(ModifierConditionKind.HandsRemainingEven, C(hands: 1), true);
-            yield return Case(ModifierConditionKind.HandsRemainingEven, C(hands: 2), false);
-            yield return Case(ModifierConditionKind.EdgePairDifferencesEqual, C("21345"), true);
-            yield return Case(ModifierConditionKind.MiddleHand, C(hands: 2, starting: 4), true);
-            yield return Case(ModifierConditionKind.MiddleHand, C(hands: 3, starting: 5), true);
-            yield return Case(ModifierConditionKind.EdgePairDifferencesEqual, C(), true);
-            yield return Case(ModifierConditionKind.EdgePairDifferencesEqual, C("12346"), false);
-            yield return Case(ModifierConditionKind.InteriorContainsPair, C("12234"), true);
-            yield return Case(ModifierConditionKind.InteriorContainsPair, C(), false);
-            yield return Case(ModifierConditionKind.OddSumGreaterThanEvenSum, C("11345"), true);
-            yield return Case(ModifierConditionKind.OddSumGreaterThanEvenSum, C("22466"), false);
-            yield return Case(ModifierConditionKind.SumPrime, C("11113"), true);
-            yield return Case(ModifierConditionKind.SumPrime, C("11112"), false);
-            yield return Case(ModifierConditionKind.EdgesMatchInterior, C("11121"), true);
-            yield return Case(ModifierConditionKind.EdgesMatchInterior, C("12341"), false);
-            yield return Case(ModifierConditionKind.UniqueCountLessThanRerollsSpent, C("11223", spent: 4), true);
-            yield return Case(ModifierConditionKind.UniqueCountLessThanRerollsSpent, C("11223", spent: 3), false);
-            yield return Case(ModifierConditionKind.NoExtremeFaces, C("22345"), true);
-            yield return Case(ModifierConditionKind.NoExtremeFaces, C(), false);
-            yield return Case(ModifierConditionKind.MiddleFacesCountAtLeast, C("33441"), true, 4);
-            yield return Case(ModifierConditionKind.MiddleFacesCountAtLeast, C("33411"), false, 4);
-            yield return Case(ModifierConditionKind.MiddleHand, C(hands: 2, starting: 3), true);
-            yield return Case(ModifierConditionKind.MiddleHand, C(hands: 3, starting: 3), false);
-            yield return Case(ModifierConditionKind.InteriorPairMatchesEdge, C("22235"), true);
-            yield return Case(ModifierConditionKind.InteriorPairMatchesEdge, C("11225"), false);
-            yield return Case(ModifierConditionKind.InteriorPairMatchesEdge, C("11232"), false);
-            yield return Case(ModifierConditionKind.Always, C(), true);
-            yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("22345", favoredFace: 2), true);
-            yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("23456", favoredFace: 2), false);
-            yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("22345", favoredFace: 6), false);
-            yield return Case(ModifierConditionKind.FavoredFaceCountAtLeast, C("22345"), false);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 1), true);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 8), false);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 24), false);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234", bound: 9), true);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("22234"), false);
-            yield return Case(ModifierConditionKind.BoundFaceCountAtLeast, C("44454", bound: 16), true);
+            foreach (var pair in Conditions())
+            {
+                var condition = (ModifierCondition)pair.Arguments[0];
+                var holds = (ModifierContext?)pair.Arguments[1];
+                var fails = (ModifierContext?)pair.Arguments[2];
+                if (holds.HasValue)
+                    yield return new TestCaseData(condition, holds.Value, true).SetName(condition.Kind + "_Witness");
+                if (fails.HasValue)
+                    yield return new TestCaseData(condition, fails.Value, false).SetName(condition.Kind + "_NearMiss");
+            }
         }
 
-        private static TestCaseData Case(ModifierConditionKind kind, ModifierContext context, bool expected,
+        private static TestCaseData Pair(ModifierConditionKind kind, ModifierContext holds, ModifierContext fails,
             int parameter = 0, int secondary = 0)
-            => new TestCaseData(new ModifierCondition(kind, parameter, secondary), context, expected)
-                .SetName(kind + "_" + string.Join("", context.CurrentDice.ToArray()) + "_" + expected + "_" +
-                    context.SelectedMask + "_" + context.HandsRemaining + "_" + context.RerollsRemaining + "_" +
-                    context.RerollsSpentOnHand + "_" + context.EverRerolledMask + "_" +
-                    string.Join("", context.InitialDice.ToArray()) + "_" + context.BeforeRerollDice + "_" +
-                    context.PreviousPlayedDice + "_" + context.PreviousStageStartingHands + "_" + context.PreviousStageHandsRemaining + "_" +
-                    context.FavoredFace + "_" + context.BoundMask);
+            => new TestCaseData(new ModifierCondition(kind, parameter, secondary), (ModifierContext?)holds, (ModifierContext?)fails)
+                .SetName(kind.ToString());
+
+        private static TestCaseData Always(ModifierContext holds)
+            => new TestCaseData(new ModifierCondition(ModifierConditionKind.Always), (ModifierContext?)holds, null)
+                .SetName(nameof(ModifierConditionKind.Always));
+
+        private static TestCaseData Never(ModifierContext fails)
+            => new TestCaseData(new ModifierCondition(ModifierConditionKind.Never), null, (ModifierContext?)fails)
+                .SetName(nameof(ModifierConditionKind.Never));
 
         private static ModifierContext C(string dice = "12345", string initial = null, string before = null,
             string previous = null, int selected = 0, int ever = 0, int spent = 0, int hands = 3,

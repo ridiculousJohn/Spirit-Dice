@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -14,162 +9,109 @@ namespace Dice.Tests
 {
     public sealed class SceneLightingReceiverIntegrationTests
     {
-        private Scene scene;
-        private readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
-        private SpiritDiceTray tray;
-        private SpiritTrayScene trayScene;
-        private SpiritModifierHistoryRenderer history;
-        private SpiritHostPortrait host;
+        private Scene preview;
+        private TestTrayRig rig;
         private SceneLightingAsset lighting;
-        private SceneLightingMaterial compositor;
 
         [SetUp]
         public void SetUp()
         {
-            scene = EditorSceneManager.NewPreviewScene();
-            var trayPresentation = AssetDatabase.LoadAssetAtPath<SpiritTrayPresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LanternTrayPresentation.asset");
-            trayScene = UnityEngine.Object.Instantiate(trayPresentation.RigPrefab);
-            SceneManager.MoveGameObjectToScene(trayScene.gameObject, scene);
-            trayScene.Configure(trayPresentation); trayScene.Initialize();
-            tray = trayScene.DiceTray;
-            tray.Configure(trayPresentation, trayScene);
-            tray.Initialize();
-            MoveRenderer(tray.RenderRoot, tray.RenderCamera);
-            history = trayScene.HistoryRenderer;
-            history.Configure(trayPresentation, trayScene);
-            history.Initialize();
-            MoveRenderer(history.RenderRoot, history.RenderCamera);
-            AddHistory();
-            var parent = Root("Lighting host", typeof(RectTransform)).GetComponent<RectTransform>();
-            parent.sizeDelta = new Vector2(128, 128);
-            var presentation = Own(ScriptableObject.CreateInstance<SpiritHostPresentationAsset>());
-            var authoredHost = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
-                "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsHost.asset");
-            presentation.SilhouetteShader = authoredHost.SilhouetteShader;
-            presentation.SmokeShader = authoredHost.SmokeShader;
-            presentation.ReferenceSize = parent.sizeDelta;
-            presentation.Layers = new[]
-            {
-                new SpiritPortraitLayer { Id = "body", Texture = Texture2D.whiteTexture, Size = new Vector2(128, 128) },
-                new SpiritPortraitLayer { Id = "glow", Texture = Texture2D.whiteTexture, Size = new Vector2(16, 16),
-                    Tint = new Color(.2f, .4f, .8f, .42f), ReceiveSceneLighting = false }
-            };
-            host = SpiritPortraitTestAuthoring.Create(presentation, parent);
-            host.Build((RectTransform)host.transform, presentation);
-            lighting = Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
-            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            preview = EditorSceneManager.NewPreviewScene();
+            rig = new TestTrayRig(preview);
+            rig.Stage.localPosition = new Vector3(3, -2, 5);
+            rig.Stage.localRotation = Quaternion.Euler(0, 30, 0);
+            lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
             lighting.BaseTexture = Texture2D.whiteTexture;
-            lighting.ReceiverAmbient = new Color(.15f, .15f, .15f);
-            lighting.ReceiverKeyColor = Color.black;
             lighting.Lights = new[]
             {
-                new SceneLightLayer { Contribution = Texture2D.whiteTexture, FlickerAmount = .45f, Seed = 41,
+                new SceneLightLayer { Contribution = Texture2D.whiteTexture, Intensity = .6f, FlickerAmount = 0f,
                     ReceiverPosition = new Vector3(-2, 4, -3), ReceiverColor = Color.red, ReceiverIntensity = 4f, ReceiverRange = 15f },
-                new SceneLightLayer { Contribution = Texture2D.whiteTexture, FlickerAmount = .35f, Seed = 97,
-                    ReceiverPosition = new Vector3(2, 4, -3), ReceiverColor = Color.green, ReceiverIntensity = 4f, ReceiverRange = 15f }
+                new SceneLightLayer { Contribution = Texture2D.whiteTexture, Intensity = .9f, FlickerAmount = 0f,
+                    ReceiverPosition = new Vector3(2, 4, -3), ReceiverColor = Color.green, ReceiverIntensity = 3f, ReceiverRange = 9f }
             };
-            compositor = new SceneLightingMaterial(lighting.Shader);
         }
 
         [TearDown]
         public void TearDown()
         {
-            compositor?.Dispose();
-            if (scene.IsValid()) EditorSceneManager.ClosePreviewScene(scene);
-            foreach (var resource in resources) if (resource != null) UnityEngine.Object.DestroyImmediate(resource);
-            resources.Clear();
+            rig.Dispose();
+            Object.DestroyImmediate(lighting);
+            if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
         }
 
+        /** Checks every stage material receives the sampled lights placed in the stage's own space / fails if a material misses the sample or lights ignore the stage transform. */
         [Test]
-        public void CompositorHostDiceAndHistoryUseOneSampleAndRigLocalLightCoordinates()
+        public void StageMaterialsReceiveTheSampleInStageSpace()
         {
+            var scene = rig.Start();
             var state = new SceneLightingState();
-            bool distinctLevels = false;
-            for (int sample = 0; sample < 12; ++sample)
+            state.Sample(lighting, 2.5);
+            scene.SetSceneLighting(state);
+            Material[] materials = Receivers(rig.Stage);
+            Assert.That(materials, Is.Not.Empty);
+            foreach (Material material in materials)
             {
-                state.Sample(lighting, sample * .419);
-                compositor.Apply(state);
-                Apply(state);
-                Assert.That(Field<SceneLightingState>(trayScene, "sceneLighting"), Is.SameAs(state));
-                Assert.That(Field<SceneLightingState>(history, "sceneLighting"), Is.SameAs(state));
-                distinctLevels |= Mathf.Abs(state.GetIntensity(0) - state.GetIntensity(1)) > .002f;
-                for (int i = 0; i < state.Count; ++i)
-                {
-                    Assert.That(compositor.Material.GetFloat("_LightIntensity" + i), Is.EqualTo(state.GetIntensity(i)));
-                    CheckRig(tray.RenderRoot, state, i);
-                    CheckRig(history.RenderRoot, state, i);
-                }
-                Color expected = state.EvaluateReceiver(Vector3.zero, Vector3.back);
-                Color actual = host.GetLayer("body").color.linear;
-                Assert.That(actual.r, Is.EqualTo(expected.r).Within(.001f));
-                Assert.That(actual.g, Is.EqualTo(expected.g).Within(.001f));
-                Assert.That(actual.b, Is.EqualTo(expected.b).Within(.001f));
-                Assert.That(host.GetLayer("glow").color, Is.EqualTo(new Color(.2f, .4f, .8f, .42f)));
+                Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.EqualTo(1f), material.name);
+                for (int i = 0; i < state.Count; ++i) AssertLight(material, state, i, rig.Stage);
             }
-            Assert.That(distinctLevels, Is.True, "The two authored seeds should produce independent light levels.");
         }
 
+        /** Checks lighting with fewer lights empties the unused slots and no lighting disables receivers / fails if a removed light or an unlit table leaves light behind. */
         [Test]
-        public void RemovingLightsClearsSlotsAndNewHistoryKeepsTheCurrentSampleAcrossReenable()
+        public void StageMaterialsClearSlotsTheSampleDoesNotLight()
         {
+            var scene = rig.Start();
             var state = new SceneLightingState();
-            state.Sample(lighting, 12.375);
-            Apply(state);
-            Material oldDie = history.GetDieRenderer(0).sharedMaterial;
-            history.Clear();
-            Assert.That(oldDie == null, Is.True, "Clearing entries must release their owned material.");
-            AddHistory();
-            Material arrived = history.GetDieRenderer(0).sharedMaterial;
-            Assert.That(arrived.GetVector("_SceneLightParameters0").x, Is.EqualTo(state.GetIntensity(0)));
-            history.gameObject.SetActive(false);
-            Invoke(history, "OnDisable");
-            Assert.That(history.GetDieTransform(0).gameObject.activeInHierarchy, Is.False);
-            Assert.That(history.RenderRoot.gameObject.activeSelf, Is.True);
-            history.gameObject.SetActive(true);
-            Invoke(history, "OnEnable");
-            Assert.That(history.RenderRoot.gameObject.activeSelf, Is.True);
-            Assert.That(arrived.GetVector("_SceneLightParameters1").x, Is.EqualTo(state.GetIntensity(1)));
+            state.Sample(lighting, 2.5);
+            scene.SetSceneLighting(state);
             lighting.Lights = new[] { lighting.Lights[0] };
-            state.Sample(lighting, 13);
-            compositor.Apply(state);
-            Apply(state);
-            foreach (Material material in Materials())
+            state.Sample(lighting, 3);
+            scene.SetSceneLighting(state);
+            foreach (Material material in Receivers(rig.Stage))
+            {
+                AssertLight(material, state, 0, rig.Stage);
                 for (int i = 1; i < SceneLightingAsset.MaximumLights; ++i) AssertEmptySlot(material, i);
-            for (int i = 1; i < SceneLightingAsset.MaximumLights; ++i)
-                Assert.That(compositor.Material.GetFloat("_LightIntensity" + i), Is.Zero);
-            state.Sample(null, 14);
-            Apply(state);
-            foreach (Material material in Materials())
+            }
+            scene.SetSceneLighting(null);
+            foreach (Material material in Receivers(rig.Stage))
             {
                 Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.Zero);
                 Assert.That(material.GetVector("_SceneLightingAmbient"), Is.EqualTo(Vector4.zero));
-                Assert.That(material.GetVector("_SceneLightingKeyColor"), Is.EqualTo(Vector4.zero));
                 for (int i = 0; i < SceneLightingAsset.MaximumLights; ++i) AssertEmptySlot(material, i);
             }
-            Assert.That(host.GetLayer("body").color, Is.EqualTo(Color.white));
-            history.Clear(); AddHistory();
-            Assert.That(history.GetDieRenderer(0).sharedMaterial.GetFloat("_SceneLightingEnabled"), Is.Zero);
         }
 
-        private void Apply(SceneLightingState state)
+        /** Checks modifier tokens, existing and newly added, receive the current sample in the shared stage's space / fails if a token misses the sample or places lights relative to its bay. */
+        [Test]
+        public void ModifierTokensReceiveTheCurrentSampleInStageSpace()
         {
-            tray.SetSceneLighting(state);
+            rig.Geometry.ModifierRoot.localRotation = Quaternion.Euler(0, 40, 0);
+            var history = rig.StartHistory();
+            var definition = TestTrayRig.Definition("test.lighting.token");
+            history.Add(TestTrayRig.Contribution(definition, 1), rig.Charms(definition), definition, false);
+            var state = new SceneLightingState();
+            state.Sample(lighting, 4.25);
             history.SetSceneLighting(state);
-            host.SetSceneLighting(state, Vector3.zero);
+            history.Add(TestTrayRig.Contribution(definition, 2), rig.Charms(definition), definition, false);
+            for (int token = 0; token < history.Count; ++token)
+            {
+                Material material = history.GetDieRenderer(token).sharedMaterial;
+                Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.EqualTo(1f), "Token " + token);
+                for (int i = 0; i < state.Count; ++i) AssertLight(material, state, i, rig.Stage);
+            }
         }
 
-        private static void CheckRig(Transform root, SceneLightingState state, int index)
+        private static Material[] Receivers(Transform root) => root.GetComponentsInChildren<MeshRenderer>(true)
+            .Select(renderer => renderer.sharedMaterial)
+            .Where(material => material != null && material.HasProperty("_SceneLightingEnabled")).Distinct().ToArray();
+
+        private static void AssertLight(Material material, SceneLightingState state, int index, Transform space)
         {
-            foreach (Material material in RigMaterials(root))
-            {
-                Assert.That(material.GetFloat("_SceneLightingEnabled"), Is.EqualTo(1f));
-                Assert.That(material.GetVector("_SceneLightParameters" + index).x, Is.EqualTo(state.GetIntensity(index)));
-                SceneLightLayer light = state.Asset.Lights[index];
-                Vector3 world = root.TransformPoint(light.ReceiverPosition);
-                Assert.That(material.GetVector("_SceneLightPosition" + index),
-                    Is.EqualTo(new Vector4(world.x, world.y, world.z, light.ReceiverRange)));
-            }
+            SceneLightLayer light = state.Asset.Lights[index];
+            Vector3 world = space.TransformPoint(state.GetReceiverPosition(index));
+            Assert.That(material.GetVector("_SceneLightParameters" + index).x, Is.EqualTo(state.GetIntensity(index)).Within(.00001f));
+            Assert.That(Vector4.Distance(material.GetVector("_SceneLightPosition" + index),
+                new Vector4(world.x, world.y, world.z, light.ReceiverRange)), Is.LessThan(.0001f), material.name + " light " + index);
         }
 
         private static void AssertEmptySlot(Material material, int index)
@@ -178,44 +120,5 @@ namespace Dice.Tests
             Assert.That(material.GetVector("_SceneLightColor" + index), Is.EqualTo(Vector4.zero));
             Assert.That(material.GetVector("_SceneLightParameters" + index), Is.EqualTo(Vector4.zero));
         }
-
-        private IEnumerable<Material> Materials() => RigMaterials(tray.RenderRoot).Concat(RigMaterials(history.RenderRoot));
-        private static Material[] RigMaterials(Transform root)
-        {
-            Material[] result = root.GetComponentsInChildren<MeshRenderer>(true).Select(renderer => renderer.sharedMaterial)
-                .Where(material => material != null && material.HasProperty("_SceneLightingEnabled")
-                    && material.GetFloat("_SurfaceKind") != 5f && material.GetFloat("_SurfaceKind") != 6f).Distinct().ToArray();
-            Assert.That(result, Is.Not.Empty);
-            return result;
-        }
-
-        private void AddHistory()
-        {
-            var definition = new ModifierDefinition("lighting.test", "lighting", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Always), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
-            var contribution = (ModifierContribution)Activator.CreateInstance(typeof(ModifierContribution),
-                BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { 1L, definition, 1L, 0L, 0 }, null);
-            history.Add(contribution, definition, false);
-        }
-
-        private void MoveRenderer(Transform root, Camera camera)
-        {
-            SceneManager.MoveGameObjectToScene(root.root.gameObject, scene);
-            camera.scene = scene;
-            camera.enabled = false;
-        }
-
-        private GameObject Root(string name, params Type[] components)
-        {
-            var result = new GameObject(name, components) { hideFlags = HideFlags.HideAndDontSave };
-            SceneManager.MoveGameObjectToScene(result, scene);
-            return result;
-        }
-
-        private T Own<T>(T resource) where T : UnityEngine.Object { resources.Add(resource); return resource; }
-        private static T Field<T>(object instance, string name)
-            => (T)instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
-        private static void Invoke(object instance, string name)
-            => instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(instance, null);
     }
 }

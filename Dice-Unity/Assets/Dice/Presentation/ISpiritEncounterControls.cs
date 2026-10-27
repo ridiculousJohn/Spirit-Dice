@@ -9,6 +9,8 @@ namespace Dice.Presentation
     {
         EncounterSnapshot Snapshot { get; }
         MechanicalCatalog Catalog { get; }
+        /** The presentation of the catalog's charms. */
+        ModifierPresentationCatalog ModifierPresentation { get; }
         HandPreview Preview { get; }
         IReadOnlyList<ModifierInspection> ModifierInspections { get; }
         int SelectedMask { get; }

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 0c5abe5129dbb7441acf17a0a28d5bbc, type: 2}
   displayName: Strong Fence / Base
   icon: {fileID: 21300000, guid: de8bc03a5fcf501c9907caf21e2be568, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Dice 1 + 5 exceed the sum of dice 2 + 3 + 4.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -10,15 +10,15 @@ namespace Dice.Presentation
     internal static class SpiritCharmVisuals
     {
         internal static void SetIcon(Image icon, SpiritModifierSigilGraphic sigil, SpiritModifierCategoryBadge category,
-            ModifierDefinition definition)
+            ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            icon.sprite = definition == null ? null : SpiritModifierIcons.GetSprite(definition);
-            icon.color = sigil.color = definition == null ? Color.white : SpiritModifierIcons.GetEffectColor(definition);
+            icon.sprite = definition == null ? null : charms.GetIcon(definition);
+            icon.color = sigil.color = definition == null ? Color.white : charms.GetEffectColor(definition);
             bool visible = icon.sprite != null;
             icon.gameObject.SetActive(visible);
-            if (definition != null) sigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            if (definition != null) sigil.Seed = charms.GetSigilSeed(definition);
             sigil.gameObject.SetActive(definition != null && !visible);
-            category.Render(definition);
+            category.Render(charms, definition);
         }
 
         internal static SpiritCharmStatusPresentation Status(ISpiritEncounterControls controls,
@@ -59,7 +59,7 @@ namespace Dice.Presentation
             foreach (string id in ids)
             {
                 var definition = controls.Catalog.GetModifier(id);
-                names.Add(SpiritModifierPresentation.GetName(definition) + "\n" + AvailabilityScopeText(definition));
+                names.Add(controls.ModifierPresentation.GetName(definition) + "\n" + AvailabilityScopeText(definition));
             }
             return (HasPendingProgress(controls) ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
                 "Available in future reward pools.\n\n" + string.Join("\n\n", names);

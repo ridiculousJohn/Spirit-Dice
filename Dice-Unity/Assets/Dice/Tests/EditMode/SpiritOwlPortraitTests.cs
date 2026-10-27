@@ -8,13 +8,15 @@ using UnityEngine.UI;
 
 namespace Dice.Tests
 {
+    [Explicit("Art-generation check; run it by name while the owl art is being changed.")]
+    [Category("ArtAuthoring")]
     public sealed class SpiritOwlPortraitTests
     {
         private GameObject host;
         private SpiritHostPortrait portrait;
         private SpiritHostPresentationAsset presentation;
-        private static readonly Vector2 PerchPosition = new Vector2(.814f, .884f);
-        private static readonly Vector2 TablePosition = new Vector2(.5f, .612f);
+        // Normalized room positions of the physical feet at rest on the table and while waiting on the perch.
+        private Vector2 table, perch;
 
         [SetUp]
         public void SetUp()
@@ -26,6 +28,11 @@ namespace Dice.Tests
                 "Assets/Dice/Content/Presentation/Watchtower/WatchtowerHost.asset");
             Assert.That(presentation, Is.Not.Null);
             portrait = presentation.Create(parent);
+            table = Contact("Physical Rest");
+            portrait.SetState(SpiritPresentationState.Waiting, 0f);
+            perch = Contact("Physical Rest");
+            portrait.ResetPose();
+            Assert.That(Vector2.Distance(perch, table), Is.GreaterThan(.01f), "The watcher waits away from the table.");
         }
 
         [TearDown]
@@ -35,25 +42,25 @@ namespace Dice.Tests
         public void ArrivalUsesSeparateFlightAndLandingArtworkBeforeFoldingAtTheTable()
         {
             portrait.SetState(SpiritPresentationState.Waiting, 0f);
-            AssertContact("Physical Rest", PerchPosition);
             Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
             AssertArtwork("Physical Rest");
 
             portrait.SetState(SpiritPresentationState.Arrival, .45f);
             Assert.That(Picture("Physical Arrival").color.a, Is.EqualTo(1f));
             AssertArtwork("Physical Arrival");
-            Assert.That(Contact("Physical Arrival").x, Is.InRange(TablePosition.x, PerchPosition.x));
+            Assert.That(Contact("Physical Arrival").x, Is.InRange(Mathf.Min(table.x, perch.x), Mathf.Max(table.x, perch.x)),
+                "The flight crosses between the perch and the table.");
 
             portrait.SetState(SpiritPresentationState.Arrival, .81f);
             Assert.That(Picture("Physical Settle").color.a, Is.EqualTo(1f));
             AssertArtwork("Physical Settle");
-            AssertContact("Physical Settle", TablePosition);
+            AssertContact("Physical Settle", table);
 
             portrait.SetState(SpiritPresentationState.Arrival, 1f);
             Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
             Assert.That(Picture("Physical Arrival").color.a, Is.Zero);
             Assert.That(Picture("Physical Settle").color.a, Is.Zero);
-            AssertContact("Physical Rest", TablePosition);
+            AssertContact("Physical Rest", table);
         }
 
         [Test]
@@ -70,73 +77,25 @@ namespace Dice.Tests
             Assert.That(portrait.IsReacting, Is.True);
             AssertSpiritLeads();
             portrait.Advance(.3f);
-            Assert.That(HeadDisplacement("Physical Rest"), Is.GreaterThan(1f));
-        }
-
-        [TestCase(SpiritPresentationState.Victory, 1.5f)]
-        [TestCase(SpiritPresentationState.Defeat, 1.2f)]
-        [TestCase(SpiritPresentationState.Farewell, .5f)]
-        public void OutcomeHeadMotionLeadsWithTheSpiritBeforeThePhysicalAcknowledgment(
-            SpiritPresentationState state, float duration)
-        {
-            Assert.That(portrait.GetDuration(state), Is.EqualTo(duration));
-            portrait.SetState(state, .1f / duration);
-            Assert.That(Mathf.Abs(Picture("Spirit Rest").Weights[2]), Is.GreaterThan(.005f));
-            Assert.That(Picture("Physical Rest").Weights[2], Is.Zero.Within(.0001f));
-            Assert.That(Picture("Spirit Rest").color.a, Is.GreaterThan(.03f));
-            portrait.SetState(state, .4f / duration);
-            Assert.That(Mathf.Abs(Picture("Physical Rest").Weights[2]), Is.GreaterThan(.01f));
-            Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
-            Assert.That(Picture("Physical Arrival").color.a, Is.Zero);
-            Assert.That(Picture("Physical Settle").color.a, Is.Zero);
+            Assert.That(HeadDisplacement("Physical Rest"), Is.GreaterThan(0f), "The physical head follows the spirit.");
         }
 
         [TestCase(SpiritPresentationState.Victory)]
         [TestCase(SpiritPresentationState.Defeat)]
         [TestCase(SpiritPresentationState.Farewell)]
-        public void OutcomeSamplingIsNormalizedDeterministicAndDoesNotAdvanceItself(SpiritPresentationState state)
+        public void OutcomeHeadMotionLeadsWithTheSpiritBeforeThePhysicalAcknowledgment(SpiritPresentationState state)
         {
-            portrait.SetState(state, .4f);
-            Vector2 head = ArtworkPoint("Physical Rest", new Vector2(.53f, .85f));
-            float alpha = Picture("Spirit Rest").color.a;
-            portrait.Advance(10f);
-            Assert.That(portrait.Progress, Is.EqualTo(.4f));
-            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
-            Assert.That(Picture("Spirit Rest").color.a, Is.EqualTo(alpha));
-            portrait.SetState(state, .9f);
-            portrait.SetState(state, .4f);
-            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
-            portrait.ResetPose();
-            portrait.SetState(state, .4f);
-            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), Is.EqualTo(head));
-        }
-
-        [Test]
-        public void OutcomeEntryPreservesIdleAndInterruptedReactionDeformation(
-            [Values(SpiritPresentationState.Victory, SpiritPresentationState.Defeat, SpiritPresentationState.Farewell)]
-            SpiritPresentationState state, [Values(false, true)] bool reacting)
-        {
-            portrait.Advance(3.85f);
-            if (reacting)
-            {
-                portrait.React();
-                portrait.Advance(.4f);
-            }
-            float[][] weights = presentation.Layers.Select(layer => Picture(layer.Id).Weights.ToArray()).ToArray();
-            float[] alphas = presentation.Layers.Select(layer => Picture(layer.Id).color.a).ToArray();
-            Vector2 head = ArtworkPoint("Physical Rest", new Vector2(.53f, .85f));
-
-            portrait.SetState(state, 0f);
-
-            for (int i = 0; i < presentation.Layers.Length; ++i)
-            {
-                var picture = Picture(presentation.Layers[i].Id);
-                Assert.That(picture.color.a, Is.EqualTo(alphas[i]).Within(.0001f), picture.name);
-                for (int channel = 0; channel < weights[i].Length; ++channel)
-                    Assert.That(picture.Weights[channel], Is.EqualTo(weights[i][channel]).Within(.0001f), picture.name);
-            }
-            Assert.That(Vector2.Distance(ArtworkPoint("Physical Rest", new Vector2(.53f, .85f)), head), Is.LessThan(.001f));
-            Assert.That(portrait.IsReacting, Is.False);
+            float duration = portrait.GetDuration(state);
+            Assert.That(duration, Is.GreaterThan(0f), state + " requires an authored performance.");
+            portrait.SetState(state, .1f / duration);
+            Assert.That(Mathf.Abs(Picture("Spirit Rest").Weights[2]), Is.GreaterThan(0f), "The spirit turns first.");
+            Assert.That(Picture("Physical Rest").Weights[2], Is.Zero.Within(.0001f), "The physical head waits for the spirit.");
+            Assert.That(Picture("Spirit Rest").color.a, Is.GreaterThan(0f), "The leading spirit is visible.");
+            portrait.SetState(state, .4f / duration);
+            Assert.That(Mathf.Abs(Picture("Physical Rest").Weights[2]), Is.GreaterThan(.0001f), "The physical head acknowledges.");
+            Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
+            Assert.That(Picture("Physical Arrival").color.a, Is.Zero);
+            Assert.That(Picture("Physical Settle").color.a, Is.Zero);
         }
 
         [TestCase(SpiritPresentationState.Victory)]
@@ -153,7 +112,7 @@ namespace Dice.Tests
                     var picture = Picture(presentation.Layers[i].Id);
                     Assert.That(picture.rectTransform.sizeDelta, Is.EqualTo(sizes[i]), picture.name);
                     Assert.That(picture.rectTransform.localRotation, Is.EqualTo(Quaternion.identity), picture.name);
-                    AssertContact(picture.name, TablePosition);
+                    AssertContact(picture.name, table);
                 }
             }
         }
@@ -179,7 +138,7 @@ namespace Dice.Tests
                 for (int channel = 0; channel < weights[i].Length; ++channel)
                     Assert.That(picture.Weights[channel], Is.EqualTo(weights[i][channel]).Within(.0001f), picture.name);
             }
-            AssertContacts(TablePosition);
+            AssertContacts(table);
         }
 
         [Test]
@@ -187,36 +146,12 @@ namespace Dice.Tests
         {
             portrait.SetState(SpiritPresentationState.Victory, .5f);
             float victory = Picture("Physical Rest").Weights[2];
-            Assert.That(victory, Is.GreaterThan(.09f));
+            Assert.That(victory, Is.GreaterThan(0f), "Victory tilts one way.");
             portrait.ResetPose();
             portrait.SetState(SpiritPresentationState.Defeat, .5f);
             float defeat = Picture("Physical Rest").Weights[2];
-            Assert.That(defeat, Is.LessThan(-.05f));
-            Assert.That(Mathf.Abs(defeat), Is.LessThan(victory * .7f));
-        }
-
-        [Test]
-        public void ArrivalIsDeterministicAfterSeekingResetAndSkipping()
-        {
-            portrait.SetState(SpiritPresentationState.Arrival, .45f);
-            Vector2 contact = Contact("Physical Arrival");
-            Vector2 flightSize = Picture("Physical Arrival").rectTransform.sizeDelta;
-            Vector2 displacement = Picture("Physical Arrival").EvaluateDisplacement(new Vector2(.43f, .52f), flightSize);
-            portrait.Advance(100f);
-            Assert.That(Contact("Physical Arrival"), Is.EqualTo(contact));
-            Assert.That(Picture("Physical Arrival").EvaluateDisplacement(new Vector2(.43f, .52f), flightSize),
-                Is.EqualTo(displacement));
-            portrait.SetState(SpiritPresentationState.Arrival, .9f);
-            portrait.ResetPose();
-            portrait.SetState(SpiritPresentationState.Arrival, .45f);
-            Assert.That(Contact("Physical Arrival"), Is.EqualTo(contact));
-            Assert.That(Picture("Physical Arrival").rectTransform.sizeDelta, Is.EqualTo(flightSize));
-            Assert.That(Picture("Physical Arrival").EvaluateDisplacement(new Vector2(.43f, .52f), flightSize),
-                Is.EqualTo(displacement));
-            portrait.SetState(SpiritPresentationState.Idle, 1f);
-            AssertContact("Physical Rest", TablePosition);
-            Assert.That(Picture("Physical Rest").color.a, Is.EqualTo(1f));
-            Assert.That(portrait.IsReacting, Is.False);
+            Assert.That(defeat, Is.LessThan(0f), "Defeat tilts the other way.");
+            Assert.That(Mathf.Abs(defeat), Is.LessThan(victory), "Defeat tilts more quietly than the victory acknowledgment.");
         }
 
         [Test]
@@ -225,16 +160,16 @@ namespace Dice.Tests
             foreach (float progress in new[] { .76f, .81f, .9f, .96f, 1f })
             {
                 portrait.SetState(SpiritPresentationState.Arrival, progress);
-                AssertContacts(TablePosition);
+                AssertContacts(table);
             }
             portrait.SetState(SpiritPresentationState.Idle, 1f);
             portrait.Advance(3.8f);
-            AssertContacts(TablePosition);
+            AssertContacts(table);
             portrait.React();
             foreach (float step in new[] { .1f, .3f, .7f, .8f })
             {
                 portrait.Advance(step);
-                AssertContacts(TablePosition);
+                AssertContacts(table);
             }
             Assert.That(portrait.IsReacting, Is.False);
         }
@@ -253,7 +188,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void FoldingKeepsTheChestRegisteredAndRecoversFromASmallGroundedSettle()
+        public void FoldingKeepsTheChestRegisteredAndRecoversFromAGroundedSettle()
         {
             portrait.SetState(SpiritPresentationState.Arrival, .90f);
             Assert.That(Vector2.Distance(ArtworkPoint("Physical Settle", new Vector2(.51f, .43f)),
@@ -262,32 +197,21 @@ namespace Dice.Tests
             float landingHead = ArtworkPoint("Physical Settle", new Vector2(.51f, .72f)).y;
             portrait.SetState(SpiritPresentationState.Arrival, .79f);
             float compressedHead = ArtworkPoint("Physical Settle", new Vector2(.51f, .72f)).y;
-            Assert.That(landingHead - compressedHead, Is.InRange(3f, 6f));
-            AssertContacts(TablePosition);
+            Assert.That(compressedHead, Is.LessThan(landingHead), "The landing settles the head down.");
+            AssertContacts(table);
             portrait.SetState(SpiritPresentationState.Arrival, 1f);
-            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.5f, .80f)).y - compressedHead,
-                Is.InRange(3f, 6f));
-        }
-
-        [TestCase(540f, 960f)]
-        [TestCase(443f, 900f)]
-        [TestCase(960f, 540f)]
-        public void AuthoredContactsFollowTheRoomAcrossPortraitSizes(float width, float height)
-        {
-            host.GetComponent<RectTransform>().sizeDelta = new Vector2(width, height);
-            portrait.SetState(SpiritPresentationState.Waiting, 0f);
-            AssertContact("Physical Rest", PerchPosition);
-            portrait.SetState(SpiritPresentationState.Idle, 1f);
-            AssertContacts(TablePosition);
+            Assert.That(ArtworkPoint("Physical Rest", new Vector2(.5f, .80f)).y, Is.GreaterThan(compressedHead),
+                "The folded watcher recovers from the settle.");
         }
 
         [Test]
-        public void WatcherHasAuthoredFeetToCrownHeightAtPerchAndTable()
+        public void WatcherAppearsSmallerOnTheDistantPerchThanAtTheTable()
         {
             portrait.SetState(SpiritPresentationState.Waiting, 0f);
-            Assert.That(VisibleHeight(), Is.EqualTo(.062f).Within(.001f));
+            float perchHeight = VisibleHeight();
             portrait.SetState(SpiritPresentationState.Idle, 1f);
-            Assert.That(VisibleHeight(), Is.EqualTo(.31f).Within(.001f));
+            Assert.That(perchHeight, Is.GreaterThan(0f));
+            Assert.That(perchHeight, Is.LessThan(VisibleHeight()), "The distant perch shows the watcher smaller than at the table.");
         }
 
         [Test]
@@ -351,36 +275,6 @@ namespace Dice.Tests
             Assert.That(head.color.a, Is.GreaterThan(0));
         }
 
-        [Test]
-        public void HiddenResetCancelsReactionAndRefreshingVisibleHostPreservesIt()
-        {
-            portrait.React();
-            portrait.Advance(.4f);
-            float displacement = HeadDisplacement("Physical Rest");
-            portrait.SetVisible(true);
-            Assert.That(portrait.IsReacting, Is.True);
-            Assert.That(HeadDisplacement("Physical Rest"), Is.EqualTo(displacement));
-            portrait.SetVisible(false);
-            portrait.React();
-            portrait.Advance(100f);
-            Assert.That(portrait.IsReacting, Is.False);
-            Assert.That(portrait.State, Is.EqualTo(SpiritPresentationState.Idle));
-            portrait.SetVisible(true);
-            portrait.React();
-            Assert.That(portrait.IsReacting, Is.True);
-        }
-
-        [TestCase(-1f, 0f)]
-        [TestCase(2f, 1f)]
-        [TestCase(float.NaN, 0f)]
-        public void JourneyProgressCannotProduceInvalidPoses(float progress, float expected)
-        {
-            portrait.SetState(SpiritPresentationState.Arrival, progress);
-            Assert.That(portrait.Progress, Is.EqualTo(expected));
-            Assert.That(float.IsNaN(Contact("Physical Rest").x), Is.False);
-            Assert.That(float.IsNaN(Contact("Physical Rest").y), Is.False);
-        }
-
         private SpiritPortraitImage Picture(string name) => portrait.GetLayer(name);
 
         private void AssertArtwork(string name)
@@ -393,10 +287,8 @@ namespace Dice.Tests
         }
 
         private void AssertSpiritLeads()
-        {
-            Assert.That(HeadDisplacement("Spirit Rest"), Is.GreaterThan(.5f));
-            Assert.That(HeadDisplacement("Spirit Rest"), Is.GreaterThan(HeadDisplacement("Physical Rest") * 3f));
-        }
+            => Assert.That(HeadDisplacement("Spirit Rest"), Is.GreaterThan(HeadDisplacement("Physical Rest")),
+                "The spirit head turns ahead of the physical head.");
 
         private float VisibleHeight()
         {

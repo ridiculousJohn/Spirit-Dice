@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 4719ba75fb319b44693525960ec8efab, type: 2}
   displayName: Gatekeeper's Bowl / Mult
   icon: {fileID: 21300000, guid: 10eb5672133e57068f2fd242479096d6, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Dice 1 + 5 equal hands remaining + 1 or rerolls remaining.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
   displayName: Tall Pine / Rerolls
   icon: {fileID: 21300000, guid: 0939cdbdbf88547a959f4cbc54778a45, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least one die shows {parameter}.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

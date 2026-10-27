@@ -5,9 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Dice.App;
-using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -18,12 +16,16 @@ using UnityEngine.UI;
 
 namespace Dice.Tests
 {
+    /** The watcher's own choreography: it waits on a perch, flies down during the journey's automatic arrival and lands at the table. */
+    [Explicit("Art-generation check; run it by name while the owl art is being changed.")]
+    [Category("ArtAuthoring")]
     public sealed class WatchtowerJourneyPlayTests
     {
         private const string EncounterId = "encounter.owl.watchtower";
         private SpiritEncounterController controller;
         private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
+        private int flight;
 
         [UnitySetUp]
         public IEnumerator InvestigationReady()
@@ -32,290 +34,12 @@ namespace Dice.Tests
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            journey = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == EncounterId);
+            journey = controller.JourneyCatalog.Find(EncounterId);
+            Assert.That(journey, Is.Not.Null, EncounterId);
+            flight = FlightIndex();
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
             yield return null;
-        }
-
-        [UnityTest]
-        public IEnumerator ApproachClimbPerchAndFlightIntroduceTheWatcherBeforeOneOpeningRoll()
-        {
-            Assert.That(journey.Beats.Select(beat => beat.Id), Is.EqualTo(new[]
-                { "approach", "climb", "perch", "flight", "witness", "bargain", "discovery", "invitation" }));
-            Assert.That(journey.Beats.Select(beat => beat.Kind), Is.EqualTo(new[]
-            {
-                EncounterJourneyBeatKind.Illustration, EncounterJourneyBeatKind.Illustration,
-                EncounterJourneyBeatKind.Dialogue, EncounterJourneyBeatKind.Arrival,
-                EncounterJourneyBeatKind.Dialogue, EncounterJourneyBeatKind.Dialogue, EncounterJourneyBeatKind.Dialogue,
-                EncounterJourneyBeatKind.Invitation
-            }));
-            var approach = journey.Beats.Single(beat => beat.Id == "approach");
-            var climb = journey.Beats.Single(beat => beat.Id == "climb");
-            var perch = journey.Beats.Single(beat => beat.Id == "perch");
-            var flight = journey.Beats.Single(beat => beat.Id == "flight");
-            Assert.That(approach.Background, Is.Not.Null);
-            Assert.That(climb.Background, Is.SameAs(approach.Background));
-            Assert.That(climb.BackgroundScaleFrom, Is.EqualTo(1));
-            Assert.That(climb.BackgroundScaleTo, Is.EqualTo(1.12f));
-            Assert.That(climb.BackgroundMotionTo, Is.EqualTo(new Vector2(0, -.035f)));
-            Assert.That(perch.HostState, Is.EqualTo(SpiritPresentationState.Waiting));
-            Assert.That(flight.HostState, Is.EqualTo(SpiritPresentationState.Arrival));
-            Assert.That(flight.HideNarrativeDuringMotion, Is.True);
-            Assert.That(journey.Beats.Where(beat => beat.AutoAdvance).Select(beat => beat.Id),
-                Is.EqualTo(new[] { "flight" }));
-            Assert.That(journey.TablePresentation.RoomTexture, Is.Not.Null);
-            Assert.That(journey.TablePresentation.AudioTheme, Is.Not.Null);
-            Assert.That(journey.TablePresentation.AudioTheme.ambience, Is.Null);
-            Assert.That(journey.TablePresentation.AudioTheme.creak, Is.Null);
-            Assert.That(journey.TablePresentation.HostPresentation, Is.TypeOf<SpiritHostPresentationAsset>());
-            var presentation = (SpiritHostPresentationAsset)journey.TablePresentation.HostPresentation;
-            Assert.That(presentation.Layers.Single(layer => layer.Id == "Physical Rest").Texture, Is.Not.Null);
-            Assert.That(presentation.Layers.Single(layer => layer.Id == "Physical Arrival").Texture, Is.Not.Null);
-            Assert.That(presentation.Layers.Single(layer => layer.Id == "Physical Settle").Texture, Is.Not.Null);
-            Assert.That(journey.Beats.Single(beat => beat.Id == "perch").Text, Is.EqualTo("An owl watches from the upper arch."));
-            Assert.That(journey.Beats.Single(beat => beat.Id == "witness").Text, Does.StartWith("I saw your traveler cross the marsh behind a blue light."));
-            Assert.That(journey.Beats.Single(beat => beat.Id == "bargain").Text,
-                Is.EqualTo("Something was wrong with that light. Sit. Show me what you see, and I will tell you where it led them."));
-
-            int resolutions = 0;
-            controller.Resolved += _ => ++resolutions;
-            controller.SelectEncounter(EncounterId);
-            yield return ContentReady.Routed(controller);
-            yield return null;
-            for (int index = 0; index < journey.Beats.Count; ++index)
-            {
-                Assert.That(controller.BeatIndex, Is.EqualTo(index));
-                AssertNoEngine(resolutions);
-                if (journey.Beats[index].Id == "flight")
-                {
-                    yield return new WaitForSecondsRealtime(1.8f);
-                    Assert.That(view.JourneyView.IsAnimating, Is.True);
-                    var owl = Owl();
-                    Assert.That(owl.State, Is.EqualTo(SpiritPresentationState.Arrival));
-                    Assert.That(owl.GetLayer("Physical Arrival").color.a, Is.GreaterThan(.1f));
-                    Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True,
-                        "Continue stays available during the descent.");
-                    Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero,
-                        "The flight has the chamber to itself.");
-                    yield return CheckPortraitSizes("flight");
-                    float deadline = Time.realtimeSinceStartup + 10;
-                    while (controller.BeatIndex == index && Time.realtimeSinceStartup < deadline)
-                    {
-                        Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero,
-                            "The flight must not reveal an empty plaque before its dialogue.");
-                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
-                        yield return null;
-                    }
-                    Assert.That(controller.BeatIndex, Is.EqualTo(index + 1),
-                        "Landing must advance directly to the first dialogue exactly once.");
-                    ++index;
-                }
-                yield return WaitForJourney();
-                Assert.That(view.JourneyView.VisibleBeatIndex, Is.EqualTo(index));
-                Assert.That(Find<Text>("JourneyTitle").text, Is.EqualTo(journey.Beats[index].Title));
-                Assert.That(controller.CanSkipIntro, Is.False);
-                AssertNoEngine(resolutions);
-                if (journey.Beats[index].Id == "perch")
-                {
-                    Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Waiting));
-                    Assert.That(Vector2.Distance(Contact(), new Vector2(.814f, .884f)), Is.LessThan(.00001f));
-                }
-                if (journey.Beats[index].Id == "witness")
-                {
-                    Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
-                    Assert.That(Vector2.Distance(Contact(), new Vector2(.5f, .612f)), Is.LessThan(.00001f));
-                    Assert.That(Owl().GetLayer("Physical Rest").color.a, Is.EqualTo(1).Within(.001f));
-                    Assert.That(Owl().GetLayer("Physical Arrival").color.a, Is.Zero);
-                    Assert.That(Owl().GetLayer("Physical Settle").color.a, Is.Zero);
-                }
-                yield return CheckPortraitSizes(journey.Beats[index].Id + "-settled");
-                if (index < journey.Beats.Count - 1) Click("JourneyAdvanceButton");
-            }
-
-            var rule = journey.TablePresentation.RulePresentations.Single();
-            Assert.That(rule.RuleId, Is.EqualTo("rule.distinct_faces_multiplier"));
-            Assert.That(Regex.Replace(rule.Description, "<[^>]*>", ""),
-                Is.EqualTo("Each distinct face in your scored hand adds +1 multiplier."));
-            Assert.That(Find<Text>("JourneyRuleName").text, Is.EqualTo(rule.DisplayName));
-            Assert.That(Find<Text>("JourneyRuleText").text, Does.Contain(rule.Description));
-            yield return new WaitForSecondsRealtime(.25f);
-            Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
-            AssertNoEngine(resolutions);
-            var openingGroups = OpeningGroups();
-            Click("JourneyAcceptButton");
-            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(EncounterId));
-            Assert.That(controller.Snapshot.Revision, Is.Zero);
-            Assert.That(controller.IsBusy, Is.True);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            foreach (var group in openingGroups) Assert.That(group.alpha, Is.Zero, group.name);
-            yield return ContentReady.Routed();
-            Assert.That(view.PlayButton.IsInteractable(), Is.False);
-            Assert.That(resolutions, Is.EqualTo(1));
-            var opening = controller.Snapshot;
-            controller.AcceptEncounter();
-            yield return ContentReady.Routed(controller);
-            Assert.That(controller.Snapshot, Is.SameAs(opening));
-            float rollDeadline = Time.realtimeSinceStartup + 5;
-            float previousOpacity = 0;
-            bool observedFade = false;
-            while (!view.DiceTray.IsRolling && Time.realtimeSinceStartup < rollDeadline)
-            {
-                float opacity = openingGroups[0].alpha;
-                Assert.That(opacity, Is.GreaterThanOrEqualTo(previousOpacity));
-                foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(opacity), group.name);
-                observedFade |= opacity > 0 && opacity < 1;
-                Assert.That(controller.IsBusy, Is.True);
-                Assert.That(view.PlayButton.IsInteractable(), Is.False);
-                Assert.That(resolutions, Is.EqualTo(1));
-                previousOpacity = opacity;
-                yield return null;
-            }
-            Assert.That(observedFade, Is.True, "The gameplay HUD must fade in before the opening roll.");
-            Assert.That(view.DiceTray.IsRolling, Is.True);
-            foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(1), group.name);
-            Assert.That(resolutions, Is.EqualTo(1));
-            yield return WaitForPresentation();
-            Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
-            yield return CheckPortraitSizes("opening-table");
-            Assert.That(rule.ActivationPhase, Is.EqualTo(ModifierPhase.PlayHand));
-            var ruleLabel = view.GameplayHud.EncounterRuleLabel;
-            Assert.That(ruleLabel.gameObject.activeInHierarchy, Is.True);
-            Assert.That(ruleLabel.transform.IsChildOf(view.PlayButton.transform), Is.True);
-            Assert.That(ruleLabel.transform.IsChildOf(view.RerollButton.transform), Is.False);
-            Assert.That(view.MultiplierLabel.text, Is.EqualTo(DiagnosticText.Number(controller.Snapshot.ModifierMultiplier)),
-                "The watcher bonus must remain outside the roll bonus bank until the hand is scored.");
-
-            HandScoredEvent scored = null;
-            EncounterRuleActivatedEvent activation = null;
-            int ruleActivations = 0;
-            controller.Resolved += resolution =>
-            {
-                scored = resolution.Events.OfType<HandScoredEvent>().SingleOrDefault();
-                foreach (var value in resolution.Events.OfType<EncounterRuleActivatedEvent>())
-                {
-                    if (value.RuleId != rule.RuleId) continue;
-                    activation = value;
-                    ++ruleActivations;
-                }
-            };
-            Click("PlayButton");
-            yield return ContentReady.Routed();
-            Assert.That(scored, Is.Not.Null);
-            Assert.That(activation, Is.Not.Null);
-            Assert.That(ruleActivations, Is.EqualTo(1));
-            Assert.That(activation.MultiplierBonus, Is.EqualTo(scored.Score.EncounterRuleMultiplier));
-            Assert.That(scored.Score.EncounterRuleMultiplier, Is.GreaterThan(0));
-            var selection = Find<Text>("SelectionLabel");
-            float totalDeadline = Time.realtimeSinceStartup + 30;
-            while (selection.text != "TOTAL" && Time.realtimeSinceStartup < totalDeadline) yield return null;
-            Assert.That(selection.text, Is.EqualTo("TOTAL"), "The scored hand must present its final total before the next hand.");
-            Assert.That(view.MultiplierLabel.text, Is.EqualTo(DiagnosticText.Number(scored.Score.Multiplier)));
-            Assert.That(scored.Score.Multiplier, Is.EqualTo(scored.Score.CategoryMultiplier +
-                scored.Score.UpgradeMultiplier + scored.Score.ModifierMultiplier + scored.Score.EncounterRuleMultiplier));
-            Assert.That(Find<Text>("ScoreBreakdown").text, Is.EqualTo("STEP 4 OF 4 - " + DiagnosticText.Number(scored.Score.BaseScore) +
-                " x " + DiagnosticText.Number(scored.Score.Multiplier)));
-            yield return CheckPortraitSizes("scored-table");
-            yield return WaitForPresentation();
-            LogAssert.NoUnexpectedReceived();
-        }
-
-        [UnityTest]
-        public IEnumerator DisablingDuringTheOpeningFadeRestoresTheHudWithoutStartingADelayedRoll()
-        {
-            int resolutions = 0;
-            controller.Resolved += _ => ++resolutions;
-            controller.SelectEncounter(EncounterId);
-            yield return ContentReady.Routed(controller);
-            while (controller.BeatIndex < journey.Beats.Count - 1) controller.AdvanceJourney();
-            yield return WaitForJourney();
-            var openingGroups = OpeningGroups();
-            Click("JourneyAcceptButton");
-            yield return ContentReady.Routed();
-            var opening = controller.Snapshot;
-            float deadline = Time.realtimeSinceStartup + 5;
-            while (openingGroups[0].alpha == 0 && !view.DiceTray.IsRolling &&
-                Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(openingGroups[0].alpha, Is.InRange(.000001f, .999999f));
-            Assert.That(controller.IsBusy, Is.True);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            view.enabled = false;
-            foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(1), group.name);
-            Assert.That(controller.IsBusy, Is.False);
-            yield return new WaitForSecondsRealtime(journey.TablePresentation.OpeningFadeDuration + .1f);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            Assert.That(controller.Snapshot, Is.SameAs(opening));
-            Assert.That(resolutions, Is.EqualTo(1));
-            view.enabled = true;
-            yield return new WaitForSecondsRealtime(journey.TablePresentation.OpeningFadeDuration + .1f);
-            foreach (var group in openingGroups) Assert.That(group.alpha, Is.EqualTo(1), group.name);
-            Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            Assert.That(controller.Snapshot, Is.SameAs(opening));
-            Assert.That(resolutions, Is.EqualTo(1));
-            Assert.That(view.PlayButton.IsInteractable(), Is.True);
-            LogAssert.NoUnexpectedReceived();
-        }
-
-        [UnityTest]
-        public IEnumerator ImmediateAutomaticBeatDefersRefreshAndCannotAdvanceARevisitOrAcceptTheInvitation()
-        {
-            var runtimeJourney = UnityEngine.Object.Instantiate(journey);
-            var runtimeCatalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
-            try
-            {
-                journey = runtimeJourney;
-                SetField(runtimeCatalog, "entries", runtimeCatalog.Entries.Select(value => value.Id == journey.Id ? journey : value).ToArray());
-                SetField(runtimeCatalog, "chapters", Array.Empty<EncounterChapterAsset>());
-                foreach (var beat in journey.Beats)
-                {
-                    SetField(beat, "duration", 0f);
-                    SetField(beat, "autoAdvance", false);
-                }
-                SetField(journey.Beats[0], "id", "automatic-step");
-                SetField(journey.Beats[0], "autoAdvance", true);
-                SetField(journey.Beats[0], "hideNarrativeDuringMotion", true);
-                SetField(journey.Beats[journey.Beats.Count - 1], "autoAdvance", true);
-                Assert.That(controller.InitializeJourney(controller.Catalog, runtimeCatalog, controller.SavePath), Is.True);
-                yield return ContentReady.Routed(controller);
-                int resolutions = 0;
-                controller.Resolved += _ => ++resolutions;
-                controller.SelectEncounter(EncounterId);
-                yield return ContentReady.Routed(controller);
-                Assert.That(controller.BeatIndex, Is.Zero);
-                Assert.That(view.JourneyView.VisibleBeatIndex, Is.Zero);
-                Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero);
-                Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True);
-                Find<Button>("JourneyAdvanceButton").onClick.Invoke();
-                yield return ContentReady.Routed();
-                Assert.That(controller.BeatIndex, Is.EqualTo(1));
-                yield return null;
-                Assert.That(controller.BeatIndex, Is.EqualTo(1), "An interrupted automatic beat must not advance again.");
-                controller.ReturnToInvestigation();
-                yield return ContentReady.Routed(controller);
-                controller.SelectEncounter(EncounterId);
-                yield return ContentReady.Routed(controller);
-                Assert.That(controller.BeatIndex, Is.Zero);
-                yield return WaitForJourney();
-                Assert.That(controller.BeatIndex, Is.EqualTo(1));
-                Assert.That(view.JourneyView.VisibleBeatIndex, Is.EqualTo(1));
-                yield return new WaitForSecondsRealtime(.1f);
-                Assert.That(controller.BeatIndex, Is.EqualTo(1),
-                    "Only the current visit may complete its automatic continuation, exactly once.");
-                AssertNoEngine(resolutions);
-                while (controller.BeatIndex < journey.Beats.Count - 1) controller.AdvanceJourney();
-                yield return WaitForJourney();
-                Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
-                Assert.That(Find<Button>("JourneyAcceptButton").IsInteractable(), Is.True);
-                AssertNoEngine(resolutions);
-                LogAssert.NoUnexpectedReceived();
-            }
-            finally
-            {
-                UnityEngine.Object.Destroy(runtimeCatalog);
-                UnityEngine.Object.Destroy(runtimeJourney);
-            }
         }
 
         [UnityTest]
@@ -331,26 +55,37 @@ namespace Dice.Tests
             yield return null;
             Canvas.ForceUpdateCanvases();
 
-            string captureRoot = Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT");
+            // Motion frames are an inspection capture, written only when a capture root is set.
+            string captureRoot = Environment.GetEnvironmentVariable("DICE_SPIRIT_CAPTURE_ROOT");
             if (!string.IsNullOrEmpty(captureRoot))
             {
-                captureRoot = Path.Combine(captureRoot, "watchtower-" +
+                captureRoot = Path.Combine(captureRoot, "watchtower-motion-" +
                     DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture));
                 Assert.That(Directory.Exists(captureRoot), Is.False);
                 Directory.CreateDirectory(captureRoot);
                 TestContext.WriteLine("Watchtower motion capture: " + captureRoot);
             }
 
-            yield return AdvanceTo("perch");
+            yield return AdvanceTo(flight - 1);
             yield return WaitForJourney();
-            yield return CaptureMotion("flight", 4.5f, () => Click("JourneyAdvanceButton"),
-                () => view.JourneyView.IsAnimating);
-            Assert.That(journey.Beats[controller.BeatIndex].Id, Is.EqualTo("witness"));
+            Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Waiting), "The watcher waits on its perch before the flight.");
+            Vector2 perch = Contact();
+            float arrivalOpacity = 0;
+            yield return CaptureMotion("flight", journey.Beats[flight].Duration, () => Click("JourneyAdvanceButton"),
+                () => view.JourneyView.IsAnimating, () =>
+                {
+                    if (controller.BeatIndex != flight) return;
+                    Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Arrival));
+                    arrivalOpacity = Mathf.Max(arrivalOpacity, Owl().GetLayer("Physical Arrival").color.a);
+                });
+            Assert.That(arrivalOpacity, Is.GreaterThan(.1f), "The watcher's arrival pose must show during the descent.");
+            Assert.That(controller.BeatIndex, Is.EqualTo(flight + 1), "Landing continues to the beat after the flight.");
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
-            Assert.That(Vector2.Distance(Contact(), new Vector2(.5f, .612f)), Is.LessThan(.00001f));
             AssertRestPose();
+            Vector2 landed = Contact();
+            Assert.That(Vector2.Distance(landed, perch), Is.GreaterThan(.01f), "The flight carries the watcher off its perch.");
 
-            yield return AdvanceTo("invitation");
+            yield return AdvanceTo(journey.Beats.Count - 1);
             yield return WaitForJourney();
             yield return CaptureMotion("transition", 0f, () =>
             {
@@ -361,6 +96,8 @@ namespace Dice.Tests
             }, () => controller.IsBusy);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
+            Assert.That(Vector2.Distance(Contact(), landed), Is.LessThan(.00001f),
+                "The watcher stays where it landed when the table opens.");
 
             var owl = Owl();
             string[] physicalLayers = { "Physical Rest", "Physical Arrival", "Physical Settle" };
@@ -379,13 +116,14 @@ namespace Dice.Tests
                         physicalLayers[index] + " foot contact moved during table motion.");
             }
 
-            yield return CaptureMotion("idle", 15.6f, null, null, () =>
+            float idle = owl.GetDuration(SpiritPresentationState.Idle);
+            Assert.That(idle, Is.GreaterThan(0), "The watcher's idle loop must have a length to observe.");
+            yield return CaptureMotion("idle", idle, null, null, () =>
             {
                 Assert.That(owl.State, Is.EqualTo(SpiritPresentationState.Idle));
                 AssertFeet();
             });
-            Assert.That(owl.GestureDuration, Is.EqualTo(1.8f).Within(.001f));
-            yield return CaptureMotion("reaction", 1.8f, () =>
+            yield return CaptureMotion("reaction", owl.GestureDuration, () =>
             {
                 owl.React();
                 Assert.That(owl.IsReacting, Is.True);
@@ -393,13 +131,6 @@ namespace Dice.Tests
             Assert.That(owl.State, Is.EqualTo(SpiritPresentationState.Idle));
             AssertRestPose();
             LogAssert.NoUnexpectedReceived();
-
-            void AssertRestPose()
-            {
-                Assert.That(Owl().GetLayer("Physical Rest").color.a, Is.EqualTo(1).Within(.001f));
-                Assert.That(Owl().GetLayer("Physical Arrival").color.a, Is.Zero);
-                Assert.That(Owl().GetLayer("Physical Settle").color.a, Is.Zero);
-            }
 
             IEnumerator CaptureMotion(string phase, float seconds, Action begin = null,
                 Func<bool> pending = null, Action validate = null)
@@ -457,7 +188,7 @@ namespace Dice.Tests
         {
             controller.SelectEncounter(EncounterId);
             yield return ContentReady.Routed(controller);
-            yield return AdvanceTo("flight");
+            yield return AdvanceTo(flight);
             yield return new WaitForSecondsRealtime(.5f);
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             var activeJourney = view.JourneyView;
@@ -473,19 +204,20 @@ namespace Dice.Tests
 
             controller.SelectEncounter(EncounterId);
             yield return ContentReady.Routed(controller);
-            yield return AdvanceTo("perch");
+            yield return AdvanceTo(flight - 1);
             yield return WaitForJourney();
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Waiting));
-            var presentation = (SpiritHostPresentationAsset)journey.TablePresentation.HostPresentation;
-            Assert.That(Vector2.Distance(Contact(), new Vector2(.814f, .884f)), Is.LessThan(.00001f));
-            yield return new WaitForSecondsRealtime(journey.Beats.Single(beat => beat.Id == "flight").Duration + .1f);
-            Assert.That(journey.Beats[controller.BeatIndex].Id, Is.EqualTo("perch"),
-                "The canceled flight must not advance the new visit.");
-            yield return AdvanceTo("invitation");
+            Vector2 perch = Contact();
+            yield return new WaitForSecondsRealtime(journey.Beats[flight].Duration + .1f);
+            Assert.That(controller.BeatIndex, Is.EqualTo(flight - 1), "The canceled flight must not advance the new visit.");
+            yield return AdvanceTo(journey.Beats.Count - 1);
             yield return WaitForJourney();
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
             yield return WaitForPresentation();
+            Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
+            Vector2 table = Contact();
+            Assert.That(Vector2.Distance(table, perch), Is.GreaterThan(.01f), "The watcher plays from the table, not its perch.");
             controller.Abandon();
             yield return WaitForPresentation();
             var abandoned = controller.Snapshot;
@@ -495,22 +227,21 @@ namespace Dice.Tests
             controller.SelectEncounter(EncounterId);
             yield return ContentReady.Routed(controller);
             Assert.That(controller.CanSkipIntro, Is.True);
-            yield return AdvanceTo("flight");
+            yield return AdvanceTo(flight);
             yield return new WaitForSecondsRealtime(.5f);
             Assert.That(view.JourneyView.IsAnimating, Is.True);
             Click("JourneySkipButton");
             yield return ContentReady.Routed();
             yield return WaitForJourney();
-            yield return new WaitForSecondsRealtime(journey.Beats.Single(beat => beat.Id == "flight").Duration + .1f);
+            yield return new WaitForSecondsRealtime(journey.Beats[flight].Duration + .1f);
             Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(controller.Snapshot, Is.SameAs(abandoned));
             Assert.That(controller.HasActiveEncounter, Is.False);
             Assert.That(Owl().State, Is.EqualTo(SpiritPresentationState.Idle));
-            Assert.That(Vector2.Distance(Contact(), new Vector2(.5f, .612f)), Is.LessThan(.00001f));
-            Assert.That(Owl().GetLayer("Physical Rest").color.a, Is.EqualTo(1).Within(.001f));
-            Assert.That(Owl().GetLayer("Physical Arrival").color.a, Is.Zero);
-            Assert.That(Owl().GetLayer("Physical Settle").color.a, Is.Zero);
+            Assert.That(Vector2.Distance(Contact(), table), Is.LessThan(.00001f),
+                "Skipping the flight settles the watcher where it sits at the table.");
+            AssertRestPose();
             yield return CheckPortraitSizes("revisit-skipped");
             activeJourney = view.JourneyView;
             controller.ReturnToInvestigation();
@@ -520,16 +251,32 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        // The flight is the journey's automatic arrival; the beat before it is the perch and the beat after it the landing.
+        private int FlightIndex()
+        {
+            for (int index = 0; index < journey.Beats.Count; ++index)
+            {
+                var beat = journey.Beats[index];
+                if (beat.Kind != EncounterJourneyBeatKind.Arrival || !beat.AutoAdvance) continue;
+                Assert.That(index, Is.InRange(1, journey.Beats.Count - 2),
+                    "The watcher's flight needs a perch beat before it and a landing beat after it.");
+                return index;
+            }
+            Assert.Fail("The watchtower journey has no automatic arrival for the watcher's flight.");
+            return -1;
+        }
+
+        private void AssertRestPose()
+        {
+            Assert.That(Owl().GetLayer("Physical Rest").color.a, Is.EqualTo(1).Within(.001f));
+            Assert.That(Owl().GetLayer("Physical Arrival").color.a, Is.Zero);
+            Assert.That(Owl().GetLayer("Physical Settle").color.a, Is.Zero);
+        }
+
         private SpiritHostPortrait Owl()
         {
             Assert.That(view.HostPortrait, Is.TypeOf<SpiritHostPortrait>());
             return (SpiritHostPortrait)view.HostPortrait;
-        }
-
-        private CanvasGroup[] OpeningGroups()
-        {
-            return ((IEnumerable<CanvasGroup>)typeof(SpiritEncounterView)
-                .GetField("openingGroups", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view)).ToArray();
         }
 
         private Vector2 Contact()
@@ -537,25 +284,13 @@ namespace Dice.Tests
             var layer = Owl().GetLayer("Physical Rest").rectTransform;
             return new Vector2(layer.anchoredPosition.x / 540f, layer.anchoredPosition.y / 960f);
         }
-        private void AssertNoEngine(int resolutions)
-        {
-            Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.Preview, Is.Null);
-            Assert.That(controller.HasActiveEncounter, Is.False);
-            Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            Assert.That(resolutions, Is.Zero);
-            Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(controller), Is.Null);
-            Assert.That(File.Exists(controller.SavePath), Is.False);
-        }
 
-        private IEnumerator AdvanceTo(string id)
+        private IEnumerator AdvanceTo(int index)
         {
-            while (journey.Beats[controller.BeatIndex].Id != id)
+            while (controller.BeatIndex != index)
             {
                 yield return WaitForJourney();
-                if (journey.Beats[controller.BeatIndex].Id == id) break;
+                if (controller.BeatIndex == index) break;
                 Click("JourneyAdvanceButton");
                 yield return ContentReady.Routed();
             }

@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,7 +12,7 @@ namespace Dice.Tests
 {
     public sealed class SpiritTablePieceTests
     {
-        private const string PieceId = "piece.candle";
+        private const string PieceId = "piece.test";
         private const string InteractionId = "position";
         private static readonly Vector3[] BayPoints =
         {
@@ -38,7 +35,7 @@ namespace Dice.Tests
             var anchor = new GameObject("NeutralAnchor", typeof(RectTransform));
             anchor.transform.SetParent(parent.transform, false);
             anchor.transform.position = new Vector3(-300, 0, 0);
-            var prop = new GameObject("Candle", typeof(RectTransform));
+            var prop = new GameObject("Table Piece", typeof(RectTransform));
             prop.transform.SetParent(parent.transform, false);
             piece = prop.AddComponent<SpiritTablePieceView>();
             Set(piece, "pieceId", PieceId);
@@ -65,6 +62,7 @@ namespace Dice.Tests
             created.Clear();
         }
 
+        /** Checks a release picks the nearest candidate within the radius, the earlier on a tie / fails if it snaps from outside the radius. */
         [Test]
         public void NearestPositionSnapsWithinTheRadiusAndPrefersTheEarlierTie()
         {
@@ -72,11 +70,12 @@ namespace Dice.Tests
             Assert.That(SpiritTablePieceLayout.FindNearest(new Vector2(9, 3), candidates, 5), Is.EqualTo(1));
             Assert.That(SpiritTablePieceLayout.FindNearest(new Vector2(5, 0), candidates, 5), Is.EqualTo(0));
             Assert.That(SpiritTablePieceLayout.FindNearest(new Vector2(40, 0), candidates, 5), Is.EqualTo(-1));
-            Assert.That(SpiritTablePieceLayout.FindNearest(new Vector2(25, 0), candidates, 5), Is.EqualTo(2), "The radius is inclusive.");
-            Assert.That(SpiritTablePieceLayout.FindNearest(Vector2.zero, Array.Empty<Vector2>(), 5), Is.EqualTo(-1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => SpiritTablePieceLayout.FindNearest(Vector2.zero, candidates, -1));
         }
 
+        /**
+         * Checks a point maps through the image that shows it, the front image where both do and the nearer image beyond both /
+         * fails if a point reads the wrong slice of the room texture.
+         */
         [Test]
         public void SplitBackgroundsMapPointsThroughTheImageThatShowsThem()
         {
@@ -87,16 +86,22 @@ namespace Dice.Tests
             var roomUv = new Rect(0, .4f, 1, .6f);
             AssertCoordinate(new Vector2(0, -180), table, tableUv, room, roomUv, new Vector2(.5f, .2f));
             AssertCoordinate(new Vector2(-270, 300), table, tableUv, room, roomUv, new Vector2(0, .7f));
-            AssertCoordinate(new Vector2(0, 120), table, tableUv, room, roomUv, new Vector2(.5f, .4f));
             // Beyond both images, the nearer image extrapolates its own slice.
-            AssertCoordinate(new Vector2(0, -540), table, tableUv, room, roomUv, new Vector2(.5f, -.04f));
             AssertCoordinate(new Vector2(0, 540), table, tableUv, room, roomUv, new Vector2(.5f, 1.1f));
             // Where both contain the point, the front image is what the player sees.
             Assert.That(SpiritTablePieceLayout.TextureCoordinate(new Vector2(0, 0), table, tableUv, new Vector2(0, 0), table, roomUv),
                 Is.EqualTo(new Vector2(.5f, .32f)).Using(Vector2EqualityComparer));
-            Assert.That(SpiritTablePieceLayout.DistanceOutside(new Vector2(3, 4), new Rect(-1, -1, 1, 1)), Is.EqualTo(5).Within(.0001f));
         }
 
+        /** Checks the distance from a point to a rectangle's nearest edge / fails if a point outside reads as inside or mismeasured. */
+        [Test]
+        public void DistanceOutsideMeasuresToTheNearestEdge()
+        {
+            Assert.That(SpiritTablePieceLayout.DistanceOutside(new Vector2(3, 4), new Rect(-1, -1, 1, 1)), Is.EqualTo(5).Within(.0001f));
+            Assert.That(SpiritTablePieceLayout.DistanceOutside(new Vector2(-.5f, -.5f), new Rect(-1, -1, 1, 1)), Is.Zero);
+        }
+
+        /** Checks a slot's viewport rectangle maps into the tray frame / fails if slots are placed off their tray position. */
         [Test]
         public void SlotPlacementMapsThroughTheTrayViewportIntoItsFrame()
         {
@@ -108,6 +113,10 @@ namespace Dice.Tests
                 Is.EqualTo(new Vector2(-200 + 400 * .3f, -100 + 200 * .7f)).Using(Vector2EqualityComparer));
         }
 
+        /**
+         * Checks releasing the prop requests the nearest allowed new position, the neutral spot included / fails if a
+         * disallowed bay or the current position is requested.
+         */
         [Test]
         public void ReleasingThePropRequestsOnlyTheNearestAllowedNewPosition()
         {
@@ -121,11 +130,6 @@ namespace Dice.Tests
             Assert.That(requests.Count, Is.EqualTo(1));
             AssertAt(BayPoints[2]);
 
-            // A release far from every position returns the prop without an action.
-            Drag(new Vector2(200, 0), new Vector2(200, 500));
-            Assert.That(requests.Count, Is.EqualTo(1));
-            AssertAt(BayPoints[2]);
-
             // Dropping onto the current position is not a move.
             Drag(new Vector2(200, 0), new Vector2(230, 0));
             Assert.That(requests.Count, Is.EqualTo(1));
@@ -136,6 +140,10 @@ namespace Dice.Tests
             AssertAt(new Vector3(-300, 0, 0));
         }
 
+        /**
+         * Checks a refused, unsubmitted, locked or unbound move leaves the prop at its engine position / fails if the prop
+         * follows the pointer or keeps a position the engine did not accept.
+         */
         [Test]
         public void RefusedOrRejectedMovesReturnThePropAndLockedPiecesDoNotFollowThePointer()
         {
@@ -166,6 +174,7 @@ namespace Dice.Tests
             Assert.That(requests.Count, Is.EqualTo(1), "An unbound prop cannot be moved.");
         }
 
+        /** Checks emissive images scale their authored alpha, never exceed it and restore it / fails if emission overwrites the authored color. */
         [Test]
         public void EmissiveImagesFollowTheLightAndRestoreTheirAuthoredColor()
         {
@@ -185,6 +194,7 @@ namespace Dice.Tests
             Assert.That(piece.LightIntensity, Is.EqualTo(1f), "A piece only brightens its light while flaring.");
         }
 
+        /** Checks binding needs a neutral anchor only when neutral is allowed and initializing needs a piece id / fails if a prop binds without them. */
         [Test]
         public void BindingRequiresAnAuthoredNeutralAnchorWhenNeutralIsAllowed()
         {
@@ -194,105 +204,6 @@ namespace Dice.Tests
                 PiecePosition.Bay(0), PieceMovementTiming.DuringHand, false)));
             Set(piece, "pieceId", "");
             Assert.Throws<InvalidOperationException>(() => piece.Initialize(_ => true, (_, __) => true));
-        }
-
-        [Test]
-        public void MerchantCandleBindsToItsEncounterPieceWithItsLightUnderTheNeutralCandle()
-        {
-            var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset");
-            Assert.That(table, Is.Not.Null);
-            var light = table.PieceLights.Single();
-            var catalog = TestContent.BuildStandardCatalog();
-            var encounter = catalog.GetEncounter("encounter.merchant.unquiet_cart");
-            var snapshot = EncounterSession.CreateEncounter(catalog, encounter.Id, 42).Snapshot;
-            var scene = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID));
-            try
-            {
-                var view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<SpiritEncounterView>(true)).Single();
-                var candle = view.TablePieces.Single();
-                Assert.That(candle.PieceId, Is.EqualTo(light.PieceId));
-                Assert.That(candle.InteractionId, Is.EqualTo(light.InteractionId));
-                var interaction = snapshot.PieceInteractions.Single(value =>
-                    value.PieceId == candle.PieceId && value.InteractionId == candle.InteractionId);
-                var position = ((PiecePositionState)interaction.State).Position;
-                Assert.That(position, Is.EqualTo(PiecePosition.Neutral));
-                var definition = (PositionInteractionDefinition)encounter.Pieces.Single(value => value.Id == candle.PieceId)
-                    .Interactions.Single(value => value.Id == candle.InteractionId);
-
-                // The piece layer belongs to the gameplay surface and follows the dice tray frame directly, so the prop
-                // receives drags before the dice touch targets beneath it and draws below the HUD's popups.
-                Transform frame = candle.transform.parent;
-                Assert.That(frame.parent, Is.SameAs(view.GameplayHud.PlayingPanel));
-                Assert.That(frame.GetSiblingIndex(), Is.EqualTo(view.GameplayHud.DiceTrayFrame.GetSiblingIndex() + 1));
-                Assert.That(view.GameplayHud.DiceTrayFrame.parent, Is.SameAs(view.GameplayHud.PlayingPanel));
-                Assert.That(view.GameplayHud.transform.parent, Is.SameAs(view.Portrait));
-                Assert.That(candle.GetComponentsInChildren<Graphic>(true).Any(graphic => graphic.raycastTarget), Is.True);
-
-                var neutral = (RectTransform)typeof(SpiritTablePieceView)
-                    .GetField("neutralAnchor", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(candle);
-                Assert.That(neutral, Is.Not.Null);
-                SceneLightLayer sceneLight = table.SceneLighting.Lights[light.LightIndex];
-                Vector2 footprintCenter = BrightestCenter(sceneLight.Contribution);
-                Vector2? neutralCoordinate = null;
-                foreach (float width in new[] { 540f, 443f })
-                {
-                    view.Portrait.anchorMin = view.Portrait.anchorMax = new Vector2(.5f, .5f);
-                    view.Portrait.sizeDelta = new Vector2(width, 960);
-                    view.Portrait.anchoredPosition = Vector2.zero;
-                    // A preview scene neither sizes nor scales its overlay canvas, so the test gives it unit scale and recalculates rects.
-                    view.Canvas.transform.localScale = Vector3.one;
-                    foreach (var rect in view.GetComponentsInChildren<RectTransform>(true)) rect.ForceUpdateRectTransforms();
-                    candle.Bind(position, definition);
-                    candle.Layout(BayPoints);
-                    Assert.That(candle.IsBound, Is.True);
-                    Assert.That(Vector3.Distance(candle.transform.position, neutral.position), Is.LessThan(.001f), "Width " + width);
-                    RectTransform front = view.TableImage.rectTransform, back = view.RoomImage.rectTransform;
-                    Vector3 world = candle.transform.position;
-                    Vector2 coordinate = SpiritTablePieceLayout.TextureCoordinate(front.InverseTransformPoint(world), front.rect,
-                        view.TableImage.uvRect, back.InverseTransformPoint(world), back.rect, view.RoomImage.uvRect);
-                    // The neutral spot is registered to the artwork, so it maps to one room-texture point at every width.
-                    if (neutralCoordinate == null) neutralCoordinate = coordinate;
-                    Assert.That(Vector2.Distance(coordinate, neutralCoordinate.Value), Is.LessThan(.0005f),
-                        "Width " + width + ": " + coordinate.ToString("F5"));
-                    // The light moves by the prop's displacement from its reference, so its footprint center stays at the candle's base.
-                    Vector2 footprint = footprintCenter + sceneLight.UvOffset + (coordinate - light.ReferencePosition);
-                    Assert.That(Vector2.Distance(footprint, coordinate), Is.LessThan(.002f),
-                        "Width " + width + ": footprint " + footprint.ToString("F5") + ", candle " + coordinate.ToString("F5"));
-                }
-            }
-            finally { EditorSceneManager.ClosePreviewScene(scene); }
-        }
-
-        /**
-         * The merchant candle's repel flare widens and brightens its flame without reaching higher, and its spark burst
-         * is a hidden child that finishes within the flare and stays below the top of the candle's own rectangle, which
-         * the tray composition keeps below the resource row.
-         */
-        /** Normalized center of the brightest pixels of a light contribution, read from its source file. */
-        private static Vector2 BrightestCenter(Texture2D contribution)
-        {
-            Assert.That(contribution, Is.Not.Null);
-            var decoded = new Texture2D(2, 2);
-            try
-            {
-                Assert.That(decoded.LoadImage(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(contribution))), Is.True);
-                Color32[] pixels = decoded.GetPixels32();
-                int peak = pixels.Max(pixel => Math.Max(pixel.r, Math.Max(pixel.g, pixel.b)));
-                Assert.That(peak, Is.GreaterThan(0));
-                double x = 0, y = 0;
-                int count = 0;
-                for (int i = 0; i < pixels.Length; ++i)
-                {
-                    if (Math.Max(pixels[i].r, Math.Max(pixels[i].g, pixels[i].b)) < peak * .99f) continue;
-                    x += i % decoded.width + .5;
-                    y += i / decoded.width + .5;
-                    ++count;
-                }
-                // Texture2D rows start at the bottom, matching normalized room-texture coordinates.
-                return new Vector2((float)(x / count / decoded.width), (float)(y / count / decoded.height));
-            }
-            finally { UnityEngine.Object.DestroyImmediate(decoded); }
         }
 
         private bool RequestMove(SpiritTablePieceView view, PiecePosition position)

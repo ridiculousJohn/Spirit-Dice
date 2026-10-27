@@ -33,6 +33,9 @@ namespace Dice.Presentation
         [SerializeField] private SceneLightingAsset sceneLighting;
         [Tooltip("Scene lights that follow table piece props; lights without an entry keep their authored positions.")]
         [SerializeField] private EncounterTablePieceLight[] pieceLights = Array.Empty<EncounterTablePieceLight>();
+        [Tooltip("Resting multiplier of each scene light's authored intensity while the encounter is played, such as 0 for a flare " +
+            "light that only rule reactions raise; a light without an entry rests at 1.")]
+        [SerializeField] private float[] restingLightLevels = Array.Empty<float>();
         [SerializeField] private Vector3 hostLightingPosition = new Vector3(0, 1, 2);
         [SerializeField] private SpiritHostPresentationAsset hostPresentation;
         [SerializeField] private SpiritAudioTheme audioTheme;
@@ -49,6 +52,7 @@ namespace Dice.Presentation
         public Texture2D RoomTexture => roomTexture;
         public SceneLightingAsset SceneLighting => sceneLighting;
         public IReadOnlyList<EncounterTablePieceLight> PieceLights => pieceLights ?? Array.Empty<EncounterTablePieceLight>();
+        public IReadOnlyList<float> RestingLightLevels => restingLightLevels ?? Array.Empty<float>();
         public Vector3 HostLightingPosition => hostLightingPosition;
         public SpiritHostPresentationAsset HostPresentation => hostPresentation;
         public SpiritAudioTheme AudioTheme => audioTheme;

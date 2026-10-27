@@ -16,7 +16,7 @@ MonoBehaviour:
   SmokeShader: {fileID: 0}
   SigilColor: {r: 0.82352941, g: 0.65098039, b: 0.34509804, a: 1}
   PortraitPrefab: {fileID: 7170046874770213139, guid: "804aa37bed503e94f94c7b67dcf64e2b", type: 3}
-  SigilPrefab: {fileID: 0}
+  SigilPrefab: {fileID: 6469703378660953074, guid: "5a1e1165c02dd0c44bbed972ff0b7587", type: 3}
   LitLayerShader: {fileID: 4800000, guid: "1381d22630ca4363815c8e4751f13ca1", type: 3}
   ReferenceSize: {x: 941, y: 1672}
   Scale: 1

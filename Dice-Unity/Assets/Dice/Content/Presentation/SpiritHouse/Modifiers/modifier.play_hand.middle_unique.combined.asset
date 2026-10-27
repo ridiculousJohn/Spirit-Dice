@@ -16,6 +16,5 @@ MonoBehaviour:
   displayName: Lone Watcher / Base + Mult
   icon: {fileID: 0}
   conditionTemplate: The middle die has a face no other die shows.
-  conditionTypeName: MiddleUniqueCondition
   artwork: 6
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

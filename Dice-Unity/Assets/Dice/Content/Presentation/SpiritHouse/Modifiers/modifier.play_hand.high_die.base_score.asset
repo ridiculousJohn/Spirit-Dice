@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
   displayName: Lone Mountain / Base
   icon: {fileID: 21300000, guid: 58020fe66d555849b6f4af60fc79838e, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category is High Die.
   artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -22,6 +22,8 @@ namespace Dice.Tests
      * neutral spot and on three bays, a poltergeist disturbance mid-motion, and close crops of the host and props.
      * It writes PNGs under DICE_SPIRIT_CAPTURE_ROOT and is ignored without it; it is a capture, not a regression test.
      */
+    [Explicit("Review capture; run it explicitly with DICE_SPIRIT_CAPTURE_ROOT set.")]
+    [Category("Capture")]
     public sealed class MerchantReviewCapturePlayTests
     {
         private const string EncounterId = "encounter.merchant.unquiet_cart";

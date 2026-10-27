@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
+using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -41,6 +43,9 @@ namespace Dice.Editor
         private UniversalRenderPipelineAsset previewPipeline;
         private readonly SceneLightingState lighting = new SceneLightingState();
         private readonly int[] faces = { 1, 2, 3, 4, 5 };
+        private ModifierPresentationCatalog charms;
+        private ModifierDefinition historyDefinition;
+        private ModifierContribution historyContribution;
         private string message;
 
         [MenuItem("Dice/Tray Composition Preview")]
@@ -201,15 +206,42 @@ namespace Dice.Editor
         private void RefreshHistory()
         {
             history.Clear();
-            var definition = new ModifierDefinition("preview.history", "preview.history", ModifierPhase.InitialRoll,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
-            var definitionEncounter = new EncounterDefinition("preview.table", new[] { new StageDefinition(1000000, 3, 3) },
-                startingModifiers: new[] { definition.Id });
+            if (historyCount == 0) return;
+            EnsureHistoryCharm();
+            for (int i = 0; i < historyCount; ++i) history.Add(historyContribution, charms, historyDefinition, false);
+        }
+
+        /**
+         * Loads the application's content and skin and shows the first of its charms that activates on the opening roll
+         * of an encounter holding only that charm.
+         */
+        private void EnsureHistoryCharm()
+        {
+            if (charms != null) return;
+            DiceApplicationConfig[] configurations = AssetDatabase.FindAssets("t:DiceApplicationConfig")
+                .Select(guid => AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
+            if (configurations.Length != 1)
+                throw new InvalidOperationException("The history preview requires exactly one application configuration.");
+            configurations[0].Validate();
+            MechanicalContent content = configurations[0].CatalogAsset.Build();
+            var presentation = new ModifierPresentationCatalog(configurations[0].ModifierSkin, content);
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition("preview.hand." + category, category, 1, 1, 0, 0, 0));
-            var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
-            var contribution = EncounterSession.CreateEncounter(catalog, definitionEncounter.Id, 60).Snapshot.ModifierContributions[0];
-            for (int i = 0; i < historyCount; ++i) history.Add(contribution, definition, false);
+                .Select(category => new HandDefinition("preview.hand." + category, category, 1, 1, 0, 0, 0)).ToArray();
+            foreach (ModifierDefinition definition in content.Catalog.Modifiers)
+            {
+                if (definition.Phase != ModifierPhase.InitialRoll) continue;
+                var definitionEncounter = new EncounterDefinition("preview.table", new[] { new StageDefinition(1000000, 3, 3) },
+                    startingModifiers: new[] { definition.Id });
+                var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
+                var contributions = EncounterSession.CreateEncounter(catalog, definitionEncounter.Id, 60).Snapshot.ModifierContributions;
+                if (contributions.Count == 0) continue;
+                charms = presentation;
+                historyDefinition = definition;
+                historyContribution = contributions[0];
+                return;
+            }
+            presentation.Dispose();
+            throw new InvalidOperationException("The application's content has no charm that activates on an opening roll.");
         }
 
         private void RenderPreview()
@@ -266,6 +298,9 @@ namespace Dice.Editor
         {
             compositor?.Dispose();
             compositor = null;
+            charms?.Dispose();
+            charms = null;
+            historyDefinition = null;
             encounter?.Dispose();
             encounter = null;
             view = null;

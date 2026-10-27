@@ -16,6 +16,8 @@ namespace Dice.Presentation
         EncounterRulePresentationAsset RulePresentation { get; }
         /** The table's ambient activity, or null when the encounter authors none. */
         EncounterAmbientActivity Ambient { get; }
+        /** The table's rule dice visuals, or null when no rule card references one. */
+        EncounterRuleDiceVisuals RuleDiceVisuals { get; }
         void SetDiceSelection(int mask);
         void HideRewardsAndEnding();
         void SetOpeningOpacity(float opacity);
@@ -30,8 +32,6 @@ namespace Dice.Presentation
     internal sealed class SpiritScorePlayback
     {
         private const float ScoreStepDuration = .52f;
-        private const float ScoreStepHold = .35f;
-        private const float ModifierStepHold = .55f;
         private const float DisturbanceHold = .3f;
         // A committed hand pauses before interference that precedes its scoring, so the poltergeist reads as interrupting it.
         private const float PlayHandDisturbanceBeat = .25f;
@@ -74,15 +74,17 @@ namespace Dice.Presentation
                 if (ruleEvent is EncounterRuleActivatedEvent activatedRule)
                 {
                     // Scored-hand rule bonuses are presented after the hand's modifier contributions.
-                    if (activatedRule.MultiplierBonus != 0) continue;
-                    if (host.RulePresentation == null || activatedRule.RuleId != host.RulePresentation.RuleId) continue;
-                    hud.RenderEncounterRule(resolution.Snapshot, host.RulePresentation);
-                    actionModifierCue.ShowHost(host.RulePresentation.Icon, ModifierPhase.PlayerReroll,
-                        host.Host != null ? host.Host.GestureDuration : 1.8f);
-                    hud.SelectionLabel.text = host.RulePresentation.DisplayName;
-                    hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).amber;
-                    host.Host?.React();
-                    yield return hud.AnimateRuleSpirit(host.RulePresentation.Icon, .65f);
+                    if (activatedRule.MultiplierBonus == 0 && host.RulePresentation != null &&
+                        activatedRule.RuleId == host.RulePresentation.RuleId)
+                    {
+                        hud.RenderEncounterRule(resolution.Snapshot, host.RulePresentation);
+                        actionModifierCue.ShowHost(host.RulePresentation.Icon, ModifierPhase.PlayerReroll,
+                            host.Host != null ? host.Host.GestureDuration : 1.8f);
+                        hud.SelectionLabel.text = host.RulePresentation.DisplayName;
+                        hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).amber;
+                        host.Host?.React();
+                        yield return hud.AnimateRuleSpirit(host.RulePresentation.Icon, .65f);
+                    }
                 }
                 else if (ruleEvent is DiceRolledEvent rolled)
                 {
@@ -134,9 +136,9 @@ namespace Dice.Presentation
                 }
                 else if (ruleEvent is ModifierActivatedEvent activated && activated.Phase != ModifierPhase.PlayHand)
                 {
-                    encounterAudio.Play(SpiritAudioCue.Score);
-                    yield return AnimateContribution(activated.Contribution, activated.StageIndex, activated.HandIndex, resolution, true);
-                    yield return new WaitForSecondsRealtime(ModifierStepHold);
+                    // A banked roll bonus leaves the tray highlight, resolving token and total as the roll left them.
+                    yield return PlayStep(Steps().BuildBankedContribution(activated.Contribution, hud.DisplayedBaseScore,
+                        hud.DisplayedMultiplier, resolution.Events, activated.StageIndex, activated.HandIndex));
                 }
                 else if (ruleEvent is HandScoredEvent scored)
                 {
@@ -144,67 +146,17 @@ namespace Dice.Presentation
                     host.SetDiceSelection(0);
                     diceTray.SetValues(scored.Dice);
                     hud.SetScore(scored.Score, true);
-                    modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog);
-                    diceTray.SetScoringHighlight(DiceValues.AllMask);
-                    hud.HandScoreLabel.text = "0";
-                    host.Host?.React();
-                    hud.ModifierEmblem.gameObject.SetActive(false);
-                    hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
-                    hud.SelectionLabel.text = "DICE\n+" + DiagnosticText.Number(scored.Score.DiceSum) + " base";
-                    hud.CategoryLabel.text = "COUNTING DICE";
-                    hud.ScoreDetail.text = "STEP 1 OF 4 - DICE";
-                    encounterAudio.Play(SpiritAudioCue.Score);
-                    yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier,
-                        checked(hud.DisplayedBaseScore + scored.Score.DiceSum), hud.DisplayedMultiplier, ScoreStepDuration);
-                    yield return new WaitForSecondsRealtime(ScoreStepHold);
-
-                    long handBase = checked(scored.Score.CategoryBaseScore + scored.Score.UpgradeBaseScore);
-                    long handMultiplier = checked(scored.Score.CategoryMultiplier + scored.Score.UpgradeMultiplier);
-                    hud.CategoryLabel.text = DiagnosticText.Humanize(scored.Score.Category.ToString()).ToUpperInvariant();
-                    diceTray.SetScoringHighlight(SpiritHandScoringHighlights.GetMask(scored.Dice, scored.Score.Category));
-                    hud.SelectionLabel.text = hud.CategoryLabel.text + " / LEVEL " + scored.Score.UpgradeCount + "\n" +
-                        ContributionDelta(handBase, handMultiplier, 0);
-                    hud.ScoreDetail.text = "STEP 2 OF 4 - HAND RANK";
-                    encounterAudio.Play(SpiritAudioCue.Score);
-                    yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier,
-                        checked(hud.DisplayedBaseScore + handBase),
-                        checked(hud.DisplayedMultiplier + handMultiplier), ScoreStepDuration);
-                    yield return new WaitForSecondsRealtime(ScoreStepHold);
-
-                    // Recorded contributions retain the eligibility and activation order of the engine phase.
-                    diceTray.SetScoringHighlight(0);
-                    foreach (var contribution in scored.Score.ModifierContributions)
+                    modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog, controls.ModifierPresentation);
+                    var steps = Steps().BuildHand(scored.Score, scored.Dice, hud.DisplayedBaseScore, hud.DisplayedMultiplier,
+                        host.RulePresentation, resolution.Events, scored.StageIndex, scored.HandIndex);
+                    foreach (var step in steps)
                     {
-                        if (contribution.Phase != ModifierPhase.PlayHand) continue;
-                        encounterAudio.Play(SpiritAudioCue.Score);
-                        yield return AnimateContribution(contribution, scored.StageIndex, scored.HandIndex, resolution, false);
-                        yield return new WaitForSecondsRealtime(ModifierStepHold);
+                        diceTray.SetScoringHighlight(step.HighlightMask);
+                        if (step.ResolvingIndex >= 0) modifierHistory.SetResolving(step.Contribution.Value);
+                        else modifierHistory.ClearResolving();
+                        if (!step.RevealsTotal) hud.HandScoreLabel.text = DiagnosticText.Number(step.Total);
+                        yield return PlayStep(step);
                     }
-                    modifierHistory.ClearResolving();
-                    if (scored.Score.EncounterRuleMultiplier != 0)
-                    {
-                        hud.SelectionLabel.text = (host.RulePresentation != null ? host.RulePresentation.DisplayName : "ENCOUNTER RULE") +
-                            "\n+" + DiagnosticText.Number(scored.Score.EncounterRuleMultiplier) + " multiplier";
-                        hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).amber;
-                        hud.CategoryLabel.text = "ENCOUNTER RULE";
-                        hud.ScoreDetail.text = "STEP 3 OF 4 - ENCOUNTER RULE";
-                        actionModifierCue.ShowHost(host.RulePresentation != null ? host.RulePresentation.Icon : null,
-                            ModifierPhase.PlayHand, host.Host != null ? host.Host.GestureDuration : 1.8f);
-                        host.Host?.React();
-                        encounterAudio.Play(SpiritAudioCue.Score);
-                        yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier, hud.DisplayedBaseScore,
-                            checked(hud.DisplayedMultiplier + scored.Score.EncounterRuleMultiplier), ScoreStepDuration);
-                        yield return new WaitForSecondsRealtime(ScoreStepHold);
-                    }
-                    hud.ModifierEmblem.gameObject.SetActive(false);
-                    hud.CategoryLabel.text = "FINAL SCORE";
-                    hud.SelectionLabel.text = "TOTAL";
-                    hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
-                    hud.ScoreDetail.text = "STEP 4 OF 4 - " + DiagnosticText.Number(scored.Score.BaseScore) + " x " +
-                        DiagnosticText.Number(scored.Score.Multiplier);
-                    encounterAudio.Play(SpiritAudioCue.Score);
-                    yield return hud.AnimateTotal(scored.Score.HandScore, ScoreStepDuration);
-                    yield return new WaitForSecondsRealtime(.55f);
                 }
                 else if (ruleEvent is ThresholdChangedEvent threshold)
                 {
@@ -261,13 +213,15 @@ namespace Dice.Presentation
                     hud.ScoreDetail.text = "";
                     if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(.16f);
                 }
-                else if (ruleEvent is ResourceChangedEvent resource)
+                else if (ruleEvent is ResourceChangedEvent resource && !IsModifierGrant(resource, resolution))
                 {
-                    if (IsModifierGrant(resource, resolution)) continue;
                     hud.ShowResource(resource);
                     if (resource.Resource == ResourceKind.Rerolls && resource.Cause != ResourceChangeCause.ModifierEffect)
                         hud.SelectionLabel.text = resource.After + " rerolls remaining";
                 }
+                // A rule's dice visuals present each event after the playback's own presentation of it.
+                IEnumerator ruleDice = host.RuleDiceVisuals?.Present(ruleEvent);
+                if (ruleDice != null) yield return ruleDice;
             }
             if (resolution.Snapshot.Phase == EncounterPhase.Completed)
             {
@@ -330,75 +284,37 @@ namespace Dice.Presentation
             return false;
         }
 
-        private void ShowModifierGrants(long instanceId, int stageIndex, int handIndex, Resolution resolution,
-            ModifierDefinition definition, List<SpiritCounterHighlight> highlights)
+        /** Shows a scoring step's labels, emblem, cues and resource changes, animates its counters, and holds it. */
+        private IEnumerator PlayStep(SpiritScoringStep step)
         {
-            foreach (var ruleEvent in resolution.Events)
-                if (ruleEvent is ResourceChangedEvent resource && resource.Cause == ResourceChangeCause.ModifierEffect &&
-                    resource.StageIndex == stageIndex && resource.HandIndex == handIndex && resource.SourceInstanceId == instanceId)
-                {
-                    hud.ShowResource(resource);
-                    if (resource.After == resource.Before) continue;
-                    if (resource.Resource == ResourceKind.Rerolls)
-                        SpiritGameplayHud.AddCounterHighlight(highlights, hud.RerollsHighlight, definition);
-                    else if (resource.Resource == ResourceKind.Hands)
-                        SpiritGameplayHud.AddCounterHighlight(highlights, hud.HandsHighlight, definition);
-                }
-        }
-
-        private void ShowContribution(ModifierContribution contribution, bool banked)
-        {
-            var definition = host.Controls.Catalog.GetModifier(contribution.DefinitionId);
-            if (!banked) modifierHistory.SetResolving(contribution);
-            hud.ShowActivationIcon(definition);
-            hud.CategoryLabel.text = CharmName(definition);
-            hud.SelectionLabel.color = SpiritModifierIcons.GetEffectColor(definition);
-            hud.SelectionLabel.text = CharmName(definition) + "\n" +
-                ContributionDelta(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
-                (banked ? " (banked)" : " (on play)");
-            hud.ScoreDetail.text = banked ? "ROLL BONUS" : "STEP 3 OF 4 - CHARMS";
-        }
-
-        private IEnumerator AnimateContribution(ModifierContribution contribution, int stageIndex, int handIndex,
-            Resolution resolution, bool banked)
-        {
-            ShowContribution(contribution, banked);
-            var definition = host.Controls.Catalog.GetModifier(contribution.DefinitionId);
-            bool showReroll = contribution.Rerolls != 0;
-            bool showPlay = false;
-            foreach (var ruleEvent in resolution.Events)
-                if (ruleEvent is ResourceChangedEvent resource && resource.Cause == ResourceChangeCause.ModifierEffect &&
-                    resource.StageIndex == stageIndex && resource.HandIndex == handIndex &&
-                    resource.SourceInstanceId == contribution.InstanceId && resource.After != resource.Before)
-                {
-                    showReroll |= resource.Resource == ResourceKind.Rerolls;
-                    showPlay |= resource.Resource == ResourceKind.Hands;
-                }
-            if (contribution.BaseScore != 0 || contribution.Multiplier != 0 || (!showReroll && !showPlay))
-            {
-                showPlay |= definition.Phase == ModifierPhase.PlayHand;
-                showReroll |= definition.Phase != ModifierPhase.PlayHand;
-            }
-            actionModifierCue.Show(definition, ScoreStepDuration + ModifierStepHold, showReroll, showPlay);
+            if (step.HostReacts) host.Host?.React();
+            if (step.Emblem != null) hud.ShowActivationIcon(Charms, step.Emblem);
+            else hud.ModifierEmblem.gameObject.SetActive(false);
+            hud.CategoryLabel.text = step.CategoryText;
+            hud.SelectionLabel.color = step.SelectionColor;
+            hud.SelectionLabel.text = step.SelectionText;
+            hud.ScoreDetail.text = step.StepLabel;
+            if (step.Charm != null)
+                actionModifierCue.Show(Charms, step.Charm, ScoreStepDuration + step.Hold, step.RerollCue, step.PlayCue);
+            if (step.RuleCue)
+                actionModifierCue.ShowHost(host.RulePresentation != null ? host.RulePresentation.Icon : null,
+                    ModifierPhase.PlayHand, host.Host != null ? host.Host.GestureDuration : 1.8f);
             var highlights = new List<SpiritCounterHighlight>();
-            if (contribution.BaseScore != 0) SpiritGameplayHud.AddCounterHighlight(highlights, hud.BaseScoreHighlight, definition);
-            if (contribution.Multiplier != 0) SpiritGameplayHud.AddCounterHighlight(highlights, hud.MultiplierHighlight, definition);
-            ShowModifierGrants(contribution.InstanceId, stageIndex, handIndex, resolution, definition, highlights);
-            yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier,
-                checked(hud.DisplayedBaseScore + contribution.BaseScore), checked(hud.DisplayedMultiplier + contribution.Multiplier),
+            if (step.HighlightsBaseScore) SpiritGameplayHud.AddCounterHighlight(highlights, hud.BaseScoreHighlight, Charms, step.Charm);
+            if (step.HighlightsMultiplier) SpiritGameplayHud.AddCounterHighlight(highlights, hud.MultiplierHighlight, Charms, step.Charm);
+            if (step.HighlightsRerolls) SpiritGameplayHud.AddCounterHighlight(highlights, hud.RerollsHighlight, Charms, step.Charm);
+            if (step.HighlightsHands) SpiritGameplayHud.AddCounterHighlight(highlights, hud.HandsHighlight, Charms, step.Charm);
+            foreach (var grant in step.Grants) hud.ShowResource(grant);
+            encounterAudio.Play(SpiritAudioCue.Score);
+            if (step.RevealsTotal) yield return hud.AnimateTotal(step.Total, ScoreStepDuration);
+            else yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier, step.BaseScore, step.Multiplier,
                 ScoreStepDuration, highlights);
+            yield return new WaitForSecondsRealtime(step.Hold);
         }
 
-        private static string ContributionDelta(long baseScore, long multiplier, long rerolls)
-        {
-            var effects = new List<string>();
-            if (baseScore != 0) effects.Add("+" + DiagnosticText.Number(baseScore) + " base");
-            if (multiplier != 0) effects.Add("+" + DiagnosticText.Number(multiplier) + " mult");
-            if (rerolls != 0) effects.Add("+" + rerolls + (rerolls == 1 ? " reroll" : " rerolls"));
-            return string.Join("  /  ", effects);
-        }
+        private SpiritScoringStepBuilder Steps()
+            => new SpiritScoringStepBuilder(host.Controls.Catalog, Charms, SpiritUi.GetTheme(hud.transform));
 
-        private static string CharmName(ModifierDefinition definition)
-            => SpiritModifierPresentation.GetName(definition);
+        private ModifierPresentationCatalog Charms => host.Controls.ModifierPresentation;
     }
 }

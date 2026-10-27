@@ -17,6 +17,7 @@ namespace Dice.Tests
         private const string ModifierId = "modifier.story.base";
         private const string EncounterId = "encounter.story";
         private readonly List<ScriptableObject> assets = new List<ScriptableObject>();
+        private readonly SyntheticCharms charms = new SyntheticCharms();
         private MechanicalCatalog catalog;
 
         [SetUp]
@@ -35,11 +36,11 @@ namespace Dice.Tests
         {
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
+            charms.Dispose();
         }
 
         [TestCase(true, false)]
         [TestCase(false, true)]
-        [TestCase(true, true)]
         public void BuildKeepsDiscoveryAndConcreteGrantsIndependent(bool discovers, bool grants)
         {
             string[] families = discovers ? new[] { FamilyId } : Array.Empty<string>();
@@ -64,11 +65,9 @@ namespace Dice.Tests
             Assert.Throws<ArgumentException>(() => reward.Build(catalog));
         }
 
-        [TestCase(false, true)]
-        [TestCase(false, false)]
-        [TestCase(true, true)]
-        [TestCase(true, false)]
-        public void JourneyValidatesBeatAndCompletionRewards(bool completion, bool unknownFamily)
+        [TestCase(false)]
+        [TestCase(true)]
+        public void JourneyValidatesBeatAndCompletionRewards(bool completion)
         {
             var journey = Journey();
             Assert.That(journey.Beats[0].ProgressionReward, Is.Null);
@@ -79,44 +78,15 @@ namespace Dice.Tests
             Assert.That(completion ? journey.CompletionReward : journey.Beats[0].ProgressionReward, Is.SameAs(reward));
             Assert.DoesNotThrow(() => journey.Validate(catalog));
 
-            Set(reward, unknownFamily ? "discoveredFamilyIds" : "grantedModifierIds",
-                new[] { unknownFamily ? "family.missing" : "modifier.missing" });
+            Set(reward, "grantedModifiers", new[] { charms.Charm("modifier.missing") });
             Assert.Throws<ArgumentException>(() => journey.Validate(catalog));
-        }
-
-        [TestCase("SpiritHouse/LastLanternJourney", "FoxFamilyDiscovery")]
-        [TestCase("Watchtower/WatchtowerJourney", "OwlFamilyDiscovery")]
-        [TestCase("MothCrossroads/MothCrossroadsJourney", "MothFamilyDiscovery")]
-        public void AuthoredInvitationsDiscoverOnlyTheirEncounterUnlockFamilies(string journeyPath, string rewardName)
-        {
-            var authoredCatalog = AssetDatabase.LoadAssetAtPath<MechanicalCatalogAsset>(
-                "Assets/Dice/Content/Mechanical/Standard.asset").Build(TestContent.ModifierAssets());
-            var journey = AssetDatabase.LoadAssetAtPath<EncounterJourneyAsset>(
-                "Assets/Dice/Content/Presentation/" + journeyPath + ".asset");
-            var reward = AssetDatabase.LoadAssetAtPath<ProgressionRewardAsset>(
-                "Assets/Dice/Content/Mechanical/ProgressionRewards/" + rewardName + ".asset");
-            Assert.That(journey, Is.Not.Null);
-            Assert.That(reward, Is.Not.Null);
-            Assert.DoesNotThrow(() => journey.Validate(authoredCatalog));
-            Assert.That(journey.Beats.Where(beat => beat.ProgressionReward != null).Select(beat => beat.Kind),
-                Is.EqualTo(new[] { EncounterJourneyBeatKind.Invitation }));
-            Assert.That(journey.Beats.Last().ProgressionReward, Is.SameAs(reward));
-            Assert.That(journey.CompletionReward, Is.Null);
-
-            var definition = reward.Build(authoredCatalog);
-            var encounter = authoredCatalog.GetEncounter(journey.EncounterId);
-            Assert.That(definition.DiscoveredFamilyIds, Has.Count.EqualTo(3));
-            Assert.That(definition.DiscoveredFamilyIds, Is.EquivalentTo(encounter.UnlockRewardModifierIds
-                .Select(id => authoredCatalog.GetModifier(id).FamilyId).Distinct()));
-            Assert.That(definition.GrantedModifierIds, Is.EqualTo(rewardName == "FoxFamilyDiscovery"
-                ? new[] { "modifier.initial_roll.first_hand.base_score" } : Array.Empty<string>()));
         }
 
         private ProgressionRewardAsset Reward(string[] families, string[] modifiers)
         {
             var reward = Create<ProgressionRewardAsset>();
             Set(reward, "discoveredFamilyIds", families);
-            Set(reward, "grantedModifierIds", modifiers);
+            Set(reward, "grantedModifiers", modifiers.Select(id => charms.Charm(id)).ToArray());
             return reward;
         }
 

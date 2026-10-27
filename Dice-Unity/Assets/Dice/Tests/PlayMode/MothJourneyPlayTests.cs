@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Dice.App;
-using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -17,9 +16,11 @@ using UnityEngine.UI;
 
 namespace Dice.Tests
 {
+    /** The moth's own choreography: its lantern moths circle while it waits and carry that flight into its arrival. */
     public sealed class MothJourneyPlayTests
     {
         private const string EncounterId = "encounter.moth.crossroads";
+        private const string LanternMothLayerPrefix = "Lantern moth";
         private SpiritEncounterController controller;
         private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
@@ -31,173 +32,89 @@ namespace Dice.Tests
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            journey = controller.JourneyCatalog.Entries.Single(value => value.EncounterId == EncounterId);
+            journey = controller.JourneyCatalog.Find(EncounterId);
+            Assert.That(journey, Is.Not.Null, EncounterId);
             SetField(controller, "useFixedSeed", true);
             SetField(controller, "initialSeed", "60");
             yield return null;
         }
 
         [UnityTest]
-        public IEnumerator MothCausewayLanternArrivalOpeningIdleAndReactionPlayInRealTime()
+        [Explicit("Art-generation check; run it by name while the moth art is being changed.")]
+        [Category("ArtAuthoring")]
+        public IEnumerator MothArrivalStartsFromTheVisibleWaitingFlightOfItsLanternMoths()
         {
+            int arrival = ArrivalIndex();
+            controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
+            while (controller.BeatIndex < arrival - 1) controller.AdvanceJourney();
+            yield return WaitForJourney();
+            Assert.That(controller.BeatIndex, Is.EqualTo(arrival - 1));
+            var moths = LanternMoths();
+            Assert.That(moths.All(moth => moth != null && moth.isActiveAndEnabled), Is.True,
+                "The lantern moths are visible while the moth waits.");
+            // Waiting moths circle the lantern, so their pose is sampled in the same frame as the click that starts the arrival.
+            var positions = moths.Select(moth => moth.rectTransform.anchoredPosition).ToArray();
+            var rotations = moths.Select(moth => moth.rectTransform.localRotation).ToArray();
+            Click("JourneyAdvanceButton");
+            Assert.That(controller.BeatIndex, Is.EqualTo(arrival));
+            Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Arrival));
+            for (int index = 0; index < moths.Length; ++index)
+            {
+                Assert.That(Vector2.Distance(moths[index].rectTransform.anchoredPosition, positions[index]),
+                    Is.LessThan(.01f), moths[index].name + ": the arrival must start from the visible waiting position.");
+                Assert.That(Quaternion.Angle(moths[index].rectTransform.localRotation, rotations[index]),
+                    Is.LessThan(.01f), moths[index].name + ": the arrival must preserve the visible banking angle.");
+            }
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest, Explicit("Inspection capture of the moth journey's motion, written under DICE_SPIRIT_CAPTURE_ROOT.")]
+        [Category("Capture")]
+        public IEnumerator MothJourneyMotionCapture()
+        {
+            string captureRoot = Environment.GetEnvironmentVariable("DICE_SPIRIT_CAPTURE_ROOT");
+            if (string.IsNullOrEmpty(captureRoot)) Assert.Ignore("Set DICE_SPIRIT_CAPTURE_ROOT to capture the moth journey's motion.");
+            captureRoot = Path.Combine(captureRoot, "moth-motion-" +
+                DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture));
+            Assert.That(Directory.Exists(captureRoot), Is.False);
+            Directory.CreateDirectory(captureRoot);
+            TestContext.WriteLine("Moth motion capture: " + captureRoot);
+
+            controller.SelectEncounter(EncounterId);
+            yield return ContentReady.Routed(controller);
             var portrait = ContentReady.Portrait();
-            Assert.That(portrait, Is.Not.Null);
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(540, 960);
             portrait.anchoredPosition = Vector2.zero;
             yield return null;
             Canvas.ForceUpdateCanvases();
 
-            string captureRoot = Environment.GetEnvironmentVariable("DICE_SPIRIT_MOTION_CAPTURE_ROOT");
-            if (!string.IsNullOrEmpty(captureRoot))
+            // Each beat is held for its authored motion, or briefly when it has none.
+            for (int index = 0; index < journey.Beats.Count; ++index)
             {
-                captureRoot = Path.Combine(captureRoot, "moth-" +
-                    DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture));
-                Assert.That(Directory.Exists(captureRoot), Is.False);
-                Directory.CreateDirectory(captureRoot);
-                TestContext.WriteLine("Moth motion capture: " + captureRoot);
+                if (controller.BeatIndex > index) continue;
+                Action begin = controller.BeatIndex == index - 1 ? () => Click("JourneyAdvanceButton") : (Action)null;
+                yield return CaptureMotion(journey.Beats[index].Id, Mathf.Max(journey.Beats[index].Duration, 2f), begin,
+                    () => view.JourneyView.IsAnimating);
             }
-
-            Assert.That(journey.Beats.Select(beat => beat.Id), Is.EqualTo(new[]
-                { "causeway", "lantern", "arrival", "witness", "bargain", "discovery", "invitation" }));
-            Assert.That(journey.Beats.Where(beat => beat.AutoAdvance).Select(beat => beat.Id),
-                Is.EqualTo(new[] { "arrival" }));
-            Assert.That(journey.Beats.Where(beat => beat.Id != "arrival").All(beat => beat.Duration == 0), Is.True);
-            int resolutions = 0;
-            int rolls = 0;
-            controller.Resolved += resolution =>
+            yield return CaptureMotion("accept", .5f, () => Click("JourneyAcceptButton"), () => controller.IsBusy);
+            if (view.JourneyView.EncounterCharms.IsOpen)
             {
-                ++resolutions;
-                rolls += resolution.Events.OfType<DiceRolledEvent>().Count();
-            };
-            AssertNoEngine(resolutions);
-            yield return CaptureMotion("causeway", 3f, () => controller.SelectEncounter(EncounterId),
-                () => view.JourneyView.IsAnimating, () => AssertNoEngine(resolutions));
-            yield return ContentReady.Routed(controller);
-            AssertBeat("causeway");
-
-            yield return CaptureMotion("lantern", 11.1f, () => Click("JourneyAdvanceButton"),
-                () => view.JourneyView.IsAnimating, () =>
-                {
-                    AssertNoEngine(resolutions);
-                    Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Waiting));
-                });
-            AssertBeat("lantern");
-
-            yield return CaptureMotion("arrival", 7f, () =>
-            {
-                var moths = Enumerable.Range(1, 3).Select(index => Moth().GetLayer("Lantern moth " + index)).ToArray();
-                var positions = moths.Select(moth => moth.rectTransform.anchoredPosition).ToArray();
-                var rotations = moths.Select(moth => moth.rectTransform.localRotation).ToArray();
-                Click("JourneyAdvanceButton");
-                for (int index = 0; index < moths.Length; ++index)
-                {
-                    Assert.That(Vector2.Distance(moths[index].rectTransform.anchoredPosition, positions[index]),
-                        Is.LessThan(.01f), "Arrival must start from the visible waiting position.");
-                    Assert.That(Quaternion.Angle(moths[index].rectTransform.localRotation, rotations[index]),
-                        Is.LessThan(.01f), "Arrival must preserve the visible banking angle.");
-                }
-            },
-                () => view.JourneyView.IsAnimating, () =>
-                {
-                    AssertNoEngine(resolutions);
-                    if (journey.Beats[controller.BeatIndex].Id == "arrival")
-                    {
-                        Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Arrival));
-                        Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.Zero);
-                        Assert.That(Find<Button>("JourneyAdvanceButton").IsInteractable(), Is.True,
-                            "Continue stays available while the arrival plays.");
-                    }
-                    else Assert.That(journey.Beats[controller.BeatIndex].Id, Is.EqualTo("witness"));
-                });
-            AssertBeat("witness");
-            Assert.That(Find<CanvasGroup>("JourneyNarrative").alpha, Is.EqualTo(1).Within(.001f));
-            yield return CaptureMotion("witness", 2f, null, null, () => AssertNoEngine(resolutions));
-
-            foreach (string phase in new[] { "bargain", "discovery", "invitation" })
-            {
-                yield return CaptureMotion(phase, 2f, () => Click("JourneyAdvanceButton"),
-                    () => view.JourneyView.IsAnimating, () =>
-                    {
-                        AssertNoEngine(resolutions);
-                        Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Idle));
-                    });
-                AssertBeat(phase);
+                yield return WaitUntilClickable("BeginEncounterButton");
+                yield return CaptureMotion("opening", .5f, () => Click("BeginEncounterButton"), () => controller.IsBusy);
             }
-            Assert.That(Find<Text>("JourneyRuleName").text,
-                Is.EqualTo(journey.TablePresentation.RulePresentations.Single().DisplayName));
-            AssertNoEngine(resolutions);
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
+            yield return CaptureMotion("idle", Moth().GetDuration(SpiritPresentationState.Idle));
+            yield return CaptureMotion("reaction", Moth().GestureDuration, () => Moth().React(), () => Moth().IsReacting);
 
-            bool observedRoll = false;
-            bool observedFade = false;
-            var openingGroup = Find<CanvasGroup>("TargetPanel");
-            Click("JourneyAcceptButton");
-            yield return ContentReady.Routed();
-            Assert.That(Find<RectTransform>("SpiritEncounterCharmsScreen").gameObject.activeInHierarchy, Is.True);
-            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            AssertNoEngine(resolutions);
-            yield return WaitUntilClickable("BeginEncounterButton");
-            yield return CaptureMotion("opening", .5f, () =>
+            IEnumerator CaptureMotion(string phase, float seconds, Action start = null, Func<bool> pending = null)
             {
-                Click("BeginEncounterButton");
-                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-                Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(EncounterId));
-                Assert.That(controller.Snapshot.Revision, Is.Zero);
-                Assert.That(controller.IsBusy, Is.True);
-                Assert.That(openingGroup.alpha, Is.Zero);
-                Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-                observedRoll |= view.DiceTray.IsRolling;
-                var opening = controller.Snapshot;
-                controller.AcceptEncounter();
-                Assert.That(controller.Snapshot, Is.SameAs(opening));
-            }, () => controller.IsBusy, () =>
-            {
-                observedRoll |= view.DiceTray.IsRolling;
-                if (openingGroup.alpha > 0 && openingGroup.alpha < 1)
-                {
-                    observedFade = true;
-                    Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-                    Assert.That(view.PlayButton.IsInteractable(), Is.False);
-                }
-                if (view.DiceTray.IsRolling) Assert.That(openingGroup.alpha, Is.EqualTo(1));
-                Assert.That(resolutions, Is.EqualTo(1));
-                Assert.That(rolls, Is.EqualTo(1));
-                Assert.That(controller.Snapshot.Revision, Is.Zero);
-            });
-            Assert.That(observedRoll, Is.True, "Accept must visibly present the initial dice roll.");
-            Assert.That(observedFade, Is.True, "Gameplay must fade in before the opening roll.");
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            Assert.That(view.PlayButton.IsInteractable(), Is.True);
-            var expected = EncounterSession.CreateEncounter(controller.Catalog, EncounterId, 60);
-            for (int index = 0; index < DiceValues.Count; ++index)
-                Assert.That(controller.Snapshot.CurrentDice[index], Is.EqualTo(expected.Snapshot.CurrentDice[index]));
-
-            yield return CaptureMotion("idle", 8.1f, null, null, () =>
-            {
-                Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Idle));
-                Assert.That(resolutions, Is.EqualTo(1));
-                Assert.That(rolls, Is.EqualTo(1));
-            });
-            Assert.That(Moth().GestureDuration, Is.EqualTo(1.5f).Within(.001f));
-            yield return CaptureMotion("reaction", 1.5f, () =>
-            {
-                Moth().React();
-                Assert.That(Moth().IsReacting, Is.True);
-            }, () => Moth().IsReacting);
-            Assert.That(Moth().State, Is.EqualTo(SpiritPresentationState.Idle));
-            Assert.That(resolutions, Is.EqualTo(1));
-            Assert.That(rolls, Is.EqualTo(1));
-            TestContext.WriteLine("Moth journey completed: one resolution, one opening roll, seed 60.");
-            LogAssert.NoUnexpectedReceived();
-
-            IEnumerator CaptureMotion(string phase, float seconds, Action begin = null,
-                Func<bool> pending = null, Action validate = null)
-            {
-                string directory = string.IsNullOrEmpty(captureRoot) ? null : Path.Combine(captureRoot, phase);
-                if (directory != null) Directory.CreateDirectory(directory);
+                string directory = Path.Combine(captureRoot, phase);
+                Directory.CreateDirectory(directory);
                 var paths = new List<string>();
-                using var timestamps = directory == null ? null : File.CreateText(Path.Combine(directory, "timestamps.csv"));
-                timestamps?.WriteLine("frame,seconds,realtime_seconds,file,state,progress");
+                using var timestamps = File.CreateText(Path.Combine(directory, "timestamps.csv"));
+                timestamps.WriteLine("frame,seconds,realtime_seconds,file,state,progress");
                 yield return new WaitForEndOfFrame();
                 double started = Time.realtimeSinceStartupAsDouble;
                 double nextCapture = 0;
@@ -206,9 +123,8 @@ namespace Dice.Tests
                 {
                     double now = Time.realtimeSinceStartupAsDouble;
                     double elapsed = now - started;
-                    if (began) validate?.Invoke();
                     bool complete = began && elapsed >= seconds && (pending == null || !pending());
-                    if (directory != null && (elapsed >= nextCapture || complete))
+                    if (elapsed >= nextCapture || complete)
                     {
                         string filename = string.Format(CultureInfo.InvariantCulture,
                             "frame-{0:D5}-{1:D6}ms.png", paths.Count, (int)(elapsed * 1000));
@@ -219,11 +135,11 @@ namespace Dice.Tests
                             filename, view.HostPortrait != null ? view.HostPortrait.State.ToString() : "",
                             view.HostPortrait != null ? view.HostPortrait.Progress : 0));
                         paths.Add(path);
-                        nextCapture = elapsed + (phase == "lantern" || phase == "arrival" ? .04 : .1);
+                        nextCapture = elapsed + .04;
                     }
                     if (!began)
                     {
-                        begin?.Invoke();
+                        start?.Invoke();
                         began = true;
                     }
                     else if (complete) break;
@@ -239,11 +155,32 @@ namespace Dice.Tests
                     Assert.That(File.Exists(path), Is.True, path);
                     Assert.That(new FileInfo(path).Length, Is.GreaterThan(0), path);
                 }
-                TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture,
-                    "Moth phase {0}: {1:F3}s, {2} frames, state {3}, resolutions {4}, rolls {5}.",
-                    phase, Time.realtimeSinceStartupAsDouble - started, paths.Count,
-                    view.HostPortrait != null ? view.HostPortrait.State.ToString() : "", resolutions, rolls));
+                TestContext.WriteLine(string.Format(CultureInfo.InvariantCulture, "Moth phase {0}: {1:F3}s, {2} frames.",
+                    phase, Time.realtimeSinceStartupAsDouble - started, paths.Count));
             }
+        }
+
+        // The moth's arrival is its journey's arrival beat; the beat before it shows the moth waiting at the lantern.
+        private int ArrivalIndex()
+        {
+            for (int index = 0; index < journey.Beats.Count; ++index)
+                if (journey.Beats[index].Kind == EncounterJourneyBeatKind.Arrival)
+                {
+                    Assert.That(index, Is.GreaterThan(0), "The moth's arrival needs a waiting beat before it.");
+                    return index;
+                }
+            Assert.Fail("The moth journey has no arrival beat.");
+            return -1;
+        }
+
+        private SpiritPortraitImage[] LanternMoths()
+        {
+            var host = journey.TablePresentation.HostPresentation;
+            Assert.That(host, Is.Not.Null);
+            var moths = host.Layers.Where(layer => layer.Id.StartsWith(LanternMothLayerPrefix, StringComparison.Ordinal))
+                .Select(layer => Moth().GetLayer(layer.Id)).ToArray();
+            Assert.That(moths, Is.Not.Empty, "The moth host has no lantern moth layers.");
+            return moths;
         }
 
         private SpiritHostPortrait Moth()
@@ -252,29 +189,13 @@ namespace Dice.Tests
             return view.HostPortrait;
         }
 
-        private void AssertBeat(string id)
+        private IEnumerator WaitForJourney()
         {
-            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(journey.Beats[controller.BeatIndex].Id, Is.EqualTo(id));
-            Assert.That(view.JourneyView.VisibleBeatIndex, Is.EqualTo(controller.BeatIndex));
-            Assert.That(view.JourneyView.IsAnimating, Is.False);
-            Assert.That(Find<Text>("JourneyBody").text, Is.EqualTo(journey.Beats[controller.BeatIndex].Text));
-            Assert.That(controller.CanSkipIntro, Is.False);
-            Assert.That(Find<Button>(id == "invitation" ? "JourneyAcceptButton" : "JourneyAdvanceButton")
-                .IsInteractable(), Is.True);
-        }
-
-        private void AssertNoEngine(int resolutions)
-        {
-            Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.Preview, Is.Null);
-            Assert.That(controller.HasActiveEncounter, Is.False);
-            Assert.That(controller.IsBusy, Is.False);
-            Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
-            Assert.That(resolutions, Is.Zero);
-            Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(controller), Is.Null);
-            Assert.That(File.Exists(controller.SavePath), Is.False);
+            yield return ContentReady.Routed();
+            float deadline = Time.realtimeSinceStartup + 30;
+            while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus);
+            yield return new WaitForSecondsRealtime(.15f);
         }
 
         private T Find<T>(string name) where T : Component

@@ -1,0 +1,15 @@
+{
+  "name": "Dice.Tests.Shared",
+  "rootNamespace": "Dice.Tests",
+  "references": [
+    "Dice.Engine",
+    "Dice.UnityContent",
+    "Dice.Presentation"
+  ],
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "autoReferenced": false,
+  "overrideReferences": true,
+  "precompiledReferences": []
+}

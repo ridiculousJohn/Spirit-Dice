@@ -96,7 +96,7 @@ namespace Dice.Presentation
                 if (offer.Kind == RewardKind.Modifier || unlock)
                 {
                     var definition = controls.Catalog.GetModifier(option.DefinitionId);
-                    card.RenderModifier(definition, offer.OfferId, option.OptionId);
+                    card.RenderModifier(controls.ModifierPresentation, definition, offer.OfferId, option.OptionId);
                 }
                 else if (option.Category.HasValue)
                 {

@@ -34,16 +34,16 @@ namespace Dice.Presentation
             dismissButton.onClick.AddListener(Close);
         }
 
-        public void Show(long instanceId, ModifierDefinition definition, SpiritCharmStatusPresentation status,
-            EncounterPhase phase)
+        public void Show(long instanceId, ModifierPresentationCatalog charms, ModifierDefinition definition,
+            SpiritCharmStatusPresentation status, EncounterPhase phase)
         {
             InstanceId = instanceId;
-            SpiritCharmVisuals.SetIcon(Icon, Sigil, Category, definition);
-            Title.text = SpiritModifierPresentation.GetName(definition);
-            Effect.text = SpiritModifierPresentation.GetEffectText(definition);
-            Effect.color = SpiritModifierIcons.GetEffectColor(definition);
+            SpiritCharmVisuals.SetIcon(Icon, Sigil, Category, charms, definition);
+            Title.text = charms.GetName(definition);
+            Effect.text = charms.GetEffectText(definition);
+            Effect.color = charms.GetEffectColor(definition);
             var theme = SpiritUi.GetTheme(transform);
-            Description.text = SpiritRewardCard.GetModifierDescription(definition, theme.amber,
+            Description.text = SpiritRewardCard.GetModifierDescription(charms, definition, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
             Badge.Render(status);
             Status.text = status.GetDetailText(definition.Phase, phase);

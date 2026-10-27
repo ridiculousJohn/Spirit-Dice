@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -17,16 +16,17 @@ namespace Dice.App
         private const int MaximumEventLogEntries = 160;
         [SerializeField] private DiagnosticEncounterView view;
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
+        [SerializeField] private ModifierSkinAsset modifierSkin;
         [SerializeField] private string encounterId = "encounter.standard";
         [SerializeField] private string initialSeed = "60";
         private readonly List<string> eventLog = new List<string>();
         private EncounterApplication application;
         private IReadOnlyList<string> readOnlyEventLog;
         private string cacheStatus = string.Empty;
-        private ModifierAssetLoader modifierAssets;
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
+        public ModifierPresentationCatalog ModifierPresentation { get; private set; }
         public HandPreview Preview { get; private set; }
         public IReadOnlyList<ModifierInspection> ModifierInspections { get; private set; } = Array.Empty<ModifierInspection>();
         public IReadOnlyList<string> EventLog => readOnlyEventLog ?? (readOnlyEventLog = eventLog.AsReadOnly());
@@ -42,47 +42,41 @@ namespace Dice.App
             SeedText = initialSeed;
         }
 
-        private IEnumerator Start()
+        /** Loads the catalog and skin the scene references, the same content and skin the application loads. */
+        private void Start()
         {
-            if (Catalog != null) yield break;
-            if (catalogAsset == null) yield break;
-            StatusMessage = "Loading modifiers...";
-            modifierAssets = new ModifierAssetLoader();
-            yield return modifierAssets.Load();
-            if (Catalog != null) { ReleaseContent(); yield break; }
-            if (modifierAssets.Error != null)
-            {
-                StatusMessage = "Cannot load modifiers: " + modifierAssets.Error.Message;
-                ReleaseContent();
-                yield break;
-            }
+            if (Catalog != null) return;
+            if (catalogAsset == null) return;
             try
             {
-                Catalog = catalogAsset.Build(modifierAssets.Assets);
-                StartNew(initialSeed);
+                MechanicalContent content = catalogAsset.Build();
+                if (modifierSkin == null) throw new InvalidOperationException("A modifier skin is required.");
+                ModifierPresentation = new ModifierPresentationCatalog(modifierSkin, content);
+                Catalog = content.Catalog;
             }
             catch (Exception exception)
             {
                 StatusMessage = "Cannot initialize the encounter: " + exception.Message;
-                ReleaseContent();
+                return;
             }
+            StartNew(initialSeed);
         }
 
         private void OnDestroy()
         {
             application?.AttachPresenter(null);
-            ReleaseContent();
+            ModifierPresentation?.Dispose();
+            ModifierPresentation = null;
         }
 
-        private void ReleaseContent()
+        /** Takes ownership of the charm presentation, which presents the catalog's charms. */
+        public void Initialize(MechanicalCatalog catalog, ModifierPresentationCatalog presentation, string encounterId,
+            ulong seed, string savePath)
         {
-            modifierAssets?.Dispose();
-            modifierAssets = null;
-        }
-
-        public void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string savePath)
-        {
+            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
             var next = new EncounterApplication(catalog, encounterId, seed);
+            if (!ReferenceEquals(ModifierPresentation, presentation)) ModifierPresentation?.Dispose();
+            ModifierPresentation = presentation;
             Catalog = catalog;
             this.encounterId = encounterId;
             SavePath = savePath;
@@ -259,7 +253,8 @@ namespace Dice.App
 
         private void AppendEvents(Resolution resolution)
         {
-            foreach (var ruleEvent in resolution.Events) eventLog.Add(DiagnosticText.DescribeEvent(ruleEvent, Catalog));
+            foreach (var ruleEvent in resolution.Events)
+                eventLog.Add(DiagnosticText.DescribeEvent(ruleEvent, Catalog, ModifierPresentation));
             if (eventLog.Count > MaximumEventLogEntries) eventLog.RemoveRange(0, eventLog.Count - MaximumEventLogEntries);
         }
 

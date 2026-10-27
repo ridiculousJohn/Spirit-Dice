@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
   displayName: Stored Acorn / Mult
   icon: {fileID: 21300000, guid: 876771b626965e719b777d73a1b4a861, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: A die face equals rerolls remaining.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

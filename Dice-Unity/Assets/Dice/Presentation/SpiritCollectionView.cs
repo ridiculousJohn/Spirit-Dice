@@ -26,6 +26,7 @@ namespace Dice.Presentation
         [SerializeField] private Button filterButton;
         [SerializeField] private SpiritModifierFamilyRow rowPrefab;
         private MechanicalCatalog catalog;
+        private ModifierPresentationCatalog charms;
         private EncounterJourneyCatalogAsset journeys;
         [SerializeField] private RectTransform content;
         [SerializeField] private ScrollRect scroll;
@@ -49,12 +50,15 @@ namespace Dice.Presentation
             filterButton.onClick.AddListener(() => SetFilter((SpiritCollectionFilter)(((int)Filter + 1) % 3)));
         }
 
-        public void Show(MechanicalCatalog mechanicalCatalog, IReadOnlyList<string> profileUnlockedModifierIds,
-            EncounterJourneyCatalogAsset journeyCatalog = null, IReadOnlyList<string> profileDiscoveredFamilyIds = null)
+        public void Show(MechanicalCatalog mechanicalCatalog, ModifierPresentationCatalog charmPresentation,
+            IReadOnlyList<string> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog = null,
+            IReadOnlyList<string> profileDiscoveredFamilyIds = null)
         {
             if (mechanicalCatalog == null) throw new ArgumentNullException(nameof(mechanicalCatalog));
+            if (charmPresentation == null) throw new ArgumentNullException(nameof(charmPresentation));
             if (Root == null) throw new InvalidOperationException("Build the collection before opening it.");
             catalog = mechanicalCatalog;
+            charms = charmPresentation;
             journeys = journeyCatalog;
             unlockedIds.Clear();
             ownedFamilyIds.Clear();
@@ -91,7 +95,7 @@ namespace Dice.Presentation
             families.Clear();
             families.AddRange(grouped.Values);
             families.Sort((left, right) => StringComparer.Ordinal.Compare(
-                SpiritModifierFamilyRow.GetFamilyName(left[0]), SpiritModifierFamilyRow.GetFamilyName(right[0])));
+                SpiritModifierFamilyRow.GetFamilyName(charms, left[0]), SpiritModifierFamilyRow.GetFamilyName(charms, right[0])));
             foreach (var family in families)
                 family.Sort((left, right) => VariantOrder(left).CompareTo(VariantOrder(right)));
             summary.text = "Collected " + unlockedCount + " / " + permanentCount + "  |  Available at start " + starterCount;
@@ -126,7 +130,7 @@ namespace Dice.Presentation
                     row.RenderUndiscovered(familyId);
                     continue;
                 }
-                row.Render(family, StatusText, Select,
+                row.Render(charms, family, StatusText, Select,
                     definition => definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id));
                 if (firstSelectableId == null) firstSelectableId = family[0].Id;
                 foreach (var definition in family)
@@ -158,9 +162,9 @@ namespace Dice.Presentation
                 if (!row.IsUndiscovered && row.FamilyId == definition.FamilyId) visible = true;
             if (!visible) return;
             SelectedModifierId = definition.Id;
-            detailTitle.text = SpiritModifierPresentation.GetName(definition) + " - " + StatusText(definition);
-            detailEffect.text = SpiritModifierPresentation.GetEffectText(definition);
-            detailEffect.color = SpiritModifierIcons.GetEffectColor(definition);
+            detailTitle.text = charms.GetName(definition) + " - " + StatusText(definition);
+            detailEffect.text = charms.GetEffectText(definition);
+            detailEffect.color = charms.GetEffectColor(definition);
             detailSource.text = GetSourceText(definition, catalog, journeys);
             foreach (var row in rows) row.SetSelected(definition.Id);
         }

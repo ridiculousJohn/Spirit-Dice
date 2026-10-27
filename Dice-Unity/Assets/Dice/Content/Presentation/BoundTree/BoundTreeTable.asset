@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
+  m_Name: BoundTreeTable
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterTablePresentationAsset
+  displayTitle: THE BOUND TREE
+  scene:
+    m_AssetGUID: f62b841e083a3fe42a30570ee0ca76bf
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  roomTexture: {fileID: 2800000, guid: 5ffe23df8daa4e2ea2eca8fb672412da, type: 3}
+  sceneLighting: {fileID: 11400000, guid: 354dbbc621d6175468e24d525fdc5987, type: 2}
+  pieceLights: []
+  restingLightLevels:
+  - 1
+  - 0
+  hostLightingPosition: {x: 0, y: 0, z: 0}
+  hostPresentation: {fileID: 11400000, guid: 95847fc938965b5db26e91a9f3dd4545, type: 2}
+  audioTheme: {fileID: 11400000, guid: ed94bba6676542b7b017d54e0135c5dc, type: 2}
+  trayPresentation: {fileID: 11400000, guid: 574c21a7431340f4b884c0150c5a466e, type: 2}
+  rulePresentations:
+  - {fileID: 11400000, guid: a09fa264a658af84f85c9abb0716f7e2, type: 2}
+  ambientActivity: {fileID: 0}
+  roomTableEdge: 0.625
+  roomSplit: 0.625
+  openingFadeDuration: 0.3

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
   displayName: Woven Mat / Rerolls
   icon: {fileID: 21300000, guid: b2e9561858f75029a2cc5dbf33814613, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Odd and even faces alternate across all five dice.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

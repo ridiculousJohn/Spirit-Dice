@@ -11,9 +11,9 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: NymphFamilyDiscovery
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   discoveredFamilyIds:
   - modifier.play_hand.three_smallest_sum_at_most_maximum
   - modifier.play_hand.adjacent_difference_at_most
   - modifier.play_hand.no_dice_rerolled
-  grantedModifierIds: []
+  grantedModifiers: []

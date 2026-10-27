@@ -14,16 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
   encounterId: encounter.merchant.unquiet_cart
   storyId: 
-  locationTitle: "The Unquiet Cart"
-  spiritName: "The Merchant"
-  leadText: "The traveler's trail leaves the road beyond the old bridge, where a merchant's cart stands beside dark water."
+  locationTitle: The Unquiet Cart
+  spiritName: The Merchant
+  leadText: The traveler's trail leaves the road beyond the old bridge, where a merchant's cart stands beside dark water.
   cardArtwork: {fileID: 2800000, guid: d7f60e26749f4d9e8dccfd49e234dc2c, type: 3}
   beats:
   - id: road
     kind: 0
-    title: "The Unquiet Cart"
-    text: "The road narrows beside dark water. A merchant's cart stands beneath a sagging canvas cover. A hanging cup turns against the breeze as you approach."
-    continueLabel: "Approach the cart"
+    title: The Unquiet Cart
+    text: The road narrows beside dark water. A merchant's cart stands beneath a sagging canvas cover. A hanging cup turns against the breeze as you approach.
+    continueLabel: Approach the cart
     background: {fileID: 2800000, guid: 067cb65055264a0984a07c5e7fe760e7, type: 3}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -52,9 +52,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: witness
     kind: 1
-    title: "The Merchant"
-    text: "Looking for someone? Yes, they passed this way. Left the road and went into the marsh."
-    continueLabel: "Ask about the path"
+    title: The Merchant
+    text: Looking for someone? Yes, they passed this way. Left the road and went into the marsh.
+    continueLabel: Ask about the path
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -83,9 +83,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: wares
     kind: 2
-    title: "The path they took"
-    text: "I know the path they took. But I can't leave my wares with this thing awake."
-    continueLabel: "Ask what is awake"
+    title: The path they took
+    text: I know the path they took. But I can't leave my wares with this thing awake.
+    continueLabel: Ask what is awake
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -114,9 +114,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: knock
     kind: 2
-    title: "Beneath the table"
-    text: "Something knocks beneath the table. He presses a hand against it."
-    continueLabel: "Wait for him to explain"
+    title: Beneath the table
+    text: Something knocks beneath the table. He presses a hand against it.
+    continueLabel: Wait for him to explain
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -145,9 +145,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: bargain
     kind: 2
-    title: "What it wants"
-    text: "It likes watching us play. Likes cheating more. Beat me despite its meddling, and it sulks for a while. Long enough for me to show you the way."
-    continueLabel: "Ask how to stop it"
+    title: What it wants
+    text: It likes watching us play. Likes cheating more. Beat me despite its meddling, and it sulks for a while. Long enough for me to show you the way.
+    continueLabel: Ask how to stop it
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -176,9 +176,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: candle
     kind: 2
-    title: "A short candle"
-    text: "He takes a short candle from beside a wooden chest."
-    continueLabel: "Watch the flame"
+    title: A short candle
+    text: He takes a short candle from beside a wooden chest.
+    continueLabel: Watch the flame
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -207,9 +207,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: ward
     kind: 2
-    title: "The Merchant's Candle"
-    text: "This keeps its fingers off things. Set it beside what you want left alone."
-    continueLabel: "Ask about the charms"
+    title: The Merchant's Candle
+    text: This keeps its fingers off things. Set it beside what you want left alone.
+    continueLabel: Ask about the charms
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -238,9 +238,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: discovery
     kind: 2
-    title: "What the wares reveal"
-    text: "This bargain reveals Draining Bowl, Returning Echo, and Counted Coins. Their charms reward a trader's habits: careful counting and repeating what worked."
-    continueLabel: "Hear the terms"
+    title: What the wares reveal
+    text: 'This bargain reveals Draining Bowl, Returning Echo, and Counted Coins. Their charms reward a trader''s habits: careful counting and repeating what worked.'
+    continueLabel: Hear the terms
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -269,9 +269,9 @@ MonoBehaviour:
     backgroundScaleTo: 1
   - id: invitation
     kind: 3
-    title: "The Unquiet Cart"
-    text: "It is already listening. Accept, and we begin."
-    continueLabel: "Accept the bargain"
+    title: The Unquiet Cart
+    text: It is already listening. Accept, and we begin.
+    continueLabel: Accept the bargain
     background: {fileID: 0}
     sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
@@ -299,14 +299,14 @@ MonoBehaviour:
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   tablePresentation: {fileID: 11400000, guid: 9b5e590776ad40cc9ff5b6dd060c37a6, type: 2}
-  victoryTitle: "Quiet. At last."
-  victoryText: "Come. There's dry ground around the great tree. That's where I saw your traveler heading."
-  defeatTitle: "Pleased with itself, isn't it?"
-  defeatText: "Take a breath. We can try again."
-  abandonText: "The merchant keeps a hand pressed to the table. Beneath it, something waits for the next game."
-  resultContinueLabel: "Return to the trail"
-  completionClueTitle: "Dry ground by the great tree"
-  completionClueText: "The traveler left the road and entered the swamp, heading for the dry ground around the great tree. The merchant knows the way through."
+  victoryTitle: Quiet. At last.
+  victoryText: Come. There's dry ground around the great tree. That's where I saw your traveler heading.
+  defeatTitle: Pleased with itself, isn't it?
+  defeatText: Take a breath. We can try again.
+  abandonText: The merchant keeps a hand pressed to the table. Beneath it, something waits for the next game.
+  resultContinueLabel: Return to the trail
+  completionClueTitle: Dry ground by the great tree
+  completionClueText: The traveler left the road and entered the swamp, heading for the dry ground around the great tree. The merchant knows the way through.
   completionReward: {fileID: 0}
   victoryPresentation:
     enabled: 1
@@ -332,7 +332,8 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
-  followUpEncounterIds: []
+  followUpEncounterIds:
+  - encounter.nymph.bound_tree
   requiredCompletedEncounterIds: []
   requiredCompletedStoryIds:
   - story.fox.chapter-one-return

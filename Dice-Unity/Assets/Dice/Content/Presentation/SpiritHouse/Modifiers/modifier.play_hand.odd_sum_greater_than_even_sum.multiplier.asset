@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: f253f02bc4ab2b54e980b9d6d344a26b, type: 2}
   displayName: Uneven Scales / Mult
   icon: {fileID: 21300000, guid: f7b146c6dd12538885319e6199c3ce11, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Sum of odd faces exceeds sum of even faces.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

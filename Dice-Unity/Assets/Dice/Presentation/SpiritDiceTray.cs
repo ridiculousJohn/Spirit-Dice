@@ -41,6 +41,8 @@ namespace Dice.Presentation
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public bool IsRolling { get; private set; }
+        /** The authored die in each slot; objects parented to it follow its rolls, flips and rest pose. */
+        public IReadOnlyList<Transform> Dice => dice;
         public int ScoringHighlightMask => scoringHighlightMask;
 
         public void SetSceneLighting(SceneLightingState state)

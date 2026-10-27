@@ -28,8 +28,11 @@ namespace Dice.Tests
      * searches session seeds against the shipped catalog for an opening whose rule draws produce it, then plays that
      * seed through the real controller, engine and playback. Frames of the portrait canvas are written at 30 per second
      * of real time, from half a second before the action until playback settles, under DICE_SPIRIT_CAPTURE_ROOT; it is
-     * ignored without it. It is a capture, not a regression test.
+     * ignored without it. It is a capture, not a regression test; the behaviour it shows is tested by
+     * DieInterferenceRulePlayTests and BayWardRulePlayTests.
      */
+    [Explicit("Review capture; run it explicitly with DICE_SPIRIT_CAPTURE_ROOT set.")]
+    [Category("Capture")]
     public sealed class MerchantDisturbanceCapturePlayTests
     {
         private const string EncounterId = "encounter.merchant.unquiet_cart";

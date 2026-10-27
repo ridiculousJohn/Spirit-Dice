@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 0dc76eeed9084bb68adc4798b800ddec, type: 2}
   displayName: Lantern Seekers / Rerolls
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least {parameter} dice show the favored face.
   artwork: 3
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

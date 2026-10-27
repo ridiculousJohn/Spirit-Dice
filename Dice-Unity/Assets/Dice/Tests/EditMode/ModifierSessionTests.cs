@@ -151,6 +151,44 @@ namespace Dice.Tests
             Assert.That(result.Snapshot.ModifierContributions[0].DefinitionId, Is.EqualTo("initial"));
         }
 
+        /** Checks opening-roll and last-reroll bonuses are banked before scoring, survive save and restore, and add into the scored hand / fails if the last-reroll bonus fires early, either bank is lost on restore, or scoring drops them. */
+        [Test]
+        public void OpeningAndLastRerollBonusesAreBankedAcrossSaveAndScored()
+        {
+            var opening = Modifier("opening", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
+                new ModifierEffect(ModifierEffectKind.AddBaseScore, 7));
+            var lastReroll = new ModifierDefinition("last-reroll", "test.last-reroll", ModifierPhase.PlayerReroll,
+                new ModifierCondition(ModifierConditionKind.LastRerollOnLastHand),
+                new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 3) });
+            var definitions = new[] { opening, lastReroll };
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 1, 2) },
+                startingModifiers: definitions.Select(value => value.Id));
+            var catalog = new MechanicalCatalog("test.modifiers", TestContent.Hands(), new[] { encounter }, definitions);
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 0);
+            var banked = session.Execute(new RerollDiceAction(1), 0).Snapshot;
+            Assert.That(banked.ModifierContributions.Select(value => value.DefinitionId), Is.EqualTo(new[] { "opening" }),
+                "A reroll that leaves rerolls is not the last reroll.");
+            banked = session.Execute(new RerollDiceAction(1), 1).Snapshot;
+            Assert.That(banked.ModifierContributions.Select(value => value.DefinitionId),
+                Is.EqualTo(new[] { "opening", "last-reroll" }));
+            Assert.That(banked.ModifierBaseScore, Is.EqualTo(7));
+            Assert.That(banked.ModifierMultiplier, Is.EqualTo(3));
+
+            var restored = EncounterSession.RestoreEncounter(catalog, session.CaptureSave());
+            Assert.That(restored.Success, Is.True, restored.Error + ": " + restored.Detail);
+            var resumed = restored.Session.Snapshot;
+            Assert.That(resumed.ModifierContributions, Is.EqualTo(banked.ModifierContributions));
+            Assert.That(resumed.ModifierBaseScore, Is.EqualTo(banked.ModifierBaseScore));
+            Assert.That(resumed.ModifierMultiplier, Is.EqualTo(banked.ModifierMultiplier));
+
+            var score = restored.Session.Execute(PlayHandAction.Instance, resumed.Revision).Events.OfType<HandScoredEvent>().Single().Score;
+            Assert.That(score.ModifierContributions, Is.EqualTo(banked.ModifierContributions));
+            Assert.That(score.ModifierBaseScore, Is.EqualTo(7));
+            Assert.That(score.ModifierMultiplier, Is.EqualTo(3));
+            Assert.That(score.BaseScore, Is.EqualTo(score.DiceSum + score.CategoryBaseScore + score.UpgradeBaseScore + 7));
+            Assert.That(score.Multiplier, Is.EqualTo(score.CategoryMultiplier + score.UpgradeMultiplier + 3));
+        }
+
         [Test]
         public void RepeatedPreviewMatchesCommittedPlayEffectsAndPreservesFutureState()
         {

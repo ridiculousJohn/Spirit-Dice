@@ -22,6 +22,8 @@ namespace Dice.Tests
         private ModifierDefinition discovered;
         private ModifierDefinition undiscovered;
         private ModifierDefinition inert;
+        private readonly SyntheticCharms synthetic = new SyntheticCharms();
+        private ModifierPresentationCatalog charms;
 
         [SetUp]
         public void BuildCollection()
@@ -42,6 +44,7 @@ namespace Dice.Tests
                 encounterModifierIds: new[] { encounterOnly.Id }, unlockRewardModifierIds: new[] { locked.Id, unlocked.Id });
             catalog = new MechanicalCatalog("collection.test", TestContent.Hands(), new[] { encounter },
                 new[] { starter, locked, unlocked, encounterOnly, discovered, undiscovered, inert });
+            charms = synthetic.For(catalog);
             root = new GameObject("CollectionTest", typeof(RectTransform), typeof(Canvas), typeof(SpiritUiContext));
             ((RectTransform)root.transform).sizeDelta = new Vector2(443, 960);
             var themePath = AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:SpiritUiTheme").First());
@@ -57,19 +60,20 @@ namespace Dice.Tests
         public void ReleaseCollection()
         {
             UnityEngine.Object.DestroyImmediate(root);
+            synthetic.Dispose();
         }
 
         [Test]
         public void FamilyRowSharesIdentityAndTriggerWhileVariantsRetainIndependentStates()
         {
             var profileIds = new[] { unlocked.Id };
-            view.Show(catalog, profileIds);
+            view.Show(catalog, charms, profileIds);
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             Assert.That(view.Rows.Count, Is.EqualTo(1));
             var row = view.Rows.Single();
             Assert.That(row.GetComponentsInChildren<Text>().Count(text => text.name == "FamilyName"), Is.EqualTo(1));
             Assert.That(row.GetComponentsInChildren<Text>().Count(text => text.name == "FamilyCondition"), Is.EqualTo(1));
-            Assert.That(Find<Text>(row, "FamilyCondition").text, Does.Contain("When playing a hand"));
+            Assert.That(Find<Text>(row, "FamilyCondition").text, Does.Contain(charms.GetDescriptionLead(unlocked)));
             Assert.That(row.GetComponentsInChildren<Text>().Where(text => text.name == "VariantState").Select(text => text.text),
                 Is.EqualTo(new[] { "Available", "Locked", "Unlocked" }));
             Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("Collected 1 / 4  |  Available at start 1"));
@@ -82,18 +86,18 @@ namespace Dice.Tests
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Id));
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Locked"));
             Assert.That(Find<Text>(view, "CollectionDetailEffect").text,
-                Is.EqualTo(SpiritModifierPresentation.GetEffectText(locked)));
+                Is.EqualTo(charms.GetEffectText(locked)));
             Assert.That(Find<Text>(view, "CollectionDetailSource").text, Does.Contain("after stage 3"));
         }
 
         [Test]
         public void ReopeningRefreshesPermanentProgressWithoutChangingEncounterOnlyStatus()
         {
-            view.Show(catalog, new[] { unlocked.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id });
             Find<Button>(view.Rows.Single(), "FamilyVariant1").onClick.Invoke();
             view.Hide();
             Assert.That(view.IsVisible, Is.False);
-            view.Show(catalog, new[] { unlocked.Id, locked.Id, encounterOnly.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id, locked.Id, encounterOnly.Id });
             Assert.That(view.IsVisible, Is.True);
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Id));
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Unlocked"));
@@ -105,7 +109,7 @@ namespace Dice.Tests
         public void FilterCyclesOwnedDiscoveredAllAndKeepsSelectionInVisibleFamilies()
         {
             var discoveredIds = new[] { discovered.FamilyId, encounterOnly.FamilyId, inert.FamilyId };
-            view.Show(catalog, Array.Empty<string>(), null, discoveredIds);
+            view.Show(catalog, charms, Array.Empty<string>(), null, discoveredIds);
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EqualTo(new[] { starter.FamilyId }));
             var button = Find<Button>(view, "CollectionFilterButton");
             button.onClick.Invoke();
@@ -125,7 +129,7 @@ namespace Dice.Tests
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Available"));
             view.SetFilter(SpiritCollectionFilter.All);
             view.Hide();
-            view.Show(catalog, Array.Empty<string>());
+            view.Show(catalog, charms, Array.Empty<string>());
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             view.SetFilter(SpiritCollectionFilter.Discovered);
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EqualTo(new[] { starter.FamilyId }));
@@ -135,7 +139,7 @@ namespace Dice.Tests
         [Test]
         public void AllUsesCompactUndiscoveredRowsWithoutRevealingOrInspectingTheirCharms()
         {
-            view.Show(catalog, new[] { unlocked.Id, encounterOnly.Id, inert.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id, encounterOnly.Id, inert.Id });
             view.SetFilter(SpiritCollectionFilter.All);
             Assert.That(view.Rows.Count, Is.EqualTo(3));
             Assert.That(view.Rows.Count(row => row.IsUndiscovered), Is.EqualTo(2));
@@ -161,12 +165,12 @@ namespace Dice.Tests
         {
             var permanentCatalog = new MechanicalCatalog("permanent.test", TestContent.Hands(), catalog.Encounters,
                 new[] { locked, unlocked, encounterOnly, discovered, undiscovered });
-            view.Show(permanentCatalog, new[] { discovered.Id });
+            view.Show(permanentCatalog, charms, new[] { discovered.Id });
             Assert.That(view.Rows.Single().FamilyId, Is.EqualTo(discovered.FamilyId));
             Assert.That(view.SelectedModifierId, Is.EqualTo(discovered.Id));
             view.SetFilter(SpiritCollectionFilter.Discovered);
             Assert.That(view.Rows.Single().FamilyId, Is.EqualTo(discovered.FamilyId));
-            view.Show(permanentCatalog, Array.Empty<string>());
+            view.Show(permanentCatalog, charms, Array.Empty<string>());
             Assert.That(view.Rows, Is.Empty);
             Assert.That(view.SelectedModifierId, Is.Null);
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Is.EqualTo("No owned families"));
@@ -197,9 +201,9 @@ namespace Dice.Tests
             try
             {
                 var rewardData = new SerializedObject(reward);
-                var grants = rewardData.FindProperty("grantedModifierIds");
+                var grants = rewardData.FindProperty("grantedModifiers");
                 grants.arraySize = 1;
-                grants.GetArrayElementAtIndex(0).stringValue = discovered.Id;
+                grants.GetArrayElementAtIndex(0).objectReferenceValue = synthetic.Charm(discovered.Id);
                 rewardData.ApplyModifiedPropertiesWithoutUndo();
                 var journeyData = new SerializedObject(journey);
                 journeyData.FindProperty("encounterId").stringValue = "encounter.test";

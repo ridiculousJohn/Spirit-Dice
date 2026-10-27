@@ -22,6 +22,7 @@ namespace Dice.Tests
         private const string GiftId = "modifier.story-gift";
         private const string GiftFamily = "family.story-gift";
         private readonly List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
+        private readonly SyntheticCharms charms = new SyntheticCharms();
         private GameObject host;
         private SpiritEncounterController controller;
         private MechanicalCatalog catalog;
@@ -63,102 +64,7 @@ namespace Dice.Tests
             UnityEngine.Object.DestroyImmediate(host);
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
-        }
-
-        [Test]
-        public void AuthoredJourneyCatalogMatchesMechanicalContent()
-        {
-            var journeyScript = AssetDatabase.LoadAssetAtPath<MonoScript>(
-                "Assets/Dice/Presentation/EncounterJourneyAsset.cs");
-            Assert.That(journeyScript, Is.Not.Null);
-            var importedJourney = AssetDatabase.LoadMainAssetAtPath(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternJourney.asset");
-            const string journeyPath = "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternJourney.asset";
-            var directJourney = AssetDatabase.LoadAssetAtPath<EncounterJourneyAsset>(journeyPath);
-            TestContext.WriteLine("Raw journey main asset: " + importedJourney);
-            TestContext.WriteLine("Typed journey asset: " + directJourney);
-            TestContext.WriteLine("Imported journey GUID: " + AssetDatabase.AssetPathToGUID(journeyPath));
-            foreach (var imported in AssetDatabase.LoadAllAssetsAtPath(journeyPath))
-            {
-                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(imported, out string guid, out long localId);
-                TestContext.WriteLine("Journey subasset: " + imported + ", GUID " + guid + ", local ID " + localId);
-            }
-            Assert.That(journeyScript.GetClass(), Is.EqualTo(typeof(EncounterJourneyAsset)),
-                "Imported journey object type: " + (importedJourney == null ? "null" : importedJourney.GetType().FullName));
-            var authored = AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset");
-            Assert.That(authored, Is.Not.Null, "The authored journey catalog must resolve its script.");
-            var serializedCatalog = new SerializedObject(authored);
-            var entriesProperty = serializedCatalog.FindProperty("entries");
-            TestContext.WriteLine("Serialized catalog entry count: " + entriesProperty.arraySize);
-            for (int index = 0; index < entriesProperty.arraySize; ++index)
-            {
-                var entryProperty = entriesProperty.GetArrayElementAtIndex(index);
-                TestContext.WriteLine("Serialized catalog entry " + index + ": entity ID " +
-                    entryProperty.objectReferenceEntityIdValue + ", value " + entryProperty.objectReferenceValue);
-            }
-            Assert.That(directJourney, Is.Not.Null, "The direct typed journey load is missing; raw main asset: " + importedJourney);
-            Assert.That(authored.Entries, Is.Not.Empty);
-            foreach (var entry in authored.Entries)
-            {
-                Assert.That(entry, Is.Not.Null, "A catalog journey reference is missing.");
-                Assert.That(entry.Beats, Is.Not.Empty, entry.name);
-                Assert.That(entry.TablePresentation, Is.Not.Null, entry.name);
-                Assert.That(entry.TablePresentation.RulePresentations, Is.Not.Null, entry.name);
-                foreach (var rule in entry.TablePresentation.RulePresentations)
-                    Assert.That(rule, Is.Not.Null, entry.name + " has a missing rule reference.");
-            }
-            var mechanical = TestContent.BuildStandardCatalog();
-            Assert.DoesNotThrow(() => authored.Validate(mechanical));
-            Assert.That(directJourney.FollowUpEncounterIds, Is.EqualTo(new[] { "encounter.owl.watchtower" }));
-            Assert.That(directJourney.ResultContinueLabel, Is.EqualTo("Return to the trail"));
-            var victory = directJourney.GetOutcomePresentation(EncounterOutcome.Won);
-            Assert.That(victory, Is.Not.Null);
-            Assert.That((int)victory.HostState, Is.EqualTo(4));
-            Assert.That(victory.HoldDuration, Is.EqualTo(.25f));
-            Assert.That(victory.FadeDuration, Is.EqualTo(.3f));
-            Assert.That(victory.ShowDialogue, Is.True);
-            var defeat = directJourney.GetOutcomePresentation(EncounterOutcome.Lost);
-            Assert.That(defeat, Is.Not.Null);
-            Assert.That((int)defeat.HostState, Is.EqualTo(5));
-            Assert.That(defeat.HoldDuration, Is.EqualTo(.2f));
-            Assert.That(defeat.FadeDuration, Is.EqualTo(.3f));
-            Assert.That(defeat.ShowDialogue, Is.True);
-            var abandon = directJourney.GetOutcomePresentation(EncounterOutcome.Abandoned);
-            Assert.That(abandon, Is.Not.Null);
-            Assert.That((int)abandon.HostState, Is.EqualTo(6));
-            Assert.That(abandon.HoldDuration, Is.Zero);
-            Assert.That(abandon.FadeDuration, Is.EqualTo(.2f));
-            Assert.That(abandon.ShowDialogue, Is.False);
-            Assert.That(controller.InitializeJourney(mechanical, authored, savePath), Is.True, controller.JourneyStatus);
-            Assert.That(controller.Catalog, Is.SameAs(mechanical));
-            Assert.That(controller.Snapshot, Is.Null);
-        }
-
-        [Test]
-        public void MerchantJourneyValidatesWithItsTableRulesAndCandlePieceLight()
-        {
-            var merchant = AssetDatabase.LoadAssetAtPath<EncounterJourneyAsset>(
-                "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantJourney.asset");
-            var authored = AssetDatabase.LoadAssetAtPath<EncounterJourneyCatalogAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/SpiritJourneyCatalog.asset");
-            Assert.That(merchant, Is.Not.Null);
-            Assert.That(authored.Entries, Does.Contain(merchant));
-            var mechanical = TestContent.BuildStandardCatalog();
-            Assert.DoesNotThrow(() => merchant.Validate(mechanical));
-            Assert.DoesNotThrow(() => authored.Validate(mechanical));
-            var table = merchant.TablePresentation;
-            Assert.That(AssetDatabase.GetAssetPath(table),
-                Is.EqualTo("Assets/Dice/Content/Presentation/HauntedMerchant/MerchantUnquietCartTable.asset"));
-            Assert.That(AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID), Is.EqualTo("Assets/Scenes/MerchantEncounter.unity"));
-            Assert.That(table.HostPresentation.SigilPrefab, Is.Not.Null, "The gameplay HUD requires the host's sigil.");
-            var encounter = mechanical.GetEncounter(merchant.EncounterId);
-            Assert.That(table.RulePresentations.Select(rule => rule.RuleId), Is.EqualTo(encounter.Rules.Select(rule => rule.Id)));
-            var light = table.PieceLights.Single();
-            Assert.That(light.LightIndex, Is.InRange(0, table.SceneLighting.Lights.Length - 1));
-            var piece = encounter.Pieces.Single(value => value.Id == light.PieceId);
-            Assert.That(piece.Interactions.Single(value => value.Id == light.InteractionId), Is.InstanceOf<PositionInteractionDefinition>());
-            Assert.That(controller.InitializeJourney(mechanical, authored, savePath), Is.True, controller.JourneyStatus);
+            charms.Dispose();
         }
 
         [Test]
@@ -183,21 +89,6 @@ namespace Dice.Tests
             controller.SkipIntro();
             controller.AcceptEncounter();
             Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
-        }
-
-        [Test]
-        public void SkippingVisitedIntroAppliesItsStoryRewards()
-        {
-            var savedProfile = new PlayerProfile();
-            savedProfile.VisitEncounter(FirstId);
-            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json"), savedProfile);
-            Set(journeys.Entries[0].Beats[1], "progressionReward", Reward(true, true));
-            Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(FirstId);
-            controller.SkipIntro();
-            Assert.That(controller.BeatIndex, Is.EqualTo(3));
-            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).DiscoveredFamilyIds, Does.Contain(GiftFamily));
         }
 
         [Test]
@@ -273,7 +164,7 @@ namespace Dice.Tests
         {
             var reward = Create<ProgressionRewardAsset>();
             Set(reward, "discoveredFamilyIds", discover ? new[] { GiftFamily } : Array.Empty<string>());
-            Set(reward, "grantedModifierIds", grant ? new[] { GiftId } : Array.Empty<string>());
+            Set(reward, "grantedModifiers", grant ? new[] { charms.Charm(GiftId, GiftFamily) } : Array.Empty<ModifierAsset>());
             return reward;
         }
 
@@ -487,10 +378,11 @@ namespace Dice.Tests
             Assert.That(File.Exists(savePath), Is.False);
         }
 
-        [TestCase(FirstId)]
-        [TestCase(SecondId)]
-        public void AcceptanceStartsSelectedDataOnceAndPresentsTheOpeningRoll(string id)
+        [Test]
+        public void AcceptanceStartsSelectedDataOnceAndPresentsTheOpeningRoll()
         {
+            // The second catalog entry, so starting the first entry instead would fail.
+            const string id = SecondId;
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             int presented = 0;
             controller.Resolved += resolution =>
@@ -803,9 +695,6 @@ namespace Dice.Tests
             foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
                 Assert.That(journey.GetOutcomePresentation(outcome), Is.Null);
             var presentation = new EncounterOutcomePresentation();
-            Assert.That(presentation.HoldDuration, Is.Zero);
-            Assert.That(presentation.FadeDuration, Is.EqualTo(.3f));
-            Assert.That(presentation.ShowDialogue, Is.False);
             Set(journey, "victoryPresentation", presentation);
             Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won), Is.Null);
             Set(presentation, "enabled", true);

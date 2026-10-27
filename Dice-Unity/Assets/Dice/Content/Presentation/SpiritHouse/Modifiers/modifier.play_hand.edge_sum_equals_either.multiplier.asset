@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: b6c971c8f51e2e74ab21056533e38c3d, type: 2}
   displayName: Two Gateposts / Mult
   icon: {fileID: 21300000, guid: 8d405e5a27e35f0c83358a641000d63d, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Dice 1 + 5 equal {parameter} or {secondaryParameter}.
   artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
   displayName: Great Oak / Rerolls
   icon: {fileID: 21300000, guid: 63d45ee2bc1c5cbc83d4434ac87978b5, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Sum of the three smallest faces is at most the largest face.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

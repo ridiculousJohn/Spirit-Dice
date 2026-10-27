@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 315cd53f1ff2721468f46920de6c0907, type: 2}
   displayName: Falling Leaf / Rerolls
   icon: {fileID: 21300000, guid: 79d57455a98f5fb5a8e2fb456d1e774d, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category ranks below the roll before the latest reroll.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

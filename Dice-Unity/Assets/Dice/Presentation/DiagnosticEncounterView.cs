@@ -266,10 +266,10 @@ namespace Dice.Presentation
                 if (offer.Kind == RewardKind.Modifier)
                 {
                     ModifierDefinition modifier = cachedCatalog.GetModifier(option.DefinitionId);
-                    card.Title = DiagnosticText.Humanize(modifier.Id);
-                    card.Body = DiagnosticText.DescribeCondition(modifier.Condition) + "\n" + DiagnosticText.DescribeEffects(modifier);
-                    card.Detail = DiagnosticText.Humanize(modifier.Phase.ToString()) + " | " +
-                        DiagnosticText.Humanize(modifier.ActivationLimit.ToString()) + "\n" + modifier.Id + " | option " + option.OptionId;
+                    ModifierPresentationCatalog charms = controls.ModifierPresentation;
+                    card.Title = charms.GetName(modifier);
+                    card.Body = charms.GetConditionText(modifier) + "\n" + charms.GetEffectText(modifier);
+                    card.Detail = charms.GetTimingText(modifier) + "\n" + modifier.Id + " | option " + option.OptionId;
                 }
                 else if (option.Category.HasValue)
                 {
@@ -293,12 +293,12 @@ namespace Dice.Presentation
             foreach (ModifierInstanceSnapshot instance in cachedSnapshot.Modifiers)
             {
                 ModifierDefinition definition = cachedCatalog.GetModifier(instance.DefinitionId);
+                ModifierPresentationCatalog charms = controls.ModifierPresentation;
                 var card = new CardText
                 {
-                    Title = DiagnosticText.Humanize(definition.Id) + " #" + instance.InstanceId,
-                    Body = DiagnosticText.DescribeCondition(definition.Condition) + "\n" + DiagnosticText.DescribeEffects(definition),
-                    Detail = DiagnosticText.Humanize(definition.Phase.ToString()) + " | " +
-                        DiagnosticText.Humanize(definition.ActivationLimit.ToString()) +
+                    Title = charms.GetName(definition) + " #" + instance.InstanceId,
+                    Body = charms.GetConditionText(definition) + "\n" + charms.GetEffectText(definition),
+                    Detail = charms.GetTimingText(definition) +
                         "\nActivations: hand " + instance.ActivationsThisHand + ", stage " + instance.ActivationsThisStage +
                         ", total " + instance.TotalActivations + "\n" + definition.Id,
                     Status = definition.Phase == ModifierPhase.PlayHand ? "If played now: inspection unavailable" : "Evaluated on roll"

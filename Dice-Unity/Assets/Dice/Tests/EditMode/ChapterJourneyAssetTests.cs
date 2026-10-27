@@ -33,7 +33,7 @@ namespace Dice.Tests
         [Test]
         public void StoryWithoutMechanicalEncounterUsesItsIdAndReusesHostPresentation()
         {
-            var story = Journey("story.fox", true);
+            var story = Journey("story.first", true);
             var rule = Create<EncounterRulePresentationAsset>();
             Set(rule, "ruleId", "rule.not.in.encounter");
             Set(story.TablePresentation, "rulePresentations", new[] { rule });
@@ -53,7 +53,7 @@ namespace Dice.Tests
         [TestCase("presentation")]
         public void StoryRequiresExplicitCompletionAndNoMechanicalInvitation(string invalid)
         {
-            var story = Journey("story.fox", true);
+            var story = Journey("story.first", true);
             if (invalid == "invitation") Set(story.Beats[0], "kind", EncounterJourneyBeatKind.Invitation);
             if (invalid == "automatic") Set(story.Beats[0], "autoAdvance", true);
             if (invalid == "encounter") Set(story, "encounterId", EncounterId);
@@ -77,7 +77,7 @@ namespace Dice.Tests
         public void FollowUpsAndCompletionPrerequisitesCanConnectEncountersAndStories()
         {
             var encounter = Journey(EncounterId, false);
-            var story = Journey("story.fox", true);
+            var story = Journey("story.first", true);
             var final = Journey("story.return", true);
             Set(encounter, "followUpEncounterIds", new[] { story.Id });
             Set(story, "requiredCompletedEncounterIds", new[] { EncounterId });
@@ -90,7 +90,7 @@ namespace Dice.Tests
         [TestCase(true)]
         public void MissingCompletionPrerequisitesAreRejected(bool storyPrerequisite)
         {
-            var story = Journey("story.fox", true);
+            var story = Journey("story.first", true);
             Set(story, storyPrerequisite ? "requiredCompletedStoryIds" : "requiredCompletedEncounterIds",
                 new[] { "missing" });
             if (storyPrerequisite) Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog));
@@ -101,7 +101,7 @@ namespace Dice.Tests
         public void StoryPrerequisitesCannotReferToMechanicalJourneys()
         {
             var encounter = Journey(EncounterId, false);
-            var story = Journey("story.fox", true);
+            var story = Journey("story.first", true);
             Set(story, "requiredCompletedStoryIds", new[] { EncounterId });
             Assert.Throws<FormatException>(() => Catalog(encounter, story).Validate(catalog));
         }
@@ -112,8 +112,8 @@ namespace Dice.Tests
         [TestCase("blank")]
         public void InvalidCompletionPrerequisiteIdsAreRejected(string invalid)
         {
-            var first = Journey("story.fox", true);
-            var second = Journey("story.owl", true);
+            var first = Journey("story.first", true);
+            var second = Journey("story.second", true);
             Set(first, "requiredCompletedStoryIds", invalid == "null" ? null :
                 invalid == "duplicate" ? new[] { second.Id, second.Id } :
                 new[] { invalid == "self" ? first.Id : " " });
@@ -124,9 +124,9 @@ namespace Dice.Tests
         [TestCase(true)]
         public void CompletionPrerequisiteCyclesAreRejectedAcrossJourneyKinds(bool mixed)
         {
-            var first = Journey(mixed ? EncounterId : "story.fox", !mixed);
-            var second = Journey("story.owl", true);
-            var third = Journey("story.moth", true);
+            var first = Journey(mixed ? EncounterId : "story.first", !mixed);
+            var second = Journey("story.second", true);
+            var third = Journey("story.third", true);
             Set(first, "requiredCompletedStoryIds", new[] { second.Id });
             Set(second, "requiredCompletedStoryIds", new[] { third.Id });
             Set(third, mixed ? "requiredCompletedEncounterIds" : "requiredCompletedStoryIds", new[] { first.Id });
@@ -217,7 +217,7 @@ namespace Dice.Tests
             var journey = Create<EncounterJourneyAsset>();
             Set(journey, storyOnly ? "storyId" : "encounterId", id);
             Set(journey, "locationTitle", "The clearing");
-            Set(journey, "spiritName", "Fox");
+            Set(journey, "spiritName", "Spirit");
             Set(journey, "leadText", "A familiar spirit waits.");
             Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
             var beat = new EncounterJourneyBeat();

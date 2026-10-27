@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: f4a742b413f7ec34bb12c738a55f0d53, type: 2}
   displayName: Falling Leaf / Base + Mult
   icon: {fileID: 21300000, guid: 79d57455a98f5fb5a8e2fb456d1e774d, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: Category ranks below the roll before the latest reroll.
   artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

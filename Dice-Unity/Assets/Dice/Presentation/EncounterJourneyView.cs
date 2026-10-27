@@ -96,7 +96,7 @@ namespace Dice.Presentation
             }
             // Back to invitation returns to this beat, so it must rest at its authored final pose.
             FinishAnimation();
-            EncounterCharms.Show(encounterControls.Catalog, encounter.EncounterModifierIds);
+            EncounterCharms.Show(encounterControls.Catalog, encounterControls.ModifierPresentation, encounter.EncounterModifierIds);
         }
 
         public void Bind(IEncounterJourneyControls journey, ISpiritEncounterControls encounter)
@@ -201,19 +201,20 @@ namespace Dice.Presentation
             charmDetail.gameObject.SetActive(visible);
             if (!visible) return;
             var definition = encounterControls.Catalog.GetModifier(beat.Charm.Id);
+            var charms = encounterControls.ModifierPresentation;
             var theme = SpiritUi.GetTheme(transform);
-            string name = SpiritModifierPresentation.GetName(definition);
+            string name = charms.GetName(definition);
             body.text = body.text.Replace("{charm}", "<b><color=#" + ColorUtility.ToHtmlStringRGB(theme.amber) +
-                ">" + SpiritModifierFamilyRow.GetFamilyName(definition) + "</color></b>");
+                ">" + SpiritModifierFamilyRow.GetFamilyName(charms, definition) + "</color></b>");
             charmName.text = name;
-            charmEffect.text = "<b>" + SpiritModifierPresentation.GetEffectText(definition) + "</b>";
-            charmEffect.color = SpiritModifierIcons.GetEffectColor(definition);
-            charmCondition.text = SpiritRewardCard.GetModifierDescription(definition, theme.amber,
+            charmEffect.text = "<b>" + charms.GetEffectText(definition) + "</b>";
+            charmEffect.color = charms.GetEffectColor(definition);
+            charmCondition.text = SpiritRewardCard.GetModifierDescription(charms, definition, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
-            charmIcon.sprite = SpiritModifierIcons.GetSprite(definition);
-            charmIcon.color = charmSigil.color = SpiritModifierIcons.GetEffectColor(definition);
+            charmIcon.sprite = charms.GetIcon(definition);
+            charmIcon.color = charmSigil.color = charms.GetEffectColor(definition);
             charmIcon.gameObject.SetActive(charmIcon.sprite != null);
-            charmSigil.Seed = SpiritModifierIcons.GetSigilSeed(definition);
+            charmSigil.Seed = charms.GetSigilSeed(definition);
             charmSigil.gameObject.SetActive(charmIcon.sprite == null);
         }
 

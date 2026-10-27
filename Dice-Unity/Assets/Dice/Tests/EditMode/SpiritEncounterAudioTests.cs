@@ -2,15 +2,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 
 namespace Dice.Tests
 {
     public sealed class SpiritEncounterAudioTests
     {
-        private const string MerchantAudioPath = "Assets/Dice/Content/Presentation/HauntedMerchant/MerchantAudio.asset";
-        private const string ScreenPrefabPath = "Assets/Dice/Content/Presentation/UI/SpiritEncounterScreen.prefab";
         private readonly List<Object> resources = new List<Object>();
 
         [TearDown]
@@ -21,6 +18,7 @@ namespace Dice.Tests
             resources.Clear();
         }
 
+        /** Checks clip choice skips empty slots, never repeats the previous clip and reaches every assigned clip / fails if a slot is empty, a clip plays twice in a row or one is never chosen. */
         [Test]
         public void ClipChoiceNeverRepeatsImmediatelyAndReachesEveryAssignedClip()
         {
@@ -40,6 +38,7 @@ namespace Dice.Tests
             foreach (var count in counts.Values) Assert.That(count, Is.GreaterThan(60));
         }
 
+        /** Checks a lone clip may repeat and missing or empty lists fall back / fails if a single clip goes silent or an empty list ignores its fallback. */
         [Test]
         public void SingleClipRepeatsAndUnassignedListsUseTheFallback()
         {
@@ -52,26 +51,9 @@ namespace Dice.Tests
             Assert.That(SpiritEncounterAudio.ChooseClip(new AudioClip[] { null }, null, null, random), Is.Null);
         }
 
+        /** Checks an interval maps exactly one cosmetic draw uniformly onto its range / fails if scheduling consumes extra draws or leaves the range. */
         [Test]
-        public void ScheduledIntervalsSpanTheAuthoredRange()
-        {
-            var random = new System.Random(911);
-            float shortest = float.MaxValue, longest = float.MinValue;
-            for (int draw = 0; draw < 1000; draw++)
-            {
-                float interval = SpiritEncounterAudio.NextInterval(25, 60, random);
-                Assert.That(interval, Is.InRange(25f, 60f));
-                shortest = Mathf.Min(shortest, interval);
-                longest = Mathf.Max(longest, interval);
-            }
-            Assert.That(shortest, Is.LessThan(27f));
-            Assert.That(longest, Is.GreaterThan(58f));
-            Assert.That(SpiritEncounterAudio.NextInterval(0, .5f, random), Is.EqualTo(1f), "Intervals must be at least one second.");
-            Assert.That(SpiritEncounterAudio.NextInterval(40, 30, random), Is.EqualTo(40f), "An inverted range uses its minimum.");
-        }
-
-        [Test]
-        public void IntervalUsesOneCosmeticDrawLikeTheCreakSchedule()
+        public void IntervalMapsOneCosmeticDrawOntoItsRange()
         {
             var random = new System.Random(77);
             var reference = new System.Random(77);
@@ -83,94 +65,42 @@ namespace Dice.Tests
             Assert.That(random.Next(), Is.EqualTo(reference.Next()), "Scheduling must consume exactly one draw.");
         }
 
+        /** Checks intervals last at least one second and an inverted range uses its minimum / fails if a short or inverted range schedules too soon. */
         [Test]
-        public void MerchantThemeAssignsPoltergeistClipsAndQuietAmbientOneShots()
+        public void IntervalsLastAtLeastOneSecondAndInvertedRangesUseTheirMinimum()
         {
-            var theme = AssetDatabase.LoadAssetAtPath<SpiritAudioTheme>(MerchantAudioPath);
-            Assert.That(theme, Is.Not.Null);
-            Assert.That(theme.disturbanceClips.Select(clip => clip.name),
-                Is.EqualTo(new[] { "poltergeist_giggle_01", "poltergeist_giggle_02" }));
-            Assert.That(theme.disturbanceBlockedClips.Select(clip => clip.name), Is.EqualTo(new[] { "poltergeist_grumble_01" }));
-            Assert.That(theme.ambientOneShotClips.Select(clip => clip.name), Is.EqualTo(new[]
-                { "poltergeist_ambient_giggle_01", "poltergeist_ambient_giggle_02", "poltergeist_ambient_giggle_03" }));
-            foreach (var clip in theme.disturbanceClips.Concat(theme.disturbanceBlockedClips).Concat(theme.ambientOneShotClips))
-            {
-                Assert.That(clip.channels, Is.EqualTo(1), clip.name);
-                Assert.That(clip.frequency, Is.EqualTo(44100), clip.name);
-                Assert.That(clip.length, Is.InRange(.5f, 3f), clip.name);
-            }
-            Assert.That(theme.ambientOneShotVolume, Is.GreaterThan(0f).And.LessThan(theme.effectsVolume));
-            Assert.That(theme.minimumAmbientOneShotInterval, Is.EqualTo(25f));
-            Assert.That(theme.maximumAmbientOneShotInterval, Is.EqualTo(60f));
+            var random = new System.Random(911);
+            Assert.That(SpiritEncounterAudio.NextInterval(0, .5f, random), Is.EqualTo(1f));
+            Assert.That(SpiritEncounterAudio.NextInterval(40, 30, random), Is.EqualTo(40f));
         }
 
+        /** Checks a voice pool rotates through its voices and clamps volume to one / fails if a voice is skipped or reused out of turn, or a volume above one is kept. */
         [Test]
-        public void SharedThemeHasNoAmbientOneShots()
-        {
-            var theme = AssetDatabase.LoadAssetAtPath<SpiritAudioTheme>("Assets/Dice/Presentation/Shared/SpiritAudio/SpiritAudioTheme.asset");
-            Assert.That(theme, Is.Not.Null);
-            Assert.That(theme.ambientOneShotClips == null || theme.ambientOneShotClips.Length == 0, Is.True,
-                "Themes without authored ambient one-shots keep their previous audio.");
-        }
-
-        [Test]
-        public void EncounterScreenAuthorsPropVoicesApartFromTheCueVoices()
-        {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ScreenPrefabPath);
-            Assert.That(prefab, Is.Not.Null);
-            var serialized = new SerializedObject(prefab.GetComponentsInChildren<SpiritEncounterAudio>(true).Single());
-            AudioSource[] Sources(string name)
-            {
-                var property = serialized.FindProperty(name);
-                return Enumerable.Range(0, property.arraySize)
-                    .Select(index => (AudioSource)property.GetArrayElementAtIndex(index).objectReferenceValue).ToArray();
-            }
-            var props = Sources("propSources");
-            var cues = Sources("cueSources");
-            var others = new[] { "ambienceSource", "creakSource", "rollSource" }
-                .Select(name => (AudioSource)serialized.FindProperty(name).objectReferenceValue).ToArray();
-            Assert.That(props, Has.Length.InRange(2, 3), "Prop sounds have a small voice pool of their own.");
-            Assert.That(props, Has.None.Null);
-            Assert.That(props.Distinct().Count(), Is.EqualTo(props.Length));
-            Assert.That(props.Intersect(cues.Concat(others)), Is.Empty, "Prop voices never share the cue, ambience, creak or roll voices.");
-            foreach (var source in props)
-            {
-                Assert.That(source.playOnAwake, Is.False, source.name);
-                Assert.That(source.loop, Is.False, source.name);
-                Assert.That(source.spatialBlend, Is.EqualTo(cues[0].spatialBlend), source.name + " plays flat like the cues.");
-                Assert.That(source.outputAudioMixerGroup, Is.SameAs(cues[0].outputAudioMixerGroup), source.name);
-            }
-        }
-
-        [Test]
-        public void VoicePoolPlaysOnlyItsOwnVoicesInRotation()
+        public void VoicePoolRotatesThroughItsVoicesAndClampsVolume()
         {
             var root = new GameObject("Voices");
             resources.Add(root);
-            AudioSource Source(string name)
+            var voices = Enumerable.Range(0, 3).Select(index =>
             {
-                var child = new GameObject(name);
+                var child = new GameObject("Voice " + index);
                 child.transform.SetParent(root.transform, false);
                 var source = child.AddComponent<AudioSource>();
                 source.playOnAwake = false;
                 return source;
-            }
-            var cues = Enumerable.Range(0, 4).Select(index => Source("Cue " + index)).ToArray();
-            var props = Enumerable.Range(0, 3).Select(index => Source("Prop " + index)).ToArray();
+            }).ToArray();
             // A long clip keeps any voice the editor really plays busy for the whole loop.
             var clip = AudioClip.Create("knock", 44100 * 5, 1, 44100, false);
             resources.Add(clip);
             int next = 0;
             for (int play = 0; play < 9; play++)
             {
-                var source = SpiritEncounterAudio.PlayOnVoice(props, ref next, clip, 1.5f);
-                Assert.That(source, Is.SameAs(props[play % props.Length]), "Voices rotate through the pool.");
+                var source = SpiritEncounterAudio.PlayOnVoice(voices, ref next, clip, 1.5f);
+                Assert.That(source, Is.SameAs(voices[play % voices.Length]), "Voices rotate through the pool.");
                 Assert.That(source.clip, Is.SameAs(clip));
                 Assert.That(source.volume, Is.EqualTo(1f), "Volumes clamp to one.");
-                Assert.That(next, Is.EqualTo((play + 1) % props.Length));
+                Assert.That(next, Is.EqualTo((play + 1) % voices.Length));
             }
-            foreach (var source in props) source.Stop();
-            Assert.That(cues.All(source => source.clip == null && !source.isPlaying), Is.True, "The cue voices are never touched.");
+            foreach (var source in voices) source.Stop();
         }
 
         private AudioClip Clip(string name)

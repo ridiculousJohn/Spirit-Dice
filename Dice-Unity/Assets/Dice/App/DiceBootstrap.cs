@@ -19,9 +19,7 @@ namespace Dice.App
         [SerializeField] private SpiritApplicationPresentation presentation;
         private AsyncOperationHandle<DiceApplicationConfig> configurationHandle;
         private bool hasConfigurationHandle;
-        private ModifierAssetLoader modifierAssets;
-        private ModifierPresentationLoader presentationAssets;
-        private IDisposable presentationTheme;
+        private ModifierPresentationCatalog modifierPresentation;
         private bool retainContent;
 
         [field: SerializeField] public SpiritStartupView StartupView { get; private set; }
@@ -61,32 +59,7 @@ namespace Dice.App
                 }
                 DiceApplicationConfig configuration = configurationHandle.Result;
                 if (!ValidateConfiguration(configuration)) yield break;
-
-                SetStartupStatus("Loading modifiers...");
-                if (StartupObsolete) yield break;
-                modifierAssets = new ModifierAssetLoader(configuration.ModifierLabel);
-                IEnumerator modifierLoad = modifierAssets.Load();
-                while (!StartupObsolete && configurationHandle.IsValid() && modifierLoad.MoveNext()) yield return modifierLoad.Current;
-                if (StartupObsolete) yield break;
-                if (!ConfigurationStillLoaded()) yield break;
-                if (modifierAssets.Error != null)
-                {
-                    SetStartupStatus("Cannot load modifiers: " + modifierAssets.Error.Message);
-                    yield break;
-                }
-
-                SetStartupStatus("Loading charm presentation...");
-                if (StartupObsolete) yield break;
-                presentationAssets = new ModifierPresentationLoader(configuration.ModifierPresentationLabel);
-                IEnumerator presentationLoad = presentationAssets.Load();
-                while (!StartupObsolete && configurationHandle.IsValid() && presentationLoad.MoveNext()) yield return presentationLoad.Current;
-                if (StartupObsolete) yield break;
-                if (!ConfigurationStillLoaded()) yield break;
-                if (presentationAssets.Error != null)
-                {
-                    SetStartupStatus("Cannot load charm presentation: " + presentationAssets.Error.Message);
-                    yield break;
-                }
+                // The catalog, the charms it references and the skin load with the configuration as its dependencies.
                 Initialize(configuration);
             }
             finally
@@ -130,23 +103,28 @@ namespace Dice.App
             }
         }
 
-        private bool ConfigurationStillLoaded()
-        {
-            if (configurationHandle.IsValid()) return true;
-            SetStartupStatus("Cannot initialize the application: The configuration load operation was invalidated.");
-            return false;
-        }
-
         private void Initialize(DiceApplicationConfig configuration)
         {
             MechanicalCatalog catalog = null;
             try
             {
-                catalog = configuration.CatalogAsset.Build(modifierAssets.Assets);
-                presentationTheme = SpiritModifierPresentation.InstallTheme(presentationAssets.Assets, catalog);
+                MechanicalContent content;
+                try
+                {
+                    content = configuration.CatalogAsset.Build();
+                    // The skin must present exactly the charms the content uses.
+                    modifierPresentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
+                }
+                catch (Exception exception)
+                {
+                    SetStartupStatus("Cannot load the game content: " + exception.Message);
+                    return;
+                }
+                catalog = content.Catalog;
                 // Controller events may disable this component while initialization is on the stack.
                 retainContent = true;
                 controller.ConfigureSeedPolicy(configuration.UseFixedSeed, configuration.InitialSeed);
+                controller.ConfigureModifierPresentation(modifierPresentation);
                 bool initialized;
                 if (configuration.JourneyCatalog != null)
                 {
@@ -180,12 +158,8 @@ namespace Dice.App
 
         private void ReleaseContent()
         {
-            presentationTheme?.Dispose();
-            presentationTheme = null;
-            presentationAssets?.Dispose();
-            presentationAssets = null;
-            modifierAssets?.Dispose();
-            modifierAssets = null;
+            modifierPresentation?.Dispose();
+            modifierPresentation = null;
             if (!hasConfigurationHandle) return;
             hasConfigurationHandle = false;
             if (configurationHandle.IsValid()) Addressables.Release(configurationHandle);

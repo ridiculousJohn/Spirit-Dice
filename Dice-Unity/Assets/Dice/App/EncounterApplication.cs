@@ -34,11 +34,10 @@ namespace Dice.App
             return result.Success;
         }
 
-        public static EncounterApplication Create(MechanicalCatalogAsset asset, IEnumerable<ModifierAsset> modifiers,
-            string encounterId, ulong seed)
+        public static EncounterApplication Create(MechanicalCatalogAsset asset, string encounterId, ulong seed)
         {
             if (asset == null) throw new ArgumentNullException(nameof(asset));
-            return new EncounterApplication(asset.Build(modifiers), encounterId, seed);
+            return new EncounterApplication(asset.Build().Catalog, encounterId, seed);
         }
 
         public void AttachPresenter(IEncounterPresenter value)

@@ -20,8 +20,7 @@ MonoBehaviour:
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
   journeyCatalog: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df804, type: 2}
+  modifierSkin: {fileID: 11400000, guid: ab6e2e026ae267749af2e8a3f3663615, type: 2}
   encounterId: encounter.fox.introduction
-  modifierLabel: dice.modifiers
-  modifierPresentationLabel: dice.theme.spirit-house.modifiers
   useFixedSeed: 0
   initialSeed: 60

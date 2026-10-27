@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: c4e9b216d324167408c8a7dce65b2ae1, type: 2}
   displayName: Last Ember / Rerolls
   icon: {fileID: 21300000, guid: 2a976a11f77250f89155bc204da452de, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: First hand of this stage, and the previous stage used every hand.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

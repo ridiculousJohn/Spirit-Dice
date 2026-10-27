@@ -10,10 +10,11 @@ namespace Dice.Presentation
         [field: SerializeField] public Image Accent { get; private set; }
         [field: SerializeField] public Image Glyph { get; private set; }
         [SerializeField] private Outline border;
-        internal void Render(ModifierDefinition definition)
+        /** Shows the charm's category mark; a null definition hides the badge. */
+        internal void Render(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            Glyph.sprite = definition == null ? null : SpiritModifierIcons.GetCategorySprite(definition);
-            Color color = definition == null ? Color.white : SpiritModifierIcons.GetEffectColor(definition);
+            Glyph.sprite = definition == null ? null : charms.GetCategorySprite(definition);
+            Color color = definition == null ? Color.white : charms.GetEffectColor(definition);
             Accent.color = border.effectColor = color;
             Glyph.color = Color.white;
             gameObject.SetActive(Glyph.sprite != null);

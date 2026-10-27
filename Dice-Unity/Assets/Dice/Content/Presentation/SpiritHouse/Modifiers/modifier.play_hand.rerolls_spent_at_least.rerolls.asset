@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 80f5176e8fd41db42a93f180dc9823e6, type: 2}
   displayName: Patient Mill / Rerolls
   icon: {fileID: 21300000, guid: f6a239815302542a9c132513d020106a, type: 3}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: At least {parameter} rerolls were spent on this hand.
   artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

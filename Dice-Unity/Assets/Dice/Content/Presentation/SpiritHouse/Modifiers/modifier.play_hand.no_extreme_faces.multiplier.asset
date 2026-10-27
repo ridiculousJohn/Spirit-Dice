@@ -15,7 +15,6 @@ MonoBehaviour:
   modifier: {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
   displayName: Quiet Grove / Mult
   icon: {fileID: 0}
-  conditionTemplate: 
-  conditionTypeName: 
+  conditionTemplate: No die shows {parameter} or {secondaryParameter}.
   artwork: 4
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

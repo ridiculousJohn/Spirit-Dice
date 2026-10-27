@@ -23,6 +23,8 @@ namespace Dice.UnityContent
 
         public string Id => id;
         public string FamilyId => familyId;
+        public int Parameter => parameter;
+        public int SecondaryParameter => secondaryParameter;
 
         public ModifierDefinition Build()
         {

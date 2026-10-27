@@ -18,3 +18,4 @@ MonoBehaviour:
   artwork: {fileID: 2800000, guid: 067cb65055264a0984a07c5e7fe760e7, type: 3}
   entries:
   - {fileID: 11400000, guid: a8ded007d7fa45f3869cf51933250cef, type: 2}
+  - {fileID: 11400000, guid: 7e4f59fd9c7d6f0458fd325dfa7627b6, type: 2}
