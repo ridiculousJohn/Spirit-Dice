@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: ""
   SilhouetteShader: {fileID: 0}
   SmokeShader: {fileID: 0}
-  SigilColor: {r: 0.82352941, g: 0.65098039, b: 0.34509804, a: 1}
   PortraitPrefab: {fileID: 1002, guid: "7a5c2d399f435d488c072697eea35d64", type: 3}
   SigilPrefab: {fileID: 6469703378660953074, guid: "95544163f33c4391b3816ffb65cc92e7", type: 3}
   LitLayerShader: {fileID: 4800000, guid: "1381d22630ca4363815c8e4751f13ca1", type: 3}
@@ -8968,5 +8967,3 @@ MonoBehaviour:
             m_PreInfinity: 2
             m_PostInfinity: 2
             m_RotationOrder: 4
-  SigilLines: []
-  SigilWidth: 0.035

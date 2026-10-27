@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -72,7 +73,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void DisturbanceStuttersTheLightAndJoltsOneRandomProp()
+        public void JoltStuttersTheLightAndStrikesOneRandomProp()
         {
             var light = new AmbientLightActor { LightIndex = 0, IdleInterval = new AmbientRange(1000f, 1000f) };
             var swing = Swing(10f);
@@ -84,12 +85,12 @@ namespace Dice.Tests
                 var props = ids.Select(Prop).ToArray();
                 var lighting = new RecordingLighting(1);
                 var activity = new EncounterAmbientActivity(asset, lighting, ids.Select((id, i) => Binding(id, props[i])).ToArray());
-                activity.Disturb();
+                activity.Jolt();
                 Assert.That(lighting.Writes, Is.Empty, "Nothing happens before the first hand.");
                 activity.Begin(seed);
                 Run(activity, lighting, .1f);
                 int before = lighting.Writes.Count;
-                activity.Disturb();
+                activity.Jolt();
                 Run(activity, lighting, .1f);
                 var moved = props.Where(prop => prop.localRotation != Quaternion.identity).ToArray();
                 Assert.That(moved, Has.Length.EqualTo(1), "Seed " + seed);
@@ -112,7 +113,7 @@ namespace Dice.Tests
             var activity = new EncounterAmbientActivity(asset, lighting, new[] { Binding("cup", prop) });
             activity.Begin(7);
             RunUntil(activity, lighting, () => lighting.Values[0] == 0f, 10f);
-            activity.Disturb();
+            activity.Jolt();
             Run(activity, lighting, .2f);
             Assert.That(prop.localRotation, Is.Not.EqualTo(Quaternion.identity));
 
@@ -129,9 +130,9 @@ namespace Dice.Tests
             Assert.That(activity.IsAtRest, Is.True);
 
             int writes = lighting.Writes.Count;
-            activity.Disturb();
+            activity.Jolt();
             Run(activity, lighting, 120f);
-            Assert.That(lighting.Writes.Count, Is.EqualTo(writes), "Idle events and disturbances stop after settling.");
+            Assert.That(lighting.Writes.Count, Is.EqualTo(writes), "Idle events and jolts stop after settling.");
             Assert.That(prop.localRotation, Is.EqualTo(Quaternion.identity));
         }
 
@@ -140,10 +141,10 @@ namespace Dice.Tests
         {
             var swing = Swing(10f);
             var asset = Activity(Array.Empty<AmbientLightActor>(), new[] { PropActor("a", swing), PropActor("b", swing) });
-            float disturbed = PeakAfter(asset, activity => activity.Disturb());
+            float disturbed = PeakAfter(asset, activity => activity.Jolt());
             float knocked = PeakAfter(asset, activity => activity.Knock());
-            Assert.That(knocked / disturbed, Is.EqualTo(asset.DefeatStrength / asset.DisturbanceStrength).Within(.001f),
-                "The knock strikes at the defeat strength rather than the disturbance strength.");
+            Assert.That(knocked / disturbed, Is.EqualTo(asset.DefeatStrength / asset.JoltStrength).Within(.001f),
+                "The knock strikes at the defeat strength rather than the jolt strength.");
 
             var props = new[] { Prop("a"), Prop("b") };
             var lighting = new RecordingLighting(0);
@@ -163,7 +164,7 @@ namespace Dice.Tests
             Assert.That(props.All(prop => prop.localRotation == Quaternion.identity), Is.True);
             Assert.That(knock.IsAtRest, Is.True);
             knock.Knock();
-            knock.Disturb();
+            knock.Jolt();
             Run(knock, lighting, 1f);
             Assert.That(props.All(prop => prop.localRotation == Quaternion.identity), Is.True, "The knock happens once.");
         }
@@ -178,7 +179,7 @@ namespace Dice.Tests
             var activity = new EncounterAmbientActivity(asset, lighting, new[] { Binding("cup", prop) });
             activity.Begin(9);
             RunUntil(activity, lighting, () => lighting.Values[0] == 0f, 10f);
-            activity.Disturb();
+            activity.Jolt();
             Run(activity, lighting, .2f);
             Assert.That(prop.localRotation, Is.Not.EqualTo(Quaternion.identity));
             activity.Stop();
@@ -217,17 +218,39 @@ namespace Dice.Tests
             AssertTier(sound.Plays, idle, .2f, "Idle");
 
             sound.Plays.Clear();
-            for (int i = 0; i < 10; ++i) activity.Disturb();
-            Assert.That(sound.Plays, Has.Count.EqualTo(10), "Each disturbance jolt sounds once.");
+            for (int i = 0; i < 10; ++i) activity.Jolt();
+            Assert.That(sound.Plays, Has.Count.EqualTo(10), "Each jolt sounds once.");
             AssertTier(sound.Plays, hit, .5f, "Hit");
 
             sound.Plays.Clear();
             activity.Knock();
-            activity.Disturb();
+            activity.Jolt();
             activity.Knock();
             Run(activity, lighting, 30f);
             Assert.That(sound.Plays, Has.Count.EqualTo(1), "The final knock sounds once and nothing sounds after it.");
             AssertTier(sound.Plays, defeat, .8f, "Defeat");
+        }
+
+        /** Checks the encounter's end knocks or settles as the asset authors for each outcome / fails if the outcome's authored ending is ignored. */
+        [Test]
+        public void TheEndingFollowsTheAssetsEndingForTheOutcome()
+        {
+            var actor = PropActor("a", Swing(10f));
+            actor.DefeatClips = Clips("knock", 1);
+            var asset = Activity(Array.Empty<AmbientLightActor>(), new[] { actor });
+            Set(asset, "wonEnding", AmbientEnding.Knock);
+            Set(asset, "lostEnding", AmbientEnding.Settle);
+            Set(asset, "abandonedEnding", AmbientEnding.Knock);
+            foreach (var (outcome, knocks) in new[] { (EncounterOutcome.Won, true), (EncounterOutcome.Lost, false),
+                (EncounterOutcome.Abandoned, true), (EncounterOutcome.None, false) })
+            {
+                var sound = new RecordingSound();
+                var activity = new EncounterAmbientActivity(asset, new RecordingLighting(0), new[] { Binding("a", Prop("a")) }, sound);
+                activity.Begin(5);
+                activity.End(outcome);
+                Assert.That(activity.IsRunning, Is.False, outcome.ToString());
+                Assert.That(sound.Plays.Count, Is.EqualTo(knocks ? 1 : 0), outcome + (knocks ? " knocks." : " settles."));
+            }
         }
 
         [Test]
@@ -242,7 +265,7 @@ namespace Dice.Tests
             var activity = new EncounterAmbientActivity(Activity(Array.Empty<AmbientLightActor>(), new[] { voiced }), lighting,
                 new[] { Binding("a", Prop("a")) }, sound);
             activity.Begin(8);
-            activity.Disturb();
+            activity.Jolt();
             activity.Knock();
             Assert.That(sound.Plays, Has.Count.EqualTo(2));
             Assert.That(hit, Has.Member(sound.Plays[1].Clip), "A prop without defeat clips knocks with a hit clip.");
@@ -254,13 +277,13 @@ namespace Dice.Tests
                 new[] { PropActor("b", Swing(10f), new AmbientRange(1f, 2f)) }), lighting, new[] { Binding("b", Prop("b")) }, silent);
             quiet.Begin(8);
             Run(quiet, lighting, 20f);
-            quiet.Disturb();
+            quiet.Jolt();
             quiet.Knock();
             Assert.That(silent.Plays, Is.Empty, "Props and activities without clips stay silent.");
         }
 
         [Test]
-        public void EachDisturbancePlaysOneBurstBesideTheJoltedPropsHit()
+        public void EachJoltPlaysOneBurstBesideTheStruckPropsHit()
         {
             var bursts = Clips("burst", 3);
             var hit = Clips("hit", 2);
@@ -273,16 +296,16 @@ namespace Dice.Tests
             var lighting = new RecordingLighting(0);
             var sound = new RecordingSound();
             var activity = new EncounterAmbientActivity(asset, lighting, ids.Select(id => Binding(id, Prop(id))).ToArray(), sound);
-            activity.Disturb();
+            activity.Jolt();
             Assert.That(sound.Plays, Is.Empty, "Nothing sounds before the first hand.");
             activity.Begin(77);
             var burstPlays = new List<(AudioClip Clip, float Volume)>();
             for (int i = 0; i < 10; ++i)
             {
                 int before = sound.Plays.Count;
-                activity.Disturb();
+                activity.Jolt();
                 var played = sound.Plays.Skip(before).ToList();
-                Assert.That(played.Count(play => bursts.Contains(play.Clip)), Is.EqualTo(1), "One burst per disturbance.");
+                Assert.That(played.Count(play => bursts.Contains(play.Clip)), Is.EqualTo(1), "One burst per jolt.");
                 Assert.That(played.Count(play => hit.Contains(play.Clip)), Is.EqualTo(1), "The jolted prop sounds its hit.");
                 Assert.That(played, Has.Count.EqualTo(2));
                 burstPlays.AddRange(played.Where(play => bursts.Contains(play.Clip)));
@@ -295,10 +318,10 @@ namespace Dice.Tests
             Set(bare, "burstClips", bursts);
             var room = new EncounterAmbientActivity(bare, lighting, Array.Empty<EncounterAmbientPropBinding>(), empty);
             room.Begin(3);
-            room.Disturb();
-            Assert.That(empty.Plays, Has.Count.EqualTo(1), "A disturbance bursts even with no props to jolt.");
+            room.Jolt();
+            Assert.That(empty.Plays, Has.Count.EqualTo(1), "A jolt bursts even with no props to jolt.");
             room.Settle();
-            room.Disturb();
+            room.Jolt();
             Assert.That(empty.Plays, Has.Count.EqualTo(1), "No bursts after the encounter ends.");
         }
 
@@ -319,7 +342,7 @@ namespace Dice.Tests
                 activity.Begin(2024);
                 for (int second = 0; second < 40; ++second)
                 {
-                    if (second % 7 == 3) activity.Disturb();
+                    if (second % 7 == 3) activity.Jolt();
                     Run(activity, lighting, 1f);
                     angles.Add(prop.localEulerAngles.z);
                 }
@@ -614,8 +637,31 @@ namespace Dice.Tests
             return value;
         }
 
-        private static void Set(object target, string name, object value)
-            => target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
+        /** Sets an authored field of a test asset through its serialized form; an array sets each element. */
+        private static void Set(Object target, string name, object value)
+        {
+            using var serialized = new SerializedObject(target);
+            var property = serialized.FindProperty(name);
+            Assert.That(property, Is.Not.Null, target.GetType().Name + "." + name);
+            if (value is Array values)
+            {
+                property.arraySize = values.Length;
+                for (int i = 0; i < values.Length; ++i) Assign(property.GetArrayElementAtIndex(i), values.GetValue(i));
+            }
+            else Assign(property, value);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void Assign(SerializedProperty property, object value)
+        {
+            switch (value)
+            {
+                case Enum kind: property.intValue = Convert.ToInt32(kind); break;
+                case float number: property.floatValue = number; break;
+                case Object reference: property.objectReferenceValue = reference; break;
+                default: property.boxedValue = value; break;
+            }
+        }
 
         private sealed class RecordingSound : IAmbientSoundTarget
         {

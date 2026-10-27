@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -56,28 +55,28 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
             view = ContentReady.EncounterView(controller);
-            var presenters = Presenters(view, rules, name);
-            yield return Settle(presenters);
-            AssertShows(presenters, controller.Snapshot, name + ": the opening roll");
+            var visuals = Visuals(view, rules.Length, name);
+            yield return Settle(visuals);
+            AssertShows(visuals, controller.Snapshot, name + ": the opening roll");
 
             // Player rerolls of dice that are neither bound nor marked bind the marked die and grow its roots.
             int reroll = 0;
-            while (controller.Snapshot.BoundMask == 0)
+            while (controller.Snapshot.Binding().BoundMask == 0)
             {
                 Assert.That(++reroll, Is.LessThanOrEqualTo(DiceValues.Count), name + ": no die bound after repeated rerolls.");
                 Assert.That(controller.Snapshot.RerollsRemaining, Is.GreaterThan(0), name + ": the stage needs rerolls to bind a die.");
-                int marked = controller.Snapshot.MarkedMask;
-                int free = DiceValues.AllMask & ~controller.Snapshot.BoundMask & ~marked;
+                int marked = controller.Snapshot.Binding().MarkedMask;
+                int free = DiceValues.AllMask & ~controller.Snapshot.Binding().BoundMask & ~marked;
                 controller.ToggleDie(Bay(free));
                 controller.Reroll();
                 yield return WaitIdle(controller);
                 if (marked == 0) continue;
-                Assert.That(controller.Snapshot.BoundMask & marked, Is.EqualTo(marked), name + ": the marked die binds.");
+                Assert.That(controller.Snapshot.Binding().BoundMask & marked, Is.EqualTo(marked), name + ": the marked die binds.");
             }
-            yield return Settle(presenters);
-            AssertShows(presenters, controller.Snapshot, name + ": after the binding reroll");
+            yield return Settle(visuals);
+            AssertShows(visuals, controller.Snapshot, name + ": after the binding reroll");
 
-            int bound = controller.Snapshot.BoundMask;
+            int bound = controller.Snapshot.Binding().BoundMask;
             controller.ToggleDie(Bay(bound));
             Assert.That(controller.SelectedMask, Is.Zero, name + ": a bound die cannot be selected.");
 
@@ -92,62 +91,60 @@ namespace Dice.Tests
             yield return null;
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision), controller.StatusMessage);
             view = ContentReady.EncounterView(controller);
-            presenters = Presenters(view, rules, name);
-            for (int bay = 0; bay < DiceValues.Count; ++bay)
-                foreach (var presenter in presenters)
-                    Assert.That(presenter[bay].IsAnimating, Is.False, name + ": a loaded run shows its state without animation.");
-            AssertShows(presenters, saved, name + ": the loaded run");
+            visuals = Visuals(view, rules.Length, name);
+            foreach (var die in visuals)
+                foreach (var visual in die)
+                    Assert.That(visual.IsAnimating, Is.False, name + ": a loaded run shows its state without animation.");
+            AssertShows(visuals, saved, name + ": the loaded run");
 
             // Scoring the hand withdraws every root.
             controller.PlayHand();
             float releaseDeadline = Time.realtimeSinceStartup + 30;
-            while (RootsShown(presenters) && Time.realtimeSinceStartup < releaseDeadline) yield return null;
-            Assert.That(RootsShown(presenters), Is.False, name + ": the roots withdraw after scoring.");
+            while (RootsShown(visuals) && Time.realtimeSinceStartup < releaseDeadline) yield return null;
+            Assert.That(RootsShown(visuals), Is.False, name + ": the roots withdraw after scoring.");
             yield return WaitIdle(controller);
             if (controller.Snapshot.Phase == EncounterPhase.Playing)
             {
-                yield return Settle(presenters);
-                AssertShows(presenters, controller.Snapshot, name + ": the next hand");
+                yield return Settle(visuals);
+                AssertShows(visuals, controller.Snapshot, name + ": the next hand");
             }
         }
 
-        /** The presenters of the encounter screen's dice visuals for the encounter's binding rules. */
-        private static DieBindingVisualPresenter[] Presenters(SpiritEncounterView view, DieBindingRuleDefinition[] rules, string name)
+        /**
+         * The binding visuals under each of the tray's dice, one per binding rule: the table's binding presenters create
+         * them as children of the dice they follow.
+         */
+        private static DieBindingVisual[][] Visuals(SpiritEncounterView view, int ruleCount, string name)
         {
-            var visuals = (EncounterRuleDiceVisuals)typeof(SpiritEncounterView)
-                .GetField("ruleDiceVisuals", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
-            Assert.That(visuals, Is.Not.Null, name + ": the table presents rule dice visuals.");
-            var presenters = rules.Select(rule => visuals.Presenters.OfType<DieBindingVisualPresenter>()
-                .SingleOrDefault(presenter => presenter.RuleId == rule.Id)).ToArray();
-            for (int i = 0; i < rules.Length; ++i)
-                Assert.That(presenters[i], Is.Not.Null, name + ": the table presents binding rule " + rules[i].Id + ".");
-            return presenters;
+            var visuals = new DieBindingVisual[DiceValues.Count][];
+            for (int bay = 0; bay < DiceValues.Count; ++bay)
+            {
+                visuals[bay] = view.DiceTray.Dice[bay].GetComponentsInChildren<DieBindingVisual>(true);
+                Assert.That(visuals[bay].Length, Is.EqualTo(ruleCount), name + ": each binding rule shows a visual on die " + bay + ".");
+            }
+            return visuals;
         }
 
         /** Each die shows a mark where the snapshot marks it and roots where it is bound. */
-        private static void AssertShows(DieBindingVisualPresenter[] presenters, EncounterSnapshot snapshot, string message)
+        private static void AssertShows(DieBindingVisual[][] visuals, EncounterSnapshot snapshot, string message)
         {
             for (int bay = 0; bay < DiceValues.Count; ++bay)
             {
-                Assert.That(presenters.Max(presenter => presenter[bay].Mark),
-                    Is.EqualTo((snapshot.MarkedMask & (1 << bay)) != 0 ? 1f : 0f), message + ": mark " + bay);
-                Assert.That(Growth(presenters, bay),
-                    Is.EqualTo((snapshot.BoundMask & (1 << bay)) != 0 ? 1f : 0f), message + ": roots " + bay);
+                Assert.That(visuals[bay].Max(visual => visual.Mark),
+                    Is.EqualTo((snapshot.Binding().MarkedMask & (1 << bay)) != 0 ? 1f : 0f), message + ": mark " + bay);
+                Assert.That(visuals[bay].Max(visual => visual.Growth),
+                    Is.EqualTo((snapshot.Binding().BoundMask & (1 << bay)) != 0 ? 1f : 0f), message + ": roots " + bay);
             }
         }
 
-        private static float Growth(DieBindingVisualPresenter[] presenters, int bay) => presenters.Max(presenter => presenter[bay].Growth);
-
-        private static bool RootsShown(DieBindingVisualPresenter[] presenters)
-            => presenters.Any(presenter => Enumerable.Range(0, DiceValues.Count)
-                .Any(bay => presenter[bay].Growth > 0f || presenter[bay].GrowthTarget > 0f));
+        private static bool RootsShown(DieBindingVisual[][] visuals)
+            => visuals.Any(die => die.Any(visual => visual.Growth > 0f || visual.GrowthTarget > 0f));
 
         /** Waits until every die's visual has finished animating. */
-        private static IEnumerator Settle(DieBindingVisualPresenter[] presenters)
+        private static IEnumerator Settle(DieBindingVisual[][] visuals)
         {
             float deadline = Time.realtimeSinceStartup + 10;
-            while (presenters.Any(presenter => Enumerable.Range(0, DiceValues.Count).Any(bay => presenter[bay].IsAnimating)) &&
-                Time.realtimeSinceStartup < deadline) yield return null;
+            while (visuals.Any(die => die.Any(visual => visual.IsAnimating)) && Time.realtimeSinceStartup < deadline) yield return null;
         }
 
         private static int Bay(int mask)

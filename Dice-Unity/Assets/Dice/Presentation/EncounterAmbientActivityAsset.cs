@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
 using UnityEngine;
 
 namespace Dice.Presentation
@@ -47,7 +48,7 @@ namespace Dice.Presentation
         }
     }
 
-    /** A scene light that sputters out, stays dark and sputters back on its idle schedule, and stutters on disturbances. */
+    /** A scene light that sputters out, stays dark and sputters back on its idle schedule, and stutters on jolts. */
     [Serializable]
     public sealed class AmbientLightActor
     {
@@ -59,7 +60,7 @@ namespace Dice.Presentation
         public AmbientRange DarkDuration = new AmbientRange(1.5f, 4f);
         [Tooltip("Flickers in each sputter before and after an outage.")]
         public AmbientCount SputterFlickers = new AmbientCount(3, 6);
-        [Tooltip("Flickers in the brief stutter on a poltergeist disturbance.")]
+        [Tooltip("Flickers in the brief stutter on a jolt.")]
         public AmbientCount StutterFlickers = new AmbientCount(2, 4);
         [Tooltip("Seconds each flicker holds its level.")]
         public AmbientRange FlickerDuration = new AmbientRange(.04f, .14f);
@@ -82,7 +83,7 @@ namespace Dice.Presentation
         }
     }
 
-    /** A scene prop, bound by ID in the encounter scene, that its motion kind jolts on idle timers and disturbances, with optional sounds per kind of jolt. */
+    /** A scene prop, bound by ID in the encounter scene, that its motion kind jolts on idle timers and on the activity's jolts, with optional sounds per kind of jolt. */
     [Serializable]
     public sealed class AmbientPropActor
     {
@@ -99,10 +100,10 @@ namespace Dice.Presentation
         [Tooltip("Optional sounds for idle jolts; chosen randomly without immediate repeats.")]
         public AudioClip[] IdleClips = Array.Empty<AudioClip>();
         [Range(0, 1)] public float IdleVolume = .3f;
-        [Tooltip("Optional sounds when a poltergeist disturbance jolts this prop; chosen randomly without immediate repeats.")]
+        [Tooltip("Optional sounds when the activity's jolt strikes this prop; chosen randomly without immediate repeats.")]
         public AudioClip[] HitClips = Array.Empty<AudioClip>();
         [Range(0, 1)] public float HitVolume = .5f;
-        [Tooltip("Optional sounds for this prop's final knock on defeat; the hit clips play when none are assigned.")]
+        [Tooltip("Optional sounds for this prop's final knock when the encounter ends with one; the hit clips play when none are assigned.")]
         public AudioClip[] DefeatClips = Array.Empty<AudioClip>();
         [Range(0, 1)] public float DefeatVolume = .6f;
 
@@ -121,32 +122,59 @@ namespace Dice.Presentation
         }
     }
 
-    /** Presentation-only haunting authored per encounter table: light outages, prop jolts and their sounds with no effect on play. */
+    /** How the ambient activity ends with the encounter. */
+    public enum AmbientEnding
+    {
+        /** Lights return steadily to full and moving props damp to rest. */
+        Settle,
+        /** One prop knocks hard while lights return steadily to full. */
+        Knock
+    }
+
+    /** Presentation-only ambient activity authored per encounter table: light outages, prop jolts and their sounds with no effect on play. */
     [CreateAssetMenu(menuName = "Dice/Presentation/Encounter Ambient Activity")]
     public sealed class EncounterAmbientActivityAsset : ScriptableObject
     {
         [SerializeField] private AmbientLightActor[] lights = Array.Empty<AmbientLightActor>();
         [SerializeField] private AmbientPropActor[] props = Array.Empty<AmbientPropActor>();
-        [Tooltip("Strength multiplier for the prop jolted by each poltergeist disturbance.")]
-        [SerializeField, Min(0)] private float disturbanceStrength = 1f;
-        [Tooltip("Strength multiplier for the final knock on defeat.")]
+        [Tooltip("Strength multiplier for the prop struck by each jolt a rule presenter asks for.")]
+        [SerializeField, Min(0)] private float joltStrength = 1f;
+        [Tooltip("Strength multiplier for the final knock when the encounter ends with one.")]
         [SerializeField, Min(0)] private float defeatStrength = 2.5f;
+        [Tooltip("How the activity ends when the encounter is won.")]
+        [SerializeField] private AmbientEnding wonEnding = AmbientEnding.Settle;
+        [Tooltip("How the activity ends when the encounter is lost.")]
+        [SerializeField] private AmbientEnding lostEnding = AmbientEnding.Knock;
+        [Tooltip("How the activity ends when the encounter is abandoned.")]
+        [SerializeField] private AmbientEnding abandonedEnding = AmbientEnding.Settle;
         [Tooltip("Seconds over which every light returns steadily to full when the encounter ends.")]
         [SerializeField, Min(0)] private float lightRecovery = 1f;
-        [Tooltip("Time constant in seconds at which moving props damp to rest on victory.")]
+        [Tooltip("Time constant in seconds at which moving props damp to rest when the activity settles.")]
         [SerializeField, Min(.01f)] private float settleTime = .35f;
-        [Tooltip("Optional sounds played once on each poltergeist disturbance, beside the jolted prop's hit; chosen randomly without immediate repeats.")]
+        [Tooltip("Optional sounds played once on each jolt, beside the struck prop's hit; chosen randomly without immediate repeats.")]
         [SerializeField] private AudioClip[] burstClips = Array.Empty<AudioClip>();
         [SerializeField, Range(0, 1)] private float burstVolume = .4f;
 
         public IReadOnlyList<AmbientLightActor> Lights => lights ?? Array.Empty<AmbientLightActor>();
         public IReadOnlyList<AmbientPropActor> Props => props ?? Array.Empty<AmbientPropActor>();
-        public float DisturbanceStrength => disturbanceStrength;
+        public float JoltStrength => joltStrength;
         public float DefeatStrength => defeatStrength;
         public float LightRecovery => lightRecovery;
         public float SettleTime => settleTime;
         public AudioClip[] BurstClips => burstClips;
         public float BurstVolume => burstVolume;
+
+        /** How the activity ends for the encounter's outcome; an encounter without an outcome settles. */
+        public AmbientEnding EndingFor(EncounterOutcome outcome)
+        {
+            switch (outcome)
+            {
+                case EncounterOutcome.Won: return wonEnding;
+                case EncounterOutcome.Lost: return lostEnding;
+                case EncounterOutcome.Abandoned: return abandonedEnding;
+                default: return AmbientEnding.Settle;
+            }
+        }
 
         internal static bool ValidVolume(float volume) => SceneLightingAsset.Finite(volume) && volume >= 0f && volume <= 1f;
 
@@ -167,7 +195,7 @@ namespace Dice.Presentation
                 prop.Validate();
                 if (!propIds.Add(prop.Id)) throw new InvalidOperationException("Ambient prop actors require distinct IDs.");
             }
-            if (!SceneLightingAsset.Finite(disturbanceStrength) || disturbanceStrength < 0f ||
+            if (!SceneLightingAsset.Finite(joltStrength) || joltStrength < 0f ||
                 !SceneLightingAsset.Finite(defeatStrength) || defeatStrength < 0f ||
                 !SceneLightingAsset.Finite(lightRecovery) || lightRecovery < 0f ||
                 !SceneLightingAsset.Finite(settleTime) || settleTime <= 0f)

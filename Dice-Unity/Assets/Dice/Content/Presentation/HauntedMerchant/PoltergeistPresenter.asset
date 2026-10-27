@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 155f141ebbf14ca6bbb760576457fb00, type: 3}
+  m_Name: PoltergeistPresenter
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.DieInterferencePresenterAsset
+  disturbanceClips:
+  - {fileID: 8300000, guid: 0be961a8625248afbc830db2c0f61ec1, type: 3}
+  - {fileID: 8300000, guid: 82694c1e33144cda86edd593f7bb7450, type: 3}
+  blockedClips:
+  - {fileID: 8300000, guid: 7ee59dffd1694ce28e94311bc1191f24, type: 3}
+  hold: 0.3
+  playHandBeat: 0.25

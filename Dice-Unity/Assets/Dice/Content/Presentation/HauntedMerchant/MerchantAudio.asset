@@ -42,11 +42,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4594dfc3a05547edb0a6bfd35c79012f, type: 3}
   score: {fileID: 8300000, guid: b84699ef9b4c42b5bfc60b29ece30a84, type: 3}
   stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
-  disturbanceClips:
-  - {fileID: 8300000, guid: 0be961a8625248afbc830db2c0f61ec1, type: 3}
-  - {fileID: 8300000, guid: 82694c1e33144cda86edd593f7bb7450, type: 3}
-  disturbanceBlockedClips:
-  - {fileID: 8300000, guid: 7ee59dffd1694ce28e94311bc1191f24, type: 3}
   ambience: {fileID: 0}
   creak: {fileID: 0}
   ambientOneShotClips:

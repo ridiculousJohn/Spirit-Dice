@@ -78,9 +78,6 @@ namespace Dice.Presentation
         public Vector2 Offset;
         public SpiritPortraitLayer[] Layers = Array.Empty<SpiritPortraitLayer>();
         public SpiritPresentationSequence[] Sequences = Array.Empty<SpiritPresentationSequence>();
-        public Vector2[] SigilLines = Array.Empty<Vector2>();
-        public float SigilWidth = .035f;
-        public Color SigilColor = new Color32(210, 166, 88, 255);
 
         public SpiritHostPortrait Create(RectTransform parent)
         {
@@ -153,10 +150,6 @@ namespace Dice.Presentation
                     ValidateCurve(track.EntryWeight, false);
                 }
             }
-            Require(Finite(SigilWidth) && SigilWidth > 0f, "SigilWidth must be positive and finite.");
-            Require(SigilLines == null || SigilLines.Length % 2 == 0, "SigilLines must contain endpoint pairs.");
-            if (SigilLines != null)
-                foreach (Vector2 point in SigilLines) Require(Finite(point), "SigilLines must be finite.");
         }
 
         private static void ValidateCurve(AnimationCurve curve, bool required)

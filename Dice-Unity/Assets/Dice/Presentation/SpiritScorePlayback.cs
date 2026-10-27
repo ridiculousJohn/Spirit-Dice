@@ -13,28 +13,39 @@ namespace Dice.Presentation
         ISpiritEncounterControls Controls { get; }
         IEncounterJourneyControls Journey { get; }
         SpiritHostPortrait Host { get; }
-        EncounterRulePresentationAsset RulePresentation { get; }
+        /** The configured table's rule cards. */
+        IReadOnlyList<EncounterRulePresentationAsset> RuleCards { get; }
+        /** The configured table's rule card shown on the HUD, or null when the table shows none. */
+        EncounterRulePresentationAsset HudRuleCard { get; }
         /** The table's ambient activity, or null when the encounter authors none. */
         EncounterAmbientActivity Ambient { get; }
-        /** The table's rule dice visuals, or null when no rule card references one. */
-        EncounterRuleDiceVisuals RuleDiceVisuals { get; }
+        /** The presenters of the table's rules, or null when no rule card references one. */
+        EncounterRulePresenters RulePresenters { get; }
         void SetDiceSelection(int mask);
         void HideRewardsAndEnding();
         void SetOpeningOpacity(float opacity);
         void ShowEnding();
         void RecordScore(ScoreBreakdown score);
-        /** Shows the table piece that repelled an interference attempt and returns how long its reaction lasts. */
-        float ShowProtection(DisturbanceBlockedEvent blocked);
         void FinishPresentation(Resolution resolution);
     }
 
-    /** Plays an accepted resolution's ordered events on the HUD, tray, host, and audio, then hands completion back to the view. */
+    /**
+     * Plays an accepted resolution's ordered events on the HUD, tray, host, and audio, then hands completion back to the
+     * view. For each event it waits the longest lead-in the rule presenters ask for, presents the core changes, then runs
+     * every rule presenter's presentation of the event side by side and waits for all of them.
+     */
     internal sealed class SpiritScorePlayback
     {
         private const float ScoreStepDuration = .52f;
-        private const float DisturbanceHold = .3f;
-        // A committed hand pauses before interference that precedes its scoring, so the poltergeist reads as interrupting it.
-        private const float PlayHandDisturbanceBeat = .25f;
+        // Seconds the host's gesture is assumed to last when the encounter has no host portrait.
+        private const float FallbackGestureDuration = 1.8f;
+        // Seconds the remaining-threshold counter takes to count down, and the pause after it.
+        private const float ThresholdCountDuration = .35f;
+        private const float ThresholdHold = .16f;
+        // Seconds a later stage's intro panel holds before play resumes.
+        private const float StageIntroHold = .9f;
+        // Seconds a later hand's cleared counters hold before its roll.
+        private const float HandStartHold = .16f;
         private readonly ISpiritScorePlaybackHost host;
         private readonly SpiritGameplayHud hud;
         private readonly SpiritDiceTray diceTray;
@@ -43,6 +54,7 @@ namespace Dice.Presentation
         private readonly SpiritActionModifierCue actionModifierCue;
         private readonly SpiritEncounterEndingView endingView;
         private IEnumerator activeRoll;
+        private ConcurrentRoutines activeRules;
 
         internal SpiritScorePlayback(ISpiritScorePlaybackHost host, SpiritGameplayHud hud, SpiritDiceTray diceTray,
             SpiritModifierHistoryTray modifierHistory, SpiritEncounterAudio encounterAudio,
@@ -297,8 +309,7 @@ namespace Dice.Presentation
             if (step.Charm != null)
                 actionModifierCue.Show(Charms, step.Charm, ScoreStepDuration + step.Hold, step.RerollCue, step.PlayCue);
             if (step.RuleCue)
-                actionModifierCue.ShowHost(host.RulePresentation != null ? host.RulePresentation.Icon : null,
-                    ModifierPhase.PlayHand, host.Host != null ? host.Host.GestureDuration : 1.8f);
+                actionModifierCue.ShowHost(step.Rule.Icon, ModifierPhase.PlayHand, GestureDuration);
             var highlights = new List<SpiritCounterHighlight>();
             if (step.HighlightsBaseScore) SpiritGameplayHud.AddCounterHighlight(highlights, hud.BaseScoreHighlight, Charms, step.Charm);
             if (step.HighlightsMultiplier) SpiritGameplayHud.AddCounterHighlight(highlights, hud.MultiplierHighlight, Charms, step.Charm);
@@ -311,6 +322,12 @@ namespace Dice.Presentation
                 ScoreStepDuration, highlights);
             yield return new WaitForSecondsRealtime(step.Hold);
         }
+
+        /** Seconds the host's gesture lasts, or the assumed length when the encounter has no host portrait. */
+        internal static float GestureDurationOf(SpiritHostPortrait hostPortrait)
+            => hostPortrait != null ? hostPortrait.GestureDuration : FallbackGestureDuration;
+
+        private float GestureDuration => GestureDurationOf(host.Host);
 
         private SpiritScoringStepBuilder Steps()
             => new SpiritScoringStepBuilder(host.Controls.Catalog, Charms, SpiritUi.GetTheme(hud.transform));

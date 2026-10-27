@@ -11,29 +11,30 @@ namespace Dice.Presentation
         [SerializeField] private Text description;
         [SerializeField] private RectTransform iconRoot;
         [SerializeField] private Image icon;
-        private readonly Dictionary<Graphic, Graphic> sigils = new Dictionary<Graphic, Graphic>();
+        private readonly Dictionary<SpiritHostPresentationAsset, Graphic> sigils = new Dictionary<SpiritHostPresentationAsset, Graphic>();
 
         public Text Title => title;
         public Text Description => description;
         public RectTransform IconRoot => iconRoot;
 
-        public void Render(string name, string effect, Sprite sprite, Graphic sigilPrefab)
+        /** Shows the rule's name, effect and icon; a rule without an icon shows the host's sigil, or no icon without a host. */
+        public void Render(string name, string effect, Sprite sprite, SpiritHostPresentationAsset host)
         {
             title.text = name;
             description.text = effect;
             icon.sprite = sprite;
             icon.gameObject.SetActive(sprite != null);
             foreach (var instance in sigils.Values) instance.gameObject.SetActive(false);
-            if (sprite == null && sigilPrefab != null)
+            if (sprite == null && host != null)
             {
-                if (!sigils.TryGetValue(sigilPrefab, out var sigil))
+                if (!sigils.TryGetValue(host, out var sigil))
                 {
-                    sigil = Instantiate(sigilPrefab, iconRoot, false);
-                    sigils.Add(sigilPrefab, sigil);
+                    sigil = host.CreateSigil("HostSigil", iconRoot);
+                    sigils.Add(host, sigil);
                 }
                 sigil.gameObject.SetActive(true);
             }
-            iconRoot.gameObject.SetActive(sprite != null || sigilPrefab != null);
+            iconRoot.gameObject.SetActive(sprite != null || host != null);
         }
     }
 }

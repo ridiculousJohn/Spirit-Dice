@@ -18,3 +18,5 @@ MonoBehaviour:
   availableText: First reroll free
   usedText: Favor used
   icon: {fileID: 0}
+  shownOnHud: 1
+  presenter: {fileID: 11400000, guid: 3171be8780d7459494be8910401ae821, type: 2}

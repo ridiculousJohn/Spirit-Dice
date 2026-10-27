@@ -1,25 +1,25 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using RecordedFlare = Dice.Tests.TestRulePresenterContext.RecordedFlare;
 
 namespace Dice.Tests
 {
     /**
-     * Rule-supplied dice visuals: the binding kind's states from events and snapshots, generic dispatch, and light flares.
-     * Mechanism tests use a test-created binding visual and per-die prefab.
+     * The binding rule's presenter: its dice states from events and snapshots, its presenters' creation and disposal, and
+     * light flares. Mechanism tests use a test-created binding presenter asset and per-die prefab.
      */
-    public sealed class RuleDiceVisualTests
+    public sealed class DieBindingPresenterTests
     {
         private const string BindingId = "rule.test.binding";
         private readonly List<Object> created = new List<Object>();
+        private readonly List<TestRulePresenterContext> contexts = new List<TestRulePresenterContext>();
 
         [TearDown]
         public void TearDown()
@@ -27,6 +27,8 @@ namespace Dice.Tests
             foreach (var value in created)
                 if (value != null) Object.DestroyImmediate(value);
             created.Clear();
+            foreach (var context in contexts) context.Dispose();
+            contexts.Clear();
         }
 
         [Test]
@@ -60,8 +62,8 @@ namespace Dice.Tests
             var visual = Instantiate(ShellPrefab(), null);
             var shell = (DieBindingShellVisual)visual;
             shell.MarkShell.enabled = shell.RootShell.enabled = true;
-            // Edit mode does not run Awake on instantiation; the visual's creation is simulated here.
-            typeof(DieBindingVisual).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(visual, null);
+            // Edit mode does not run Awake on instantiation; a visual's first advance renders its starting levels instead.
+            visual.Advance(0f);
             Assert.That(shell.MarkShell.enabled || shell.RootShell.enabled, Is.False, "A new visual shows nothing.");
             visual.AnimateMark(1f, .4f);
             Assert.That(visual.IsAnimating, Is.True);
@@ -103,11 +105,11 @@ namespace Dice.Tests
         {
             var fixture = new PresenterFixture(this, BindingAsset(), BindingId);
             var session = EncounterSession.CreateEncounter(Catalog(), TestContent.EncounterId, 11);
-            var reroll = session.Execute(new RerollDiceAction(1 << Bay(DiceValues.AllMask & ~session.Snapshot.MarkedMask)),
+            var reroll = session.Execute(new RerollDiceAction(1 << Bay(DiceValues.AllMask & ~session.Snapshot.Binding().MarkedMask)),
                 session.Snapshot.Revision);
             fixture.Presenter.Sync(reroll.Snapshot, false);
             for (int bay = 0; bay < DiceValues.Count; ++bay) Assert.That(fixture.Presenter[bay].IsAnimating, Is.False);
-            AssertLevels(fixture, reroll.Snapshot.MarkedMask, reroll.Snapshot.BoundMask, "A resumed state");
+            AssertLevels(fixture, reroll.Snapshot.Binding().MarkedMask, reroll.Snapshot.Binding().BoundMask, "A resumed state");
             fixture.Presenter.Sync(null, true);
             fixture.Settle();
             AssertLevels(fixture, 0, 0, "No snapshot");
@@ -117,26 +119,30 @@ namespace Dice.Tests
                 Assert.That(fixture.Presenter.Present(ruleEvent), Is.Null, "Another rule's events are not this card's.");
             Assert.That(fixture.Presenter.Present(other.InitialResolution.Events.OfType<HandStartedEvent>().Single()), Is.Null);
             Assert.That(fixture.Presenter.Present(other.InitialResolution.Events.OfType<DiceRolledEvent>().Single()), Is.Null);
-            Assert.That(fixture.Reactions, Is.Zero);
+            Assert.That(other.Snapshot.Binding().MarkedMask, Is.Not.Zero);
+            fixture.Presenter.Sync(other.Snapshot, false);
+            AssertLevels(fixture, 0, 0, "Another binding rule's dice");
+            Assert.That(fixture.Context.Count("react"), Is.Zero);
         }
 
         [Test]
-        public void OnlyRuleCardsWithDiceVisualsBuildAContextAndPresentersWhoseDisposalRemovesTheirDieVisuals()
+        public void OnlyRuleCardsWithPresentersBuildAContextAndPresentersWhoseDisposalRemovesTheirDieVisuals()
         {
+            var encounter = Catalog().GetEncounter(TestContent.EncounterId);
             var plain = new[] { Card("rule.test.plain", null), null, Card("rule.test.other", null) };
             bool built = false;
-            Assert.That(EncounterRuleDiceVisuals.Create(plain, () => { built = true; return null; }), Is.Null);
-            Assert.That(built, Is.False, "Cards without dice visuals build no context.");
+            Assert.That(EncounterRulePresenters.Create(plain, encounter, () => { built = true; return null; }), Is.Null);
+            Assert.That(built, Is.False, "Cards without presenters build no context.");
 
             var cards = new[] { Card("rule.test.plain", null), Card(BindingId, BindingAsset()) };
-            var context = new RuleDiceVisualContext(Dice(), null, null);
-            var visuals = EncounterRuleDiceVisuals.Create(cards, () => context);
+            var context = Context();
+            var presenters = EncounterRulePresenters.Create(cards, encounter, () => context);
             try
             {
-                Assert.That(visuals.Presenters.Single(), Is.InstanceOf<DieBindingVisualPresenter>());
+                Assert.That(presenters.Presenters.Single(), Is.InstanceOf<DieBindingVisualPresenter>());
                 foreach (var die in context.Dice) Assert.That(die.GetComponentsInChildren<DieBindingVisual>().Length, Is.EqualTo(1));
             }
-            finally { visuals.Dispose(); }
+            finally { presenters.Dispose(); }
             foreach (var die in context.Dice) Assert.That(die.GetComponentsInChildren<DieBindingVisual>(), Is.Empty);
         }
 
@@ -152,16 +158,16 @@ namespace Dice.Tests
             var bindFlare = asset.FlareLight >= 0 ? new[] { Flare(asset, "bind") } : Array.Empty<RecordedFlare>();
             var session = EncounterSession.CreateEncounter(Catalog(ruleId), TestContent.EncounterId, 7);
             var opening = session.InitialResolution;
-            int marked = Bay(session.Snapshot.MarkedMask);
+            int marked = Bay(session.Snapshot.Binding().MarkedMask);
             foreach (var ruleEvent in opening.Events)
             {
                 var routine = fixture.Presenter.Present(ruleEvent);
                 Assert.That(routine != null, Is.EqualTo(ruleEvent is DieMarkedEvent), name + ": " + ruleEvent.GetType().Name);
-                Run(routine);
+                TestRulePresenterContext.Run(routine);
             }
             fixture.Settle();
             AssertLevels(fixture, 1 << marked, 0, name + ": the opening roll's mark");
-            Assert.That(fixture.Reactions, Is.EqualTo(1), name);
+            Assert.That(fixture.Context.Count("react"), Is.EqualTo(1), name);
             Assert.That(fixture.Lights.Flares, Is.EqualTo(markFlare), name + ": a mark plays the asset's mark flare.");
 
             var reroll = session.Execute(new RerollDiceAction(DiceValues.AllMask & ~(1 << marked)), session.Snapshot.Revision);
@@ -174,11 +180,11 @@ namespace Dice.Tests
             Assert.That(die.GrowthTarget, Is.EqualTo(1f), name + ": the roots grow when the die binds.");
             Assert.That(die.MarkTarget, Is.Zero, name + ": the mark gives way to the roots.");
             Assert.That(fixture.Lights.Flares, Is.EqualTo(bindFlare), name + ": a binding plays the asset's binding flare.");
-            Run(routineBound);
-            Run(fixture.Presenter.Present(reroll.Events.OfType<DieMarkedEvent>().Single()));
+            TestRulePresenterContext.Run(routineBound);
+            TestRulePresenterContext.Run(fixture.Presenter.Present(reroll.Events.OfType<DieMarkedEvent>().Single()));
             fixture.Settle();
-            AssertLevels(fixture, reroll.Snapshot.MarkedMask, reroll.Snapshot.BoundMask, name + ": after the reroll");
-            Assert.That(fixture.Reactions, Is.EqualTo(3), name);
+            AssertLevels(fixture, reroll.Snapshot.Binding().MarkedMask, reroll.Snapshot.Binding().BoundMask, name + ": after the reroll");
+            Assert.That(fixture.Context.Count("react"), Is.EqualTo(3), name);
 
             var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
             Assert.That(played.Accepted, Is.True);
@@ -195,11 +201,11 @@ namespace Dice.Tests
                     AssertLevels(fixture, 0, 0, name + ": released after scoring");
                     released = true;
                 }
-                Run(routine);
+                TestRulePresenterContext.Run(routine);
             }
             Assert.That(released, Is.True, name);
             fixture.Settle();
-            AssertLevels(fixture, played.Snapshot.MarkedMask, 0, name + ": the next hand's opening mark");
+            AssertLevels(fixture, played.Snapshot.Binding().MarkedMask, 0, name + ": the next hand's opening mark");
             fixture.Presenter.Dispose();
         }
 
@@ -225,18 +231,6 @@ namespace Dice.Tests
             return new RecordedFlare(asset.FlareLight, Value("FlarePeak"), Value("FlareRise"), Value("FlareHold"), Value("FlareFall"));
         }
 
-        /** Runs a playback routine to its end, skipping its realtime waits. */
-        private static void Run(IEnumerator routine)
-        {
-            if (routine == null) return;
-            int steps = 0;
-            while (routine.MoveNext())
-            {
-                if (routine.Current is IEnumerator nested && !(nested is CustomYieldInstruction)) Run(nested);
-                Assert.That(++steps, Is.LessThan(100));
-            }
-        }
-
         private static int Bay(int mask)
         {
             for (int bay = 0; bay < DiceValues.Count; ++bay)
@@ -251,17 +245,11 @@ namespace Dice.Tests
             return new MechanicalCatalog("test.binding.visuals", TestContent.Hands(), new[] { encounter });
         }
 
-        /** Five stand-in dice. */
-        private Transform[] Dice()
+        private TestRulePresenterContext Context()
         {
-            var dice = new Transform[DiceValues.Count];
-            for (int i = 0; i < dice.Length; ++i)
-            {
-                var die = new GameObject("Die " + i);
-                created.Add(die);
-                dice[i] = die.transform;
-            }
-            return dice;
+            var context = TestRulePresenterContext.Create();
+            contexts.Add(context);
+            return context;
         }
 
         /** A test shell visual with mark and root shells, standing in for an authored per-die prefab. */
@@ -281,7 +269,7 @@ namespace Dice.Tests
             return shell;
         }
 
-        /** A test binding visual over the test shell prefab, with distinct mark and binding flares on light 1. */
+        /** A test binding presenter asset over the test shell prefab, with distinct mark and binding flares on light 1. */
         private DieBindingVisualAsset BindingAsset()
         {
             var asset = ScriptableObject.CreateInstance<DieBindingVisualAsset>();
@@ -302,13 +290,13 @@ namespace Dice.Tests
             return asset;
         }
 
-        private EncounterRulePresentationAsset Card(string ruleId, RuleDiceVisualAsset diceVisual)
+        private EncounterRulePresentationAsset Card(string ruleId, RulePresenterAsset presenter)
         {
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(card);
             using var serialized = new SerializedObject(card);
             serialized.FindProperty("ruleId").stringValue = ruleId;
-            serialized.FindProperty("diceVisual").objectReferenceValue = diceVisual;
+            serialized.FindProperty("presenter").objectReferenceValue = presenter;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return card;
         }
@@ -320,49 +308,20 @@ namespace Dice.Tests
             return instance;
         }
 
-        private readonly struct RecordedFlare : IEquatable<RecordedFlare>
-        {
-            public readonly int Index;
-            public readonly float Peak, Rise, Hold, Fall;
-
-            public RecordedFlare(int index, float peak, float rise, float hold, float fall)
-            {
-                Index = index;
-                Peak = peak;
-                Rise = rise;
-                Hold = hold;
-                Fall = fall;
-            }
-
-            public bool Equals(RecordedFlare other)
-                => Index == other.Index && Peak == other.Peak && Rise == other.Rise && Hold == other.Hold && Fall == other.Fall;
-
-            public override bool Equals(object obj) => obj is RecordedFlare other && Equals(other);
-            public override int GetHashCode() => HashCode.Combine(Index, Peak, Rise, Hold, Fall);
-            public override string ToString() => "light " + Index + " peak " + Peak + " rise " + Rise + " hold " + Hold + " fall " + Fall;
-        }
-
-        private sealed class RecordingLights : IRuleSceneLights
-        {
-            public readonly List<RecordedFlare> Flares = new List<RecordedFlare>();
-            public int LightCount => SceneLightingAsset.MaximumLights;
-            public void Flare(int index, float peak, float rise, float hold, float fall)
-                => Flares.Add(new RecordedFlare(index, peak, rise, hold, fall));
-        }
-
-        /** Five stand-in dice with a binding visual's presenter created under them. */
+        /** Five stand-in dice with a binding presenter created under them for the session catalog's binding rule. */
         private sealed class PresenterFixture
         {
-            public readonly RecordingLights Lights = new RecordingLights();
-            public readonly RuleDiceVisualContext Context;
+            public readonly TestRulePresenterContext Context;
             public readonly DieBindingVisualPresenter Presenter;
-            public int Reactions;
 
-            public PresenterFixture(RuleDiceVisualTests owner, DieBindingVisualAsset asset, string ruleId)
+            public PresenterFixture(DieBindingPresenterTests owner, DieBindingVisualAsset asset, string ruleId)
             {
-                Context = new RuleDiceVisualContext(owner.Dice(), () => ++Reactions, Lights);
-                Presenter = (DieBindingVisualPresenter)asset.Create(ruleId, Context);
+                Context = owner.Context();
+                var rule = Catalog(ruleId).GetEncounter(TestContent.EncounterId).Rules.Single();
+                Presenter = (DieBindingVisualPresenter)asset.Create(owner.Card(ruleId, asset), rule, Context);
             }
+
+            public TestRulePresenterContext.RecordingLights Lights => Context.RecordedLights;
 
             /** Lets every running animation finish. */
             public void Settle()

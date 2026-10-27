@@ -3,12 +3,16 @@ using UnityEngine;
 
 namespace Dice.Presentation
 {
-    public enum SpiritAudioCue { Roll, Spirit, Score, StageClear, Disturbance, DisturbanceBlocked }
+    public enum SpiritAudioCue { Spirit, Score, StageClear }
 
     /** Owns cosmetic audio sources and suspension without altering global audio or game randomness. */
     [DisallowMultipleComponent]
     public sealed class SpiritEncounterAudio : MonoBehaviour, IAmbientSoundTarget
     {
+        // Seconds a roll lasts when the theme has no recording for its dice count.
+        private const float UnrecordedRollDuration = .4f;
+        // Seconds before a roll's dice launch when the encounter has no audio theme.
+        private const float UnthemedRollLaunchTime = .15f;
         [SerializeField] private SpiritAudioTheme theme;
         [SerializeField] private bool muted;
         [SerializeField] private AudioSource ambienceSource;
@@ -25,8 +29,6 @@ namespace Dice.Presentation
         private int nextCueSource;
         private int nextPropSource;
         private AudioClip lastSpiritClip;
-        private AudioClip lastDisturbanceClip;
-        private AudioClip lastBlockedClip;
         private AudioClip lastAmbientOneShotClip;
 
         public SpiritAudioTheme Theme => theme;
@@ -36,13 +38,12 @@ namespace Dice.Presentation
             StopPlayback();
             theme = selectedTheme;
             lastSpiritClip = null;
-            lastDisturbanceClip = null;
-            lastBlockedClip = null;
             lastAmbientOneShotClip = null;
             RefreshPlayback();
         }
 
-        public void PlayJourneyCue(AudioClip clip) => PlayClip(clip);
+        /** Plays an authored clip, such as a journey beat's or a rule presenter's, on the cue voices at the effects volume. */
+        public void PlayCue(AudioClip clip) => PlayClip(clip);
         public bool Muted
         {
             get => muted;
@@ -84,10 +85,7 @@ namespace Dice.Presentation
                     throw new InvalidOperationException("Encounter audio prop sources must be authored apart from the cue sources.");
         }
 
-        /** Returns the visual roll duration even when audio is muted or suspended. */
-        public float PlayRoll(int diceCount)
-            => BeginRoll(diceCount).Duration;
-
+        /** Times a roll of the dice count and schedules its recording; the timing holds even when audio is muted or suspended. */
         public SpiritRollTiming BeginRoll(int diceCount)
         {
             Initialize();
@@ -96,8 +94,8 @@ namespace Dice.Presentation
             SpiritRollContactTrack track = theme != null && theme.rollContactTracks != null
                 && diceCount > 0 && diceCount <= theme.rollContactTracks.Length
                 ? theme.rollContactTracks[diceCount - 1] : null;
-            var timing = new SpiritRollTiming(clip != null ? clip.length : .4f, track,
-                theme != null ? theme.rollLaunchTime : .15f, Time.unscaledTimeAsDouble, AudioSettings.dspTime);
+            var timing = new SpiritRollTiming(clip != null ? clip.length : UnrecordedRollDuration, track,
+                theme != null ? theme.rollLaunchTime : UnthemedRollLaunchTime, Time.unscaledTimeAsDouble, AudioSettings.dspTime);
             if (CanPlay && clip != null)
             {
                 rollSource.Stop();
@@ -116,14 +114,9 @@ namespace Dice.Presentation
             AudioClip clip;
             switch (cue)
             {
-                case SpiritAudioCue.Roll:
-                    PlayRoll(5);
-                    return;
                 case SpiritAudioCue.Spirit: clip = ChooseSpiritClip(); break;
                 case SpiritAudioCue.Score: clip = theme.score; break;
                 case SpiritAudioCue.StageClear: clip = theme.stageClear; break;
-                case SpiritAudioCue.Disturbance: clip = lastDisturbanceClip = ChooseClip(theme.disturbanceClips, lastDisturbanceClip, null, cosmeticRandom); break;
-                case SpiritAudioCue.DisturbanceBlocked: clip = lastBlockedClip = ChooseClip(theme.disturbanceBlockedClips, lastBlockedClip, null, cosmeticRandom); break;
                 default: return;
             }
             PlayClip(clip);

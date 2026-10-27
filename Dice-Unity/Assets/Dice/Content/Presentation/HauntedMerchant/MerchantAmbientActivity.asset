@@ -149,8 +149,11 @@ MonoBehaviour:
     DefeatClips:
     - {fileID: 8300000, guid: a4bd6e7ccdf24af8bddc0f0722b5eb10, type: 3}
     DefeatVolume: 0.6
-  disturbanceStrength: 1.6
+  joltStrength: 1.6
   defeatStrength: 2.5
+  wonEnding: 0
+  lostEnding: 1
+  abandonedEnding: 0
   lightRecovery: 1
   settleTime: 0.35
   burstClips:

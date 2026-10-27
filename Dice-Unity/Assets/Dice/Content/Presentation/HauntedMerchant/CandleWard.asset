@@ -19,3 +19,5 @@ MonoBehaviour:
   usedText: Wards the candle's bay
   icon: {fileID: 21300000, guid: 86836402051f4e9f9c7ee642545fa8c6, type: 3}
   activationPhase: 1
+  shownOnHud: 0
+  presenter: {fileID: 11400000, guid: 90ef40307cbf447fa8496e88065cf71d, type: 2}

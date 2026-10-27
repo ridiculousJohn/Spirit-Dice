@@ -1,33 +1,41 @@
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace Dice.Tests
 {
-    /** The gameplay HUD's encounter rule badge and the rule wording it shows, driven by synthetic rule encounters. */
+    /**
+     * The gameplay HUD's encounter rule badge, the table card it shows and the rule wording, driven by synthetic rule
+     * encounters on a synthetic HUD holding only the two rule badges and the action buttons they sit beside.
+     */
     public sealed class EncounterRuleBadgeTests
     {
         private const string EncounterId = "encounter.rule-badge";
         private readonly List<Object> created = new List<Object>();
-        private Scene preview;
+        private SyntheticUi ui;
         private SpiritGameplayHud hud;
 
         [SetUp]
         public void SetUp()
         {
-            preview = EditorSceneManager.NewPreviewScene();
-            var prefab = AssetDatabase.LoadAssetAtPath<SpiritGameplayHud>("Assets/Dice/Content/Presentation/UI/SpiritGameplayHud.prefab");
-            Assert.That(prefab, Is.Not.Null);
-            hud = Object.Instantiate(prefab);
-            SceneManager.MoveGameObjectToScene(hud.gameObject, preview);
+            ui = new SyntheticUi();
+            hud = ui.Add<SpiritGameplayHud>(ui.Root, "Gameplay HUD");
+            foreach (string action in new[] { "reroll", "play" })
+            {
+                var badge = ui.Add<CanvasGroup>(hud.transform, action + " rule badge");
+                SyntheticUi.Set(hud, action + "EncounterRuleGroup", badge);
+                SyntheticUi.Set(hud, action + "EncounterRuleLabel", ui.Add<Text>(badge.transform, "Label"));
+                SyntheticUi.Set(hud, action + "EncounterRuleIcon", ui.Add<Image>(badge.transform, "Icon"));
+            }
+            SyntheticUi.Set(hud, "<RerollButton>k__BackingField", ActionButton("Reroll"));
+            SyntheticUi.Set(hud, "<PlayButton>k__BackingField", ActionButton("Play"));
         }
 
         [TearDown]
@@ -36,7 +44,14 @@ namespace Dice.Tests
             foreach (var item in created)
                 if (item != null) Object.DestroyImmediate(item);
             created.Clear();
-            if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
+            ui.Dispose();
+        }
+
+        private SpiritUiButtonVisual ActionButton(string name)
+        {
+            var button = ui.Add<SpiritUiButtonVisual>(hud.transform, name);
+            button.targetGraphic = button.gameObject.AddComponent<Image>();
+            return button;
         }
 
         /**
@@ -108,21 +123,43 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks that a rule's wording names the encounter's current favored face and that wording of a rule without a
-         * favored face is kept as authored. Fails if the face is not named or is substituted for a rule that has none.
+         * Checks that a table's HUD card is the card flagged as shown on the HUD wherever it sits among the table's cards,
+         * and that a table flagging none has no HUD card. Fails if an unflagged card is shown or the flagged card is not.
          */
         [Test]
-        public void RuleWordingNamesTheCurrentFavoredFace()
+        public void TheTableShowsItsFlaggedCardOnTheHud()
         {
-            var favored = Session(new CyclingFavoredFaceMultiplierRuleDefinition()).Snapshot.EncounterRules.Single();
-            Assert.That(favored.FavoredFace, Is.GreaterThan(0));
-            Assert.That(Presentation(favored.Id, ModifierPhase.PlayHand, "Favored {face}", "Favored {face}").TextFor(favored),
-                Is.EqualTo("Favored " + favored.FavoredFace.ToString(CultureInfo.InvariantCulture)));
+            var unflagged = Presentation("rule.unflagged", ModifierPhase.PlayerReroll, "unflagged", "unflagged", shownOnHud: false);
+            var flagged = Presentation("rule.flagged", ModifierPhase.PlayHand, "flagged", "flagged", shownOnHud: true);
+            Assert.That(Table("table.flagged", unflagged, flagged).HudRuleCard, Is.SameAs(flagged));
+            Assert.That(Table("table.unflagged", unflagged).HudRuleCard, Is.Null);
+        }
 
-            var plain = Session(new FirstRerollFreeRuleDefinition()).Snapshot.EncounterRules.Single();
-            Assert.That(plain.FavoredFace, Is.Zero);
-            Assert.That(Presentation(plain.Id, ModifierPhase.PlayerReroll, "Favored {face}", "Favored {face}").TextFor(plain),
-                Is.EqualTo("Favored {face}"));
+        /**
+         * Checks that a table flagging more than one card as shown on the HUD fails with a message naming the table. Fails if
+         * such a table yields a card or its failure does not name it.
+         */
+        [Test]
+        public void ATableFlaggingMoreThanOneHudCardFails()
+        {
+            var table = Table("table.two-flagged",
+                Presentation("rule.first", ModifierPhase.PlayerReroll, "first", "first", shownOnHud: true),
+                Presentation("rule.second", ModifierPhase.PlayHand, "second", "second", shownOnHud: true));
+            var failure = Assert.Throws<InvalidOperationException>(() => _ = table.HudRuleCard);
+            Assert.That(failure.Message, Does.Contain("table.two-flagged"));
+        }
+
+        /**
+         * Checks that rule wording fills each placeholder the rule's snapshot supplies, for its availability, and keeps any
+         * other placeholder as authored. Fails if a supplied value is not filled or an unsupplied placeholder is replaced.
+         */
+        [Test]
+        public void RuleWordingFillsTheValuesTheRuleSnapshotSupplies()
+        {
+            var presentation = Presentation("rule.favored", ModifierPhase.PlayHand, "Favored {face} of {count}", "Spent {face}");
+            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot("rule.favored", true, 4)), Is.EqualTo("Favored 4 of {count}"));
+            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot("rule.favored", false, 6)), Is.EqualTo("Spent 6"));
+            Assert.That(presentation.TextFor(new EncounterRuleSnapshot("rule.favored", true)), Is.EqualTo("Favored {face} of {count}"));
         }
 
         /** A one-stage test encounter with the given rule. */
@@ -135,24 +172,34 @@ namespace Dice.Tests
         }
 
         private EncounterRulePresentationAsset Presentation(string ruleId, ModifierPhase phase, string available, string used,
-            Sprite icon = null)
+            Sprite icon = null, bool shownOnHud = false)
         {
             var asset = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(asset);
-            Set(asset, "ruleId", ruleId);
-            Set(asset, "displayName", ruleId);
-            Set(asset, "availableText", available);
-            Set(asset, "usedText", used);
-            Set(asset, "icon", icon);
-            Set(asset, "activationPhase", phase);
+            asset.name = ruleId;
+            using var serialized = new SerializedObject(asset);
+            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("displayName").stringValue = ruleId;
+            serialized.FindProperty("availableText").stringValue = available;
+            serialized.FindProperty("usedText").stringValue = used;
+            serialized.FindProperty("icon").objectReferenceValue = icon;
+            serialized.FindProperty("activationPhase").intValue = (int)phase;
+            serialized.FindProperty("shownOnHud").boolValue = shownOnHud;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }
 
-        private static void Set(object target, string name, object value)
+        private EncounterTablePresentationAsset Table(string name, params EncounterRulePresentationAsset[] cards)
         {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
+            var table = ScriptableObject.CreateInstance<EncounterTablePresentationAsset>();
+            created.Add(table);
+            table.name = name;
+            using var serialized = new SerializedObject(table);
+            var list = serialized.FindProperty("rulePresentations");
+            list.arraySize = cards.Length;
+            for (int i = 0; i < cards.Length; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = cards[i];
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return table;
         }
     }
 }

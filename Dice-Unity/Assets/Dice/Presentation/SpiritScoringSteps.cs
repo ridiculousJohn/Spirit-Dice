@@ -40,6 +40,8 @@ namespace Dice.Presentation
         public bool PlayCue { get; internal set; }
         /** Whether the encounter rule's host cue marks the play button. */
         public bool RuleCue { get; internal set; }
+        /** The card of the rule whose bonus the step presents; null for a step that presents no rule bonus. */
+        public EncounterRulePresentationAsset Rule { get; internal set; }
         /** Whether the host reacts as the step begins. */
         public bool HostReacts { get; internal set; }
         public bool HighlightsBaseScore { get; internal set; }
@@ -75,14 +77,15 @@ namespace Dice.Presentation
 
         /**
          * The steps of a scored hand, starting from the counters' banked base score and multiplier. Events are the
-         * resolution's events, searched for the resource changes of each charm in the hand's stage and hand index; rule is
-         * the encounter rule presentation, or null when the encounter shows none.
+         * resolution's events, searched for the resource changes of each charm and the activation of each rule bonus in the
+         * hand's stage and hand index; rules are the table's rule cards, which name each bonus's rule.
          */
         public IReadOnlyList<SpiritScoringStep> BuildHand(ScoreBreakdown score, DiceValues dice, long startingBaseScore,
-            long startingMultiplier, EncounterRulePresentationAsset rule, IReadOnlyList<RuleEvent> events, int stageIndex,
-            int handIndex)
+            long startingMultiplier, IReadOnlyList<EncounterRulePresentationAsset> rules, IReadOnlyList<RuleEvent> events,
+            int stageIndex, int handIndex)
         {
             if (score == null) throw new ArgumentNullException(nameof(score));
+            if (rules == null) throw new ArgumentNullException(nameof(rules));
             if (events == null) throw new ArgumentNullException(nameof(events));
             var steps = new List<SpiritScoringStep>();
             long baseScore = checked(startingBaseScore + score.DiceSum);
@@ -134,22 +137,27 @@ namespace Dice.Presentation
                 steps.Add(step);
             }
 
-            if (score.EncounterRuleMultiplier != 0)
+            // Each rule bonus is presented with the card of the rule that granted it.
+            foreach (var ruleEvent in events)
             {
-                multiplier = checked(multiplier + score.EncounterRuleMultiplier);
+                if (!(ruleEvent is EncounterRuleActivatedEvent activated) || activated.MultiplierBonus == 0 ||
+                    activated.StageIndex != stageIndex || activated.HandIndex != handIndex) continue;
+                var rule = EncounterRulePresentationAsset.For(rules, activated.RuleId) ?? throw new InvalidOperationException(
+                    "Rule " + activated.RuleId + " grants a scored-hand bonus, but the table has no card presenting it.");
+                multiplier = checked(multiplier + activated.MultiplierBonus);
                 steps.Add(new SpiritScoringStep
                 {
                     BaseScore = baseScore,
                     Multiplier = multiplier,
                     StepLabel = "STEP 3 OF 4 - ENCOUNTER RULE",
                     CategoryText = "ENCOUNTER RULE",
-                    SelectionText = (rule != null ? rule.DisplayName : "ENCOUNTER RULE") +
-                        "\n+" + DiagnosticText.Number(score.EncounterRuleMultiplier) + " multiplier",
+                    SelectionText = rule.DisplayName + "\n+" + DiagnosticText.Number(activated.MultiplierBonus) + " multiplier",
                     SelectionColor = theme.amber,
                     ResolvingIndex = -1,
                     // The rule bonus is shown beside the last charm's emblem.
                     Emblem = emblem,
                     RuleCue = true,
+                    Rule = rule,
                     HostReacts = true,
                     Hold = ScoreStepHold
                 });

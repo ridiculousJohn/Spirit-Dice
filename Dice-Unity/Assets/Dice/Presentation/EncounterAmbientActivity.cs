@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
 using UnityEngine;
 
 namespace Dice.Presentation
@@ -16,14 +17,15 @@ namespace Dice.Presentation
 
     /**
      * Runs an encounter's ambient activity on its own clock and presentation random, never the engine's streams.
-     * Lights and props idle on their schedules from the first hand; disturbances add a stutter, a burst sound and a jolt;
-     * victory settles everything and defeat knocks one prop, after which the activity stops at rest.
+     * Lights and props idle on their schedules from the first hand; a jolt adds a stutter, a burst sound and a prop strike;
+     * the encounter's end settles everything or knocks one prop, as the asset authors for its outcome, after which the
+     * activity stops at rest.
      * Struck props play their authored sound for the kind of jolt through the optional sound target.
      */
     public sealed class EncounterAmbientActivity
     {
         private enum State { Stopped, Running, Ending }
-        private enum Jolt { Idle, Hit, Defeat }
+        private enum JoltKind { Idle, Hit, Defeat }
 
         private readonly EncounterAmbientActivityAsset asset;
         private readonly IAmbientLightingTarget lighting;
@@ -69,7 +71,7 @@ namespace Dice.Presentation
             }
         }
 
-        /** True from the first hand until the encounter ends; idle events and disturbances act only then. */
+        /** True from the first hand until the encounter ends; idle events and jolts act only then. */
         public bool IsRunning => state == State.Running;
 
         /** True when every light is at full intensity and every prop rests at its base pose. */
@@ -129,14 +131,14 @@ namespace Dice.Presentation
                     struck = true;
                 }
                 // Idle jolts that fall due together in one long step sound once.
-                if (struck) PlayJolt(prop, Jolt.Idle);
+                if (struck) PlayJolt(prop, JoltKind.Idle);
                 prop.Motion.Apply(time);
             }
             if (state == State.Ending && IsAtRest) state = State.Stopped;
         }
 
-        /** A poltergeist disturbance: lights not already out stutter briefly, the burst sounds once and one random prop jolts. */
-        public void Disturb()
+        /** A jolt to the room: lights not already out stutter briefly, the burst sounds once and one random prop is struck. */
+        public void Jolt()
         {
             if (state != State.Running) return;
             foreach (var light in lights)
@@ -148,11 +150,21 @@ namespace Dice.Presentation
             }
             if (props.Length == 0) return;
             var prop = props[random.Next(props.Length)];
-            prop.Motion.Strike(time, prop.Actor.Strength * asset.DisturbanceStrength);
-            PlayJolt(prop, Jolt.Hit);
+            prop.Motion.Strike(time, prop.Actor.Strength * asset.JoltStrength);
+            PlayJolt(prop, JoltKind.Hit);
         }
 
-        /** Victory: pending outages cancel, lights return steadily to full, props damp to rest and idle events stop. */
+        /** Ends the activity as the asset authors for the encounter's outcome. */
+        public void End(EncounterOutcome outcome)
+        {
+            switch (asset.EndingFor(outcome))
+            {
+                case AmbientEnding.Knock: Knock(); break;
+                default: Settle(); break;
+            }
+        }
+
+        /** Pending outages cancel, lights return steadily to full, props damp to rest and idle events stop. */
         public void Settle()
         {
             if (state != State.Running) return;
@@ -161,7 +173,7 @@ namespace Dice.Presentation
             foreach (var prop in props) prop.Motion.Settle(time, asset.SettleTime);
         }
 
-        /** Defeat: one random prop knocks hard, lights return steadily to full, and idle events stop. */
+        /** One random prop knocks hard, lights return steadily to full, and idle events stop. */
         public void Knock()
         {
             if (state != State.Running) return;
@@ -170,7 +182,7 @@ namespace Dice.Presentation
             if (props.Length == 0) return;
             var prop = props[random.Next(props.Length)];
             prop.Motion.Strike(time, prop.Actor.Strength * asset.DefeatStrength);
-            PlayJolt(prop, Jolt.Defeat);
+            PlayJolt(prop, JoltKind.Defeat);
         }
 
         /** Ends the activity at once: every light at exactly full intensity and every prop at its base pose. */
@@ -190,7 +202,7 @@ namespace Dice.Presentation
         }
 
         /** Plays one of the prop's clips for the kind of jolt, other than the one it played last for that kind. */
-        private void PlayJolt(PropActorState prop, Jolt jolt)
+        private void PlayJolt(PropActorState prop, JoltKind jolt)
         {
             if (sound == null) return;
             var actor = prop.Actor;
@@ -198,11 +210,11 @@ namespace Dice.Presentation
             float volume;
             switch (jolt)
             {
-                case Jolt.Idle:
+                case JoltKind.Idle:
                     clip = prop.LastIdleClip = SpiritEncounterAudio.ChooseClip(actor.IdleClips, prop.LastIdleClip, null, soundRandom);
                     volume = actor.IdleVolume;
                     break;
-                case Jolt.Hit:
+                case JoltKind.Hit:
                     clip = prop.LastHitClip = SpiritEncounterAudio.ChooseClip(actor.HitClips, prop.LastHitClip, null, soundRandom);
                     volume = actor.HitVolume;
                     break;

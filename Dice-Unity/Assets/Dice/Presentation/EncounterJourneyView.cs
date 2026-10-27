@@ -189,7 +189,7 @@ namespace Dice.Presentation
             rightPanel.gameObject.SetActive(parting);
             leftPanel.texture = rightPanel.texture = previous;
             leftPanel.material = rightPanel.material = previousSceneLightingMaterial?.Material;
-            if (beat.AudioCue != null) audio?.PlayJourneyCue(beat.AudioCue);
+            if (beat.AudioCue != null) audio?.PlayCue(beat.AudioCue);
             StartCoroutine(AnimateBeat(journey, index, parting));
         }
 
@@ -226,7 +226,7 @@ namespace Dice.Presentation
                     if (index == invitationRules.Count)
                         invitationRules.Add(Instantiate(invitationRulePrefab, invitationRulesRoot, false));
                     invitationRules[index].Render(rule.DisplayName, rule.Description, rule.Icon,
-                        table.HostPresentation != null ? table.HostPresentation.SigilPrefab : null);
+                        table.HostPresentation);
                 }
             }
             bool showRules = invitationRuleCount > 0;

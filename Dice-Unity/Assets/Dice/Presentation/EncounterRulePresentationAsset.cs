@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using Dice.Engine;
@@ -14,9 +16,12 @@ namespace Dice.Presentation
         [SerializeField] private string availableText;
         [SerializeField] private string usedText;
         [SerializeField] private Sprite icon;
+        [Tooltip("The action the rule acts on: its HUD badge sits beside that action's button and its activation cue marks it.")]
         [SerializeField] private ModifierPhase activationPhase = ModifierPhase.PlayerReroll;
-        [Tooltip("Optional visuals the rule shows on the tray's dice, such as marked and bound dice; empty for none.")]
-        [SerializeField] private RuleDiceVisualAsset diceVisual;
+        [Tooltip("Whether the gameplay HUD shows the rule's badge beside the button of its activation phase.")]
+        [SerializeField] private bool shownOnHud;
+        [Tooltip("Optional presentation the rule brings to playback, such as its activation, marked and bound dice or a disturbance; empty for none.")]
+        [SerializeField] private RulePresenterAsset presenter;
 
         public string RuleId => ruleId;
         public string DisplayName => displayName;
@@ -25,7 +30,8 @@ namespace Dice.Presentation
         public string UsedText => usedText;
         public Sprite Icon => icon;
         public ModifierPhase ActivationPhase => activationPhase;
-        public RuleDiceVisualAsset DiceVisual => diceVisual;
+        public bool ShownOnHud => shownOnHud;
+        public RulePresenterAsset Presenter => presenter;
 
         /** The card text for the rule's availability, with each {name} the rule's snapshot supplies filled in. */
         public string TextFor(EncounterRuleSnapshot rule)
@@ -35,6 +41,15 @@ namespace Dice.Presentation
             foreach (var value in rule.TextValues)
                 text = text.Replace("{" + value.Key + "}", value.Value.ToString(CultureInfo.InvariantCulture));
             return text;
+        }
+
+        /** The card among the cards that presents the rule, or null when none does. */
+        public static EncounterRulePresentationAsset For(IReadOnlyList<EncounterRulePresentationAsset> cards, string ruleId)
+        {
+            if (cards == null) throw new ArgumentNullException(nameof(cards));
+            foreach (var card in cards)
+                if (card != null && string.Equals(card.ruleId, ruleId, StringComparison.Ordinal)) return card;
+            return null;
         }
     }
 }

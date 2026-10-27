@@ -19,3 +19,4 @@ MonoBehaviour:
   availableText: "Face {face}: +2 per match"
   usedText: "Face {face}: +2 per match"
   icon: {fileID: 0}
+  shownOnHud: 1

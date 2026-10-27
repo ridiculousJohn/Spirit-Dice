@@ -19,3 +19,5 @@ MonoBehaviour:
   usedText: May disturb a die
   icon: {fileID: 21300000, guid: 8fc7336f87b64ab9baac50134aa1677c, type: 3}
   activationPhase: 2
+  shownOnHud: 1
+  presenter: {fileID: 11400000, guid: 6ece80580dae4c9bb27d300c89b49976, type: 2}

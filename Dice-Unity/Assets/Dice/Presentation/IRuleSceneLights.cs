@@ -1,6 +1,6 @@
 namespace Dice.Presentation
 {
-    /** Scene lights a rule's dice visuals raise above their resting level for a moment, such as a flare for a reaction. */
+    /** Scene lights a rule presenter raises above their resting level for a moment, such as a flare for a reaction. */
     public interface IRuleSceneLights
     {
         int LightCount { get; }

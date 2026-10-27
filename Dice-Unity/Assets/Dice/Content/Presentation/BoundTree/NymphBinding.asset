@@ -19,4 +19,5 @@ MonoBehaviour:
   usedText: Binds a marked die
   icon: {fileID: 0}
   activationPhase: 1
-  diceVisual: {fileID: 11400000, guid: 3bb68398e91df9f4f92cf40711707f39, type: 2}
+  shownOnHud: 1
+  presenter: {fileID: 11400000, guid: 3bb68398e91df9f4f92cf40711707f39, type: 2}

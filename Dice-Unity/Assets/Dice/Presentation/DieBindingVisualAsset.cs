@@ -6,17 +6,17 @@ using UnityEngine;
 namespace Dice.Presentation
 {
     /**
-     * The binding rule's dice visuals: a faint mark on the die the spirit has marked, and roots that grow around a die when
+     * The binding rule's presenter: a faint mark on the die the spirit has marked, and roots that grow around a die when
      * it binds and withdraw when the hand's bindings release. The per-die prefab renders the two levels; this asset times
      * them and the spirit's reaction and flare.
      */
-    [CreateAssetMenu(menuName = "Dice/Presentation/Rule Dice Visual/Die Binding")]
-    public sealed class DieBindingVisualAsset : RuleDiceVisualAsset
+    [CreateAssetMenu(menuName = "Dice/Presentation/Rule Presenter/Die Binding")]
+    public sealed class DieBindingVisualAsset : RulePresenterAsset<DieBindingRuleDefinition>
     {
         [Tooltip("Per-die visual created once under each of the tray's five dice.")]
         [SerializeField] private DieBindingVisual diePrefab;
         [Tooltip("Scene light raised for the spirit's reactions, or -1 for none.")]
-        [SerializeField, Min(-1)] private int flareLight = 1;
+        [SerializeField, Min(-1)] private int flareLight = -1;
         [Header("Mark")]
         [Tooltip("Seconds the mark takes to fade in; playback waits this long after a die is marked.")]
         [SerializeField, Min(0)] private float markFadeDuration = .45f;
@@ -46,24 +46,22 @@ namespace Dice.Presentation
         public float MarkYieldDuration => markYieldDuration;
         public float ReleaseDuration => releaseDuration;
 
-        public override RuleDiceVisualPresenter Create(string ruleId, RuleDiceVisualContext context)
+        protected override RulePresenter Create(DieBindingRuleDefinition rule, RulePresenterContext context)
         {
-            if (string.IsNullOrEmpty(ruleId)) throw new ArgumentException("Binding visuals require the rule's id.", nameof(ruleId));
-            if (context == null) throw new ArgumentNullException(nameof(context));
             if (diePrefab == null) throw new InvalidOperationException("Binding visuals require a per-die prefab.");
             if (flareLight >= 0 && context.Lights != null && flareLight >= context.Lights.LightCount)
                 throw new InvalidOperationException("The binding flare requires a scene light.");
-            return new DieBindingVisualPresenter(this, ruleId, context);
+            return new DieBindingVisualPresenter(this, rule.Id, context);
         }
 
-        internal void FlareMark(IRuleSceneLights lights)
-        {
-            if (flareLight >= 0 && lights != null) lights.Flare(flareLight, markFlarePeak, markFlareRise, markFlareHold, markFlareFall);
-        }
+        internal void FlareMark(IRuleSceneLights lights) => Flare(lights, markFlarePeak, markFlareRise, markFlareHold, markFlareFall);
 
-        internal void FlareBind(IRuleSceneLights lights)
+        internal void FlareBind(IRuleSceneLights lights) => Flare(lights, bindFlarePeak, bindFlareRise, bindFlareHold, bindFlareFall);
+
+        /** Raises the flare light; nothing when the asset names no light or the encounter has no scene lighting. */
+        private void Flare(IRuleSceneLights lights, float peak, float rise, float hold, float fall)
         {
-            if (flareLight >= 0 && lights != null) lights.Flare(flareLight, bindFlarePeak, bindFlareRise, bindFlareHold, bindFlareFall);
+            if (flareLight >= 0 && lights != null) lights.Flare(flareLight, peak, rise, hold, fall);
         }
     }
 
@@ -72,14 +70,14 @@ namespace Dice.Presentation
      * the spirit's reaction and a small flare; a binding grows the roots while the mark gives way, with the reaction and a
      * full flare; once a played hand's scoring finishes every root and mark withdraws, before the next opening roll.
      */
-    public sealed class DieBindingVisualPresenter : RuleDiceVisualPresenter
+    public sealed class DieBindingVisualPresenter : RulePresenter
     {
         private readonly DieBindingVisualAsset settings;
         private readonly string ruleId;
-        private readonly RuleDiceVisualContext context;
+        private readonly RulePresenterContext context;
         private readonly DieBindingVisual[] dice = new DieBindingVisual[DiceValues.Count];
 
-        internal DieBindingVisualPresenter(DieBindingVisualAsset settings, string ruleId, RuleDiceVisualContext context)
+        internal DieBindingVisualPresenter(DieBindingVisualAsset settings, string ruleId, RulePresenterContext context)
         {
             this.settings = settings;
             this.ruleId = ruleId;
@@ -87,8 +85,6 @@ namespace Dice.Presentation
             for (int i = 0; i < dice.Length; ++i)
                 dice[i] = UnityEngine.Object.Instantiate(settings.DiePrefab, context.Dice[i], false);
         }
-
-        public string RuleId => ruleId;
 
         /** The per-die visual on the die in the given bay. */
         public DieBindingVisual this[int bay] => dice[bay];
@@ -151,7 +147,7 @@ namespace Dice.Presentation
         private IEnumerator Mark(int bay)
         {
             dice[bay].AnimateMark(1f, settings.MarkFadeDuration);
-            context.HostReaction?.Invoke();
+            context.ReactHost();
             settings.FlareMark(context.Lights);
             return Wait(settings.MarkFadeDuration);
         }
@@ -160,7 +156,7 @@ namespace Dice.Presentation
         {
             dice[bay].AnimateMark(0f, settings.MarkYieldDuration);
             dice[bay].AnimateGrowth(1f, settings.GrowDuration);
-            context.HostReaction?.Invoke();
+            context.ReactHost();
             settings.FlareBind(context.Lights);
             return Wait(settings.GrowDuration);
         }

@@ -217,11 +217,7 @@ namespace Dice.Presentation
                 if (Application.isPlaying) Destroy(current.gameObject);
                 else DestroyImmediate(current.gameObject);
             }
-            if (presentation == null) { current = null; return; }
-            if (presentation.SigilPrefab == null)
-                throw new InvalidOperationException("The host requires an authored sigil prefab.");
-            current = Instantiate(presentation.SigilPrefab, parent, false);
-            current.name = name;
+            current = presentation != null ? presentation.CreateSigil(name, parent) : null;
         }
 
         public void RenderEncounterRule(EncounterSnapshot snapshot, EncounterRulePresentationAsset presentation)

@@ -62,5 +62,23 @@ namespace Dice.Presentation
         public float RoomTableEdge => roomTableEdge;
         public float RoomSplit => roomSplit;
         public float OpeningFadeDuration => openingFadeDuration;
+
+        /** The rule card flagged as shown on the HUD, or null when no card is; more than one flagged card fails. */
+        public EncounterRulePresentationAsset HudRuleCard
+        {
+            get
+            {
+                EncounterRulePresentationAsset shown = null;
+                foreach (var card in RulePresentations)
+                {
+                    if (card == null || !card.ShownOnHud) continue;
+                    if (shown != null)
+                        throw new InvalidOperationException("Encounter table '" + name +
+                            "' flags more than one rule card as shown on the HUD: '" + shown.name + "' and '" + card.name + "'.");
+                    shown = card;
+                }
+                return shown;
+            }
+        }
     }
 }

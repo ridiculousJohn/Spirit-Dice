@@ -19,3 +19,4 @@ MonoBehaviour:
   availableText: Distinct faces add multiplier
   usedText: Distinct faces add multiplier
   icon: {fileID: 0}
+  shownOnHud: 1

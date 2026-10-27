@@ -21,6 +21,7 @@ namespace Dice.Tests
         private ModifierDefinition second;
         private SpiritScoringStepBuilder builder;
         private ModifierPresentationCatalog charms;
+        private readonly List<EncounterRulePresentationAsset> cards = new List<EncounterRulePresentationAsset>();
 
         [SetUp]
         public void SetUp()
@@ -42,6 +43,8 @@ namespace Dice.Tests
         {
             synthetic.Dispose();
             UnityEngine.Object.DestroyImmediate(theme);
+            foreach (var card in cards) UnityEngine.Object.DestroyImmediate(card);
+            cards.Clear();
         }
 
         /** Checks the dice step adds the dice sum to the banked base, keeps the banked multiplier and highlights every die / fails if it ignores the banked counters, the dice sum or the full highlight. */
@@ -168,23 +171,37 @@ namespace Dice.Tests
             Assert.That(total.ResolvingIndex, Is.EqualTo(-1));
         }
 
-        /** Checks an encounter rule bonus adds one step that raises the multiplier only, beside the last charm's emblem / fails if the rule step appears without a bonus, misses one, or changes the base. */
-        [TestCase(0L)]
-        [TestCase(4L)]
-        public void EncounterRuleBonusAddsOneMultiplierStep(long ruleMultiplier)
+        /** Checks a scored hand's rule bonus adds one step that raises the multiplier only, named by the card of the bonus's rule, and a bonus whose rule has no card fails naming the rule / fails if the rule step is missing, names another rule's card, changes the base or is built without a card. */
+        [Test]
+        public void EncounterRuleBonusAddsOneMultiplierStepNamedByItsRulesCard()
         {
-            var score = Score(HighDieDice, HandCategory.HighDie, 0, new[] { Contribution(first, 1, baseScore: 10) }, ruleMultiplier);
-            var steps = Build(score, HighDieDice, 0, 0);
-            var rules = steps.Where(step => step.RuleCue).ToArray();
-            Assert.That(rules.Length, Is.EqualTo(ruleMultiplier != 0 ? 1 : 0));
-            if (rules.Length == 0) return;
-            var charm = steps[2];
-            Assert.That(steps[3], Is.SameAs(rules[0]));
-            Assert.That(rules[0].BaseScore, Is.EqualTo(charm.BaseScore));
-            Assert.That(rules[0].Multiplier, Is.EqualTo(charm.Multiplier + ruleMultiplier));
-            Assert.That(rules[0].StepLabel, Is.EqualTo("STEP 3 OF 4 - ENCOUNTER RULE"));
-            Assert.That(rules[0].Emblem, Is.SameAs(first));
-            Assert.That(rules[0].SelectionColor, Is.EqualTo(theme.amber));
+            const string encounterId = "encounter.test.rule_bonus";
+            var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) },
+                rules: new EncounterRuleDefinition[] { new FirstRerollFreeRuleDefinition(), new DistinctFacesMultiplierRuleDefinition() });
+            var session = EncounterSession.CreateEncounter(
+                new MechanicalCatalog("test.steps.rules", TestContent.Hands(), new[] { encounter }), encounterId, 5);
+            var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
+            Assert.That(played.Accepted, Is.True);
+            var scored = played.Events.OfType<HandScoredEvent>().Single();
+            long bonus = played.Events.OfType<EncounterRuleActivatedEvent>().Single(value => value.MultiplierBonus != 0).MultiplierBonus;
+            var favor = Card(FirstRerollFreeRuleDefinition.StableId, "Favor");
+            var distinct = Card(DistinctFacesMultiplierRuleDefinition.StableId, "Distinct");
+
+            var steps = builder.BuildHand(scored.Score, scored.Dice, 0, 0, new[] { favor, distinct }, played.Events,
+                scored.StageIndex, scored.HandIndex);
+            var rule = steps.Single(step => step.RuleCue);
+            var rank = steps[1];
+            Assert.That(steps[2], Is.SameAs(rule));
+            Assert.That(rule.Rule, Is.SameAs(distinct));
+            Assert.That(rule.SelectionText, Does.StartWith("Distinct\n+" + bonus));
+            Assert.That(rule.BaseScore, Is.EqualTo(rank.BaseScore));
+            Assert.That(rule.Multiplier, Is.EqualTo(rank.Multiplier + bonus));
+            Assert.That(rule.StepLabel, Is.EqualTo("STEP 3 OF 4 - ENCOUNTER RULE"));
+            Assert.That(rule.SelectionColor, Is.EqualTo(theme.amber));
+
+            var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored.Score, scored.Dice, 0, 0,
+                new[] { favor }, played.Events, scored.StageIndex, scored.HandIndex));
+            Assert.That(unnamed.Message, Does.Contain(DistinctFacesMultiplierRuleDefinition.StableId));
         }
 
         /** Checks a banked roll bonus adds its contribution to the current counters as a roll bonus without a resolving token / fails if it is worded as a scored charm or claims a history token. */
@@ -203,7 +220,20 @@ namespace Dice.Tests
         }
 
         private IReadOnlyList<SpiritScoringStep> Build(ScoreBreakdown score, DiceValues dice, long bankedBase, long bankedMultiplier)
-            => builder.BuildHand(score, dice, bankedBase, bankedMultiplier, null, Array.Empty<RuleEvent>(), 0, 0);
+            => builder.BuildHand(score, dice, bankedBase, bankedMultiplier, Array.Empty<EncounterRulePresentationAsset>(),
+                Array.Empty<RuleEvent>(), 0, 0);
+
+        /** A rule card naming the rule with the given display name. */
+        private EncounterRulePresentationAsset Card(string ruleId, string displayName)
+        {
+            var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
+            cards.Add(card);
+            using var serialized = new UnityEditor.SerializedObject(card);
+            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("displayName").stringValue = displayName;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return card;
+        }
 
         private static ModifierDefinition Definition(string id, ModifierPhase phase)
             => new ModifierDefinition(id, id, phase, new AlwaysCondition(),

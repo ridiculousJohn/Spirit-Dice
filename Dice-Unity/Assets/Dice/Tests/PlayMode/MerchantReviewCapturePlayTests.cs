@@ -124,7 +124,7 @@ namespace Dice.Tests
                     bool ready = disturbances >= 3 && lighting.GetLightIntensity(Lantern) < .5f && Displaced() >= 2;
                     if (!ready && Time.realtimeSinceStartup >= next)
                     {
-                        activity.Disturb();
+                        activity.Jolt();
                         ++disturbances;
                         next = Time.realtimeSinceStartup + .2f;
                     }

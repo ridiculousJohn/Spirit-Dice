@@ -505,7 +505,7 @@ namespace Dice.Tests
                 bool lift = name == "TrunkLid";
                 float idleLow = PeakResponse(actor.Motion, actor.Strength * actor.IdleStrength.Min, lift);
                 float idle = PeakResponse(actor.Motion, actor.Strength * actor.IdleStrength.Max, lift);
-                float disturbance = PeakResponse(actor.Motion, actor.Strength * activity.DisturbanceStrength, lift);
+                float disturbance = PeakResponse(actor.Motion, actor.Strength * activity.JoltStrength, lift);
                 if (lift) Assert.That(idleLow / (cut.SuggestedLift * FrameHeight / PlateSize.y), Is.GreaterThanOrEqualTo(2f),
                     name + " idle hop " + idleLow);
                 Assert.That(idleLow, Is.GreaterThan(0f), name + " moves on an idle jolt.");
@@ -711,12 +711,13 @@ namespace Dice.Tests
         {
             var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(TablePath);
             var activity = table.AmbientActivity;
-            var giggles = table.AudioTheme;
+            var giggles = table.RulePresentations.Select(rule => rule.Presenter).OfType<DieInterferencePresenterAsset>().Single();
+            var audio = table.AudioTheme;
             Assert.That(activity.BurstClips, Is.Not.Empty, "Each disturbance rumbles the room.");
-            Assert.That(giggles.disturbanceClips, Is.Not.Empty, "The poltergeist giggles on each disturbance.");
-            Assert.That(activity.BurstVolume, Is.GreaterThan(0f).And.LessThan(giggles.effectsVolume), "Bursts play under the giggles.");
+            Assert.That(giggles.DisturbanceClips, Is.Not.Empty, "The poltergeist giggles on each disturbance.");
+            Assert.That(activity.BurstVolume, Is.GreaterThan(0f).And.LessThan(audio.effectsVolume), "Bursts play under the giggles.");
             Assert.That(activity.BurstClips.Max(EncounterAmbientActivityTests.Peak),
-                Is.LessThan(giggles.disturbanceClips.Min(EncounterAmbientActivityTests.Peak)), "Burst clips are normalized under the giggles.");
+                Is.LessThan(giggles.DisturbanceClips.Min(EncounterAmbientActivityTests.Peak)), "Burst clips are normalized under the giggles.");
         }
 
         // Helpers
