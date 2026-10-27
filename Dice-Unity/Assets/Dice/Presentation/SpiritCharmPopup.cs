@@ -15,7 +15,6 @@ namespace Dice.Presentation
         [field: SerializeField] public RectTransform Panel { get; private set; }
         [field: SerializeField] public Text Title { get; private set; }
         [field: SerializeField] public Image Icon { get; private set; }
-        [field: SerializeField] public SpiritModifierSigilGraphic Sigil { get; private set; }
         [field: SerializeField] public SpiritModifierCategoryBadge Category { get; private set; }
         [field: SerializeField] public Text Effect { get; private set; }
         [field: SerializeField] public Text Description { get; private set; }
@@ -38,7 +37,7 @@ namespace Dice.Presentation
             SpiritCharmStatusPresentation status, EncounterPhase phase)
         {
             InstanceId = instanceId;
-            SpiritCharmVisuals.SetIcon(Icon, Sigil, Category, charms, definition);
+            SpiritCharmVisuals.SetIcon(Icon, Category, charms, definition);
             Title.text = charms.GetName(definition);
             Effect.text = charms.GetEffectText(definition);
             Effect.color = charms.GetEffectColor(definition);

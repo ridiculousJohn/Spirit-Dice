@@ -25,7 +25,6 @@ namespace Dice.Presentation
         [SerializeField] private Text familyName;
         [SerializeField] private Text condition;
         [SerializeField] private Image icon;
-        [SerializeField] private SpiritModifierSigilGraphic sigil;
         [SerializeField] private GameObject artwork;
         [SerializeField] private GameObject variantRoot;
         private Action<ModifierDefinition> selected;
@@ -60,9 +59,7 @@ namespace Dice.Presentation
             condition.text = SpiritRewardCard.GetModifierDescription(charms, first, theme.amber, theme.GetModifierTriggerColor(first.Phase));
             icon.sprite = charms.GetIcon(first);
             icon.color = SpiritUi.GetTheme(transform).cream;
-            icon.gameObject.SetActive(icon.sprite != null);
-            sigil.Seed = charms.GetSigilSeed(first);
-            sigil.gameObject.SetActive(icon.sprite == null);
+            icon.gameObject.SetActive(true);
             selected = select;
             for (int index = 0; index < variants.Length; ++index)
             {
@@ -96,7 +93,6 @@ namespace Dice.Presentation
             familyName.text = "Undiscovered family";
             condition.text = "Locked";
             icon.gameObject.SetActive(false);
-            sigil.gameObject.SetActive(false);
             foreach (var item in variants)
             {
                 item.Definition = null;

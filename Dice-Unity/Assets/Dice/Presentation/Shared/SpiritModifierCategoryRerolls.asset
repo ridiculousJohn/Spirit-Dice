@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierCategoryPresentationAsset
   accentColor: {r: 1, g: 0.83921569, b: 0.38823529, a: 1}
   inkColor: {r: 0.6, g: 0.41176471, b: 0.03137255, a: 1}
-  symbol: 4
+  symbol: {fileID: 21300000, guid: 444742757ca969049b5d55db162d9fa2, type: 3}

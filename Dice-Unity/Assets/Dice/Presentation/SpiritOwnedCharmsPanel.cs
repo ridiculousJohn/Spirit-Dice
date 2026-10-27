@@ -24,7 +24,6 @@ namespace Dice.Presentation
         [field: SerializeField] public Text DetailTitle { get; private set; }
         [field: SerializeField] public Text DetailBody { get; private set; }
         [field: SerializeField] public Image DetailIcon { get; private set; }
-        [field: SerializeField] public SpiritModifierSigilGraphic DetailSigil { get; private set; }
         [field: SerializeField] public SpiritModifierCategoryBadge DetailCategory { get; private set; }
         [field: SerializeField] public RectTransform DetailStatusRow { get; private set; }
         [field: SerializeField] public Text DetailStatus { get; private set; }
@@ -70,7 +69,7 @@ namespace Dice.Presentation
                     var instance = snapshot.Modifiers[i];
                     var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                     card.InstanceId = instance.InstanceId;
-                    SpiritCharmVisuals.SetIcon(card.Icon, card.Sigil, card.Category, controls.ModifierPresentation, definition);
+                    SpiritCharmVisuals.SetIcon(card.Icon, card.Category, controls.ModifierPresentation, definition);
                     card.Title.text = controls.ModifierPresentation.GetName(definition);
                     card.Body.text = controls.ModifierPresentation.GetConditionText(definition);
                     card.Effect.text = controls.ModifierPresentation.GetEffectText(definition);
@@ -135,10 +134,8 @@ namespace Dice.Presentation
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
                 DetailIcon.sprite = controls.ModifierPresentation.GetIcon(definition);
                 Color color = controls.ModifierPresentation.GetEffectColor(definition);
-                DetailIcon.color = DetailSigil.color = color;
-                DetailIcon.gameObject.SetActive(DetailIcon.sprite != null);
-                DetailSigil.Seed = controls.ModifierPresentation.GetSigilSeed(definition);
-                DetailSigil.gameObject.SetActive(DetailIcon.sprite == null);
+                DetailIcon.color = color;
+                DetailIcon.gameObject.SetActive(true);
                 DetailCategory.Render(controls.ModifierPresentation, definition);
                 DetailTitle.text = controls.ModifierPresentation.GetName(definition);
                 DetailBody.text = controls.ModifierPresentation.GetConditionText(definition) + "\n" +
@@ -163,7 +160,6 @@ namespace Dice.Presentation
             DetailTitle.text = "No charms yet";
             DetailIcon.sprite = null;
             DetailIcon.gameObject.SetActive(false);
-            DetailSigil.gameObject.SetActive(false);
             DetailCategory.Render(null, null);
             DetailBody.text = "Clear a stage to choose a charm.";
             DetailStatusRow.gameObject.SetActive(false);

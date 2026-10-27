@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Hollow Reed / Base
   icon: {fileID: 21300000, guid: 3f960d25a9fc5e42896b8e365bc252ad, type: 3}
   conditionTemplate: An interior die equals the absolute difference of its two neighbors.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

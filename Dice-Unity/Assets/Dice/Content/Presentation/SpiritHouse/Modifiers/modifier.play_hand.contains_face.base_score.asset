@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
   displayName: One Spark / Base
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 04716263b8fa23e45b2c132d2556751e, type: 3}
   conditionTemplate: At least one die shows {parameter}.
-  artwork: 5
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

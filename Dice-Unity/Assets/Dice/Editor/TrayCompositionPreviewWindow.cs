@@ -240,7 +240,6 @@ namespace Dice.Editor
                 historyContribution = contributions[0];
                 return;
             }
-            presentation.Dispose();
             throw new InvalidOperationException("The application's content has no charm that activates on an opening roll.");
         }
 
@@ -298,7 +297,6 @@ namespace Dice.Editor
         {
             compositor?.Dispose();
             compositor = null;
-            charms?.Dispose();
             charms = null;
             historyDefinition = null;
             encounter?.Dispose();

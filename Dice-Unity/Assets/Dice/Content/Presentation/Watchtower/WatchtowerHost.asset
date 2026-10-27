@@ -32,12 +32,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0
@@ -59,12 +53,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0
@@ -86,12 +74,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0
@@ -113,12 +95,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0
@@ -140,12 +116,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0
@@ -167,12 +137,6 @@ MonoBehaviour:
     ReceiveSceneLighting: 1
     Smoke:
       Enabled: 0
-      MotionMask: {fileID: 0}
-      FlowNoise: {fileID: 0}
-      Distortion: 0.035
-      Speed: 0.7
-      Opacity: 0.6
-      Flow: {x: 0, y: 0.018}
     Weights:
     - 0
     - 0

@@ -26,6 +26,8 @@ namespace Dice.Presentation
      */
     public sealed class SpiritGameplayHud : MonoBehaviour
     {
+        // Units a highlighted counter's caption moves aside for the charm icon shown beside it.
+        private const float CounterIconInset = 22f;
         [SerializeField] private RectTransform portrait;
         public RectTransform Root => portrait;
         [field: SerializeField] public RectTransform DiceTrayFrame { get; private set; }
@@ -58,7 +60,6 @@ namespace Dice.Presentation
         [SerializeField] private Image ruleSpiritIcon;
         private Graphic ruleSpiritSigil;
         [SerializeField] private RectTransform ruleSpiritSigilRoot;
-        [SerializeField] private SpiritModifierSigilGraphic modifierActivationSigil;
         [SerializeField] private SpiritModifierCategoryBadge modifierActivationCategory;
 
         [field: SerializeField] public Text EncounterTitle { get; private set; }
@@ -131,7 +132,7 @@ namespace Dice.Presentation
             if (reroll == null) throw new ArgumentNullException(nameof(reroll));
             if (play == null) throw new ArgumentNullException(nameof(play));
             if (SelectionLabel == null || ModifierEmblem == null || ModifierActivationIcon == null ||
-                modifierActivationSigil == null || modifierActivationCategory == null || CategoryLabel == null ||
+                modifierActivationCategory == null || CategoryLabel == null ||
                 ScoreDetail == null || BaseScoreLabel == null || MultiplierLabel == null || HandScoreLabel == null ||
                 RerollButton == null || PlayButton == null || !Valid(BaseScoreHighlight) || !Valid(MultiplierHighlight) ||
                 !Valid(RerollsHighlight) || !Valid(HandsHighlight))
@@ -284,11 +285,8 @@ namespace Dice.Presentation
         public void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             ModifierActivationIcon.sprite = charms.GetIcon(definition);
-            Color color = charms.GetEffectColor(definition);
-            ModifierActivationIcon.color = modifierActivationSigil.color = color;
-            ModifierActivationIcon.gameObject.SetActive(ModifierActivationIcon.sprite != null);
-            modifierActivationSigil.Seed = charms.GetSigilSeed(definition);
-            modifierActivationSigil.gameObject.SetActive(ModifierActivationIcon.sprite == null);
+            ModifierActivationIcon.color = charms.GetEffectColor(definition);
+            ModifierActivationIcon.gameObject.SetActive(true);
             modifierActivationCategory.Render(charms, definition);
             ModifierEmblem.enabled = false;
             ModifierEmblem.gameObject.SetActive(true);
@@ -306,7 +304,6 @@ namespace Dice.Presentation
             ModifierActivationIcon.gameObject.SetActive(false);
             ModifierActivationIcon.rectTransform.localScale = modifierActivationIconScale;
             ModifierActivationIcon.color = Color.white;
-            modifierActivationSigil.gameObject.SetActive(false);
             modifierActivationCategory.Render(null, null);
             foreach (var highlight in new[] { BaseScoreHighlight, MultiplierHighlight, RerollsHighlight, HandsHighlight })
                 ResetCounterHighlight(highlight);
@@ -330,12 +327,11 @@ namespace Dice.Presentation
             ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             if (highlights.Contains(highlight)) return;
-            var sprite = charms.GetIcon(definition);
             highlight.Color = charms.GetEffectColor(definition);
-            highlight.Icon.sprite = sprite;
+            highlight.Icon.sprite = charms.GetIcon(definition);
             highlight.Icon.color = highlight.Color;
-            highlight.Icon.gameObject.SetActive(sprite != null);
-            if (sprite != null) highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset + new Vector2(22, 0);
+            highlight.Icon.gameObject.SetActive(true);
+            highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset + new Vector2(CounterIconInset, 0);
             highlights.Add(highlight);
         }
 

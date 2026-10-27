@@ -37,12 +37,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "2ad73856000f4659bcdae0e525434fa7", type: 3}
         Lights:

@@ -65,17 +65,15 @@ namespace Dice.App
         private void OnDestroy()
         {
             application?.AttachPresenter(null);
-            ModifierPresentation?.Dispose();
             ModifierPresentation = null;
         }
 
-        /** Takes ownership of the charm presentation, which presents the catalog's charms. */
+        /** Uses the charm presentation, which presents the catalog's charms. */
         public void Initialize(MechanicalCatalog catalog, ModifierPresentationCatalog presentation, string encounterId,
             ulong seed, string savePath)
         {
             if (presentation == null) throw new ArgumentNullException(nameof(presentation));
             var next = new EncounterApplication(catalog, encounterId, seed);
-            if (!ReferenceEquals(ModifierPresentation, presentation)) ModifierPresentation?.Dispose();
             ModifierPresentation = presentation;
             Catalog = catalog;
             this.encounterId = encounterId;

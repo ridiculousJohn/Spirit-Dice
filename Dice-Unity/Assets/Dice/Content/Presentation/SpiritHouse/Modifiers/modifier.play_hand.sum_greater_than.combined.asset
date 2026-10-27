@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Full Basket / Base + Mult
   icon: {fileID: 21300000, guid: 12dfd240b92051fba41eafd0771acb79, type: 3}
   conditionTemplate: Dice sum exceeds {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

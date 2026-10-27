@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Grafted Branch / Rerolls
   icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   conditionTemplate: At least {parameter} dice show the face of a bound die.
-  artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

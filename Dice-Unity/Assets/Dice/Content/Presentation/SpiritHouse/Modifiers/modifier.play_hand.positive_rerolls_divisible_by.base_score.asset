@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Spare Beads / Base
   icon: {fileID: 21300000, guid: 7270284106975186b72b3e638a456af5, type: 3}
   conditionTemplate: Rerolls remaining are positive and divisible by {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

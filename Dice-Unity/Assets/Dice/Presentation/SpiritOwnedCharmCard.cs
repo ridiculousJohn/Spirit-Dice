@@ -11,7 +11,6 @@ namespace Dice.Presentation
         [field: SerializeField] public Text Body { get; private set; }
         [field: SerializeField] public Text Effect { get; private set; }
         [field: SerializeField] public Image Icon { get; private set; }
-        [field: SerializeField] public SpiritModifierSigilGraphic Sigil { get; private set; }
         [field: SerializeField] public SpiritModifierCategoryBadge Category { get; private set; }
         [field: SerializeField] public SpiritCharmStatusBadge Badge { get; private set; }
         [field: SerializeField] public SpiritCharmSelectionGraphic SelectionOutline { get; private set; }

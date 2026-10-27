@@ -9,15 +9,12 @@ namespace Dice.Presentation
     /** Charm icon state and text shared by the gameplay view, its panels, and score playback. */
     internal static class SpiritCharmVisuals
     {
-        internal static void SetIcon(Image icon, SpiritModifierSigilGraphic sigil, SpiritModifierCategoryBadge category,
-            ModifierPresentationCatalog charms, ModifierDefinition definition)
+        internal static void SetIcon(Image icon, SpiritModifierCategoryBadge category, ModifierPresentationCatalog charms,
+            ModifierDefinition definition)
         {
             icon.sprite = definition == null ? null : charms.GetIcon(definition);
-            icon.color = sigil.color = definition == null ? Color.white : charms.GetEffectColor(definition);
-            bool visible = icon.sprite != null;
-            icon.gameObject.SetActive(visible);
-            if (definition != null) sigil.Seed = charms.GetSigilSeed(definition);
-            sigil.gameObject.SetActive(definition != null && !visible);
+            icon.color = definition == null ? Color.white : charms.GetEffectColor(definition);
+            icon.gameObject.SetActive(icon.sprite != null);
             category.Render(charms, definition);
         }
 

@@ -71,7 +71,6 @@ namespace Dice.Tests
             Set(row, "artwork", artwork.gameObject);
             Set(row, "variantRoot", variantRoot.gameObject);
             Set(row, "icon", Add<Image>(artwork, "Icon"));
-            Set(row, "sigil", Add<SpiritModifierSigilGraphic>(artwork, "Sigil"));
             Set(row, "familyName", Add<Text>(row.transform, "Family Name"));
             Set(row, "condition", Add<Text>(row.transform, "Condition"));
             using (var serialized = new SerializedObject(row))

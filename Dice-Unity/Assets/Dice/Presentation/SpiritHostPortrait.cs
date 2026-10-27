@@ -113,7 +113,7 @@ namespace Dice.Presentation
                 var image = authoredLayers[i];
                 if (image == null) throw new InvalidOperationException("An authored portrait layer is missing.");
                 SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled
-                    ? new SpiritSmokeMaterial(source.Smoke, asset.SmokeShader, image.material) : null;
+                    ? new SpiritSmokeMaterial(asset.SmokeShader, image.material) : null;
                 if (smoke != null) image.material = smoke.Material;
                 SceneLitLayerMaterial lit = source.Lighting != null && source.Lighting.Configured
                     ? new SceneLitLayerMaterial(source.Lighting, asset.LitLayerShader, image.material) : null;

@@ -15,7 +15,6 @@ namespace Dice.Presentation
         [SerializeField] private Text condition;
         [SerializeField] private Text effects;
         [SerializeField] private Image charmIcon;
-        [SerializeField] private SpiritModifierSigilGraphic charmSigil;
         [SerializeField] private SpiritModifierCategoryBadge charmCategory;
         [SerializeField] private Text handTitle;
         [SerializeField] private Text handLevelText;
@@ -61,7 +60,7 @@ namespace Dice.Presentation
             handUpgradeMode = false;
             modifierRoot.SetActive(true);
             handRoot.SetActive(false);
-            SpiritCharmVisuals.SetIcon(charmIcon, charmSigil, charmCategory, charms, definition);
+            SpiritCharmVisuals.SetIcon(charmIcon, charmCategory, charms, definition);
             title.text = charms.GetName(definition);
             var theme = SpiritUi.GetTheme(transform);
             condition.text = GetModifierDescription(charms, definition, theme.amber, theme.GetModifierTriggerColor(definition.Phase));

@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Single Firefly / Base
   icon: {fileID: 21300000, guid: 67362e19221f5bb1b5044eb3fc2569f2, type: 3}
   conditionTemplate: Exactly one rerolled die shows {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

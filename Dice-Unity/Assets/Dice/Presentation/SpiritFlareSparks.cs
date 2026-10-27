@@ -12,9 +12,8 @@ namespace Dice.Presentation
     [DisallowMultipleComponent, RequireComponent(typeof(RectTransform))]
     public sealed class SpiritFlareSparks : MonoBehaviour
     {
-        private const int TextureSize = 32;
-        private static Texture2D softDisc;
-
+        [Tooltip("A white disc whose alpha falls smoothly to zero at its rim; every glow and spark draws it.")]
+        [SerializeField] private Texture2D softDisc;
         [SerializeField, Range(0, 16)] private int sparkCount = 7;
         [Tooltip("Spark diameter at launch; sparks shrink as they fade.")]
         [SerializeField, Min(0)] private float sparkSize = 3.5f;
@@ -113,6 +112,8 @@ namespace Dice.Presentation
 
         private void Build()
         {
+            if (softDisc == null)
+                throw new System.InvalidOperationException("The flare sparks on " + name + " require a soft disc texture.");
             if (glow == null) glow = CreatePart("Flare Glow");
             while (sparks.Count < sparkCount)
             {
@@ -131,33 +132,12 @@ namespace Dice.Presentation
             rect.SetParent(transform, false);
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
             var image = part.GetComponent<RawImage>();
-            image.texture = SoftDisc();
+            image.texture = softDisc;
             image.raycastTarget = false;
             part.SetActive(false);
             return image;
         }
 
         private static float Range(System.Random random, float min, float max) => min + (max - min) * (float)random.NextDouble();
-
-        /** A white disc whose alpha falls smoothly to zero at its rim. */
-        private static Texture2D SoftDisc()
-        {
-            if (softDisc != null) return softDisc;
-            softDisc = new Texture2D(TextureSize, TextureSize, TextureFormat.RGBA32, false)
-            {
-                name = "Flare Soft Disc", hideFlags = HideFlags.DontSave, wrapMode = TextureWrapMode.Clamp
-            };
-            var pixels = new Color32[TextureSize * TextureSize];
-            for (int y = 0; y < TextureSize; ++y)
-                for (int x = 0; x < TextureSize; ++x)
-                {
-                    float dx = (x + .5f) / TextureSize * 2f - 1f, dy = (y + .5f) / TextureSize * 2f - 1f;
-                    float edge = Mathf.Clamp01(1f - (dx * dx + dy * dy));
-                    pixels[y * TextureSize + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(255f * edge * edge));
-                }
-            softDisc.SetPixels32(pixels);
-            softDisc.Apply(false, true);
-            return softDisc;
-        }
     }
 }

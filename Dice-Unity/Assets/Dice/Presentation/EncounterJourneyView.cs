@@ -33,7 +33,6 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform charmDetail;
         [SerializeField] private RectTransform charmIconRoot;
         [SerializeField] private Image charmIcon;
-        [SerializeField] private SpiritModifierSigilGraphic charmSigil;
         [SerializeField] private Text charmName;
         [SerializeField] private Text charmEffect;
         [SerializeField] private Text charmCondition;
@@ -60,7 +59,6 @@ namespace Dice.Presentation
         public Text Body => body;
         public RectTransform CharmDetail => charmDetail;
         public Image CharmIcon => charmIcon;
-        public SpiritModifierSigilGraphic CharmSigil => charmSigil;
         public Text CharmName => charmName;
         public Text CharmEffect => charmEffect;
         public Text CharmCondition => charmCondition;
@@ -212,10 +210,8 @@ namespace Dice.Presentation
             charmCondition.text = SpiritRewardCard.GetModifierDescription(charms, definition, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
             charmIcon.sprite = charms.GetIcon(definition);
-            charmIcon.color = charmSigil.color = charms.GetEffectColor(definition);
-            charmIcon.gameObject.SetActive(charmIcon.sprite != null);
-            charmSigil.Seed = charms.GetSigilSeed(definition);
-            charmSigil.gameObject.SetActive(charmIcon.sprite == null);
+            charmIcon.color = charms.GetEffectColor(definition);
+            charmIcon.gameObject.SetActive(true);
         }
 
         private void ConfigureInvitation(EncounterTablePresentationAsset table, bool invitation)

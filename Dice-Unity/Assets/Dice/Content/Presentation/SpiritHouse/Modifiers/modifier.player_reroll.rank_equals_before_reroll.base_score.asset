@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Still Reflection / Base
   icon: {fileID: 21300000, guid: 51879f5dcdbe51f19e7ed067e47deaea, type: 3}
   conditionTemplate: Category matches the roll before the latest reroll.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

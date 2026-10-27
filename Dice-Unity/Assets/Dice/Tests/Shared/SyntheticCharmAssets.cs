@@ -18,7 +18,6 @@ namespace Dice.Tests
     public class SyntheticCharmAssets : IDisposable
     {
         private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
-        private readonly List<IDisposable> loaded = new List<IDisposable>();
 
         public T Own<T>(T item) where T : UnityEngine.Object
         {
@@ -57,14 +56,21 @@ namespace Dice.Tests
 #endif
         }
 
-        public ModifierCategoryPresentationAsset Category(ModifierCategorySymbol symbol = ModifierCategorySymbol.Base,
-            Color? accent = null, Color? ink = null)
+        /** A 2 x 2 sprite destroyed on disposal. */
+        public Sprite Icon()
+        {
+            var texture = Own(new Texture2D(2, 2));
+            return Own(Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f)));
+        }
+
+        /** A category with the given mark; without one it shows no mark. */
+        public ModifierCategoryPresentationAsset Category(Sprite symbol = null, Color? accent = null, Color? ink = null)
         {
 #if UNITY_EDITOR
             var category = Own(ScriptableObject.CreateInstance<ModifierCategoryPresentationAsset>());
-            category.name = "Category " + symbol;
+            category.name = symbol != null ? "Category " + symbol.name : "Category without symbol";
             var serialized = new SerializedObject(category);
-            serialized.FindProperty("symbol").intValue = (int)symbol;
+            serialized.FindProperty("symbol").objectReferenceValue = symbol;
             if (accent.HasValue) serialized.FindProperty("accentColor").colorValue = accent.Value;
             if (ink.HasValue) serialized.FindProperty("inkColor").colorValue = ink.Value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -74,9 +80,9 @@ namespace Dice.Tests
 #endif
         }
 
+        /** A charm presentation; without a given icon it shows a fabricated one. */
         public ModifierPresentationAsset Presentation(ModifierAsset modifier, ModifierCategoryPresentationAsset category,
-            string displayName = null, string template = "Test condition.", ModifierArtworkKind artwork = ModifierArtworkKind.None,
-            Sprite icon = null)
+            string displayName = null, string template = "Test condition.", Sprite icon = null)
         {
 #if UNITY_EDITOR
             var presentation = Own(ScriptableObject.CreateInstance<ModifierPresentationAsset>());
@@ -85,9 +91,8 @@ namespace Dice.Tests
             serialized.FindProperty("modifier").objectReferenceValue = modifier;
             serialized.FindProperty("displayName").stringValue = displayName ?? "Name of " + modifier?.Id;
             serialized.FindProperty("conditionTemplate").stringValue = template;
-            serialized.FindProperty("artwork").intValue = (int)artwork;
             serialized.FindProperty("category").objectReferenceValue = category;
-            serialized.FindProperty("icon").objectReferenceValue = icon;
+            serialized.FindProperty("icon").objectReferenceValue = icon != null ? icon : Icon();
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return presentation;
 #else
@@ -176,23 +181,19 @@ namespace Dice.Tests
 #endif
         }
 
-        /** Builds a presentation that is disposed with these charms. */
+        /** Builds the presentation of the content from the skin. */
         public ModifierPresentationCatalog Load(ModifierSkinAsset skin, MechanicalContent content)
-        {
-            var presentation = new ModifierPresentationCatalog(skin, content);
-            loaded.Add(presentation);
-            return presentation;
-        }
+            => new ModifierPresentationCatalog(skin, content);
 
         /**
          * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id and presented
-         * as "Name of <id>" with the condition text "Condition of <id>", the given category (a base category without one)
-         * and the given icon.
+         * as "Name of <id>" with the condition text "Condition of <id>", the given category (or one with a fabricated
+         * symbol) and the given icon (or a fabricated one).
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null,
             Sprite icon = null)
         {
-            category = category != null ? category : Category();
+            category = category != null ? category : Category(Icon());
             var pairs = new List<KeyValuePair<ModifierAsset, ModifierDefinition>>();
             var presentations = new List<ModifierPresentationAsset>();
             foreach (ModifierDefinition definition in catalog.Modifiers)
@@ -231,7 +232,7 @@ namespace Dice.Tests
                 }
                 if (testCategory == null)
                 {
-                    testCategory = Category();
+                    testCategory = Category(Icon());
                     categories.Add(testCategory);
                 }
                 ModifierAsset charm = Charm(definition.Id, definition.FamilyId);
@@ -244,8 +245,6 @@ namespace Dice.Tests
 
         public void Dispose()
         {
-            foreach (IDisposable presentation in loaded) presentation.Dispose();
-            loaded.Clear();
             foreach (UnityEngine.Object item in created)
                 if (item != null) UnityEngine.Object.DestroyImmediate(item);
             created.Clear();

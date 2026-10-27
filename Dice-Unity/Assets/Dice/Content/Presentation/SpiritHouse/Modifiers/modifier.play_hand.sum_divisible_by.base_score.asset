@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Counted Coins / Base
   icon: {fileID: 21300000, guid: cb65c031339e54d5b1c61bb59d290e6b, type: 3}
   conditionTemplate: Dice sum is divisible by {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

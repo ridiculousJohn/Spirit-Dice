@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Solitary Blossom / Base
   icon: {fileID: 21300000, guid: 20e759c998545a349dda79437898907d, type: 3}
   conditionTemplate: Exactly one die shows {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

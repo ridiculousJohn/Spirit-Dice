@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2e34ec1e90ed7054daa272d7165af045, type: 2}
   displayName: Welcoming Pair / Mult
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 976a31b8b892b8144a3d410d055f9e0b, type: 3}
   conditionTemplate: The initial roll's category is Pair.
-  artwork: 1
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

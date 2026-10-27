@@ -12,9 +12,9 @@ namespace Dice.Presentation
      * The presentation of every charm of one loaded content, built at load from a skin. Each presentation is matched
      * to its charm's definition through the presentation's own charm reference; a content charm without exactly one
      * presentation, an effect kind, phase or activation limit the content uses without wording, or incomplete
-     * contribution wording fails construction. It owns the artwork it generates.
+     * contribution wording fails construction.
      */
-    public sealed class ModifierPresentationCatalog : IDisposable
+    public sealed class ModifierPresentationCatalog
     {
         private const string ParameterPlaceholder = "{parameter}";
         private const string SecondaryParameterPlaceholder = "{secondaryParameter}";
@@ -29,7 +29,6 @@ namespace Dice.Presentation
             new Dictionary<ModifierActivationLimit, ModifierActivationLimitWording>();
         private readonly ModifierContributionWording contributionWording;
         private readonly string noEffectsText;
-        private readonly SpiritModifierArtwork artwork = new SpiritModifierArtwork();
 
         public MechanicalCatalog Catalog { get; }
 
@@ -122,8 +121,8 @@ namespace Dice.Presentation
             string id = presentation.Modifier.Id;
             if (string.IsNullOrWhiteSpace(presentation.DisplayName))
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires a display name: " + id);
-            if (!Enum.IsDefined(typeof(ModifierArtworkKind), presentation.Artwork))
-                throw new InvalidOperationException("The charm presentation " + presentation.name + " has an invalid artwork kind: " + id);
+            if (presentation.Icon == null)
+                throw new InvalidOperationException("The charm presentation " + presentation.name + " requires an icon: " + id);
             if (string.IsNullOrWhiteSpace(presentation.ConditionTemplate))
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires condition text: " + id);
             // Any brace left once the known placeholders are removed is an unknown or malformed placeholder.
@@ -213,29 +212,13 @@ namespace Dice.Presentation
             return string.Join("  /  ", parts);
         }
 
-        /** The presentation's icon, or the sprite of its artwork kind; null when it has neither, so its sigil shows. */
-        public Sprite GetIcon(ModifierDefinition definition)
-        {
-            ModifierPresentationAsset entry = Entry(definition);
-            return entry.Icon != null ? entry.Icon : artwork.GetArtworkSprite(entry.Artwork);
-        }
-
-        /** A fixed hash of the family keeps the family's sigil stable across sessions and platform hash seeds. */
-        public uint GetSigilSeed(ModifierDefinition definition)
-        {
-            Entry(definition);
-            uint value = 2166136261;
-            foreach (char character in definition.FamilyId) value = unchecked((value ^ character) * 16777619);
-            return value;
-        }
+        public Sprite GetIcon(ModifierDefinition definition) => Entry(definition).Icon;
 
         public ModifierCategoryPresentationAsset GetCategory(ModifierDefinition definition) => Entry(definition).Category;
         public Color GetEffectColor(ModifierDefinition definition) => GetCategory(definition).AccentColor;
         public Color GetInkColor(ModifierDefinition definition) => GetCategory(definition).InkColor;
-        public ModifierCategorySymbol GetCategorySymbol(ModifierDefinition definition) => GetCategory(definition).Symbol;
-        public Sprite GetCategorySprite(ModifierDefinition definition) => artwork.GetSymbolSprite(GetCategorySymbol(definition));
-
-        public void Dispose() => artwork.Dispose();
+        /** The mark of the charm's category; null for a category without one. */
+        public Sprite GetCategorySprite(ModifierDefinition definition) => GetCategory(definition).Symbol;
 
         private ModifierPresentationAsset Entry(ModifierDefinition definition)
         {

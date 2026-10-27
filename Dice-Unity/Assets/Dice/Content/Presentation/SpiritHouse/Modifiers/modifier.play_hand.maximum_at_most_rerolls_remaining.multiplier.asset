@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Low Roof / Mult
   icon: {fileID: 21300000, guid: 63ca1f4174ad57a4afc8af5769785f8a, type: 3}
   conditionTemplate: Largest face is at most rerolls remaining.
-  artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

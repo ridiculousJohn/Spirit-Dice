@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Wide Valley / Mult
   icon: {fileID: 21300000, guid: 370bbad52bff57c8a2ca042c0bca0114, type: 3}
   conditionTemplate: Largest minus smallest face exceeds {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

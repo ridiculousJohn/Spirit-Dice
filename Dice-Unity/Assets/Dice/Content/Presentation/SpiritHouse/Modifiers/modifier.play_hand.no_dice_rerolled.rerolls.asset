@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Unturned Leaf / Rerolls
   icon: {fileID: 21300000, guid: 03ef151ca207597eb2e85402a53c5543, type: 3}
   conditionTemplate: No rerolls spent on this hand.
-  artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

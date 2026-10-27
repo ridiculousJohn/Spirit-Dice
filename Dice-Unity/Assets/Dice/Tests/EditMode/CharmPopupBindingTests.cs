@@ -32,7 +32,6 @@ namespace Dice.Tests
             SyntheticUi.Set(popup, "<Panel>k__BackingField", panel);
             SyntheticUi.Set(popup, "<Title>k__BackingField", ui.Add<Text>(panel, "Title"));
             SyntheticUi.Set(popup, "<Icon>k__BackingField", ui.Add<Image>(panel, "Icon"));
-            SyntheticUi.Set(popup, "<Sigil>k__BackingField", ui.Add<SpiritModifierSigilGraphic>(panel, "Sigil"));
             SyntheticUi.Set(popup, "<Category>k__BackingField", ui.CategoryBadge(panel));
             SyntheticUi.Set(popup, "<Effect>k__BackingField", ui.Add<Text>(panel, "Effect"));
             SyntheticUi.Set(popup, "<Description>k__BackingField", ui.Add<Text>(panel, "Description"));

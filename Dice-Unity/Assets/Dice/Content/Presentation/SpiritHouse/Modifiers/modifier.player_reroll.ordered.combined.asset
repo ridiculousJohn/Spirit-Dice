@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Winding Stair / Base + Mult
   icon: {fileID: 21300000, guid: 9069dfd6eb175e90b730e6a5f996b2df, type: 3}
   conditionTemplate: Faces are in ascending or descending order; ties allowed.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

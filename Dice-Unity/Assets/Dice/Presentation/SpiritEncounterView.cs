@@ -587,7 +587,7 @@ namespace Dice.Presentation
                 diceButtons[i].onClick.RemoveListener(selectDie[i]);
                 diceButtons[i].onClick.AddListener(selectDie[i]);
             }
-            actionModifierCue.Initialize(RerollButton, PlayButton);
+            actionModifierCue.Initialize();
             RewardsPanel.Build(portrait, () => Busy);
             EncounterCharmsIntroduction.Build();
             OwnedCharmsPanel.Build(portrait, ShowTable, () => Busy);

@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Handful of Seeds / Base + Mult
   icon: {fileID: 21300000, guid: 9d89383b13505a0db99957107e613b1e, type: 3}
   conditionTemplate: A rerolled die face equals hands remaining in the evaluation context.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Dice.Engine;
 using Dice.Presentation;
@@ -28,8 +27,8 @@ namespace Dice.Tests
             var category = synthetic.Category();
             var first = synthetic.Charm("test.first");
             var second = synthetic.Charm("test.second");
-            var firstIcon = Icon();
-            var secondIcon = Icon();
+            var firstIcon = synthetic.Icon();
+            var secondIcon = synthetic.Icon();
             var content = SyntheticCharms.Content(first, second);
             var charms = synthetic.Load(synthetic.Skin(new[]
             {
@@ -188,91 +187,11 @@ namespace Dice.Tests
             Assert.That(charms.GetContributionText(baseScore, multiplier, rerolls), Is.EqualTo(expected));
         }
 
-        /** Checks every artwork kind draws one cached, visible, distinct sprite with transparent space / fails if a kind draws nothing, redraws or duplicates another. */
-        [Test]
-        public void EveryArtworkKindDrawsDistinctVisibleInkWithTransparentSpace()
-        {
-            var kinds = Enum.GetValues(typeof(ModifierArtworkKind)).Cast<ModifierArtworkKind>()
-                .Where(kind => kind != ModifierArtworkKind.None).ToArray();
-            Assert.That(kinds, Is.Not.Empty);
-            var category = synthetic.Category();
-            var charmAssets = kinds.Select((kind, index) => synthetic.Charm("test.artwork." + index)).ToArray();
-            var content = SyntheticCharms.Content(charmAssets);
-            var charms = synthetic.Load(synthetic.Skin(charmAssets.Select((charm, index) =>
-                synthetic.Presentation(charm, category, artwork: kinds[index])), new[] { category }), content);
-            var sprites = new HashSet<Sprite>();
-            var images = new List<Color32[]>();
-            foreach (var definition in content.Catalog.Modifiers)
-            {
-                var sprite = charms.GetIcon(definition);
-                Assert.That(sprite, Is.Not.Null, definition.Id);
-                Assert.That(charms.GetIcon(definition), Is.SameAs(sprite), definition.Id + " redraws its artwork.");
-                Assert.That(sprites.Add(sprite), Is.True, definition.Id);
-                var pixels = ReadPixels(sprite.texture);
-                Assert.That(pixels.Any(value => value.a > 0), Is.True, definition.Id + " requires visible artwork.");
-                Assert.That(pixels.Any(value => value.a == 0), Is.True, definition.Id + " requires transparent space.");
-                Assert.That(images.All(value => !value.SequenceEqual(pixels)), Is.True, definition.Id + " duplicates another kind's image.");
-                images.Add(pixels);
-            }
-        }
-
-        /** Checks a charm without an icon or artwork has no sprite while one with artwork has one / fails if a sprite is invented. */
-        [Test]
-        public void SpriteComesOnlyFromAnAuthoredIconOrArtwork()
-        {
-            var category = synthetic.Category();
-            var plain = synthetic.Charm("test.plain");
-            var drawn = synthetic.Charm("test.drawn");
-            var content = SyntheticCharms.Content(plain, drawn);
-            var charms = synthetic.Load(synthetic.Skin(new[]
-            {
-                synthetic.Presentation(plain, category),
-                synthetic.Presentation(drawn, category, artwork: ModifierArtworkKind.OneSpark)
-            }, new[] { category }), content);
-            Assert.That(charms.GetIcon(content.GetDefinition(plain)), Is.Null);
-            Assert.That(charms.GetIcon(content.GetDefinition(drawn)), Is.Not.Null);
-        }
-
-        /**
-         * Checks every category symbol draws one cached, distinct, white glyph with transparent space that is never saved /
-         * fails if a symbol draws nothing, redraws, duplicates another or tints its ink.
-         */
-        [Test]
-        public void CategoryGlyphsUseDistinctCachedWhiteInkWithTransparentSpace()
-        {
-            var symbols = Enum.GetValues(typeof(ModifierCategorySymbol)).Cast<ModifierCategorySymbol>()
-                .Where(symbol => symbol != ModifierCategorySymbol.None).ToArray();
-            Assert.That(symbols, Is.Not.Empty);
-            var categories = symbols.Select(symbol => synthetic.Category(symbol)).ToArray();
-            var charmAssets = symbols.Select((symbol, index) => synthetic.Charm("test.category." + index)).ToArray();
-            var content = SyntheticCharms.Content(charmAssets);
-            var charms = synthetic.Load(synthetic.Skin(charmAssets.Select((charm, index) =>
-                synthetic.Presentation(charm, categories[index])), categories), content);
-            var sprites = new HashSet<Sprite>();
-            var images = new List<Color32[]>();
-            foreach (var definition in content.Catalog.Modifiers)
-            {
-                var sprite = charms.GetCategorySprite(definition);
-                Assert.That(sprite, Is.Not.Null, definition.Id);
-                Assert.That(charms.GetCategorySprite(definition), Is.SameAs(sprite), definition.Id + " redraws its glyph.");
-                Assert.That(sprites.Add(sprite), Is.True, definition.Id);
-                Assert.That(sprite.hideFlags, Is.EqualTo(HideFlags.DontSave));
-                Assert.That(sprite.texture.hideFlags, Is.EqualTo(HideFlags.DontSave));
-                var pixels = ReadPixels(sprite.texture);
-                Assert.That(pixels.Any(pixel => pixel.a > 0), Is.True, definition.Id);
-                Assert.That(pixels.Any(pixel => pixel.a == 0), Is.True, definition.Id);
-                Assert.That(pixels.Where(pixel => pixel.a > 0).All(pixel => pixel.r == 255 && pixel.g == 255 && pixel.b == 255),
-                    Is.True, definition.Id);
-                Assert.That(images.All(image => !image.SequenceEqual(pixels)), Is.True, definition.Id);
-                images.Add(pixels);
-            }
-        }
-
-        /** Checks category styling comes from the presentation's category even when the effects suggest another role / fails if styling is inferred from effects or identity. */
+        /** Checks category styling and mark come from the presentation's category even when the effects suggest another role / fails if styling or the mark is inferred from effects or identity. */
         [Test]
         public void CategoryStylingComesFromThePresentationsCategory()
         {
-            var rerolls = synthetic.Category(ModifierCategorySymbol.Rerolls, new Color(.2f, .6f, .9f), new Color(.1f, .3f, .5f));
+            var rerolls = synthetic.Category(synthetic.Icon(), new Color(.2f, .6f, .9f), new Color(.1f, .3f, .5f));
             var charm = synthetic.Charm("test.lookup.base_score", effects: new[] { (ModifierEffectKind.AddBaseScore, 10L) });
             var content = SyntheticCharms.Content(charm);
             var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, rerolls) }, new[] { rerolls }), content);
@@ -280,30 +199,7 @@ namespace Dice.Tests
             Assert.That(charms.GetCategory(definition), Is.SameAs(rerolls));
             Assert.That(charms.GetEffectColor(definition), Is.EqualTo(rerolls.AccentColor));
             Assert.That(charms.GetInkColor(definition), Is.EqualTo(rerolls.InkColor));
-            Assert.That(charms.GetCategorySymbol(definition), Is.EqualTo(rerolls.Symbol));
-        }
-
-        /** Checks disposing destroys the sprites and textures the presentation generated / fails if generated art outlives its owner. */
-        [Test]
-        public void DisposingDestroysTheGeneratedSpritesAndTheirTextures()
-        {
-            var category = synthetic.Category(ModifierCategorySymbol.Base);
-            var charm = synthetic.Charm("test.lifecycle");
-            var content = SyntheticCharms.Content(charm);
-            var charms = new ModifierPresentationCatalog(synthetic.Skin(new[]
-                { synthetic.Presentation(charm, category, artwork: ModifierArtworkKind.WelcomingPair) }, new[] { category }), content);
-            var definition = content.GetDefinition(charm);
-            var familySprite = charms.GetIcon(definition);
-            var categorySprite = charms.GetCategorySprite(definition);
-            Assert.That(familySprite, Is.Not.Null);
-            Assert.That(categorySprite, Is.Not.Null);
-            var familyTexture = familySprite.texture;
-            var categoryTexture = categorySprite.texture;
-            charms.Dispose();
-            Assert.That(familySprite == null, Is.True);
-            Assert.That(categorySprite == null, Is.True);
-            Assert.That(familyTexture == null, Is.True);
-            Assert.That(categoryTexture == null, Is.True);
+            Assert.That(charms.GetCategorySprite(definition), Is.SameAs(rerolls.Symbol));
         }
 
         /** Checks a content charm without a presentation in the skin fails at load / fails if the charm loads without presentation. */
@@ -420,7 +316,7 @@ namespace Dice.Tests
             var serialized = new SerializedObject(charm);
             serialized.FindProperty("effects").arraySize = 0;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var category = synthetic.Category(ModifierCategorySymbol.None);
+            var category = synthetic.Category();
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, noEffectsText: " ");
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
@@ -433,7 +329,7 @@ namespace Dice.Tests
             var serialized = new SerializedObject(charm);
             serialized.FindProperty("effects").arraySize = 0;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var category = synthetic.Category(ModifierCategorySymbol.None);
+            var category = synthetic.Category();
             var content = SyntheticCharms.Content(charm);
             var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category },
                 noEffectsText: "Nothing happens"), content);
@@ -459,12 +355,27 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
+        /** Checks a presentation without an icon fails at load with a message naming the charm / fails if a charm loads without artwork or the failure does not say which charm. */
+        [Test]
+        public void APresentationWithoutAnIconFailsAtLoadNamingTheCharm()
+        {
+            var category = synthetic.Category();
+            var charm = synthetic.Charm("test.without_icon");
+            var presentation = synthetic.Presentation(charm, category);
+            var serialized = new SerializedObject(presentation);
+            serialized.FindProperty("icon").objectReferenceValue = null;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var skin = synthetic.Skin(new[] { presentation }, new[] { category });
+            var error = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+            Assert.That(error.Message, Does.Contain("test.without_icon"));
+        }
+
         /** Checks a presentation whose category the skin does not list fails at load / fails if an unlisted category is used. */
         [Test]
         public void ACategoryTheSkinDoesNotListFailsAtLoad()
         {
             var listed = synthetic.Category();
-            var unlisted = synthetic.Category(ModifierCategorySymbol.Multiplier);
+            var unlisted = synthetic.Category();
             var charm = synthetic.Charm("test.unlisted");
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, unlisted) }, new[] { listed });
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
@@ -507,32 +418,5 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Definition(ModifierPresentationCatalog charms) => charms.Catalog.Modifiers.Single();
-
-        private Sprite Icon()
-        {
-            var texture = synthetic.Own(new Texture2D(2, 2));
-            return synthetic.Own(Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f)));
-        }
-
-        private static Color32[] ReadPixels(Texture2D texture)
-        {
-            var previous = RenderTexture.active;
-            var target = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32);
-            var readable = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
-            try
-            {
-                Graphics.Blit(texture, target);
-                RenderTexture.active = target;
-                readable.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
-                readable.Apply();
-                return readable.GetPixels32();
-            }
-            finally
-            {
-                RenderTexture.active = previous;
-                RenderTexture.ReleaseTemporary(target);
-                UnityEngine.Object.DestroyImmediate(readable);
-            }
-        }
     }
 }

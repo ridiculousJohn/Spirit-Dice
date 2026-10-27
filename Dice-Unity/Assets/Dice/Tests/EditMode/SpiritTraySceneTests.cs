@@ -288,16 +288,16 @@ namespace Dice.Tests
             }
         }
 
-        /** Checks a categorized token shows its category glyph and ink over the untinted bone while an uncategorized one hides category marks and keeps its sigil / fails if category ink tints the bone, the glyph is missing or uncategorized tokens show category marks. */
+        /** Checks a categorized token shows its category glyph and ink over the untinted bone while an uncategorized one hides category marks and keeps its icon / fails if category ink tints the bone, the glyph is missing or uncategorized tokens show category marks. */
         [Test]
         public void CategorizedTokensShowTheirGlyphAndInkWithoutTintingTheBone()
         {
             Color ink = new Color(.2f, .45f, .7f, 1f);
             var categorized = TestTrayRig.Definition("test.tray.categorized", effect: ModifierEffectKind.AddMultiplier);
-            var categorizedCharms = Rig.Synthetic.For(Rig.Synthetic.Category(ModifierCategorySymbol.Multiplier, ink: ink), categorized);
+            var categorizedCharms = Rig.Synthetic.For(Rig.Synthetic.Category(Rig.Synthetic.Icon(), ink: ink), categorized);
             {
                 var plain = TestTrayRig.Definition("test.tray.uncategorized");
-                var plainCharms = Rig.Synthetic.For(Rig.Synthetic.Category(ModifierCategorySymbol.None), plain);
+                var plainCharms = Rig.Synthetic.For(Rig.Synthetic.Category(), plain);
                 var history = Rig.StartHistory();
                 history.Add(TestTrayRig.Contribution(categorized), categorizedCharms, categorized, false);
                 history.Add(TestTrayRig.Contribution(plain, 2), plainCharms, plain, false);
@@ -561,7 +561,6 @@ namespace Dice.Tests
             TestTrayRig.Set(hud, "<ModifierEmblem>k__BackingField", Ui<SpiritUiOrnament>("ModifierEmblem"));
             TestTrayRig.Set(hud, "<RerollButton>k__BackingField", Ui<Button>("RerollButton"));
             TestTrayRig.Set(hud, "<PlayButton>k__BackingField", Ui<Button>("PlayButton"));
-            TestTrayRig.Set(hud, "modifierActivationSigil", Ui<SpiritModifierSigilGraphic>("ModifierActivationSigil"));
             var badge = Ui<SpiritModifierCategoryBadge>("ModifierActivationCategory");
             var accent = Ui<Image>("Accent", badge.transform);
             TestTrayRig.Set(badge, "<Accent>k__BackingField", accent);

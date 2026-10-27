@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Wide Valley / Rerolls
   icon: {fileID: 21300000, guid: 370bbad52bff57c8a2ca042c0bca0114, type: 3}
   conditionTemplate: Largest minus smallest face exceeds {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

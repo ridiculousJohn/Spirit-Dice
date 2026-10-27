@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Light Basket / Rerolls
   icon: {fileID: 21300000, guid: 30d7001f8467517eb875a26ee8e028a7, type: 3}
   conditionTemplate: Dice sum is less than {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

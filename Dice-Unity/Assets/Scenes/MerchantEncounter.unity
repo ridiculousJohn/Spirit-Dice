@@ -782,6 +782,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67fcd92de8d84e829e3aa825658e1b11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritFlareSparks
+  softDisc: {fileID: 2800000, guid: 5543ac4fd92a4464a96438349b14c46e, type: 3}
   sparkCount: 10
   sparkSize: 8
   sparkReach: {x: 40, y: 11}

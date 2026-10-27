@@ -51,7 +51,7 @@ namespace Dice.Tests
             var cue = ui.Add<SpiritActionModifierCue>(ui.Root, "Action Cue");
             reroll = Author(ui, cue, "reroll");
             play = Author(ui, cue, "play");
-            cue.Initialize(null, null);
+            cue.Initialize();
             return cue;
         }
 
@@ -63,7 +63,6 @@ namespace Dice.Tests
             var label = ui.Add<CanvasGroup>(button, action + " label");
             SyntheticUi.Set(cue, action + ".Group", group);
             SyntheticUi.Set(cue, action + ".Artwork", artwork);
-            SyntheticUi.Set(cue, action + ".Sigil", ui.Add<SpiritModifierSigilGraphic>(group.transform, "Sigil"));
             SyntheticUi.Set(cue, action + ".Category", ui.CategoryBadge(group.transform));
             SyntheticUi.Set(cue, action + ".Border", artwork.gameObject.AddComponent<Outline>());
             SyntheticUi.Set(cue, action + ".Label", label);

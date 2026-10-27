@@ -18,7 +18,6 @@ namespace Dice.Presentation
         [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         private readonly List<Entry> entries = new List<Entry>();
         private readonly List<UnityEngine.Object> ownedResources = new List<UnityEngine.Object>();
-        private readonly Dictionary<uint, Texture2D> sigils = new Dictionary<uint, Texture2D>();
         [SerializeField] private GameObject renderRoot;
         [SerializeField] private SpiritModifierToken tokenPrefab;
         private bool initialized;
@@ -146,7 +145,7 @@ namespace Dice.Presentation
             material.SetFloat("_ShowFaceIcon", 1);
             material.SetFloat("_Seed", entries.Count * 17.31f);
             material.SetColor("_FaceIconColor", charms.GetInkColor(definition));
-            SetIcon(material, charms, definition);
+            SetSprite(material, charms.GetIcon(definition), "_FaceIcon", "_FaceIconRect", "_FaceIconUVTransform");
             SetCategory(material, charms, definition);
             SetClip(material);
             Transform die = token.Body.transform;
@@ -272,31 +271,10 @@ namespace Dice.Presentation
             entry.Shadow.SetPropertyBlock(properties);
         }
 
-        private void SetIcon(Material material, ModifierPresentationCatalog charms, ModifierDefinition definition)
-        {
-            Sprite sprite = charms.GetIcon(definition);
-            if (sprite != null)
-            {
-                SetSprite(material, sprite, "_FaceIcon", "_FaceIconRect", "_FaceIconUVTransform");
-            }
-            else
-            {
-                uint seed = charms.GetSigilSeed(definition);
-                if (!sigils.TryGetValue(seed, out Texture2D icon))
-                {
-                    icon = SpiritModifierSigilTexture.Create(seed);
-                    sigils.Add(seed, icon);
-                    ownedResources.Add(icon);
-                }
-                material.SetTexture("_FaceIcon", icon);
-                material.SetVector("_FaceIconRect", new Vector4(0, 0, 1, 1));
-            }
-        }
-
         private static void SetCategory(Material material, ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             Sprite sprite = charms.GetCategorySprite(definition);
-            bool visible = charms.GetCategorySymbol(definition) != ModifierCategorySymbol.None && sprite != null;
+            bool visible = sprite != null;
             material.SetFloat("_ShowCategory", visible ? 1 : 0);
             if (!visible) return;
             material.SetColor("_CategoryColor", charms.GetInkColor(definition));
@@ -351,7 +329,6 @@ namespace Dice.Presentation
             Clear();
             foreach (UnityEngine.Object resource in ownedResources) Release(resource);
             ownedResources.Clear();
-            sigils.Clear();
             texture = null;
             renderCamera = null;
             trayRoot = null;

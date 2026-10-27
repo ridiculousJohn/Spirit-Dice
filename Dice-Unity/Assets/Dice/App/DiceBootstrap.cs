@@ -19,7 +19,6 @@ namespace Dice.App
         [SerializeField] private SpiritApplicationPresentation presentation;
         private AsyncOperationHandle<DiceApplicationConfig> configurationHandle;
         private bool hasConfigurationHandle;
-        private ModifierPresentationCatalog modifierPresentation;
         private bool retainContent;
 
         [field: SerializeField] public SpiritStartupView StartupView { get; private set; }
@@ -109,6 +108,7 @@ namespace Dice.App
             try
             {
                 MechanicalContent content;
+                ModifierPresentationCatalog modifierPresentation;
                 try
                 {
                     content = configuration.CatalogAsset.Build();
@@ -158,8 +158,6 @@ namespace Dice.App
 
         private void ReleaseContent()
         {
-            modifierPresentation?.Dispose();
-            modifierPresentation = null;
             if (!hasConfigurationHandle) return;
             hasConfigurationHandle = false;
             if (configurationHandle.IsValid()) Addressables.Release(configurationHandle);

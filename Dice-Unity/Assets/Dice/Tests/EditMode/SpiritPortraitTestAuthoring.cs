@@ -30,9 +30,15 @@ namespace Dice.Tests
                 image.texture = source.Texture; image.color = source.Tint; image.raycastTarget = false;
                 image.Configure(source.Mesh);
                 if (source.Weights != null && source.Weights.Length == image.Weights.Count) image.SetWeights(source.Weights);
-                // A smoke layer's authored material uses the host's smoke shader, as an authored portrait prefab's does.
+                // A smoke layer's authored material uses the host's smoke shader and carries its flow noise and motion
+                // mask, as an authored portrait prefab's does.
                 if (source.Smoke != null && source.Smoke.Enabled)
-                    image.material = new Material(asset.SmokeShader) { name = source.Id + " Smoke" };
+                {
+                    var smoke = new Material(asset.SmokeShader) { name = source.Id + " Smoke" };
+                    smoke.SetTexture("_NoiseTex", Texture2D.grayTexture);
+                    smoke.SetTexture("_MotionMask", Texture2D.whiteTexture);
+                    image.material = smoke;
+                }
                 images[i] = image;
             }
             var serialized = new SerializedObject(portrait);

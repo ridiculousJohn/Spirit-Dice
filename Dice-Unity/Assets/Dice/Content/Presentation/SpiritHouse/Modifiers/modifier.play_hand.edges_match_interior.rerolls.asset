@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Echoing Bells / Rerolls
   icon: {fileID: 21300000, guid: 580b083597035912a89e7f0aede6613e, type: 3}
   conditionTemplate: Dice 1 and 5 match, and an interior die has that face.
-  artwork: 0
   category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

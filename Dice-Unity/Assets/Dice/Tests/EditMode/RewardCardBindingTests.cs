@@ -57,7 +57,6 @@ namespace Dice.Tests
             SyntheticUi.Set(card, "condition", ui.Add<Text>(modifierRoot.transform, "Condition"));
             SyntheticUi.Set(card, "effects", ui.Add<Text>(modifierRoot.transform, "Effects"));
             SyntheticUi.Set(card, "charmIcon", ui.Add<Image>(modifierRoot.transform, "Charm Icon"));
-            SyntheticUi.Set(card, "charmSigil", ui.Add<SpiritModifierSigilGraphic>(modifierRoot.transform, "Charm Sigil"));
             SyntheticUi.Set(card, "charmCategory", ui.CategoryBadge(modifierRoot.transform));
             SyntheticUi.Set(card, "handValues", ui.Add<Text>(handRoot.transform, "Hand Values"));
             SyntheticUi.Set(card, "handPattern", ui.Add<SpiritHandPatternGraphic>(handRoot.transform, "Hand Pattern"));

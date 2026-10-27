@@ -36,12 +36,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "d89ac900ebf548f7b83085c2f8335b0d", type: 3}
         Lights:
@@ -81,12 +75,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "4ad6f3e142664a1dbeacc4df64d77e74", type: 3}
         Lights:
@@ -126,12 +114,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "0cfb84b131434e3f8f1873d7af6fbd64", type: 3}
         Lights:
@@ -171,12 +153,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "0cfb84b131434e3f8f1873d7af6fbd64", type: 3}
         Lights:
@@ -216,12 +192,6 @@ MonoBehaviour:
       ReceiveSceneLighting: 1
       Smoke:
         Enabled: 0
-        MotionMask: {fileID: 0}
-        FlowNoise: {fileID: 0}
-        Distortion: 0.035
-        Speed: 0.7
-        Opacity: 0.6
-        Flow: {x: 0, y: 0.018}
       Lighting:
         BaseTexture: {fileID: 2800000, guid: "057a62d6bab14fcda6f9c980a473abcf", type: 3}
         Lights:

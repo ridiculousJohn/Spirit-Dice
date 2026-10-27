@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Braided Cord / Mult
   icon: {fileID: 21300000, guid: 61db2b803ce55e438bfa8bc4fe9efdd1, type: 3}
   conditionTemplate: Three consecutive dice show the same face.
-  artwork: 0
   category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

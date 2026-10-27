@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Narrow Bridge / Base + Mult
   icon: {fileID: 21300000, guid: edfeb47ece3c5f25812f625104752942, type: 3}
   conditionTemplate: Largest minus smallest face is less than {parameter}.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

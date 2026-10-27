@@ -12,7 +12,6 @@ namespace Dice.Presentation
         {
             public CanvasGroup Group;
             public Image Artwork;
-            public SpiritModifierSigilGraphic Sigil;
             public SpiritModifierCategoryBadge Category;
             public Outline Border;
             public Graphic HostSigil;
@@ -34,7 +33,7 @@ namespace Dice.Presentation
         public bool IsRerollVisible => reroll != null && reroll.Group.gameObject.activeInHierarchy;
         public bool IsPlayVisible => play != null && play.Group.gameObject.activeInHierarchy;
 
-        public void Initialize(Button rerollButton, Button playButton)
+        public void Initialize()
         {
             if (reroll == null || play == null || reroll.Group == null || play.Group == null)
                 throw new System.InvalidOperationException("Action modifier cues require authored image groups.");
@@ -43,27 +42,18 @@ namespace Dice.Presentation
             Clear();
         }
 
-        public void Show(ModifierPresentationCatalog charms, ModifierDefinition definition, float displayDuration)
-        {
-            if (definition == null) { Clear(); return; }
-            Show(charms.GetIcon(definition), definition.Phase, displayDuration,
-                charms.GetSigilSeed(definition), definition.Phase != ModifierPhase.PlayHand,
-                definition.Phase == ModifierPhase.PlayHand, charms, definition);
-        }
-
-        public void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed = 0)
-            => Show(sprite, phase, displayDuration, sigilSeed, phase != ModifierPhase.PlayHand, phase == ModifierPhase.PlayHand);
+        public void Show(Sprite sprite, ModifierPhase phase, float displayDuration)
+            => Show(sprite, phase, displayDuration, phase != ModifierPhase.PlayHand, phase == ModifierPhase.PlayHand);
 
         public void Show(ModifierPresentationCatalog charms, ModifierDefinition definition, float displayDuration,
             bool showReroll, bool showPlay)
         {
             if (definition == null) { Clear(); return; }
-            Show(charms.GetIcon(definition), definition.Phase, displayDuration,
-                charms.GetSigilSeed(definition), showReroll, showPlay, charms, definition);
+            Show(charms.GetIcon(definition), definition.Phase, displayDuration, showReroll, showPlay, charms, definition);
         }
 
-        private void Show(Sprite sprite, ModifierPhase phase, float displayDuration, uint sigilSeed,
-            bool showReroll, bool showPlay, ModifierPresentationCatalog charms = null, ModifierDefinition definition = null)
+        private void Show(Sprite sprite, ModifierPhase phase, float displayDuration, bool showReroll, bool showPlay,
+            ModifierPresentationCatalog charms = null, ModifierDefinition definition = null)
         {
             Clear();
             if (reroll == null || play == null || (!showReroll && !showPlay)) return;
@@ -71,24 +61,21 @@ namespace Dice.Presentation
             secondary = showReroll && showPlay ? play : null;
             ActivePhase = phase;
             ActiveSprite = sprite;
-            Prepare(active, sprite, sigilSeed, charms, definition);
-            if (secondary != null) Prepare(secondary, sprite, sigilSeed, charms, definition);
+            Prepare(active, sprite, charms, definition);
+            if (secondary != null) Prepare(secondary, sprite, charms, definition);
             duration = Mathf.Max(.01f, displayDuration);
             elapsed = 0;
         }
 
         /** A charm cue takes the charm's category colour and mark; a host cue, without a charm, takes the theme's cream. */
-        private static void Prepare(Cue cue, Sprite sprite, uint sigilSeed, ModifierPresentationCatalog charms,
-            ModifierDefinition definition)
+        private static void Prepare(Cue cue, Sprite sprite, ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             Color color = definition == null ? SpiritUi.GetTheme(cue.Group.transform).cream :
                 charms.GetEffectColor(definition);
-            cue.Artwork.color = cue.Sigil.color = cue.Border.effectColor = color;
+            cue.Artwork.color = cue.Border.effectColor = color;
             cue.Category.Render(charms, definition);
             cue.Artwork.sprite = sprite;
             cue.Artwork.gameObject.SetActive(sprite != null);
-            cue.Sigil.Seed = sigilSeed;
-            cue.Sigil.gameObject.SetActive(sprite == null);
             if (cue.HostSigil != null) cue.HostSigil.gameObject.SetActive(false);
             cue.Group.gameObject.SetActive(true);
             cue.Group.alpha = 0;
@@ -121,7 +108,6 @@ namespace Dice.Presentation
         {
             Show(sprite, phase, displayDuration);
             if (active == null || sprite != null || active.HostSigil == null) return;
-            active.Sigil.gameObject.SetActive(false);
             active.HostSigil.gameObject.SetActive(true);
         }
 
@@ -133,7 +119,7 @@ namespace Dice.Presentation
             {
                 if (cue == null) continue;
                 cue.Category.Render(null, null);
-                cue.Artwork.color = cue.Sigil.color = cue.Border.effectColor = SpiritUi.GetTheme(cue.Group.transform).cream;
+                cue.Artwork.color = cue.Border.effectColor = SpiritUi.GetTheme(cue.Group.transform).cream;
             }
             if (reroll != null) reroll.Group.gameObject.SetActive(false);
             if (play != null) play.Group.gameObject.SetActive(false);

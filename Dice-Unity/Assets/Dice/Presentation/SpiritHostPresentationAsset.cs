@@ -8,18 +8,14 @@ namespace Dice.Presentation
     public enum SpiritPortraitProperty { PositionX, PositionY, Width, Height, Rotation, Alpha, Deformation }
     public enum SpiritTrackBlend { Replace, Add }
 
+    /**
+     * Whether a layer animates as smoke. The layer's authored image material, which uses the host's smoke shader, holds
+     * the smoke's flow noise, motion mask and values.
+     */
     [Serializable]
     public sealed class SpiritPortraitSmoke
     {
         public bool Enabled;
-        [Tooltip("Optional linear motion mask: black remains fixed, white receives smoke motion.")]
-        public Texture2D MotionMask;
-        [Tooltip("Optional linear, repeating RG flow noise. An omitted texture uses generated noise.")]
-        public Texture2D FlowNoise;
-        [Range(0f, .05f)] public float Distortion = .035f;
-        [Min(0f)] public float Speed = .7f;
-        [Range(0f, 1f)] public float Opacity = .6f;
-        public Vector2 Flow = new Vector2(0f, .018f);
     }
 
     [Serializable]
@@ -119,15 +115,7 @@ namespace Dice.Presentation
                     "Layer " + layer.Id + " has invalid Pivot.");
                 Require(Finite(layer.Rotation) && Finite(layer.Tint.r) && Finite(layer.Tint.g) && Finite(layer.Tint.b) && Finite(layer.Tint.a), "Layer " + layer.Id + " has invalid tint or rotation.");
                 if (layer.Smoke != null && layer.Smoke.Enabled)
-                {
                     Require(!layer.Silhouette, "Layer " + layer.Id + " cannot use both silhouette and smoke materials.");
-                    Require(Finite(layer.Smoke.Distortion) && layer.Smoke.Distortion >= 0f && layer.Smoke.Distortion <= .05f,
-                        "Layer " + layer.Id + " smoke distortion must be between zero and 0.05.");
-                    Require(Finite(layer.Smoke.Speed) && layer.Smoke.Speed >= 0f && Finite(layer.Smoke.Flow),
-                        "Layer " + layer.Id + " smoke motion must be finite, with nonnegative speed.");
-                    Require(Finite(layer.Smoke.Opacity) && layer.Smoke.Opacity >= 0f && layer.Smoke.Opacity <= 1f,
-                        "Layer " + layer.Id + " smoke opacity must be between zero and one.");
-                }
                 if (layer.Lighting != null && layer.Lighting.Configured)
                 {
                     Require(!layer.Silhouette && (layer.Smoke == null || !layer.Smoke.Enabled) && layer.ReceiveSceneLighting,

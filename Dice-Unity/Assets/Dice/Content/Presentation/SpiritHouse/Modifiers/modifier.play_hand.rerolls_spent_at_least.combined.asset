@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Patient Mill / Base + Mult
   icon: {fileID: 21300000, guid: f6a239815302542a9c132513d020106a, type: 3}
   conditionTemplate: At least {parameter} rerolls were spent on this hand.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

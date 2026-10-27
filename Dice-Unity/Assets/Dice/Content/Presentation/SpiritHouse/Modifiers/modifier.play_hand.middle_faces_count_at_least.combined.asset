@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: Gathered Ferns / Base + Mult
   icon: {fileID: 21300000, guid: a0603af9c8b4575c94569b0593c9414b, type: 3}
   conditionTemplate: At least {parameter} dice show 3 or 4.
-  artwork: 0
   category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}
