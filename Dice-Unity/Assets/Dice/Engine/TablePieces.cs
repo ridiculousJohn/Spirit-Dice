@@ -75,6 +75,9 @@ namespace Dice.Engine
     public abstract class PieceInteractionState
     {
         internal PieceInteractionState() { }
+
+        /** Developer diagnostics, not player-facing text: the state in the interaction kind's own words. */
+        internal abstract string DescribeDiagnostic(IDiagnosticFormat format);
     }
 
     public abstract class PieceInteractionInput
@@ -86,6 +89,9 @@ namespace Dice.Engine
     {
         public PiecePosition Position { get; }
         internal PiecePositionState(PiecePosition position) => Position = position;
+
+        internal override string DescribeDiagnostic(IDiagnosticFormat format)
+            => Position.Kind == PiecePositionKind.DiceBay ? "die " + (Position.Index + 1) : format.Humanize(Position.Kind.ToString());
     }
 
     public sealed class MovePieceInput : PieceInteractionInput
@@ -196,6 +202,9 @@ namespace Dice.Engine
             Before = before;
             After = after;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => PieceId + " " + InteractionId + ": " + Before.DescribeDiagnostic(format) + " -> " + After.DescribeDiagnostic(format) + ".";
     }
 
     /** Interaction states are stored in definition order: each piece's interactions, piece by piece. */

@@ -14,6 +14,7 @@ namespace Dice.Presentation
         private readonly List<string> upgradeRows = new List<string>();
         private readonly List<string> eventRows = new List<string>();
         private readonly string[] dieLabels = new string[DiceValues.Count];
+        private readonly List<string> dieStates = new List<string>();
         private IDiagnosticEncounterControls controls;
         private EncounterSnapshot cachedSnapshot;
         private MechanicalCatalog cachedCatalog;
@@ -183,10 +184,15 @@ namespace Dice.Presentation
                 {
                     bool selected = (cachedMask & (1 << index)) != 0;
                     if (selected) ++selectedCount;
-                    bool bound = (snapshot.BoundMask & (1 << index)) != 0;
-                    bool marked = (snapshot.MarkedMask & (1 << index)) != 0;
-                    dieLabels[index] = "DIE " + (index + 1) + "\n" + snapshot.CurrentDice[index] + "\n" +
-                        (bound ? "BOUND" : (selected ? "REROLL" : "KEEP") + (marked ? " / MARKED" : ""));
+                    // A locked die cannot be rerolled, so only the rules' labels describe it.
+                    dieStates.Clear();
+                    if ((snapshot.LockedMask & (1 << index)) == 0) dieStates.Add(selected ? "REROLL" : "KEEP");
+                    foreach (EncounterRuleSnapshot rule in snapshot.EncounterRules)
+                    {
+                        string label = rule.DiagnosticDieLabel(index);
+                        if (!string.IsNullOrEmpty(label)) dieStates.Add(label);
+                    }
+                    dieLabels[index] = "DIE " + (index + 1) + "\n" + snapshot.CurrentDice[index] + "\n" + string.Join(" / ", dieStates);
                 }
                 selectionLabel = "Select dice FOR REROLL. " + selectedCount + " selected | mask " + cachedMask +
                     " | rerolls spent on this hand " + snapshot.RerollsSpentOnHand;
@@ -318,33 +324,28 @@ namespace Dice.Presentation
                         }
                         break;
                     }
-                long currentBase = 0, currentMultiplier = 0;
-                int currentRerolls = 0;
-                foreach (ModifierContribution contribution in cachedSnapshot.ModifierContributions)
-                {
-                    if (contribution.InstanceId != instance.InstanceId) continue;
-                    currentBase += contribution.BaseScore;
-                    currentMultiplier += contribution.Multiplier;
-                    currentRerolls += contribution.Rerolls;
-                }
-                card.Contributions = "This hand so far: +" + DiagnosticText.Number(currentBase) + " base, +" +
-                    DiagnosticText.Number(currentMultiplier) + " multiplier, +" + currentRerolls + " rerolls.";
+                card.Contributions = "This hand so far: " + DescribeContributions(cachedSnapshot.ModifierContributions, instance.InstanceId);
                 if (cachedPreview != null && definition.Phase == ModifierPhase.PlayHand)
-                {
-                    long projectedBase = 0, projectedMultiplier = 0;
-                    int projectedRerolls = 0;
-                    foreach (ModifierContribution contribution in cachedPreview.Score.ModifierContributions)
-                    {
-                        if (contribution.InstanceId != instance.InstanceId) continue;
-                        projectedBase += contribution.BaseScore;
-                        projectedMultiplier += contribution.Multiplier;
-                        projectedRerolls += contribution.Rerolls;
-                    }
-                    card.Contributions += "\nIf played now, hand total: +" + DiagnosticText.Number(projectedBase) +
-                        " base, +" + DiagnosticText.Number(projectedMultiplier) + " multiplier, +" + projectedRerolls + " rerolls.";
-                }
+                    card.Contributions += "\nIf played now, hand total: " +
+                        DescribeContributions(cachedPreview.Score.ModifierContributions, instance.InstanceId);
                 inventoryCards.Add(card);
             }
+        }
+
+        /** The summed base, multiplier and rerolls of the instance's contributions among the contributions. */
+        private static string DescribeContributions(IEnumerable<ModifierContribution> contributions, long instanceId)
+        {
+            long baseScore = 0, multiplier = 0;
+            int rerolls = 0;
+            foreach (ModifierContribution contribution in contributions)
+            {
+                if (contribution.InstanceId != instanceId) continue;
+                baseScore += contribution.BaseScore;
+                multiplier += contribution.Multiplier;
+                rerolls += contribution.Rerolls;
+            }
+            return "+" + DiagnosticText.Number(baseScore) + " base, +" + DiagnosticText.Number(multiplier) + " multiplier, +" +
+                rerolls + " rerolls.";
         }
 
     }

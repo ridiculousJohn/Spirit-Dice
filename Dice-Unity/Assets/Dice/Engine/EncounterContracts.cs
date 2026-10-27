@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace Dice.Engine
 {
@@ -137,15 +138,44 @@ namespace Dice.Engine
         }
     }
 
+    /**
+     * Formatting an event description takes from its caller: the engine holds no display names, so charm names and
+     * number and identifier formatting come from the presentation that shows the description.
+     */
+    public interface IDiagnosticFormat
+    {
+        string Number(long value);
+        /** Spaces an engine identifier or enum name into words. */
+        string Humanize(string value);
+        string ModifierName(string definitionId);
+    }
+
     public abstract class RuleEvent
     {
         public int StageIndex { get; }
         public int HandIndex { get; }
-        internal RuleEvent(int stageIndex, int handIndex)
+        protected RuleEvent(int stageIndex, int handIndex)
         {
             StageIndex = stageIndex;
             HandIndex = handIndex;
         }
+
+        /** Developer diagnostics for logs and debug views, not player-facing text: the stage and hand, then the event's own detail. */
+        public string Describe(IDiagnosticFormat format)
+        {
+            if (format == null) throw new ArgumentNullException(nameof(format));
+            return "Stage " + (StageIndex + 1) + " / hand " + (HandIndex + 1) + " - " + DescribeDetail(format);
+        }
+
+        /** What happened, in the event's own words. */
+        protected abstract string DescribeDetail(IDiagnosticFormat format);
+
+        private protected static string DescribeDice(DiceValues dice)
+            => dice[0] + "  " + dice[1] + "  " + dice[2] + "  " + dice[3] + "  " + dice[4];
+
+        private protected static string DescribeContribution(ModifierContribution contribution, IDiagnosticFormat format)
+            => "+" + format.Number(contribution.BaseScore) + " base, +" + format.Number(contribution.Multiplier) +
+               " multiplier, +" + format.Number(contribution.Rerolls) + " rerolls";
     }
 
     public sealed class ModifierUnlockedEvent : RuleEvent
@@ -157,6 +187,11 @@ namespace Dice.Engine
             ModifierId = modifier.Id;
             Availability = modifier.Availability;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Unlocked " + format.ModifierName(ModifierId) + " (" + format.Humanize(Availability.Access.ToString()) + ", " +
+                format.Humanize(Availability.Scope.ToString()) + (Availability.ScopeId != null ? " " + Availability.ScopeId : "") +
+                ", power tier " + Availability.PowerTier + ").";
     }
 
     public sealed class StageStartedEvent : RuleEvent
@@ -170,6 +205,9 @@ namespace Dice.Engine
             Hands = definition.StartingHands;
             Rerolls = definition.StartingRerolls;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Started. Target " + format.Number(Threshold) + ", " + Hands + " hands, " + Rerolls + " rerolls.";
     }
 
     public sealed class HandStartedEvent : RuleEvent
@@ -181,6 +219,9 @@ namespace Dice.Engine
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Started. " + HandsRemaining + " hands and " + RerollsRemaining + " rerolls remain.";
     }
 
     public sealed class DiceRolledEvent : RuleEvent
@@ -199,6 +240,10 @@ namespace Dice.Engine
             SelectedMask = selectedMask;
             ChangedMask = changedMask;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => format.Humanize(Kind.ToString()) + ": [" + DescribeDice(After) + "]. Rerolled mask " + SelectedMask +
+                ", changed mask " + ChangedMask + ".";
     }
 
     public sealed class EncounterRuleActivatedEvent : RuleEvent
@@ -212,6 +257,9 @@ namespace Dice.Engine
             RuleId = ruleId;
             MultiplierBonus = multiplierBonus;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => RuleId + " activated" + (MultiplierBonus != 0 ? ": +" + format.Number(MultiplierBonus) + " multiplier." : ".");
     }
 
     public sealed class ResourceChangedEvent : RuleEvent
@@ -233,6 +281,9 @@ namespace Dice.Engine
             SourceInstanceId = sourceInstanceId;
             SourceDefinitionId = sourceDefinitionId;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => format.Humanize(Resource.ToString()) + " " + Before + " -> " + After + " (" + format.Humanize(Cause.ToString()) + ").";
     }
 
     public sealed class HandScoredEvent : RuleEvent
@@ -243,6 +294,24 @@ namespace Dice.Engine
         {
             Dice = state.CurrentDice;
             Score = score;
+        }
+
+        /** The played dice, the full score breakdown, then one line per modifier contribution. */
+        protected override string DescribeDetail(IDiagnosticFormat format)
+        {
+            var text = new StringBuilder("Played [").Append(DescribeDice(Dice)).Append("]\n")
+                .Append(format.Humanize(Score.Category.ToString())).Append(" (upgrade level ").Append(Score.UpgradeCount).Append(")\n")
+                .Append("Base: dice ").Append(format.Number(Score.DiceSum)).Append(" + category ").Append(format.Number(Score.CategoryBaseScore))
+                .Append(" + upgrades ").Append(format.Number(Score.UpgradeBaseScore)).Append(" + modifiers ")
+                .Append(format.Number(Score.ModifierBaseScore)).Append(" = ").Append(format.Number(Score.BaseScore))
+                .Append("\nMultiplier: category ").Append(format.Number(Score.CategoryMultiplier)).Append(" + upgrades ")
+                .Append(format.Number(Score.UpgradeMultiplier)).Append(" + modifiers ").Append(format.Number(Score.ModifierMultiplier))
+                .Append(" = ").Append(format.Number(Score.Multiplier)).Append("\nFinal score: ").Append(format.Number(Score.BaseScore))
+                .Append(" x ").Append(format.Number(Score.Multiplier)).Append(" = ").Append(format.Number(Score.HandScore));
+            foreach (ModifierContribution contribution in Score.ModifierContributions)
+                text.Append("\n  ").Append(format.ModifierName(contribution.DefinitionId)).Append(" #")
+                    .Append(contribution.InstanceId).Append(": ").Append(DescribeContribution(contribution, format));
+            return text.ToString();
         }
     }
 
@@ -259,6 +328,10 @@ namespace Dice.Engine
             After = state.RemainingThreshold;
             HandScore = handScore;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Target remaining " + format.Number(Before) + " -> " + format.Number(After) + "; applied " +
+                format.Number(AppliedScore) + ", excess " + format.Number(ExcessScore) + ".";
     }
 
     public sealed class StageClearedEvent : RuleEvent
@@ -270,11 +343,16 @@ namespace Dice.Engine
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Cleared. " + HandsRemaining + " hands and " + RerollsRemaining + " rerolls remain.";
     }
 
     public sealed class RewardsRequiredEvent : RuleEvent
     {
         internal RewardsRequiredEvent(EncounterState state) : base(state.StageIndex, state.HandIndex) { }
+
+        protected override string DescribeDetail(IDiagnosticFormat format) => "Rewards required before the next stage.";
     }
 
     public sealed class EncounterCompletedEvent : RuleEvent
@@ -290,6 +368,10 @@ namespace Dice.Engine
             HandsPlayed = state.TotalHandsPlayed;
             RerollsSpent = state.TotalRerollsSpent;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => format.Humanize(Outcome.ToString()) + ". Total score " + format.Number(TotalScore) + "; " + HandsPlayed +
+                " hands played, " + RerollsSpent + " rerolls spent.";
     }
 
     public sealed class Resolution

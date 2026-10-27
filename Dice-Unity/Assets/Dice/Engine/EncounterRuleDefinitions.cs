@@ -145,6 +145,9 @@ namespace Dice.Engine
         /** Named values the rule's card text may show as {name} placeholders. */
         public virtual IReadOnlyDictionary<string, int> TextValues => NoTextValues;
 
+        /** Developer diagnostics, not player-facing text: what this rule's state says about one die, or null for nothing. */
+        public virtual string DiagnosticDieLabel(int bay) => null;
+
         public EncounterRuleSnapshot(string id, bool isAvailable)
         {
             DefinitionValidation.RequireId(id, nameof(id));

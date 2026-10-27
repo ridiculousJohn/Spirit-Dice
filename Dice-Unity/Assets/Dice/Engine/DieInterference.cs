@@ -27,6 +27,10 @@ namespace Dice.Engine
             Before = before;
             After = after;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => RuleId + " " + format.Humanize(Kind.ToString()) + " on die " + (Bay + 1) + " after " +
+                format.Humanize(Trigger.ToString()) + ": " + Before + " -> " + After + ".";
     }
 
     public sealed class DisturbanceBlockedEvent : RuleEvent
@@ -48,6 +52,10 @@ namespace Dice.Engine
             Trigger = trigger;
             ProtectingRuleId = protectingRuleId;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => RuleId + " " + format.Humanize(Kind.ToString()) + " on die " + (Bay + 1) + " after " +
+                format.Humanize(Trigger.ToString()) + " blocked by " + ProtectingRuleId + ".";
     }
 
     /** The dice an interference rule disturbed during the current hand. */
@@ -73,6 +81,8 @@ namespace Dice.Engine
             DisturbedMask = disturbedMask;
             LatestDisturbedMask = latestDisturbedMask;
         }
+
+        public override string DiagnosticDieLabel(int bay) => (DisturbedMask & (1 << bay)) != 0 ? "DISTURBED" : null;
 
         private protected override bool StateEquals(EncounterRuleSnapshot other)
         {

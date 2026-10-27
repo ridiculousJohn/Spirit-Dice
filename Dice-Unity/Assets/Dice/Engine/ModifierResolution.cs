@@ -51,6 +51,10 @@ namespace Dice.Engine
 
         internal ModifierActivatedEvent(EncounterState state, ModifierContribution contribution)
             : base(state.StageIndex, state.HandIndex) => Contribution = contribution;
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => format.ModifierName(DefinitionId) + " #" + InstanceId + " activated on " + format.Humanize(Phase.ToString()) + ": " +
+                DescribeContribution(Contribution, format) + ".";
     }
 
     public sealed class HandPreview

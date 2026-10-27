@@ -13,6 +13,8 @@ namespace Dice.Engine
             RuleId = ruleId;
             Bay = bay;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format) => "Die " + (Bay + 1) + " marked for binding.";
     }
 
     public sealed class DieBoundEvent : RuleEvent
@@ -27,6 +29,8 @@ namespace Dice.Engine
             Bay = bay;
             Face = face;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format) => "Die " + (Bay + 1) + " bound at " + Face + ".";
     }
 
     /** A binding rule's snapshot: the dice it has bound and the die it has marked during the current hand. */
@@ -43,6 +47,12 @@ namespace Dice.Engine
             if ((markedMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(markedMask));
             BoundMask = boundMask;
             MarkedMask = markedMask;
+        }
+
+        public override string DiagnosticDieLabel(int bay)
+        {
+            int bit = 1 << bay;
+            return (BoundMask & bit) != 0 ? "BOUND" : (MarkedMask & bit) != 0 ? "MARKED" : null;
         }
 
         private protected override bool StateEquals(EncounterRuleSnapshot other)

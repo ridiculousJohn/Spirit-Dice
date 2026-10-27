@@ -103,6 +103,10 @@ namespace Dice.Engine
             Offer = offer;
             IsRefresh = isRefresh;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => (IsRefresh ? "Refreshed " : "Offered ") + format.Humanize(Offer.Kind.ToString()) + " choices for stage " +
+                (Offer.TargetStageIndex + 1) + " (offer " + Offer.OfferId + ").";
     }
 
     public sealed class RewardSelectedEvent : RuleEvent
@@ -117,6 +121,11 @@ namespace Dice.Engine
             Kind = offer.Kind;
             Option = option;
         }
+
+        /** Names a selected charm by its presentation and a hand upgrade by its engine id. */
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Selected " + (Kind == RewardKind.HandUpgrade ? format.Humanize(Option.DefinitionId) : format.ModifierName(Option.DefinitionId)) +
+                " (offer " + OfferId + ", option " + Option.OptionId + ").";
     }
 
     public sealed class RewardSkippedEvent : RuleEvent
@@ -124,6 +133,9 @@ namespace Dice.Engine
         public RewardKind Kind { get; }
         internal RewardSkippedEvent(EncounterState state, RewardKind kind)
             : base(state.StageIndex, state.HandIndex) => Kind = kind;
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Skipped " + format.Humanize(Kind.ToString()) + "; no eligible options.";
     }
 
     public sealed class ModifierAcquiredEvent : RuleEvent
@@ -136,6 +148,9 @@ namespace Dice.Engine
             InstanceId = modifier.InstanceId;
             DefinitionId = modifier.DefinitionId;
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => "Acquired " + format.ModifierName(DefinitionId) + " #" + InstanceId + ".";
     }
 
     public sealed class HandUpgradedEvent : RuleEvent
@@ -152,5 +167,8 @@ namespace Dice.Engine
             Before = before;
             After = state.HandUpgrades[(int)category];
         }
+
+        protected override string DescribeDetail(IDiagnosticFormat format)
+            => format.Humanize(Category.ToString()) + " upgraded " + Before + " -> " + After + ".";
     }
 }
