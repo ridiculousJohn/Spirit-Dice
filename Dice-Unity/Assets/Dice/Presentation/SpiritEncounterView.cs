@@ -726,8 +726,7 @@ namespace Dice.Presentation
 
         private void RenderHandRanks()
         {
-            handRanksPanel.Render(controls.Catalog, controls.Snapshot,
-                controls.Snapshot.Phase == EncounterPhase.Playing ? controls.Preview?.Score.Category : null);
+            handRanksPanel.Render(controls.Catalog, controls.Snapshot);
         }
 
         public void ShowTable()
@@ -847,8 +846,8 @@ namespace Dice.Presentation
                 hud.ModifierEmblem.gameObject.SetActive(false);
                 DiceTray.SetValues(snapshot.CurrentDice);
                 SetDiceSelection(controls.SelectedMask);
-                var score = controls.Preview?.Score;
-                hud.SetScore(score, false);
+                // The hand rank shows only while a played hand is scored.
+                hud.CategoryLabel.text = "";
                 hud.SetScoreValues(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier);
                 hud.HandScoreLabel.text = "0";
                 hud.ScoreDetail.text = "";

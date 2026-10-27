@@ -69,183 +69,167 @@ namespace Dice.Presentation
             this.endingView = endingView;
         }
 
-        /** Releases an interrupted roll; the view stops the playback coroutine itself. */
+        /** Releases an interrupted roll and the rule presentations still running; the view stops the playback coroutine itself. */
         internal void CancelRoll()
         {
             (activeRoll as IDisposable)?.Dispose();
             activeRoll = null;
+            activeRules?.Dispose();
+            activeRules = null;
         }
 
         internal IEnumerator Play(Resolution resolution, float openingFade)
         {
-            var controls = host.Controls;
-            bool rollDisturbed = false;
             // The committed snapshot may include a new hand; only event dice are shown until presentation completes.
             foreach (var ruleEvent in resolution.Events)
             {
-                if (ruleEvent is EncounterRuleActivatedEvent activatedRule)
-                {
-                    // Scored-hand rule bonuses are presented after the hand's modifier contributions.
-                    if (activatedRule.MultiplierBonus == 0 && host.RulePresentation != null &&
-                        activatedRule.RuleId == host.RulePresentation.RuleId)
-                    {
-                        hud.RenderEncounterRule(resolution.Snapshot, host.RulePresentation);
-                        actionModifierCue.ShowHost(host.RulePresentation.Icon, ModifierPhase.PlayerReroll,
-                            host.Host != null ? host.Host.GestureDuration : 1.8f);
-                        hud.SelectionLabel.text = host.RulePresentation.DisplayName;
-                        hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).amber;
-                        host.Host?.React();
-                        yield return hud.AnimateRuleSpirit(host.RulePresentation.Icon, .65f);
-                    }
-                }
-                else if (ruleEvent is DiceRolledEvent rolled)
-                {
-                    modifierHistory.Clear();
-                    diceTray.SetScoringHighlight(0);
-                    hud.PlayingPanel.gameObject.SetActive(true);
-                    host.HideRewardsAndEnding();
-                    if (rolled.Before.HasValue) diceTray.SetValues(rolled.Before.Value);
-                    host.SetDiceSelection(rolled.SelectedMask);
-                    if (openingFade > 0 && rolled.Kind == RollKind.Initial)
-                        yield return FadeOpening(openingFade);
-                    int rollMask = rolled.Kind == RollKind.Initial ? DiceValues.AllMask : rolled.SelectedMask;
-                    int diceCount = 0;
-                    for (int die = 0; die < DiceValues.Count; die++)
-                        if ((rollMask & (1 << die)) != 0) diceCount++;
-                    SpiritRollTiming rollTiming = encounterAudio.BeginRoll(diceCount);
-                    activeRoll = diceTray.Roll(rolled.After, rollMask, rollTiming);
-                    yield return activeRoll;
-                    activeRoll = null;
-                    // The preview already includes a disturbance that follows this roll; its category waits for that die.
-                    rollDisturbed = DisturbedAfter(resolution, rolled);
-                    hud.SetScore(rollDisturbed ? null : controls.Preview?.Score, false);
-                }
-                else if (ruleEvent is DieDisturbedEvent disturbed)
-                {
-                    // Interference lands after the player's roll or before scoring; the die visibly moves even if its face returns.
-                    HandScoredEvent disturbedHand = ScoredAfter(resolution, disturbed);
-                    if (disturbedHand != null) yield return new WaitForSecondsRealtime(PlayHandDisturbanceBeat);
-                    host.Host?.React();
-                    encounterAudio.Play(SpiritAudioCue.Disturbance);
-                    host.Ambient?.Disturb();
-                    activeRoll = disturbed.Kind == DieInterferenceKind.Flip
-                        ? diceTray.Flip(disturbed.Bay, disturbed.After)
-                        : diceTray.RollDie(disturbed.Bay, disturbed.After, encounterAudio.BeginRoll(1));
-                    yield return activeRoll;
-                    activeRoll = null;
-                    // The rank follows the landed die: the hand about to be scored, or the preview after a reroll.
-                    if (disturbedHand != null) hud.SetScore(disturbedHand.Score, false);
-                    else if (rollDisturbed) hud.SetScore(controls.Preview?.Score, false);
-                    rollDisturbed = false;
-                    yield return new WaitForSecondsRealtime(DisturbanceHold);
-                }
-                else if (ruleEvent is DisturbanceBlockedEvent blocked)
-                {
-                    if (ScoredAfter(resolution, blocked) != null) yield return new WaitForSecondsRealtime(PlayHandDisturbanceBeat);
-                    host.Host?.React();
-                    encounterAudio.Play(SpiritAudioCue.DisturbanceBlocked);
-                    yield return new WaitForSecondsRealtime(Mathf.Max(host.ShowProtection(blocked), DisturbanceHold));
-                }
-                else if (ruleEvent is ModifierActivatedEvent activated && activated.Phase != ModifierPhase.PlayHand)
-                {
-                    // A banked roll bonus leaves the tray highlight, resolving token and total as the roll left them.
-                    yield return PlayStep(Steps().BuildBankedContribution(activated.Contribution, hud.DisplayedBaseScore,
-                        hud.DisplayedMultiplier, resolution.Events, activated.StageIndex, activated.HandIndex));
-                }
-                else if (ruleEvent is HandScoredEvent scored)
-                {
-                    host.RecordScore(scored.Score);
-                    host.SetDiceSelection(0);
-                    diceTray.SetValues(scored.Dice);
-                    hud.SetScore(scored.Score, true);
-                    modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog, controls.ModifierPresentation);
-                    var steps = Steps().BuildHand(scored.Score, scored.Dice, hud.DisplayedBaseScore, hud.DisplayedMultiplier,
-                        host.RulePresentation, resolution.Events, scored.StageIndex, scored.HandIndex);
-                    foreach (var step in steps)
-                    {
-                        diceTray.SetScoringHighlight(step.HighlightMask);
-                        if (step.ResolvingIndex >= 0) modifierHistory.SetResolving(step.Contribution.Value);
-                        else modifierHistory.ClearResolving();
-                        if (!step.RevealsTotal) hud.HandScoreLabel.text = DiagnosticText.Number(step.Total);
-                        yield return PlayStep(step);
-                    }
-                }
-                else if (ruleEvent is ThresholdChangedEvent threshold)
-                {
-                    hud.TargetCaption.text = "TO CLEAR";
-                    yield return hud.AnimateThreshold(threshold.Before, threshold.After, .35f);
-                    yield return new WaitForSecondsRealtime(.16f);
-                }
-                else if (ruleEvent is StageClearedEvent)
-                {
-                    hud.TargetLabel.text = "0";
-                    hud.TargetCaption.text = "STAGE CLEARED";
-                    encounterAudio.Play(SpiritAudioCue.StageClear);
-                    if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
-                        host.Journey?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
-                    {
-                        host.Host?.React();
-                        yield return new WaitForSecondsRealtime(host.Host != null ? host.Host.GestureDuration : 1.8f);
-                    }
-                }
-                else if (ruleEvent is StageStartedEvent stage)
-                {
-                    hud.StageLabel.text = "STAGE " + (stage.StageIndex + 1) + " / " + resolution.Snapshot.StageCount;
-                    hud.TargetLabel.text = DiagnosticText.Number(stage.Threshold);
-                    hud.TargetCaption.text = "TO CLEAR";
-                    hud.HandsPanel.gameObject.SetActive(true);
-                    hud.RerollsPanel.gameObject.SetActive(true);
-                    hud.ResourcesLabel.gameObject.SetActive(false);
-                    hud.SetResources(stage.Hands, stage.Rerolls);
-                    hud.PlayingPanel.gameObject.SetActive(false);
-                    host.HideRewardsAndEnding();
-                    hud.StageIntroTitle.text = hud.StageLabel.text;
-                    hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
-                    hud.StageIntroDetail.text = "CLEAR " + DiagnosticText.Number(stage.Threshold) + " POINTS\n" +
-                        stage.Hands + " hands / " + stage.Rerolls + " rerolls";
-                    if (resolution.PreviousRevision >= 0)
-                    {
-                        hud.StageIntroPanel.gameObject.SetActive(true);
-                        yield return new WaitForSecondsRealtime(.9f);
-                    }
-                    hud.StageIntroPanel.gameObject.SetActive(false);
-                }
-                else if (ruleEvent is HandStartedEvent hand)
-                {
-                    host.Ambient?.Begin();
-                    modifierHistory.Clear();
-                    hud.RenderEncounterRule(resolution.Snapshot, host.RulePresentation);
-                    hud.SetResources(hand.HandsRemaining, hand.RerollsRemaining);
-                    hud.SetScoreValues(0, 0);
-                    hud.HandScoreLabel.text = "0";
-                    hud.CategoryLabel.text = "";
-                    hud.ModifierEmblem.gameObject.SetActive(false);
-                    hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
-                    hud.SelectionLabel.text = "NEW HAND";
-                    hud.ScoreDetail.text = "";
-                    if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(.16f);
-                }
-                else if (ruleEvent is ResourceChangedEvent resource && !IsModifierGrant(resource, resolution))
-                {
-                    hud.ShowResource(resource);
-                    if (resource.Resource == ResourceKind.Rerolls && resource.Cause != ResourceChangeCause.ModifierEffect)
-                        hud.SelectionLabel.text = resource.After + " rerolls remaining";
-                }
-                // A rule's dice visuals present each event after the playback's own presentation of it.
-                IEnumerator ruleDice = host.RuleDiceVisuals?.Present(ruleEvent);
-                if (ruleDice != null) yield return ruleDice;
+                var presenters = host.RulePresenters;
+                float leadIn = presenters != null ? presenters.LeadIn(ruleEvent) : 0f;
+                if (leadIn > 0f) yield return new WaitForSecondsRealtime(leadIn);
+                IEnumerator core = PresentCore(ruleEvent, resolution, openingFade);
+                if (core != null) yield return core;
+                activeRules = presenters?.Present(ruleEvent);
+                if (activeRules != null) yield return activeRules;
+                activeRules = null;
             }
             if (resolution.Snapshot.Phase == EncounterPhase.Completed)
             {
-                // Defeat ends the haunting with a final knock; victory and abandonment let it settle.
-                if (resolution.Snapshot.Outcome == EncounterOutcome.Lost) host.Ambient?.Knock();
-                else host.Ambient?.Settle();
+                host.Ambient?.End(resolution.Snapshot.Outcome);
                 endingView.Render(resolution.Snapshot, host.Journey?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(controls, resolution.Snapshot.NewlyUnlockedModifierIds));
+                    SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds));
                 yield return endingView.Present(host.Host, host.SetOpeningOpacity, host.ShowEnding,
-                    clip => encounterAudio.PlayJourneyCue(clip));
+                    clip => encounterAudio.PlayCue(clip));
             }
             host.FinishPresentation(resolution);
+        }
+
+        /** The core presentation of an event the core presents, or null for an event only rule presenters present. */
+        private IEnumerator PresentCore(RuleEvent ruleEvent, Resolution resolution, float openingFade)
+        {
+            switch (ruleEvent)
+            {
+                case DiceRolledEvent rolled: return PresentRoll(rolled, openingFade);
+                case ModifierActivatedEvent activated: return PresentBankedBonus(activated, resolution);
+                case HandScoredEvent scored: return PresentHand(scored, resolution);
+                case ThresholdChangedEvent threshold: return PresentThreshold(threshold);
+                case StageClearedEvent _: return PresentStageCleared(resolution);
+                case StageStartedEvent stage: return PresentStage(stage, resolution);
+                case HandStartedEvent hand: return PresentHandStart(hand, resolution);
+                case ResourceChangedEvent resource: return PresentResource(resource, resolution);
+                default: return null;
+            }
+        }
+
+        private IEnumerator PresentRoll(DiceRolledEvent rolled, float openingFade)
+        {
+            modifierHistory.Clear();
+            diceTray.SetScoringHighlight(0);
+            hud.PlayingPanel.gameObject.SetActive(true);
+            host.HideRewardsAndEnding();
+            if (rolled.Before.HasValue) diceTray.SetValues(rolled.Before.Value);
+            host.SetDiceSelection(rolled.SelectedMask);
+            if (openingFade > 0 && rolled.Kind == RollKind.Initial)
+                yield return FadeOpening(openingFade);
+            int rollMask = rolled.Kind == RollKind.Initial ? DiceValues.AllMask : rolled.SelectedMask;
+            SpiritRollTiming rollTiming = encounterAudio.BeginRoll(DiceValues.CountBays(rollMask));
+            activeRoll = diceTray.Roll(rolled.After, rollMask, rollTiming);
+            yield return activeRoll;
+            activeRoll = null;
+        }
+
+        private IEnumerator PresentBankedBonus(ModifierActivatedEvent activated, Resolution resolution)
+        {
+            if (activated.Phase == ModifierPhase.PlayHand) yield break;
+            // A banked roll bonus leaves the tray highlight, resolving token and total as the roll left them.
+            yield return PlayStep(Steps().BuildBankedContribution(activated.Contribution, hud.DisplayedBaseScore,
+                hud.DisplayedMultiplier, resolution.Events, activated.StageIndex, activated.HandIndex));
+        }
+
+        private IEnumerator PresentHand(HandScoredEvent scored, Resolution resolution)
+        {
+            host.RecordScore(scored.Score);
+            host.SetDiceSelection(0);
+            diceTray.SetValues(scored.Dice);
+            var controls = host.Controls;
+            modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog, controls.ModifierPresentation);
+            var steps = Steps().BuildHand(scored.Score, scored.Dice, hud.DisplayedBaseScore, hud.DisplayedMultiplier,
+                host.RuleCards, resolution.Events, scored.StageIndex, scored.HandIndex);
+            foreach (var step in steps)
+            {
+                diceTray.SetScoringHighlight(step.HighlightMask);
+                if (step.ResolvingIndex >= 0) modifierHistory.SetResolving(step.Contribution.Value);
+                else modifierHistory.ClearResolving();
+                if (!step.RevealsTotal) hud.HandScoreLabel.text = DiagnosticText.Number(step.Total);
+                yield return PlayStep(step);
+            }
+        }
+
+        private IEnumerator PresentThreshold(ThresholdChangedEvent threshold)
+        {
+            hud.TargetCaption.text = "TO CLEAR";
+            yield return hud.AnimateThreshold(threshold.Before, threshold.After, ThresholdCountDuration);
+            yield return new WaitForSecondsRealtime(ThresholdHold);
+        }
+
+        private IEnumerator PresentStageCleared(Resolution resolution)
+        {
+            hud.TargetLabel.text = "0";
+            hud.TargetCaption.text = "STAGE CLEARED";
+            encounterAudio.Play(SpiritAudioCue.StageClear);
+            if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
+                host.Journey?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
+            {
+                host.Host?.React();
+                yield return new WaitForSecondsRealtime(GestureDuration);
+            }
+        }
+
+        private IEnumerator PresentStage(StageStartedEvent stage, Resolution resolution)
+        {
+            hud.StageLabel.text = "STAGE " + (stage.StageIndex + 1) + " / " + resolution.Snapshot.StageCount;
+            hud.TargetLabel.text = DiagnosticText.Number(stage.Threshold);
+            hud.TargetCaption.text = "TO CLEAR";
+            hud.HandsPanel.gameObject.SetActive(true);
+            hud.RerollsPanel.gameObject.SetActive(true);
+            hud.ResourcesLabel.gameObject.SetActive(false);
+            hud.SetResources(stage.Hands, stage.Rerolls);
+            hud.PlayingPanel.gameObject.SetActive(false);
+            host.HideRewardsAndEnding();
+            hud.StageIntroTitle.text = hud.StageLabel.text;
+            hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
+            hud.StageIntroDetail.text = "CLEAR " + DiagnosticText.Number(stage.Threshold) + " POINTS\n" +
+                stage.Hands + " hands / " + stage.Rerolls + " rerolls";
+            if (resolution.PreviousRevision >= 0)
+            {
+                hud.StageIntroPanel.gameObject.SetActive(true);
+                yield return new WaitForSecondsRealtime(StageIntroHold);
+            }
+            hud.StageIntroPanel.gameObject.SetActive(false);
+        }
+
+        private IEnumerator PresentHandStart(HandStartedEvent hand, Resolution resolution)
+        {
+            host.Ambient?.Begin();
+            modifierHistory.Clear();
+            hud.RenderEncounterRule(resolution.Snapshot, host.HudRuleCard);
+            hud.SetResources(hand.HandsRemaining, hand.RerollsRemaining);
+            hud.SetScoreValues(0, 0);
+            hud.HandScoreLabel.text = "0";
+            hud.CategoryLabel.text = "";
+            hud.ModifierEmblem.gameObject.SetActive(false);
+            hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
+            hud.SelectionLabel.text = "NEW HAND";
+            hud.ScoreDetail.text = "";
+            if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(HandStartHold);
+        }
+
+        private IEnumerator PresentResource(ResourceChangedEvent resource, Resolution resolution)
+        {
+            // A charm's grant is presented with the charm's own step.
+            if (IsModifierGrant(resource, resolution)) yield break;
+            hud.ShowResource(resource);
+            if (resource.Resource == ResourceKind.Rerolls && resource.Cause != ResourceChangeCause.ModifierEffect)
+                hud.SelectionLabel.text = resource.After + " rerolls remaining";
         }
 
         private IEnumerator FadeOpening(float duration)
@@ -258,41 +242,13 @@ namespace Dice.Presentation
             host.SetOpeningOpacity(1);
         }
 
-        private static bool DisturbedAfter(Resolution resolution, DiceRolledEvent rolled)
-        {
-            int next = resolution.Events.IndexOf(rolled) + 1;
-            return next > 0 && next < resolution.Events.Count && resolution.Events[next] is DieDisturbedEvent;
-        }
-
-        /** The hand scored after an interference event in the same action, or null when no hand is scored before the next roll. */
-        private static HandScoredEvent ScoredAfter(Resolution resolution, RuleEvent interference)
-        {
-            for (int next = resolution.Events.IndexOf(interference) + 1; next > 0 && next < resolution.Events.Count; next++)
-            {
-                if (resolution.Events[next] is DiceRolledEvent) return null;
-                if (resolution.Events[next] is HandScoredEvent scored) return scored;
-            }
-            return null;
-        }
-
+        /** Whether the resource change is a charm's effect from a charm activation in the same hand. */
         private static bool IsModifierGrant(ResourceChangedEvent resource, Resolution resolution)
         {
             if (resource.Cause != ResourceChangeCause.ModifierEffect) return false;
-            if (IsPlayHandGrant(resource, resolution)) return true;
             foreach (var ruleEvent in resolution.Events)
-                if (ruleEvent is ModifierActivatedEvent activated && activated.Phase != ModifierPhase.PlayHand &&
-                    activated.StageIndex == resource.StageIndex && activated.HandIndex == resource.HandIndex &&
-                    activated.InstanceId == resource.SourceInstanceId) return true;
-            return false;
-        }
-
-        private static bool IsPlayHandGrant(ResourceChangedEvent resource, Resolution resolution)
-        {
-            if (resource.Cause != ResourceChangeCause.ModifierEffect) return false;
-            foreach (var ruleEvent in resolution.Events)
-                if (ruleEvent is ModifierActivatedEvent activated && activated.Phase == ModifierPhase.PlayHand &&
-                    activated.StageIndex == resource.StageIndex && activated.HandIndex == resource.HandIndex &&
-                    activated.InstanceId == resource.SourceInstanceId) return true;
+                if (ruleEvent is ModifierActivatedEvent activated && activated.StageIndex == resource.StageIndex &&
+                    activated.HandIndex == resource.HandIndex && activated.InstanceId == resource.SourceInstanceId) return true;
             return false;
         }
 

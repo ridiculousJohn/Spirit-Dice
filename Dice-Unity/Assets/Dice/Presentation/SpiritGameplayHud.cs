@@ -251,12 +251,6 @@ namespace Dice.Presentation
             PlayButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
 
-        public void SetScore(ScoreBreakdown score, bool played)
-        {
-            CategoryLabel.text = score == null ? "" : DiagnosticText.Humanize(score.Category.ToString()).ToUpperInvariant();
-            if (played) SelectionLabel.text = "HAND SCORED";
-        }
-
         public void SetScoreValues(long baseScore, long multiplier)
         {
             DisplayedBaseScore = baseScore;
