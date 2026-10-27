@@ -2,7 +2,7 @@
 
 Content refers to charms by direct references to their `ModifierAsset`s. The engine
 catalog is built from the charms `Standard.asset` references (encounter lists, unlock
-milestones and reward pools, including fallbacks), so a charm referenced nowhere is
+rewards and reward pools, including fallbacks), so a charm referenced nowhere is
 not part of the game. Saves and profiles store charm ids, which resolve through the
 loaded catalog.
 
@@ -11,9 +11,6 @@ loaded catalog.
 from that same list. Fox uses Base and Mult variants of Open Gate, Still Reflection,
 and Rising Sun. Owl and moth use Base and Mult variants of their three established
 milestone families; these lists are provisional.
-
-Each milestone retains its four legacy `modifiers` for validating existing run
-saves. Those IDs do not select the contents of new unlock offers.
 
 ## Family discovery and story grants
 

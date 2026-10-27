@@ -119,7 +119,6 @@ namespace Dice.Tests
             var starting = Modifier("modifier.starting");
             var addition = Modifier("modifier.addition");
             var unlock = Modifier("modifier.unlock", ModifierAccess.PermanentUnlock);
-            var milestone = Modifier("modifier.milestone", ModifierAccess.PermanentUnlock);
             var pooled = Modifier("modifier.pooled");
             var fallback = Modifier("modifier.fallback");
             Modifier("modifier.unreferenced");
@@ -129,10 +128,6 @@ namespace Dice.Tests
                 References(encounter.FindPropertyRelative("startingModifiers"), starting, pooled);
                 References(encounter.FindPropertyRelative("encounterModifiers"), addition);
                 References(encounter.FindPropertyRelative("unlockRewardModifiers"), unlock);
-                var milestones = encounter.FindPropertyRelative("unlockMilestones");
-                milestones.arraySize = 1;
-                milestones.GetArrayElementAtIndex(0).FindPropertyRelative("stageNumber").intValue = 1;
-                References(milestones.GetArrayElementAtIndex(0).FindPropertyRelative("modifiers"), milestone);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
             Pool(catalog, new[] { pooled }, fallback);
@@ -140,7 +135,7 @@ namespace Dice.Tests
             var built = catalog.Build().Catalog;
 
             Assert.That(built.Modifiers.Select(modifier => modifier.Id), Is.EquivalentTo(new[]
-                { starting.Id, addition.Id, unlock.Id, milestone.Id, pooled.Id, fallback.Id }));
+                { starting.Id, addition.Id, unlock.Id, pooled.Id, fallback.Id }));
         }
 
         /** Checks each encounter and pool keeps its charms' ids in authored order / fails if a list is reordered or loses a charm. */

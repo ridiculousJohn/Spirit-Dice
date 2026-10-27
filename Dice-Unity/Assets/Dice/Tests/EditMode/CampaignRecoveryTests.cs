@@ -55,24 +55,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void InterruptedImportStagingDoesNotSuppressLegacyMigration()
-        {
-            string staging = Path.Combine(root, Guid.NewGuid().ToString("N") + ".importing");
-            Directory.CreateDirectory(staging);
-            string partial = Path.Combine(staging, "spirit-profile.json");
-            File.WriteAllText(partial, "partial profile");
-            byte[] legacy = PlayerProfileCodec.Serialize(new PlayerProfile());
-            File.WriteAllBytes(Path.Combine(root, "spirit-profile.json"), legacy);
-            var slots = Load();
-            Assert.That(slots.HasGame(1), Is.True);
-            Assert.That(File.ReadAllBytes(slots.GetProfilePath(1)), Is.EqualTo(legacy));
-            Assert.That(File.ReadAllText(partial), Is.EqualTo("partial profile"));
-            Assert.That(slots.RecoveryCampaigns, Is.Empty);
-            Assert.That(Directory.GetDirectories(root, "*.importing"), Is.EqualTo(new[] { staging }));
-        }
-
-        [Test]
-        public void PublishedRunOnlyCampaignWithoutMetadataRemainsSelectableAfterAnInterruptedImport()
+        public void PublishedRunOnlyCampaignWithoutMetadataRemainsSelectable()
         {
             string id = Guid.NewGuid().ToString("N");
             string directory = Path.Combine(root, id);
@@ -120,7 +103,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void ValidIndexBackfillsAssignedLegacyCampaignMetadata()
+        public void ValidIndexBackfillsMissingCampaignMetadata()
         {
             string id = CreateCampaign();
             WriteIndex(null, id, null);
@@ -336,13 +319,10 @@ namespace Dice.Tests
             Directory.CreateDirectory(saveRoot);
             string sentinel = Path.Combine(target, "keep.txt");
             File.WriteAllText(sentinel, "keep");
-            string legacyPath = Path.Combine(saveRoot, "spirit-profile.json");
-            byte[] legacy = PlayerProfileCodec.Serialize(new PlayerProfile());
-            File.WriteAllBytes(legacyPath, legacy);
 
             var slots = new CampaignSaveSlots(saveRoot, TestContent.Catalog());
             Assert.That(slots.Load(), Is.Null);
-            Assert.That(File.ReadAllBytes(slots.GetProfilePath(1)), Is.EqualTo(legacy));
+            Assert.That(slots.StartNewGame(1), Is.Null);
             Assert.That(slots.StartNewGame(2), Is.Null);
             string profilePath = slots.GetProfilePath(2);
             PlayerProfileFileStore.Save(profilePath, PlayerProfileFileStore.Load(profilePath));
@@ -368,7 +348,6 @@ namespace Dice.Tests
             Assert.That(Directory.Exists(previous), Is.False);
             Assert.That(File.Exists(slots.GetProfilePath(1)), Is.True);
             Assert.That(File.Exists(slots.GetProfilePath(2)), Is.True);
-            Assert.That(File.ReadAllBytes(legacyPath), Is.EqualTo(legacy));
             Assert.That(File.ReadAllText(sentinel), Is.EqualTo("keep"));
         }
 

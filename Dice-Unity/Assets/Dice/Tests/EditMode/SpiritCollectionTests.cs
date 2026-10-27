@@ -40,7 +40,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition("encounter.test", new[]
                 {
                     new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3)
-                }, unlockMilestones: new[] { new ModifierUnlockMilestone(3, Array.Empty<string>()) },
+                }, unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
                 encounterModifierIds: new[] { encounterOnly.Id }, unlockRewardModifierIds: new[] { locked.Id, unlocked.Id });
             catalog = new MechanicalCatalog("collection.test", TestContent.Hands(), new[] { encounter },
                 new[] { starter, locked, unlocked, encounterOnly, discovered, undiscovered, inert });

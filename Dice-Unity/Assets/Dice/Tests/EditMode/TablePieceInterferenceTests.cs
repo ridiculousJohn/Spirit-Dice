@@ -319,9 +319,9 @@ namespace Dice.Tests
             Assert.That(Session(Catalog(chance: 20)).CaptureSave().RuleRandomState, Is.Not.Zero);
         }
 
-        /** Checks current-format JSON requires the piece and rule fields and an earlier format cannot carry pieces / fails if either loads. */
+        /** Checks current-format JSON requires the piece and rule fields / fails if a save without one of them loads. */
         [Test]
-        public void CurrentFormatJsonRequiresTheNewFieldsAndEarlierFormatsRejectPieces()
+        public void CurrentFormatJsonRequiresThePieceAndRuleFields()
         {
             var catalog = Catalog(chance: 0);
             var session = Session(catalog);
@@ -332,47 +332,20 @@ namespace Dice.Tests
                 json.Remove(field);
                 Assert.Throws<FormatException>(() => Decode(catalog, json), field);
             }
-            var downgraded = JObject.Parse(Json(session.CaptureSave()));
-            downgraded[nameof(EncounterSaveData.SaveFormatVersion)] = 5;
-            downgraded[nameof(EncounterSaveData.RulesVersion)] = 7;
-            var result = EncounterSession.RestoreEncounter(catalog, Decode(catalog, downgraded));
-            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
-        }
-
-        /** Checks a format five save without pieces or rule state restores and continues identically / fails if the migration loses the dice stream. */
-        [Test]
-        public void FormatFiveSavesRestoreWithoutPiecesOrDisturbances()
-        {
-            var catalog = Catalog(chance: 0, haunting: false, pieces: false);
-            var original = Session(catalog);
-            Execute(original, new RerollDiceAction(3));
-            var json = JObject.Parse(Json(original.CaptureSave()));
-            json[nameof(EncounterSaveData.SaveFormatVersion)] = 5;
-            json[nameof(EncounterSaveData.RulesVersion)] = 7;
-            json.Remove(nameof(EncounterSaveData.RuleStates));
-            json.Remove(nameof(EncounterSaveData.RuleRandomState));
-            json.Remove(nameof(EncounterSaveData.Pieces));
-            var restored = Restore(catalog, Decode(catalog, json));
-            Execute(original, new RerollDiceAction(5));
-            Execute(restored, new RerollDiceAction(5));
-            Assert.That(restored.Snapshot.CurrentDice, Is.EqualTo(original.Snapshot.CurrentDice));
-            Assert.That(restored.CaptureSave().SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
         }
 
         private static MechanicalCatalog Catalog(int chance, int rerollWeight = 1, int flipWeight = 1, bool afterReroll = true,
             bool afterPlay = true, bool ward = false, DieInterferenceKind[] blocked = null,
             PieceMovementTiming timing = PieceMovementTiming.DuringHand, bool allowsNeutral = true, int allowedBays = DiceValues.AllMask,
-            int startingBay = -1, bool haunting = true, bool pieces = true, StageDefinition[] stages = null,
+            int startingBay = -1, bool haunting = true, StageDefinition[] stages = null,
             ModifierDefinition[] modifiers = null)
         {
             var rules = new System.Collections.Generic.List<EncounterRuleDefinition>();
             if (haunting) rules.Add(new DieInterferenceRuleDefinition(HauntingId, chance, rerollWeight, flipWeight, afterReroll, afterPlay));
             if (ward) rules.Add(Ward(blocked));
             var start = startingBay < 0 ? PiecePosition.Neutral : PiecePosition.Bay(startingBay);
-            var pieceList = pieces
-                ? new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(InteractionId, start, timing,
-                    allowsNeutral, allowedBays) }) }
-                : Array.Empty<TablePieceDefinition>();
+            var pieceList = new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(InteractionId, start, timing,
+                allowsNeutral, allowedBays) }) };
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: modifiers?.Select(value => value.Id),
                 rules: rules, pieces: pieceList);

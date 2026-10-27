@@ -10,6 +10,9 @@ namespace Dice.App
     {
         public const int MaximumProfileBytes = 1024 * 1024;
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
+        // To change the format, raise PlayerProfile.CurrentFormatVersion and append a step that upgrades the previous format.
+        private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
+            "ProfileFormatVersion", PlayerProfile.CurrentFormatVersion);
 
         public static byte[] Serialize(PlayerProfile profile)
         {
@@ -43,28 +46,22 @@ namespace Dice.App
                         DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error
                     });
                     if (reader.Read()) throw new FormatException("The profile contains trailing content.");
-                    JToken version = document["ProfileFormatVersion"];
-                    if (version == null || version.Type != JTokenType.Integer)
+                    var check = FormatUpgrades.Upgrade(document);
+                    if (check == SaveFormatCheck.VersionNotInteger)
                         throw new FormatException("The profile format version must be an integer.");
-                    long formatVersion = version.Value<long>();
-                    if (formatVersion != 1 && formatVersion != 3 && formatVersion != PlayerProfile.CurrentFormatVersion)
+                    if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The profile format version is unsupported.");
                     foreach (var property in document.Properties())
-                        if (property.Name != "ProfileFormatVersion" && property.Name != "UnlockedModifierIds" &&
-                            property.Name != "CompletedEncounterIds" && property.Name != "VisitedEncounterIds" &&
-                            !(formatVersion >= 3 && property.Name == "DiscoveredFamilyIds") &&
-                            !(formatVersion == PlayerProfile.CurrentFormatVersion && property.Name == "CompletedStoryIds"))
+                        if (property.Name != "ProfileFormatVersion" && property.Name != "DiscoveredFamilyIds" &&
+                            property.Name != "UnlockedModifierIds" && property.Name != "CompletedEncounterIds" &&
+                            property.Name != "CompletedStoryIds" && property.Name != "VisitedEncounterIds")
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
-                    if (formatVersion >= 3)
-                        ReadIds(document["DiscoveredFamilyIds"], profile.DiscoverFamily);
-                    if (formatVersion == PlayerProfile.CurrentFormatVersion)
-                        ReadIds(document["CompletedStoryIds"], profile.CompleteStory);
+                    ReadIds(document["DiscoveredFamilyIds"], profile.DiscoverFamily);
+                    ReadIds(document["CompletedStoryIds"], profile.CompleteStory);
                     ReadIds(document["UnlockedModifierIds"], profile.UnlockModifier);
                     ReadIds(document["CompletedEncounterIds"], profile.CompleteEncounter);
-                    // Version one profiles written before journey tracking have no visit field.
-                    if (document["VisitedEncounterIds"] != null)
-                        ReadIds(document["VisitedEncounterIds"], profile.VisitEncounter);
+                    ReadIds(document["VisitedEncounterIds"], profile.VisitEncounter);
                     return profile;
                 }
             }

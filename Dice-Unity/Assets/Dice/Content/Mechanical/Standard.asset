@@ -232,23 +232,8 @@ MonoBehaviour:
     spiritId: spirit.fox
     unlockMilestones:
     - stageNumber: 3
-      modifiers:
-      - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
-      - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
-      - {fileID: 11400000, guid: 4ca1b30991b7dba458eecb77910def8b, type: 2}
-      - {fileID: 11400000, guid: 9c38d67a0b8620041a2816daa7d37b09, type: 2}
     - stageNumber: 6
-      modifiers:
-      - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
-      - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
-      - {fileID: 11400000, guid: c84c761ab8bf6d645aef3b9c6cedf083, type: 2}
-      - {fileID: 11400000, guid: ba7c79c16939ff641aebac2bfa89ab01, type: 2}
     - stageNumber: 10
-      modifiers:
-      - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
-      - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
-      - {fileID: 11400000, guid: e2279929f2b6dc74a979a856beef4c27, type: 2}
-      - {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
     encounterModifiers: []
     encounterModifiersFirstClearedStageNumber: 1
     unlockRewardModifiers:
@@ -346,23 +331,8 @@ MonoBehaviour:
     spiritId: spirit.owl
     unlockMilestones:
     - stageNumber: 3
-      modifiers:
-      - {fileID: 11400000, guid: 676a870c49a830743ae381a9fda5f904, type: 2}
-      - {fileID: 11400000, guid: 98387713ddba41b44a7ca4303f23c233, type: 2}
-      - {fileID: 11400000, guid: c8282098f1896fe4ab825f441045c38b, type: 2}
-      - {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
     - stageNumber: 6
-      modifiers:
-      - {fileID: 11400000, guid: 6f40009baf557dc48be450654e963a77, type: 2}
-      - {fileID: 11400000, guid: d33cc2e6604c8dd4ca32799954e90b27, type: 2}
-      - {fileID: 11400000, guid: c59990f49049df44288442476a95156e, type: 2}
-      - {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
     - stageNumber: 10
-      modifiers:
-      - {fileID: 11400000, guid: 3b063526b75fdde46a306a8068ba6add, type: 2}
-      - {fileID: 11400000, guid: 969570c51392e2b4eb438885716052e5, type: 2}
-      - {fileID: 11400000, guid: 2e97f5010ef9c9842bd97083a4c8bd88, type: 2}
-      - {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
     encounterModifiers: []
     encounterModifiersFirstClearedStageNumber: 1
     unlockRewardModifiers:
@@ -460,23 +430,8 @@ MonoBehaviour:
     spiritId: spirit.moth
     unlockMilestones:
     - stageNumber: 3
-      modifiers:
-      - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
-      - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
-      - {fileID: 11400000, guid: f38ada6ef415ff64c82a9d07cb422be2, type: 2}
-      - {fileID: 11400000, guid: 8a5e7f13eb0ed9148ac9fdfbb4df6a2c, type: 2}
     - stageNumber: 6
-      modifiers:
-      - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
-      - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
-      - {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
-      - {fileID: 11400000, guid: 0eb4f0eda9ba4e545996e1ae1b9af5e7, type: 2}
     - stageNumber: 10
-      modifiers:
-      - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
-      - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
-      - {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
-      - {fileID: 11400000, guid: 303e2e4fd1d0d164ca2251b303f37c7f, type: 2}
     encounterModifiers:
     - {fileID: 11400000, guid: d6bffd73f10944cd9ff44dbe5eda0669, type: 2}
     - {fileID: 11400000, guid: 4d776a2f625a4b16adce09a547516b3b, type: 2}
@@ -578,23 +533,8 @@ MonoBehaviour:
     spiritId: spirit.merchant
     unlockMilestones:
     - stageNumber: 3
-      modifiers:
-      - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
-      - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
-      - {fileID: 11400000, guid: faf037042b04e6e4e89ccc2ddb3ae53d, type: 2}
-      - {fileID: 11400000, guid: c2059b6fb13385441af8145c71cd8660, type: 2}
     - stageNumber: 6
-      modifiers:
-      - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
-      - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
-      - {fileID: 11400000, guid: e82516bd4f6d5314ebb4cea2b02d478e, type: 2}
-      - {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
     - stageNumber: 10
-      modifiers:
-      - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
-      - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
-      - {fileID: 11400000, guid: e2555e5891db9f94a80b106d385fcb68, type: 2}
-      - {fileID: 11400000, guid: 434e63c4fe92ce344b6db70fb96c6ec6, type: 2}
     encounterModifiers: []
     encounterModifiersFirstClearedStageNumber: 1
     unlockRewardModifiers:
@@ -696,23 +636,8 @@ MonoBehaviour:
     spiritId: spirit.nymph
     unlockMilestones:
     - stageNumber: 3
-      modifiers:
-      - {fileID: 11400000, guid: 22dcf0cabd4d0f145a6e6b5c018ac05f, type: 2}
-      - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
-      - {fileID: 11400000, guid: 0e43985acf43db647904a9e4c71d6d75, type: 2}
-      - {fileID: 11400000, guid: f8d4bd830318bb543a92de66a8833058, type: 2}
     - stageNumber: 6
-      modifiers:
-      - {fileID: 11400000, guid: 53d507885d6840b498fa44df18f3e217, type: 2}
-      - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
-      - {fileID: 11400000, guid: 359921b8ca81b0542829cc8a41da090f, type: 2}
-      - {fileID: 11400000, guid: 249c80e6228b78f43b1fc6cdefcea3b5, type: 2}
     - stageNumber: 10
-      modifiers:
-      - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
-      - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
-      - {fileID: 11400000, guid: fda6679a3f3a9ed4189f16b4523ab08c, type: 2}
-      - {fileID: 11400000, guid: df51b279b948c4942967d3306f13fa06, type: 2}
     encounterModifiers:
     - {fileID: 11400000, guid: 38929b861b0c4c5caa1fffc496ad2b63, type: 2}
     - {fileID: 11400000, guid: 0f939e9b5de14cb7a9a55c6348337b0e, type: 2}

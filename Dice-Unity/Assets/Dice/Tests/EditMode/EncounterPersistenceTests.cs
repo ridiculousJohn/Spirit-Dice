@@ -372,8 +372,10 @@ namespace Dice.Tests
 
         private static IEnumerable<TestCaseData> InvalidInitialSaves()
         {
-            yield return Invalid("save version", value => ++value.SaveFormatVersion, EncounterRestoreError.SaveFormatVersionMismatch);
-            yield return Invalid("rules version", value => ++value.RulesVersion, EncounterRestoreError.RulesVersionMismatch);
+            yield return Invalid("newer save version", value => ++value.SaveFormatVersion, EncounterRestoreError.SaveFormatVersionMismatch);
+            yield return Invalid("older save version", value => --value.SaveFormatVersion, EncounterRestoreError.SaveFormatVersionMismatch);
+            yield return Invalid("newer rules version", value => ++value.RulesVersion, EncounterRestoreError.RulesVersionMismatch);
+            yield return Invalid("older rules version", value => --value.RulesVersion, EncounterRestoreError.RulesVersionMismatch);
             yield return Invalid("random version", value => ++value.RandomAlgorithmVersion, EncounterRestoreError.RandomAlgorithmVersionMismatch);
             yield return Invalid("catalog version", value => value.CatalogVersion = "unknown", EncounterRestoreError.CatalogVersionMismatch);
             yield return Invalid("encounter", value => value.EncounterId = "unknown", EncounterRestoreError.EncounterNotFound);

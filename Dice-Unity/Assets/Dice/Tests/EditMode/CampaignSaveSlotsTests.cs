@@ -145,65 +145,8 @@ namespace Dice.Tests
             AssertEmptyProfile(PlayerProfileFileStore.Load(restored.GetProfilePath(1)));
         }
 
-        [TestCase(true, true)]
-        [TestCase(true, false)]
-        [TestCase(false, true)]
-        public void LegacyFilesAreCopiedOnceToSlotOneWithoutModifyingTheirBytes(bool hasRun, bool hasProfile)
-        {
-            string legacyRun = Path.Combine(root, "spirit-encounter.json");
-            string legacyProfile = Path.Combine(root, "spirit-profile.json");
-            byte[] runBytes = EncounterSaveCodec.Serialize(
-                EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave());
-            var profile = new PlayerProfile();
-            profile.CompleteStory("story.legacy");
-            byte[] profileBytes = PlayerProfileCodec.Serialize(profile);
-            if (hasRun) File.WriteAllBytes(legacyRun, runBytes);
-            if (hasProfile) File.WriteAllBytes(legacyProfile, profileBytes);
-            var slots = Load();
-            Assert.That(slots.ActiveSlot, Is.EqualTo(1));
-            Assert.That(slots.HasGame(1), Is.True);
-            Assert.That(slots.HasGame(2), Is.False);
-            Assert.That(slots.HasGame(3), Is.False);
-            Assert.That(File.Exists(slots.GetSavePath(1)), Is.EqualTo(hasRun));
-            Assert.That(File.Exists(slots.GetProfilePath(1)), Is.EqualTo(hasProfile));
-            if (hasRun)
-            {
-                Assert.That(File.ReadAllBytes(legacyRun), Is.EqualTo(runBytes));
-                Assert.That(File.ReadAllBytes(slots.GetSavePath(1)), Is.EqualTo(runBytes));
-            }
-            if (hasProfile)
-            {
-                Assert.That(File.ReadAllBytes(legacyProfile), Is.EqualTo(profileBytes));
-                Assert.That(File.ReadAllBytes(slots.GetProfilePath(1)), Is.EqualTo(profileBytes));
-            }
-            string firstRun = slots.GetSavePath(1);
-            slots.StartNewGame(1);
-            string replacementRun = slots.GetSavePath(1);
-            var restored = Load();
-            Assert.That(restored.GetSavePath(1), Is.EqualTo(replacementRun).And.Not.EqualTo(firstRun));
-            Assert.That(File.Exists(restored.GetSavePath(1)), Is.False);
-            AssertEmptyProfile(PlayerProfileFileStore.Load(restored.GetProfilePath(1)));
-            Assert.That(Directory.GetDirectories(root).Length, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void CorruptLegacyProfileIsPreservedAndReportedByTheProfileLoader()
-        {
-            string legacyProfile = Path.Combine(root, "spirit-profile.json");
-            byte[] corrupt = Encoding.UTF8.GetBytes("invalid profile");
-            File.WriteAllBytes(legacyProfile, corrupt);
-            var slots = Load();
-            string migratedProfile = slots.GetProfilePath(1);
-            Assert.That(File.ReadAllBytes(migratedProfile), Is.EqualTo(corrupt));
-            Assert.Throws<FormatException>(() => PlayerProfileFileStore.Load(migratedProfile));
-            Assert.That(Load().GetProfilePath(1), Is.EqualTo(migratedProfile));
-            slots.StartNewGame(1);
-            AssertEmptyProfile(PlayerProfileFileStore.Load(slots.GetProfilePath(1)));
-            Assert.That(File.Exists(migratedProfile), Is.False);
-            Assert.That(File.ReadAllBytes(legacyProfile), Is.EqualTo(corrupt));
-        }
-
         [TestCase("version")]
+        [TestCase("older-version")]
         [TestCase("active-zero")]
         [TestCase("active-four")]
         [TestCase("active-string")]
@@ -235,6 +178,7 @@ namespace Dice.Tests
             string[] originalDirectories = Directory.GetDirectories(root);
             var document = JObject.Parse(File.ReadAllText(IndexPath));
             if (invalid == "version") document["formatVersion"] = 2;
+            if (invalid == "older-version") document["formatVersion"] = 0;
             if (invalid == "active-zero") document["activeSlot"] = 0;
             if (invalid == "active-four") document["activeSlot"] = 4;
             if (invalid == "active-string") document["activeSlot"] = "2";
@@ -272,21 +216,13 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void RecoveryKeepsLegacyFilesAndFreshSlotsRemainUsableAfterReload()
+        public void RecoveredEmptySlotsRemainUsableAfterReload()
         {
-            byte[] legacyRun = Encoding.UTF8.GetBytes("legacy run");
-            byte[] legacyProfile = Encoding.UTF8.GetBytes("legacy profile");
-            string legacyRunPath = Path.Combine(root, "spirit-encounter.json");
-            string legacyProfilePath = Path.Combine(root, "spirit-profile.json");
-            File.WriteAllBytes(legacyRunPath, legacyRun);
-            File.WriteAllBytes(legacyProfilePath, legacyProfile);
             File.WriteAllText(IndexPath, "invalid index");
             var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.That(slots.Load(), Is.Not.Null);
             AssertEmptySlots(slots);
             Assert.That(Directory.GetDirectories(root), Is.Empty);
-            Assert.That(File.ReadAllBytes(legacyRunPath), Is.EqualTo(legacyRun));
-            Assert.That(File.ReadAllBytes(legacyProfilePath), Is.EqualTo(legacyProfile));
 
             slots.StartNewGame(3);
             string profilePath = slots.GetProfilePath(3);
@@ -359,11 +295,13 @@ namespace Dice.Tests
         [TestCase(true)]
         public void FailedIndexCommitRetainsSelectionMappingAndPreparedFiles(bool startNewGame)
         {
-            File.WriteAllBytes(Path.Combine(root, "spirit-profile.json"), PlayerProfileCodec.Serialize(new PlayerProfile()));
             var slots = Load();
+            slots.StartNewGame(1);
             string originalRun = slots.GetSavePath(1);
             string originalProfile = slots.GetProfilePath(1);
             byte[] originalIndex = File.ReadAllBytes(IndexPath);
+            // A directory at the index backup path makes the next commit fail.
+            File.Delete(IndexPath + ".bak");
             Directory.CreateDirectory(IndexPath + ".bak");
             Assert.Catch<Exception>(() =>
             {
@@ -380,24 +318,18 @@ namespace Dice.Tests
             Assert.That(Load().GetSavePath(1), Is.EqualTo(originalRun));
             Assert.That(Directory.GetFiles(root, "spirit-slots.json.tmp-*").Length, Is.EqualTo(1));
             string[] preparedProfiles = Directory.GetFiles(root, "spirit-profile.json", SearchOption.AllDirectories);
-            Assert.That(preparedProfiles.Length, Is.EqualTo(startNewGame ? 3 : 2));
+            Assert.That(preparedProfiles.Length, Is.EqualTo(startNewGame ? 2 : 1));
             foreach (string path in preparedProfiles) AssertEmptyProfile(PlayerProfileFileStore.Load(path));
         }
 
         [Test]
-        public void IndexDirectoryIsAnAccessErrorAndDoesNotStartMigration()
+        public void IndexDirectoryIsAnAccessErrorAndDoesNotCreateCampaigns()
         {
-            string legacyProfile = Path.Combine(root, "spirit-profile.json");
-            byte[] profile = PlayerProfileCodec.Serialize(new PlayerProfile());
-            File.WriteAllBytes(legacyProfile, profile);
             Directory.CreateDirectory(IndexPath);
             var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.Catch<Exception>(() => slots.Load());
             Assert.Throws<InvalidOperationException>(() => { _ = slots.ActiveSlot; });
-            Assert.That(File.ReadAllBytes(legacyProfile), Is.EqualTo(profile));
-            string[] prepared = Directory.GetFiles(root, "spirit-profile.json", SearchOption.AllDirectories);
-            Assert.That(prepared.Length, Is.EqualTo(1));
-            foreach (string path in prepared) Assert.That(File.ReadAllBytes(path), Is.EqualTo(profile));
+            Assert.That(Directory.GetDirectories(root), Is.EqualTo(new[] { IndexPath }));
             Assert.That(Directory.GetFiles(root, "spirit-slots.json.tmp-*").Length, Is.EqualTo(0));
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -53,10 +54,46 @@ namespace Dice.Tests
             var invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
             invalid["HasPreviousStage"] = 2;
             Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));
-            invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
-            invalid["SaveFormatVersion"] = 99;
-            Assert.Throws<NotSupportedException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));
+            foreach (int version in new[] { EncounterSaveData.CurrentFormatVersion - 1, EncounterSaveData.CurrentFormatVersion + 1 })
+            {
+                invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
+                invalid["SaveFormatVersion"] = version;
+                Assert.Throws<NotSupportedException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()),
+                    TestContent.Catalog()), version.ToString());
+            }
             Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(new byte[EncounterSaveCodec.MaximumSaveBytes + 1], TestContent.Catalog()));
+        }
+
+        [Test]
+        public void FormatUpgradesRunRegisteredStepsInOrderFromTheDocumentVersion()
+        {
+            var seen = new List<string>();
+            var upgrades = new SaveFormatUpgrades("version", 4,
+                document => { seen.Add("first from " + document["version"]); document["first"] = true; },
+                document => { seen.Add("second from " + document["version"]); document["second"] = true; });
+            Assert.That(upgrades.OldestVersion, Is.EqualTo(2));
+            var oldest = new JObject { ["version"] = 2 };
+            Assert.That(upgrades.Upgrade(oldest), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(seen, Is.EqualTo(new[] { "first from 2", "second from 3" }));
+            Assert.That((int)oldest["version"], Is.EqualTo(4));
+            Assert.That((bool)oldest["first"] && (bool)oldest["second"], Is.True);
+            seen.Clear();
+            var newer = new JObject { ["version"] = 3 };
+            Assert.That(upgrades.Upgrade(newer), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(seen, Is.EqualTo(new[] { "second from 3" }));
+            Assert.That((int)newer["version"], Is.EqualTo(4));
+            seen.Clear();
+            Assert.That(upgrades.Upgrade(new JObject { ["version"] = 4 }), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(seen, Is.Empty);
+            foreach (int version in new[] { 1, 5 })
+            {
+                var unsupported = new JObject { ["version"] = version };
+                Assert.That(upgrades.Upgrade(unsupported), Is.EqualTo(SaveFormatCheck.VersionUnsupported), version.ToString());
+                Assert.That((int)unsupported["version"], Is.EqualTo(version), "A rejected document is left unchanged.");
+            }
+            Assert.That(upgrades.Upgrade(new JObject()), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
+            Assert.That(upgrades.Upgrade(new JObject { ["version"] = "2" }), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
+            Assert.That(seen, Is.Empty);
         }
 
         [Test]

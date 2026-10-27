@@ -32,6 +32,9 @@ namespace Dice.App
     {
         private const string MetadataFileName = "spirit-campaign.json";
         private const string BackupPrefix = "spirit-slots.corrupt-";
+        private const int MetadataFormatVersion = 1;
+        // To change the metadata format, raise MetadataFormatVersion and append a step that upgrades the previous format.
+        private static readonly SaveFormatUpgrades MetadataUpgrades = new SaveFormatUpgrades("formatVersion", MetadataFormatVersion);
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
         private readonly string root;
         private readonly MechanicalCatalog catalog;
@@ -45,18 +48,15 @@ namespace Dice.App
         internal bool IsSafeCampaignDirectory(string id) => TryAttributes(CampaignDirectory(id), out var attributes) &&
             (attributes & FileAttributes.Directory) != 0 && (attributes & FileAttributes.ReparsePoint) == 0;
 
-        internal List<CampaignRecoveryInfo> Scan(string[] assigned, out bool foundCampaigns)
+        internal List<CampaignRecoveryInfo> Scan(string[] assigned)
         {
-            foundCampaigns = false;
             var result = new List<CampaignRecoveryInfo>();
             if (!TryAttributes(root, out _)) return result;
             var mapped = new HashSet<string>(assigned, StringComparer.OrdinalIgnoreCase);
             foreach (string directory in Directory.GetDirectories(root))
             {
                 string id = Path.GetFileName(directory);
-                if (!IsCampaignId(id)) continue;
-                foundCampaigns = true;
-                if (mapped.Contains(id)) continue;
+                if (!IsCampaignId(id) || mapped.Contains(id)) continue;
                 var info = ReadCampaign(id);
                 if (info != null) result.Add(info);
             }
@@ -90,32 +90,6 @@ namespace Dice.App
             return new CampaignRecoveryInfo(id, profile, save, written, ReadSlot(directory));
         }
 
-        internal string ImportLegacy()
-        {
-            string id;
-            string directory;
-            string staging;
-            do
-            {
-                id = Guid.NewGuid().ToString("N");
-                directory = CampaignDirectory(id);
-                staging = directory + ".importing";
-            }
-            while (TryAttributes(directory, out _) || TryAttributes(staging, out _));
-            Directory.CreateDirectory(staging);
-            // Publish only a complete copy so interrupted imports do not hide the original legacy files.
-            foreach (string name in new[] { "spirit-profile.json", "spirit-encounter.json" })
-            {
-                string source = Path.Combine(root, name);
-                if (File.Exists(source)) File.Copy(source, Path.Combine(staging, name));
-            }
-            if (!string.Equals(Path.GetDirectoryName(Path.GetFullPath(staging)), Path.GetDirectoryName(directory), StringComparison.OrdinalIgnoreCase))
-                throw new IOException("The campaign import directory is outside the save root.");
-            RequireRegularTree(staging);
-            Directory.Move(staging, directory);
-            return id;
-        }
-
         internal void WriteSlot(string id, int slot)
         {
             string directory = CampaignDirectory(id);
@@ -124,7 +98,7 @@ namespace Dice.App
             string path = Path.Combine(directory, MetadataFileName);
             RequireRegularFile(path);
             RequireRegularFile(path + ".bak");
-            var document = new JObject { ["formatVersion"] = 1, ["slot"] = slot };
+            var document = new JObject { ["formatVersion"] = MetadataFormatVersion, ["slot"] = slot };
             SaveFileCommit.Write(path, TextEncoding.GetBytes(document.ToString(Formatting.Indented)));
         }
 
@@ -181,8 +155,8 @@ namespace Dice.App
                     using (var reader = new JsonTextReader(text) { MaxDepth = 3, DateParseHandling = DateParseHandling.None })
                     {
                         var document = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
-                        if (reader.Read() || document.Count != 2 || document["formatVersion"]?.Type != JTokenType.Integer ||
-                            document["formatVersion"].Value<long>() != 1 || document["slot"]?.Type != JTokenType.Integer) return 0;
+                        if (reader.Read() || MetadataUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded) return 0;
+                        if (document.Count != 2 || document["slot"]?.Type != JTokenType.Integer) return 0;
                         long slot = document["slot"].Value<long>();
                         return slot >= 1 && slot <= CampaignSaveSlots.SlotCount ? (int)slot : 0;
                     }

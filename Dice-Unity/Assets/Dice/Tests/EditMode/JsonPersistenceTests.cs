@@ -11,28 +11,6 @@ namespace Dice.Tests
     public sealed class JsonPersistenceTests
     {
         [Test]
-        public void LegacyJsonResumesAndResavesWithCurrentAccounting()
-        {
-            // Legacy saves predate encounter rules, so the fixture encounter has none.
-            var catalog = TestContent.Catalog();
-            var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 60);
-            original.Execute(new RerollDiceAction(1), original.Snapshot.Revision);
-            var json = SaveJson(original);
-            json["SaveFormatVersion"] = 1;
-            json["RulesVersion"] = 3;
-            json.Remove("RerollsSpentInStage");
-            json.Remove("FreeRerollsUsedInStage");
-            json.Remove("TotalFreeRerollsUsed");
-            var result = EncounterSession.RestoreEncounter(catalog, Decode(json, catalog));
-            Assert.That(result.Success, Is.True, result.Detail);
-            var resumed = result.Session;
-            original.Execute(new RerollDiceAction(3), original.Snapshot.Revision);
-            resumed.Execute(new RerollDiceAction(3), resumed.Snapshot.Revision);
-            EncounterPersistenceTests.AssertGraphEqual(original.CaptureSave(), resumed.CaptureSave());
-            Assert.That(Decode(SaveJson(resumed), catalog).SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
-        }
-
-        [Test]
         public void JsonRoundTripPreservesFreeRerollUsageAndFollowingRandomSequence()
         {
             var stage = new StageDefinition(1000000, 3, 3);

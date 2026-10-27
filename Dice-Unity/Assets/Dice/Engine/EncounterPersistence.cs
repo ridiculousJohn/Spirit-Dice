@@ -45,7 +45,6 @@ namespace Dice.Engine
                 NewlyUnlockedModifierIds = state.NewlyUnlockedModifierIds.ToArray(),
                 DiscoveredFamilyIds = state.DiscoveredFamilyIds.ToArray(),
                 PendingUnlockOfferDiscoveredFamilyIds = state.PendingUnlockOfferDiscoveredFamilyIds?.ToArray(),
-                PendingModifierOfferUsesLegacyEligibility = state.PendingModifierOfferUsesLegacyEligibility,
                 PendingModifierOfferUsesEncounterAdditions = state.PendingModifierOfferUsesEncounterAdditions,
                 PendingModifierOfferUnlockedIds = state.PendingModifierOfferUnlockedIds?.ToArray(),
                 Modifiers = new EncounterSaveModifierData[state.Modifiers.Length],
@@ -99,12 +98,9 @@ namespace Dice.Engine
             error = EncounterRestoreError.None;
             detail = null;
             if (save == null) return Fail(EncounterRestoreError.NullSave, "The save is missing.", out error, out detail);
-            bool legacy = save.SaveFormatVersion == 1;
-            if (save.SaveFormatVersion < 1 || save.SaveFormatVersion > EncounterSaveData.CurrentFormatVersion)
+            if (save.SaveFormatVersion != EncounterSaveData.CurrentFormatVersion)
                 return Fail(EncounterRestoreError.SaveFormatVersionMismatch, "Save format version mismatch.", out error, out detail);
-            if (save.RulesVersion != (legacy ? 3 : save.SaveFormatVersion == 2 ? 4 : save.SaveFormatVersion == 3 ? 5 :
-                save.SaveFormatVersion == 4 ? 6 : save.SaveFormatVersion == 5 ? 7 : save.SaveFormatVersion == 6 ? 8 :
-                EncounterSession.RulesVersion))
+            if (save.RulesVersion != EncounterSession.RulesVersion)
                 return Fail(EncounterRestoreError.RulesVersionMismatch, "Rules version mismatch.", out error, out detail);
             if (save.RandomAlgorithmVersion != DeterministicRandom.AlgorithmVersion)
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
@@ -113,8 +109,6 @@ namespace Dice.Engine
             try { definition = catalog.GetEncounter(save.EncounterId); }
             catch (ArgumentException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is invalid.", out error, out detail); }
             catch (KeyNotFoundException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is missing from the catalog.", out error, out detail); }
-            if (legacy && definition.Rules.Count != 0)
-                return Fail(EncounterRestoreError.RulesVersionMismatch, "Legacy saves require an encounter without rules.", out error, out detail);
             try
             {
                 state = ValidateAndMap(catalog, definition, save);
@@ -134,8 +128,6 @@ namespace Dice.Engine
         {
             Require(Enum.IsDefined(typeof(EncounterPhase), save.Phase) && Enum.IsDefined(typeof(EncounterOutcome), save.Outcome),
                 "Phase or outcome is invalid.");
-            Require(save.SaveFormatVersion >= 4 || save.Phase != EncounterPhase.ChoosingUnlock,
-                "Legacy saves cannot contain unlock choices.");
             Require(save.Revision >= 0 && save.StageIndex >= 0 && save.StageIndex < definition.Stages.Count,
                 "Revision or stage index is invalid.");
             var stage = definition.Stages[save.StageIndex];
@@ -151,9 +143,6 @@ namespace Dice.Engine
                 "Cumulative counters or resources are invalid.");
             Require(save.RerollsSpentInStage >= 0 && save.FreeRerollsUsedInStage >= 0 && save.TotalFreeRerollsUsed >= 0,
                 "Reroll accounting counters are invalid.");
-            if (save.SaveFormatVersion == 1)
-                Require(save.RerollsSpentInStage == 0 && save.FreeRerollsUsedInStage == 0 && save.TotalFreeRerollsUsed == 0,
-                    "Legacy saves cannot contain rule accounting history.");
             Require(save.NextOfferId > 0 && save.NextOptionId > 0, "Reward identity counters are invalid.");
             bool completed = save.Phase == EncounterPhase.Completed;
             Require(completed == (save.Outcome != EncounterOutcome.None), "Phase and outcome disagree.");
@@ -203,9 +192,9 @@ namespace Dice.Engine
                 Modifiers = new ModifierInstanceState[save.Modifiers.Length],
                 ExcludedRewardFamilies = new List<string>(save.ExcludedRewardFamilies),
                 RecentHandUpgrades = new List<HandCategory>(save.RecentHandUpgrades),
-                PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories)
+                PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories),
+                PendingModifierOfferUsesEncounterAdditions = save.PendingModifierOfferUsesEncounterAdditions
             };
-            state.PendingModifierOfferUsesEncounterAdditions = save.SaveFormatVersion >= 4 && save.PendingModifierOfferUsesEncounterAdditions;
             ValidateUnlocks(catalog, definition, save, state);
             ValidateDiscoveries(catalog, save, state);
             ValidateHistory(definition, save, state, postPlay);
@@ -230,11 +219,6 @@ namespace Dice.Engine
 
         private static void ValidateUnlocks(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save, EncounterState state)
         {
-            if (save.SaveFormatVersion < 3)
-            {
-                state.PendingModifierOfferUsesLegacyEligibility = state.Phase == EncounterPhase.ChoosingModifier;
-                return;
-            }
             Require(save.UnlockedModifierIds != null && save.NewlyUnlockedModifierIds != null, "Unlock arrays are missing.");
             var unlocked = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in save.UnlockedModifierIds)
@@ -247,21 +231,18 @@ namespace Dice.Engine
             }
             var earned = new HashSet<string>(StringComparer.Ordinal);
             int clearedStageNumber = state.StageIndex + (state.RemainingThreshold == 0 ? 1 : 0);
+            bool milestoneCleared = false;
+            foreach (var milestone in definition.UnlockMilestones)
+                if (milestone.StageNumber <= clearedStageNumber) milestoneCleared = true;
             foreach (string id in save.NewlyUnlockedModifierIds)
             {
                 Require(id != null && unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
-                bool reached = false;
-                foreach (var milestone in definition.UnlockMilestones)
-                    if (milestone.StageNumber <= clearedStageNumber &&
-                        (milestone.ModifierIds.Contains(id) || definition.UnlockRewardModifierIds.Contains(id))) reached = true;
-                Require(reached, "An earned unlock requires a cleared milestone.");
+                // Unlock offers draw only from the encounter's unlock rewards, so only those can be earned.
+                Require(milestoneCleared && definition.UnlockRewardModifierIds.Contains(id), "An earned unlock requires a cleared milestone.");
             }
             state.UnlockedModifierIds = new List<string>(save.UnlockedModifierIds);
             state.NewlyUnlockedModifierIds = new List<string>(save.NewlyUnlockedModifierIds);
-            Require(!save.PendingModifierOfferUsesLegacyEligibility || state.Phase == EncounterPhase.ChoosingModifier,
-                "Legacy eligibility requires a pending modifier offer.");
-            state.PendingModifierOfferUsesLegacyEligibility = save.PendingModifierOfferUsesLegacyEligibility;
-            if (state.Phase == EncounterPhase.ChoosingModifier && !state.PendingModifierOfferUsesLegacyEligibility)
+            if (state.Phase == EncounterPhase.ChoosingModifier)
             {
                 Require(save.PendingModifierOfferUnlockedIds != null, "Pending offer unlocks are missing.");
                 var pendingUnlocks = new HashSet<string>(StringComparer.Ordinal);
@@ -276,15 +257,6 @@ namespace Dice.Engine
         {
             var families = new HashSet<string>(StringComparer.Ordinal);
             foreach (var modifier in catalog.Modifiers) families.Add(modifier.FamilyId);
-            if (save.SaveFormatVersion < 5)
-            {
-                // Existing runs retain every family that was eligible when their offers were generated.
-                foreach (var modifier in catalog.Modifiers)
-                    if (!state.DiscoveredFamilyIds.Contains(modifier.FamilyId)) state.DiscoveredFamilyIds.Add(modifier.FamilyId);
-                if (state.Phase == EncounterPhase.ChoosingUnlock)
-                    state.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(state.DiscoveredFamilyIds);
-                return;
-            }
             Require(save.DiscoveredFamilyIds != null, "Discovered family IDs are missing.");
             var discovered = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in save.DiscoveredFamilyIds)
@@ -382,11 +354,10 @@ namespace Dice.Engine
         /** Each stateful rule restores and validates its own saved state against the restored core state. */
         private static void RestoreRuleStates(EncounterDefinition definition, EncounterSaveData save, EncounterState state, bool postPlay)
         {
-            // Earlier formats stored no rule states; their rules start from initial state.
-            Require(save.RuleStates != null || save.SaveFormatVersion < 7, "Rule states are missing.");
+            Require(save.RuleStates != null, "Rule states are missing.");
             var rules = definition.Rules;
             var sources = new object[rules.Count];
-            foreach (var entry in save.RuleStates ?? Array.Empty<EncounterSaveRuleData>())
+            foreach (var entry in save.RuleStates)
             {
                 int slot = -1;
                 for (int i = 0; entry != null && i < rules.Count; ++i)
@@ -399,9 +370,8 @@ namespace Dice.Engine
             for (int i = 0; i < rules.Count; ++i)
             {
                 if (rules[i].SaveDataType == null) continue;
-                Require(sources[i] != null || save.SaveFormatVersion < 7, "A rule state is missing.");
-                var source = sources[i] ?? rules[i].CaptureState(rules[i].CreateState());
-                Require(rules[i].TryRestoreState(state, source, postPlay, out state.RuleStates[i], out string detail), detail);
+                Require(sources[i] != null, "A rule state is missing.");
+                Require(rules[i].TryRestoreState(state, sources[i], postPlay, out state.RuleStates[i], out string detail), detail);
             }
         }
 
@@ -420,14 +390,9 @@ namespace Dice.Engine
         /** Rules that report drawing from the rule stream are its only consumers. */
         private static DeterministicRandom RestoreRuleRandom(EncounterDefinition definition, EncounterSaveData save)
         {
-            bool used = EncounterRuleResolver.UsesRuleRandom(definition);
-            if (save.SaveFormatVersion >= 6)
-            {
-                Require(used || save.RuleRandomState == 0, "Only rules that draw from the rule stream may advance it.");
-                return new DeterministicRandom(save.RuleRandomState);
-            }
-            // Earlier formats had no rule stream; derive one only for an encounter that now draws from it.
-            return new DeterministicRandom(used ? save.DiceRandomState ^ EncounterSession.RuleRandomSalt : 0);
+            Require(EncounterRuleResolver.UsesRuleRandom(definition) || save.RuleRandomState == 0,
+                "Only rules that draw from the rule stream may advance it.");
+            return new DeterministicRandom(save.RuleRandomState);
         }
 
         private static EncounterSavePieceData[] CapturePieces(EncounterDefinition definition, EncounterState state)
@@ -446,11 +411,6 @@ namespace Dice.Engine
         private static PieceInteractionState[] RestorePieces(EncounterDefinition definition, EncounterSaveData save)
         {
             var initial = TablePieceStates.Initial(definition);
-            if (save.SaveFormatVersion < 6)
-            {
-                Require(save.Pieces == null || save.Pieces.Length == 0, "Earlier saves cannot contain table pieces.");
-                return initial;
-            }
             Require(save.Pieces != null && save.Pieces.Length == initial.Length, "Table piece states disagree with the encounter.");
             var states = new PieceInteractionState[initial.Length];
             int slot = 0;
@@ -535,12 +495,6 @@ namespace Dice.Engine
             state.ModifierBaseScore = baseScore;
             state.ModifierMultiplier = multiplier;
             decimal stagePaidRerolls = definition.Stages[state.StageIndex].StartingRerolls + stageRerollGrants - state.RerollsRemaining;
-            if (save.SaveFormatVersion == 1)
-            {
-                Require(stagePaidRerolls >= 0 && stagePaidRerolls <= int.MaxValue,
-                    "Legacy stage reroll accounting is outside its supported range.");
-                state.RerollsSpentInStage = (int)stagePaidRerolls;
-            }
             Require(stagePaidRerolls == (long)state.RerollsSpentInStage - state.FreeRerollsUsedInStage,
                 "Stage reroll resources disagree with paid and free action history.");
             for (int i = 0; i < state.HandUpgrades.Length; ++i)
@@ -678,38 +632,20 @@ namespace Dice.Engine
             foreach (var instance in state.Modifiers) owned.Add(instance.DefinitionId);
             var offered = new HashSet<string>(StringComparer.Ordinal);
             var history = new HashSet<string>(state.ExcludedRewardFamilies, StringComparer.Ordinal);
+            var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
             int nextOption = 0;
             foreach (string poolId in layout.PoolIds)
             {
                 var pool = catalog.GetRewardPool(poolId);
-                if (!state.PendingModifierOfferUsesLegacyEligibility)
-                {
-                    var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
-                    var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.StageIndex + 2, pool, owned, offered,
-                        definition, unlocked, state.PendingModifierOfferUsesEncounterAdditions);
-                    string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.StageIndex + 2, pool, definition, unlocked);
-                    if (eligible.Count == 0 && fallback == null) continue;
-                    Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
-                    var currentOption = options[nextOption++];
-                    var currentModifier = catalog.GetModifier(currentOption.DefinitionId);
-                    Require(eligible.Count == 0 ? currentOption.DefinitionId == fallback : eligible.Contains(currentOption.DefinitionId),
-                        "Modifier option violates its scope, unlock, pool, or tier eligibility.");
-                    Require(history.Contains(currentModifier.FamilyId), "An offered family is absent from reward history.");
-                    offered.Add(currentModifier.FamilyId);
-                    continue;
-                }
-                bool hasCandidate = false;
-                foreach (string id in pool.ModifierIds)
-                    if (!owned.Contains(id) && !offered.Contains(catalog.GetModifier(id).FamilyId)) { hasCandidate = true; break; }
-                if (!hasCandidate && pool.FallbackModifierId == null) continue;
+                var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.StageIndex + 2, pool, owned, offered,
+                    definition, unlocked, state.PendingModifierOfferUsesEncounterAdditions);
+                string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.StageIndex + 2, pool, definition, unlocked);
+                if (eligible.Count == 0 && fallback == null) continue;
                 Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
                 var option = options[nextOption++];
                 var modifier = catalog.GetModifier(option.DefinitionId);
-                if (!hasCandidate)
-                    Require(option.DefinitionId == pool.FallbackModifierId, "An exhausted reward slot requires its fallback.");
-                else
-                    Require(pool.ModifierIds.Contains(option.DefinitionId) && !owned.Contains(option.DefinitionId) &&
-                        !offered.Contains(modifier.FamilyId), "Modifier option is inconsistent with its pool.");
+                Require(eligible.Count == 0 ? option.DefinitionId == fallback : eligible.Contains(option.DefinitionId),
+                    "Modifier option violates its scope, unlock, pool, or tier eligibility.");
                 Require(history.Contains(modifier.FamilyId), "An offered family is absent from reward history.");
                 offered.Add(modifier.FamilyId);
             }

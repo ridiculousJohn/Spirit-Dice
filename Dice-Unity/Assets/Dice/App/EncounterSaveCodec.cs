@@ -17,12 +17,13 @@ namespace Dice.App
     {
         public const int MaximumSaveBytes = 16 * 1024 * 1024;
         private const int MaximumDepth = 64;
-        private const string LegacyDisturbedMask = "DisturbedMask";
-        private const string LegacyLatestDisturbedMask = "LatestDisturbedMask";
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
         private static readonly JsonSerializerSettings Settings = CreateSettings(MissingMemberHandling.Ignore);
         // A rule state belongs to its rule's save class, so a field that class does not define is rejected.
         private static readonly JsonSerializerSettings RuleStateSettings = CreateSettings(MissingMemberHandling.Error);
+        // To change the format, raise EncounterSaveData.CurrentFormatVersion and append a step that upgrades the previous format.
+        private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
+            nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion);
 
         public static byte[] Serialize(EncounterSaveData save)
         {
@@ -63,54 +64,12 @@ namespace Dice.App
                         LineInfoHandling = LineInfoHandling.Ignore
                     });
                     if (reader.Read()) throw new FormatException("The save contains trailing content.");
-                    var version = document[nameof(EncounterSaveData.SaveFormatVersion)];
-                    if (version == null || version.Type != JTokenType.Integer)
+                    var check = FormatUpgrades.Upgrade(document);
+                    if (check == SaveFormatCheck.VersionNotInteger)
                         throw new FormatException("The save format version must be an integer.");
-                    var serializer = JsonSerializer.Create(Settings);
-                    int formatVersion = version.ToObject<int>(serializer);
-                    if (formatVersion < 1 || formatVersion > EncounterSaveData.CurrentFormatVersion)
+                    if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The save format version is unsupported.");
-                    if (formatVersion == 1)
-                    {
-                        // Legacy encounters spent one resource per reroll; retain the version for rules validation.
-                        if (document[nameof(EncounterSaveData.FreeRerollsUsedInStage)] == null)
-                            document.Add(nameof(EncounterSaveData.FreeRerollsUsedInStage), 0);
-                        if (document[nameof(EncounterSaveData.TotalFreeRerollsUsed)] == null)
-                            document.Add(nameof(EncounterSaveData.TotalFreeRerollsUsed), 0L);
-                        if (document[nameof(EncounterSaveData.RerollsSpentInStage)] == null)
-                            document.Add(nameof(EncounterSaveData.RerollsSpentInStage), 0);
-                    }
-                    if (formatVersion < 3)
-                    {
-                        if (document[nameof(EncounterSaveData.UnlockedModifierIds)] == null)
-                            document.Add(nameof(EncounterSaveData.UnlockedModifierIds), new JArray());
-                        if (document[nameof(EncounterSaveData.NewlyUnlockedModifierIds)] == null)
-                            document.Add(nameof(EncounterSaveData.NewlyUnlockedModifierIds), new JArray());
-                        if (document[nameof(EncounterSaveData.PendingModifierOfferUsesLegacyEligibility)] == null)
-                            document.Add(nameof(EncounterSaveData.PendingModifierOfferUsesLegacyEligibility), false);
-                        if (document[nameof(EncounterSaveData.PendingModifierOfferUnlockedIds)] == null)
-                            document.Add(nameof(EncounterSaveData.PendingModifierOfferUnlockedIds), JValue.CreateNull());
-                    }
-                    if (formatVersion < 4 && document[nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions)] == null)
-                        document.Add(nameof(EncounterSaveData.PendingModifierOfferUsesEncounterAdditions), false);
-                    if (formatVersion < 5)
-                    {
-                        if (document[nameof(EncounterSaveData.DiscoveredFamilyIds)] == null)
-                            document.Add(nameof(EncounterSaveData.DiscoveredFamilyIds), JValue.CreateNull());
-                        if (document[nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds)] == null)
-                            document.Add(nameof(EncounterSaveData.PendingUnlockOfferDiscoveredFamilyIds), JValue.CreateNull());
-                    }
-                    if (formatVersion < 6)
-                    {
-                        // Earlier formats had no table pieces, interference or rule stream; restore supplies the stream.
-                        if (document[LegacyDisturbedMask] == null) document.Add(LegacyDisturbedMask, 0);
-                        if (document[LegacyLatestDisturbedMask] == null) document.Add(LegacyLatestDisturbedMask, 0);
-                        if (document[nameof(EncounterSaveData.RuleRandomState)] == null)
-                            document.Add(nameof(EncounterSaveData.RuleRandomState), 0UL);
-                        if (document[nameof(EncounterSaveData.Pieces)] == null)
-                            document.Add(nameof(EncounterSaveData.Pieces), JValue.CreateNull());
-                    }
-                    if (formatVersion < 7) MigrateDisturbedMasks(document, catalog, serializer);
+                    var serializer = JsonSerializer.Create(Settings);
                     var ruleStates = ReadRuleStates(document, catalog, serializer);
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
@@ -143,39 +102,6 @@ namespace Dice.App
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StrictPrimitiveConverter());
             return settings;
-        }
-
-        /** Format 6 kept the haunting's disturbed dice on the shared block; they move into its rule's state. */
-        private static void MigrateDisturbedMasks(JObject document, MechanicalCatalog catalog, JsonSerializer serializer)
-        {
-            int disturbed = TakeLegacyMask(document, LegacyDisturbedMask, serializer);
-            int latest = TakeLegacyMask(document, LegacyLatestDisturbedMask, serializer);
-            if (document[nameof(EncounterSaveData.RuleStates)] == null)
-                document.Add(nameof(EncounterSaveData.RuleStates), new JArray());
-            if (disturbed == 0 && latest == 0) return;
-            // Only the encounter's die-interference rule could have recorded disturbed dice.
-            string ruleId = null;
-            var encounter = FindEncounter(document, catalog);
-            if (encounter != null)
-                foreach (var rule in encounter.Rules)
-                    if (rule.SaveDataType == typeof(DieInterferenceSaveData)) ruleId = rule.Id;
-            if (ruleId == null) throw new FormatException("Disturbed dice require a die-interference rule.");
-            if (!(document[nameof(EncounterSaveData.RuleStates)] is JArray entries))
-                throw new FormatException("Rule states must be an array.");
-            entries.Add(new JObject
-            {
-                { nameof(EncounterSaveRuleData.RuleId), ruleId },
-                { nameof(EncounterSaveRuleData.State), JObject.FromObject(new DieInterferenceSaveData
-                    { DisturbedMask = disturbed, LatestDisturbedMask = latest }, serializer) }
-            });
-        }
-
-        private static int TakeLegacyMask(JObject document, string name, JsonSerializer serializer)
-        {
-            var token = document[name] ?? throw new JsonSerializationException("A required save field is missing: " + name);
-            int value = token.ToObject<int>(serializer);
-            document.Remove(name);
-            return value;
         }
 
         /**

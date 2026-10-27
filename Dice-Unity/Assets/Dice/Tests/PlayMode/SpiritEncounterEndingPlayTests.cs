@@ -365,7 +365,7 @@ namespace Dice.Tests
                 Enumerable.Range(0, stageCount).Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)),
                 rules: definition.Rules, spiritId: definition.SpiritId,
                 unlockMilestones: winning
-                    ? Enumerable.Range(1, stageCount).Select(stage => new ModifierUnlockMilestone(stage, unlockIds)).ToArray()
+                    ? Enumerable.Range(1, stageCount).Select(stage => new ModifierUnlockMilestone(stage)).ToArray()
                     : Array.Empty<ModifierUnlockMilestone>(),
                 encounterModifierIds: definition.EncounterModifierIds, unlockRewardModifierIds: unlockIds,
                 pieces: definition.Pieces,

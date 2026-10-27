@@ -636,33 +636,14 @@ namespace Dice.Tests
             Assert.That(File.Exists(controller.ProfilePath), Is.False);
         }
 
-        [Test]
-        public void LegacyProfileKeepsProgressAndNewVisitsRoundTripAndMerge()
-        {
-            var old = new JObject
-            {
-                ["ProfileFormatVersion"] = 1,
-                ["UnlockedModifierIds"] = new JArray("modifier.future"),
-                ["CompletedEncounterIds"] = new JArray("encounter.future")
-            };
-            var profile = PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(old.ToString()));
-            Assert.That(profile.VisitedEncounterIds, Is.Empty);
-            Assert.That(profile.UnlockModifier("modifier.future"), Is.False);
-            Assert.That(profile.CompleteEncounter("encounter.future"), Is.False);
-            Assert.That(profile.VisitEncounter(SecondId), Is.True);
-            Assert.That(profile.VisitEncounter(SecondId), Is.False);
-            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
-            Assert.That(restored.VisitedEncounterIds, Is.EqualTo(new[] { SecondId }));
-            Assert.That(new PlayerProfile().Merge(restored), Is.True);
-            Assert.That(restored.Merge(profile), Is.False);
-        }
-
+        [TestCase("missing")]
         [TestCase("duplicate")]
         [TestCase("blank")]
         [TestCase("null")]
         public void InvalidVisitFieldsAreRejected(string error)
         {
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
+            if (error == "missing") document.Remove("VisitedEncounterIds");
             if (error == "duplicate") document["VisitedEncounterIds"] = new JArray(FirstId, FirstId);
             if (error == "blank") document["VisitedEncounterIds"] = new JArray(" ");
             if (error == "null") document["VisitedEncounterIds"] = JValue.CreateNull();

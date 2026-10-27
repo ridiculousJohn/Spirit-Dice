@@ -13,6 +13,9 @@ namespace Dice.App
     {
         public const int SlotCount = 3;
         private const int MaximumIndexBytes = 4096;
+        private const int IndexFormatVersion = 1;
+        // To change the index format, raise IndexFormatVersion and append a step that upgrades the previous format.
+        private static readonly SaveFormatUpgrades IndexUpgrades = new SaveFormatUpgrades("formatVersion", IndexFormatVersion);
         private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
         private readonly string root;
         private readonly string indexPath;
@@ -36,13 +39,13 @@ namespace Dice.App
 
         public string Load()
         {
-            bool missing = false;
             string backupPath = null;
             int selected = 1;
             string[] loaded = null;
+            // A missing index is rebuilt from the campaigns' slot claims, like a corrupt one but without a backup.
             try { ReadIndex(out selected, out loaded); }
-            catch (FileNotFoundException) { missing = true; }
-            catch (DirectoryNotFoundException) { missing = true; }
+            catch (FileNotFoundException) { }
+            catch (DirectoryNotFoundException) { }
             catch (FormatException)
             {
                 backupPath = Path.Combine(root, "spirit-slots.corrupt-" + Guid.NewGuid().ToString("N") + ".json");
@@ -52,7 +55,7 @@ namespace Dice.App
             {
                 for (int index = 0; index < loaded.Length; ++index)
                     if (loaded[index] != null) recovery.BackfillSlot(loaded[index], index + 1);
-                var unresolved = recovery.Scan(loaded, out _);
+                var unresolved = recovery.Scan(loaded);
                 campaigns = loaded;
                 activeSlot = selected;
                 recoveryCampaigns = unresolved.AsReadOnly();
@@ -60,7 +63,7 @@ namespace Dice.App
             }
 
             var initial = new string[SlotCount];
-            var candidates = recovery.Scan(initial, out bool foundCampaigns);
+            var candidates = recovery.Scan(initial);
             foreach (var candidate in candidates)
             {
                 if (candidate.SuggestedSlot == 0) continue;
@@ -68,13 +71,6 @@ namespace Dice.App
                 foreach (var other in candidates)
                     if (other.SuggestedSlot == candidate.SuggestedSlot) ++count;
                 if (count == 1) initial[candidate.SuggestedSlot - 1] = candidate.CampaignId;
-            }
-            string legacyRun = Path.Combine(root, "spirit-encounter.json");
-            string legacyProfile = Path.Combine(root, "spirit-profile.json");
-            if (missing && !foundCampaigns && (File.Exists(legacyRun) || File.Exists(legacyProfile)))
-            {
-                initial[0] = recovery.ImportLegacy();
-                recovery.WriteSlot(initial[0], 1);
             }
             int recoveredSelection = Array.FindIndex(initial, campaign => campaign != null) + 1;
             Commit(recoveredSelection == 0 ? 1 : recoveredSelection, initial);
@@ -180,7 +176,7 @@ namespace Dice.App
         {
             var document = new JObject
             {
-                ["formatVersion"] = 1,
+                ["formatVersion"] = IndexFormatVersion,
                 ["activeSlot"] = selected,
                 ["campaigns"] = new JArray(next)
             };
@@ -215,11 +211,11 @@ namespace Dice.App
                         DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error
                     });
                     if (reader.Read()) throw new FormatException("The save slot index contains trailing content.");
+                    if (IndexUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded)
+                        throw new FormatException("The save slot index format version is unsupported.");
                     foreach (var property in document.Properties())
                         if (property.Name != "formatVersion" && property.Name != "activeSlot" && property.Name != "campaigns")
                             throw new FormatException("The save slot index contains an unsupported field: " + property.Name);
-                    if (document["formatVersion"]?.Type != JTokenType.Integer || document["formatVersion"].Value<long>() != 1)
-                        throw new FormatException("The save slot index format version is unsupported.");
                     if (document["activeSlot"]?.Type != JTokenType.Integer)
                         throw new FormatException("The active save slot must be an integer.");
                     long selectedValue = document["activeSlot"].Value<long>();

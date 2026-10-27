@@ -249,7 +249,7 @@ namespace Dice.Tests
             var stages = finalWin ? new[] { new StageDefinition(1, 1, 0) } :
                 new[] { new StageDefinition(1, 1, 0), new StageDefinition(1000000, 1, 0) };
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages,
-                unlockMilestones: new[] { new ModifierUnlockMilestone(1, new[] { UnlockedId }) },
+                unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: new[] { UnlockedId });
             return new MechanicalCatalog("test.progression.v1", TestContent.Hands(), new[] { encounter }, new[] { modifier });
         }

@@ -12,9 +12,6 @@ namespace Dice.Tests
     {
         private const string BindingId = "rule.test.binding";
         private const string HauntingId = "rule.test.haunting";
-        private const string WardId = "rule.test.ward";
-        private const string PieceId = "piece.test";
-        private const string InteractionId = "position";
 
         [Test]
         public void TheOpeningRollIsMarkedWithoutChangingItsFacesOrTheDiceStream()
@@ -278,65 +275,6 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void FormatSixDisturbancesMigrateIntoTheHauntingRuleState()
-        {
-            var catalog = WardedHauntingCatalog();
-            var session = Session(catalog, 5);
-            Execute(session, new RerollDiceAction(1));
-            Assert.That(session.Snapshot.DisturbedMask, Is.Not.Zero);
-            var current = session.CaptureSave();
-            var haunting = (DieInterferenceSaveData)current.RuleStates.Single().State;
-            Assert.That(current.RuleStates.Single().RuleId, Is.EqualTo(HauntingId), "Stateless rules save no entry.");
-            var json = Downgrade(session, haunting.DisturbedMask, haunting.LatestDisturbedMask);
-            var decoded = Decode(catalog, json);
-            Assert.That(decoded.SaveFormatVersion, Is.EqualTo(6));
-            var migrated = decoded.RuleStates.Single();
-            Assert.That(migrated.RuleId, Is.EqualTo(HauntingId));
-            Assert.That(((DieInterferenceSaveData)migrated.State).DisturbedMask, Is.EqualTo(haunting.DisturbedMask));
-            Assert.That(((DieInterferenceSaveData)migrated.State).LatestDisturbedMask, Is.EqualTo(haunting.LatestDisturbedMask));
-            var restored = Restore(catalog, decoded);
-            Assert.That(restored.Snapshot.DisturbedMask, Is.EqualTo(session.Snapshot.DisturbedMask));
-            var resaved = restored.CaptureSave();
-            Assert.That(resaved.SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
-            Assert.That(resaved.RulesVersion, Is.EqualTo(EncounterSession.RulesVersion));
-            EncounterPersistenceTests.AssertGraphEqual(current.RuleStates, resaved.RuleStates);
-            Execute(session, new RerollDiceAction(2));
-            Execute(restored, new RerollDiceAction(2));
-            Assert.That(restored.Snapshot.CurrentDice, Is.EqualTo(session.Snapshot.CurrentDice));
-            Assert.That(restored.Snapshot.DisturbedMask, Is.EqualTo(session.Snapshot.DisturbedMask));
-
-            var undisturbed = Session(catalog, 5);
-            var quiet = Decode(catalog, Downgrade(undisturbed, 0, 0));
-            Assert.That(quiet.RuleStates, Is.Empty, "Zero masks are dropped.");
-            var quietRestored = Restore(catalog, quiet);
-            Assert.That(quietRestored.Snapshot.DisturbedMask, Is.Zero);
-            EncounterPersistenceTests.AssertGraphEqual(undisturbed.CaptureSave().RuleStates, quietRestored.CaptureSave().RuleStates);
-        }
-
-        [Test]
-        public void FormatSixDocumentsWithoutInterferenceLoadWithoutRuleStates()
-        {
-            var catalog = new MechanicalCatalog("test.plain.rules", TestContent.Hands(), new[]
-            {
-                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                    rules: new[] { new FirstRerollFreeRuleDefinition() })
-            });
-            var session = Session(catalog, 12);
-            Execute(session, new RerollDiceAction(3));
-            var decoded = Decode(catalog, Downgrade(session, 0, 0));
-            Assert.That(decoded.RuleStates, Is.Empty);
-            var restored = Restore(catalog, decoded);
-            Execute(session, new RerollDiceAction(5));
-            Execute(restored, new RerollDiceAction(5));
-            EncounterPersistenceTests.AssertGraphEqual(session.CaptureSave(), restored.CaptureSave());
-            Assert.Throws<FormatException>(() => Decode(catalog, Downgrade(session, 1, 1)),
-                "Disturbed dice require a die-interference rule.");
-            var missing = Downgrade(session, 0, 0);
-            missing.Remove("LatestDisturbedMask");
-            Assert.Throws<FormatException>(() => Decode(catalog, missing));
-        }
-
-        [Test]
         public void DieBindingSettingsAndRuleIdsAreAuthoredOnTheDefinition()
         {
             var rule = new DieBindingRuleDefinition(BindingId, true, false);
@@ -359,31 +297,6 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages ?? new[] { new StageDefinition(1000000, 20, 20) },
                 startingModifiers: modifiers?.Select(value => value.Id), rules: rules);
             return new MechanicalCatalog("test.binding", TestContent.Hands(), new[] { encounter }, modifiers);
-        }
-
-        private static MechanicalCatalog WardedHauntingCatalog()
-        {
-            var ward = new TablePieceDefinition(PieceId, new[]
-                { new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand) });
-            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                rules: new EncounterRuleDefinition[]
-                {
-                    new DieInterferenceRuleDefinition(HauntingId, 100, 1, 1, true, true),
-                    new BayWardRuleDefinition(WardId, PieceId, InteractionId, new[] { DieInterferenceKind.ForcedReroll })
-                }, pieces: new[] { ward });
-            return new MechanicalCatalog("test.haunting", TestContent.Hands(), new[] { encounter });
-        }
-
-        /** Rewrites a current save as a format 6 document, which kept disturbed dice on the shared block. */
-        private static JObject Downgrade(EncounterSession session, int disturbed, int latest)
-        {
-            var json = Json(session);
-            json[nameof(EncounterSaveData.SaveFormatVersion)] = 6;
-            json[nameof(EncounterSaveData.RulesVersion)] = 8;
-            json.Remove(nameof(EncounterSaveData.RuleStates));
-            json.Add("DisturbedMask", disturbed);
-            json.Add("LatestDisturbedMask", latest);
-            return json;
         }
 
         private static DieBindingSaveData Binding(EncounterSaveData save)

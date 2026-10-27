@@ -26,41 +26,19 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void LegacyProfileRetainsUnknownIdsAndInfersStarterAndOwnedFamilies()
+        public void UndiscoveredProfileRetainsUnknownIdsAndInfersStarterAndOwnedFamilies()
         {
-            byte[] legacy = Encoding.UTF8.GetBytes("{\"ProfileFormatVersion\":1,\"UnlockedModifierIds\":[\"owned\",\"future\"]," +
-                "\"CompletedEncounterIds\":[\"encounter.future\"]}");
-            var profile = PlayerProfileCodec.Deserialize(legacy);
+            var profile = new PlayerProfile();
+            profile.UnlockModifier("owned");
+            profile.UnlockModifier("future");
+            profile.CompleteEncounter("encounter.future");
             Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
             Assert.That(profile.GetDiscoveredFamilyIds(RewardCatalog()), Is.EquivalentTo(new[] { "family.starter", "family.owned" }));
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.DiscoveredFamilyIds, Is.Empty);
             Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "owned", "future" }));
             Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
             Assert.That(restored.GetDiscoveredFamilyIds(RewardCatalog()), Is.EqualTo(profile.GetDiscoveredFamilyIds(RewardCatalog())));
-            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(profile)));
-            Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(4));
-            document["ProfileFormatVersion"] = 2;
-            Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
-        }
-
-        [Test]
-        public void VersionThreeProgressMigratesWithoutLosingUnknownIds()
-        {
-            var legacy = new JObject
-            {
-                ["ProfileFormatVersion"] = 3,
-                ["DiscoveredFamilyIds"] = new JArray("family.future"),
-                ["UnlockedModifierIds"] = new JArray("modifier.future"),
-                ["CompletedEncounterIds"] = new JArray("encounter.future"),
-                ["VisitedEncounterIds"] = new JArray("encounter.visited")
-            };
-            var profile = PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(legacy.ToString()));
-            Assert.That(profile.CompletedStoryIds, Is.Empty);
-            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
-            Assert.That(restored.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.future" }));
-            Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "modifier.future" }));
-            Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
-            Assert.That(restored.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.visited" }));
         }
 
         [Test]
@@ -219,8 +197,13 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(new byte[] { 0xff }));
             Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(new byte[PlayerProfileCodec.MaximumProfileBytes + 1]));
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
-            document["ProfileFormatVersion"] = 99;
-            Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
+            Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(PlayerProfile.CurrentFormatVersion));
+            foreach (int version in new[] { PlayerProfile.CurrentFormatVersion - 1, PlayerProfile.CurrentFormatVersion + 1 })
+            {
+                document["ProfileFormatVersion"] = version;
+                Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())),
+                    version.ToString());
+            }
         }
 
         [Test]

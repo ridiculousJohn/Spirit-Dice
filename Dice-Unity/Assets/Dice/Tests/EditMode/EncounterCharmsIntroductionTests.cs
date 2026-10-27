@@ -89,7 +89,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 6)
                     .Select(index => new StageDefinition(1, 2, 1, index < 5 ? StageExitBehavior.AwaitRewards : StageExitBehavior.AdvanceAutomatically)),
                 startingModifiers: new[] { Ordinary[0] }, rewardPolicy: policy,
-                unlockMilestones: new[] { new ModifierUnlockMilestone(3, new[] { Unlock }) },
+                unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
                 encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
                 unlockRewardModifierIds: new[] { Unlock }, encounterModifiersFirstClearedStageNumber: firstClearedStage);
             return new MechanicalCatalog("test.charms_introduction." + firstClearedStage + (additions ? ".additions" : ".none"),

@@ -250,7 +250,6 @@ namespace Dice.Engine
             for (int i = 0; i < owned.Length; ++i) owned[i] = next.Modifiers[i].DefinitionId;
             var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.StageIndex + 1,
                 owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds, next.StageIndex + 2);
-            next.PendingModifierOfferUsesLegacyEligibility = false;
             next.PendingModifierOfferUsesEncounterAdditions = true;
             next.PendingModifierOfferUnlockedIds = new List<string>(next.UnlockedModifierIds);
             next.ExcludedRewardFamilies = new List<string>(generated.ExcludedFamilyIds);
@@ -293,7 +292,6 @@ namespace Dice.Engine
             events.Add(new ModifierAcquiredEvent(next, modifier));
             next.PendingReward = null;
             next.ExcludedRewardFamilies.Clear();
-            next.PendingModifierOfferUsesLegacyEligibility = false;
             next.PendingModifierOfferUnlockedIds = null;
             next.PendingUnlockOfferDiscoveredFamilyIds = null;
             OfferHandUpgrades(next, events);
@@ -302,7 +300,6 @@ namespace Dice.Engine
         private void OfferHandUpgrades(EncounterState next, List<RuleEvent> events)
         {
             next.PendingModifierOfferUnlockedIds = null;
-            next.PendingModifierOfferUsesLegacyEligibility = false;
             next.PendingModifierOfferUsesEncounterAdditions = false;
             var categories = next.PendingUpgradeCategories
                 ?? throw new InvalidOperationException("The hand-upgrade choices have not been generated.");
@@ -496,7 +493,6 @@ namespace Dice.Engine
             next.PendingReward = null;
             next.PendingUnlockOfferDiscoveredFamilyIds = null;
             next.PendingUpgradeCategories = null;
-            next.PendingModifierOfferUsesLegacyEligibility = false;
             next.PendingModifierOfferUsesEncounterAdditions = false;
             next.PendingModifierOfferUnlockedIds = null;
             events.Add(new EncounterCompletedEvent(next));
@@ -598,7 +594,6 @@ namespace Dice.Engine
         internal List<string> NewlyUnlockedModifierIds = new List<string>();
         internal List<string> DiscoveredFamilyIds = new List<string>();
         internal List<string> PendingUnlockOfferDiscoveredFamilyIds;
-        internal bool PendingModifierOfferUsesLegacyEligibility;
         internal bool PendingModifierOfferUsesEncounterAdditions;
         internal List<string> PendingModifierOfferUnlockedIds;
 

@@ -74,24 +74,15 @@ namespace Dice.Engine
         }
     }
 
+    /** Clearing this stage offers a choice from the encounter's UnlockRewardModifierIds. */
     public sealed class ModifierUnlockMilestone
     {
         public int StageNumber { get; }
-        public ReadOnlyCollection<string> ModifierIds { get; }
 
-        public ModifierUnlockMilestone(int stageNumber, IEnumerable<string> modifierIds)
+        public ModifierUnlockMilestone(int stageNumber)
         {
             if (stageNumber < 1) throw new ArgumentOutOfRangeException(nameof(stageNumber));
-            if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
-            var ids = new List<string>(modifierIds);
-            var unique = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in ids)
-            {
-                DefinitionValidation.RequireId(id, nameof(modifierIds));
-                if (!unique.Add(id)) throw new ArgumentException("Unlock IDs must be unique.", nameof(modifierIds));
-            }
             StageNumber = stageNumber;
-            ModifierIds = ids.AsReadOnly();
         }
     }
 
@@ -241,12 +232,6 @@ namespace Dice.Engine
                 foreach (string modifierId in encounter.StartingModifiers)
                     if (!modifiersById.ContainsKey(modifierId))
                         throw new ArgumentException("A starting modifier is missing from the catalog.", nameof(encounters));
-                foreach (var milestone in encounter.UnlockMilestones)
-                    foreach (string modifierId in milestone.ModifierIds)
-                        if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
-                            modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
-                            !modifier.Availability.MatchesEncounter(encounter))
-                            throw new ArgumentException("Milestones must reference permanent unlocks within the encounter scope.", nameof(encounters));
                 foreach (string modifierId in encounter.UnlockRewardModifierIds)
                     if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
                         modifier.Availability.Access != ModifierAccess.PermanentUnlock ||

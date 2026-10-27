@@ -50,7 +50,7 @@ namespace Dice.UnityContent
                 }
                 encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
                     Ids(source.startingModifiers, Use), BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
-                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones, Use),
+                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones),
                     Ids(source.encounterModifiers, Use), Ids(source.unlockRewardModifiers, Use), BuildPieces(source.pieces),
                     source.encounterModifiersFirstClearedStageNumber);
             }
@@ -87,14 +87,14 @@ namespace Dice.UnityContent
             return ids;
         }
 
-        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources, Action<ModifierAsset> use)
+        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
         {
             if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
             var definitions = new ModifierUnlockMilestone[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
                 var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
-                definitions[i] = new ModifierUnlockMilestone(source.stageNumber, Ids(source.modifiers, use));
+                definitions[i] = new ModifierUnlockMilestone(source.stageNumber);
             }
             return definitions;
         }
@@ -227,7 +227,6 @@ namespace Dice.UnityContent
         private sealed class UnlockMilestoneData
         {
             public int stageNumber;
-            public ModifierAsset[] modifiers = Array.Empty<ModifierAsset>();
         }
 
         [Serializable]
