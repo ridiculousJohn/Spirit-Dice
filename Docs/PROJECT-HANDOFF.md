@@ -4,7 +4,7 @@ Current state: October 22, 2026. This is a working contract and current-state su
 
 ## Working contract
 
-Read this document, [presentation authoring](PRESENTATION-AUTHORING.md), and [Tools/README.md](../Tools/README.md).
+Read this document, [code standards](CODE-STANDARDS.md), [presentation authoring](PRESENTATION-AUTHORING.md), and [Tools/README.md](../Tools/README.md).
 
 - Follow John's approved design. Do not invent screens, confirmation steps, celebrations, delays, rewards, or flow changes. Preserve accepted visuals and pacing unless the requested change requires otherwise.
 - Inspect first; explain the cause and smallest complete proposed fix. Wait for implementation approval unless John has already directed the work. Agreement with an observation is not authorization. Historical proposals are not authorization.
