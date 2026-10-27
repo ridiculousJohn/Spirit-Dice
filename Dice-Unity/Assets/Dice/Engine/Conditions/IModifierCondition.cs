@@ -5,5 +5,8 @@ namespace Dice.Engine
     public interface IModifierCondition
     {
         bool Evaluate(in ModifierContext context);
+
+        /** False for a condition that never activates in any context. */
+        bool CanEverActivate => true;
     }
 }

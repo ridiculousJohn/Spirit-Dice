@@ -157,16 +157,17 @@ namespace Dice.Tests
             Assert.That(disturbed.Bay, Is.Zero, "Only the kept die can be disturbed after a reroll.");
             Assert.That(disturbed.RuleId, Is.EqualTo(HauntingId));
             Assert.That(disturbed.Kind, Is.EqualTo(DieInterferenceKind.Flip));
+            Assert.That(disturbed.Trigger, Is.EqualTo(InterferenceTrigger.PlayerReroll));
             Assert.That(disturbed.After, Is.EqualTo(7 - disturbed.Before));
             Assert.That(result.Snapshot.CurrentDice[0], Is.EqualTo(disturbed.After));
             Assert.That(events.IndexOf(disturbed), Is.EqualTo(events.IndexOf(rolled) + 1));
             Assert.That(events.IndexOf(events.OfType<ModifierActivatedEvent>().Single()), Is.GreaterThan(events.IndexOf(disturbed)));
-            Assert.That(result.Snapshot.DisturbedMask, Is.EqualTo(1));
+            Assert.That(result.Snapshot.Interference().DisturbedMask, Is.EqualTo(1));
             Assert.That(result.Snapshot.EverRerolledMask, Is.EqualTo(AllButFirstBay));
 
             var rerolledEverything = Execute(Session(catalog), new RerollDiceAction(DiceValues.AllMask));
             Assert.That(rerolledEverything.Events.OfType<DieDisturbedEvent>(), Is.Empty);
-            Assert.That(rerolledEverything.Snapshot.DisturbedMask, Is.Zero);
+            Assert.That(rerolledEverything.Snapshot.Interference().DisturbedMask, Is.Zero);
         }
 
         /** Checks a zero percent chance never disturbs / fails if interference ignores its chance. */
@@ -226,10 +227,11 @@ namespace Dice.Tests
             var session = Session(catalog);
             var result = Execute(session, PlayHandAction.Instance);
             var disturbed = result.Events.OfType<DieDisturbedEvent>().Single();
+            Assert.That(disturbed.Trigger, Is.EqualTo(InterferenceTrigger.PlayHand));
             Assert.That(result.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
-            Assert.That(result.Snapshot.DisturbedMask, Is.EqualTo(1 << disturbed.Bay));
+            Assert.That(result.Snapshot.Interference().DisturbedMask, Is.EqualTo(1 << disturbed.Bay));
             var restored = Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave())));
-            Assert.That(restored.Snapshot.DisturbedMask, Is.EqualTo(1 << disturbed.Bay));
+            Assert.That(restored.Snapshot.Interference().DisturbedMask, Is.EqualTo(1 << disturbed.Bay));
         }
 
         /** Checks a ward blocks only effects it names on the bay its piece occupies / fails if it protects from neutral or blocks unnamed effects. */
@@ -245,9 +247,10 @@ namespace Dice.Tests
             Assert.That(block.Bay, Is.Zero);
             Assert.That(block.RuleId, Is.EqualTo(HauntingId));
             Assert.That(block.ProtectingRuleId, Is.EqualTo(WardId));
+            Assert.That(block.Trigger, Is.EqualTo(InterferenceTrigger.PlayerReroll));
             Assert.That(blocked.Events.OfType<DieDisturbedEvent>(), Is.Empty);
             Assert.That(blocked.Snapshot.CurrentDice[0], Is.EqualTo(before));
-            Assert.That(blocked.Snapshot.DisturbedMask, Is.Zero);
+            Assert.That(blocked.Snapshot.Interference().DisturbedMask, Is.Zero);
 
             var neutral = Session(catalog);
             Assert.That(Execute(neutral, new RerollDiceAction(AllButFirstBay)).Events.OfType<DieDisturbedEvent>().Single().Bay, Is.Zero,
@@ -289,7 +292,7 @@ namespace Dice.Tests
             var haunted = Catalog(chance: 100);
             var session = Session(haunted);
             Execute(session, new RerollDiceAction(1));
-            Assert.That(session.Snapshot.DisturbedMask, Is.Not.Zero);
+            Assert.That(session.Snapshot.Interference().DisturbedMask, Is.Not.Zero);
             AssertInvalid(haunted, session.CaptureSave(), save =>
                 Haunting(save).LatestDisturbedMask = Haunting(save).DisturbedMask == 1 ? 2 : 1);
             AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = DiceValues.AllMask);

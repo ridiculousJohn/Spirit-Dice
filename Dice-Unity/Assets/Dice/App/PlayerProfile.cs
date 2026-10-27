@@ -40,8 +40,7 @@ namespace Dice.App
             var result = new List<string>(discoveredFamilyIds);
             var known = new HashSet<string>(result, StringComparer.Ordinal);
             foreach (var modifier in catalog.Modifiers)
-                if ((modifier.Availability.Access == ModifierAccess.Starter && modifier.RewardEligible &&
-                     modifier.Effects.Count > 0 && !(modifier.Condition is NeverCondition) ||
+                if ((modifier.Availability.Access == ModifierAccess.Starter && modifier.IsPlayable ||
                      modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlockedModifierIds.Contains(modifier.Id)) &&
                     known.Add(modifier.FamilyId)) result.Add(modifier.FamilyId);
             return result.AsReadOnly();

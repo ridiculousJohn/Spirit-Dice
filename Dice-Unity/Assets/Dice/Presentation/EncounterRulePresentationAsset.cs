@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine;
 using Dice.Engine;
 
@@ -26,10 +27,14 @@ namespace Dice.Presentation
         public ModifierPhase ActivationPhase => activationPhase;
         public RuleDiceVisualAsset DiceVisual => diceVisual;
 
+        /** The card text for the rule's availability, with each {name} the rule's snapshot supplies filled in. */
         public string TextFor(EncounterRuleSnapshot rule)
         {
             string text = rule.IsAvailable ? availableText : usedText;
-            return rule.FavoredFace > 0 ? text?.Replace("{face}", rule.FavoredFace.ToString(System.Globalization.CultureInfo.InvariantCulture)) : text;
+            if (text == null) return null;
+            foreach (var value in rule.TextValues)
+                text = text.Replace("{" + value.Key + "}", value.Value.ToString(CultureInfo.InvariantCulture));
+            return text;
         }
     }
 }

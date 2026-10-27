@@ -75,7 +75,8 @@ namespace Dice.Tests
                 new EncounterDefinition(EncounterId, stages, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition() })
             });
 
-        private static int FavoredFace(EncounterSession session) => session.Snapshot.EncounterRules.Single().FavoredFace;
+        private static int FavoredFace(EncounterSession session)
+            => ((FavoredFaceRuleSnapshot)session.Snapshot.EncounterRules.Single()).FavoredFace;
 
         private static EncounterSession WithDice(MechanicalCatalog catalog, params int[] dice)
         {

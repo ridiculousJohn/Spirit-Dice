@@ -164,6 +164,10 @@ namespace Dice.Engine
         public ModifierActivationLimit ActivationLimit { get; }
         public bool RewardEligible { get; }
         public ModifierAvailabilityDefinition Availability { get; }
+
+        /** A charm that can be offered and can ever do something when it activates. */
+        public bool IsPlayable => RewardEligible && Effects.Count > 0 && Condition.CanEverActivate;
+
         public ModifierDefinition(string id, string familyId, ModifierPhase phase, ModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
@@ -195,7 +199,7 @@ namespace Dice.Engine
         }
     }
 
-    public readonly struct ModifierContext
+    public readonly struct ModifierContext : IEquatable<ModifierContext>
     {
         public DiceValues CurrentDice { get; }
         public DiceValues InitialDice { get; }
@@ -210,13 +214,13 @@ namespace Dice.Engine
         public int StartingHands { get; }
         public int? PreviousStageStartingHands { get; }
         public int? PreviousStageHandsRemaining { get; }
-        public int? FavoredFace { get; }
-        /** Dice bound by encounter rules; they score normally but cannot be rerolled. */
-        public int BoundMask { get; }
+        /** The encounter's rules as conditions observe them; a condition depending on a rule reads that rule's snapshot type. */
+        public IReadOnlyList<EncounterRuleSnapshot> EncounterRules { get; }
         public ModifierContext(DiceValues currentDice, DiceValues initialDice, DiceValues? beforeRerollDice,
             DiceValues? previousPlayedDice, int selectedMask, int everRerolledMask, int rerollsSpentOnHand,
             int handsRemaining, int rerollsRemaining, int handsPlayedInStage, int startingHands,
-            int? previousStageStartingHands, int? previousStageHandsRemaining, int? favoredFace = null, int boundMask = 0)
+            int? previousStageStartingHands, int? previousStageHandsRemaining,
+            IReadOnlyList<EncounterRuleSnapshot> encounterRules = null)
         {
             if (!currentDice.IsValid || !initialDice.IsValid ||
                 (beforeRerollDice.HasValue && !beforeRerollDice.Value.IsValid) ||
@@ -224,7 +228,6 @@ namespace Dice.Engine
                 throw new ArgumentException("Context dice must contain five valid faces.");
             if ((selectedMask & ~DiceValues.AllMask) != 0 || (everRerolledMask & ~DiceValues.AllMask) != 0)
                 throw new ArgumentOutOfRangeException(nameof(selectedMask));
-            if ((boundMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(boundMask));
             if (rerollsSpentOnHand < 0 || handsRemaining < 0 || rerollsRemaining < 0 ||
                 handsPlayedInStage < 0 || startingHands < 1 || previousStageStartingHands < 1 ||
                 previousStageHandsRemaining < 0)
@@ -242,9 +245,45 @@ namespace Dice.Engine
             StartingHands = startingHands;
             PreviousStageStartingHands = previousStageStartingHands;
             PreviousStageHandsRemaining = previousStageHandsRemaining;
-            if (favoredFace < 1 || favoredFace > 6) throw new ArgumentOutOfRangeException(nameof(favoredFace));
-            FavoredFace = favoredFace;
-            BoundMask = boundMask;
+            EncounterRules = encounterRules ?? Array.Empty<EncounterRuleSnapshot>();
         }
+
+        public bool Equals(ModifierContext other)
+        {
+            if (CurrentDice != other.CurrentDice || InitialDice != other.InitialDice ||
+                BeforeRerollDice != other.BeforeRerollDice || PreviousPlayedDice != other.PreviousPlayedDice ||
+                SelectedMask != other.SelectedMask || EverRerolledMask != other.EverRerolledMask ||
+                RerollsSpentOnHand != other.RerollsSpentOnHand || HandsRemaining != other.HandsRemaining ||
+                RerollsRemaining != other.RerollsRemaining || HandsPlayedInStage != other.HandsPlayedInStage ||
+                StartingHands != other.StartingHands || PreviousStageStartingHands != other.PreviousStageStartingHands ||
+                PreviousStageHandsRemaining != other.PreviousStageHandsRemaining) return false;
+            // A default-constructed context has no list; it observes no rules, like an empty list.
+            var rules = EncounterRules ?? Array.Empty<EncounterRuleSnapshot>();
+            var otherRules = other.EncounterRules ?? Array.Empty<EncounterRuleSnapshot>();
+            if (rules.Count != otherRules.Count) return false;
+            for (int i = 0; i < rules.Count; ++i)
+                if (!Equals(rules[i], otherRules[i])) return false;
+            return true;
+        }
+
+        public override bool Equals(object obj) => obj is ModifierContext other && Equals(other);
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = CurrentDice.GetHashCode();
+                hash = hash * 397 ^ InitialDice.GetHashCode();
+                hash = hash * 397 ^ SelectedMask;
+                hash = hash * 397 ^ EverRerolledMask;
+                hash = hash * 397 ^ HandsRemaining;
+                hash = hash * 397 ^ RerollsRemaining;
+                hash = hash * 397 ^ HandsPlayedInStage;
+                return hash * 397 ^ (EncounterRules?.Count ?? 0);
+            }
+        }
+
+        public static bool operator ==(ModifierContext left, ModifierContext right) => left.Equals(right);
+        public static bool operator !=(ModifierContext left, ModifierContext right) => !left.Equals(right);
     }
 }

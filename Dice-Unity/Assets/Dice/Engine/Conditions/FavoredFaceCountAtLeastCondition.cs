@@ -13,11 +13,14 @@ namespace Dice.Engine
             Parameter = parameter;
         }
 
+        /** Reads the first favored-face rule; without one the condition is false. */
         public bool Evaluate(in ModifierContext context)
         {
             ModifierConditionHelpers.ValidateContext(in context);
-            return context.FavoredFace.HasValue &&
-                ModifierConditionHelpers.CountOf(context.CurrentDice, context.FavoredFace.Value) >= Parameter;
+            foreach (var rule in context.EncounterRules)
+                if (rule is FavoredFaceRuleSnapshot favored)
+                    return ModifierConditionHelpers.CountOf(context.CurrentDice, favored.FavoredFace) >= Parameter;
+            return false;
         }
     }
 }

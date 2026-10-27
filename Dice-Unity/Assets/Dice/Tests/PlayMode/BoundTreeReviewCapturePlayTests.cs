@@ -80,7 +80,7 @@ namespace Dice.Tests
             yield return null;
             yield return Capture(root, "e-table-after-opening-roll-" + Width + "x" + Height + ".png");
             yield return Capture(root, "e-table-after-opening-roll-" + NarrowWidth + "x" + Height + ".png", NarrowWidth);
-            int marked = controller.Snapshot.MarkedMask;
+            int marked = controller.Snapshot.Binding().MarkedMask;
 
             // Reroll one other die, so the marked die binds at its kept face and another die is marked.
             int rerolled = Lowest(DiceValues.AllMask & ~marked);
@@ -94,8 +94,8 @@ namespace Dice.Tests
             yield return WaitIdle(controller);
             // The bind flare falls back to rest before the settled capture.
             yield return new WaitForSecondsRealtime(2f);
-            int bound = controller.Snapshot.BoundMask;
-            int nextMark = controller.Snapshot.MarkedMask;
+            int bound = controller.Snapshot.Binding().BoundMask;
+            int nextMark = controller.Snapshot.Binding().MarkedMask;
             yield return Capture(root, "g-bound-and-next-mark.png");
 
             controller.Save();

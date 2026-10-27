@@ -6,7 +6,7 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.SelectedCountOf(dice, context.SelectedMask, ModifierConditionHelpers.SelectedCount(context.SelectedMask)) == 1;
+            return ModifierConditionHelpers.SelectedCountOf(dice, context.SelectedMask, DiceValues.CountBays(context.SelectedMask)) == 1;
         }
     }
 }

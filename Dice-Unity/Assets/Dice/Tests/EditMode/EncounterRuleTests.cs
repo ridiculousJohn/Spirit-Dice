@@ -312,6 +312,33 @@ namespace Dice.Tests
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
         }
 
+        /**
+         * Checks rule snapshots are equal, with equal hashes, only for the same snapshot type, id, availability and rule state /
+         * fails if a subclass's state or type is ignored, or a rule without values supplies card text values.
+         */
+        [Test]
+        public void RuleSnapshotsCompareTheirTypeAndTheirRulesOwnState()
+        {
+            var favored = new FavoredFaceRuleSnapshot("rule.a", true, 3);
+            Assert.That(favored, Is.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 3)));
+            Assert.That(favored.GetHashCode(), Is.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 3).GetHashCode()));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 4)));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.a", false, 3)));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.b", true, 3)));
+
+            var binding = new DieBindingRuleSnapshot("rule.a", true, 1, 2);
+            Assert.That(binding, Is.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 2)));
+            Assert.That(binding.GetHashCode(), Is.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 2).GetHashCode()));
+            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 2, 2)));
+            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 4)));
+
+            var plain = new EncounterRuleSnapshot("rule.a", true);
+            Assert.That(plain, Is.EqualTo(new EncounterRuleSnapshot("rule.a", true)));
+            Assert.That(plain, Is.Not.EqualTo(favored));
+            Assert.That(favored, Is.Not.EqualTo(plain));
+            Assert.That(plain.TextValues, Is.Empty);
+        }
+
         private static IEnumerable<TestCaseData> InvalidAccounting()
         {
             yield return Invalid("negative stage actions", save => save.RerollsSpentInStage = -1);

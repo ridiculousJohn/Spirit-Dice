@@ -45,8 +45,7 @@ namespace Dice.Engine
             }
             else AddDiscoveredFamilies(discoveredFamilyIds);
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.Availability.Access == ModifierAccess.Starter && modifier.RewardEligible &&
-                    modifier.Effects.Count > 0 && !(modifier.Condition is NeverCondition) &&
+                if (modifier.Availability.Access == ModifierAccess.Starter && modifier.IsPlayable &&
                     !state.DiscoveredFamilyIds.Contains(modifier.FamilyId)) state.DiscoveredFamilyIds.Add(modifier.FamilyId);
             AddUnlockedModifiers(unlockedModifierIds ?? Array.Empty<string>());
             var events = new List<RuleEvent>();

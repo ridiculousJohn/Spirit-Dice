@@ -95,7 +95,7 @@ namespace Dice.Tests
                 rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
             var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
             Initialize(catalog, TestContent.EncounterId, 17, savePath);
-            int marked = controller.Snapshot.MarkedMask;
+            int marked = controller.Snapshot.Binding().MarkedMask;
             controller.ToggleDie(Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, marked));
             controller.Reroll();
             Assert.That(controller.Snapshot.LockedMask, Is.EqualTo(marked));

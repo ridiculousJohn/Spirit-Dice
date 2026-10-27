@@ -11,15 +11,19 @@ namespace Dice.Engine
         public string RuleId { get; }
         public int Bay { get; }
         public DieInterferenceKind Kind { get; }
+        /** The committed action the disturbance followed. */
+        public InterferenceTrigger Trigger { get; }
         public int Before { get; }
         public int After { get; }
 
-        internal DieDisturbedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind, int before, int after)
+        internal DieDisturbedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind, InterferenceTrigger trigger,
+            int before, int after)
             : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
             Bay = bay;
             Kind = kind;
+            Trigger = trigger;
             Before = before;
             After = after;
         }
@@ -30,14 +34,18 @@ namespace Dice.Engine
         public string RuleId { get; }
         public int Bay { get; }
         public DieInterferenceKind Kind { get; }
+        /** The committed action the blocked disturbance followed. */
+        public InterferenceTrigger Trigger { get; }
         public string ProtectingRuleId { get; }
 
-        internal DisturbanceBlockedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind, string protectingRuleId)
+        internal DisturbanceBlockedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind,
+            InterferenceTrigger trigger, string protectingRuleId)
             : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
             Bay = bay;
             Kind = kind;
+            Trigger = trigger;
             ProtectingRuleId = protectingRuleId;
         }
     }
@@ -48,6 +56,31 @@ namespace Dice.Engine
     {
         public int DisturbedMask;
         public int LatestDisturbedMask;
+    }
+
+    /** An interference rule's snapshot: the dice it disturbed during the current hand and the one it disturbed last. */
+    public sealed class DieInterferenceRuleSnapshot : EncounterRuleSnapshot
+    {
+        /** Dice changed by interference during this hand; they do not count as rerolled or changed for charms. */
+        public int DisturbedMask { get; }
+        /** The die disturbed by the latest committed action, if any. */
+        public int LatestDisturbedMask { get; }
+
+        public DieInterferenceRuleSnapshot(string id, bool isAvailable, int disturbedMask, int latestDisturbedMask) : base(id, isAvailable)
+        {
+            if ((disturbedMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(disturbedMask));
+            if ((latestDisturbedMask & ~disturbedMask) != 0) throw new ArgumentOutOfRangeException(nameof(latestDisturbedMask));
+            DisturbedMask = disturbedMask;
+            LatestDisturbedMask = latestDisturbedMask;
+        }
+
+        private protected override bool StateEquals(EncounterRuleSnapshot other)
+        {
+            var interference = (DieInterferenceRuleSnapshot)other;
+            return DisturbedMask == interference.DisturbedMask && LatestDisturbedMask == interference.LatestDisturbedMask;
+        }
+
+        private protected override int StateHash => DisturbedMask << DiceValues.Count | LatestDisturbedMask;
     }
 
     internal sealed class DieInterferenceState : EncounterRuleState
@@ -83,10 +116,15 @@ namespace Dice.Engine
         }
 
         internal override bool IsAvailable(EncounterState state) => true;
-        internal override bool CanDisturbDice => true;
         internal override bool UsesRuleRandom => true;
         public override Type SaveDataType => typeof(DieInterferenceSaveData);
         internal override EncounterRuleState CreateState() => new DieInterferenceState();
+
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+        {
+            var value = (DieInterferenceState)ruleState;
+            return new DieInterferenceRuleSnapshot(Id, ShowsAvailable(state), value.DisturbedMask, value.LatestDisturbedMask);
+        }
 
         internal override object CaptureState(EncounterRuleState state)
         {
@@ -107,7 +145,7 @@ namespace Dice.Engine
             else if (!postPlay && (latest & restored.LatestRerollMask) != 0)
                 detail = "A reroll disturbance must target a kept die.";
             // Each committed action resolves at most one disturbance.
-            else if (CountBays(disturbed) > (long)restored.RerollsSpentOnHand + (postPlay ? 1 : 0))
+            else if (DiceValues.CountBays(disturbed) > (long)restored.RerollsSpentOnHand + (postPlay ? 1 : 0))
                 detail = "Disturbed dice exceed the hand's committed actions.";
             else
             {
@@ -134,13 +172,13 @@ namespace Dice.Engine
             disturbance.LatestDisturbedMask = 0;
             if (trigger == InterferenceTrigger.PlayerReroll ? !AfterPlayerReroll : !AfterPlayHand) return false;
             if (eligibleMask == 0 || state.RuleRandom.NextInt(100) >= ChancePercent) return false;
-            int bay = NthBay(eligibleMask, state.RuleRandom.NextInt(CountBays(eligibleMask)));
+            int bay = DiceValues.NthBay(eligibleMask, state.RuleRandom.NextInt(DiceValues.CountBays(eligibleMask)));
             var kind = state.RuleRandom.NextInt(ForcedRerollWeight + FlipWeight) < ForcedRerollWeight
                 ? DieInterferenceKind.ForcedReroll : DieInterferenceKind.Flip;
             var protector = EncounterRuleResolver.Protector(encounter, state, bay, kind);
             if (protector != null)
             {
-                events.Add(new DisturbanceBlockedEvent(state, Id, bay, kind, protector.Id));
+                events.Add(new DisturbanceBlockedEvent(state, Id, bay, kind, trigger, protector.Id));
                 return true;
             }
             int before = state.CurrentDice[bay];
@@ -148,23 +186,8 @@ namespace Dice.Engine
             state.CurrentDice = state.CurrentDice.With(bay, after);
             disturbance.DisturbedMask |= 1 << bay;
             disturbance.LatestDisturbedMask = 1 << bay;
-            events.Add(new DieDisturbedEvent(state, Id, bay, kind, before, after));
+            events.Add(new DieDisturbedEvent(state, Id, bay, kind, trigger, before, after));
             return true;
-        }
-
-        internal static int CountBays(int mask)
-        {
-            int count = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if ((mask & (1 << i)) != 0) ++count;
-            return count;
-        }
-
-        internal static int NthBay(int mask, int index)
-        {
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if ((mask & (1 << i)) != 0 && index-- == 0) return i;
-            throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
 

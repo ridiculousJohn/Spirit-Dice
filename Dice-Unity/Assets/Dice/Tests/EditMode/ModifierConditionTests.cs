@@ -54,6 +54,61 @@ namespace Dice.Tests
             Assert.That(exception.ParamName, Is.EqualTo("kind"));
         }
 
+        /**
+         * Checks the favored face count reads the first favored-face rule among the encounter's rules / fails if it counts a
+         * face without such a rule, reads a later rule's face or ignores the snapshot's face.
+         */
+        [Test]
+        public void FavoredFaceCountReadsTheFirstFavoredFaceRule()
+        {
+            var condition = new FavoredFaceCountAtLeastCondition(3);
+            Assert.That(condition.Evaluate(C("22234", rules: new[] { Plain(), Favored(2), Favored(4) })), Is.True);
+            Assert.That(condition.Evaluate(C("22234", rules: new[] { Favored(4), Favored(2) })), Is.False);
+            Assert.That(condition.Evaluate(C("22234", rules: new[] { Plain() })), Is.False);
+            Assert.That(condition.Evaluate(C("22234")), Is.False);
+        }
+
+        /**
+         * Checks the bound face count reads the dice every binding rule has bound, and nothing without a binding rule / fails
+         * if it reads only one binding rule, counts marked dice or counts dice no rule has bound.
+         */
+        [Test]
+        public void BoundFaceCountReadsTheDiceEveryBindingRuleHasBound()
+        {
+            var condition = new BoundFaceCountAtLeastCondition(3);
+            Assert.That(condition.Evaluate(C("21333", rules: new[] { Bound(1), Plain(), Bound(16) })), Is.True);
+            Assert.That(condition.Evaluate(C("21333", rules: new[] { Bound(1) })), Is.False);
+            Assert.That(condition.Evaluate(C("21333", rules: new[] { new DieBindingRuleSnapshot("rule.binding", true, 1, 16) })),
+                Is.False);
+            Assert.That(condition.Evaluate(C("21333", rules: new[] { Plain() })), Is.False);
+        }
+
+        /**
+         * Checks two contexts built separately from equal values and equal rule snapshots are equal, and differ when a rule's
+         * state or a resource differs / fails if equality compares rule list references or ignores a rule's state.
+         */
+        [Test]
+        public void ContextsWithEqualValuesAndRuleSnapshotsAreEqual()
+        {
+            var context = C("22234", hands: 2, rules: new[] { Plain(), Favored(2) });
+            var same = C("22234", hands: 2, rules: new[] { Plain(), Favored(2) });
+            Assert.That(same, Is.EqualTo(context));
+            Assert.That(same == context, Is.True);
+            Assert.That(same.GetHashCode(), Is.EqualTo(context.GetHashCode()));
+            Assert.That(C("22234", hands: 2, rules: new[] { Plain(), Favored(3) }), Is.Not.EqualTo(context));
+            Assert.That(C("22234", hands: 2, rules: new[] { Plain() }), Is.Not.EqualTo(context));
+            Assert.That(C("22234", hands: 1, rules: new[] { Plain(), Favored(2) }) != context, Is.True);
+        }
+
+        /** Checks only the never condition reports it can never activate / fails if another condition is treated as inert. */
+        [Test]
+        public void OnlyTheNeverConditionCanNeverActivate()
+        {
+            Assert.That(ModifierConditions.Create(ModifierConditionKind.Never).CanEverActivate, Is.False);
+            Assert.That(ModifierConditions.Create(ModifierConditionKind.Always).CanEverActivate, Is.True);
+            Assert.That(ModifierConditions.Create(ModifierConditionKind.ContainsFace).CanEverActivate, Is.True);
+        }
+
         /** Checks a descriptor accepts its kind's largest parameter and rejects the next one / fails if out-of-range content loads. */
         [TestCase(ModifierConditionKind.ContainsFace, 6, 0, 7, 0)]
         [TestCase(ModifierConditionKind.FavoredFaceCountAtLeast, 5, 0, 6, 0)]
@@ -146,8 +201,10 @@ namespace Dice.Tests
             yield return Pair(ModifierConditionKind.MiddleHand, C(hands: 2, starting: 3), C(hands: 3, starting: 3));
             yield return Pair(ModifierConditionKind.InteriorPairMatchesEdge, C("22235"), C("11225"));
             yield return Always(C());
-            yield return Pair(ModifierConditionKind.FavoredFaceCountAtLeast, C("22223", favoredFace: 2), C("22234", favoredFace: 2), 4);
-            yield return Pair(ModifierConditionKind.BoundFaceCountAtLeast, C("22134", bound: 1), C("21345", bound: 1), 2);
+            yield return Pair(ModifierConditionKind.FavoredFaceCountAtLeast, C("22223", rules: new[] { Favored(2) }),
+                C("22234", rules: new[] { Favored(2) }), 4);
+            yield return Pair(ModifierConditionKind.BoundFaceCountAtLeast, C("22134", rules: new[] { Bound(1) }),
+                C("21345", rules: new[] { Bound(1) }), 2);
         }
 
         /** Each condition's witness and near miss as single expectations, for checks that compare imported conditions. */
@@ -181,10 +238,15 @@ namespace Dice.Tests
         private static ModifierContext C(string dice = "12345", string initial = null, string before = null,
             string previous = null, int selected = 0, int ever = 0, int spent = 0, int hands = 3,
             int rerolls = 3, int played = 0, int starting = 3, int? priorStarting = null, int? priorRemaining = null,
-            int? favoredFace = null, int bound = 0)
+            EncounterRuleSnapshot[] rules = null)
             => new ModifierContext(D(dice), D(initial ?? dice), before == null ? (DiceValues?)null : D(before),
                 previous == null ? (DiceValues?)null : D(previous), selected, ever, spent, hands, rerolls,
-                played, starting, priorStarting, priorRemaining, favoredFace, bound);
+                played, starting, priorStarting, priorRemaining, rules);
+
+        private static EncounterRuleSnapshot Plain() => new EncounterRuleSnapshot("rule.plain", true);
+        private static EncounterRuleSnapshot Favored(int face) => new FavoredFaceRuleSnapshot("rule.favored." + face, true, face);
+        private static EncounterRuleSnapshot Bound(int boundMask)
+            => new DieBindingRuleSnapshot("rule.binding." + boundMask, true, boundMask, 0);
 
         private static DiceValues D(string values)
             => new DiceValues(values[0] - '0', values[1] - '0', values[2] - '0', values[3] - '0', values[4] - '0');

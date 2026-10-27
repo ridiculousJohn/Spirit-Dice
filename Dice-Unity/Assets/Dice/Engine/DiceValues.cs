@@ -46,6 +46,23 @@ namespace Dice.Engine
         public bool IsValid => IsFace(first) && IsFace(second) && IsFace(third) && IsFace(fourth) && IsFace(fifth);
         public int[] ToArray() => new[] { first, second, third, fourth, fifth };
 
+        /** The number of bays a dice mask selects. */
+        public static int CountBays(int mask)
+        {
+            int count = 0;
+            for (int i = 0; i < Count; ++i)
+                if ((mask & (1 << i)) != 0) ++count;
+            return count;
+        }
+
+        /** The bay at the given zero-based position among the bays a dice mask selects, counting from the first bay. */
+        public static int NthBay(int mask, int index)
+        {
+            for (int i = 0; i < Count; ++i)
+                if ((mask & (1 << i)) != 0 && index-- == 0) return i;
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+
         internal DiceValues With(int index, int face)
         {
             int[] faces = ToArray();

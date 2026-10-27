@@ -95,12 +95,12 @@ namespace Dice.Presentation
 
         public override void Sync(EncounterSnapshot snapshot, bool animate)
         {
-            bool playing = snapshot != null && snapshot.Phase == EncounterPhase.Playing;
+            DieBindingRuleSnapshot binding = snapshot != null && snapshot.Phase == EncounterPhase.Playing ? Binding(snapshot) : null;
             for (int bay = 0; bay < dice.Length; ++bay)
             {
                 if (dice[bay] == null) continue;
-                float mark = playing && (snapshot.MarkedMask & (1 << bay)) != 0 ? 1f : 0f;
-                float growth = playing && (snapshot.BoundMask & (1 << bay)) != 0 ? 1f : 0f;
+                float mark = binding != null && (binding.MarkedMask & (1 << bay)) != 0 ? 1f : 0f;
+                float growth = binding != null && (binding.BoundMask & (1 << bay)) != 0 ? 1f : 0f;
                 if (!animate) dice[bay].Show(mark, growth);
                 else
                 {
@@ -139,6 +139,14 @@ namespace Dice.Presentation
         }
 
         private bool Valid(int bay) => bay >= 0 && bay < dice.Length && dice[bay] != null;
+
+        /** This presenter's rule in the snapshot, or null when the encounter has no such binding rule. */
+        private DieBindingRuleSnapshot Binding(EncounterSnapshot snapshot)
+        {
+            foreach (var rule in snapshot.EncounterRules)
+                if (rule.Id == ruleId) return rule as DieBindingRuleSnapshot;
+            return null;
+        }
 
         private IEnumerator Mark(int bay)
         {

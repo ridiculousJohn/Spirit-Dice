@@ -29,6 +29,31 @@ namespace Dice.Engine
         }
     }
 
+    /** A binding rule's snapshot: the dice it has bound and the die it has marked during the current hand. */
+    public sealed class DieBindingRuleSnapshot : EncounterRuleSnapshot
+    {
+        /** Bound dice score normally but cannot be rerolled. */
+        public int BoundMask { get; }
+        /** The die that binds after the next player reroll. */
+        public int MarkedMask { get; }
+
+        public DieBindingRuleSnapshot(string id, bool isAvailable, int boundMask, int markedMask) : base(id, isAvailable)
+        {
+            if ((boundMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(boundMask));
+            if ((markedMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(markedMask));
+            BoundMask = boundMask;
+            MarkedMask = markedMask;
+        }
+
+        private protected override bool StateEquals(EncounterRuleSnapshot other)
+        {
+            var binding = (DieBindingRuleSnapshot)other;
+            return BoundMask == binding.BoundMask && MarkedMask == binding.MarkedMask;
+        }
+
+        private protected override int StateHash => BoundMask << DiceValues.Count | MarkedMask;
+    }
+
     /** The dice a binding rule has bound and the die it has marked during the current hand. */
     [Serializable]
     public sealed class DieBindingSaveData
@@ -82,7 +107,7 @@ namespace Dice.Engine
             if ((bound & ~DiceValues.AllMask) != 0 || (marked & ~DiceValues.AllMask) != 0 || (bound & marked) != 0 ||
                 (marked & (marked - 1)) != 0)
                 detail = "Bound and marked dice masks are inconsistent.";
-            else if (DieInterferenceRuleDefinition.CountBays(bound) != expectedBound || (marked != 0) != expectsMark)
+            else if (DiceValues.CountBays(bound) != expectedBound || (marked != 0) != expectsMark)
                 detail = "Bound and marked dice disagree with the hand's rerolls.";
             else
             {
@@ -118,7 +143,7 @@ namespace Dice.Engine
             var binding = (DieBindingState)ruleState;
             if (binding.MarkedMask != 0)
             {
-                int bay = DieInterferenceRuleDefinition.NthBay(binding.MarkedMask, 0);
+                int bay = DiceValues.NthBay(binding.MarkedMask, 0);
                 binding.BoundMask |= binding.MarkedMask;
                 binding.MarkedMask = 0;
                 events.Add(new DieBoundEvent(state, Id, bay, state.CurrentDice[bay]));
@@ -127,15 +152,18 @@ namespace Dice.Engine
         }
 
         internal override int LockedDiceMask(EncounterRuleState ruleState) => ((DieBindingState)ruleState).BoundMask;
-        internal override int BoundDiceMask(EncounterRuleState ruleState) => ((DieBindingState)ruleState).BoundMask;
-        internal override int MarkedDiceMask(EncounterRuleState ruleState) => ((DieBindingState)ruleState).MarkedMask;
+
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+        {
+            var binding = (DieBindingState)ruleState;
+            return new DieBindingRuleSnapshot(Id, ShowsAvailable(state), binding.BoundMask, binding.MarkedMask);
+        }
 
         private void Mark(EncounterState state, DieBindingState binding, List<RuleEvent> events)
         {
             int unbound = DiceValues.AllMask & ~binding.BoundMask;
             if (unbound == 0) return;
-            int bay = DieInterferenceRuleDefinition.NthBay(unbound,
-                state.RuleRandom.NextInt(DieInterferenceRuleDefinition.CountBays(unbound)));
+            int bay = DiceValues.NthBay(unbound, state.RuleRandom.NextInt(DiceValues.CountBays(unbound)));
             binding.MarkedMask = 1 << bay;
             events.Add(new DieMarkedEvent(state, Id, bay));
         }

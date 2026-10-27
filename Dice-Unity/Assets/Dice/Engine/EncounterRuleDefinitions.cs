@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
@@ -18,12 +19,17 @@ namespace Dice.Engine
         internal virtual int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => 0;
         internal virtual int MaximumFreeRerollsPerHand => 0;
         internal virtual long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => 0;
-        internal virtual int FavoredFace(long totalHandsPlayed) => 0;
         internal virtual void ValidateDefinition(EncounterDefinition encounter) { }
-        internal virtual bool CanDisturbDice => false;
 
         /** Rules that draw from the rule random stream; encounters without one keep the stream empty. */
         internal virtual bool UsesRuleRandom => false;
+
+        /** The rule as the snapshot shows it; a rule exposing more state returns its own snapshot type. */
+        internal virtual EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+            => new EncounterRuleSnapshot(Id, ShowsAvailable(state));
+
+        /** Snapshots report a rule as available only while the encounter is playing. */
+        private protected bool ShowsAvailable(EncounterState state) => state.Phase == EncounterPhase.Playing && IsAvailable(state);
 
         /** The rule's own serializable save class, or null for a rule without persisted state. */
         public virtual Type SaveDataType => null;
@@ -51,8 +57,6 @@ namespace Dice.Engine
 
         /** Dice that cannot be selected for a player reroll. */
         internal virtual int LockedDiceMask(EncounterRuleState ruleState) => 0;
-        internal virtual int BoundDiceMask(EncounterRuleState ruleState) => 0;
-        internal virtual int MarkedDiceMask(EncounterRuleState ruleState) => 0;
 
         /** Dice whose faces changed during this hand outside player rerolls. */
         internal virtual int DiceChangedOutsideRerollsMask(EncounterRuleState ruleState) => 0;
@@ -114,7 +118,10 @@ namespace Dice.Engine
         internal override bool IsAvailable(EncounterState state) => true;
 
         /** The persisted encounter-wide hand count keeps the cycle stable through stage changes and resume. */
-        internal override int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % 6) + 1;
+        internal static int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % 6) + 1;
+
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+            => new FavoredFaceRuleSnapshot(Id, ShowsAvailable(state), FavoredFace(state.TotalHandsPlayed));
 
         internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
         {
@@ -126,28 +133,66 @@ namespace Dice.Engine
         }
     }
 
-    public sealed class EncounterRuleSnapshot : IEquatable<EncounterRuleSnapshot>
+    /** What every encounter rule shows: its id and whether it is available now. Rules with more state extend it. */
+    public class EncounterRuleSnapshot : IEquatable<EncounterRuleSnapshot>
     {
+        private static readonly IReadOnlyDictionary<string, int> NoTextValues =
+            new ReadOnlyDictionary<string, int>(new Dictionary<string, int>());
+
         public string Id { get; }
         public bool IsAvailable { get; }
-        public int FavoredFace { get; }
 
-        internal EncounterRuleSnapshot(EncounterRuleDefinition definition, EncounterState state)
+        /** Named values the rule's card text may show as {name} placeholders. */
+        public virtual IReadOnlyDictionary<string, int> TextValues => NoTextValues;
+
+        public EncounterRuleSnapshot(string id, bool isAvailable)
         {
-            Id = definition.Id;
-            IsAvailable = state.Phase == EncounterPhase.Playing && definition.IsAvailable(state);
-            FavoredFace = definition.FavoredFace(state.TotalHandsPlayed);
+            DefinitionValidation.RequireId(id, nameof(id));
+            Id = id;
+            IsAvailable = isAvailable;
         }
 
         public bool Equals(EncounterRuleSnapshot other)
-            => other != null && Id == other.Id && IsAvailable == other.IsAvailable && FavoredFace == other.FavoredFace;
+            => other != null && other.GetType() == GetType() && Id == other.Id && IsAvailable == other.IsAvailable &&
+                StateEquals(other);
 
-        public override bool Equals(object obj) => obj is EncounterRuleSnapshot other && Equals(other);
-        public override int GetHashCode() => unchecked((StringComparer.Ordinal.GetHashCode(Id) * 397 ^ IsAvailable.GetHashCode()) * 397 ^ FavoredFace);
+        public sealed override bool Equals(object obj) => obj is EncounterRuleSnapshot other && Equals(other);
+        public sealed override int GetHashCode()
+            => unchecked((StringComparer.Ordinal.GetHashCode(Id) * 397 ^ IsAvailable.GetHashCode()) * 397 ^ StateHash);
+
+        /** Compares the rule's own state with another snapshot of the same type. */
+        private protected virtual bool StateEquals(EncounterRuleSnapshot other) => true;
+        private protected virtual int StateHash => 0;
+    }
+
+    /** The cycling favored-face rule's snapshot; its card text names the favored face as {face}. */
+    public sealed class FavoredFaceRuleSnapshot : EncounterRuleSnapshot
+    {
+        private readonly IReadOnlyDictionary<string, int> textValues;
+
+        public int FavoredFace { get; }
+        public override IReadOnlyDictionary<string, int> TextValues => textValues;
+
+        public FavoredFaceRuleSnapshot(string id, bool isAvailable, int favoredFace) : base(id, isAvailable)
+        {
+            if (favoredFace < 1 || favoredFace > 6) throw new ArgumentOutOfRangeException(nameof(favoredFace));
+            FavoredFace = favoredFace;
+            textValues = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(StringComparer.Ordinal) { ["face"] = favoredFace });
+        }
+
+        private protected override bool StateEquals(EncounterRuleSnapshot other) => FavoredFace == ((FavoredFaceRuleSnapshot)other).FavoredFace;
+        private protected override int StateHash => FavoredFace;
     }
 
     internal static class EncounterRuleResolver
     {
+        internal static ReadOnlyCollection<EncounterRuleSnapshot> Snapshots(EncounterDefinition definition, EncounterState state)
+        {
+            var snapshots = new EncounterRuleSnapshot[definition.Rules.Count];
+            for (int i = 0; i < snapshots.Length; ++i) snapshots[i] = definition.Rules[i].CreateSnapshot(state, state.RuleStates[i]);
+            return Array.AsReadOnly(snapshots);
+        }
+
         internal static EncounterRuleDefinition RerollCostWaiver(EncounterDefinition definition, EncounterState state)
         {
             // A reroll has one cost to waive; the first applicable rule owns the activation event.
@@ -200,20 +245,6 @@ namespace Dice.Engine
         {
             int mask = 0;
             for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].LockedDiceMask(state.RuleStates[i]);
-            return mask;
-        }
-
-        internal static int BoundDice(EncounterDefinition definition, EncounterState state)
-        {
-            int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].BoundDiceMask(state.RuleStates[i]);
-            return mask;
-        }
-
-        internal static int MarkedDice(EncounterDefinition definition, EncounterState state)
-        {
-            int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].MarkedDiceMask(state.RuleStates[i]);
             return mask;
         }
 

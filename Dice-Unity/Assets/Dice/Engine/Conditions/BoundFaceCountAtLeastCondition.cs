@@ -13,12 +13,15 @@ namespace Dice.Engine
             Parameter = parameter;
         }
 
-        /** Counts the dice showing each bound die's face, the bound die included. */
+        /** Counts the dice showing each bound die's face, the bound die included, over the dice every binding rule has bound. */
         public bool Evaluate(in ModifierContext context)
         {
             ModifierConditionHelpers.ValidateContext(in context);
+            int boundMask = 0;
+            foreach (var rule in context.EncounterRules)
+                if (rule is DieBindingRuleSnapshot binding) boundMask |= binding.BoundMask;
             for (int i = 0; i < DiceValues.Count; ++i)
-                if ((context.BoundMask & (1 << i)) != 0 &&
+                if ((boundMask & (1 << i)) != 0 &&
                     ModifierConditionHelpers.CountOf(context.CurrentDice, context.CurrentDice[i]) >= Parameter) return true;
             return false;
         }

@@ -63,12 +63,6 @@ namespace Dice.Engine
         public int LatestRerollMask { get; }
         public int LatestChangedMask { get; }
         public int EverRerolledMask { get; }
-        /** Dice changed by interference during this hand; they do not count as rerolled or changed for charms. */
-        public int DisturbedMask { get; }
-        /** Dice bound by encounter rules during this hand; they score normally but cannot be rerolled. */
-        public int BoundMask { get; }
-        /** Dice an encounter rule has marked to bind after the next player reroll. */
-        public int MarkedMask { get; }
         /** Dice that cannot be selected for a player reroll. */
         public int LockedMask { get; }
         public ReadOnlyCollection<PieceInteractionSnapshot> PieceInteractions { get; }
@@ -112,9 +106,7 @@ namespace Dice.Engine
             LockedMask = EncounterRuleResolver.LockedDice(definition, state);
             CanReroll = state.Phase == EncounterPhase.Playing && LockedMask != DiceValues.AllMask &&
                 (state.RerollsRemaining > 0 || EncounterRuleResolver.RerollCostWaiver(definition, state) != null);
-            var rules = new List<EncounterRuleSnapshot>();
-            foreach (var rule in definition.Rules) rules.Add(new EncounterRuleSnapshot(rule, state));
-            EncounterRules = rules.AsReadOnly();
+            EncounterRules = EncounterRuleResolver.Snapshots(definition, state);
             CurrentDice = state.CurrentDice;
             InitialDice = state.InitialDice;
             DiceBeforeLastReroll = state.DiceBeforeLastReroll;
@@ -122,9 +114,6 @@ namespace Dice.Engine
             LatestRerollMask = state.LatestRerollMask;
             LatestChangedMask = state.LatestChangedMask;
             EverRerolledMask = state.EverRerolledMask;
-            DisturbedMask = EncounterRuleResolver.DiceChangedOutsideRerolls(definition, state);
-            BoundMask = EncounterRuleResolver.BoundDice(definition, state);
-            MarkedMask = EncounterRuleResolver.MarkedDice(definition, state);
             PieceInteractions = TablePieceStates.Capture(definition, state);
             RerollsSpentOnHand = state.RerollsSpentOnHand;
             HandsPlayedInStage = state.HandsPlayedInStage;

@@ -33,7 +33,7 @@ namespace Dice.Engine
                 }
                 if (modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
                     modifier.Availability.Scope == ModifierAvailabilityScope.Encounter ||
-                    !modifier.RewardEligible || modifier.Effects.Count == 0 || modifier.Condition is NeverCondition)
+                    !modifier.IsPlayable)
                     throw new ArgumentException("Progression grants require playable permanent modifiers outside encounter scope.", nameof(catalog));
             }
         }

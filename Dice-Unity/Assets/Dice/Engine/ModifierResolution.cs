@@ -167,20 +167,12 @@ namespace Dice.Engine
             return Array.AsReadOnly(values);
         }
 
+        /** One context, with one set of rule snapshots, serves every modifier evaluated in a resolution step. */
         private static ModifierContext CreateContext(EncounterState state, EncounterDefinition encounter, int handsRemaining)
-        {
-            int? favoredFace = null;
-            foreach (var rule in encounter.Rules)
-            {
-                int face = rule.FavoredFace(state.TotalHandsPlayed);
-                if (face != 0) { favoredFace = face; break; }
-            }
-            return new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
+            => new ModifierContext(state.CurrentDice, state.InitialDice, state.DiceBeforeLastReroll,
                 state.PreviousPlayedDice, state.LatestRerollMask, state.EverRerolledMask, state.RerollsSpentOnHand,
                 handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage, encounter.Stages[state.StageIndex].StartingHands,
-                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining, favoredFace,
-                EncounterRuleResolver.BoundDice(encounter, state));
-        }
+                state.PreviousStageStartingHands, state.PreviousStageHandsRemaining, EncounterRuleResolver.Snapshots(encounter, state));
 
         private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)
             => (definition.ActivationLimit != ModifierActivationLimit.OncePerHand || instance.ActivationsThisHand == 0) &&

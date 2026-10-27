@@ -26,14 +26,6 @@ namespace Dice.Engine
             return count;
         }
 
-        internal static int SelectedCount(int selectedMask)
-        {
-            int count = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if ((selectedMask & (1 << i)) != 0) ++count;
-            return count;
-        }
-
         internal static int Minimum(DiceValues dice)
         {
             int minimum = dice[0];
