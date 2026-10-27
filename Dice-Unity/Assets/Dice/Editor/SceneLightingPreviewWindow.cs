@@ -7,15 +7,12 @@ using UnityEngine;
 
 namespace Dice.Editor
 {
+    /**
+     * Previews scene lighting composed from texture assets: an ambient scene and up to four lights, each with a
+     * contribution and an optional response map. The selections are remembered between sessions.
+     */
     public sealed class SceneLightingPreviewWindow : EditorWindow
     {
-        private sealed class PreviewLight
-        {
-            public string Path;
-            public string ResponsePath;
-            public SceneLightLayer Layer;
-        }
-
         [Serializable]
         private sealed class CaptureFrame
         {
@@ -37,15 +34,14 @@ namespace Dice.Editor
             public List<CaptureFrame> Frames = new List<CaptureFrame>();
         }
 
-        private const string DefaultAmbientPath = "Docs/work/moth-lighting-prototype/ambient-v2.png";
-        private const string DefaultIlluminatedPath = "Docs/work/moth-lighting-prototype/illuminated.png";
-        private const string DefaultResponsePath = "Docs/work/moth-lighting-prototype/lantern-response-v2.png";
+        private const int MaximumLights = 4;
+        private const string ShaderPath = "Assets/Dice/Presentation/Shared/SceneLighting.shader";
+        private const string AmbientKey = "Dice.SceneLightingPreview.Ambient";
 
-        private readonly List<PreviewLight> lights = new List<PreviewLight>();
+        private readonly List<SceneLightLayer> lights = new List<SceneLightLayer>();
         private SceneLightingAsset lighting;
         private SceneLightingMaterial compositor;
         private RenderTexture output;
-        private string ambientPath = DefaultAmbientPath;
         private string message;
         private Vector2 scroll;
         private bool animate = true;
@@ -61,7 +57,12 @@ namespace Dice.Editor
             window.Show();
         }
 
-        public static void CaptureDefaultPreview()
+        /**
+         * Captures the lighting preview's remembered ambient scene and first light to a new directory beneath Docs/work
+         * named by DICE_LIGHTING_CAPTURE: the ambient and original images, steady intensity samples, animated frames and
+         * a JSON record of the inputs and sampled intensities.
+         */
+        public static void CaptureSelectedPreview()
         {
             string capturePath = Environment.GetEnvironmentVariable("DICE_LIGHTING_CAPTURE");
             if (string.IsNullOrWhiteSpace(capturePath))
@@ -72,21 +73,24 @@ namespace Dice.Editor
                 throw new InvalidOperationException("Lighting captures must stay beneath Docs/work.");
             if (Directory.Exists(absolute))
                 throw new InvalidOperationException("Choose a new capture directory to preserve existing output.");
+            Texture2D ambient = PreviewAssetSelection.Load<Texture2D>(AmbientKey);
+            SceneLightLayer light = CreateDefaultLight();
+            light.Contribution = PreviewAssetSelection.Load<Texture2D>(ContributionKey(0));
+            light.ResponseMap = PreviewAssetSelection.Load<Texture2D>(ResponseKey(0));
+            if (ambient == null || light.Contribution == null)
+                throw new InvalidOperationException("Choose an ambient scene and a first light contribution in the lighting preview.");
             Directory.CreateDirectory(absolute);
 
             SceneLightingAsset scene = CreateInstance<SceneLightingAsset>();
-            scene.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            scene.Shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
             scene.hideFlags = HideFlags.HideAndDontSave;
             SceneLightingMaterial material = null;
             RenderTexture target = null;
             Texture2D pixels = null;
             try
             {
-                scene.BaseTexture = LoadTexture(DefaultAmbientPath);
-                SceneLightLayer light = CreateDefaultLight();
+                scene.BaseTexture = ambient;
                 scene.Lights = new[] { light };
-                light.Contribution = LoadTexture(DefaultIlluminatedPath);
-                light.ResponseMap = LoadTexture(DefaultResponsePath, linear: true);
                 material = new SceneLightingMaterial(scene.Shader);
                 if (!material.Material.shader.isSupported)
                     throw new InvalidOperationException("Scene lighting shader is unsupported by the graphics device.");
@@ -96,16 +100,16 @@ namespace Dice.Editor
                 pixels = new Texture2D(target.width, target.height, TextureFormat.RGBA32, false, false);
                 CaptureRecord record = new CaptureRecord
                 {
-                    Ambient = DefaultAmbientPath,
-                    Illuminated = DefaultIlluminatedPath,
-                    ResponseMap = DefaultResponsePath,
+                    Ambient = AssetDatabase.GetAssetPath(ambient),
+                    Illuminated = AssetDatabase.GetAssetPath(light.Contribution),
+                    ResponseMap = light.ResponseMap != null ? AssetDatabase.GetAssetPath(light.ResponseMap) : "",
                     DistanceFalloff = light.DistanceFalloff,
                     SourceResponse = light.SourceResponse,
                     ConstrainAmbientToReference = light.ConstrainAmbientToReference,
                     ColorSpace = QualitySettings.activeColorSpace.ToString()
                 };
-                File.WriteAllBytes(System.IO.Path.Combine(absolute, "ambient.png"), scene.BaseTexture.EncodeToPNG());
-                File.WriteAllBytes(System.IO.Path.Combine(absolute, "original.png"), light.Contribution.EncodeToPNG());
+                CaptureTextureToFile(scene.BaseTexture, target, pixels, absolute, "ambient.png");
+                CaptureTextureToFile(light.Contribution, target, pixels, absolute, "original.png");
                 foreach (float intensity in new[] { 0f, .05f, .1f, .2f, .4f, .65f, 1f })
                 {
                     light.Intensity = intensity;
@@ -144,14 +148,29 @@ namespace Dice.Editor
                 if (target != null) target.Release();
                 DestroyImmediate(target);
                 DestroyImmediate(pixels);
-                DestroyImmediate(scene.BaseTexture);
-                if (scene.Lights != null)
-                    foreach (SceneLightLayer light in scene.Lights)
-                    {
-                        DestroyImmediate(light.Contribution);
-                        DestroyImmediate(light.ResponseMap);
-                    }
                 DestroyImmediate(scene);
+            }
+        }
+
+        /** Imported textures need not be readable, so each is copied through the render target before encoding. */
+        private static void CaptureTextureToFile(Texture2D texture, RenderTexture target, Texture2D pixels, string directory,
+            string file)
+        {
+            RenderTexture previousTarget = RenderTexture.active;
+            bool previousSrgb = GL.sRGBWrite;
+            try
+            {
+                GL.sRGBWrite = QualitySettings.activeColorSpace == UnityEngine.ColorSpace.Linear;
+                Graphics.Blit(texture, target);
+                RenderTexture.active = target;
+                pixels.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
+                pixels.Apply(false, false);
+                File.WriteAllBytes(System.IO.Path.Combine(directory, file), pixels.EncodeToPNG());
+            }
+            finally
+            {
+                RenderTexture.active = previousTarget;
+                GL.sRGBWrite = previousSrgb;
             }
         }
 
@@ -192,19 +211,30 @@ namespace Dice.Editor
             };
         }
 
+        private static string ContributionKey(int light) => "Dice.SceneLightingPreview.Light" + light + ".Contribution";
+        private static string ResponseKey(int light) => "Dice.SceneLightingPreview.Light" + light + ".Response";
+
+        private static SceneLightLayer CreateLight(int index) =>
+            index == 0 ? CreateDefaultLight() : new SceneLightLayer { Seed = 1977 + index * 101 };
+
         private void OnEnable()
         {
             startedAt = EditorApplication.timeSinceStartup;
             lighting = CreateInstance<SceneLightingAsset>();
-            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            lighting.Shader = AssetDatabase.LoadAssetAtPath<Shader>(ShaderPath);
             lighting.hideFlags = HideFlags.HideAndDontSave;
-            lights.Add(new PreviewLight
+            lighting.BaseTexture = PreviewAssetSelection.Load<Texture2D>(AmbientKey);
+            var remembered = new List<SceneLightLayer>();
+            for (int index = 0; index < MaximumLights; ++index)
             {
-                Path = DefaultIlluminatedPath,
-                ResponsePath = DefaultResponsePath,
-                Layer = CreateDefaultLight()
-            });
-            Reload();
+                SceneLightLayer light = CreateLight(index);
+                light.Contribution = PreviewAssetSelection.Load<Texture2D>(ContributionKey(index));
+                light.ResponseMap = PreviewAssetSelection.Load<Texture2D>(ResponseKey(index));
+                remembered.Add(light);
+            }
+            int count = Math.Max(1, remembered.FindLastIndex(light => light.Contribution != null || light.ResponseMap != null) + 1);
+            lights.AddRange(remembered.GetRange(0, count));
+            SelectionChanged();
             EditorApplication.update += UpdatePreview;
         }
 
@@ -214,17 +244,8 @@ namespace Dice.Editor
             ReleaseOutput();
             compositor?.Dispose();
             compositor = null;
-            if (lighting != null)
-            {
-                DestroyImmediate(lighting.BaseTexture);
-                DestroyImmediate(lighting);
-                lighting = null;
-            }
-            foreach (PreviewLight light in lights)
-            {
-                DestroyImmediate(light.Layer.Contribution);
-                DestroyImmediate(light.Layer.ResponseMap);
-            }
+            DestroyImmediate(lighting);
+            lighting = null;
             lights.Clear();
         }
 
@@ -244,7 +265,6 @@ namespace Dice.Editor
             {
                 comparison = GUILayout.Toolbar(comparison, new[] { "Lit scene", "Original", "Ambient" }, EditorStyles.toolbarButton);
                 animate = GUILayout.Toggle(animate, "Animate", EditorStyles.toolbarButton, GUILayout.Width(75f));
-                if (GUILayout.Button("Reload files", EditorStyles.toolbarButton, GUILayout.Width(90f))) Reload();
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -253,56 +273,65 @@ namespace Dice.Editor
                 {
                     scroll = EditorGUILayout.BeginScrollView(scroll);
                     EditorGUILayout.LabelField("Ambient scene", EditorStyles.boldLabel);
-                    DrawPath(ref ambientPath, "Choose ambient scene");
+                    Texture2D ambient = PreviewAssetSelection.Field("Texture", lighting.BaseTexture, AmbientKey);
+                    if (ambient != lighting.BaseTexture)
+                    {
+                        lighting.BaseTexture = ambient;
+                        SelectionChanged();
+                    }
                     EditorGUILayout.Space();
                     for (int index = 0; index < lights.Count; ++index)
                     {
-                        PreviewLight light = lights[index];
+                        SceneLightLayer light = lights[index];
                         EditorGUILayout.LabelField("Light " + (index + 1), EditorStyles.boldLabel);
-                        DrawPath(ref light.Path, "Choose light contribution");
-                        light.Layer.ContributionIncludesBase = EditorGUILayout.Toggle("Includes ambient scene", light.Layer.ContributionIncludesBase);
-                        EditorGUILayout.LabelField("Response map (optional)");
-                        DrawPath(ref light.ResponsePath, "Choose light response map");
-                        light.Layer.DistanceFalloff = EditorGUILayout.Slider(new GUIContent("Distance falloff",
-                            "Controls how quickly distant surfaces lose illumination as intensity falls."), light.Layer.DistanceFalloff, 0f, 4f);
-                        light.Layer.SourceResponse = EditorGUILayout.Slider(new GUIContent("Source response",
-                            "Response exponent for the source and glow mask. Values below 1 keep the source visible longer as intensity falls."), light.Layer.SourceResponse, .1f, 2f);
-                        using (new EditorGUI.DisabledScope(!light.Layer.ContributionIncludesBase))
+                        Texture2D contribution = PreviewAssetSelection.Field("Contribution", light.Contribution, ContributionKey(index));
+                        Texture2D response = PreviewAssetSelection.Field("Response map (optional)", light.ResponseMap, ResponseKey(index));
+                        if (contribution != light.Contribution || response != light.ResponseMap)
                         {
-                            light.Layer.ConstrainAmbientToReference = EditorGUILayout.Toggle(new GUIContent("Constrain ambient",
-                                "Constrain the ambient scene to the full illuminated reference. Applies only when the contribution includes ambient."),
-                                light.Layer.ConstrainAmbientToReference);
+                            light.Contribution = contribution;
+                            light.ResponseMap = response;
+                            SelectionChanged();
                         }
-                        light.Layer.Tint = EditorGUILayout.ColorField("Tint", light.Layer.Tint);
-                        light.Layer.Intensity = EditorGUILayout.Slider("Intensity", light.Layer.Intensity, 0f, 2f);
-                        light.Layer.FlickerAmount = EditorGUILayout.Slider("Flicker amount", light.Layer.FlickerAmount, 0f, .5f);
-                        light.Layer.FlickerSpeed = EditorGUILayout.Slider("Flicker speed", light.Layer.FlickerSpeed, .05f, 5f);
-                        light.Layer.Seed = EditorGUILayout.IntField("Seed", light.Layer.Seed);
+                        light.ContributionIncludesBase = EditorGUILayout.Toggle("Includes ambient scene", light.ContributionIncludesBase);
+                        light.DistanceFalloff = EditorGUILayout.Slider(new GUIContent("Distance falloff",
+                            "Controls how quickly distant surfaces lose illumination as intensity falls."), light.DistanceFalloff, 0f, 4f);
+                        light.SourceResponse = EditorGUILayout.Slider(new GUIContent("Source response",
+                            "Response exponent for the source and glow mask. Values below 1 keep the source visible longer as intensity falls."), light.SourceResponse, .1f, 2f);
+                        using (new EditorGUI.DisabledScope(!light.ContributionIncludesBase))
+                        {
+                            light.ConstrainAmbientToReference = EditorGUILayout.Toggle(new GUIContent("Constrain ambient",
+                                "Constrain the ambient scene to the full illuminated reference. Applies only when the contribution includes ambient."),
+                                light.ConstrainAmbientToReference);
+                        }
+                        light.Tint = EditorGUILayout.ColorField("Tint", light.Tint);
+                        light.Intensity = EditorGUILayout.Slider("Intensity", light.Intensity, 0f, 2f);
+                        light.FlickerAmount = EditorGUILayout.Slider("Flicker amount", light.FlickerAmount, 0f, .5f);
+                        light.FlickerSpeed = EditorGUILayout.Slider("Flicker speed", light.FlickerSpeed, .05f, 5f);
+                        light.Seed = EditorGUILayout.IntField("Seed", light.Seed);
                         float intensity = animate
-                            ? SceneLightFlicker.EvaluateIntensity(Elapsed, light.Layer.Intensity, light.Layer.FlickerAmount,
-                                light.Layer.FlickerSpeed, light.Layer.Seed)
-                            : light.Layer.Intensity;
+                            ? SceneLightFlicker.EvaluateIntensity(Elapsed, light.Intensity, light.FlickerAmount,
+                                light.FlickerSpeed, light.Seed)
+                            : light.Intensity;
                         EditorGUILayout.LabelField("Current intensity", intensity.ToString("F3"));
                         if (lights.Count > 1 && GUILayout.Button("Remove light"))
                         {
-                            DestroyImmediate(light.Layer.Contribution);
-                            DestroyImmediate(light.Layer.ResponseMap);
                             lights.RemoveAt(index);
-                            UpdateLayers();
+                            SaveLights();
+                            SelectionChanged();
                             GUIUtility.ExitGUI();
                         }
                         EditorGUILayout.Space();
                     }
-                    using (new EditorGUI.DisabledScope(lights.Count >= 4))
+                    using (new EditorGUI.DisabledScope(lights.Count >= MaximumLights))
                     {
                         if (GUILayout.Button("Add light"))
                         {
-                            lights.Add(new PreviewLight { Path = "", ResponsePath = "", Layer = new SceneLightLayer { Seed = 1977 + lights.Count * 101 } });
-                            UpdateLayers();
+                            lights.Add(CreateLight(lights.Count));
+                            SelectionChanged();
                         }
                     }
                     EditorGUILayout.Space();
-                    EditorGUILayout.HelpBox("PNG files are loaded into memory. Nothing is imported into Assets or saved to a scene. Each light can use a contribution image or an illuminated image that includes the ambient scene. Optional response maps use linear data: red is normalized surface distance, green is the source and glow mask.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Nothing is saved to a scene or asset. Each light can use a contribution image or an illuminated image that includes the ambient scene. Optional response maps hold linear data, so import them with sRGB off: red is normalized surface distance, green is the source and glow mask.", MessageType.Info);
                     if (!string.IsNullOrEmpty(message)) EditorGUILayout.HelpBox(message, MessageType.Warning);
                     EditorGUILayout.EndScrollView();
                 }
@@ -325,74 +354,32 @@ namespace Dice.Editor
             return System.IO.Path.IsPathRooted(path) ? path : System.IO.Path.Combine(repository, path);
         }
 
-        private void DrawPath(ref string path, string title)
+        /** Remembers every light's selection under its current index and forgets indices beyond the last light. */
+        private void SaveLights()
         {
-            path = EditorGUILayout.TextField(path);
-            if (GUILayout.Button("Choose PNG..."))
+            for (int index = 0; index < MaximumLights; ++index)
             {
-                string selected = EditorUtility.OpenFilePanel(title, Directory.Exists(Resolve(path))
-                    ? Resolve(path) : System.IO.Path.GetDirectoryName(Resolve(path)), "png");
-                if (!string.IsNullOrEmpty(selected))
-                {
-                    path = selected;
-                    Reload();
-                }
+                PreviewAssetSelection.Save(ContributionKey(index), index < lights.Count ? lights[index].Contribution : null);
+                PreviewAssetSelection.Save(ResponseKey(index), index < lights.Count ? lights[index].ResponseMap : null);
             }
         }
 
-        private static Texture2D LoadTexture(string path, bool linear = false)
-        {
-            if (string.IsNullOrWhiteSpace(path)) return null;
-            string absolute = Resolve(path);
-            if (!File.Exists(absolute)) throw new FileNotFoundException("PNG file is missing", absolute);
-            Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false, linear)
-            {
-                name = System.IO.Path.GetFileName(absolute),
-                hideFlags = HideFlags.HideAndDontSave,
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear
-            };
-            if (!ImageConversion.LoadImage(texture, File.ReadAllBytes(absolute)))
-            {
-                DestroyImmediate(texture);
-                throw new InvalidDataException("Could not decode PNG: " + absolute);
-            }
-            return texture;
-        }
-
-        private void Reload()
+        private void SelectionChanged()
         {
             message = null;
+            UpdateLayers();
+            ReleaseOutput();
             try
             {
-                Texture2D ambient = LoadTexture(ambientPath);
-                DestroyImmediate(lighting.BaseTexture);
-                lighting.BaseTexture = ambient;
-                foreach (PreviewLight light in lights)
-                {
-                    Texture2D contribution = LoadTexture(light.Path);
-                    DestroyImmediate(light.Layer.Contribution);
-                    light.Layer.Contribution = contribution;
-                    Texture2D response = LoadTexture(light.ResponsePath, linear: true);
-                    DestroyImmediate(light.Layer.ResponseMap);
-                    light.Layer.ResponseMap = response;
-                }
-                UpdateLayers();
-                ReleaseOutput();
                 if (compositor == null) compositor = new SceneLightingMaterial(lighting.Shader);
             }
-            catch (Exception exception)
-            {
-                message = exception.Message;
-                UpdateLayers();
-            }
+            catch (Exception exception) { message = exception.Message; }
             Repaint();
         }
 
         private void UpdateLayers()
         {
-            lighting.Lights = lights.FindAll(light => light.Layer.Contribution != null)
-                .ConvertAll(light => light.Layer).ToArray();
+            lighting.Lights = lights.FindAll(light => light.Contribution != null).ToArray();
         }
 
         private Texture PreviewTexture()
@@ -400,8 +387,8 @@ namespace Dice.Editor
             if (lighting == null || lighting.BaseTexture == null) return null;
             if (comparison == 2) return lighting.BaseTexture;
             if (comparison == 1)
-                return lights.Count > 0 && lights[0].Layer.ContributionIncludesBase && lights[0].Layer.Contribution != null
-                    ? lights[0].Layer.Contribution : lighting.BaseTexture;
+                return lights.Count > 0 && lights[0].ContributionIncludesBase && lights[0].Contribution != null
+                    ? lights[0].Contribution : lighting.BaseTexture;
             if (compositor == null) return null;
             if (output == null)
             {

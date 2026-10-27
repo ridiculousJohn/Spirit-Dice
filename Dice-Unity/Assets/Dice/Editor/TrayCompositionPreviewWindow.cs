@@ -16,7 +16,10 @@ namespace Dice.Editor
     public sealed class TrayCompositionPreviewWindow : EditorWindow
     {
         private const string PipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
-        [SerializeField] private EncounterTablePresentationAsset table;
+        private const string TableKey = "Dice.TrayCompositionPreview.Table";
+        // Any fixed seed: the preview samples one repeatable opening.
+        private const ulong PreviewSeed = 60;
+        private EncounterTablePresentationAsset table;
         [SerializeField] private bool showGameplayUi = true;
         [SerializeField] private bool narrow;
         [SerializeField] private int historyCount = 6;
@@ -43,24 +46,31 @@ namespace Dice.Editor
         private UniversalRenderPipelineAsset previewPipeline;
         private readonly SceneLightingState lighting = new SceneLightingState();
         private readonly int[] faces = { 1, 2, 3, 4, 5 };
+        private DiceApplicationConfig configuration;
+        private MechanicalContent content;
         private ModifierPresentationCatalog charms;
         private ModifierDefinition historyDefinition;
         private ModifierContribution historyContribution;
         private string message;
+        private EncounterSnapshot ruleSnapshot;
+        private string ruleMessage;
 
         [MenuItem("Dice/Tray Composition Preview")]
         public static void Open()
         {
             var window = GetWindow<TrayCompositionPreviewWindow>("Tray Composition Preview");
             window.minSize = new Vector2(420, 650);
-            if (Selection.activeObject is EncounterTablePresentationAsset selected) window.table = selected;
+            if (Selection.activeObject is EncounterTablePresentationAsset selected)
+            {
+                window.table = selected;
+                PreviewAssetSelection.Save(TableKey, selected);
+            }
             window.Show();
         }
 
         private void OnEnable()
         {
-            if (table == null) table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(
-                "Assets/Dice/Content/Presentation/SpiritHouse/LastLanternTable.asset");
+            table = PreviewAssetSelection.Load<EncounterTablePresentationAsset>(TableKey);
             EditorApplication.playModeStateChanged += PlayModeChanged;
             EditorApplication.projectChanged += SourceChanged;
             Undo.undoRedoPerformed += SourceChanged;
@@ -89,8 +99,7 @@ namespace Dice.Editor
 
         private void OnGUI()
         {
-            table = (EncounterTablePresentationAsset)EditorGUILayout.ObjectField("Encounter table", table,
-                typeof(EncounterTablePresentationAsset), false);
+            table = PreviewAssetSelection.Field("Encounter table", table, TableKey);
             narrow = GUILayout.Toolbar(narrow ? 1 : 0, new[] { "540 x 960", "443 x 960" }) == 1;
             showGameplayUi = EditorGUILayout.Toggle("Show gameplay UI", showGameplayUi);
             showPreviewOptions = EditorGUILayout.Foldout(showPreviewOptions, "Preview options", true);
@@ -167,6 +176,7 @@ namespace Dice.Editor
                 stagedSourceSettings = settings;
                 rebuild = false;
                 gameplayUi.ConfigureEncounterRuleSigil(table.HostPresentation);
+                PrepareRuleSnapshot();
                 RefreshHistory();
             }
             encounter.Resize(narrow);
@@ -190,17 +200,50 @@ namespace Dice.Editor
             hud.TargetCaption.text = "TO CLEAR";
             hud.SetResources(3, 3);
             hud.ResourcesLabel.gameObject.SetActive(false);
-            hud.CategoryLabel.text = DiagnosticText.Humanize(HandEvaluator.Evaluate(
-                new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4])).ToString()).ToUpperInvariant();
+            // The hand rank shows only while a played hand is scored.
+            hud.CategoryLabel.text = "";
             hud.SetScoreValues(0, 0);
             hud.HandScoreLabel.text = "0";
             hud.SelectionLabel.text = "";
             hud.ScoreDetail.text = "";
             hud.StatusLabel.text = "COMPOSITION PREVIEW";
-            var rule = table.RulePresentations.Count > 0 ? table.RulePresentations[0] : null;
-            string ruleText = rule != null ? rule.AvailableText?.Replace("{face}",
-                faces[0].ToString(System.Globalization.CultureInfo.InvariantCulture)) : null;
-            hud.RenderEncounterRuleBadge(rule, rule != null, true, ruleText);
+            var rule = table.HudRuleCard;
+            if (ruleMessage != null) hud.RenderEncounterRuleBadge(rule, true, true, ruleMessage);
+            else hud.RenderEncounterRule(ruleSnapshot, rule);
+        }
+
+        /**
+         * The opening snapshot of the encounter of the first journey, in catalog order, that plays on the table; the HUD
+         * badge fills its card text from that encounter's rule as the game does. Without such a journey there is no rule
+         * to fill it from, so the badge shows a selection message in place of its text.
+         */
+        private void PrepareRuleSnapshot()
+        {
+            ruleSnapshot = null;
+            ruleMessage = null;
+            if (table.HudRuleCard == null) return;
+            EnsureContent();
+            var journey = configuration.JourneyCatalog?.Entries
+                .FirstOrDefault(entry => entry != null && !entry.IsStoryOnly && entry.TablePresentation == table);
+            if (journey == null)
+            {
+                ruleMessage = "Select a table a journey plays on to preview its rule badge text.";
+                return;
+            }
+            ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, journey.EncounterId, PreviewSeed).Snapshot;
+        }
+
+        /** Loads the application's configuration and builds its content once per staged preview. */
+        private void EnsureContent()
+        {
+            if (content != null) return;
+            DiceApplicationConfig[] configurations = AssetDatabase.FindAssets("t:DiceApplicationConfig")
+                .Select(guid => AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
+            if (configurations.Length != 1)
+                throw new InvalidOperationException("The preview requires exactly one application configuration.");
+            configurations[0].Validate();
+            content = configurations[0].CatalogAsset.Build();
+            configuration = configurations[0];
         }
 
         private void RefreshHistory()
@@ -218,13 +261,8 @@ namespace Dice.Editor
         private void EnsureHistoryCharm()
         {
             if (charms != null) return;
-            DiceApplicationConfig[] configurations = AssetDatabase.FindAssets("t:DiceApplicationConfig")
-                .Select(guid => AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
-            if (configurations.Length != 1)
-                throw new InvalidOperationException("The history preview requires exactly one application configuration.");
-            configurations[0].Validate();
-            MechanicalContent content = configurations[0].CatalogAsset.Build();
-            var presentation = new ModifierPresentationCatalog(configurations[0].ModifierSkin, content);
+            EnsureContent();
+            var presentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
                 .Select(category => new HandDefinition("preview.hand." + category, category, 1, 1, 0, 0, 0)).ToArray();
             foreach (ModifierDefinition definition in content.Catalog.Modifiers)
@@ -233,7 +271,7 @@ namespace Dice.Editor
                 var definitionEncounter = new EncounterDefinition("preview.table", new[] { new StageDefinition(1000000, 3, 3) },
                     startingModifiers: new[] { definition.Id });
                 var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
-                var contributions = EncounterSession.CreateEncounter(catalog, definitionEncounter.Id, 60).Snapshot.ModifierContributions;
+                var contributions = EncounterSession.CreateEncounter(catalog, definitionEncounter.Id, PreviewSeed).Snapshot.ModifierContributions;
                 if (contributions.Count == 0) continue;
                 charms = presentation;
                 historyDefinition = definition;
@@ -299,6 +337,10 @@ namespace Dice.Editor
             compositor = null;
             charms = null;
             historyDefinition = null;
+            content = null;
+            configuration = null;
+            ruleSnapshot = null;
+            ruleMessage = null;
             encounter?.Dispose();
             encounter = null;
             view = null;

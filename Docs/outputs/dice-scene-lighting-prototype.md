@@ -8,7 +8,7 @@ Open `Dice > Encounter Lighting Preview` in Edit Mode to inspect the selected pr
 
 Selected runtime textures and response maps are under `Assets/Dice/Art/MothCrossroads`; the table and two lighting assets are under `Assets/Dice/Content/Presentation/MothCrossroads`. Only the chosen inputs needed by the runtime are included there. Art iterations, generation records, test helpers, and captures remain ignored local files.
 
-Open `Dice > Lighting Preview` in Unity. The default local inputs are `Docs/work/moth-lighting-prototype/ambient-v2.png`, `illuminated.png`, and `lantern-response-v2.png`. They are experimental artwork/data maps, ignored by Git and unavailable in a fresh clone. Choose replacement PNGs in the window when those local files are absent. Loading them creates in-memory textures, not imported project assets or saved scene changes.
+Open `Dice > Lighting Preview` in Unity. The window starts empty: choose the ambient scene and each light's contribution and response map from the project's imported textures. It remembers the last selection between sessions and clears a remembered texture that no longer exists. Previewing changes no asset or scene.
 
 The default lantern intensity is 0.65 relative to the original painted contribution, with 0.12 flicker amount, speed 1, and seed 1977. Controls support steady/animated lighting, intensity, color, flicker amount and speed, seed, and comparisons against ambient and original images. Up to four lights can have independent textures and settings. Adding a light does not generate its illumination map; that must be authored for the scene.
 
@@ -40,7 +40,7 @@ The two generated images differ slightly in registration, detail, and dimensions
 
 ## Capturing a preview
 
-Set `DICE_LIGHTING_CAPTURE` to a nonexistent directory beneath `Docs/work`, then invoke `Dice.Editor.SceneLightingPreviewWindow.CaptureDefaultPreview` through Unity's `-executeMethod` option with graphics enabled. Keep the Unity log outside that new directory. The command writes ambient/original images, seven steady intensity samples, 120 frames at 20 fps, and a JSON record of sampled intensities and response settings. It refuses to replace an existing capture directory. Do not start a batch process against this project while its editor is open.
+Choose the ambient scene and first light in the window, set `DICE_LIGHTING_CAPTURE` to a nonexistent directory beneath `Docs/work`, then invoke `Dice.Editor.SceneLightingPreviewWindow.CaptureSelectedPreview` through Unity's `-executeMethod` option with graphics enabled. It captures the remembered ambient scene and first light's contribution and response map. Keep the Unity log outside that new directory. The command writes ambient/original images, seven steady intensity samples, 120 frames at 20 fps, and a JSON record of sampled intensities and response settings. It refuses to replace an existing capture directory. Do not start a batch process against this project while its editor is open.
 
 The earlier local video `Docs/work/moth-lighting-prototype/moth-lantern-preview.mp4` predates the response-map changes. Revised frames are in `response-capture-20261013-193810-965` beneath the same directory. Rendered frames and validation helpers/results remain ignored. Reusable runtime and editor tooling are ordinary project source.
 

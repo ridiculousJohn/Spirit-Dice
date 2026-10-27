@@ -14,12 +14,12 @@ namespace Dice.Editor
     /** An isolated presentation stage previews authored scene lighting with the encounter's renderers. */
     public sealed class EncounterLightingPreviewWindow : EditorWindow
     {
-        private const string DefaultTablePath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsTable.asset";
-        private const string DefaultEntryPath = "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsEntryLighting.asset";
+        private const string TableKey = "Dice.EncounterLightingPreview.Table";
+        private const string EntryKey = "Dice.EncounterLightingPreview.Entry";
         private const string PreviewPipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
         private const int UiLayer = 30;
-        [SerializeField] private EncounterTablePresentationAsset table;
-        [SerializeField] private SceneLightingAsset entry;
+        private EncounterTablePresentationAsset table;
+        private SceneLightingAsset entry;
         [SerializeField] private bool showTable = true;
         [SerializeField] private bool animate = true;
         [SerializeField] private float intensity = 1f;
@@ -61,8 +61,8 @@ namespace Dice.Editor
 
         private void OnEnable()
         {
-            if (table == null) table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(DefaultTablePath);
-            if (entry == null) entry = AssetDatabase.LoadAssetAtPath<SceneLightingAsset>(DefaultEntryPath);
+            table = PreviewAssetSelection.Load<EncounterTablePresentationAsset>(TableKey);
+            entry = PreviewAssetSelection.Load<SceneLightingAsset>(EntryKey);
             startedAt = EditorApplication.timeSinceStartup;
             EditorApplication.update += UpdatePreview;
             EditorApplication.playModeStateChanged += PlayModeChanged;
@@ -104,10 +104,8 @@ namespace Dice.Editor
                     EditorStyles.toolbarButton) == 1;
                 if (GUILayout.Button("Reload", EditorStyles.toolbarButton, GUILayout.Width(60))) ReleaseStage();
             }
-            table = (EncounterTablePresentationAsset)EditorGUILayout.ObjectField("Table", table,
-                typeof(EncounterTablePresentationAsset), false);
-            entry = (SceneLightingAsset)EditorGUILayout.ObjectField("Entry lighting", entry,
-                typeof(SceneLightingAsset), false);
+            table = PreviewAssetSelection.Field("Table", table, TableKey);
+            entry = PreviewAssetSelection.Field("Entry lighting", entry, EntryKey);
             intensity = EditorGUILayout.Slider("Intensity multiplier", intensity, 0f, 2f);
             DrawLightMultipliers(showTable ? table?.SceneLighting : entry);
             bool nextAnimate = EditorGUILayout.Toggle("Animate", animate);

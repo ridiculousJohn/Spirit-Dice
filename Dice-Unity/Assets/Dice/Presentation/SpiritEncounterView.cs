@@ -117,63 +117,6 @@ namespace Dice.Presentation
         private bool presenting;
         private Rect previousSafeArea;
         private Vector2 previousScreenSize;
-        private SpiritHostPresentationAsset compositionHost;
-
-        /** Binds the authored gameplay HUD for composition inspection. */
-        public void BuildCompositionOverlay(RectTransform parent, SpiritUiTheme theme)
-        {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
-            if (theme == null) throw new ArgumentNullException(nameof(theme));
-            if (controls != null) throw new InvalidOperationException("The encounter view is bound to a game session.");
-            if (GameplayHud == null || portrait == null || inputGroup == null)
-                throw new InvalidOperationException("The composition overlay requires an authored encounter screen.");
-            enabled = false;
-            uiTheme = theme;
-            inputGroup.blocksRaycasts = false;
-            GameplayHud.BuildHeader(portrait, ToggleMenu);
-            GameplayHud.BuildPlayingPanel();
-            GameplayHud.BuildPlayingHud(Reroll, Play);
-            GameplayHud.BuildEncounterRule(GameplayHud.DiceTrayFrame);
-            GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, ReturnToInvestigation);
-        }
-
-        /** Representative playing values expose the HUD's occupied space without a game session. */
-        public void RefreshCompositionOverlay(EncounterTablePresentationAsset table, DiceValues faces)
-        {
-            if (portrait == null || GameplayHud == null || controls != null)
-                throw new InvalidOperationException("Build the composition overlay before refreshing it.");
-            if (!faces.IsValid) throw new ArgumentException("Every die must have a face from 1 to 6.", nameof(faces));
-            SpiritHostPresentationAsset host = table != null ? table.HostPresentation : null;
-            EncounterRulePresentationAsset rule = table != null && table.RulePresentations.Count > 0
-                ? table.RulePresentations[0] : null;
-            if (configuredTable != table || compositionHost != host || encounterRulePresentation != rule)
-            {
-                configuredTable = table;
-                compositionHost = host;
-                encounterRulePresentation = rule;
-                GameplayHud.ConfigureEncounterRuleSigil(host);
-            }
-            var hud = GameplayHud;
-            hud.EncounterTitle.text = table != null ? table.DisplayTitle : "ENCOUNTER";
-            hud.StageLabel.text = "STAGE 1 / 3";
-            hud.TargetLabel.text = "120";
-            hud.TargetCaption.text = "TO CLEAR";
-            hud.SetResources(3, 3);
-            hud.ResourcesLabel.gameObject.SetActive(false);
-            hud.CategoryLabel.text = DiagnosticText.Humanize(HandEvaluator.Evaluate(faces).ToString()).ToUpperInvariant();
-            hud.SetScoreValues(0, 0);
-            hud.HandScoreLabel.text = "0";
-            hud.SelectionLabel.text = "";
-            hud.ScoreDetail.text = "";
-            hud.StatusLabel.text = "COMPOSITION PREVIEW";
-            hud.InvestigationButton.gameObject.SetActive(table != null);
-            string ruleText = rule != null ? rule.AvailableText?.Replace("{face}",
-                faces[0].ToString(System.Globalization.CultureInfo.InvariantCulture)) : null;
-            hud.RenderEncounterRuleBadge(encounterRulePresentation, rule != null, true, ruleText);
-            foreach (Button button in new[] { hud.PlayButton, hud.RerollButton, hud.CharmsButton, hud.HandRanksButton,
-                hud.MenuButton, hud.InvestigationButton })
-                button.interactable = true;
-        }
 
         public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journey)
         {
