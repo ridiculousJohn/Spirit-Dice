@@ -30,8 +30,6 @@ namespace Dice.Tests
         }
 
         [TestCase("RerollsSpentInStage")]
-        [TestCase("FreeRerollsUsedInStage")]
-        [TestCase("TotalFreeRerollsUsed")]
         public void CurrentFormatRequiresExplicitRerollAccounting(string field)
         {
             var json = SaveJson(TestContent.Session());

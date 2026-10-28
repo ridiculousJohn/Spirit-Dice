@@ -284,7 +284,7 @@ namespace Dice.Tests
             Assert.That(rule.SaveDataType, Is.EqualTo(typeof(DieBindingSaveData)));
             Assert.That(new DieInterferenceRuleDefinition(HauntingId, 20, 1, 1, true, true).SaveDataType,
                 Is.EqualTo(typeof(DieInterferenceSaveData)));
-            Assert.That(new FirstRerollFreeRuleDefinition().SaveDataType, Is.Null);
+            Assert.That(new FirstRerollFreeRuleDefinition().SaveDataType, Is.EqualTo(typeof(FirstRerollFreeSaveData)));
             Assert.Throws<ArgumentException>(() => new DieBindingRuleDefinition(" ", true, true));
         }
 

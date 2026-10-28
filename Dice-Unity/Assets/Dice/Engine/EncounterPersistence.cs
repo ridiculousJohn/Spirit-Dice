@@ -23,14 +23,13 @@ namespace Dice.Engine
                 PreviousPlayedDice = state.PreviousPlayedDice?.ToArray(),
                 LatestRerollMask = state.LatestRerollMask, LatestChangedMask = state.LatestChangedMask,
                 EverRerolledMask = state.EverRerolledMask, RerollsSpentOnHand = state.RerollsSpentOnHand,
-                RerollsSpentInStage = state.RerollsSpentInStage, FreeRerollsUsedInStage = state.FreeRerollsUsedInStage,
+                RerollsSpentInStage = state.RerollsSpentInStage,
                 HandsPlayedInStage = state.HandsPlayedInStage,
                 HasPreviousStage = state.PreviousStageStartingHands.HasValue,
                 PreviousStageStartingHands = state.PreviousStageStartingHands ?? 0,
                 PreviousStageHandsRemaining = state.PreviousStageHandsRemaining ?? 0,
                 TotalScore = state.TotalScore, TotalHandsPlayed = state.TotalHandsPlayed,
                 TotalRerollsSpent = state.TotalRerollsSpent,
-                TotalFreeRerollsUsed = state.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])state.HandUpgrades.Clone(),
                 DiceRandomState = state.DiceRandom.State, RewardRandomState = state.RewardRandom.State,
                 RuleRandomState = state.RuleRandom.State,
@@ -141,8 +140,7 @@ namespace Dice.Engine
                 save.TotalRerollsSpent >= save.RerollsSpentOnHand && save.TotalHandsPlayed <= save.Revision &&
                 save.TotalRerollsSpent <= save.Revision - save.TotalHandsPlayed,
                 "Cumulative counters or resources are invalid.");
-            Require(save.RerollsSpentInStage >= 0 && save.FreeRerollsUsedInStage >= 0 && save.TotalFreeRerollsUsed >= 0,
-                "Reroll accounting counters are invalid.");
+            Require(save.RerollsSpentInStage >= 0, "Reroll accounting counters are invalid.");
             Require(save.NextOfferId > 0 && save.NextOptionId > 0, "Reward identity counters are invalid.");
             bool completed = save.Phase == EncounterPhase.Completed;
             Require(completed == (save.Outcome != EncounterOutcome.None), "Phase and outcome disagree.");
@@ -179,12 +177,11 @@ namespace Dice.Engine
                 PreviousPlayedDice = save.PreviousPlayedDice == null ? (DiceValues?)null : ReadDice(save.PreviousPlayedDice),
                 LatestRerollMask = save.LatestRerollMask, LatestChangedMask = save.LatestChangedMask,
                 EverRerolledMask = save.EverRerolledMask, RerollsSpentOnHand = save.RerollsSpentOnHand,
-                RerollsSpentInStage = save.RerollsSpentInStage, FreeRerollsUsedInStage = save.FreeRerollsUsedInStage,
+                RerollsSpentInStage = save.RerollsSpentInStage,
                 HandsPlayedInStage = save.HandsPlayedInStage,
                 PreviousStageStartingHands = save.HasPreviousStage ? (int?)save.PreviousStageStartingHands : null,
                 PreviousStageHandsRemaining = save.HasPreviousStage ? (int?)save.PreviousStageHandsRemaining : null,
                 TotalScore = save.TotalScore, TotalHandsPlayed = save.TotalHandsPlayed, TotalRerollsSpent = save.TotalRerollsSpent,
-                TotalFreeRerollsUsed = save.TotalFreeRerollsUsed,
                 HandUpgrades = (int[])save.HandUpgrades.Clone(), DiceRandom = new DeterministicRandom(save.DiceRandomState),
                 RewardRandom = new DeterministicRandom(save.RewardRandomState), RewardRefreshes = save.RewardRefreshes,
                 RuleRandom = RestoreRuleRandom(definition, save),
@@ -495,7 +492,7 @@ namespace Dice.Engine
             state.ModifierBaseScore = baseScore;
             state.ModifierMultiplier = multiplier;
             decimal stagePaidRerolls = definition.Stages[state.StageIndex].StartingRerolls + stageRerollGrants - state.RerollsRemaining;
-            Require(stagePaidRerolls == (long)state.RerollsSpentInStage - state.FreeRerollsUsedInStage,
+            Require(stagePaidRerolls == state.RerollsSpentInStage - EncounterRuleResolver.FreeRerollsUsedInStage(definition, state),
                 "Stage reroll resources disagree with paid and free action history.");
             for (int i = 0; i < state.HandUpgrades.Length; ++i)
                 Require(state.HandUpgrades[i] <= catalog.Hands[i].MaximumUpgrades, "A hand upgrade exceeds its catalog cap.");
@@ -506,19 +503,21 @@ namespace Dice.Engine
             int currentFree = EncounterRuleResolver.FreeRerollsUsedOnHand(definition, state.RerollsSpentOnHand);
             int maximumFreePerHand = EncounterRuleResolver.MaximumFreeRerollsPerHand(definition);
             long previousHands = state.TotalHandsPlayed - state.HandsPlayedInStage;
-            long previousFree = state.TotalFreeRerollsUsed - state.FreeRerollsUsedInStage;
+            long freeInStage = EncounterRuleResolver.FreeRerollsUsedInStage(definition, state);
+            long totalFree = EncounterRuleResolver.TotalFreeRerollsUsed(definition, state);
+            long previousFree = totalFree - freeInStage;
             Require(state.RerollsSpentInStage >= state.RerollsSpentOnHand &&
                 state.TotalRerollsSpent >= state.RerollsSpentInStage &&
                 (state.StageIndex != 0 || state.TotalRerollsSpent == state.RerollsSpentInStage),
                 "Stage and cumulative reroll action counts disagree.");
-            Require(state.FreeRerollsUsedInStage >= currentFree &&
-                state.FreeRerollsUsedInStage <= (long)state.HandIndex * maximumFreePerHand + currentFree &&
+            Require(freeInStage >= currentFree &&
+                freeInStage <= (long)state.HandIndex * maximumFreePerHand + currentFree &&
                 previousFree >= 0 && previousFree <= previousHands * maximumFreePerHand &&
-                state.TotalFreeRerollsUsed <= state.TotalRerollsSpent,
+                totalFree <= state.TotalRerollsSpent,
                 "Free reroll history disagrees with encounter rules and hand history.");
             long paidOnHand = (long)state.RerollsSpentOnHand - currentFree;
-            long paidInStage = (long)state.RerollsSpentInStage - state.FreeRerollsUsedInStage;
-            long paidTotal = state.TotalRerollsSpent - state.TotalFreeRerollsUsed;
+            long paidInStage = state.RerollsSpentInStage - freeInStage;
+            long paidTotal = state.TotalRerollsSpent - totalFree;
             Require(paidOnHand >= 0 && paidInStage >= paidOnHand && paidTotal >= paidInStage,
                 "Paid reroll history disagrees with free reroll accounting.");
         }

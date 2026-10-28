@@ -5,7 +5,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 7;
+        public const int CurrentFormatVersion = 8;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -28,7 +28,6 @@ namespace Dice.Engine
         public int EverRerolledMask;
         public int RerollsSpentOnHand;
         public int RerollsSpentInStage;
-        public int FreeRerollsUsedInStage;
         public int HandsPlayedInStage;
         public bool HasPreviousStage;
         public int PreviousStageStartingHands;
@@ -36,7 +35,6 @@ namespace Dice.Engine
         public long TotalScore;
         public long TotalHandsPlayed;
         public long TotalRerollsSpent;
-        public long TotalFreeRerollsUsed;
         public int[] HandUpgrades;
         public ulong DiceRandomState;
         public EncounterSaveModifierData[] Modifiers;

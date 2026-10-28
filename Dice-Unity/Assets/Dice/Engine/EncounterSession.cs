@@ -379,9 +379,9 @@ namespace Dice.Engine
             next.RerollsRemaining = stage.StartingRerolls;
             next.HandsPlayedInStage = 0;
             next.RerollsSpentInStage = 0;
-            next.FreeRerollsUsedInStage = 0;
             next.HandIndex = 0;
             foreach (var modifier in next.Modifiers) modifier.ActivationsThisStage = 0;
+            EncounterRuleResolver.StageStarted(definition, next);
             events.Add(new StageStartedEvent(next.StageIndex, stage));
             StartHand(next, events);
         }
@@ -416,14 +416,9 @@ namespace Dice.Engine
         private void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
         {
             int beforeRerolls = next.RerollsRemaining;
-            var costWaiver = EncounterRuleResolver.RerollCostWaiver(definition, next);
+            var costWaiver = EncounterRuleResolver.WaiveRerollCost(definition, next);
             if (costWaiver == null) --next.RerollsRemaining;
-            else
-            {
-                next.FreeRerollsUsedInStage = checked(next.FreeRerollsUsedInStage + 1);
-                next.TotalFreeRerollsUsed = checked(next.TotalFreeRerollsUsed + 1);
-                events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Id));
-            }
+            else events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Id));
             next.RerollsSpentOnHand = checked(next.RerollsSpentOnHand + 1);
             next.RerollsSpentInStage = checked(next.RerollsSpentInStage + 1);
             next.TotalRerollsSpent = checked(next.TotalRerollsSpent + 1);
@@ -564,14 +559,12 @@ namespace Dice.Engine
         internal int EverRerolledMask;
         internal int RerollsSpentOnHand;
         internal int RerollsSpentInStage;
-        internal int FreeRerollsUsedInStage;
         internal int HandsPlayedInStage;
         internal int? PreviousStageStartingHands;
         internal int? PreviousStageHandsRemaining;
         internal long TotalScore;
         internal long TotalHandsPlayed;
         internal long TotalRerollsSpent;
-        internal long TotalFreeRerollsUsed;
         internal int[] HandUpgrades;
         internal DeterministicRandom DiceRandom;
         internal ModifierInstanceState[] Modifiers;
