@@ -169,30 +169,26 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
 
-        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
-        {
-            int faceMask = 0;
-            int distinct = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-            {
-                int bit = 1 << dice[i];
-                if ((faceMask & bit) == 0) ++distinct;
-                faceMask |= bit;
-            }
-            return distinct;
-        }
+        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => dice.DistinctFaceCount;
     }
 
     public sealed class CyclingFavoredFaceMultiplierRuleDefinition : EncounterRuleDefinition
     {
         public const string StableId = "rule.cycling_favored_face_multiplier";
 
-        public CyclingFavoredFaceMultiplierRuleDefinition() : base(StableId) { }
+        /** The multiplier each scored die showing the favored face adds. */
+        public int MultiplierPerFavoredDie { get; }
+
+        public CyclingFavoredFaceMultiplierRuleDefinition(int multiplierPerFavoredDie) : base(StableId)
+        {
+            if (multiplierPerFavoredDie < 1) throw new ArgumentOutOfRangeException(nameof(multiplierPerFavoredDie));
+            MultiplierPerFavoredDie = multiplierPerFavoredDie;
+        }
 
         internal override bool IsAvailable(EncounterState state) => true;
 
         /** The persisted encounter-wide hand count keeps the cycle stable through stage changes and resume. */
-        internal static int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % 6) + 1;
+        internal static int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % DiceValues.FaceCount) + DiceValues.MinimumFace;
 
         internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
             => new FavoredFaceRuleSnapshot(Id, ShowsAvailable(state), FavoredFace(state.TotalHandsPlayed));
@@ -202,7 +198,7 @@ namespace Dice.Engine
             int favoredFace = FavoredFace(totalHandsPlayed);
             long bonus = 0;
             for (int i = 0; i < DiceValues.Count; ++i)
-                if (dice[i] == favoredFace) bonus += 2;
+                if (dice[i] == favoredFace) bonus += MultiplierPerFavoredDie;
             return bonus;
         }
     }
@@ -252,7 +248,7 @@ namespace Dice.Engine
 
         public FavoredFaceRuleSnapshot(string id, bool isAvailable, int favoredFace) : base(id, isAvailable)
         {
-            if (favoredFace < 1 || favoredFace > 6) throw new ArgumentOutOfRangeException(nameof(favoredFace));
+            if (!DiceValues.IsFace(favoredFace)) throw new ArgumentOutOfRangeException(nameof(favoredFace));
             FavoredFace = favoredFace;
             textValues = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(StringComparer.Ordinal) { ["face"] = favoredFace });
         }
@@ -270,11 +266,9 @@ namespace Dice.Engine
             return Array.AsReadOnly(snapshots);
         }
 
-        internal static EncounterRuleDefinition RerollCostWaiver(EncounterDefinition definition, EncounterState state)
-        {
-            int slot = RerollCostWaiverSlot(definition, state);
-            return slot < 0 ? null : definition.Rules[slot];
-        }
+        /** Whether the player can pay for a reroll or a rule waives its cost. */
+        internal static bool CanAffordReroll(EncounterDefinition definition, EncounterState state)
+            => state.RerollsRemaining > 0 || RerollCostWaiverSlot(definition, state) >= 0;
 
         /** Tells the rule that waives this player reroll's cost that it did so; returns that rule, or null for a paid reroll. */
         internal static EncounterRuleDefinition WaiveRerollCost(EncounterDefinition definition, EncounterState state)

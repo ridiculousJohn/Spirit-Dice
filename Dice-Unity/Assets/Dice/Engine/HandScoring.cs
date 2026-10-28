@@ -6,6 +6,9 @@ namespace Dice.Engine
 {
     public static class HandEvaluator
     {
+        /** The face masks, one bit per face, of the straights 1 to 5 and 2 to 6. */
+        private const int LowStraightFaces = 0x3e, HighStraightFaces = 0x7c;
+
         public static HandCategory Evaluate(DiceValues dice) => Evaluate(dice, out _);
 
         /**
@@ -16,7 +19,7 @@ namespace Dice.Engine
         public static HandCategory Evaluate(DiceValues dice, out int formingMask)
         {
             if (!dice.IsValid) throw new ArgumentException("Five valid die faces are required.", nameof(dice));
-            var counts = new int[7];
+            var counts = new int[DiceValues.MaximumFace + 1];
             int faceMask = 0;
             for (int i = 0; i < DiceValues.Count; ++i)
             {
@@ -32,15 +35,15 @@ namespace Dice.Engine
         {
             int pairs = 0;
             bool triple = false;
-            for (int face = 1; face <= 6; ++face)
+            for (int face = DiceValues.MinimumFace; face <= DiceValues.MaximumFace; ++face)
             {
-                if (counts[face] == 5) return HandCategory.FiveOfAKind;
+                if (counts[face] == DiceValues.Count) return HandCategory.FiveOfAKind;
                 if (counts[face] == 4) return HandCategory.FourOfAKind;
                 if (counts[face] == 3) triple = true;
                 if (counts[face] == 2) ++pairs;
             }
             if (triple && pairs == 1) return HandCategory.FullHouse;
-            if (faceMask == 0x3e || faceMask == 0x7c) return HandCategory.Straight;
+            if (faceMask == LowStraightFaces || faceMask == HighStraightFaces) return HandCategory.Straight;
             if (triple) return HandCategory.ThreeOfAKind;
             if (pairs == 2) return HandCategory.TwoPair;
             if (pairs == 1) return HandCategory.Pair;

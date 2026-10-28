@@ -9,7 +9,7 @@ namespace Dice.Engine
 
         public NoExtremeFacesCondition(int parameter, int secondaryParameter)
         {
-            if (parameter < 1 || parameter > 6 || secondaryParameter < 1 || secondaryParameter > 6) throw new ArgumentOutOfRangeException(nameof(parameter));
+            if (!DiceValues.IsFace(parameter) || !DiceValues.IsFace(secondaryParameter)) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
             SecondaryParameter = secondaryParameter;
         }

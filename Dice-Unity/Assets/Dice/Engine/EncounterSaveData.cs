@@ -56,7 +56,6 @@ namespace Dice.Engine
         public string[] NewlyUnlockedModifierIds;
         public string[] DiscoveredFamilyIds;
         public string[] PendingUnlockOfferDiscoveredFamilyIds;
-        public bool PendingModifierOfferUsesEncounterAdditions;
         public string[] PendingModifierOfferUnlockedIds;
     }
 

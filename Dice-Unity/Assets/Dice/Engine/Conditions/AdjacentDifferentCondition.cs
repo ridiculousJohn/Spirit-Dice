@@ -6,7 +6,7 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.AdjacentDifferences(dice, 1, 5);
+            return ModifierConditionHelpers.AdjacentDifferences(dice, 1, DiceValues.MaximumFaceDifference);
         }
     }
 }

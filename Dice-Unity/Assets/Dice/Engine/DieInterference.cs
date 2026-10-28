@@ -192,7 +192,7 @@ namespace Dice.Engine
                 return true;
             }
             int before = state.CurrentDice[bay];
-            int after = kind == DieInterferenceKind.Flip ? 7 - before : state.RuleRandom.NextInt(6) + 1;
+            int after = kind == DieInterferenceKind.Flip ? DiceValues.OppositeFace(before) : DiceValues.RollFace(ref state.RuleRandom);
             state.CurrentDice = state.CurrentDice.With(bay, after);
             disturbance.DisturbedMask |= 1 << bay;
             disturbance.LatestDisturbedMask = 1 << bay;

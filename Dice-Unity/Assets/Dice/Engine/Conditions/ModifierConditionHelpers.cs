@@ -59,18 +59,6 @@ namespace Dice.Engine
             return largestGroup;
         }
 
-        internal static int UniqueCount(DiceValues dice)
-        {
-            int seen = 0, uniqueCount = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-            {
-                int bit = 1 << dice[i];
-                if ((seen & bit) == 0) ++uniqueCount;
-                seen |= bit;
-            }
-            return uniqueCount;
-        }
-
         internal static int OddCount(DiceValues dice)
         {
             int oddCount = 0;
@@ -89,11 +77,10 @@ namespace Dice.Engine
 
         internal static bool CompareRank(DiceValues dice, DiceValues? other, int comparison, bool initialRankWhenMissing = false)
         {
+            if (!other.HasValue && !initialRankWhenMissing) return false;
             // The initial previous-hand comparison rank is HighDie.
-            if (!other.HasValue && initialRankWhenMissing) other = new DiceValues(1, 2, 3, 4, 6);
-            if (!other.HasValue) return false;
-            int difference = ((int)HandEvaluator.Evaluate(dice)).CompareTo((int)HandEvaluator.Evaluate(other.Value));
-            return difference == comparison;
+            HandCategory otherRank = other.HasValue ? HandEvaluator.Evaluate(other.Value) : HandCategory.HighDie;
+            return ((int)HandEvaluator.Evaluate(dice)).CompareTo((int)otherRank) == comparison;
         }
 
         internal static bool AdjacentDifferences(DiceValues dice, int minimum, int maximum)

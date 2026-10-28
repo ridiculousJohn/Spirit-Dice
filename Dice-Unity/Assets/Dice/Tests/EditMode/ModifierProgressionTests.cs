@@ -131,7 +131,7 @@ namespace Dice.Tests
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
             var random = new DeterministicRandom(seed);
             return RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, incomingStage - 1,
-                owned ?? Array.Empty<string>(), history ?? Array.Empty<string>(), ref random, encounter, unlocked, incomingStage);
+                owned ?? Array.Empty<string>(), history ?? Array.Empty<string>(), ref random, encounter, unlocked);
         }
 
         [Test]

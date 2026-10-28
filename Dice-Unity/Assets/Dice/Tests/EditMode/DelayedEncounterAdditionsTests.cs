@@ -19,7 +19,7 @@ namespace Dice.Tests
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
             var random = new DeterministicRandom(7);
             var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, new[] { Owned },
-                Array.Empty<string>(), ref random, encounter, Array.Empty<string>(), clearedStage + 1);
+                Array.Empty<string>(), ref random, encounter, Array.Empty<string>());
             Assert.That(generated.ModifierIds, Is.EqualTo(offered ? new[] { Addition } : Array.Empty<string>()));
         }
 

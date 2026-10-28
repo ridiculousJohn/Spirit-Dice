@@ -16,7 +16,7 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            for (int face = 1; face <= 6; ++face)
+            for (int face = DiceValues.MinimumFace; face <= DiceValues.MaximumFace; ++face)
                 if (ModifierConditionHelpers.SelectedCountOf(dice, context.SelectedMask, face) >= Parameter) return true;
             return false;
         }

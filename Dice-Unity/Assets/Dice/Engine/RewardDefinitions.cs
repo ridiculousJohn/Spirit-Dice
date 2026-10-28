@@ -6,6 +6,9 @@ namespace Dice.Engine
 {
     public sealed class ProgressionRewardDefinition
     {
+        /** The longest progression id; saved player progress stores ids up to this length. */
+        public const int MaximumIdLength = 256;
+
         public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
         public ReadOnlyCollection<string> GrantedModifierIds { get; }
 
@@ -18,10 +21,8 @@ namespace Dice.Engine
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            var families = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var modifier in catalog.Modifiers) families.Add(modifier.FamilyId);
             foreach (string id in DiscoveredFamilyIds)
-                if (!families.Contains(id))
+                if (!catalog.HasFamily(id))
                     throw new ArgumentException("A discovered family is missing from the catalog.", nameof(catalog));
             foreach (string id in GrantedModifierIds)
             {
@@ -46,8 +47,8 @@ namespace Dice.Engine
             foreach (string id in entries)
             {
                 DefinitionValidation.RequireId(id, parameter);
-                if (id.Trim() != id || id.Length > 256)
-                    throw new ArgumentException("Progression IDs must be trimmed and at most 256 characters.", parameter);
+                if (id.Trim() != id || id.Length > MaximumIdLength)
+                    throw new ArgumentException("Progression IDs must be trimmed and at most " + MaximumIdLength + " characters.", parameter);
                 foreach (char value in id)
                     if (char.IsControl(value)) throw new ArgumentException("Progression IDs cannot contain control characters.", parameter);
                 if (!unique.Add(id)) throw new ArgumentException("Progression IDs must be unique.", parameter);
@@ -158,6 +159,8 @@ namespace Dice.Engine
         public int RefreshCost { get; }
         public int HandUpgradeOptionCount { get; }
         public ReadOnlyCollection<HandUpgradeHistoryRule> UpgradeHistory { get; }
+        /** The most recent upgrade choices any offer excludes, and so the history worth keeping. */
+        public int MaximumExcludedRecentChoices { get; }
         public ReadOnlyCollection<ModifierTierRule> TierRules { get; }
         public ReadOnlyCollection<ModifierTierMilestone> TierMilestones { get; }
 
@@ -179,11 +182,13 @@ namespace Dice.Engine
                 throw new ArgumentException("Reward layouts must be nonempty and nonnull.", nameof(modifierLayouts));
             var rules = new List<HandUpgradeHistoryRule>(upgradeHistory);
             int previousBoundary = 0;
+            int maximumExcluded = 0;
             foreach (var rule in rules)
             {
                 if (rule.MaxIncomingStageNumber <= previousBoundary || rule.ExcludedRecentChoices < 0)
                     throw new ArgumentException("Upgrade history rules require increasing positive boundaries.", nameof(upgradeHistory));
                 previousBoundary = rule.MaxIncomingStageNumber;
+                maximumExcluded = Math.Max(maximumExcluded, rule.ExcludedRecentChoices);
             }
             if (previousBoundary != int.MaxValue)
                 throw new ArgumentException("Upgrade history rules must cover every incoming stage.", nameof(upgradeHistory));
@@ -194,6 +199,7 @@ namespace Dice.Engine
             RefreshCost = refreshCost;
             HandUpgradeOptionCount = handUpgradeOptionCount;
             UpgradeHistory = rules.AsReadOnly();
+            MaximumExcludedRecentChoices = maximumExcluded;
             var tiers = tierRules == null ? new List<ModifierTierRule>() : new List<ModifierTierRule>(tierRules);
             int previousStage = 0;
             foreach (var rule in tiers)
@@ -211,6 +217,17 @@ namespace Dice.Engine
                 if (milestone.IncomingStageNumber < 1 || milestone.MinimumTier < 1 || !milestoneStages.Add(milestone.IncomingStageNumber))
                     throw new ArgumentException("Tier milestones require unique positive stages and tiers.", nameof(tierMilestones));
             TierMilestones = milestones.AsReadOnly();
+        }
+
+        /** The layout of the charm offer made after clearing the stage numbered rewardCycleIndex; layouts repeat in order. */
+        public ModifierRewardLayout LayoutFor(int rewardCycleIndex) => ModifierLayouts[rewardCycleIndex % ModifierLayouts.Count];
+
+        /** How many of the most recent upgrade choices an offer for the incoming stage excludes. */
+        public int ExcludedRecentChoices(int incomingStageNumber)
+        {
+            foreach (var rule in UpgradeHistory)
+                if (incomingStageNumber <= rule.MaxIncomingStageNumber) return rule.ExcludedRecentChoices;
+            throw new InvalidOperationException("Upgrade history rules cover every incoming stage.");
         }
     }
 

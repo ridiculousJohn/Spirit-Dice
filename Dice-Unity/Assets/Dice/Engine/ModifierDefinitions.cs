@@ -59,6 +59,9 @@ namespace Dice.Engine
         /** A charm that can be offered and can ever do something when it activates. */
         public bool IsPlayable => RewardEligible && Effects.Count > 0 && Condition.CanEverActivate;
 
+        /** A playable starter charm; every player has discovered its family. */
+        public bool IsDiscoveredFromStart => Availability.Access == ModifierAccess.Starter && IsPlayable;
+
         public ModifierDefinition(string id, string familyId, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)

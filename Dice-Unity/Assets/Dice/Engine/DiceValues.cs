@@ -6,6 +6,12 @@ namespace Dice.Engine
     {
         public const int Count = 5;
         public const int AllMask = (1 << Count) - 1;
+        public const int MinimumFace = 1;
+        public const int MaximumFace = 6;
+        public const int FaceCount = MaximumFace - MinimumFace + 1;
+        /** The largest difference between two faces. */
+        public const int MaximumFaceDifference = MaximumFace - MinimumFace;
+        public const int MaximumSum = Count * MaximumFace;
         private readonly int first;
         private readonly int second;
         private readonly int third;
@@ -46,6 +52,31 @@ namespace Dice.Engine
         public bool IsValid => IsFace(first) && IsFace(second) && IsFace(third) && IsFace(fourth) && IsFace(fifth);
         public int[] ToArray() => new[] { first, second, third, fourth, fifth };
 
+        /** The number of different faces among the dice. */
+        public int DistinctFaceCount
+        {
+            get
+            {
+                int seen = 0, distinct = 0;
+                for (int i = 0; i < Count; ++i)
+                {
+                    int bit = 1 << this[i];
+                    if ((seen & bit) == 0) ++distinct;
+                    seen |= bit;
+                }
+                return distinct;
+            }
+        }
+
+        /** The dice whose faces differ from the other dice in the same bays. */
+        public int DifferingMask(DiceValues other)
+        {
+            int mask = 0;
+            for (int i = 0; i < Count; ++i)
+                if (this[i] != other[i]) mask |= 1 << i;
+            return mask;
+        }
+
         /** The number of bays a dice mask selects. */
         public static int CountBays(int mask)
         {
@@ -78,7 +109,13 @@ namespace Dice.Engine
         public static bool operator ==(DiceValues left, DiceValues right) => left.Equals(right);
         public static bool operator !=(DiceValues left, DiceValues right) => !left.Equals(right);
 
-        private static bool IsFace(int value) => value >= 1 && value <= 6;
+        public static bool IsFace(int value) => value >= MinimumFace && value <= MaximumFace;
+
+        /** The face on the opposite side of a die. */
+        internal static int OppositeFace(int face) => MinimumFace + MaximumFace - face;
+
+        internal static int RollFace(ref DeterministicRandom random) => random.NextInt(FaceCount) + MinimumFace;
+
         private static void ValidateFace(int value)
         {
             if (!IsFace(value)) throw new ArgumentOutOfRangeException(nameof(value));

@@ -7,34 +7,36 @@ namespace Dice.Engine
     public static class RewardGenerator
     {
         private const int MinimumCandidatesBeforeHistoryBypass = 3;
+        /**
+         * An upgrade offer that takes every candidate draws nothing from the reward stream while it has at most this many;
+         * the reward streams of existing seeds depend on it.
+         */
+        private const int MaximumUpgradeCandidatesWithoutDraw = 3;
 
+        /** The offer after clearing the stage numbered rewardCycleIndex, for the stage after it. */
         public static ModifierRewardGeneration GenerateModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int rewardCycleIndex, IEnumerable<string> ownedModifierIds, IEnumerable<string> excludedFamilyIds,
-            ref DeterministicRandom random, EncounterDefinition encounter = null, IEnumerable<string> unlockedModifierIds = null,
-            int incomingStageNumber = 0)
+            ref DeterministicRandom random, EncounterDefinition encounter = null, IEnumerable<string> unlockedModifierIds = null)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (policy == null) throw new ArgumentNullException(nameof(policy));
             if (rewardCycleIndex < 0) throw new ArgumentOutOfRangeException(nameof(rewardCycleIndex));
             if (ownedModifierIds == null) throw new ArgumentNullException(nameof(ownedModifierIds));
             if (excludedFamilyIds == null) throw new ArgumentNullException(nameof(excludedFamilyIds));
-            if (incomingStageNumber == 0) incomingStageNumber = checked(rewardCycleIndex + 1);
-            if (incomingStageNumber < 1) throw new ArgumentOutOfRangeException(nameof(incomingStageNumber));
+            int incomingStageNumber = checked(rewardCycleIndex + 1);
             var unlocked = new HashSet<string>(unlockedModifierIds ?? Array.Empty<string>(), StringComparer.Ordinal);
             var owned = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in ownedModifierIds) { catalog.GetModifier(id); owned.Add(id); }
-            var knownFamilies = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var modifier in catalog.Modifiers) knownFamilies.Add(modifier.FamilyId);
             var history = new List<string>();
             var excluded = new HashSet<string>(StringComparer.Ordinal);
             foreach (string familyId in excludedFamilyIds)
             {
                 DefinitionValidation.RequireId(familyId, nameof(excludedFamilyIds));
-                if (!knownFamilies.Contains(familyId))
+                if (!catalog.HasFamily(familyId))
                     throw new ArgumentException("An excluded modifier family is missing from the catalog.", nameof(excludedFamilyIds));
                 if (excluded.Add(familyId)) history.Add(familyId);
             }
-            var layout = policy.ModifierLayouts[rewardCycleIndex % policy.ModifierLayouts.Count];
+            var layout = policy.LayoutFor(rewardCycleIndex);
             var pools = new List<ModifierRewardPoolDefinition>();
             foreach (string poolId in layout.PoolIds) pools.Add(catalog.GetRewardPool(poolId));
             var offeredIds = new List<string>();
@@ -72,16 +74,8 @@ namespace Dice.Engine
                     throw new ArgumentOutOfRangeException(nameof(upgrades));
             foreach (var category in recentUpgrades)
                 if ((uint)category >= HandDefinition.CategoryCount) throw new ArgumentOutOfRangeException(nameof(recentUpgrades));
-            int historyWindow = 0;
-            foreach (var rule in policy.UpgradeHistory)
-                if (incomingStageNumber <= rule.MaxIncomingStageNumber) { historyWindow = rule.ExcludedRecentChoices; break; }
-            var excluded = new HashSet<HandCategory>();
-            int historyCount = Math.Min(recentUpgrades.Count, historyWindow);
-            for (int i = 0; i < historyCount; ++i) excluded.Add(recentUpgrades[i]);
-            var candidates = EligibleHands(catalog, upgrades, excluded);
-            if (candidates.Count < policy.HandUpgradeOptionCount)
-                candidates = EligibleHands(catalog, upgrades, new HashSet<HandCategory>());
-            if (candidates.Count <= 3 && candidates.Count <= policy.HandUpgradeOptionCount)
+            var candidates = UpgradeCandidates(catalog, policy, incomingStageNumber, upgrades, recentUpgrades);
+            if (candidates.Count <= MaximumUpgradeCandidatesWithoutDraw && candidates.Count <= policy.HandUpgradeOptionCount)
             {
                 candidates.Sort();
                 return candidates.AsReadOnly();
@@ -97,14 +91,28 @@ namespace Dice.Engine
             return selected.AsReadOnly();
         }
 
+        /** The hands an upgrade offer for the incoming stage chooses from. */
+        internal static List<HandCategory> UpgradeCandidates(MechanicalCatalog catalog, RewardPolicyDefinition policy,
+            int incomingStageNumber, IReadOnlyList<int> upgrades, IReadOnlyList<HandCategory> recentUpgrades)
+        {
+            var excluded = new HashSet<HandCategory>();
+            int historyCount = Math.Min(recentUpgrades.Count, policy.ExcludedRecentChoices(incomingStageNumber));
+            for (int i = 0; i < historyCount; ++i) excluded.Add(recentUpgrades[i]);
+            var candidates = EligibleHands(catalog, upgrades, excluded);
+            // Recent choices become eligible again when too few other hands remain to fill the offer.
+            if (candidates.Count < policy.HandUpgradeOptionCount)
+                candidates = EligibleHands(catalog, upgrades, new HashSet<HandCategory>());
+            return candidates;
+        }
+
         private static List<string> EligibleModifiers(MechanicalCatalog catalog, ModifierRewardPoolDefinition pool,
-            int incomingStageNumber, HashSet<string> owned, HashSet<string> excluded, HashSet<string> currentFamilies,
-            EncounterDefinition encounter, ISet<string> unlocked, bool includeEncounterModifiers)
+            int incomingStageNumber, HashSet<string> owned, HashSet<string> currentFamilies,
+            EncounterDefinition encounter, ISet<string> unlocked)
         {
             var candidates = new List<string>();
             var ids = new List<string>(pool.ModifierIds);
             // The offer for an incoming stage follows clearing the stage before it.
-            if (includeEncounterModifiers && encounter != null &&
+            if (encounter != null &&
                 incomingStageNumber - 1 >= encounter.EncounterModifiersFirstClearedStageNumber)
                 foreach (string id in encounter.EncounterModifierIds)
                     if (!ids.Contains(id)) ids.Add(id);
@@ -112,18 +120,16 @@ namespace Dice.Engine
             {
                 var modifier = catalog.GetModifier(id);
                 if (modifier.RewardEligible && modifier.Availability.IsAvailable(encounter, unlocked, id) &&
-                    !owned.Contains(id) && !excluded.Contains(modifier.FamilyId) &&
-                    !currentFamilies.Contains(modifier.FamilyId)) candidates.Add(id);
+                    !owned.Contains(id) && !currentFamilies.Contains(modifier.FamilyId)) candidates.Add(id);
             }
             return candidates;
         }
 
         internal static List<string> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<string> owned,
-            HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked,
-            bool includeEncounterModifiers = true)
+            HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked)
             => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, incomingStageNumber, owned,
-                new HashSet<string>(StringComparer.Ordinal), currentFamilies, encounter, unlocked, includeEncounterModifiers));
+                currentFamilies, encounter, unlocked));
 
         internal static string EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy, int incomingStageNumber,
             ModifierRewardPoolDefinition pool, EncounterDefinition encounter, ISet<string> unlocked)

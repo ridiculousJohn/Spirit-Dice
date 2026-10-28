@@ -40,7 +40,7 @@ namespace Dice.Engine
             if (SelectedMask <= 0 || (SelectedMask & ~DiceValues.AllMask) != 0 ||
                 (SelectedMask & EncounterRuleResolver.LockedDice(session.Definition, state)) != 0)
                 return CommandRejection.InvalidDiceSelection;
-            if (state.RerollsRemaining <= 0 && EncounterRuleResolver.RerollCostWaiver(session.Definition, state) == null)
+            if (!EncounterRuleResolver.CanAffordReroll(session.Definition, state))
                 return CommandRejection.NoRerollsRemaining;
             return CommandRejection.None;
         }
@@ -144,7 +144,7 @@ namespace Dice.Engine
             RerollsRemaining = state.RerollsRemaining;
             LockedMask = EncounterRuleResolver.LockedDice(definition, state);
             CanReroll = state.Phase == EncounterPhase.Playing && LockedMask != DiceValues.AllMask &&
-                (state.RerollsRemaining > 0 || EncounterRuleResolver.RerollCostWaiver(definition, state) != null);
+                EncounterRuleResolver.CanAffordReroll(definition, state);
             EncounterRules = EncounterRuleResolver.Snapshots(definition, state);
             CurrentDice = state.CurrentDice;
             InitialDice = state.InitialDice;

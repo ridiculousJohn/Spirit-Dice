@@ -9,17 +9,17 @@ namespace Dice.Tests
     public sealed class CyclingFavoredFaceMultiplierRuleTests
     {
         private const string EncounterId = TestContent.EncounterId;
-        private const string RuleId = CyclingFavoredFaceMultiplierRuleDefinition.StableId;
+        private const int MultiplierPerFavoredDie = 3;
 
-        /** Checks each scored die showing the favored face adds two multiplier / fails if other faces count or matches are ignored. */
+        /** Checks each scored die showing the favored face adds the rule's multiplier / fails if other faces count or matches are ignored. */
         [Test]
-        public void EachScoredDieShowingTheFavoredFaceAddsTwoMultiplier()
+        public void EachScoredDieShowingTheFavoredFaceAddsTheRulesMultiplier()
         {
             var catalog = RuleCatalog(new StageDefinition(1000000, 12, 3));
             int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, 27));
             int other = favored % 6 + 1;
             Assert.That(WithDice(catalog, favored, favored, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
-                Is.EqualTo(4));
+                Is.EqualTo(2 * MultiplierPerFavoredDie));
             Assert.That(WithDice(catalog, other, other, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
                 Is.Zero);
         }
@@ -59,7 +59,7 @@ namespace Dice.Tests
                 new FavoredFaceCountAtLeastCondition(2),
                 new ModifierEffect[] { new AddMultiplierEffect(7) });
             var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 8, 3) },
-                startingModifiers: new[] { charm.Id }, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition() });
+                startingModifiers: new[] { charm.Id }, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition(MultiplierPerFavoredDie) });
             var catalog = new MechanicalCatalog("test.favored_face.charms", TestContent.Hands(), new[] { encounter }, new[] { charm });
             int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, 27));
             int other = favored % 6 + 1;
@@ -72,7 +72,7 @@ namespace Dice.Tests
         private static MechanicalCatalog RuleCatalog(params StageDefinition[] stages)
             => new MechanicalCatalog("test.cycling_favored_face", TestContent.Hands(), new[]
             {
-                new EncounterDefinition(EncounterId, stages, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition() })
+                new EncounterDefinition(EncounterId, stages, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition(MultiplierPerFavoredDie) })
             });
 
         private static int FavoredFace(EncounterSession session)

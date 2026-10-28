@@ -6,7 +6,7 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.UniqueCount(dice) < context.RerollsSpentOnHand;
+            return dice.DistinctFaceCount < context.RerollsSpentOnHand;
         }
     }
 }

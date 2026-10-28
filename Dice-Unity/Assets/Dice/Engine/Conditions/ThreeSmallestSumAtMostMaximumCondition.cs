@@ -8,7 +8,8 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            int first = 7, second = 7, third = 7, maximum = 1;
+            // Each smallest starts above every face and the maximum at the lowest face.
+            int first = DiceValues.MaximumFace + 1, second = first, third = first, maximum = DiceValues.MinimumFace;
             for (int i = 0; i < DiceValues.Count; ++i)
             {
                 int face = dice[i];

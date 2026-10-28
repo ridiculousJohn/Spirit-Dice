@@ -8,7 +8,7 @@ namespace Dice.Engine
 
         public ContainsFaceCondition(int parameter)
         {
-            if (parameter < 1 || parameter > 6) throw new ArgumentOutOfRangeException(nameof(parameter));
+            if (!DiceValues.IsFace(parameter)) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }
 

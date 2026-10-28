@@ -6,7 +6,7 @@ namespace Dice.Engine
         {
             ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
-            return context.RerollsRemaining >= 1 && context.RerollsRemaining <= 6 && ModifierConditionHelpers.CountOf(dice, context.RerollsRemaining) > 0;
+            return DiceValues.IsFace(context.RerollsRemaining) && ModifierConditionHelpers.CountOf(dice, context.RerollsRemaining) > 0;
         }
     }
 }

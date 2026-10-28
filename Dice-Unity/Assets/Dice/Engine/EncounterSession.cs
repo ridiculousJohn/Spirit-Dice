@@ -8,6 +8,7 @@ namespace Dice.Engine
     {
         public const int RulesVersion = 9;
         internal const ulong RuleRandomSalt = 0x6a09e667f3bcc909UL;
+        private const ulong RewardRandomSalt = 0xd1b54a32d192ed03UL;
         private readonly MechanicalCatalog catalog;
         private readonly EncounterDefinition definition;
         private EncounterState state;
@@ -27,7 +28,7 @@ namespace Dice.Engine
             {
                 HandUpgrades = new List<int>(definition.StartingUpgrades).ToArray(),
                 DiceRandom = new DeterministicRandom(seed),
-                RewardRandom = new DeterministicRandom(seed ^ 0xd1b54a32d192ed03UL),
+                RewardRandom = new DeterministicRandom(seed ^ RewardRandomSalt),
                 // Only rules that draw from this stream seed it; other encounters keep it empty.
                 RuleRandom = new DeterministicRandom(EncounterRuleResolver.UsesRuleRandom(definition) ? seed ^ RuleRandomSalt : 0),
                 RewardRefreshes = definition.RewardPolicy?.StartingRefreshes ?? 0,
@@ -41,15 +42,11 @@ namespace Dice.Engine
                     InstanceId = i + 1L,
                     DefinitionId = definition.StartingModifiers[i]
                 };
-            if (discoveredFamilyIds == null)
-            {
-                foreach (var modifier in catalog.Modifiers)
-                    if (!state.DiscoveredFamilyIds.Contains(modifier.FamilyId)) state.DiscoveredFamilyIds.Add(modifier.FamilyId);
-            }
-            else AddDiscoveredFamilies(discoveredFamilyIds);
+            // A session created without the player's discoveries, as previews and diagnostics are, has discovered every family.
+            AddDiscoveredFamilies(discoveredFamilyIds ?? catalog.FamilyIds);
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.Availability.Access == ModifierAccess.Starter && modifier.IsPlayable &&
-                    !state.DiscoveredFamilyIds.Contains(modifier.FamilyId)) state.DiscoveredFamilyIds.Add(modifier.FamilyId);
+                if (modifier.IsDiscoveredFromStart && !state.DiscoveredFamilyIds.Contains(modifier.FamilyId))
+                    state.DiscoveredFamilyIds.Add(modifier.FamilyId);
             AddUnlockedModifiers(unlockedModifierIds ?? Array.Empty<string>());
             var events = new List<RuleEvent>();
             StartStage(state, events);
@@ -64,11 +61,9 @@ namespace Dice.Engine
         {
             if (discoveredFamilyIds == null) throw new ArgumentNullException(nameof(discoveredFamilyIds));
             var next = state.Copy();
-            var families = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var modifier in catalog.Modifiers) families.Add(modifier.FamilyId);
             foreach (string id in discoveredFamilyIds)
             {
-                if (id == null || !families.Contains(id))
+                if (!catalog.HasFamily(id))
                     throw new ArgumentException("Discovered families must exist in the catalog.", nameof(discoveredFamilyIds));
                 if (!next.DiscoveredFamilyIds.Contains(id)) next.DiscoveredFamilyIds.Add(id);
             }
@@ -209,15 +204,14 @@ namespace Dice.Engine
         {
             var owned = new string[next.Modifiers.Length];
             for (int i = 0; i < owned.Length; ++i) owned[i] = next.Modifiers[i].DefinitionId;
-            var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.StageIndex + 1,
-                owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds, next.StageIndex + 2);
-            next.PendingModifierOfferUsesEncounterAdditions = true;
+            var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.ClearedStageNumber,
+                owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds);
             next.PendingModifierOfferUnlockedIds = new List<string>(next.UnlockedModifierIds);
             next.ExcludedRewardFamilies = new List<string>(generated.ExcludedFamilyIds);
             // Upgrade choices are fixed before any modifier refresh can consume the reward stream.
             if (!isRefresh)
                 next.PendingUpgradeCategories = new List<HandCategory>(RewardGenerator.GenerateHandUpgrades(catalog,
-                    definition.RewardPolicy, next.StageIndex + 2, next.HandUpgrades, next.RecentHandUpgrades,
+                    definition.RewardPolicy, next.IncomingStageNumber, next.HandUpgrades, next.RecentHandUpgrades,
                     ref next.RewardRandom));
             var options = new List<RewardOption>();
             foreach (string id in generated.ModifierIds)
@@ -261,7 +255,6 @@ namespace Dice.Engine
         private void OfferHandUpgrades(EncounterState next, List<RuleEvent> events)
         {
             next.PendingModifierOfferUnlockedIds = null;
-            next.PendingModifierOfferUsesEncounterAdditions = false;
             var categories = next.PendingUpgradeCategories
                 ?? throw new InvalidOperationException("The hand-upgrade choices have not been generated.");
             var options = new List<RewardOption>();
@@ -289,9 +282,7 @@ namespace Dice.Engine
             next.HandUpgrades[(int)category] = checked(before + 1);
             events.Add(new HandUpgradedEvent(next, category, option.DefinitionId, before));
             next.RecentHandUpgrades.Insert(0, category);
-            int historyCount = 0;
-            foreach (var rule in definition.RewardPolicy.UpgradeHistory)
-                historyCount = Math.Max(historyCount, rule.ExcludedRecentChoices);
+            int historyCount = definition.RewardPolicy.MaximumExcludedRecentChoices;
             if (next.RecentHandUpgrades.Count > historyCount)
                 next.RecentHandUpgrades.RemoveRange(historyCount, next.RecentHandUpgrades.Count - historyCount);
             next.PendingReward = null;
@@ -370,7 +361,7 @@ namespace Dice.Engine
         {
             var faces = new int[DiceValues.Count];
             for (int i = 0; i < faces.Length; ++i)
-                faces[i] = (selectedMask & (1 << i)) != 0 ? next.DiceRandom.NextInt(6) + 1 : next.CurrentDice[i];
+                faces[i] = (selectedMask & (1 << i)) != 0 ? DiceValues.RollFace(ref next.DiceRandom) : next.CurrentDice[i];
             return new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]);
         }
 
@@ -391,9 +382,7 @@ namespace Dice.Engine
             next.CurrentDice = Roll(next, selectedMask);
             next.LatestRerollMask = selectedMask;
             next.EverRerolledMask |= selectedMask;
-            next.LatestChangedMask = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if (before[i] != next.CurrentDice[i]) next.LatestChangedMask |= 1 << i;
+            next.LatestChangedMask = before.DifferingMask(next.CurrentDice);
             events.Add(new DiceRolledEvent(next, RollKind.PlayerReroll, before, selectedMask, next.LatestChangedMask));
             EncounterRuleResolver.PlayerRerollResolved(definition, next, selectedMask, events);
             // Interference targets kept dice, then reroll charms observe the disturbed faces.
@@ -449,24 +438,17 @@ namespace Dice.Engine
             next.PendingReward = null;
             next.PendingUnlockOfferDiscoveredFamilyIds = null;
             next.PendingUpgradeCategories = null;
-            next.PendingModifierOfferUsesEncounterAdditions = false;
             next.PendingModifierOfferUnlockedIds = null;
             events.Add(new EncounterCompletedEvent(next));
         }
 
         private bool OfferModifierUnlocks(EncounterState next, List<RuleEvent> events)
         {
-            bool milestoneReached = false;
-            foreach (var milestone in definition.UnlockMilestones)
-                if (milestone.StageNumber == next.StageIndex + 1) milestoneReached = true;
-            if (!milestoneReached) return false;
-            var candidates = new List<string>();
-            foreach (string id in definition.UnlockRewardModifierIds)
-                if (!next.UnlockedModifierIds.Contains(id) &&
-                    next.DiscoveredFamilyIds.Contains(catalog.GetModifier(id).FamilyId)) candidates.Add(id);
+            if (!definition.HasUnlockMilestone(next.ClearedStageNumber)) return false;
+            var candidates = definition.UnlockCandidates(catalog, next.UnlockedModifierIds, next.DiscoveredFamilyIds);
             next.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(next.DiscoveredFamilyIds);
             var options = new List<RewardOption>();
-            while (options.Count < 3 && candidates.Count > 0)
+            while (options.Count < ModifierUnlockMilestone.OfferSize && candidates.Count > 0)
             {
                 int index = next.RewardRandom.NextInt(candidates.Count);
                 options.Add(new RewardOption(AllocateOptionId(next), candidates[index]));
@@ -508,6 +490,10 @@ namespace Dice.Engine
         internal EncounterOutcome Outcome;
         internal int StageIndex;
         internal int HandIndex;
+        /** The number of the stage just cleared, whose rewards are offered. */
+        internal int ClearedStageNumber => StageIndex + 1;
+        /** The number of the stage the offered rewards lead into. */
+        internal int IncomingStageNumber => StageIndex + 2;
         internal long RemainingThreshold;
         internal int HandsRemaining;
         internal int RerollsRemaining;
@@ -548,7 +534,6 @@ namespace Dice.Engine
         internal List<string> NewlyUnlockedModifierIds = new List<string>();
         internal List<string> DiscoveredFamilyIds = new List<string>();
         internal List<string> PendingUnlockOfferDiscoveredFamilyIds;
-        internal bool PendingModifierOfferUsesEncounterAdditions;
         internal List<string> PendingModifierOfferUnlockedIds;
 
         internal EncounterState Copy()
