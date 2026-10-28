@@ -28,8 +28,8 @@ Replaying these events is safe: discoveries and ownership
 are sets, so they do not accumulate duplicates. Other story systems can call
 `SpiritEncounterController.ApplyProgressionReward` with a built definition.
 
-The three authored invitation rewards under `ProgressionRewards` reveal each
-encounter's existing three unlock families. Fox also grants Open Gate / Base
+The authored invitation rewards under `ProgressionRewards` (fox, owl, moth, merchant
+and nymph) reveal each encounter's three unlock families. Fox also grants Open Gate / Base
 (`modifier.initial_roll.first_hand.base_score`, +10 Base, tier 1).
 For a guide who gives protection before a region, author both discovery and grant
 lists, and include the granted charms in that region's ordinary run pools so they
@@ -43,7 +43,8 @@ encounter; the first fox visit has no prerequisite. Returning to the fox uses
 grants Sheltering Branch / Base (+15 Base, tier 2) and Boundary Stone / Mult
 (+2 Mult, tier 1). These ordinary permanent charms already belong to the existing
 Base and Mult pools. Gifts become eligible for future offers without being equipped.
-The return journey completes Chapter 1. Chapter 2 is not authored here.
+The return journey completes Chapter 1. Chapter 2, The Drowned Road, follows the
+merchant and then the bound tree; each requires completion of the preceding journey.
 
 A journey beat can reference a `charm` mechanical asset to show a compact detail
 panel below its narration. Use `{charm}` in the narration for the highlighted
@@ -65,8 +66,8 @@ The family provisionally reuses the existing Last Lantern artwork and the standa
 effect-category assets. Replace the shared artwork only when dedicated art is
 approved. The favored-face rule itself still adds +2 Mult per matching scored die.
 
-The mechanical condition is `FavoredFaceCountAtLeastCondition`, serialized as
-`conditionKind: 74` with `parameter: 2`. Each modifier and its presentation remain
+The mechanical condition is `FavoredFaceCountAtLeastConditionConfig` with
+`count: 2`, which builds `FavoredFaceCountAtLeastCondition`. Each modifier and its presentation remain
 separate ScriptableObjects: the catalog references the modifier and the modifier skin
 (`Presentation/SpiritHouse/SpiritHouseModifierSkin.asset`) lists its presentation.
 
@@ -77,7 +78,7 @@ separate ScriptableObjects: the catalog references the modifier and the modifier
 (`modifier.play_hand.adjacent_difference_at_most`) and Unturned Leaf
 (`modifier.play_hand.no_dice_rerolled`) as its six `unlockRewardModifiers`, with
 unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDiscovery`
-discovers those three families and grants nothing; no journey references it yet.
+discovers those three families and grants nothing; the bound tree journey references it.
 
 Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
 variants. They trigger when at least three dice show the face of a die bound by
@@ -86,8 +87,8 @@ the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and
 +1 reroll. Each is tier 1 and once per hand. The family provisionally reuses the
 Joined Roots icon and artwork and the standard effect-category assets until
 dedicated art is approved. The mechanical condition is
-`BoundFaceCountAtLeastCondition`, serialized as `conditionKind: 75` with
-`parameter: 3`.
+`BoundFaceCountAtLeastConditionConfig` with `count: 3`, which builds
+`BoundFaceCountAtLeastCondition`.
 
 `encounterModifiersFirstClearedStageNumber: 3` makes the stage 3 clear's charm
 offer the first that can contain Grafted Branch. Encounters that do not author

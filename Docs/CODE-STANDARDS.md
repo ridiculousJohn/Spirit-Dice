@@ -22,6 +22,8 @@ The architecture boundaries in [the handoff](PROJECT-HANDOFF.md) ("Architecture 
 
 - **Prefer direct asset references between content.** Why: they cannot silently break, survive renames and show up in the editor.
 - **Ids are right when** the value must live outside the asset graph (saves, analytics, network), or a reference deliberately crosses a loading boundary. Saves store ids and resolve them through loaded content.
+- **An id has a type that says what it identifies.** Default: the class that defines a kind of content owns a typed id, a small readonly struct nested in that class (e.g. `EncounterDefinition.Id`) wrapping the content's GUID. Why: a naked id then documents itself, and passing one kind where another is expected does not compile. Code passes the content itself where it can and the id only where an identity must be stored or cross a boundary. Use another representation where it is genuinely better for the job; never pick one by habit or because the surrounding code already does.
+- **Values have their real type.** A number is stored and passed as a number, a GUID as a GUID; text is parsed only where text actually comes in (a text field, a file).
 - **Never duplicate an identity by name.** If two things must agree (a template and the condition it describes), one references the other; they do not each carry a copy of the same name.
 
 ## Content, text and values

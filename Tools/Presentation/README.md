@@ -33,7 +33,7 @@ Open **Dice > Tray Composition Preview** and select the encounter table. It prev
 
 **Show gameplay UI** is enabled by default and displays the scene's authored HUD with sample values. No gameplay session runs and preview controls do not accept game input. Turn it off to inspect the host, background, and trays. Sample dice, modifier count/scroll, and lighting time remain preview controls. Encounter Lighting Preview uses the same authored scene source in table mode.
 
-Legacy placement, angle, projection, and material-seed fields on tray assets remain serialized for initial authoring compatibility. They do not override existing scenes or rig prefabs. Do not use historical generators to apply visual edits to existing production assets.
+A tray asset holds only its rig prefab and render texture size; placement, angle, projection and materials live in the scene and the rig prefab. Do not use historical generators to apply visual edits to existing production assets.
 
 `SpiritTrayGeometry` defines five dice surface anchors and five selection-label anchors. Dice settle and roll relative to each surface anchor, with `DiceScale` controlling their size. `ModifierRoot` defines the modifier bay's local axes and surface; its width, depth, die size, spacing and visible capacity control the scrolling row. The live bay shows ready PlayHand modifiers and highlights each resolving tile. Additional ready entries remain scrollable. Runtime click targets follow the authored projection, and clipping follows the bay's local coordinates. Keep anchors inside the prefab and its materials on the scene-lighting-compatible dice shader. Scene instances clone materials before applying lighting.
 
