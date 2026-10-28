@@ -102,7 +102,7 @@ namespace Dice.Tests
                 Assert.That(controller.BeatIndex, Is.Zero);
                 Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
                 Assert.That(controller.ProfileDiscoveredFamilyIds, Does.Not.Contain(GiftFamily));
-                Assert.That(controller.JourneyStatus, Does.Contain("Cannot award story progress"));
+                Assert.That(controller.JourneyStatus.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.RewardFailed));
             }
             controller.AdvanceJourney();
             Assert.That(controller.BeatIndex, Is.EqualTo(1));
@@ -291,7 +291,7 @@ namespace Dice.Tests
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
                 Assert.That(controller.CompletedStoryIds, Is.Empty);
                 Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
-                Assert.That(controller.JourneyStatus, Does.Contain("Cannot finish the story"));
+                Assert.That(controller.JourneyStatus.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.StoryFailed));
             }
             controller.AdvanceJourney();
             Assert.That(controller.CompletedStoryIds, Does.Contain(story.StoryId));
@@ -346,8 +346,8 @@ namespace Dice.Tests
         {
             SetBeats(journeys.Entries[0]);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
-            Assert.That(controller.StatusMessage, Does.StartWith("Cannot initialize investigation:"));
-            Assert.That(controller.JourneyStatus, Is.EqualTo(controller.StatusMessage));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.InvestigationFailed));
+            Assert.That(controller.JourneyStatus, Is.SameAs(controller.Status));
             Assert.That(controller.Catalog, Is.Null);
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.Application, Is.Null);
@@ -611,7 +611,7 @@ namespace Dice.Tests
             File.WriteAllText(controller.ProfilePath, "{ broken external profile");
             ulong seed = controller.Seed;
             controller.AcceptEncounter();
-            Assert.That(controller.JourneyStatus, Does.Contain("cannot save player profile"));
+            Assert.That(controller.JourneyStatus.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.VisitFailed));
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.Seed, Is.EqualTo(seed));
             Assert.That(controller.VisitedEncounterIds, Is.Empty);
@@ -628,7 +628,8 @@ namespace Dice.Tests
             SelectInvitation(FirstId);
             controller.ConfigureSeedPolicy(true, "invalid");
             controller.AcceptEncounter();
-            Assert.That(controller.JourneyStatus, Does.Contain("Seed must be"));
+            Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.InvitationFailed));
+            Assert.That(controller.JourneyStatus.Detail, Does.Contain("Seed must be"));
             Assert.That(controller.VisitedEncounterIds, Is.Empty);
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(File.Exists(controller.ProfilePath), Is.False);
@@ -654,7 +655,8 @@ namespace Dice.Tests
             var journey = journeys.Entries[0];
             SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation), Beat("later", EncounterJourneyBeatKind.Dialogue));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
-            Assert.That(controller.JourneyStatus, Does.Contain("final journey beat"));
+            Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.InvestigationFailed));
+            Assert.That(controller.JourneyStatus.Detail, Does.Contain("final journey beat"));
             SetBeats(journey, Beat("invite-one", EncounterJourneyBeatKind.Invitation), Beat("invite-two", EncounterJourneyBeatKind.Invitation));
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
             SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation));
@@ -937,7 +939,7 @@ namespace Dice.Tests
                 controller.ToggleDie(0);
                 controller.Reroll();
                 Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 1));
-                Assert.That(controller.StatusMessage, Does.Contain("Progress is pending"));
+                Assert.That(controller.Status.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.EncounterSavePending));
                 controller.PlayHand();
                 Assert.That(controller.Snapshot.Revision, Is.EqualTo(revision + 1));
                 Assert.That(controller.TrySave(), Is.False);
@@ -1010,7 +1012,7 @@ namespace Dice.Tests
             string contents = failure == "malformed" ? "{ broken run" : json.ToString();
             File.WriteAllText(savePath, contents);
             Assert.That(controller.OpenSavedChapter(), Is.False);
-            Assert.That(controller.JourneyStatus, Does.Contain("Cannot load"));
+            Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.LoadFailed));
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.ShowMainMenu(), Is.True);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
@@ -1028,7 +1030,7 @@ namespace Dice.Tests
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
             controller.SelectChapter(second.Id);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
-            Assert.That(controller.JourneyStatus, Is.Not.Empty);
+            Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.ChapterLocked));
             var profile = new PlayerProfile();
             profile.CompleteEncounter(FirstId);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);

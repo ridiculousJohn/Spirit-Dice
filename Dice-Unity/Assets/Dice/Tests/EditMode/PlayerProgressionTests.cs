@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Dice.App;
 using Dice.Engine;
+using Dice.Presentation;
 using NUnit.Framework;
 
 namespace Dice.Tests
@@ -41,7 +42,7 @@ namespace Dice.Tests
                 Assert.That(progression.PersistProfile(), Is.True);
                 Assert.That(progression.HasProfile, Is.False);
                 Assert.That(progression.ProfilePath, Is.Null);
-                Assert.That(progression.ProfileStatusMessage, Is.Empty);
+                Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
                 Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
                 Assert.That(progression.VisitedEncounterIds, Is.Empty);
             }
@@ -96,7 +97,7 @@ namespace Dice.Tests
             Assert.That(progression.HasProfile, Is.True);
             Assert.That(progression.ProfilePath, Is.EqualTo(originalProfile));
             Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.first" }));
-            Assert.That(progression.ProfileStatusMessage, Does.Contain("Cannot load player profile"));
+            Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.LoadFailed));
             Assert.That(File.ReadAllText(differentProfile), Is.EqualTo(corrupt));
         }
 
@@ -118,11 +119,12 @@ namespace Dice.Tests
                 Assert.That(progression.CompletedEncounterIds, Is.Empty);
                 Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous" }));
                 Assert.That(progression.KnownDiscoveredFamilies(catalog), Does.Not.Contain(GiftFamily));
-                Assert.That(progression.ProfileStatusMessage, Is.Not.Empty);
+                Assert.That(progression.Status.Kind, Is.EqualTo(FailureOf(operation)));
+                Assert.That(progression.Status.Detail, Is.Not.Empty);
             }
             Assert.That(File.ReadAllBytes(progression.ProfilePath), Is.EqualTo(before));
             Assert.That(ApplyOperation(operation, catalog), Is.True);
-            Assert.That(progression.ProfileStatusMessage, Is.Empty);
+            Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
             var saved = PlayerProfileFileStore.Load(progression.ProfilePath);
             if (operation == "visit")
             {
@@ -195,7 +197,7 @@ namespace Dice.Tests
                 Assert.That(PlayerProfileFileStore.Load(originalProfile).UnlockedModifierIds, Is.Empty);
                 Assert.That(progression.PrepareProfile(otherRun), Is.False);
                 Assert.That(progression.ProfilePath, Is.EqualTo(originalProfile));
-                Assert.That(progression.ProfileStatusMessage, Does.Contain("cannot save the encounter"));
+                Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.EncounterSavePending));
             }
 
             Assert.That(progression.PrepareProfile(otherRun), Is.True);
@@ -221,18 +223,22 @@ namespace Dice.Tests
             {
                 Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, application.CaptureSave(), savePath), Is.False);
                 Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
-                Assert.That(progression.ProfileStatusMessage, Does.Contain("cannot save player profile"));
+                Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.ProfileSavePending));
                 Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
             }
 
             using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
                 Assert.That(progression.PersistProfile(), Is.True);
 
-            Assert.That(progression.ProfileStatusMessage, Is.Empty);
+            Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
             var saved = PlayerProfileFileStore.Load(progression.ProfilePath);
             Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
             Assert.That(saved.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
         }
+
+        private static PlayerProfileStatusKind FailureOf(string operation) =>
+            operation == "story" ? PlayerProfileStatusKind.StoryFailed :
+            operation == "visit" ? PlayerProfileStatusKind.VisitFailed : PlayerProfileStatusKind.RewardFailed;
 
         private bool ApplyOperation(string operation, MechanicalCatalog catalog)
         {

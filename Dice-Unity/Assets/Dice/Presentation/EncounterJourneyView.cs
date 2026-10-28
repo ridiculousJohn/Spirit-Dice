@@ -126,7 +126,7 @@ namespace Dice.Presentation
             }
             if (journey != null && index >= 0 && index < journey.Beats.Count)
             {
-                journeyStatus.text = controls.JourneyStatus;
+                journeyStatus.text = SpiritStatusText.Describe(controls.JourneyStatus);
                 if (changed) ShowBeat(journey, index);
             }
             renderedJourney = journey;

@@ -67,7 +67,7 @@ namespace Dice.Tests
         {
             Assert.That(host.GetComponent<SpiritEncounterView>(), Is.Null, "Controllers do not construct presentation.");
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.StatusMessage, Does.Contain("startup"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.WaitingForStartup));
             Assert.DoesNotThrow(() => controller.StartNew());
             Assert.DoesNotThrow(() => controller.PlayHand());
             Assert.DoesNotThrow(() => controller.Load());
@@ -177,7 +177,7 @@ namespace Dice.Tests
             var before = controller.Snapshot;
             var preview = controller.Preview;
             var inspections = controller.ModifierInspections;
-            string status = controller.StatusMessage;
+            var status = controller.Status;
             int changes = 0;
             controller.StateChanged += () => ++changes;
             controller.ToggleDie(2);
@@ -196,7 +196,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
             Assert.That(controller.SelectedMask, Is.Zero);
-            Assert.That(controller.StatusMessage, Is.EqualTo(status));
+            Assert.That(controller.Status, Is.SameAs(status));
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(changes, Is.Zero);
             Assert.That(resolutions, Is.EqualTo(1));
@@ -221,14 +221,14 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += resolution => ++resolutions;
             controller.Reroll();
-            Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.NoRerollsRemaining)));
+            AssertRejected(CommandRejection.NoRerollsRemaining);
             Assert.That(controller.SelectedMask, Is.EqualTo(8));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
             Assert.That(controller.IsBusy, Is.False);
             controller.RefreshRewards();
-            Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.InvalidPhase)));
+            AssertRejected(CommandRejection.InvalidPhase);
             Assert.That(resolutions, Is.Zero);
         }
 
@@ -257,7 +257,7 @@ namespace Dice.Tests
             Assert.That(EncounterSaveCodec.Serialize(saved), Is.EqualTo(EncounterSaveCodec.Serialize(expected.CaptureSave())));
             var refreshed = controller.Snapshot;
             controller.ChooseReward(stale.OfferId, stale.Options[0].OptionId);
-            Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.InvalidOffer)));
+            AssertRejected(CommandRejection.InvalidOffer);
             Assert.That(controller.Snapshot, Is.SameAs(refreshed));
             controller.StartNew();
             controller.ToggleDie(2);
@@ -266,10 +266,10 @@ namespace Dice.Tests
             Assert.That(controller.SelectedMask, Is.Zero);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(resolutions, Is.EqualTo(2));
-            Assert.That(controller.StatusMessage, Does.Contain("Loaded"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Loaded));
             var offer = controller.Snapshot.PendingReward;
             controller.ChooseReward(offer.OfferId, -1);
-            Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.InvalidRewardOption)));
+            AssertRejected(CommandRejection.InvalidRewardOption);
             controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
             AssertSnapshots(expected.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), 2).Snapshot);
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingHandUpgrade));
@@ -309,7 +309,7 @@ namespace Dice.Tests
             int resolutions = 0;
             controller.Resolved += resolution => ++resolutions;
             Assert.That(controller.TryLoad(), Is.False);
-            Assert.That(controller.StatusMessage, Does.Contain("Cannot load"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.LoadFailed));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
@@ -329,20 +329,44 @@ namespace Dice.Tests
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.ModifierInspections.Count, Is.EqualTo(1));
-            Assert.That(controller.StatusMessage, Does.Contain("Hand preview unavailable"));
+            AssertPreviewWarning(SpiritStatusKind.Started);
             controller.ToggleDie(0);
             controller.Reroll();
             AssertSnapshots(expected.Execute(new RerollDiceAction(1), 0).Snapshot);
-            Assert.That(controller.StatusMessage, Does.Contain("Accepted action").And.Contain("Hand preview unavailable"));
+            AssertPreviewWarning(SpiritStatusKind.ActionAccepted);
             Assert.That(controller.IsBusy, Is.False);
             controller.Save();
             controller.StartNew();
             controller.ToggleDie(2);
             controller.Load();
             AssertSnapshots(expected.Snapshot);
-            Assert.That(controller.StatusMessage, Does.Contain("Loaded").And.Contain("Hand preview unavailable"));
+            AssertPreviewWarning(SpiritStatusKind.Loaded);
             Assert.That(controller.SelectedMask, Is.Zero);
             Assert.That(controller.ModifierInspections.Count, Is.EqualTo(1));
+        }
+
+        /** Checks run states report each failed display evaluation as its own warning / fails if a warning is lost, merged or left over. */
+        [Test]
+        public void RunStatesReportEachDisplayFailureAsItsOwnWarning()
+        {
+            controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started));
+            Assert.That(controller.Status.HandPreviewFailure, Is.Null);
+            Assert.That(controller.Status.ModifierInspectionFailure, Is.Null);
+
+            var modifier = new ModifierDefinition("faulting", "family.faulting", ModifierPhase.PlayHand,
+                new FaultingCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
+            controller.Initialize(catalog, TestContent.EncounterId, 19, savePath);
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started));
+            Assert.That(controller.Status.Seed, Is.EqualTo(19));
+            Assert.That(controller.Status.HandPreviewFailure, Is.EqualTo(FaultingCondition.Message));
+            Assert.That(controller.Status.ModifierInspectionFailure, Is.EqualTo(FaultingCondition.Message));
+            controller.ToggleDie(0);
+            controller.Reroll();
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.ActionAccepted));
+            Assert.That(controller.Status.Revision, Is.EqualTo(controller.Snapshot.Revision));
+            Assert.That(controller.Status.ModifierInspectionFailure, Is.EqualTo(FaultingCondition.Message));
         }
 
         [Test]
@@ -362,7 +386,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.Null);
             Assert.That(resolutions, Is.EqualTo(1));
             controller.PlayHand();
-            Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.EncounterCompleted)));
+            AssertRejected(CommandRejection.EncounterCompleted);
             Assert.That(resolutions, Is.EqualTo(1));
             controller.StartNew();
             AssertSnapshots(EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 42).Snapshot);
@@ -376,18 +400,18 @@ namespace Dice.Tests
         {
             controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 42, savePath);
             controller.Save();
-            Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Saved), controller.Status.ToString());
             var previous = EncounterSaveFileStore.Load(savePath, TestContent.Catalog());
             var unityRandomState = UnityEngine.Random.state;
             for (int run = 0; run < 2; ++run)
             {
                 controller.StartNew();
-                Assert.That(controller.StatusMessage, Does.StartWith("Started encounter with seed "), controller.StatusMessage);
+                Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started), controller.Status.ToString());
                 Assert.That(controller.Snapshot.Revision, Is.Zero);
                 Assert.That(controller.IsBusy, Is.False);
                 Assert.That(UnityEngine.Random.state, Is.EqualTo(unityRandomState));
                 controller.Save();
-                Assert.That(controller.StatusMessage, Does.StartWith("Saved encounter."), controller.StatusMessage);
+                Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Saved), controller.Status.ToString());
                 var current = EncounterSaveFileStore.Load(savePath, TestContent.Catalog());
                 Assert.That(current.DiceRandomState, Is.Not.EqualTo(previous.DiceRandomState));
                 Assert.That(current.RewardRandomState, Is.Not.EqualTo(previous.RewardRandomState));
@@ -462,7 +486,8 @@ namespace Dice.Tests
             var inspections = controller.ModifierInspections;
             ConfigureSeedPolicy(true, invalidSeed);
             controller.StartNew();
-            Assert.That(controller.StatusMessage, Does.Contain("Cannot start").And.Contain("unsigned 64-bit integer"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.StartFailed));
+            Assert.That(controller.Status.Detail, Does.Contain("unsigned 64-bit integer"));
             Assert.That(controller.Snapshot, Is.SameAs(before));
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
@@ -470,7 +495,7 @@ namespace Dice.Tests
             Assert.That(controller.IsBusy, Is.False);
             ConfigureSeedPolicy(false, invalidSeed);
             controller.StartNew();
-            Assert.That(controller.StatusMessage, Does.Contain("Started encounter"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started));
             Assert.That(controller.Snapshot, Is.Not.SameAs(before));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             Assert.That(controller.SelectedMask, Is.Zero);
@@ -520,6 +545,26 @@ namespace Dice.Tests
 
         private void AssertSnapshots(EncounterSnapshot expected)
             => EncounterSessionTests.AssertSnapshotsEqual(expected, controller.Snapshot);
+
+        private void AssertRejected(CommandRejection rejection)
+        {
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.ActionRejected));
+            Assert.That(controller.Status.Rejection, Is.EqualTo(rejection));
+        }
+
+        /** The run state was reported with the failed hand preview as its warning. */
+        private void AssertPreviewWarning(SpiritStatusKind kind)
+        {
+            Assert.That(controller.Status.Kind, Is.EqualTo(kind));
+            Assert.That(controller.Status.HandPreviewFailure, Is.Not.Null.And.Not.Empty);
+        }
+
+        /** A condition whose evaluation always fails, so every display evaluation of its charm fails. */
+        private sealed class FaultingCondition : IModifierCondition
+        {
+            public const string Message = "Test condition failure.";
+            public bool Evaluate(in ModifierContext context) => throw new InvalidOperationException(Message);
+        }
 
         /** An event that states whether it ends the dice selection, and nothing else. */
         private sealed class SelectionEvent : RuleEvent

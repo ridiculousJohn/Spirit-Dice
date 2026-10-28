@@ -152,7 +152,7 @@ namespace Dice.Tests
             yield return null;
             Click("SaveRunButton");
             yield return ContentReady.Routed();
-            Assert.That(File.Exists(controller.SavePath), Is.True, controller.StatusMessage);
+            Assert.That(File.Exists(controller.SavePath), Is.True, controller.Status.ToString());
             var saved = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
             Assert.That(saved.StageIndex, Is.EqualTo(1));
             var beforeReturn = controller.Snapshot;
@@ -238,7 +238,7 @@ namespace Dice.Tests
                 authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
                 authored.Modifiers, authored.RewardPools);
             Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
-                controller.JourneyStatus);
+                controller.JourneyStatus.ToString());
             yield return ContentReady.Routed(controller);
             yield return null;
         }
@@ -344,7 +344,7 @@ namespace Dice.Tests
             view.JourneyView.Refresh();
             float deadline = Time.realtimeSinceStartup + 15;
             while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus);
+            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus.ToString());
             yield return new WaitForSecondsRealtime(.15f);
             if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
             {
@@ -360,7 +360,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 45;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, controller.StatusMessage);
+            Assert.That(controller.IsBusy, Is.False, controller.Status.ToString());
             Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             yield return null;
         }

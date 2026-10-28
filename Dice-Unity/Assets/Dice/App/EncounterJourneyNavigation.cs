@@ -59,13 +59,13 @@ namespace Dice.App
                     progress.CompletedEncounterIds.Contains(journey.EncounterId)));
         }
 
-        public bool SelectChapter(string id, Progress progress, out string error)
+        public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
         {
-            error = null;
+            error = SpiritStatusKind.None;
             if (JourneyPhase != EncounterJourneyPhase.Investigation || JourneyCatalog == null) return false;
             var chapter = FindChapter(id);
-            if (chapter == null) { error = "The chapter does not exist in the investigation."; return false; }
-            if (!IsChapterAvailable(id, progress)) { error = "Follow the current lead before opening this chapter."; return false; }
+            if (chapter == null) { error = SpiritStatusKind.ChapterNotFound; return false; }
+            if (!IsChapterAvailable(id, progress)) { error = SpiritStatusKind.ChapterLocked; return false; }
             SelectedChapter = chapter;
             return true;
         }
@@ -96,13 +96,13 @@ namespace Dice.App
                 journey.RequiredCompletedStoryIds.All(progress.CompletedStoryIds.Contains);
         }
 
-        public bool SelectEncounter(string id, Progress progress, out string error)
+        public bool SelectEncounter(string id, Progress progress, out SpiritStatusKind error)
         {
-            error = null;
+            error = SpiritStatusKind.None;
             if (JourneyCatalog == null || JourneyPhase != EncounterJourneyPhase.Investigation) return false;
             var selected = JourneyCatalog.Find(id);
-            if (selected == null) { error = "The encounter has no investigation lead."; return false; }
-            if (!IsJourneyAvailable(id, progress)) { error = "Follow the current lead before visiting this location."; return false; }
+            if (selected == null) { error = SpiritStatusKind.LeadNotFound; return false; }
+            if (!IsJourneyAvailable(id, progress)) { error = SpiritStatusKind.LocationLocked; return false; }
             highlightedEncounterIds.Remove(id);
             Commit(new Transition(selected, EncounterJourneyPhase.Sequence, 0));
             return true;
@@ -145,14 +145,14 @@ namespace Dice.App
             return true;
         }
 
-        public bool Load(string encounterId, bool requireLead, out Transition transition, out string error)
+        public bool Load(string encounterId, bool requireLead, out Transition transition, out SpiritStatusKind error)
         {
             transition = null;
-            error = null;
+            error = SpiritStatusKind.None;
             var journey = JourneyCatalog?.Find(encounterId);
             if (requireLead && journey == null)
             {
-                error = "Cannot load the encounter: no investigation lead exists for the saved encounter.";
+                error = SpiritStatusKind.SavedEncounterHasNoLead;
                 return false;
             }
             transition = new Transition(journey, EncounterJourneyPhase.Playing, -1);
@@ -168,12 +168,12 @@ namespace Dice.App
             return true;
         }
 
-        public bool ResumeEncounter(string encounterId, bool hasActiveEncounter, out string error)
+        public bool ResumeEncounter(string encounterId, bool hasActiveEncounter, out SpiritStatusKind error)
         {
-            error = null;
+            error = SpiritStatusKind.None;
             if (!CanResume(hasActiveEncounter)) return false;
             var journey = JourneyCatalog?.Find(encounterId);
-            if (journey == null) { error = "The active encounter has no investigation lead."; return false; }
+            if (journey == null) { error = SpiritStatusKind.ActiveEncounterHasNoLead; return false; }
             Commit(new Transition(journey, EncounterJourneyPhase.Playing, -1));
             return true;
         }

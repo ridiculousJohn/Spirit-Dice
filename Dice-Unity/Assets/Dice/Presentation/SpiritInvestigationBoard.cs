@@ -103,7 +103,7 @@ namespace Dice.Presentation
             renderedProgress = progress;
             renderedChapter = chapter;
             renderedCatalog = catalog;
-            Status.text = controls.JourneyStatus;
+            Status.text = SpiritStatusText.Describe(controls.JourneyStatus);
             ResumeButton.gameObject.SetActive(controls.CanResume);
             bool hasMainMenu = mainMenuControls != null;
             SpiritUi.SetButtonLabel(LoadButton, hasMainMenu ? "Main menu" : "Load saved encounter");

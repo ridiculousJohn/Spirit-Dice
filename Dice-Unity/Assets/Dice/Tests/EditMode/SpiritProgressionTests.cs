@@ -141,7 +141,8 @@ namespace Dice.Tests
             File.WriteAllText(profilePath, "{ broken profile");
             controller.Initialize(Catalog(), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.StatusMessage, Does.Contain("Cannot load player profile"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.ProfileProblem));
+            Assert.That(controller.Status.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.LoadFailed));
             Assert.That(File.ReadAllText(profilePath), Is.EqualTo("{ broken profile"));
         }
 
@@ -159,7 +160,7 @@ namespace Dice.Tests
             ChooseUnlock();
             var before = controller.Snapshot;
             Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(UnlockedId));
-            Assert.That(controller.StatusMessage, Does.Contain("Progress is pending"));
+            Assert.That(controller.Status.Profile.IsPending, Is.True);
             controller.StartNew();
             controller.Load();
             controller.Initialize(catalog, TestContent.EncounterId, 42, savePath);
@@ -182,14 +183,14 @@ namespace Dice.Tests
             {
                 ChooseUnlock();
                 Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-                Assert.That(controller.StatusMessage, Does.Contain("cannot save the encounter"));
+                Assert.That(controller.Status.Profile.Kind, Is.EqualTo(PlayerProfileStatusKind.EncounterSavePending));
                 Assert.That(PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath).UnlockedModifierIds, Is.Empty);
                 var pending = controller.Snapshot;
                 controller.StartNew();
                 Assert.That(controller.Snapshot, Is.SameAs(pending));
             }
             controller.Save();
-            Assert.That(controller.ProfileStatusMessage, Is.Empty);
+            Assert.That(controller.ProfileStatus.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
             controller.Load();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));

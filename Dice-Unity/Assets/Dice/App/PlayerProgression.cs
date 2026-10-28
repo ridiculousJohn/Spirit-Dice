@@ -4,6 +4,7 @@ using System.IO;
 using System.Security;
 using System.Security.Cryptography;
 using Dice.Engine;
+using Dice.Presentation;
 
 namespace Dice.App
 {
@@ -17,7 +18,7 @@ namespace Dice.App
 
         public bool HasProfile => profile != null;
         public string ProfilePath { get; private set; }
-        public string ProfileStatusMessage { get; private set; } = string.Empty;
+        public PlayerProfileStatus Status { get; private set; } = PlayerProfileStatus.None;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => profile?.UnlockedModifierIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> CompletedEncounterIds => profile?.CompletedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<string> CompletedStoryIds => profile?.CompletedStoryIds ?? (IReadOnlyList<string>)Array.Empty<string>();
@@ -31,7 +32,7 @@ namespace Dice.App
             pendingUnlockSave = null;
             pendingUnlockSavePath = null;
             ProfilePath = null;
-            ProfileStatusMessage = string.Empty;
+            Status = PlayerProfileStatus.None;
         }
 
         public bool PrepareProfile(string savePath)
@@ -44,12 +45,12 @@ namespace Dice.App
                 if (profile != null && path == ProfilePath) profile.Merge(loaded);
                 else profile = loaded;
                 ProfilePath = path;
-                ProfileStatusMessage = string.Empty;
+                Status = PlayerProfileStatus.None;
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                ProfileStatusMessage = "Cannot load player profile: " + exception.Message;
+                Status = new PlayerProfileStatus(PlayerProfileStatusKind.LoadFailed, exception.Message);
                 return false;
             }
         }
@@ -107,13 +108,13 @@ namespace Dice.App
                 if (!nextProfile.ApplyReward(reward, catalog)) return true;
                 PlayerProfileFileStore.Save(ProfilePath, nextProfile);
                 profile = nextProfile;
-                ProfileStatusMessage = string.Empty;
+                Status = PlayerProfileStatus.None;
                 changed = true;
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                ProfileStatusMessage = "Cannot award story progress: " + exception.Message;
+                Status = new PlayerProfileStatus(PlayerProfileStatusKind.RewardFailed, exception.Message);
                 return false;
             }
         }
@@ -132,12 +133,12 @@ namespace Dice.App
                 nextProfile.CompleteStory(storyId);
                 PlayerProfileFileStore.Save(ProfilePath, nextProfile);
                 profile = nextProfile;
-                ProfileStatusMessage = string.Empty;
+                Status = PlayerProfileStatus.None;
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                ProfileStatusMessage = "Cannot finish the story: " + exception.Message;
+                Status = new PlayerProfileStatus(PlayerProfileStatusKind.StoryFailed, exception.Message);
                 return false;
             }
         }
@@ -152,11 +153,11 @@ namespace Dice.App
                     EncounterSaveFileStore.Save(pendingUnlockSavePath, pendingUnlockSave);
                     pendingUnlockSave = null;
                     pendingUnlockSavePath = null;
-                    ProfileStatusMessage = string.Empty;
+                    Status = PlayerProfileStatus.None;
                 }
                 catch (Exception exception) when (IsExpectedFailure(exception))
                 {
-                    ProfileStatusMessage = "Progress is pending: cannot save the encounter. " + exception.Message;
+                    Status = new PlayerProfileStatus(PlayerProfileStatusKind.EncounterSavePending, exception.Message);
                     return false;
                 }
             }
@@ -165,12 +166,12 @@ namespace Dice.App
             {
                 PlayerProfileFileStore.Save(ProfilePath, profile);
                 profileDirty = false;
-                ProfileStatusMessage = string.Empty;
+                Status = PlayerProfileStatus.None;
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                ProfileStatusMessage = "Progress is pending: cannot save player profile. " + exception.Message;
+                Status = new PlayerProfileStatus(PlayerProfileStatusKind.ProfileSavePending, exception.Message);
                 return false;
             }
         }
@@ -186,12 +187,12 @@ namespace Dice.App
             {
                 PlayerProfileFileStore.Save(ProfilePath, nextProfile);
                 profile = nextProfile;
-                ProfileStatusMessage = string.Empty;
+                Status = PlayerProfileStatus.None;
                 return true;
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                ProfileStatusMessage = "Cannot accept the invitation: cannot save player profile. " + exception.Message;
+                Status = new PlayerProfileStatus(PlayerProfileStatusKind.VisitFailed, exception.Message);
                 return false;
             }
         }

@@ -142,7 +142,7 @@ namespace Dice.Tests
             campaign.ContinueGame();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(controller.StatusMessage, Does.StartWith("Cannot load"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.LoadFailed));
             Assert.That(campaign.CanStartNewGame, Is.True);
             Assert.That(File.ReadAllText(slots.GetSavePath(1)), Is.EqualTo(unreadable));
         }
@@ -157,7 +157,7 @@ namespace Dice.Tests
             Assert.That(campaign.Initialize(catalog, journeys, root), Is.True);
             campaign.ContinueGame();
             var snapshot = controller.Snapshot;
-            Assert.That(snapshot, Is.Not.Null, controller.StatusMessage);
+            Assert.That(snapshot, Is.Not.Null, controller.Status.ToString());
             string savePath = controller.SavePath;
 
             Assert.That(campaign.Initialize(catalog, null, Path.Combine(root, "rejected-campaigns")), Is.False);
@@ -174,11 +174,11 @@ namespace Dice.Tests
         {
             SeedCampaign(Slots(), 1);
             Assert.That(campaign.Initialize(catalog, journeys, root), Is.True);
-            Assert.That(controller.StatusMessage, Does.Not.Contain("recovered"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.MainMenuReady));
 
             File.WriteAllText(Path.Combine(root, "spirit-slots.json"), "{ broken index");
             Assert.That(campaign.Initialize(catalog, journeys, root), Is.True);
-            Assert.That(controller.StatusMessage, Does.Contain("recovered"));
+            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.SaveSlotsRecovered).Or.EqualTo(SpiritStatusKind.UnassignedSavesRecovered));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             Assert.That(campaign.CanOpenSavedChapter, Is.True);
         }

@@ -15,7 +15,7 @@ namespace Dice.Presentation
         bool CanSkipIntro { get; }
         bool HasActiveEncounter { get; }
         bool CanResume { get; }
-        string JourneyStatus { get; }
+        SpiritStatus JourneyStatus { get; }
         IReadOnlyList<string> VisitedEncounterIds { get; }
         IReadOnlyList<string> HighlightedEncounterIds { get; }
         IReadOnlyList<string> CompletedStoryIds { get; }

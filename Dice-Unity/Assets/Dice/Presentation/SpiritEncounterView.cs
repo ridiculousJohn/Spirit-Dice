@@ -731,7 +731,7 @@ namespace Dice.Presentation
                 RewardsPanel.Root.gameObject.SetActive(false);
                 EncounterCharmsIntroduction.Hide();
                 endingPanel.gameObject.SetActive(false);
-                hud.StatusLabel.text = controls.StatusMessage;
+                hud.StatusLabel.text = SpiritStatusText.Describe(controls.Status);
                 return;
             }
             bool createdPresenters = CreatePresenters(snapshot.EncounterId);
@@ -777,7 +777,7 @@ namespace Dice.Presentation
                 "Total score  " + DiagnosticText.Number(snapshot.TotalScore);
             hud.CharmCount.text = snapshot.Modifiers.Count + " kept";
             SpiritUi.SetButtonLabel(hud.CharmsButton, "CHARMS (" + snapshot.Modifiers.Count + ")");
-            hud.StatusLabel.text = ProductStatus(controls.StatusMessage);
+            hud.StatusLabel.text = SpiritStatusText.Gameplay(controls.Status);
             RenderProfileSummary();
             if (playing)
             {
@@ -861,24 +861,6 @@ namespace Dice.Presentation
             SpiritUi.SetButtonLabel(RerollButton, "Reroll");
         }
 
-        private static string ProductStatus(string status)
-        {
-            if (string.IsNullOrEmpty(status)) return "";
-            int profileWarning = status.IndexOf("Progress is pending:", StringComparison.Ordinal);
-            if (profileWarning >= 0) return status.Substring(profileWarning);
-            if (status.StartsWith("Started encounter", StringComparison.Ordinal) ||
-                status.StartsWith("Accepted action", StringComparison.Ordinal) ||
-                status.StartsWith("Encounter ready.", StringComparison.Ordinal))
-            {
-                int previewWarning = status.IndexOf(" Hand preview unavailable:", StringComparison.Ordinal);
-                int inspectionWarning = status.IndexOf(" Modifier inspection unavailable:", StringComparison.Ordinal);
-                int warning = previewWarning < 0 ? inspectionWarning : inspectionWarning < 0 ? previewWarning :
-                    Math.Min(previewWarning, inspectionWarning);
-                return warning < 0 ? "" : status.Substring(warning).Trim();
-            }
-            return status;
-        }
-
         private void Present(Resolution resolution)
         {
             if (resolution == null) return;
@@ -920,7 +902,7 @@ namespace Dice.Presentation
             var ids = new HashSet<string>(progression.ProfileUnlockedModifierIds, StringComparer.Ordinal);
             foreach (var modifier in controls.Catalog.Modifiers)
                 if (ids.Contains(modifier.Id)) ++unlocked;
-            profileSummary.text = string.IsNullOrEmpty(progression.ProfileStatusMessage)
+            profileSummary.text = progression.ProfileStatus.Kind == PlayerProfileStatusKind.None
                 ? unlocked + (unlocked == 1 ? " charm permanently unlocked\n" : " charms permanently unlocked\n") +
                     progression.CompletedEncounterIds.Count +
                     (progression.CompletedEncounterIds.Count == 1 ? " encounter completed" : " encounters completed")

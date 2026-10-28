@@ -194,7 +194,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed();
             float deadline = Time.realtimeSinceStartup + 30;
             while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus);
+            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus.ToString());
             yield return new WaitForSecondsRealtime(.15f);
         }
 

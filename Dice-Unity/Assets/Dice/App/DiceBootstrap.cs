@@ -27,7 +27,7 @@ namespace Dice.App
 
         private void Awake()
         {
-            StartupView.ShowStatus(controller.StatusMessage);
+            StartupView.ShowStatus(SpiritStatusText.Describe(controller.Status));
         }
 
         private IEnumerator Start()
@@ -39,7 +39,7 @@ namespace Dice.App
                     if (controller.PresentationReady) StartupView.Hide();
                     yield break;
                 }
-                SetStartupStatus("Loading application configuration...");
+                SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.LoadingConfiguration));
                 if (StartupObsolete || !BeginConfigurationLoad()) yield break;
 
                 // Addressables shutdown can invalidate operations while startup is waiting.
@@ -47,13 +47,13 @@ namespace Dice.App
                 if (StartupObsolete) yield break;
                 if (!configurationHandle.IsValid())
                 {
-                    SetStartupStatus("Cannot load application configuration: The load operation was invalidated.");
+                    SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.ConfigurationFailed, "The load operation was invalidated."));
                     yield break;
                 }
                 if (configurationHandle.Status != AsyncOperationStatus.Succeeded || configurationHandle.Result == null)
                 {
-                    SetStartupStatus("Cannot load application configuration: " +
-                        (configurationHandle.OperationException?.Message ?? "The load returned no configuration."));
+                    SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.ConfigurationFailed,
+                        configurationHandle.OperationException?.Message ?? "The load returned no configuration."));
                     yield break;
                 }
                 DiceApplicationConfig configuration = configurationHandle.Result;
@@ -67,9 +67,9 @@ namespace Dice.App
             }
         }
 
-        private void SetStartupStatus(string status)
+        private void SetStartupStatus(SpiritStatus status)
         {
-            StartupView.ShowStatus(status);
+            StartupView.ShowStatus(SpiritStatusText.Describe(status));
             controller.SetStatus(status);
         }
 
@@ -83,7 +83,7 @@ namespace Dice.App
             }
             catch (Exception exception)
             {
-                SetStartupStatus("Cannot load application configuration: " + exception.Message);
+                SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.ConfigurationFailed, exception.Message));
                 return false;
             }
         }
@@ -97,7 +97,7 @@ namespace Dice.App
             }
             catch (Exception exception)
             {
-                SetStartupStatus("Cannot initialize the application: " + exception.Message);
+                SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.ApplicationFailed, exception.Message));
                 return false;
             }
         }
@@ -117,7 +117,7 @@ namespace Dice.App
                 }
                 catch (Exception exception)
                 {
-                    SetStartupStatus("Cannot load the game content: " + exception.Message);
+                    SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.ContentFailed, exception.Message));
                     return;
                 }
                 catalog = content.Catalog;
@@ -132,11 +132,11 @@ namespace Dice.App
                 }
                 else initialized = controller.Initialize(catalog, configuration.JourneyCatalog, configuration.EncounterId);
                 if (initialized) presentation.Initialize(configuration.FrontendScene);
-                else SetStartupStatus(controller.StatusMessage);
+                else SetStartupStatus(controller.Status);
             }
             catch (Exception exception)
             {
-                if (controller != null) SetStartupStatus("Cannot initialize the encounter: " + exception.Message);
+                if (controller != null) SetStartupStatus(SpiritStatus.Of(SpiritStatusKind.EncounterInitializationFailed, exception.Message));
             }
             finally
             {

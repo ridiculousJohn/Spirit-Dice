@@ -97,6 +97,7 @@ namespace Dice.App
             if (slot != activeSlot) Commit(slot, campaigns);
         }
 
+        /** Returns the developer detail of a failed removal of the replaced campaign, or null. */
         public string StartNewGame(int slot)
         {
             ValidateSlot(slot);
@@ -112,12 +113,12 @@ namespace Dice.App
             Commit(slot, next);
             if (previous == null) return null;
             try { recovery.DeleteCampaign(previous); }
-            catch (IOException exception) { return CleanupWarning(previous, exception); }
-            catch (UnauthorizedAccessException exception) { return CleanupWarning(previous, exception); }
+            catch (IOException exception) { return CleanupFailure(previous, exception); }
+            catch (UnauthorizedAccessException exception) { return CleanupFailure(previous, exception); }
             return null;
         }
 
-        private string CleanupWarning(string previous, Exception exception)
+        private string CleanupFailure(string previous, Exception exception)
         {
             try
             {
@@ -130,7 +131,7 @@ namespace Dice.App
             }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
-            return "The new campaign was saved, but the previous campaign could not be removed: " + exception.Message;
+            return exception.Message;
         }
 
         public void RecoverCampaign(string campaignId, int slot)

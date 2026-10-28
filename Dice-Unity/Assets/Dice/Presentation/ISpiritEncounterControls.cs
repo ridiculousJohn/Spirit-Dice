@@ -15,7 +15,7 @@ namespace Dice.Presentation
         IReadOnlyList<ModifierInspection> ModifierInspections { get; }
         int SelectedMask { get; }
         bool IsBusy { get; }
-        string StatusMessage { get; }
+        SpiritStatus Status { get; }
 
         event Action StateChanged;
         event Action<Resolution> Resolved;

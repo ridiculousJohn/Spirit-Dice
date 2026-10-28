@@ -124,8 +124,8 @@ namespace Dice.Tests
             }
 
             // Loading the run while the offer is pending shows it again.
-            Assert.That(controller.TrySave(), Is.True, controller.StatusMessage);
-            Assert.That(controller.TryLoad(), Is.True, controller.StatusMessage);
+            Assert.That(controller.TrySave(), Is.True, controller.Status.ToString());
+            Assert.That(controller.TryLoad(), Is.True, controller.Status.ToString());
             yield return Idle(controller);
             AssertIntroductionOpen(controller, view, journey);
             yield return Click(view.EncounterCharmsIntroduction.Screen.BeginButton);
@@ -188,7 +188,7 @@ namespace Dice.Tests
                 authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
                 authored.Modifiers, authored.RewardPools);
             Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
-                controller.JourneyStatus);
+                controller.JourneyStatus.ToString());
             ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             yield return SelectToInvitation(controller, journey.EncounterId);
             var view = ContentReady.EncounterView(controller);
@@ -317,7 +317,7 @@ namespace Dice.Tests
         private static IEnumerator LoadSession(SpiritEncounterController controller, EncounterSession session)
         {
             EncounterSaveFileStore.Save(controller.SavePath, session.CaptureSave());
-            Assert.That(controller.TryLoad(), Is.True, controller.StatusMessage);
+            Assert.That(controller.TryLoad(), Is.True, controller.Status.ToString());
             yield return Idle(controller);
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(session.Snapshot.Revision));
         }
@@ -337,7 +337,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, controller.StatusMessage);
+            Assert.That(controller.IsBusy, Is.False, controller.Status.ToString());
             yield return null;
         }
 

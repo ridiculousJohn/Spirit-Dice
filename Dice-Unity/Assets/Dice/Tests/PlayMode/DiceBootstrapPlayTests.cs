@@ -141,7 +141,7 @@ namespace Dice.Tests
             var view = ContentReady.EncounterView(controller);
             Assert.That(controller.PresentationReady, Is.False);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.True);
-            Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(controller.StatusMessage));
+            Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(SpiritStatusText.Describe(controller.Status)));
             Assert.That(host.transform.Find("SpiritCanvas"), Is.Null);
             Assert.That(view, Is.Null);
             Assert.That(ContentReady.FrontendView(controller), Is.Null);
@@ -157,8 +157,8 @@ namespace Dice.Tests
             yield return CreateHost();
             yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             provider.Complete(null, new InvalidOperationException(failureKey));
-            yield return WaitUntil(() => controller.StatusMessage.StartsWith("Cannot"), "Startup did not report its failure.");
-            Assert.That(controller.StatusMessage, Does.Contain(failureKey));
+            yield return WaitUntil(() => controller.Status.Kind == SpiritStatusKind.ConfigurationFailed, "Startup did not report its failure.");
+            Assert.That(controller.Status.Detail, Does.Contain(failureKey));
             Assert.That(controller.Catalog, Is.Null);
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.IsBusy, Is.False);
@@ -217,7 +217,7 @@ namespace Dice.Tests
             controller.Initialize(catalog, encounterId, 42, savePath);
             var snapshot = controller.Snapshot;
             var preview = controller.Preview;
-            string status = controller.StatusMessage;
+            var status = controller.Status;
             RestoreOriginalLocators();
             ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
             yield return ContentReady.Routed(controller);
@@ -232,7 +232,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.SavePath, Is.EqualTo(savePath));
             Assert.That(controller.JourneyCatalog, Is.Null);
-            Assert.That(controller.StatusMessage, Is.EqualTo(status));
+            Assert.That(controller.Status, Is.SameAs(status));
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.False);
             controller.StartNew();
             var expected = EncounterSession.CreateEncounter(catalog, encounterId, 17).Snapshot;

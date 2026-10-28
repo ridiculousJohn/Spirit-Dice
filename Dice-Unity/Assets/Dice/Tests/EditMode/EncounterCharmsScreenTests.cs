@@ -125,7 +125,7 @@ namespace Dice.Tests
             public bool CanSkipIntro => false;
             public bool HasActiveEncounter => false;
             public bool CanResume => false;
-            public string JourneyStatus => "";
+            public SpiritStatus JourneyStatus => SpiritStatus.None;
             public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
@@ -155,7 +155,7 @@ namespace Dice.Tests
             public IReadOnlyList<ModifierInspection> ModifierInspections => Array.Empty<ModifierInspection>();
             public int SelectedMask => 0;
             public bool IsBusy => false;
-            public string StatusMessage => "";
+            public SpiritStatus Status => SpiritStatus.None;
             public event Action StateChanged { add { } remove { } }
             public event Action<Resolution> Resolved { add { } remove { } }
             public void ToggleDie(int index) { }

@@ -202,7 +202,7 @@ namespace Dice.Tests
             public bool CanSkipIntro => false;
             public bool HasActiveEncounter => false;
             public bool CanResume => false;
-            public string JourneyStatus => string.Empty;
+            public SpiritStatus JourneyStatus => SpiritStatus.None;
             public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
             public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();

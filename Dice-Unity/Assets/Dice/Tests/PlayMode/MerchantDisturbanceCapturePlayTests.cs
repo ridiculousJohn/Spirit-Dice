@@ -316,7 +316,7 @@ namespace Dice.Tests
                 recorder.Mark("commit");
                 if (kind == Case.ForcedRerollOnPlayHand) controller.PlayHand();
                 else controller.Reroll();
-                Assert.That(controller.IsBusy, Is.True, controller.StatusMessage);
+                Assert.That(controller.IsBusy, Is.True, controller.Status.ToString());
                 deadline = Time.realtimeSinceStartup + 30;
                 while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
                 Assert.That(controller.IsBusy, Is.False, "Disturbance playback must complete.");

@@ -68,7 +68,7 @@ namespace Dice.Tests
             Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(true, null, null, new[] { StoryId })), Is.False);
             Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(true, null, new[] { FirstId }, new[] { StoryId })), Is.True);
             Assert.That(navigation.SelectEncounter(SecondId, EmptyProgress(), out var error), Is.False);
-            Assert.That(error, Is.Not.Empty);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.LocationLocked));
             AssertInvestigation();
             Assert.That(navigation.IsJourneyAvailable("encounter.missing", EmptyProgress()), Is.False);
         }
@@ -191,10 +191,10 @@ namespace Dice.Tests
             Assert.That(navigation.ReturnToInvestigation(), Is.True);
             Assert.That(navigation.ResumeEncounter(FirstId, false, out _), Is.False);
             Assert.That(navigation.ResumeEncounter("encounter.missing", true, out var error), Is.False);
-            Assert.That(error, Is.Not.Empty);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.ActiveEncounterHasNoLead));
             AssertInvestigation();
             Assert.That(navigation.ResumeEncounter(FirstId, true, out error), Is.True);
-            Assert.That(error, Is.Null);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
@@ -231,7 +231,7 @@ namespace Dice.Tests
             Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
             Assert.That(navigation.ReturnToInvestigation(), Is.False);
             Assert.That(navigation.Load(SecondId, false, out var transition, out var error), Is.True);
-            Assert.That(error, Is.Null);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             navigation.Commit(transition);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(navigation.SelectedJourney, Is.Null);
@@ -243,12 +243,12 @@ namespace Dice.Tests
             Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.Load("encounter.missing", true, out var transition, out var error), Is.False);
             Assert.That(transition, Is.Null);
-            Assert.That(error, Is.Not.Empty);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.SavedEncounterHasNoLead));
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             Assert.That(navigation.BeatIndex, Is.Zero);
             Assert.That(navigation.Load("encounter.missing", false, out transition, out error), Is.True);
-            Assert.That(error, Is.Null);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             navigation.Commit(transition);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
@@ -319,13 +319,14 @@ namespace Dice.Tests
         public void ChapterSelectionIsAvailableOnlyOnTheBoardAndSurvivesBoardRefresh()
         {
             var chapters = Chapters();
-            Assert.That(navigation.SelectChapter(chapters[1].Id, EmptyProgress(), out string error), Is.False);
-            Assert.That(error, Is.Not.Empty);
+            Assert.That(navigation.SelectChapter(chapters[1].Id, EmptyProgress(), out SpiritStatusKind error), Is.False);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.ChapterLocked));
             Assert.That(navigation.SelectChapter("chapter.missing", EmptyProgress(), out error), Is.False);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.ChapterNotFound));
             var progress = new Progress(true, null, new[] { FirstId }, new[] { StoryId });
             navigation.InitializeJourney(catalog, progress);
             Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out error), Is.True);
-            Assert.That(error, Is.Null);
+            Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             navigation.ReturnToInvestigation(progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
             Assert.That(navigation.SelectEncounter(FirstId, progress, out _), Is.True);

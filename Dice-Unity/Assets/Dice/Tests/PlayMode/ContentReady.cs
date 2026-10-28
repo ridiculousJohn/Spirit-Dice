@@ -14,6 +14,15 @@ namespace Dice.Tests
 {
     internal static class ContentReady
     {
+        /** Statuses that report a failed startup or campaign opening. */
+        private static readonly SpiritStatusKind[] StartupFailures =
+        {
+            SpiritStatusKind.ConfigurationFailed, SpiritStatusKind.ApplicationFailed, SpiritStatusKind.ContentFailed,
+            SpiritStatusKind.EncounterInitializationFailed, SpiritStatusKind.MainMenuFailed, SpiritStatusKind.SaveSlotsFailed,
+            SpiritStatusKind.InvestigationFailed, SpiritStatusKind.ProfileProblem, SpiritStatusKind.StartFailed,
+            SpiritStatusKind.LoadFailed
+        };
+
         /**
          * Loads the authored content and, when entering an encounter, opens the first encounter journey in catalog order
          * that a fresh profile can play without prerequisites and that has the property the caller requires.
@@ -26,15 +35,15 @@ namespace Dice.Tests
             while ((controller.Catalog == null || controller.JourneyCatalog == null) &&
                 Time.realtimeSinceStartup < deadline)
             {
-                Assert.That(controller.StatusMessage, Does.Not.StartWith("Cannot"));
+                Assert.That(StartupFailures, Has.No.Member(controller.Status.Kind), controller.Status.ToString());
                 yield return null;
             }
-            Assert.That(controller.Catalog, Is.Not.Null, controller.StatusMessage);
-            Assert.That(controller.JourneyCatalog, Is.Not.Null, controller.StatusMessage);
+            Assert.That(controller.Catalog, Is.Not.Null, controller.Status.ToString());
+            Assert.That(controller.JourneyCatalog, Is.Not.Null, controller.Status.ToString());
             yield return Routed(controller);
             string savePath = SpiritSavePath();
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, savePath), Is.True,
-                controller.StatusMessage);
+                controller.Status.ToString());
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.Null);
             if (!enterEncounter) { yield return Routed(controller); yield break; }
@@ -58,7 +67,7 @@ namespace Dice.Tests
             deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, "Opening encounter presentation did not complete.");
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
         }
 
         /**
@@ -160,7 +169,7 @@ namespace Dice.Tests
             SeedPrerequisites(profile, controller.JourneyCatalog, journey, new HashSet<string>(StringComparer.Ordinal));
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, controller.SavePath),
-                Is.True, controller.JourneyStatus);
+                Is.True, controller.JourneyStatus.ToString());
             Assert.That(controller.IsJourneyAvailable(journeyId), Is.True, journeyId);
         }
 

@@ -76,7 +76,7 @@ namespace Dice.Tests
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False, "Opening encounter presentation did not complete.");
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
             yield return null;
             yield return Capture(root, "e-table-after-opening-roll-" + Width + "x" + Height + ".png");
             yield return Capture(root, "e-table-after-opening-roll-" + NarrowWidth + "x" + Height + ".png", NarrowWidth);
@@ -109,7 +109,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             yield return null;
             view = ContentReady.EncounterView(controller);
-            Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision), controller.StatusMessage);
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision), controller.Status.ToString());
             yield return Capture(root, "h-loaded-marked-and-bound.png");
 
             // Select the marked die and an unbound die beside the bound one; tapping the bound die changes nothing.

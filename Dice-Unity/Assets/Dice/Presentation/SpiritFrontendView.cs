@@ -34,7 +34,7 @@ namespace Dice.Presentation
             bool menu = journey.JourneyPhase == EncounterJourneyPhase.MainMenu;
             bool board = journey.JourneyPhase == EncounterJourneyPhase.Investigation;
             Board.Root.gameObject.SetActive(board);
-            if (menu) MainMenu.Render(journey.JourneyStatus);
+            if (menu) MainMenu.Render(SpiritStatusText.Describe(journey.JourneyStatus));
             else MainMenu.Hide();
             if (board) Board.Render(journey, encounter, false, true);
             if (!board) Collection.Hide();

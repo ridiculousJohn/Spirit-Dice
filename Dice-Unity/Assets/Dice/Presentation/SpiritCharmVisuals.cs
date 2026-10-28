@@ -46,8 +46,7 @@ namespace Dice.Presentation
         }
 
         internal static bool HasPendingProgress(ISpiritEncounterControls controls) =>
-            controls is ISpiritProgressionControls progression &&
-            progression.ProfileStatusMessage.StartsWith("Progress is pending:", StringComparison.Ordinal);
+            controls is ISpiritProgressionControls progression && progression.ProfileStatus.IsPending;
 
         internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<string> ids)
         {

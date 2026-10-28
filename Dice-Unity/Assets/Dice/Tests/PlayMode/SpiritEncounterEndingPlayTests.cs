@@ -378,7 +378,7 @@ namespace Dice.Tests
             var catalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
             SetField(catalog, "chapters", Array.Empty<EncounterChapterAsset>());
             SetField(catalog, "entries", entries);
-            Assert.That(controller.InitializeJourney(mechanical, catalog, controller.SavePath), Is.True, controller.JourneyStatus);
+            Assert.That(controller.InitializeJourney(mechanical, catalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
             foreach (var definitionToUnlock in unlockDefinitions) profile.DiscoverFamily(definitionToUnlock.FamilyId);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);

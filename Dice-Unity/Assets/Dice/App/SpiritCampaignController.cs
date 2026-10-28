@@ -47,14 +47,13 @@ namespace Dice.App
                 slots = nextSlots;
                 IsInitialized = true;
                 RefreshSlots();
-                controller.SetStatus(recoveredIndex == null ? "Main menu ready." :
-                    recoveryCampaigns.Count == 0 ? "Save-slot list recovered." :
-                    "Save-slot list recovered. Open Load Game to recover unassigned saves.");
+                controller.SetStatus(SpiritStatus.Of(recoveredIndex == null ? SpiritStatusKind.MainMenuReady :
+                    recoveryCampaigns.Count == 0 ? SpiritStatusKind.SaveSlotsRecovered : SpiritStatusKind.UnassignedSavesRecovered));
                 return true;
             }
             catch (Exception exception) when (Expected(exception))
             {
-                controller.SetStatus("Cannot open save slots: " + exception.Message);
+                controller.SetStatus(SpiritStatus.Of(SpiritStatusKind.SaveSlotsFailed, exception.Message));
                 return false;
             }
         }
@@ -72,7 +71,7 @@ namespace Dice.App
             }
             catch (Exception exception) when (Expected(exception))
             {
-                controller.SetStatus("Cannot select save slot: " + exception.Message);
+                controller.SetStatus(SpiritStatus.Of(SpiritStatusKind.SaveSlotSelectionFailed, exception.Message));
             }
         }
 
@@ -81,15 +80,15 @@ namespace Dice.App
             if (!CanStartNewGame) return;
             try
             {
-                string cleanupWarning = slots.StartNewGame(slot);
+                string cleanupFailure = slots.StartNewGame(slot);
                 RefreshSlots();
                 if (!controller.InitializeMenu(catalog, journeys, SelectedSavePath())) return;
                 if (!controller.InitializeJourney(catalog, journeys, SelectedSavePath())) ReturnWithError();
-                else if (cleanupWarning != null) controller.SetStatus(cleanupWarning);
+                else if (cleanupFailure != null) controller.SetStatus(SpiritStatus.Of(SpiritStatusKind.PreviousCampaignNotRemoved, cleanupFailure));
             }
             catch (Exception exception) when (Expected(exception))
             {
-                controller.SetStatus("Cannot start a new game: " + exception.Message);
+                controller.SetStatus(SpiritStatus.Of(SpiritStatusKind.NewGameFailed, exception.Message));
             }
         }
 
@@ -108,11 +107,11 @@ namespace Dice.App
                 slots.RecoverCampaign(campaignId, slot);
                 RefreshSlots();
                 if (!controller.InitializeMenu(catalog, journeys, SelectedSavePath())) return;
-                controller.SetStatus("Campaign recovered to slot " + slot + ".");
+                controller.SetStatus(SpiritStatus.Recovered(slot));
             }
             catch (Exception exception) when (Expected(exception))
             {
-                controller.SetStatus("Cannot recover campaign: " + exception.Message);
+                controller.SetStatus(SpiritStatus.Of(SpiritStatusKind.CampaignRecoveryFailed, exception.Message));
             }
         }
 
@@ -142,9 +141,9 @@ namespace Dice.App
 
         private void ReturnWithError()
         {
-            string message = controller.StatusMessage;
+            var status = controller.Status;
             controller.ShowMainMenu();
-            controller.SetStatus(message);
+            controller.SetStatus(status);
         }
 
         private string SelectedSavePath() => slots.GetSavePath(ActiveSaveSlot) ??

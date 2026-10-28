@@ -64,7 +64,7 @@ namespace Dice.Tests
             var resolutions = new List<Resolution>();
             controller.Resolved += resolutions.Add;
             controller.Reroll();
-            Assert.That(controller.IsBusy, Is.True, controller.StatusMessage);
+            Assert.That(controller.IsBusy, Is.True, controller.Status.ToString());
             bool moved = false, reacted = false;
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline)
@@ -111,7 +111,7 @@ namespace Dice.Tests
             float deadline = Time.realtimeSinceStartup + 30;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
             yield return null;
         }
     }

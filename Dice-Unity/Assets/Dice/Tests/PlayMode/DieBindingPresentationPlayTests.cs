@@ -52,7 +52,7 @@ namespace Dice.Tests
                 yield return ContentReady.Routed(controller);
             }
             yield return WaitIdle(controller);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.StatusMessage);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
             view = ContentReady.EncounterView(controller);
             var visuals = Visuals(view, rules.Length, name);
@@ -81,15 +81,15 @@ namespace Dice.Tests
             Assert.That(controller.SelectedMask, Is.Zero, name + ": a bound die cannot be selected.");
 
             // Loading the saved run from the investigation board shows its marked and bound dice at once.
-            Assert.That(controller.TrySave(), Is.True, controller.StatusMessage);
+            Assert.That(controller.TrySave(), Is.True, controller.Status.ToString());
             var saved = controller.Snapshot;
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
             yield return null;
-            Assert.That(controller.TryLoad(), Is.True, controller.StatusMessage);
+            Assert.That(controller.TryLoad(), Is.True, controller.Status.ToString());
             yield return ContentReady.Routed(controller);
             yield return null;
-            Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision), controller.StatusMessage);
+            Assert.That(controller.Snapshot.Revision, Is.EqualTo(saved.Revision), controller.Status.ToString());
             view = ContentReady.EncounterView(controller);
             visuals = Visuals(view, rules.Length, name);
             foreach (var die in visuals)

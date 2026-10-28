@@ -225,7 +225,7 @@ namespace Dice.Tests
             public IReadOnlyList<ModifierInspection> ModifierInspections => Array.Empty<ModifierInspection>();
             public int SelectedMask => 0;
             public bool IsBusy => true;
-            public string StatusMessage => "";
+            public SpiritStatus Status => SpiritStatus.None;
             public event Action StateChanged { add { } remove { } }
             public event Action<Resolution> Resolved { add { } remove { } }
             public void ToggleDie(int index) => throw new NotSupportedException();
