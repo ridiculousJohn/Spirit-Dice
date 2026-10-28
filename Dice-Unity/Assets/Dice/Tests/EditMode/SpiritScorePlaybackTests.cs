@@ -27,6 +27,8 @@ namespace Dice.Tests
         private SyntheticUi ui;
         private SyntheticCharms charms;
         private SpiritGameplayHud hud;
+        // The synthetic HUD's labels by the HUD property each fills.
+        private readonly Dictionary<string, Text> labels = new Dictionary<string, Text>();
         private SpiritEncounterAudio audio;
 
         [SetUp]
@@ -103,9 +105,9 @@ namespace Dice.Tests
             var activated = granted ? new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1)) : null;
             var change = new ResourceChangedEvent(state, ResourceKind.Rerolls,
                 granted ? ResourceChangeCause.ModifierEffect : ResourceChangeCause.RerollDice, 1, 2, activated);
-            hud.SelectionLabel.text = "before";
+            hud.ShowRuleSelection("before");
             Run(playback.Play(new Resolution(session.Snapshot.Revision, session.Snapshot, new RuleEvent[] { change }), 0));
-            Assert.That(hud.SelectionLabel.text, Is.EqualTo(granted ? "before" : "<hud.rerollsRemaining.many>2"));
+            Assert.That(labels["SelectionLabel"].text, Is.EqualTo(granted ? "before" : "<hud.rerollsRemaining.many>2"));
         }
 
         private string Rank(HandCategory category) => ui.Wording.handNames.Name(category).ToUpperInvariant();
@@ -113,7 +115,7 @@ namespace Dice.Tests
         /** Runs the playback to its end and returns the HUD's rank label as it stood at every yield. */
         private List<string> Run(IEnumerator routine)
         {
-            var labels = new List<string>();
+            var shown = new List<string>();
             var running = new Stack<IEnumerator>();
             running.Push(routine);
             for (int steps = 0; running.Count > 0; ++steps)
@@ -125,7 +127,7 @@ namespace Dice.Tests
                     running.Pop();
                     continue;
                 }
-                labels.Add(hud.CategoryLabel.text);
+                shown.Add(labels["CategoryLabel"].text);
                 if (current.Current is CustomYieldInstruction) continue;
                 if (current.Current is IEnumerator nested) running.Push(nested);
                 else if (running.Count > 1)
@@ -134,7 +136,7 @@ namespace Dice.Tests
                     (current as IDisposable)?.Dispose();
                 }
             }
-            return labels;
+            return shown;
         }
 
         /** A HUD holding only what score playback writes: its labels, panels, counters, rule badges and action buttons. */
@@ -145,7 +147,10 @@ namespace Dice.Tests
             SyntheticUi.Set(created, "<PlayingPanel>k__BackingField", ui.Rect(parent, "Playing"));
             foreach (string label in new[] { "SelectionLabel", "CategoryLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
                 "HandScoreLabel", "TargetLabel", "TargetCaption", "HandsLabel", "RerollsLabel", "ResourcesLabel" })
-                SyntheticUi.Set(created, "<" + label + ">k__BackingField", ui.Add<Text>(parent, label));
+            {
+                labels[label] = ui.Add<Text>(parent, label);
+                SyntheticUi.Set(created, "<" + label + ">k__BackingField", labels[label]);
+            }
             SyntheticUi.Set(created, "<ModifierEmblem>k__BackingField", ui.Add<Image>(parent, "Emblem"));
             SyntheticUi.Set(created, "<ModifierActivationIcon>k__BackingField", ui.Add<Image>(parent, "Activation Icon"));
             foreach (string highlight in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })

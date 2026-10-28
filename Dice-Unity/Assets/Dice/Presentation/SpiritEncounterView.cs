@@ -33,14 +33,7 @@ namespace Dice.Presentation
         [field: SerializeField] public SpiritDiceTray DiceTray { get; private set; }
         [field: SerializeField] public SpiritTrayScene TrayScene { get; private set; }
         [field: SerializeField] public SpiritModifierHistoryTray ModifierHistory { get; private set; }
-        public Button PlayButton => GameplayHud != null ? GameplayHud.PlayButton : null;
-        public Button RerollButton => GameplayHud != null ? GameplayHud.RerollButton : null;
-        public Button CharmsButton => GameplayHud != null ? GameplayHud.CharmsButton : null;
-        public Button HandRanksButton => GameplayHud != null ? GameplayHud.HandRanksButton : null;
         public Button RefreshButton => RewardsPanel != null ? RewardsPanel.RefreshButton : null;
-        public Text BaseScoreLabel => GameplayHud != null ? GameplayHud.BaseScoreLabel : null;
-        public Text MultiplierLabel => GameplayHud != null ? GameplayHud.MultiplierLabel : null;
-        public Text HandScoreLabel => GameplayHud != null ? GameplayHud.HandScoreLabel : null;
         [field: SerializeField] public EncounterJourneyView JourneyView { get; private set; }
         public SpiritHostPortrait HostPortrait => hostPortrait;
 
@@ -215,7 +208,8 @@ namespace Dice.Presentation
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
             actionModifierCue.ConfigureHost(selectedTable.HostPresentation);
-            GameplayHud.EncounterTitle.text = menuTitle.text = selectedTable.DisplayTitle;
+            GameplayHud.ShowEncounterTitle(selectedTable.DisplayTitle);
+            menuTitle.text = selectedTable.DisplayTitle;
             var credits = encounterAudio.Theme?.credits;
             pauseMenu.Credits.text = credits != null ? credits.text : "";
             pauseMenu.CreditsBacking.gameObject.SetActive(credits != null);
@@ -553,21 +547,17 @@ namespace Dice.Presentation
             inputGroup.interactable = !Busy;
             ModifierHistory.SetInteractable(!Busy);
             if (Busy) return;
-            var hud = GameplayHud;
             var snapshot = controls.Snapshot;
-            var wording = SpiritUi.GetWording(transform);
             if (snapshot == null)
             {
                 CloseCharmPopup();
                 rulePresenters?.Sync(null, false);
-                hud.RenderEncounterRule(null, hudRuleCard);
                 inputGroup.interactable = false;
                 ModifierHistory.SetInteractable(false);
-                hud.PlayingPanel.gameObject.SetActive(false);
                 RewardsPanel.Root.gameObject.SetActive(false);
                 EncounterCharmsIntroduction.Hide();
                 endingPanel.gameObject.SetActive(false);
-                hud.StatusLabel.text = SpiritStatusText.Describe(controls.Status, wording.status);
+                GameplayHud.ShowNoEncounter(hudRuleCard, controls.Status);
                 return;
             }
             bool createdPresenters = CreatePresenters(snapshot.EncounterId);
@@ -593,42 +583,15 @@ namespace Dice.Presentation
                     controls.ModifierPresentation);
             else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
-            bool choosingUpgrade = snapshot.Phase == EncounterPhase.ChoosingHandUpgrade;
-            bool choosingUnlock = snapshot.Phase == EncounterPhase.ChoosingUnlock;
-            hud.TargetPanel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
-            hud.StatusLabel.gameObject.SetActive(!choosingUpgrade && !choosingUnlock);
-            hud.PlayingPanel.gameObject.SetActive(playing);
+            GameplayHud.ShowSnapshot(snapshot, hudRuleCard, controls.Status, lastScore, controls.SelectedMask);
             RewardsPanel.Root.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
-            hud.StageLabel.text = wording.hud.Stage(snapshot.StageIndex + 1, snapshot.StageCount);
-            hud.TargetLabel.text = DiagnosticText.Number(completed ? snapshot.TotalScore : snapshot.RemainingThreshold);
-            hud.TargetCaption.text = playing ? wording.hud.toClear : completed ? wording.hud.totalScore : wording.hud.stageCleared;
-            hud.HandsPanel.gameObject.SetActive(playing);
-            hud.RerollsPanel.gameObject.SetActive(playing);
-            hud.ResourcesLabel.gameObject.SetActive(!playing && !choosingUpgrade && !choosingUnlock);
-            hud.SetResources(snapshot.HandsRemaining, snapshot.RerollsRemaining);
-            hud.RenderEncounterRule(snapshot, hudRuleCard);
-            hud.ResourcesLabel.text = playing ? wording.hud.Resources(snapshot.HandsRemaining, snapshot.RerollsRemaining) :
-                lastScore != null ? wording.hud.LastHand(lastScore.HandScore) : wording.hud.TotalScoreLine(snapshot.TotalScore);
-            hud.CharmCount.text = wording.hud.CharmCount(snapshot.Modifiers.Count);
-            SpiritUi.SetButtonLabel(hud.CharmsButton, wording.hud.CharmsButton(snapshot.Modifiers.Count));
-            hud.StatusLabel.text = SpiritStatusText.Gameplay(controls.Status, wording.status);
             RenderProfileSummary();
             if (playing)
             {
                 ambientActivity?.Begin();
-                hud.ModifierEmblem.gameObject.SetActive(false);
                 DiceTray.SetValues(snapshot.CurrentDice);
                 SetDiceSelection(controls.SelectedMask);
-                // The hand rank shows only while a played hand is scored.
-                hud.CategoryLabel.text = "";
-                hud.SetScoreValues(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier);
-                hud.HandScoreLabel.text = "0";
-                hud.ScoreDetail.text = "";
-                hud.PlayButton.interactable = true;
-                hud.RerollButton.interactable = controls.SelectedMask != 0 && snapshot.CanReroll;
-                // Idle play shows no instruction or selection count; the tray highlight marks the reroll selection.
-                hud.SelectionLabel.text = "";
             }
             else if (!completed) RewardsPanel.Render(snapshot);
             EncounterCharmsIntroduction.Refresh(controls.Catalog, controls.ModifierPresentation, snapshot, journeyControls?.SelectedJourney);
@@ -637,7 +600,7 @@ namespace Dice.Presentation
                 SetGameplayVisible(false);
                 endingPanel.gameObject.SetActive(true);
                 endingView.Render(snapshot, journeyControls?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds, wording));
+                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds, SpiritUi.GetWording(transform)));
             }
             if (IsCharmsOpen) OwnedCharmsPanel.Render();
             if (IsHandRanksOpen) RenderHandRanks();
@@ -853,12 +816,7 @@ namespace Dice.Presentation
             public override void CueAction(ModifierPhase phase, Sprite icon)
                 => view.actionModifierCue.ShowHost(icon, phase, SpiritScorePlayback.GestureDurationOf(view.hostPortrait));
 
-            public override void ShowSelection(string text)
-            {
-                var label = view.GameplayHud.SelectionLabel;
-                label.text = text;
-                label.color = SpiritUi.GetTheme(view.GameplayHud.transform).amber;
-            }
+            public override void ShowSelection(string text) => view.GameplayHud.ShowRuleSelection(text);
 
             public override IEnumerator SweepSpirit(Sprite icon, float duration) => view.GameplayHud.AnimateRuleSpirit(icon, duration);
         }

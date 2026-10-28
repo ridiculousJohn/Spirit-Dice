@@ -19,6 +19,11 @@ namespace Dice.Editor
         private const string TableKey = "Dice.TrayCompositionPreview.Table";
         // Any fixed seed: the preview samples one repeatable opening.
         private const ulong PreviewSeed = 60;
+        // The sample opening the gameplay overlay shows: the first of three stages, its threshold and its hands and rerolls.
+        private const int SampleStageCount = 3;
+        private const long SampleThreshold = 120;
+        private const int SampleHands = 3;
+        private const int SampleRerolls = 3;
         private EncounterTablePresentationAsset table;
         [SerializeField] private bool showGameplayUi = true;
         [SerializeField] private bool narrow;
@@ -194,19 +199,11 @@ namespace Dice.Editor
         private void RefreshGameplayValues()
         {
             var hud = gameplayUi;
-            hud.EncounterTitle.text = table.DisplayTitle;
-            hud.StageLabel.text = "STAGE 1 / 3";
-            hud.TargetLabel.text = "120";
-            hud.TargetCaption.text = "TO CLEAR";
-            hud.SetResources(3, 3);
-            hud.ResourcesLabel.gameObject.SetActive(false);
-            // The hand rank shows only while a played hand is scored.
-            hud.CategoryLabel.text = "";
-            hud.SetScoreValues(0, 0);
-            hud.HandScoreLabel.text = "0";
-            hud.SelectionLabel.text = "";
-            hud.ScoreDetail.text = "";
-            hud.StatusLabel.text = "COMPOSITION PREVIEW";
+            hud.ShowEncounterTitle(table.DisplayTitle);
+            hud.ShowStageTarget(1, SampleStageCount, SampleThreshold);
+            hud.ShowHandCounters(SampleHands, SampleRerolls);
+            hud.ShowIdleScore(0, 0);
+            hud.ShowStatus("COMPOSITION PREVIEW");
             var rule = table.HudRuleCard;
             if (ruleMessage != null) hud.RenderEncounterRuleBadge(rule, true, true, ruleMessage);
             else hud.RenderEncounterRule(ruleSnapshot, rule);

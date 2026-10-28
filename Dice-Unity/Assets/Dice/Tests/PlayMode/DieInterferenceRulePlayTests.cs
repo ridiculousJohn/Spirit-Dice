@@ -84,7 +84,8 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.CurrentDice[expected.Bay], Is.EqualTo(expected.After), context);
             Assert.That(view.DiceTray.GetVisibleFace(expected.Bay), Is.EqualTo(expected.After),
                 context + ": the disturbed die shows its new face.");
-            Assert.That(view.GameplayHud.CategoryLabel.text, Is.Empty,
+            Assert.That(view.GameplayHud.GetComponentsInChildren<UnityEngine.UI.Text>(true).Single(label => label.name == "HandCategory").text,
+                Is.Empty,
                 context + ": the hand rank shows only while a played hand is scored.");
             LogAssert.NoUnexpectedReceived();
         }

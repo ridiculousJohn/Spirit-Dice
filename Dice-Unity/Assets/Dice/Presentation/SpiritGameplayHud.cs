@@ -22,7 +22,8 @@ namespace Dice.Presentation
 
     /**
      * Gameplay HUD around the dice tray: header, target and resources, score preview, actions, encounter rule,
-     * footer, and stage intro. Authored controls bind to the encounter and score playback.
+     * footer, and stage intro. Authored controls bind to the encounter and score playback, which tell the HUD what
+     * happened or what to show; the HUD fills its own elements from the wording asset.
      */
     public sealed class SpiritGameplayHud : MonoBehaviour
     {
@@ -62,42 +63,43 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform ruleSpiritSigilRoot;
         [SerializeField] private SpiritModifierCategoryBadge modifierActivationCategory;
 
-        [field: SerializeField] public Text EncounterTitle { get; private set; }
-        [field: SerializeField] public Text StageLabel { get; private set; }
-        [field: SerializeField] public Button MenuButton { get; private set; }
-        [field: SerializeField] public RectTransform TargetPanel { get; private set; }
-        [field: SerializeField] public Text TargetLabel { get; private set; }
-        [field: SerializeField] public Text TargetCaption { get; private set; }
-        [field: SerializeField] public RectTransform HandsPanel { get; private set; }
-        [field: SerializeField] public Text HandsLabel { get; private set; }
-        [field: SerializeField] public RectTransform RerollsPanel { get; private set; }
-        [field: SerializeField] public Text RerollsLabel { get; private set; }
-        [field: SerializeField] public Text ResourcesLabel { get; private set; }
-        [field: SerializeField] public RectTransform PlayingPanel { get; private set; }
-        [field: SerializeField] public Text SelectionLabel { get; private set; }
-        [field: SerializeField] public Image ModifierEmblem { get; private set; }
-        [field: SerializeField] public Image ModifierActivationIcon { get; private set; }
-        [field: SerializeField] public Text CategoryLabel { get; private set; }
-        [field: SerializeField] public Text ScoreDetail { get; private set; }
-        [field: SerializeField] public Text BaseScoreLabel { get; private set; }
-        [field: SerializeField] public Text MultiplierLabel { get; private set; }
-        [field: SerializeField] public Text HandScoreLabel { get; private set; }
-        [field: SerializeField] public Button RerollButton { get; private set; }
-        [field: SerializeField] public Button PlayButton { get; private set; }
-        [field: SerializeField] public CanvasGroup EncounterRuleGroup { get; private set; }
-        [field: SerializeField] public Text EncounterRuleLabel { get; private set; }
-        [field: SerializeField] public Image EncounterRuleIcon { get; private set; }
-        public Graphic EncounterRuleSigil { get; private set; }
-        [field: SerializeField] public CanvasGroup RuleSpiritSweep { get; private set; }
-        [field: SerializeField] public RectTransform StageIntroPanel { get; private set; }
-        [field: SerializeField] public Text StageIntroTitle { get; private set; }
-        [field: SerializeField] public Text StageIntroDetail { get; private set; }
-        [field: SerializeField, Min(1)] public int StageIntroDetailFontSize { get; private set; } = 19;
-        [field: SerializeField] public Button CharmsButton { get; private set; }
-        [field: SerializeField] public Button HandRanksButton { get; private set; }
-        [field: SerializeField] public Text CharmCount { get; private set; }
-        [field: SerializeField] public Text StatusLabel { get; private set; }
-        [field: SerializeField] public Button InvestigationButton { get; private set; }
+        [field: SerializeField] private Text EncounterTitle { get; set; }
+        [field: SerializeField] private Text StageLabel { get; set; }
+        [field: SerializeField] private Button MenuButton { get; set; }
+        [field: SerializeField] private RectTransform TargetPanel { get; set; }
+        [field: SerializeField] private Text TargetLabel { get; set; }
+        [field: SerializeField] private Text TargetCaption { get; set; }
+        [field: SerializeField] private RectTransform HandsPanel { get; set; }
+        [field: SerializeField] private Text HandsLabel { get; set; }
+        [field: SerializeField] private RectTransform RerollsPanel { get; set; }
+        [field: SerializeField] private Text RerollsLabel { get; set; }
+        [field: SerializeField] private Text ResourcesLabel { get; set; }
+        [field: SerializeField] private RectTransform PlayingPanel { get; set; }
+        [field: SerializeField] private Text SelectionLabel { get; set; }
+        [field: SerializeField] private Image ModifierEmblem { get; set; }
+        [field: SerializeField] private Image ModifierActivationIcon { get; set; }
+        [field: SerializeField] private Text CategoryLabel { get; set; }
+        [field: SerializeField] private Text ScoreDetail { get; set; }
+        [field: SerializeField] private Text BaseScoreLabel { get; set; }
+        [field: SerializeField] private Text MultiplierLabel { get; set; }
+        [field: SerializeField] private Text HandScoreLabel { get; set; }
+        [field: SerializeField] private Button RerollButton { get; set; }
+        [field: SerializeField] private Button PlayButton { get; set; }
+        [field: SerializeField] private CanvasGroup EncounterRuleGroup { get; set; }
+        [field: SerializeField] private Text EncounterRuleLabel { get; set; }
+        [field: SerializeField] private Image EncounterRuleIcon { get; set; }
+        private Graphic EncounterRuleSigil { get; set; }
+        [field: SerializeField] private CanvasGroup RuleSpiritSweep { get; set; }
+        [field: SerializeField] private RectTransform StageIntroPanel { get; set; }
+        [field: SerializeField] private Text StageIntroTitle { get; set; }
+        [field: SerializeField] private Text StageIntroDetail { get; set; }
+        [field: SerializeField, Min(1)] private int StageIntroDetailFontSize { get; set; } = 19;
+        [field: SerializeField] private Button CharmsButton { get; set; }
+        [field: SerializeField] private Button HandRanksButton { get; set; }
+        [field: SerializeField] private Text CharmCount { get; set; }
+        [field: SerializeField] private Text StatusLabel { get; set; }
+        [field: SerializeField] private Button InvestigationButton { get; set; }
+        /** The base score and multiplier the score counters show, from which a scoring step counts on. */
         public long DisplayedBaseScore { get; private set; }
         public long DisplayedMultiplier { get; private set; }
 
@@ -120,12 +122,11 @@ namespace Dice.Presentation
             MenuButton.onClick.AddListener(ToggleMenu);
         }
 
-        /** Returns the authored playing area and tray display. */
-        public RectTransform BuildPlayingPanel()
+        /** Checks the authored playing area and tray display. */
+        public void BuildPlayingPanel()
         {
             if (PlayingPanel == null || DiceTrayFrame == null || DiceTrayImage == null)
                 throw new InvalidOperationException("The gameplay HUD requires an authored playing panel and tray display.");
-            return PlayingPanel;
         }
 
         public void BuildPlayingHud(Action reroll, Action play)
@@ -252,7 +253,170 @@ namespace Dice.Presentation
             PlayButton.GetComponent<SpiritUiButtonVisual>().CaptureContent();
         }
 
-        public void SetScoreValues(long baseScore, long multiplier)
+        public void ShowEncounterTitle(string title) => EncounterTitle.text = title;
+
+        /** Shows the stage line and the threshold left to clear. */
+        public void ShowStageTarget(int stageNumber, int stageCount, long threshold)
+        {
+            var wording = SpiritUi.GetWording(transform).hud;
+            StageLabel.text = wording.Stage(stageNumber, stageCount);
+            TargetLabel.text = DiagnosticText.Number(threshold);
+            TargetCaption.text = wording.toClear;
+        }
+
+        /** Shows the hands and rerolls counters, in place of the resources line, with their counts. */
+        public void ShowHandCounters(int hands, int rerolls)
+        {
+            HandsPanel.gameObject.SetActive(true);
+            RerollsPanel.gameObject.SetActive(true);
+            ResourcesLabel.gameObject.SetActive(false);
+            SetResources(hands, rerolls);
+        }
+
+        /** Shows a hand waiting for play: the score counters at these values and no rank, total, step or selection text. */
+        public void ShowIdleScore(long baseScore, long multiplier)
+        {
+            ModifierEmblem.gameObject.SetActive(false);
+            // The hand rank shows only while a played hand is scored.
+            CategoryLabel.text = "";
+            SetScoreValues(baseScore, multiplier);
+            HandScoreLabel.text = "0";
+            ScoreDetail.text = "";
+            // Idle play shows no instruction or selection count; the tray highlight marks the reroll selection.
+            SelectionLabel.text = "";
+        }
+
+        public void ShowStatus(string text) => StatusLabel.text = text;
+
+        /** Shows that the encounter screen has no run: no playing area, the table's rule badge hidden, and the status. */
+        public void ShowNoEncounter(EncounterRulePresentationAsset ruleCard, SpiritStatus status)
+        {
+            RenderEncounterRule(null, ruleCard);
+            PlayingPanel.gameObject.SetActive(false);
+            ShowStatus(SpiritStatusText.Describe(status, SpiritUi.GetWording(transform).status));
+        }
+
+        /**
+         * Shows a snapshot at rest: its stage, target, resources, rule badge, charm count and status, and while it plays an
+         * idle hand at its charm scores with the actions its reroll selection allows. The resources line shows the last
+         * hand's score when one was scored, and the total score otherwise.
+         */
+        public void ShowSnapshot(EncounterSnapshot snapshot, EncounterRulePresentationAsset ruleCard, SpiritStatus status,
+            ScoreBreakdown lastScore, int selectedMask)
+        {
+            var wording = SpiritUi.GetWording(transform);
+            bool playing = snapshot.Phase == EncounterPhase.Playing;
+            bool completed = snapshot.Phase == EncounterPhase.Completed;
+            bool choosing = snapshot.Phase == EncounterPhase.ChoosingHandUpgrade || snapshot.Phase == EncounterPhase.ChoosingUnlock;
+            TargetPanel.gameObject.SetActive(!choosing);
+            StatusLabel.gameObject.SetActive(!choosing);
+            PlayingPanel.gameObject.SetActive(playing);
+            StageLabel.text = wording.hud.Stage(snapshot.StageIndex + 1, snapshot.StageCount);
+            TargetLabel.text = DiagnosticText.Number(completed ? snapshot.TotalScore : snapshot.RemainingThreshold);
+            TargetCaption.text = playing ? wording.hud.toClear : completed ? wording.hud.totalScore : wording.hud.stageCleared;
+            HandsPanel.gameObject.SetActive(playing);
+            RerollsPanel.gameObject.SetActive(playing);
+            ResourcesLabel.gameObject.SetActive(!playing && !choosing);
+            SetResources(snapshot.HandsRemaining, snapshot.RerollsRemaining);
+            RenderEncounterRule(snapshot, ruleCard);
+            ResourcesLabel.text = playing ? wording.hud.Resources(snapshot.HandsRemaining, snapshot.RerollsRemaining) :
+                lastScore != null ? wording.hud.LastHand(lastScore.HandScore) : wording.hud.TotalScoreLine(snapshot.TotalScore);
+            CharmCount.text = wording.hud.CharmCount(snapshot.Modifiers.Count);
+            SpiritUi.SetButtonLabel(CharmsButton, wording.hud.CharmsButton(snapshot.Modifiers.Count));
+            ShowStatus(SpiritStatusText.Gameplay(status, wording.status));
+            if (!playing) return;
+            ShowIdleScore(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier);
+            PlayButton.interactable = true;
+            RerollButton.interactable = selectedMask != 0 && snapshot.CanReroll;
+        }
+
+        /** A roll shows the playing area. */
+        public void ShowDiceRoll() => PlayingPanel.gameObject.SetActive(true);
+
+        /**
+         * Shows a starting stage's line, threshold and counters and prepares its intro panel, hidden; the playing area hides
+         * until the stage's first roll.
+         */
+        public void ShowStageStart(StageStartedEvent stage, int stageCount)
+        {
+            ShowStageTarget(stage.StageIndex + 1, stageCount, stage.Threshold);
+            ShowHandCounters(stage.Hands, stage.Rerolls);
+            PlayingPanel.gameObject.SetActive(false);
+            StageIntroTitle.text = StageLabel.text;
+            StageIntroDetail.fontSize = StageIntroDetailFontSize;
+            StageIntroDetail.text = SpiritUi.GetWording(transform).hud.StageIntro(stage.Threshold, stage.Hands, stage.Rerolls);
+            StageIntroPanel.gameObject.SetActive(false);
+        }
+
+        /** Shows the intro panel the stage start prepared. */
+        public void ShowStageIntro() => StageIntroPanel.gameObject.SetActive(true);
+
+        public void HideStageIntro() => StageIntroPanel.gameObject.SetActive(false);
+
+        /** Shows a starting hand: its rule badge and resources, cleared score counters and the new hand line. */
+        public void ShowHandStart(HandStartedEvent hand, EncounterSnapshot snapshot, EncounterRulePresentationAsset ruleCard)
+        {
+            RenderEncounterRule(snapshot, ruleCard);
+            SetResources(hand.HandsRemaining, hand.RerollsRemaining);
+            ShowIdleScore(0, 0);
+            SelectionLabel.color = SpiritUi.GetTheme(transform).muted;
+            SelectionLabel.text = SpiritUi.GetWording(transform).hud.newHand;
+        }
+
+        /** Counts the threshold left to clear from one value to the other over the duration. */
+        public IEnumerator ShowThresholdChange(long before, long after, float duration)
+        {
+            TargetCaption.text = SpiritUi.GetWording(transform).hud.toClear;
+            return AnimateThreshold(before, after, duration);
+        }
+
+        public void ShowStageCleared()
+        {
+            TargetLabel.text = "0";
+            TargetCaption.text = SpiritUi.GetWording(transform).hud.stageCleared;
+        }
+
+        /** Shows a resource's new count; a reroll change also shows the rerolls remaining as the selection line. */
+        public void ShowResourceChanged(ResourceChangedEvent resource)
+        {
+            ShowResource(resource);
+            if (resource.Resource == ResourceKind.Rerolls)
+                SelectionLabel.text = SpiritUi.GetWording(transform).hud.RerollsRemaining(resource.After);
+        }
+
+        /** Shows the played hand's running total before a step that does not reveal the final total. */
+        public void ShowHandTotal(long total) => HandScoreLabel.text = DiagnosticText.Number(total);
+
+        /** Shows a scoring step's emblem, rank, selection and step lines, its counter highlights and its granted resources. */
+        public void ShowScoringStep(SpiritScoringStep step, ModifierPresentationCatalog charms)
+        {
+            if (step.Emblem != null) ShowActivationIcon(charms, step.Emblem);
+            else ModifierEmblem.gameObject.SetActive(false);
+            CategoryLabel.text = step.CategoryText;
+            SelectionLabel.color = step.SelectionColor;
+            SelectionLabel.text = step.SelectionText;
+            ScoreDetail.text = step.StepLabel;
+            stepHighlights = new List<SpiritCounterHighlight>();
+            if (step.HighlightsBaseScore) AddCounterHighlight(stepHighlights, BaseScoreHighlight, charms, step.Charm);
+            if (step.HighlightsMultiplier) AddCounterHighlight(stepHighlights, MultiplierHighlight, charms, step.Charm);
+            if (step.HighlightsRerolls) AddCounterHighlight(stepHighlights, RerollsHighlight, charms, step.Charm);
+            if (step.HighlightsHands) AddCounterHighlight(stepHighlights, HandsHighlight, charms, step.Charm);
+            foreach (var grant in step.Grants) ShowResource(grant);
+        }
+
+        /** Animates the shown scoring step: its revealed total, or its score counters from those shown with its highlights. */
+        public IEnumerator AnimateScoringStep(SpiritScoringStep step, float duration)
+            => step.RevealsTotal ? AnimateTotal(step.Total, duration)
+                : AnimateScore(DisplayedBaseScore, DisplayedMultiplier, step.BaseScore, step.Multiplier, duration, stepHighlights);
+
+        /** Shows a rule presenter's selection line, marked as the rule's. */
+        public void ShowRuleSelection(string text)
+        {
+            SelectionLabel.text = text;
+            SelectionLabel.color = SpiritUi.GetTheme(transform).amber;
+        }
+
+        private void SetScoreValues(long baseScore, long multiplier)
         {
             DisplayedBaseScore = baseScore;
             DisplayedMultiplier = multiplier;
@@ -260,7 +424,7 @@ namespace Dice.Presentation
             MultiplierLabel.text = DiagnosticText.Number(multiplier);
         }
 
-        public void SetResources(int hands, int rerolls)
+        private void SetResources(int hands, int rerolls)
         {
             var wording = SpiritUi.GetWording(transform).hud;
             HandsLabel.text = wording.Hands(hands);
@@ -268,14 +432,14 @@ namespace Dice.Presentation
             ResourcesLabel.text = wording.Resources(hands, rerolls);
         }
 
-        public void ShowResource(ResourceChangedEvent resource)
+        private void ShowResource(ResourceChangedEvent resource)
         {
             var wording = SpiritUi.GetWording(transform).hud;
             if (resource.Resource == ResourceKind.Rerolls) RerollsLabel.text = wording.Rerolls(resource.After);
             else if (resource.Resource == ResourceKind.Hands) HandsLabel.text = wording.Hands(resource.After);
         }
 
-        public void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)
+        private void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             ModifierActivationIcon.sprite = charms.GetIcon(definition);
             ModifierActivationIcon.color = charms.GetEffectColor(definition);
@@ -316,7 +480,7 @@ namespace Dice.Presentation
             TargetLabel.rectTransform.localScale = targetLabelScale;
         }
 
-        internal static void AddCounterHighlight(List<SpiritCounterHighlight> highlights, SpiritCounterHighlight highlight,
+        private static void AddCounterHighlight(List<SpiritCounterHighlight> highlights, SpiritCounterHighlight highlight,
             ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
             if (highlights.Contains(highlight)) return;
@@ -328,8 +492,8 @@ namespace Dice.Presentation
             highlights.Add(highlight);
         }
 
-        internal IEnumerator AnimateScore(long beforeBase, long beforeMultiplier, long afterBase, long afterMultiplier, float duration,
-            List<SpiritCounterHighlight> highlights = null)
+        private IEnumerator AnimateScore(long beforeBase, long beforeMultiplier, long afterBase, long afterMultiplier, float duration,
+            List<SpiritCounterHighlight> highlights)
         {
             CaptureAuthoredScales();
             float elapsed = 0;
@@ -368,7 +532,7 @@ namespace Dice.Presentation
                 foreach (var highlight in highlights) ResetCounterHighlight(highlight);
         }
 
-        public IEnumerator AnimateTotal(long score, float duration)
+        private IEnumerator AnimateTotal(long score, float duration)
         {
             CaptureAuthoredScales();
             float elapsed = 0;
@@ -386,7 +550,7 @@ namespace Dice.Presentation
             HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
         }
 
-        public IEnumerator AnimateThreshold(long before, long after, float duration)
+        private IEnumerator AnimateThreshold(long before, long after, float duration)
         {
             CaptureAuthoredScales();
             float elapsed = 0;

@@ -124,7 +124,7 @@ namespace Dice.Presentation
         {
             modifierHistory.Clear();
             diceTray.SetScoringHighlight(0);
-            hud.PlayingPanel.gameObject.SetActive(true);
+            hud.ShowDiceRoll();
             host.HideRewardsAndEnding();
             if (rolled.Before.HasValue) diceTray.SetValues(rolled.Before.Value);
             host.SetDiceSelection(rolled.SelectedMask);
@@ -157,22 +157,20 @@ namespace Dice.Presentation
                 diceTray.SetScoringHighlight(step.HighlightMask);
                 if (step.ResolvingIndex >= 0) modifierHistory.SetResolving(step.Contribution.Value);
                 else modifierHistory.ClearResolving();
-                if (!step.RevealsTotal) hud.HandScoreLabel.text = DiagnosticText.Number(step.Total);
+                if (!step.RevealsTotal) hud.ShowHandTotal(step.Total);
                 yield return PlayStep(step);
             }
         }
 
         private IEnumerator PresentThreshold(ThresholdChangedEvent threshold)
         {
-            hud.TargetCaption.text = Wording.hud.toClear;
-            yield return hud.AnimateThreshold(threshold.Before, threshold.After, ThresholdCountDuration);
+            yield return hud.ShowThresholdChange(threshold.Before, threshold.After, ThresholdCountDuration);
             yield return new WaitForSecondsRealtime(ThresholdHold);
         }
 
         private IEnumerator PresentStageCleared(Resolution resolution)
         {
-            hud.TargetLabel.text = "0";
-            hud.TargetCaption.text = Wording.hud.stageCleared;
+            hud.ShowStageCleared();
             encounterAudio.Play(SpiritAudioCue.StageClear);
             if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
                 host.Journey?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
@@ -184,40 +182,19 @@ namespace Dice.Presentation
 
         private IEnumerator PresentStage(StageStartedEvent stage, Resolution resolution)
         {
-            var wording = Wording.hud;
-            hud.StageLabel.text = wording.Stage(stage.StageIndex + 1, resolution.Snapshot.StageCount);
-            hud.TargetLabel.text = DiagnosticText.Number(stage.Threshold);
-            hud.TargetCaption.text = wording.toClear;
-            hud.HandsPanel.gameObject.SetActive(true);
-            hud.RerollsPanel.gameObject.SetActive(true);
-            hud.ResourcesLabel.gameObject.SetActive(false);
-            hud.SetResources(stage.Hands, stage.Rerolls);
-            hud.PlayingPanel.gameObject.SetActive(false);
+            hud.ShowStageStart(stage, resolution.Snapshot.StageCount);
             host.HideRewardsAndEnding();
-            hud.StageIntroTitle.text = hud.StageLabel.text;
-            hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
-            hud.StageIntroDetail.text = wording.StageIntro(stage.Threshold, stage.Hands, stage.Rerolls);
-            if (resolution.PreviousRevision >= 0)
-            {
-                hud.StageIntroPanel.gameObject.SetActive(true);
-                yield return new WaitForSecondsRealtime(StageIntroHold);
-            }
-            hud.StageIntroPanel.gameObject.SetActive(false);
+            if (resolution.PreviousRevision < 0) yield break;
+            hud.ShowStageIntro();
+            yield return new WaitForSecondsRealtime(StageIntroHold);
+            hud.HideStageIntro();
         }
 
         private IEnumerator PresentHandStart(HandStartedEvent hand, Resolution resolution)
         {
             host.Ambient?.Begin();
             modifierHistory.Clear();
-            hud.RenderEncounterRule(resolution.Snapshot, host.HudRuleCard);
-            hud.SetResources(hand.HandsRemaining, hand.RerollsRemaining);
-            hud.SetScoreValues(0, 0);
-            hud.HandScoreLabel.text = "0";
-            hud.CategoryLabel.text = "";
-            hud.ModifierEmblem.gameObject.SetActive(false);
-            hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
-            hud.SelectionLabel.text = Wording.hud.newHand;
-            hud.ScoreDetail.text = "";
+            hud.ShowHandStart(hand, resolution.Snapshot, host.HudRuleCard);
             if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(HandStartHold);
         }
 
@@ -225,8 +202,7 @@ namespace Dice.Presentation
         {
             // A charm's grant is presented with the charm's own step.
             if (resource.GrantedBy != null) yield break;
-            hud.ShowResource(resource);
-            if (resource.Resource == ResourceKind.Rerolls) hud.SelectionLabel.text = Wording.hud.RerollsRemaining(resource.After);
+            hud.ShowResourceChanged(resource);
         }
 
         private IEnumerator FadeOpening(float duration)
@@ -243,26 +219,13 @@ namespace Dice.Presentation
         private IEnumerator PlayStep(SpiritScoringStep step)
         {
             if (step.HostReacts) host.Host?.React();
-            if (step.Emblem != null) hud.ShowActivationIcon(Charms, step.Emblem);
-            else hud.ModifierEmblem.gameObject.SetActive(false);
-            hud.CategoryLabel.text = step.CategoryText;
-            hud.SelectionLabel.color = step.SelectionColor;
-            hud.SelectionLabel.text = step.SelectionText;
-            hud.ScoreDetail.text = step.StepLabel;
+            hud.ShowScoringStep(step, Charms);
             if (step.Charm != null)
                 actionModifierCue.Show(Charms, step.Charm, ScoreStepDuration + step.Hold, step.RerollCue, step.PlayCue);
             if (step.RuleCue)
                 actionModifierCue.ShowHost(step.Rule.Icon, ModifierPhase.PlayHand, GestureDuration);
-            var highlights = new List<SpiritCounterHighlight>();
-            if (step.HighlightsBaseScore) SpiritGameplayHud.AddCounterHighlight(highlights, hud.BaseScoreHighlight, Charms, step.Charm);
-            if (step.HighlightsMultiplier) SpiritGameplayHud.AddCounterHighlight(highlights, hud.MultiplierHighlight, Charms, step.Charm);
-            if (step.HighlightsRerolls) SpiritGameplayHud.AddCounterHighlight(highlights, hud.RerollsHighlight, Charms, step.Charm);
-            if (step.HighlightsHands) SpiritGameplayHud.AddCounterHighlight(highlights, hud.HandsHighlight, Charms, step.Charm);
-            foreach (var grant in step.Grants) hud.ShowResource(grant);
             encounterAudio.Play(SpiritAudioCue.Score);
-            if (step.RevealsTotal) yield return hud.AnimateTotal(step.Total, ScoreStepDuration);
-            else yield return hud.AnimateScore(hud.DisplayedBaseScore, hud.DisplayedMultiplier, step.BaseScore, step.Multiplier,
-                ScoreStepDuration, highlights);
+            yield return hud.AnimateScoringStep(step, ScoreStepDuration);
             yield return new WaitForSecondsRealtime(step.Hold);
         }
 

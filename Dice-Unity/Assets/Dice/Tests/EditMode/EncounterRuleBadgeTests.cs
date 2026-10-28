@@ -21,6 +21,10 @@ namespace Dice.Tests
         private readonly List<Object> created = new List<Object>();
         private SyntheticUi ui;
         private SpiritGameplayHud hud;
+        // The synthetic badges, labels and icons, by the action whose button each sits beside.
+        private readonly Dictionary<string, CanvasGroup> badges = new Dictionary<string, CanvasGroup>();
+        private readonly Dictionary<string, Text> badgeLabels = new Dictionary<string, Text>();
+        private readonly Dictionary<string, Image> badgeIcons = new Dictionary<string, Image>();
 
         [SetUp]
         public void SetUp()
@@ -29,10 +33,10 @@ namespace Dice.Tests
             hud = ui.Add<SpiritGameplayHud>(ui.Root, "Gameplay HUD");
             foreach (string action in new[] { "reroll", "play" })
             {
-                var badge = ui.Add<CanvasGroup>(hud.transform, action + " rule badge");
+                var badge = badges[action] = ui.Add<CanvasGroup>(hud.transform, action + " rule badge");
                 SyntheticUi.Set(hud, action + "EncounterRuleGroup", badge);
-                SyntheticUi.Set(hud, action + "EncounterRuleLabel", ui.Add<Text>(badge.transform, "Label"));
-                SyntheticUi.Set(hud, action + "EncounterRuleIcon", ui.Add<Image>(badge.transform, "Icon"));
+                SyntheticUi.Set(hud, action + "EncounterRuleLabel", badgeLabels[action] = ui.Add<Text>(badge.transform, "Label"));
+                SyntheticUi.Set(hud, action + "EncounterRuleIcon", badgeIcons[action] = ui.Add<Image>(badge.transform, "Icon"));
             }
             SyntheticUi.Set(hud, "<RerollButton>k__BackingField", ActionButton("Reroll"));
             SyntheticUi.Set(hud, "<PlayButton>k__BackingField", ActionButton("Play"));
@@ -65,20 +69,21 @@ namespace Dice.Tests
             var session = Session(new FirstRerollFreeRuleDefinition());
             var rule = Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "favor ready", "favor spent");
             hud.RenderEncounterRule(session.Snapshot, rule);
-            Assert.That(hud.EncounterRuleGroup.gameObject.activeSelf, Is.True);
-            Assert.That(hud.EncounterRuleLabel.text, Is.EqualTo("favor ready"));
-            Assert.That(hud.EncounterRuleGroup.alpha, Is.EqualTo(1f));
+            Assert.That(badges["reroll"].gameObject.activeSelf, Is.True);
+            Assert.That(badgeLabels["reroll"].text, Is.EqualTo("favor ready"));
+            Assert.That(badges["reroll"].alpha, Is.EqualTo(1f));
 
             var spent = session.Execute(new RerollDiceAction(1), session.Snapshot.Revision);
             Assert.That(spent.Accepted, Is.True);
             Assert.That(spent.Snapshot.EncounterRules.Single().IsAvailable, Is.False);
             hud.RenderEncounterRule(spent.Snapshot, rule);
-            Assert.That(hud.EncounterRuleGroup.gameObject.activeSelf, Is.True);
-            Assert.That(hud.EncounterRuleLabel.text, Is.EqualTo("favor spent"));
-            Assert.That(hud.EncounterRuleGroup.alpha, Is.LessThan(1f), "A spent rule is dimmed.");
+            Assert.That(badges["reroll"].gameObject.activeSelf, Is.True);
+            Assert.That(badgeLabels["reroll"].text, Is.EqualTo("favor spent"));
+            Assert.That(badges["reroll"].alpha, Is.LessThan(1f), "A spent rule is dimmed.");
 
             hud.RenderEncounterRule(session.Snapshot, Presentation("rule.absent", ModifierPhase.PlayerReroll, "absent", "absent"));
-            Assert.That(hud.EncounterRuleGroup.gameObject.activeSelf, Is.False, "A rule the encounter lacks is not shown.");
+            Assert.That(badges["reroll"].gameObject.activeSelf || badges["play"].gameObject.activeSelf, Is.False,
+                "A rule the encounter lacks is not shown.");
         }
 
         /**
@@ -91,14 +96,14 @@ namespace Dice.Tests
             var session = Session(new FirstRerollFreeRuleDefinition());
             hud.RenderEncounterRule(session.Snapshot,
                 Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "reroll", "reroll"));
-            var rerollBadge = hud.EncounterRuleGroup;
+            Assert.That(badges["reroll"].gameObject.activeSelf, Is.True);
+            Assert.That(badges["play"].gameObject.activeSelf, Is.False);
+            Assert.That(badgeLabels["reroll"].text, Is.EqualTo("reroll"));
             hud.RenderEncounterRule(session.Snapshot,
                 Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayHand, "play", "play"));
-            var playBadge = hud.EncounterRuleGroup;
-            Assert.That(playBadge, Is.Not.SameAs(rerollBadge));
-            Assert.That(playBadge.gameObject.activeSelf, Is.True);
-            Assert.That(rerollBadge.gameObject.activeSelf, Is.False);
-            Assert.That(hud.EncounterRuleLabel.text, Is.EqualTo("play"));
+            Assert.That(badges["play"].gameObject.activeSelf, Is.True);
+            Assert.That(badges["reroll"].gameObject.activeSelf, Is.False);
+            Assert.That(badgeLabels["play"].text, Is.EqualTo("play"));
         }
 
         /**
@@ -113,13 +118,13 @@ namespace Dice.Tests
             created.Add(sprite);
             hud.RenderEncounterRule(session.Snapshot,
                 Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "icon", "icon", sprite));
-            Assert.That(hud.EncounterRuleIcon.sprite, Is.SameAs(sprite));
-            Assert.That(hud.EncounterRuleIcon.enabled, Is.True);
+            Assert.That(badgeIcons["reroll"].sprite, Is.SameAs(sprite));
+            Assert.That(badgeIcons["reroll"].enabled, Is.True);
 
             hud.RenderEncounterRule(session.Snapshot,
                 Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "none", "none"));
-            Assert.That(hud.EncounterRuleIcon.sprite == null, Is.True);
-            Assert.That(hud.EncounterRuleIcon.enabled, Is.False);
+            Assert.That(badgeIcons["reroll"].sprite == null, Is.True);
+            Assert.That(badgeIcons["reroll"].enabled, Is.False);
         }
 
         /**

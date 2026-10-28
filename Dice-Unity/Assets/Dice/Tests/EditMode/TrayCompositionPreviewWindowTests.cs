@@ -101,7 +101,8 @@ namespace Dice.Tests
                 var hud = Field<SpiritGameplayHud>(window, "gameplayUi");
                 var scene = Field<SpiritTrayScene>(window, "trayScene");
                 var camera = scene.RenderCamera;
-                Assert.That(hud.BaseScoreLabel.text, Is.EqualTo("0"));
+                Assert.That(hud.GetComponentsInChildren<UnityEngine.UI.Text>(true).Single(label => label.name == "BaseScoreLabel").text,
+                    Is.EqualTo("0"));
                 Assert.That(hud.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
                 float shownAlpha = hud.GetComponent<CanvasGroup>().alpha;
                 Set(window, "showGameplayUi", false);

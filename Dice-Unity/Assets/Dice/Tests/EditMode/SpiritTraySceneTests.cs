@@ -218,9 +218,9 @@ namespace Dice.Tests
             hud.BuildPlayingHud(() => { }, () => { });
             foreach (RectTransform rect in scaled) rect.localScale = Vector3.one * 2;
             hud.BuildPlayingHud(() => { }, () => { });
-            Assert.That(hud.AnimateTotal(100, 0).MoveNext(), Is.False);
-            Assert.That(hud.HandScoreLabel.rectTransform.localScale,
-                Is.EqualTo(authored[Array.IndexOf(scaled, hud.HandScoreLabel.rectTransform)]));
+            Assert.That(hud.AnimateScoringStep(new SpiritScoringStep { RevealsTotal = true, Total = 100 }, 0).MoveNext(), Is.False);
+            RectTransform total = scaled.Single(rect => rect.name == "HandScoreLabel");
+            Assert.That(total.localScale, Is.EqualTo(authored[Array.IndexOf(scaled, total)]));
             hud.ResetTransientVisuals();
             for (int i = 0; i < scaled.Length; ++i) Assert.That(scaled[i].localScale, Is.EqualTo(authored[i]), scaled[i].name);
         }

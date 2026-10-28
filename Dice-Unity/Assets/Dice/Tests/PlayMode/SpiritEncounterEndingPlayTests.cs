@@ -119,8 +119,8 @@ namespace Dice.Tests
             Click("UpgradeHandButton");
             Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False,
                 "The confirmed final offer must close before the farewell starts.");
-            Assert.That(view.CharmsButton.gameObject.activeInHierarchy, Is.False, journey.Id);
-            Assert.That(view.HandRanksButton.gameObject.activeInHierarchy, Is.False, journey.Id);
+            Assert.That(Find<Button>("CharmsButton").gameObject.activeInHierarchy, Is.False, journey.Id);
+            Assert.That(Find<Button>("HandRanksButton").gameObject.activeInHierarchy, Is.False, journey.Id);
             unlockDefinitions = controller.Snapshot.NewlyUnlockedModifierIds.Select(controller.Catalog.GetModifier).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(definition.UnlockMilestones.Count), journey.Id);
             float motionDeadline = Time.realtimeSinceStartup + 45;
