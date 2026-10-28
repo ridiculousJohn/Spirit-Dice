@@ -119,11 +119,11 @@ namespace Dice.Engine
         public int RewardRefreshCost { get; }
         /** How many charm offer refreshes the held reward refresh points pay for. */
         public int RewardRefreshesAvailable { get; }
-        public ReadOnlyCollection<string> ExcludedRewardFamilies { get; }
+        public ReadOnlyCollection<ModifierFamilyDefinition.Id> ExcludedRewardFamilies { get; }
         public ReadOnlyCollection<HandCategory> RecentHandUpgrades { get; }
         public ReadOnlyCollection<string> UnlockedModifierIds { get; }
         public ReadOnlyCollection<string> NewlyUnlockedModifierIds { get; }
-        public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
+        public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
 
         internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
         {
@@ -170,11 +170,11 @@ namespace Dice.Engine
             RewardRefreshes = state.RewardRefreshes;
             RewardRefreshCost = definition.RewardPolicy?.RefreshCost ?? 0;
             RewardRefreshesAvailable = RewardRefreshCost > 0 ? state.RewardRefreshes / RewardRefreshCost : 0;
-            ExcludedRewardFamilies = new List<string>(state.ExcludedRewardFamilies).AsReadOnly();
+            ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies).AsReadOnly();
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();
             UnlockedModifierIds = new List<string>(state.UnlockedModifierIds).AsReadOnly();
             NewlyUnlockedModifierIds = new List<string>(state.NewlyUnlockedModifierIds).AsReadOnly();
-            DiscoveredFamilyIds = new List<string>(state.DiscoveredFamilyIds).AsReadOnly();
+            DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(state.DiscoveredFamilyIds).AsReadOnly();
         }
     }
 

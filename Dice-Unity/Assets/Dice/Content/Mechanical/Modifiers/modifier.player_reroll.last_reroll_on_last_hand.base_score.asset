@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.last_reroll_on_last_hand.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.last_reroll_on_last_hand.base_score
-  familyId: modifier.player_reroll.last_reroll_on_last_hand
+  family: {fileID: 11400000, guid: ad247eb4086a67448a0a6e26092edecd, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539478

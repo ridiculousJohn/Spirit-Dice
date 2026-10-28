@@ -211,11 +211,11 @@ namespace Dice.Tests
             Assert.That(screen.BeginButton.IsInteractable(), Is.True, "Continue is available immediately.");
             var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
             var families = encounter.EncounterModifierIds.Select(controller.Catalog.GetModifier)
-                .GroupBy(definition => definition.FamilyId).Select(group => group.First()).ToArray();
+                .GroupBy(definition => definition.Family).Select(group => group.First()).ToArray();
             var rows = screen.Rows.Where(row => row.gameObject.activeSelf).ToArray();
-            Assert.That(rows.Select(row => row.FamilyId), Is.EquivalentTo(families.Select(family => family.FamilyId)), journey.Id);
+            Assert.That(rows.Select(row => row.Family), Is.EquivalentTo(families.Select(family => family.Family)), journey.Id);
             foreach (var family in families)
-                Assert.That(rows.Single(row => row.FamilyId == family.FamilyId).GetComponentsInChildren<Text>().Select(text => text.text),
+                Assert.That(rows.Single(row => row.Family == family.Family).GetComponentsInChildren<Text>().Select(text => text.text),
                     Does.Contain(ContentReady.Charms.GetFamilyName(family)), journey.Id);
         }
 

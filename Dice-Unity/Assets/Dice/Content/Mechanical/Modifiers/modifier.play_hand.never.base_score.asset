@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.never.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.never.base_score
-  familyId: modifier.play_hand.never
+  family: {fileID: 11400000, guid: eae10bb6593c7da40a2ab7bfd8aacb96, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539231

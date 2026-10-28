@@ -8,7 +8,7 @@ namespace Dice.UnityContent
     public sealed class ModifierAsset : ScriptableObject
     {
         [SerializeField] private string id;
-        [SerializeField] private string familyId;
+        [SerializeField] private ModifierFamilyAsset family;
         [SerializeField] private ModifierPhase phase;
         [SerializeReference, SelectImplementation] private ModifierConditionConfig condition;
         [SerializeReference, SelectImplementation] private ModifierEffectConfig[] effects = Array.Empty<ModifierEffectConfig>();
@@ -20,11 +20,12 @@ namespace Dice.UnityContent
         [SerializeField] private string availabilityScopeId;
 
         public string Id => id;
-        public string FamilyId => familyId;
+        public ModifierFamilyAsset Family => family;
         /** The authored condition; its text values fill the charm's condition wording. */
         public ModifierConditionConfig Condition => condition;
 
-        public ModifierDefinition Build()
+        /** The charm's definition in the given family, the one built from Family that the content's charms of the family share. */
+        public ModifierDefinition Build(ModifierFamilyDefinition familyDefinition)
         {
             if (condition == null) throw new InvalidOperationException("The charm " + id + " has no condition.");
             if (effects == null) throw new InvalidOperationException("The charm " + id + " has no effect list.");
@@ -34,7 +35,7 @@ namespace Dice.UnityContent
                 var source = effects[i] ?? throw new InvalidOperationException("The charm " + id + " has a missing effect.");
                 effectDefinitions[i] = source.Build();
             }
-            return new ModifierDefinition(id, familyId, phase, condition.Build(),
+            return new ModifierDefinition(id, familyDefinition, phase, condition.Build(),
                 effectDefinitions, activationLimit, rewardEligible,
                 new ModifierAvailabilityDefinition(powerTier, availabilityScope,
                     string.IsNullOrEmpty(availabilityScopeId) ? null : availabilityScopeId, access));

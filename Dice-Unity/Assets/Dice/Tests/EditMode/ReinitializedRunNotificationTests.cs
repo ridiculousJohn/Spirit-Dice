@@ -64,7 +64,7 @@ namespace Dice.Tests
         /** A one-stage encounter that starts with one charm whose Play Hand bonus is always ready. */
         private static MechanicalCatalog OneCharmCatalog(string modifierId)
         {
-            var definition = new ModifierDefinition(modifierId, modifierId, ModifierPhase.PlayHand,
+            var definition = new ModifierDefinition(modifierId, TestFamilies.Of(modifierId), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) },
                 startingModifiers: new[] { modifierId });

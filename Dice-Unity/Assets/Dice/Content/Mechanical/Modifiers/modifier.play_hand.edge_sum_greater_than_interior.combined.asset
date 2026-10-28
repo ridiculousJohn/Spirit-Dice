@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_sum_greater_than_interior.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.edge_sum_greater_than_interior.combined
-  familyId: modifier.play_hand.edge_sum_greater_than_interior
+  family: {fileID: 11400000, guid: 4526ffd83e644f946a6e477e7c2d7b91, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539053

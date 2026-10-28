@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.minimum_equals_rerolls_spent.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.minimum_equals_rerolls_spent.rerolls
-  familyId: modifier.play_hand.minimum_equals_rerolls_spent
+  family: {fileID: 11400000, guid: cf0b44ef7333b34479501c4aac1cf9db, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539229

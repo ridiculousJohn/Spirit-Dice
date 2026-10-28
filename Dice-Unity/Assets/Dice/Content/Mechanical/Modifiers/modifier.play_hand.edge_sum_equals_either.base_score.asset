@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.edge_sum_equals_either.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.edge_sum_equals_either.base_score
-  familyId: modifier.play_hand.edge_sum_equals_either
+  family: {fileID: 11400000, guid: f6a098122f7878b4694f4075bdf6b247, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539033

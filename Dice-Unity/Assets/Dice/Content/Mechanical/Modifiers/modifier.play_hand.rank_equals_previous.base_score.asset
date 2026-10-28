@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.rank_equals_previous.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.rank_equals_previous.base_score
-  familyId: modifier.play_hand.rank_equals_previous
+  family: {fileID: 11400000, guid: 1211f4554118b8c4fa4a03fb8c44a741, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539325

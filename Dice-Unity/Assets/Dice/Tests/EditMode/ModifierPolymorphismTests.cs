@@ -13,12 +13,12 @@ namespace Dice.Tests
         {
             IModifierCondition condition = null;
             var typedException = Assert.Throws<ArgumentNullException>(() =>
-                new ModifierDefinition("custom.null", "test.null", ModifierPhase.PlayHand,
+                new ModifierDefinition("custom.null", TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
                     condition, Array.Empty<ModifierEffect>()));
             Assert.That(typedException.ParamName, Is.EqualTo("condition"));
 
             var literalException = Assert.Throws<ArgumentNullException>(() =>
-                new ModifierDefinition("custom.null", "test.null", ModifierPhase.PlayHand,
+                new ModifierDefinition("custom.null", TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
                     null, Array.Empty<ModifierEffect>()));
             Assert.That(literalException.ParamName, Is.EqualTo("condition"));
         }
@@ -193,7 +193,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit, params ModifierEffect[] effects)
-            => new ModifierDefinition(id, "test." + id, phase, condition, effects, limit);
+            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition, effects, limit);
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] definitions, StageDefinition stage = null)
         {

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.initial_roll.previous_stage_at_most_half_hands_played.rerolls
-  familyId: modifier.initial_roll.previous_stage_at_most_half_hands_played
+  family: {fileID: 11400000, guid: 48de8f622d2a0fc4b84317296ab52466, type: 2}
   phase: 0
   condition:
     rid: 1123138582844538932

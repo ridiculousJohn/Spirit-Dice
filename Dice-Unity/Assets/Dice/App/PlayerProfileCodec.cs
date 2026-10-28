@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using Dice.Engine;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -26,7 +27,7 @@ namespace Dice.App
             var document = new JObject
             {
                 [FormatVersionField] = PlayerProfile.CurrentFormatVersion,
-                [DiscoveredFamilyIdsField] = new JArray(profile.DiscoveredFamilyIds),
+                [DiscoveredFamilyIdsField] = FamilyIdArray(profile),
                 [UnlockedModifierIdsField] = new JArray(profile.UnlockedModifierIds),
                 [CompletedEncounterIdsField] = new JArray(profile.CompletedEncounterIds),
                 [CompletedStoryIdsField] = new JArray(profile.CompletedStoryIds),
@@ -62,7 +63,7 @@ namespace Dice.App
                             property.Name != CompletedStoryIdsField && property.Name != VisitedEncounterIdsField)
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
-                    ReadIds(document[DiscoveredFamilyIdsField], profile.DiscoverFamily);
+                    ReadFamilyIds(document[DiscoveredFamilyIdsField], profile.DiscoverFamily);
                     ReadIds(document[CompletedStoryIdsField], profile.CompleteStory);
                     ReadIds(document[UnlockedModifierIdsField], profile.UnlockModifier);
                     ReadIds(document[CompletedEncounterIdsField], profile.CompleteEncounter);
@@ -73,6 +74,25 @@ namespace Dice.App
             catch (JsonException exception) { throw new FormatException("The profile JSON is invalid.", exception); }
             catch (DecoderFallbackException exception) { throw new FormatException("The profile contains invalid UTF-8.", exception); }
             catch (OverflowException exception) { throw new FormatException("A profile integer is outside its supported range.", exception); }
+        }
+
+        // A family id is written as its GUID's 32 hexadecimal digits, the text its asset's .meta file holds.
+        private static JArray FamilyIdArray(PlayerProfile profile)
+        {
+            var array = new JArray();
+            foreach (var id in profile.DiscoveredFamilyIds) array.Add(id.Value.ToString("N"));
+            return array;
+        }
+
+        private static void ReadFamilyIds(JToken token, Func<ModifierFamilyDefinition.Id, bool> add)
+        {
+            if (!(token is JArray array)) throw new FormatException("Profile IDs must be arrays.");
+            foreach (JToken value in array)
+            {
+                if (value.Type != JTokenType.String || !Guid.TryParseExact(value.Value<string>(), "N", out Guid guid) || guid == Guid.Empty)
+                    throw new FormatException("Profile family IDs must be GUIDs.");
+                if (!add(new ModifierFamilyDefinition.Id(guid))) throw new FormatException("Profile IDs must be unique.");
+            }
         }
 
         private static void ReadIds(JToken token, Func<string, bool> add)

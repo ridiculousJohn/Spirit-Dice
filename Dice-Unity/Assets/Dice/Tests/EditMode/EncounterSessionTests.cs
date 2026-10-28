@@ -44,7 +44,7 @@ namespace Dice.Tests
         public void ActivationAndGrantedResourceChangeStateEachOther()
         {
             var state = new EncounterState();
-            var charm = new ModifierDefinition("test.session.grant", "test.session.grant", ModifierPhase.PlayHand,
+            var charm = new ModifierDefinition("test.session.grant", TestFamilies.Of("test.session.grant"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
             var activated = new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1));
             var granted = new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.ModifierEffect, 1, 2, activated);
@@ -59,7 +59,7 @@ namespace Dice.Tests
         public void PlayedHandStatesItsActivationsAndRuleBonuses()
         {
             const string encounterId = "encounter.test.scored_links";
-            var charm = new ModifierDefinition("test.session.scored", "test.session.scored", ModifierPhase.PlayHand,
+            var charm = new ModifierDefinition("test.session.scored", TestFamilies.Of("test.session.scored"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(2) });
             var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 0) },
                 startingModifiers: new[] { charm.Id }, rules: new EncounterRuleDefinition[] { new DistinctFacesMultiplierRuleDefinition() });

@@ -9,19 +9,25 @@ namespace Dice.Engine
         /** The longest progression id; saved player progress stores ids up to this length. */
         public const int MaximumIdLength = 256;
 
-        public ReadOnlyCollection<string> DiscoveredFamilyIds { get; }
+        public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
         public ReadOnlyCollection<string> GrantedModifierIds { get; }
 
-        public ProgressionRewardDefinition(IEnumerable<string> discoveredFamilyIds, IEnumerable<string> grantedModifierIds)
+        public ProgressionRewardDefinition(IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds,
+            IEnumerable<string> grantedModifierIds)
         {
-            DiscoveredFamilyIds = CopyIds(discoveredFamilyIds, nameof(discoveredFamilyIds));
+            if (discoveredFamilyIds == null) throw new ArgumentNullException(nameof(discoveredFamilyIds));
+            var families = new List<ModifierFamilyDefinition.Id>(discoveredFamilyIds);
+            var uniqueFamilies = new HashSet<ModifierFamilyDefinition.Id>();
+            foreach (var id in families)
+                if (!uniqueFamilies.Add(id)) throw new ArgumentException("Discovered families must be unique.", nameof(discoveredFamilyIds));
+            DiscoveredFamilyIds = families.AsReadOnly();
             GrantedModifierIds = CopyIds(grantedModifierIds, nameof(grantedModifierIds));
         }
 
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            foreach (string id in DiscoveredFamilyIds)
+            foreach (var id in DiscoveredFamilyIds)
                 if (!catalog.HasFamily(id))
                     throw new ArgumentException("A discovered family is missing from the catalog.", nameof(catalog));
             foreach (string id in GrantedModifierIds)
@@ -234,12 +240,12 @@ namespace Dice.Engine
     public sealed class ModifierRewardGeneration
     {
         public ReadOnlyCollection<string> ModifierIds { get; }
-        public ReadOnlyCollection<string> ExcludedFamilyIds { get; }
+        public ReadOnlyCollection<ModifierFamilyDefinition.Id> ExcludedFamilyIds { get; }
 
-        internal ModifierRewardGeneration(IEnumerable<string> modifierIds, IEnumerable<string> excludedFamilyIds)
+        internal ModifierRewardGeneration(IEnumerable<string> modifierIds, IEnumerable<ModifierFamilyDefinition.Id> excludedFamilyIds)
         {
             ModifierIds = new List<string>(modifierIds).AsReadOnly();
-            ExcludedFamilyIds = new List<string>(excludedFamilyIds).AsReadOnly();
+            ExcludedFamilyIds = new List<ModifierFamilyDefinition.Id>(excludedFamilyIds).AsReadOnly();
         }
     }
 }

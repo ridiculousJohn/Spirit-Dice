@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_prime.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.sum_prime.rerolls
-  familyId: modifier.play_hand.sum_prime
+  family: {fileID: 11400000, guid: 357dee333f898bf42a0349e6fe81ce7b, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539413

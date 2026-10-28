@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.three_smallest_sum_at_most_maximum.multiplier
-  familyId: modifier.play_hand.three_smallest_sum_at_most_maximum
+  family: {fileID: 11400000, guid: 406b24cd7f794654ca7ccb24b15fa8d2, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539420

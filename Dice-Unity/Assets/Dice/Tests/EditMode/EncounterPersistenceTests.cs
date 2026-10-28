@@ -125,7 +125,7 @@ namespace Dice.Tests
             input.PendingReward.Options[0].OptionId = 99;
             input.PendingReward.OfferId = 99;
             input.PendingUpgradeCategories[0] = (HandCategory)99;
-            input.ExcludedRewardFamilies[0] = "mutation";
+            input.ExcludedRewardFamilies[0] = TestFamilies.IdOf("mutation");
             input.PendingReward.Options = null;
             input.PendingUpgradeCategories = null;
             AssertGraphEqual(expected, resumed.CaptureSave());
@@ -193,7 +193,7 @@ namespace Dice.Tests
         public void DuplicateFallbackRewardsRestoreAsDistinctOwnedInstances()
         {
             var normal = RewardTestContent.Modifier("normal", "family.normal");
-            var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
+            var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var catalog = RewardTestContent.Catalog(new[] { normal, fallback },
                 new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) },
@@ -265,7 +265,7 @@ namespace Dice.Tests
         {
             var normal = new[] { RewardTestContent.Modifier("first", "family.first"),
                 RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third") };
-            var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
+            var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
             var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }),
@@ -275,7 +275,7 @@ namespace Dice.Tests
             var save = session.CaptureSave();
             Restore(catalog, save);
             save.PendingReward.Options[0].DefinitionId = fallback.Id;
-            save.ExcludedRewardFamilies = save.ExcludedRewardFamilies.Concat(new[] { fallback.FamilyId }).ToArray();
+            save.ExcludedRewardFamilies = save.ExcludedRewardFamilies.Concat(new[] { fallback.Family.Identity }).ToArray();
             var result = EncounterSession.RestoreEncounter(catalog, save);
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
@@ -408,7 +408,7 @@ namespace Dice.Tests
             yield return Invalid("refresh currency", value => value.RewardRefreshes = -1);
             yield return Invalid("next offer identity", value => value.NextOfferId = 0);
             yield return Invalid("next option identity", value => value.NextOptionId = 0);
-            yield return Invalid("unknown family", value => value.ExcludedRewardFamilies = new[] { "unknown" }, EncounterRestoreError.InvalidDefinition);
+            yield return Invalid("unknown family", value => value.ExcludedRewardFamilies = new[] { TestFamilies.IdOf("unknown") }, EncounterRestoreError.InvalidDefinition);
             yield return Invalid("unknown upgrade history", value => value.RecentHandUpgrades = new[] { (HandCategory)99 });
             yield return Invalid("unexpected cached choices", value => value.PendingUpgradeCategories = new[] { HandCategory.Pair });
         }
@@ -442,12 +442,12 @@ namespace Dice.Tests
         {
             var definitions = new[]
             {
-                new ModifierDefinition("initial", "family.initial", ModifierPhase.InitialRoll,
+                new ModifierDefinition("initial", TestFamilies.Of("family.initial"), ModifierPhase.InitialRoll,
                     new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) }),
-                new ModifierDefinition("reroll", "family.reroll", ModifierPhase.PlayerReroll,
+                new ModifierDefinition("reroll", TestFamilies.Of("family.reroll"), ModifierPhase.PlayerReroll,
                     new AlwaysCondition(), new ModifierEffect[] { new AddMultiplierEffect(2),
                         new AddRerollsEffect(1) }),
-                new ModifierDefinition("play", "family.play", ModifierPhase.PlayHand,
+                new ModifierDefinition("play", TestFamilies.Of("family.play"), ModifierPhase.PlayHand,
                     new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(11) })
             };
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },

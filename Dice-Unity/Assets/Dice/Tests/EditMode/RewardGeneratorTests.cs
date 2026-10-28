@@ -26,7 +26,7 @@ namespace Dice.Tests
             for (int incomingStageIndex = 1; incomingStageIndex <= 8; ++incomingStageIndex)
             {
                 var generated = RewardGenerator.GenerateModifiers(catalog, policy, incomingStageIndex,
-                    Array.Empty<string>(), Array.Empty<string>(), ref random);
+                    Array.Empty<string>(), Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
                 Assert.That(generated.ModifierIds, Is.EqualTo(new[] { incomingStageIndex % 2 == 0 ? "first" : "second" }));
             }
         }
@@ -46,11 +46,11 @@ namespace Dice.Tests
             {
                 var random = new DeterministicRandom(seed);
                 var generated = RewardGenerator.GenerateModifiers(catalog, policy, 1,
-                    new[] { "first.base" }, Array.Empty<string>(), ref random);
+                    new[] { "first.base" }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
                 Assert.That(generated.ModifierIds.Count, Is.EqualTo(3));
                 Assert.That(generated.ModifierIds, Does.Not.Contain("first.base"));
                 Assert.That(generated.ModifierIds, Does.Contain("first.mult"));
-                Assert.That(generated.ModifierIds.Select(value => catalog.GetModifier(value).FamilyId).Distinct().Count(), Is.EqualTo(3));
+                Assert.That(generated.ModifierIds.Select(value => catalog.GetModifier(value).Family).Distinct().Count(), Is.EqualTo(3));
             }
         }
 
@@ -63,16 +63,16 @@ namespace Dice.Tests
                 new[] { new ModifierRewardPoolDefinition("pool", modifiers.Select(value => value.Id)) }, policy);
             var random = new DeterministicRandom(7);
             var retained = RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(),
-                new[] { "family.0", "family.1" }, ref random);
+                new[] { TestFamilies.IdOf("family.0"), TestFamilies.IdOf("family.1") }, ref random);
             Assert.That(retained.ModifierIds.Count, Is.EqualTo(1));
             Assert.That(retained.ModifierIds, Does.Not.Contain("modifier.0").And.Not.Contain("modifier.1"));
-            Assert.That(retained.ExcludedFamilyIds, Does.Contain("family.0").And.Contain("family.1"));
+            Assert.That(retained.ExcludedFamilyIds, Has.Member(TestFamilies.IdOf("family.0")).And.Member(TestFamilies.IdOf("family.1")));
 
             var reset = RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(),
-                new[] { "family.0", "family.1", "family.2" }, ref random);
+                new[] { "family.0", "family.1", "family.2" }.Select(TestFamilies.IdOf), ref random);
             Assert.That(reset.ModifierIds.Count, Is.EqualTo(1));
-            Assert.That(reset.ExcludedFamilyIds, Is.EquivalentTo(new[] { "family.0", "family.1", "family.2" }
-                .Concat(reset.ModifierIds.Select(value => catalog.GetModifier(value).FamilyId)).Distinct()));
+            Assert.That(reset.ExcludedFamilyIds, Is.EquivalentTo(new[] { "family.0", "family.1", "family.2" }.Select(TestFamilies.IdOf)
+                .Concat(reset.ModifierIds.Select(value => catalog.GetModifier(value).Family.Identity)).Distinct()));
         }
 
         [Test]
@@ -86,15 +86,15 @@ namespace Dice.Tests
                 new ModifierRewardPoolDefinition("large", modifiers.Select(value => value.Id))
             };
             var catalog = RewardTestContent.Catalog(modifiers, pools, policy);
-            string[] history = { "family.0", "family.1", "family.2" };
+            var history = new[] { "family.0", "family.1", "family.2" }.Select(TestFamilies.IdOf).ToArray();
             for (ulong seed = 0; seed < 30; ++seed)
             {
                 var random = new DeterministicRandom(seed);
                 var offer = RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(), history, ref random);
                 Assert.That(offer.ModifierIds.Count, Is.EqualTo(2));
                 Assert.That(history, Is.SubsetOf(offer.ExcludedFamilyIds));
-                Assert.That(history, Does.Not.Contain(catalog.GetModifier(offer.ModifierIds[1]).FamilyId));
-                Assert.That(offer.ModifierIds.Select(value => catalog.GetModifier(value).FamilyId).Distinct().Count(), Is.EqualTo(2));
+                Assert.That(history, Has.No.Member(catalog.GetModifier(offer.ModifierIds[1]).Family.Identity));
+                Assert.That(offer.ModifierIds.Select(value => catalog.GetModifier(value).Family).Distinct().Count(), Is.EqualTo(2));
             }
         }
 
@@ -102,18 +102,18 @@ namespace Dice.Tests
         public void ExhaustedPoolCanSkipARewardSlotAndExplicitFallbackRemainsOutsideOrdinaryEligibility()
         {
             var normal = RewardTestContent.Modifier("normal", "family.normal");
-            var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
+            var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
             var ordinary = RewardTestContent.Catalog(new[] { normal, fallback },
                 new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }) }, policy);
             var random = new DeterministicRandom(12);
-            var skipped = RewardGenerator.GenerateModifiers(ordinary, policy, 1, new[] { normal.Id }, Array.Empty<string>(), ref random);
+            var skipped = RewardGenerator.GenerateModifiers(ordinary, policy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
             Assert.That(skipped.ModifierIds, Is.Empty);
 
             var withFallback = RewardTestContent.Catalog(new[] { normal, fallback },
                 new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) }, policy);
-            var generated = RewardGenerator.GenerateModifiers(withFallback, policy, 1, new[] { normal.Id }, Array.Empty<string>(), ref random);
+            var generated = RewardGenerator.GenerateModifiers(withFallback, policy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
             Assert.That(generated.ModifierIds, Is.EqualTo(new[] { fallback.Id }));
         }
 
@@ -126,8 +126,8 @@ namespace Dice.Tests
             var second = new DeterministicRandom(991);
             for (int i = 1; i < 12; ++i)
             {
-                var a = RewardGenerator.GenerateModifiers(catalog, policy, i, Array.Empty<string>(), Array.Empty<string>(), ref first);
-                var b = RewardGenerator.GenerateModifiers(catalog, policy, i, Array.Empty<string>(), Array.Empty<string>(), ref second);
+                var a = RewardGenerator.GenerateModifiers(catalog, policy, i, Array.Empty<string>(), Array.Empty<ModifierFamilyDefinition.Id>(), ref first);
+                var b = RewardGenerator.GenerateModifiers(catalog, policy, i, Array.Empty<string>(), Array.Empty<ModifierFamilyDefinition.Id>(), ref second);
                 Assert.That(a.ModifierIds, Is.EqualTo(b.ModifierIds));
                 Assert.That(a.ExcludedFamilyIds, Is.EqualTo(b.ExcludedFamilyIds));
                 Assert.That(first.State, Is.EqualTo(second.State));
@@ -188,7 +188,7 @@ namespace Dice.Tests
     internal static class RewardTestContent
     {
         internal static ModifierDefinition Modifier(string id, string family)
-            => new ModifierDefinition(id, family, ModifierPhase.PlayHand, new AlwaysCondition(),
+            => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(10) });
 
         internal static RewardPolicyDefinition Policy(IEnumerable<ModifierRewardLayout> layouts = null,

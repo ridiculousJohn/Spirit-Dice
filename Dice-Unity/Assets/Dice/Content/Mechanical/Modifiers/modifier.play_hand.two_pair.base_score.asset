@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.two_pair.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.two_pair.base_score
-  familyId: modifier.play_hand.two_pair
+  family: {fileID: 11400000, guid: fae17c1bf307826478cf0109bd50d689, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539424

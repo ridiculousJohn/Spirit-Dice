@@ -18,6 +18,8 @@ namespace Dice.Tests
     public class SyntheticCharmAssets : IDisposable
     {
         private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
+        private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyAsset> families =
+            new Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyAsset>();
 
         public T Own<T>(T item) where T : UnityEngine.Object
         {
@@ -25,8 +27,38 @@ namespace Dice.Tests
             return item;
         }
 
-        /** A charm asset; without a condition it always activates, and without effects it adds 10 base score. */
-        public ModifierAsset Charm(string id, string familyId = null, ModifierPhase phase = ModifierPhase.PlayHand,
+        /** The family asset of the test family named by the text (see TestFamilies); one asset per family. */
+        public ModifierFamilyAsset Family(string name) => Family(TestFamilies.IdOf(name), name);
+
+        /** The family asset of a family definition, named as TestFamilies names it; one asset per family. */
+        public ModifierFamilyAsset Family(ModifierFamilyDefinition family) => Family(family.Identity, TestFamilies.NameOf(family));
+
+        private ModifierFamilyAsset Family(ModifierFamilyDefinition.Id id, string name)
+        {
+#if UNITY_EDITOR
+            if (families.TryGetValue(id, out ModifierFamilyAsset family)) return family;
+            family = Own(ScriptableObject.CreateInstance<ModifierFamilyAsset>());
+            family.name = name;
+            var serialized = new SerializedObject(family);
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = id.Value.ToString("N");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            families.Add(id, family);
+            return family;
+#else
+            throw EditorRequired();
+#endif
+        }
+
+        /**
+         * A charm asset in the test family named by family, or by its id without one; without a condition it always
+         * activates, and without effects it adds 10 base score.
+         */
+        public ModifierAsset Charm(string id, string family = null, ModifierPhase phase = ModifierPhase.PlayHand,
+            ModifierConditionConfig condition = null, ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand,
+            params ModifierEffectConfig[] effects)
+            => CharmIn(Family(family ?? id), id, phase, condition, limit, effects);
+
+        private ModifierAsset CharmIn(ModifierFamilyAsset family, string id, ModifierPhase phase = ModifierPhase.PlayHand,
             ModifierConditionConfig condition = null, ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand,
             params ModifierEffectConfig[] effects)
         {
@@ -35,7 +67,7 @@ namespace Dice.Tests
             asset.name = id;
             var serialized = new SerializedObject(asset);
             serialized.FindProperty("id").stringValue = id;
-            serialized.FindProperty("familyId").stringValue = familyId ?? id;
+            serialized.FindProperty("family").objectReferenceValue = family;
             serialized.FindProperty("phase").intValue = (int)phase;
             serialized.FindProperty("condition").managedReferenceValue = condition ?? new AlwaysConditionConfig();
             serialized.FindProperty("activationLimit").intValue = (int)limit;
@@ -119,11 +151,11 @@ namespace Dice.Tests
         public static ModifierTextFormat TextFormat() => new ModifierTextFormat("[{amount} {label}]", " & ", "[{amount}]",
             "[{amount} {label}]", " # ", "{phase} @ {limit}", "[{amount} {label}]", " ; ");
 
-        /** Test family names: "Family of <family id>" for every family of the given charm presentations. */
+        /** Test family names: "Family of <family asset name>" for every family of the given charm presentations. */
         public static ModifierFamilyWording[] FamilyWording(IEnumerable<ModifierPresentationAsset> modifiers) => modifiers
             .Where(presentation => presentation != null && presentation.Modifier != null)
-            .Select(presentation => presentation.Modifier.FamilyId).Distinct(StringComparer.Ordinal)
-            .Select(family => new ModifierFamilyWording(family, "Family of " + family)).ToArray();
+            .Select(presentation => presentation.Modifier.Family).Distinct()
+            .Select(family => new ModifierFamilyWording(family, "Family of " + family.name)).ToArray();
 
         /** A skin of the given presentations and categories; without family names it names every family as FamilyWording does. */
         public ModifierSkinAsset Skin(IEnumerable<ModifierPresentationAsset> modifiers,
@@ -145,7 +177,7 @@ namespace Dice.Tests
             for (int i = 0; i < familyRows.Length; ++i)
             {
                 SerializedProperty element = familyList.GetArrayElementAtIndex(i);
-                element.FindPropertyRelative("familyId").stringValue = familyRows[i].FamilyId;
+                element.FindPropertyRelative("family").objectReferenceValue = familyRows[i].Family;
                 element.FindPropertyRelative("name").stringValue = familyRows[i].Name;
             }
             ModifierEffectWording[] effects = (wording ?? Wording()).ToArray();
@@ -223,7 +255,7 @@ namespace Dice.Tests
             var presentations = new List<ModifierPresentationAsset>();
             foreach (ModifierDefinition definition in catalog.Modifiers)
             {
-                ModifierAsset charm = Charm(definition.Id, definition.FamilyId);
+                ModifierAsset charm = CharmIn(Family(definition.Family), definition.Id);
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
                 presentations.Add(Presentation(charm, category, template: "Condition of " + definition.Id));
             }
@@ -235,6 +267,7 @@ namespace Dice.Tests
             foreach (UnityEngine.Object item in created)
                 if (item != null) UnityEngine.Object.DestroyImmediate(item);
             created.Clear();
+            families.Clear();
         }
 
 #if UNITY_EDITOR

@@ -37,7 +37,7 @@ namespace Dice.App
         public string SavePath { get; internal set; }
         public string ProfilePath => progression.ProfilePath;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
-        public IReadOnlyList<string> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
+        public IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
         public IReadOnlyList<string> CompletedEncounterIds => progression.CompletedEncounterIds;
         public IReadOnlyList<string> CompletedStoryIds => progression.CompletedStoryIds;
         public PlayerProfileStatus ProfileStatus => progression.Status;

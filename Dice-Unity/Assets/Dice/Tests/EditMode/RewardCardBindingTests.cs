@@ -230,7 +230,7 @@ namespace Dice.Tests
             Assert.That(marker.gameObject.activeSelf, Is.EqualTo(selected), "marker");
         }
 
-        private static ModifierDefinition NewCharm() => new ModifierDefinition("test.reward", "test.reward", ModifierPhase.PlayHand,
+        private static ModifierDefinition NewCharm() => new ModifierDefinition("test.reward", TestFamilies.Of("test.reward"), ModifierPhase.PlayHand,
             new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) });
     }
 }

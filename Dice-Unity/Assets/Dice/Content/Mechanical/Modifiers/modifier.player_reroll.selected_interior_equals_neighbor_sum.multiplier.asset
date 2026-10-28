@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.selected_interior_equals_neighbor_sum.multiplier
-  familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
+  family: {fileID: 11400000, guid: 442e532537b6959448afa1cffdca7f73, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539528

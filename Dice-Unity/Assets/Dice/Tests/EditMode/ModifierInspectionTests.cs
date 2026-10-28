@@ -247,7 +247,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand, ModifierEffect[] effects = null)
-            => new ModifierDefinition(id, "test." + id, phase, condition,
+            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition,
                 effects ?? new ModifierEffect[] { new AddBaseScoreEffect(7) }, limit);
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] definitions, IEnumerable<StageDefinition> stages = null,

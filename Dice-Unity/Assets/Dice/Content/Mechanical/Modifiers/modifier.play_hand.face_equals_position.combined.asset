@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.face_equals_position.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.face_equals_position.combined
-  familyId: modifier.play_hand.face_equals_position
+  family: {fileID: 11400000, guid: e89b13b5136b2dd4aa5d774063477e71, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539098

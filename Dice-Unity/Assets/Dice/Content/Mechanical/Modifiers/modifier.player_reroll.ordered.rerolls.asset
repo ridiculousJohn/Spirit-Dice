@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.ordered.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.ordered.rerolls
-  familyId: modifier.player_reroll.ordered
+  family: {fileID: 11400000, guid: 0eb5a30963f77e848935d9f9159e9076, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539494

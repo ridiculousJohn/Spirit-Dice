@@ -711,7 +711,7 @@ namespace Dice.Presentation
             collectionView.Show(controls.Catalog, controls.ModifierPresentation,
                 (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
                 journeyControls?.JourneyCatalog,
-                (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<string>());
+                (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<ModifierFamilyDefinition.Id>());
         }
 
         ISpiritEncounterControls ISpiritScorePlaybackHost.Controls => controls;

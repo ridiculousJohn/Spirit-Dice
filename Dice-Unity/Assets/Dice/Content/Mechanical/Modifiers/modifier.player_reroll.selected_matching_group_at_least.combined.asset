@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_matching_group_at_least.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.selected_matching_group_at_least.combined
-  familyId: modifier.player_reroll.selected_matching_group_at_least
+  family: {fileID: 11400000, guid: f9e019000bc2eae4988ef7e7c1523af4, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539543

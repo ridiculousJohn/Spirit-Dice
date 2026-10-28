@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.middle_equals_odd_count.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.middle_equals_odd_count.base_score
-  familyId: modifier.play_hand.middle_equals_odd_count
+  family: {fileID: 11400000, guid: f18ae0c4e5062b44f96720352eae10ad, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539195

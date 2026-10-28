@@ -55,7 +55,7 @@ namespace Dice.Tests
             {
                 Modifier(Locked, access: ModifierAccess.PermanentUnlock), Modifier(Addition), Modifier(Pooled), Modifier(Fallback),
                 Modifier(Ineligible, eligible: false),
-                new ModifierDefinition(Scoped, "family." + Scoped, ModifierPhase.PlayHand, new NeverCondition(),
+                new ModifierDefinition(Scoped, TestFamilies.Of("family." + Scoped), ModifierPhase.PlayHand, new NeverCondition(),
                     Array.Empty<ModifierEffect>(), availability: new ModifierAvailabilityDefinition(1, ModifierAvailabilityScope.Encounter,
                         "encounter.scoped"))
             };
@@ -67,7 +67,7 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter, bool eligible = true)
-            => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
+            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
                 rewardEligible: eligible, availability: new ModifierAvailabilityDefinition(access: access));
     }
 }

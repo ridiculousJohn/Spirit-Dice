@@ -1,4 +1,5 @@
 using System;
+using Dice.Engine;
 using UnityEngine;
 
 namespace Dice.Presentation
@@ -44,7 +45,7 @@ namespace Dice.Presentation
         {
             var progression = encounter as ISpiritProgressionControls;
             Collection.Show(encounter.Catalog, encounter.ModifierPresentation, progression?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
-                journey.JourneyCatalog, progression?.ProfileDiscoveredFamilyIds ?? Array.Empty<string>());
+                journey.JourneyCatalog, progression?.ProfileDiscoveredFamilyIds ?? Array.Empty<ModifierFamilyDefinition.Id>());
         }
 
         private void OnDestroy() => Unbind();

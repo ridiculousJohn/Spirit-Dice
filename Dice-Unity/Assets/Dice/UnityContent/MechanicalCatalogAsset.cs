@@ -64,11 +64,26 @@ namespace Dice.UnityContent
                     source.fallbackModifier == null ? null : source.fallbackModifier.Id);
             }
             referenced.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
+            // Each family asset is built once, so the charms of a family share its definition.
+            var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
+            var familiesById = new Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyAsset>();
+            ModifierFamilyDefinition Family(ModifierAsset modifier)
+            {
+                ModifierFamilyAsset family = modifier.Family;
+                if (family == null) throw new InvalidOperationException("The charm asset " + modifier.name + " has no family.");
+                if (families.TryGetValue(family, out ModifierFamilyDefinition built)) return built;
+                built = family.Build();
+                if (familiesById.TryGetValue(built.Identity, out ModifierFamilyAsset other))
+                    throw new InvalidOperationException("Two charm family assets share the id " + built.Identity + ": " + other.name + ", " + family.name);
+                familiesById.Add(built.Identity, family);
+                families.Add(family, built);
+                return built;
+            }
             var modifierDefinitions = new ModifierDefinition[referenced.Count];
             var pairs = new KeyValuePair<ModifierAsset, ModifierDefinition>[referenced.Count];
             for (int i = 0; i < referenced.Count; ++i)
             {
-                modifierDefinitions[i] = referenced[i].Build();
+                modifierDefinitions[i] = referenced[i].Build(Family(referenced[i]));
                 pairs[i] = new KeyValuePair<ModifierAsset, ModifierDefinition>(referenced[i], modifierDefinitions[i]);
             }
             var catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions,

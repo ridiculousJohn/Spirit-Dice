@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_difference_at_most.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.adjacent_difference_at_most.base_score
-  familyId: modifier.play_hand.adjacent_difference_at_most
+  family: {fileID: 11400000, guid: 92527cd3ee1eb384bb61dbf31be896bf, type: 2}
   phase: 2
   condition:
     rid: 1123138582844538943

@@ -11,6 +11,7 @@ namespace Dice.Tests
     {
         private const string GiftId = "modifier.gift";
         private const string GiftFamily = "family.gift";
+        private static readonly ModifierFamilyDefinition.Id GiftFamilyId = TestFamilies.IdOf(GiftFamily);
         private const string StoryId = "story.return";
         private PlayerProgression progression;
         private string savePath;
@@ -118,7 +119,7 @@ namespace Dice.Tests
                 Assert.That(progression.CompletedStoryIds, Is.Empty);
                 Assert.That(progression.CompletedEncounterIds, Is.Empty);
                 Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous" }));
-                Assert.That(progression.KnownDiscoveredFamilies(catalog), Does.Not.Contain(GiftFamily));
+                Assert.That(progression.KnownDiscoveredFamilies(catalog), Has.No.Member(GiftFamilyId));
                 Assert.That(progression.Status.Kind, Is.EqualTo(FailureOf(operation)));
                 Assert.That(progression.Status.Detail, Is.Not.Empty);
             }
@@ -134,7 +135,7 @@ namespace Dice.Tests
             else
             {
                 Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
-                Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamily));
+                Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
                 if (operation == "story") Assert.That(saved.CompletedStoryIds, Is.EqualTo(new[] { StoryId }));
                 else Assert.That(saved.CompletedStoryIds, Is.Empty);
             }
@@ -144,7 +145,7 @@ namespace Dice.Tests
         public void RepeatedRewardSucceedsWithoutWritingOrReportingAChange()
         {
             var catalog = Catalog();
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamily }, new[] { GiftId });
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, new[] { GiftId });
             Assert.That(progression.PrepareProfile(savePath), Is.True);
             Assert.That(progression.ApplyProgressionReward(reward, catalog, out bool changed), Is.True);
             Assert.That(changed, Is.True);
@@ -162,20 +163,20 @@ namespace Dice.Tests
             var profile = new PlayerProfile();
             profile.UnlockModifier(GiftId);
             profile.UnlockModifier("modifier.future");
-            profile.DiscoverFamily("family.future");
+            profile.DiscoverFamily(TestFamilies.IdOf("family.future"));
             PlayerProfileFileStore.Save(ProfilePathFor(savePath), profile);
             Assert.That(progression.PrepareProfile(savePath), Is.True);
 
             var first = Catalog(Modifier(GiftId, GiftFamily), Modifier("modifier.starter", "family.starter", ModifierAccess.Starter));
             Assert.That(progression.KnownUnlockedModifiers(first), Is.EqualTo(new[] { GiftId }));
-            Assert.That(progression.KnownDiscoveredFamilies(first), Is.EquivalentTo(new[] { GiftFamily, "family.starter" }));
+            Assert.That(progression.KnownDiscoveredFamilies(first), Is.EquivalentTo(new[] { GiftFamilyId, TestFamilies.IdOf("family.starter") }));
 
             var second = Catalog(Modifier("modifier.future", "family.future"),
                 Modifier("modifier.other-starter", "family.other-starter", ModifierAccess.Starter));
             Assert.That(progression.KnownUnlockedModifiers(second), Is.EqualTo(new[] { "modifier.future" }));
-            Assert.That(progression.KnownDiscoveredFamilies(second), Is.EquivalentTo(new[] { "family.future", "family.other-starter" }));
+            Assert.That(progression.KnownDiscoveredFamilies(second), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.future"), TestFamilies.IdOf("family.other-starter") }));
             Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId, "modifier.future" }));
-            Assert.That(PlayerProfileFileStore.Load(progression.ProfilePath).DiscoveredFamilyIds, Is.EqualTo(new[] { "family.future" }));
+            Assert.That(PlayerProfileFileStore.Load(progression.ProfilePath).DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family.future") }));
         }
 
         [Test]
@@ -242,7 +243,7 @@ namespace Dice.Tests
 
         private bool ApplyOperation(string operation, MechanicalCatalog catalog)
         {
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamily }, new[] { GiftId });
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, new[] { GiftId });
             if (operation == "story") return progression.CompleteStoryJourney(StoryId, new[] { reward }, catalog);
             if (operation == "visit") return progression.PersistVisit(TestContent.EncounterId);
             bool result = progression.ApplyProgressionReward(reward, catalog, out bool changed);
@@ -268,7 +269,7 @@ namespace Dice.Tests
             }, modifiers.Length == 0 ? new[] { Modifier(GiftId, GiftFamily) } : modifiers);
 
         private static ModifierDefinition Modifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock)
-            => new ModifierDefinition(id, family, ModifierPhase.PlayHand, new AlwaysCondition(),
+            => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: access));
     }

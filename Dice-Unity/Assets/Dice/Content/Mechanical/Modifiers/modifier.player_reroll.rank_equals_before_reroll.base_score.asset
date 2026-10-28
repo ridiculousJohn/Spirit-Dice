@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.rank_equals_before_reroll.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.rank_equals_before_reroll.base_score
-  familyId: modifier.player_reroll.rank_equals_before_reroll
+  family: {fileID: 11400000, guid: 8497be2805ff7c04ebfddecab5c9446e, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539505

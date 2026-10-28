@@ -44,14 +44,14 @@ namespace Dice.Presentation
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
-            var families = new Dictionary<string, List<ModifierDefinition>>(StringComparer.Ordinal);
+            var families = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
             foreach (string id in modifierIds)
             {
                 var definition = catalog.GetModifier(id);
-                if (!families.TryGetValue(definition.FamilyId, out var family))
+                if (!families.TryGetValue(definition.Family, out var family))
                 {
                     family = new List<ModifierDefinition>();
-                    families.Add(definition.FamilyId, family);
+                    families.Add(definition.Family, family);
                 }
                 family.Add(definition);
             }

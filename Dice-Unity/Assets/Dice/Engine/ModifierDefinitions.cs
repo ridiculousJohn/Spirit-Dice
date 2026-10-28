@@ -48,7 +48,7 @@ namespace Dice.Engine
     public sealed class ModifierDefinition
     {
         public string Id { get; }
-        public string FamilyId { get; }
+        public ModifierFamilyDefinition Family { get; }
         public ModifierPhase Phase { get; }
         public IModifierCondition Condition { get; }
         public ReadOnlyCollection<ModifierEffect> Effects { get; }
@@ -62,12 +62,11 @@ namespace Dice.Engine
         /** A playable starter charm; every player has discovered its family. */
         public bool IsDiscoveredFromStart => Availability.Access == ModifierAccess.Starter && IsPlayable;
 
-        public ModifierDefinition(string id, string familyId, ModifierPhase phase, IModifierCondition condition,
+        public ModifierDefinition(string id, ModifierFamilyDefinition family, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
         {
             DefinitionValidation.RequireId(id, nameof(id));
-            DefinitionValidation.RequireId(familyId, nameof(familyId));
             if (!Enum.IsDefined(typeof(ModifierPhase), phase)) throw new ArgumentOutOfRangeException(nameof(phase));
             if (!Enum.IsDefined(typeof(ModifierActivationLimit), activationLimit)) throw new ArgumentOutOfRangeException(nameof(activationLimit));
             if (condition == null) throw new ArgumentNullException(nameof(condition));
@@ -76,7 +75,7 @@ namespace Dice.Engine
             foreach (var effect in entries)
                 if (effect == null) throw new ArgumentException("An effect is missing.", nameof(effects));
             Id = id;
-            FamilyId = familyId;
+            Family = family ?? throw new ArgumentNullException(nameof(family));
             Phase = phase;
             Condition = condition;
             Effects = entries.AsReadOnly();

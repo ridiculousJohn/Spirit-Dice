@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.high_die.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.high_die.rerolls
-  familyId: modifier.play_hand.high_die
+  family: {fileID: 11400000, guid: d00fcb4c70279d84cadc3ab94dfccc8c, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539130

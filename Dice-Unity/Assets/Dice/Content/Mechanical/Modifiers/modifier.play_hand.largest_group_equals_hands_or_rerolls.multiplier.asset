@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.largest_group_equals_hands_or_rerolls.multiplier
-  familyId: modifier.play_hand.largest_group_equals_hands_or_rerolls
+  family: {fileID: 11400000, guid: 0082012c0b1d91448bc21c5c82f94536, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539182

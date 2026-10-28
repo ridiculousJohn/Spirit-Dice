@@ -19,7 +19,7 @@ namespace Dice.Tests
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
             var random = new DeterministicRandom(7);
             var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, new[] { Owned },
-                Array.Empty<string>(), ref random, encounter, Array.Empty<string>());
+                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, encounter, Array.Empty<string>());
             Assert.That(generated.ModifierIds, Is.EqualTo(offered ? new[] { Addition } : Array.Empty<string>()));
         }
 
@@ -37,7 +37,7 @@ namespace Dice.Tests
                 string substitute = offered == Other ? Addition : Other;
                 var save = session.CaptureSave();
                 save.PendingReward.Options[0].DefinitionId = substitute;
-                save.ExcludedRewardFamilies = new[] { "family." + substitute };
+                save.ExcludedRewardFamilies = new[] { TestFamilies.IdOf("family." + substitute) };
                 var result = EncounterSession.RestoreEncounter(catalog, save);
                 if (catalog == immediate) Assert.That(result.Success, Is.True, result.Detail);
                 else
@@ -134,7 +134,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
             string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
-            => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand,
+            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(1, scope, scopeId, access));
 

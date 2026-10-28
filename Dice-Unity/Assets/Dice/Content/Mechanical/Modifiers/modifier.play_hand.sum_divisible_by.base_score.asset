@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_divisible_by.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.sum_divisible_by.base_score
-  familyId: modifier.play_hand.sum_divisible_by
+  family: {fileID: 11400000, guid: a5de7e5498534004e8b6a5f0777f9105, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539370

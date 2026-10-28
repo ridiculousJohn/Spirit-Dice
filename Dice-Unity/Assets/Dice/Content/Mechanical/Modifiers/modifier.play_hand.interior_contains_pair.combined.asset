@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.interior_contains_pair.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.interior_contains_pair.combined
-  familyId: modifier.play_hand.interior_contains_pair
+  family: {fileID: 11400000, guid: 4b7d9a4c0dc7a4e4b94d884301883d81, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539134

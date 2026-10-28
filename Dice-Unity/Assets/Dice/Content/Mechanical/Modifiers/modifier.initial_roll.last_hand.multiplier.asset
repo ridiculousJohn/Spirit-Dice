@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.last_hand.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.initial_roll.last_hand.multiplier
-  familyId: modifier.initial_roll.last_hand
+  family: {fileID: 11400000, guid: 36664f84193508a41a58bed5bfd97c3f, type: 2}
   phase: 0
   condition:
     rid: 1123138582844538912

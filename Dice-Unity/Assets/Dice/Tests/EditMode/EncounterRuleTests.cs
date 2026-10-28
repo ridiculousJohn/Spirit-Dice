@@ -319,7 +319,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierEffect effect, ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)
-            => new ModifierDefinition(id, "family." + id, phase, condition, new[] { effect }, limit);
+            => new ModifierDefinition(id, TestFamilies.Of("family." + id), phase, condition, new[] { effect }, limit);
 
         private static MechanicalCatalog Catalog(int paidRerolls = 2, int hands = 5,
             IEnumerable<StageDefinition> stages = null, ModifierDefinition[] modifiers = null)

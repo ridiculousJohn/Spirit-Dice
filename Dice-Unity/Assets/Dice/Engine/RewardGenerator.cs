@@ -15,7 +15,7 @@ namespace Dice.Engine
 
         /** The offer after clearing the stage numbered rewardCycleIndex, for the stage after it. */
         public static ModifierRewardGeneration GenerateModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
-            int rewardCycleIndex, IEnumerable<string> ownedModifierIds, IEnumerable<string> excludedFamilyIds,
+            int rewardCycleIndex, IEnumerable<string> ownedModifierIds, IEnumerable<ModifierFamilyDefinition.Id> excludedFamilyIds,
             ref DeterministicRandom random, EncounterDefinition encounter = null, IEnumerable<string> unlockedModifierIds = null)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
@@ -27,11 +27,10 @@ namespace Dice.Engine
             var unlocked = new HashSet<string>(unlockedModifierIds ?? Array.Empty<string>(), StringComparer.Ordinal);
             var owned = new HashSet<string>(StringComparer.Ordinal);
             foreach (string id in ownedModifierIds) { catalog.GetModifier(id); owned.Add(id); }
-            var history = new List<string>();
-            var excluded = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string familyId in excludedFamilyIds)
+            var history = new List<ModifierFamilyDefinition.Id>();
+            var excluded = new HashSet<ModifierFamilyDefinition.Id>();
+            foreach (var familyId in excludedFamilyIds)
             {
-                DefinitionValidation.RequireId(familyId, nameof(excludedFamilyIds));
                 if (!catalog.HasFamily(familyId))
                     throw new ArgumentException("An excluded modifier family is missing from the catalog.", nameof(excludedFamilyIds));
                 if (excluded.Add(familyId)) history.Add(familyId);
@@ -40,17 +39,17 @@ namespace Dice.Engine
             var pools = new List<ModifierRewardPoolDefinition>();
             foreach (string poolId in layout.PoolIds) pools.Add(catalog.GetRewardPool(poolId));
             var offeredIds = new List<string>();
-            var currentFamilies = new HashSet<string>(StringComparer.Ordinal);
+            var currentFamilies = new HashSet<ModifierFamilyDefinition.Id>();
             foreach (var pool in pools)
             {
                 var available = AvailableSlotModifiers(catalog, policy, incomingStageNumber, pool, owned, currentFamilies, encounter, unlocked);
-                var candidates = available.FindAll(id => !excluded.Contains(catalog.GetModifier(id).FamilyId));
+                var candidates = available.FindAll(id => !excluded.Contains(catalog.GetModifier(id).Family.Identity));
                 if (candidates.Count < MinimumCandidatesBeforeHistoryBypass)
                     candidates = available;
                 string selected = candidates.Count == 0 ? EligibleFallback(catalog, policy, incomingStageNumber, pool, encounter, unlocked)
                     : SelectModifier(catalog, policy, incomingStageNumber, candidates, ref random);
                 if (selected == null) continue;
-                string selectedFamily = catalog.GetModifier(selected).FamilyId;
+                var selectedFamily = catalog.GetModifier(selected).Family.Identity;
                 offeredIds.Add(selected);
                 currentFamilies.Add(selectedFamily);
                 if (excluded.Add(selectedFamily)) history.Add(selectedFamily);
@@ -106,7 +105,7 @@ namespace Dice.Engine
         }
 
         private static List<string> EligibleModifiers(MechanicalCatalog catalog, ModifierRewardPoolDefinition pool,
-            int incomingStageNumber, HashSet<string> owned, HashSet<string> currentFamilies,
+            int incomingStageNumber, HashSet<string> owned, HashSet<ModifierFamilyDefinition.Id> currentFamilies,
             EncounterDefinition encounter, ISet<string> unlocked)
         {
             var candidates = new List<string>();
@@ -120,14 +119,14 @@ namespace Dice.Engine
             {
                 var modifier = catalog.GetModifier(id);
                 if (modifier.RewardEligible && modifier.Availability.IsAvailable(encounter, unlocked, id) &&
-                    !owned.Contains(id) && !currentFamilies.Contains(modifier.FamilyId)) candidates.Add(id);
+                    !owned.Contains(id) && !currentFamilies.Contains(modifier.Family.Identity)) candidates.Add(id);
             }
             return candidates;
         }
 
         internal static List<string> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<string> owned,
-            HashSet<string> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked)
+            HashSet<ModifierFamilyDefinition.Id> currentFamilies, EncounterDefinition encounter, ISet<string> unlocked)
             => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, incomingStageNumber, owned,
                 currentFamilies, encounter, unlocked));
 

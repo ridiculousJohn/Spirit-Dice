@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.no_dice_rerolled.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.no_dice_rerolled.base_score
-  familyId: modifier.play_hand.no_dice_rerolled
+  family: {fileID: 11400000, guid: 4a05af4b0c0f6c54e97d080e2a19dd1e, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539235

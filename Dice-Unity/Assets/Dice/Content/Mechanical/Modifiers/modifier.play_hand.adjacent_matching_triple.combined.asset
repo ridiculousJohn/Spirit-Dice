@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_matching_triple.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.adjacent_matching_triple.combined
-  familyId: modifier.play_hand.adjacent_matching_triple
+  family: {fileID: 11400000, guid: 2bd5e7500e0c8af4ca10bb1c25ad7dd2, type: 2}
   phase: 2
   condition:
     rid: 1123138582844538963

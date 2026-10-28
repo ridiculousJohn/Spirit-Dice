@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Dice.Engine;
+using Dice.UnityContent;
 using UnityEngine;
 
 namespace Dice.Presentation
@@ -149,19 +150,19 @@ namespace Dice.Presentation
         }
     }
 
-    /** The name a charm family is shown under, for the family id its charms share. */
+    /** The name a charm family is shown under. */
     [Serializable]
     public sealed class ModifierFamilyWording
     {
-        [SerializeField] private string familyId;
+        [SerializeField] private ModifierFamilyAsset family;
         [SerializeField] private string name;
 
-        public string FamilyId => familyId;
+        public ModifierFamilyAsset Family => family;
         public string Name => name;
 
-        public ModifierFamilyWording(string familyId, string name)
+        public ModifierFamilyWording(ModifierFamilyAsset family, string name)
         {
-            this.familyId = familyId;
+            this.family = family;
             this.name = name;
         }
     }

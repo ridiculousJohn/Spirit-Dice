@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.maximum_at_most_rerolls_remaining.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.maximum_at_most_rerolls_remaining.combined
-  familyId: modifier.play_hand.maximum_at_most_rerolls_remaining
+  family: {fileID: 11400000, guid: 86f1a7fcc5b34ed41a68ff578c47b5d0, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539188

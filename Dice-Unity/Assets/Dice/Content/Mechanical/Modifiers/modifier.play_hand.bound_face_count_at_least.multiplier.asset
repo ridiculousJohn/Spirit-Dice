@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.bound_face_count_at_least.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.bound_face_count_at_least.multiplier
-  familyId: modifier.play_hand.bound_face_count_at_least
+  family: {fileID: 11400000, guid: bcf0a3e08e64b424d898c543f1c0de3b, type: 2}
   phase: 2
   condition:
     rid: 1123138582844538984

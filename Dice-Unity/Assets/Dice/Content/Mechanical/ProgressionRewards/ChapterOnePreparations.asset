@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: ChapterOnePreparations
   m_EditorClassIdentifier: 
-  discoveredFamilyIds:
-  - modifier.play_hand.interior_pair_matches_edge
-  - modifier.play_hand.extreme_equals_hands_remaining
+  discoveredFamilies:
+  - {fileID: 11400000, guid: 52cfce392db9a5c4ea4ae6b8a3ee26cb, type: 2}
+  - {fileID: 11400000, guid: 321a59622f851724cb426e8ef6efcfbd, type: 2}
   grantedModifiers:
   - {fileID: 11400000, guid: c9c616a498b9c264a9a9394603f4577f, type: 2}
   - {fileID: 11400000, guid: 0703508354705dd4b8fc8ba48c2ca01e, type: 2}

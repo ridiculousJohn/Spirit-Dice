@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.ordered.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.ordered.combined
-  familyId: modifier.play_hand.ordered
+  family: {fileID: 11400000, guid: ed4b0af5c54e49e4a96b27e759090601, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539264

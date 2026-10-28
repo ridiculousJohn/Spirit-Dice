@@ -18,7 +18,7 @@ namespace Dice.Presentation
         private readonly Dictionary<ModifierDefinition, ModifierPresentationAsset> entries =
             new Dictionary<ModifierDefinition, ModifierPresentationAsset>();
         private readonly Dictionary<ModifierDefinition, int> order = new Dictionary<ModifierDefinition, int>();
-        private readonly Dictionary<string, string> familyNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly Dictionary<ModifierFamilyDefinition.Id, string> familyNames = new Dictionary<ModifierFamilyDefinition.Id, string>();
         private readonly Dictionary<ModifierEffectKind, ModifierEffectWording> wording =
             new Dictionary<ModifierEffectKind, ModifierEffectWording>();
         private readonly Dictionary<ModifierPhase, ModifierPhaseWording> phaseWording =
@@ -66,13 +66,19 @@ namespace Dice.Presentation
             foreach (ModifierFamilyWording family in skin.FamilyWording)
             {
                 if (family == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has a missing family name.");
-                if (string.IsNullOrWhiteSpace(family.FamilyId) || string.IsNullOrWhiteSpace(family.Name))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " has an incomplete family name for the family '" +
-                        family.FamilyId + "'.");
-                if (familyNames.ContainsKey(family.FamilyId))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " names the family " + family.FamilyId + " twice.");
-                familyNames.Add(family.FamilyId, family.Name);
+                if (family.Family == null)
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has a family name without a family: '" + family.Name + "'.");
+                if (string.IsNullOrWhiteSpace(family.Name))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has an incomplete family name for the family " +
+                        family.Family.name + ".");
+                if (familyNames.ContainsKey(family.Family.Identity))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " names the family " + family.Family.name + " twice.");
+                familyNames.Add(family.Family.Identity, family.Name);
             }
+            foreach (ModifierAsset modifier in content.Modifiers)
+                if (!familyNames.ContainsKey(content.GetDefinition(modifier).Family.Identity))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no name for the family " +
+                        modifier.Family.name + " of the charm " + modifier.Id + ".");
             foreach (ModifierEffectWording effect in skin.EffectWording)
             {
                 if (effect == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has missing effect wording.");
@@ -120,9 +126,6 @@ namespace Dice.Presentation
             RequireFormat(skin, format.ContributionSeparator, "contributionSeparator", true);
             foreach (ModifierDefinition definition in Catalog.Modifiers)
             {
-                if (!familyNames.ContainsKey(definition.FamilyId))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no name for the family " + definition.FamilyId +
-                        " of the charm " + definition.Id + ".");
                 if (definition.Effects.Count == 0 && string.IsNullOrWhiteSpace(skin.NoEffectsText))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no text for the charm without effects " + definition.Id + ".");
                 foreach (ModifierEffect effect in definition.Effects)
@@ -172,7 +175,7 @@ namespace Dice.Presentation
         public string GetFamilyName(ModifierDefinition definition)
         {
             Entry(definition);
-            return familyNames[definition.FamilyId];
+            return familyNames[definition.Family.Identity];
         }
 
         /** The position of the charm's presentation in the skin; screens that list a family's variants list them in this order. */

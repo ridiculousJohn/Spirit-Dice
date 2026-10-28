@@ -31,7 +31,7 @@ namespace Dice.Presentation
         internal const float UnavailableVariantAlpha = .35f;
         private Action<ModifierDefinition> selected;
 
-        public string FamilyId { get; private set; }
+        public ModifierFamilyDefinition Family { get; private set; }
         public bool IsUndiscovered { get; private set; }
 
         public static SpiritModifierFamilyRow Create(SpiritModifierFamilyRow prefab, string name, Transform parent)
@@ -55,7 +55,7 @@ namespace Dice.Presentation
             IsUndiscovered = false;
             artwork.SetActive(true);
             variantRoot.SetActive(true);
-            FamilyId = first.FamilyId;
+            Family = first.Family;
             familyName.text = charms.GetFamilyName(first);
             var theme = SpiritUi.GetTheme(transform);
             condition.text = SpiritRewardCard.GetModifierDescription(charms, first, SpiritUi.GetWording(transform).charmText, theme.amber,
@@ -70,7 +70,7 @@ namespace Dice.Presentation
                 item.Button.gameObject.SetActive(index < definitions.Count);
                 if (index >= definitions.Count) continue;
                 var definition = definitions[index];
-                if (definition.FamilyId != FamilyId)
+                if (definition.Family != Family)
                     throw new ArgumentException("A family row cannot mix families.", nameof(definitions));
                 item.Definition = definition;
                 item.Category.sprite = charms.GetCategorySprite(definition);
@@ -86,9 +86,9 @@ namespace Dice.Presentation
             LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
         }
 
-        public void RenderUndiscovered(string familyId)
+        public void RenderUndiscovered(ModifierFamilyDefinition family)
         {
-            FamilyId = familyId;
+            Family = family;
             IsUndiscovered = true;
             artwork.SetActive(false);
             variantRoot.SetActive(false);

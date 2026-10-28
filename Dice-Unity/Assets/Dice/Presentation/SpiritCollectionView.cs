@@ -21,8 +21,8 @@ namespace Dice.Presentation
         private readonly List<SpiritModifierFamilyRow> rowPool = new List<SpiritModifierFamilyRow>();
         private readonly List<List<ModifierDefinition>> families = new List<List<ModifierDefinition>>();
         private readonly HashSet<string> unlockedIds = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<string> ownedFamilyIds = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<string> discoveredFamilyIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<ModifierFamilyDefinition.Id> ownedFamilyIds = new HashSet<ModifierFamilyDefinition.Id>();
+        private readonly HashSet<ModifierFamilyDefinition.Id> discoveredFamilyIds = new HashSet<ModifierFamilyDefinition.Id>();
         [SerializeField] private Button closeButton;
         [SerializeField] private Button filterButton;
         [SerializeField] private SpiritModifierFamilyRow rowPrefab;
@@ -54,7 +54,7 @@ namespace Dice.Presentation
 
         public void Show(MechanicalCatalog mechanicalCatalog, ModifierPresentationCatalog charmPresentation,
             IReadOnlyList<string> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog,
-            IReadOnlyList<string> profileDiscoveredFamilyIds = null)
+            IReadOnlyList<ModifierFamilyDefinition.Id> profileDiscoveredFamilyIds = null)
         {
             if (mechanicalCatalog == null) throw new ArgumentNullException(nameof(mechanicalCatalog));
             if (charmPresentation == null) throw new ArgumentNullException(nameof(charmPresentation));
@@ -69,24 +69,24 @@ namespace Dice.Presentation
             if (profileUnlockedModifierIds != null)
                 foreach (string id in profileUnlockedModifierIds) unlockedIds.Add(id);
             if (profileDiscoveredFamilyIds != null)
-                foreach (string id in profileDiscoveredFamilyIds) discoveredFamilyIds.Add(id);
-            var grouped = new Dictionary<string, List<ModifierDefinition>>(StringComparer.Ordinal);
+                foreach (var id in profileDiscoveredFamilyIds) discoveredFamilyIds.Add(id);
+            var grouped = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
             int permanentCount = 0;
             int unlockedCount = 0;
             int starterCount = 0;
             foreach (var definition in catalog.Modifiers)
             {
                 if (!definition.RewardEligible || definition.Availability.Access == ModifierAccess.EncounterExclusive) continue;
-                if (!grouped.TryGetValue(definition.FamilyId, out var family))
+                if (!grouped.TryGetValue(definition.Family, out var family))
                 {
                     family = new List<ModifierDefinition>();
-                    grouped.Add(definition.FamilyId, family);
+                    grouped.Add(definition.Family, family);
                 }
                 family.Add(definition);
                 if (definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id))
                 {
-                    ownedFamilyIds.Add(definition.FamilyId);
-                    discoveredFamilyIds.Add(definition.FamilyId);
+                    ownedFamilyIds.Add(definition.Family.Identity);
+                    discoveredFamilyIds.Add(definition.Family.Identity);
                 }
                 if (definition.Availability.Access == ModifierAccess.PermanentUnlock)
                 {
@@ -119,7 +119,7 @@ namespace Dice.Presentation
             string firstSelectableId = null;
             foreach (var family in families)
             {
-                string familyId = family[0].FamilyId;
+                var familyId = family[0].Family.Identity;
                 bool discovered = discoveredFamilyIds.Contains(familyId);
                 if (filter == SpiritCollectionFilter.Owned && !ownedFamilyIds.Contains(familyId) ||
                     filter == SpiritCollectionFilter.Discovered && !discovered) continue;
@@ -131,7 +131,7 @@ namespace Dice.Presentation
                 rows.Add(row);
                 if (!discovered)
                 {
-                    row.RenderUndiscovered(familyId);
+                    row.RenderUndiscovered(family[0].Family);
                     continue;
                 }
                 row.Render(charms, family, StatusText, Select,
@@ -163,7 +163,7 @@ namespace Dice.Presentation
         {
             bool visible = false;
             foreach (var row in rows)
-                if (!row.IsUndiscovered && row.FamilyId == definition.FamilyId) visible = true;
+                if (!row.IsUndiscovered && row.Family == definition.Family) visible = true;
             if (!visible) return;
             SelectedModifierId = definition.Id;
             var wording = Wording;

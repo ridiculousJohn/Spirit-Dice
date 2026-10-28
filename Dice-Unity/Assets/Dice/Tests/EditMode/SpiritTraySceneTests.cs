@@ -822,7 +822,7 @@ namespace Dice.Tests
 
         internal static ModifierDefinition Definition(string id, ModifierPhase phase = ModifierPhase.PlayHand,
             ModifierEffect effect = null)
-            => new ModifierDefinition(id, id, phase, new AlwaysCondition(), new[] { effect ?? new AddBaseScoreEffect(1) });
+            => new ModifierDefinition(id, TestFamilies.Of(id), phase, new AlwaysCondition(), new[] { effect ?? new AddBaseScoreEffect(1) });
 
         /** A contribution of the definition, made through the engine's own constructor. */
         internal static ModifierContribution Contribution(ModifierDefinition definition, long instanceId = 1, long baseScore = 1,

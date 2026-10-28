@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_face_unchanged.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.selected_face_unchanged.rerolls
-  familyId: modifier.player_reroll.selected_face_unchanged
+  family: {fileID: 11400000, guid: b11d022f961dde84284256c38396a394, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539521

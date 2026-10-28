@@ -62,14 +62,14 @@ namespace Dice.App
                     yield return modifier.Id;
         }
 
-        public IReadOnlyList<string> KnownDiscoveredFamilies(MechanicalCatalog catalog)
+        /** The profile's discovered families that the catalog has, in the catalog's family order. */
+        public IReadOnlyList<ModifierFamilyDefinition.Id> KnownDiscoveredFamilies(MechanicalCatalog catalog)
         {
-            if (profile == null || catalog == null) return Array.Empty<string>();
-            var known = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in profile.GetDiscoveredFamilyIds(catalog))
-                if (catalog.HasFamily(id)) known.Add(id);
-            var result = new List<string>(known);
-            result.Sort(StringComparer.Ordinal);
+            if (profile == null || catalog == null) return Array.Empty<ModifierFamilyDefinition.Id>();
+            var discovered = new HashSet<ModifierFamilyDefinition.Id>(profile.GetDiscoveredFamilyIds(catalog));
+            var result = new List<ModifierFamilyDefinition.Id>();
+            foreach (var family in catalog.Families)
+                if (discovered.Contains(family.Identity)) result.Add(family.Identity);
             return result;
         }
 

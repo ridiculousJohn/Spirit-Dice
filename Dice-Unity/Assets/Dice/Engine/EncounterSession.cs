@@ -20,7 +20,7 @@ namespace Dice.Engine
         public EncounterSnapshot Snapshot => new EncounterSnapshot(state, definition, catalog.Version);
 
         private EncounterSession(MechanicalCatalog catalog, string encounterId, ulong seed, IEnumerable<string> unlockedModifierIds,
-            IEnumerable<string> discoveredFamilyIds)
+            IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             definition = catalog.GetEncounter(encounterId);
@@ -43,10 +43,10 @@ namespace Dice.Engine
                     DefinitionId = definition.StartingModifiers[i]
                 };
             // A session created without the player's discoveries, as previews and diagnostics are, has discovered every family.
-            AddDiscoveredFamilies(discoveredFamilyIds ?? catalog.FamilyIds);
+            AddDiscoveredFamilies(discoveredFamilyIds ?? FamilyIds(catalog));
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.IsDiscoveredFromStart && !state.DiscoveredFamilyIds.Contains(modifier.FamilyId))
-                    state.DiscoveredFamilyIds.Add(modifier.FamilyId);
+                if (modifier.IsDiscoveredFromStart && !state.DiscoveredFamilyIds.Contains(modifier.Family.Identity))
+                    state.DiscoveredFamilyIds.Add(modifier.Family.Identity);
             AddUnlockedModifiers(unlockedModifierIds ?? Array.Empty<string>());
             var events = new List<RuleEvent>();
             StartStage(state, events);
@@ -54,14 +54,21 @@ namespace Dice.Engine
         }
 
         public static EncounterSession CreateEncounter(MechanicalCatalog catalog, string encounterId, ulong seed,
-            IEnumerable<string> unlockedModifierIds = null, IEnumerable<string> discoveredFamilyIds = null)
+            IEnumerable<string> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
             => new EncounterSession(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);
 
-        public void AddDiscoveredFamilies(IEnumerable<string> discoveredFamilyIds)
+        private static List<ModifierFamilyDefinition.Id> FamilyIds(MechanicalCatalog catalog)
+        {
+            var ids = new List<ModifierFamilyDefinition.Id>();
+            foreach (var family in catalog.Families) ids.Add(family.Identity);
+            return ids;
+        }
+
+        public void AddDiscoveredFamilies(IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds)
         {
             if (discoveredFamilyIds == null) throw new ArgumentNullException(nameof(discoveredFamilyIds));
             var next = state.Copy();
-            foreach (string id in discoveredFamilyIds)
+            foreach (var id in discoveredFamilyIds)
             {
                 if (!catalog.HasFamily(id))
                     throw new ArgumentException("Discovered families must exist in the catalog.", nameof(discoveredFamilyIds));
@@ -81,7 +88,7 @@ namespace Dice.Engine
                 if (modifier.Availability.Access != ModifierAccess.PermanentUnlock)
                     throw new ArgumentException("Unlocks must reference permanent-unlock modifiers.", nameof(unlockedModifierIds));
                 if (known.Add(id)) next.UnlockedModifierIds.Add(id);
-                if (!next.DiscoveredFamilyIds.Contains(modifier.FamilyId)) next.DiscoveredFamilyIds.Add(modifier.FamilyId);
+                if (!next.DiscoveredFamilyIds.Contains(modifier.Family.Identity)) next.DiscoveredFamilyIds.Add(modifier.Family.Identity);
             }
             state = next;
         }
@@ -207,7 +214,7 @@ namespace Dice.Engine
             var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.ClearedStageNumber,
                 owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds);
             next.PendingModifierOfferUnlockedIds = new List<string>(next.UnlockedModifierIds);
-            next.ExcludedRewardFamilies = new List<string>(generated.ExcludedFamilyIds);
+            next.ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(generated.ExcludedFamilyIds);
             // Upgrade choices are fixed before any modifier refresh can consume the reward stream.
             if (!isRefresh)
                 next.PendingUpgradeCategories = new List<HandCategory>(RewardGenerator.GenerateHandUpgrades(catalog,
@@ -446,7 +453,7 @@ namespace Dice.Engine
         {
             if (!definition.HasUnlockMilestone(next.ClearedStageNumber)) return false;
             var candidates = definition.UnlockCandidates(catalog, next.UnlockedModifierIds, next.DiscoveredFamilyIds);
-            next.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(next.DiscoveredFamilyIds);
+            next.PendingUnlockOfferDiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(next.DiscoveredFamilyIds);
             var options = new List<RewardOption>();
             while (options.Count < ModifierUnlockMilestone.OfferSize && candidates.Count > 0)
             {
@@ -465,7 +472,7 @@ namespace Dice.Engine
             if (!next.UnlockedModifierIds.Contains(option.DefinitionId))
             {
                 next.UnlockedModifierIds.Add(option.DefinitionId);
-                string familyId = catalog.GetModifier(option.DefinitionId).FamilyId;
+                var familyId = catalog.GetModifier(option.DefinitionId).Family.Identity;
                 if (!next.DiscoveredFamilyIds.Contains(familyId)) next.DiscoveredFamilyIds.Add(familyId);
                 next.NewlyUnlockedModifierIds.Add(option.DefinitionId);
                 events.Add(new ModifierUnlockedEvent(next, catalog.GetModifier(option.DefinitionId)));
@@ -527,13 +534,13 @@ namespace Dice.Engine
         internal RewardOffer PendingReward;
         internal long NextOfferId = 1;
         internal long NextOptionId = 1;
-        internal List<string> ExcludedRewardFamilies = new List<string>();
+        internal List<ModifierFamilyDefinition.Id> ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>();
         internal List<HandCategory> RecentHandUpgrades = new List<HandCategory>();
         internal List<HandCategory> PendingUpgradeCategories;
         internal List<string> UnlockedModifierIds = new List<string>();
         internal List<string> NewlyUnlockedModifierIds = new List<string>();
-        internal List<string> DiscoveredFamilyIds = new List<string>();
-        internal List<string> PendingUnlockOfferDiscoveredFamilyIds;
+        internal List<ModifierFamilyDefinition.Id> DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
+        internal List<ModifierFamilyDefinition.Id> PendingUnlockOfferDiscoveredFamilyIds;
         internal List<string> PendingModifierOfferUnlockedIds;
 
         internal EncounterState Copy()
@@ -546,13 +553,14 @@ namespace Dice.Engine
             copy.PieceStates = (PieceInteractionState[])PieceStates.Clone();
             copy.RuleStates = new EncounterRuleState[RuleStates.Length];
             for (int i = 0; i < RuleStates.Length; ++i) copy.RuleStates[i] = RuleStates[i]?.Copy();
-            copy.ExcludedRewardFamilies = new List<string>(ExcludedRewardFamilies);
+            copy.ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(ExcludedRewardFamilies);
             copy.RecentHandUpgrades = new List<HandCategory>(RecentHandUpgrades);
             copy.PendingUpgradeCategories = PendingUpgradeCategories == null ? null : new List<HandCategory>(PendingUpgradeCategories);
             copy.UnlockedModifierIds = new List<string>(UnlockedModifierIds);
             copy.NewlyUnlockedModifierIds = new List<string>(NewlyUnlockedModifierIds);
-            copy.DiscoveredFamilyIds = new List<string>(DiscoveredFamilyIds);
-            copy.PendingUnlockOfferDiscoveredFamilyIds = PendingUnlockOfferDiscoveredFamilyIds == null ? null : new List<string>(PendingUnlockOfferDiscoveredFamilyIds);
+            copy.DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(DiscoveredFamilyIds);
+            copy.PendingUnlockOfferDiscoveredFamilyIds = PendingUnlockOfferDiscoveredFamilyIds == null ? null
+                : new List<ModifierFamilyDefinition.Id>(PendingUnlockOfferDiscoveredFamilyIds);
             copy.PendingModifierOfferUnlockedIds = PendingModifierOfferUnlockedIds == null ? null : new List<string>(PendingModifierOfferUnlockedIds);
             return copy;
         }

@@ -186,7 +186,7 @@ namespace Dice.Engine
                 RuleRandom = RestoreRuleRandom(definition, save),
                 NextOfferId = save.NextOfferId, NextOptionId = save.NextOptionId,
                 Modifiers = new ModifierInstanceState[save.Modifiers.Length],
-                ExcludedRewardFamilies = new List<string>(save.ExcludedRewardFamilies),
+                ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(save.ExcludedRewardFamilies),
                 RecentHandUpgrades = new List<HandCategory>(save.RecentHandUpgrades),
                 PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories)
             };
@@ -200,10 +200,10 @@ namespace Dice.Engine
             foreach (var modifier in catalog.Modifiers) definitions.Add(modifier.Id, modifier);
             ValidateModifiers(catalog, definition, save, state, definitions, postPlay);
             ValidateRerollAccounting(definition, state);
-            var excluded = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string family in state.ExcludedRewardFamilies)
+            var excluded = new HashSet<ModifierFamilyDefinition.Id>();
+            foreach (var family in state.ExcludedRewardFamilies)
             {
-                Require(!string.IsNullOrWhiteSpace(family) && excluded.Add(family), "Reward family history is invalid.");
+                Require(excluded.Add(family), "Reward family history is invalid.");
                 if (!catalog.HasFamily(family))
                     throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Reward family is missing from the catalog.");
             }
@@ -250,24 +250,24 @@ namespace Dice.Engine
         private static void ValidateDiscoveries(MechanicalCatalog catalog, EncounterSaveData save, EncounterState state)
         {
             Require(save.DiscoveredFamilyIds != null, "Discovered family IDs are missing.");
-            var discovered = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in save.DiscoveredFamilyIds)
+            var discovered = new HashSet<ModifierFamilyDefinition.Id>();
+            foreach (var id in save.DiscoveredFamilyIds)
             {
-                Require(id != null && discovered.Add(id), "Discovered family IDs must be valid and unique.");
+                Require(discovered.Add(id), "Discovered family IDs must be unique.");
                 if (!catalog.HasFamily(id))
                     throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "A discovered family is missing from the catalog.");
             }
-            state.DiscoveredFamilyIds = new List<string>(save.DiscoveredFamilyIds);
+            state.DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(save.DiscoveredFamilyIds);
             foreach (string id in state.UnlockedModifierIds)
-                Require(discovered.Contains(catalog.GetModifier(id).FamilyId), "An owned modifier requires a discovered family.");
+                Require(discovered.Contains(catalog.GetModifier(id).Family.Identity), "An owned modifier requires a discovered family.");
             if (state.Phase == EncounterPhase.ChoosingUnlock)
             {
                 Require(save.PendingUnlockOfferDiscoveredFamilyIds != null, "Pending unlock discovery IDs are missing.");
-                var pending = new HashSet<string>(StringComparer.Ordinal);
-                foreach (string id in save.PendingUnlockOfferDiscoveredFamilyIds)
-                    Require(id != null && discovered.Contains(id) && pending.Add(id),
+                var pending = new HashSet<ModifierFamilyDefinition.Id>();
+                foreach (var id in save.PendingUnlockOfferDiscoveredFamilyIds)
+                    Require(discovered.Contains(id) && pending.Add(id),
                         "Pending unlock discoveries must be unique and currently discovered.");
-                state.PendingUnlockOfferDiscoveredFamilyIds = new List<string>(save.PendingUnlockOfferDiscoveredFamilyIds);
+                state.PendingUnlockOfferDiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(save.PendingUnlockOfferDiscoveredFamilyIds);
             }
             else Require(save.PendingUnlockOfferDiscoveredFamilyIds == null, "Pending unlock discoveries require an unlock offer.");
         }
@@ -611,8 +611,8 @@ namespace Dice.Engine
             Require(options.Count <= layout.PoolIds.Count, "Modifier offer has too many options.");
             var owned = new HashSet<string>(StringComparer.Ordinal);
             foreach (var instance in state.Modifiers) owned.Add(instance.DefinitionId);
-            var offered = new HashSet<string>(StringComparer.Ordinal);
-            var history = new HashSet<string>(state.ExcludedRewardFamilies, StringComparer.Ordinal);
+            var offered = new HashSet<ModifierFamilyDefinition.Id>();
+            var history = new HashSet<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies);
             var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
             int nextOption = 0;
             foreach (string poolId in layout.PoolIds)
@@ -627,8 +627,8 @@ namespace Dice.Engine
                 var modifier = catalog.GetModifier(option.DefinitionId);
                 Require(eligible.Count == 0 ? option.DefinitionId == fallback : eligible.Contains(option.DefinitionId),
                     "Modifier option violates its scope, unlock, pool, or tier eligibility.");
-                Require(history.Contains(modifier.FamilyId), "An offered family is absent from reward history.");
-                offered.Add(modifier.FamilyId);
+                Require(history.Contains(modifier.Family.Identity), "An offered family is absent from reward history.");
+                offered.Add(modifier.Family.Identity);
             }
             Require(nextOption == options.Count, "Modifier offer contains an extra option.");
         }
@@ -642,7 +642,7 @@ namespace Dice.Engine
             foreach (var option in options)
             {
                 Require(definition.UnlockRewardModifierIds.Contains(option.DefinitionId) && offered.Add(option.DefinitionId) &&
-                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(option.DefinitionId).FamilyId),
+                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(option.DefinitionId).Family.Identity),
                     "Unlock options must be distinct entries from discovered families in the authored unlock pool.");
                 // Profile progress can have been committed before the corresponding run save was written.
                 candidates.Add(option.DefinitionId);

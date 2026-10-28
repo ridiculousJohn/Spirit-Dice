@@ -81,8 +81,8 @@ namespace Dice.Tests
             Assert.That(screen.Narration.gameObject.activeSelf, Is.True);
             Assert.That(screen.Narration.text, Does.Contain(Line));
             var additions = catalog.GetEncounter(TestContent.EncounterId).EncounterModifierIds
-                .Select(id => catalog.GetModifier(id).FamilyId).Distinct();
-            Assert.That(screen.Rows.Where(row => row.gameObject.activeSelf).Select(row => row.FamilyId), Is.EqualTo(additions));
+                .Select(id => catalog.GetModifier(id).Family).Distinct();
+            Assert.That(screen.Rows.Where(row => row.gameObject.activeSelf).Select(row => row.Family), Is.EqualTo(additions));
 
             screen.BeginButton.onClick.Invoke();
             Assert.That(introduction.IsOpen, Is.False, "Continue dismisses the introduction.");

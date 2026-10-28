@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.initial_roll.initial_pair.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.initial_roll.initial_pair.base_score
-  familyId: modifier.initial_roll.initial_pair
+  family: {fileID: 11400000, guid: 2126fc8efd2f38744906ef6572f1f278, type: 2}
   phase: 0
   condition:
     rid: 1123138582844538889

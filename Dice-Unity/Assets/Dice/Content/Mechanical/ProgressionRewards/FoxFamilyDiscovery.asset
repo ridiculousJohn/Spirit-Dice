@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: FoxFamilyDiscovery
   m_EditorClassIdentifier: 
-  discoveredFamilyIds:
-  - modifier.initial_roll.first_hand
-  - modifier.player_reroll.rank_equals_before_reroll
-  - modifier.initial_roll.initial_rank_above_previous
+  discoveredFamilies:
+  - {fileID: 11400000, guid: 1099eae1ed344ad4d8ffaea3413c1123, type: 2}
+  - {fileID: 11400000, guid: 8497be2805ff7c04ebfddecab5c9446e, type: 2}
+  - {fileID: 11400000, guid: ac9f75a6aed785c429dd24108a36e517, type: 2}
   grantedModifiers:
   - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}

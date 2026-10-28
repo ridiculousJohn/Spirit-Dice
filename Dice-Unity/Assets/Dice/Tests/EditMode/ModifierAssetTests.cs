@@ -12,13 +12,16 @@ namespace Dice.Tests
 {
     public sealed class ModifierAssetTests
     {
+        private const string FamilyGuid = "0f1e2d3c4b5a69788796a5b4c3d2e1f0";
         private readonly List<ScriptableObject> assets = new List<ScriptableObject>();
+        private ModifierFamilyAsset exampleFamily;
 
         [TearDown]
         public void TearDown()
         {
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
+            exampleFamily = null;
         }
 
         [Test]
@@ -40,11 +43,12 @@ namespace Dice.Tests
             effects.GetArrayElementAtIndex(1).managedReferenceValue = new AddRerollsEffectConfig(2);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            var definition = asset.Build();
+            var family = asset.Family.Build();
+            var definition = asset.Build(family);
             Assert.That(asset.Id, Is.EqualTo("modifier.example"));
-            Assert.That(asset.FamilyId, Is.EqualTo("family.example"));
+            Assert.That(family.Identity, Is.EqualTo(new ModifierFamilyDefinition.Id(Guid.ParseExact(FamilyGuid, "N"))));
             Assert.That(definition.Id, Is.EqualTo(asset.Id));
-            Assert.That(definition.FamilyId, Is.EqualTo(asset.FamilyId));
+            Assert.That(definition.Family, Is.SameAs(family));
             Assert.That(definition.Phase, Is.EqualTo(ModifierPhase.PlayerReroll));
             Assert.That(definition.Condition, Is.TypeOf<SelectedSumEqualsEitherCondition>());
             var condition = (SelectedSumEqualsEitherCondition)definition.Condition;
@@ -73,14 +77,14 @@ namespace Dice.Tests
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("condition").managedReferenceValue = new ContainsFaceConditionConfig(7);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build());
+            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
 
             serialized.FindProperty("condition.face").intValue = 1;
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 1;
             effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddRerollsEffectConfig((long)int.MaxValue + 1);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build());
+            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
         }
 
         /** Checks the catalog lists its referenced charms by ordinal id whatever their authored order and culture / fails if authored order or culture orders them. */
@@ -191,6 +195,23 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(() => catalog.Build());
         }
 
+        /** Checks the charms of one family asset share its definition and two family assets with one id fail the build, naming the asset / fails if a family is built per charm or a duplicate id loads. */
+        [Test]
+        public void CatalogBuildSharesEachFamilyAndRejectsTwoFamilyAssetsSharingAnId()
+        {
+            var catalog = Catalog();
+            var first = Modifier("modifier.first");
+            var second = Modifier("modifier.second");
+            Pool(catalog, new[] { first, second });
+            var built = catalog.Build().Catalog;
+            Assert.That(built.GetModifier(second.Id).Family, Is.SameAs(built.GetModifier(first.Id).Family));
+            Assert.That(built.Families, Is.EqualTo(new[] { built.GetModifier(first.Id).Family }));
+
+            Pool(catalog, new[] { first, Modifier("modifier.copy", family: Family(FamilyGuid, "family.copy")) });
+            var failure = Assert.Throws<InvalidOperationException>(() => catalog.Build());
+            Assert.That(failure.Message, Does.Contain("family.copy"));
+        }
+
         private static void Pool(MechanicalCatalogAsset catalog, ModifierAsset[] modifiers, ModifierAsset fallback = null)
         {
             using var serialized = new SerializedObject(catalog);
@@ -209,14 +230,26 @@ namespace Dice.Tests
             for (int i = 0; i < modifiers.Length; ++i) list.GetArrayElementAtIndex(i).objectReferenceValue = modifiers[i];
         }
 
-        private ModifierAsset Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
+        /** A charm; without a family it belongs to the one example family of the test. */
+        private ModifierAsset Modifier(string id, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null)
         {
             var asset = Create<ModifierAsset>();
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("id").stringValue = id;
-            serialized.FindProperty("familyId").stringValue = "family.example";
+            serialized.FindProperty("family").objectReferenceValue = family != null ? family
+                : exampleFamily != null ? exampleFamily : exampleFamily = Family(FamilyGuid, "family.example");
             serialized.FindProperty("condition").managedReferenceValue = new AlwaysConditionConfig();
             serialized.FindProperty("access").intValue = (int)access;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return asset;
+        }
+
+        private ModifierFamilyAsset Family(string guid, string name)
+        {
+            var asset = Create<ModifierFamilyAsset>();
+            asset.name = name;
+            using var serialized = new SerializedObject(asset);
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = guid;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }

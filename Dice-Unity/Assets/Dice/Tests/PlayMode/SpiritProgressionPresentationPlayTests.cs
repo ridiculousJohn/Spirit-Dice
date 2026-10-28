@@ -31,7 +31,7 @@ namespace Dice.Tests
             string path = ContentReady.SpiritSavePath();
             var profile = new PlayerProfile();
             profile.UnlockModifier(definition.Id);
-            profile.DiscoverFamily(definition.FamilyId);
+            profile.DiscoverFamily(definition.Family.Identity);
             PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), PlayerProfileFileStore.FileName), profile);
             controller.Initialize(catalog, encounter.Id, ContentReady.Seed, path);
             yield return ContentReady.Routed(controller);

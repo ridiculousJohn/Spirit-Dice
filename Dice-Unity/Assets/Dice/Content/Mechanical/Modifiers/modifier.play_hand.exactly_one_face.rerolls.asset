@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.exactly_one_face.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.exactly_one_face.rerolls
-  familyId: modifier.play_hand.exactly_one_face
+  family: {fileID: 11400000, guid: e4e05aa38f66f594c861700bd24b8050, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539085

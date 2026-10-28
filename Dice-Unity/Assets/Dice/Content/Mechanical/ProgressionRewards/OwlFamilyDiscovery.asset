@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: OwlFamilyDiscovery
   m_EditorClassIdentifier: 
-  discoveredFamilyIds:
-  - modifier.play_hand.edge_pair_sums_equal
-  - modifier.play_hand.alternating_parity
-  - modifier.play_hand.ordered
+  discoveredFamilies:
+  - {fileID: 11400000, guid: 22cc9a4d75dd5a3408954e3d3b8a6404, type: 2}
+  - {fileID: 11400000, guid: ea1d4c217d40525448d88d335d9b8978, type: 2}
+  - {fileID: 11400000, guid: ed4b0af5c54e49e4a96b27e759090601, type: 2}
   grantedModifiers: []

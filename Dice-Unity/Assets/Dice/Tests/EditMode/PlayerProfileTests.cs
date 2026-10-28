@@ -14,11 +14,11 @@ namespace Dice.Tests
         public void DiscoveryIsPersistedMergedAndIndependentOfIndividualOwnership()
         {
             var profile = new PlayerProfile();
-            Assert.That(profile.DiscoverFamily("family.future"), Is.True);
-            Assert.That(profile.DiscoverFamily("family.future"), Is.False);
+            Assert.That(profile.DiscoverFamily(TestFamilies.IdOf("family.future")), Is.True);
+            Assert.That(profile.DiscoverFamily(TestFamilies.IdOf("family.future")), Is.False);
             Assert.That(profile.UnlockedModifierIds, Is.Empty);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
-            Assert.That(restored.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.future" }));
+            Assert.That(restored.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family.future") }));
             Assert.That(restored.Merge(profile), Is.False);
             var merged = new PlayerProfile();
             Assert.That(merged.Merge(restored), Is.True);
@@ -33,7 +33,7 @@ namespace Dice.Tests
             profile.UnlockModifier("future");
             profile.CompleteEncounter("encounter.future");
             Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
-            Assert.That(profile.GetDiscoveredFamilyIds(RewardCatalog()), Is.EquivalentTo(new[] { "family.starter", "family.owned" }));
+            Assert.That(profile.GetDiscoveredFamilyIds(RewardCatalog()), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.starter"), TestFamilies.IdOf("family.owned") }));
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.DiscoveredFamilyIds, Is.Empty);
             Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "owned", "future" }));
@@ -87,15 +87,15 @@ namespace Dice.Tests
         {
             var catalog = RewardCatalog();
             var profile = new PlayerProfile();
-            var discovered = new[] { "family.revealed" };
+            var discovered = new[] { TestFamilies.IdOf("family.revealed") };
             var granted = new[] { "owned" };
             var reward = new ProgressionRewardDefinition(discovered, granted);
-            discovered[0] = "unknown";
+            discovered[0] = TestFamilies.IdOf("unknown");
             granted[0] = "unknown";
             Assert.That(profile.ApplyReward(reward, catalog), Is.True);
             Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "owned" }));
-            Assert.That(profile.DiscoveredFamilyIds, Is.EquivalentTo(new[] { "family.revealed", "family.owned" }));
-            Assert.That(profile.GetDiscoveredFamilyIds(catalog), Is.EquivalentTo(new[] { "family.revealed", "family.owned", "family.starter" }));
+            Assert.That(profile.DiscoveredFamilyIds, Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned") }));
+            Assert.That(profile.GetDiscoveredFamilyIds(catalog), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned"), TestFamilies.IdOf("family.starter") }));
             Assert.That(profile.ApplyReward(reward, catalog), Is.False);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.ApplyReward(reward, catalog), Is.False);
@@ -111,7 +111,7 @@ namespace Dice.Tests
         public void InvalidRewardRejectsAllProgressBeforeMutation(string invalid)
         {
             var profile = new PlayerProfile();
-            string[] discoveries = { invalid == "family" ? "unknown.family" : "family.revealed" };
+            ModifierFamilyDefinition.Id[] discoveries = { TestFamilies.IdOf(invalid == "family" ? "unknown.family" : "family.revealed") };
             string[] grants = { "owned", invalid == "family" ? "owned.variant" : invalid == "modifier" ? "unknown" : invalid };
             var reward = new ProgressionRewardDefinition(discoveries, grants);
             Assert.Throws<ArgumentException>(() => profile.ApplyReward(reward, RewardCatalog()));
@@ -126,7 +126,8 @@ namespace Dice.Tests
         {
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
             if (invalid == "missing") document.Remove("DiscoveredFamilyIds");
-            if (invalid == "duplicate") document["DiscoveredFamilyIds"] = new JArray("family", "family");
+            string family = TestFamilies.IdOf("family").ToString();
+            if (invalid == "duplicate") document["DiscoveredFamilyIds"] = new JArray(family, family);
             if (invalid == "invalid") document["DiscoveredFamilyIds"] = new JArray("family\ninvalid");
             Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
         }
@@ -149,7 +150,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition RewardModifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock,
             ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, bool inert = false, bool never = false)
-            => new ModifierDefinition(id, family, ModifierPhase.PlayHand,
+            => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand,
                 never ? new NeverCondition() : (IModifierCondition)new AlwaysCondition(),
                 inert ? Array.Empty<ModifierEffect>() : new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(scope: scope,

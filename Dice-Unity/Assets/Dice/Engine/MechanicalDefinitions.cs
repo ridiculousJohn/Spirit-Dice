@@ -178,11 +178,11 @@ namespace Dice.Engine
 
         /** The unlock rewards an offer draws from: those not yet unlocked whose families are discovered, in authored order. */
         internal List<string> UnlockCandidates(MechanicalCatalog catalog, ICollection<string> unlockedIds,
-            ICollection<string> discoveredFamilyIds)
+            ICollection<ModifierFamilyDefinition.Id> discoveredFamilyIds)
         {
             var candidates = new List<string>();
             foreach (string id in UnlockRewardModifierIds)
-                if (!unlockedIds.Contains(id) && discoveredFamilyIds.Contains(catalog.GetModifier(id).FamilyId)) candidates.Add(id);
+                if (!unlockedIds.Contains(id) && discoveredFamilyIds.Contains(catalog.GetModifier(id).Family.Identity)) candidates.Add(id);
             return candidates;
         }
 
@@ -204,12 +204,12 @@ namespace Dice.Engine
         private readonly Dictionary<string, EncounterDefinition> encounters;
         private readonly Dictionary<string, ModifierDefinition> modifiersById;
         private readonly Dictionary<string, ModifierRewardPoolDefinition> rewardPoolsById;
-        private readonly HashSet<string> familyIds;
+        private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
         /** The families of the catalog's charms, in the order their first charms appear. */
-        public ReadOnlyCollection<string> FamilyIds { get; }
+        public ReadOnlyCollection<ModifierFamilyDefinition> Families { get; }
         public ReadOnlyCollection<ModifierRewardPoolDefinition> RewardPools { get; }
         public ReadOnlyCollection<EncounterDefinition> Encounters { get; }
 
@@ -240,11 +240,19 @@ namespace Dice.Engine
                     modifierList.Add(modifier);
                 }
             Modifiers = modifierList.AsReadOnly();
-            familyIds = new HashSet<string>(StringComparer.Ordinal);
-            var families = new List<string>();
+            familiesById = new Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition>();
+            var families = new List<ModifierFamilyDefinition>();
             foreach (var modifier in modifierList)
-                if (familyIds.Add(modifier.FamilyId)) families.Add(modifier.FamilyId);
-            FamilyIds = families.AsReadOnly();
+            {
+                if (!familiesById.TryGetValue(modifier.Family.Identity, out var known))
+                {
+                    familiesById.Add(modifier.Family.Identity, modifier.Family);
+                    families.Add(modifier.Family);
+                }
+                else if (known != modifier.Family)
+                    throw new ArgumentException("Two charm families share the id " + modifier.Family.Identity + ".", nameof(modifiers));
+            }
+            Families = families.AsReadOnly();
             rewardPoolsById = new Dictionary<string, ModifierRewardPoolDefinition>(StringComparer.Ordinal);
             var poolList = new List<ModifierRewardPoolDefinition>();
             if (rewardPools != null)
@@ -310,7 +318,7 @@ namespace Dice.Engine
         }
 
         /** Whether a charm of the catalog belongs to the family. */
-        public bool HasFamily(string familyId) => familyId != null && familyIds.Contains(familyId);
+        public bool HasFamily(ModifierFamilyDefinition.Id familyId) => familiesById.ContainsKey(familyId);
 
         public ModifierRewardPoolDefinition GetRewardPool(string id)
         {

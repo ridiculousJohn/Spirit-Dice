@@ -84,7 +84,7 @@ namespace Dice.Tests
                 paths[slot - 1] = slots.GetSavePath(slot);
                 var profile = new PlayerProfile();
                 profile.UnlockModifier("modifier." + slot);
-                profile.DiscoverFamily("family." + slot);
+                profile.DiscoverFamily(TestFamilies.IdOf("family." + slot));
                 profile.CompleteEncounter("encounter." + slot);
                 profile.CompleteStory("story." + slot);
                 profile.VisitEncounter("visited." + slot);
@@ -105,7 +105,7 @@ namespace Dice.Tests
                 Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(paths[slot - 1], TestContent.Catalog())), Is.EqualTo(saves[slot - 1]));
                 var profile = PlayerProfileFileStore.Load(slots.GetProfilePath(slot));
                 Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "modifier." + slot }));
-                Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { "family." + slot }));
+                Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family." + slot) }));
                 Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { "encounter." + slot }));
                 Assert.That(profile.CompletedStoryIds, Is.EqualTo(new[] { "story." + slot }));
                 Assert.That(profile.VisitedEncounterIds, Is.EqualTo(new[] { "visited." + slot }));

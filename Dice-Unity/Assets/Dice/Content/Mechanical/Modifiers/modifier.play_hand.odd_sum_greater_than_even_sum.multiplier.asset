@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.odd_sum_greater_than_even_sum.multiplier
-  familyId: modifier.play_hand.odd_sum_greater_than_even_sum
+  family: {fileID: 11400000, guid: 560edf3fcb9b58b428640986f3ea4263, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539258

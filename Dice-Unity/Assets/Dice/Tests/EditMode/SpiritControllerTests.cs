@@ -319,7 +319,7 @@ namespace Dice.Tests
         [Test]
         public void PreviewFailureDoesNotInvalidateAcceptedOrRestoredState()
         {
-            var modifier = new ModifierDefinition("overflow", "family.overflow", ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition("overflow", TestFamilies.Of("family.overflow"), ModifierPhase.PlayHand,
                 new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(long.MaxValue) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
@@ -352,7 +352,7 @@ namespace Dice.Tests
             Assert.That(controller.Status.HandPreviewFailure, Is.Null);
             Assert.That(controller.Status.ModifierInspectionFailure, Is.Null);
 
-            var modifier = new ModifierDefinition("faulting", "family.faulting", ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition("faulting", TestFamilies.Of("family.faulting"), ModifierPhase.PlayHand,
                 new FaultingCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
             controller.Initialize(catalog, TestContent.EncounterId, 19, savePath);

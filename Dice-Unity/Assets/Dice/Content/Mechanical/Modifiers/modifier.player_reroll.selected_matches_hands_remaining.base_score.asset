@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_matches_hands_remaining.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.selected_matches_hands_remaining.base_score
-  familyId: modifier.player_reroll.selected_matches_hands_remaining
+  family: {fileID: 11400000, guid: f2a9bba594189a34a8d9c48b58bbc22d, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539532

@@ -15,7 +15,7 @@ namespace Dice.Tests
             int face = TestContent.Session().Snapshot.CurrentDice[0];
             var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
                 new AddRerollsEffect(face));
-            var conditional = new ModifierDefinition("conditional", "test.conditional", ModifierPhase.PlayHand,
+            var conditional = new ModifierDefinition("conditional", TestFamilies.Of("test.conditional"), ModifierPhase.PlayHand,
                 new ContainsRerollsRemainingCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var session = Session(new[] { grant, conditional },
@@ -52,7 +52,7 @@ namespace Dice.Tests
         {
             var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
                 new AddRerollsEffect(2));
-            var exhausted = new ModifierDefinition("empty", "test.empty", ModifierPhase.PlayHand,
+            var exhausted = new ModifierDefinition("empty", TestFamilies.Of("test.empty"), ModifierPhase.PlayHand,
                 new OutOfRerollsCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var definitions = reverse ? new[] { exhausted, grant } : new[] { grant, exhausted };
@@ -157,7 +157,7 @@ namespace Dice.Tests
         {
             var opening = Modifier("opening", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
                 new AddBaseScoreEffect(7));
-            var lastReroll = new ModifierDefinition("last-reroll", "test.last-reroll", ModifierPhase.PlayerReroll,
+            var lastReroll = new ModifierDefinition("last-reroll", TestFamilies.Of("test.last-reroll"), ModifierPhase.PlayerReroll,
                 new LastRerollOnLastHandCondition(),
                 new ModifierEffect[] { new AddMultiplierEffect(3) });
             var definitions = new[] { opening, lastReroll };
@@ -288,7 +288,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, ModifierActivationLimit limit,
             params ModifierEffect[] effects)
-            => new ModifierDefinition(id, "test." + id, phase, new AlwaysCondition(), effects, limit);
+            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, new AlwaysCondition(), effects, limit);
 
         private static EncounterSession Session(IEnumerable<ModifierDefinition> modifiers, IEnumerable<string> inventory,
             IEnumerable<StageDefinition> stages = null, ulong seed = 0)
@@ -301,7 +301,7 @@ namespace Dice.Tests
 
         private static void AssertHandCountPredicate(IModifierCondition condition, int hands, int rerolls, bool expected)
         {
-            var modifier = new ModifierDefinition("condition", "test.condition", ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition("condition", TestFamilies.Of("test.condition"), ModifierPhase.PlayHand,
                 condition, new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var session = Session(new[] { modifier }, new[] { modifier.Id },
                 new[] { new StageDefinition(1000000, hands, rerolls) });

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.hands_remaining_even.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.hands_remaining_even.combined
-  familyId: modifier.play_hand.hands_remaining_even
+  family: {fileID: 11400000, guid: 792cf9de5176adc489ba84c8079256b3, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539116

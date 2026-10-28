@@ -7,14 +7,19 @@ namespace Dice.UnityContent
     [CreateAssetMenu(menuName = "Dice/Progression Reward")]
     public sealed class ProgressionRewardAsset : ScriptableObject
     {
-        [SerializeField] private string[] discoveredFamilyIds = Array.Empty<string>();
+        [SerializeField] private ModifierFamilyAsset[] discoveredFamilies = Array.Empty<ModifierFamilyAsset>();
         [SerializeField] private ModifierAsset[] grantedModifiers = Array.Empty<ModifierAsset>();
 
         public ProgressionRewardDefinition Build(MechanicalCatalog catalog)
         {
+            var families = discoveredFamilies ?? throw new InvalidOperationException("Discovered families are missing.");
+            var familyIds = new ModifierFamilyDefinition.Id[families.Length];
+            for (int i = 0; i < familyIds.Length; ++i)
+                familyIds[i] = families[i] != null ? families[i].Identity
+                    : throw new InvalidOperationException("A discovered family reference is missing: " + name);
             var ids = new string[GrantedModifiers.Length];
             for (int i = 0; i < ids.Length; ++i) ids[i] = GrantedModifier(i).Id;
-            var definition = new ProgressionRewardDefinition(discoveredFamilyIds, ids);
+            var definition = new ProgressionRewardDefinition(familyIds, ids);
             definition.Validate(catalog);
             return definition;
         }

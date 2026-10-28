@@ -51,7 +51,7 @@ namespace Dice.Tests
         public void ADefinitionOutsideTheLoadedContentHasNoPresentation()
         {
             var charms = Single(synthetic.Charm("test.loaded"));
-            var outside = synthetic.Charm("test.loaded").Build();
+            var outside = synthetic.Charm("test.loaded").Build(TestFamilies.Of("test.loaded"));
             Assert.Throws<InvalidOperationException>(() => charms.GetName(outside));
             Assert.Throws<InvalidOperationException>(() => charms.GetIcon(outside));
         }
@@ -223,8 +223,8 @@ namespace Dice.Tests
                 synthetic.Presentation(other, category, "Other / Variant")
             }, new[] { category }, families: new[]
             {
-                new ModifierFamilyWording("family.shared", "Shared family"),
-                new ModifierFamilyWording("family.other", "Other family")
+                new ModifierFamilyWording(synthetic.Family("family.shared"), "Shared family"),
+                new ModifierFamilyWording(synthetic.Family("family.other"), "Other family")
             }), content);
 
             Assert.That(charms.GetFamilyName(content.GetDefinition(first)), Is.EqualTo("Shared family"));
@@ -241,8 +241,8 @@ namespace Dice.Tests
             var category = synthetic.Category();
             var charm = synthetic.Charm("test.charm", "family.test");
             var families = fault == "missing" ? new ModifierFamilyWording[0] :
-                fault == "blank" ? new[] { new ModifierFamilyWording("family.test", " ") } :
-                new[] { new ModifierFamilyWording("family.test", "One"), new ModifierFamilyWording("family.test", "Two") };
+                fault == "blank" ? new[] { new ModifierFamilyWording(synthetic.Family("family.test"), " ") } :
+                new[] { new ModifierFamilyWording(synthetic.Family("family.test"), "One"), new ModifierFamilyWording(synthetic.Family("family.test"), "Two") };
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, families: families);
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }

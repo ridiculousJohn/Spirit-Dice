@@ -20,13 +20,13 @@ namespace Dice.Tests
                 access: ModifierAccess.PermanentUnlock)).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Id));
-            var discoveries = modifiers.Take(discoveredCount).Select(value => value.FamilyId).ToArray();
+            var discoveries = modifiers.Take(discoveredCount).Select(value => value.Family.Identity).ToArray();
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
                 discoveredFamilyIds: discoveries);
             var result = session.Execute(PlayHandAction.Instance, 0);
             var offer = result.Snapshot.PendingReward;
             Assert.That(offer.Options.Count, Is.EqualTo(Math.Min(3, discoveredCount)));
-            Assert.That(offer.Options.All(value => discoveries.Contains(catalog.GetModifier(value.DefinitionId).FamilyId)), Is.True);
+            Assert.That(offer.Options.All(value => discoveries.Contains(catalog.GetModifier(value.DefinitionId).Family.Identity)), Is.True);
             Assert.That(result.Snapshot.UnlockedModifierIds, Is.Empty);
             var restored = EncounterSession.RestoreEncounter(catalog,
                 EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
@@ -42,15 +42,15 @@ namespace Dice.Tests
         [Test]
         public void OwnedIndividualDiscoversItsFamilyAndOnlyUnownedVariantsAreOffered()
         {
-            var modifiers = Enumerable.Range(0, 5).Select(i => new ModifierDefinition("unlock." + i, "family.shared",
+            var modifiers = Enumerable.Range(0, 5).Select(i => new ModifierDefinition("unlock." + i, TestFamilies.Of("family.shared"),
                 ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Id));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
-                new[] { modifiers[0].Id }, Array.Empty<string>());
+                new[] { modifiers[0].Id }, Array.Empty<ModifierFamilyDefinition.Id>());
             var snapshot = session.Execute(PlayHandAction.Instance, 0).Snapshot;
-            Assert.That(snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { "family.shared" }));
+            Assert.That(snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family.shared") }));
             Assert.That(snapshot.PendingReward.Options.Count, Is.EqualTo(3));
             Assert.That(snapshot.PendingReward.Options.Any(value => value.DefinitionId == modifiers[0].Id), Is.False);
         }
@@ -63,12 +63,12 @@ namespace Dice.Tests
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Id));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
-                discoveredFamilyIds: new[] { modifiers[0].FamilyId });
+                discoveredFamilyIds: new[] { modifiers[0].Family.Identity });
             session.Execute(PlayHandAction.Instance, 0);
             var offer = session.Snapshot.PendingReward;
-            Assert.Throws<ArgumentException>(() => session.AddDiscoveredFamilies(new[] { modifiers[1].FamilyId, "unknown" }));
-            Assert.That(session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { modifiers[0].FamilyId }));
-            session.AddDiscoveredFamilies(modifiers.Select(value => value.FamilyId));
+            Assert.Throws<ArgumentException>(() => session.AddDiscoveredFamilies(new[] { modifiers[1].Family.Identity, TestFamilies.IdOf("unknown") }));
+            Assert.That(session.Snapshot.DiscoveredFamilyIds, Is.EqualTo(new[] { modifiers[0].Family.Identity }));
+            session.AddDiscoveredFamilies(modifiers.Select(value => value.Family.Identity));
             var restored = EncounterSession.RestoreEncounter(catalog,
                 EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(session.CaptureSave()), catalog));
             Assert.That(restored.Success, Is.True, restored.Detail);
@@ -87,10 +87,10 @@ namespace Dice.Tests
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Id));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
-                discoveredFamilyIds: new[] { modifiers[0].FamilyId });
+                discoveredFamilyIds: new[] { modifiers[0].Family.Identity });
             session.Execute(PlayHandAction.Instance, 0);
             var save = session.CaptureSave();
-            save.DiscoveredFamilyIds = new[] { "unknown.family" };
+            save.DiscoveredFamilyIds = new[] { TestFamilies.IdOf("unknown.family") };
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
             save = session.CaptureSave();
             save.PendingReward.Options[0].DefinitionId = modifiers[1].Id;
@@ -103,7 +103,7 @@ namespace Dice.Tests
         private static ModifierDefinition Modifier(string id, int tier = 1,
             ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, string scopeId = null,
             ModifierAccess access = ModifierAccess.Starter, bool rewardEligible = true)
-            => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand,
+            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, scope, scopeId, access));
 
@@ -131,7 +131,7 @@ namespace Dice.Tests
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
             var random = new DeterministicRandom(seed);
             return RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, incomingStage - 1,
-                owned ?? Array.Empty<string>(), history ?? Array.Empty<string>(), ref random, encounter, unlocked);
+                owned ?? Array.Empty<string>(), (history ?? Array.Empty<string>()).Select(TestFamilies.IdOf), ref random, encounter, unlocked);
         }
 
         [Test]
@@ -168,7 +168,7 @@ namespace Dice.Tests
                 Is.EquivalentTo(modifiers.Select(value => value.Id)));
             var otherEncounter = new EncounterDefinition("other", new[] { new StageDefinition(1, 1, 0) }, spiritId: "spirit.second");
             var random = new DeterministicRandom(1);
-            Assert.That(RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(), Array.Empty<string>(),
+            Assert.That(RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(), Array.Empty<ModifierFamilyDefinition.Id>(),
                 ref random, otherEncounter, modifiers.Select(value => value.Id)).ModifierIds, Is.EqualTo(new[] { "global" }));
         }
 
@@ -332,7 +332,7 @@ namespace Dice.Tests
         [TestCase(7)]
         public void UnlockOfferUsesDistinctUnownedIndividualsAndRequiresExplicitChoice(int remaining)
         {
-            var modifiers = Enumerable.Range(0, 8).Select(i => new ModifierDefinition("charm." + i, "shared.family",
+            var modifiers = Enumerable.Range(0, 8).Select(i => new ModifierDefinition("charm." + i, TestFamilies.Of("shared.family"),
                 ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.range_greater_than.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.range_greater_than.combined
-  familyId: modifier.play_hand.range_greater_than
+  family: {fileID: 11400000, guid: fe2bc84a6c119ff49bede7e8f4726e4a, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539291

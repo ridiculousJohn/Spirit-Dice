@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.selected_sum_equals_either.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.selected_sum_equals_either.combined
-  familyId: modifier.player_reroll.selected_sum_equals_either
+  family: {fileID: 11400000, guid: c8a7c2dbd9a6328429cc67b42712ca1c, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539552

@@ -21,7 +21,7 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            var modifier = new ModifierDefinition(ModifierId, FamilyId, ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(ModifierId, TestFamilies.Of(FamilyId), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
             catalog = new MechanicalCatalog("test.progression-reward-assets", TestContent.Hands(),
@@ -46,11 +46,11 @@ namespace Dice.Tests
             var reward = Reward(families, modifiers);
             var definition = reward.Build(catalog);
 
-            Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(families));
+            var discovered = families.Select(TestFamilies.IdOf).ToArray();
+            Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(discovered));
             Assert.That(definition.GrantedModifierIds, Is.EqualTo(modifiers));
-            if (discovers) families[0] = "family.changed";
             if (grants) modifiers[0] = "modifier.changed";
-            Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(discovers ? new[] { FamilyId } : Array.Empty<string>()));
+            Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(discovered));
             Assert.That(definition.GrantedModifierIds, Is.EqualTo(grants ? new[] { ModifierId } : Array.Empty<string>()));
         }
 
@@ -95,7 +95,7 @@ namespace Dice.Tests
         private ProgressionRewardAsset Reward(string[] families, string[] modifiers)
         {
             var reward = Create<ProgressionRewardAsset>();
-            SyntheticUi.Set(reward, "discoveredFamilyIds", families);
+            SyntheticUi.Set(reward, "discoveredFamilies", families.Select(charms.Family).ToArray());
             SyntheticUi.Set(reward, "grantedModifiers", modifiers.Select(id => charms.Charm(id)).ToArray());
             return reward;
         }

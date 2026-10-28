@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.exactly_one_selected_matches_selected_count.combined
-  familyId: modifier.player_reroll.exactly_one_selected_matches_selected_count
+  family: {fileID: 11400000, guid: f7f2616c096f61e4fbdda9cc30bf84a4, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539462

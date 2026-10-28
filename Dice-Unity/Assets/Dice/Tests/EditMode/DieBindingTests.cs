@@ -102,7 +102,7 @@ namespace Dice.Tests
         [Test]
         public void BindingsPersistThroughPlayHandAndClearWhenTheNextHandStarts()
         {
-            var bonus = new ModifierDefinition("charm.bound", "family.bound", ModifierPhase.PlayHand,
+            var bonus = new ModifierDefinition("charm.bound", TestFamilies.Of("family.bound"), ModifierPhase.PlayHand,
                 new BoundFaceCountAtLeastCondition(1),
                 new ModifierEffect[] { new AddBaseScoreEffect(7) });
             var catalog = Catalog(modifiers: new[] { bonus });

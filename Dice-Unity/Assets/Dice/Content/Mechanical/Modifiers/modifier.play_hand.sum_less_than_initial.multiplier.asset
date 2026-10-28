@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.sum_less_than_initial.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.sum_less_than_initial.multiplier
-  familyId: modifier.play_hand.sum_less_than_initial
+  family: {fileID: 11400000, guid: 4cb2089189ed18041862491417c64b16, type: 2}
   phase: 2
   condition:
     rid: 1123138582844539402

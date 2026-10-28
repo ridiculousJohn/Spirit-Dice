@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.alternating_parity.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.alternating_parity.rerolls
-  familyId: modifier.play_hand.alternating_parity
+  family: {fileID: 11400000, guid: ea1d4c217d40525448d88d335d9b8978, type: 2}
   phase: 2
   condition:
     rid: 1123138582844538977

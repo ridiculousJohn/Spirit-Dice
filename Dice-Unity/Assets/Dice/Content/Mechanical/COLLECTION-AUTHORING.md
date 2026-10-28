@@ -3,8 +3,12 @@
 Content refers to charms by direct references to their `ModifierAsset`s. The engine
 catalog is built from the charms `Standard.asset` references (encounter lists, unlock
 rewards and reward pools, including fallbacks), so a charm referenced nowhere is
-not part of the game. Saves and profiles store charm ids, which resolve through the
-loaded catalog.
+not part of the game. Each charm references its family, a `ModifierFamilyAsset`
+(Create > Dice > Modifier Family) in `ModifierFamilies`, named after the family as
+its charms are named after themselves; the catalog's families are those of its
+charms. A family's id is its asset GUID, which the family asset stores and the
+editor keeps equal to the GUID in its .meta file. Saves and profiles store charm
+ids and family ids, which resolve through the loaded catalog.
 
 `Standard.asset` authors each spirit's six `unlockRewardModifiers` and its stage
 3, 6, and 10 unlock opportunities. Each opportunity chooses one still-locked entry
@@ -14,8 +18,8 @@ milestone families; these lists are provisional.
 
 ## Family discovery and story grants
 
-Create a `Dice/Progression Reward` asset with independent `discoveredFamilyIds`
-and `grantedModifiers` (charm references) lists. Discovering a family reveals its variants and
+Create a `Dice/Progression Reward` asset with independent `discoveredFamilies`
+(family asset references) and `grantedModifiers` (charm references) lists. Discovering a family reveals its variants and
 allows its entries in authored unlock lists to be offered. Granting an individual
 charm permanently owns it and also discovers its family. Neither operation equips
 the charm or inserts it into an encounter's ordinary pool.

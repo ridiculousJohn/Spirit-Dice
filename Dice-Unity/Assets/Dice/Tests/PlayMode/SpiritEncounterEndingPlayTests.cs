@@ -381,7 +381,7 @@ namespace Dice.Tests
             }).ToArray());
             Assert.That(controller.InitializeJourney(mechanical, catalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
-            foreach (var definitionToUnlock in unlockDefinitions) profile.DiscoverFamily(definitionToUnlock.FamilyId);
+            foreach (var definitionToUnlock in unlockDefinitions) profile.DiscoverFamily(definitionToUnlock.Family.Identity);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             initialCompletedEncounterIds = controller.CompletedEncounterIds.ToArray();

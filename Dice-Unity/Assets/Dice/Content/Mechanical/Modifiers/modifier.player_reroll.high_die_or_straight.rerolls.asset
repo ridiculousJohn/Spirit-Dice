@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.player_reroll.high_die_or_straight.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.player_reroll.high_die_or_straight.rerolls
-  familyId: modifier.player_reroll.high_die_or_straight
+  family: {fileID: 11400000, guid: c7bc692b5f87e3541af3b13cf64ce2b1, type: 2}
   phase: 1
   condition:
     rid: 1123138582844539476

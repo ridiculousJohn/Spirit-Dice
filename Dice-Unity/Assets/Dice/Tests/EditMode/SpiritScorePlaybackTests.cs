@@ -99,7 +99,7 @@ namespace Dice.Tests
             var session = EncounterSession.CreateEncounter(catalog, EncounterId, 7);
             var host = new PlaybackHost(new Controls(catalog, charms.For()));
             var playback = new SpiritScorePlayback(host, hud, rig.StartDice(), rig.CreateHistoryTray(), audio, null, null);
-            var charm = new ModifierDefinition("test.playback.grant", "test.playback.grant", ModifierPhase.PlayerReroll,
+            var charm = new ModifierDefinition("test.playback.grant", TestFamilies.Of("test.playback.grant"), ModifierPhase.PlayerReroll,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
             var state = new EncounterState();
             var activated = granted ? new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1)) : null;

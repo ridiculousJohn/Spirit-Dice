@@ -12,7 +12,14 @@ namespace Dice.Tests
         /** Content of the given charms: each charm's definition in a one-encounter catalog. */
         public static MechanicalContent Content(params ModifierAsset[] charms)
         {
-            var definitions = charms.Select(charm => charm.Build()).ToArray();
+            // Each family asset is built once, so the charms of a family share its definition.
+            var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
+            var definitions = charms.Select(charm =>
+            {
+                if (!families.TryGetValue(charm.Family, out ModifierFamilyDefinition family))
+                    families.Add(charm.Family, family = charm.Family.Build());
+                return charm.Build(family);
+            }).ToArray();
             return new MechanicalContent(Catalog(definitions), charms.Select((charm, index) =>
                 new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definitions[index])));
         }

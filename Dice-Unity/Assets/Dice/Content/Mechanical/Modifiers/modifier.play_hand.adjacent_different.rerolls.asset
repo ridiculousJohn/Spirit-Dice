@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: modifier.play_hand.adjacent_different.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
   id: modifier.play_hand.adjacent_different.rerolls
-  familyId: modifier.play_hand.adjacent_different
+  family: {fileID: 11400000, guid: f469276432174f14d8a1710ff89bdf6e, type: 2}
   phase: 2
   condition:
     rid: 1123138582844538959

@@ -159,7 +159,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand)
-            => new ModifierDefinition(id, "test." + id, phase, condition,
+            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition,
                 new ModifierEffect[] { new AddBaseScoreEffect(7) }, limit);
 
         private static EncounterSession Session(params ModifierDefinition[] definitions)

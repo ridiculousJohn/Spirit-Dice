@@ -17,7 +17,7 @@ namespace Dice.App
         public Resolution InitialResolution => session.InitialResolution;
 
         public EncounterApplication(MechanicalCatalog catalog, string encounterId, ulong seed,
-            IEnumerable<string> unlockedModifierIds = null, IEnumerable<string> discoveredFamilyIds = null)
+            IEnumerable<string> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
         {
             session = EncounterSession.CreateEncounter(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);
         }
@@ -78,7 +78,7 @@ namespace Dice.App
 
         public EncounterSaveData CaptureSave() => session.CaptureSave();
         public void MergeUnlockedModifiers(IEnumerable<string> modifierIds) => session.AddUnlockedModifiers(modifierIds);
-        public void MergeDiscoveredFamilies(IEnumerable<string> familyIds) => session.AddDiscoveredFamilies(familyIds);
+        public void MergeDiscoveredFamilies(IEnumerable<ModifierFamilyDefinition.Id> familyIds) => session.AddDiscoveredFamilies(familyIds);
     }
 
     /** What a view shows of the hand to be played; the failures are developer detail of an unavailable part, or null. */

@@ -98,7 +98,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
             string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
-            => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand,
+            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(1, scope, scopeId, access));
 

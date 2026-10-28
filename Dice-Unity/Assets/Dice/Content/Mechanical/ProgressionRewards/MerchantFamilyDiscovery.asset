@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98386c601ef84b94989a24a6ef99f6a8, type: 3}
   m_Name: MerchantFamilyDiscovery
   m_EditorClassIdentifier: 
-  discoveredFamilyIds:
-  - modifier.play_hand.sum_less_than_initial
-  - modifier.play_hand.rank_equals_previous
-  - modifier.play_hand.sum_divisible_by
+  discoveredFamilies:
+  - {fileID: 11400000, guid: 4cb2089189ed18041862491417c64b16, type: 2}
+  - {fileID: 11400000, guid: 1211f4554118b8c4fa4a03fb8c44a741, type: 2}
+  - {fileID: 11400000, guid: a5de7e5498534004e8b6a5f0777f9105, type: 2}
   grantedModifiers: []
