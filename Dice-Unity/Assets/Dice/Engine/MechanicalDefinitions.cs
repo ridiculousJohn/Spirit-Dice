@@ -281,6 +281,71 @@ namespace Dice.Engine
             if (!encounters.TryGetValue(id, out var definition)) throw new KeyNotFoundException(id);
             return definition;
         }
+
+        /** Where a charm can be obtained in the catalog's encounters. */
+        public ModifierSources GetModifierSources(string modifierId)
+        {
+            ModifierDefinition modifier = GetModifier(modifierId);
+            var unlocks = new List<ModifierUnlockSource>();
+            var runRewards = new List<EncounterDefinition>();
+            foreach (var encounter in Encounters)
+            {
+                if (encounter.UnlockMilestones.Count > 0 && encounter.UnlockRewardModifierIds.Contains(modifier.Id))
+                    unlocks.Add(new ModifierUnlockSource(encounter));
+                if (modifier.RewardEligible && modifier.Availability.MatchesEncounter(encounter) &&
+                    IsRunRewardSource(encounter, modifier.Id))
+                    runRewards.Add(encounter);
+            }
+            return new ModifierSources(unlocks, runRewards);
+        }
+
+        /** Whether the charm is one of the encounter's additions or an entry or fallback of a pool its charm offers draw from. */
+        private bool IsRunRewardSource(EncounterDefinition encounter, string modifierId)
+        {
+            if (encounter.EncounterModifierIds.Contains(modifierId)) return true;
+            if (encounter.RewardPolicy == null) return false;
+            foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
+                foreach (string poolId in layout.PoolIds)
+                {
+                    var pool = rewardPoolsById[poolId];
+                    if (pool.ModifierIds.Contains(modifierId) || pool.FallbackModifierId == modifierId) return true;
+                }
+            return false;
+        }
+    }
+
+    /** Where a charm can be obtained in a catalog's encounters, each list in catalog order. */
+    public sealed class ModifierSources
+    {
+        /** The encounters whose unlock offers can contain the charm. */
+        public ReadOnlyCollection<ModifierUnlockSource> Unlocks { get; }
+        /** The encounters whose run charm offers can contain the charm, as an encounter addition, pool entry or pool fallback. */
+        public ReadOnlyCollection<EncounterDefinition> RunRewards { get; }
+
+        internal ModifierSources(List<ModifierUnlockSource> unlocks, List<EncounterDefinition> runRewards)
+        {
+            Unlocks = unlocks.AsReadOnly();
+            RunRewards = runRewards.AsReadOnly();
+        }
+    }
+
+    /** An encounter whose unlock offers can contain a charm. */
+    public sealed class ModifierUnlockSource
+    {
+        public EncounterDefinition Encounter { get; }
+        /**
+         * The numbers of the stages whose clear makes an unlock offer, in authored order. Each offer draws from every
+         * still-locked charm of the encounter's unlock list, so any of them can offer the charm.
+         */
+        public ReadOnlyCollection<int> StageNumbers { get; }
+
+        internal ModifierUnlockSource(EncounterDefinition encounter)
+        {
+            Encounter = encounter;
+            var stageNumbers = new List<int>();
+            foreach (var milestone in encounter.UnlockMilestones) stageNumbers.Add(milestone.StageNumber);
+            StageNumbers = stageNumbers.AsReadOnly();
+        }
     }
 
     internal static class DefinitionValidation

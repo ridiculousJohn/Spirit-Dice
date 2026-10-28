@@ -24,6 +24,8 @@ namespace Dice.Tests
         private ModifierDefinition inert;
         private readonly SyntheticCharms synthetic = new SyntheticCharms();
         private ModifierPresentationCatalog charms;
+        private EncounterJourneyCatalogAsset journeys;
+        private ScriptableObject[] journeyAssets;
 
         [SetUp]
         public void BuildCollection()
@@ -45,6 +47,7 @@ namespace Dice.Tests
             catalog = new MechanicalCatalog("collection.test", TestContent.Hands(), new[] { encounter },
                 new[] { starter, locked, unlocked, encounterOnly, discovered, undiscovered, inert });
             charms = synthetic.For(catalog);
+            journeys = Journeys("encounter.test", "Test House", out journeyAssets);
             root = new GameObject("CollectionTest", typeof(RectTransform), typeof(Canvas), typeof(SpiritUiContext));
             ((RectTransform)root.transform).sizeDelta = new Vector2(443, 960);
             var themePath = AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:SpiritUiTheme").First());
@@ -60,6 +63,7 @@ namespace Dice.Tests
         public void ReleaseCollection()
         {
             UnityEngine.Object.DestroyImmediate(root);
+            foreach (var asset in journeyAssets) UnityEngine.Object.DestroyImmediate(asset);
             synthetic.Dispose();
         }
 
@@ -67,7 +71,7 @@ namespace Dice.Tests
         public void FamilyRowSharesIdentityAndTriggerWhileVariantsRetainIndependentStates()
         {
             var profileIds = new[] { unlocked.Id };
-            view.Show(catalog, charms, profileIds);
+            view.Show(catalog, charms, profileIds, journeys);
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             Assert.That(view.Rows.Count, Is.EqualTo(1));
             var row = view.Rows.Single();
@@ -93,11 +97,11 @@ namespace Dice.Tests
         [Test]
         public void ReopeningRefreshesPermanentProgressWithoutChangingEncounterOnlyStatus()
         {
-            view.Show(catalog, charms, new[] { unlocked.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id }, journeys);
             Find<Button>(view.Rows.Single(), "FamilyVariant1").onClick.Invoke();
             view.Hide();
             Assert.That(view.IsVisible, Is.False);
-            view.Show(catalog, charms, new[] { unlocked.Id, locked.Id, encounterOnly.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id, locked.Id, encounterOnly.Id }, journeys);
             Assert.That(view.IsVisible, Is.True);
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Id));
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Unlocked"));
@@ -109,7 +113,7 @@ namespace Dice.Tests
         public void FilterCyclesOwnedDiscoveredAllAndKeepsSelectionInVisibleFamilies()
         {
             var discoveredIds = new[] { discovered.FamilyId, encounterOnly.FamilyId, inert.FamilyId };
-            view.Show(catalog, charms, Array.Empty<string>(), null, discoveredIds);
+            view.Show(catalog, charms, Array.Empty<string>(), journeys, discoveredIds);
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EqualTo(new[] { starter.FamilyId }));
             var button = Find<Button>(view, "CollectionFilterButton");
             button.onClick.Invoke();
@@ -129,7 +133,7 @@ namespace Dice.Tests
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Available"));
             view.SetFilter(SpiritCollectionFilter.All);
             view.Hide();
-            view.Show(catalog, charms, Array.Empty<string>());
+            view.Show(catalog, charms, Array.Empty<string>(), journeys);
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             view.SetFilter(SpiritCollectionFilter.Discovered);
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EqualTo(new[] { starter.FamilyId }));
@@ -139,7 +143,7 @@ namespace Dice.Tests
         [Test]
         public void AllUsesCompactUndiscoveredRowsWithoutRevealingOrInspectingTheirCharms()
         {
-            view.Show(catalog, charms, new[] { unlocked.Id, encounterOnly.Id, inert.Id });
+            view.Show(catalog, charms, new[] { unlocked.Id, encounterOnly.Id, inert.Id }, journeys);
             view.SetFilter(SpiritCollectionFilter.All);
             Assert.That(view.Rows.Count, Is.EqualTo(3));
             Assert.That(view.Rows.Count(row => row.IsUndiscovered), Is.EqualTo(2));
@@ -165,12 +169,12 @@ namespace Dice.Tests
         {
             var permanentCatalog = new MechanicalCatalog("permanent.test", TestContent.Hands(), catalog.Encounters,
                 new[] { locked, unlocked, encounterOnly, discovered, undiscovered });
-            view.Show(permanentCatalog, charms, new[] { discovered.Id });
+            view.Show(permanentCatalog, charms, new[] { discovered.Id }, journeys);
             Assert.That(view.Rows.Single().FamilyId, Is.EqualTo(discovered.FamilyId));
             Assert.That(view.SelectedModifierId, Is.EqualTo(discovered.Id));
             view.SetFilter(SpiritCollectionFilter.Discovered);
             Assert.That(view.Rows.Single().FamilyId, Is.EqualTo(discovered.FamilyId));
-            view.Show(permanentCatalog, charms, Array.Empty<string>());
+            view.Show(permanentCatalog, charms, Array.Empty<string>(), journeys);
             Assert.That(view.Rows, Is.Empty);
             Assert.That(view.SelectedModifierId, Is.Null);
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Is.EqualTo("No owned families"));
@@ -193,7 +197,7 @@ namespace Dice.Tests
             var content = SyntheticCharms.Content(baseScore, multiplier, rerolls);
             var skin = synthetic.Skin(new[] { rerolls, baseScore, multiplier }.Select(charm => synthetic.Presentation(charm, category)),
                 new[] { category });
-            view.Show(content.Catalog, synthetic.Load(skin, content), Array.Empty<string>());
+            view.Show(content.Catalog, synthetic.Load(skin, content), Array.Empty<string>(), journeys);
             var row = view.Rows.Single();
             var listed = Enumerable.Range(0, 3).Select(index =>
             {
@@ -206,10 +210,10 @@ namespace Dice.Tests
         [Test]
         public void SourcesDescribeAuthoredUnlockScheduleAndDistinguishRunOnlyAdditions()
         {
-            Assert.That(SpiritCollectionView.GetSourceText(locked, catalog), Does.Contain("Unlock choice:")
+            Assert.That(SpiritCollectionView.GetSourceText(locked, catalog, journeys), Does.Contain("Unlock choice:")
                 .And.Contain("after stage 3").And.Contain("Once unlocked, run charm pool:"));
-            Assert.That(SpiritCollectionView.GetSourceText(starter, catalog), Does.StartWith("Available from the start."));
-            Assert.That(SpiritCollectionView.GetSourceText(encounterOnly, catalog),
+            Assert.That(SpiritCollectionView.GetSourceText(starter, catalog, journeys), Does.StartWith("Available from the start."));
+            Assert.That(SpiritCollectionView.GetSourceText(encounterOnly, catalog, journeys),
                 Does.StartWith("Encounter only; never permanently collected.").And.Contain("Run charm pool:"));
         }
 
@@ -249,6 +253,67 @@ namespace Dice.Tests
                 UnityEngine.Object.DestroyImmediate(journey);
                 UnityEngine.Object.DestroyImmediate(reward);
             }
+        }
+
+        /** Checks the source text formats the catalog's unlock and run reward sources under their journeys' locations and leaves out encounters without a journey / fails if a stated stage or source is dropped, an encounter is named another way, or an encounter without a journey is listed. */
+        [Test]
+        public void SourcesNameTheCatalogsSourcesByTheirJourneysLocations()
+        {
+            var stages = new[] { new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3) };
+            var sourced = new EncounterDefinition("encounter.sourced", stages,
+                unlockMilestones: new[] { new ModifierUnlockMilestone(1), new ModifierUnlockMilestone(3) },
+                encounterModifierIds: new[] { discovered.Id }, unlockRewardModifierIds: new[] { locked.Id });
+            var unjourneyed = new EncounterDefinition("encounter.unjourneyed", stages,
+                unlockMilestones: new[] { new ModifierUnlockMilestone(2) }, encounterModifierIds: new[] { discovered.Id },
+                unlockRewardModifierIds: new[] { locked.Id });
+            var sources = new MechanicalCatalog("collection.sources", TestContent.Hands(), new[] { sourced, unjourneyed },
+                new[] { locked, discovered });
+            var journeys = Journeys("encounter.sourced", "Test House", out var created);
+            try
+            {
+                Assert.That(SpiritCollectionView.GetSourceText(locked, sources, journeys),
+                    Is.EqualTo("Unlock choice: Test House - after stages 1, 3.\nOnce unlocked, run charm pool: Not offered in current encounters."));
+                Assert.That(SpiritCollectionView.GetSourceText(discovered, sources, journeys),
+                    Does.EndWith("Once unlocked, run charm pool: Test House."));
+            }
+            finally
+            {
+                foreach (var asset in created) UnityEngine.Object.DestroyImmediate(asset);
+            }
+        }
+
+        /** Checks a source encounter whose journey has no location title fails loudly / fails if the encounter is named by its id instead. */
+        [Test]
+        public void SourceJourneyWithoutALocationTitleFails()
+        {
+            var journeys = Journeys("encounter.test", "", out var created);
+            try
+            {
+                var failure = Assert.Throws<InvalidOperationException>(() => SpiritCollectionView.GetSourceText(locked, catalog, journeys));
+                Assert.That(failure.Message, Does.Contain("encounter.test"));
+            }
+            finally
+            {
+                foreach (var asset in created) UnityEngine.Object.DestroyImmediate(asset);
+            }
+        }
+
+        /** A journey catalog of one encounter journey with the given location title; the assets are returned for release. */
+        private static EncounterJourneyCatalogAsset Journeys(string encounterId, string locationTitle, out ScriptableObject[] created)
+        {
+            var journey = ScriptableObject.CreateInstance<EncounterJourneyAsset>();
+            var journeys = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
+            created = new ScriptableObject[] { journeys, journey };
+            var journeyData = new SerializedObject(journey);
+            journeyData.FindProperty("encounterId").stringValue = encounterId;
+            journeyData.FindProperty("locationTitle").stringValue = locationTitle;
+            journeyData.ApplyModifiedPropertiesWithoutUndo();
+            var catalogData = new SerializedObject(journeys);
+            var entries = catalogData.FindProperty("entries");
+            entries.arraySize = 1;
+            entries.GetArrayElementAtIndex(0).objectReferenceValue = journey;
+            catalogData.ApplyModifiedPropertiesWithoutUndo();
+            return journeys;
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffect effect,

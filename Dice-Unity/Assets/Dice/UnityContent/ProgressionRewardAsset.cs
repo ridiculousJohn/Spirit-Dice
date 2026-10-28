@@ -12,14 +12,26 @@ namespace Dice.UnityContent
 
         public ProgressionRewardDefinition Build(MechanicalCatalog catalog)
         {
-            if (grantedModifiers == null) throw new InvalidOperationException("Granted charms are missing.");
-            var ids = new string[grantedModifiers.Length];
-            for (int i = 0; i < ids.Length; ++i)
-                ids[i] = grantedModifiers[i] != null ? grantedModifiers[i].Id
-                    : throw new InvalidOperationException("A granted charm reference is missing: " + name);
+            var ids = new string[GrantedModifiers.Length];
+            for (int i = 0; i < ids.Length; ++i) ids[i] = GrantedModifier(i).Id;
             var definition = new ProgressionRewardDefinition(discoveredFamilyIds, ids);
             definition.Validate(catalog);
             return definition;
         }
+
+        /** Whether the reward grants the charm, read from its charm references. */
+        public bool GrantsModifier(string modifierId)
+        {
+            for (int i = 0; i < GrantedModifiers.Length; ++i)
+                if (GrantedModifier(i).Id == modifierId) return true;
+            return false;
+        }
+
+        private ModifierAsset[] GrantedModifiers
+            => grantedModifiers ?? throw new InvalidOperationException("Granted charms are missing.");
+
+        private ModifierAsset GrantedModifier(int index)
+            => grantedModifiers[index] != null ? grantedModifiers[index]
+                : throw new InvalidOperationException("A granted charm reference is missing: " + name);
     }
 }

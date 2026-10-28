@@ -51,11 +51,12 @@ namespace Dice.Presentation
         }
 
         public void Show(MechanicalCatalog mechanicalCatalog, ModifierPresentationCatalog charmPresentation,
-            IReadOnlyList<string> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog = null,
+            IReadOnlyList<string> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog,
             IReadOnlyList<string> profileDiscoveredFamilyIds = null)
         {
             if (mechanicalCatalog == null) throw new ArgumentNullException(nameof(mechanicalCatalog));
             if (charmPresentation == null) throw new ArgumentNullException(nameof(charmPresentation));
+            if (journeyCatalog == null) throw new ArgumentNullException(nameof(journeyCatalog));
             if (Root == null) throw new InvalidOperationException("Build the collection before opening it.");
             catalog = mechanicalCatalog;
             charms = charmPresentation;
@@ -181,52 +182,36 @@ namespace Dice.Presentation
             }
         }
 
+        /**
+         * Where a charm can be obtained: its unlock and run reward sources as the mechanical catalog states them, and its
+         * story and completion gifts from the journeys' progression rewards. Encounters are named by their journeys'
+         * locations; encounters without a journey are not listed.
+         */
         public static string GetSourceText(ModifierDefinition definition, MechanicalCatalog mechanicalCatalog,
-            EncounterJourneyCatalogAsset journeyCatalog = null)
+            EncounterJourneyCatalogAsset journeyCatalog)
         {
+            if (journeyCatalog == null) throw new ArgumentNullException(nameof(journeyCatalog));
+            ModifierSources sources = mechanicalCatalog.GetModifierSources(definition.Id);
             var unlockSources = new List<string>();
-            var giftSources = new List<string>();
+            foreach (var unlock in sources.Unlocks)
+            {
+                if (!TryGetEncounterName(unlock.Encounter, journeyCatalog, out string name)) continue;
+                var stages = new List<string>();
+                foreach (int stageNumber in unlock.StageNumbers) stages.Add(stageNumber.ToString());
+                unlockSources.Add(name + " - after stage" + (stages.Count > 1 ? "s " : " ") + string.Join(", ", stages));
+            }
             var rewardSources = new List<string>();
+            foreach (var encounter in sources.RunRewards)
+                if (TryGetEncounterName(encounter, journeyCatalog, out string name)) rewardSources.Add(name);
+            var giftSources = new List<string>();
+            // Encounter journeys are listed in the catalog's encounter order, then story journeys in journey order.
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
-                var journey = journeyCatalog?.Find(encounter.Id);
-                if (journeyCatalog != null && journey == null) continue;
-                string name = journey?.LocationTitle ?? DiagnosticText.Humanize(encounter.Id);
-                var stages = new List<string>();
-                bool selectionSource = encounter.UnlockRewardModifierIds.Contains(definition.Id);
-                foreach (var milestone in encounter.UnlockMilestones)
-                    if (selectionSource)
-                        stages.Add(milestone.StageNumber.ToString());
-                if (stages.Count > 0)
-                    unlockSources.Add(name + " - after stage" + (stages.Count > 1 ? "s " : " ") + string.Join(", ", stages));
-                if (journey != null)
-                {
-                    foreach (var beat in journey.Beats)
-                        if (beat.ProgressionReward != null && beat.ProgressionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
-                        {
-                            giftSources.Add(name + " - story");
-                            break;
-                        }
-                    if (journey.CompletionReward != null && journey.CompletionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
-                        giftSources.Add(name + " - completion");
-                }
-                if (definition.RewardEligible && definition.Availability.MatchesEncounter(encounter) &&
-                    IsRewardSource(definition.Id, encounter, mechanicalCatalog))
-                    rewardSources.Add(name);
+                var journey = journeyCatalog.Find(encounter.Id);
+                if (journey != null) AddGiftSources(journey, definition.Id, giftSources);
             }
-            if (journeyCatalog != null)
-                foreach (var journey in journeyCatalog.Entries)
-                {
-                    if (journey == null || !journey.IsStoryOnly) continue;
-                    foreach (var beat in journey.Beats)
-                        if (beat.ProgressionReward != null && beat.ProgressionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
-                        {
-                            giftSources.Add(journey.LocationTitle + " - story");
-                            break;
-                        }
-                    if (journey.CompletionReward != null && journey.CompletionReward.Build(mechanicalCatalog).GrantedModifierIds.Contains(definition.Id))
-                        giftSources.Add(journey.LocationTitle + " - completion");
-                }
+            foreach (var journey in journeyCatalog.Entries)
+                if (journey != null && journey.IsStoryOnly) AddGiftSources(journey, definition.Id, giftSources);
             string rewards = rewardSources.Count > 0 ? string.Join(", ", rewardSources) : "Not offered in current encounters";
             if (definition.Availability.Access == ModifierAccess.EncounterExclusive)
                 return "Encounter only; never permanently collected.\nRun charm pool: " + rewards + ".";
@@ -237,17 +222,29 @@ namespace Dice.Presentation
             return (source.Length > 0 ? source : "Not obtainable yet") + ".\nOnce unlocked, run charm pool: " + rewards + ".";
         }
 
-        private static bool IsRewardSource(string modifierId, EncounterDefinition encounter, MechanicalCatalog mechanicalCatalog)
+        /** The encounter's name, its journey's location, or false when the journey catalog has no journey for it. */
+        private static bool TryGetEncounterName(EncounterDefinition encounter, EncounterJourneyCatalogAsset journeyCatalog,
+            out string name)
         {
-            if (encounter.EncounterModifierIds.Contains(modifierId)) return true;
-            if (encounter.RewardPolicy == null) return false;
-            foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
-                foreach (string poolId in layout.PoolIds)
+            var journey = journeyCatalog.Find(encounter.Id);
+            name = journey != null ? LocationTitle(journey) : null;
+            return journey != null;
+        }
+
+        private static string LocationTitle(EncounterJourneyAsset journey)
+            => !string.IsNullOrWhiteSpace(journey.LocationTitle) ? journey.LocationTitle
+                : throw new InvalidOperationException("Journey " + journey.Id + " has no location title.");
+
+        private static void AddGiftSources(EncounterJourneyAsset journey, string modifierId, List<string> giftSources)
+        {
+            foreach (var beat in journey.Beats)
+                if (beat.ProgressionReward != null && beat.ProgressionReward.GrantsModifier(modifierId))
                 {
-                    var pool = mechanicalCatalog.GetRewardPool(poolId);
-                    if (pool.ModifierIds.Contains(modifierId) || pool.FallbackModifierId == modifierId) return true;
+                    giftSources.Add(LocationTitle(journey) + " - story");
+                    break;
                 }
-            return false;
+            if (journey.CompletionReward != null && journey.CompletionReward.GrantsModifier(modifierId))
+                giftSources.Add(LocationTitle(journey) + " - completion");
         }
     }
 }

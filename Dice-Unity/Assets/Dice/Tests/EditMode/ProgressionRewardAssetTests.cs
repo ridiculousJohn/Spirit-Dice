@@ -65,6 +65,17 @@ namespace Dice.Tests
             Assert.Throws<ArgumentException>(() => reward.Build(catalog));
         }
 
+        /** Checks a reward states it grants a charm it references and not one it does not, and a missing reference fails / fails if the answer ignores the references or a missing one is skipped. */
+        [Test]
+        public void RewardStatesWhetherItGrantsACharmFromItsReferences()
+        {
+            var reward = Reward(Array.Empty<string>(), new[] { ModifierId });
+            Assert.That(reward.GrantsModifier(ModifierId), Is.True);
+            Assert.That(reward.GrantsModifier("modifier.other"), Is.False);
+            Set(reward, "grantedModifiers", new ModifierAsset[] { null });
+            Assert.Throws<InvalidOperationException>(() => reward.GrantsModifier(ModifierId));
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void JourneyValidatesBeatAndCompletionRewards(bool completion)
