@@ -14,12 +14,12 @@ namespace Dice.Editor
     {
         private const string TableKey = "Dice.EncounterLightingPreview.Table";
         private const string EntryKey = "Dice.EncounterLightingPreview.Entry";
-        private const string PreviewPipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
         private const int UiLayer = 30;
-        private EncounterTablePresentationAsset table;
-        private SceneLightingAsset entry;
-        [SerializeField] private bool showTable = true;
-        [SerializeField] private bool animate = true;
+        // The selection, the stage's renderers and its lighting are internal so EditMode tests drive and inspect the stage.
+        internal EncounterTablePresentationAsset table;
+        internal SceneLightingAsset entry;
+        [SerializeField] internal bool showTable = true;
+        [SerializeField] internal bool animate = true;
         [SerializeField] private float intensity = 1f;
         [SerializeField] private float[] lightMultipliers = Array.Empty<float>();
         [SerializeField] private float poseTime;
@@ -28,19 +28,18 @@ namespace Dice.Editor
         private Scene previewScene;
         private GameObject stage;
         private Camera camera;
-        private RenderTexture output;
+        internal RenderTexture output;
         private RawImage roomImage;
         private RawImage tableImage;
         private SpiritTrayScene trayScene;
-        private SpiritDiceTray tray;
-        private SpiritModifierHistoryRenderer history;
+        internal SpiritDiceTray tray;
+        internal SpiritModifierHistoryRenderer history;
         private SpiritHostPortrait host;
         private SceneLitImage[] litImages = Array.Empty<SceneLitImage>();
-        private SceneLightingAsset lighting;
+        internal SceneLightingAsset lighting;
         private SceneLightingAsset sourceLighting;
-        private SceneLightingMaterial compositor;
-        private RenderPipelineAsset previousPipeline;
-        private UniversalRenderPipelineAsset previewPipeline;
+        internal SceneLightingMaterial compositor;
+        internal readonly EncounterPreviewPipeline pipeline = new EncounterPreviewPipeline();
         private readonly SceneLightingState state = new SceneLightingState();
         private EncounterTablePresentationAsset stagedTable;
         private SceneLightingAsset stagedEntry;
@@ -162,11 +161,12 @@ namespace Dice.Editor
             ResizeMultipliers(lighting.Lights.Length);
             var values = new float[lightMultipliers.Length];
             for (int i = 0; i < values.Length; ++i)
-                values[i] = float.IsNaN(lightMultipliers[i]) || float.IsInfinity(lightMultipliers[i]) ? 1f : Mathf.Max(0f, lightMultipliers[i]);
+                values[i] = !FiniteValue.Is(lightMultipliers[i]) ? 1f : Mathf.Max(0f, lightMultipliers[i]);
             return values;
         }
 
-        private void EnsureStage()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void EnsureStage()
         {
             var selectedLighting = showTable ? table?.SceneLighting : entry;
             string settings = showTable && table != null ? SpiritEncounterPreviewScene.SourceSettings(table) : null;
@@ -224,14 +224,15 @@ namespace Dice.Editor
                 canvas.planeDistance = 1;
                 var scaler = canvasRoot.gameObject.AddComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                scaler.referenceResolution = new Vector2(540, 960);
+                scaler.referenceResolution = new Vector2(SpiritEncounterPreviewScene.PreviewWidth, SpiritEncounterPreviewScene.PreviewHeight);
                 scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
                 scaler.matchWidthOrHeight = 1;
                 roomImage = Image("Entry", canvasRoot, Vector2.zero, Vector2.one);
             }
         }
 
-        private void RenderPreview()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void RenderPreview()
         {
             double time = animate ? EditorApplication.timeSinceStartup - startedAt : Math.Max(0, poseTime);
             if (lighting != null)
@@ -316,7 +317,8 @@ namespace Dice.Editor
             return image;
         }
 
-        private void ReleaseStage()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void ReleaseStage()
         {
             compositor?.Dispose();
             compositor = null;

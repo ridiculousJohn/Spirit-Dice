@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -193,18 +191,18 @@ namespace Dice.Tests
             var definition = TestTrayRig.Definition("test.tray.consumer");
             history.Add(TestTrayRig.Contribution(definition), Rig.Charms(definition), definition, false);
             Transform token = history.GetDieTransform(0);
-            TestTrayRig.Invoke(scene, "OnEnable");
-            TestTrayRig.Invoke(history, "OnDisable");
+            scene.OnEnable();
+            history.OnDisable();
             Assert.That(token.gameObject.activeInHierarchy, Is.False, "Disabling the modifier renderer hides its tokens.");
             Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
-            TestTrayRig.Invoke(dice, "OnDisable");
+            dice.OnDisable();
             Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
             RenderTexture texture = scene.Texture;
             UnityEngine.Object.DestroyImmediate(dice.gameObject);
             Assert.That(texture != null && texture.IsCreated() && scene.RenderCamera != null, Is.True);
-            TestTrayRig.Invoke(scene, "OnDisable");
+            scene.OnDisable();
             Assert.That(Rig.Stage.gameObject.activeSelf, Is.False);
-            TestTrayRig.Invoke(scene, "OnEnable");
+            scene.OnEnable();
             Assert.That(Rig.Stage.gameObject.activeSelf, Is.True);
         }
 
@@ -295,25 +293,23 @@ namespace Dice.Tests
             Color ink = new Color(.2f, .45f, .7f, 1f);
             var categorized = TestTrayRig.Definition("test.tray.categorized", effect: new AddMultiplierEffect(1));
             var categorizedCharms = Rig.Synthetic.For(Rig.Synthetic.Category(Rig.Synthetic.Icon(), ink: ink), categorized);
-            {
-                var plain = TestTrayRig.Definition("test.tray.uncategorized");
-                var plainCharms = Rig.Synthetic.For(Rig.Synthetic.Category(), plain);
-                var history = Rig.StartHistory();
-                history.Add(TestTrayRig.Contribution(categorized), categorizedCharms, categorized, false);
-                history.Add(TestTrayRig.Contribution(plain, 2), plainCharms, plain, false);
-                Material marked = history.GetDieRenderer(0).sharedMaterial;
-                Material unmarked = history.GetDieRenderer(1).sharedMaterial;
-                Sprite glyph = categorizedCharms.GetCategorySprite(categorized);
-                Assert.That(glyph, Is.Not.Null);
-                Assert.That(marked.GetFloat("_ShowCategory"), Is.EqualTo(1f));
-                Assert.That(marked.GetTexture("_CategoryIcon"), Is.SameAs(glyph.texture));
-                AssertColor(marked.GetColor("_CategoryColor"), ink);
-                AssertColor(marked.GetColor("_FaceIconColor"), ink);
-                AssertColor(marked.GetColor("_BaseColor"), Rig.TokenMaterial.GetColor("_BaseColor"));
-                Assert.That(unmarked.GetFloat("_ShowCategory"), Is.Zero);
-                Assert.That(unmarked.GetFloat("_ShowFaceIcon"), Is.EqualTo(1f));
-                Assert.That(unmarked.GetTexture("_FaceIcon"), Is.Not.Null);
-            }
+            var plain = TestTrayRig.Definition("test.tray.uncategorized");
+            var plainCharms = Rig.Synthetic.For(Rig.Synthetic.Category(), plain);
+            var history = Rig.StartHistory();
+            history.Add(TestTrayRig.Contribution(categorized), categorizedCharms, categorized, false);
+            history.Add(TestTrayRig.Contribution(plain, 2), plainCharms, plain, false);
+            Material marked = history.GetDieRenderer(0).sharedMaterial;
+            Material unmarked = history.GetDieRenderer(1).sharedMaterial;
+            Sprite glyph = categorizedCharms.GetCategorySprite(categorized);
+            Assert.That(glyph, Is.Not.Null);
+            Assert.That(marked.GetFloat("_ShowCategory"), Is.EqualTo(1f));
+            Assert.That(marked.GetTexture("_CategoryIcon"), Is.SameAs(glyph.texture));
+            AssertColor(marked.GetColor("_CategoryColor"), ink);
+            AssertColor(marked.GetColor("_FaceIconColor"), ink);
+            AssertColor(marked.GetColor("_BaseColor"), Rig.TokenMaterial.GetColor("_BaseColor"));
+            Assert.That(unmarked.GetFloat("_ShowCategory"), Is.Zero);
+            Assert.That(unmarked.GetFloat("_ShowFaceIcon"), Is.EqualTo(1f));
+            Assert.That(unmarked.GetTexture("_FaceIcon"), Is.Not.Null);
         }
 
         /** Checks scrolling moves tokens along the bay and clips those outside it / fails if overflow tokens stay visible or scrolling does not reveal them. */
@@ -393,7 +389,7 @@ namespace Dice.Tests
             var definition = TestTrayRig.Definition("test.tray.pointer");
             int last = tray.Renderer.Capacity + 4;
             for (int i = 0; i <= last; ++i) tray.Add(TestTrayRig.Contribution(definition, i + 1), Rig.Charms(definition), definition, false);
-            TestTrayRig.Invoke(tray, "LateUpdate");
+            tray.LateUpdate();
             var root = (RectTransform)tray.transform;
             var visible = (RectTransform)tray.Content.GetChild(0);
             Rect projected = tray.Renderer.GetDieViewportRect(0);
@@ -528,7 +524,6 @@ namespace Dice.Tests
                 new[] { new EncounterDefinition("test.ready", new[] { new StageDefinition(1, 1, 0) }) }, new[] { roll, score, grant });
         }
 
-        /** Installs a theme holding one test-only charm in the given category and returns its definition. */
         /** A gameplay HUD built from test-only UI objects; scaled lists the graphics whose scales it captures. */
         private SpiritGameplayHud CreateHud(out RectTransform[] scaled)
         {
@@ -549,35 +544,33 @@ namespace Dice.Tests
             Text Label(string property)
             {
                 var label = Ui<Text>(property);
-                TestTrayRig.Set(hud, "<" + property + ">k__BackingField", label);
+                SyntheticUi.Set(hud, "<" + property + ">k__BackingField", label);
                 graphics.Add(label);
                 return label;
             }
             var icon = Ui<Image>("ModifierActivationIcon");
-            TestTrayRig.Set(hud, "<ModifierActivationIcon>k__BackingField", icon);
+            SyntheticUi.Set(hud, "<ModifierActivationIcon>k__BackingField", icon);
             graphics.Add(icon);
             foreach (string property in new[] { "SelectionLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
                 "HandScoreLabel", "TargetLabel" })
                 Label(property);
-            TestTrayRig.Set(hud, "<CategoryLabel>k__BackingField", Ui<Text>("CategoryLabel"));
-            TestTrayRig.Set(hud, "<ModifierEmblem>k__BackingField", Ui<Image>("ModifierEmblem"));
-            TestTrayRig.Set(hud, "<RerollButton>k__BackingField", Ui<Button>("RerollButton"));
-            TestTrayRig.Set(hud, "<PlayButton>k__BackingField", Ui<Button>("PlayButton"));
+            SyntheticUi.Set(hud, "<CategoryLabel>k__BackingField", Ui<Text>("CategoryLabel"));
+            SyntheticUi.Set(hud, "<ModifierEmblem>k__BackingField", Ui<Image>("ModifierEmblem"));
+            SyntheticUi.Set(hud, "<RerollButton>k__BackingField", Ui<Button>("RerollButton"));
+            SyntheticUi.Set(hud, "<PlayButton>k__BackingField", Ui<Button>("PlayButton"));
             var badge = Ui<SpiritModifierCategoryBadge>("ModifierActivationCategory");
             var accent = Ui<Image>("Accent", badge.transform);
-            TestTrayRig.Set(badge, "<Accent>k__BackingField", accent);
-            TestTrayRig.Set(badge, "<Glyph>k__BackingField", Ui<Image>("Glyph", badge.transform));
-            TestTrayRig.Set(badge, "border", accent.gameObject.AddComponent<Outline>());
-            TestTrayRig.Set(hud, "modifierActivationCategory", badge);
+            SyntheticUi.Set(badge, "<Accent>k__BackingField", accent);
+            SyntheticUi.Set(badge, "<Glyph>k__BackingField", Ui<Image>("Glyph", badge.transform));
+            SyntheticUi.Set(badge, "border", accent.gameObject.AddComponent<Outline>());
+            SyntheticUi.Set(hud, "modifierActivationCategory", badge);
             foreach (string name in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })
             {
-                object highlight = typeof(SpiritGameplayHud).GetField("<" + name + ">k__BackingField",
-                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(hud);
                 var label = Ui<Text>(name + " Label");
                 var highlightIcon = Ui<Image>(name + " Icon");
-                TestTrayRig.Set(highlight, "Label", label);
-                TestTrayRig.Set(highlight, "Caption", Ui<Text>(name + " Caption"));
-                TestTrayRig.Set(highlight, "Icon", highlightIcon);
+                SyntheticUi.Set(hud, "<" + name + ">k__BackingField.Label", label);
+                SyntheticUi.Set(hud, "<" + name + ">k__BackingField.Caption", Ui<Text>(name + " Caption"));
+                SyntheticUi.Set(hud, "<" + name + ">k__BackingField.Icon", highlightIcon);
                 graphics.Add(label);
                 graphics.Add(highlightIcon);
             }
@@ -635,8 +628,6 @@ namespace Dice.Tests
             {
                 contactTimes = new[] { .16f, .3f, .43f }, settleTime = 0
             }, 0, 0, 0);
-            MethodInfo support = typeof(SpiritDiceTray).GetMethod("SupportHeight",
-                BindingFlags.Instance | BindingFlags.NonPublic);
             for (int sample = 0; sample <= 24; ++sample)
                 for (int index = 0; index < dice.Dice.Count; ++index)
                 {
@@ -645,7 +636,7 @@ namespace Dice.Tests
                         out Quaternion rotation, out float lift, out float drift);
                     Transform die = dice.Dice[index];
                     die.localRotation = rotation;
-                    float height = (float)support.Invoke(dice, new object[] { rotation });
+                    float height = dice.SupportHeight(rotation);
                     die.localPosition = new Vector3(drift, height + lift, 0) * scene.Geometry.DiceScale;
                     AssertMeshCornersFit(scene.RenderCamera, die);
                 }
@@ -728,15 +719,14 @@ namespace Dice.Tests
             }
             Geometry.ModifierRoot = Child("Modifier Bay", Geometry.transform);
             Geometry.ModifierRoot.localPosition = new Vector3(0, 0, 1.8f);
-            Presentation.GeometryPrefab = Geometry;
 
             var dicePresentation = Child("Dice Presentation", Stage).gameObject;
             Dice = dicePresentation.AddComponent<SpiritDiceTray>();
-            Set(Dice, "dice", dice);
-            Set(Dice, "selectionOutlines", Outlines);
-            Set(Dice, "selectionFrames", Frames);
-            Set(Dice, "contactShadows", shadows);
-            Set(Dice, "renderRoot", dicePresentation);
+            SyntheticUi.Set(Dice, "dice", dice);
+            SyntheticUi.Set(Dice, "selectionOutlines", Outlines);
+            SyntheticUi.Set(Dice, "selectionFrames", Frames);
+            SyntheticUi.Set(Dice, "contactShadows", shadows);
+            SyntheticUi.Set(Dice, "renderRoot", dicePresentation);
 
             var template = Root("Modifier Token Template");
             Token = template.AddComponent<SpiritModifierToken>();
@@ -752,13 +742,13 @@ namespace Dice.Tests
             var historyPresentation = Child("Modifier Presentation", Stage).gameObject;
             History = historyPresentation.AddComponent<SpiritModifierHistoryRenderer>();
             var tokens = Child("Modifier Tokens", Geometry.ModifierRoot).gameObject;
-            Set(History, "renderRoot", tokens);
-            Set(History, "contentRoot", tokens.transform);
-            Set(History, "tokenPrefab", Token);
+            SyntheticUi.Set(History, "renderRoot", tokens);
+            SyntheticUi.Set(History, "contentRoot", tokens.transform);
+            SyntheticUi.Set(History, "tokenPrefab", Token);
 
-            Set(TrayScene, "renderRoot", Stage.gameObject);
-            Set(TrayScene, "renderCamera", Camera);
-            Set(TrayScene, "geometry", Geometry);
+            SyntheticUi.Set(TrayScene, "renderRoot", Stage.gameObject);
+            SyntheticUi.Set(TrayScene, "renderCamera", Camera);
+            SyntheticUi.Set(TrayScene, "geometry", Geometry);
         }
 
         /** Configures and initializes the shared scene without framing it. */
@@ -819,14 +809,14 @@ namespace Dice.Tests
             scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.inertia = false;
             var button = Root("Token Button", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<Button>();
-            Set(tray, "root", trayRect);
-            Set(tray, "content", content);
-            Set(tray, "scroll", scroll);
-            Set(tray, "frame", frame);
-            Set(tray, "tokenPrefab", button);
+            SyntheticUi.Set(tray, "root", trayRect);
+            SyntheticUi.Set(tray, "content", content);
+            SyntheticUi.Set(tray, "scroll", scroll);
+            SyntheticUi.Set(tray, "frame", frame);
+            SyntheticUi.Set(tray, "tokenPrefab", button);
             tray.BindRenderer(History);
             tray.Configure(Presentation, TrayScene);
-            tray.Build(trayRect);
+            tray.Build();
             return tray;
         }
 
@@ -837,15 +827,7 @@ namespace Dice.Tests
         /** A contribution of the definition, made through the engine's own constructor. */
         internal static ModifierContribution Contribution(ModifierDefinition definition, long instanceId = 1, long baseScore = 1,
             long multiplier = 0, int rerolls = 0)
-            => (ModifierContribution)Activator.CreateInstance(typeof(ModifierContribution), BindingFlags.Instance | BindingFlags.NonPublic,
-                null, new object[] { instanceId, definition, baseScore, multiplier, rerolls }, null);
-
-        internal static void Set(object instance, string name, object value)
-            => instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                .SetValue(instance, value);
-
-        internal static void Invoke(object instance, string name)
-            => instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(instance, null);
+            => new ModifierContribution(instanceId, definition, baseScore, multiplier, rerolls);
 
         public void Dispose()
         {

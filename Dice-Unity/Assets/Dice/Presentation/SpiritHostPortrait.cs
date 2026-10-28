@@ -41,6 +41,8 @@ namespace Dice.Presentation
         private double stateAge;
         // Continuous effects retain their phase across dialogue and pose resets.
         private double effectAge;
+        // Internal so EditMode tests read the time continuous effects are sampled at.
+        internal double EffectAge => effectAge;
         private float arrivalProgress;
         private Color sceneLightingTint = Color.white;
         private bool hasSceneLighting;

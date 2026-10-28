@@ -21,6 +21,8 @@ namespace Dice.App
         private string current;
         private Coroutine transition;
         private AsyncOperationHandle<SceneInstance> scene;
+        // Internal so PlayMode tests check the routed scene handle is released.
+        internal AsyncOperationHandle<SceneInstance> SceneHandle => scene;
         public SpiritEncounterView EncounterView { get; private set; }
         public SpiritFrontendView FrontendView { get; private set; }
         public GameObject PresentationRoot { get; private set; }

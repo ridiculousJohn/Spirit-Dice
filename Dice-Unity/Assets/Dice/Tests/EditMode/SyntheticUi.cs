@@ -46,6 +46,16 @@ namespace Dice.Tests
 
         public T Add<T>(Transform parent, string name) where T : Component => Rect(parent, name).gameObject.AddComponent<T>();
 
+        public Text Label(Transform parent, string name) => Add<Text>(parent, name);
+
+        /** A button with a text label child, as authored menu buttons carry. */
+        public Button LabeledButton(Transform parent, string name)
+        {
+            var button = Add<Button>(parent, name);
+            Label(button.transform, "Label");
+            return button;
+        }
+
         public Button NewButton(Transform parent, string name)
         {
             var image = Add<Image>(parent, name);
@@ -114,32 +124,40 @@ namespace Dice.Tests
             return screen;
         }
 
-        public static void Set(Object target, string property, Object value)
+        /**
+         * Sets a serialized field of a fabricated object through its serialized form, as an author sets it in the
+         * inspector. The path may reach into nested serialized data; an array value sets each element.
+         */
+        public static void Set(Object target, string path, object value)
         {
             using var serialized = new SerializedObject(target);
-            var field = serialized.FindProperty(property);
-            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + property);
-            field.objectReferenceValue = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(field.objectReferenceValue, Is.SameAs(value), target.GetType().Name + "." + property);
-        }
-
-        public static void Set(Object target, string property, Color value)
-        {
-            using var serialized = new SerializedObject(target);
-            var field = serialized.FindProperty(property);
-            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + property);
-            field.colorValue = value;
+            var property = serialized.FindProperty(path);
+            Assert.That(property, Is.Not.Null, target.GetType().Name + "." + path);
+            Assign(property, value);
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        public static void Set(Object target, string property, string value)
+        private static void Assign(SerializedProperty property, object value)
         {
-            using var serialized = new SerializedObject(target);
-            var field = serialized.FindProperty(property);
-            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + property);
-            field.stringValue = value;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            if (property.isArray && property.propertyType != SerializedPropertyType.String)
+            {
+                Assert.That(value, Is.InstanceOf<Array>(), property.propertyPath);
+                var values = (Array)value;
+                property.arraySize = values.Length;
+                for (int index = 0; index < values.Length; ++index) Assign(property.GetArrayElementAtIndex(index), values.GetValue(index));
+                return;
+            }
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.ObjectReference:
+                    property.objectReferenceValue = (Object)value;
+                    Assert.That(property.objectReferenceValue, Is.SameAs(value), property.propertyPath);
+                    break;
+                case SerializedPropertyType.Enum: property.intValue = Convert.ToInt32(value); break;
+                case SerializedPropertyType.Integer: property.longValue = Convert.ToInt64(value); break;
+                case SerializedPropertyType.Float: property.doubleValue = Convert.ToDouble(value); break;
+                default: property.boxedValue = value; break;
+            }
         }
 
         public void Dispose()

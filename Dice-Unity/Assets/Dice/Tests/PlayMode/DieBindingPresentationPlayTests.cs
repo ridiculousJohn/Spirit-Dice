@@ -5,7 +5,6 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace Dice.Tests
@@ -21,8 +20,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator BindingRulesShowMarksGrowRootsLockBoundDiceAndReleaseAfterScoring()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => !value.IsStoryOnly &&
                 controller.Catalog.GetEncounter(value.EncounterId).Rules.OfType<DieBindingRuleDefinition>().Any());
@@ -35,26 +33,9 @@ namespace Dice.Tests
         {
             string name = journey.Id;
             var rules = controller.Catalog.GetEncounter(journey.EncounterId).Rules.OfType<DieBindingRuleDefinition>().ToArray();
-            controller.ReturnToInvestigation();
-            yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.EncounterId);
-            yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
-                controller.AdvanceJourney();
-            controller.AcceptEncounter();
-            yield return ContentReady.Routed(controller);
-            var view = ContentReady.EncounterView(controller);
-            // Encounters that introduce their additions before play show the pre-encounter screen first.
-            if (view.JourneyView.EncounterCharms.IsOpen)
-            {
-                view.JourneyView.EncounterCharms.BeginButton.onClick.Invoke();
-                yield return ContentReady.Routed(controller);
-            }
-            yield return WaitIdle(controller);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
+            yield return ContentReady.EnterEncounter(controller, journey.Id, ContentReady.Seed);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
-            view = ContentReady.EncounterView(controller);
+            var view = ContentReady.EncounterView(controller);
             var visuals = Visuals(view, rules.Length, name);
             yield return Settle(visuals);
             AssertShows(visuals, controller.Snapshot, name + ": the opening roll");
@@ -69,7 +50,7 @@ namespace Dice.Tests
                 int free = DiceValues.AllMask & ~controller.Snapshot.Binding().BoundMask & ~marked;
                 controller.ToggleDie(Bay(free));
                 controller.Reroll();
-                yield return WaitIdle(controller);
+                yield return ContentReady.Idle(controller);
                 if (marked == 0) continue;
                 Assert.That(controller.Snapshot.Binding().BoundMask & marked, Is.EqualTo(marked), name + ": the marked die binds.");
             }
@@ -99,10 +80,8 @@ namespace Dice.Tests
 
             // Scoring the hand withdraws every root.
             controller.PlayHand();
-            float releaseDeadline = Time.realtimeSinceStartup + 30;
-            while (RootsShown(visuals) && Time.realtimeSinceStartup < releaseDeadline) yield return null;
-            Assert.That(RootsShown(visuals), Is.False, name + ": the roots withdraw after scoring.");
-            yield return WaitIdle(controller);
+            yield return ContentReady.WaitUntil(() => !RootsShown(visuals), name + ": the roots withdraw after scoring.");
+            yield return ContentReady.Idle(controller);
             if (controller.Snapshot.Phase == EncounterPhase.Playing)
             {
                 yield return Settle(visuals);
@@ -143,8 +122,7 @@ namespace Dice.Tests
         /** Waits until every die's visual has finished animating. */
         private static IEnumerator Settle(DieBindingVisual[][] visuals)
         {
-            float deadline = Time.realtimeSinceStartup + 10;
-            while (visuals.Any(die => die.Any(visual => visual.IsAnimating)) && Time.realtimeSinceStartup < deadline) yield return null;
+            yield return ContentReady.WaitUntil(() => !visuals.Any(die => die.Any(visual => visual.IsAnimating)), "The binding visuals settle.");
         }
 
         private static int Bay(int mask)
@@ -152,15 +130,6 @@ namespace Dice.Tests
             for (int bay = 0; bay < DiceValues.Count; ++bay)
                 if ((mask & (1 << bay)) != 0) return bay;
             throw new System.ArgumentException("No die in the mask.", nameof(mask));
-        }
-
-        private static IEnumerator WaitIdle(SpiritEncounterController controller)
-        {
-            yield return null;
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, "Presentation did not complete.");
-            yield return null;
         }
     }
 }

@@ -9,8 +9,8 @@ using Dice.Presentation;
 using Dice.UnityContent;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
+using static Dice.Tests.TestJourneys;
 
 namespace Dice.Tests
 {
@@ -49,7 +49,8 @@ namespace Dice.Tests
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) },
                 new[] { new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id }) });
             journeys = Create<EncounterJourneyCatalogAsset>();
-            SetAuthored(journeys, "entries", new[] { Journey(FirstId, "Harbor", "Ferryman"), Journey(SecondId, "Observatory", "Astronomer") });
+            SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", Journey(FirstId, "Harbor", "Ferryman"),
+                Journey(SecondId, "Observatory", "Astronomer")) });
             string directory = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..", "Docs", "work",
                 "encounter-journey-file-tests", Guid.NewGuid().ToString("N")));
             savePath = Path.Combine(directory, "encounter.json");
@@ -144,7 +145,7 @@ namespace Dice.Tests
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
             }, catalog.Modifiers);
-            SetAuthored(journeys.Entries[0], "completionReward", Reward(true, true));
+            SyntheticUi.Set(journeys.Entries[0], "completionReward", Reward(true, true));
             Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
             SelectInvitation(FirstId);
             controller.AcceptEncounter();
@@ -161,15 +162,15 @@ namespace Dice.Tests
         private ProgressionRewardAsset Reward(bool discover, bool grant)
         {
             var reward = Create<ProgressionRewardAsset>();
-            SetAuthored(reward, "discoveredFamilyIds", discover ? new[] { GiftFamily } : Array.Empty<string>());
-            SetAuthored(reward, "grantedModifiers", grant ? new[] { charms.Charm(GiftId, GiftFamily) } : Array.Empty<ModifierAsset>());
+            SyntheticUi.Set(reward, "discoveredFamilyIds", discover ? new[] { GiftFamily } : Array.Empty<string>());
+            SyntheticUi.Set(reward, "grantedModifiers", grant ? new[] { charms.Charm(GiftId, GiftFamily) } : Array.Empty<ModifierAsset>());
             return reward;
         }
 
         [Test]
         public void PrerequisitesGateNewLeadsButPreservePreviouslyVisitedEncounters()
         {
-            SetAuthored(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             Assert.That(controller.IsJourneyAvailable(FirstId), Is.True);
             Assert.That(controller.IsJourneyAvailable(SecondId), Is.False);
@@ -301,11 +302,11 @@ namespace Dice.Tests
         private EncounterJourneyAsset AddStory()
         {
             var story = Journey("", "A return visit", "The guide");
-            SetAuthored(story, "storyId", "story.return");
+            SyntheticUi.Set(story, "storyId", "story.return");
             SetBeats(story, Beat("report", EncounterJourneyBeatKind.Dialogue),
                 Beat("prepare", EncounterJourneyBeatKind.Dialogue));
-            SetAuthored(story, "completionReward", Reward(true, true));
-            SetAuthored(journeys, "entries", new[] { journeys.Entries[0], journeys.Entries[1], story });
+            SyntheticUi.Set(story, "completionReward", Reward(true, true));
+            SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", journeys.Entries[0], journeys.Entries[1], story) });
             return story;
         }
 
@@ -660,12 +661,12 @@ namespace Dice.Tests
             SetBeats(journey, Beat("invite-one", EncounterJourneyBeatKind.Invitation), Beat("invite-two", EncounterJourneyBeatKind.Invitation));
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
             SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation));
-            SetAuthored(journey, "encounterId", "encounter.missing");
+            SyntheticUi.Set(journey, "encounterId", "encounter.missing");
             Assert.Throws<KeyNotFoundException>(() => journeys.Validate(catalog));
-            SetAuthored(journey, "encounterId", FirstId);
+            SyntheticUi.Set(journey, "encounterId", FirstId);
             var rule = Create<EncounterRulePresentationAsset>();
-            SetAuthored(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
-            SetAuthored(journey.TablePresentation, "rulePresentations", new[] { rule });
+            SyntheticUi.Set(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
+            SyntheticUi.Set(journey.TablePresentation, "rulePresentations", new[] { rule });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
@@ -675,15 +676,15 @@ namespace Dice.Tests
             var journey = journeys.Entries[0];
             foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
                 Assert.That(journey.GetOutcomePresentation(outcome), Is.Null);
-            SetAuthored(journey, "victoryPresentation.holdDuration", 2f);
+            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", 2f);
             Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won), Is.Null, "An authored but disabled outcome is not used.");
-            SetAuthored(journey, "victoryPresentation.enabled", true);
+            SyntheticUi.Set(journey, "victoryPresentation.enabled", true);
             Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won)?.HoldDuration, Is.EqualTo(2f));
             Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
-            SetAuthored(journey, "victoryPresentation.holdDuration", float.NaN);
+            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", float.NaN);
             Assert.Throws<FormatException>(() => journey.Validate(catalog));
-            SetAuthored(journey, "victoryPresentation.holdDuration", 0f);
-            SetAuthored(journey, "victoryPresentation.fadeDuration", -1f);
+            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", 0f);
+            SyntheticUi.Set(journey, "victoryPresentation.fadeDuration", -1f);
             Assert.Throws<FormatException>(() => journey.Validate(catalog));
         }
 
@@ -692,9 +693,9 @@ namespace Dice.Tests
         [TestCase("missing")]
         public void FollowUpReferencesMustBeUniqueOtherCatalogJourneys(string invalid)
         {
-            SetAuthored(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            SetAuthored(journeys.Entries[0], "followUpEncounterIds", invalid == "duplicate" ? new[] { SecondId, SecondId } :
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", invalid == "duplicate" ? new[] { SecondId, SecondId } :
                 new[] { invalid == "self" ? FirstId : "encounter.missing" });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
@@ -790,7 +791,7 @@ namespace Dice.Tests
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
             });
-            SetAuthored(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
             Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
         }
 
@@ -957,7 +958,7 @@ namespace Dice.Tests
         {
             var first = Chapter("chapter.first", journeys.Entries[0]);
             var second = Chapter("chapter.second", journeys.Entries[1]);
-            SetAuthored(journeys, "chapters", new[] { first, second });
+            SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             var profile = new PlayerProfile();
             profile.CompleteEncounter(FirstId);
             string profilePath = Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json");
@@ -1024,8 +1025,8 @@ namespace Dice.Tests
         {
             var first = Chapter("chapter.first", journeys.Entries[0]);
             var second = Chapter("chapter.second", journeys.Entries[1]);
-            SetAuthored(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
-            SetAuthored(journeys, "chapters", new[] { first, second });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
             controller.SelectChapter(second.Id);
@@ -1056,8 +1057,8 @@ namespace Dice.Tests
             var story = AddStory();
             var first = Chapter("chapter.first", journeys.Entries[0], story);
             var second = Chapter("chapter.second", journeys.Entries[1]);
-            SetAuthored(journeys.Entries[1], "requiredCompletedStoryIds", new[] { story.Id });
-            SetAuthored(journeys, "chapters", new[] { first, second });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedStoryIds", new[] { story.Id });
+            SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             controller.SelectEncounter(story.Id);
             controller.AdvanceJourney();
@@ -1074,78 +1075,21 @@ namespace Dice.Tests
         }
 
         private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
-        {
-            var chapter = Create<EncounterChapterAsset>();
-            SetAuthored(chapter, "id", id);
-            SetAuthored(chapter, "title", id);
-            SetAuthored(chapter, "entries", entries);
-            return chapter;
-        }
+            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
 
         private EncounterJourneyAsset Journey(string id, string location, string spirit)
         {
             var journey = Create<EncounterJourneyAsset>();
-            SetAuthored(journey, "encounterId", id);
-            SetAuthored(journey, "locationTitle", location);
-            SetAuthored(journey, "spiritName", spirit);
-            SetAuthored(journey, "leadText", "A strange visitor waits beyond the door.");
-            SetAuthored(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
+            SyntheticUi.Set(journey, "encounterId", id);
+            SyntheticUi.Set(journey, "locationTitle", location);
+            SyntheticUi.Set(journey, "spiritName", spirit);
+            SyntheticUi.Set(journey, "leadText", "A strange visitor waits beyond the door.");
+            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
             SetBeats(journey, Beat("approach", EncounterJourneyBeatKind.Illustration),
                 Beat("arrival", EncounterJourneyBeatKind.Arrival),
                 Beat("bargain", EncounterJourneyBeatKind.Dialogue),
                 Beat("invitation", EncounterJourneyBeatKind.Invitation));
             return journey;
-        }
-
-        private static (string Id, EncounterJourneyBeatKind Kind) Beat(string id, EncounterJourneyBeatKind kind) => (id, kind);
-
-        /** Replaces the journey's beats with new default beats of the given ids and kinds; an arrival beat shows the host arriving. */
-        private static void SetBeats(EncounterJourneyAsset journey, params (string Id, EncounterJourneyBeatKind Kind)[] beats)
-        {
-            using var serialized = new SerializedObject(journey);
-            var list = serialized.FindProperty("beats");
-            list.arraySize = beats.Length;
-            for (int index = 0; index < beats.Length; ++index)
-            {
-                var beat = list.GetArrayElementAtIndex(index);
-                beat.boxedValue = new EncounterJourneyBeat();
-                beat.FindPropertyRelative("id").stringValue = beats[index].Id;
-                beat.FindPropertyRelative("kind").intValue = (int)beats[index].Kind;
-                if (beats[index].Kind == EncounterJourneyBeatKind.Arrival)
-                    beat.FindPropertyRelative("hostState").intValue = (int)SpiritPresentationState.Arrival;
-            }
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        /** Sets an authored field of the journey's beat through the journey's serialized form. */
-        private static void SetBeat(EncounterJourneyAsset journey, int beat, string field, object value)
-            => SetAuthored(journey, "beats.Array.data[" + beat + "]." + field, value);
-
-        /** Sets an authored field of a test asset through its serialized form; an array sets each element. */
-        private static void SetAuthored(UnityEngine.Object target, string path, object value)
-        {
-            using var serialized = new SerializedObject(target);
-            var property = serialized.FindProperty(path);
-            Assert.That(property, Is.Not.Null, target.GetType().Name + "." + path);
-            if (value is Array values)
-            {
-                property.arraySize = values.Length;
-                for (int index = 0; index < values.Length; ++index) Assign(property.GetArrayElementAtIndex(index), values.GetValue(index));
-            }
-            else Assign(property, value);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void Assign(SerializedProperty property, object value)
-        {
-            switch (value)
-            {
-                case bool flag: property.boolValue = flag; break;
-                case float number: property.floatValue = number; break;
-                case string text: property.stringValue = text; break;
-                case UnityEngine.Object reference: property.objectReferenceValue = reference; break;
-                default: throw new ArgumentException("Unsupported test value " + value + ".", nameof(value));
-            }
         }
 
         private void SelectInvitation(string id)

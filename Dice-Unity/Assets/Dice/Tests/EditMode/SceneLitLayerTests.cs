@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,7 +10,6 @@ namespace Dice.Tests
 {
     public sealed class SceneLitLayerTests
     {
-        private const string LitShaderPath = "Assets/Dice/Presentation/Shared/SceneLitImage.shader";
         private readonly List<UnityEngine.Object> objects = new List<UnityEngine.Object>();
         private SceneLightingAsset asset;
         private Shader shader;
@@ -19,10 +17,9 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            shader = AssetDatabase.LoadAssetAtPath<Shader>(LitShaderPath);
-            Assert.That(shader, Is.Not.Null);
+            shader = TestShaders.Load(TestShaders.SceneLitImage);
             asset = Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
-            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.BaseTexture = Texture(new Color(.1f, .1f, .1f, 1f));
             asset.Lights = new[]
             {
@@ -56,7 +53,7 @@ namespace Dice.Tests
         {
             Texture2D unlit = Texture(Color.gray), reference = Texture(Color.yellow), response = Texture(Color.blue), depth = Texture(Color.white);
             var layer = Layer(unlit, reference, response, depth);
-            var source = Own(new Material(AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader")));
+            var source = Own(new Material(TestShaders.Load(TestShaders.SourceMaskedImage)));
             Texture2D mask = Texture(Color.white);
             source.SetTexture("_SourceTex", Texture(Color.magenta));
             source.SetTexture("_LayerMask", mask);

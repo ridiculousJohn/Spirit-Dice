@@ -101,7 +101,7 @@ namespace Dice.Tests
             var rejected = session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), 2);
             Assert.That(rejected.Rejection, Is.EqualTo(CommandRejection.InvalidOffer));
             Assert.That(rejected.Events, Is.Empty);
-            AssertSnapshotsEqual(result.Snapshot, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(result.Snapshot, session.Snapshot);
         }
 
         [Test]
@@ -122,9 +122,9 @@ namespace Dice.Tests
             var before = session.Snapshot;
             var choice = new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId);
             Assert.That(session.Execute(choice, before.Revision - 1).Rejection, Is.EqualTo(CommandRejection.StaleRevision));
-            AssertSnapshotsEqual(before, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             var accepted = session.Execute(choice, before.Revision);
-            AssertSnapshotsEqual(control.Execute(choice, before.Revision).Snapshot, accepted.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(choice, before.Revision).Snapshot, accepted.Snapshot);
             Assert.That(session.Execute(choice, before.Revision).Rejection, Is.EqualTo(CommandRejection.StaleRevision));
             AssertRejected(session, choice, CommandRejection.InvalidPhase);
             var upgradeOffer = session.Snapshot.PendingReward;
@@ -132,9 +132,9 @@ namespace Dice.Tests
             AssertRejected(session, new SelectHandUpgradeAction(upgradeOffer.OfferId, -1), CommandRejection.InvalidRewardOption);
             var upgrade = new SelectHandUpgradeAction(upgradeOffer.OfferId, upgradeOffer.Options[0].OptionId);
             var after = session.Execute(upgrade, session.Snapshot.Revision);
-            AssertSnapshotsEqual(control.Execute(upgrade, control.Snapshot.Revision).Snapshot, after.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(upgrade, control.Snapshot.Revision).Snapshot, after.Snapshot);
             AssertRejected(session, upgrade, CommandRejection.InvalidPhase);
-            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), control.Snapshot.Revision).Snapshot,
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), control.Snapshot.Revision).Snapshot,
                 session.Execute(new RerollDiceAction(31), session.Snapshot.Revision).Snapshot);
         }
 
@@ -148,7 +148,7 @@ namespace Dice.Tests
             for (int i = 0; i < 2; ++i)
             {
                 var action = new RefreshModifierOfferAction(session.Snapshot.PendingReward.OfferId);
-                AssertSnapshotsEqual(control.Execute(action, control.Snapshot.Revision).Snapshot,
+                EncounterSessionTests.AssertSnapshotsEqual(control.Execute(action, control.Snapshot.Revision).Snapshot,
                     session.Execute(action, session.Snapshot.Revision).Snapshot);
             }
             Assert.That(session.Snapshot.RewardRefreshes, Is.Zero);
@@ -158,7 +158,7 @@ namespace Dice.Tests
             SelectFirstPair(control);
             session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
             control.Execute(PlayHandAction.Instance, control.Snapshot.Revision);
-            AssertSnapshotsEqual(control.Snapshot, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Snapshot, session.Snapshot);
         }
 
         [Test]
@@ -288,9 +288,9 @@ namespace Dice.Tests
             for (int i = 0; i < 2; ++i)
             {
                 Assert.Throws<OverflowException>(() => session.Execute(PlayHandAction.Instance, 0));
-                AssertSnapshotsEqual(before, session.Snapshot);
+                EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             }
-            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
                 session.Execute(new RerollDiceAction(31), 0).Snapshot);
         }
 
@@ -318,7 +318,7 @@ namespace Dice.Tests
             var result = session.Execute(action, before.Revision);
             Assert.That(result.Rejection, Is.EqualTo(expected));
             Assert.That(result.Events, Is.Empty);
-            AssertSnapshotsEqual(before, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
         }
 
         private static void SelectFirstPair(EncounterSession session)
@@ -338,8 +338,5 @@ namespace Dice.Tests
             option = offer.Options.Single(value => value.Category == category);
             Assert.That(session.Execute(new SelectHandUpgradeAction(offer.OfferId, option.OptionId), session.Snapshot.Revision).Accepted, Is.True);
         }
-
-        private static void AssertSnapshotsEqual(EncounterSnapshot expected, EncounterSnapshot actual)
-            => EncounterSessionTests.AssertSnapshotsEqual(expected, actual);
     }
 }

@@ -24,6 +24,8 @@ namespace Dice.Presentation
         private bool paused;
         private float nextCreak;
         private float nextAmbientOneShot;
+        // Internal so PlayMode tests read the scheduled one-shot time and make the next one-shot due.
+        internal float NextAmbientOneShot { get => nextAmbientOneShot; set => nextAmbientOneShot = value; }
         private int nextCueSource;
         private int nextPropSource;
         private AudioClip lastSpiritClip;

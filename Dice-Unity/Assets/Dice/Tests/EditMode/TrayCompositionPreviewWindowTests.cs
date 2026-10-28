@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using Dice.Editor;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -53,24 +52,21 @@ namespace Dice.Tests
             foreach (bool narrow in new[] { false, true })
             {
                 var table = LoadTable(path);
-                Set(window, "table", table); Set(window, "narrow", narrow); Set(window, "historyCount", 6);
-                Invoke(window, "EnsureStage");
-                var view = Field<SpiritEncounterView>(window, "view");
-                var scene = Field<SpiritTrayScene>(window, "trayScene");
-                var dice = Field<SpiritDiceTray>(window, "dice");
-                var history = Field<SpiritModifierHistoryRenderer>(window, "history");
-                Assert.That(scene, Is.SameAs(view.TrayScene));
-                Assert.That(Field<SpiritGameplayHud>(window, "gameplayUi"), Is.SameAs(view.GameplayHud));
-                Assert.That(Field<SpiritHostPortrait>(window, "host"), Is.SameAs(view.HostPortrait));
+                window.table = table; window.narrow = narrow; window.historyCount = 6;
+                window.EnsureStage();
+                var view = window.view;
+                var scene = view.TrayScene;
+                var dice = scene.DiceTray;
+                var history = scene.HistoryRenderer;
                 Assert.That(view.enabled, Is.False, "A preview does not bind a gameplay session.");
                 Assert.That(dice.RenderCamera, Is.SameAs(scene.RenderCamera));
                 Assert.That(history.RenderCamera, Is.SameAs(scene.RenderCamera));
                 Assert.That(dice.Texture, Is.SameAs(history.Texture));
                 Assert.That(history.Count, Is.EqualTo(6));
                 Assert.That(view.GameplayHud.DiceTrayImage.texture, Is.SameAs(scene.Texture));
-                var output = Field<RenderTexture>(window, "output");
-                Assert.That(output.width, Is.EqualTo(narrow ? 443 : 540));
-                Assert.That(output.height, Is.EqualTo(960));
+                var output = window.output;
+                Assert.That(output.width, Is.EqualTo(SpiritEncounterPreviewScene.Width(narrow)));
+                Assert.That(output.height, Is.EqualTo(SpiritEncounterPreviewScene.PreviewHeight));
                 Assert.That(view.Portrait.rect.size, Is.EqualTo(new Vector2(output.width, output.height)));
                 var source = EditorSceneManager.OpenPreviewScene(AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID));
                 try
@@ -85,7 +81,7 @@ namespace Dice.Tests
                 finally { EditorSceneManager.ClosePreviewScene(source); }
                 RenderAndCheckPixels(scene, output);
                 // Each width builds its own stage, as a freshly opened preview would.
-                Invoke(window, "ReleaseStage");
+                window.ReleaseStage();
             }
         }
 
@@ -95,53 +91,53 @@ namespace Dice.Tests
             string path = TestContent.LitTablePath();
             foreach (bool narrow in new[] { false, true })
             {
-                Set(window, "table", LoadTable(path));
-                Set(window, "narrow", narrow);
-                Invoke(window, "EnsureStage");
-                var hud = Field<SpiritGameplayHud>(window, "gameplayUi");
-                var scene = Field<SpiritTrayScene>(window, "trayScene");
+                window.table = LoadTable(path);
+                window.narrow = narrow;
+                window.EnsureStage();
+                var hud = window.view.GameplayHud;
+                var scene = window.view.TrayScene;
                 var camera = scene.RenderCamera;
                 Assert.That(hud.GetComponentsInChildren<UnityEngine.UI.Text>(true).Single(label => label.name == "BaseScoreLabel").text,
                     Is.EqualTo("0"));
                 Assert.That(hud.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
                 float shownAlpha = hud.GetComponent<CanvasGroup>().alpha;
-                Set(window, "showGameplayUi", false);
-                Invoke(window, "EnsureStage");
+                window.showGameplayUi = false;
+                window.EnsureStage();
                 Assert.That(hud.GetComponent<CanvasGroup>().alpha, Is.Zero);
                 Assert.That(hud.DiceTrayFrame.GetComponent<CanvasGroup>().ignoreParentGroups, Is.True);
                 Assert.That(hud.DiceTrayImage.isActiveAndEnabled, Is.True);
-                Set(window, "showGameplayUi", true);
-                Invoke(window, "EnsureStage");
-                Assert.That(Field<SpiritGameplayHud>(window, "gameplayUi"), Is.SameAs(hud));
+                window.showGameplayUi = true;
+                window.EnsureStage();
+                Assert.That(window.view.GameplayHud, Is.SameAs(hud));
                 Assert.That(hud.GetComponent<CanvasGroup>().alpha, Is.EqualTo(shownAlpha), "Showing the overlay restores the HUD's authored opacity.");
                 Assert.That(scene.RenderCamera, Is.SameAs(camera));
-                Invoke(window, "RenderPreview");
+                window.RenderPreview();
                 // Each width builds its own stage, as a freshly opened preview would.
-                Invoke(window, "ReleaseStage");
+                window.ReleaseStage();
             }
         }
 
         [Test]
         public void PreviewControlsRefreshExistingObjectsAndSampleHostTimeDeterministically()
         {
-            Set(window, "table", LoadTable(TestContent.LitTablePath()));
-            Invoke(window, "EnsureStage");
-            var stage = Field<GameObject>(window, "stage");
-            var scene = Field<SpiritTrayScene>(window, "trayScene");
-            var host = Field<SpiritHostPortrait>(window, "host");
-            var output = Field<RenderTexture>(window, "output");
-            Set(window, "narrow", true); Set(window, "historyCount", 12);
-            Set(window, "historyScroll", 1f); Set(window, "sampleTime", 2.5f);
-            int[] faces = Field<int[]>(window, "faces");
+            window.table = LoadTable(TestContent.LitTablePath());
+            window.EnsureStage();
+            var view = window.view;
+            var scene = view.TrayScene;
+            var host = view.HostPortrait;
+            var output = window.output;
+            window.narrow = true; window.historyCount = 12;
+            window.historyScroll = 1f; window.sampleTime = 2.5f;
+            int[] faces = window.faces;
             for (int i = 0; i < faces.Length; ++i) faces[i] = 6;
-            Invoke(window, "EnsureStage"); Invoke(window, "RenderPreview");
-            Assert.That(Field<GameObject>(window, "stage"), Is.SameAs(stage));
-            Assert.That(Field<SpiritTrayScene>(window, "trayScene"), Is.SameAs(scene));
-            Assert.That(Field<SpiritHostPortrait>(window, "host"), Is.SameAs(host));
-            Assert.That(Field<RenderTexture>(window, "output"), Is.SameAs(output));
-            Assert.That(output.width, Is.EqualTo(443));
-            Assert.That(Field<SpiritModifierHistoryRenderer>(window, "history").Count, Is.EqualTo(12));
-            var transforms = Field<Transform[]>(scene.DiceTray, "dice");
+            window.EnsureStage(); window.RenderPreview();
+            Assert.That(window.view, Is.SameAs(view));
+            Assert.That(view.TrayScene, Is.SameAs(scene));
+            Assert.That(view.HostPortrait, Is.SameAs(host));
+            Assert.That(window.output, Is.SameAs(output));
+            Assert.That(output.width, Is.EqualTo(SpiritEncounterPreviewScene.NarrowPreviewWidth));
+            Assert.That(scene.HistoryRenderer.Count, Is.EqualTo(12));
+            var transforms = scene.DiceTray.Dice;
             for (int i = 0; i < faces.Length; ++i)
             {
                 Vector3 resultNormal = transforms[i].TransformDirection(Vector3.back);
@@ -151,36 +147,9 @@ namespace Dice.Tests
                 // A shallow authored camera can make a side face more prominent than the upward result.
                 Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0), "Die " + i + " result visibility");
             }
-            Assert.That(Field<double>(host, "effectAge"), Is.EqualTo(2.5));
-            Invoke(window, "RenderPreview");
-            Assert.That(Field<double>(host, "effectAge"), Is.EqualTo(2.5));
-        }
-
-        [Test]
-        public void LegacyPlacementCameraAndGeometrySeedsCannotOverrideTheAuthoredScene()
-        {
-            var table = Object.Instantiate(LoadTable(TestContent.LitTablePath()));
-            var presentation = Object.Instantiate(table.TrayPresentation);
-            Set(table, "trayPresentation", presentation);
-            Set(window, "table", table);
-            try
-            {
-                Invoke(window, "EnsureStage");
-                var view = Field<SpiritEncounterView>(window, "view");
-                Vector2 anchor = view.GameplayHud.DiceTrayFrame.anchorMin;
-                Quaternion rotation = view.TrayScene.RenderCamera.transform.localRotation;
-                var geometry = view.TrayScene.Geometry;
-                presentation.CompositionRect = new Rect(.6f, .7f, .2f, .1f);
-                presentation.CameraEulerAngles = new Vector3(1, 2, 3);
-                presentation.FieldOfView = 120;
-                presentation.GeometryPrefab = null;
-                Invoke(window, "EnsureStage");
-                view = Field<SpiritEncounterView>(window, "view");
-                Assert.That(view.GameplayHud.DiceTrayFrame.anchorMin, Is.EqualTo(anchor));
-                Assert.That(view.TrayScene.RenderCamera.transform.localRotation, Is.EqualTo(rotation));
-                Assert.That(view.TrayScene.Geometry, Is.SameAs(geometry));
-            }
-            finally { Invoke(window, "ReleaseStage"); Object.DestroyImmediate(presentation); Object.DestroyImmediate(table); }
+            Assert.That(host.EffectAge, Is.EqualTo(2.5));
+            window.RenderPreview();
+            Assert.That(host.EffectAge, Is.EqualTo(2.5));
         }
 
         [UnityTest]
@@ -204,8 +173,8 @@ namespace Dice.Tests
             Vector3 originalPosition = geometry.localPosition;
             try
             {
-                Set(window, "table", table);
-                Invoke(window, "EnsureStage");
+                window.table = table;
+                window.EnsureStage();
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("Edit authored encounter presentation");
                 Undo.RecordObjects(new Object[] { frame, camera, camera.transform, geometry }, "Edit authored encounter presentation");
@@ -216,8 +185,8 @@ namespace Dice.Tests
                 geometry.localPosition += new Vector3(.2f, .1f, -.3f);
                 Undo.FlushUndoRecordObjects();
                 Undo.IncrementCurrentGroup();
-                Invoke(window, "EnsureStage");
-                var edited = Field<SpiritEncounterView>(window, "view");
+                window.EnsureStage();
+                var edited = window.view;
                 AssertRect(edited.GameplayHud.DiceTrayFrame, frame);
                 Assert.That(edited.TrayScene.RenderCamera.backgroundColor, Is.EqualTo(camera.backgroundColor));
                 Assert.That(edited.TrayScene.RenderCamera.clearFlags, Is.EqualTo(camera.clearFlags));
@@ -226,8 +195,8 @@ namespace Dice.Tests
                 Assert.That(edited.TrayScene.Geometry, Is.Not.SameAs(authored.TrayScene.Geometry));
                 Undo.PerformUndo();
                 yield return null;
-                Invoke(window, "EnsureStage");
-                var undone = Field<SpiritEncounterView>(window, "view");
+                window.EnsureStage();
+                var undone = window.view;
                 Assert.That(frame.anchorMin, Is.EqualTo(originalAnchor));
                 Assert.That(undone.GameplayHud.DiceTrayFrame.anchorMin, Is.EqualTo(originalAnchor));
                 Assert.That(undone.TrayScene.RenderCamera.transform.localRotation, Is.EqualTo(originalRotation));
@@ -236,15 +205,15 @@ namespace Dice.Tests
                 Assert.That(undone.TrayScene.Geometry.transform.localPosition, Is.EqualTo(originalPosition));
                 Undo.PerformRedo();
                 yield return null;
-                Invoke(window, "EnsureStage");
-                var redone = Field<SpiritEncounterView>(window, "view");
+                window.EnsureStage();
+                var redone = window.view;
                 AssertRect(redone.GameplayHud.DiceTrayFrame, frame);
                 Assert.That(redone.TrayScene.RenderCamera.backgroundColor, Is.EqualTo(camera.backgroundColor));
                 Assert.That(redone.TrayScene.Geometry.transform.localPosition, Is.EqualTo(geometry.localPosition));
             }
             finally
             {
-                Invoke(window, "ReleaseStage");
+                window.ReleaseStage();
                 Undo.ClearUndo(frame); Undo.ClearUndo(camera); Undo.ClearUndo(camera.transform); Undo.ClearUndo(geometry);
                 EditorSceneManager.CloseScene(source, true);
                 SceneManager.SetActiveScene(original);
@@ -254,17 +223,17 @@ namespace Dice.Tests
         [Test]
         public void RebuildingAndClosingReleaseOwnedStageWhilePreservingAuthoredAssetsAndPipeline()
         {
-            Set(window, "table", LoadTable(TestContent.LitTablePath()));
-            Invoke(window, "EnsureStage");
-            var scene = Field<SpiritTrayScene>(window, "trayScene");
+            window.table = LoadTable(TestContent.LitTablePath());
+            window.EnsureStage();
+            var scene = window.view.TrayScene;
             var camera = scene.RenderCamera;
             var texture = scene.Texture;
-            var output = Field<RenderTexture>(window, "output");
+            var output = window.output;
             RenderPipelineAsset acquired = QualitySettings.renderPipeline;
-            Set(window, "rebuild", true); Invoke(window, "EnsureStage");
+            window.rebuild = true; window.EnsureStage();
             Assert.That(scene == null && camera == null && texture == null && output == null, Is.True);
             Assert.That(QualitySettings.renderPipeline, Is.SameAs(acquired));
-            Assert.That(Field<SpiritTrayScene>(window, "trayScene").Geometry, Is.Not.Null);
+            Assert.That(window.view.TrayScene.Geometry, Is.Not.Null);
             Object.DestroyImmediate(window); window = null;
             Assert.That(QualitySettings.renderPipeline, Is.SameAs(previousPipeline));
         }
@@ -279,7 +248,7 @@ namespace Dice.Tests
             try
             {
                 sentinel.Create(); RenderTexture.active = sentinel; GL.sRGBWrite = !srgb;
-                Invoke(window, "RenderPreview");
+                window.RenderPreview();
                 Assert.That(RenderTexture.active, Is.SameAs(sentinel));
                 Assert.That(GL.sRGBWrite, Is.EqualTo(!srgb));
                 RenderTexture.active = scene.Texture;
@@ -304,12 +273,5 @@ namespace Dice.Tests
             Assert.That(actual.pivot, Is.EqualTo(expected.pivot));
             Assert.That(actual.localScale, Is.EqualTo(expected.localScale));
         }
-
-        private static T Field<T>(object instance, string name)
-            => (T)instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
-        private static void Set(object instance, string name, object value)
-            => instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(instance, value);
-        private static void Invoke(object instance, string name)
-            => instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(instance, null);
     }
 }

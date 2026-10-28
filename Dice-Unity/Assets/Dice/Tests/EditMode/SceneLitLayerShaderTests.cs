@@ -5,17 +5,12 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static Dice.Tests.TestPixels;
 
 namespace Dice.Tests
 {
     public sealed class SceneLitLayerShaderTests
     {
-        private const string LitShaderPath = "Assets/Dice/Presentation/Shared/SceneLitImage.shader";
-        private const string PreviewShaderPath = "Assets/Dice/Presentation/Shared/SceneLitImagePreview.shader";
-        private const string BackgroundShaderPath = "Assets/Dice/Presentation/Shared/SceneLighting.shader";
-        private const int SampleCount = 4;
-        private const int RenderWidth = 16;
-        private const int RenderHeight = 4;
         private readonly List<UnityEngine.Object> objects = new List<UnityEngine.Object>();
         private readonly List<IDisposable> materials = new List<IDisposable>();
         private Shader litShader;
@@ -28,12 +23,10 @@ namespace Dice.Tests
                 Assert.Ignore("Lit layer pixels require a real graphics device.");
             Assert.That(QualitySettings.activeColorSpace, Is.EqualTo(ColorSpace.Linear));
             Assert.That(SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat), Is.True);
-            litShader = AssetDatabase.LoadAssetAtPath<Shader>(LitShaderPath);
-            Assert.That(litShader, Is.Not.Null);
+            litShader = TestShaders.Load(TestShaders.SceneLitImage);
             Assert.That(litShader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(litShader), Is.False);
-            previewShader = AssetDatabase.LoadAssetAtPath<Shader>(PreviewShaderPath);
-            Assert.That(previewShader, Is.Not.Null);
+            previewShader = TestShaders.Load(TestShaders.SceneLitImagePreview);
             Assert.That(previewShader.name, Is.EqualTo(SceneLitLayerMaterial.PreviewShaderName));
             Assert.That(previewShader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(previewShader), Is.False);
@@ -74,7 +67,7 @@ namespace Dice.Tests
             lit.Apply(state, Vector3.zero, new Rect(0f, 0f, 1f, 1f));
             Color[] actual = RenderLit(lit, layer.BaseTexture);
             for (int i = 0; i < actual.Length; ++i)
-                Assert.That(actual[i], Is.EqualTo(albedo[(i % RenderWidth) / (RenderWidth / SampleCount)]), "Pixel " + i);
+                Assert.That(actual[i], Is.EqualTo(albedo[SampleOf(i)]), "Pixel " + i);
 
             // An sRGB base round-trips exactly as the same texture copied without lighting.
             var encoded = new Texture2D(SampleCount, 1, TextureFormat.RGBA32, false, false)
@@ -110,7 +103,7 @@ namespace Dice.Tests
             SceneLightingAsset asset = Asset(ambient, areaLight);
             var state = new SceneLightingState();
             state.Sample(asset, 2.25, new[] { multiplier });
-            var background = new SceneLightingMaterial(AssetDatabase.LoadAssetAtPath<Shader>(BackgroundShaderPath));
+            var background = new SceneLightingMaterial(TestShaders.Load(TestShaders.SceneLighting));
             materials.Add(background);
             background.Apply(state);
             var layer = new SceneLitLayer
@@ -198,7 +191,7 @@ namespace Dice.Tests
             Color[] actual = RenderLit(lit, layer.BaseTexture);
             for (int i = 0; i < actual.Length; ++i)
             {
-                Vector3 position = new Vector3(0f, 0f, Mathf.Lerp(0f, -2f, depth[(i % RenderWidth) / (RenderWidth / SampleCount)]));
+                Vector3 position = new Vector3(0f, 0f, Mathf.Lerp(0f, -2f, depth[SampleOf(i)]));
                 Color expected = albedo + albedo * Point(position, pointLight, state.GetIntensity(0), layer.Wrap);
                 AssertChannel(actual[i].r, expected.r, i, "r");
             }
@@ -294,7 +287,7 @@ namespace Dice.Tests
         {
             var asset = ScriptableObject.CreateInstance<SceneLightingAsset>();
             objects.Add(asset);
-            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>(BackgroundShaderPath);
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.BaseTexture = Texture(ambient);
             asset.Lights = lights;
             return asset;
@@ -310,18 +303,8 @@ namespace Dice.Tests
             FlickerAmount = 0f
         };
 
-        private Texture2D Texture(Color[] samples)
-        {
-            Assert.That(samples.Length, Is.EqualTo(SampleCount));
-            var texture = new Texture2D(SampleCount, 1, TextureFormat.RGBAFloat, false, true)
-                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            objects.Add(texture);
-            texture.SetPixels(samples);
-            texture.Apply();
-            return texture;
-        }
+        private Texture2D Texture(Color[] samples) => TestPixels.Texture(samples, objects);
 
-        private static Color[] Solid(Color color) => new[] { color, color, color, color };
         private static Color Gray(float value) => new Color(value, value, value, 1f);
 
         private static Vector2 PixelUv(int index)
@@ -353,35 +336,7 @@ namespace Dice.Tests
             return Render(preview, 0, source);
         }
 
-        private Color[] Render(Material material, int pass, Texture source)
-        {
-            var target = RenderTexture.GetTemporary(RenderWidth, RenderHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            RenderTexture previous = RenderTexture.active;
-            bool previousWrite = GL.sRGBWrite;
-            var readback = new Texture2D(RenderWidth, RenderHeight, TextureFormat.RGBAFloat, false, true);
-            try
-            {
-                GL.sRGBWrite = false;
-                if (material != null) Graphics.Blit(source, target, material, pass);
-                else Graphics.Blit(source, target);
-                RenderTexture.active = target;
-                readback.ReadPixels(new Rect(0, 0, RenderWidth, RenderHeight), 0, 0);
-                readback.Apply();
-                return readback.GetPixels();
-            }
-            finally
-            {
-                GL.sRGBWrite = previousWrite;
-                RenderTexture.active = previous;
-                RenderTexture.ReleaseTemporary(target);
-                UnityEngine.Object.DestroyImmediate(readback);
-            }
-        }
-
         private static void AssertChannel(float actual, float expected, int pixel, string channel)
-        {
-            Assert.That(float.IsNaN(actual) || float.IsInfinity(actual), Is.False, "Pixel " + pixel + " channel " + channel);
-            Assert.That(actual, Is.EqualTo(expected).Within(.0005f * Mathf.Max(1f, Mathf.Abs(expected))), "Pixel " + pixel + " channel " + channel);
-        }
+            => TestPixels.AssertChannel(actual, expected, .0005f, pixel, channel);
     }
 }

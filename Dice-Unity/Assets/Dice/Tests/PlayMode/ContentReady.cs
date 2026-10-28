@@ -31,7 +31,7 @@ namespace Dice.Tests
         {
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
-            float deadline = Time.realtimeSinceStartup + 30;
+            float deadline = Time.realtimeSinceStartup + Timeout;
             while ((controller.Catalog == null || controller.JourneyCatalog == null) &&
                 Time.realtimeSinceStartup < deadline)
             {
@@ -64,9 +64,7 @@ namespace Dice.Tests
                 controller.AdvanceJourney();
             controller.AcceptEncounter();
             yield return Routed(controller);
-            deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, "Opening encounter presentation did not complete.");
+            yield return WaitUntil(() => !controller.IsBusy, "Opening encounter presentation did not complete.");
             Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
         }
 
@@ -208,9 +206,7 @@ namespace Dice.Tests
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             if (controller == null) return;
             // sceneLoaded runs after Awake and before Start loads the persistent profile.
-            var setter = typeof(SpiritEncounterController).GetProperty(nameof(SpiritEncounterController.SavePath))
-                .GetSetMethod(true);
-            setter.Invoke(controller, new object[] { ContentReady.SpiritSavePath() });
+            controller.SavePath = ContentReady.SpiritSavePath();
         }
     }
 }

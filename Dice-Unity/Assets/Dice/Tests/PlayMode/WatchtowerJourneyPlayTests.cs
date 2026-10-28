@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -378,13 +377,6 @@ namespace Dice.Tests
             Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + name);
             pointer.pointerCurrentRaycast = hits[0];
             ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
-        }
-
-        private static void SetField(object target, string name, object value)
-        {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
         }
     }
 }

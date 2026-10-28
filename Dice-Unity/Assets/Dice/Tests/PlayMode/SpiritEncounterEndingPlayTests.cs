@@ -2,14 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -77,7 +74,7 @@ namespace Dice.Tests
             var unlockedBefore = controller.ProfileUnlockedModifierIds.ToArray();
             // A parallel session clears every stage but the last, choosing each milestone's first unlock; the run is
             // then loaded from its save so the final victory follows restored milestones.
-            var session = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, 60, unlockedBefore,
+            var session = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, ContentReady.Seed, unlockedBefore,
                 controller.ProfileDiscoveredFamilyIds);
             for (int stage = 1; stage < definition.Stages.Count; ++stage)
             {
@@ -123,13 +120,12 @@ namespace Dice.Tests
             Assert.That(Find<Button>("HandRanksButton").gameObject.activeInHierarchy, Is.False, journey.Id);
             unlockDefinitions = controller.Snapshot.NewlyUnlockedModifierIds.Select(controller.Catalog.GetModifier).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(definition.UnlockMilestones.Count), journey.Id);
-            float motionDeadline = Time.realtimeSinceStartup + 45;
+            float motionDeadline = Time.realtimeSinceStartup + ContentReady.SequenceTimeout;
             while (view.HostPortrait.State != outcome.HostState && Time.realtimeSinceStartup < motionDeadline)
             {
                 Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False, journey.Id);
-                Assert.That(Find<RectTransform>("StageIntroPanel").gameObject.activeInHierarchy &&
-                    Find<Text>("StageIntroTitle").text == "CHARM UNLOCKED", Is.False,
-                    "Final-stage unlocks belong in the summary after the host's response.");
+                Assert.That(Find<RectTransform>("StageIntroPanel").gameObject.activeInHierarchy, Is.False,
+                    "No stage or unlock announcement plays over the host's response; final-stage unlocks belong in the summary.");
                 yield return null;
             }
             Assert.That(view.HostPortrait.State, Is.EqualTo(outcome.HostState), journey.Id);
@@ -140,7 +136,7 @@ namespace Dice.Tests
             Assert.That(Find<RectTransform>("SpiritRewardsPanel").gameObject.activeInHierarchy, Is.False,
                 "Skip farewell must not appear over the offer screen.");
             string firstStep = outcome.ShowDialogue ? "EndingDialogueContinueButton" : "EndingNewRunButton";
-            yield return Until(() => Find<Button>(firstStep).gameObject.activeInHierarchy, journey.Id + " victory result");
+            yield return ContentReady.WaitUntil(() => Find<Button>(firstStep).gameObject.activeInHierarchy, journey.Id + " victory result", ContentReady.SequenceTimeout);
             yield return WaitForPresentation();
             Assert.That(Find<RectTransform>("PlayingPanel").gameObject.activeInHierarchy, Is.False, journey.Id);
             if (outcome.ShowDialogue)
@@ -148,7 +144,7 @@ namespace Dice.Tests
                 Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.SpiritName), journey.Id);
                 Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.VictoryText), journey.Id);
                 Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.Id);
-                RefreshView();
+                view.Refresh();
                 Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.True,
                     "Refreshing the same result must retain the current dialogue.");
                 Click("EndingDialogueContinueButton");
@@ -185,7 +181,7 @@ namespace Dice.Tests
             controller.SelectEncounter(journey.EncounterId);
             yield return ContentReady.Routed(controller);
             while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
-            yield return Until(() => !view.JourneyView.IsAnimating, journey.Id + " replay invitation");
+            yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, journey.Id + " replay invitation", ContentReady.SequenceTimeout);
             controller.AcceptEncounter();
             yield return WaitForPresentation();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None), journey.Id);
@@ -246,13 +242,13 @@ namespace Dice.Tests
         {
             var outcome = journey.GetOutcomePresentation(EncounterOutcome.Lost);
             controller.PlayHand();
-            yield return Until(() => view.HostPortrait.State == outcome.HostState, journey.Id + " defeat motion");
+            yield return ContentReady.WaitUntil(() => view.HostPortrait.State == outcome.HostState, journey.Id + " defeat motion", ContentReady.SequenceTimeout);
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost), journey.Id);
             Assert.That(controller.IsBusy, Is.True, journey.Id);
             var previous = controller.Snapshot;
             if (skipMotion) Click("EndingSkipButton");
             string firstStep = outcome.ShowDialogue ? "EndingDialogueContinueButton" : "EndingRetryButton";
-            yield return Until(() => Find<Button>(firstStep).gameObject.activeInHierarchy, journey.Id + " defeat result");
+            yield return ContentReady.WaitUntil(() => Find<Button>(firstStep).gameObject.activeInHierarchy, journey.Id + " defeat result", ContentReady.SequenceTimeout);
             yield return WaitForPresentation();
             if (outcome.ShowDialogue)
             {
@@ -274,7 +270,7 @@ namespace Dice.Tests
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
             yield return null;
-            if (ActiveCharmsScreen())
+            if (view.JourneyView.EncounterCharms.IsOpen)
             {
                 Assert.That(controller.Snapshot, Is.SameAs(previous), "The encounter starts after its charm introduction.");
                 Click("BeginEncounterButton");
@@ -307,7 +303,7 @@ namespace Dice.Tests
             var outcome = journey.GetOutcomePresentation(EncounterOutcome.Abandoned);
             yield return EnterEncounter();
             controller.Abandon();
-            yield return Until(() => view.HostPortrait.State == outcome.HostState, journey.Id + " abandon farewell");
+            yield return ContentReady.WaitUntil(() => view.HostPortrait.State == outcome.HostState, journey.Id + " abandon farewell", ContentReady.SequenceTimeout);
             Assert.That(controller.IsBusy, Is.True, journey.Id);
             Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.False, journey.Id);
             yield return WaitForPresentation();
@@ -348,8 +344,8 @@ namespace Dice.Tests
             journey = UnityEngine.Object.Instantiate(authored);
             foreach (var beat in journey.Beats)
             {
-                SetField(beat, "duration", 0f);
-                SetField(beat, "autoAdvance", false);
+                ContentReady.SetField(beat, "duration", 0f);
+                ContentReady.SetField(beat, "autoAdvance", false);
             }
             var definition = original.GetEncounter(journey.EncounterId);
             int stageCount = winning ? VictoryStages : 1;
@@ -379,8 +375,12 @@ namespace Dice.Tests
                     .Select(value => value == journey ? shortEncounter : original.GetEncounter(value.EncounterId)),
                 original.Modifiers, original.RewardPools);
             var catalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
-            SetField(catalog, "chapters", Array.Empty<EncounterChapterAsset>());
-            SetField(catalog, "entries", entries);
+            ContentReady.SetField(catalog, "chapters", controller.JourneyCatalog.Chapters.Select(chapter =>
+            {
+                var copy = UnityEngine.Object.Instantiate(chapter);
+                ContentReady.SetField(copy, "entries", chapter.Entries.Select(value => value == authored ? journey : value).ToArray());
+                return copy;
+            }).ToArray());
             Assert.That(controller.InitializeJourney(mechanical, catalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
             foreach (var definitionToUnlock in unlockDefinitions) profile.DiscoverFamily(definitionToUnlock.FamilyId);
@@ -394,69 +394,22 @@ namespace Dice.Tests
             controller.SelectEncounter(journey.EncounterId);
             yield return ContentReady.Routed(controller);
             while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
-            yield return Until(() => !view.JourneyView.IsAnimating, journey.Id + " invitation");
+            yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, journey.Id + " invitation", ContentReady.SequenceTimeout);
             controller.AcceptEncounter();
             yield return ContentReady.Routed(controller);
             yield return WaitForPresentation();
             Assert.That(view.HostPortrait, Is.Not.Null, journey.Id);
         }
 
-        private bool ActiveCharmsScreen() => ContentReady.PresentationRoot(controller).GetComponentsInChildren<RectTransform>(true)
-            .Any(rect => rect.name == "SpiritEncounterCharmsScreen" && rect.gameObject.activeInHierarchy);
-
         private IEnumerator WaitForPresentation()
         {
             yield return ContentReady.Routed();
-            yield return Until(() => !controller.IsBusy, "presentation completion");
+            yield return ContentReady.WaitUntil(() => !controller.IsBusy, "presentation completion", ContentReady.SequenceTimeout);
             yield return null;
         }
 
-        private static IEnumerator Until(Func<bool> ready, string description)
-        {
-            float deadline = Time.realtimeSinceStartup + 45;
-            while (!ready() && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(ready(), Is.True, description);
-        }
+        private T Find<T>(string name) where T : Component => ContentReady.Find<T>(controller, name);
 
-        private void RefreshView() => typeof(SpiritEncounterView).GetMethod("Refresh", BindingFlags.Instance | BindingFlags.NonPublic)
-            .Invoke(view, null);
-
-        /** The named component, preferring an active one where several screens author the same name. */
-        private T Find<T>(string name) where T : Component
-        {
-            var value = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).Where(item => item.name == name)
-                .OrderByDescending(item => item.gameObject.activeInHierarchy).FirstOrDefault();
-            Assert.That(value, Is.Not.Null, name);
-            return value;
-        }
-
-        private void Click(string name)
-        {
-            var button = Find<Button>(name);
-            Assert.That(button.gameObject.activeInHierarchy, Is.True, name);
-            Assert.That(button.IsInteractable(), Is.True, name);
-            Canvas.ForceUpdateCanvases();
-            var rect = (RectTransform)button.transform;
-            var pointer = new PointerEventData(EventSystem.current)
-            {
-                position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center)),
-                button = PointerEventData.InputButton.Left,
-                pointerId = -1
-            };
-            var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pointer, hits);
-            Assert.That(hits, Is.Not.Empty, name);
-            var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
-            Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + name);
-            pointer.pointerCurrentRaycast = hits[0];
-            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
-        }
-
-        private static void SetField(object target, string name, object value)
-        {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
-        }
+        private void Click(string name) => ContentReady.Click(Find<Button>(name));
     }
 }

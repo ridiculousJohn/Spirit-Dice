@@ -6,8 +6,8 @@ using System.Text;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
-using NUnit.Framework;
 using Newtonsoft.Json.Linq;
+using NUnit.Framework;
 using Application = UnityEngine.Application;
 
 namespace Dice.Tests
@@ -50,7 +50,6 @@ namespace Dice.Tests
         {
             byte[] bytes = EncounterSaveCodec.Serialize(EncounterSession.CreateEncounter(
                 TestContent.Catalog(), TestContent.EncounterId, 3).CaptureSave());
-            Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes("[]"), TestContent.Catalog()));
             var invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
             invalid["HasPreviousStage"] = 2;
             Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));

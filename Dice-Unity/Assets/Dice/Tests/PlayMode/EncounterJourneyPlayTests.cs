@@ -3,13 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -18,7 +16,6 @@ namespace Dice.Tests
 {
     public sealed class EncounterJourneyPlayTests
     {
-        private const ulong Seed = 60;
         private SpiritEncounterController controller;
         private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private int resolutions;
@@ -75,12 +72,13 @@ namespace Dice.Tests
             }
 
             // The invitation presents every rule of the journey's table, in order.
+            var rows = view.JourneyView.GetComponentsInChildren<SpiritInvitationRuleView>(true);
+            Assert.That(rows.Length, Is.GreaterThanOrEqualTo(journey.TablePresentation.RulePresentations.Count));
             for (int index = 0; index < journey.TablePresentation.RulePresentations.Count; ++index)
             {
-                string suffix = index == 0 ? "" : (index + 1).ToString();
                 var rule = journey.TablePresentation.RulePresentations[index];
-                Assert.That(Find<Text>("JourneyRuleName" + suffix).text, Is.EqualTo(rule.DisplayName));
-                Assert.That(Find<Text>("JourneyRuleText" + suffix).text, Does.Contain(rule.Description));
+                Assert.That(rows[index].Title.text, Is.EqualTo(rule.DisplayName));
+                Assert.That(rows[index].Description.text, Does.Contain(rule.Description));
             }
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
@@ -103,7 +101,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1), "Repeated acceptance must not roll or create another run.");
             Assert.That(rolls, Is.EqualTo(1), "Accepting must roll the opening dice once.");
-            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, Seed);
+            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, ContentReady.Seed);
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 Assert.That(controller.Snapshot.CurrentDice[index], Is.EqualTo(expected.Snapshot.CurrentDice[index]));
@@ -127,7 +125,10 @@ namespace Dice.Tests
                 var stages = controller.Catalog.GetEncounter(value.EncounterId).Stages;
                 return stages.Count > 1 && stages[0].ExitBehavior == StageExitBehavior.AwaitRewards;
             });
-            yield return InstallShortStages(journey);
+            Assert.That(controller.InitializeJourney(ContentReady.ShortStages(controller.Catalog, journey.EncounterId, "journey-playmode.v1"),
+                controller.JourneyCatalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
+            yield return ContentReady.Routed(controller);
+            yield return null;
             yield return ClickClue(journey);
             yield return AdvanceToInvitation();
             Click("JourneyAcceptButton");
@@ -222,28 +223,6 @@ namespace Dice.Tests
         }
 
         /**
-         * Installs a catalog in which the journey's encounter has every stage target at 1 and is otherwise as authored, so
-         * each played hand clears its stage; the board is shown again for the same journeys.
-         */
-        private IEnumerator InstallShortStages(EncounterJourneyAsset journey)
-        {
-            var authored = controller.Catalog;
-            var definition = authored.GetEncounter(journey.EncounterId);
-            var shortEncounter = new EncounterDefinition(definition.Id,
-                definition.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
-                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
-                definition.SpiritId, definition.UnlockMilestones, definition.EncounterModifierIds,
-                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
-            var mechanical = new MechanicalCatalog("journey-playmode.v1", authored.Hands,
-                authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
-                authored.Modifiers, authored.RewardPools);
-            Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
-                controller.JourneyStatus.ToString());
-            yield return ContentReady.Routed(controller);
-            yield return null;
-        }
-
-        /**
          * Takes the first card of the pending reward through the rewards panel and confirms it; an introduction of the
          * encounter's own charms over the offer is continued first.
          */
@@ -290,8 +269,7 @@ namespace Dice.Tests
             Assert.That(controller.HasActiveEncounter, Is.False);
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(resolutions, Is.Zero);
-            Assert.That(typeof(SpiritEncounterController).GetField("application", BindingFlags.Instance | BindingFlags.NonPublic)
-                .GetValue(controller), Is.Null, "The narrative must not create an engine or consume its random streams.");
+            Assert.That(controller.Application, Is.Null, "The narrative must not create an engine or consume its random streams.");
             Assert.That(File.Exists(controller.SavePath), Is.False);
         }
 
@@ -302,7 +280,7 @@ namespace Dice.Tests
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 var slot = view.TrayScene.Geometry.DiceSlots[index];
-                var die = ContentReady.Die(view.DiceTray, index);
+                var die = view.DiceTray.Dice[index];
                 Assert.That(die, Is.Not.Null, "Die " + index);
                 Assert.That(die.IsChildOf(slot), Is.True, "The authored die belongs to its tray slot.");
                 Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
@@ -342,25 +320,20 @@ namespace Dice.Tests
         {
             yield return ContentReady.Routed();
             view.JourneyView.Refresh();
-            float deadline = Time.realtimeSinceStartup + 15;
-            while (view.JourneyView.IsAnimating && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(view.JourneyView.IsAnimating, Is.False, controller.JourneyStatus.ToString());
-            yield return new WaitForSecondsRealtime(.15f);
+            yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, controller.JourneyStatus.ToString());
             if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
             {
                 bool invitation = controller.SelectedJourney.Beats[controller.BeatIndex].Kind == EncounterJourneyBeatKind.Invitation;
                 var button = Find<Button>(invitation ? "JourneyAcceptButton" : "JourneyAdvanceButton");
-                Assert.That(button.gameObject.activeInHierarchy, Is.True, button.name);
-                Assert.That(button.IsInteractable(), Is.True, button.name);
+                yield return ContentReady.WaitUntil(() => button.gameObject.activeInHierarchy && button.IsInteractable(),
+                    button.name + " becomes available once the beat has shown.");
             }
         }
 
         private IEnumerator WaitForPresentation()
         {
             yield return ContentReady.Routed();
-            float deadline = Time.realtimeSinceStartup + 45;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, controller.Status.ToString());
+            yield return ContentReady.WaitUntil(() => !controller.IsBusy, controller.Status.ToString(), ContentReady.SequenceTimeout);
             Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             yield return null;
         }
@@ -368,43 +341,8 @@ namespace Dice.Tests
         private string ActiveText() => string.Join("\n", ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>()
             .Where(label => label.isActiveAndEnabled).Select(label => label.text));
 
-        private T Find<T>(string name) where T : Component
-        {
-            foreach (string prefix in new[] { "JourneyRuleName", "JourneyRuleText" })
-            {
-                if (!name.StartsWith(prefix, StringComparison.Ordinal)) continue;
-                int index = name.Length == prefix.Length ? 0 : int.Parse(name.Substring(prefix.Length)) - 1;
-                var rows = view.JourneyView.GetComponentsInChildren<SpiritInvitationRuleView>(true);
-                Assert.That(index, Is.LessThan(rows.Length), name);
-                Component match = prefix == "JourneyRuleName" ? rows[index].Title : rows[index].Description;
-                return match as T;
-            }
-            var result = ContentReady.PresentationRoot(controller).GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
-            Assert.That(result, Is.Not.Null, name);
-            return result;
-        }
+        private T Find<T>(string name) where T : Component => ContentReady.Find<T>(controller, name);
 
-        private void Click(string name)
-        {
-            var button = Find<Button>(name);
-            Assert.That(button.gameObject.activeInHierarchy, Is.True, name);
-            Assert.That(button.IsInteractable(), Is.True, name);
-            Assert.That(EventSystem.current, Is.Not.Null);
-            Canvas.ForceUpdateCanvases();
-            var rect = (RectTransform)button.transform;
-            var pointer = new PointerEventData(EventSystem.current)
-            {
-                position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center)),
-                button = PointerEventData.InputButton.Left,
-                pointerId = -1
-            };
-            var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pointer, hits);
-            Assert.That(hits, Is.Not.Empty, name);
-            var handler = ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject);
-            Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + name);
-            pointer.pointerCurrentRaycast = hits[0];
-            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
-        }
+        private void Click(string name) => ContentReady.Click(Find<Button>(name));
     }
 }

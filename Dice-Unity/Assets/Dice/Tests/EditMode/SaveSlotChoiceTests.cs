@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -11,9 +10,7 @@ namespace Dice.Tests
     /** Main menu and save slot picker choices, bound to test-only menu controls on a minimal test hierarchy. */
     public sealed class SaveSlotChoiceTests
     {
-        private GameObject root;
-        private SpiritUiTheme theme;
-        private SpiritUiWording wording;
+        private SyntheticUi ui;
         private MenuControls controls;
         private SpiritMainMenu menu;
         private SpiritSaveSlotPicker picker;
@@ -21,23 +18,18 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
-            wording = SyntheticWording.Create();
-            root = new GameObject("Save slot choice test", typeof(RectTransform), typeof(SpiritUiContext));
-            root.GetComponent<SpiritUiContext>().Configure(theme, wording);
+            ui = new SyntheticUi();
             controls = new MenuControls();
-            picker = BuildPicker(root.transform);
-            menu = BuildMenu(root.transform, picker);
-            menu.Build((RectTransform)root.transform);
+            picker = BuildPicker(ui.Root);
+            menu = BuildMenu(ui.Root, picker);
+            menu.Build();
             menu.Bind(controls);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(root);
-            Object.DestroyImmediate(theme);
-            Object.DestroyImmediate(wording);
+            ui.Dispose();
         }
 
         /** Checks the menu enables Continue and Chapter only when the controls offer them; fails if either is enabled without its save. */
@@ -143,79 +135,57 @@ namespace Dice.Tests
             picker.RecoveryPicker.CandidateButtons[candidate].onClick.Invoke();
         }
 
-        private static SpiritMainMenu BuildMenu(Transform parent, SpiritSaveSlotPicker slotPicker)
+        private SpiritMainMenu BuildMenu(Transform parent, SpiritSaveSlotPicker slotPicker)
         {
-            var menuRoot = Rect(parent, "MainMenu");
+            var menuRoot = ui.Rect(parent, "MainMenu");
             var result = menuRoot.gameObject.AddComponent<SpiritMainMenu>();
-            SetProperty(result, "Root", menuRoot);
-            SetProperty(result, "Title", Label(menuRoot, "Title"));
-            SetProperty(result, "Status", Label(menuRoot, "Status"));
-            SetProperty(result, "ContinueButton", NewButton(menuRoot, "Continue"));
-            SetProperty(result, "ChapterButton", NewButton(menuRoot, "Chapter"));
-            SetProperty(result, "NewGameButton", NewButton(menuRoot, "NewGame"));
-            SetProperty(result, "OptionsButton", NewButton(menuRoot, "Options"));
-            SetProperty(result, "SlotSelectorButton", NewButton(menuRoot, "LoadGame"));
-            SetProperty(result, "SlotPicker", slotPicker);
+            SyntheticUi.Set(result, "<Root>k__BackingField", menuRoot);
+            SyntheticUi.Set(result, "<Title>k__BackingField", ui.Label(menuRoot, "Title"));
+            SyntheticUi.Set(result, "<Status>k__BackingField", ui.Label(menuRoot, "Status"));
+            SyntheticUi.Set(result, "<ContinueButton>k__BackingField", ui.LabeledButton(menuRoot, "Continue"));
+            SyntheticUi.Set(result, "<ChapterButton>k__BackingField", ui.LabeledButton(menuRoot, "Chapter"));
+            SyntheticUi.Set(result, "<NewGameButton>k__BackingField", ui.LabeledButton(menuRoot, "NewGame"));
+            SyntheticUi.Set(result, "<OptionsButton>k__BackingField", ui.LabeledButton(menuRoot, "Options"));
+            SyntheticUi.Set(result, "<SlotSelectorButton>k__BackingField", ui.LabeledButton(menuRoot, "LoadGame"));
+            SyntheticUi.Set(result, "<SlotPicker>k__BackingField", slotPicker);
             return result;
         }
 
-        private static SpiritSaveSlotPicker BuildPicker(Transform parent)
+        private SpiritSaveSlotPicker BuildPicker(Transform parent)
         {
-            var pickerRoot = Rect(parent, "SlotPicker");
-            var recoveryRoot = Rect(pickerRoot, "RecoveryPicker");
+            var pickerRoot = ui.Rect(parent, "SlotPicker");
+            var recoveryRoot = ui.Rect(pickerRoot, "RecoveryPicker");
             var recovery = recoveryRoot.gameObject.AddComponent<SpiritCampaignRecoveryPicker>();
-            SetProperty(recovery, "Root", recoveryRoot);
-            SetProperty(recovery, "CloseButton", NewButton(recoveryRoot, "Close"));
-            SetProperty(recovery, "PreviousPageButton", NewButton(recoveryRoot, "Previous"));
-            SetProperty(recovery, "NextPageButton", NewButton(recoveryRoot, "Next"));
-            SetProperty(recovery, "PageLabel", Label(recoveryRoot, "Page"));
-            Set(recovery, "candidateButtons", Enumerable.Range(0, 3).Select(index => NewButton(recoveryRoot, "Candidate" + index)).ToArray());
-            Set(recovery, "summaries", Labels(recoveryRoot, "Summary"));
-            Set(recovery, "details", Labels(recoveryRoot, "Detail"));
-            Set(recovery, "identifiers", Labels(recoveryRoot, "Identifier"));
+            SyntheticUi.Set(recovery, "<Root>k__BackingField", recoveryRoot);
+            SyntheticUi.Set(recovery, "<CloseButton>k__BackingField", ui.LabeledButton(recoveryRoot, "Close"));
+            SyntheticUi.Set(recovery, "<PreviousPageButton>k__BackingField", ui.LabeledButton(recoveryRoot, "Previous"));
+            SyntheticUi.Set(recovery, "<NextPageButton>k__BackingField", ui.LabeledButton(recoveryRoot, "Next"));
+            SyntheticUi.Set(recovery, "<PageLabel>k__BackingField", ui.Label(recoveryRoot, "Page"));
+            SyntheticUi.Set(recovery, "candidateButtons", Enumerable.Range(0, 3).Select(index => ui.LabeledButton(recoveryRoot, "Candidate" + index)).ToArray());
+            SyntheticUi.Set(recovery, "summaries", Labels(recoveryRoot, "Summary"));
+            SyntheticUi.Set(recovery, "details", Labels(recoveryRoot, "Detail"));
+            SyntheticUi.Set(recovery, "identifiers", Labels(recoveryRoot, "Identifier"));
 
-            var confirmation = Rect(pickerRoot, "Confirmation");
+            var confirmation = ui.Rect(pickerRoot, "Confirmation");
             var result = pickerRoot.gameObject.AddComponent<SpiritSaveSlotPicker>();
-            SetProperty(result, "Root", pickerRoot);
-            SetProperty(result, "Title", Label(pickerRoot, "Title"));
-            SetProperty(result, "Subtitle", Label(pickerRoot, "Subtitle"));
-            SetProperty(result, "CloseButton", NewButton(pickerRoot, "Close"));
-            SetProperty(result, "RecoverSavesButton", NewButton(pickerRoot, "RecoverSaves"));
-            SetProperty(result, "RecoveryPicker", recovery);
-            SetProperty(result, "Confirmation", confirmation);
-            SetProperty(result, "ConfirmationTitle", Label(confirmation, "Title"));
-            SetProperty(result, "ConfirmationText", Label(confirmation, "Text"));
-            SetProperty(result, "ConfirmReplaceSaveButton", NewButton(confirmation, "Confirm"));
-            SetProperty(result, "CancelReplaceSaveButton", NewButton(confirmation, "Cancel"));
-            Set(result, "slotButtons", Enumerable.Range(0, 3).Select(index => NewButton(pickerRoot, "Slot" + index)).ToArray());
-            Set(result, "slotSummaries", Labels(pickerRoot, "SlotSummary"));
+            SyntheticUi.Set(result, "<Root>k__BackingField", pickerRoot);
+            SyntheticUi.Set(result, "<Title>k__BackingField", ui.Label(pickerRoot, "Title"));
+            SyntheticUi.Set(result, "<Subtitle>k__BackingField", ui.Label(pickerRoot, "Subtitle"));
+            SyntheticUi.Set(result, "<CloseButton>k__BackingField", ui.LabeledButton(pickerRoot, "Close"));
+            SyntheticUi.Set(result, "<RecoverSavesButton>k__BackingField", ui.LabeledButton(pickerRoot, "RecoverSaves"));
+            SyntheticUi.Set(result, "<RecoveryPicker>k__BackingField", recovery);
+            SyntheticUi.Set(result, "<Confirmation>k__BackingField", confirmation);
+            SyntheticUi.Set(result, "<ConfirmationTitle>k__BackingField", ui.Label(confirmation, "Title"));
+            SyntheticUi.Set(result, "<ConfirmationText>k__BackingField", ui.Label(confirmation, "Text"));
+            SyntheticUi.Set(result, "<ConfirmReplaceSaveButton>k__BackingField", ui.LabeledButton(confirmation, "Confirm"));
+            SyntheticUi.Set(result, "<CancelReplaceSaveButton>k__BackingField", ui.LabeledButton(confirmation, "Cancel"));
+            SyntheticUi.Set(result, "slotButtons", Enumerable.Range(0, 3).Select(index => ui.LabeledButton(pickerRoot, "Slot" + index)).ToArray());
+            SyntheticUi.Set(result, "slotSummaries", Labels(pickerRoot, "SlotSummary"));
             return result;
         }
 
-        private static RectTransform Rect(Transform parent, string name)
-        {
-            var item = new GameObject(name, typeof(RectTransform));
-            item.transform.SetParent(parent, false);
-            return (RectTransform)item.transform;
-        }
-
-        private static Text Label(Transform parent, string name) => Rect(parent, name).gameObject.AddComponent<Text>();
-
-        private static Text[] Labels(Transform parent, string name)
-            => Enumerable.Range(0, 3).Select(index => Label(parent, name + index)).ToArray();
-
-        private static Button NewButton(Transform parent, string name)
-        {
-            var button = Rect(parent, name).gameObject.AddComponent<Button>();
-            Label(button.transform, "Label");
-            return button;
-        }
-
-        private static void SetProperty(object target, string name, object value)
-            => target.GetType().GetProperty(name).GetSetMethod(true).Invoke(target, new[] { value });
-
-        private static void Set(object target, string field, object value)
-            => target.GetType().GetField(field, BindingFlags.NonPublic | BindingFlags.Instance).SetValue(target, value);
+        private Text[] Labels(Transform parent, string name)
+            => Enumerable.Range(0, 3).Select(index => ui.Label(parent, name + index)).ToArray();
 
         /** Menu controls that offer every action and record what the menu asks of them. */
         private sealed class MenuControls : ISpiritMainMenuControls

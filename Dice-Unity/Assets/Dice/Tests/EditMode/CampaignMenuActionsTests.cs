@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -30,17 +29,14 @@ namespace Dice.Tests
             campaign = host.AddComponent<SpiritCampaignController>();
             catalog = TestContent.Catalog();
             var journey = Create<EncounterJourneyAsset>();
-            Set(journey, "encounterId", TestContent.EncounterId);
-            Set(journey, "locationTitle", "Test location");
-            Set(journey, "spiritName", "Test host");
-            Set(journey, "leadText", "A test lead.");
-            Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            var invitation = new EncounterJourneyBeat();
-            Set(invitation, "id", "invitation");
-            Set(invitation, "kind", EncounterJourneyBeatKind.Invitation);
-            Set(journey, "beats", new[] { invitation });
-            journeys = Create<EncounterJourneyCatalogAsset>();
-            Set(journeys, "entries", new[] { journey });
+            SyntheticUi.Set(journey, "encounterId", TestContent.EncounterId);
+            SyntheticUi.Set(journey, "locationTitle", "Test location");
+            SyntheticUi.Set(journey, "spiritName", "Test host");
+            SyntheticUi.Set(journey, "leadText", "A test lead.");
+            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
+            TestJourneys.SetBeats(journey, TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
+            journeys = TestJourneys.Catalog(Create<EncounterJourneyCatalogAsset>(),
+                TestJourneys.Chapter(Create<EncounterChapterAsset>(), "chapter.test", journey));
             root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",
                 "campaign-menu-tests", Guid.NewGuid().ToString("N")));
             Directory.CreateDirectory(root);
@@ -214,8 +210,5 @@ namespace Dice.Tests
             assets.Add(asset);
             return asset;
         }
-
-        private static void Set(object target, string field, object value)
-            => target.GetType().GetField(field, BindingFlags.NonPublic | BindingFlags.Instance).SetValue(target, value);
     }
 }

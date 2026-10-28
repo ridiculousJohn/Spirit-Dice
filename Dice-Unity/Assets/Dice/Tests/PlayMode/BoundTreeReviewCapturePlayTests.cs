@@ -151,9 +151,9 @@ namespace Dice.Tests
             yield return EncounterCharmsIntroductionPlayTests.EnterShortEncounter(controller, controller.Catalog, journey);
             yield return EncounterCharmsIntroductionPlayTests.ReachIntroducedOffer(controller, EncounterId);
             var view = ContentReady.EncounterView(controller);
-            yield return EncounterCharmsIntroductionPlayTests.SizePortrait(Width);
+            yield return SizePortrait(Width);
             EncounterCharmsIntroductionPlayTests.AssertIntroductionOpen(controller, view, journey);
-            EncounterCharmsIntroductionPlayTests.AssertIntroductionLayout(view);
+            AssertIntroductionLayout(view);
             yield return EncounterCharmsIntroductionPlayTests.AssertOfferCovered(view, true);
             yield return Capture(root, "a-stage3-introduction-" + Width + "x" + Height + ".png");
 
@@ -162,6 +162,80 @@ namespace Dice.Tests
             yield return EncounterCharmsIntroductionPlayTests.AssertOfferCovered(view, false);
             yield return Capture(root, "b-stage3-offer-after-continue-" + Width + "x" + Height + ".png");
             LogAssert.NoUnexpectedReceived();
+        }
+
+        /** Sizes the portrait to the given width at the authoring height. */
+        private static IEnumerator SizePortrait(int width)
+        {
+            var portrait = ContentReady.Portrait();
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = new Vector2(width, Height);
+            portrait.anchoredPosition = Vector2.zero;
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+        }
+
+        /** The narration, family row, scope sentence and Continue are complete and stacked without overlap. */
+        private static void AssertIntroductionLayout(SpiritEncounterView view)
+        {
+            Canvas.ForceUpdateCanvases();
+            var screen = view.EncounterCharmsIntroduction.Screen;
+            var title = Child<Text>(screen, "EncounterCharmsTitle");
+            var scope = Child<Text>(screen, "EncounterCharmsScope");
+            bool narrated = screen.Narration.gameObject.activeInHierarchy;
+            var stack = new[] { title.rectTransform, narrated ? screen.Narration.rectTransform : null, scope.rectTransform,
+                (RectTransform)screen.Scroll.transform, (RectTransform)screen.BeginButton.transform }.Where(rect => rect != null).ToArray();
+            for (int index = 1; index < stack.Length; ++index) AssertBelow(stack[index - 1], stack[index]);
+            foreach (var text in new[] { title, narrated ? screen.Narration : null, scope, screen.BeginButton.GetComponentInChildren<Text>() })
+                if (text != null) AssertCompleteText(text);
+            var viewport = (RectTransform)screen.Scroll.viewport.transform;
+            var row = (RectTransform)screen.Rows[0].transform;
+            var rowCorners = new Vector3[4];
+            var viewportCorners = new Vector3[4];
+            row.GetWorldCorners(rowCorners);
+            viewport.GetWorldCorners(viewportCorners);
+            Assert.That(rowCorners[0].y, Is.GreaterThanOrEqualTo(viewportCorners[0].y - .5f), "The family row fits its list.");
+            Assert.That(rowCorners[2].y, Is.LessThanOrEqualTo(viewportCorners[2].y + .5f));
+            var portraitCorners = new Vector3[4];
+            view.Portrait.GetWorldCorners(portraitCorners);
+            var screenCorners = new Vector3[4];
+            screen.Root.GetWorldCorners(screenCorners);
+            Assert.That(Vector3.Distance(screenCorners[0], portraitCorners[0]), Is.LessThan(.01f));
+            Assert.That(Vector3.Distance(screenCorners[2], portraitCorners[2]), Is.LessThan(.01f),
+                "The introduction covers the whole portrait.");
+        }
+
+        private static void AssertBelow(RectTransform upper, RectTransform lower)
+        {
+            var upperCorners = new Vector3[4];
+            var lowerCorners = new Vector3[4];
+            upper.GetWorldCorners(upperCorners);
+            lower.GetWorldCorners(lowerCorners);
+            Assert.That(upperCorners[0].y, Is.GreaterThanOrEqualTo(lowerCorners[2].y - .01f), upper.name + " overlaps " + lower.name);
+        }
+
+        private static void AssertCompleteText(Text label)
+        {
+            var settings = label.GetGenerationSettings(label.rectTransform.rect.size);
+            var rendered = label.cachedTextGenerator;
+            Assert.That(rendered.Populate(label.text, settings), Is.True, label.name);
+            settings.fontSize = label.resizeTextForBestFit ? rendered.fontSizeUsedForBestFit : label.fontSize;
+            settings.resizeTextForBestFit = false;
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            using (var complete = new TextGenerator())
+            {
+                Assert.That(complete.Populate(label.text, settings), Is.True, label.name);
+                Assert.That(rendered.vertexCount, Is.EqualTo(complete.vertexCount), label.name + " truncates text.");
+            }
+            Assert.That(label.rectTransform.rect.height, Is.GreaterThanOrEqualTo(label.preferredHeight - .5f),
+                label.name + " is clipped vertically.");
+        }
+
+        private static T Child<T>(SpiritEncounterCharmsScreen screen, string name) where T : Component
+        {
+            var result = screen.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
+            Assert.That(result, Is.Not.Null, name);
+            return result;
         }
 
         private static DieBindingVisual Visual(SpiritEncounterView view, int mask)

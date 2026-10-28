@@ -1,13 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Resolution = Dice.Engine.Resolution;
 
@@ -21,10 +19,6 @@ namespace Dice.Tests
      */
     public sealed class BayWardRulePlayTests
     {
-        private const ulong SeedSearchLimit = 4000;
-        // Player rerolls take the two leftmost dice, so a reroll attempt targets one of the kept three.
-        private const int RerollMask = 0b00011;
-
         /**
          * Checks, on the first encounter with a ward, that an interference attempt on the bay occupied by the ward's
          * piece is reported as blocked by that ward, that the piece flares and the host reacts during playback, and that
@@ -34,7 +28,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator WardedBayRepelsTheInterferenceAndItsPieceFlares()
         {
-            yield return LoadApplication();
+            yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             (string Journey, BayWardRuleDefinition Ward)? found = null;
             foreach (var journey in controller.JourneyCatalog.Entries.Where(value => value != null && !value.IsStoryOnly))
@@ -58,11 +52,11 @@ namespace Dice.Tests
             // An attempt after a player reroll leaves the attacked die on the board; otherwise the ward meets Play Hand.
             bool afterReroll = encounter.Rules.OfType<DieInterferenceRuleDefinition>()
                 .Any(rule => rule.AfterPlayerReroll && Repels(ward, rule));
-            EncounterAction Action() => afterReroll ? (EncounterAction)new RerollDiceAction(RerollMask) : PlayHandAction.Instance;
+            EncounterAction Action() => afterReroll ? (EncounterAction)new RerollDiceAction(ContentReady.RerollMask) : PlayHandAction.Instance;
             string context = encounter.Id + " " + ward.Id;
             ulong seed = 0;
             int bay = -1;
-            for (ulong candidate = 1; candidate <= SeedSearchLimit && seed == 0; candidate++)
+            for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)
             {
                 var unwarded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Id, candidate);
                 var attempt = unwarded.Execute(Action(), unwarded.Snapshot.Revision).Events.OfType<DieDisturbedEvent>()
@@ -80,14 +74,14 @@ namespace Dice.Tests
                 bay = attempt.Bay;
             }
             Assert.That(seed, Is.Not.Zero, context + ": no searched seed attempts interference the ward can repel.");
-            yield return Begin(controller, journeyId, seed);
+            yield return ContentReady.EnterEncounter(controller, journeyId, seed);
             var view = ContentReady.EncounterView(controller);
             var piece = view.TablePieces.SingleOrDefault(value => value.PieceId == ward.PieceId && value.InteractionId == ward.InteractionId);
             Assert.That(piece, Is.Not.Null, context + ": the table presents no prop for the ward's piece.");
             yield return Move(controller, piece, PiecePosition.Bay(bay));
             if (afterReroll)
                 for (int die = 0; die < DiceValues.Count; die++)
-                    if ((RerollMask & (1 << die)) != 0) controller.ToggleDie(die);
+                    if ((ContentReady.RerollMask & (1 << die)) != 0) controller.ToggleDie(die);
             int keptFace = controller.Snapshot.CurrentDice[bay];
             var resolutions = new List<Resolution>();
             controller.Resolved += resolutions.Add;
@@ -95,7 +89,7 @@ namespace Dice.Tests
             else controller.PlayHand();
             Assert.That(controller.IsBusy, Is.True, controller.Status.ToString());
             bool flared = false, reacted = false;
-            float deadline = Time.realtimeSinceStartup + 30;
+            float deadline = Time.realtimeSinceStartup + ContentReady.Timeout;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline)
             {
                 flared |= piece.IsFlaring;
@@ -126,32 +120,6 @@ namespace Dice.Tests
                 (rule.ForcedRerollWeight > 0 && ward.Blocks(DieInterferenceKind.ForcedReroll) ||
                     rule.FlipWeight > 0 && ward.Blocks(DieInterferenceKind.Flip));
 
-        private static IEnumerator LoadApplication()
-        {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
-        }
-
-        /** Opens the journey's encounter with a fixed session seed and waits for its opening roll. */
-        private static IEnumerator Begin(SpiritEncounterController controller, string journeyId, ulong seed)
-        {
-            controller.ReturnToInvestigation();
-            yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journeyId);
-            controller.SelectEncounter(journeyId);
-            yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
-                controller.AdvanceJourney();
-            controller.ConfigureSeedPolicy(true, seed.ToString(CultureInfo.InvariantCulture));
-            controller.AcceptEncounter();
-            yield return ContentReady.Routed(controller);
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
-            yield return null;
-        }
-
         /** Moves the piece through the controller and waits for its prop to settle at the new position. */
         private static IEnumerator Move(SpiritEncounterController controller, SpiritTablePieceView piece, PiecePosition position)
         {
@@ -159,20 +127,21 @@ namespace Dice.Tests
             if (placement.Position != position)
             {
                 controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
-                float deadline = Time.realtimeSinceStartup + 10;
-                while ((controller.IsBusy || placement.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
+                yield return ContentReady.WaitUntil(() => !controller.IsBusy && placement.Position == position, piece.PieceId + " must move.");
             }
             Assert.That(placement.Position, Is.EqualTo(position), piece.PieceId);
+            // The prop has settled once it holds still for a few frames.
+            const int SettledFrames = 3;
             Vector3 previous = piece.transform.position;
             int stable = 0;
-            float settle = Time.realtimeSinceStartup + 5;
-            while (stable < 3 && Time.realtimeSinceStartup < settle)
+            float settle = Time.realtimeSinceStartup + ContentReady.Timeout;
+            while (stable < SettledFrames && Time.realtimeSinceStartup < settle)
             {
                 yield return null;
                 stable = (piece.transform.position - previous).sqrMagnitude < 1e-6f ? stable + 1 : 0;
                 previous = piece.transform.position;
             }
-            Assert.That(stable, Is.EqualTo(3), piece.PieceId + " must settle.");
+            Assert.That(stable, Is.EqualTo(SettledFrames), piece.PieceId + " must settle.");
         }
     }
 }

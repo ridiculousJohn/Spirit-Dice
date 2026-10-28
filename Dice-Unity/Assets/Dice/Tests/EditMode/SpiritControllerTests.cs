@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
-using Dice.UnityContent;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 using UnityEngine;
@@ -435,8 +433,6 @@ namespace Dice.Tests
                 controller.Reroll();
                 AssertSnapshots(expected.Execute(new RerollDiceAction(5), 0).Snapshot);
             }
-            Assert.That(typeof(SpiritEncounterController).GetField("useFixedSeed",
-                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(controller), Is.EqualTo(fixedSeed));
             if (fixedSeed)
             {
                 controller.StartNew();

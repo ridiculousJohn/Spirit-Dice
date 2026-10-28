@@ -59,13 +59,16 @@ namespace Dice.Presentation
         private SceneLightingMaterial sceneLightingMaterial;
         private SceneLightingMaterial previousSceneLightingMaterial;
 
+        // Internal so EditMode tests read the lighting the background and its departing panels show.
+        internal RawImage Background => background;
+        internal RawImage LeftPanel => leftPanel;
+        internal RawImage RightPanel => rightPanel;
+        // Internal so PlayMode tests accept the invitation through the screen's own button.
+        internal Button AcceptButton => acceptButton;
+        internal SceneLightingState SceneLighting => sceneLightingState;
+        internal SceneLightingState PreviousSceneLighting => previousSceneLightingState;
+
         public bool IsAnimating { get; private set; }
-        public Text Body => body;
-        public RectTransform CharmDetail => charmDetail;
-        public Image CharmIcon => charmIcon;
-        public Text CharmName => charmName;
-        public Text CharmEffect => charmEffect;
-        public Text CharmCondition => charmCondition;
         public int VisibleBeatIndex { get; private set; } = -1;
         [field: SerializeField] public SpiritEncounterCharmsScreen EncounterCharms { get; private set; }
 
@@ -347,14 +350,15 @@ namespace Dice.Presentation
             SetButtons();
         }
 
-        private void OnDisable()
+        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
+        internal void OnDisable()
         {
             CancelAnimation();
             ClearSceneLighting();
             hasRendered = false;
         }
 
-        private void LateUpdate()
+        internal void LateUpdate()
         {
             double time = Time.unscaledTimeAsDouble;
             var asset = activeBeat?.SceneLighting;

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -37,9 +36,9 @@ namespace Dice.Tests
             var prop = new GameObject("Table Piece", typeof(RectTransform));
             prop.transform.SetParent(parent.transform, false);
             piece = prop.AddComponent<SpiritTablePiecePosition>();
-            Set(piece, "neutralAnchor", (RectTransform)anchor.transform);
-            Set(piece, "snapRadius", 90f);
-            Set(piece, "settleDuration", 0f);
+            SyntheticUi.Set(piece, "neutralAnchor", (RectTransform)anchor.transform);
+            SyntheticUi.Set(piece, "snapRadius", 90f);
+            SyntheticUi.Set(piece, "settleDuration", 0f);
             // Bay 3 is not an allowed position, so releases near it must not request it.
             definition = new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand,
                 true, DiceValues.AllMask & ~(1 << 3));
@@ -180,7 +179,7 @@ namespace Dice.Tests
             var image = flame.GetComponent<Image>();
             image.color = new Color(1, .8f, .4f, .8f);
             var view = piece.GetComponent<SpiritTablePieceView>();
-            Set(view, "emissiveImages", new Graphic[] { image });
+            SyntheticUi.Set(view, "emissiveImages", new Graphic[] { image });
             view.SetEmission(.5f);
             Assert.That(image.color.a, Is.EqualTo(.4f).Within(.0001f));
             Assert.That(image.color.g, Is.EqualTo(.8f).Within(.0001f));
@@ -196,7 +195,7 @@ namespace Dice.Tests
         [Test]
         public void BindingRequiresAnAuthoredNeutralAnchorWhenNeutralIsAllowed()
         {
-            Set(piece, "neutralAnchor", null);
+            SyntheticUi.Set(piece, "neutralAnchor", null);
             Assert.Throws<InvalidOperationException>(() => piece.Bind(PiecePosition.Neutral, definition));
             Assert.DoesNotThrow(() => piece.Bind(PiecePosition.Bay(0), new PositionInteractionDefinition(InteractionId,
                 PiecePosition.Bay(0), PieceMovementTiming.DuringHand, false)));
@@ -232,8 +231,5 @@ namespace Dice.Tests
 
         private static readonly Comparison<Vector2> Vector2EqualityComparer =
             (left, right) => Vector2.Distance(left, right) < .0001f ? 0 : 1;
-
-        private static void Set(object target, string name, object value)
-            => target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
     }
 }

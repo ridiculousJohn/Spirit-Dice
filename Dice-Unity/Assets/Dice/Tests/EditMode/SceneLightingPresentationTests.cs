@@ -22,7 +22,7 @@ namespace Dice.Tests
         public void SetUp()
         {
             asset = Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
-            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.BaseTexture = Texture(new[] { new Color(.1f, .1f, .1f, 1f) });
             asset.Lights = new[]
             {

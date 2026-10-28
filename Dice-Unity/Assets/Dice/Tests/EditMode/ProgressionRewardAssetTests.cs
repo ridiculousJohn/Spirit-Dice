@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 
 namespace Dice.Tests
@@ -72,7 +70,7 @@ namespace Dice.Tests
             var reward = Reward(Array.Empty<string>(), new[] { ModifierId });
             Assert.That(reward.GrantsModifier(ModifierId), Is.True);
             Assert.That(reward.GrantsModifier("modifier.other"), Is.False);
-            Set(reward, "grantedModifiers", new ModifierAsset[] { null });
+            SyntheticUi.Set(reward, "grantedModifiers", new ModifierAsset[] { null });
             Assert.Throws<InvalidOperationException>(() => reward.GrantsModifier(ModifierId));
         }
 
@@ -85,34 +83,32 @@ namespace Dice.Tests
             Assert.That(journey.CompletionReward, Is.Null);
             Assert.DoesNotThrow(() => journey.Validate(catalog));
             var reward = Reward(new[] { FamilyId }, new[] { ModifierId });
-            Set(completion ? (object)journey : journey.Beats[0], completion ? "completionReward" : "progressionReward", reward);
+            if (completion) SyntheticUi.Set(journey, "completionReward", reward);
+            else TestJourneys.SetBeat(journey, 0, "progressionReward", reward);
             Assert.That(completion ? journey.CompletionReward : journey.Beats[0].ProgressionReward, Is.SameAs(reward));
             Assert.DoesNotThrow(() => journey.Validate(catalog));
 
-            Set(reward, "grantedModifiers", new[] { charms.Charm("modifier.missing") });
+            SyntheticUi.Set(reward, "grantedModifiers", new[] { charms.Charm("modifier.missing") });
             Assert.Throws<ArgumentException>(() => journey.Validate(catalog));
         }
 
         private ProgressionRewardAsset Reward(string[] families, string[] modifiers)
         {
             var reward = Create<ProgressionRewardAsset>();
-            Set(reward, "discoveredFamilyIds", families);
-            Set(reward, "grantedModifiers", modifiers.Select(id => charms.Charm(id)).ToArray());
+            SyntheticUi.Set(reward, "discoveredFamilyIds", families);
+            SyntheticUi.Set(reward, "grantedModifiers", modifiers.Select(id => charms.Charm(id)).ToArray());
             return reward;
         }
 
         private EncounterJourneyAsset Journey()
         {
             var journey = Create<EncounterJourneyAsset>();
-            Set(journey, "encounterId", EncounterId);
-            Set(journey, "locationTitle", "Story table");
-            Set(journey, "spiritName", "Story keeper");
-            Set(journey, "leadText", "A keeper waits at the table.");
-            Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            var beat = new EncounterJourneyBeat();
-            Set(beat, "id", "invitation");
-            Set(beat, "kind", EncounterJourneyBeatKind.Invitation);
-            Set(journey, "beats", new[] { beat });
+            SyntheticUi.Set(journey, "encounterId", EncounterId);
+            SyntheticUi.Set(journey, "locationTitle", "Story table");
+            SyntheticUi.Set(journey, "spiritName", "Story keeper");
+            SyntheticUi.Set(journey, "leadText", "A keeper waits at the table.");
+            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
+            TestJourneys.SetBeats(journey, TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
             return journey;
         }
 
@@ -122,8 +118,5 @@ namespace Dice.Tests
             assets.Add(asset);
             return asset;
         }
-
-        private static void Set(object target, string field, object value)
-            => target.GetType().GetField(field, BindingFlags.NonPublic | BindingFlags.Instance).SetValue(target, value);
     }
 }

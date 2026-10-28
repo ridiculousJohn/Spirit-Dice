@@ -299,7 +299,7 @@ namespace Dice.Tests
             for (int frame = 0; frame < 3; frame++) yield return null;
 
             var lighting = (IAmbientLightingTarget)view.TableLighting;
-            var target = ContentReady.Die(view.DiceTray, plan.Bay);
+            var target = view.DiceTray.Dice[plan.Bay];
             Quaternion targetRest = target.localRotation;
             float targetHeight = target.localPosition.y;
             var resolutions = new List<Resolution>();

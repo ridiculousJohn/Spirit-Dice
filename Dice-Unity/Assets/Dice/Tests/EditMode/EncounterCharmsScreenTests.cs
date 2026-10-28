@@ -72,7 +72,7 @@ namespace Dice.Tests
             view.Build(null);
             var journey = ui.Own(ScriptableObject.CreateInstance<EncounterJourneyAsset>());
             SyntheticUi.Set(journey, "encounterId", TestContent.EncounterId);
-            var controls = new JourneyControls(journey);
+            var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
 
             view.Bind(controls, Controls(EncounterCharmsIntroductionTests.Catalog(firstClearedStage: 1, additions: true)));
             accept.onClick.Invoke();
@@ -109,39 +109,6 @@ namespace Dice.Tests
         private static ModifierDefinition Modifier(string id, string familyId, int amount)
             => new ModifierDefinition(id, familyId, ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(amount) });
-
-        /** A journey resting at its invitation that counts acceptances. */
-        private sealed class JourneyControls : IEncounterJourneyControls
-        {
-            public int Accepted;
-
-            public JourneyControls(EncounterJourneyAsset journey) => SelectedJourney = journey;
-
-            public EncounterJourneyPhase JourneyPhase => EncounterJourneyPhase.Sequence;
-            public EncounterJourneyCatalogAsset JourneyCatalog => null;
-            public EncounterChapterAsset SelectedChapter => null;
-            public EncounterJourneyAsset SelectedJourney { get; }
-            public int BeatIndex => 0;
-            public bool CanSkipIntro => false;
-            public bool HasActiveEncounter => false;
-            public bool CanResume => false;
-            public SpiritStatus JourneyStatus => SpiritStatus.None;
-            public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
-            public bool IsJourneyAvailable(string id) => true;
-            public bool IsChapterAvailable(string id) => false;
-            public bool IsChapterCompleted(string id) => false;
-            public event Action JourneyChanged { add { } remove { } }
-            public void SelectChapter(string id) { }
-            public void SelectEncounter(string encounterId) { }
-            public void AdvanceJourney() { }
-            public void SkipIntro() { }
-            public void AcceptEncounter() => ++Accepted;
-            public void ReturnToInvestigation() { }
-            public void ResumeEncounter() { }
-            public void RetryEncounter() { }
-        }
 
         /** Encounter controls that only supply the mechanical catalog. */
         private sealed class EncounterControls : ISpiritEncounterControls

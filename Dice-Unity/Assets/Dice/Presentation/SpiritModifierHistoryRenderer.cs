@@ -301,28 +301,19 @@ namespace Dice.Presentation
             material.SetVector(uvTransform, transform);
         }
 
-
-
         private void SetClip(Material material)
         {
-            if (sharedScene == null)
-                material.SetVector("_ClipWorldX", new Vector4(renderRoot.transform.position.x - InnerHalfWidth,
-                    renderRoot.transform.position.x + InnerHalfWidth, 1, 0));
-            else
-            {
-                material.SetVector("_ClipLocalX", new Vector4(-BayHalfWidth, BayHalfWidth, 1, 0));
-                material.SetMatrix("_ClipWorldToLocal", BayRoot.worldToLocalMatrix);
-            }
+            material.SetVector("_ClipLocalX", new Vector4(-BayHalfWidth, BayHalfWidth, 1, 0));
+            material.SetMatrix("_ClipWorldToLocal", BayRoot.worldToLocalMatrix);
         }
 
-
-
-        private void OnEnable()
+        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
+        internal void OnEnable()
         {
             if (renderRoot != null) renderRoot.SetActive(true);
         }
 
-        private void OnDisable()
+        internal void OnDisable()
         {
             if (renderRoot != null) renderRoot.SetActive(false);
         }

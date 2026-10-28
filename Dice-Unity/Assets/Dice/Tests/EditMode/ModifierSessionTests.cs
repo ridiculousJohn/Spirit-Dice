@@ -212,7 +212,7 @@ namespace Dice.Tests
             {
                 preview = session.PreviewHandResolution();
                 AssertScoreEqual(preview.Score, session.PreviewPlayHand());
-                AssertSnapshotsEqual(before, session.Snapshot);
+                EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             }
             Assert.That(preview.Events.OfType<ModifierActivatedEvent>().Select(value => value.DefinitionId), Is.EqualTo(new[] { "play" }));
             Assert.That(preview.Modifiers.Select(value => value.TotalActivations), Is.EqualTo(new long[] { 1, 1, 1 }));
@@ -223,8 +223,8 @@ namespace Dice.Tests
             Assert.That(preview.Events.OfType<ModifierActivatedEvent>().Select(value => value.Contribution),
                 Is.EqualTo(committed.Events.OfType<ModifierActivatedEvent>().Where(value => value.Phase == ModifierPhase.PlayHand)
                     .Select(value => value.Contribution)));
-            AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 1).Snapshot, committed.Snapshot);
-            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 2).Snapshot,
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 1).Snapshot, committed.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 2).Snapshot,
                 session.Execute(new RerollDiceAction(31), 2).Snapshot);
         }
 
@@ -241,10 +241,10 @@ namespace Dice.Tests
             var rejected = session.Execute(new RerollDiceAction(selectedMask), 0);
             Assert.That(rejected.Rejection, Is.EqualTo(rejection));
             Assert.That(rejected.Events, Is.Empty);
-            AssertSnapshotsEqual(before, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             Assert.That(session.Execute(PlayHandAction.Instance, -1).Rejection, Is.EqualTo(CommandRejection.StaleRevision));
-            AssertSnapshotsEqual(before, session.Snapshot);
-            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
+            EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
                 session.Execute(new RerollDiceAction(31), 0).Snapshot);
         }
 
@@ -260,10 +260,10 @@ namespace Dice.Tests
             for (int i = 0; i < 2; ++i)
             {
                 Assert.Throws<OverflowException>(() => session.Execute(new RerollDiceAction(31), 0));
-                AssertSnapshotsEqual(before, session.Snapshot);
+                EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             }
             var committed = session.Execute(PlayHandAction.Instance, 0);
-            AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 0).Snapshot, committed.Snapshot);
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(PlayHandAction.Instance, 0).Snapshot, committed.Snapshot);
             Assert.That(committed.Events.OfType<ModifierActivatedEvent>(), Is.Empty);
         }
 
@@ -280,9 +280,9 @@ namespace Dice.Tests
             for (int i = 0; i < 2; ++i)
             {
                 Assert.Throws<OverflowException>(() => session.Execute(PlayHandAction.Instance, 0));
-                AssertSnapshotsEqual(before, session.Snapshot);
+                EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
             }
-            AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
+            EncounterSessionTests.AssertSnapshotsEqual(control.Execute(new RerollDiceAction(31), 0).Snapshot,
                 session.Execute(new RerollDiceAction(31), 0).Snapshot);
         }
 
@@ -316,8 +316,5 @@ namespace Dice.Tests
             foreach (var property in typeof(ScoreBreakdown).GetProperties())
                 Assert.That(property.GetValue(actual), Is.EqualTo(property.GetValue(expected)), property.Name);
         }
-
-        private static void AssertSnapshotsEqual(EncounterSnapshot expected, EncounterSnapshot actual)
-            => EncounterSessionTests.AssertSnapshotsEqual(expected, actual);
     }
 }

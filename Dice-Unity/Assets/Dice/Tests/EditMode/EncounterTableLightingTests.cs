@@ -290,7 +290,7 @@ namespace Dice.Tests
             for (int i = 0; i < pixels.Length; ++i) pixels[i] = new Color(.2f, .15f, .08f);
             contribution.SetPixels(pixels); contribution.Apply();
             var asset = ui.Own(ScriptableObject.CreateInstance<SceneLightingAsset>());
-            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.BaseTexture = texture;
             asset.Lights = new[]
             {

@@ -261,20 +261,5 @@ namespace Dice.Tests
 
         private static EncounterSession Session(MechanicalCatalog catalog)
             => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14);
-
-        // Recording is test instrumentation; production conditions are immutable and pure.
-        private sealed class RecordingCondition : IModifierCondition
-        {
-            private readonly Func<ModifierContext, bool> predicate;
-            internal List<ModifierContext> Contexts { get; } = new List<ModifierContext>();
-
-            internal RecordingCondition(Func<ModifierContext, bool> predicate) => this.predicate = predicate;
-
-            public bool Evaluate(in ModifierContext context)
-            {
-                Contexts.Add(context);
-                return predicate(context);
-            }
-        }
     }
 }

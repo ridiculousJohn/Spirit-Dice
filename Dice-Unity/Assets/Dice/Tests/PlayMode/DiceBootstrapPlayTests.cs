@@ -36,7 +36,7 @@ namespace Dice.Tests
         public IEnumerator SetUp()
         {
             authoredHandle = Addressables.LoadAssetAsync<DiceApplicationConfig>(DiceBootstrap.ConfigurationAddress);
-            yield return WaitUntil(() => authoredHandle.IsDone, "Authored configuration did not load.");
+            yield return ContentReady.WaitUntil(() => authoredHandle.IsDone, "Authored configuration did not load.");
             Assert.That(authoredHandle.Status, Is.EqualTo(AsyncOperationStatus.Succeeded));
             Assert.That(authoredHandle.Result, Is.Not.Null);
             previousExceptionHandler = ResourceManager.ExceptionHandler;
@@ -62,7 +62,7 @@ namespace Dice.Tests
             if (host != null) UnityEngine.Object.Destroy(host);
             yield return null;
             if (presentationScene.IsValid())
-                yield return WaitUntil(() => !presentationScene.IsValid() || !presentationScene.isLoaded,
+                yield return ContentReady.WaitUntil(() => !presentationScene.IsValid() || !presentationScene.isLoaded,
                     "Destroying the application did not unload its owned presentation scene.");
             if (provider != null && provider.IsPending)
             {
@@ -107,13 +107,13 @@ namespace Dice.Tests
             Assert.That(firstStartupVisible, Is.True, "Startup must have its own surface before content loads.");
             Assert.That(firstPresentationReady, Is.False);
             Assert.That(firstGameHierarchyExists, Is.False, "Awake must not construct gameplay presentation.");
-            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
+            yield return ContentReady.WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             AssertStartupSurface();
             yield return new WaitForEndOfFrame();
             AssertStartupSurface();
             RestoreOriginalLocators();
             provider.Complete(authoredHandle.Result);
-            yield return WaitUntil(() => host.GetComponent<SpiritCampaignController>()?.IsInitialized == true,
+            yield return ContentReady.WaitUntil(() => host.GetComponent<SpiritCampaignController>()?.IsInitialized == true,
                 "Startup did not initialize the main menu.");
             yield return ContentReady.Routed(controller);
             var frontend = ContentReady.FrontendView(controller);
@@ -156,9 +156,9 @@ namespace Dice.Tests
         {
             InstallPendingConfiguration();
             yield return CreateHost();
-            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
+            yield return ContentReady.WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             provider.Complete(null, new InvalidOperationException(failureKey));
-            yield return WaitUntil(() => controller.Status.Kind == SpiritStatusKind.ConfigurationFailed, "Startup did not report its failure.");
+            yield return ContentReady.WaitUntil(() => controller.Status.Kind == SpiritStatusKind.ConfigurationFailed, "Startup did not report its failure.");
             Assert.That(controller.Status.Detail, Does.Contain(failureKey));
             Assert.That(controller.Catalog, Is.Null);
             Assert.That(controller.Snapshot, Is.Null);
@@ -167,12 +167,8 @@ namespace Dice.Tests
             AssertStartupSurface();
             Assert.DoesNotThrow(controller.StartNew);
 
-            var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition("hand.recovery." + (int)category, category, 5, 1, 5, 1, 6));
             const string encounterId = "encounter.bootstrap.recovery";
-            var table = DirectTable(out var rules);
-            var catalog = new MechanicalCatalog("bootstrap.recovery.v1", hands,
-                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });
+            var catalog = DirectCatalog("bootstrap.recovery", encounterId, out var table);
             controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
             RestoreOriginalLocators();
             ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
@@ -188,12 +184,12 @@ namespace Dice.Tests
         {
             InstallPendingConfiguration();
             yield return CreateHost();
-            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
+            yield return ContentReady.WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             UnityEngine.Object.Destroy(bootstrap);
             yield return null;
             RestoreOriginalLocators();
             provider.Complete(authoredHandle.Result);
-            yield return WaitUntil(() => provider.ReleaseCount == 1, "Destroyed bootstrap retained configuration.");
+            yield return ContentReady.WaitUntil(() => provider.ReleaseCount == 1, "Destroyed bootstrap retained configuration.");
             yield return null;
             Assert.That(controller.Catalog, Is.Null);
             Assert.That(controller.JourneyCatalog, Is.Null);
@@ -226,7 +222,7 @@ namespace Dice.Tests
             Assert.That(ContentReady.EncounterView(controller), Is.Not.Null);
             Assert.That(ContentReady.EncounterView(controller).TablePresentation, Is.SameAs(table));
             provider.Complete(authoredHandle.Result);
-            yield return WaitUntil(() => provider.ReleaseCount == 1, "Superseded startup retained configuration.");
+            yield return ContentReady.WaitUntil(() => provider.ReleaseCount == 1, "Superseded startup retained configuration.");
             yield return null;
             Assert.That(controller.Catalog, Is.SameAs(catalog));
             Assert.That(controller.Snapshot, Is.SameAs(snapshot));
@@ -243,8 +239,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator DisablingCompletedBootstrapKeepsItsContentAndInstalledThemeAlive()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.LoadApplication();
             var sceneController = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var sceneBootstrap = sceneController.GetComponent<DiceBootstrap>();
             Assert.That(sceneBootstrap, Is.Not.Null);
@@ -268,9 +263,22 @@ namespace Dice.Tests
             while (sceneController.SelectedJourney.Beats[sceneController.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 sceneController.AdvanceJourney();
             sceneController.AcceptEncounter();
-            yield return WaitUntil(() => !sceneController.IsBusy, "Opening presentation did not complete.");
+            yield return ContentReady.WaitUntil(() => !sceneController.IsBusy, "Opening presentation did not complete.");
             Assert.That(sceneController.Snapshot, Is.Not.Null);
             Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
+        }
+
+        /**
+         * A one-encounter catalog, of the given version and every hand category, whose encounter carries the rules the
+         * direct table's cards present, so a run of it opens on that table.
+         */
+        private MechanicalCatalog DirectCatalog(string version, string encounterId, out EncounterTablePresentationAsset table)
+        {
+            var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
+                .Select(category => new HandDefinition("hand." + version + "." + (int)category, category, 5, 1, 5, 1, 6));
+            table = DirectTable(out var rules);
+            return new MechanicalCatalog(version + ".v1", hands,
+                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });
         }
 
         /** The authored table a run without a journey opens on, and the rules its cards present. */
@@ -306,16 +314,6 @@ namespace Dice.Tests
             host = controller.gameObject;
             bootstrap = host.GetComponent<DiceBootstrap>();
             Assert.That(bootstrap, Is.Not.Null);
-        }
-
-        private static IEnumerator WaitUntil(Func<bool> ready, string failure)
-        {
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (!ready())
-            {
-                Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline), failure);
-                yield return null;
-            }
         }
 
         private sealed class PendingConfigurationProvider : ResourceProviderBase

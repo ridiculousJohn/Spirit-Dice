@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
@@ -8,7 +7,6 @@ using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -19,10 +17,8 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ExhaustedUnlockListShowsContinueAndCompletesTheEncounter()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.LoadApplication();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var view = ContentReady.EncounterView(controller);
             var definition = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock);
             var configuration = Addressables.LoadAssetAsync<DiceApplicationConfig>(DiceBootstrap.ConfigurationAddress);
             yield return configuration;
@@ -36,40 +32,28 @@ namespace Dice.Tests
             var profile = new PlayerProfile();
             profile.UnlockModifier(definition.Id);
             profile.DiscoverFamily(definition.FamilyId);
-            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), "spirit-profile.json"), profile);
-            controller.Initialize(catalog, encounter.Id, 60, path);
+            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), PlayerProfileFileStore.FileName), profile);
+            controller.Initialize(catalog, encounter.Id, ContentReady.Seed, path);
             yield return ContentReady.Routed(controller);
-            view = ContentReady.EncounterView(controller);
+            var view = ContentReady.EncounterView(controller);
             Assert.That(view.TablePresentation, Is.SameAs(table));
             var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = new Vector2(443, 912);
             controller.PlayHand();
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False);
+            yield return ContentReady.WaitUntil(() => !controller.IsBusy, "The played hand's presentation did not complete.");
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
-            var rewards = Find<Text>(view, "RewardTitle").GetComponentInParent<SpiritUiContext>(true).Wording.rewards;
-            Assert.That(Find<Text>(view, "RewardTitle").text, Is.EqualTo(rewards.exhaustedTitle));
-            var confirm = Find<Button>(view, "UpgradeHandButton");
+            var rewards = ContentReady.Find<Text>(controller, "RewardTitle").GetComponentInParent<SpiritUiContext>(true).Wording.rewards;
+            Assert.That(ContentReady.Find<Text>(controller, "RewardTitle").text, Is.EqualTo(rewards.exhaustedTitle));
+            var confirm = ContentReady.Find<Button>(controller, "UpgradeHandButton");
             Assert.That(confirm.interactable, Is.True);
             Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo(rewards.continueButton));
             confirm.onClick.Invoke();
             yield return ContentReady.Routed();
-            view = ContentReady.EncounterView(controller);
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
-            deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False);
+            yield return ContentReady.WaitUntil(() => !controller.IsBusy, "The encounter's completion did not finish presenting.");
             LogAssert.NoUnexpectedReceived();
-        }
-
-        private static T Find<T>(Component root, string name) where T : Component
-        {
-            var component = root.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
-            Assert.That(component, Is.Not.Null, name);
-            return component;
         }
     }
 }

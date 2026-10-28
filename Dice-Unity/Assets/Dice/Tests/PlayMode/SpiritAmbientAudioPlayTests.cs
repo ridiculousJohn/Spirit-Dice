@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -17,6 +16,7 @@ namespace Dice.Tests
         private AudioSource[] cues;
         private AudioSource[] props;
         private AudioClip[] ambientClips;
+        private SpiritAudioTheme theme;
         private GameObject listener;
 
         /**
@@ -64,8 +64,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator AmbientOneShotsFollowTheCreakScheduleAndSuspension()
         {
-            var theme = Theme(ambientClips);
-            Set("theme", theme);
+            Set("theme", Theme(ambientClips));
             root.SetActive(true);
             sound.SendMessage("OnApplicationFocus", true);
             AssertScheduled();
@@ -181,9 +180,10 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        /** A test theme of the given one-shot clips; it becomes the theme the schedule checks use. */
         private SpiritAudioTheme Theme(AudioClip[] clips)
         {
-            var theme = ScriptableObject.CreateInstance<SpiritAudioTheme>();
+            theme = ScriptableObject.CreateInstance<SpiritAudioTheme>();
             resources.Add(theme);
             theme.ambientOneShotClips = clips;
             theme.ambientOneShotVolume = .3f;
@@ -194,8 +194,9 @@ namespace Dice.Tests
 
         private void AssertScheduled()
         {
-            float delay = (float)Field("nextAmbientOneShot") - Time.unscaledTime;
-            Assert.That(delay, Is.InRange(24f, 60f), "One-shots must be scheduled within the authored interval.");
+            float delay = sound.NextAmbientOneShot - Time.unscaledTime;
+            Assert.That(delay, Is.InRange(theme.minimumAmbientOneShotInterval, theme.maximumAmbientOneShotInterval),
+                "One-shots must be scheduled within the authored interval.");
         }
 
         private void AssertSilentWhileDue()
@@ -210,7 +211,7 @@ namespace Dice.Tests
                 Assert.That(source == null || !source.isPlaying, Is.True, "Suspended audio must stay silent.");
         }
 
-        private void Due() => Set("nextAmbientOneShot", 0f);
+        private void Due() => sound.NextAmbientOneShot = 0f;
 
         private AudioSource Source(string name)
         {
@@ -228,10 +229,6 @@ namespace Dice.Tests
             return clip;
         }
 
-        private object Field(string name)
-            => typeof(SpiritEncounterAudio).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(sound);
-
-        private void Set(string name, object value)
-            => typeof(SpiritEncounterAudio).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(sound, value);
+        private void Set(string name, object value) => ContentReady.SetField(sound, name, value);
     }
 }

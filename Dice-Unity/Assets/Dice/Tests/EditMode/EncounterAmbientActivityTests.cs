@@ -4,7 +4,6 @@ using System.Linq;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -238,9 +237,9 @@ namespace Dice.Tests
             var actor = PropActor("a", Swing(10f));
             actor.DefeatClips = Clips("knock", 1);
             var asset = Activity(Array.Empty<AmbientLightActor>(), new[] { actor });
-            Set(asset, "wonEnding", AmbientEnding.Knock);
-            Set(asset, "lostEnding", AmbientEnding.Settle);
-            Set(asset, "abandonedEnding", AmbientEnding.Knock);
+            SyntheticUi.Set(asset, "wonEnding", AmbientEnding.Knock);
+            SyntheticUi.Set(asset, "lostEnding", AmbientEnding.Settle);
+            SyntheticUi.Set(asset, "abandonedEnding", AmbientEnding.Knock);
             foreach (var (outcome, knocks) in new[] { (EncounterOutcome.Won, true), (EncounterOutcome.Lost, false),
                 (EncounterOutcome.Abandoned, true), (EncounterOutcome.None, false) })
             {
@@ -291,8 +290,8 @@ namespace Dice.Tests
             var actors = ids.Select(id => PropActor(id, Swing(10f))).ToArray();
             foreach (var actor in actors) actor.HitClips = hit;
             var asset = Activity(Array.Empty<AmbientLightActor>(), actors);
-            Set(asset, "burstClips", bursts);
-            Set(asset, "burstVolume", .25f);
+            SyntheticUi.Set(asset, "burstClips", bursts);
+            SyntheticUi.Set(asset, "burstVolume", .25f);
             var lighting = new RecordingLighting(0);
             var sound = new RecordingSound();
             var activity = new EncounterAmbientActivity(asset, lighting, ids.Select(id => Binding(id, Prop(id))).ToArray(), sound);
@@ -315,7 +314,7 @@ namespace Dice.Tests
 
             var empty = new RecordingSound();
             var bare = Activity(Array.Empty<AmbientLightActor>(), Array.Empty<AmbientPropActor>());
-            Set(bare, "burstClips", bursts);
+            SyntheticUi.Set(bare, "burstClips", bursts);
             var room = new EncounterAmbientActivity(bare, lighting, Array.Empty<EncounterAmbientPropBinding>(), empty);
             room.Begin(3);
             room.Jolt();
@@ -333,7 +332,7 @@ namespace Dice.Tests
             actor.IdleClips = Clips("idle", 3);
             actor.HitClips = Clips("hit", 3);
             var asset = Activity(new[] { light }, new[] { actor });
-            Set(asset, "burstClips", Clips("burst", 2));
+            SyntheticUi.Set(asset, "burstClips", Clips("burst", 2));
             List<(double Time, int Index, float Value)> Record(IAmbientSoundTarget target, List<float> angles)
             {
                 var prop = Prop("Cup");
@@ -510,7 +509,8 @@ namespace Dice.Tests
         {
             // A prop anchored at the top-left corner of a frame that resizes while the prop moves.
             var frame = (RectTransform)Track(new GameObject("Frame", typeof(RectTransform))).transform;
-            frame.sizeDelta = new Vector2(540f, 960f);
+            var original = new Vector2(540f, 960f);
+            frame.sizeDelta = original;
             RectTransform prop = Prop("Prop");
             prop.SetParent(frame, false);
             prop.anchorMin = prop.anchorMax = new Vector2(0f, 1f);
@@ -529,7 +529,7 @@ namespace Dice.Tests
                     Vector3 before = prop.localPosition;
                     frame.sizeDelta = resized;
                     foreach (var rect in frame.GetComponentsInChildren<RectTransform>(true)) rect.ForceUpdateRectTransforms();
-                    var corner = new Vector3((540f - resized.x) / 2f, -(960f - resized.y) / 2f, 0f);
+                    var corner = new Vector3((original.x - resized.x) / 2f, -(original.y - resized.y) / 2f, 0f);
                     Assert.That(Vector3.Distance(prop.localPosition - before, corner), Is.LessThan(.0001f),
                         "The resize moves the prop's local position with its corner anchor.");
                     done = true;
@@ -605,15 +605,15 @@ namespace Dice.Tests
         private EncounterAmbientActivityAsset Activity(AmbientLightActor[] lights, AmbientPropActor[] props)
         {
             var asset = Track(ScriptableObject.CreateInstance<EncounterAmbientActivityAsset>());
-            Set(asset, "lights", lights);
-            Set(asset, "props", props);
+            SyntheticUi.Set(asset, "lights", lights);
+            SyntheticUi.Set(asset, "props", props);
             return asset;
         }
 
         private AmbientSwingMotionAsset Swing(float amplitude)
         {
             var asset = Track(ScriptableObject.CreateInstance<AmbientSwingMotionAsset>());
-            Set(asset, "amplitude", amplitude);
+            SyntheticUi.Set(asset, "amplitude", amplitude);
             return asset;
         }
 
@@ -635,32 +635,6 @@ namespace Dice.Tests
         {
             created.Add(value);
             return value;
-        }
-
-        /** Sets an authored field of a test asset through its serialized form; an array sets each element. */
-        private static void Set(Object target, string name, object value)
-        {
-            using var serialized = new SerializedObject(target);
-            var property = serialized.FindProperty(name);
-            Assert.That(property, Is.Not.Null, target.GetType().Name + "." + name);
-            if (value is Array values)
-            {
-                property.arraySize = values.Length;
-                for (int i = 0; i < values.Length; ++i) Assign(property.GetArrayElementAtIndex(i), values.GetValue(i));
-            }
-            else Assign(property, value);
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void Assign(SerializedProperty property, object value)
-        {
-            switch (value)
-            {
-                case Enum kind: property.intValue = Convert.ToInt32(kind); break;
-                case float number: property.floatValue = number; break;
-                case Object reference: property.objectReferenceValue = reference; break;
-                default: property.boxedValue = value; break;
-            }
         }
 
         private sealed class RecordingSound : IAmbientSoundTarget

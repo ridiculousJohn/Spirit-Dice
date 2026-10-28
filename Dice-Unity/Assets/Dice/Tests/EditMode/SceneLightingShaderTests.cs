@@ -5,14 +5,12 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static Dice.Tests.TestPixels;
 
 namespace Dice.Tests
 {
     public sealed class SceneLightingShaderTests
     {
-        private const int SampleCount = 4;
-        private const int RenderWidth = 16;
-        private const int RenderHeight = 4;
         private readonly List<UnityEngine.Object> objects = new List<UnityEngine.Object>();
         private SceneLightingMaterial material;
 
@@ -24,8 +22,7 @@ namespace Dice.Tests
             Assert.That(QualitySettings.activeColorSpace, Is.EqualTo(ColorSpace.Linear));
             Assert.That(SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBFloat), Is.True);
             Assert.That(SystemInfo.SupportsTextureFormat(TextureFormat.RGBAFloat), Is.True);
-            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
-            Assert.That(shader, Is.Not.Null);
+            Shader shader = TestShaders.Load(TestShaders.SceneLighting);
             Assert.That(shader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(shader), Is.False);
             material = new SceneLightingMaterial(shader);
@@ -285,16 +282,7 @@ namespace Dice.Tests
                 FlickerAmount = 0f
             };
 
-        private Texture2D Texture(Color[] samples)
-        {
-            Assert.That(samples.Length, Is.EqualTo(SampleCount));
-            var texture = new Texture2D(SampleCount, 1, TextureFormat.RGBAFloat, false, true)
-                { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
-            objects.Add(texture);
-            texture.SetPixels(samples);
-            texture.Apply();
-            return texture;
-        }
+        private Texture2D Texture(Color[] samples) => TestPixels.Texture(samples, objects);
 
         private Texture2D ColorTexture(Color32 sample)
         {
@@ -305,8 +293,6 @@ namespace Dice.Tests
             texture.Apply();
             return texture;
         }
-
-        private static Color[] Solid(Color color) => new[] { color, color, color, color };
 
         private static float Scale(float intensity, float distance, float mask, float falloff, float exponent)
         {
@@ -319,41 +305,19 @@ namespace Dice.Tests
         private Color[] Pixels(SceneLightingAsset asset, float[] overrides, Color[] expected)
         {
             material.Apply(asset, 3.25, overrides, false);
-            var target = RenderTexture.GetTemporary(RenderWidth, RenderHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
-            RenderTexture previous = RenderTexture.active;
-            bool previousWrite = GL.sRGBWrite;
-            var readback = new Texture2D(RenderWidth, RenderHeight, TextureFormat.RGBAFloat, false, true);
-            try
+            Color[] actual = TestPixels.Render(material.Material, SceneLightingMaterial.PreviewPass, asset.BaseTexture);
+            for (int i = 0; i < actual.Length; ++i)
             {
-                GL.sRGBWrite = false;
-                Graphics.Blit(asset.BaseTexture, target, material.Material, SceneLightingMaterial.PreviewPass);
-                RenderTexture.active = target;
-                readback.ReadPixels(new Rect(0, 0, RenderWidth, RenderHeight), 0, 0);
-                readback.Apply();
-                Color[] actual = readback.GetPixels();
-                for (int i = 0; i < actual.Length; ++i)
-                {
-                    Color wanted = expected[(i % RenderWidth) / (RenderWidth / SampleCount)];
-                    AssertChannel(actual[i].r, wanted.r, i, "r");
-                    AssertChannel(actual[i].g, wanted.g, i, "g");
-                    AssertChannel(actual[i].b, wanted.b, i, "b");
-                    AssertChannel(actual[i].a, 1f, i, "a");
-                }
-                return new[] { actual[1], actual[5], actual[9], actual[13] };
+                Color wanted = expected[SampleOf(i)];
+                AssertChannel(actual[i].r, wanted.r, i, "r");
+                AssertChannel(actual[i].g, wanted.g, i, "g");
+                AssertChannel(actual[i].b, wanted.b, i, "b");
+                AssertChannel(actual[i].a, 1f, i, "a");
             }
-            finally
-            {
-                GL.sRGBWrite = previousWrite;
-                RenderTexture.active = previous;
-                RenderTexture.ReleaseTemporary(target);
-                UnityEngine.Object.DestroyImmediate(readback);
-            }
+            return new[] { actual[1], actual[5], actual[9], actual[13] };
         }
 
         private static void AssertChannel(float actual, float expected, int pixel, string channel)
-        {
-            Assert.That(float.IsNaN(actual) || float.IsInfinity(actual), Is.False, "Pixel " + pixel + " channel " + channel);
-            Assert.That(actual, Is.EqualTo(expected).Within(.001f * Mathf.Max(1f, Mathf.Abs(expected))), "Pixel " + pixel + " channel " + channel);
-        }
+            => TestPixels.AssertChannel(actual, expected, .001f, pixel, channel);
     }
 }

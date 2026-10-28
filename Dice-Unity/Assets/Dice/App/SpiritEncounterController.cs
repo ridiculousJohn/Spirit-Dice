@@ -35,7 +35,8 @@ namespace Dice.App
         public int SelectedMask { get; private set; }
         public bool IsBusy { get; private set; }
         public SpiritStatus Status { get; private set; } = SpiritStatus.Of(SpiritStatusKind.WaitingForStartup);
-        public string SavePath { get; private set; }
+        // The setter is internal so PlayMode tests isolate the save and profile before Start loads them.
+        public string SavePath { get; internal set; }
         public string ProfilePath => progression.ProfilePath;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
         public IReadOnlyList<string> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);

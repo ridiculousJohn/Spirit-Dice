@@ -1,15 +1,11 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
@@ -64,48 +60,15 @@ namespace Dice.Tests
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
             yield return EnterShortEncounter(controller, authored, journey);
-            var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
-            int introducedStage = encounter.EncounterModifiersFirstClearedStageNumber;
-            var session = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, 60);
-
-            // Earlier charm offers, shown as a resumed run, are not introduced.
-            while (session.Snapshot.StageIndex < introducedStage - 1)
-            {
-                Execute(session, PlayHandAction.Instance);
-                while (session.Snapshot.Phase != EncounterPhase.Playing)
-                {
-                    if (session.Snapshot.Phase == EncounterPhase.ChoosingModifier)
-                    {
-                        int target = session.Snapshot.PendingReward.TargetStageIndex;
-                        Assert.That(target, Is.LessThan(introducedStage), journey.Id);
-                        yield return LoadSession(controller, session);
-                        Assert.That(view.RewardsPanel.Root.gameObject.activeInHierarchy, Is.True, journey.Id);
-                        Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": stage " + target + " offer");
-                    }
-                    ResolveFirst(session);
-                }
-            }
-            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(introducedStage - 1), journey.Id);
-            yield return LoadSession(controller, session);
-            Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": playing");
-
-            // Clearing the stage offers any permanent unlock first, without the introduction.
-            controller.PlayHand();
-            yield return Idle(controller);
-            while (controller.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
-            {
-                Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": unlock choice");
-                yield return ChooseFirst(controller, view);
-            }
+            int introducedStage = controller.Catalog.GetEncounter(journey.EncounterId).EncounterModifiersFirstClearedStageNumber;
+            yield return ReachIntroducedOffer(controller, journey.EncounterId);
 
             // The first charm offer that can contain the additions is covered by the introduction.
-            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier), journey.Id);
             var introducedOffer = controller.Snapshot.PendingReward;
-            Assert.That(introducedOffer.TargetStageIndex, Is.EqualTo(introducedStage), journey.Id);
             AssertIntroductionOpen(controller, view, journey);
             yield return AssertOfferCovered(view, true);
 
-            yield return Click(view.EncounterCharmsIntroduction.Screen.BeginButton);
+            yield return ContentReady.ClickWhenShown(view.EncounterCharmsIntroduction.Screen.BeginButton);
             Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": Continue dismisses the introduction.");
             Assert.That(controller.Snapshot.PendingReward.OfferId, Is.EqualTo(introducedOffer.OfferId));
             Assert.That(view.RewardsPanel.Root.gameObject.activeInHierarchy, Is.True);
@@ -113,10 +76,10 @@ namespace Dice.Tests
 
             // A refreshed offer keeps its target stage and is not introduced again. Refreshing is available only when the
             // encounter's reward policy grants refreshes.
-            if (view.RefreshButton.IsInteractable())
+            if (view.RewardsPanel.RefreshButton.IsInteractable())
             {
-                yield return Click(view.RefreshButton);
-                yield return Idle(controller);
+                yield return ContentReady.ClickWhenShown(view.RewardsPanel.RefreshButton);
+                yield return ContentReady.Idle(controller);
                 Assert.That(controller.Snapshot.PendingReward.OfferId, Is.Not.EqualTo(introducedOffer.OfferId));
                 Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage));
                 Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": refresh does not show it again.");
@@ -126,9 +89,9 @@ namespace Dice.Tests
             // Loading the run while the offer is pending shows it again.
             Assert.That(controller.TrySave(), Is.True, controller.Status.ToString());
             Assert.That(controller.TryLoad(), Is.True, controller.Status.ToString());
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
             AssertIntroductionOpen(controller, view, journey);
-            yield return Click(view.EncounterCharmsIntroduction.Screen.BeginButton);
+            yield return ContentReady.ClickWhenShown(view.EncounterCharmsIntroduction.Screen.BeginButton);
             Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False);
 
             // Returning to the table from the investigation board resumes the run and shows it again.
@@ -137,10 +100,10 @@ namespace Dice.Tests
             yield return null;
             Assert.That(controller.CanResume, Is.True);
             controller.ResumeEncounter();
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             AssertIntroductionOpen(controller, view, journey);
-            yield return Click(view.EncounterCharmsIntroduction.Screen.BeginButton);
+            yield return ContentReady.ClickWhenShown(view.EncounterCharmsIntroduction.Screen.BeginButton);
             Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False);
 
             // Taking a charm moves on without the introduction.
@@ -178,48 +141,59 @@ namespace Dice.Tests
         internal static IEnumerator EnterShortEncounter(SpiritEncounterController controller, MechanicalCatalog authored,
             EncounterJourneyAsset journey)
         {
-            var definition = authored.GetEncounter(journey.EncounterId);
-            var shortEncounter = new EncounterDefinition(definition.Id,
-                definition.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
-                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
-                definition.SpiritId, definition.UnlockMilestones, definition.EncounterModifierIds,
-                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
-            var mechanical = new MechanicalCatalog("charms-introduction-playmode.v1", authored.Hands,
-                authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
-                authored.Modifiers, authored.RewardPools);
+            var mechanical = ContentReady.ShortStages(authored, journey.EncounterId, "charms-introduction-playmode.v1");
             Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
                 controller.JourneyStatus.ToString());
             ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
             yield return SelectToInvitation(controller, journey.EncounterId);
             var view = ContentReady.EncounterView(controller);
-            view.JourneyView.GetComponentsInChildren<Button>(true).Single(button => button.name == "JourneyAcceptButton")
-                .onClick.Invoke();
+            view.JourneyView.AcceptButton.onClick.Invoke();
             Assert.That(view.JourneyView.EncounterCharms.IsOpen, Is.False, "The pre-encounter screen is skipped.");
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
         }
 
         /**
          * Plays the shortened encounter to the stage clear that first offers its additions and takes any permanent unlock,
-         * leaving that charm offer pending.
+         * leaving that charm offer pending. Earlier charm offers and the playing table, shown as resumed runs, and any
+         * unlock choice are not introduced.
          */
         internal static IEnumerator ReachIntroducedOffer(SpiritEncounterController controller, string encounterId)
         {
+            SpiritEncounterView View() => ContentReady.EncounterView(controller);
             int introducedStage = controller.Catalog.GetEncounter(encounterId).EncounterModifiersFirstClearedStageNumber;
-            var session = EncounterSession.CreateEncounter(controller.Catalog, encounterId, 60);
+            var session = EncounterSession.CreateEncounter(controller.Catalog, encounterId, ContentReady.Seed);
             while (session.Snapshot.StageIndex < introducedStage - 1)
             {
                 Execute(session, PlayHandAction.Instance);
-                while (session.Snapshot.Phase != EncounterPhase.Playing) ResolveFirst(session);
+                while (session.Snapshot.Phase != EncounterPhase.Playing)
+                {
+                    if (session.Snapshot.Phase == EncounterPhase.ChoosingModifier)
+                    {
+                        int target = session.Snapshot.PendingReward.TargetStageIndex;
+                        Assert.That(target, Is.LessThan(introducedStage), encounterId);
+                        yield return LoadSession(controller, session);
+                        Assert.That(View().RewardsPanel.Root.gameObject.activeInHierarchy, Is.True, encounterId);
+                        Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": stage " + target + " offer");
+                    }
+                    ResolveFirst(session);
+                }
             }
+            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(introducedStage - 1), encounterId);
             yield return LoadSession(controller, session);
+            Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": playing");
+
+            // Clearing the stage offers any permanent unlock first, without the introduction.
             controller.PlayHand();
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
             while (controller.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
-                yield return ChooseFirst(controller, ContentReady.EncounterView(controller));
-            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier));
-            Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage));
+            {
+                Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": unlock choice");
+                yield return ChooseFirst(controller, View());
+            }
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier), encounterId);
+            Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage), encounterId);
         }
 
         /** The introduction is open with the journey's narration, if any, the encounter's families, and no Back button. */
@@ -247,43 +221,13 @@ namespace Dice.Tests
                     Does.Contain(ContentReady.Charms.GetFamilyName(family)), journey.Id);
         }
 
-        /** The narration, family row, scope sentence and Continue are complete and stacked without overlap. */
-        internal static void AssertIntroductionLayout(SpiritEncounterView view)
-        {
-            Canvas.ForceUpdateCanvases();
-            var screen = view.EncounterCharmsIntroduction.Screen;
-            var title = Child<Text>(screen, "EncounterCharmsTitle");
-            var scope = Child<Text>(screen, "EncounterCharmsScope");
-            bool narrated = screen.Narration.gameObject.activeInHierarchy;
-            var stack = new[] { title.rectTransform, narrated ? screen.Narration.rectTransform : null, scope.rectTransform,
-                (RectTransform)screen.Scroll.transform, (RectTransform)screen.BeginButton.transform }.Where(rect => rect != null).ToArray();
-            for (int index = 1; index < stack.Length; ++index) AssertBelow(stack[index - 1], stack[index]);
-            foreach (var text in new[] { title, narrated ? screen.Narration : null, scope, screen.BeginButton.GetComponentInChildren<Text>() })
-                if (text != null) AssertCompleteText(text);
-            var viewport = (RectTransform)screen.Scroll.viewport.transform;
-            var row = (RectTransform)screen.Rows[0].transform;
-            var rowCorners = new Vector3[4];
-            var viewportCorners = new Vector3[4];
-            row.GetWorldCorners(rowCorners);
-            viewport.GetWorldCorners(viewportCorners);
-            Assert.That(rowCorners[0].y, Is.GreaterThanOrEqualTo(viewportCorners[0].y - .5f), "The family row fits its list.");
-            Assert.That(rowCorners[2].y, Is.LessThanOrEqualTo(viewportCorners[2].y + .5f));
-            var portraitCorners = new Vector3[4];
-            view.Portrait.GetWorldCorners(portraitCorners);
-            var screenCorners = new Vector3[4];
-            screen.Root.GetWorldCorners(screenCorners);
-            Assert.That(Vector3.Distance(screenCorners[0], portraitCorners[0]), Is.LessThan(.01f));
-            Assert.That(Vector3.Distance(screenCorners[2], portraitCorners[2]), Is.LessThan(.01f),
-                "The introduction covers the whole portrait.");
-        }
-
         /** Raycasts at the first offer card: covered, the topmost hit belongs to the introduction; uncovered, it is the card. */
         internal static IEnumerator AssertOfferCovered(SpiritEncounterView view, bool covered)
         {
             yield return null;
             yield return null;
             var card = view.RewardsPanel.Cards.First(value => value.Button.gameObject.activeInHierarchy).Button;
-            var handler = TopClickHandler(card, out _, out var hit);
+            var handler = ContentReady.TopClickHandler(card, out _, out var hit);
             if (covered)
             {
                 Assert.That(hit.gameObject, Is.Not.Null);
@@ -294,16 +238,6 @@ namespace Dice.Tests
             else Assert.That(handler, Is.SameAs(card.gameObject), "The offer is interactable.");
         }
 
-        internal static IEnumerator SizePortrait(int width = 540)
-        {
-            var portrait = ContentReady.Portrait();
-            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-            portrait.sizeDelta = new Vector2(width, 960);
-            portrait.anchoredPosition = Vector2.zero;
-            yield return null;
-            Canvas.ForceUpdateCanvases();
-        }
-
         private static IEnumerator ChooseFirst(SpiritEncounterController controller, SpiritEncounterView view)
         {
             var panel = view.RewardsPanel;
@@ -311,14 +245,14 @@ namespace Dice.Tests
             if (card != null) card.Button.onClick.Invoke();
             Assert.That(panel.ConfirmButton.IsInteractable(), Is.True);
             panel.ConfirmButton.onClick.Invoke();
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
         }
 
         private static IEnumerator LoadSession(SpiritEncounterController controller, EncounterSession session)
         {
             EncounterSaveFileStore.Save(controller.SavePath, session.CaptureSave());
             Assert.That(controller.TryLoad(), Is.True, controller.Status.ToString());
-            yield return Idle(controller);
+            yield return ContentReady.Idle(controller);
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(session.Snapshot.Revision));
         }
 
@@ -332,92 +266,10 @@ namespace Dice.Tests
             yield return null;
         }
 
-        private static IEnumerator Idle(SpiritEncounterController controller)
-        {
-            yield return ContentReady.Routed(controller);
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False, controller.Status.ToString());
-            yield return null;
-        }
-
-        private static IEnumerator Click(Button button)
-        {
-            Assert.That(button.gameObject.activeInHierarchy, Is.True, button.name);
-            Assert.That(button.IsInteractable(), Is.True, button.name);
-            // Newly shown graphics are skipped by GraphicRaycaster until the canvas assigns their depth when rendering.
-            float deadline = Time.realtimeSinceStartup + 1;
-            while (TopClickHandler(button, out _, out _) != button.gameObject)
-            {
-                Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline), "A graphic blocks " + button.name);
-                yield return null;
-            }
-            var handler = TopClickHandler(button, out var pointer, out var hit);
-            pointer.pointerCurrentRaycast = hit;
-            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
-        }
-
-        private static GameObject TopClickHandler(Button button, out PointerEventData pointer, out RaycastResult hit)
-        {
-            Canvas.ForceUpdateCanvases();
-            Assert.That(EventSystem.current, Is.Not.Null);
-            var rect = (RectTransform)button.transform;
-            pointer = new PointerEventData(EventSystem.current)
-            {
-                position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center)),
-                button = PointerEventData.InputButton.Left,
-                pointerId = -1
-            };
-            var hits = new List<RaycastResult>();
-            EventSystem.current.RaycastAll(pointer, hits);
-            hit = hits.Count > 0 ? hits[0] : default;
-            return hits.Count > 0 ? ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject) : null;
-        }
-
-        private static void AssertBelow(RectTransform upper, RectTransform lower)
-        {
-            var upperCorners = new Vector3[4];
-            var lowerCorners = new Vector3[4];
-            upper.GetWorldCorners(upperCorners);
-            lower.GetWorldCorners(lowerCorners);
-            Assert.That(upperCorners[0].y, Is.GreaterThanOrEqualTo(lowerCorners[2].y - .01f), upper.name + " overlaps " + lower.name);
-        }
-
-        private static void AssertCompleteText(Text label)
-        {
-            var settings = label.GetGenerationSettings(label.rectTransform.rect.size);
-            var rendered = label.cachedTextGenerator;
-            Assert.That(rendered.Populate(label.text, settings), Is.True, label.name);
-            settings.fontSize = label.resizeTextForBestFit ? rendered.fontSizeUsedForBestFit : label.fontSize;
-            settings.resizeTextForBestFit = false;
-            settings.verticalOverflow = VerticalWrapMode.Overflow;
-            using (var complete = new TextGenerator())
-            {
-                Assert.That(complete.Populate(label.text, settings), Is.True, label.name);
-                Assert.That(rendered.vertexCount, Is.EqualTo(complete.vertexCount), label.name + " truncates text.");
-            }
-            Assert.That(label.rectTransform.rect.height, Is.GreaterThanOrEqualTo(label.preferredHeight - .5f),
-                label.name + " is clipped vertically.");
-        }
-
-        private static T Child<T>(SpiritEncounterCharmsScreen screen, string name) where T : Component
-        {
-            var result = screen.GetComponentsInChildren<T>(true).FirstOrDefault(value => value.name == name);
-            Assert.That(result, Is.Not.Null, name);
-            return result;
-        }
-
         private static void Execute(EncounterSession session, EncounterAction action)
         {
             var result = session.Execute(action, session.Snapshot.Revision);
             Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
-        }
-
-        private static void SetField(object target, string name, object value)
-        {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
         }
     }
 }

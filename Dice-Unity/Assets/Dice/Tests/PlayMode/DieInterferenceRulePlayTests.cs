@@ -1,13 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using Resolution = Dice.Engine.Resolution;
 
@@ -21,10 +19,6 @@ namespace Dice.Tests
      */
     public sealed class DieInterferenceRulePlayTests
     {
-        private const ulong SeedSearchLimit = 4000;
-        // Player rerolls take the two leftmost dice, so a reroll disturbance targets one of the kept three.
-        private const int RerollMask = 0b00011;
-
         /**
          * Checks that a disturbed kept die visibly moves after a player reroll, the host reacts, the die shows the
          * disturbed face once playback settles, and the score panel shows no hand rank after the reroll. Fails if the
@@ -33,7 +27,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator RerollDisturbanceMovesTheKeptDieToItsNewFaceAndTheHostReacts()
         {
-            yield return LoadApplication();
+            yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly &&
                 controller.Catalog.GetEncounter(value.EncounterId).Rules.OfType<DieInterferenceRuleDefinition>()
@@ -42,10 +36,10 @@ namespace Dice.Tests
             string encounterId = journey.EncounterId;
             DieDisturbedEvent expected = null;
             ulong seed = 0;
-            for (ulong candidate = 1; candidate <= SeedSearchLimit && seed == 0; candidate++)
+            for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)
             {
                 var session = EncounterSession.CreateEncounter(controller.Catalog, encounterId, candidate);
-                var rerolled = session.Execute(new RerollDiceAction(RerollMask), session.Snapshot.Revision);
+                var rerolled = session.Execute(new RerollDiceAction(ContentReady.RerollMask), session.Snapshot.Revision);
                 var disturbed = rerolled.Events.OfType<DieDisturbedEvent>().FirstOrDefault();
                 if (disturbed == null || disturbed.Before == disturbed.After) continue;
                 expected = disturbed;
@@ -53,12 +47,12 @@ namespace Dice.Tests
             }
             Assert.That(seed, Is.Not.Zero, encounterId + ": no searched seed disturbs a kept die after a reroll.");
             string context = encounterId + " " + expected.Kind;
-            yield return Begin(controller, journey.Id, seed);
+            yield return ContentReady.EnterEncounter(controller, journey.Id, seed);
             var view = ContentReady.EncounterView(controller);
             for (int die = 0; die < DiceValues.Count; die++)
-                if ((RerollMask & (1 << die)) != 0) controller.ToggleDie(die);
-            Assert.That(controller.SelectedMask, Is.EqualTo(RerollMask), context);
-            var target = ContentReady.Die(view.DiceTray, expected.Bay);
+                if ((ContentReady.RerollMask & (1 << die)) != 0) controller.ToggleDie(die);
+            Assert.That(controller.SelectedMask, Is.EqualTo(ContentReady.RerollMask), context);
+            var target = view.DiceTray.Dice[expected.Bay];
             Quaternion rest = target.localRotation;
             Vector3 restPosition = target.localPosition;
             var resolutions = new List<Resolution>();
@@ -66,7 +60,7 @@ namespace Dice.Tests
             controller.Reroll();
             Assert.That(controller.IsBusy, Is.True, controller.Status.ToString());
             bool moved = false, reacted = false;
-            float deadline = Time.realtimeSinceStartup + 30;
+            float deadline = Time.realtimeSinceStartup + ContentReady.Timeout;
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline)
             {
                 moved |= Quaternion.Angle(target.localRotation, rest) > 1f || (target.localPosition - restPosition).magnitude > .001f;
@@ -88,32 +82,6 @@ namespace Dice.Tests
                 Is.Empty,
                 context + ": the hand rank shows only while a played hand is scored.");
             LogAssert.NoUnexpectedReceived();
-        }
-
-        private static IEnumerator LoadApplication()
-        {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
-        }
-
-        /** Opens the journey's encounter with a fixed session seed and waits for its opening roll. */
-        private static IEnumerator Begin(SpiritEncounterController controller, string journeyId, ulong seed)
-        {
-            controller.ReturnToInvestigation();
-            yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journeyId);
-            controller.SelectEncounter(journeyId);
-            yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
-                controller.AdvanceJourney();
-            controller.ConfigureSeedPolicy(true, seed.ToString(CultureInfo.InvariantCulture));
-            controller.AcceptEncounter();
-            yield return ContentReady.Routed(controller);
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(controller.IsBusy, Is.False);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
-            yield return null;
         }
     }
 }

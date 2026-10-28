@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
@@ -40,12 +39,11 @@ namespace Dice.Tests
             created.Clear();
         }
 
-        [TestCase("Assets/Dice/Presentation/Shared/SourceMaskedImage.shader")]
-        [TestCase("Assets/Dice/Presentation/Shared/SceneLitImage.shader")]
+        [TestCase(TestShaders.SourceMaskedImage)]
+        [TestCase(TestShaders.SceneLitImage)]
         public void FractionalMaskCoverageMatchesDefaultUiAlphaBlending(string shaderPath)
         {
-            var shader = AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
-            Assert.That(shader, Is.Not.Null, shaderPath);
+            var shader = TestShaders.Load(shaderPath);
             var material = new Material(shader);
             var source = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             var mask = new Texture2D(1, 1, TextureFormat.RGBA32, false, true);
@@ -268,29 +266,19 @@ namespace Dice.Tests
             return value;
         }
 
-        private static Vector3[] Vertices(SpiritPortraitImage image)
+        private static Vector3[] Vertices(SpiritPortraitImage image) => RenderedMesh(image).vertices;
+
+        /** The alpha of every grid vertex the image generates, in grid order. */
+        private static byte[] VertexAlphas(SpiritPortraitImage image) => RenderedMesh(image).colors32.Select(color => color.a).ToArray();
+
+        /** The mesh the image hands its canvas renderer. */
+        private static UnityEngine.Mesh RenderedMesh(SpiritPortraitImage image)
         {
-            // Rebuild only consumes the dirty state set by the weights.
+            // Rebuild only consumes the dirty state set by the weights, tint or mesh.
             image.Rebuild(CanvasUpdate.PreRender);
             UnityEngine.Mesh mesh = image.canvasRenderer.GetMesh();
             Assert.That(mesh, Is.Not.Null);
-            return mesh.vertices;
-        }
-
-        /** The alpha of every grid vertex the image generates, in grid order. */
-        private static byte[] VertexAlphas(SpiritPortraitImage image)
-        {
-            using var vertices = new VertexHelper();
-            typeof(SpiritPortraitImage).GetMethod("OnPopulateMesh", BindingFlags.NonPublic | BindingFlags.Instance,
-                null, new[] { typeof(VertexHelper) }, null).Invoke(image, new object[] { vertices });
-            var alphas = new byte[vertices.currentVertCount];
-            for (int index = 0; index < alphas.Length; ++index)
-            {
-                UIVertex vertex = default;
-                vertices.PopulateUIVertex(ref vertex, index);
-                alphas[index] = vertex.color.a;
-            }
-            return alphas;
+            return mesh;
         }
 
         private static float MaxDistance(Vector3[] first, Vector3[] second)

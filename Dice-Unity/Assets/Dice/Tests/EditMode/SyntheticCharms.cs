@@ -13,9 +13,7 @@ namespace Dice.Tests
         public static MechanicalContent Content(params ModifierAsset[] charms)
         {
             var definitions = charms.Select(charm => charm.Build()).ToArray();
-            var catalog = new MechanicalCatalog("test.charms", TestContent.Hands(),
-                new[] { new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) }) }, definitions);
-            return new MechanicalContent(catalog, charms.Select((charm, index) =>
+            return new MechanicalContent(Catalog(definitions), charms.Select((charm, index) =>
                 new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definitions[index])));
         }
 

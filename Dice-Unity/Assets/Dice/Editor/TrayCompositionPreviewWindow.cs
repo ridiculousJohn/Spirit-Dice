@@ -21,33 +21,31 @@ namespace Dice.Editor
         private const long SampleThreshold = 120;
         private const int SampleHands = 3;
         private const int SampleRerolls = 3;
-        private EncounterTablePresentationAsset table;
-        [SerializeField] private bool showGameplayUi = true;
-        [SerializeField] private bool narrow;
-        [SerializeField] private int historyCount = 6;
-        [SerializeField] private float historyScroll;
-        [SerializeField] private float sampleTime;
+        // The preview options, the staged view and its output are internal so EditMode tests drive and inspect the stage.
+        internal EncounterTablePresentationAsset table;
+        [SerializeField] internal bool showGameplayUi = true;
+        [SerializeField] internal bool narrow;
+        [SerializeField] internal int historyCount = 6;
+        [SerializeField] internal float historyScroll;
+        [SerializeField] internal float sampleTime;
         [SerializeField] private bool showPreviewOptions;
         private SpiritEncounterPreviewScene encounter;
-        private SpiritEncounterView view;
-        private GameObject stage;
+        internal SpiritEncounterView view;
         private Camera camera;
-        private RenderTexture output;
+        internal RenderTexture output;
         private SpiritTrayScene trayScene;
         private SpiritDiceTray dice;
         private SpiritModifierHistoryRenderer history;
         private SpiritHostPortrait host;
         private SpiritGameplayHud gameplayUi;
-        private RectTransform gameplayUiRoot;
         private SceneLightingMaterial compositor;
         private RawImage roomImage, tableImage;
         private EncounterTablePresentationAsset stagedTable;
         private string stagedSourceSettings;
-        private bool rebuild;
-        private RenderPipelineAsset previousPipeline;
-        private UniversalRenderPipelineAsset previewPipeline;
+        internal bool rebuild;
+        private readonly EncounterPreviewPipeline pipeline = new EncounterPreviewPipeline();
         private readonly SceneLightingState lighting = new SceneLightingState();
-        private readonly int[] faces = { 1, 2, 3, 4, 5 };
+        internal readonly int[] faces = { 1, 2, 3, 4, 5 };
         private DiceApplicationConfig configuration;
         private MechanicalContent content;
         private ModifierPresentationCatalog charms;
@@ -148,17 +146,17 @@ namespace Dice.Editor
                 "save prefab edits before refreshing.", MessageType.Info);
         }
 
-        private void EnsureStage()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void EnsureStage()
         {
             if (table == null) throw new InvalidOperationException("Select a table with an authored encounter scene.");
             string settings = SpiritEncounterPreviewScene.SourceSettings(table);
             if (encounter == null || stagedTable != table || rebuild || settings != stagedSourceSettings)
             {
                 ReleaseStage();
-                AcquirePipeline();
+                pipeline.Acquire();
                 encounter = SpiritEncounterPreviewScene.Open(table, narrow);
                 view = encounter.View;
-                stage = encounter.Root;
                 camera = encounter.Camera;
                 output = encounter.Output;
                 trayScene = view.TrayScene;
@@ -269,7 +267,8 @@ namespace Dice.Editor
             throw new InvalidOperationException("The application's content has no charm that activates on an opening roll.");
         }
 
-        private void RenderPreview()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void RenderPreview()
         {
             lighting.Sample(table.SceneLighting, sampleTime);
             compositor?.Apply(lighting);
@@ -284,42 +283,17 @@ namespace Dice.Editor
             try
             {
                 Canvas.ForceUpdateCanvases();
-                Render(trayScene.RenderCamera, trayScene.Texture);
-                Render(camera, output);
+                EncounterPreviewPipeline.Render(trayScene.RenderCamera, trayScene.Texture);
+                EncounterPreviewPipeline.Render(camera, output);
             }
             finally { RenderTexture.active = previous; GL.sRGBWrite = previousSrgb; }
         }
 
-        private static void Render(Camera renderCamera, RenderTexture target)
-        {
-            if (GraphicsSettings.currentRenderPipeline == null) renderCamera.Render();
-            else
-            {
-                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-                if (!RenderPipeline.SupportsRenderRequest(renderCamera, request))
-                    throw new InvalidOperationException("The active pipeline cannot preview this camera.");
-                RenderPipeline.SubmitRenderRequest(renderCamera, request);
-            }
-        }
+        private static string SizeLabel(bool narrowWidth)
+            => SpiritEncounterPreviewScene.Width(narrowWidth) + " x " + SpiritEncounterPreviewScene.PreviewHeight;
 
-        private void AcquirePipeline()
-        {
-            if (previewPipeline != null) return;
-            previewPipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
-            if (previewPipeline == null) throw new InvalidOperationException("The encounter preview pipeline is unavailable.");
-            previousPipeline = QualitySettings.renderPipeline;
-            QualitySettings.renderPipeline = previewPipeline;
-        }
-
-        private void ReleasePipeline()
-        {
-            if (previewPipeline == null) return;
-            if (QualitySettings.renderPipeline == previewPipeline) QualitySettings.renderPipeline = previousPipeline;
-            previewPipeline = null;
-            previousPipeline = null;
-        }
-
-        private void ReleaseStage()
+        // Internal so EditMode tests drive the stage without the window's GUI.
+        internal void ReleaseStage()
         {
             compositor?.Dispose();
             compositor = null;

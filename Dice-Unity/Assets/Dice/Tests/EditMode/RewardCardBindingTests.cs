@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -30,6 +31,7 @@ namespace Dice.Tests
         private Text title;
         private Text handTitle;
         private Text handLevel;
+        private Text handValues;
         private Image marker;
         private Image handPattern;
 
@@ -60,7 +62,9 @@ namespace Dice.Tests
             SyntheticUi.Set(card, "effects", ui.Add<Text>(modifierRoot.transform, "Effects"));
             SyntheticUi.Set(card, "charmIcon", ui.Add<Image>(modifierRoot.transform, "Charm Icon"));
             SyntheticUi.Set(card, "charmCategory", ui.CategoryBadge(modifierRoot.transform));
-            SyntheticUi.Set(card, "handValues", ui.Add<Text>(handRoot.transform, "Hand Values"));
+            handValues = ui.Add<Text>(handRoot.transform, "Hand Values");
+            SyntheticUi.Set(card, "handValues", handValues);
+            SyntheticUi.Set(card, "<Button>k__BackingField", card.gameObject.AddComponent<Button>());
             handPattern = ui.Add<Image>(handRoot.transform, "Hand Pattern");
             SyntheticUi.Set(card, "handPattern", handPattern);
             SetHandPatterns(HandCategory.HighDie, HandCategory.Pair);
@@ -142,6 +146,53 @@ namespace Dice.Tests
             card.RenderHandUpgrade(Hand(HandCategory.Pair), 0, 3, 4);
             Assert.That(handPattern.sprite, Is.SameAs(patterns[0]));
             Assert.Throws<System.InvalidOperationException>(() => card.RenderHandUpgrade(Hand(HandCategory.Straight), 0, 3, 4));
+        }
+
+        /**
+         * Checks that a hand-upgrade card shows the hand's current level and values, adds the next level's increments
+         * only while selected, and returns to the current values when deselected. Fails if the upgrade is previewed
+         * before selection or remains after deselection.
+         */
+        [Test]
+        public void HandUpgradePreviewsTheNextLevelOnlyWhileSelected()
+        {
+            // A test-only hand at level 3 whose base and multiplier rise by different amounts per level.
+            var hand = new HandDefinition("hand.reward-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            const int level = 3;
+            long baseScore = hand.BaseScoreAt(level);
+            long multiplier = hand.MultiplierAt(level);
+            string current = "<rewardCard.values>" + DiagnosticText.Number(baseScore) + "|" + DiagnosticText.Number(multiplier);
+            string upgraded = "<rewardCard.selectedValues>" + DiagnosticText.Number(baseScore) + "|" +
+                DiagnosticText.Number(hand.BaseScorePerUpgrade) + "|" + DiagnosticText.Number(multiplier) + "|" +
+                DiagnosticText.Number(hand.MultiplierPerUpgrade);
+
+            card.RenderHandUpgrade(hand, level, 1, 1);
+            Assert.That(handTitle.text, Is.EqualTo("<handNames.pair>"));
+            Assert.That(handLevel.text, Is.EqualTo("<rewardCard.level>" + level));
+            Assert.That(handValues.text, Is.EqualTo(current));
+            card.SetHandUpgradeSelected(true);
+            Assert.That(handLevel.text, Is.EqualTo("<rewardCard.selectedLevel>" + level));
+            Assert.That(handValues.text, Is.EqualTo(upgraded));
+            card.SetHandUpgradeSelected(false);
+            Assert.That(handLevel.text, Is.EqualTo("<rewardCard.level>" + level));
+            Assert.That(handValues.text, Is.EqualTo(current));
+        }
+
+        /**
+         * Checks that a card created from the template reports the offer and option of its latest rendering, once per
+         * click. Fails if a click reports an earlier rendering's choice or re-rendering adds another listener.
+         */
+        [Test]
+        public void ButtonReportsTheLatestRenderedChoiceOncePerClick()
+        {
+            var choices = new List<(long Offer, long Option)>();
+            var created = SpiritRewardCard.Create(card, "Created Reward Card", ui.Root, (offer, option) => choices.Add((offer, option)));
+            var hand = TestContent.Hands()[0];
+            created.RenderHandUpgrade(hand, 0, 11, 21);
+            created.Button.onClick.Invoke();
+            created.RenderHandUpgrade(hand, 0, 12, 22);
+            created.Button.onClick.Invoke();
+            Assert.That(choices, Is.EqualTo(new[] { (11L, 21L), (12L, 22L) }));
         }
 
         private static HandDefinition Hand(HandCategory category) => System.Array.Find(TestContent.Hands(), hand => hand.Category == category);

@@ -1,13 +1,10 @@
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace Dice.Tests
 {
@@ -44,40 +41,39 @@ namespace Dice.Tests
         {
             var journey = UnityEngine.ScriptableObject.CreateInstance<EncounterJourneyAsset>();
             resources.Add(journey);
-            var approach = new EncounterJourneyBeat();
-            var arrival = new EncounterJourneyBeat();
-            Set(approach, "sceneLighting", first);
-            Set(approach, "duration", 0f);
-            Set(arrival, "sceneLighting", second);
-            Set(arrival, "transition", EncounterJourneyTransition.PartingPanels);
-            Set(arrival, "duration", 20f);
-            Set(journey, "beats", new[] { approach, arrival });
-            var controls = new JourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
+            TestJourneys.SetBeats(journey, TestJourneys.Beat("approach", EncounterJourneyBeatKind.Illustration),
+                TestJourneys.Beat("arrival", EncounterJourneyBeatKind.Illustration));
+            TestJourneys.SetBeat(journey, 0, "sceneLighting", first);
+            TestJourneys.SetBeat(journey, 0, "duration", 0f);
+            TestJourneys.SetBeat(journey, 1, "sceneLighting", second);
+            TestJourneys.SetBeat(journey, 1, "transition", EncounterJourneyTransition.PartingPanels);
+            TestJourneys.SetBeat(journey, 1, "duration", 20f);
+            var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
             var prefab = AssetDatabase.LoadAssetAtPath<EncounterJourneyView>("Assets/Dice/Content/Presentation/UI/EncounterJourneyView.prefab");
             Assert.That(prefab, Is.Not.Null);
             var view = UnityEngine.Object.Instantiate(prefab);
             var root = view.gameObject;
             SceneManager.MoveGameObjectToScene(root, preview);
-            root.GetComponent<RectTransform>().sizeDelta = new Vector2(540, 960);
+            root.GetComponent<RectTransform>().sizeDelta = SpiritPortraitSafeArea.DefaultReferenceSize;
             view.Build(null);
             view.Bind(controls, null);
             view.Refresh();
-            Invoke(view, "LateUpdate");
-            var background = Field<RawImage>(view, "background");
-            var left = Field<RawImage>(view, "leftPanel");
-            var right = Field<RawImage>(view, "rightPanel");
+            view.LateUpdate();
+            var background = view.Background;
+            var left = view.LeftPanel;
+            var right = view.RightPanel;
             Material approachMaterial = background.material;
             controls.BeatIndex = 1;
             view.Refresh();
-            Invoke(view, "LateUpdate");
+            view.LateUpdate();
             Require(left.gameObject.activeSelf && right.gameObject.activeSelf &&
                 left.material == approachMaterial && right.material == approachMaterial && background.material != approachMaterial,
                 "Departing panels did not retain the previous beat's compositor independently.");
             Require(left.texture == first.BaseTexture && background.texture == second.BaseTexture &&
                 left.uvRect == new Rect(0, 0, .5f, 1) && right.uvRect == new Rect(.5f, 0, .5f, 1),
                 "Departing panels lost their matching texture or half of the image.");
-            var currentState = Field<SceneLightingState>(view, "sceneLightingState");
-            var previousState = Field<SceneLightingState>(view, "previousSceneLightingState");
+            var currentState = view.SceneLighting;
+            var previousState = view.PreviousSceneLighting;
             Require(currentState.Asset == second && previousState.Asset == first && currentState.SampleTime == previousState.SampleTime,
                 "Current and departing backgrounds were not sampled from the same clock.");
             view.Bind(controls, null);
@@ -87,28 +83,28 @@ namespace Dice.Tests
                 "Rebinding the journey retained canceled panel or current lighting.");
             controls.BeatIndex = 0;
             view.Refresh();
-            Invoke(view, "LateUpdate");
+            view.LateUpdate();
             approachMaterial = background.material;
             controls.BeatIndex = 1;
-            Set(arrival, "duration", 0f);
+            TestJourneys.SetBeat(journey, 1, "duration", 0f);
             view.Refresh();
-            Invoke(view, "LateUpdate");
+            view.LateUpdate();
             Require(!view.IsAnimating && !left.gameObject.activeSelf && !right.gameObject.activeSelf &&
-                approachMaterial == null && Field<SceneLightingState>(view, "previousSceneLightingState").Asset == null,
+                approachMaterial == null && view.PreviousSceneLighting.Asset == null,
                 "A completed transition did not release its departing compositor.");
             root.SetActive(false);
-            Invoke(view, "OnDisable");
-            Require(Field<SceneLightingState>(view, "sceneLightingState").Asset == null &&
+            view.OnDisable();
+            Require(view.SceneLighting.Asset == null &&
                 background.material == background.defaultMaterial, "Disabling the journey retained current lighting.");
             root.SetActive(true);
             controls.BeatIndex = 0;
             view.Refresh();
-            Invoke(view, "LateUpdate");
-            Require(Field<SceneLightingState>(view, "sceneLightingState").Asset == first,
+            view.LateUpdate();
+            Require(view.SceneLighting.Asset == first,
                 "Re-enabling the journey did not bind the current beat's lighting.");
             controls.JourneyPhase = EncounterJourneyPhase.Investigation;
             view.Refresh();
-            Require(Field<SceneLightingState>(view, "sceneLightingState").Asset == null &&
+            Require(view.SceneLighting.Asset == null &&
                 background.material == background.defaultMaterial,
                 "Returning to investigation retained sequence lighting.");
         }
@@ -123,7 +119,7 @@ namespace Dice.Tests
             for (int i = 0; i < pixels.Length; ++i) pixels[i] = new Color(.2f, .15f, .08f);
             contribution.SetPixels(pixels); contribution.Apply();
             var asset = UnityEngine.ScriptableObject.CreateInstance<SceneLightingAsset>();
-            asset.Shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SceneLighting.shader");
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.hideFlags = texture.hideFlags = contribution.hideFlags = HideFlags.HideAndDontSave;
             asset.BaseTexture = texture;
             asset.Lights = new[] { new SceneLightLayer { Contribution = contribution, Intensity = intensity, FlickerAmount = 0f } };
@@ -131,48 +127,7 @@ namespace Dice.Tests
             return asset;
         }
 
-        private static GameObject Root(string name, Scene scene, params Type[] components)
-        {
-            var root = new GameObject(name, components) { hideFlags = HideFlags.HideAndDontSave };
-            SceneManager.MoveGameObjectToScene(root, scene);
-            return root;
-        }
-
-        private static T Field<T>(object instance, string name)
-            => (T)instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(instance);
-        private static void Set(object instance, string name, object value)
-            => instance.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(instance, value);
-        private static void Invoke(object instance, string name, params object[] arguments)
-            => instance.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(instance, arguments);
         private static void Require(bool value, string message) => Assert.That(value, Is.True, message);
-
-        private sealed class JourneyControls : IEncounterJourneyControls
-        {
-            public EncounterJourneyPhase JourneyPhase { get; set; }
-            public EncounterJourneyAsset SelectedJourney { get; set; }
-            public int BeatIndex { get; set; }
-            public EncounterJourneyCatalogAsset JourneyCatalog => null;
-            public EncounterChapterAsset SelectedChapter => null;
-            public bool CanSkipIntro => false;
-            public bool HasActiveEncounter => false;
-            public bool CanResume => false;
-            public SpiritStatus JourneyStatus => SpiritStatus.None;
-            public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
-            public bool IsJourneyAvailable(string id) => true;
-            public bool IsChapterAvailable(string id) => false;
-            public bool IsChapterCompleted(string id) => false;
-            public event Action JourneyChanged { add { } remove { } }
-            public void SelectChapter(string id) { }
-            public void SelectEncounter(string encounterId) { }
-            public void AdvanceJourney() { }
-            public void SkipIntro() { }
-            public void AcceptEncounter() { }
-            public void ReturnToInvestigation() { }
-            public void ResumeEncounter() { }
-            public void RetryEncounter() { }
-        }
     }
 }
 

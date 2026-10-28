@@ -319,11 +319,11 @@ namespace Dice.Presentation
 
         private Vector3 SlotPosition(int index)
         {
-            return sharedScene != null ? Vector3.up * (SupportHeight(dice[index].localRotation) * DieScale)
-                : new Vector3((index - 2) * SlotSpacing, RestHeight, 0f);
+            return Vector3.up * (SupportHeight(dice[index].localRotation) * DieScale);
         }
 
-        private float SupportHeight(Quaternion rotation)
+        // Internal so EditMode tests pose dice through a roll arc as the roll does.
+        internal float SupportHeight(Quaternion rotation)
         {
             Vector3 downward = Quaternion.Inverse(rotation) * Vector3.down;
             float height = 0f;
@@ -375,9 +375,9 @@ namespace Dice.Presentation
                 if (slot != null) slot.gameObject.SetActive(active);
         }
 
-        private void OnEnable() => SetContentActive(true);
-        private void OnDisable() => SetContentActive(false);
+        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
+        internal void OnEnable() => SetContentActive(true);
+        internal void OnDisable() => SetContentActive(false);
         private void OnDestroy() => ReleasePresentation();
-
     }
 }

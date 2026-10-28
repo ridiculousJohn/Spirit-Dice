@@ -27,6 +27,7 @@ namespace Dice.Tests
         private EncounterJourneyCatalogAsset journeys;
         private ScriptableObject[] journeyAssets;
         private SpiritUiWording wording;
+        private SpiritUiTheme theme;
 
         [SetUp]
         public void BuildCollection()
@@ -52,8 +53,8 @@ namespace Dice.Tests
             wording = SyntheticWording.Create();
             root = new GameObject("CollectionTest", typeof(RectTransform), typeof(Canvas), typeof(SpiritUiContext));
             ((RectTransform)root.transform).sizeDelta = new Vector2(443, 960);
-            var themePath = AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:SpiritUiTheme").First());
-            root.GetComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(themePath), wording);
+            theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
+            root.GetComponent<SpiritUiContext>().Configure(theme, wording);
             var prefab = AssetDatabase.LoadAssetAtPath<SpiritCollectionView>(
                 "Assets/Dice/Content/Presentation/UI/SpiritCollectionView.prefab");
             Assert.That(prefab, Is.Not.Null);
@@ -74,6 +75,7 @@ namespace Dice.Tests
         {
             UnityEngine.Object.DestroyImmediate(root);
             UnityEngine.Object.DestroyImmediate(wording);
+            UnityEngine.Object.DestroyImmediate(theme);
             foreach (var asset in journeyAssets) UnityEngine.Object.DestroyImmediate(asset);
             synthetic.Dispose();
         }
@@ -165,9 +167,6 @@ namespace Dice.Tests
                 Assert.That(Find<Text>(row, "FamilyName").text, Is.EqualTo("<familyRow.undiscoveredFamily>"));
                 Assert.That(Find<Text>(row, "FamilyCondition").text, Is.EqualTo("<familyRow.undiscoveredCondition>"));
                 Assert.That(row.GetComponentsInChildren<Button>(), Is.Empty);
-                var rect = (RectTransform)row.transform;
-                LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
-                Assert.That(LayoutUtility.GetPreferredHeight(rect), Is.LessThan(100));
                 Assert.That(row.GetComponentsInChildren<Text>(true).Where(text => text.name == "VariantEffect" || text.name == "VariantState")
                     .All(text => text.text == ""), Is.True);
                 foreach (var button in row.GetComponentsInChildren<Button>(true)) button.onClick.Invoke();

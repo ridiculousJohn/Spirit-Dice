@@ -268,18 +268,13 @@ namespace Dice.Presentation
             foreach (var pair in authoredMaterials)
                 if (pair.Key != null) pair.Key.sharedMaterials = pair.Value;
             authoredMaterials.Clear();
-            foreach (Material material in materials) Release(material);
+            foreach (Material material in materials) OwnedObject.Release(material);
             materials.Clear();
         }
 
-        private void OnEnable() { if (renderRoot != null) renderRoot.SetActive(true); }
-        private void OnDisable() { if (renderRoot != null) renderRoot.SetActive(false); }
+        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
+        internal void OnEnable() { if (renderRoot != null) renderRoot.SetActive(true); }
+        internal void OnDisable() { if (renderRoot != null) renderRoot.SetActive(false); }
         private void OnDestroy() => ReleasePresentation();
-        private static void Release(UnityEngine.Object resource)
-        {
-            if (resource == null) return;
-            if (Application.isPlaying) Destroy(resource);
-            else DestroyImmediate(resource);
-        }
     }
 }

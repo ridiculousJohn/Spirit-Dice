@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -10,7 +9,7 @@ namespace Dice.Tests
 {
     public sealed class SpiritSmokeTests
     {
-        private static Shader SmokeShader => AssetDatabase.LoadAssetAtPath<Shader>("Assets/Dice/Presentation/Shared/SpiritSmoke.shader");
+        private static Shader SmokeShader => TestShaders.Load(TestShaders.SpiritSmoke);
 
         /** Checks the smoke owns a copy of its authored material and releases only that copy / fails if the authored material or its textures are destroyed or the copy outlives disposal. */
         [Test]

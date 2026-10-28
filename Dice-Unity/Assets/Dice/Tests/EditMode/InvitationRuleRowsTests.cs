@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEditor;
@@ -38,13 +36,13 @@ namespace Dice.Tests
         public void InvitationShowsOneRowPerTableRuleAndOtherBeatsShowNone()
         {
             var table = Create<EncounterTablePresentationAsset>();
-            Set(table, "rulePresentations", new[] { Rule("rule.first", "First rule", "First rule text"),
+            SyntheticUi.Set(table, "rulePresentations", new[] { Rule("rule.first", "First rule", "First rule text"),
                 Rule("rule.second", "Second rule", "Second rule text") });
             var journey = Create<EncounterJourneyAsset>();
-            Set(journey, "beats", new[] { Beat("dialogue", EncounterJourneyBeatKind.Dialogue),
-                Beat("invitation", EncounterJourneyBeatKind.Invitation) });
-            Set(journey, "tablePresentation", table);
-            var controls = new JourneyControls
+            TestJourneys.SetBeats(journey, TestJourneys.Beat("dialogue", EncounterJourneyBeatKind.Dialogue),
+                TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
+            SyntheticUi.Set(journey, "tablePresentation", table);
+            var controls = new TestJourneyControls
             {
                 SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence, BeatIndex = 1
             };
@@ -70,18 +68,10 @@ namespace Dice.Tests
         private EncounterRulePresentationAsset Rule(string id, string name, string description)
         {
             var rule = Create<EncounterRulePresentationAsset>();
-            Set(rule, "ruleId", id);
-            Set(rule, "displayName", name);
-            Set(rule, "description", description);
+            SyntheticUi.Set(rule, "ruleId", id);
+            SyntheticUi.Set(rule, "displayName", name);
+            SyntheticUi.Set(rule, "description", description);
             return rule;
-        }
-
-        private static EncounterJourneyBeat Beat(string id, EncounterJourneyBeatKind kind)
-        {
-            var beat = new EncounterJourneyBeat();
-            Set(beat, "id", id);
-            Set(beat, "kind", kind);
-            return beat;
         }
 
         private T Create<T>() where T : ScriptableObject
@@ -89,41 +79,6 @@ namespace Dice.Tests
             var asset = ScriptableObject.CreateInstance<T>();
             created.Add(asset);
             return asset;
-        }
-
-        private static void Set(object target, string name, object value)
-        {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null, name);
-            field.SetValue(target, value);
-        }
-
-        private sealed class JourneyControls : IEncounterJourneyControls
-        {
-            public EncounterJourneyPhase JourneyPhase { get; set; }
-            public EncounterJourneyAsset SelectedJourney { get; set; }
-            public int BeatIndex { get; set; }
-            public EncounterJourneyCatalogAsset JourneyCatalog => null;
-            public EncounterChapterAsset SelectedChapter => null;
-            public bool CanSkipIntro => false;
-            public bool HasActiveEncounter => false;
-            public bool CanResume => false;
-            public SpiritStatus JourneyStatus => SpiritStatus.None;
-            public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
-            public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
-            public bool IsJourneyAvailable(string id) => true;
-            public bool IsChapterAvailable(string id) => false;
-            public bool IsChapterCompleted(string id) => false;
-            public event Action JourneyChanged { add { } remove { } }
-            public void SelectChapter(string id) { }
-            public void SelectEncounter(string encounterId) { }
-            public void AdvanceJourney() { }
-            public void SkipIntro() { }
-            public void AcceptEncounter() { }
-            public void ReturnToInvestigation() { }
-            public void ResumeEncounter() { }
-            public void RetryEncounter() { }
         }
     }
 }

@@ -4,9 +4,9 @@ using System.Linq;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
+using UnityEditor;
 using UnityEngine;
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 
 namespace Dice.Tests
@@ -214,10 +214,9 @@ namespace Dice.Tests
         /**
          * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id and presented
          * as "Name of <id>" with the condition text "Condition of <id>", the given category (or one with a fabricated
-         * symbol) and the given icon (or a fabricated one).
+         * symbol) and a fabricated icon.
          */
-        public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null,
-            Sprite icon = null)
+        public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null)
         {
             category = category != null ? category : Category(Icon());
             var pairs = new List<KeyValuePair<ModifierAsset, ModifierDefinition>>();
@@ -226,51 +225,9 @@ namespace Dice.Tests
             {
                 ModifierAsset charm = Charm(definition.Id, definition.FamilyId);
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
-                presentations.Add(Presentation(charm, category, template: "Condition of " + definition.Id, icon: icon));
+                presentations.Add(Presentation(charm, category, template: "Condition of " + definition.Id));
             }
             return Load(Skin(presentations, new[] { category }), new MechanicalContent(catalog, pairs));
-        }
-
-        /**
-         * A presentation of every modifier of an engine catalog in a test skin with the wording of the given skin: a
-         * modifier with the id of a charm the given skin presents shows that charm's presentation, paired with that
-         * charm asset, and every other modifier is presented as For(catalog) presents it. A family the given skin names
-         * keeps its name; every other family is named as FamilyWording names it. The given skin's assets are referenced,
-         * never owned.
-         */
-        public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierSkinAsset presented)
-        {
-            if (presented == null) throw new ArgumentNullException(nameof(presented));
-            var presentedById = new Dictionary<string, ModifierPresentationAsset>(StringComparer.Ordinal);
-            foreach (ModifierPresentationAsset presentation in presented.Modifiers)
-                presentedById.Add(presentation.Modifier.Id, presentation);
-            ModifierCategoryPresentationAsset testCategory = null;
-            var categories = new List<ModifierCategoryPresentationAsset>();
-            var pairs = new List<KeyValuePair<ModifierAsset, ModifierDefinition>>();
-            var presentations = new List<ModifierPresentationAsset>();
-            foreach (ModifierDefinition definition in catalog.Modifiers)
-            {
-                if (presentedById.TryGetValue(definition.Id, out ModifierPresentationAsset presentation))
-                {
-                    pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(presentation.Modifier, definition));
-                    presentations.Add(presentation);
-                    if (!categories.Contains(presentation.Category)) categories.Add(presentation.Category);
-                    continue;
-                }
-                if (testCategory == null)
-                {
-                    testCategory = Category(Icon());
-                    categories.Add(testCategory);
-                }
-                ModifierAsset charm = Charm(definition.Id, definition.FamilyId);
-                pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
-                presentations.Add(Presentation(charm, testCategory, template: "Condition of " + definition.Id));
-            }
-            var families = new List<ModifierFamilyWording>();
-            foreach (ModifierFamilyWording family in FamilyWording(presentations))
-                families.Add(presented.FamilyWording.FirstOrDefault(named => named.FamilyId == family.FamilyId) ?? family);
-            return Load(Skin(presentations, categories, presented.EffectWording, presented.NoEffectsText, presented.PhaseWording,
-                presented.LimitWording, presented.ContributionWording, families, presented.TextFormat), new MechanicalContent(catalog, pairs));
         }
 
         public void Dispose()

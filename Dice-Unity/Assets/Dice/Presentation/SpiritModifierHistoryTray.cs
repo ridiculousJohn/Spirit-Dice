@@ -196,14 +196,15 @@ namespace Dice.Presentation
 
         public void Advance(float deltaTime)
         {
-            if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime < 0)
+            if (!FiniteValue.Is(deltaTime) || deltaTime < 0)
                 throw new ArgumentOutOfRangeException(nameof(deltaTime));
             if (Renderer != null) Renderer.Advance(deltaTime);
         }
 
         private void Update() => Advance(Time.unscaledDeltaTime);
 
-        private void LateUpdate()
+        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive it directly.
+        internal void LateUpdate()
         {
             UpdateBayFrame();
             ResizeContent();

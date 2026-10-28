@@ -532,7 +532,8 @@ namespace Dice.Presentation
                 selected.Scene.AssetGUID == tablePresentation.Scene?.AssetGUID;
         }
 
-        private void Refresh()
+        // Internal so PlayMode tests refresh the shown state without changing it.
+        internal void Refresh()
         {
             if (!isActiveAndEnabled || canvas == null || controls == null) return;
             if (journeyControls != null && !IsSelectedTable()) return;
