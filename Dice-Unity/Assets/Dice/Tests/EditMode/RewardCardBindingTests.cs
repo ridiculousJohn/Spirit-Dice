@@ -178,6 +178,6 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition NewCharm() => new ModifierDefinition("test.reward", "test.reward", ModifierPhase.PlayHand,
-            new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 5) });
+            new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) });
     }
 }

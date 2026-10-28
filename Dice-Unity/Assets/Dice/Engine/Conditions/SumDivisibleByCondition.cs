@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public SumDivisibleByCondition(int parameter = 5)
+        public SumDivisibleByCondition(int parameter)
         {
-            parameter = parameter == 0 ? 5 : parameter;
             if (parameter < 1) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

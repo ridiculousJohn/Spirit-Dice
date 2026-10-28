@@ -454,10 +454,7 @@ namespace Dice.Engine
                 else Require(source.ActivationsThisHand <= state.RerollsSpentOnHand && source.ActivationsThisStage <= state.TotalRerollsSpent &&
                     source.TotalActivations <= state.TotalRerollsSpent, "Reroll modifier counters are invalid.");
                 if (source.ActivationsThisStage != 0)
-                {
-                    GetEffectTotals(modifier, out _, out _, out int rerolls);
-                    stageRerollGrants += (decimal)rerolls * source.ActivationsThisStage;
-                }
+                    stageRerollGrants += (decimal)ModifierEffectTotals.Of(modifier).Rerolls * source.ActivationsThisStage;
                 state.Modifiers[i] = new ModifierInstanceState
                 {
                     InstanceId = source.InstanceId, DefinitionId = source.DefinitionId,
@@ -474,9 +471,9 @@ namespace Dice.Engine
                 var instance = state.Modifiers[index];
                 Require(source.DefinitionId == instance.DefinitionId, "Contribution definition disagrees with its instance.");
                 var modifier = GetModifier(definitions, source.DefinitionId);
-                GetEffectTotals(modifier, out long expectedBase, out long expectedMultiplier, out int expectedRerolls);
-                Require(source.Phase == modifier.Phase && source.BaseScore == expectedBase &&
-                    source.Multiplier == expectedMultiplier && source.Rerolls == expectedRerolls,
+                ModifierEffectTotals expected = ModifierEffectTotals.Of(modifier);
+                Require(source.Phase == modifier.Phase && source.BaseScore == expected.BaseScore &&
+                    source.Multiplier == expected.Multiplier && source.Rerolls == expected.Rerolls,
                     "Contribution effects disagree with the catalog.");
                 ++contributionCounts[index];
                 baseScore = checked(baseScore + source.BaseScore);
@@ -713,23 +710,6 @@ namespace Dice.Engine
             if (id == null || !definitions.TryGetValue(id, out var definition))
                 throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Modifier definition is missing from the catalog.");
             return definition;
-        }
-
-        private static void GetEffectTotals(ModifierDefinition modifier, out long baseScore, out long multiplier, out int rerolls)
-        {
-            baseScore = 0;
-            multiplier = 0;
-            rerolls = 0;
-            checked
-            {
-                foreach (var effect in modifier.Effects)
-                    switch (effect.Kind)
-                    {
-                        case ModifierEffectKind.AddBaseScore: baseScore += effect.Amount; break;
-                        case ModifierEffectKind.AddMultiplier: multiplier += effect.Amount; break;
-                        case ModifierEffectKind.AddRerolls: rerolls += (int)effect.Amount; break;
-                    }
-            }
         }
 
         private static DiceValues ReadDice(int[] values)

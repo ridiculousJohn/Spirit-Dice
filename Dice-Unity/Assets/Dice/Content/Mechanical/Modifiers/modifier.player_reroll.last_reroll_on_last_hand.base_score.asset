@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.player_reroll.last_reroll_on_last_hand.base_score
   familyId: modifier.player_reroll.last_reroll_on_last_hand
   phase: 1
-  conditionKind: 54
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539478
   effects:
-  - kind: 0
-    amount: 20
+  - rid: 1123138582930784586
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539478
+      type: {class: LastRerollOnLastHandConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784586
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 20

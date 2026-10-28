@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public AdjacentDifferenceAtLeastCondition(int parameter = 2)
+        public AdjacentDifferenceAtLeastCondition(int parameter)
         {
-            parameter = parameter == 0 ? 2 : parameter;
             if (parameter < 0) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

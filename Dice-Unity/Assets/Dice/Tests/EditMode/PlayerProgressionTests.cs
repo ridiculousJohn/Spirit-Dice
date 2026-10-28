@@ -263,7 +263,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock)
             => new ModifierDefinition(id, family, ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) },
+                new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: access));
     }
 }

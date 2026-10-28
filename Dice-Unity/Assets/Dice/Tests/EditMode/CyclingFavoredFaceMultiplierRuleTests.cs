@@ -56,8 +56,8 @@ namespace Dice.Tests
         public void FavoredFaceCountCharmReadsTheRulesFavoredFace()
         {
             var charm = new ModifierDefinition("test.favored_face_count", "test.favored_face_count", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.FavoredFaceCountAtLeast, 2),
-                new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 7) });
+                new FavoredFaceCountAtLeastCondition(2),
+                new ModifierEffect[] { new AddMultiplierEffect(7) });
             var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 8, 3) },
                 startingModifiers: new[] { charm.Id }, rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition() });
             var catalog = new MechanicalCatalog("test.favored_face.charms", TestContent.Hands(), new[] { encounter }, new[] { charm });

@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.contains_face.base_score
   familyId: modifier.play_hand.contains_face
   phase: 2
-  conditionKind: 1
-  parameter: 1
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538988
   effects:
-  - kind: 0
-    amount: 10
+  - rid: 1123138582930784316
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538988
+      type: {class: ContainsFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        face: 1
+    - rid: 1123138582930784316
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10

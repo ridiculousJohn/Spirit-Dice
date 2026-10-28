@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public ExactlyOneFaceCondition(int parameter = 2)
+        public ExactlyOneFaceCondition(int parameter)
         {
-            parameter = parameter == 0 ? 2 : parameter;
             if (parameter < 1 || parameter > 6) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

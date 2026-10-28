@@ -8,13 +8,9 @@ namespace Dice.Tests
 {
     public sealed class ModifierInspectionTests
     {
-        private static IEnumerable<ModifierConditionKind> BuiltInKinds()
-            => Enum.GetValues(typeof(ModifierConditionKind)).Cast<ModifierConditionKind>();
-
-        [TestCaseSource(nameof(BuiltInKinds))]
-        public void BuiltInInspectionMatchesPreviewAndCommittedPlay(ModifierConditionKind kind)
+        [TestCaseSource(typeof(ModifierConditionTests), nameof(ModifierConditionTests.EveryCondition))]
+        public void BuiltInInspectionMatchesPreviewAndCommittedPlay(IModifierCondition condition)
         {
-            IModifierCondition condition = ModifierConditions.Create(kind);
             var definition = Modifier("built.in", ModifierPhase.PlayHand, condition);
             var session = Session(Catalog(new[] { definition }));
             AssertInspectionMatchesPlay(session);
@@ -31,7 +27,7 @@ namespace Dice.Tests
                 context.HandsRemaining == 3 && context.RerollsRemaining == 2 &&
                 context.SelectedMask == 5 && context.EverRerolledMask == 5 && context.RerollsSpentOnHand == 1);
             var grant = Modifier("grant", ModifierPhase.PlayHand, grantCondition,
-                effects: new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, 2) });
+                effects: new ModifierEffect[] { new AddRerollsEffect(2) });
             var resource = Modifier("resource", ModifierPhase.PlayHand, resourceCondition);
             var definitions = reverse ? new[] { resource, grant } : new[] { grant, resource };
             var session = Session(Catalog(definitions, new[] { new StageDefinition(1000000, 4, 3) }));
@@ -169,7 +165,7 @@ namespace Dice.Tests
         public void RepeatedInspectionPreservesSaveCountersAndFutureRandomStreams()
         {
             var definition = Modifier("resources", ModifierPhase.PlayHand, new AlwaysCondition(),
-                effects: new[] { new ModifierEffect(ModifierEffectKind.AddRerolls, 3) });
+                effects: new ModifierEffect[] { new AddRerollsEffect(3) });
             var catalog = Catalog(new[] { definition });
             var session = Session(catalog);
             var control = Session(catalog);
@@ -194,7 +190,7 @@ namespace Dice.Tests
         public void InspectionDoesNotApplyEffectsThatWouldOverflowResolution()
         {
             var definition = Modifier("overflow", ModifierPhase.PlayHand, new AlwaysCondition(),
-                effects: new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, long.MaxValue) });
+                effects: new ModifierEffect[] { new AddBaseScoreEffect(long.MaxValue) });
             var session = Session(Catalog(new[] { definition }));
             var save = session.CaptureSave();
             Assert.That(session.InspectModifiersForPlayHand().Single().Status,
@@ -252,7 +248,7 @@ namespace Dice.Tests
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand, ModifierEffect[] effects = null)
             => new ModifierDefinition(id, "test." + id, phase, condition,
-                effects ?? new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 7) }, limit);
+                effects ?? new ModifierEffect[] { new AddBaseScoreEffect(7) }, limit);
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] definitions, IEnumerable<StageDefinition> stages = null,
             IEnumerable<string> inventory = null)

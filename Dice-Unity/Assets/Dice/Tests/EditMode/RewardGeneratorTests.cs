@@ -103,7 +103,7 @@ namespace Dice.Tests
         {
             var normal = RewardTestContent.Modifier("normal", "family.normal");
             var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Never), Array.Empty<ModifierEffect>(), rewardEligible: false);
+                new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
             var ordinary = RewardTestContent.Catalog(new[] { normal, fallback },
                 new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }) }, policy);
@@ -188,8 +188,8 @@ namespace Dice.Tests
     internal static class RewardTestContent
     {
         internal static ModifierDefinition Modifier(string id, string family)
-            => new ModifierDefinition(id, family, ModifierPhase.PlayHand, new ModifierCondition(ModifierConditionKind.Always),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 10) });
+            => new ModifierDefinition(id, family, ModifierPhase.PlayHand, new AlwaysCondition(),
+                new ModifierEffect[] { new AddBaseScoreEffect(10) });
 
         internal static RewardPolicyDefinition Policy(IEnumerable<ModifierRewardLayout> layouts = null,
             int startingRefreshes = 1, int refreshesPerClear = 1, int refreshCost = 1)

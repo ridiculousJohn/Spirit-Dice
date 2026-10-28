@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.positive_rerolls_divisible_by.multiplier
   familyId: modifier.play_hand.positive_rerolls_divisible_by
   phase: 2
-  conditionKind: 24
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539285
   effects:
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784479
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539285
+      type: {class: PositiveRerollsDivisibleByConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        divisor: 3
+    - rid: 1123138582930784479
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

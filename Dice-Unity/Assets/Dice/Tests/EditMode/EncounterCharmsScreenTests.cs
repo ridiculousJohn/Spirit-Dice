@@ -108,7 +108,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, string familyId, int amount)
             => new ModifierDefinition(id, familyId, ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, amount) });
+                new ModifierEffect[] { new AddBaseScoreEffect(amount) });
 
         /** A journey resting at its invitation that counts acceptances. */
         private sealed class JourneyControls : IEncounterJourneyControls

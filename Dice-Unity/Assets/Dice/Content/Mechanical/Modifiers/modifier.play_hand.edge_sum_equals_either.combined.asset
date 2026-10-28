@@ -15,17 +15,30 @@ MonoBehaviour:
   id: modifier.play_hand.edge_sum_equals_either.combined
   familyId: modifier.play_hand.edge_sum_equals_either
   phase: 2
-  conditionKind: 36
-  parameter: 6
-  secondaryParameter: 8
+  condition:
+    rid: 1123138582844539035
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784342
+  - rid: 1123138582930784343
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539035
+      type: {class: EdgeSumEqualsEitherConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        firstSum: 6
+        secondSum: 8
+    - rid: 1123138582930784342
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784343
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

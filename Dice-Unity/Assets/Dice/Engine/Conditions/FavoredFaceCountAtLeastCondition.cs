@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public FavoredFaceCountAtLeastCondition(int parameter = 2)
+        public FavoredFaceCountAtLeastCondition(int parameter)
         {
-            parameter = parameter == 0 ? 2 : parameter;
             if (parameter < 1 || parameter > DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.rank_below_previous.combined
   familyId: modifier.play_hand.rank_below_previous
   phase: 2
-  conditionKind: 10
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539318
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784497
+  - rid: 1123138582930784498
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539318
+      type: {class: RankBelowPreviousConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784497
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784498
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

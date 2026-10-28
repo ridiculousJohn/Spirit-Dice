@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.initial_roll.last_hand.rerolls
   familyId: modifier.initial_roll.last_hand
   phase: 0
-  conditionKind: 6
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538914
   effects:
-  - kind: 2
-    amount: 2
+  - rid: 1123138582930784275
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538914
+      type: {class: LastHandConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784275
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

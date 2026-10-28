@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.sum_divisible_by.multiplier
   familyId: modifier.play_hand.sum_divisible_by
   phase: 2
-  conditionKind: 14
-  parameter: 5
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539375
   effects:
-  - kind: 1
-    amount: 4
+  - rid: 1123138582930784529
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539375
+      type: {class: SumDivisibleByConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        divisor: 5
+    - rid: 1123138582930784529
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 4

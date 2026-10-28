@@ -7,10 +7,8 @@ namespace Dice.Engine
         public int Parameter { get; }
         public int SecondaryParameter { get; }
 
-        public NoExtremeFacesCondition(int parameter = 1, int secondaryParameter = 6)
+        public NoExtremeFacesCondition(int parameter, int secondaryParameter)
         {
-            parameter = parameter == 0 ? 1 : parameter;
-            secondaryParameter = secondaryParameter == 0 ? 6 : secondaryParameter;
             if (parameter < 1 || parameter > 6 || secondaryParameter < 1 || secondaryParameter > 6) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
             SecondaryParameter = secondaryParameter;

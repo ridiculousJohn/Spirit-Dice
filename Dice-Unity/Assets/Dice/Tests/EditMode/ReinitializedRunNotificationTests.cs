@@ -65,7 +65,7 @@ namespace Dice.Tests
         private static MechanicalCatalog OneCharmCatalog(string modifierId)
         {
             var definition = new ModifierDefinition(modifierId, modifierId, ModifierPhase.PlayHand,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+                new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) },
                 startingModifiers: new[] { modifierId });
             return new MechanicalCatalog("reinitialize." + modifierId, TestContent.Hands(), new[] { encounter }, new[] { definition });

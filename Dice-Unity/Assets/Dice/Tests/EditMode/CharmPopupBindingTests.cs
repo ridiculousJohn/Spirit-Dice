@@ -50,7 +50,7 @@ namespace Dice.Tests
             popup.Close();
 
             charm = new ModifierDefinition("test.popup", "test.popup", ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 5) });
+                new ModifierEffect[] { new AddBaseScoreEffect(5) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(100000, 3, 3) },
                 startingModifiers: new[] { charm.Id });
             var catalog = new MechanicalCatalog("test.popup", TestContent.Hands(), new[] { encounter }, new[] { charm });

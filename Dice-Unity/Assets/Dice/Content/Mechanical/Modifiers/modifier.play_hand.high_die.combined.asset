@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.high_die.combined
   familyId: modifier.play_hand.high_die
   phase: 2
-  conditionKind: 17
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539125
   effects:
-  - kind: 0
-    amount: 15
-  - kind: 1
-    amount: 3
+  - rid: 1123138582930784392
+  - rid: 1123138582930784393
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539125
+      type: {class: HighDieConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784392
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 15
+    - rid: 1123138582930784393
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 3

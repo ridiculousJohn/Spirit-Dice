@@ -150,8 +150,8 @@ namespace Dice.Tests
         private static ModifierDefinition RewardModifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock,
             ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, bool inert = false, bool never = false)
             => new ModifierDefinition(id, family, ModifierPhase.PlayHand,
-                new ModifierCondition(never ? ModifierConditionKind.Never : ModifierConditionKind.Always),
-                inert ? Array.Empty<ModifierEffect>() : new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) },
+                never ? new NeverCondition() : (IModifierCondition)new AlwaysCondition(),
+                inert ? Array.Empty<ModifierEffect>() : new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(scope: scope,
                     scopeId: scope == ModifierAvailabilityScope.Encounter ? TestContent.EncounterId : null, access: access));
 

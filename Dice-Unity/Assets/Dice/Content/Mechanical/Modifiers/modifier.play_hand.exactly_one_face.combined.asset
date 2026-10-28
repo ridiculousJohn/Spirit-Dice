@@ -15,17 +15,29 @@ MonoBehaviour:
   id: modifier.play_hand.exactly_one_face.combined
   familyId: modifier.play_hand.exactly_one_face
   phase: 2
-  conditionKind: 20
-  parameter: 2
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539080
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784367
+  - rid: 1123138582930784368
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539080
+      type: {class: ExactlyOneFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        face: 2
+    - rid: 1123138582930784367
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784368
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

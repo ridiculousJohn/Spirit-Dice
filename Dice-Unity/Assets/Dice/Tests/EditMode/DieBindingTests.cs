@@ -103,8 +103,8 @@ namespace Dice.Tests
         public void BindingsPersistThroughPlayHandAndClearWhenTheNextHandStarts()
         {
             var bonus = new ModifierDefinition("charm.bound", "family.bound", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.BoundFaceCountAtLeast, 1),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 7) });
+                new BoundFaceCountAtLeastCondition(1),
+                new ModifierEffect[] { new AddBaseScoreEffect(7) });
             var catalog = Catalog(modifiers: new[] { bonus });
             var session = Session(catalog, 8);
             Assert.That(session.InspectModifiersForPlayHand().Single().ConditionMet, Is.False, "No die is bound before a reroll.");

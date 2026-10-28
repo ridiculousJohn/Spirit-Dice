@@ -312,8 +312,8 @@ namespace Dice.Tests
         public void PreviewOverflowKeepsAcceptedCommandsAndRestoredEngineStateUsable()
         {
             var modifier = new ModifierDefinition("overflow", "family.overflow", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Always),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, long.MaxValue) });
+                new AlwaysCondition(),
+                new ModifierEffect[] { new AddBaseScoreEffect(long.MaxValue) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
             Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 17, savePath));
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
@@ -345,7 +345,7 @@ namespace Dice.Tests
         public void CustomConditionFaultDoesNotBlockRerollSynchronizationOrReuseStaleCaches()
         {
             var modifier = new ModifierDefinition("faulting", "family.faulting", ModifierPhase.PlayHand,
-                new FaultingCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+                new FaultingCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
             Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 19, savePath));
             Assert.That(controller.Preview, Is.Null);

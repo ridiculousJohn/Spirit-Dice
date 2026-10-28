@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.player_reroll.selected_matching_group_at_least.multiplier
   familyId: modifier.player_reroll.selected_matching_group_at_least
   phase: 1
-  conditionKind: 8
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539546
   effects:
-  - kind: 1
-    amount: 4
+  - rid: 1123138582930784624
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539546
+      type: {class: SelectedMatchingGroupAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 3
+    - rid: 1123138582930784624
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 4

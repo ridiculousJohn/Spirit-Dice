@@ -237,7 +237,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Definition(string id, ModifierPhase phase)
             => new ModifierDefinition(id, id, phase, new AlwaysCondition(),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) });
+                new ModifierEffect[] { new AddBaseScoreEffect(1) });
 
         private static ModifierContribution Contribution(ModifierDefinition definition, long instanceId, long baseScore = 0,
             long multiplier = 0, int rerolls = 0)

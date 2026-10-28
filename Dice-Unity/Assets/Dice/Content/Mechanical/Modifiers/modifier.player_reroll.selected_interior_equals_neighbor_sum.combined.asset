@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.player_reroll.selected_interior_equals_neighbor_sum.combined
   familyId: modifier.player_reroll.selected_interior_equals_neighbor_sum
   phase: 1
-  conditionKind: 29
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539525
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784612
+  - rid: 1123138582930784613
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539525
+      type: {class: SelectedInteriorEqualsNeighborSumConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784612
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784613
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

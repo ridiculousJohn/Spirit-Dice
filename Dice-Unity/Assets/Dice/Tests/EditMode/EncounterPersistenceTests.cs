@@ -194,7 +194,7 @@ namespace Dice.Tests
         {
             var normal = RewardTestContent.Modifier("normal", "family.normal");
             var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Never), Array.Empty<ModifierEffect>(), rewardEligible: false);
+                new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var catalog = RewardTestContent.Catalog(new[] { normal, fallback },
                 new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) },
                 upgrades: Enumerable.Repeat(6, HandDefinition.CategoryCount).ToArray(), inventory: new[] { normal.Id });
@@ -266,7 +266,7 @@ namespace Dice.Tests
             var normal = new[] { RewardTestContent.Modifier("first", "family.first"),
                 RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third") };
             var fallback = new ModifierDefinition("fallback", "family.fallback", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Never), Array.Empty<ModifierEffect>(), rewardEligible: false);
+                new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
             var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }),
                 new[] { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Id), fallback.Id) }, policy);
@@ -443,12 +443,12 @@ namespace Dice.Tests
             var definitions = new[]
             {
                 new ModifierDefinition("initial", "family.initial", ModifierPhase.InitialRoll,
-                    new ModifierCondition(ModifierConditionKind.Always), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 5) }),
+                    new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) }),
                 new ModifierDefinition("reroll", "family.reroll", ModifierPhase.PlayerReroll,
-                    new ModifierCondition(ModifierConditionKind.Always), new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 2),
-                        new ModifierEffect(ModifierEffectKind.AddRerolls, 1) }),
+                    new AlwaysCondition(), new ModifierEffect[] { new AddMultiplierEffect(2),
+                        new AddRerollsEffect(1) }),
                 new ModifierDefinition("play", "family.play", ModifierPhase.PlayHand,
-                    new ModifierCondition(ModifierConditionKind.Always), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 11) })
+                    new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(11) })
             };
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 startingModifiers: new[] { "initial", "reroll", "reroll", "play" });

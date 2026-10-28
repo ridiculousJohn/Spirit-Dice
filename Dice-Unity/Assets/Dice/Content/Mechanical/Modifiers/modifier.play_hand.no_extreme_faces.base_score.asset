@@ -15,15 +15,25 @@ MonoBehaviour:
   id: modifier.play_hand.no_extreme_faces.base_score
   familyId: modifier.play_hand.no_extreme_faces
   phase: 2
-  conditionKind: 69
-  parameter: 1
-  secondaryParameter: 6
+  condition:
+    rid: 1123138582844539244
   effects:
-  - kind: 0
-    amount: 15
+  - rid: 1123138582930784456
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539244
+      type: {class: NoExtremeFacesConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        firstFace: 1
+        secondFace: 6
+    - rid: 1123138582930784456
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 15

@@ -94,10 +94,8 @@ namespace Dice.Tests
             Assert.That(seed, Is.LessThan(1024));
             var modifiers = new[]
             {
-                Modifier("reroll", ModifierPhase.PlayerReroll, ModifierConditionKind.RerollsSpentAtLeast,
-                    ModifierEffectKind.AddBaseScore, 7, 1),
-                Modifier("untouched", ModifierPhase.PlayHand, ModifierConditionKind.NoDiceRerolled,
-                    ModifierEffectKind.AddBaseScore, 100)
+                Modifier("reroll", ModifierPhase.PlayerReroll, new RerollsSpentAtLeastCondition(1), new AddBaseScoreEffect(7)),
+                Modifier("untouched", ModifierPhase.PlayHand, new NoDiceRerolledCondition(), new AddBaseScoreEffect(100))
             };
             var session = Session(Catalog(paidRerolls: 0, modifiers: modifiers), seed);
             var before = session.Snapshot.CurrentDice;
@@ -116,8 +114,8 @@ namespace Dice.Tests
         [Test]
         public void FreeRerollRunsResourceGrantModifiersAndTheNextActionSpendsTheirGrant()
         {
-            var grant = Modifier("grant", ModifierPhase.PlayerReroll, ModifierConditionKind.RerollsSpentAtLeast,
-                ModifierEffectKind.AddRerolls, 1, 1, ModifierActivationLimit.OncePerHand);
+            var grant = Modifier("grant", ModifierPhase.PlayerReroll, new RerollsSpentAtLeastCondition(1), new AddRerollsEffect(1),
+                ModifierActivationLimit.OncePerHand);
             var catalog = Catalog(paidRerolls: 0, modifiers: new[] { grant });
             var session = Session(catalog);
             var free = Execute(session, new RerollDiceAction(1));
@@ -316,11 +314,12 @@ namespace Dice.Tests
         private static TestCaseData Invalid(string name, Action<EncounterSaveData> mutate)
             => new TestCaseData(mutate).SetName("EncounterRuleAccounting_" + name);
 
-        private static ModifierDefinition Modifier(string id, ModifierPhase phase, ModifierConditionKind condition,
-            ModifierEffectKind effect, long amount, int parameter = 0,
-            ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)
-            => new ModifierDefinition(id, "family." + id, phase, new ModifierCondition(condition, parameter),
-                new[] { new ModifierEffect(effect, amount) }, limit);
+        private static FirstRerollFreeSaveData Free(EncounterSaveData save)
+            => (FirstRerollFreeSaveData)save.RuleStates.Single(value => value.RuleId == FirstRerollFreeRuleDefinition.StableId).State;
+
+        private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
+            ModifierEffect effect, ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)
+            => new ModifierDefinition(id, "family." + id, phase, condition, new[] { effect }, limit);
 
         private static MechanicalCatalog Catalog(int paidRerolls = 2, int hands = 5,
             IEnumerable<StageDefinition> stages = null, ModifierDefinition[] modifiers = null)

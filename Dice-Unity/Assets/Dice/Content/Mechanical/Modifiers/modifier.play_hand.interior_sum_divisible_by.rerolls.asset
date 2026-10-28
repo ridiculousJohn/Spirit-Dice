@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.interior_sum_divisible_by.rerolls
   familyId: modifier.play_hand.interior_sum_divisible_by
   phase: 2
-  conditionKind: 51
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539175
   effects:
-  - kind: 2
-    amount: 1
+  - rid: 1123138582930784420
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539175
+      type: {class: InteriorSumDivisibleByConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        divisor: 3
+    - rid: 1123138582930784420
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

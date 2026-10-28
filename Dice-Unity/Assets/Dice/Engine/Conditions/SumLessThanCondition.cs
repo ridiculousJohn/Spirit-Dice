@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public SumLessThanCondition(int parameter = 15)
+        public SumLessThanCondition(int parameter)
         {
-            parameter = parameter == 0 ? 15 : parameter;
             if (parameter < 0) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

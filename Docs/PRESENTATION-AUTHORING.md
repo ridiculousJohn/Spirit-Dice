@@ -48,7 +48,7 @@ To add a charm, create its mechanical asset, reference it from the catalog (an e
 
 ## Charm condition text
 
-Each charm's presentation asset (`Content/Presentation/SpiritHouse/Modifiers`, `ModifierPresentationAsset`) holds its own condition wording in Condition Template. Write `{parameter}` and `{secondaryParameter}` where the condition's numbers appear; they show the `parameter` and `secondaryParameter` of the mechanical asset the presentation references, read when the text is shown, so changing a mechanical value changes the wording with no presentation edit. Text without placeholders is shown as written. Loading rejects a presentation with empty condition text or with any other `{...}` placeholder or stray brace. The diagnostic scene shows the same names, condition, effect and timing text.
+Each charm's presentation asset (`Content/Presentation/SpiritHouse/Modifiers`, `ModifierPresentationAsset`) holds its own condition wording in Condition Template. Write `{parameter}` and `{secondaryParameter}` where the condition's numbers appear; they show the first and second number of the condition config on the mechanical asset the presentation references, read when the text is shown, so changing a mechanical value changes the wording with no presentation edit. A condition without numbers has no placeholders. Text without placeholders is shown as written. Loading rejects a presentation with empty condition text or with any other `{...}` placeholder or stray brace. The diagnostic scene shows the same names, condition, effect and timing text.
 
 ## Encounter charms introductions
 

@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.range_greater_than.multiplier
   familyId: modifier.play_hand.range_greater_than
   phase: 2
-  conditionKind: 48
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539294
   effects:
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784484
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539294
+      type: {class: RangeGreaterThanConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        range: 3
+    - rid: 1123138582930784484
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

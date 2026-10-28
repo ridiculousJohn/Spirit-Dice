@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.alternating_parity.combined
   familyId: modifier.play_hand.alternating_parity
   phase: 2
-  conditionKind: 27
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538972
   effects:
-  - kind: 0
-    amount: 15
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784307
+  - rid: 1123138582930784308
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538972
+      type: {class: AlternatingParityConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784307
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 15
+    - rid: 1123138582930784308
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

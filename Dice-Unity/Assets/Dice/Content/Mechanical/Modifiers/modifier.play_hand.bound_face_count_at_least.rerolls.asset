@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.bound_face_count_at_least.rerolls
   familyId: modifier.play_hand.bound_face_count_at_least
   phase: 2
-  conditionKind: 75
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538986
   effects:
-  - kind: 2
-    amount: 1
+  - rid: 1123138582930784315
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 2
   availabilityScope: 2
   availabilityScopeId: encounter.nymph.bound_tree
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538986
+      type: {class: BoundFaceCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 3
+    - rid: 1123138582930784315
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.player_reroll.rank_below_before_reroll.multiplier
   familyId: modifier.player_reroll.rank_below_before_reroll
   phase: 1
-  conditionKind: 55
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539501
   effects:
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784599
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539501
+      type: {class: RankBelowBeforeRerollConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784599
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

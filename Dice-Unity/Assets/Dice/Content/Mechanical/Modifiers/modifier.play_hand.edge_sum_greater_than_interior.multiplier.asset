@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.edge_sum_greater_than_interior.multiplier
   familyId: modifier.play_hand.edge_sum_greater_than_interior
   phase: 2
-  conditionKind: 45
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539056
   effects:
-  - kind: 1
-    amount: 4
+  - rid: 1123138582930784354
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539056
+      type: {class: EdgeSumGreaterThanInteriorConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784354
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 4

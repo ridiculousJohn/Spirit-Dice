@@ -10,10 +10,8 @@ namespace Dice.UnityContent
         [SerializeField] private string id;
         [SerializeField] private string familyId;
         [SerializeField] private ModifierPhase phase;
-        [SerializeField] private ModifierConditionKind conditionKind;
-        [SerializeField] private int parameter;
-        [SerializeField] private int secondaryParameter;
-        [SerializeField] private ModifierEffectData[] effects = Array.Empty<ModifierEffectData>();
+        [SerializeReference, SelectImplementation] private ModifierConditionConfig condition;
+        [SerializeReference, SelectImplementation] private ModifierEffectConfig[] effects = Array.Empty<ModifierEffectConfig>();
         [SerializeField] private ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand;
         [SerializeField] private bool rewardEligible = true;
         [SerializeField, Min(1)] private int powerTier = 1;
@@ -23,30 +21,23 @@ namespace Dice.UnityContent
 
         public string Id => id;
         public string FamilyId => familyId;
-        public int Parameter => parameter;
-        public int SecondaryParameter => secondaryParameter;
+        /** The authored condition; its text values fill the charm's condition wording. */
+        public ModifierConditionConfig Condition => condition;
 
         public ModifierDefinition Build()
         {
-            if (effects == null) throw new InvalidOperationException("Modifier effects are missing.");
+            if (condition == null) throw new InvalidOperationException("The charm " + id + " has no condition.");
+            if (effects == null) throw new InvalidOperationException("The charm " + id + " has no effect list.");
             var effectDefinitions = new ModifierEffect[effects.Length];
             for (int i = 0; i < effects.Length; ++i)
             {
-                var source = effects[i] ?? throw new InvalidOperationException("A modifier effect is missing.");
-                effectDefinitions[i] = new ModifierEffect(source.kind, source.amount);
+                var source = effects[i] ?? throw new InvalidOperationException("The charm " + id + " has a missing effect.");
+                effectDefinitions[i] = source.Build();
             }
-            return new ModifierDefinition(id, familyId, phase,
-                ModifierConditions.Create(conditionKind, parameter, secondaryParameter),
+            return new ModifierDefinition(id, familyId, phase, condition.Build(),
                 effectDefinitions, activationLimit, rewardEligible,
                 new ModifierAvailabilityDefinition(powerTier, availabilityScope,
                     string.IsNullOrEmpty(availabilityScopeId) ? null : availabilityScopeId, access));
-        }
-
-        [Serializable]
-        private sealed class ModifierEffectData
-        {
-            public ModifierEffectKind kind;
-            public long amount;
         }
     }
 }

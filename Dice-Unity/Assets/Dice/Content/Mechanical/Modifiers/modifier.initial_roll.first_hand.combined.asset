@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.initial_roll.first_hand.combined
   familyId: modifier.initial_roll.first_hand
   phase: 0
-  conditionKind: 38
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538882
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784257
+  - rid: 1123138582930784258
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538882
+      type: {class: FirstHandConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784257
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784258
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

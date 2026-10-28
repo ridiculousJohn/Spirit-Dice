@@ -27,8 +27,8 @@ namespace Dice.Tests
         public void RuleBonusAddsToTheHandMultiplierAndIsAnnouncedBeforeScoring()
         {
             var modifier = new ModifierDefinition("test.always", "test.always", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Always),
-                new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 7) });
+                new AlwaysCondition(),
+                new ModifierEffect[] { new AddMultiplierEffect(7) });
             var catalog = Catalog(modifier);
             var session = WithDice(catalog, 2, 2, 3, 5, 6);
             var preview = session.PreviewPlayHand();

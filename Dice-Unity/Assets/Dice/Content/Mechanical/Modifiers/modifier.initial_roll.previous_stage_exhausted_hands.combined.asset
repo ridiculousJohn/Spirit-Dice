@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.initial_roll.previous_stage_exhausted_hands.combined
   familyId: modifier.initial_roll.previous_stage_exhausted_hands
   phase: 0
-  conditionKind: 49
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538936
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784287
+  - rid: 1123138582930784288
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538936
+      type: {class: PreviousStageExhaustedHandsConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784287
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784288
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

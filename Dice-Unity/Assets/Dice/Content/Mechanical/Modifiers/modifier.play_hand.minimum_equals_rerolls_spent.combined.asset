@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.minimum_equals_rerolls_spent.combined
   familyId: modifier.play_hand.minimum_equals_rerolls_spent
   phase: 2
-  conditionKind: 32
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539224
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784447
+  - rid: 1123138582930784448
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539224
+      type: {class: MinimumEqualsRerollsSpentConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784447
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784448
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

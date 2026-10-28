@@ -146,7 +146,7 @@ namespace Dice.Tests
         public void RerollInterferenceFlipsAKeptDieBeforeRerollCharms()
         {
             var charm = new ModifierDefinition("test.reroll_charm", "test.reroll_charm", ModifierPhase.PlayerReroll,
-                new ModifierCondition(ModifierConditionKind.Always), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 9) },
+                new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(9) },
                 ModifierActivationLimit.Unlimited);
             var catalog = Catalog(chance: 100, rerollWeight: 0, flipWeight: 1, modifiers: new[] { charm });
 
@@ -199,7 +199,7 @@ namespace Dice.Tests
         {
             // Every die shows six, so a flip leaves exactly one one on the table for the charm to find.
             var charm = new ModifierDefinition("test.play_charm", "test.play_charm", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.ContainsFace, 1), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 9) });
+                new ContainsFaceCondition(1), new ModifierEffect[] { new AddBaseScoreEffect(9) });
             var catalog = Catalog(chance: 100, rerollWeight: 0, flipWeight: 1, modifiers: new[] { charm });
             var session = WithDice(catalog, 6, 6, 6, 6, 6);
             ulong ruleStream = session.CaptureSave().RuleRandomState;

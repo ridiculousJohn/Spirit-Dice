@@ -15,17 +15,29 @@ MonoBehaviour:
   id: modifier.play_hand.favored_face_count_at_least.combined
   familyId: modifier.play_hand.favored_face_count_at_least
   phase: 2
-  conditionKind: 74
-  parameter: 2
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539107
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784382
+  - rid: 1123138582930784383
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 2
   availabilityScope: 2
   availabilityScopeId: encounter.moth.crossroads
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539107
+      type: {class: FavoredFaceCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 2
+    - rid: 1123138582930784382
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784383
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

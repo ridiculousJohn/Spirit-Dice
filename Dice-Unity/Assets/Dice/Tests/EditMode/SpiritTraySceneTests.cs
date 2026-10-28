@@ -293,7 +293,7 @@ namespace Dice.Tests
         public void CategorizedTokensShowTheirGlyphAndInkWithoutTintingTheBone()
         {
             Color ink = new Color(.2f, .45f, .7f, 1f);
-            var categorized = TestTrayRig.Definition("test.tray.categorized", effect: ModifierEffectKind.AddMultiplier);
+            var categorized = TestTrayRig.Definition("test.tray.categorized", effect: new AddMultiplierEffect(1));
             var categorizedCharms = Rig.Synthetic.For(Rig.Synthetic.Category(Rig.Synthetic.Icon(), ink: ink), categorized);
             {
                 var plain = TestTrayRig.Definition("test.tray.uncategorized");
@@ -522,8 +522,8 @@ namespace Dice.Tests
         private static MechanicalCatalog ReadyCatalog(out ModifierDefinition roll, out ModifierDefinition score, out ModifierDefinition grant)
         {
             roll = TestTrayRig.Definition("test.ready.roll", ModifierPhase.InitialRoll);
-            score = TestTrayRig.Definition("test.ready.score", ModifierPhase.PlayHand, ModifierEffectKind.AddMultiplier);
-            grant = TestTrayRig.Definition("test.ready.grant", ModifierPhase.PlayHand, ModifierEffectKind.AddRerolls);
+            score = TestTrayRig.Definition("test.ready.score", ModifierPhase.PlayHand, new AddMultiplierEffect(1));
+            grant = TestTrayRig.Definition("test.ready.grant", ModifierPhase.PlayHand, new AddRerollsEffect(1));
             return new MechanicalCatalog("test.ready", TestContent.Hands(),
                 new[] { new EncounterDefinition("test.ready", new[] { new StageDefinition(1, 1, 0) }) }, new[] { roll, score, grant });
         }
@@ -832,8 +832,8 @@ namespace Dice.Tests
         }
 
         internal static ModifierDefinition Definition(string id, ModifierPhase phase = ModifierPhase.PlayHand,
-            ModifierEffectKind effect = ModifierEffectKind.AddBaseScore)
-            => new ModifierDefinition(id, id, phase, new AlwaysCondition(), new[] { new ModifierEffect(effect, 1) });
+            ModifierEffect effect = null)
+            => new ModifierDefinition(id, id, phase, new AlwaysCondition(), new[] { effect ?? new AddBaseScoreEffect(1) });
 
         /** A contribution of the definition, made through the engine's own constructor. */
         internal static ModifierContribution Contribution(ModifierDefinition definition, long instanceId = 1, long baseScore = 1,

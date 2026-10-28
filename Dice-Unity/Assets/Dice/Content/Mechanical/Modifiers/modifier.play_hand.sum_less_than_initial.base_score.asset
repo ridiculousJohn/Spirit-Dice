@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.sum_less_than_initial.base_score
   familyId: modifier.play_hand.sum_less_than_initial
   phase: 2
-  conditionKind: 5
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539397
   effects:
-  - kind: 0
-    amount: 10
+  - rid: 1123138582930784541
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539397
+      type: {class: SumLessThanInitialConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784541
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10

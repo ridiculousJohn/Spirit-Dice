@@ -15,13 +15,18 @@ MonoBehaviour:
   id: modifier.play_hand.never.combined
   familyId: modifier.play_hand.never
   phase: 2
-  conditionKind: 56
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539232
   effects: []
   activationLimit: 1
   rewardEligible: 0
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539232
+      type: {class: NeverConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 

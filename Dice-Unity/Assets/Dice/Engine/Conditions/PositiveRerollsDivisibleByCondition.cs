@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public PositiveRerollsDivisibleByCondition(int parameter = 3)
+        public PositiveRerollsDivisibleByCondition(int parameter)
         {
-            parameter = parameter == 0 ? 3 : parameter;
             if (parameter < 1) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

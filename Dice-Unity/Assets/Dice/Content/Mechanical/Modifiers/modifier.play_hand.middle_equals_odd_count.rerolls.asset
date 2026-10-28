@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.middle_equals_odd_count.rerolls
   familyId: modifier.play_hand.middle_equals_odd_count
   phase: 2
-  conditionKind: 60
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539202
   effects:
-  - kind: 2
-    amount: 2
+  - rid: 1123138582930784435
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539202
+      type: {class: MiddleEqualsOddCountConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784435
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

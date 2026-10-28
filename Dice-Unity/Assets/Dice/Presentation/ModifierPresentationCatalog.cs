@@ -16,9 +16,6 @@ namespace Dice.Presentation
      */
     public sealed class ModifierPresentationCatalog
     {
-        private const string ParameterPlaceholder = "{parameter}";
-        private const string SecondaryParameterPlaceholder = "{secondaryParameter}";
-
         private readonly Dictionary<ModifierDefinition, ModifierPresentationAsset> entries =
             new Dictionary<ModifierDefinition, ModifierPresentationAsset>();
         private readonly Dictionary<ModifierEffectKind, ModifierEffectWording> wording =
@@ -125,8 +122,9 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires an icon: " + id);
             if (string.IsNullOrWhiteSpace(presentation.ConditionTemplate))
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires condition text: " + id);
-            // Any brace left once the known placeholders are removed is an unknown or malformed placeholder.
-            string unplaced = presentation.ConditionTemplate.Replace(ParameterPlaceholder, "").Replace(SecondaryParameterPlaceholder, "");
+            // Any brace left once the condition's own placeholders are removed is an unknown or malformed placeholder.
+            string unplaced = presentation.ConditionTemplate;
+            foreach (var value in presentation.Modifier.Condition.TextValues) unplaced = unplaced.Replace(Placeholder(value.Key), "");
             if (unplaced.IndexOf('{') >= 0 || unplaced.IndexOf('}') >= 0)
                 throw new InvalidOperationException("The condition template of " + presentation.name + " contains an unknown placeholder: " + id);
             if (presentation.Category == null)
@@ -142,11 +140,13 @@ namespace Dice.Presentation
         {
             ModifierPresentationAsset entry = Entry(definition);
             // Read the referenced mechanical asset, so changed parameters appear immediately.
-            ModifierAsset modifier = entry.Modifier;
-            return entry.ConditionTemplate
-                .Replace(ParameterPlaceholder, modifier.Parameter.ToString(CultureInfo.InvariantCulture))
-                .Replace(SecondaryParameterPlaceholder, modifier.SecondaryParameter.ToString(CultureInfo.InvariantCulture));
+            string text = entry.ConditionTemplate;
+            foreach (var value in entry.Modifier.Condition.TextValues)
+                text = text.Replace(Placeholder(value.Key), value.Value.ToString(CultureInfo.InvariantCulture));
+            return text;
         }
+
+        private static string Placeholder(string name) => "{" + name + "}";
 
         public string GetEffectText(ModifierDefinition definition)
         {

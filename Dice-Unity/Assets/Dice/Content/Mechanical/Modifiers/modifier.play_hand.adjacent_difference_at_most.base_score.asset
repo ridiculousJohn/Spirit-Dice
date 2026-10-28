@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.adjacent_difference_at_most.base_score
   familyId: modifier.play_hand.adjacent_difference_at_most
   phase: 2
-  conditionKind: 44
-  parameter: 1
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538943
   effects:
-  - kind: 0
-    amount: 15
+  - rid: 1123138582930784291
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538943
+      type: {class: AdjacentDifferenceAtMostConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        difference: 1
+    - rid: 1123138582930784291
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 15

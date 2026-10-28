@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.extreme_equals_hands_remaining.base_score
   familyId: modifier.play_hand.extreme_equals_hands_remaining
   phase: 2
-  conditionKind: 39
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539087
   effects:
-  - kind: 0
-    amount: 10
+  - rid: 1123138582930784371
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539087
+      type: {class: ExtremeEqualsHandsRemainingConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784371
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10

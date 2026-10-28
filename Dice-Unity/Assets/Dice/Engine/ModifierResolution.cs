@@ -107,26 +107,15 @@ namespace Dice.Engine
                     !HasActivationAllowance(instance, definition) ||
                     !definition.Condition.Evaluate(in context)) continue;
 
-                long baseScore = 0;
-                long multiplier = 0;
-                int rerolls = 0;
+                ModifierEffectTotals totals = ModifierEffectTotals.Of(definition);
                 checked
                 {
-                    foreach (var effect in definition.Effects)
-                    {
-                        switch (effect.Kind)
-                        {
-                            case ModifierEffectKind.AddBaseScore: baseScore += effect.Amount; break;
-                            case ModifierEffectKind.AddMultiplier: multiplier += effect.Amount; break;
-                            case ModifierEffectKind.AddRerolls: rerolls += (int)effect.Amount; break;
-                            default: throw new InvalidOperationException("Unsupported modifier effect.");
-                        }
-                    }
                     ++instance.ActivationsThisHand;
                     ++instance.ActivationsThisStage;
                     ++instance.TotalActivations;
                 }
-                contributions.Add(new ModifierContribution(instance.InstanceId, definition, baseScore, multiplier, rerolls));
+                contributions.Add(new ModifierContribution(instance.InstanceId, definition, totals.BaseScore, totals.Multiplier,
+                    totals.Rerolls));
             }
 
             foreach (var contribution in contributions)

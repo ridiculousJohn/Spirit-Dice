@@ -14,10 +14,10 @@ namespace Dice.Tests
         {
             int face = TestContent.Session().Snapshot.CurrentDice[0];
             var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
-                new ModifierEffect(ModifierEffectKind.AddRerolls, face));
+                new AddRerollsEffect(face));
             var conditional = new ModifierDefinition("conditional", "test.conditional", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.ContainsRerollsRemaining),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+                new ContainsRerollsRemainingCondition(),
+                new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var session = Session(new[] { grant, conditional },
                 reverse ? new[] { "conditional", "grant" } : new[] { "grant", "conditional" },
                 new[] { new StageDefinition(1000000, 3, 0) });
@@ -32,18 +32,18 @@ namespace Dice.Tests
         [TestCase(3, false)]
         [TestCase(4, true)]
         public void HandParityConditionUsesTheHandCountBeforePlaying(int startingHands, bool expected)
-            => AssertHandCountPredicate(ModifierConditionKind.HandsRemainingEven, startingHands, 0, expected);
+            => AssertHandCountPredicate(new HandsRemainingEvenCondition(), startingHands, 0, expected);
 
         [Test]
         public void ResourceComparisonConditionsPreserveTheirNativeHandCountTiming()
         {
             var dice = TestContent.Session().Snapshot.CurrentDice;
-            AssertHandCountPredicate(ModifierConditionKind.ExtremeEqualsHandsRemaining, dice.ToArray().Min(), 0, true);
+            AssertHandCountPredicate(new ExtremeEqualsHandsRemainingCondition(), dice.ToArray().Min(), 0, true);
             int largestGroup = dice.ToArray().GroupBy(value => value).Max(value => value.Count());
-            AssertHandCountPredicate(ModifierConditionKind.LargestGroupEqualsHandsOrRerolls, largestGroup, 0, true);
-            AssertHandCountPredicate(ModifierConditionKind.EdgeSumEqualsHandsOrRerolls, dice[0] + dice[4], 0, true);
-            AssertHandCountPredicate(ModifierConditionKind.RerollsExceedHandsRemaining, 3, 3, false);
-            AssertHandCountPredicate(ModifierConditionKind.RerollsExceedHandsRemaining, 3, 4, true);
+            AssertHandCountPredicate(new LargestGroupEqualsHandsOrRerollsCondition(), largestGroup, 0, true);
+            AssertHandCountPredicate(new EdgeSumEqualsHandsOrRerollsCondition(), dice[0] + dice[4], 0, true);
+            AssertHandCountPredicate(new RerollsExceedHandsRemainingCondition(), 3, 3, false);
+            AssertHandCountPredicate(new RerollsExceedHandsRemainingCondition(), 3, 4, true);
         }
 
         [TestCase(false)]
@@ -51,10 +51,10 @@ namespace Dice.Tests
         public void PhasePredicatesObserveResourcesBeforeAnyModifierEffects(bool reverse)
         {
             var grant = Modifier("grant", ModifierPhase.PlayHand, ModifierActivationLimit.Unlimited,
-                new ModifierEffect(ModifierEffectKind.AddRerolls, 2));
+                new AddRerollsEffect(2));
             var exhausted = new ModifierDefinition("empty", "test.empty", ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.OutOfRerolls),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+                new OutOfRerollsCondition(),
+                new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var definitions = reverse ? new[] { exhausted, grant } : new[] { grant, exhausted };
             var session = Session(definitions, reverse ? new[] { "empty", "grant" } : new[] { "grant", "empty" },
                 new[] { new StageDefinition(1000000, 3, 0) });
@@ -72,7 +72,7 @@ namespace Dice.Tests
         public void DuplicateDefinitionsHaveIndependentOncePerHandCounters()
         {
             var definition = Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 7));
+                new AddBaseScoreEffect(7));
             var session = Session(new[] { definition }, new[] { "reroll", "reroll" });
             var first = session.Execute(new RerollDiceAction(1), 0);
             Assert.That(first.Events.OfType<ModifierActivatedEvent>().Select(value => value.InstanceId),
@@ -100,7 +100,7 @@ namespace Dice.Tests
         public void OncePerStageCountersResetOnStageEntryAndDuplicateInstancesRemainIndependent()
         {
             var definition = Modifier("stage", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerStage,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 1));
+                new AddBaseScoreEffect(1));
             var probe = TestContent.Session();
             probe.Execute(new RerollDiceAction(1), 0);
             var firstScore = probe.PreviewPlayHand();
@@ -127,11 +127,11 @@ namespace Dice.Tests
             var definitions = new[]
             {
                 Modifier("initial", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 5)),
+                    new AddBaseScoreEffect(5)),
                 Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddMultiplier, 2)),
+                    new AddMultiplierEffect(2)),
                 Modifier("play", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 11))
+                    new AddBaseScoreEffect(11))
             };
             var session = Session(definitions, definitions.Select(value => value.Id));
             Assert.That(session.Snapshot.ModifierBaseScore, Is.EqualTo(5));
@@ -156,10 +156,10 @@ namespace Dice.Tests
         public void OpeningAndLastRerollBonusesAreBankedAcrossSaveAndScored()
         {
             var opening = Modifier("opening", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 7));
+                new AddBaseScoreEffect(7));
             var lastReroll = new ModifierDefinition("last-reroll", "test.last-reroll", ModifierPhase.PlayerReroll,
-                new ModifierCondition(ModifierConditionKind.LastRerollOnLastHand),
-                new[] { new ModifierEffect(ModifierEffectKind.AddMultiplier, 3) });
+                new LastRerollOnLastHandCondition(),
+                new ModifierEffect[] { new AddMultiplierEffect(3) });
             var definitions = new[] { opening, lastReroll };
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 1, 2) },
                 startingModifiers: definitions.Select(value => value.Id));
@@ -195,12 +195,12 @@ namespace Dice.Tests
             var definitions = new[]
             {
                 Modifier("initial", ModifierPhase.InitialRoll, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 5)),
+                    new AddBaseScoreEffect(5)),
                 Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddMultiplier, 2)),
+                    new AddMultiplierEffect(2)),
                 Modifier("play", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
-                    new ModifierEffect(ModifierEffectKind.AddBaseScore, 11),
-                    new ModifierEffect(ModifierEffectKind.AddRerolls, 3))
+                    new AddBaseScoreEffect(11),
+                    new AddRerollsEffect(3))
             };
             var session = Session(definitions, definitions.Select(value => value.Id), seed: 77);
             var control = Session(definitions, definitions.Select(value => value.Id), seed: 77);
@@ -233,8 +233,8 @@ namespace Dice.Tests
         public void RejectedActionsLeaveModifiersAndFutureDiceUnchanged(int selectedMask, CommandRejection rejection)
         {
             var modifier = Modifier("reroll", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 19),
-                new ModifierEffect(ModifierEffectKind.AddRerolls, 1));
+                new AddBaseScoreEffect(19),
+                new AddRerollsEffect(1));
             var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var before = session.Snapshot;
@@ -252,8 +252,8 @@ namespace Dice.Tests
         public void OverflowAfterDrawingRerollDiceDoesNotCommitRandomStateCountersOrContributions()
         {
             var modifier = Modifier("overflow", ModifierPhase.PlayerReroll, ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 19),
-                new ModifierEffect(ModifierEffectKind.AddRerolls, int.MaxValue));
+                new AddBaseScoreEffect(19),
+                new AddRerollsEffect(int.MaxValue));
             var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var before = session.Snapshot;
@@ -271,7 +271,7 @@ namespace Dice.Tests
         public void PlayOverflowAndPreviewOverflowLeaveTheEncounterRetryable()
         {
             var modifier = Modifier("overflow", ModifierPhase.PlayHand, ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, long.MaxValue));
+                new AddBaseScoreEffect(long.MaxValue));
             var session = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var control = Session(new[] { modifier }, new[] { modifier.Id }, seed: 14);
             var before = session.Snapshot;
@@ -288,7 +288,7 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, ModifierActivationLimit limit,
             params ModifierEffect[] effects)
-            => new ModifierDefinition(id, "test." + id, phase, new ModifierCondition(ModifierConditionKind.Always), effects, limit);
+            => new ModifierDefinition(id, "test." + id, phase, new AlwaysCondition(), effects, limit);
 
         private static EncounterSession Session(IEnumerable<ModifierDefinition> modifiers, IEnumerable<string> inventory,
             IEnumerable<StageDefinition> stages = null, ulong seed = 0)
@@ -299,16 +299,16 @@ namespace Dice.Tests
             return EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, seed);
         }
 
-        private static void AssertHandCountPredicate(ModifierConditionKind kind, int hands, int rerolls, bool expected)
+        private static void AssertHandCountPredicate(IModifierCondition condition, int hands, int rerolls, bool expected)
         {
             var modifier = new ModifierDefinition("condition", "test.condition", ModifierPhase.PlayHand,
-                new ModifierCondition(kind), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 17) });
+                condition, new ModifierEffect[] { new AddBaseScoreEffect(17) });
             var session = Session(new[] { modifier }, new[] { modifier.Id },
                 new[] { new StageDefinition(1000000, hands, rerolls) });
             var result = session.Execute(PlayHandAction.Instance, 0);
-            Assert.That(result.Events.OfType<ModifierActivatedEvent>().Any(), Is.EqualTo(expected), kind.ToString());
+            Assert.That(result.Events.OfType<ModifierActivatedEvent>().Any(), Is.EqualTo(expected), condition.GetType().Name);
             Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore,
-                Is.EqualTo(expected ? 17 : 0), kind.ToString());
+                Is.EqualTo(expected ? 17 : 0), condition.GetType().Name);
         }
 
         private static void AssertScoreEqual(ScoreBreakdown expected, ScoreBreakdown actual)

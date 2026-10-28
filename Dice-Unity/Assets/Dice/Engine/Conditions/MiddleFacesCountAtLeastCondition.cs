@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public MiddleFacesCountAtLeastCondition(int parameter = 4)
+        public MiddleFacesCountAtLeastCondition(int parameter)
         {
-            parameter = parameter == 0 ? 4 : parameter;
             if (parameter < 1 || parameter > DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

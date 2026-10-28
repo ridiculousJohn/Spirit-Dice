@@ -28,15 +28,15 @@ namespace Dice.Tests
         [SetUp]
         public void BuildCollection()
         {
-            starter = Modifier("starter", ModifierAccess.Starter, ModifierEffectKind.AddBaseScore);
-            locked = Modifier("locked", ModifierAccess.PermanentUnlock, ModifierEffectKind.AddMultiplier);
+            starter = Modifier("starter", ModifierAccess.Starter, new AddBaseScoreEffect(1));
+            locked = Modifier("locked", ModifierAccess.PermanentUnlock, new AddMultiplierEffect(1));
             unlocked = new ModifierDefinition("unlocked", "family", ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 5), new ModifierEffect(ModifierEffectKind.AddMultiplier, 1) },
+                new ModifierEffect[] { new AddBaseScoreEffect(5), new AddMultiplierEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
-            encounterOnly = Modifier("encounter.only", ModifierAccess.EncounterExclusive, ModifierEffectKind.AddRerolls, "family.encounter");
-            discovered = Modifier("discovered", ModifierAccess.PermanentUnlock, ModifierEffectKind.AddBaseScore, "family.discovered");
-            undiscovered = Modifier("undiscovered", ModifierAccess.PermanentUnlock, ModifierEffectKind.AddMultiplier, "family.undiscovered");
-            inert = Modifier("inert", ModifierAccess.Starter, ModifierEffectKind.AddRerolls, "family.inert", false);
+            encounterOnly = Modifier("encounter.only", ModifierAccess.EncounterExclusive, new AddRerollsEffect(1), "family.encounter");
+            discovered = Modifier("discovered", ModifierAccess.PermanentUnlock, new AddBaseScoreEffect(1), "family.discovered");
+            undiscovered = Modifier("undiscovered", ModifierAccess.PermanentUnlock, new AddMultiplierEffect(1), "family.undiscovered");
+            inert = Modifier("inert", ModifierAccess.Starter, new AddRerollsEffect(1), "family.inert", false);
             var encounter = new EncounterDefinition("encounter.test", new[]
                 {
                     new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3)
@@ -230,10 +230,10 @@ namespace Dice.Tests
             }
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffectKind kind,
+        private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffect effect,
             string familyId = "family", bool rewardEligible = true)
             => new ModifierDefinition(id, familyId, ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { new ModifierEffect(kind, 1) }, rewardEligible: rewardEligible, availability: access == ModifierAccess.EncounterExclusive
+                new[] { effect }, rewardEligible: rewardEligible, availability: access == ModifierAccess.EncounterExclusive
                     ? new ModifierAvailabilityDefinition(scope: ModifierAvailabilityScope.Encounter, scopeId: "encounter.test", access: access)
                     : new ModifierAvailabilityDefinition(access: access));
 

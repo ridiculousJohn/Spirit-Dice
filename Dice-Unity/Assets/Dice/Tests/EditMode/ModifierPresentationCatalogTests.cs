@@ -62,8 +62,7 @@ namespace Dice.Tests
         {
             const int parameter = 2;
             const int secondaryParameter = 5;
-            var charm = synthetic.Charm("test.extremes", condition: ModifierConditionKind.NoExtremeFaces,
-                parameter: parameter, secondaryParameter: secondaryParameter);
+            var charm = synthetic.Charm("test.extremes", condition: new NoExtremeFacesConditionConfig(parameter, secondaryParameter));
             var charms = Single(charm, "Avoids {parameter} and {secondaryParameter}.");
             Assert.That(charms.GetConditionText(Definition(charms)), Is.EqualTo("Avoids " + parameter + " and " + secondaryParameter + "."));
         }
@@ -72,13 +71,13 @@ namespace Dice.Tests
         [Test]
         public void ConditionTextFollowsChangedMechanicalParameters()
         {
-            var charm = synthetic.Charm("test.extremes", condition: ModifierConditionKind.NoExtremeFaces, parameter: 1, secondaryParameter: 6);
+            var charm = synthetic.Charm("test.extremes", condition: new NoExtremeFacesConditionConfig(1, 6));
             var charms = Single(charm, "Avoids {parameter} and {secondaryParameter}.");
             const int parameter = 3;
             const int secondaryParameter = 4;
             var mechanical = new SerializedObject(charm);
-            mechanical.FindProperty("parameter").intValue = parameter;
-            mechanical.FindProperty("secondaryParameter").intValue = secondaryParameter;
+            mechanical.FindProperty("condition.firstFace").intValue = parameter;
+            mechanical.FindProperty("condition.secondFace").intValue = secondaryParameter;
             mechanical.ApplyModifiedPropertiesWithoutUndo();
             Assert.That(charms.GetConditionText(Definition(charms)), Is.EqualTo("Avoids " + parameter + " and " + secondaryParameter + "."));
         }
@@ -87,7 +86,7 @@ namespace Dice.Tests
         [Test]
         public void ConditionTextWithoutPlaceholdersIsUsedAsWritten()
         {
-            var charm = synthetic.Charm("test.pair", condition: ModifierConditionKind.InitialPair, parameter: 4, secondaryParameter: 5);
+            var charm = synthetic.Charm("test.pair", condition: new InitialPairConditionConfig());
             var charms = Single(charm, "Your opening dice pair up.");
             Assert.That(charms.GetConditionText(Definition(charms)), Is.EqualTo("Your opening dice pair up."));
         }
@@ -96,7 +95,7 @@ namespace Dice.Tests
         [Test]
         public void EffectTextUsesTheSkinsWordingForEachEffect()
         {
-            var charm = synthetic.Charm("test.both", effects: new[] { (ModifierEffectKind.AddBaseScore, 10L), (ModifierEffectKind.AddMultiplier, 7L) });
+            var charm = synthetic.Charm("test.both", effects: new ModifierEffectConfig[] { new AddBaseScoreEffectConfig(10), new AddMultiplierEffectConfig(7) });
             var charms = Worded(charm, new[]
             {
                 new ModifierEffectWording(ModifierEffectKind.AddBaseScore, "spark", "sparks", "S"),
@@ -110,7 +109,7 @@ namespace Dice.Tests
         [TestCase(2, "+2 sparks")]
         public void EffectTextUsesTheSingularLabelForOneAndThePluralOtherwise(int amount, string expected)
         {
-            var charm = synthetic.Charm("test.amount", effects: new[] { (ModifierEffectKind.AddRerolls, (long)amount) });
+            var charm = synthetic.Charm("test.amount", effects: new AddRerollsEffectConfig(amount));
             var charms = Worded(charm, new[] { new ModifierEffectWording(ModifierEffectKind.AddRerolls, "spark", "sparks", "S") });
             Assert.That(charms.GetEffectText(Definition(charms)), Is.EqualTo(expected));
         }
@@ -119,8 +118,8 @@ namespace Dice.Tests
         [Test]
         public void CompactEffectTextMarksEachEffectOfAMultiEffectCharm()
         {
-            var both = synthetic.Charm("test.both", effects: new[] { (ModifierEffectKind.AddBaseScore, 10L), (ModifierEffectKind.AddMultiplier, 7L) });
-            var single = synthetic.Charm("test.single", effects: new[] { (ModifierEffectKind.AddBaseScore, 3L) });
+            var both = synthetic.Charm("test.both", effects: new ModifierEffectConfig[] { new AddBaseScoreEffectConfig(10), new AddMultiplierEffectConfig(7) });
+            var single = synthetic.Charm("test.single", effects: new AddBaseScoreEffectConfig(3));
             var category = synthetic.Category();
             var content = SyntheticCharms.Content(both, single);
             var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(both, category), synthetic.Presentation(single, category) },
@@ -156,8 +155,8 @@ namespace Dice.Tests
         public void RewardDescriptionUsesTheSkinsLeadAndLimitNote(bool phaseImpliesLimit, string note, string expectedNote)
         {
             const int face = 4;
-            var charm = synthetic.Charm("test.contains_face", phase: ModifierPhase.PlayerReroll, condition: ModifierConditionKind.ContainsFace,
-                parameter: face, limit: ModifierActivationLimit.OncePerStage, effects: new[] { (ModifierEffectKind.AddMultiplier, 2L) });
+            var charm = synthetic.Charm("test.contains_face", phase: ModifierPhase.PlayerReroll, condition: new ContainsFaceConditionConfig(face),
+                limit: ModifierActivationLimit.OncePerStage, effects: new AddMultiplierEffectConfig(2));
             var implied = phaseImpliesLimit ? new[] { ModifierActivationLimit.OncePerStage } : new ModifierActivationLimit[0];
             var charms = Timed(charm, new[] { new ModifierPhaseWording(ModifierPhase.PlayerReroll, "At dusk", "When dusk falls", implied) },
                 new[] { new ModifierActivationLimitWording(ModifierActivationLimit.OncePerStage, "Rarely", note) },
@@ -192,7 +191,7 @@ namespace Dice.Tests
         public void CategoryStylingComesFromThePresentationsCategory()
         {
             var rerolls = synthetic.Category(synthetic.Icon(), new Color(.2f, .6f, .9f), new Color(.1f, .3f, .5f));
-            var charm = synthetic.Charm("test.lookup.base_score", effects: new[] { (ModifierEffectKind.AddBaseScore, 10L) });
+            var charm = synthetic.Charm("test.lookup.base_score", effects: new AddBaseScoreEffectConfig(10));
             var content = SyntheticCharms.Content(charm);
             var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, rerolls) }, new[] { rerolls }), content);
             var definition = content.GetDefinition(charm);
@@ -240,7 +239,7 @@ namespace Dice.Tests
         [Test]
         public void AnEffectKindWithoutWordingFailsAtLoad()
         {
-            var charm = synthetic.Charm("test.rerolls", effects: new[] { (ModifierEffectKind.AddRerolls, 1L) });
+            var charm = synthetic.Charm("test.rerolls", effects: new AddRerollsEffectConfig(1));
             Assert.Throws<InvalidOperationException>(() => Worded(charm,
                 new[] { new ModifierEffectWording(ModifierEffectKind.AddBaseScore, "spark", "sparks", "S") }));
         }

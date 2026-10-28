@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.contains_upper_face.multiplier
   familyId: modifier.play_hand.contains_upper_face
   phase: 2
-  conditionKind: 9
-  parameter: 6
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539011
   effects:
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784329
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539011
+      type: {class: ContainsUpperFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        face: 6
+    - rid: 1123138582930784329
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

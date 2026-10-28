@@ -104,7 +104,7 @@ namespace Dice.Tests
             ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, string scopeId = null,
             ModifierAccess access = ModifierAccess.Starter, bool rewardEligible = true)
             => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Never), Array.Empty<ModifierEffect>(),
+                new NeverCondition(), Array.Empty<ModifierEffect>(),
                 rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, scope, scopeId, access));
 
         private static RewardPolicyDefinition Policy(int slots = 1, IEnumerable<ModifierTierRule> rules = null,

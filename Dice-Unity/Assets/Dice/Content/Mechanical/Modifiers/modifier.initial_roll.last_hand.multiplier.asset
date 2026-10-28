@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.initial_roll.last_hand.multiplier
   familyId: modifier.initial_roll.last_hand
   phase: 0
-  conditionKind: 6
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844538912
   effects:
-  - kind: 1
-    amount: 3
+  - rid: 1123138582930784274
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844538912
+      type: {class: LastHandConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784274
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 3

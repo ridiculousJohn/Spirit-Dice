@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.player_reroll.exactly_one_selected_face.base_score
   familyId: modifier.player_reroll.exactly_one_selected_face
   phase: 1
-  conditionKind: 2
-  parameter: 1
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539451
   effects:
-  - kind: 0
-    amount: 10
+  - rid: 1123138582930784571
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539451
+      type: {class: ExactlyOneSelectedFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        face: 1
+    - rid: 1123138582930784571
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10

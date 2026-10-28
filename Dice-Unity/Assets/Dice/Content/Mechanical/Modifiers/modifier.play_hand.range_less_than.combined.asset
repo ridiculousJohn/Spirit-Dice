@@ -15,17 +15,29 @@ MonoBehaviour:
   id: modifier.play_hand.range_less_than.combined
   familyId: modifier.play_hand.range_less_than
   phase: 2
-  conditionKind: 4
-  parameter: 3
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539300
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784487
+  - rid: 1123138582930784488
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539300
+      type: {class: RangeLessThanConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        range: 3
+    - rid: 1123138582930784487
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784488
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

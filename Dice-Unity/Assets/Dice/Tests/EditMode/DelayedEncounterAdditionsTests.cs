@@ -97,7 +97,7 @@ namespace Dice.Tests
         private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
             string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
             => new ModifierDefinition(id, "family." + id, ModifierPhase.PlayHand,
-                new ModifierCondition(ModifierConditionKind.Never), Array.Empty<ModifierEffect>(),
+                new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(1, scope, scopeId, access));
 
         private static Resolution Execute(EncounterSession session, EncounterAction action)

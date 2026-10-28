@@ -32,9 +32,9 @@ namespace Dice.Tests
             var definitions = new[]
             {
                 Modifier("custom.match", ModifierPhase.PlayerReroll, matching,
-                    ModifierActivationLimit.Unlimited, new ModifierEffect(ModifierEffectKind.AddBaseScore, 17)),
+                    ModifierActivationLimit.Unlimited, new AddBaseScoreEffect(17)),
                 Modifier("custom.fail", ModifierPhase.PlayerReroll, failing,
-                    ModifierActivationLimit.Unlimited, new ModifierEffect(ModifierEffectKind.AddMultiplier, 9))
+                    ModifierActivationLimit.Unlimited, new AddMultiplierEffect(9))
             };
             var session = Session(Catalog(definitions));
             Assert.That(definitions[0].Condition, Is.SameAs(matching));
@@ -60,7 +60,7 @@ namespace Dice.Tests
         {
             var condition = new RecordingCondition(context => true);
             var definition = Modifier("custom.limited", ModifierPhase.PlayerReroll, condition, limit,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 7));
+                new AddBaseScoreEffect(7));
             var session = Session(Catalog(new[] { definition }));
             Assert.That(condition.Contexts, Is.Empty);
             session.PreviewHandResolution();
@@ -89,9 +89,9 @@ namespace Dice.Tests
             var exhaustedCondition = new RecordingCondition(context =>
                 context.HandsRemaining == 2 && context.RerollsRemaining == 0);
             var grant = Modifier("custom.grant", ModifierPhase.PlayHand, grantCondition,
-                ModifierActivationLimit.Unlimited, new ModifierEffect(ModifierEffectKind.AddRerolls, 2));
+                ModifierActivationLimit.Unlimited, new AddRerollsEffect(2));
             var exhausted = Modifier("custom.exhausted", ModifierPhase.PlayHand, exhaustedCondition,
-                ModifierActivationLimit.Unlimited, new ModifierEffect(ModifierEffectKind.AddBaseScore, 17));
+                ModifierActivationLimit.Unlimited, new AddBaseScoreEffect(17));
             var definitions = reverse ? new[] { exhausted, grant } : new[] { grant, exhausted };
             var session = Session(Catalog(definitions, new StageDefinition(1000000, 3, 0)));
 
@@ -116,8 +116,8 @@ namespace Dice.Tests
                 context.HandsRemaining == 19 && context.RerollsRemaining == 20);
             var definition = Modifier("custom.preview", ModifierPhase.PlayHand, condition,
                 ModifierActivationLimit.OncePerHand,
-                new ModifierEffect(ModifierEffectKind.AddBaseScore, 11),
-                new ModifierEffect(ModifierEffectKind.AddRerolls, 3));
+                new AddBaseScoreEffect(11),
+                new AddRerollsEffect(3));
             var catalog = Catalog(new[] { definition });
             var session = Session(catalog);
             var control = Session(catalog);
@@ -155,9 +155,9 @@ namespace Dice.Tests
             var definitions = new[]
             {
                 Modifier("custom.initial", ModifierPhase.InitialRoll, initial,
-                    ModifierActivationLimit.OncePerHand, new ModifierEffect(ModifierEffectKind.AddBaseScore, 5)),
+                    ModifierActivationLimit.OncePerHand, new AddBaseScoreEffect(5)),
                 Modifier("custom.reroll", ModifierPhase.PlayerReroll, reroll,
-                    ModifierActivationLimit.OncePerHand, new ModifierEffect(ModifierEffectKind.AddMultiplier, 2))
+                    ModifierActivationLimit.OncePerHand, new AddMultiplierEffect(2))
             };
             var catalog = Catalog(definitions);
             var session = Session(catalog);

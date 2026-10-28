@@ -15,17 +15,29 @@ MonoBehaviour:
   id: modifier.play_hand.middle_faces_count_at_least.combined
   familyId: modifier.play_hand.middle_faces_count_at_least
   phase: 2
-  conditionKind: 70
-  parameter: 4
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539206
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784437
+  - rid: 1123138582930784438
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539206
+      type: {class: MiddleFacesCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 4
+    - rid: 1123138582930784437
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784438
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

@@ -6,9 +6,8 @@ namespace Dice.Engine
     {
         public int Parameter { get; }
 
-        public RerollsSpentAtLeastCondition(int parameter = 3)
+        public RerollsSpentAtLeastCondition(int parameter)
         {
-            parameter = parameter == 0 ? 3 : parameter;
             if (parameter < 0) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }

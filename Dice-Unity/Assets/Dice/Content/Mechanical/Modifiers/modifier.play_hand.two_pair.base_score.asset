@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.two_pair.base_score
   familyId: modifier.play_hand.two_pair
   phase: 2
-  conditionKind: 41
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539424
   effects:
-  - kind: 0
-    amount: 15
+  - rid: 1123138582930784556
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539424
+      type: {class: TwoPairConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784556
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 15

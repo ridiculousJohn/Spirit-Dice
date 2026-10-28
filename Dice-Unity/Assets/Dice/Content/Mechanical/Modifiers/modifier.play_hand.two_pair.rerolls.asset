@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.two_pair.rerolls
   familyId: modifier.play_hand.two_pair
   phase: 2
-  conditionKind: 41
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539431
   effects:
-  - kind: 2
-    amount: 2
+  - rid: 1123138582930784560
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539431
+      type: {class: TwoPairConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784560
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

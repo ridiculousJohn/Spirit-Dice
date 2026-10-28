@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.sum_less_than.rerolls
   familyId: modifier.play_hand.sum_less_than
   phase: 2
-  conditionKind: 40
-  parameter: 15
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539395
   effects:
-  - kind: 2
-    amount: 2
+  - rid: 1123138582930784540
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539395
+      type: {class: SumLessThanConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        sum: 15
+    - rid: 1123138582930784540
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

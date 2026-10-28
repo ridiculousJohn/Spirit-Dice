@@ -15,15 +15,25 @@ MonoBehaviour:
   id: modifier.player_reroll.selected_sum_equals_either.base_score
   familyId: modifier.player_reroll.selected_sum_equals_either
   phase: 1
-  conditionKind: 42
-  parameter: 8
-  secondaryParameter: 10
+  condition:
+    rid: 1123138582844539550
   effects:
-  - kind: 0
-    amount: 10
+  - rid: 1123138582930784626
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539550
+      type: {class: SelectedSumEqualsEitherConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        firstSum: 8
+        secondSum: 10
+    - rid: 1123138582930784626
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10

@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.edges_match_interior.combined
   familyId: modifier.play_hand.edges_match_interior
   phase: 2
-  conditionKind: 67
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539062
   effects:
-  - kind: 0
-    amount: 10
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784357
+  - rid: 1123138582930784358
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539062
+      type: {class: EdgesMatchInteriorConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784357
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 10
+    - rid: 1123138582930784358
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

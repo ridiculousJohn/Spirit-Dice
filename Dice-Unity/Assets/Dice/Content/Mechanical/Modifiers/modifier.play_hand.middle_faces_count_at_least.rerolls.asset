@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.play_hand.middle_faces_count_at_least.rerolls
   familyId: modifier.play_hand.middle_faces_count_at_least
   phase: 2
-  conditionKind: 70
-  parameter: 4
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539211
   effects:
-  - kind: 2
-    amount: 2
+  - rid: 1123138582930784440
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539211
+      type: {class: MiddleFacesCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 4
+    - rid: 1123138582930784440
+      type: {class: AddRerollsEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

@@ -15,15 +15,23 @@ MonoBehaviour:
   id: modifier.play_hand.edge_pair_sums_equal.multiplier
   familyId: modifier.play_hand.edge_pair_sums_equal
   phase: 2
-  conditionKind: 15
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539029
   effects:
-  - kind: 1
-    amount: 4
+  - rid: 1123138582930784339
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539029
+      type: {class: EdgePairSumsEqualConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784339
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 4

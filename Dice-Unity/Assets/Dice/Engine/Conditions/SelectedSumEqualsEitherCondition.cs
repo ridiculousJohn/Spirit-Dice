@@ -7,10 +7,8 @@ namespace Dice.Engine
         public int Parameter { get; }
         public int SecondaryParameter { get; }
 
-        public SelectedSumEqualsEitherCondition(int parameter = 8, int secondaryParameter = 10)
+        public SelectedSumEqualsEitherCondition(int parameter, int secondaryParameter)
         {
-            parameter = parameter == 0 ? 8 : parameter;
-            secondaryParameter = secondaryParameter == 0 ? 10 : secondaryParameter;
             if (parameter < 0 || secondaryParameter < 0) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
             SecondaryParameter = secondaryParameter;

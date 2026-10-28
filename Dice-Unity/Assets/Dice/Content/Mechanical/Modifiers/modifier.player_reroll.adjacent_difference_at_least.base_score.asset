@@ -15,15 +15,24 @@ MonoBehaviour:
   id: modifier.player_reroll.adjacent_difference_at_least.base_score
   familyId: modifier.player_reroll.adjacent_difference_at_least
   phase: 1
-  conditionKind: 23
-  parameter: 2
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539442
   effects:
-  - kind: 0
-    amount: 20
+  - rid: 1123138582930784566
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539442
+      type: {class: AdjacentDifferenceAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        difference: 2
+    - rid: 1123138582930784566
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 20

@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.player_reroll.high_die_or_straight.combined
   familyId: modifier.player_reroll.high_die_or_straight
   phase: 1
-  conditionKind: 26
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539471
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 1
+  - rid: 1123138582930784582
+  - rid: 1123138582930784583
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
   access: 0
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539471
+      type: {class: HighDieOrStraightConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784582
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784583
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

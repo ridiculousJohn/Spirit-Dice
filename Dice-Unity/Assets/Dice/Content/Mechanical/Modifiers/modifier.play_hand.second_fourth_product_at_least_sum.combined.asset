@@ -15,17 +15,28 @@ MonoBehaviour:
   id: modifier.play_hand.second_fourth_product_at_least_sum.combined
   familyId: modifier.play_hand.second_fourth_product_at_least_sum
   phase: 2
-  conditionKind: 58
-  parameter: 0
-  secondaryParameter: 0
+  condition:
+    rid: 1123138582844539363
   effects:
-  - kind: 0
-    amount: 5
-  - kind: 1
-    amount: 2
+  - rid: 1123138582930784522
+  - rid: 1123138582930784523
   activationLimit: 1
   rewardEligible: 1
   powerTier: 2
   access: 1
   availabilityScope: 0
-  availabilityScopeId:
+  availabilityScopeId: 
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138582844539363
+      type: {class: SecondFourthProductAtLeastSumConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data: 
+    - rid: 1123138582930784522
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 1123138582930784523
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2

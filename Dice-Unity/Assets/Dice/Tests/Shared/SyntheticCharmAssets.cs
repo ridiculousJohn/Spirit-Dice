@@ -25,10 +25,10 @@ namespace Dice.Tests
             return item;
         }
 
-        /** A charm asset; without effects it adds 10 base score. */
+        /** A charm asset; without a condition it always activates, and without effects it adds 10 base score. */
         public ModifierAsset Charm(string id, string familyId = null, ModifierPhase phase = ModifierPhase.PlayHand,
-            ModifierConditionKind condition = ModifierConditionKind.Always, int parameter = 0, int secondaryParameter = 0,
-            ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand, params (ModifierEffectKind kind, long amount)[] effects)
+            ModifierConditionConfig condition = null, ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand,
+            params ModifierEffectConfig[] effects)
         {
 #if UNITY_EDITOR
             var asset = Own(ScriptableObject.CreateInstance<ModifierAsset>());
@@ -37,18 +37,12 @@ namespace Dice.Tests
             serialized.FindProperty("id").stringValue = id;
             serialized.FindProperty("familyId").stringValue = familyId ?? id;
             serialized.FindProperty("phase").intValue = (int)phase;
-            serialized.FindProperty("conditionKind").intValue = (int)condition;
-            serialized.FindProperty("parameter").intValue = parameter;
-            serialized.FindProperty("secondaryParameter").intValue = secondaryParameter;
+            serialized.FindProperty("condition").managedReferenceValue = condition ?? new AlwaysConditionConfig();
             serialized.FindProperty("activationLimit").intValue = (int)limit;
-            if (effects.Length == 0) effects = new[] { (ModifierEffectKind.AddBaseScore, 10L) };
+            if (effects.Length == 0) effects = new ModifierEffectConfig[] { new AddBaseScoreEffectConfig(10) };
             SerializedProperty list = serialized.FindProperty("effects");
             list.arraySize = effects.Length;
-            for (int i = 0; i < effects.Length; ++i)
-            {
-                list.GetArrayElementAtIndex(i).FindPropertyRelative("kind").intValue = (int)effects[i].kind;
-                list.GetArrayElementAtIndex(i).FindPropertyRelative("amount").longValue = effects[i].amount;
-            }
+            for (int i = 0; i < effects.Length; ++i) list.GetArrayElementAtIndex(i).managedReferenceValue = effects[i];
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
 #else

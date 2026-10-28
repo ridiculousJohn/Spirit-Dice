@@ -244,7 +244,7 @@ namespace Dice.Tests
         private static MechanicalCatalog Catalog(bool finalWin = false)
         {
             var modifier = new ModifierDefinition(UnlockedId, "family.permanent", ModifierPhase.PlayHand,
-                new AlwaysCondition(), new[] { new ModifierEffect(ModifierEffectKind.AddBaseScore, 1) },
+                new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
             var stages = finalWin ? new[] { new StageDefinition(1, 1, 0) } :
                 new[] { new StageDefinition(1, 1, 0), new StageDefinition(1000000, 1, 0) };

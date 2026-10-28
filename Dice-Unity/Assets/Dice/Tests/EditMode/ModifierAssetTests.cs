@@ -27,9 +27,7 @@ namespace Dice.Tests
             var asset = Modifier("modifier.example");
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("phase").intValue = (int)ModifierPhase.PlayerReroll;
-            serialized.FindProperty("conditionKind").intValue = (int)ModifierConditionKind.SelectedSumEqualsEither;
-            serialized.FindProperty("parameter").intValue = 7;
-            serialized.FindProperty("secondaryParameter").intValue = 12;
+            serialized.FindProperty("condition").managedReferenceValue = new SelectedSumEqualsEitherConditionConfig(7, 12);
             serialized.FindProperty("activationLimit").intValue = (int)ModifierActivationLimit.OncePerStage;
             serialized.FindProperty("rewardEligible").boolValue = false;
             serialized.FindProperty("powerTier").intValue = 3;
@@ -38,8 +36,8 @@ namespace Dice.Tests
             serialized.FindProperty("availabilityScopeId").stringValue = "spirit.test";
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 2;
-            Effect(effects.GetArrayElementAtIndex(0), ModifierEffectKind.AddBaseScore, 25);
-            Effect(effects.GetArrayElementAtIndex(1), ModifierEffectKind.AddRerolls, 2);
+            effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddBaseScoreEffectConfig(25);
+            effects.GetArrayElementAtIndex(1).managedReferenceValue = new AddRerollsEffectConfig(2);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             var definition = asset.Build();
@@ -58,13 +56,13 @@ namespace Dice.Tests
             Assert.That(definition.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
             Assert.That(definition.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
             Assert.That(definition.Availability.ScopeId, Is.EqualTo("spirit.test"));
-            Assert.That(definition.Effects.Select(effect => effect.Kind),
-                Is.EqualTo(new[] { ModifierEffectKind.AddBaseScore, ModifierEffectKind.AddRerolls }));
+            Assert.That(definition.Effects.Select(effect => effect.GetType()),
+                Is.EqualTo(new[] { typeof(AddBaseScoreEffect), typeof(AddRerollsEffect) }));
             Assert.That(definition.Effects.Select(effect => effect.Amount), Is.EqualTo(new long[] { 25, 2 }));
 
-            Effect(effects.GetArrayElementAtIndex(0), ModifierEffectKind.AddMultiplier, 9);
+            effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddMultiplierEffectConfig(9);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(definition.Effects[0].Kind, Is.EqualTo(ModifierEffectKind.AddBaseScore));
+            Assert.That(definition.Effects[0], Is.TypeOf<AddBaseScoreEffect>());
             Assert.That(definition.Effects[0].Amount, Is.EqualTo(25));
         }
 
@@ -73,15 +71,14 @@ namespace Dice.Tests
         {
             var asset = Modifier("modifier.invalid");
             using var serialized = new SerializedObject(asset);
-            serialized.FindProperty("conditionKind").intValue = (int)ModifierConditionKind.ContainsFace;
-            serialized.FindProperty("parameter").intValue = 7;
+            serialized.FindProperty("condition").managedReferenceValue = new ContainsFaceConditionConfig(7);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build());
 
-            serialized.FindProperty("parameter").intValue = 1;
+            serialized.FindProperty("condition.face").intValue = 1;
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 1;
-            Effect(effects.GetArrayElementAtIndex(0), ModifierEffectKind.AddRerolls, (long)int.MaxValue + 1);
+            effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddRerollsEffectConfig((long)int.MaxValue + 1);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build());
         }
@@ -218,7 +215,7 @@ namespace Dice.Tests
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("id").stringValue = id;
             serialized.FindProperty("familyId").stringValue = "family.example";
-            serialized.FindProperty("conditionKind").intValue = (int)ModifierConditionKind.Always;
+            serialized.FindProperty("condition").managedReferenceValue = new AlwaysConditionConfig();
             serialized.FindProperty("access").intValue = (int)access;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
@@ -258,12 +255,6 @@ namespace Dice.Tests
             var asset = ScriptableObject.CreateInstance<T>();
             assets.Add(asset);
             return asset;
-        }
-
-        private static void Effect(SerializedProperty effect, ModifierEffectKind kind, long amount)
-        {
-            effect.FindPropertyRelative("kind").intValue = (int)kind;
-            effect.FindPropertyRelative("amount").longValue = amount;
         }
     }
 }
