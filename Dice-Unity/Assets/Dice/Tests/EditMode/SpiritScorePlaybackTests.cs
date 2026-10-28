@@ -87,6 +87,27 @@ namespace Dice.Tests
             Assert.That(host.Finished, Is.EqualTo(new[] { reroll, played }));
         }
 
+        /** Checks a resource change a charm activation granted is left to the charm's own step while any other change is shown at once / fails if playback searches the events for the grant's charm or shows a grant on its own. */
+        [TestCase(false)]
+        [TestCase(true)]
+        public void GrantedResourceChangeIsLeftToItsCharmsStep(bool granted)
+        {
+            var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) });
+            var catalog = new MechanicalCatalog("test.playback", TestContent.Hands(), new[] { encounter });
+            var session = EncounterSession.CreateEncounter(catalog, EncounterId, 7);
+            var host = new PlaybackHost(new Controls(catalog, charms.For()));
+            var playback = new SpiritScorePlayback(host, hud, rig.StartDice(), rig.CreateHistoryTray(), audio, null, null);
+            var charm = new ModifierDefinition("test.playback.grant", "test.playback.grant", ModifierPhase.PlayerReroll,
+                new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
+            var state = new EncounterState();
+            var activated = granted ? new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1)) : null;
+            var change = new ResourceChangedEvent(state, ResourceKind.Rerolls,
+                granted ? ResourceChangeCause.ModifierEffect : ResourceChangeCause.RerollDice, 1, 2, activated);
+            hud.SelectionLabel.text = "before";
+            Run(playback.Play(new Resolution(session.Snapshot.Revision, session.Snapshot, new RuleEvent[] { change }), 0));
+            Assert.That(hud.SelectionLabel.text, Is.EqualTo(granted ? "before" : "2 rerolls remaining"));
+        }
+
         private static string Rank(HandCategory category) => DiagnosticText.Humanize(category.ToString()).ToUpperInvariant();
 
         /** Runs the playback to its end and returns the HUD's rank label as it stood at every yield. */

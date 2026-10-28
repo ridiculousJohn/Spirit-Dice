@@ -137,24 +137,29 @@ namespace Dice.Engine
             if (state.Phase != EncounterPhase.Playing) throw new InvalidOperationException("The encounter is not accepting a hand.");
             EncounterState preview = state.Copy();
             var events = new List<RuleEvent>();
-            ScoreBreakdown score = ResolvePlayedHand(preview, events);
+            ScoreBreakdown score = ResolvePlayedHand(preview, events, out _, out _);
             return new HandPreview(score, preview, events);
         }
 
-        private ScoreBreakdown ResolvePlayedHand(EncounterState next, List<RuleEvent> events)
+        /** Scores the played hand; the activations and rule bonuses are those the score includes, in order. */
+        private ScoreBreakdown ResolvePlayedHand(EncounterState next, List<RuleEvent> events,
+            out List<ModifierActivatedEvent> activations, out List<EncounterRuleActivatedEvent> ruleBonuses)
         {
             int beforeHands = next.HandsRemaining;
             --next.HandsRemaining;
             events.Add(new ResourceChangedEvent(next, ResourceKind.Hands, ResourceChangeCause.PlayHand,
                 beforeHands, next.HandsRemaining));
-            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, events);
+            activations = ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, events);
+            ruleBonuses = new List<EncounterRuleActivatedEvent>();
             long ruleMultiplier = 0;
             foreach (var rule in definition.Rules)
             {
                 long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
                 ruleMultiplier = checked(ruleMultiplier + bonus);
-                events.Add(new EncounterRuleActivatedEvent(next, rule.Id, bonus));
+                var activated = new EncounterRuleActivatedEvent(next, rule.Id, bonus);
+                ruleBonuses.Add(activated);
+                events.Add(activated);
             }
             return HandScorer.Calculate(next.CurrentDice, catalog, next.HandUpgrades, next.ModifierContributions,
                 ruleMultiplier);
@@ -410,11 +415,11 @@ namespace Dice.Engine
         {
             // Committed hands may be disturbed before scoring; previews never are.
             EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
-            ScoreBreakdown score = ResolvePlayedHand(next, events);
+            ScoreBreakdown score = ResolvePlayedHand(next, events, out var activations, out var ruleBonuses);
             next.TotalScore = checked(next.TotalScore + score.HandScore);
             next.TotalHandsPlayed = checked(next.TotalHandsPlayed + 1);
             next.HandsPlayedInStage = checked(next.HandsPlayedInStage + 1);
-            events.Add(new HandScoredEvent(next, score));
+            events.Add(new HandScoredEvent(next, score, activations, ruleBonuses));
             long beforeThreshold = next.RemainingThreshold;
             next.RemainingThreshold = score.HandScore >= beforeThreshold ? 0 : beforeThreshold - score.HandScore;
             events.Add(new ThresholdChangedEvent(next, beforeThreshold, score.HandScore));

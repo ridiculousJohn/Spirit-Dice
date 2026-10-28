@@ -313,18 +313,18 @@ namespace Dice.Engine
         public ResourceChangeCause Cause { get; }
         public int Before { get; }
         public int After { get; }
-        public long? SourceInstanceId { get; }
-        public string SourceDefinitionId { get; }
+        /** The charm activation whose effect granted the change, or null for a change no charm granted. */
+        public ModifierActivatedEvent GrantedBy { get; }
         internal ResourceChangedEvent(EncounterState state, ResourceKind resource, ResourceChangeCause cause, int before, int after,
-            long? sourceInstanceId = null, string sourceDefinitionId = null)
+            ModifierActivatedEvent grantedBy = null)
             : base(state.StageIndex, state.HandIndex)
         {
             Resource = resource;
             Cause = cause;
             Before = before;
             After = after;
-            SourceInstanceId = sourceInstanceId;
-            SourceDefinitionId = sourceDefinitionId;
+            GrantedBy = grantedBy;
+            grantedBy?.AddGrant(this);
         }
 
         protected override string DescribeDetail(IDiagnosticFormat format)
@@ -335,11 +335,20 @@ namespace Dice.Engine
     {
         public DiceValues Dice { get; }
         public ScoreBreakdown Score { get; }
-        internal HandScoredEvent(EncounterState state, ScoreBreakdown score) : base(state.StageIndex, state.HandIndex)
+        /** The PlayHand charm activations the score includes, in activation order. */
+        public ReadOnlyCollection<ModifierActivatedEvent> Activations { get; }
+        /** The encounter rule activations whose multiplier bonuses the score includes, in activation order. */
+        public ReadOnlyCollection<EncounterRuleActivatedEvent> RuleBonuses { get; }
+        internal HandScoredEvent(EncounterState state, ScoreBreakdown score, IEnumerable<ModifierActivatedEvent> activations,
+            IEnumerable<EncounterRuleActivatedEvent> ruleBonuses) : base(state.StageIndex, state.HandIndex)
         {
             Dice = state.CurrentDice;
             Score = score;
+            Activations = new List<ModifierActivatedEvent>(activations).AsReadOnly();
+            RuleBonuses = new List<EncounterRuleActivatedEvent>(ruleBonuses).AsReadOnly();
         }
+
+        public override bool EndsDiceSelection => true;
 
         /** The played dice, the full score breakdown, then one line per modifier contribution. */
         protected override string DescribeDetail(IDiagnosticFormat format)

@@ -48,9 +48,19 @@ namespace Dice.Engine
         public string DefinitionId => Contribution.DefinitionId;
         public ModifierPhase Phase => Contribution.Phase;
         public ModifierContribution Contribution { get; }
+        /** The resource changes the activation's effects granted, in order. */
+        public ReadOnlyCollection<ResourceChangedEvent> Grants { get; }
+        private readonly List<ResourceChangedEvent> grants = new List<ResourceChangedEvent>();
 
         internal ModifierActivatedEvent(EncounterState state, ModifierContribution contribution)
-            : base(state.StageIndex, state.HandIndex) => Contribution = contribution;
+            : base(state.StageIndex, state.HandIndex)
+        {
+            Contribution = contribution;
+            Grants = grants.AsReadOnly();
+        }
+
+        /** Records a change granted by this activation; the change's constructor calls it. */
+        internal void AddGrant(ResourceChangedEvent grant) => grants.Add(grant);
 
         protected override string DescribeDetail(IDiagnosticFormat format)
             => format.ModifierName(DefinitionId) + " #" + InstanceId + " activated on " + format.Humanize(Phase.ToString()) + ": " +
@@ -93,8 +103,9 @@ namespace Dice.Engine
             return Array.AsReadOnly(values);
         }
 
-        internal static void Resolve(EncounterState state, MechanicalCatalog catalog, EncounterDefinition encounter,
-            ModifierPhase phase, List<RuleEvent> events)
+        /** Activates the phase's eligible charms and returns their activations in order. */
+        internal static List<ModifierActivatedEvent> Resolve(EncounterState state, MechanicalCatalog catalog,
+            EncounterDefinition encounter, ModifierPhase phase, List<RuleEvent> events)
         {
             var context = CreateContext(state, encounter, state.HandsRemaining);
             var contributions = new List<ModifierContribution>();
@@ -118,18 +129,22 @@ namespace Dice.Engine
                     totals.Rerolls));
             }
 
+            var activations = new List<ModifierActivatedEvent>();
             foreach (var contribution in contributions)
             {
                 state.ModifierBaseScore = checked(state.ModifierBaseScore + contribution.BaseScore);
                 state.ModifierMultiplier = checked(state.ModifierMultiplier + contribution.Multiplier);
                 state.ModifierContributions.Add(contribution);
-                events.Add(new ModifierActivatedEvent(state, contribution));
+                var activated = new ModifierActivatedEvent(state, contribution);
+                activations.Add(activated);
+                events.Add(activated);
                 if (contribution.Rerolls == 0) continue;
                 int before = state.RerollsRemaining;
                 state.RerollsRemaining = checked(before + contribution.Rerolls);
                 events.Add(new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.ModifierEffect,
-                    before, state.RerollsRemaining, contribution.InstanceId, contribution.DefinitionId));
+                    before, state.RerollsRemaining, activated));
             }
+            return activations;
         }
 
         internal static ReadOnlyCollection<ModifierInspection> InspectForPlayHand(EncounterState state,

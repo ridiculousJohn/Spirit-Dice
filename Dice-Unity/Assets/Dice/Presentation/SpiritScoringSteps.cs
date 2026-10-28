@@ -76,17 +76,16 @@ namespace Dice.Presentation
         }
 
         /**
-         * The steps of a scored hand, starting from the counters' banked base score and multiplier. Events are the
-         * resolution's events, searched for the resource changes of each charm and the activation of each rule bonus in the
-         * hand's stage and hand index; rules are the table's rule cards, which name each bonus's rule.
+         * The steps of a scored hand, starting from the counters' banked base score and multiplier. The scored hand states
+         * its charm activations, with the resource changes each granted, and its rule bonuses; rules are the table's rule
+         * cards, which name each bonus's rule.
          */
-        public IReadOnlyList<SpiritScoringStep> BuildHand(ScoreBreakdown score, DiceValues dice, long startingBaseScore,
-            long startingMultiplier, IReadOnlyList<EncounterRulePresentationAsset> rules, IReadOnlyList<RuleEvent> events,
-            int stageIndex, int handIndex)
+        public IReadOnlyList<SpiritScoringStep> BuildHand(HandScoredEvent scored, long startingBaseScore,
+            long startingMultiplier, IReadOnlyList<EncounterRulePresentationAsset> rules)
         {
-            if (score == null) throw new ArgumentNullException(nameof(score));
+            if (scored == null) throw new ArgumentNullException(nameof(scored));
             if (rules == null) throw new ArgumentNullException(nameof(rules));
-            if (events == null) throw new ArgumentNullException(nameof(events));
+            ScoreBreakdown score = scored.Score;
             var steps = new List<SpiritScoringStep>();
             long baseScore = checked(startingBaseScore + score.DiceSum);
             long multiplier = startingMultiplier;
@@ -138,10 +137,8 @@ namespace Dice.Presentation
             }
 
             // Each rule bonus is presented with the card of the rule that granted it.
-            foreach (var ruleEvent in events)
+            foreach (var activated in scored.RuleBonuses)
             {
-                if (!(ruleEvent is EncounterRuleActivatedEvent activated) || activated.MultiplierBonus == 0 ||
-                    activated.StageIndex != stageIndex || activated.HandIndex != handIndex) continue;
                 var rule = EncounterRulePresentationAsset.For(rules, activated.RuleId) ?? throw new InvalidOperationException(
                     "Rule " + activated.RuleId + " grants a scored-hand bonus, but the table has no card presenting it.");
                 multiplier = checked(multiplier + activated.MultiplierBonus);
@@ -182,33 +179,29 @@ namespace Dice.Presentation
 
         /**
          * The step of a roll bonus banked by a charm outside the PlayHand phase, starting from the counters' current base
-         * score and multiplier. Events are searched for the charm's resource changes in the given stage and hand index.
+         * score and multiplier. The activation states the resource changes it granted.
          */
-        public SpiritScoringStep BuildBankedContribution(ModifierContribution contribution, long startingBaseScore,
-            long startingMultiplier, IReadOnlyList<RuleEvent> events, int stageIndex, int handIndex)
+        public SpiritScoringStep BuildBankedContribution(ModifierActivatedEvent activated, long startingBaseScore,
+            long startingMultiplier)
         {
-            if (events == null) throw new ArgumentNullException(nameof(events));
-            return BuildContribution(contribution, true, -1, startingBaseScore, startingMultiplier, events, stageIndex, handIndex);
+            if (activated == null) throw new ArgumentNullException(nameof(activated));
+            return BuildContribution(activated, true, -1, startingBaseScore, startingMultiplier);
         }
 
-        private SpiritScoringStep BuildContribution(ModifierContribution contribution, bool banked, int resolvingIndex,
-            long startingBaseScore, long startingMultiplier, IReadOnlyList<RuleEvent> events, int stageIndex, int handIndex)
+        private SpiritScoringStep BuildContribution(ModifierActivatedEvent activated, bool banked, int resolvingIndex,
+            long startingBaseScore, long startingMultiplier)
         {
+            ModifierContribution contribution = activated.Contribution;
             var definition = catalog.GetModifier(contribution.DefinitionId);
             string name = charms.GetName(definition);
-            var grants = new List<ResourceChangedEvent>();
             bool grantsRerolls = false;
             bool grantsHands = false;
-            foreach (var ruleEvent in events)
-                if (ruleEvent is ResourceChangedEvent resource && resource.Cause == ResourceChangeCause.ModifierEffect &&
-                    resource.StageIndex == stageIndex && resource.HandIndex == handIndex &&
-                    resource.SourceInstanceId == contribution.InstanceId)
-                {
-                    grants.Add(resource);
-                    if (resource.After == resource.Before) continue;
-                    grantsRerolls |= resource.Resource == ResourceKind.Rerolls;
-                    grantsHands |= resource.Resource == ResourceKind.Hands;
-                }
+            foreach (var grant in activated.Grants)
+            {
+                if (grant.After == grant.Before) continue;
+                grantsRerolls |= grant.Resource == ResourceKind.Rerolls;
+                grantsHands |= grant.Resource == ResourceKind.Hands;
+            }
             bool showReroll = contribution.Rerolls != 0 || grantsRerolls;
             bool showPlay = grantsHands;
             if (contribution.BaseScore != 0 || contribution.Multiplier != 0 || (!showReroll && !showPlay))
@@ -236,7 +229,7 @@ namespace Dice.Presentation
                 HighlightsMultiplier = contribution.Multiplier != 0,
                 HighlightsRerolls = grantsRerolls,
                 HighlightsHands = grantsHands,
-                Grants = grants,
+                Grants = activated.Grants,
                 Hold = ModifierStepHold
             };
         }

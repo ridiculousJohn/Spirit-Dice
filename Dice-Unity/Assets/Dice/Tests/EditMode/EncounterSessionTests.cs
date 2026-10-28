@@ -23,6 +23,60 @@ namespace Dice.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => random.NextInt(0));
         }
 
+        /** Checks a dice roll and a scored hand state that they end the dice selection and other events do not / fails if the statement is missing from either or claimed by another event. */
+        [Test]
+        public void OnlyRollsAndScoredHandsEndTheDiceSelection()
+        {
+            var state = new EncounterState { CurrentDice = new DiceValues(1, 2, 3, 4, 6) };
+            var score = HandScorer.Calculate(state.CurrentDice, TestContent.Catalog(), new int[HandDefinition.CategoryCount]);
+            Assert.That(new DiceRolledEvent(state, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask).EndsDiceSelection,
+                Is.True);
+            Assert.That(new HandScoredEvent(state, score, Array.Empty<ModifierActivatedEvent>(),
+                Array.Empty<EncounterRuleActivatedEvent>()).EndsDiceSelection, Is.True);
+            Assert.That(new HandStartedEvent(state).EndsDiceSelection, Is.False);
+            Assert.That(new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.RerollDice, 2, 1).EndsDiceSelection,
+                Is.False);
+            Assert.That(new FabricatedEvent().EndsDiceSelection, Is.False);
+        }
+
+        /** Checks a charm activation states the resource changes it granted and each change states the activation that granted it, while a change no charm granted states none / fails if either side of the link is missing or a plain change claims a charm. */
+        [Test]
+        public void ActivationAndGrantedResourceChangeStateEachOther()
+        {
+            var state = new EncounterState();
+            var charm = new ModifierDefinition("test.session.grant", "test.session.grant", ModifierPhase.PlayHand,
+                new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
+            var activated = new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1));
+            var granted = new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.ModifierEffect, 1, 2, activated);
+            var spent = new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.RerollDice, 2, 1);
+            Assert.That(activated.Grants, Is.EqualTo(new[] { granted }));
+            Assert.That(granted.GrantedBy, Is.SameAs(activated));
+            Assert.That(spent.GrantedBy, Is.Null);
+        }
+
+        /** Checks a played hand states the charm activations and rule bonuses its score includes, and the session links a granting charm's activation to its resource change / fails if the scored hand lists other events or a grant is left unlinked. */
+        [Test]
+        public void PlayedHandStatesItsActivationsAndRuleBonuses()
+        {
+            const string encounterId = "encounter.test.scored_links";
+            var charm = new ModifierDefinition("test.session.scored", "test.session.scored", ModifierPhase.PlayHand,
+                new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(2) });
+            var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 0) },
+                startingModifiers: new[] { charm.Id }, rules: new EncounterRuleDefinition[] { new DistinctFacesMultiplierRuleDefinition() });
+            var session = EncounterSession.CreateEncounter(new MechanicalCatalog("test.session.scored_links", TestContent.Hands(),
+                new[] { encounter }, new[] { charm }), encounterId, 5);
+            var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
+            var scored = played.Events.OfType<HandScoredEvent>().Single();
+            var activated = played.Events.OfType<ModifierActivatedEvent>().Single();
+            Assert.That(scored.Activations, Is.EqualTo(new[] { activated }));
+            Assert.That(scored.RuleBonuses, Is.Not.Empty, "Fixture rule bonus");
+            Assert.That(scored.RuleBonuses, Is.EqualTo(played.Events.OfType<EncounterRuleActivatedEvent>()
+                .Where(value => value.MultiplierBonus != 0)));
+            var grant = played.Events.OfType<ResourceChangedEvent>().Single(value => value.Cause == ResourceChangeCause.ModifierEffect);
+            Assert.That(activated.Grants, Is.EqualTo(new[] { grant }));
+            Assert.That(grant.GrantedBy, Is.SameAs(activated));
+        }
+
         [Test]
         public void InitialResolutionContainsOrderedFactsAndNoHandIsSpent()
         {

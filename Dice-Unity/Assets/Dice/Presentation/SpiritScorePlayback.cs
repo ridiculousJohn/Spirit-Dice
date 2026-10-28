@@ -109,13 +109,13 @@ namespace Dice.Presentation
             switch (ruleEvent)
             {
                 case DiceRolledEvent rolled: return PresentRoll(rolled, openingFade);
-                case ModifierActivatedEvent activated: return PresentBankedBonus(activated, resolution);
-                case HandScoredEvent scored: return PresentHand(scored, resolution);
+                case ModifierActivatedEvent activated: return PresentBankedBonus(activated);
+                case HandScoredEvent scored: return PresentHand(scored);
                 case ThresholdChangedEvent threshold: return PresentThreshold(threshold);
                 case StageClearedEvent _: return PresentStageCleared(resolution);
                 case StageStartedEvent stage: return PresentStage(stage, resolution);
                 case HandStartedEvent hand: return PresentHandStart(hand, resolution);
-                case ResourceChangedEvent resource: return PresentResource(resource, resolution);
+                case ResourceChangedEvent resource: return PresentResource(resource);
                 default: return null;
             }
         }
@@ -137,23 +137,21 @@ namespace Dice.Presentation
             activeRoll = null;
         }
 
-        private IEnumerator PresentBankedBonus(ModifierActivatedEvent activated, Resolution resolution)
+        private IEnumerator PresentBankedBonus(ModifierActivatedEvent activated)
         {
             if (activated.Phase == ModifierPhase.PlayHand) yield break;
             // A banked roll bonus leaves the tray highlight, resolving token and total as the roll left them.
-            yield return PlayStep(Steps().BuildBankedContribution(activated.Contribution, hud.DisplayedBaseScore,
-                hud.DisplayedMultiplier, resolution.Events, activated.StageIndex, activated.HandIndex));
+            yield return PlayStep(Steps().BuildBankedContribution(activated, hud.DisplayedBaseScore, hud.DisplayedMultiplier));
         }
 
-        private IEnumerator PresentHand(HandScoredEvent scored, Resolution resolution)
+        private IEnumerator PresentHand(HandScoredEvent scored)
         {
             host.RecordScore(scored.Score);
             host.SetDiceSelection(0);
             diceTray.SetValues(scored.Dice);
             var controls = host.Controls;
             modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog, controls.ModifierPresentation);
-            var steps = Steps().BuildHand(scored.Score, scored.Dice, hud.DisplayedBaseScore, hud.DisplayedMultiplier,
-                host.RuleCards, resolution.Events, scored.StageIndex, scored.HandIndex);
+            var steps = Steps().BuildHand(scored, hud.DisplayedBaseScore, hud.DisplayedMultiplier, host.RuleCards);
             foreach (var step in steps)
             {
                 diceTray.SetScoringHighlight(step.HighlightMask);
@@ -223,13 +221,12 @@ namespace Dice.Presentation
             if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(HandStartHold);
         }
 
-        private IEnumerator PresentResource(ResourceChangedEvent resource, Resolution resolution)
+        private IEnumerator PresentResource(ResourceChangedEvent resource)
         {
             // A charm's grant is presented with the charm's own step.
-            if (IsModifierGrant(resource, resolution)) yield break;
+            if (resource.GrantedBy != null) yield break;
             hud.ShowResource(resource);
-            if (resource.Resource == ResourceKind.Rerolls && resource.Cause != ResourceChangeCause.ModifierEffect)
-                hud.SelectionLabel.text = resource.After + " rerolls remaining";
+            if (resource.Resource == ResourceKind.Rerolls) hud.SelectionLabel.text = resource.After + " rerolls remaining";
         }
 
         private IEnumerator FadeOpening(float duration)
@@ -240,16 +237,6 @@ namespace Dice.Presentation
                 yield return null;
             }
             host.SetOpeningOpacity(1);
-        }
-
-        /** Whether the resource change is a charm's effect from a charm activation in the same hand. */
-        private static bool IsModifierGrant(ResourceChangedEvent resource, Resolution resolution)
-        {
-            if (resource.Cause != ResourceChangeCause.ModifierEffect) return false;
-            foreach (var ruleEvent in resolution.Events)
-                if (ruleEvent is ModifierActivatedEvent activated && activated.StageIndex == resource.StageIndex &&
-                    activated.HandIndex == resource.HandIndex && activated.InstanceId == resource.SourceInstanceId) return true;
-            return false;
         }
 
         /** Shows a scoring step's labels, emblem, cues and resource changes, animates its counters, and holds it. */

@@ -53,7 +53,7 @@ namespace Dice.Tests
         public void DiceStepAddsTheDiceSumToTheBankedCountersAndHighlightsEveryDie(long bankedBase, long bankedMultiplier)
         {
             var score = Score(HighDieDice, HandCategory.HighDie, 0);
-            var dice = Build(score, HighDieDice, bankedBase, bankedMultiplier)[0];
+            var dice = Build(score, bankedBase, bankedMultiplier)[0];
             Assert.That(dice.BaseScore, Is.EqualTo(bankedBase + score.DiceSum));
             Assert.That(dice.Multiplier, Is.EqualTo(bankedMultiplier));
             Assert.That(dice.StepLabel, Is.EqualTo("STEP 1 OF 4 - DICE"));
@@ -90,7 +90,7 @@ namespace Dice.Tests
                 Contribution(first, 2, baseScore: 10),
                 Contribution(second, 5, baseScore: 3, multiplier: 1)
             };
-            var steps = Build(Score(HighDieDice, HandCategory.HighDie, 0, contributions), HighDieDice, 0, 0);
+            var steps = Build(Score(HighDieDice, HandCategory.HighDie, 0, contributions), 0, 0, contributions);
             var charmSteps = steps.Where(step => step.Charm != null).ToArray();
             Assert.That(charmSteps.Select(step => step.Contribution.Value.InstanceId), Is.EqualTo(new long[] { 4, 2, 5 }));
             Assert.That(charmSteps.Select(step => step.ResolvingIndex), Is.EqualTo(new[] { 0, 1, 2 }));
@@ -110,8 +110,8 @@ namespace Dice.Tests
         [TestCase(0L, 2L)]
         public void CharmStepShowsThePresentedCharmAndHighlightsTheCountersItChanges(long baseScore, long multiplier)
         {
-            var score = Score(HighDieDice, HandCategory.HighDie, 0, Contribution(first, 1, baseScore, multiplier));
-            var step = Build(score, HighDieDice, 0, 0)[2];
+            var contribution = Contribution(first, 1, baseScore, multiplier);
+            var step = Build(Score(HighDieDice, HandCategory.HighDie, 0, contribution), 0, 0, contribution)[2];
             Assert.That(step.Charm, Is.SameAs(first));
             Assert.That(step.Emblem, Is.SameAs(first));
             Assert.That(step.CategoryText, Is.EqualTo(charms.GetName(first)));
@@ -130,20 +130,38 @@ namespace Dice.Tests
         public void CueMarksRerollForGrantedRerollsAndPlayForScoring(long baseScore, long multiplier, int rerolls,
             bool rerollCue, bool playCue)
         {
-            var score = Score(HighDieDice, HandCategory.HighDie, 0, Contribution(first, 1, baseScore, multiplier, rerolls));
-            var step = Build(score, HighDieDice, 0, 0)[2];
+            var contribution = Contribution(first, 1, baseScore, multiplier, rerolls);
+            var step = Build(Score(HighDieDice, HandCategory.HighDie, 0, contribution), 0, 0, contribution)[2];
             Assert.That(step.RerollCue, Is.EqualTo(rerollCue));
             Assert.That(step.PlayCue, Is.EqualTo(playCue));
         }
 
-        /** Checks contributions banked outside the PlayHand phase produce no charm step / fails if a roll bonus is replayed during scoring. */
+        /** Checks a charm step shows and highlights the resource changes its activation states it granted, and none for an activation that granted none / fails if grants are searched for elsewhere, dropped, or invented. */
+        [TestCase(false)]
+        [TestCase(true)]
+        public void CharmStepShowsTheResourceChangesItsActivationGranted(bool granted)
+        {
+            var contribution = Contribution(first, 1, rerolls: granted ? 1 : 0);
+            var activated = new ModifierActivatedEvent(new EncounterState(), contribution);
+            var grant = granted ? new ResourceChangedEvent(new EncounterState(), ResourceKind.Rerolls,
+                ResourceChangeCause.ModifierEffect, 1, 2, activated) : null;
+            var scored = Scored(Score(HighDieDice, HandCategory.HighDie, 0, contribution), new[] { activated });
+            var step = builder.BuildHand(scored, 0, 0, Array.Empty<EncounterRulePresentationAsset>())[2];
+            Assert.That(step.Grants, Is.EqualTo(granted ? new[] { grant } : Array.Empty<ResourceChangedEvent>()));
+            Assert.That(step.HighlightsRerolls, Is.EqualTo(granted));
+            Assert.That(step.HighlightsHands, Is.False);
+        }
+
+        /** Checks contributions banked outside the PlayHand phase produce no charm step: only the scored hand's activations do / fails if a roll bonus is replayed during scoring. */
         [TestCase(false)]
         [TestCase(true)]
         public void ContributionsOutsideThePlayHandPhaseProduceNoCharmStep(bool withPlayHandCharm)
         {
             var contributions = new List<ModifierContribution> { Contribution(bank, 1, baseScore: 7) };
-            if (withPlayHandCharm) contributions.Add(Contribution(first, 2, baseScore: 10));
-            var steps = Build(Score(HighDieDice, HandCategory.HighDie, 0, contributions.ToArray()), HighDieDice, 7, 0);
+            var played = new List<ModifierContribution>();
+            if (withPlayHandCharm) played.Add(Contribution(first, 2, baseScore: 10));
+            contributions.AddRange(played);
+            var steps = Build(Score(HighDieDice, HandCategory.HighDie, 0, contributions.ToArray()), 7, 0, played.ToArray());
             Assert.That(steps.Where(step => step.Charm != null).Select(step => step.Charm),
                 Is.EqualTo(withPlayHandCharm ? new[] { first } : Array.Empty<ModifierDefinition>()));
             Assert.That(steps.Count, Is.EqualTo(withPlayHandCharm ? 4 : 3));
@@ -154,9 +172,9 @@ namespace Dice.Tests
         [TestCase(2L)]
         public void TotalStaysZeroUntilTheLastStep(long ruleMultiplier)
         {
-            var score = Score(PairDice, HandCategory.Pair, 1, new[] { Contribution(first, 1, baseScore: 10),
-                Contribution(second, 2, multiplier: 3) }, ruleMultiplier);
-            var steps = Build(score, PairDice, 0, 0);
+            var contributions = new[] { Contribution(first, 1, baseScore: 10), Contribution(second, 2, multiplier: 3) };
+            var score = Score(PairDice, HandCategory.Pair, 1, contributions, ruleMultiplier);
+            var steps = Build(score, 0, 0, contributions);
             foreach (var step in steps.Take(steps.Count - 1))
             {
                 Assert.That(step.Total, Is.Zero, step.StepLabel);
@@ -187,8 +205,7 @@ namespace Dice.Tests
             var favor = Card(FirstRerollFreeRuleDefinition.StableId, "Favor");
             var distinct = Card(DistinctFacesMultiplierRuleDefinition.StableId, "Distinct");
 
-            var steps = builder.BuildHand(scored.Score, scored.Dice, 0, 0, new[] { favor, distinct }, played.Events,
-                scored.StageIndex, scored.HandIndex);
+            var steps = builder.BuildHand(scored, 0, 0, new[] { favor, distinct });
             var rule = steps.Single(step => step.RuleCue);
             var rank = steps[1];
             Assert.That(steps[2], Is.SameAs(rule));
@@ -199,8 +216,7 @@ namespace Dice.Tests
             Assert.That(rule.StepLabel, Is.EqualTo("STEP 3 OF 4 - ENCOUNTER RULE"));
             Assert.That(rule.SelectionColor, Is.EqualTo(theme.amber));
 
-            var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored.Score, scored.Dice, 0, 0,
-                new[] { favor }, played.Events, scored.StageIndex, scored.HandIndex));
+            var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored, 0, 0, new[] { favor }));
             Assert.That(unnamed.Message, Does.Contain(DistinctFacesMultiplierRuleDefinition.StableId));
         }
 
@@ -209,7 +225,7 @@ namespace Dice.Tests
         public void BankedContributionIsARollBonusWithoutAResolvingToken()
         {
             var contribution = Contribution(bank, 1, baseScore: 7, multiplier: 2);
-            var step = builder.BuildBankedContribution(contribution, 5, 1, Array.Empty<RuleEvent>(), 0, 0);
+            var step = builder.BuildBankedContribution(new ModifierActivatedEvent(new EncounterState(), contribution), 5, 1);
             Assert.That(step.BaseScore, Is.EqualTo(5 + contribution.BaseScore));
             Assert.That(step.Multiplier, Is.EqualTo(1 + contribution.Multiplier));
             Assert.That(step.StepLabel, Is.EqualTo("ROLL BONUS"));
@@ -219,9 +235,14 @@ namespace Dice.Tests
             Assert.That(step.PlayCue, Is.False);
         }
 
-        private IReadOnlyList<SpiritScoringStep> Build(ScoreBreakdown score, DiceValues dice, long bankedBase, long bankedMultiplier)
-            => builder.BuildHand(score, dice, bankedBase, bankedMultiplier, Array.Empty<EncounterRulePresentationAsset>(),
-                Array.Empty<RuleEvent>(), 0, 0);
+        /** The steps of a scored hand whose charm activations are the given PlayHand contributions, without rule bonuses. */
+        private IReadOnlyList<SpiritScoringStep> Build(ScoreBreakdown score, long bankedBase, long bankedMultiplier,
+            params ModifierContribution[] activated)
+            => builder.BuildHand(Scored(score, activated.Select(value => new ModifierActivatedEvent(new EncounterState(), value))),
+                bankedBase, bankedMultiplier, Array.Empty<EncounterRulePresentationAsset>());
+
+        private static HandScoredEvent Scored(ScoreBreakdown score, IEnumerable<ModifierActivatedEvent> activations)
+            => new HandScoredEvent(new EncounterState(), score, activations, Array.Empty<EncounterRuleActivatedEvent>());
 
         /** A rule card naming the rule with the given display name. */
         private EncounterRulePresentationAsset Card(string ruleId, string displayName)
