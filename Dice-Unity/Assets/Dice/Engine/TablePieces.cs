@@ -169,6 +169,19 @@ namespace Dice.Engine
             InteractionId = interactionId;
             Input = input;
         }
+
+        internal override CommandRejection Validate(EncounterSession session)
+        {
+            EncounterState state = session.State;
+            if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
+            if (!TablePieceStates.TryFind(session.Definition, PieceId, InteractionId, out int slot, out var piece))
+                return CommandRejection.InvalidPiece;
+            if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
+            return piece.Accepts(state.PieceStates[slot], Input) ? CommandRejection.None : CommandRejection.InvalidPieceInput;
+        }
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.InteractWithPiece(next, this, events);
     }
 
     public sealed class PieceInteractionSnapshot

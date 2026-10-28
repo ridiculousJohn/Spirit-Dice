@@ -15,18 +15,46 @@ namespace Dice.Engine
             OfferId = offerId;
             OptionId = optionId;
         }
+
+        internal override CommandRejection Validate(EncounterSession session)
+            => session.ValidateRewardSelection(EncounterPhase.ChoosingUnlock, OfferId, OptionId);
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.SelectModifierUnlock(next, OptionId, events);
     }
 
     public sealed class AcknowledgeModifierUnlockAction : EncounterAction
     {
         public long OfferId { get; }
         public AcknowledgeModifierUnlockAction(long offerId) => OfferId = offerId;
+
+        /** Accepted only for an unlock offer without options; an offer with options is answered by selecting one. */
+        internal override CommandRejection Validate(EncounterSession session)
+        {
+            var rejection = session.ValidateRewardOffer(EncounterPhase.ChoosingUnlock, OfferId);
+            if (rejection != CommandRejection.None) return rejection;
+            return session.State.PendingReward.Options.Count == 0 ? CommandRejection.None : CommandRejection.InvalidRewardOption;
+        }
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.ContinueAfterUnlock(next, events);
     }
 
     public sealed class RefreshModifierOfferAction : EncounterAction
     {
         public long OfferId { get; }
         public RefreshModifierOfferAction(long offerId) => OfferId = offerId;
+
+        internal override CommandRejection Validate(EncounterSession session)
+        {
+            var rejection = session.ValidateRewardOffer(EncounterPhase.ChoosingModifier, OfferId);
+            if (rejection != CommandRejection.None) return rejection;
+            return session.State.RewardRefreshes < session.Definition.RewardPolicy.RefreshCost
+                ? CommandRejection.InsufficientRewardRefreshes : CommandRejection.None;
+        }
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.RefreshModifierOffer(next, events);
     }
 
     public sealed class SelectModifierAction : EncounterAction
@@ -38,6 +66,12 @@ namespace Dice.Engine
             OfferId = offerId;
             OptionId = optionId;
         }
+
+        internal override CommandRejection Validate(EncounterSession session)
+            => session.ValidateRewardSelection(EncounterPhase.ChoosingModifier, OfferId, OptionId);
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.SelectModifier(next, OptionId, events);
     }
 
     public sealed class SelectHandUpgradeAction : EncounterAction
@@ -49,6 +83,12 @@ namespace Dice.Engine
             OfferId = offerId;
             OptionId = optionId;
         }
+
+        internal override CommandRejection Validate(EncounterSession session)
+            => session.ValidateRewardSelection(EncounterPhase.ChoosingHandUpgrade, OfferId, OptionId);
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.SelectHandUpgrade(next, OptionId, events);
     }
 
     public readonly struct RewardOption

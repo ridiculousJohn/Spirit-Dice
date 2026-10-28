@@ -280,6 +280,41 @@ namespace Dice.Tests
             Assert.Throws<OverflowException>(() => session.Execute(PlayHandAction.Instance, 2));
         }
 
+        /**
+         * Checks the session runs an action through the action's own validation and resolution: a rejection the action
+         * reports leaves the session unchanged, and an accepted action's events are committed with the next revision / fails
+         * if the session decides by action type what an action does or resolves a rejected action.
+         */
+        [Test]
+        public void AnActionValidatesAndResolvesItself()
+        {
+            var session = TestContent.Session();
+            var rejected = new FabricatedAction(CommandRejection.InvalidPhase);
+            var before = session.Snapshot;
+            Assert.That(session.Execute(rejected, 0).Rejection, Is.EqualTo(CommandRejection.InvalidPhase));
+            Assert.That(rejected.Resolutions, Is.Zero);
+            AssertSnapshotsEqual(before, session.Snapshot);
+
+            var accepted = new FabricatedAction(CommandRejection.None);
+            var result = session.Execute(accepted, 0);
+            Assert.That(result.Accepted, Is.True);
+            Assert.That(accepted.Resolutions, Is.EqualTo(1));
+            Assert.That(result.Events, Is.EqualTo(new[] { accepted.Event }));
+            Assert.That(session.Snapshot.Revision, Is.EqualTo(1));
+        }
+
+        /** Checks no assembly outside the engine can define an action / fails if an action the engine does not define could reach the session. */
+        [Test]
+        public void OnlyTheEngineDefinesActions()
+        {
+            // Accessibility is checked on the public type's own metadata; tests reach the internal constructor only through
+            // the engine's InternalsVisibleTo.
+            ConstructorInfo[] constructors = typeof(EncounterAction).GetConstructors(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(constructors, Is.Not.Empty);
+            Assert.That(constructors.All(constructor => constructor.IsAssembly), Is.True);
+        }
+
         internal static void AssertSnapshotsEqual(EncounterSnapshot expected, EncounterSnapshot actual)
         {
             foreach (var property in typeof(EncounterSnapshot).GetProperties())
@@ -320,6 +355,32 @@ namespace Dice.Tests
                         AssertValuesEqual(property.GetValue(expected), property.GetValue(actual), path + "." + property.Name, visiting);
             }
             finally { visiting.Remove(expected); }
+        }
+
+        /** An action the test defines through the engine's InternalsVisibleTo, reporting a fixed rejection and one event. */
+        private sealed class FabricatedAction : EncounterAction
+        {
+            private readonly CommandRejection rejection;
+
+            internal FabricatedAction(CommandRejection rejection) => this.rejection = rejection;
+
+            internal int Resolutions { get; private set; }
+            internal RuleEvent Event { get; } = new FabricatedEvent();
+
+            internal override CommandRejection Validate(EncounterSession session) => rejection;
+
+            internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            {
+                ++Resolutions;
+                events.Add(Event);
+            }
+        }
+
+        private sealed class FabricatedEvent : RuleEvent
+        {
+            internal FabricatedEvent() : base(0, 0) { }
+
+            protected override string DescribeDetail(IDiagnosticFormat format) => "fabricated";
         }
 
         private static bool HasValueEquality(Type type)

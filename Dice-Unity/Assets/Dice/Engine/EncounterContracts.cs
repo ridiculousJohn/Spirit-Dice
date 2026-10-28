@@ -16,27 +16,61 @@ namespace Dice.Engine
     public enum ResourceKind { Hands, Rerolls, RewardRefreshes }
     public enum ResourceChangeCause { PlayHand, RerollDice, ModifierEffect, StageClear, RefreshReward }
 
+    /** A player action on an encounter. Each action validates and resolves itself; actions are defined only in the engine. */
     public abstract class EncounterAction
     {
         internal EncounterAction() { }
+
+        /** Why the session cannot take this action now, or None; the session has checked the revision and that it is not completed. */
+        internal abstract CommandRejection Validate(EncounterSession session);
+
+        /** Applies this action to the session's private copy of its state. */
+        internal abstract void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events);
     }
 
     public sealed class RerollDiceAction : EncounterAction
     {
         public int SelectedMask { get; }
         public RerollDiceAction(int selectedMask) => SelectedMask = selectedMask;
+
+        internal override CommandRejection Validate(EncounterSession session)
+        {
+            EncounterState state = session.State;
+            if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
+            if (SelectedMask <= 0 || (SelectedMask & ~DiceValues.AllMask) != 0 ||
+                (SelectedMask & EncounterRuleResolver.LockedDice(session.Definition, state)) != 0)
+                return CommandRejection.InvalidDiceSelection;
+            if (state.RerollsRemaining <= 0 && EncounterRuleResolver.RerollCostWaiver(session.Definition, state) == null)
+                return CommandRejection.NoRerollsRemaining;
+            return CommandRejection.None;
+        }
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.Reroll(next, SelectedMask, events);
     }
 
     public sealed class PlayHandAction : EncounterAction
     {
         public static PlayHandAction Instance { get; } = new PlayHandAction();
         private PlayHandAction() { }
+
+        internal override CommandRejection Validate(EncounterSession session)
+            => session.State.Phase == EncounterPhase.Playing ? CommandRejection.None : CommandRejection.InvalidPhase;
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => session.Play(next, events);
     }
 
+    /** Ends the encounter as abandoned; it is accepted in any phase of an encounter that has not completed. */
     public sealed class AbandonEncounterAction : EncounterAction
     {
         public static AbandonEncounterAction Instance { get; } = new AbandonEncounterAction();
         private AbandonEncounterAction() { }
+
+        internal override CommandRejection Validate(EncounterSession session) => CommandRejection.None;
+
+        internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
+            => EncounterSession.Complete(next, EncounterOutcome.Abandoned, events);
     }
 
     public sealed class EncounterSnapshot
@@ -154,7 +188,7 @@ namespace Dice.Engine
     {
         public int StageIndex { get; }
         public int HandIndex { get; }
-        protected RuleEvent(int stageIndex, int handIndex)
+        internal RuleEvent(int stageIndex, int handIndex)
         {
             StageIndex = stageIndex;
             HandIndex = handIndex;

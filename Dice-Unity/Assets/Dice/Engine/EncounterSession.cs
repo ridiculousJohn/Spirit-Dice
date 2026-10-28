@@ -13,6 +13,9 @@ namespace Dice.Engine
         private EncounterState state;
 
         public Resolution InitialResolution { get; }
+        /** The committed state and the encounter, as actions validate against them. */
+        internal EncounterState State => state;
+        internal EncounterDefinition Definition => definition;
         public EncounterSnapshot Snapshot => new EncounterSnapshot(state, definition, catalog.Version);
 
         private EncounterSession(MechanicalCatalog catalog, string encounterId, ulong seed, IEnumerable<string> unlockedModifierIds,
@@ -115,15 +118,7 @@ namespace Dice.Engine
             // Resolve on a private copy so an arithmetic or rules failure cannot partially commit an action.
             EncounterState next = state.Copy();
             var events = new List<RuleEvent>();
-            if (action is RerollDiceAction reroll) Reroll(next, reroll.SelectedMask, events);
-            else if (action is PlayHandAction) Play(next, events);
-            else if (action is RefreshModifierOfferAction) RefreshModifierOffer(next, events);
-            else if (action is SelectModifierAction modifier) SelectModifier(next, modifier.OptionId, events);
-            else if (action is SelectHandUpgradeAction upgrade) SelectHandUpgrade(next, upgrade.OptionId, events);
-            else if (action is SelectModifierUnlockAction unlock) SelectModifierUnlock(next, unlock.OptionId, events);
-            else if (action is AcknowledgeModifierUnlockAction) ContinueAfterUnlock(next, events);
-            else if (action is InteractWithPieceAction interaction) InteractWithPiece(next, interaction, events);
-            else Complete(next, EncounterOutcome.Abandoned, events);
+            action.Resolve(this, next, events);
             next.Revision = checked(state.Revision + 1);
             var snapshot = new EncounterSnapshot(next, definition, catalog.Version);
             var result = new Resolution(state.Revision, snapshot, events);
@@ -170,56 +165,17 @@ namespace Dice.Engine
             if (expectedRevision != state.Revision) return CommandRejection.StaleRevision;
             if (action == null) return CommandRejection.InvalidAction;
             if (state.Phase == EncounterPhase.Completed) return CommandRejection.EncounterCompleted;
-            if (action is AbandonEncounterAction) return CommandRejection.None;
-            if (action is RefreshModifierOfferAction refresh)
-            {
-                var rejection = ValidateRewardOffer(EncounterPhase.ChoosingModifier, refresh.OfferId);
-                if (rejection != CommandRejection.None) return rejection;
-                return state.RewardRefreshes < definition.RewardPolicy.RefreshCost
-                    ? CommandRejection.InsufficientRewardRefreshes : CommandRejection.None;
-            }
-            if (action is SelectModifierAction modifier)
-                return ValidateRewardSelection(EncounterPhase.ChoosingModifier, modifier.OfferId, modifier.OptionId);
-            if (action is SelectHandUpgradeAction upgrade)
-                return ValidateRewardSelection(EncounterPhase.ChoosingHandUpgrade, upgrade.OfferId, upgrade.OptionId);
-            if (action is SelectModifierUnlockAction unlock)
-                return ValidateRewardSelection(EncounterPhase.ChoosingUnlock, unlock.OfferId, unlock.OptionId);
-            if (action is AcknowledgeModifierUnlockAction acknowledge)
-            {
-                var rejection = ValidateRewardOffer(EncounterPhase.ChoosingUnlock, acknowledge.OfferId);
-                if (rejection != CommandRejection.None) return rejection;
-                return state.PendingReward.Options.Count == 0 ? CommandRejection.None : CommandRejection.InvalidRewardOption;
-            }
-            if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
-            if (action is PlayHandAction) return CommandRejection.None;
-            if (action is InteractWithPieceAction interaction)
-            {
-                if (!TablePieceStates.TryFind(definition, interaction.PieceId, interaction.InteractionId, out int slot,
-                    out var piece)) return CommandRejection.InvalidPiece;
-                if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
-                return piece.Accepts(state.PieceStates[slot], interaction.Input)
-                    ? CommandRejection.None : CommandRejection.InvalidPieceInput;
-            }
-            if (action is RerollDiceAction reroll)
-            {
-                if (reroll.SelectedMask <= 0 || (reroll.SelectedMask & ~DiceValues.AllMask) != 0 ||
-                    (reroll.SelectedMask & EncounterRuleResolver.LockedDice(definition, state)) != 0)
-                    return CommandRejection.InvalidDiceSelection;
-                if (state.RerollsRemaining <= 0 && EncounterRuleResolver.RerollCostWaiver(definition, state) == null)
-                    return CommandRejection.NoRerollsRemaining;
-                return CommandRejection.None;
-            }
-            return CommandRejection.InvalidAction;
+            return action.Validate(this);
         }
 
-        private CommandRejection ValidateRewardOffer(EncounterPhase phase, long offerId)
+        internal CommandRejection ValidateRewardOffer(EncounterPhase phase, long offerId)
         {
             if (state.Phase != phase) return CommandRejection.InvalidPhase;
             if (state.PendingReward == null || state.PendingReward.OfferId != offerId) return CommandRejection.InvalidOffer;
             return CommandRejection.None;
         }
 
-        private CommandRejection ValidateRewardSelection(EncounterPhase phase, long offerId, long optionId)
+        internal CommandRejection ValidateRewardSelection(EncounterPhase phase, long offerId, long optionId)
         {
             var rejection = ValidateRewardOffer(phase, offerId);
             if (rejection != CommandRejection.None) return rejection;
@@ -272,7 +228,7 @@ namespace Dice.Engine
             SetOffer(next, RewardKind.Modifier, options, isRefresh, events);
         }
 
-        private void RefreshModifierOffer(EncounterState next, List<RuleEvent> events)
+        internal void RefreshModifierOffer(EncounterState next, List<RuleEvent> events)
         {
             int before = next.RewardRefreshes;
             next.RewardRefreshes -= definition.RewardPolicy.RefreshCost;
@@ -281,7 +237,7 @@ namespace Dice.Engine
             OfferModifiers(next, true, events);
         }
 
-        private void SelectModifier(EncounterState next, long optionId, List<RuleEvent> events)
+        internal void SelectModifier(EncounterState next, long optionId, List<RuleEvent> events)
         {
             RewardOption option = GetSelectedOption(next, optionId);
             events.Add(new RewardSelectedEvent(next, next.PendingReward, option));
@@ -317,7 +273,7 @@ namespace Dice.Engine
             SetOffer(next, RewardKind.HandUpgrade, options, false, events);
         }
 
-        private void SelectHandUpgrade(EncounterState next, long optionId, List<RuleEvent> events)
+        internal void SelectHandUpgrade(EncounterState next, long optionId, List<RuleEvent> events)
         {
             RewardOption option = GetSelectedOption(next, optionId);
             HandCategory category = option.Category.Value;
@@ -413,7 +369,7 @@ namespace Dice.Engine
             return new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]);
         }
 
-        private void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
+        internal void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
         {
             int beforeRerolls = next.RerollsRemaining;
             var costWaiver = EncounterRuleResolver.WaiveRerollCost(definition, next);
@@ -441,7 +397,7 @@ namespace Dice.Engine
             ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, events);
         }
 
-        private void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
+        internal void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
         {
             TablePieceStates.TryFind(definition, action.PieceId, action.InteractionId, out int slot, out var interaction);
             var before = next.PieceStates[slot];
@@ -450,7 +406,7 @@ namespace Dice.Engine
             events.Add(new PieceInteractionChangedEvent(next, action.PieceId, action.InteractionId, before, after));
         }
 
-        private void Play(EncounterState next, List<RuleEvent> events)
+        internal void Play(EncounterState next, List<RuleEvent> events)
         {
             // Committed hands may be disturbed before scoring; previews never are.
             EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
@@ -481,7 +437,7 @@ namespace Dice.Engine
             }
         }
 
-        private static void Complete(EncounterState next, EncounterOutcome outcome, List<RuleEvent> events)
+        internal static void Complete(EncounterState next, EncounterOutcome outcome, List<RuleEvent> events)
         {
             next.Phase = EncounterPhase.Completed;
             next.Outcome = outcome;
@@ -515,7 +471,7 @@ namespace Dice.Engine
             return true;
         }
 
-        private void SelectModifierUnlock(EncounterState next, long optionId, List<RuleEvent> events)
+        internal void SelectModifierUnlock(EncounterState next, long optionId, List<RuleEvent> events)
         {
             RewardOption option = GetSelectedOption(next, optionId);
             events.Add(new RewardSelectedEvent(next, next.PendingReward, option));
@@ -530,7 +486,7 @@ namespace Dice.Engine
             ContinueAfterUnlock(next, events);
         }
 
-        private void ContinueAfterUnlock(EncounterState next, List<RuleEvent> events)
+        internal void ContinueAfterUnlock(EncounterState next, List<RuleEvent> events)
         {
             next.PendingReward = null;
             next.PendingUnlockOfferDiscoveredFamilyIds = null;
