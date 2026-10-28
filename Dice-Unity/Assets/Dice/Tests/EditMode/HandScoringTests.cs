@@ -112,6 +112,57 @@ namespace Dice.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new DiceValues(0, 1, 2, 3, 4));
         }
 
+        /** Checks the evaluator states the dice that form each category: every die of a full house, straight or five of a kind, the matched dice of pairs and sets, and the first highest die of a high die / fails if a category marks dice outside its pattern or misses one. */
+        [TestCase(1, 2, 3, 4, 6, HandCategory.HighDie, 16)]
+        [TestCase(4, 1, 3, 4, 6, HandCategory.Pair, 9)]
+        [TestCase(4, 2, 4, 6, 2, HandCategory.TwoPair, 23)]
+        [TestCase(3, 1, 3, 6, 3, HandCategory.ThreeOfAKind, 21)]
+        [TestCase(3, 6, 3, 6, 3, HandCategory.FullHouse, 31)]
+        [TestCase(6, 6, 2, 6, 6, HandCategory.FourOfAKind, 27)]
+        [TestCase(5, 1, 3, 2, 4, HandCategory.Straight, 31)]
+        [TestCase(3, 6, 2, 5, 4, HandCategory.Straight, 31)]
+        [TestCase(2, 2, 2, 2, 2, HandCategory.FiveOfAKind, 31)]
+        [TestCase(6, 4, 3, 1, 2, HandCategory.HighDie, 1)]
+        [TestCase(5, 1, 6, 3, 5, HandCategory.Pair, 17)]
+        [TestCase(2, 2, 1, 3, 3, HandCategory.TwoPair, 27)]
+        [TestCase(2, 6, 6, 6, 4, HandCategory.ThreeOfAKind, 14)]
+        [TestCase(1, 5, 5, 5, 5, HandCategory.FourOfAKind, 30)]
+        public void EvaluatorStatesTheDiceThatFormTheCategory(int first, int second, int third, int fourth, int fifth,
+            HandCategory category, int expectedMask)
+        {
+            Assert.That(HandEvaluator.Evaluate(new DiceValues(first, second, third, fourth, fifth), out int mask), Is.EqualTo(category));
+            Assert.That(mask, Is.EqualTo(expectedMask));
+        }
+
+        /** Checks the score breakdown states the dice that form its category / fails if the breakdown's dice differ from the evaluator's or are left empty. */
+        [TestCase(4, 1, 3, 4, 6, 9)]
+        [TestCase(1, 2, 3, 4, 6, 16)]
+        public void ScoreStatesTheDiceThatFormItsCategory(int first, int second, int third, int fourth, int fifth, int expectedMask)
+        {
+            var score = HandScorer.Calculate(new DiceValues(first, second, third, fourth, fifth), TestContent.Catalog(), new int[8]);
+            Assert.That(score.FormingDiceMask, Is.EqualTo(expectedMask));
+        }
+
+        /** Checks a hand states its base score and multiplier at each upgrade level from zero to its maximum and rejects levels outside that range / fails if a level's values drift from the per-upgrade rise or an out-of-range level is answered. */
+        [TestCase(0, 17L, 3L)]
+        [TestCase(2, 31L, 7L)]
+        [TestCase(6, 59L, 15L)]
+        public void HandStatesItsValuesAtAnUpgradeLevel(int level, long baseScore, long multiplier)
+        {
+            var hand = new HandDefinition("hand.level-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            Assert.That(hand.BaseScoreAt(level), Is.EqualTo(baseScore));
+            Assert.That(hand.MultiplierAt(level), Is.EqualTo(multiplier));
+        }
+
+        [TestCase(-1)]
+        [TestCase(7)]
+        public void HandRejectsAnUpgradeLevelOutsideItsRange(int level)
+        {
+            var hand = new HandDefinition("hand.level-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            Assert.Throws<ArgumentOutOfRangeException>(() => hand.BaseScoreAt(level));
+            Assert.Throws<ArgumentOutOfRangeException>(() => hand.MultiplierAt(level));
+        }
+
         [TestCase(-1)]
         [TestCase(7)]
         public void InvalidUpgradeCountIsNotSilentlyClamped(int count)

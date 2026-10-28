@@ -117,19 +117,17 @@ namespace Dice.Presentation
                 SelectionText = category + " / LEVEL " + score.UpgradeCount + "\n" +
                     charms.GetContributionText(handBase, handMultiplier, 0),
                 SelectionColor = theme.muted,
-                HighlightMask = SpiritHandScoringHighlights.GetMask(dice, score.Category),
+                HighlightMask = score.FormingDiceMask,
                 ResolvingIndex = -1,
                 Hold = ScoreStepHold
             });
 
-            // Recorded contributions retain the eligibility and activation order of the engine phase.
+            // Activations retain the eligibility and activation order of the engine phase.
             ModifierDefinition emblem = null;
             int readyIndex = 0;
-            foreach (var contribution in score.ModifierContributions)
+            foreach (var activated in scored.Activations)
             {
-                if (contribution.Phase != ModifierPhase.PlayHand) continue;
-                var step = BuildContribution(contribution, false, readyIndex++, baseScore, multiplier, events, stageIndex,
-                    handIndex);
+                var step = BuildContribution(activated, false, readyIndex++, baseScore, multiplier);
                 baseScore = step.BaseScore;
                 multiplier = step.Multiplier;
                 emblem = step.Emblem;

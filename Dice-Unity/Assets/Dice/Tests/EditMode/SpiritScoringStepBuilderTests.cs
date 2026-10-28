@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -14,6 +13,8 @@ namespace Dice.Tests
     {
         private static readonly DiceValues HighDieDice = new DiceValues(1, 2, 3, 4, 6);
         private static readonly DiceValues PairDice = new DiceValues(2, 5, 2, 3, 6);
+        // A fabricated forming mask no category of the fixture dice would derive.
+        private const int FormingMask = (1 << 1) | (1 << 4);
         private SyntheticCharms synthetic;
         private SpiritUiTheme theme;
         private ModifierDefinition bank;
@@ -63,26 +64,26 @@ namespace Dice.Tests
             Assert.That(dice.Charm, Is.Null);
         }
 
-        /** Checks the hand rank step adds the category's and its upgrades' base and multiplier and highlights the category's dice / fails if upgrades are dropped or counted when absent, or the dice highlight ignores the category. */
+        /** Checks the hand rank step adds the category's and its upgrades' base and multiplier and highlights the dice the score states form the category / fails if upgrades are dropped or counted when absent, or the dice highlight is derived instead of read. */
         [TestCase(0)]
         [TestCase(3)]
         public void HandRankStepAddsCategoryAndUpgradeValuesWithTheCategoryHighlight(int upgrades)
         {
             var score = Score(PairDice, HandCategory.Pair, upgrades);
-            var steps = Build(score, PairDice, 0, 0);
+            var steps = Build(score, 0, 0);
             var rank = steps[1];
             Assert.That(rank.BaseScore, Is.EqualTo(steps[0].BaseScore + score.CategoryBaseScore + score.UpgradeBaseScore));
             Assert.That(rank.Multiplier, Is.EqualTo(steps[0].Multiplier + score.CategoryMultiplier + score.UpgradeMultiplier));
             Assert.That(score.UpgradeBaseScore != 0 || score.UpgradeMultiplier != 0, Is.EqualTo(upgrades > 0), "Fixture upgrades");
             Assert.That(rank.StepLabel, Is.EqualTo("STEP 2 OF 4 - HAND RANK"));
             Assert.That(rank.SelectionText, Does.Contain(" / LEVEL " + upgrades + "\n"));
-            Assert.That(rank.HighlightMask, Is.EqualTo((1 << 0) | (1 << 2)), "Only the pair's dice are highlighted.");
+            Assert.That(rank.HighlightMask, Is.EqualTo(FormingMask), "Only the dice the score states are highlighted.");
             Assert.That(rank.ResolvingIndex, Is.EqualTo(-1));
         }
 
-        /** Checks each PlayHand contribution gets one charm step in contribution order, adding its base and multiplier and resolving its own token / fails if charms are reordered, merged or skipped, or the counters or resolving token drift. */
+        /** Checks each charm activation of the scored hand gets one charm step in activation order, adding its base and multiplier and resolving its own token / fails if charms are reordered, merged or skipped, or the counters or resolving token drift. */
         [Test]
-        public void EachPlayHandContributionGetsOneCharmStepInContributionOrder()
+        public void EachPlayHandActivationGetsOneCharmStepInActivationOrder()
         {
             var contributions = new[]
             {
@@ -262,19 +263,16 @@ namespace Dice.Tests
 
         private static ModifierContribution Contribution(ModifierDefinition definition, long instanceId, long baseScore = 0,
             long multiplier = 0, int rerolls = 0)
-            => TestTrayRig.Contribution(definition, instanceId, baseScore, multiplier, rerolls);
+            => new ModifierContribution(instanceId, definition, baseScore, multiplier, rerolls);
 
         private static ScoreBreakdown Score(DiceValues dice, HandCategory category, int upgrades,
             params ModifierContribution[] contributions)
             => Score(dice, category, upgrades, contributions, 0);
 
-        /** A scored hand of the given dice under a synthetic category definition. */
+        /** A scored hand of the given dice under a synthetic category definition, formed by the dice of FormingMask. */
         private static ScoreBreakdown Score(DiceValues dice, HandCategory category, int upgrades,
             IEnumerable<ModifierContribution> contributions, long ruleMultiplier)
-        {
-            var hand = new HandDefinition("test.steps.hand", category, 6, 2, 3, 1, 6);
-            return (ScoreBreakdown)Activator.CreateInstance(typeof(ScoreBreakdown), BindingFlags.Instance | BindingFlags.NonPublic,
-                null, new object[] { dice, hand, upgrades, contributions, ruleMultiplier }, null);
-        }
+            => new ScoreBreakdown(dice, FormingMask, new HandDefinition("test.steps.hand", category, 6, 2, 3, 1, 6), upgrades,
+                contributions, ruleMultiplier);
     }
 }
