@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   title: THE OLD ROAD
   description: A missing traveler. Three witnesses. A road beyond the rain.
-  entries: []
   chapters:
   - {fileID: 11400000, guid: 794ddf4ac5ed48e5bf94b07af60956c8, type: 2}
   - {fileID: 11400000, guid: 89038dc65d5e4785b51e233cfa8496d8, type: 2}

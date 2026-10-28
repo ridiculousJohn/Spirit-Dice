@@ -32,6 +32,4 @@ MonoBehaviour:
   rulePresentations:
   - {fileID: 11400000, guid: a09fa264a658af84f85c9abb0716f7e2, type: 2}
   ambientActivity: {fileID: 0}
-  roomTableEdge: 0.625
-  roomSplit: 0.625
   openingFadeDuration: 0.3

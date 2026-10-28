@@ -56,7 +56,6 @@ Material:
     - _CategoryIconRect: {r: 0, g: 0, b: 1, a: 1}
     - _CategoryIconUVTransform: {r: 1, g: 1, b: 0, a: 0}
     - _ClipLocalX: {r: 0, g: 0, b: 0, a: 0}
-    - _ClipWorldX: {r: 0, g: 0, b: 0, a: 0}
     - _FaceIconColor: {r: 0.04, g: 0.03, b: 0.02, a: 1}
     - _FaceIconRect: {r: 0, g: 0, b: 1, a: 1}
     - _FaceIconUVTransform: {r: 1, g: 1, b: 0, a: 0}

@@ -12,25 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70365ad616e9415aa4038f2f3bd30c35, type: 3}
   m_Name: MerchantTrayPresentation
   m_EditorClassIdentifier: 
-  DiceShader: {fileID: 4800000, guid: 2bf45d368b9b4a21b2da5b3a1c1ed36b, type: 3}
-  BoneTexture: {fileID: 2800000, guid: 4554059d4d75478c8ea275baa3695ef7, type: 3}
-  WoodTexture: {fileID: 2800000, guid: 0edec0dd42ef415bb6a06e07a40e4c5b, type: 3}
-  GeometryPrefab: {fileID: 11400000, guid: 29fe3d6ed8634c68ac425feffe432ea2, type: 3}
   RigPrefab: {fileID: 3540792864372039771, guid: f512680683aa4054bec21b21e5eee091, type: 3}
-  CameraPosition: {x: 0, y: 7.045147, z: -5.3701673}
-  CameraEulerAngles: {x: 51.1, y: 0, z: 0}
-  Orthographic: 0
-  FieldOfView: 27
-  OrthographicSize: 4
-  NearClipPlane: 0.1
-  FarClipPlane: 30
-  FallbackLightEulerAngles: {x: 65, y: -32, z: 0}
-  FallbackLightColor: {r: 1, g: 0.94, b: 0.8, a: 1}
-  FallbackLightIntensity: 1.2
   TextureSize: {x: 1024, y: 512}
-  CompositionRect:
-    serializedVersion: 2
-    x: 0.034999967
-    y: 0.27359372
-    width: 0.97
-    height: 0.27281252

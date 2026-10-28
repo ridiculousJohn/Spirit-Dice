@@ -12,6 +12,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70365ad616e9415aa4038f2f3bd30c35, type: 3}
   m_Name: SpiritTrayPresentation
   m_EditorClassIdentifier:
-  DiceShader: {fileID: 4800000, guid: 2bf45d368b9b4a21b2da5b3a1c1ed36b, type: 3}
-  BoneTexture: {fileID: 2800000, guid: 4554059d4d75478c8ea275baa3695ef7, type: 3}
-  WoodTexture: {fileID: 2800000, guid: 0edec0dd42ef415bb6a06e07a40e4c5b, type: 3}

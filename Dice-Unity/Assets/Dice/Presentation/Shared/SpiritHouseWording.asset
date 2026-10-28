@@ -145,17 +145,8 @@ MonoBehaviour:
     continueButton: Continue
     unlockButton: Unlock
     selectButton: Select
-    completeStep: REWARDS COMPLETE
-    charmStep: CHARM CHOICE
-    handUpgradeStep: HAND UPGRADE CHOICE
-    preparingInstruction: Preparing the next stage
-    charmInstruction: Choose one free charm to keep for this run
-    handUpgradeInstruction: 'Choose one hand upgrade
-
-      Scroll to see all choices'
     exhaustedInstruction: You own every charm this encounter awards.
     unlockInstruction: Choose one to add permanently to your collection.
-    upcomingStage: NEXT STAGE {stage} / {stages} - CLEAR {threshold}
     refreshButton: Refresh ({count})
   rewardCard:
     level: Level {level}

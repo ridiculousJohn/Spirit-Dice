@@ -249,7 +249,6 @@ GameObject:
   - component: {fileID: 7519461775979628368}
   - component: {fileID: 2985916643384433127}
   - component: {fileID: 4778318310734102129}
-  - component: {fileID: 8507225197063604025}
   m_Layer: 0
   m_Name: SpiritReplaceSaveConfirmation
   m_TagString: Untagged
@@ -329,23 +328,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiContext
   theme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
   wording: {fileID: 11400000, guid: a32898378b6852b4fa89c2bfbf1e6b94, type: 2}
---- !u!114 &8507225197063604025
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7675949221213696439}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c3b8ffaab04f41f1a53d044d945421ca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritSaveReplacementConfirmation
-  <Root>k__BackingField: {fileID: 5470534050867068136}
-  <Title>k__BackingField: {fileID: 620393984229252409}
-  <Description>k__BackingField: {fileID: 234063912140767832}
-  <ConfirmButton>k__BackingField: {fileID: 1229151836692634858}
-  <CancelButton>k__BackingField: {fileID: 7372426875833191623}
 --- !u!1001 &4016468163147634993
 PrefabInstance:
   m_ObjectHideFlags: 0

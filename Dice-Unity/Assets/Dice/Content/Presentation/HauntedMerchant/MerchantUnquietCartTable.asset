@@ -36,6 +36,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 602ca3a59fd54fd18c47382e967589ef, type: 2}
   - {fileID: 11400000, guid: 9ba561f1ec774ed3a9ae298d718e3c13, type: 2}
   ambientActivity: {fileID: 11400000, guid: 81a22bfa46ae431589790a42c69a4ebf, type: 2}
-  roomTableEdge: 0.558036
-  roomSplit: 0.625
   openingFadeDuration: 0.3

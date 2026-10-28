@@ -27,6 +27,4 @@ MonoBehaviour:
   trayPresentation: {fileID: 11400000, guid: e1f3d52645bd53c38fab87b4f054e02a, type: 2}
   rulePresentations:
   - {fileID: 11400000, guid: f5291241fb474381a876d1e2707e4972, type: 2}
-  roomTableEdge: 0.625
-  roomSplit: 0.625
   openingFadeDuration: 0.3
