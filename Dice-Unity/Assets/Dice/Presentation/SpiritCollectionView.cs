@@ -96,7 +96,7 @@ namespace Dice.Presentation
             families.Clear();
             families.AddRange(grouped.Values);
             families.Sort((left, right) => StringComparer.Ordinal.Compare(
-                SpiritModifierFamilyRow.GetFamilyName(charms, left[0]), SpiritModifierFamilyRow.GetFamilyName(charms, right[0])));
+                charms.GetFamilyName(left[0]), charms.GetFamilyName(right[0])));
             foreach (var family in families)
                 family.Sort((left, right) => charms.GetOrder(left).CompareTo(charms.GetOrder(right)));
             summary.text = "Collected " + unlockedCount + " / " + permanentCount + "  |  Available at start " + starterCount;

@@ -108,16 +108,34 @@ namespace Dice.Presentation
         }
     }
 
+    /** The name a charm family is shown under, for the family id its charms share. */
+    [Serializable]
+    public sealed class ModifierFamilyWording
+    {
+        [SerializeField] private string familyId;
+        [SerializeField] private string name;
+
+        public string FamilyId => familyId;
+        public string Name => name;
+
+        public ModifierFamilyWording(string familyId, string name)
+        {
+            this.familyId = familyId;
+            this.name = name;
+        }
+    }
+
     /**
      * One theme's charm presentation: a presentation for every charm the content uses, the category styles those
-     * presentations use, the wording of every effect kind, phase and activation limit, and the wording of score
-     * contributions. Loading validates it against the loaded content.
+     * presentations use, the name of every charm family, the wording of every effect kind, phase and activation limit,
+     * and the wording of score contributions. Loading validates it against the loaded content.
      */
     [CreateAssetMenu(menuName = "Dice/Modifier Skin")]
     public sealed class ModifierSkinAsset : ScriptableObject
     {
         [SerializeField] private ModifierPresentationAsset[] modifiers = Array.Empty<ModifierPresentationAsset>();
         [SerializeField] private ModifierCategoryPresentationAsset[] categories = Array.Empty<ModifierCategoryPresentationAsset>();
+        [SerializeField] private ModifierFamilyWording[] familyWording = Array.Empty<ModifierFamilyWording>();
         [SerializeField] private ModifierEffectWording[] effectWording = Array.Empty<ModifierEffectWording>();
         /** Shown as the effect text of a charm without effects. */
         [SerializeField] private string noEffectsText;
@@ -127,6 +145,7 @@ namespace Dice.Presentation
 
         public IReadOnlyList<ModifierPresentationAsset> Modifiers => modifiers;
         public IReadOnlyList<ModifierCategoryPresentationAsset> Categories => categories;
+        public IReadOnlyList<ModifierFamilyWording> FamilyWording => familyWording;
         public IReadOnlyList<ModifierEffectWording> EffectWording => effectWording;
         public string NoEffectsText => noEffectsText;
         public IReadOnlyList<ModifierPhaseWording> PhaseWording => phaseWording;

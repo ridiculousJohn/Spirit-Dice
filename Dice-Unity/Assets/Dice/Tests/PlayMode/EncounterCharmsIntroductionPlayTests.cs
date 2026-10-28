@@ -244,7 +244,7 @@ namespace Dice.Tests
             Assert.That(rows.Select(row => row.FamilyId), Is.EquivalentTo(families.Select(family => family.FamilyId)), journey.Id);
             foreach (var family in families)
                 Assert.That(rows.Single(row => row.FamilyId == family.FamilyId).GetComponentsInChildren<Text>().Select(text => text.text),
-                    Does.Contain(SpiritModifierFamilyRow.GetFamilyName(ContentReady.Charms, family)), journey.Id);
+                    Does.Contain(ContentReady.Charms.GetFamilyName(family)), journey.Id);
         }
 
         /** The narration, family row, scope sentence and Continue are complete and stacked without overlap. */

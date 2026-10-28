@@ -11,7 +11,7 @@ namespace Dice.Presentation
     /**
      * The presentation of every charm of one loaded content, built at load from a skin. Each presentation is matched
      * to its charm's definition through the presentation's own charm reference; a content charm without exactly one
-     * presentation, an effect kind, phase or activation limit the content uses without wording, or incomplete
+     * presentation, a content charm family without exactly one name, an effect kind, phase or activation limit the content uses without wording, or incomplete
      * contribution wording fails construction.
      */
     public sealed class ModifierPresentationCatalog
@@ -19,6 +19,7 @@ namespace Dice.Presentation
         private readonly Dictionary<ModifierDefinition, ModifierPresentationAsset> entries =
             new Dictionary<ModifierDefinition, ModifierPresentationAsset>();
         private readonly Dictionary<ModifierDefinition, int> order = new Dictionary<ModifierDefinition, int>();
+        private readonly Dictionary<string, string> familyNames = new Dictionary<string, string>(StringComparer.Ordinal);
         private readonly Dictionary<ModifierEffectKind, ModifierEffectWording> wording =
             new Dictionary<ModifierEffectKind, ModifierEffectWording>();
         private readonly Dictionary<ModifierPhase, ModifierPhaseWording> phaseWording =
@@ -34,8 +35,8 @@ namespace Dice.Presentation
         {
             if (skin == null) throw new ArgumentNullException(nameof(skin));
             if (content == null) throw new ArgumentNullException(nameof(content));
-            if (skin.Modifiers == null || skin.Categories == null || skin.EffectWording == null || skin.PhaseWording == null ||
-                skin.LimitWording == null)
+            if (skin.Modifiers == null || skin.Categories == null || skin.FamilyWording == null || skin.EffectWording == null ||
+                skin.PhaseWording == null || skin.LimitWording == null)
                 throw new InvalidOperationException("The modifier skin " + skin.name + " has missing lists.");
             Catalog = content.Catalog;
             var categories = new HashSet<ModifierCategoryPresentationAsset>();
@@ -62,6 +63,16 @@ namespace Dice.Presentation
             foreach (ModifierAsset modifier in content.Modifiers)
                 if (!presented.Contains(modifier))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no presentation for the charm " + modifier.Id + ".");
+            foreach (ModifierFamilyWording family in skin.FamilyWording)
+            {
+                if (family == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has a missing family name.");
+                if (string.IsNullOrWhiteSpace(family.FamilyId) || string.IsNullOrWhiteSpace(family.Name))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has an incomplete family name for the family '" +
+                        family.FamilyId + "'.");
+                if (familyNames.ContainsKey(family.FamilyId))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " names the family " + family.FamilyId + " twice.");
+                familyNames.Add(family.FamilyId, family.Name);
+            }
             foreach (ModifierEffectWording effect in skin.EffectWording)
             {
                 if (effect == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has missing effect wording.");
@@ -100,6 +111,9 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The modifier skin " + skin.name + " has incomplete contribution wording.");
             foreach (ModifierDefinition definition in Catalog.Modifiers)
             {
+                if (!familyNames.ContainsKey(definition.FamilyId))
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no name for the family " + definition.FamilyId +
+                        " of the charm " + definition.Id + ".");
                 if (definition.Effects.Count == 0 && string.IsNullOrWhiteSpace(skin.NoEffectsText))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no text for the charm without effects " + definition.Id + ".");
                 foreach (ModifierEffect effect in definition.Effects)
@@ -137,6 +151,13 @@ namespace Dice.Presentation
         }
 
         public string GetName(ModifierDefinition definition) => Entry(definition).DisplayName;
+
+        /** The name of the charm's family, shared by every variant of the family. */
+        public string GetFamilyName(ModifierDefinition definition)
+        {
+            Entry(definition);
+            return familyNames[definition.FamilyId];
+        }
 
         /** The position of the charm's presentation in the skin; screens that list a family's variants list them in this order. */
         public int GetOrder(ModifierDefinition definition)

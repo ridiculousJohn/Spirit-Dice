@@ -203,7 +203,7 @@ namespace Dice.Presentation
             var theme = SpiritUi.GetTheme(transform);
             string name = charms.GetName(definition);
             body.text = body.text.Replace("{charm}", "<b><color=#" + ColorUtility.ToHtmlStringRGB(theme.amber) +
-                ">" + SpiritModifierFamilyRow.GetFamilyName(charms, definition) + "</color></b>");
+                ">" + charms.GetFamilyName(definition) + "</color></b>");
             charmName.text = name;
             charmEffect.text = "<b>" + charms.GetEffectText(definition) + "</b>";
             charmEffect.color = charms.GetEffectColor(definition);

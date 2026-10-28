@@ -54,7 +54,7 @@ namespace Dice.Presentation
             artwork.SetActive(true);
             variantRoot.SetActive(true);
             FamilyId = first.FamilyId;
-            familyName.text = GetFamilyName(charms, first);
+            familyName.text = charms.GetFamilyName(first);
             var theme = SpiritUi.GetTheme(transform);
             condition.text = SpiritRewardCard.GetModifierDescription(charms, first, theme.amber, theme.GetModifierTriggerColor(first.Phase));
             icon.sprite = charms.GetIcon(first);
@@ -107,13 +107,6 @@ namespace Dice.Presentation
         {
             foreach (var item in variants)
                 item.Selection.enabled = item.Definition != null && item.Definition.Id == modifierId;
-        }
-
-        public static string GetFamilyName(ModifierPresentationCatalog charms, ModifierDefinition definition)
-        {
-            string name = charms.GetName(definition);
-            int separator = name.LastIndexOf(" / ", StringComparison.Ordinal);
-            return separator < 0 ? name : name.Substring(0, separator);
         }
     }
 }

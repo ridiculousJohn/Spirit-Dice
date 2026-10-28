@@ -201,6 +201,46 @@ namespace Dice.Tests
             Assert.That(charms.GetCategorySprite(definition), Is.SameAs(rerolls.Symbol));
         }
 
+        /** Checks every variant of a family shows the skin's name of the family / fails if the name comes from a variant's own display name. */
+        [Test]
+        public void EachVariantShowsTheSkinsNameOfItsFamily()
+        {
+            var category = synthetic.Category();
+            var first = synthetic.Charm("test.first", "family.shared");
+            var second = synthetic.Charm("test.second", "family.shared");
+            var other = synthetic.Charm("test.other", "family.other");
+            var content = SyntheticCharms.Content(first, second, other);
+            var charms = synthetic.Load(synthetic.Skin(new[]
+            {
+                synthetic.Presentation(first, category, "Shared / First"),
+                synthetic.Presentation(second, category, "Second"),
+                synthetic.Presentation(other, category, "Other / Variant")
+            }, new[] { category }, families: new[]
+            {
+                new ModifierFamilyWording("family.shared", "Shared family"),
+                new ModifierFamilyWording("family.other", "Other family")
+            }), content);
+
+            Assert.That(charms.GetFamilyName(content.GetDefinition(first)), Is.EqualTo("Shared family"));
+            Assert.That(charms.GetFamilyName(content.GetDefinition(second)), Is.EqualTo("Shared family"));
+            Assert.That(charms.GetFamilyName(content.GetDefinition(other)), Is.EqualTo("Other family"));
+        }
+
+        /** Checks a content family without a name, with a blank name or named twice fails at load / fails if a family loads unnamed or ambiguous. */
+        [TestCase("missing")]
+        [TestCase("blank")]
+        [TestCase("twice")]
+        public void AFamilyWithoutExactlyOneNameFailsAtLoad(string fault)
+        {
+            var category = synthetic.Category();
+            var charm = synthetic.Charm("test.charm", "family.test");
+            var families = fault == "missing" ? new ModifierFamilyWording[0] :
+                fault == "blank" ? new[] { new ModifierFamilyWording("family.test", " ") } :
+                new[] { new ModifierFamilyWording("family.test", "One"), new ModifierFamilyWording("family.test", "Two") };
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, families: families);
+            Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+        }
+
         /** Checks a content charm without a presentation in the skin fails at load / fails if the charm loads without presentation. */
         [Test]
         public void ACharmWithoutPresentationFailsAtLoad()

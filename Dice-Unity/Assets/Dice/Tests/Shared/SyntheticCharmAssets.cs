@@ -115,17 +115,35 @@ namespace Dice.Tests
         public static ModifierContributionWording ContributionWording() =>
             new ModifierContributionWording("base label", "multiplier label", "reroll label", "rerolls label");
 
+        /** Test family names: "Family of <family id>" for every family of the given charm presentations. */
+        public static ModifierFamilyWording[] FamilyWording(IEnumerable<ModifierPresentationAsset> modifiers) => modifiers
+            .Where(presentation => presentation != null && presentation.Modifier != null)
+            .Select(presentation => presentation.Modifier.FamilyId).Distinct(StringComparer.Ordinal)
+            .Select(family => new ModifierFamilyWording(family, "Family of " + family)).ToArray();
+
+        /** A skin of the given presentations and categories; without family names it names every family as FamilyWording does. */
         public ModifierSkinAsset Skin(IEnumerable<ModifierPresentationAsset> modifiers,
             IEnumerable<ModifierCategoryPresentationAsset> categories, IEnumerable<ModifierEffectWording> wording = null,
             string noEffectsText = "No effects", IEnumerable<ModifierPhaseWording> phases = null,
-            IEnumerable<ModifierActivationLimitWording> limits = null, ModifierContributionWording contribution = null)
+            IEnumerable<ModifierActivationLimitWording> limits = null, ModifierContributionWording contribution = null,
+            IEnumerable<ModifierFamilyWording> families = null)
         {
 #if UNITY_EDITOR
             var skin = Own(ScriptableObject.CreateInstance<ModifierSkinAsset>());
             skin.name = "Test Skin";
             var serialized = new SerializedObject(skin);
-            SetList(serialized.FindProperty("modifiers"), modifiers.ToArray());
+            ModifierPresentationAsset[] presentations = modifiers.ToArray();
+            SetList(serialized.FindProperty("modifiers"), presentations);
             SetList(serialized.FindProperty("categories"), categories.ToArray());
+            ModifierFamilyWording[] familyRows = (families ?? FamilyWording(presentations)).ToArray();
+            SerializedProperty familyList = serialized.FindProperty("familyWording");
+            familyList.arraySize = familyRows.Length;
+            for (int i = 0; i < familyRows.Length; ++i)
+            {
+                SerializedProperty element = familyList.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("familyId").stringValue = familyRows[i].FamilyId;
+                element.FindPropertyRelative("name").stringValue = familyRows[i].Name;
+            }
             ModifierEffectWording[] effects = (wording ?? Wording()).ToArray();
             SerializedProperty list = serialized.FindProperty("effectWording");
             list.arraySize = effects.Length;
@@ -202,8 +220,9 @@ namespace Dice.Tests
         /**
          * A presentation of every modifier of an engine catalog in a test skin with the wording of the given skin: a
          * modifier with the id of a charm the given skin presents shows that charm's presentation, paired with that
-         * charm asset, and every other modifier is presented as For(catalog) presents it. The given skin's assets are
-         * referenced, never owned.
+         * charm asset, and every other modifier is presented as For(catalog) presents it. A family the given skin names
+         * keeps its name; every other family is named as FamilyWording names it. The given skin's assets are referenced,
+         * never owned.
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierSkinAsset presented)
         {
@@ -233,8 +252,11 @@ namespace Dice.Tests
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
                 presentations.Add(Presentation(charm, testCategory, template: "Condition of " + definition.Id));
             }
+            var families = new List<ModifierFamilyWording>();
+            foreach (ModifierFamilyWording family in FamilyWording(presentations))
+                families.Add(presented.FamilyWording.FirstOrDefault(named => named.FamilyId == family.FamilyId) ?? family);
             return Load(Skin(presentations, categories, presented.EffectWording, presented.NoEffectsText, presented.PhaseWording,
-                presented.LimitWording, presented.ContributionWording), new MechanicalContent(catalog, pairs));
+                presented.LimitWording, presented.ContributionWording, families), new MechanicalContent(catalog, pairs));
         }
 
         public void Dispose()
