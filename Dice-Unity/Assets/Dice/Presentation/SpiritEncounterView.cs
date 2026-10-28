@@ -386,6 +386,41 @@ namespace Dice.Presentation
             portrait.sizeDelta = new Vector2(width, portrait.sizeDelta.y);
         }
 
+        /**
+         * Readies the screen, which stays disabled, as a still editor preview that the camera renders at the portrait size:
+         * the gameplay HUD and its tray show at rest over the table with the host seated, and every other panel is hidden.
+         */
+        public void PreparePreview(Camera camera, Vector2 portraitSize, SpiritHostPresentationAsset host)
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            canvas.planeDistance = 1;
+            SizePreview(portraitSize);
+            GameplayHud.SetGameplayVisible(true, true);
+            RewardsPanel.Root.gameObject.SetActive(false);
+            OwnedCharmsPanel.Root.gameObject.SetActive(false);
+            JourneyView.gameObject.SetActive(false);
+            GameplayHud.ResetTransientVisuals();
+            TrayScene.Initialize();
+            var presentation = TrayScene.Presentation;
+            TrayScene.DiceTray.Configure(presentation, TrayScene);
+            TrayScene.DiceTray.Initialize();
+            TrayScene.HistoryRenderer.Configure(presentation, TrayScene);
+            TrayScene.HistoryRenderer.Initialize();
+            GameplayHud.PreparePreview(TrayScene.Texture);
+            hostPortrait.Build((RectTransform)hostPortrait.transform, host);
+            hostPortrait.SetVisible(true);
+        }
+
+        /** Centres the preview portrait at the given size and lays the screen out for it. */
+        public void SizePreview(Vector2 portraitSize)
+        {
+            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
+            portrait.sizeDelta = portraitSize;
+            portrait.anchoredPosition = Vector2.zero;
+            Canvas.ForceUpdateCanvases();
+        }
+
         public void ShowCharmPopup(long instanceId)
         {
             if (Busy || controls.Snapshot == null || controls.Snapshot.Phase != EncounterPhase.Playing ||

@@ -17,10 +17,8 @@ namespace Dice.Editor
         internal SpiritEncounterView View { get; private set; }
         internal Camera Camera { get; private set; }
         internal RenderTexture Output { get; private set; }
-        private CanvasGroup hudVisibility;
-        private CanvasGroup trayVisibility;
-        private float authoredHudAlpha;
-        private bool authoredTrayIgnoreParentGroups;
+        // Pixel height of the preview portrait, the encounter's reference height.
+        private const int PreviewHeight = 960;
 
         internal static string PathFor(EncounterTablePresentationAsset table)
         {
@@ -94,42 +92,19 @@ namespace Dice.Editor
                 result.Camera.clearFlags = CameraClearFlags.SolidColor;
                 result.Camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
                 result.Camera.allowHDR = result.Camera.allowMSAA = false;
-                result.Output = new RenderTexture(narrow ? 443 : 540, 960, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                result.Output = new RenderTexture(narrow ? 443 : 540, PreviewHeight, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
                 {
                     name = "Encounter Scene Preview", hideFlags = HideFlags.HideAndDontSave,
                     filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
                 };
                 result.Output.Create();
                 result.Camera.targetTexture = result.Output;
-                view.Canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                view.Canvas.worldCamera = result.Camera;
-                view.Canvas.planeDistance = 1;
-                result.Resize(narrow);
-                view.GameplayHud.SetGameplayVisible(true, true);
-                view.RewardsPanel.Root.gameObject.SetActive(false);
-                view.OwnedCharmsPanel.Root.gameObject.SetActive(false);
-                view.JourneyView.gameObject.SetActive(false);
-                view.GameplayHud.ResetTransientVisuals();
-                view.TrayScene.Initialize();
-                var presentation = view.TrayScene.Presentation;
-                view.TrayScene.DiceTray.Configure(presentation, view.TrayScene);
-                view.TrayScene.DiceTray.Initialize();
-                view.TrayScene.HistoryRenderer.Configure(presentation, view.TrayScene);
-                view.TrayScene.HistoryRenderer.Initialize();
+                result.Camera.aspect = (float)result.Output.width / PreviewHeight;
+                view.PreparePreview(result.Camera, new Vector2(result.Output.width, PreviewHeight), table.HostPresentation);
+                // The tray renders on request, into the preview scene only.
                 view.TrayScene.RenderCamera.scene = result.Scene;
                 view.TrayScene.RenderCamera.overrideSceneCullingMask = EditorSceneManager.GetSceneCullingMask(result.Scene);
                 view.TrayScene.RenderCamera.enabled = false;
-                view.GameplayHud.DiceTrayImage.texture = view.TrayScene.Texture;
-                view.GameplayHud.DiceTrayImage.enabled = true;
-                view.HostPortrait.Build((RectTransform)view.HostPortrait.transform, table.HostPresentation);
-                view.HostPortrait.SetVisible(true);
-                result.hudVisibility = view.GameplayHud.GetComponent<CanvasGroup>();
-                if (result.hudVisibility == null) result.hudVisibility = view.GameplayHud.gameObject.AddComponent<CanvasGroup>();
-                result.hudVisibility.blocksRaycasts = false;
-                result.authoredHudAlpha = result.hudVisibility.alpha;
-                result.trayVisibility = view.GameplayHud.DiceTrayFrame.GetComponent<CanvasGroup>();
-                if (result.trayVisibility == null) result.trayVisibility = view.GameplayHud.DiceTrayFrame.gameObject.AddComponent<CanvasGroup>();
-                result.authoredTrayIgnoreParentGroups = result.trayVisibility.ignoreParentGroups;
                 return result;
             }
             catch { result.Dispose(); throw; }
@@ -146,18 +121,11 @@ namespace Dice.Editor
                 Output.Create();
                 Camera.targetTexture = Output;
             }
-            Camera.aspect = (float)width / 960;
-            View.Portrait.anchorMin = View.Portrait.anchorMax = new Vector2(.5f, .5f);
-            View.Portrait.sizeDelta = new Vector2(width, 960);
-            View.Portrait.anchoredPosition = Vector2.zero;
-            Canvas.ForceUpdateCanvases();
+            Camera.aspect = (float)width / PreviewHeight;
+            View.SizePreview(new Vector2(width, PreviewHeight));
         }
 
-        internal void ShowHud(bool visible)
-        {
-            hudVisibility.alpha = visible ? authoredHudAlpha : 0;
-            trayVisibility.ignoreParentGroups = !visible || authoredTrayIgnoreParentGroups;
-        }
+        internal void ShowHud(bool visible) => View.GameplayHud.ShowInPreview(visible);
 
         public void Dispose()
         {

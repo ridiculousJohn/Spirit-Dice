@@ -103,10 +103,17 @@ namespace Dice.Presentation
         public long DisplayedBaseScore { get; private set; }
         public long DisplayedMultiplier { get; private set; }
 
-        [field: SerializeField] internal SpiritCounterHighlight BaseScoreHighlight { get; private set; } = new SpiritCounterHighlight();
-        [field: SerializeField] internal SpiritCounterHighlight MultiplierHighlight { get; private set; } = new SpiritCounterHighlight();
-        [field: SerializeField] internal SpiritCounterHighlight RerollsHighlight { get; private set; } = new SpiritCounterHighlight();
-        [field: SerializeField] internal SpiritCounterHighlight HandsHighlight { get; private set; } = new SpiritCounterHighlight();
+        [field: SerializeField] private SpiritCounterHighlight BaseScoreHighlight { get; set; } = new SpiritCounterHighlight();
+        [field: SerializeField] private SpiritCounterHighlight MultiplierHighlight { get; set; } = new SpiritCounterHighlight();
+        [field: SerializeField] private SpiritCounterHighlight RerollsHighlight { get; set; } = new SpiritCounterHighlight();
+        [field: SerializeField] private SpiritCounterHighlight HandsHighlight { get; set; } = new SpiritCounterHighlight();
+        // Counters the shown scoring step highlights while its animation runs.
+        private List<SpiritCounterHighlight> stepHighlights = new List<SpiritCounterHighlight>();
+        // Opacity groups of the HUD and its tray display in an editor preview, and their authored settings.
+        private CanvasGroup previewHudVisibility;
+        private CanvasGroup previewTrayVisibility;
+        private float authoredPreviewHudAlpha;
+        private bool authoredPreviewTrayIgnoresParentGroups;
 
         public void BuildHeader(RectTransform parent, Action toggleMenu)
         {
@@ -447,6 +454,31 @@ namespace Dice.Presentation
             modifierActivationCategory.Render(charms, definition);
             ModifierEmblem.enabled = false;
             ModifierEmblem.gameObject.SetActive(true);
+        }
+
+        /**
+         * Readies the HUD for a still editor preview: its tray display shows the rendered tray, and an opacity group on the
+         * HUD, which passes input through, lets the preview hide the HUD while the tray display stays shown.
+         */
+        public void PreparePreview(Texture trayTexture)
+        {
+            DiceTrayImage.texture = trayTexture;
+            DiceTrayImage.enabled = true;
+            previewHudVisibility = GetComponent<CanvasGroup>();
+            if (previewHudVisibility == null) previewHudVisibility = gameObject.AddComponent<CanvasGroup>();
+            previewHudVisibility.blocksRaycasts = false;
+            authoredPreviewHudAlpha = previewHudVisibility.alpha;
+            previewTrayVisibility = DiceTrayFrame.GetComponent<CanvasGroup>();
+            if (previewTrayVisibility == null) previewTrayVisibility = DiceTrayFrame.gameObject.AddComponent<CanvasGroup>();
+            authoredPreviewTrayIgnoresParentGroups = previewTrayVisibility.ignoreParentGroups;
+        }
+
+        /** Shows or hides the prepared preview HUD at its authored opacity; the tray display stays shown either way. */
+        public void ShowInPreview(bool visible)
+        {
+            if (previewHudVisibility == null) throw new InvalidOperationException("The HUD was not prepared for a preview.");
+            previewHudVisibility.alpha = visible ? authoredPreviewHudAlpha : 0;
+            previewTrayVisibility.ignoreParentGroups = !visible || authoredPreviewTrayIgnoresParentGroups;
         }
 
         public void ResetTransientVisuals()
