@@ -18,6 +18,7 @@ namespace Dice.Presentation
     {
         private readonly Dictionary<ModifierDefinition, ModifierPresentationAsset> entries =
             new Dictionary<ModifierDefinition, ModifierPresentationAsset>();
+        private readonly Dictionary<ModifierDefinition, int> order = new Dictionary<ModifierDefinition, int>();
         private readonly Dictionary<ModifierEffectKind, ModifierEffectWording> wording =
             new Dictionary<ModifierEffectKind, ModifierEffectWording>();
         private readonly Dictionary<ModifierPhase, ModifierPhaseWording> phaseWording =
@@ -55,6 +56,7 @@ namespace Dice.Presentation
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has more than one presentation for the charm " + modifier.Id + ".");
                 ModifierDefinition definition = content.GetDefinition(modifier);
                 Validate(presentation, categories);
+                order.Add(definition, entries.Count);
                 entries.Add(definition, presentation);
             }
             foreach (ModifierAsset modifier in content.Modifiers)
@@ -135,6 +137,13 @@ namespace Dice.Presentation
         }
 
         public string GetName(ModifierDefinition definition) => Entry(definition).DisplayName;
+
+        /** The position of the charm's presentation in the skin; screens that list a family's variants list them in this order. */
+        public int GetOrder(ModifierDefinition definition)
+        {
+            Entry(definition);
+            return order[definition];
+        }
 
         public string GetConditionText(ModifierDefinition definition)
         {

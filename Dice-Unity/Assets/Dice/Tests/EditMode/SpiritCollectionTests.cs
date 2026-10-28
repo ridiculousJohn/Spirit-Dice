@@ -182,6 +182,27 @@ namespace Dice.Tests
                 .And.Not.Contain("Unlock choice:"));
         }
 
+        /** Checks a family's variants are listed in the order of their presentations in the skin / fails if they follow the catalog's order or their effects. */
+        [Test]
+        public void FamilyVariantsFollowTheSkinsPresentationOrder()
+        {
+            var category = synthetic.Category(synthetic.Icon());
+            var baseScore = synthetic.Charm("order.base_score", "order", effects: new AddBaseScoreEffectConfig(1));
+            var multiplier = synthetic.Charm("order.multiplier", "order", effects: new AddMultiplierEffectConfig(1));
+            var rerolls = synthetic.Charm("order.rerolls", "order", effects: new AddRerollsEffectConfig(1));
+            var content = SyntheticCharms.Content(baseScore, multiplier, rerolls);
+            var skin = synthetic.Skin(new[] { rerolls, baseScore, multiplier }.Select(charm => synthetic.Presentation(charm, category)),
+                new[] { category });
+            view.Show(content.Catalog, synthetic.Load(skin, content), Array.Empty<string>());
+            var row = view.Rows.Single();
+            var listed = Enumerable.Range(0, 3).Select(index =>
+            {
+                Find<Button>(row, "FamilyVariant" + index).onClick.Invoke();
+                return view.SelectedModifierId;
+            }).ToArray();
+            Assert.That(listed, Is.EqualTo(new[] { rerolls.Id, baseScore.Id, multiplier.Id }));
+        }
+
         [Test]
         public void SourcesDescribeAuthoredUnlockScheduleAndDistinguishRunOnlyAdditions()
         {

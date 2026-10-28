@@ -97,7 +97,7 @@ namespace Dice.Presentation
             families.Sort((left, right) => StringComparer.Ordinal.Compare(
                 SpiritModifierFamilyRow.GetFamilyName(charms, left[0]), SpiritModifierFamilyRow.GetFamilyName(charms, right[0])));
             foreach (var family in families)
-                family.Sort((left, right) => VariantOrder(left).CompareTo(VariantOrder(right)));
+                family.Sort((left, right) => charms.GetOrder(left).CompareTo(charms.GetOrder(right)));
             summary.text = "Collected " + unlockedCount + " / " + permanentCount + "  |  Available at start " + starterCount;
             Root.gameObject.SetActive(true);
             Root.SetAsLastSibling();
@@ -248,19 +248,6 @@ namespace Dice.Presentation
                     if (pool.ModifierIds.Contains(modifierId) || pool.FallbackModifierId == modifierId) return true;
                 }
             return false;
-        }
-
-        private static int VariantOrder(ModifierDefinition definition)
-        {
-            bool baseScore = false;
-            bool multiplier = false;
-            foreach (var effect in definition.Effects)
-            {
-                if (effect.Kind == ModifierEffectKind.AddRerolls) return 3;
-                if (effect.Kind == ModifierEffectKind.AddBaseScore) baseScore = true;
-                if (effect.Kind == ModifierEffectKind.AddMultiplier) multiplier = true;
-            }
-            return baseScore && multiplier ? 2 : multiplier ? 1 : 0;
         }
     }
 }

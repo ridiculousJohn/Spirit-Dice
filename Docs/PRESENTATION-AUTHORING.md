@@ -34,7 +34,7 @@ Safe-area fitting, standard Unity layout groups, projected dice hit regions, and
 
 Content refers to charms by direct references to their mechanical assets (`ModifierAsset`), and the application configuration (`Content/DiceApplicationConfig.asset`, Modifier Skin) references the skin `Content/Presentation/SpiritHouse/SpiritHouseModifierSkin.asset` (`ModifierSkinAsset`, Create > Dice > Modifier Skin). The diagnostic scene's controller references the same catalog and skin. The skin lists:
 
-- every charm presentation (`ModifierPresentationAsset`), each referencing its mechanical charm;
+- every charm presentation (`ModifierPresentationAsset`), each referencing its mechanical charm; the Collection lists a family's variants in the order of their presentations in this list;
 - the category presentation assets those presentations use (`Presentation/Shared/SpiritModifierCategory*.asset`; `SpiritModifierCategoryNone` styles the inert Sleeping Stone charms, which show no category mark);
 - the wording of each effect kind: the singular and plural label shown after "+N " (the singular when N is 1) and the compact label that marks each effect of a charm with more than one effect in Collection rows;
 - the effect text of a charm without effects;
