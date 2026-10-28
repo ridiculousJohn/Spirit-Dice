@@ -30,7 +30,8 @@ namespace Dice.Tests
                 };
                 var parent = host.GetComponent<RectTransform>();
                 parent.sizeDelta = presentation.ReferenceSize;
-                var portrait = presentation.Create(parent);
+                var portrait = UnityEngine.Object.Instantiate(presentation.PortraitPrefab, parent, false);
+                portrait.Build(presentation);
                 var smokeLayer = presentation.Layers.First(layer => layer.Smoke != null && layer.Smoke.Enabled);
                 var solidLayer = presentation.Layers.First(layer => layer.Smoke == null || !layer.Smoke.Enabled);
                 var smoke = portrait.GetLayer(smokeLayer.Id);

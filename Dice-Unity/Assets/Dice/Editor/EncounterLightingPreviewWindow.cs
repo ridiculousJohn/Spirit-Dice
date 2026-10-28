@@ -4,8 +4,6 @@ using Dice.Presentation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -72,17 +70,12 @@ namespace Dice.Editor
         {
             EditorApplication.update -= UpdatePreview;
             EditorApplication.playModeStateChanged -= PlayModeChanged;
-            try { ReleaseStage(); }
-            finally { ReleasePipeline(); }
+            pipeline.ReleaseAfter(ReleaseStage);
         }
 
         private void PlayModeChanged(PlayModeStateChange change)
         {
-            if (change == PlayModeStateChange.ExitingEditMode)
-            {
-                try { ReleaseStage(); }
-                finally { ReleasePipeline(); }
-            }
+            if (change == PlayModeStateChange.ExitingEditMode) pipeline.ReleaseAfter(ReleaseStage);
             Repaint();
         }
 
@@ -183,7 +176,7 @@ namespace Dice.Editor
             if (showTable && table == null) throw new InvalidOperationException("Select an encounter table.");
             if (!showTable && entry == null) throw new InvalidOperationException("Select entry lighting.");
             selectedLighting?.Validate();
-            if (showTable) AcquirePipeline();
+            if (showTable) pipeline.Acquire();
             stagedSceneSettings = settings;
             stagedTable = table;
             stagedEntry = entry;
@@ -221,24 +214,8 @@ namespace Dice.Editor
                 stage = Object("Encounter Lighting Preview");
                 camera = Object("Encounter Preview Camera").AddComponent<Camera>();
                 camera.scene = previewScene;
-                camera.enabled = false;
-                camera.transform.position = new Vector3(0, 0, -10);
-                camera.orthographic = true;
-                camera.orthographicSize = 480;
-                camera.nearClipPlane = .1f;
-                camera.farClipPlane = 30;
-                camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
-                camera.cullingMask = 1 << UiLayer;
-                camera.allowHDR = false;
-                camera.allowMSAA = false;
-                output = new RenderTexture(540, 960, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
-                {
-                    name = "Encounter Lighting Preview", hideFlags = HideFlags.HideAndDontSave,
-                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
-                };
-                output.Create();
-                camera.targetTexture = output;
+                output = SpiritEncounterPreviewScene.CreateOutput("Encounter Lighting Preview", SpiritEncounterPreviewScene.PreviewWidth);
+                SpiritEncounterPreviewScene.ConfigureCamera(camera, output, 1 << UiLayer);
                 var canvasRoot = Object("Encounter Preview Canvas", typeof(RectTransform)).GetComponent<RectTransform>();
                 canvasRoot.SetParent(stage.transform, false);
                 var canvas = canvasRoot.gameObject.AddComponent<Canvas>();
@@ -285,34 +262,14 @@ namespace Dice.Editor
             try
             {
                 Canvas.ForceUpdateCanvases();
-                if (tray != null) Render(tray.RenderCamera, tray.Texture);
-                Render(camera, output);
+                if (tray != null) EncounterPreviewPipeline.Render(tray.RenderCamera, tray.Texture);
+                EncounterPreviewPipeline.Render(camera, output);
             }
             finally
             {
                 RenderTexture.active = previous;
                 GL.sRGBWrite = previousSrgb;
             }
-        }
-
-        private void AcquirePipeline()
-        {
-            if (previewPipeline != null) return;
-            var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PreviewPipelinePath);
-            if (pipeline == null) throw new InvalidOperationException("The encounter 3D preview pipeline is unavailable.");
-            previousPipeline = QualitySettings.renderPipeline;
-            previewPipeline = pipeline;
-            // Keep URP resources alive across repaints and stage changes.
-            QualitySettings.renderPipeline = previewPipeline;
-        }
-
-        private void ReleasePipeline()
-        {
-            if (previewPipeline == null) return;
-            if (QualitySettings.renderPipeline == previewPipeline)
-                QualitySettings.renderPipeline = previousPipeline;
-            previewPipeline = null;
-            previousPipeline = null;
         }
 
         private void BindImage(RawImage image, Texture2D texture)
@@ -323,21 +280,10 @@ namespace Dice.Editor
             image.material = compositor?.Material;
         }
 
-        private static void Render(Camera renderCamera, RenderTexture target)
-        {
-            if (GraphicsSettings.currentRenderPipeline == null) renderCamera.Render();
-            else
-            {
-                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-                if (!RenderPipeline.SupportsRenderRequest(renderCamera, request))
-                    throw new InvalidOperationException("The active render pipeline cannot preview an isolated camera.");
-                RenderPipeline.SubmitRenderRequest(renderCamera, request);
-            }
-        }
-
         private static SceneLightLayer Copy(SceneLightLayer source) => new SceneLightLayer
         {
-            Contribution = source.Contribution, ResponseMap = source.ResponseMap, Tint = source.Tint,
+            Contribution = source.Contribution, ResponseMap = source.ResponseMap, UvOffset = source.UvOffset,
+            ModulateByBaseColor = source.ModulateByBaseColor, Tint = source.Tint,
             Intensity = source.Intensity, DistanceFalloff = source.DistanceFalloff, SourceResponse = source.SourceResponse,
             FlickerAmount = source.FlickerAmount, FlickerSpeed = source.FlickerSpeed, Seed = source.Seed,
             ContributionIncludesBase = source.ContributionIncludesBase,

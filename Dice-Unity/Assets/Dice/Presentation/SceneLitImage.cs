@@ -10,6 +10,8 @@ namespace Dice.Presentation
     [AddComponentMenu("Dice/Presentation/Scene Lit Image")]
     public sealed class SceneLitImage : MonoBehaviour, IMaterialModifier
     {
+        // Images authored in an encounter scene follow whichever view samples their lighting asset, so that view keeps no
+        // list of the scene's images; this registry of enabled images is how each sample, and each release, reaches them.
         private static readonly List<SceneLitImage> active = new List<SceneLitImage>();
         [Tooltip("Any view sampling this lighting asset lights the image; without a sample it shows the asset's authored levels.")]
         [SerializeField] private SceneLightingAsset lighting;

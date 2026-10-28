@@ -15,7 +15,6 @@ Shader "Dice/Spirit Dice Surface"
         _CategoryIconRect ("Category Glyph UV Rect", Vector) = (0,0,1,1)
         _CategoryIconUVTransform ("Category Glyph UV Transform", Vector) = (1,1,0,0)
         _CategoryColor ("Category Ink", Color) = (0.04,0.03,0.02,1)
-        _ClipWorldX ("World X Clip Bounds", Vector) = (0,0,0,0)
         _ClipLocalX ("Bay Local X Clip Bounds", Vector) = (0,0,0,0)
         _SurfaceKind ("Surface Kind", Float) = 0
         _Seed ("Surface Seed", Float) = 0
@@ -74,7 +73,6 @@ Shader "Dice/Spirit Dice Surface"
                 float4 _CategoryIconRect;
                 float4 _CategoryIconUVTransform;
                 half4 _CategoryColor;
-                float4 _ClipWorldX;
                 float4 _ClipLocalX;
                 float4x4 _ClipWorldToLocal;
                 float _SurfaceKind;
@@ -211,8 +209,6 @@ Shader "Dice/Spirit Dice Surface"
 
             half4 frag(Varyings input) : SV_Target
             {
-                if (_ClipWorldX.z > 0.5)
-                    clip(min(input.positionWS.x - _ClipWorldX.x, _ClipWorldX.y - input.positionWS.x));
                 if (_ClipLocalX.z > 0.5)
                 {
                     float bayX = mul(_ClipWorldToLocal, float4(input.positionWS, 1)).x;

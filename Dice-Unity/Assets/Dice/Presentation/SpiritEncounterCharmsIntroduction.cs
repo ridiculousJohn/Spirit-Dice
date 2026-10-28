@@ -26,7 +26,7 @@ namespace Dice.Presentation
         public void Build()
         {
             if (screen == null) throw new InvalidOperationException("The charms introduction requires its authored screen.");
-            screen.Build(screen.Root.parent as RectTransform, Dismiss);
+            screen.Build(Dismiss);
             screen.Hide();
         }
 

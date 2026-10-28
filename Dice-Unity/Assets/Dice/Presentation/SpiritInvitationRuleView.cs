@@ -15,7 +15,6 @@ namespace Dice.Presentation
 
         public Text Title => title;
         public Text Description => description;
-        public RectTransform IconRoot => iconRoot;
 
         /** Shows the rule's name, effect and icon; a rule without an icon shows the host's sigil, or no icon without a host. */
         public void Render(string name, string effect, Sprite sprite, SpiritHostPresentationAsset host)

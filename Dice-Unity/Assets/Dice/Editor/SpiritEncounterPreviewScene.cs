@@ -17,8 +17,12 @@ namespace Dice.Editor
         internal SpiritEncounterView View { get; private set; }
         internal Camera Camera { get; private set; }
         internal RenderTexture Output { get; private set; }
-        // Pixel height of the preview portrait, the encounter's reference height.
-        private const int PreviewHeight = 960;
+        // Pixel height of the preview portrait, the encounter's reference height, and its widths: the reference width and a
+        // narrow phone's.
+        internal const int PreviewHeight = 960;
+        internal const int PreviewWidth = 540;
+        internal const int NarrowPreviewWidth = 443;
+        private static readonly Color PreviewBackground = new Color(.04f, .055f, .05f, 1);
 
         internal static string PathFor(EncounterTablePresentationAsset table)
         {
@@ -82,23 +86,8 @@ namespace Dice.Editor
                 result.Camera = capture.AddComponent<Camera>();
                 result.Camera.scene = result.Scene;
                 result.Camera.overrideSceneCullingMask = EditorSceneManager.GetSceneCullingMask(result.Scene);
-                result.Camera.enabled = false;
-                result.Camera.transform.position = new Vector3(0, 0, -10);
-                result.Camera.orthographic = true;
-                result.Camera.orthographicSize = 480;
-                result.Camera.nearClipPlane = .1f;
-                result.Camera.farClipPlane = 30;
-                result.Camera.cullingMask = ~(1 << SpiritDiceTray.RenderLayer);
-                result.Camera.clearFlags = CameraClearFlags.SolidColor;
-                result.Camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
-                result.Camera.allowHDR = result.Camera.allowMSAA = false;
-                result.Output = new RenderTexture(narrow ? 443 : 540, PreviewHeight, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
-                {
-                    name = "Encounter Scene Preview", hideFlags = HideFlags.HideAndDontSave,
-                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
-                };
-                result.Output.Create();
-                result.Camera.targetTexture = result.Output;
+                result.Output = CreateOutput("Encounter Scene Preview", Width(narrow));
+                ConfigureCamera(result.Camera, result.Output, ~(1 << SpiritDiceTray.RenderLayer));
                 result.Camera.aspect = (float)result.Output.width / PreviewHeight;
                 view.PreparePreview(result.Camera, new Vector2(result.Output.width, PreviewHeight), table.HostPresentation);
                 // The tray renders on request, into the preview scene only.
@@ -112,7 +101,7 @@ namespace Dice.Editor
 
         internal void Resize(bool narrow)
         {
-            int width = narrow ? 443 : 540;
+            int width = Width(narrow);
             if (Output.width != width)
             {
                 Camera.targetTexture = null;
@@ -126,6 +115,39 @@ namespace Dice.Editor
         }
 
         internal void ShowHud(bool visible) => View.GameplayHud.ShowInPreview(visible);
+
+        internal static int Width(bool narrow) => narrow ? NarrowPreviewWidth : PreviewWidth;
+
+        /** A portrait render target of the preview height and the given width. */
+        internal static RenderTexture CreateOutput(string name, int width)
+        {
+            var output = new RenderTexture(width, PreviewHeight, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+            {
+                name = name, hideFlags = HideFlags.HideAndDontSave,
+                filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+            };
+            output.Create();
+            return output;
+        }
+
+        /**
+         * Readies a disabled preview camera that renders the given layers of a screen-space canvas into the output on
+         * request, framing the preview height in world units.
+         */
+        internal static void ConfigureCamera(Camera camera, RenderTexture output, int cullingMask)
+        {
+            camera.enabled = false;
+            camera.transform.position = new Vector3(0, 0, -10);
+            camera.orthographic = true;
+            camera.orthographicSize = PreviewHeight * .5f;
+            camera.nearClipPlane = .1f;
+            camera.farClipPlane = 30;
+            camera.cullingMask = cullingMask;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = PreviewBackground;
+            camera.allowHDR = camera.allowMSAA = false;
+            camera.targetTexture = output;
+        }
 
         public void Dispose()
         {

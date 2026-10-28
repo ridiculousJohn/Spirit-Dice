@@ -6,12 +6,16 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Ambient Motion/Thump")]
     public sealed class AmbientThumpMotionAsset : AmbientMotionAsset
     {
+        /** Shortest first hop, in seconds. */
+        public const float MinimumHopDuration = .02f;
+        /** Largest share of its height a bounce keeps, so the bounces always die away. */
+        public const float MaximumRestitution = .9f;
         [Tooltip("First hop height in parent units for a strike of strength one.")]
         [SerializeField, Min(0)] private float height = 6f;
         [Tooltip("Seconds the first hop is off the table.")]
-        [SerializeField, Min(.02f)] private float hopDuration = .16f;
+        [SerializeField, Min(MinimumHopDuration)] private float hopDuration = .16f;
         [Tooltip("Height kept by each following bounce.")]
-        [SerializeField, Range(0, .9f)] private float restitution = .35f;
+        [SerializeField, Range(0, MaximumRestitution)] private float restitution = .35f;
         [Tooltip("Tilt in degrees at the top of the first hop; bounces alternate sides.")]
         [SerializeField] private float tilt = 2f;
 
@@ -42,7 +46,7 @@ namespace Dice.Presentation
             for (int bounce = 0; bounce < MaximumBounces && settings.Height * strength * scale >= RestHeight; ++bounce)
             {
                 duration += HopDuration(scale);
-                scale *= Mathf.Clamp(settings.Restitution, 0f, .9f);
+                scale *= Mathf.Clamp(settings.Restitution, 0f, AmbientThumpMotionAsset.MaximumRestitution);
             }
             return duration;
         }
@@ -61,10 +65,10 @@ namespace Dice.Presentation
                     return;
                 }
                 elapsed -= hop;
-                scale *= Mathf.Clamp(settings.Restitution, 0f, .9f);
+                scale *= Mathf.Clamp(settings.Restitution, 0f, AmbientThumpMotionAsset.MaximumRestitution);
             }
         }
 
-        private float HopDuration(float scale) => Mathf.Max(.02f, settings.HopDuration) * Mathf.Sqrt(scale);
+        private float HopDuration(float scale) => Mathf.Max(AmbientThumpMotionAsset.MinimumHopDuration, settings.HopDuration) * Mathf.Sqrt(scale);
     }
 }

@@ -36,9 +36,6 @@ namespace Dice.Presentation
         [SerializeField] private Color modifierSelectedColor = new Color(1.12f, 1.08f, .82f, 1);
         [SerializeField] private Color handColor = new Color32(26, 40, 32, 215);
         [SerializeField] private Color handSelectedColor = new Color32(43, 65, 49, 255);
-        [SerializeField] private Color titleColor = new Color32(246, 231, 190, 255);
-        [SerializeField] private Color selectedTitleColor = new Color32(210, 166, 88, 255);
-        [SerializeField] private Color handLevelColor = new Color32(191, 187, 162, 255);
         [field: SerializeField] public Button Button { get; private set; }
         private Action<long, long> choose;
         private long offerId;
@@ -103,7 +100,8 @@ namespace Dice.Presentation
         public void SetModifierSelected(bool selected)
         {
             if (handUpgradeMode) return;
-            title.color = selected ? selectedTitleColor : titleColor;
+            var theme = SpiritUi.GetTheme(transform);
+            title.color = selected ? theme.amber : theme.cream;
             modifierBackground.color = selected ? modifierSelectedColor : modifierColor;
             selectionMarker.gameObject.SetActive(selected);
         }
@@ -141,8 +139,9 @@ namespace Dice.Presentation
         public void SetHandUpgradeSelected(bool selected)
         {
             if (!handUpgradeMode) return;
-            handTitle.color = selected ? selectedTitleColor : titleColor;
-            handLevelText.color = selected ? selectedTitleColor : handLevelColor;
+            var theme = SpiritUi.GetTheme(transform);
+            handTitle.color = selected ? theme.amber : theme.cream;
+            handLevelText.color = selected ? theme.amber : theme.muted;
             handBackground.color = selected ? handSelectedColor : handColor;
             var wording = SpiritUi.GetWording(transform).rewardCard;
             handLevelText.text = wording.Level(handLevel, selected);

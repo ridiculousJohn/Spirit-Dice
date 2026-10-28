@@ -13,6 +13,8 @@ namespace Dice.Presentation
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
         private static readonly int CoverageId = Shader.PropertyToID("_Coverage");
         private static readonly int PulseId = Shader.PropertyToID("_Pulse");
+        /** Shortest glow pulse period, in seconds. */
+        private const float MinimumPulsePeriod = .1f;
 
         [Tooltip("Shell that shows the mark; its opacity is the mark level.")]
         [SerializeField] private Renderer markShell;
@@ -21,11 +23,11 @@ namespace Dice.Presentation
         [Tooltip("Fraction by which the mark's glow swells and fades around its level.")]
         [SerializeField, Range(0, 1)] private float markPulseAmount = .35f;
         [Tooltip("Seconds per slow pulse of the mark's glow.")]
-        [SerializeField, Min(.1f)] private float markPulsePeriod = 2.8f;
+        [SerializeField, Min(MinimumPulsePeriod)] private float markPulsePeriod = 2.8f;
         [Tooltip("Fraction by which the roots' glow swells and fades.")]
         [SerializeField, Range(0, 1)] private float rootPulseAmount = .3f;
         [Tooltip("Seconds per slow pulse of the roots' glow.")]
-        [SerializeField, Min(.1f)] private float rootPulsePeriod = 3.4f;
+        [SerializeField, Min(MinimumPulsePeriod)] private float rootPulsePeriod = 3.4f;
         private MaterialPropertyBlock properties;
         private float markLevel;
         private float growthLevel;
@@ -71,6 +73,6 @@ namespace Dice.Presentation
         }
 
         private static float Pulse(float time, float amount, float period)
-            => 1f + amount * Mathf.Sin(2f * Mathf.PI * time / Mathf.Max(.1f, period));
+            => 1f + amount * Mathf.Sin(2f * Mathf.PI * time / Mathf.Max(MinimumPulsePeriod, period));
     }
 }

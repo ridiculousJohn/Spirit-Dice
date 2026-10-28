@@ -6,12 +6,14 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Ambient Motion/Wobble")]
     public sealed class AmbientWobbleMotionAsset : AmbientMotionAsset
     {
+        /** Shortest period and decay time constant, in seconds. */
+        public const float MinimumTime = .02f;
         [Tooltip("Peak rock in degrees for a strike of strength one.")]
         [SerializeField, Min(0)] private float amplitude = 4f;
         [Tooltip("Seconds per full rock to one side and back.")]
-        [SerializeField, Min(.02f)] private float period = .3f;
+        [SerializeField, Min(MinimumTime)] private float period = .3f;
         [Tooltip("Decay time constant in seconds.")]
-        [SerializeField, Min(.02f)] private float decay = .35f;
+        [SerializeField, Min(MinimumTime)] private float decay = .35f;
         [Tooltip("Left base contact in normalized rect coordinates of a RectTransform target; counterclockwise rocks turn about it.")]
         [SerializeField] private Vector2 leftContact = new Vector2(.25f, 0f);
         [Tooltip("Right base contact in normalized rect coordinates of a RectTransform target; clockwise rocks turn about it.")]
@@ -41,11 +43,11 @@ namespace Dice.Presentation
         }
 
         protected override float Duration(float strength)
-            => DecayDuration(settings.Amplitude * strength, Mathf.Max(.02f, settings.Decay), RestDegrees);
+            => DecayDuration(settings.Amplitude * strength, Mathf.Max(AmbientWobbleMotionAsset.MinimumTime, settings.Decay), RestDegrees);
 
         protected override void Evaluate(float elapsed, float strength, ref float angle, ref Vector2 offset)
-            => angle += settings.Amplitude * strength * Mathf.Exp(-elapsed / Mathf.Max(.02f, settings.Decay)) *
-                Mathf.Sin(2f * Mathf.PI * elapsed / Mathf.Max(.02f, settings.Period));
+            => angle += settings.Amplitude * strength * Mathf.Exp(-elapsed / Mathf.Max(AmbientWobbleMotionAsset.MinimumTime, settings.Decay)) *
+                Mathf.Sin(2f * Mathf.PI * elapsed / Mathf.Max(AmbientWobbleMotionAsset.MinimumTime, settings.Period));
 
         protected override Vector3 Pivot(float angle)
         {

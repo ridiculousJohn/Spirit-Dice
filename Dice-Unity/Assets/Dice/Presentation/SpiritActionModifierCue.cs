@@ -7,6 +7,17 @@ namespace Dice.Presentation
     /** Marks the triggering action and any action resources granted by a modifier. */
     public sealed class SpiritActionModifierCue : MonoBehaviour
     {
+        /** Shortest cue shown, in seconds. */
+        private const float MinimumDuration = .01f;
+        /** The cue fades in over at most this many seconds... */
+        private const float MaximumFadeInSeconds = .1f;
+        /** ...or this fraction of its duration, whichever is shorter. */
+        private const float MaximumFadeInFraction = .2f;
+        /** Fraction of the duration after which the cue fades out. */
+        private const float FadeOutStart = .7f;
+        /** Extra scale at the peak of the cue's swell. */
+        private const float PulseScale = .1f;
+
         [System.Serializable]
         private sealed class Cue
         {
@@ -63,7 +74,7 @@ namespace Dice.Presentation
             ActiveSprite = sprite;
             Prepare(active, sprite, charms, definition);
             if (secondary != null) Prepare(secondary, sprite, charms, definition);
-            duration = Mathf.Max(.01f, displayDuration);
+            duration = Mathf.Max(MinimumDuration, displayDuration);
             elapsed = 0;
         }
 
@@ -89,18 +100,9 @@ namespace Dice.Presentation
             foreach (var cue in new[] { reroll, play })
             {
                 if (cue == null) continue;
-                if (cue.HostSigil != null)
-                {
-                    cue.HostSigil.gameObject.SetActive(false);
-                    if (Application.isPlaying) Destroy(cue.HostSigil.gameObject);
-                    else DestroyImmediate(cue.HostSigil.gameObject);
-                }
-                cue.HostSigil = presentation?.CreateSigil("HostSigil", (RectTransform)cue.Group.transform);
-                if (cue.HostSigil != null)
-                {
-
-                    cue.HostSigil.gameObject.SetActive(false);
-                }
+                cue.HostSigil = SpiritHostPresentationAsset.ReplaceSigil(cue.HostSigil, presentation, "HostSigil",
+                    (RectTransform)cue.Group.transform);
+                if (cue.HostSigil != null) cue.HostSigil.gameObject.SetActive(false);
             }
         }
 
@@ -134,8 +136,8 @@ namespace Dice.Presentation
             if (active == null) return;
             elapsed += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(elapsed / duration);
-            float fadeIn = Mathf.SmoothStep(0, 1, elapsed / Mathf.Min(.1f, duration * .2f));
-            float alpha = fadeIn * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.7f, 1, progress)));
+            float fadeIn = Mathf.SmoothStep(0, 1, elapsed / Mathf.Min(MaximumFadeInSeconds, duration * MaximumFadeInFraction));
+            float alpha = fadeIn * (1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(FadeOutStart, 1, progress)));
             UpdateCue(active, alpha, progress);
             if (secondary != null) UpdateCue(secondary, alpha, progress);
             if (elapsed >= duration) Clear();
@@ -145,10 +147,9 @@ namespace Dice.Presentation
         {
             cue.Group.alpha = alpha;
             cue.Label.alpha = cue.LabelAlpha * (1 - alpha);
-            cue.Group.transform.localScale = cue.Scale * (1 + .1f * Mathf.Sin(progress * Mathf.PI));
+            cue.Group.transform.localScale = cue.Scale * (1 + PulseScale * Mathf.Sin(progress * Mathf.PI));
         }
 
         private void OnDisable() => Clear();
-
     }
 }

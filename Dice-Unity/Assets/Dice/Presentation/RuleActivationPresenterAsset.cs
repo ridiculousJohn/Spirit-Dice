@@ -25,7 +25,7 @@ namespace Dice.Presentation
             if (card == null) throw new ArgumentNullException(nameof(card));
             if (rule == null) throw new ArgumentNullException(nameof(rule));
             if (context == null) throw new ArgumentNullException(nameof(context));
-            if (!SceneLightingAsset.Finite(sweepDuration) || sweepDuration < 0f)
+            if (!FiniteValue.Is(sweepDuration) || sweepDuration < 0f)
                 throw new InvalidOperationException("The rule activation presenter " + name + " requires a nonnegative sweep duration.");
             return new RuleActivationPresenter(this, card, rule.Id, context);
         }

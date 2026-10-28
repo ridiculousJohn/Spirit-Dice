@@ -32,7 +32,7 @@ namespace Dice.Tests
             ui = new SyntheticUi();
             var frame = ui.Rect(ui.Root, "Portrait");
             frame.anchorMin = frame.anchorMax = new Vector2(.5f, .5f);
-            frame.sizeDelta = new Vector2(540, 960);
+            frame.sizeDelta = SpiritPortraitSafeArea.DefaultReferenceSize;
             // The room image shows the room texture above the table image, which shows the texture's lower slice.
             room = Image(frame, "Room", new Vector2(0, .4f), Vector2.one, new Rect(0, .4f, 1, .6f));
             table = Image(frame, "Table", Vector2.zero, new Vector2(1, .4f), new Rect(0, 0, 1, .4f));

@@ -33,7 +33,7 @@ namespace Dice.Tests
             Assert.DoesNotThrow(asset.Validate);
             var root = (GameObject)PrefabUtility.InstantiatePrefab(asset.PortraitPrefab.gameObject, preview);
             host = root.GetComponent<SpiritHostPortrait>();
-            host.Build((RectTransform)root.transform, asset);
+            host.Build(asset);
         }
 
         [TearDown]

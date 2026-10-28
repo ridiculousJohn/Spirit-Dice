@@ -6,12 +6,14 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Ambient Motion/Swing")]
     public sealed class AmbientSwingMotionAsset : AmbientMotionAsset
     {
+        /** Shortest period and decay time constant, in seconds. */
+        public const float MinimumTime = .05f;
         [Tooltip("Peak swing in degrees for a strike of strength one.")]
         [SerializeField, Min(0)] private float amplitude = 12f;
         [Tooltip("Seconds per full swing out and back.")]
-        [SerializeField, Min(.05f)] private float period = 1.4f;
+        [SerializeField, Min(MinimumTime)] private float period = 1.4f;
         [Tooltip("Decay time constant in seconds.")]
-        [SerializeField, Min(.05f)] private float decay = 1.6f;
+        [SerializeField, Min(MinimumTime)] private float decay = 1.6f;
 
         public float Amplitude => amplitude;
         public float Period => period;
@@ -32,10 +34,10 @@ namespace Dice.Presentation
         }
 
         protected override float Duration(float strength)
-            => DecayDuration(settings.Amplitude * strength, Mathf.Max(.05f, settings.Decay), RestDegrees);
+            => DecayDuration(settings.Amplitude * strength, Mathf.Max(AmbientSwingMotionAsset.MinimumTime, settings.Decay), RestDegrees);
 
         protected override void Evaluate(float elapsed, float strength, ref float angle, ref Vector2 offset)
-            => angle += settings.Amplitude * strength * Mathf.Exp(-elapsed / Mathf.Max(.05f, settings.Decay)) *
-                Mathf.Sin(2f * Mathf.PI * elapsed / Mathf.Max(.05f, settings.Period));
+            => angle += settings.Amplitude * strength * Mathf.Exp(-elapsed / Mathf.Max(AmbientSwingMotionAsset.MinimumTime, settings.Decay)) *
+                Mathf.Sin(2f * Mathf.PI * elapsed / Mathf.Max(AmbientSwingMotionAsset.MinimumTime, settings.Period));
     }
 }

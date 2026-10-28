@@ -68,9 +68,11 @@ namespace Dice.Tests
             SyntheticUi.Set(card, "modifierSelectedColor", ModifierSelectedColor);
             SyntheticUi.Set(card, "handColor", HandColor);
             SyntheticUi.Set(card, "handSelectedColor", HandSelectedColor);
-            SyntheticUi.Set(card, "titleColor", TitleColor);
-            SyntheticUi.Set(card, "selectedTitleColor", SelectedTitleColor);
-            SyntheticUi.Set(card, "handLevelColor", HandLevelColor);
+            // Titles take the theme's cream, amber when selected; the hand level takes its muted colour.
+            var theme = ui.Root.GetComponent<SpiritUiContext>().Theme;
+            theme.cream = TitleColor;
+            theme.amber = SelectedTitleColor;
+            theme.muted = HandLevelColor;
         }
 
         [TearDown]

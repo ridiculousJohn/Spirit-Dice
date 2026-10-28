@@ -27,7 +27,8 @@ namespace Dice.Tests
             presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
                 "Assets/Dice/Content/Presentation/Watchtower/WatchtowerHost.asset");
             Assert.That(presentation, Is.Not.Null);
-            portrait = presentation.Create(parent);
+            portrait = Object.Instantiate(presentation.PortraitPrefab, parent, false);
+            portrait.Build(presentation);
             table = Contact("Physical Rest");
             portrait.SetState(SpiritPresentationState.Waiting, 0f);
             perch = Contact("Physical Rest");

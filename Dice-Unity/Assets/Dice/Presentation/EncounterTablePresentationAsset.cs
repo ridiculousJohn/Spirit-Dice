@@ -27,6 +27,7 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Presentation/Encounter Table")]
     public sealed class EncounterTablePresentationAsset : ScriptableObject
     {
+        public const float MaximumOpeningFadeDuration = 2f;
         [SerializeField] private string displayTitle;
         [SerializeField] private AssetReference scene;
         [SerializeField] private Texture2D roomTexture;
@@ -43,9 +44,7 @@ namespace Dice.Presentation
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
         [Tooltip("Presentation-only light outages and prop jolts while the encounter is played; empty for a still table.")]
         [SerializeField] private EncounterAmbientActivityAsset ambientActivity;
-        [SerializeField, Range(0, 1)] private float roomTableEdge = .5323f;
-        [SerializeField, Range(0, 1)] private float roomSplit = .625f;
-        [SerializeField, Range(0, 2)] private float openingFadeDuration;
+        [SerializeField, Range(0, MaximumOpeningFadeDuration)] private float openingFadeDuration;
 
         public string DisplayTitle => displayTitle;
         public AssetReference Scene => scene;
@@ -59,9 +58,11 @@ namespace Dice.Presentation
         public SpiritTrayPresentationAsset TrayPresentation => trayPresentation;
         public IReadOnlyList<EncounterRulePresentationAsset> RulePresentations => rulePresentations ?? Array.Empty<EncounterRulePresentationAsset>();
         public EncounterAmbientActivityAsset AmbientActivity => ambientActivity;
-        public float RoomTableEdge => roomTableEdge;
-        public float RoomSplit => roomSplit;
-        public float OpeningFadeDuration => openingFadeDuration;
+        /** Seconds the screen fades in as an encounter opens; an authored value outside its range fails. */
+        public float OpeningFadeDuration => FiniteValue.Is(openingFadeDuration) && openingFadeDuration >= 0 &&
+            openingFadeDuration <= MaximumOpeningFadeDuration ? openingFadeDuration
+            : throw new InvalidOperationException("Encounter table '" + name + "' has an opening fade outside 0 to " +
+                MaximumOpeningFadeDuration + " seconds.");
 
         /** The rule card flagged as shown on the HUD, or null when no card is; more than one flagged card fails. */
         public EncounterRulePresentationAsset HudRuleCard

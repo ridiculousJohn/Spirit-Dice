@@ -29,11 +29,21 @@ namespace Dice.Presentation
     {
         // Units a highlighted counter's caption moves aside for the charm icon shown beside it.
         private const float CounterIconInset = 22f;
+        // Opacity of the encounter rule badge while its rule is unavailable.
+        private const float UnavailableRuleAlpha = .4f;
+        // Extra scale at the peak of a counting label's swell: the score counters and highlighted labels, a highlighted
+        // counter's icon, the hand total and the threshold.
+        private const float ScorePulse = .07f;
+        private const float HighlightIconPulse = .1f;
+        private const float TotalPulse = .14f;
+        private const float ThresholdPulse = .06f;
+        // Units the rule spirit starts left of the tray and ends right of it, and the height of its arc.
+        private const float RuleSweepOverhang = 36f;
+        private const float RuleSweepArc = 16f;
         [SerializeField] private RectTransform portrait;
         public RectTransform Root => portrait;
         [field: SerializeField] public RectTransform DiceTrayFrame { get; private set; }
         [field: SerializeField] public RawImage DiceTrayImage { get; private set; }
-        [SerializeField] private RectTransform diceTrayFrame;
         [SerializeField] private CanvasGroup rerollEncounterRuleGroup;
         [SerializeField] private Text rerollEncounterRuleLabel;
         [SerializeField] private Image rerollEncounterRuleIcon;
@@ -155,15 +165,14 @@ namespace Dice.Presentation
             PlayButton.onClick.AddListener(Play);
         }
 
-        /** Binds the authored rule display to the tray used by the spirit sweep animation. */
-        public void BuildEncounterRule(RectTransform trayFrame)
+        /** Checks the authored rule display; the spirit sweep animation crosses the tray frame. */
+        public void BuildEncounterRule()
         {
             if (rerollEncounterRuleGroup == null || rerollEncounterRuleLabel == null || rerollEncounterRuleIcon == null ||
                 playEncounterRuleGroup == null || playEncounterRuleLabel == null || playEncounterRuleIcon == null ||
                 encounterRuleSigilRoot == null || playEncounterRuleSigilRoot == null || RuleSpiritSweep == null ||
                 ruleSpiritIcon == null || ruleSpiritSigilRoot == null)
                 throw new InvalidOperationException("The gameplay HUD requires authored encounter rule references.");
-            diceTrayFrame = trayFrame != null ? trayFrame : DiceTrayFrame;
         }
 
         public void BuildStageIntro()
@@ -206,27 +215,19 @@ namespace Dice.Presentation
 
         public void ConfigureEncounterRuleSigil(SpiritHostPresentationAsset presentation)
         {
-            ReplaceSigil(ref rerollEncounterRuleSigil, presentation, encounterRuleSigilRoot, "EncounterRuleSigil");
-            ReplaceSigil(ref playEncounterRuleSigil, presentation, playEncounterRuleSigilRoot, "PlayEncounterRuleSigil");
+            rerollEncounterRuleSigil = SpiritHostPresentationAsset.ReplaceSigil(rerollEncounterRuleSigil, presentation,
+                "EncounterRuleSigil", encounterRuleSigilRoot);
+            playEncounterRuleSigil = SpiritHostPresentationAsset.ReplaceSigil(playEncounterRuleSigil, presentation,
+                "PlayEncounterRuleSigil", playEncounterRuleSigilRoot);
             EncounterRuleSigil = EncounterRuleGroup == playEncounterRuleGroup ? playEncounterRuleSigil : rerollEncounterRuleSigil;
         }
 
         public void ConfigureHostSigils(SpiritHostPresentationAsset presentation)
         {
             ConfigureEncounterRuleSigil(presentation);
-            ReplaceSigil(ref ruleSpiritSigil, presentation, ruleSpiritSigilRoot, "RuleSpiritSigil");
+            ruleSpiritSigil = SpiritHostPresentationAsset.ReplaceSigil(ruleSpiritSigil, presentation, "RuleSpiritSigil",
+                ruleSpiritSigilRoot);
             if (ruleSpiritSigil != null) ruleSpiritSigil.color = ruleSpiritIcon.color;
-        }
-
-        private void ReplaceSigil(ref Graphic current, SpiritHostPresentationAsset presentation, RectTransform parent, string name)
-        {
-            if (current != null)
-            {
-                current.gameObject.SetActive(false);
-                if (Application.isPlaying) Destroy(current.gameObject);
-                else DestroyImmediate(current.gameObject);
-            }
-            current = presentation != null ? presentation.CreateSigil(name, parent) : null;
         }
 
         public void RenderEncounterRule(EncounterSnapshot snapshot, EncounterRulePresentationAsset presentation)
@@ -251,7 +252,7 @@ namespace Dice.Presentation
             if (visible)
             {
                 EncounterRuleLabel.text = text;
-                EncounterRuleGroup.alpha = available ? 1 : .4f;
+                EncounterRuleGroup.alpha = available ? 1 : UnavailableRuleAlpha;
                 EncounterRuleIcon.sprite = presentation.Icon;
                 EncounterRuleIcon.enabled = presentation.Icon != null;
                 if (EncounterRuleSigil != null) EncounterRuleSigil.gameObject.SetActive(presentation.Icon == null);
@@ -366,7 +367,7 @@ namespace Dice.Presentation
             RenderEncounterRule(snapshot, ruleCard);
             SetResources(hand.HandsRemaining, hand.RerollsRemaining);
             ShowIdleScore(0, 0);
-            SelectionLabel.color = SpiritUi.GetTheme(transform).muted;
+            SelectionLabel.color = Theme.muted;
             SelectionLabel.text = SpiritUi.GetWording(transform).hud.newHand;
         }
 
@@ -374,7 +375,8 @@ namespace Dice.Presentation
         public IEnumerator ShowThresholdChange(long before, long after, float duration)
         {
             TargetCaption.text = SpiritUi.GetWording(transform).hud.toClear;
-            return AnimateThreshold(before, after, duration);
+            CaptureAuthoredScales();
+            return CountLabel(TargetLabel, targetLabelScale, before, after, duration, ThresholdPulse);
         }
 
         public void ShowStageCleared()
@@ -413,14 +415,17 @@ namespace Dice.Presentation
 
         /** Animates the shown scoring step: its revealed total, or its score counters from those shown with its highlights. */
         public IEnumerator AnimateScoringStep(SpiritScoringStep step, float duration)
-            => step.RevealsTotal ? AnimateTotal(step.Total, duration)
+        {
+            CaptureAuthoredScales();
+            return step.RevealsTotal ? CountLabel(HandScoreLabel, handScoreLabelScale, 0, step.Total, duration, TotalPulse)
                 : AnimateScore(DisplayedBaseScore, DisplayedMultiplier, step.BaseScore, step.Multiplier, duration, stepHighlights);
+        }
 
         /** Shows a rule presenter's selection line, marked as the rule's. */
         public void ShowRuleSelection(string text)
         {
             SelectionLabel.text = text;
-            SelectionLabel.color = SpiritUi.GetTheme(transform).amber;
+            SelectionLabel.color = Theme.amber;
         }
 
         private void SetScoreValues(long baseScore, long multiplier)
@@ -448,10 +453,7 @@ namespace Dice.Presentation
 
         private void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)
         {
-            ModifierActivationIcon.sprite = charms.GetIcon(definition);
-            ModifierActivationIcon.color = charms.GetEffectColor(definition);
-            ModifierActivationIcon.gameObject.SetActive(true);
-            modifierActivationCategory.Render(charms, definition);
+            SpiritCharmVisuals.SetIcon(ModifierActivationIcon, modifierActivationCategory, charms, definition);
             ModifierEmblem.enabled = false;
             ModifierEmblem.gameObject.SetActive(true);
         }
@@ -489,27 +491,30 @@ namespace Dice.Presentation
             CaptureAuthoredScales();
             ModifierEmblem.gameObject.SetActive(false);
             ModifierEmblem.enabled = true;
-            ModifierActivationIcon.sprite = null;
-            ModifierActivationIcon.gameObject.SetActive(false);
+            SpiritCharmVisuals.SetIcon(ModifierActivationIcon, modifierActivationCategory, null, null);
             ModifierActivationIcon.rectTransform.localScale = modifierActivationIconScale;
-            ModifierActivationIcon.color = Color.white;
-            modifierActivationCategory.Render(null, null);
             foreach (var highlight in new[] { BaseScoreHighlight, MultiplierHighlight, RerollsHighlight, HandsHighlight })
                 ResetCounterHighlight(highlight);
+            var theme = Theme;
             SelectionLabel.text = "";
-            SelectionLabel.color = SpiritUi.GetTheme(transform).muted;
+            SelectionLabel.color = theme.muted;
             SelectionLabel.rectTransform.localScale = selectionLabelScale;
-            ScoreDetail.color = SpiritUi.GetTheme(transform).muted;
+            ScoreDetail.color = theme.muted;
             ScoreDetail.rectTransform.localScale = scoreDetailScale;
+            ResetScoreLabels(theme);
+            HandScoreLabel.color = theme.cream;
+            HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
+            TargetLabel.color = theme.cream;
+            TargetLabel.rectTransform.localScale = targetLabelScale;
+        }
+
+        private void ResetScoreLabels(SpiritUiTheme theme)
+        {
             foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
             {
-                label.color = SpiritUi.GetTheme(transform).cream;
+                label.color = theme.cream;
                 label.rectTransform.localScale = label == BaseScoreLabel ? baseScoreLabelScale : multiplierLabelScale;
             }
-            HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
-            HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
-            TargetLabel.color = SpiritUi.GetTheme(transform).cream;
-            TargetLabel.rectTransform.localScale = targetLabelScale;
         }
 
         private static void AddCounterHighlight(List<SpiritCounterHighlight> highlights, SpiritCounterHighlight highlight,
@@ -527,78 +532,49 @@ namespace Dice.Presentation
         private IEnumerator AnimateScore(long beforeBase, long beforeMultiplier, long afterBase, long afterMultiplier, float duration,
             List<SpiritCounterHighlight> highlights)
         {
-            CaptureAuthoredScales();
-            float elapsed = 0;
-            while (elapsed < duration)
+            var theme = Theme;
+            for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
             {
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
                 SetScoreValues(Interpolate(beforeBase, afterBase, progress), Interpolate(beforeMultiplier, afterMultiplier, progress));
-                if (beforeBase != afterBase)
-                {
-                    BaseScoreLabel.color = SpiritUi.GetTheme(transform).amber;
-                    BaseScoreLabel.rectTransform.localScale = baseScoreLabelScale * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
-                }
-                if (beforeMultiplier != afterMultiplier)
-                {
-                    MultiplierLabel.color = SpiritUi.GetTheme(transform).amber;
-                    MultiplierLabel.rectTransform.localScale = multiplierLabelScale * (1 + .07f * Mathf.Sin(progress * Mathf.PI));
-                }
+                float pulse = Mathf.Sin(progress * Mathf.PI);
+                if (beforeBase != afterBase) Pulse(BaseScoreLabel, baseScoreLabelScale, ScorePulse * pulse, theme.amber);
+                if (beforeMultiplier != afterMultiplier) Pulse(MultiplierLabel, multiplierLabelScale, ScorePulse * pulse, theme.amber);
                 if (highlights != null)
                     foreach (var highlight in highlights)
                     {
-                        float pulse = Mathf.Sin(progress * Mathf.PI);
-                        highlight.Label.color = Color.Lerp(SpiritUi.GetTheme(transform).cream, highlight.Color, pulse);
-                        highlight.Label.rectTransform.localScale = highlight.LabelScale * (1 + .07f * pulse);
-                        highlight.Icon.rectTransform.localScale = highlight.IconScale * (1 + .1f * pulse);
+                        Pulse(highlight.Label, highlight.LabelScale, ScorePulse * pulse, Color.Lerp(theme.cream, highlight.Color, pulse));
+                        highlight.Icon.rectTransform.localScale = highlight.IconScale * (1 + HighlightIconPulse * pulse);
                     }
                 yield return null;
-                elapsed += Time.unscaledDeltaTime;
             }
             SetScoreValues(afterBase, afterMultiplier);
-            foreach (var label in new[] { BaseScoreLabel, MultiplierLabel })
-            {
-                label.color = SpiritUi.GetTheme(transform).cream;
-                label.rectTransform.localScale = label == BaseScoreLabel ? baseScoreLabelScale : multiplierLabelScale;
-            }
+            ResetScoreLabels(theme);
             if (highlights != null)
                 foreach (var highlight in highlights) ResetCounterHighlight(highlight);
         }
 
-        private IEnumerator AnimateTotal(long score, float duration)
+        /** Counts one label from one value to the other, swelling it in amber, then rests it in cream at its authored scale. */
+        private IEnumerator CountLabel(Text label, Vector3 restScale, long before, long after, float duration, float pulse)
         {
-            CaptureAuthoredScales();
-            float elapsed = 0;
-            while (elapsed < duration)
+            var theme = Theme;
+            label.text = DiagnosticText.Number(before);
+            for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
             {
                 float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
-                HandScoreLabel.text = DiagnosticText.Number(Interpolate(0, score, progress));
-                HandScoreLabel.color = SpiritUi.GetTheme(transform).amber;
-                HandScoreLabel.rectTransform.localScale = handScoreLabelScale * (1 + .14f * Mathf.Sin(progress * Mathf.PI));
+                label.text = DiagnosticText.Number(Interpolate(before, after, progress));
+                Pulse(label, restScale, pulse * Mathf.Sin(progress * Mathf.PI), theme.amber);
                 yield return null;
-                elapsed += Time.unscaledDeltaTime;
             }
-            HandScoreLabel.text = DiagnosticText.Number(score);
-            HandScoreLabel.color = SpiritUi.GetTheme(transform).cream;
-            HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
+            label.text = DiagnosticText.Number(after);
+            label.color = theme.cream;
+            label.rectTransform.localScale = restScale;
         }
 
-        private IEnumerator AnimateThreshold(long before, long after, float duration)
+        private static void Pulse(Text label, Vector3 restScale, float swell, Color color)
         {
-            CaptureAuthoredScales();
-            float elapsed = 0;
-            TargetLabel.text = DiagnosticText.Number(before);
-            while (elapsed < duration)
-            {
-                float progress = Mathf.SmoothStep(0, 1, elapsed / duration);
-                TargetLabel.text = DiagnosticText.Number(Interpolate(before, after, progress));
-                TargetLabel.color = SpiritUi.GetTheme(transform).amber;
-                TargetLabel.rectTransform.localScale = targetLabelScale * (1 + .06f * Mathf.Sin(progress * Mathf.PI));
-                yield return null;
-                elapsed += Time.unscaledDeltaTime;
-            }
-            TargetLabel.text = DiagnosticText.Number(after);
-            TargetLabel.color = SpiritUi.GetTheme(transform).cream;
-            TargetLabel.rectTransform.localScale = targetLabelScale;
+            label.color = color;
+            label.rectTransform.localScale = restScale * (1 + swell);
         }
 
         public IEnumerator AnimateRuleSpirit(Sprite icon, float duration)
@@ -612,8 +588,8 @@ namespace Dice.Presentation
             while (elapsed < duration)
             {
                 float progress = elapsed / duration;
-                rect.anchoredPosition = new Vector2(Mathf.Lerp(-36, diceTrayFrame.rect.width + 36, progress),
-                    Mathf.Sin(progress * Mathf.PI) * 16);
+                rect.anchoredPosition = new Vector2(Mathf.Lerp(-RuleSweepOverhang, DiceTrayFrame.rect.width + RuleSweepOverhang, progress),
+                    Mathf.Sin(progress * Mathf.PI) * RuleSweepArc);
                 RuleSpiritSweep.alpha = Mathf.Sin(progress * Mathf.PI);
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
@@ -650,9 +626,9 @@ namespace Dice.Presentation
             authoredScalesCaptured = true;
         }
 
-        private static void ResetCounterHighlight(SpiritCounterHighlight highlight)
+        private void ResetCounterHighlight(SpiritCounterHighlight highlight)
         {
-            highlight.Label.color = SpiritUi.GetTheme(highlight.Label.transform).cream;
+            highlight.Label.color = Theme.cream;
             highlight.Label.rectTransform.localScale = highlight.LabelScale;
             highlight.Caption.rectTransform.offsetMin = highlight.OriginalInset;
             highlight.Icon.gameObject.SetActive(false);
@@ -660,6 +636,8 @@ namespace Dice.Presentation
             highlight.Icon.rectTransform.localScale = highlight.IconScale;
             highlight.Icon.color = Color.white;
         }
+
+        private SpiritUiTheme Theme => SpiritUi.GetTheme(transform);
 
         private static long Interpolate(long before, long after, float progress)
             => (long)((decimal)before + ((decimal)after - before) * (decimal)progress);

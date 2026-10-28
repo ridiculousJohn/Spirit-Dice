@@ -14,7 +14,7 @@ namespace Dice.Tests
     /** Deformed portrait images: masked coverage, shape weights, native animation channels and mesh alpha, on synthetic rigs. */
     public sealed class DeformedPortraitImageTests
     {
-        private static readonly Vector2 DisplaySize = new Vector2(540, 960);
+        private static readonly Vector2 DisplaySize = SpiritPortraitSafeArea.DefaultReferenceSize;
         private static readonly Vector2 ImageSize = new Vector2(200, 100);
         private readonly List<Object> created = new List<Object>();
         private Scene preview;

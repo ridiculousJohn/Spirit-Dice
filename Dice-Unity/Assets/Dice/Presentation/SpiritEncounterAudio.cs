@@ -11,8 +11,6 @@ namespace Dice.Presentation
     {
         // Seconds a roll lasts when the theme has no recording for its dice count.
         private const float UnrecordedRollDuration = .4f;
-        // Seconds before a roll's dice launch when the encounter has no audio theme.
-        private const float UnthemedRollLaunchTime = .15f;
         [SerializeField] private SpiritAudioTheme theme;
         [SerializeField] private bool muted;
         [SerializeField] private AudioSource ambienceSource;
@@ -95,7 +93,7 @@ namespace Dice.Presentation
                 && diceCount > 0 && diceCount <= theme.rollContactTracks.Length
                 ? theme.rollContactTracks[diceCount - 1] : null;
             var timing = new SpiritRollTiming(clip != null ? clip.length : UnrecordedRollDuration, track,
-                theme != null ? theme.rollLaunchTime : UnthemedRollLaunchTime, Time.unscaledTimeAsDouble, AudioSettings.dspTime);
+                theme != null ? theme.rollLaunchTime : SpiritAudioTheme.DefaultRollLaunchTime, Time.unscaledTimeAsDouble, AudioSettings.dspTime);
             if (CanPlay && clip != null)
             {
                 rollSource.Stop();

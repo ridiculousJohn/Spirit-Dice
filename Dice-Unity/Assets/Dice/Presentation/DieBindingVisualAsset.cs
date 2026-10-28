@@ -125,11 +125,7 @@ namespace Dice.Presentation
         {
             for (int i = 0; i < dice.Length; ++i)
             {
-                if (dice[i] != null)
-                {
-                    if (Application.isPlaying) UnityEngine.Object.Destroy(dice[i].gameObject);
-                    else UnityEngine.Object.DestroyImmediate(dice[i].gameObject);
-                }
+                if (dice[i] != null) OwnedObject.Release(dice[i].gameObject);
                 dice[i] = null;
             }
         }

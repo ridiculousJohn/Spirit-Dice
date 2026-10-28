@@ -690,9 +690,6 @@ namespace Dice.Tests
             Shader shader = Shader.Find(DiceShaderName);
             Assert.That(shader, Is.Not.Null, DiceShaderName);
             Presentation = Own(ScriptableObject.CreateInstance<SpiritTrayPresentationAsset>());
-            Presentation.DiceShader = shader;
-            Presentation.BoneTexture = Own(new Texture2D(2, 2));
-            Presentation.WoodTexture = Own(new Texture2D(2, 2));
             Presentation.TextureSize = new Vector2Int(64, 32);
             SurfaceMaterial = Own(new Material(shader) { name = "Test Tray Surface" });
             var dieMaterial = Own(new Material(shader) { name = "Test Die" });

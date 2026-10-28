@@ -6,11 +6,13 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Spirit Audio Theme", fileName = "SpiritAudioTheme")]
     public sealed class SpiritAudioTheme : ScriptableObject
     {
+        /** Seconds before a roll's dice launch, unless a theme authors its own. */
+        public const float DefaultRollLaunchTime = .15f;
         [Tooltip("Recordings by dice count: element 0 is one die, element 1 is two dice, and so on.")]
         public AudioClip[] rollClips;
         [Tooltip("Contact tracks in the same dice-count order as rollClips.")]
         public SpiritRollContactTrack[] rollContactTracks;
-        [Min(0)] public float rollLaunchTime = .15f;
+        [Min(0)] public float rollLaunchTime = DefaultRollLaunchTime;
         public AudioClip spirit;
         [Tooltip("Gesture variations chosen randomly without immediate repeats. Spirit is the fallback when none are assigned.")]
         public AudioClip[] spiritClips;

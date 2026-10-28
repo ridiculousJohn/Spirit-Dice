@@ -34,7 +34,10 @@ namespace Dice.Editor
             public List<CaptureFrame> Frames = new List<CaptureFrame>();
         }
 
-        private const int MaximumLights = 4;
+        // The first light's intensity and seed until changed; later lights' seeds step on from it.
+        private const float DefaultIntensity = .65f;
+        private const int DefaultSeed = 1977;
+        private const int SeedStep = 101;
         private const string ShaderPath = "Assets/Dice/Presentation/Shared/SceneLighting.shader";
         private const string AmbientKey = "Dice.SceneLightingPreview.Ambient";
 
@@ -110,7 +113,7 @@ namespace Dice.Editor
                 };
                 CaptureTextureToFile(scene.BaseTexture, target, pixels, absolute, "ambient.png");
                 CaptureTextureToFile(light.Contribution, target, pixels, absolute, "original.png");
-                foreach (float intensity in new[] { 0f, .05f, .1f, .2f, .4f, .65f, 1f })
+                foreach (float intensity in new[] { 0f, .05f, .1f, .2f, .4f, DefaultIntensity, 1f })
                 {
                     light.Intensity = intensity;
                     string file = "intensity-" + intensity.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + ".png";
@@ -125,7 +128,7 @@ namespace Dice.Editor
                 target = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
                 target.Create();
                 pixels = new Texture2D(width, height, TextureFormat.RGBA32, false, false);
-                light.Intensity = .65f;
+                light.Intensity = DefaultIntensity;
                 for (int index = 0; index < 120; ++index)
                 {
                     double time = index * .05d;
@@ -204,10 +207,8 @@ namespace Dice.Editor
                 DistanceFalloff = 1.6f,
                 SourceResponse = .35f,
                 ConstrainAmbientToReference = true,
-                Intensity = .65f,
-                FlickerAmount = .12f,
-                FlickerSpeed = 1f,
-                Seed = 1977
+                Intensity = DefaultIntensity,
+                Seed = DefaultSeed
             };
         }
 
@@ -215,7 +216,7 @@ namespace Dice.Editor
         private static string ResponseKey(int light) => "Dice.SceneLightingPreview.Light" + light + ".Response";
 
         private static SceneLightLayer CreateLight(int index) =>
-            index == 0 ? CreateDefaultLight() : new SceneLightLayer { Seed = 1977 + index * 101 };
+            index == 0 ? CreateDefaultLight() : new SceneLightLayer { Seed = DefaultSeed + index * SeedStep };
 
         private void OnEnable()
         {
@@ -225,7 +226,7 @@ namespace Dice.Editor
             lighting.hideFlags = HideFlags.HideAndDontSave;
             lighting.BaseTexture = PreviewAssetSelection.Load<Texture2D>(AmbientKey);
             var remembered = new List<SceneLightLayer>();
-            for (int index = 0; index < MaximumLights; ++index)
+            for (int index = 0; index < SceneLightingAsset.MaximumLights; ++index)
             {
                 SceneLightLayer light = CreateLight(index);
                 light.Contribution = PreviewAssetSelection.Load<Texture2D>(ContributionKey(index));
@@ -294,9 +295,10 @@ namespace Dice.Editor
                         }
                         light.ContributionIncludesBase = EditorGUILayout.Toggle("Includes ambient scene", light.ContributionIncludesBase);
                         light.DistanceFalloff = EditorGUILayout.Slider(new GUIContent("Distance falloff",
-                            "Controls how quickly distant surfaces lose illumination as intensity falls."), light.DistanceFalloff, 0f, 4f);
+                            "Controls how quickly distant surfaces lose illumination as intensity falls."), light.DistanceFalloff, 0f, SceneLightLayer.MaximumDistanceFalloff);
                         light.SourceResponse = EditorGUILayout.Slider(new GUIContent("Source response",
-                            "Response exponent for the source and glow mask. Values below 1 keep the source visible longer as intensity falls."), light.SourceResponse, .1f, 2f);
+                            "Response exponent for the source and glow mask. Values below 1 keep the source visible longer as intensity falls."), light.SourceResponse,
+                            SceneLightLayer.MinimumSourceResponse, SceneLightLayer.MaximumSourceResponse);
                         using (new EditorGUI.DisabledScope(!light.ContributionIncludesBase))
                         {
                             light.ConstrainAmbientToReference = EditorGUILayout.Toggle(new GUIContent("Constrain ambient",
@@ -322,7 +324,7 @@ namespace Dice.Editor
                         }
                         EditorGUILayout.Space();
                     }
-                    using (new EditorGUI.DisabledScope(lights.Count >= MaximumLights))
+                    using (new EditorGUI.DisabledScope(lights.Count >= SceneLightingAsset.MaximumLights))
                     {
                         if (GUILayout.Button("Add light"))
                         {
@@ -357,7 +359,7 @@ namespace Dice.Editor
         /** Remembers every light's selection under its current index and forgets indices beyond the last light. */
         private void SaveLights()
         {
-            for (int index = 0; index < MaximumLights; ++index)
+            for (int index = 0; index < SceneLightingAsset.MaximumLights; ++index)
             {
                 PreviewAssetSelection.Save(ContributionKey(index), index < lights.Count ? lights[index].Contribution : null);
                 PreviewAssetSelection.Save(ResponseKey(index), index < lights.Count ? lights[index].ResponseMap : null);

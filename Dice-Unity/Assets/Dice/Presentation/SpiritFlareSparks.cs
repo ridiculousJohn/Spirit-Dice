@@ -12,6 +12,14 @@ namespace Dice.Presentation
     [DisallowMultipleComponent, RequireComponent(typeof(RectTransform))]
     public sealed class SpiritFlareSparks : MonoBehaviour
     {
+        /** Share of a flare spent rising to full before it settles back. */
+        internal const float FlareRise = .15f;
+        /** Share of a spark's life spent fading in. */
+        private const float SparkRise = .1f;
+        /** The glow's size at rest, as a share of its full size; it swells to full with the flare. */
+        private const float GlowRestScale = .8f;
+        /** Share of its launch size a spark loses by the end of its life. */
+        private const float SparkShrink = .6f;
         [Tooltip("A white disc whose alpha falls smoothly to zero at its rim; every glow and spark draws it.")]
         [SerializeField] private Texture2D softDisc;
         [SerializeField, Range(0, 16)] private int sparkCount = 7;
@@ -38,13 +46,8 @@ namespace Dice.Presentation
         private int burst;
 
         /** Seconds from enable until every part has finished. */
-        public float Duration => Mathf.Max(glowDuration, sparkStagger + sparkLifetime);
-        /** Highest point any part reaches above the pivot, in local units. */
-        public float Top => Mathf.Max(sparkReach.y + sparkSize * .5f, glowSize.y * .5f);
-        public bool IsPlaying => !float.IsNegativeInfinity(start);
-        public int SparkCount => sparkCount;
-        public IReadOnlyList<RawImage> Sparks => sparks;
-        public RawImage Glow => glow;
+        private float Duration => Mathf.Max(glowDuration, sparkStagger + sparkLifetime);
+        private bool IsPlaying => !float.IsNegativeInfinity(start);
 
         private void OnEnable()
         {
@@ -88,11 +91,11 @@ namespace Dice.Presentation
             if (glowing)
             {
                 // The glow swells with the flare's quick rise, then settles out.
-                float level = glowProgress < .15f ? glowProgress / .15f : 1f - Mathf.SmoothStep(0f, 1f, (glowProgress - .15f) / .85f);
+                float level = RiseAndSettle(glowProgress, FlareRise);
                 Color color = glowColor;
                 color.a *= level;
                 glow.color = color;
-                glow.rectTransform.sizeDelta = glowSize * (.8f + .2f * level);
+                glow.rectTransform.sizeDelta = glowSize * (GlowRestScale + (1f - GlowRestScale) * level);
             }
             for (int i = 0; i < sparkCount && i < sparks.Count; ++i)
             {
@@ -103,9 +106,9 @@ namespace Dice.Presentation
                 // Thrown quickly, slowing as they cool; they never pass their target offset.
                 float travel = 1f - (1f - progress) * (1f - progress);
                 sparks[i].rectTransform.anchoredPosition = targets[i] * travel;
-                sparks[i].rectTransform.sizeDelta = Vector2.one * (sparkSize * (1f - .6f * progress));
+                sparks[i].rectTransform.sizeDelta = Vector2.one * (sparkSize * (1f - SparkShrink * progress));
                 Color color = sparkColor;
-                color.a *= progress < .1f ? progress / .1f : 1f - Mathf.SmoothStep(0f, 1f, (progress - .1f) / .9f);
+                color.a *= RiseAndSettle(progress, SparkRise);
                 sparks[i].color = color;
             }
         }
@@ -137,6 +140,10 @@ namespace Dice.Presentation
             part.SetActive(false);
             return image;
         }
+
+        /** A pulse over progress from 0 to 1 that rises linearly to full over the rise share, then eases back to nothing. */
+        internal static float RiseAndSettle(float progress, float rise)
+            => progress < rise ? progress / rise : 1f - Mathf.SmoothStep(0f, 1f, (progress - rise) / (1f - rise));
 
         private static float Range(System.Random random, float min, float max) => min + (max - min) * (float)random.NextDouble();
     }

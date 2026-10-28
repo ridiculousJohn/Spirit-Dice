@@ -29,11 +29,11 @@ namespace Dice.Presentation
         public void Start(int index, float peak, float rise, float hold, float fall, double time)
         {
             if (index < 0 || index >= flares.Length) throw new ArgumentOutOfRangeException(nameof(index));
-            if (!SceneLightingAsset.Finite(peak) || peak < 0f) throw new ArgumentOutOfRangeException(nameof(peak));
-            if (!SceneLightingAsset.Finite(rise) || rise < 0f) throw new ArgumentOutOfRangeException(nameof(rise));
-            if (!SceneLightingAsset.Finite(hold) || hold < 0f) throw new ArgumentOutOfRangeException(nameof(hold));
-            if (!SceneLightingAsset.Finite(fall) || fall < 0f) throw new ArgumentOutOfRangeException(nameof(fall));
-            if (double.IsNaN(time) || double.IsInfinity(time)) throw new ArgumentOutOfRangeException(nameof(time));
+            if (!FiniteValue.Is(peak) || peak < 0f) throw new ArgumentOutOfRangeException(nameof(peak));
+            if (!FiniteValue.Is(rise) || rise < 0f) throw new ArgumentOutOfRangeException(nameof(rise));
+            if (!FiniteValue.Is(hold) || hold < 0f) throw new ArgumentOutOfRangeException(nameof(hold));
+            if (!FiniteValue.Is(fall) || fall < 0f) throw new ArgumentOutOfRangeException(nameof(fall));
+            if (!FiniteValue.Is(time)) throw new ArgumentOutOfRangeException(nameof(time));
             flares[index] = new Flare(time, Level(index, time), peak, rise, hold, fall);
         }
 

@@ -22,6 +22,10 @@ namespace Dice.Presentation
             public float[] Weights;
         }
 
+        /** A layer's pose holds one value per property before its deformation channels, which follow in order. */
+        private const int DeformationOffset = (int)SpiritPortraitProperty.Deformation;
+        /** Longer frame steps, such as a resume after a pause, advance the pose without emitting the gestures they skip, in seconds. */
+        private const float MaximumGestureStep = 2f;
         private SpiritHostPresentationAsset presentation;
         [SerializeField] private RectTransform portraitRoot;
         [SerializeField] private SpiritPortraitImage[] authoredLayers;
@@ -83,9 +87,8 @@ namespace Dice.Presentation
             }
         }
 
-        public void Build(RectTransform parent, SpiritHostPresentationAsset asset)
+        public void Build(SpiritHostPresentationAsset asset)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (asset == null) throw new ArgumentNullException(nameof(asset));
             if (initialized) return;
             if (portraitRoot == null || authoredLayers == null || authoredLayers.Length != asset.Layers.Length)
@@ -120,14 +123,14 @@ namespace Dice.Presentation
                 int channels = image.Weights.Count;
                 if (channels != (source.Mesh != null ? source.Mesh.Shapes.Length : 0))
                     throw new InvalidOperationException("Authored portrait deformation channels must match the animation data.");
-                var defaults = new float[6 + channels];
-                defaults[0] = image.rectTransform.anchoredPosition.x;
-                defaults[1] = image.rectTransform.anchoredPosition.y;
-                defaults[2] = image.rectTransform.sizeDelta.x;
-                defaults[3] = image.rectTransform.sizeDelta.y;
-                defaults[4] = Mathf.DeltaAngle(0, image.rectTransform.localEulerAngles.z);
-                defaults[5] = image.color.a;
-                for (int channel = 0; channel < channels; ++channel) defaults[6 + channel] = image.Weights[channel];
+                var defaults = new float[DeformationOffset + channels];
+                defaults[(int)SpiritPortraitProperty.PositionX] = image.rectTransform.anchoredPosition.x;
+                defaults[(int)SpiritPortraitProperty.PositionY] = image.rectTransform.anchoredPosition.y;
+                defaults[(int)SpiritPortraitProperty.Width] = image.rectTransform.sizeDelta.x;
+                defaults[(int)SpiritPortraitProperty.Height] = image.rectTransform.sizeDelta.y;
+                defaults[(int)SpiritPortraitProperty.Rotation] = Mathf.DeltaAngle(0, image.rectTransform.localEulerAngles.z);
+                defaults[(int)SpiritPortraitProperty.Alpha] = image.color.a;
+                for (int channel = 0; channel < channels; ++channel) defaults[DeformationOffset + channel] = image.Weights[channel];
                 layers[i] = new LayerRuntime
                 {
                     Image = image, Smoke = smoke, Lit = lit, AuthoredMaterial = image.material, Tint = image.color, Defaults = defaults, Values = new float[defaults.Length],
@@ -195,7 +198,7 @@ namespace Dice.Presentation
         public void SetState(SpiritPresentationState state, float progress)
         {
             if (!SpiritHostPresentationAsset.ValidState(state)) throw new ArgumentOutOfRangeException(nameof(state));
-            if (presentation == null || !SpiritHostPresentationAsset.Finite(progress)) return;
+            if (presentation == null || !FiniteValue.Is(progress)) return;
             progress = Mathf.Clamp01(progress);
             if (state == SpiritPresentationState.Reaction)
             {
@@ -241,7 +244,7 @@ namespace Dice.Presentation
         /** Evaluate an absolute idle time for authoring, including the continuous effect phase. */
         public void Sample(float seconds)
         {
-            if (!Visible || !SpiritHostPresentationAsset.Finite(seconds) || seconds < 0f) return;
+            if (!Visible || !FiniteValue.Is(seconds) || seconds < 0f) return;
             effectAge = 0d;
             ResetPose();
             Advance(seconds);
@@ -249,7 +252,7 @@ namespace Dice.Presentation
 
         public void Advance(float deltaTime)
         {
-            if (!Visible || !SpiritHostPresentationAsset.Finite(deltaTime) || deltaTime < 0f) return;
+            if (!Visible || !FiniteValue.Is(deltaTime) || deltaTime < 0f) return;
             effectAge += deltaTime;
             if (SpiritHostPresentationAsset.DirectedState(State))
             {
@@ -259,7 +262,7 @@ namespace Dice.Presentation
             SpiritPresentationState previousState = State;
             double previousAge = stateAge;
             stateAge += deltaTime;
-            bool emit = deltaTime <= 2f;
+            bool emit = deltaTime <= MaximumGestureStep;
             for (int i = 0; i < presentation.Sequences.Length; ++i)
             {
                 SpiritPresentationSequence sequence = presentation.Sequences[i];
@@ -298,15 +301,16 @@ namespace Dice.Presentation
                 LayerRuntime layer = layers[i];
                 float[] values = layer.Values;
                 RectTransform rect = layer.Image.rectTransform;
-                rect.anchoredPosition = new Vector2(values[0], values[1]);
-                rect.sizeDelta = new Vector2(values[2], values[3]);
-                rect.localRotation = Quaternion.Euler(0f, 0f, values[4]);
+                rect.anchoredPosition = new Vector2(values[(int)SpiritPortraitProperty.PositionX],
+                    values[(int)SpiritPortraitProperty.PositionY]);
+                rect.sizeDelta = new Vector2(values[(int)SpiritPortraitProperty.Width], values[(int)SpiritPortraitProperty.Height]);
+                rect.localRotation = Quaternion.Euler(0f, 0f, values[(int)SpiritPortraitProperty.Rotation]);
                 Color tint = layer.Tint;
                 if (hasSceneLighting && layer.Lit == null && !presentation.Layers[i].Silhouette && presentation.Layers[i].ReceiveSceneLighting)
                     tint = (tint.linear * sceneLightingTint).gamma;
-                tint.a = Mathf.Clamp01(values[5]);
+                tint.a = Mathf.Clamp01(values[(int)SpiritPortraitProperty.Alpha]);
                 layer.Image.color = tint;
-                if (layer.Weights.Length > 0) Array.Copy(values, 6, layer.Weights, 0, layer.Weights.Length);
+                if (layer.Weights.Length > 0) Array.Copy(values, DeformationOffset, layer.Weights, 0, layer.Weights.Length);
                 layer.Image.SetWeights(layer.Weights);
                 layer.Smoke?.ApplyTime(effectAge, layer.Image);
             }
@@ -368,7 +372,7 @@ namespace Dice.Presentation
         }
 
         private static int ValueIndex(SpiritPortraitProperty property, int channel)
-            => property == SpiritPortraitProperty.Deformation ? 6 + channel : (int)property;
+            => property == SpiritPortraitProperty.Deformation ? DeformationOffset + channel : (int)property;
 
         private void EmitStartGestures(SpiritPresentationState state)
         {
@@ -417,12 +421,6 @@ namespace Dice.Presentation
                         layer.Lit.Dispose();
                     }
                 }
-        }
-
-        private static void DestroyOwned(UnityEngine.Object owned)
-        {
-            if (Application.isPlaying) Destroy(owned);
-            else DestroyImmediate(owned);
         }
     }
 }

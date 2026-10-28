@@ -244,7 +244,7 @@ namespace Dice.Tests
             SpiritHostPortrait portrait = SpiritPortraitTestAuthoring.Create(hostAsset, parent);
             Own(portrait.gameObject);
             Material authored = portrait.GetComponentsInChildren<SpiritPortraitImage>(true).Single(image => image.name == "lit").material;
-            portrait.Build((RectTransform)portrait.transform, hostAsset);
+            portrait.Build(hostAsset);
             SpiritPortraitImage body = portrait.GetLayer("body"), lit = portrait.GetLayer("lit");
             Assert.That(lit.material, Is.SameAs(authored));
 

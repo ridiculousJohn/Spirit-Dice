@@ -15,12 +15,6 @@ namespace Dice.Presentation
             CaptureContent();
         }
 
-        internal void ExcludeContentFromTint(Transform root)
-        {
-            untintedContent = root;
-            CaptureContent();
-        }
-
         public void CaptureContent()
         {
             content = System.Array.FindAll(GetComponentsInChildren<Graphic>(true),

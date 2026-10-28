@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Dice.Engine;
 using Dice.UnityContent;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Dice.Presentation
 {
@@ -33,8 +32,8 @@ namespace Dice.Presentation
         {
             if (!Enum.IsDefined(typeof(SpiritPresentationState), hostState) ||
                 hostState == SpiritPresentationState.Reaction ||
-                float.IsNaN(holdDuration) || float.IsInfinity(holdDuration) || holdDuration < 0 ||
-                float.IsNaN(fadeDuration) || float.IsInfinity(fadeDuration) || fadeDuration < 0)
+                !FiniteValue.Is(holdDuration) || holdDuration < 0 ||
+                !FiniteValue.Is(fadeDuration) || fadeDuration < 0)
                 throw new FormatException("Encounter outcome presentation data is invalid.");
         }
     }
@@ -61,7 +60,7 @@ namespace Dice.Presentation
         [SerializeField] private EncounterJourneyTransition transition;
         [SerializeField] private float scaleFrom = 1;
         [SerializeField] private float scaleTo = 1;
-        [SerializeField, FormerlySerializedAs("hostPose")] private SpiritPresentationState hostState;
+        [SerializeField] private SpiritPresentationState hostState;
         [SerializeField] private bool hideNarrativeDuringMotion;
         [SerializeField] private bool autoAdvance;
         [SerializeField] private Vector2 backgroundMotionFrom;
@@ -196,12 +195,12 @@ namespace Dice.Presentation
                     !Enum.IsDefined(typeof(SpiritPresentationState), beat.HostState) ||
                     beat.HostState == SpiritPresentationState.Reaction ||
                     !Enum.IsDefined(typeof(EncounterJourneyTransition), beat.Transition) ||
-                    float.IsNaN(beat.Duration) || float.IsInfinity(beat.Duration) || beat.Duration < 0 ||
-                    float.IsNaN(beat.ScaleFrom) || float.IsInfinity(beat.ScaleFrom) || beat.ScaleFrom <= 0 ||
-                    float.IsNaN(beat.ScaleTo) || float.IsInfinity(beat.ScaleTo) || beat.ScaleTo <= 0 ||
-                    float.IsNaN(beat.BackgroundScaleFrom) || float.IsInfinity(beat.BackgroundScaleFrom) || beat.BackgroundScaleFrom <= 0 ||
-                    float.IsNaN(beat.BackgroundScaleTo) || float.IsInfinity(beat.BackgroundScaleTo) || beat.BackgroundScaleTo <= 0 ||
-                    !Finite(beat.BackgroundMotionFrom) || !Finite(beat.BackgroundMotionTo))
+                    !FiniteValue.Is(beat.Duration) || beat.Duration < 0 ||
+                    !FiniteValue.Is(beat.ScaleFrom) || beat.ScaleFrom <= 0 ||
+                    !FiniteValue.Is(beat.ScaleTo) || beat.ScaleTo <= 0 ||
+                    !FiniteValue.Is(beat.BackgroundScaleFrom) || beat.BackgroundScaleFrom <= 0 ||
+                    !FiniteValue.Is(beat.BackgroundScaleTo) || beat.BackgroundScaleTo <= 0 ||
+                    !FiniteValue.Is(beat.BackgroundMotionFrom) || !FiniteValue.Is(beat.BackgroundMotionTo))
                     throw new FormatException("Journey beat animation data is invalid.");
                 if (beat.Kind == EncounterJourneyBeatKind.Invitation) ++invitations;
                 beat.SceneLighting?.Validate();
@@ -215,9 +214,7 @@ namespace Dice.Presentation
             if (tablePresentation == null) throw new FormatException("An encounter journey requires table presentation.");
             tablePresentation.SceneLighting?.Validate();
             if (tablePresentation.SceneLighting != null &&
-                (!SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.x) ||
-                 !SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.y) ||
-                 !SceneLightingAsset.Finite(tablePresentation.HostLightingPosition.z)))
+                !FiniteValue.Is(tablePresentation.HostLightingPosition))
                 throw new FormatException("Journey host lighting position must be finite.");
             if (tablePresentation.RulePresentations == null) throw new FormatException("Journey rule presentations require an array.");
             var ruleIds = new HashSet<string>(StringComparer.Ordinal);
@@ -241,9 +238,6 @@ namespace Dice.Presentation
                 if (!IsStableId(id) || id == Id || !ids.Add(id))
                     throw new FormatException("Journey completion prerequisite IDs must be valid, unique, and different from the journey.");
         }
-
-        private static bool Finite(Vector2 value) => !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
-            !float.IsNaN(value.y) && !float.IsInfinity(value.y);
 
         private static bool IsStableId(string value)
         {

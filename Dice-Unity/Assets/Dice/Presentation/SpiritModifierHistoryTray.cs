@@ -9,8 +9,6 @@ namespace Dice.Presentation
     /** Ready PlayHand activations form an ordered, scrollable tray beneath the dice. */
     public sealed class SpiritModifierHistoryTray : MonoBehaviour
     {
-        public const float TokenSize = 40;
-        public const float ArrivalDuration = .30f;
         private const float TokenSpacing = 42;
         [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
         private readonly List<ModifierContribution> contributions = new List<ModifierContribution>();
@@ -21,9 +19,6 @@ namespace Dice.Presentation
         [SerializeField] private ScrollRect scroll;
         private bool interactable = true;
         private bool scrollToLatest;
-        private string encounterId;
-        private int stageIndex;
-        private int handIndex;
         private SpiritTrayScene sharedScene;
         [SerializeField] private RectTransform frame;
         [SerializeField] private RawImage image;
@@ -44,15 +39,6 @@ namespace Dice.Presentation
         {
             internal RectTransform Rect;
             internal Button Button;
-        }
-
-        public void Configure(SpiritTrayPresentationAsset presentation)
-        {
-            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
-            presentation.Validate();
-            if (trayPresentation != presentation || sharedScene != null) ReleasePresentation();
-            trayPresentation = presentation;
-            Renderer?.Configure(presentation);
         }
 
         public void Configure(SpiritTrayPresentationAsset presentation, SpiritTrayScene scene)
@@ -76,9 +62,8 @@ namespace Dice.Presentation
             sharedScene = null;
         }
 
-        public void Build(RectTransform parent)
+        public void Build()
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (root == null || content == null || scroll == null || frame == null || renderer == null || tokenPrefab == null)
                 throw new InvalidOperationException("The modifier tray requires authored UI and renderer references.");
             InitializeRenderer();
@@ -116,12 +101,10 @@ namespace Dice.Presentation
             foreach (Token token in tokens)
             {
                 token.Rect.gameObject.SetActive(false);
-                if (Application.isPlaying) Destroy(token.Rect.gameObject);
-                else DestroyImmediate(token.Rect.gameObject);
+                OwnedObject.Release(token.Rect.gameObject);
             }
             tokens.Clear();
             contributions.Clear();
-            encounterId = null;
             scrollToLatest = false;
             if (scroll != null)
             {
@@ -155,29 +138,6 @@ namespace Dice.Presentation
             tokens.Add(token);
             ResizeContent();
             if (animate) scrollToLatest = true;
-        }
-
-        public void Synchronize(EncounterSnapshot snapshot, MechanicalCatalog catalog, ModifierPresentationCatalog charms)
-        {
-            if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
-            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (root == null) throw new InvalidOperationException("Build the modifier tray before synchronizing activations.");
-
-            bool sameHand = encounterId == null || (encounterId == snapshot.EncounterId &&
-                stageIndex == snapshot.StageIndex && handIndex == snapshot.HandIndex);
-            bool prefixMatches = sameHand && contributions.Count <= snapshot.ModifierContributions.Count;
-            if (prefixMatches)
-                for (int i = 0; i < contributions.Count; ++i)
-                    if (!Matches(contributions[i], snapshot.ModifierContributions[i])) { prefixMatches = false; break; }
-            if (!prefixMatches) Clear();
-            encounterId = snapshot.EncounterId;
-            stageIndex = snapshot.StageIndex;
-            handIndex = snapshot.HandIndex;
-            for (int i = contributions.Count; i < snapshot.ModifierContributions.Count; ++i)
-            {
-                ModifierContribution contribution = snapshot.ModifierContributions[i];
-                Add(contribution, charms, catalog.GetModifier(contribution.DefinitionId), false);
-            }
         }
 
         public void SynchronizeReady(IReadOnlyList<ModifierContribution> previewContributions, MechanicalCatalog catalog,
@@ -270,8 +230,9 @@ namespace Dice.Presentation
         private void ResizeContent()
         {
             if (content == null || scroll == null) return;
-            content.sizeDelta = new Vector2(scroll.viewport.rect.width +
-                Mathf.Max(0, contributions.Count - (Renderer != null ? Renderer.Capacity : SpiritModifierHistoryRenderer.VisibleCapacity)) * TokenSpacing, 0);
+            // Activations exist only while the renderer is configured, which gives the bay's capacity.
+            int overflow = contributions.Count > 0 ? Mathf.Max(0, contributions.Count - Renderer.Capacity) : 0;
+            content.sizeDelta = new Vector2(scroll.viewport.rect.width + overflow * TokenSpacing, 0);
         }
     }
 }

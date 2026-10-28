@@ -7,12 +7,15 @@ namespace Dice.Presentation
     /** One camera frames both bays through the same table coordinate space. */
     public sealed class SpiritTrayScene : MonoBehaviour
     {
+        /** The selection halo's size relative to its die. */
+        private const float SelectionHaloScale = 1.13f;
+        /** Smallest half depth framed around each dice slot, in die sizes. */
+        private const float MinimumSlotHalfDepth = .88f;
         [SerializeField] private SpiritTrayPresentationAsset presentation;
         [SerializeField] private GameObject renderRoot;
         [SerializeField] private Camera renderCamera;
         [SerializeField] private SpiritTrayGeometry geometry;
         private bool initialized;
-        [SerializeField] private Light light;
         private readonly List<Material> materials = new List<Material>();
         private readonly Dictionary<Renderer, Material[]> authoredMaterials = new Dictionary<Renderer, Material[]>();
         private readonly List<Vector3> framingPoints = new List<Vector3>();
@@ -49,6 +52,7 @@ namespace Dice.Presentation
             if (presentation == null || renderRoot == null || RenderCamera == null || Geometry == null)
                 throw new InvalidOperationException("The tray scene requires authored presentation, geometry, root, and camera references.");
             presentation.ValidateScene();
+            Geometry.Validate();
             authoredTarget = RenderCamera.targetTexture;
             authoredAspect = RenderCamera.aspect;
             authoredStageActive = renderRoot.activeSelf;
@@ -131,21 +135,21 @@ namespace Dice.Presentation
                 AddFramingBounds(LocalToRenderRoot(renderer.transform), renderer.localBounds);
 
             // A rotated die and its selection halo stay inside this radius throughout the fixed roll arc.
-            float radius = Mathf.Sqrt(3) * .5f * 1.13f;
+            float radius = Mathf.Sqrt(3) * .5f * SelectionHaloScale;
             float scale = Geometry.DiceScale;
-            float height = (Mathf.Sqrt(3) * .5f + .34f + radius) * scale;
+            float height = (Mathf.Sqrt(3) * .5f + SpiritRollTiming.MaximumLift + radius) * scale;
             float bottom = (.5f - radius) * scale;
             foreach (Transform slot in Geometry.DiceSlots)
                 AddFramingBounds(LocalToRenderRoot(slot), new Bounds(
                     Vector3.up * ((height + bottom) * .5f),
-                    new Vector3((radius + .045f) * 2 * scale, height - bottom,
-                        Mathf.Max(radius, .88f) * 2 * scale)));
+                    new Vector3((radius + SpiritRollTiming.MaximumDrift) * 2 * scale, height - bottom,
+                        Mathf.Max(radius, MinimumSlotHalfDepth) * 2 * scale)));
             foreach (Transform label in Geometry.DiceLabelAnchors)
                 framingPoints.Add(LocalToRenderRoot(label).MultiplyPoint3x4(Vector3.zero));
 
             // History is clipped across its authored width; arrival adds lift but cannot expand the bay.
             float tileRadius = Mathf.Sqrt(3) * .5f * Geometry.ModifierDieSize;
-            float tileHeight = tileRadius * 2 + .08f;
+            float tileHeight = tileRadius * 2 + SpiritModifierHistoryRenderer.ArrivalLift;
             AddFramingBounds(LocalToRenderRoot(Geometry.ModifierRoot), new Bounds(
                 Vector3.up * (tileHeight * .5f), new Vector3(Geometry.ModifierWidth, tileHeight,
                     Mathf.Max(Geometry.ModifierDepth, tileRadius * 2))));
@@ -249,7 +253,7 @@ namespace Dice.Presentation
                     RenderCamera.aspect = authoredAspect;
                 }
                 Texture.Release();
-                Release(Texture);
+                OwnedObject.Release(Texture);
                 if (renderRoot != null) renderRoot.SetActive(authoredStageActive);
             }
             ReleaseMaterialInstances();

@@ -110,7 +110,7 @@ namespace Dice.Presentation
         /** Advances the activity clock; idle events fall due at their scheduled times even across long steps. */
         public void Tick(float deltaTime)
         {
-            if (!SceneLightingAsset.Finite(deltaTime) || deltaTime < 0f) throw new ArgumentOutOfRangeException(nameof(deltaTime));
+            if (!FiniteValue.Is(deltaTime) || deltaTime < 0f) throw new ArgumentOutOfRangeException(nameof(deltaTime));
             if (state == State.Stopped) return;
             double previous = time;
             time += deltaTime;

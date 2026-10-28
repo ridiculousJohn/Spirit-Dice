@@ -37,7 +37,7 @@ namespace Dice.Tests
         public void ShowListsOneRowPerFamilyInAuthoredOrder()
         {
             var screen = ui.CharmsScreen(ui.Root);
-            screen.Build(ui.Root, () => { });
+            screen.Build(() => { });
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(100, 3, 3) });
             var catalog = new MechanicalCatalog("test.charms_screen", TestContent.Hands(), new[] { encounter }, new[]
             {

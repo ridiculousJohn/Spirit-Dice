@@ -35,7 +35,7 @@ namespace Dice.Presentation
         public void SetWeight(int index, float value)
         {
             if (index < 0 || index >= weights.Length) throw new ArgumentOutOfRangeException(nameof(index), index, "Weight index must match the configured mesh shapes.");
-            if (!SpiritHostPresentationAsset.Finite(value)) throw new ArgumentException("Weights must be finite.", nameof(value));
+            if (!FiniteValue.Is(value)) throw new ArgumentException("Weights must be finite.", nameof(value));
             if (weights[index] == value) return;
             weights[index] = value;
             SetVerticesDirty();
@@ -47,7 +47,7 @@ namespace Dice.Presentation
             bool changed = false;
             for (int i = 0; i < values.Length; ++i)
             {
-                if (!SpiritHostPresentationAsset.Finite(values[i])) throw new ArgumentException("Weights must be finite.", nameof(values));
+                if (!FiniteValue.Is(values[i])) throw new ArgumentException("Weights must be finite.", nameof(values));
                 changed |= weights[i] != values[i];
             }
             if (!changed) return;

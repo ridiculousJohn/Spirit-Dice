@@ -27,7 +27,7 @@ namespace Dice.Presentation
         [field: SerializeField] public Button CloseButton { get; private set; }
         public IReadOnlyList<Row> Rows => rows;
 
-        public void Build(RectTransform parent, Action close)
+        public void Build(Action close)
         {
             SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveAllListeners();

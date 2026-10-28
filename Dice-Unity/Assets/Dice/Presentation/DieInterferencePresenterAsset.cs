@@ -30,7 +30,7 @@ namespace Dice.Presentation
 
         protected override RulePresenter Create(DieInterferenceRuleDefinition rule, RulePresenterContext context)
         {
-            if (!SceneLightingAsset.Finite(hold) || hold < 0f || !SceneLightingAsset.Finite(playHandBeat) || playHandBeat < 0f)
+            if (!FiniteValue.Is(hold) || hold < 0f || !FiniteValue.Is(playHandBeat) || playHandBeat < 0f)
                 throw new InvalidOperationException("The interference presenter " + name + " requires nonnegative timings.");
             return new DieInterferencePresenter(this, rule.Id, context);
         }

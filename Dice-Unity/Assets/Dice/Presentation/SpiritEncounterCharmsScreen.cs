@@ -25,7 +25,7 @@ namespace Dice.Presentation
         public IReadOnlyList<SpiritModifierFamilyRow> Rows => rows;
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
 
-        public void Build(RectTransform parent, Action begin)
+        public void Build(Action begin)
         {
             SpiritUi.RequireWording(transform);
             BeginButton.onClick.RemoveAllListeners();

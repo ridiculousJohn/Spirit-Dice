@@ -76,9 +76,9 @@ namespace Dice.Tests
             wider.ReferenceSize = presentation.ReferenceSize;
             wider.Layers = presentation.Layers.Append(new SpiritPortraitLayer
                 { Id = "Extra", Texture = Texture2D.whiteTexture, Size = Vector2.one }).ToArray();
-            Assert.Throws<InvalidOperationException>(() => portrait.Build((RectTransform)portrait.transform, wider));
+            Assert.Throws<InvalidOperationException>(() => portrait.Build(wider));
 
-            portrait.Build((RectTransform)portrait.transform, presentation);
+            portrait.Build(presentation);
             Assert.That(portrait.GetLayer("Ribbon"), Is.Not.Null);
             Assert.That(portrait.GetLayer("Extra"), Is.Null);
             Assert.That(Value(Ribbon, X), Is.EqualTo(RibbonRestX), "The rest pose is read from the authored image.");
@@ -448,7 +448,7 @@ namespace Dice.Tests
         {
             presentation.Sequences = sequences;
             portrait = SpiritPortraitTestAuthoring.Create(presentation, Room);
-            portrait.Build((RectTransform)portrait.transform, presentation);
+            portrait.Build(presentation);
         }
 
         private float Value(int layer, SpiritPortraitProperty property) => portrait.ReadLayerValue(layer, property);

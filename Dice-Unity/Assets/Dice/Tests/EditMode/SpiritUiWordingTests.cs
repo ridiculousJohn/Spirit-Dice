@@ -81,7 +81,6 @@ namespace Dice.Tests
         [Test]
         public void RewardsAndHudTextUseTheirTemplates()
         {
-            Assert.That(wording.rewards.UpcomingStage(2, 4, 1200), Is.EqualTo("<rewards.upcomingStage>2|4|1,200"));
             Assert.That(wording.rewards.RefreshButton(2), Is.EqualTo("<rewards.refreshButton>2"));
             var hud = wording.hud;
             Assert.That(hud.Stage(2, 5), Is.EqualTo("<hud.stage>2|5"));
@@ -177,7 +176,7 @@ namespace Dice.Tests
             using var ui = new SyntheticUi();
             ui.Wording.handRanks.level = null;
             var panel = ui.Add<SpiritHandRanksPanel>(ui.Root, "Hand Ranks");
-            Assert.That(Assert.Throws<InvalidOperationException>(() => panel.Build(ui.Root, () => { })).Message,
+            Assert.That(Assert.Throws<InvalidOperationException>(() => panel.Build(() => { })).Message,
                 Does.Contain("handRanks.level"));
         }
     }

@@ -10,9 +10,15 @@ namespace Dice.Presentation
     /** Presents authored arrival and story beats without creating encounter mechanics. */
     public sealed class EncounterJourneyView : MonoBehaviour
     {
+        /** Fraction of a hidden-narrative beat after which the narrative fades in over the remainder. */
+        private const float NarrativeRevealStart = .9f;
+        /** Seconds the foreground takes to fade in at the start of its beat. */
+        private const float ForegroundFadeInSeconds = .25f;
+        /** How far each parting panel travels, as a fraction of the artwork width. */
+        private const float PanelPartingDistance = .54f;
+
         private IEncounterJourneyControls controls;
         private ISpiritEncounterControls encounterControls;
-        [SerializeField] private RectTransform sequence;
         [SerializeField] private RectTransform artwork;
         [SerializeField] private RawImage background;
         [SerializeField] private RawImage foreground;
@@ -24,14 +30,12 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform narrative;
         [SerializeField] private ScrollRect narrativeScroll;
         [SerializeField] private Text ruleHeading;
-        [SerializeField] private Text ruleScope;
         [SerializeField] private SpiritInvitationRuleView invitationRulePrefab;
         [SerializeField] private GameObject invitationSection;
         [SerializeField] private RectTransform invitationRulesRoot;
         private readonly List<SpiritInvitationRuleView> invitationRules = new List<SpiritInvitationRuleView>();
         private int invitationRuleCount;
         [SerializeField] private RectTransform charmDetail;
-        [SerializeField] private RectTransform charmIconRoot;
         [SerializeField] private Image charmIcon;
         [SerializeField] private Text charmName;
         [SerializeField] private Text charmEffect;
@@ -79,7 +83,7 @@ namespace Dice.Presentation
             returnButton.onClick.AddListener(() => controls.ReturnToInvestigation());
             skipButton.onClick.RemoveAllListeners();
             skipButton.onClick.AddListener(() => controls.SkipIntro());
-            EncounterCharms.Build((RectTransform)transform, () => controls.AcceptEncounter());
+            EncounterCharms.Build(() => controls.AcceptEncounter());
         }
 
         private void ShowEncounterCharms()
@@ -285,7 +289,7 @@ namespace Dice.Presentation
             float eased = Mathf.SmoothStep(0, 1, value);
             hostState?.Invoke(beat.HostState, value);
             narrativeGroup.alpha = beat.HideNarrativeDuringMotion ?
-                beat.AutoAdvance ? 0 : Mathf.Clamp01((value - .9f) * 10f) : 1;
+                beat.AutoAdvance ? 0 : Mathf.InverseLerp(NarrativeRevealStart, 1, value) : 1;
             background.rectTransform.anchoredPosition = Vector2.Scale(
                 Vector2.Lerp(beat.BackgroundMotionFrom, beat.BackgroundMotionTo, eased), artwork.rect.size);
             background.rectTransform.localScale = Vector3.one * Mathf.Lerp(beat.BackgroundScaleFrom, beat.BackgroundScaleTo, eased);
@@ -296,10 +300,10 @@ namespace Dice.Presentation
             if (beat.Foreground != null)
             {
                 Color tint = beat.ForegroundTint;
-                tint.a *= parting || value >= 1 ? 1 : Mathf.Clamp01(value * beat.Duration / .25f);
+                tint.a *= parting || value >= 1 ? 1 : Mathf.Clamp01(value * beat.Duration / ForegroundFadeInSeconds);
                 foreground.color = tint;
             }
-            float distance = artwork.rect.width * .54f * eased;
+            float distance = artwork.rect.width * PanelPartingDistance * eased;
             leftPanel.rectTransform.anchoredPosition = new Vector2(-distance, 0);
             rightPanel.rectTransform.anchoredPosition = new Vector2(distance, 0);
         }

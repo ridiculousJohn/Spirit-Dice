@@ -7,10 +7,10 @@ namespace Dice.Presentation
     {
         public static float EvaluateIntensity(double time, float intensity, float amount, float speed, int seed)
         {
-            if (double.IsNaN(time) || double.IsInfinity(time)) throw new ArgumentOutOfRangeException(nameof(time));
-            if (!SceneLightingAsset.Finite(intensity) || intensity < 0f) throw new ArgumentOutOfRangeException(nameof(intensity));
-            if (!SceneLightingAsset.Finite(amount) || amount < 0f || amount > 1f) throw new ArgumentOutOfRangeException(nameof(amount));
-            if (!SceneLightingAsset.Finite(speed) || speed < 0f) throw new ArgumentOutOfRangeException(nameof(speed));
+            if (!FiniteValue.Is(time)) throw new ArgumentOutOfRangeException(nameof(time));
+            if (!FiniteValue.Is(intensity) || intensity < 0f) throw new ArgumentOutOfRangeException(nameof(intensity));
+            if (!FiniteValue.Is(amount) || amount < 0f || amount > 1f) throw new ArgumentOutOfRangeException(nameof(amount));
+            if (!FiniteValue.Is(speed) || speed < 0f) throw new ArgumentOutOfRangeException(nameof(speed));
             if (amount == 0f || speed == 0f || intensity == 0f) return intensity;
             double sample = time * speed;
             double fluctuation = .60 * Noise(sample * .73, seed, 0)

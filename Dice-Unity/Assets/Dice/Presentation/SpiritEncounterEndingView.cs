@@ -41,9 +41,8 @@ namespace Dice.Presentation
         [SerializeField] private int detailDialogueSize = 23;
         [SerializeField] private int detailSummarySize = 21;
 
-        public void Build(RectTransform parent, Action returnToTrail, Action retry)
+        public void Build(Action returnToTrail, Action retry)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             SpiritUi.RequireWording(transform);
             if (returnToTrail == null) throw new ArgumentNullException(nameof(returnToTrail));
             if (Root == null || panel == null || content == null || scroll == null || title == null || detail == null ||

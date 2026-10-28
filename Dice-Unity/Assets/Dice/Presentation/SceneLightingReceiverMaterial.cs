@@ -9,9 +9,9 @@ namespace Dice.Presentation
         private static readonly int AmbientId = Shader.PropertyToID("_SceneLightingAmbient");
         private static readonly int KeyColorId = Shader.PropertyToID("_SceneLightingKeyColor");
         private static readonly int KeyDirectionId = Shader.PropertyToID("_SceneLightingKeyDirection");
-        private static readonly int[] PositionIds = CreateIds("_SceneLightPosition");
-        private static readonly int[] ColorIds = CreateIds("_SceneLightColor");
-        private static readonly int[] ParametersIds = CreateIds("_SceneLightParameters");
+        private static readonly int[] PositionIds = SceneLightingAsset.LightPropertyIds("_SceneLightPosition");
+        private static readonly int[] ColorIds = SceneLightingAsset.LightPropertyIds("_SceneLightColor");
+        private static readonly int[] ParametersIds = SceneLightingAsset.LightPropertyIds("_SceneLightParameters");
 
         internal static void Apply(Material material, SceneLightingState state, Transform renderRoot)
         {
@@ -51,13 +51,6 @@ namespace Dice.Presentation
                 material.SetVector(ParametersIds[i], new Vector4(state.GetIntensity(i), light.ReceiverIntensity,
                     light.DistanceFalloff, 0f));
             }
-        }
-
-        private static int[] CreateIds(string prefix)
-        {
-            var values = new int[SceneLightingAsset.MaximumLights];
-            for (int i = 0; i < values.Length; ++i) values[i] = Shader.PropertyToID(prefix + i);
-            return values;
         }
     }
 }

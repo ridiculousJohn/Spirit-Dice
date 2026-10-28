@@ -20,6 +20,8 @@ namespace Dice.Presentation
      */
     public abstract class AmbientMotion
     {
+        /** Shortest settle time constant, in seconds. */
+        public const float MinimumSettleTime = .01f;
         private const float SettledFactor = .002f;
         private readonly List<Response> strikes = new List<Response>();
         private double settleStart = double.NaN;
@@ -44,7 +46,7 @@ namespace Dice.Presentation
         /** Starts a decaying response of the given strength at the given activity time; responses add together. */
         public void Strike(double time, float strength)
         {
-            if (!SceneLightingAsset.Finite(strength) || strength < 0f) throw new ArgumentOutOfRangeException(nameof(strength));
+            if (!FiniteValue.Is(strength) || strength < 0f) throw new ArgumentOutOfRangeException(nameof(strength));
             if (strength == 0f) return;
             if (!applied)
             {
@@ -59,7 +61,7 @@ namespace Dice.Presentation
         {
             if (strikes.Count == 0 || !double.IsNaN(settleStart)) return;
             settleStart = time;
-            settleTime = Mathf.Max(.01f, timeConstant);
+            settleTime = Mathf.Max(MinimumSettleTime, timeConstant);
         }
 
         /** Drops every response and restores the rest pose at once. */

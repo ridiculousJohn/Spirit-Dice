@@ -16,6 +16,8 @@ namespace Dice.Presentation
     {
         private readonly EncounterTablePresentationAsset table;
         private readonly IReadOnlyList<SpiritTablePieceView> pieces;
+        // The prop carrying each of the table's piece lights, in the table's order.
+        private readonly SpiritTablePieceView[] pieceLightProps;
         private readonly RawImage roomImage;
         private readonly RawImage tableImage;
         private readonly SpiritTrayScene trayScene;
@@ -53,11 +55,17 @@ namespace Dice.Presentation
             this.diceTray = diceTray;
             this.historyRenderer = historyRenderer;
             this.host = host;
-            foreach (var pieceLight in table.PieceLights)
-                if (pieceLight == null || SpiritTablePieceView.Find(pieces, pieceLight.PieceId, pieceLight.InteractionId) == null ||
-                    table.SceneLighting != null && (table.SceneLighting.Lights == null ||
-                    pieceLight.LightIndex < 0 || pieceLight.LightIndex >= table.SceneLighting.Lights.Length))
+            // Piece lights move the table's scene lights, which are checked once here rather than as they are sampled.
+            if (table.PieceLights.Count > 0) table.SceneLighting?.Validate();
+            pieceLightProps = new SpiritTablePieceView[table.PieceLights.Count];
+            for (int i = 0; i < pieceLightProps.Length; ++i)
+            {
+                var pieceLight = table.PieceLights[i];
+                pieceLightProps[i] = pieceLight != null ? SpiritTablePieceView.Find(pieces, pieceLight.PieceId, pieceLight.InteractionId) : null;
+                if (pieceLightProps[i] == null || table.SceneLighting != null &&
+                    (pieceLight.LightIndex < 0 || pieceLight.LightIndex >= table.SceneLighting.Lights.Length))
                     throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
+            }
             int count = table.SceneLighting != null && table.SceneLighting.Lights != null ? table.SceneLighting.Lights.Length : 0;
             var resting = table.RestingLightLevels;
             if (resting.Count > count)
@@ -70,7 +78,7 @@ namespace Dice.Presentation
             {
                 ambientLightIntensities[i] = 1f;
                 restingLightLevels[i] = i < resting.Count ? resting[i] : 1f;
-                if (!SceneLightingAsset.Finite(restingLightLevels[i]) || restingLightLevels[i] < 0f)
+                if (!FiniteValue.Is(restingLightLevels[i]) || restingLightLevels[i] < 0f)
                     throw new InvalidOperationException("Resting light levels must be finite and nonnegative.");
             }
             lightFlares.Resize(count);
@@ -90,7 +98,7 @@ namespace Dice.Presentation
         public void Update()
         {
             var asset = table.SceneLighting;
-            if (asset != null && table.PieceLights.Count > 0) SamplePieceLights(asset, table.PieceLights);
+            if (asset != null && pieceLightProps.Length > 0) SamplePieceLights(asset, table.PieceLights);
             else state.Sample(asset, Time.unscaledTimeAsDouble, AmbientLightIntensities(asset));
             if (asset != null)
             {
@@ -154,7 +162,7 @@ namespace Dice.Presentation
         public void SetTestLightOverride(int index, float multiplier)
         {
             if (index < 0 || index >= testLightOverrides.Length) throw new ArgumentOutOfRangeException(nameof(index));
-            if (!SceneLightingAsset.Finite(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
+            if (!FiniteValue.Is(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
             testLightOverrides[index] = multiplier;
         }
 
@@ -174,7 +182,7 @@ namespace Dice.Presentation
         void IAmbientLightingTarget.SetLightIntensity(int index, float multiplier)
         {
             if (index < 0 || index >= ambientLightIntensities.Length) throw new ArgumentOutOfRangeException(nameof(index));
-            if (!SceneLightingAsset.Finite(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
+            if (!FiniteValue.Is(multiplier) || multiplier < 0f) throw new ArgumentOutOfRangeException(nameof(multiplier));
             ambientLightIntensities[index] = multiplier;
         }
 
@@ -185,7 +193,6 @@ namespace Dice.Presentation
         /** Lights bound to table pieces follow their props; every other light keeps its authored position. */
         private void SamplePieceLights(SceneLightingAsset asset, IReadOnlyList<EncounterTablePieceLight> pieceLights)
         {
-            asset.Validate();
             int count = asset.Lights.Length;
             if (pieceLightIntensities.Length != count)
             {
@@ -199,11 +206,10 @@ namespace Dice.Presentation
                 pieceLightUvOffsets[i] = asset.Lights[i].UvOffset;
                 pieceLightReceivers[i] = asset.Lights[i].ReceiverPosition;
             }
-            foreach (var pieceLight in pieceLights)
+            for (int i = 0; i < pieceLightProps.Length; ++i)
             {
-                var piece = SpiritTablePieceView.Find(pieces, pieceLight.PieceId, pieceLight.InteractionId);
-                if (piece == null || pieceLight.LightIndex < 0 || pieceLight.LightIndex >= count)
-                    throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
+                var pieceLight = pieceLights[i];
+                var piece = pieceLightProps[i];
                 int index = pieceLight.LightIndex;
                 if (!piece.gameObject.activeInHierarchy) { pieceLightIntensities[index] = 0f; continue; }
                 Vector2 delta = RoomTextureCoordinate(piece.transform.position) - pieceLight.ReferencePosition;
@@ -212,12 +218,12 @@ namespace Dice.Presentation
                 pieceLightIntensities[index] = piece.LightIntensity * AmbientLightIntensity(index);
             }
             state.Sample(asset, Time.unscaledTimeAsDouble, pieceLightIntensities, pieceLightUvOffsets, pieceLightReceivers);
-            foreach (var pieceLight in pieceLights)
+            for (int i = 0; i < pieceLightProps.Length; ++i)
             {
-                SceneLightLayer light = asset.Lights[pieceLight.LightIndex];
-                float relativeIntensity = light.Intensity > 0f ? state.GetIntensity(pieceLight.LightIndex) / light.Intensity : 0f;
-                SpiritTablePieceView.Find(pieces, pieceLight.PieceId, pieceLight.InteractionId)
-                    .SetEmission(Mathf.Clamp01(Mathf.Pow(relativeIntensity, light.SourceResponse)));
+                int index = pieceLights[i].LightIndex;
+                SceneLightLayer light = asset.Lights[index];
+                float relativeIntensity = light.Intensity > 0f ? state.GetIntensity(index) / light.Intensity : 0f;
+                pieceLightProps[i].SetEmission(Mathf.Clamp01(Mathf.Pow(relativeIntensity, light.SourceResponse)));
             }
         }
 

@@ -39,11 +39,7 @@ namespace Dice.Presentation
 
         public void Dispose()
         {
-            if (Material != null)
-            {
-                if (Application.isPlaying) UnityEngine.Object.Destroy(Material);
-                else UnityEngine.Object.DestroyImmediate(Material);
-            }
+            OwnedObject.Release(Material);
             Material = null;
         }
     }

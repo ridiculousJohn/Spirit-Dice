@@ -19,11 +19,11 @@ namespace Dice.Presentation
             Unbind();
             encounter = encounterControls;
             journey = journeyControls;
-            MainMenu.Build(Portrait);
+            MainMenu.Build();
             MainMenu.Bind(menuControls);
-            Board.Build(Portrait, journey.ResumeEncounter, encounter.Load, ShowCollection);
+            Board.Build(journey.ResumeEncounter, encounter.Load, ShowCollection);
             Board.BindMainMenu(menuControls);
-            Collection.Build(Portrait, Collection.Hide);
+            Collection.Build(Collection.Hide);
             encounter.StateChanged += Refresh;
             journey.JourneyChanged += Refresh;
             Refresh();

@@ -30,7 +30,7 @@ namespace Dice.Presentation
         [field: SerializeField] public SpiritCharmStatusBadge DetailBadge { get; private set; }
         public long SelectedInstanceId { get; private set; } = -1;
 
-        public void Build(RectTransform parent, Action close, Func<bool> busy)
+        public void Build(Action close, Func<bool> busy)
         {
             isBusy = busy ?? throw new ArgumentNullException(nameof(busy));
             SpiritUi.RequireWording(transform);
@@ -134,11 +134,8 @@ namespace Dice.Presentation
             {
                 if (instance.InstanceId != SelectedInstanceId) continue;
                 var definition = controls.Catalog.GetModifier(instance.DefinitionId);
-                DetailIcon.sprite = controls.ModifierPresentation.GetIcon(definition);
-                Color color = controls.ModifierPresentation.GetEffectColor(definition);
-                DetailIcon.color = color;
-                DetailIcon.gameObject.SetActive(true);
-                DetailCategory.Render(controls.ModifierPresentation, definition);
+                SpiritCharmVisuals.SetIcon(DetailIcon, DetailCategory, controls.ModifierPresentation, definition);
+                Color color = DetailIcon.color;
                 DetailTitle.text = controls.ModifierPresentation.GetName(definition);
                 DetailBody.text = wording.ownedCharms.DetailBody(controls.ModifierPresentation.GetConditionText(definition),
                     "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" + controls.ModifierPresentation.GetEffectText(definition) + "</color>",
@@ -159,9 +156,7 @@ namespace Dice.Presentation
                 return;
             }
             DetailTitle.text = wording.ownedCharms.noCharmsTitle;
-            DetailIcon.sprite = null;
-            DetailIcon.gameObject.SetActive(false);
-            DetailCategory.Render(null, null);
+            SpiritCharmVisuals.SetIcon(DetailIcon, DetailCategory, null, null);
             DetailBody.text = wording.ownedCharms.noCharmsBody;
             DetailStatusRow.gameObject.SetActive(false);
             detailsLayout.RefreshLayout();

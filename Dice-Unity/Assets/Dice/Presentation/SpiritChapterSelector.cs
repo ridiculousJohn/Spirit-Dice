@@ -18,9 +18,8 @@ namespace Dice.Presentation
         [field: SerializeField] public Button CloseButton { get; private set; }
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
 
-        public void Build(RectTransform parent)
+        public void Build()
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (Root == null || Scroll == null || Content == null || CloseButton == null || chapterCardPrefab == null)
                 throw new InvalidOperationException("The chapter selector requires authored UI references.");
             SpiritUi.RequireWording(transform);

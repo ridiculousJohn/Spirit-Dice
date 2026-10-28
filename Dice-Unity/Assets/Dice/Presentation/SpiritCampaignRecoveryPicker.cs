@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Dice.Presentation
@@ -8,14 +9,17 @@ namespace Dice.Presentation
     /** Pages through preserved campaigns awaiting a destination save slot. */
     public sealed class SpiritCampaignRecoveryPicker : MonoBehaviour
     {
+        /** Characters of a campaign id shown to tell candidates apart. */
+        private const int IdentifierExcerptLength = 10;
         private ISpiritMainMenuControls controls;
         private Action<string> selectCampaign;
         private Action cancel;
-        [SerializeField] private Button[] candidateButtons = new Button[3];
-        [SerializeField] private Text[] summaries = new Text[3];
-        [SerializeField] private Text[] details = new Text[3];
-        [SerializeField] private Text[] identifiers = new Text[3];
-        private readonly string[] campaignIds = new string[3];
+        [SerializeField] private Button[] candidateButtons = Array.Empty<Button>();
+        [SerializeField] private Text[] summaries = Array.Empty<Text>();
+        [SerializeField] private Text[] details = Array.Empty<Text>();
+        [SerializeField] private Text[] identifiers = Array.Empty<Text>();
+        private string[] campaignIds = Array.Empty<string>();
+        private UnityAction[] candidateSelections;
 
         [field: SerializeField] public RectTransform Root { get; private set; }
         [field: SerializeField] public Button CloseButton { get; private set; }
@@ -26,24 +30,33 @@ namespace Dice.Presentation
         public int PageIndex { get; private set; }
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
 
-        public void Build(RectTransform parent)
+        public void Build()
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (Root == null || CloseButton == null || PreviousPageButton == null ||
                 NextPageButton == null || PageLabel == null || candidateButtons == null ||
-                summaries == null || details == null || identifiers == null || candidateButtons.Length != 3 ||
-                summaries.Length != 3 || details.Length != 3 || identifiers.Length != 3)
+                summaries == null || details == null || identifiers == null || candidateButtons.Length == 0 ||
+                summaries.Length != candidateButtons.Length || details.Length != candidateButtons.Length ||
+                identifiers.Length != candidateButtons.Length)
                 throw new InvalidOperationException("The recovery picker requires authored UI references.");
             for (int i = 0; i < candidateButtons.Length; ++i)
                 if (candidateButtons[i] == null || summaries[i] == null || details[i] == null || identifiers[i] == null)
-                    throw new InvalidOperationException("The recovery picker requires three authored candidates.");
+                    throw new InvalidOperationException("The recovery picker requires a summary, detail and identifier for every authored candidate.");
             SpiritUi.RequireWording(transform);
-            candidateButtons[0].onClick.RemoveListener(SelectFirstCandidate);
-            candidateButtons[0].onClick.AddListener(SelectFirstCandidate);
-            candidateButtons[1].onClick.RemoveListener(SelectSecondCandidate);
-            candidateButtons[1].onClick.AddListener(SelectSecondCandidate);
-            candidateButtons[2].onClick.RemoveListener(SelectThirdCandidate);
-            candidateButtons[2].onClick.AddListener(SelectThirdCandidate);
+            if (candidateSelections == null)
+            {
+                campaignIds = new string[candidateButtons.Length];
+                candidateSelections = new UnityAction[candidateButtons.Length];
+                for (int i = 0; i < candidateSelections.Length; ++i)
+                {
+                    int index = i;
+                    candidateSelections[i] = () => SelectCandidate(index);
+                }
+            }
+            for (int i = 0; i < candidateButtons.Length; ++i)
+            {
+                candidateButtons[i].onClick.RemoveListener(candidateSelections[i]);
+                candidateButtons[i].onClick.AddListener(candidateSelections[i]);
+            }
             PreviousPageButton.onClick.RemoveListener(PreviousPage);
             PreviousPageButton.onClick.AddListener(PreviousPage);
             NextPageButton.onClick.RemoveListener(NextPage);
@@ -94,7 +107,7 @@ namespace Dice.Presentation
                 summaries[i].text = wording.saveSlots.Progress(info.CompletedEncounters, info.CollectedCharms);
                 details[i].text = wording.recovery.SavedAt(info.LastSaved);
                 string id = info.CampaignId ?? "";
-                identifiers[i].text = wording.recovery.Identifier(info.SuggestedSlot, id.Length > 10 ? id.Substring(0, 10) : id);
+                identifiers[i].text = wording.recovery.Identifier(info.SuggestedSlot, id.Length > IdentifierExcerptLength ? id.Substring(0, IdentifierExcerptLength) : id);
                 candidateButtons[i].interactable = !string.IsNullOrEmpty(info.CampaignId);
             }
             PageLabel.text = wording.recovery.Page(PageIndex + 1, pageCount);
@@ -128,9 +141,6 @@ namespace Dice.Presentation
             selectCampaign?.Invoke(campaignId);
         }
 
-        private void SelectFirstCandidate() => SelectCandidate(0);
-        private void SelectSecondCandidate() => SelectCandidate(1);
-        private void SelectThirdCandidate() => SelectCandidate(2);
         private void PreviousPage() => ChangePage(-1);
         private void NextPage() => ChangePage(1);
 

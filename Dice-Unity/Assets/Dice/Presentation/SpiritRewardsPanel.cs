@@ -18,16 +18,14 @@ namespace Dice.Presentation
 
         public RectTransform Root => (RectTransform)transform;
         [field: SerializeField] public Text Title { get; private set; }
-        [field: SerializeField] public Text Step { get; private set; }
         [field: SerializeField] public Text Instruction { get; private set; }
-        [field: SerializeField] public Text UpcomingStage { get; private set; }
         [field: SerializeField] public ScrollRect Scroll { get; private set; }
         [field: SerializeField] public RectTransform Content { get; private set; }
         [field: SerializeField] public Button RefreshButton { get; private set; }
         [field: SerializeField] public Button ConfirmButton { get; private set; }
         public IReadOnlyList<SpiritRewardCard> Cards => cards;
 
-        public void Build(RectTransform parent, Func<bool> busy)
+        public void Build(Func<bool> busy)
         {
             isBusy = busy ?? throw new ArgumentNullException(nameof(busy));
             SpiritUi.RequireWording(transform);
@@ -54,25 +52,12 @@ namespace Dice.Presentation
             var wording = SpiritUi.GetWording(transform).rewards;
             Title.text = handUpgrade ? wording.handUpgradeTitle : exhausted ? wording.exhaustedTitle :
                 unlock ? wording.unlockTitle : wording.charmTitle;
-            Step.gameObject.SetActive(false);
             Instruction.gameObject.SetActive(unlock);
-            UpcomingStage.gameObject.SetActive(false);
             ConfirmButton.gameObject.SetActive(offer != null);
             SpiritUi.SetButtonLabel(ConfirmButton, handUpgrade ? wording.upgradeButton : exhausted ? wording.continueButton :
                 unlock ? wording.unlockButton : wording.selectButton);
-            Step.text = offer == null ? wording.completeStep : offer.Kind == RewardKind.Modifier ?
-                wording.charmStep : wording.handUpgradeStep;
-            Instruction.text = offer == null ? wording.preparingInstruction : offer.Kind == RewardKind.Modifier ?
-                wording.charmInstruction : wording.handUpgradeInstruction;
+            // Only an unlock offer shows an instruction.
             if (unlock) Instruction.text = exhausted ? wording.exhaustedInstruction : wording.unlockInstruction;
-            var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
-            int nextStageIndex = offer?.TargetStageIndex ?? snapshot.StageIndex + 1;
-            if (nextStageIndex < encounter.Stages.Count)
-            {
-                var nextStage = encounter.Stages[nextStageIndex];
-                UpcomingStage.text = wording.UpcomingStage(nextStageIndex + 1, snapshot.StageCount, nextStage.Threshold);
-            }
-            else UpcomingStage.text = "";
             bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
             RefreshButton.gameObject.SetActive(canRefresh);
             RefreshButton.interactable = canRefresh && snapshot.RewardRefreshesAvailable > 0;

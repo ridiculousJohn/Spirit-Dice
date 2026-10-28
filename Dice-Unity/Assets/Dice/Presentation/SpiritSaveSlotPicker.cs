@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Dice.Presentation
@@ -13,8 +14,9 @@ namespace Dice.Presentation
         private PickerMode mode;
         private int replacementSlot;
         private string recoveryCampaignId;
-        [SerializeField] private Button[] slotButtons = new Button[3];
-        [SerializeField] private Text[] slotSummaries = new Text[3];
+        [SerializeField] private Button[] slotButtons = Array.Empty<Button>();
+        [SerializeField] private Text[] slotSummaries = Array.Empty<Text>();
+        private UnityAction[] slotSelections;
 
         [field: SerializeField] public RectTransform Root { get; private set; }
         [field: SerializeField] public Text Title { get; private set; }
@@ -32,26 +34,33 @@ namespace Dice.Presentation
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
         public bool IsConfirmingReplacement => Confirmation != null && Confirmation.gameObject.activeSelf;
 
-        public void Build(RectTransform parent)
+        public void Build()
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (Root == null || Title == null || Subtitle == null || CloseButton == null ||
                 RecoverSavesButton == null || RecoveryPicker == null || Confirmation == null ||
                 ConfirmationTitle == null || ConfirmationText == null || ConfirmReplaceSaveButton == null ||
                 CancelReplaceSaveButton == null || slotButtons == null || slotSummaries == null ||
-                slotButtons.Length != 3 || slotSummaries.Length != 3)
+                slotButtons.Length == 0 || slotSummaries.Length != slotButtons.Length)
                 throw new InvalidOperationException("The save slot picker requires authored UI references.");
             for (int i = 0; i < slotButtons.Length; ++i)
                 if (slotButtons[i] == null || slotSummaries[i] == null)
-                    throw new InvalidOperationException("The save slot picker requires three authored slots.");
+                    throw new InvalidOperationException("The save slot picker requires a summary for every authored slot.");
             SpiritUi.RequireWording(transform);
-            RecoveryPicker.Build(Root);
-            slotButtons[0].onClick.RemoveListener(SelectFirstSlot);
-            slotButtons[0].onClick.AddListener(SelectFirstSlot);
-            slotButtons[1].onClick.RemoveListener(SelectSecondSlot);
-            slotButtons[1].onClick.AddListener(SelectSecondSlot);
-            slotButtons[2].onClick.RemoveListener(SelectThirdSlot);
-            slotButtons[2].onClick.AddListener(SelectThirdSlot);
+            RecoveryPicker.Build();
+            if (slotSelections == null)
+            {
+                slotSelections = new UnityAction[slotButtons.Length];
+                for (int i = 0; i < slotSelections.Length; ++i)
+                {
+                    int slot = i + 1;
+                    slotSelections[i] = () => SelectSlot(slot);
+                }
+            }
+            for (int i = 0; i < slotButtons.Length; ++i)
+            {
+                slotButtons[i].onClick.RemoveListener(slotSelections[i]);
+                slotButtons[i].onClick.AddListener(slotSelections[i]);
+            }
             CloseButton.onClick.RemoveListener(Cancel);
             CloseButton.onClick.AddListener(Cancel);
             RecoverSavesButton.onClick.RemoveListener(OpenRecovery);
@@ -216,9 +225,6 @@ namespace Dice.Presentation
 
         private SpiritUiWording.SaveSlots Wording => SpiritUi.GetWording(transform).saveSlots;
 
-        private void SelectFirstSlot() => SelectSlot(1);
-        private void SelectSecondSlot() => SelectSlot(2);
-        private void SelectThirdSlot() => SelectSlot(3);
         private void OpenRecovery() => RecoveryPicker.Show();
 
         private void OnDisable()

@@ -16,6 +16,7 @@ namespace Dice.Presentation
     /** Browses authored charm families using permanent profile progress without mutating it. */
     public sealed class SpiritCollectionView : MonoBehaviour
     {
+        private static readonly int FilterCount = Enum.GetValues(typeof(SpiritCollectionFilter)).Length;
         private readonly List<SpiritModifierFamilyRow> rows = new List<SpiritModifierFamilyRow>();
         private readonly List<SpiritModifierFamilyRow> rowPool = new List<SpiritModifierFamilyRow>();
         private readonly List<List<ModifierDefinition>> families = new List<List<ModifierDefinition>>();
@@ -42,13 +43,13 @@ namespace Dice.Presentation
         public IReadOnlyList<SpiritModifierFamilyRow> Rows => rows;
         [field: SerializeField] public SpiritCollectionFilter Filter { get; private set; }
 
-        public void Build(RectTransform parent, Action close)
+        public void Build(Action close)
         {
             SpiritUi.RequireWording(transform);
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() => close());
             filterButton.onClick.RemoveAllListeners();
-            filterButton.onClick.AddListener(() => SetFilter((SpiritCollectionFilter)(((int)Filter + 1) % 3)));
+            filterButton.onClick.AddListener(() => SetFilter((SpiritCollectionFilter)(((int)Filter + 1) % FilterCount)));
         }
 
         public void Show(MechanicalCatalog mechanicalCatalog, ModifierPresentationCatalog charmPresentation,

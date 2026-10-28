@@ -20,7 +20,7 @@ namespace Dice.Presentation
         public void Sample(SceneLightingAsset asset, double time, float[] intensityOverrides = null,
             Vector2[] uvOffsets = null, Vector3[] receiverPositions = null)
         {
-            if (double.IsNaN(time) || double.IsInfinity(time)) throw new ArgumentOutOfRangeException(nameof(time));
+            if (!FiniteValue.Is(time)) throw new ArgumentOutOfRangeException(nameof(time));
             asset?.Validate();
             int count = asset != null ? asset.Lights.Length : 0;
             if (intensityOverrides != null && intensityOverrides.Length != count
@@ -29,10 +29,9 @@ namespace Dice.Presentation
                 throw new ArgumentException("Scene lighting overrides must match the light count.");
             for (int i = 0; i < count; ++i)
             {
-                if (intensityOverrides != null && (!SceneLightingAsset.Finite(intensityOverrides[i]) || intensityOverrides[i] < 0f)
-                    || uvOffsets != null && (!SceneLightingAsset.Finite(uvOffsets[i].x) || !SceneLightingAsset.Finite(uvOffsets[i].y))
-                    || receiverPositions != null && (!SceneLightingAsset.Finite(receiverPositions[i].x)
-                        || !SceneLightingAsset.Finite(receiverPositions[i].y) || !SceneLightingAsset.Finite(receiverPositions[i].z)))
+                if (intensityOverrides != null && (!FiniteValue.Is(intensityOverrides[i]) || intensityOverrides[i] < 0f)
+                    || uvOffsets != null && !FiniteValue.Is(uvOffsets[i])
+                    || receiverPositions != null && !FiniteValue.Is(receiverPositions[i]))
                     throw new ArgumentException("Scene lighting overrides must be finite and intensities nonnegative.");
             }
             Asset = asset;

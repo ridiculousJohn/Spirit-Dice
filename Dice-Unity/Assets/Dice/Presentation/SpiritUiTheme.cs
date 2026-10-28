@@ -17,7 +17,6 @@ namespace Dice.Presentation
             public Rect spriteRect;
             public Vector4 border = new Vector4(120, 60, 120, 60);
             public float pixelsPerUnitMultiplier = 3;
-            internal Sprite GetSprite() => sprite;
         }
 
         public Font headingFont;

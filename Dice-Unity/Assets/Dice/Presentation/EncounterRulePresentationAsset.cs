@@ -12,6 +12,7 @@ namespace Dice.Presentation
     {
         [SerializeField] private string ruleId;
         [SerializeField] private string displayName;
+        [Tooltip("Optional longer description; a rule without one is described by its available text.")]
         [SerializeField, TextArea] private string description;
         [SerializeField] private string availableText;
         [SerializeField] private string usedText;
@@ -26,8 +27,6 @@ namespace Dice.Presentation
         public string RuleId => ruleId;
         public string DisplayName => displayName;
         public string Description => string.IsNullOrWhiteSpace(description) ? availableText : description;
-        public string AvailableText => availableText;
-        public string UsedText => usedText;
         public Sprite Icon => icon;
         public ModifierPhase ActivationPhase => activationPhase;
         public bool ShownOnHud => shownOnHud;

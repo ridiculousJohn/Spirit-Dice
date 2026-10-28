@@ -56,16 +56,16 @@ namespace Dice.Presentation
                 used[light.LightIndex] = true;
                 if (light.Mode != SceneLitLightMode.Reference && light.Mode != SceneLitLightMode.Computed)
                     throw new InvalidOperationException("Lit layer light mode is invalid.");
-                if (!SceneLightingAsset.Finite(light.Strength) || light.Strength < 0f)
+                if (!FiniteValue.Is(light.Strength) || light.Strength < 0f)
                     throw new InvalidOperationException("Lit layer light strength must be finite and nonnegative.");
             }
-            if (!SceneLightingAsset.Finite(DepthRange.x) || !SceneLightingAsset.Finite(DepthRange.y) || !Finite(FrameOrigin)
-                || !Finite(FrameAxisX) || !Finite(FrameAxisY))
+            if (!FiniteValue.Is(DepthRange) || !FiniteValue.Is(FrameOrigin)
+                || !FiniteValue.Is(FrameAxisX) || !FiniteValue.Is(FrameAxisY))
                 throw new InvalidOperationException("Lit layer frame mapping and depth range must be finite.");
-            if (!SceneLightingAsset.Finite(MapRect.x) || !SceneLightingAsset.Finite(MapRect.y) || !SceneLightingAsset.Finite(MapRect.width)
-                || !SceneLightingAsset.Finite(MapRect.height) || Mathf.Abs(MapRect.width) < .000001f || Mathf.Abs(MapRect.height) < .000001f)
+            if (!FiniteValue.Is(MapRect.x) || !FiniteValue.Is(MapRect.y) || !FiniteValue.Is(MapRect.width)
+                || !FiniteValue.Is(MapRect.height) || Mathf.Abs(MapRect.width) < .000001f || Mathf.Abs(MapRect.height) < .000001f)
                 throw new InvalidOperationException("Lit layer map rectangle must be finite with a nonzero size.");
-            if (!SceneLightingAsset.Finite(Wrap) || Wrap < 0f || Wrap > 1f)
+            if (!FiniteValue.Is(Wrap) || Wrap < 0f || Wrap > 1f)
                 throw new InvalidOperationException("Lit layer wrap must be between zero and one.");
         }
 
@@ -76,8 +76,5 @@ namespace Dice.Presentation
                 if (light != null && light.LightIndex == index) return light;
             return null;
         }
-
-        private static bool Finite(Vector3 value) => SceneLightingAsset.Finite(value.x) && SceneLightingAsset.Finite(value.y)
-            && SceneLightingAsset.Finite(value.z);
     }
 }

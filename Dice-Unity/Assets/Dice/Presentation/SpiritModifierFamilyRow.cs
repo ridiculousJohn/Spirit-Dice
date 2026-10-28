@@ -27,6 +27,8 @@ namespace Dice.Presentation
         [SerializeField] private Image icon;
         [SerializeField] private GameObject artwork;
         [SerializeField] private GameObject variantRoot;
+        /** Opacity of a variant the player cannot choose. */
+        internal const float UnavailableVariantAlpha = .35f;
         private Action<ModifierDefinition> selected;
 
         public string FamilyId { get; private set; }
@@ -78,7 +80,7 @@ namespace Dice.Presentation
                 item.Effect.color = charms.GetEffectColor(definition);
                 item.State.text = stateText?.Invoke(definition) ?? "";
                 item.State.gameObject.SetActive(stateText != null);
-                item.Visibility.alpha = available == null || available(definition) ? 1 : .35f;
+                item.Visibility.alpha = available == null || available(definition) ? 1 : UnavailableVariantAlpha;
                 item.Selection.enabled = false;
             }
             LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);

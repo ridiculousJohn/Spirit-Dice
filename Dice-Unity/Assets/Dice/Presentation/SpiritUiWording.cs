@@ -471,25 +471,10 @@ namespace Dice.Presentation
             public string continueButton;
             public string unlockButton;
             public string selectButton;
-            public string completeStep;
-            public string charmStep;
-            public string handUpgradeStep;
-            public string preparingInstruction;
-            public string charmInstruction;
-            public string handUpgradeInstruction;
             public string exhaustedInstruction;
             public string unlockInstruction;
-            /** {stage}, {stages} and {threshold}: the next stage's number, the stage count and its threshold. */
-            public string upcomingStage;
             /** {count}: the refreshes available. */
             public string refreshButton;
-
-            public string UpcomingStage(int stageNumber, int stageCount, long threshold)
-            {
-                string text = SpiritWordingTemplate.Fill(upcomingStage, "stage", stageNumber);
-                text = SpiritWordingTemplate.Fill(text, "stages", stageCount);
-                return SpiritWordingTemplate.FillScore(text, "threshold", threshold);
-            }
 
             public string RefreshButton(int count) => SpiritWordingTemplate.Fill(refreshButton, "count", count);
 
@@ -503,15 +488,8 @@ namespace Dice.Presentation
                 check.Text(continueButton, nameof(continueButton));
                 check.Text(unlockButton, nameof(unlockButton));
                 check.Text(selectButton, nameof(selectButton));
-                check.Text(completeStep, nameof(completeStep));
-                check.Text(charmStep, nameof(charmStep));
-                check.Text(handUpgradeStep, nameof(handUpgradeStep));
-                check.Text(preparingInstruction, nameof(preparingInstruction));
-                check.Text(charmInstruction, nameof(charmInstruction));
-                check.Text(handUpgradeInstruction, nameof(handUpgradeInstruction));
                 check.Text(exhaustedInstruction, nameof(exhaustedInstruction));
                 check.Text(unlockInstruction, nameof(unlockInstruction));
-                check.Text(upcomingStage, nameof(upcomingStage));
                 check.Text(refreshButton, nameof(refreshButton));
             }
         }

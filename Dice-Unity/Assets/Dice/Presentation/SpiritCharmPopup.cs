@@ -24,8 +24,7 @@ namespace Dice.Presentation
         public long InstanceId { get; private set; } = -1;
         public bool IsOpen => Root != null && Root.gameObject.activeSelf;
 
-        /** The overlay covers the parent canvas; the panel width follows the portrait. */
-        public void Build(Transform parent, RectTransform portraitRect)
+        public void Build()
         {
             SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveAllListeners();

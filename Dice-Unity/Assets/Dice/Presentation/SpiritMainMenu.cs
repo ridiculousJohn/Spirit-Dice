@@ -19,15 +19,14 @@ namespace Dice.Presentation
         [field: SerializeField] public Button SlotSelectorButton { get; private set; }
         [field: SerializeField] public SpiritSaveSlotPicker SlotPicker { get; private set; }
 
-        public void Build(RectTransform parent)
+        public void Build()
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (Root == null || Title == null || Status == null || ContinueButton == null ||
                 ChapterButton == null || NewGameButton == null || OptionsButton == null ||
                 SlotSelectorButton == null || SlotPicker == null)
                 throw new InvalidOperationException("The main menu requires authored UI references.");
             SpiritUi.RequireWording(transform);
-            SlotPicker.Build(Root);
+            SlotPicker.Build();
             ContinueButton.onClick.RemoveListener(ContinueGame);
             ContinueButton.onClick.AddListener(ContinueGame);
             SlotSelectorButton.onClick.RemoveListener(SelectSaveSlot);

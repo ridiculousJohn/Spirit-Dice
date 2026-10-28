@@ -144,15 +144,8 @@ namespace Dice.Tests
             r.continueButton = "<rewards.continueButton>";
             r.unlockButton = "<rewards.unlockButton>";
             r.selectButton = "<rewards.selectButton>";
-            r.completeStep = "<rewards.completeStep>";
-            r.charmStep = "<rewards.charmStep>";
-            r.handUpgradeStep = "<rewards.handUpgradeStep>";
-            r.preparingInstruction = "<rewards.preparingInstruction>";
-            r.charmInstruction = "<rewards.charmInstruction>";
-            r.handUpgradeInstruction = "<rewards.handUpgradeInstruction>";
             r.exhaustedInstruction = "<rewards.exhaustedInstruction>";
             r.unlockInstruction = "<rewards.unlockInstruction>";
-            r.upcomingStage = "<rewards.upcomingStage>{stage}|{stages}|{threshold}";
             r.refreshButton = "<rewards.refreshButton>{count}";
 
             var card = w.rewardCard;

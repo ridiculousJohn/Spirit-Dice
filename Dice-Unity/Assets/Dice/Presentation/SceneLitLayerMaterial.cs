@@ -20,20 +20,20 @@ namespace Dice.Presentation
         private static readonly int FrameTransformId = Shader.PropertyToID("_SceneLitFrameTransform");
         private static readonly int MapRectId = Shader.PropertyToID("_SceneLitMapRect");
         private static readonly int WrapId = Shader.PropertyToID("_SceneLitWrap");
-        private static readonly int[] ModeIds = CreateIds("_SceneLitMode");
-        private static readonly int[] ReferenceIds = CreateIds("_SceneLitReferenceTex");
-        private static readonly int[] ResponseMapIds = CreateIds("_SceneLitResponseTex");
-        private static readonly int[] ResponseEnabledIds = CreateIds("_SceneLitResponseEnabled");
-        private static readonly int[] StrengthIds = CreateIds("_SceneLitStrength");
-        private static readonly int[] IntensityIds = CreateIds("_SceneLitIntensity");
-        private static readonly int[] TintIds = CreateIds("_SceneLitTint");
-        private static readonly int[] DistanceFalloffIds = CreateIds("_SceneLitDistanceFalloff");
-        private static readonly int[] SourceResponseIds = CreateIds("_SceneLitSourceResponse");
-        private static readonly int[] IncludesBaseIds = CreateIds("_SceneLitIncludesBase");
-        private static readonly int[] ConstrainAmbientIds = CreateIds("_SceneLitConstrainAmbient");
-        private static readonly int[] ModulateIds = CreateIds("_SceneLitModulateByBase");
-        private static readonly int[] PositionIds = CreateIds("_SceneLitPosition");
-        private static readonly int[] LightColorIds = CreateIds("_SceneLitColor");
+        private static readonly int[] ModeIds = SceneLightingAsset.LightPropertyIds("_SceneLitMode");
+        private static readonly int[] ReferenceIds = SceneLightingAsset.LightPropertyIds("_SceneLitReferenceTex");
+        private static readonly int[] ResponseMapIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseTex");
+        private static readonly int[] ResponseEnabledIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseEnabled");
+        private static readonly int[] StrengthIds = SceneLightingAsset.LightPropertyIds("_SceneLitStrength");
+        private static readonly int[] IntensityIds = SceneLightingAsset.LightPropertyIds("_SceneLitIntensity");
+        private static readonly int[] TintIds = SceneLightingAsset.LightPropertyIds("_SceneLitTint");
+        private static readonly int[] DistanceFalloffIds = SceneLightingAsset.LightPropertyIds("_SceneLitDistanceFalloff");
+        private static readonly int[] SourceResponseIds = SceneLightingAsset.LightPropertyIds("_SceneLitSourceResponse");
+        private static readonly int[] IncludesBaseIds = SceneLightingAsset.LightPropertyIds("_SceneLitIncludesBase");
+        private static readonly int[] ConstrainAmbientIds = SceneLightingAsset.LightPropertyIds("_SceneLitConstrainAmbient");
+        private static readonly int[] ModulateIds = SceneLightingAsset.LightPropertyIds("_SceneLitModulateByBase");
+        private static readonly int[] PositionIds = SceneLightingAsset.LightPropertyIds("_SceneLitPosition");
+        private static readonly int[] LightColorIds = SceneLightingAsset.LightPropertyIds("_SceneLitColor");
         public Material Material { get; private set; }
         public SceneLitLayer Layer { get; }
         public Material Source { get; }
@@ -89,12 +89,11 @@ namespace Dice.Presentation
          * opaque, without vertex color, alpha or layer mask. It is a separate shader because UGUI draws every pass of a
          * material's shader. The caller destroys the returned material.
          */
-        public static Material CreatePreview(Material lit, Shader previewShader = null)
+        public static Material CreatePreview(Material lit, Shader previewShader)
         {
             if (!UsesLitShader(lit)) throw new ArgumentException("A lit layer material is required.", nameof(lit));
-            Shader shader = previewShader != null ? previewShader : Shader.Find(PreviewShaderName);
-            if (shader == null) throw new InvalidOperationException("Lit layer preview shader is unavailable.");
-            var preview = new Material(shader) { name = "Scene Lit Layer Preview", hideFlags = HideFlags.HideAndDontSave };
+            if (previewShader == null) throw new ArgumentNullException(nameof(previewShader));
+            var preview = new Material(previewShader) { name = "Scene Lit Layer Preview", hideFlags = HideFlags.HideAndDontSave };
             preview.CopyPropertiesFromMaterial(lit);
             return preview;
         }
@@ -147,7 +146,7 @@ namespace Dice.Presentation
             Material.SetVector(FrameOriginId, new Vector4(origin.x, origin.y, origin.z, 0f));
             // Rig position covers the image rectangle, depth and response its map rectangle; color textures follow its UV rectangle.
             bool valid = Mathf.Abs(uvRect.width) > .000001f && Mathf.Abs(uvRect.height) > .000001f
-                && SceneLightingAsset.Finite(uvRect.x) && SceneLightingAsset.Finite(uvRect.y);
+                && FiniteValue.Is(uvRect.x) && FiniteValue.Is(uvRect.y);
             Material.SetVector(FrameTransformId, valid
                 ? new Vector4(1f / uvRect.width, 1f / uvRect.height, -uvRect.x / uvRect.width, -uvRect.y / uvRect.height)
                 : new Vector4(1f, 1f, 0f, 0f));
@@ -155,9 +154,7 @@ namespace Dice.Presentation
 
         public void Dispose()
         {
-            if (Material == null) return;
-            if (Application.isPlaying) UnityEngine.Object.Destroy(Material);
-            else UnityEngine.Object.DestroyImmediate(Material);
+            OwnedObject.Release(Material);
             Material = null;
         }
 
@@ -167,13 +164,6 @@ namespace Dice.Presentation
             Material.SetTexture(id, source.GetTexture(id));
             Material.SetTextureScale(id, source.GetTextureScale(id));
             Material.SetTextureOffset(id, source.GetTextureOffset(id));
-        }
-
-        private static int[] CreateIds(string prefix)
-        {
-            var values = new int[SceneLightingAsset.MaximumLights];
-            for (int i = 0; i < values.Length; ++i) values[i] = Shader.PropertyToID(prefix + i);
-            return values;
         }
     }
 }

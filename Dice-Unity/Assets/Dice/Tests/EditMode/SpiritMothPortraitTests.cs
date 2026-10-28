@@ -26,7 +26,8 @@ namespace Dice.Tests
             presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
                 "Assets/Dice/Content/Presentation/MothCrossroads/MothCrossroadsHost.asset");
             Assert.That(presentation, Is.Not.Null);
-            portrait = presentation.Create(parent);
+            portrait = UnityEngine.Object.Instantiate(presentation.PortraitPrefab, parent, false);
+            portrait.Build(presentation);
         }
 
         [TearDown]

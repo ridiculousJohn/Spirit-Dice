@@ -9,9 +9,21 @@ namespace Dice.Presentation
     public sealed class SpiritDiceTray : MonoBehaviour
     {
         public const int RenderLayer = 31;
-        private const float SlotSpacing = 1.45f;
-        private const float FeltHeight = 0.04f;
-        private const float RestHeight = FeltHeight + 0.5f;
+        /** Seconds a roll takes when no recording times it. */
+        public const float DefaultRollDuration = .55f;
+        /** Seconds a die takes to turn over to a new face. */
+        public const float DefaultFlipDuration = .5f;
+        /** Peak hop of a flipping die, in die sizes. */
+        private const float FlipHopHeight = .45f;
+        /** Height above a resting die's slot of the point a slot query projects, in die sizes. */
+        private const float SlotPointHeight = .18f;
+        /** Width and depth the contact shadow gains per unit of lift, relative to its rest size. */
+        private const float ShadowGrowthX = .24f / 1.24f;
+        private const float ShadowGrowthZ = .18f / 1.16f;
+        /** A mesh vertex at least this far from the die's centre on two axes lies on its bevel or face perimeter. */
+        private const float SupportVertexDistance = .3f;
+        /** Degrees each slot's resting die turns beyond its quarter turn, so the row does not look stamped. */
+        private const float SlotYawStep = 3f;
         private static readonly Vector3[] FaceNormals =
         {
             Vector3.forward, Vector3.up, Vector3.right,
@@ -35,7 +47,7 @@ namespace Dice.Presentation
         private int presentationVersion;
         private SpiritTrayScene sharedScene;
         [SerializeField] private Transform[] slotRoots = new Transform[DiceValues.Count];
-        private float DieScale => sharedScene != null ? sharedScene.Geometry.DiceScale : 1;
+        private float DieScale => sharedScene.Geometry.DiceScale;
 
         public RenderTexture Texture => texture;
         public Camera RenderCamera => renderCamera;
@@ -48,14 +60,6 @@ namespace Dice.Presentation
         public void SetSceneLighting(SceneLightingState state)
         {
             sharedScene?.SetSceneLighting(state);
-        }
-
-        public void Configure(SpiritTrayPresentationAsset presentation)
-        {
-            if (presentation == null) throw new ArgumentNullException(nameof(presentation));
-            presentation.Validate();
-            if (trayPresentation != presentation || sharedScene != null) ReleasePresentation();
-            trayPresentation = presentation;
         }
 
         public void Configure(SpiritTrayPresentationAsset presentation, SpiritTrayScene scene)
@@ -125,11 +129,12 @@ namespace Dice.Presentation
                 bool selected = ((selectionMask | scoringHighlightMask) & (1 << index)) != 0;
                 selectionOutlines[index].SetActive(selected);
                 selectionFrames[index].SetActive(selected);
-                if ((rollingMask & (1 << index)) == 0) dice[index].localPosition = SlotPosition(index);
+                // A tray never initialized has no support points and keeps its authored pose.
+                if (supportPoints != null && (rollingMask & (1 << index)) == 0) dice[index].localPosition = SlotPosition(index);
             }
         }
 
-        public IEnumerator Roll(DiceValues after, int mask, float duration = 0.55f)
+        public IEnumerator Roll(DiceValues after, int mask, float duration = DefaultRollDuration)
             => Roll(after, mask, SpiritRollTiming.ForDuration(duration));
 
         public IEnumerator Roll(DiceValues after, int mask, SpiritRollTiming timing)
@@ -168,10 +173,10 @@ namespace Dice.Presentation
                             out Quaternion rotation, out float lift, out float drift);
                         dice[index].localRotation = rotation;
                         Vector3 position = SlotPosition(index);
-                        position.y = (sharedScene != null ? 0 : FeltHeight) + (SupportHeight(rotation) + lift) * DieScale;
+                        position.y = (SupportHeight(rotation) + lift) * DieScale;
                         position.x += drift * DieScale;
                         dice[index].localPosition = position;
-                        SetShadowHeight(index, lift / .34f);
+                        SetShadowHeight(index, lift / SpiritRollTiming.MaximumLift);
                     }
                     if (elapsed >= timing.Duration) break;
                     yield return null;
@@ -203,7 +208,7 @@ namespace Dice.Presentation
         }
 
         /** Turns one die over to a face with a short hop, honoring the same cancellation rules as Roll. */
-        public IEnumerator Flip(int index, int face, float duration = .5f)
+        public IEnumerator Flip(int index, int face, float duration = DefaultFlipDuration)
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             if (face < 1 || face > 6) throw new ArgumentOutOfRangeException(nameof(face));
@@ -225,12 +230,12 @@ namespace Dice.Presentation
                     float progress = duration > 0f ? Mathf.Clamp01((float)(Time.unscaledTimeAsDouble - start) / duration) : 1f;
                     // Opposite faces differ by a half turn about a horizontal axis, so the slerp tumbles the die over.
                     Quaternion rotation = Quaternion.Slerp(startRotation, endRotation, Mathf.SmoothStep(0f, 1f, progress));
-                    float lift = Mathf.Sin(progress * Mathf.PI) * .45f;
+                    float lift = Mathf.Sin(progress * Mathf.PI) * FlipHopHeight;
                     dice[index].localRotation = rotation;
                     Vector3 position = SlotPosition(index);
-                    position.y = (sharedScene != null ? 0 : FeltHeight) + (SupportHeight(rotation) + lift) * DieScale;
+                    position.y = (SupportHeight(rotation) + lift) * DieScale;
                     dice[index].localPosition = position;
-                    SetShadowHeight(index, lift / .34f);
+                    SetShadowHeight(index, lift / SpiritRollTiming.MaximumLift);
                     if (progress >= 1f) break;
                     yield return null;
                 }
@@ -273,7 +278,7 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 point = dice[index].parent.TransformPoint(SlotPosition(index) + Vector3.up * (.18f * DieScale));
+            Vector3 point = dice[index].parent.TransformPoint(SlotPosition(index) + Vector3.up * (SlotPointHeight * DieScale));
             return renderCamera.WorldToViewportPoint(point);
         }
 
@@ -281,9 +286,7 @@ namespace Dice.Presentation
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 point = sharedScene != null ? sharedScene.Geometry.DiceLabelAnchors[index].position
-                : renderRoot.transform.TransformPoint(new Vector3((index - 2) * SlotSpacing, 0.35f, -1.13f));
-            return renderCamera.WorldToViewportPoint(point);
+            return renderCamera.WorldToViewportPoint(sharedScene.Geometry.DiceLabelAnchors[index].position);
         }
 
         public Rect GetSlotViewportRect(int index)
@@ -307,8 +310,8 @@ namespace Dice.Presentation
         {
             if (contactShadows[index] == null) return;
             Vector3 scale = shadowScales[index];
-            contactShadows[index].transform.localScale = new Vector3(scale.x * (1 + lift * (.24f / 1.24f)), scale.y,
-                scale.z * (1 + lift * (.18f / 1.16f)));
+            contactShadows[index].transform.localScale = new Vector3(scale.x * (1 + lift * ShadowGrowthX), scale.y,
+                scale.z * (1 + lift * ShadowGrowthZ));
             MaterialPropertyBlock properties = new MaterialPropertyBlock();
             properties.SetFloat("_ShadowLift", lift);
             contactShadows[index].SetPropertyBlock(properties);
@@ -335,8 +338,8 @@ namespace Dice.Presentation
             // Support lies on the bevel or flat-face perimeter, never inside a pip depression.
             foreach (Vector3 point in vertices)
             {
-                int outerAxes = (Mathf.Abs(point.x) >= 0.3f ? 1 : 0)
-                    + (Mathf.Abs(point.y) >= 0.3f ? 1 : 0) + (Mathf.Abs(point.z) >= 0.3f ? 1 : 0);
+                int outerAxes = (Mathf.Abs(point.x) >= SupportVertexDistance ? 1 : 0)
+                    + (Mathf.Abs(point.y) >= SupportVertexDistance ? 1 : 0) + (Mathf.Abs(point.z) >= SupportVertexDistance ? 1 : 0);
                 if (outerAxes >= 2) points.Add(point);
             }
             return points.ToArray();
@@ -346,10 +349,8 @@ namespace Dice.Presentation
         {
             // Results face upward, so a resting die always has a flat base on the felt.
             Quaternion result = Quaternion.FromToRotation(FaceNormals[face - 1], Vector3.up);
-            return Quaternion.AngleAxis(index % 4 * 90f + (index - 2) * 3f, Vector3.up) * result;
+            return Quaternion.AngleAxis(index % 4 * 90f + (index - 2) * SlotYawStep, Vector3.up) * result;
         }
-
-
 
         public void ReleasePresentation()
         {

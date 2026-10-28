@@ -46,7 +46,7 @@ namespace Dice.Tests
             SyntheticUi.Set(popup, "<Status>k__BackingField", ui.Add<Text>(statusRow, "Status"));
             SyntheticUi.Set(popup, "<Badge>k__BackingField", badge);
             SyntheticUi.Set(popup, "<CloseButton>k__BackingField", ui.NewButton(panel, "Close"));
-            popup.Build(ui.Root, ui.Root);
+            popup.Build();
             popup.Close();
 
             charm = new ModifierDefinition("test.popup", "test.popup", ModifierPhase.PlayHand, new AlwaysCondition(),

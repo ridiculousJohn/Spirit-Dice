@@ -66,7 +66,7 @@ namespace Dice.Tests
             viewData.FindProperty("rowPrefab").objectReferenceValue = rowTemplate;
             viewData.ApplyModifiedPropertiesWithoutUndo();
             foreach (var context in root.GetComponentsInChildren<SpiritUiContext>(true)) context.Configure(context.Theme, wording);
-            view.Build((RectTransform)root.transform, () => view.Hide());
+            view.Build(() => view.Hide());
         }
 
         [TearDown]
@@ -93,7 +93,7 @@ namespace Dice.Tests
                 Is.EqualTo(new[] { "<collection.available>", "<collection.locked>", "<collection.unlocked>" }));
             Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("<collection.summary>1|4|1"));
             Assert.That(profileIds, Is.EqualTo(new[] { unlocked.Id }));
-            Assert.That(Find<Button>(row, "FamilyVariant1").GetComponent<CanvasGroup>().alpha, Is.EqualTo(.35f));
+            Assert.That(Find<Button>(row, "FamilyVariant1").GetComponent<CanvasGroup>().alpha, Is.EqualTo(SpiritModifierFamilyRow.UnavailableVariantAlpha));
             Assert.That(Find<Button>(row, "FamilyVariant2").GetComponent<CanvasGroup>().alpha, Is.EqualTo(1));
             Assert.That(Find<Button>(row, "FamilyVariant1").interactable, Is.True);
 
@@ -236,6 +236,7 @@ namespace Dice.Tests
             var reward = ScriptableObject.CreateInstance<ProgressionRewardAsset>();
             var journey = ScriptableObject.CreateInstance<EncounterJourneyAsset>();
             var journeys = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
+            EncounterChapterAsset chapter = null;
             try
             {
                 var rewardData = new SerializedObject(reward);
@@ -251,11 +252,7 @@ namespace Dice.Tests
                 beats.arraySize = 1;
                 beats.GetArrayElementAtIndex(0).FindPropertyRelative("progressionReward").objectReferenceValue = reward;
                 journeyData.ApplyModifiedPropertiesWithoutUndo();
-                var catalogData = new SerializedObject(journeys);
-                var entries = catalogData.FindProperty("entries");
-                entries.arraySize = 1;
-                entries.GetArrayElementAtIndex(0).objectReferenceValue = journey;
-                catalogData.ApplyModifiedPropertiesWithoutUndo();
+                chapter = OnlyChapter(journeys, journey);
                 Assert.That(SpiritCollectionView.GetSourceText(discovered, catalog, journeys, wording.collection), Does.StartWith(
                     "<collection.unlockableSource><collection.gifts><collection.storyGift>Test House |sourceSeparator| " +
                     "<collection.completionGift>Test House|"));
@@ -263,6 +260,7 @@ namespace Dice.Tests
             finally
             {
                 UnityEngine.Object.DestroyImmediate(journeys);
+                UnityEngine.Object.DestroyImmediate(chapter);
                 UnityEngine.Object.DestroyImmediate(journey);
                 UnityEngine.Object.DestroyImmediate(reward);
             }
@@ -318,17 +316,29 @@ namespace Dice.Tests
         {
             var journey = ScriptableObject.CreateInstance<EncounterJourneyAsset>();
             var journeys = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
-            created = new ScriptableObject[] { journeys, journey };
             var journeyData = new SerializedObject(journey);
             journeyData.FindProperty("encounterId").stringValue = encounterId;
             journeyData.FindProperty("locationTitle").stringValue = locationTitle;
             journeyData.ApplyModifiedPropertiesWithoutUndo();
-            var catalogData = new SerializedObject(journeys);
-            var entries = catalogData.FindProperty("entries");
+            created = new ScriptableObject[] { journeys, OnlyChapter(journeys, journey), journey };
+            return journeys;
+        }
+
+        /** Makes a chapter of the one journey the catalog's only chapter; the chapter is returned for release. */
+        private static EncounterChapterAsset OnlyChapter(EncounterJourneyCatalogAsset journeys, EncounterJourneyAsset journey)
+        {
+            var chapter = ScriptableObject.CreateInstance<EncounterChapterAsset>();
+            var chapterData = new SerializedObject(chapter);
+            var entries = chapterData.FindProperty("entries");
             entries.arraySize = 1;
             entries.GetArrayElementAtIndex(0).objectReferenceValue = journey;
+            chapterData.ApplyModifiedPropertiesWithoutUndo();
+            var catalogData = new SerializedObject(journeys);
+            var chapters = catalogData.FindProperty("chapters");
+            chapters.arraySize = 1;
+            chapters.GetArrayElementAtIndex(0).objectReferenceValue = chapter;
             catalogData.ApplyModifiedPropertiesWithoutUndo();
-            return journeys;
+            return chapter;
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffect effect,

@@ -8,17 +8,17 @@ namespace Dice.Presentation
     {
         public const int PreviewPass = 1;
         private static readonly int BaseTextureId = Shader.PropertyToID("_BaseTex");
-        private static readonly int[] ContributionIds = CreateIds("_LightTex");
-        private static readonly int[] ColorIds = CreateIds("_SceneLightTint");
-        private static readonly int[] IntensityIds = CreateIds("_LightIntensity");
-        private static readonly int[] ReferenceIds = CreateIds("_LightReference");
-        private static readonly int[] ResponseMapIds = CreateIds("_SceneLightResponseTex");
-        private static readonly int[] ResponseEnabledIds = CreateIds("_SceneLightResponseEnabled");
-        private static readonly int[] DistanceFalloffIds = CreateIds("_SceneLightDistanceFalloff");
-        private static readonly int[] SourceResponseIds = CreateIds("_SceneLightSourceResponse");
-        private static readonly int[] ConstrainAmbientIds = CreateIds("_SceneLightConstrainAmbient");
-        private static readonly int[] UvOffsetIds = CreateIds("_SceneLightUvOffset");
-        private static readonly int[] ModulateIds = CreateIds("_SceneLightModulateByBase");
+        private static readonly int[] ContributionIds = SceneLightingAsset.LightPropertyIds("_LightTex");
+        private static readonly int[] ColorIds = SceneLightingAsset.LightPropertyIds("_SceneLightTint");
+        private static readonly int[] IntensityIds = SceneLightingAsset.LightPropertyIds("_LightIntensity");
+        private static readonly int[] ReferenceIds = SceneLightingAsset.LightPropertyIds("_LightReference");
+        private static readonly int[] ResponseMapIds = SceneLightingAsset.LightPropertyIds("_SceneLightResponseTex");
+        private static readonly int[] ResponseEnabledIds = SceneLightingAsset.LightPropertyIds("_SceneLightResponseEnabled");
+        private static readonly int[] DistanceFalloffIds = SceneLightingAsset.LightPropertyIds("_SceneLightDistanceFalloff");
+        private static readonly int[] SourceResponseIds = SceneLightingAsset.LightPropertyIds("_SceneLightSourceResponse");
+        private static readonly int[] ConstrainAmbientIds = SceneLightingAsset.LightPropertyIds("_SceneLightConstrainAmbient");
+        private static readonly int[] UvOffsetIds = SceneLightingAsset.LightPropertyIds("_SceneLightUvOffset");
+        private static readonly int[] ModulateIds = SceneLightingAsset.LightPropertyIds("_SceneLightModulateByBase");
         public Material Material { get; private set; }
 
         public SceneLightingMaterial(Shader shader)
@@ -46,7 +46,7 @@ namespace Dice.Presentation
                 throw new ArgumentException("Intensity overrides must match the authored light count.", nameof(intensityOverrides));
             if (intensityOverrides != null)
                 foreach (float value in intensityOverrides)
-                    if (!SceneLightingAsset.Finite(value) || value < 0f)
+                    if (!FiniteValue.Is(value) || value < 0f)
                         throw new ArgumentException("Intensity overrides must be finite and nonnegative.", nameof(intensityOverrides));
             Material.SetTexture(BaseTextureId, asset.BaseTexture);
             for (int i = 0; i < SceneLightingAsset.MaximumLights; ++i)
@@ -89,17 +89,8 @@ namespace Dice.Presentation
 
         public void Dispose()
         {
-            if (Material == null) return;
-            if (Application.isPlaying) UnityEngine.Object.Destroy(Material);
-            else UnityEngine.Object.DestroyImmediate(Material);
+            OwnedObject.Release(Material);
             Material = null;
-        }
-
-        private static int[] CreateIds(string prefix)
-        {
-            var values = new int[SceneLightingAsset.MaximumLights];
-            for (int i = 0; i < values.Length; ++i) values[i] = Shader.PropertyToID(prefix + i);
-            return values;
         }
     }
 }

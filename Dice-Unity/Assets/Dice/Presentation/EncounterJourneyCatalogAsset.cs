@@ -11,7 +11,6 @@ namespace Dice.Presentation
         [SerializeField] private string title;
         [SerializeField, TextArea] private string description;
         [SerializeField] private EncounterChapterAsset[] chapters = Array.Empty<EncounterChapterAsset>();
-        [SerializeField] private EncounterJourneyAsset[] entries = Array.Empty<EncounterJourneyAsset>();
 
         public string Title => title;
         public string Description => description;
@@ -20,7 +19,6 @@ namespace Dice.Presentation
         {
             get
             {
-                if (chapters == null || chapters.Length == 0) return entries;
                 var result = new List<EncounterJourneyAsset>();
                 foreach (var chapter in chapters)
                     if (chapter?.Entries != null) result.AddRange(chapter.Entries);

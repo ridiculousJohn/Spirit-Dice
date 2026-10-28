@@ -6,8 +6,6 @@ using Dice.Presentation;
 using Dice.UnityContent;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 namespace Dice.Editor
@@ -15,7 +13,6 @@ namespace Dice.Editor
     /** Samples the authored encounter scene without a gameplay session. */
     public sealed class TrayCompositionPreviewWindow : EditorWindow
     {
-        private const string PipelinePath = "Assets/Settings/SpiritPrototypePipeline.asset";
         private const string TableKey = "Dice.TrayCompositionPreview.Table";
         // Any fixed seed: the preview samples one repeatable opening.
         private const ulong PreviewSeed = 60;
@@ -86,26 +83,21 @@ namespace Dice.Editor
             EditorApplication.playModeStateChanged -= PlayModeChanged;
             EditorApplication.projectChanged -= SourceChanged;
             Undo.undoRedoPerformed -= SourceChanged;
-            try { ReleaseStage(); }
-            finally { ReleasePipeline(); }
+            pipeline.ReleaseAfter(ReleaseStage);
         }
 
         private void SourceChanged() { rebuild = true; Repaint(); }
 
         private void PlayModeChanged(PlayModeStateChange change)
         {
-            if (change == PlayModeStateChange.ExitingEditMode)
-            {
-                try { ReleaseStage(); }
-                finally { ReleasePipeline(); }
-            }
+            if (change == PlayModeStateChange.ExitingEditMode) pipeline.ReleaseAfter(ReleaseStage);
             Repaint();
         }
 
         private void OnGUI()
         {
             table = PreviewAssetSelection.Field("Encounter table", table, TableKey);
-            narrow = GUILayout.Toolbar(narrow ? 1 : 0, new[] { "540 x 960", "443 x 960" }) == 1;
+            narrow = GUILayout.Toolbar(narrow ? 1 : 0, new[] { SizeLabel(false), SizeLabel(true) }) == 1;
             showGameplayUi = EditorGUILayout.Toggle("Show gameplay UI", showGameplayUi);
             showPreviewOptions = EditorGUILayout.Foldout(showPreviewOptions, "Preview options", true);
             if (showPreviewOptions)
@@ -174,7 +166,6 @@ namespace Dice.Editor
                 history = trayScene.HistoryRenderer;
                 host = view.HostPortrait;
                 gameplayUi = view.GameplayHud;
-                gameplayUiRoot = (RectTransform)gameplayUi.transform;
                 roomImage = view.RoomImage;
                 tableImage = view.TableImage;
                 stagedTable = table;
@@ -341,7 +332,6 @@ namespace Dice.Editor
             encounter?.Dispose();
             encounter = null;
             view = null;
-            stage = null;
             output = null;
             camera = null;
             trayScene = null;
@@ -349,7 +339,6 @@ namespace Dice.Editor
             history = null;
             host = null;
             gameplayUi = null;
-            gameplayUiRoot = null;
             roomImage = tableImage = null;
             stagedTable = null;
             stagedSourceSettings = null;

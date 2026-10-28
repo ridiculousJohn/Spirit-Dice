@@ -33,9 +33,8 @@ namespace Dice.Presentation
         [field: SerializeField] public Button ChapterButton { get; private set; }
         [field: SerializeField] public SpiritChapterSelector ChapterSelector { get; private set; }
 
-        public void Build(RectTransform parent, Action resume, Action load, Action openCollection)
+        public void Build(Action resume, Action load, Action openCollection)
         {
-            if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (resume == null) throw new ArgumentNullException(nameof(resume));
             if (load == null) throw new ArgumentNullException(nameof(load));
             if (openCollection == null) throw new ArgumentNullException(nameof(openCollection));
@@ -56,7 +55,7 @@ namespace Dice.Presentation
             CollectionButton.onClick.AddListener(OpenCollection);
             ChapterButton.onClick.RemoveListener(OpenChapters);
             ChapterButton.onClick.AddListener(OpenChapters);
-            ChapterSelector.Build(Root);
+            ChapterSelector.Build();
         }
 
         public void BindMainMenu(ISpiritMainMenuControls menu)

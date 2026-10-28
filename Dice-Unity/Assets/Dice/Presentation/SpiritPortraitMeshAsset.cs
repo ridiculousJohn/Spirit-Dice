@@ -27,7 +27,7 @@ namespace Dice.Presentation
             SpiritHostPresentationAsset.Require(Alpha == null || Alpha.Length == 0 || Alpha.Length == count, "Mesh Alpha must match the grid vertex count.");
             if (Alpha != null)
                 foreach (float alpha in Alpha)
-                    SpiritHostPresentationAsset.Require(SpiritHostPresentationAsset.Finite(alpha) && alpha >= 0f && alpha <= 1f, "Mesh Alpha must be in [0,1].");
+                    SpiritHostPresentationAsset.Require(FiniteValue.Is(alpha) && alpha >= 0f && alpha <= 1f, "Mesh Alpha must be in [0,1].");
             SpiritHostPresentationAsset.Require(Shapes != null, "Mesh Shapes cannot be null.");
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (SpiritPortraitShape shape in Shapes)
@@ -35,7 +35,7 @@ namespace Dice.Presentation
                 SpiritHostPresentationAsset.Require(shape != null && !string.IsNullOrWhiteSpace(shape.Id) && ids.Add(shape.Id), "Mesh shape ids must be nonempty and unique.");
                 SpiritHostPresentationAsset.Require(shape.Offsets != null && shape.Offsets.Length == count, "Shape Offsets must match the grid vertex count.");
                 foreach (Vector2 offset in shape.Offsets)
-                    SpiritHostPresentationAsset.Require(SpiritHostPresentationAsset.Finite(offset), "Shape Offsets must be finite.");
+                    SpiritHostPresentationAsset.Require(FiniteValue.Is(offset), "Shape Offsets must be finite.");
             }
         }
     }

@@ -79,7 +79,7 @@ namespace Dice.Tests
                 var root = (GameObject)PrefabUtility.InstantiatePrefab(asset.PortraitPrefab.gameObject, scene);
                 SpiritHostPortrait host = root.GetComponent<SpiritHostPortrait>();
                 Assert.That(host, Is.Not.Null);
-                Assert.DoesNotThrow(() => host.Build((RectTransform)root.transform, asset));
+                Assert.DoesNotThrow(() => host.Build(asset));
                 // Every part spans the one source frame.
                 Vector2 frame = host.GetLayer(asset.Layers[0].Id).rectTransform.rect.size;
                 foreach (SpiritPortraitLayer layer in asset.Layers)

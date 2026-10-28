@@ -92,7 +92,7 @@ namespace Dice.Presentation
         public void SetLightIntensity(int index, float multiplier)
         {
             CheckIndex(index);
-            if (!SceneLightingAsset.Finite(multiplier) || multiplier < 0f)
+            if (!FiniteValue.Is(multiplier) || multiplier < 0f)
                 throw new ArgumentOutOfRangeException(nameof(multiplier));
             EnsureArrays();
             intensityMultipliers[index] = multiplier;
@@ -175,7 +175,7 @@ namespace Dice.Presentation
                 if (receiver == null) continue;
                 if (receiver.Portrait == null || receiver.Presentation == null || !(receiver.Portrait.transform is RectTransform))
                     throw new InvalidOperationException("Scene lighting hosts require a portrait, presentation and RectTransform.");
-                receiver.Portrait.Build((RectTransform)receiver.Portrait.transform, receiver.Presentation);
+                receiver.Portrait.Build(receiver.Presentation);
                 receiver.Portrait.SetSceneLighting(state, receiver.Position);
             }
             if (litImages != null)

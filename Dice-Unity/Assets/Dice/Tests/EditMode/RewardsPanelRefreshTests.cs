@@ -24,7 +24,7 @@ namespace Dice.Tests
             synthetic = new SyntheticCharms();
             panel = ui.Add<SpiritRewardsPanel>(ui.Root, "Rewards");
             Transform parent = panel.transform;
-            foreach (string label in new[] { "Title", "Step", "Instruction", "UpcomingStage" })
+            foreach (string label in new[] { "Title", "Instruction" })
                 SyntheticUi.Set(panel, "<" + label + ">k__BackingField", ui.Add<Text>(parent, label));
             SyntheticUi.Set(panel, "<Content>k__BackingField", ui.Rect(parent, "Content"));
             var refresh = ui.NewButton(parent, "Refresh");
@@ -32,7 +32,7 @@ namespace Dice.Tests
             SyntheticUi.Set(panel, "<RefreshButton>k__BackingField", refresh);
             SyntheticUi.Set(panel, "<ConfirmButton>k__BackingField", ui.NewButton(parent, "Confirm"));
             SyntheticUi.Set(panel, "cardPrefab", CardTemplate());
-            panel.Build(ui.Root, () => false);
+            panel.Build(() => false);
         }
 
         [TearDown]

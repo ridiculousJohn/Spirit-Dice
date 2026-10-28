@@ -47,7 +47,7 @@ namespace Dice.Presentation
         /** Advances running animations; the visual calls it every frame with unscaled time. */
         public void Advance(float deltaTime)
         {
-            if (!SceneLightingAsset.Finite(deltaTime) || deltaTime < 0f) throw new ArgumentOutOfRangeException(nameof(deltaTime));
+            if (!FiniteValue.Is(deltaTime) || deltaTime < 0f) throw new ArgumentOutOfRangeException(nameof(deltaTime));
             if (!IsAnimating && applied) return;
             mark = mark.Advance(deltaTime);
             growth = growth.Advance(deltaTime);
@@ -73,13 +73,13 @@ namespace Dice.Presentation
 
         private static float Validate(float level, string name)
         {
-            if (!SceneLightingAsset.Finite(level) || level < 0f || level > 1f) throw new ArgumentOutOfRangeException(name);
+            if (!FiniteValue.Is(level) || level < 0f || level > 1f) throw new ArgumentOutOfRangeException(name);
             return level;
         }
 
         private static float ValidateDuration(float duration)
         {
-            if (!SceneLightingAsset.Finite(duration) || duration < 0f) throw new ArgumentOutOfRangeException(nameof(duration));
+            if (!FiniteValue.Is(duration) || duration < 0f) throw new ArgumentOutOfRangeException(nameof(duration));
             return duration;
         }
 

@@ -25,7 +25,8 @@ namespace Dice.Tests
             var presentation = AssetDatabase.LoadAssetAtPath<SpiritHostPresentationAsset>(
                 "Assets/Dice/Content/Presentation/SpiritHouse/LanternKeeperHost.asset");
             Assert.That(presentation, Is.Not.Null);
-            portrait = presentation.Create(parent);
+            portrait = Object.Instantiate(presentation.PortraitPrefab, parent, false);
+            portrait.Build(presentation);
             portraitRoot = portrait.GetLayer("Body").rectTransform.parent as RectTransform;
             physicalHead = portrait.GetLayer("Physical Front").rectTransform;
             spiritHead = portrait.GetLayer("Cyan Front").rectTransform;

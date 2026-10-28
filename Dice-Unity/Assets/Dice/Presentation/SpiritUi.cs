@@ -2,6 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 namespace Dice.Presentation
 {
+    /**
+     * The theme and wording of a UI hierarchy are authored once, on the SpiritUiContext at its root; a component finds
+     * them through its parents, so a screen or prefab follows the skin of the hierarchy it is placed in without a
+     * reference of its own.
+     */
     internal static class SpiritUi
     {
         internal static SpiritUiTheme GetTheme(Transform parent)
@@ -33,6 +38,5 @@ namespace Dice.Presentation
             var text = button.GetComponentInChildren<Text>();
             if (text != null) text.text = value;
         }
-
     }
 }

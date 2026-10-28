@@ -42,10 +42,7 @@ namespace Dice.Presentation
         public PieceInteractionPresenterAsset Presenter => presenter;
         /** Multiplies the bound scene light; above one only while flaring. */
         public float LightIntensity => 1f + (flareLightIntensity - 1f) * FlarePulse();
-        /** Peak scale of the flare target over its authored scale. */
-        public Vector2 FlarePeakScale => new Vector2(flareScale, flareHeightScale);
         public RectTransform FlareTarget => flareTarget;
-        public GameObject FlareEffect => flareEffect;
         public float FlareDuration => flareDuration;
         public bool IsFlaring => !float.IsNegativeInfinity(flareStart);
 
@@ -104,7 +101,7 @@ namespace Dice.Presentation
             float progress = (Time.unscaledTime - flareStart) / flareDuration;
             if (progress < 0f || progress >= 1f) return 0f;
             // A quick flare-up followed by a slower settle back to the authored flame.
-            return progress < .15f ? progress / .15f : 1f - Mathf.SmoothStep(0f, 1f, (progress - .15f) / .85f);
+            return SpiritFlareSparks.RiseAndSettle(progress, SpiritFlareSparks.FlareRise);
         }
 
         private void Update()
