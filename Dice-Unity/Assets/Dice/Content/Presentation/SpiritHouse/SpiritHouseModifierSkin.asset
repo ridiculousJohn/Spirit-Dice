@@ -518,3 +518,14 @@ MonoBehaviour:
     multiplierLabel: mult
     rerollLabel: reroll
     rerollsLabel: rerolls
+  textFormat:
+    effect: +{amount} {label}
+    effectSeparator: ', '
+    compactEffect: +{amount}
+    labeledCompactEffect: +{amount} {label}
+    compactEffectSeparator: '
+
+'
+    timing: '{phase} / {limit}'
+    contribution: +{amount} {label}
+    contributionSeparator: '  /  '

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using Dice.Engine;
 using Dice.UnityContent;
 using UnityEngine;
@@ -12,7 +11,7 @@ namespace Dice.Presentation
      * The presentation of every charm of one loaded content, built at load from a skin. Each presentation is matched
      * to its charm's definition through the presentation's own charm reference; a content charm without exactly one
      * presentation, a content charm family without exactly one name, an effect kind, phase or activation limit the content uses without wording, or incomplete
-     * contribution wording fails construction.
+     * contribution wording or text format fails construction.
      */
     public sealed class ModifierPresentationCatalog
     {
@@ -27,6 +26,7 @@ namespace Dice.Presentation
         private readonly Dictionary<ModifierActivationLimit, ModifierActivationLimitWording> limitWording =
             new Dictionary<ModifierActivationLimit, ModifierActivationLimitWording>();
         private readonly ModifierContributionWording contributionWording;
+        private readonly ModifierTextFormat format;
         private readonly string noEffectsText;
 
         public MechanicalCatalog Catalog { get; }
@@ -109,6 +109,15 @@ namespace Dice.Presentation
                 string.IsNullOrWhiteSpace(contributionWording.MultiplierLabel) ||
                 string.IsNullOrWhiteSpace(contributionWording.RerollLabel) || string.IsNullOrWhiteSpace(contributionWording.RerollsLabel))
                 throw new InvalidOperationException("The modifier skin " + skin.name + " has incomplete contribution wording.");
+            format = skin.TextFormat ?? throw new InvalidOperationException("The modifier skin " + skin.name + " has no text format.");
+            RequireFormat(skin, format.Effect, "effect", false);
+            RequireFormat(skin, format.EffectSeparator, "effectSeparator", true);
+            RequireFormat(skin, format.CompactEffect, "compactEffect", false);
+            RequireFormat(skin, format.LabeledCompactEffect, "labeledCompactEffect", false);
+            RequireFormat(skin, format.CompactEffectSeparator, "compactEffectSeparator", true);
+            RequireFormat(skin, format.Timing, "timing", false);
+            RequireFormat(skin, format.Contribution, "contribution", false);
+            RequireFormat(skin, format.ContributionSeparator, "contributionSeparator", true);
             foreach (ModifierDefinition definition in Catalog.Modifiers)
             {
                 if (!familyNames.ContainsKey(definition.FamilyId))
@@ -127,6 +136,13 @@ namespace Dice.Presentation
                         definition.ActivationLimit + " of the charm " + definition.Id + ".");
             }
             noEffectsText = skin.NoEffectsText;
+        }
+
+        /** A separator may be only spaces or line breaks, but not empty; any other format field needs visible text. */
+        private static void RequireFormat(ModifierSkinAsset skin, string value, string field, bool separator)
+        {
+            if (separator ? string.IsNullOrEmpty(value) : string.IsNullOrWhiteSpace(value))
+                throw new InvalidOperationException("The modifier skin " + skin.name + " has no text format " + field + ".");
         }
 
         private static void Validate(ModifierPresentationAsset presentation, HashSet<ModifierCategoryPresentationAsset> categories)
@@ -181,16 +197,19 @@ namespace Dice.Presentation
         public string GetEffectText(ModifierDefinition definition)
         {
             Entry(definition);
-            var text = new StringBuilder();
+            var parts = new List<string>();
             foreach (ModifierEffect effect in definition.Effects)
             {
-                if (text.Length > 0) text.Append(", ");
                 ModifierEffectWording effectWording = wording[effect.Kind];
-                text.Append('+').Append(DiagnosticText.Number(effect.Amount)).Append(' ')
-                    .Append(effect.Amount == 1 ? effectWording.SingularLabel : effectWording.PluralLabel);
+                parts.Add(Amount(format.Effect, DiagnosticText.Number(effect.Amount),
+                    effect.Amount == 1 ? effectWording.SingularLabel : effectWording.PluralLabel));
             }
-            return text.Length == 0 ? noEffectsText : text.ToString();
+            return parts.Count == 0 ? noEffectsText : string.Join(format.EffectSeparator, parts);
         }
+
+        /** A format template with its {amount} and {label} filled. */
+        private static string Amount(string template, string amount, string label) =>
+            template.Replace(Placeholder("amount"), amount).Replace(Placeholder("label"), label);
 
         /** One line per effect; a charm with more than one effect marks each line with its effect's compact label. */
         public string GetCompactEffectText(ModifierDefinition definition)
@@ -198,16 +217,17 @@ namespace Dice.Presentation
             Entry(definition);
             var lines = new List<string>();
             foreach (ModifierEffect effect in definition.Effects)
-                lines.Add("+" + DiagnosticText.Number(effect.Amount) +
-                    (definition.Effects.Count > 1 ? " " + wording[effect.Kind].CompactLabel : ""));
-            return string.Join("\n", lines);
+                lines.Add(Amount(definition.Effects.Count > 1 ? format.LabeledCompactEffect : format.CompactEffect,
+                    DiagnosticText.Number(effect.Amount), wording[effect.Kind].CompactLabel));
+            return string.Join(format.CompactEffectSeparator, lines);
         }
 
         /** The skin's timing label of the charm's phase, then of its activation limit. */
         public string GetTimingText(ModifierDefinition definition)
         {
             Entry(definition);
-            return phaseWording[definition.Phase].TimingLabel + " / " + limitWording[definition.ActivationLimit].TimingLabel;
+            return format.Timing.Replace(Placeholder("phase"), phaseWording[definition.Phase].TimingLabel)
+                .Replace(Placeholder("limit"), limitWording[definition.ActivationLimit].TimingLabel);
         }
 
         /** The skin's description lead of the charm's phase. */
@@ -228,18 +248,20 @@ namespace Dice.Presentation
         }
 
         /**
-         * The nonzero parts of a score contribution in the skin's contribution wording, joined by "  /  "; empty when all
-         * are zero. Reroll counts are written without digit grouping.
+         * The nonzero parts of a score contribution in the skin's contribution wording and format, joined by the format's
+         * contribution separator; empty when all are zero. Reroll counts are written without digit grouping.
          */
         public string GetContributionText(long baseScore, long multiplier, long rerolls)
         {
             var parts = new List<string>();
-            if (baseScore != 0) parts.Add("+" + DiagnosticText.Number(baseScore) + " " + contributionWording.BaseScoreLabel);
-            if (multiplier != 0) parts.Add("+" + DiagnosticText.Number(multiplier) + " " + contributionWording.MultiplierLabel);
+            if (baseScore != 0)
+                parts.Add(Amount(format.Contribution, DiagnosticText.Number(baseScore), contributionWording.BaseScoreLabel));
+            if (multiplier != 0)
+                parts.Add(Amount(format.Contribution, DiagnosticText.Number(multiplier), contributionWording.MultiplierLabel));
             if (rerolls != 0)
-                parts.Add("+" + rerolls.ToString(CultureInfo.InvariantCulture) + " " +
-                    (rerolls == 1 ? contributionWording.RerollLabel : contributionWording.RerollsLabel));
-            return string.Join("  /  ", parts);
+                parts.Add(Amount(format.Contribution, rerolls.ToString(CultureInfo.InvariantCulture),
+                    rerolls == 1 ? contributionWording.RerollLabel : contributionWording.RerollsLabel));
+            return string.Join(format.ContributionSeparator, parts);
         }
 
         public Sprite GetIcon(ModifierDefinition definition) => Entry(definition).Icon;

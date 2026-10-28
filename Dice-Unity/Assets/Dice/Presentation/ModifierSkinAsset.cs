@@ -108,6 +108,47 @@ namespace Dice.Presentation
         }
     }
 
+    /**
+     * How charm text joins the skin's labels and amounts. An effect, a labeled compact effect and a contribution part
+     * fill {amount} and {label}; an unlabeled compact effect fills {amount}; timing text fills {phase} and {limit} with
+     * the phase's and the activation limit's timing labels. The separators join a charm's effects, its compact effect
+     * lines and a contribution's parts.
+     */
+    [Serializable]
+    public sealed class ModifierTextFormat
+    {
+        [SerializeField] private string effect;
+        [SerializeField] private string effectSeparator;
+        [SerializeField] private string compactEffect;
+        [SerializeField] private string labeledCompactEffect;
+        [SerializeField] private string compactEffectSeparator;
+        [SerializeField] private string timing;
+        [SerializeField] private string contribution;
+        [SerializeField] private string contributionSeparator;
+
+        public string Effect => effect;
+        public string EffectSeparator => effectSeparator;
+        public string CompactEffect => compactEffect;
+        public string LabeledCompactEffect => labeledCompactEffect;
+        public string CompactEffectSeparator => compactEffectSeparator;
+        public string Timing => timing;
+        public string Contribution => contribution;
+        public string ContributionSeparator => contributionSeparator;
+
+        public ModifierTextFormat(string effect, string effectSeparator, string compactEffect, string labeledCompactEffect,
+            string compactEffectSeparator, string timing, string contribution, string contributionSeparator)
+        {
+            this.effect = effect;
+            this.effectSeparator = effectSeparator;
+            this.compactEffect = compactEffect;
+            this.labeledCompactEffect = labeledCompactEffect;
+            this.compactEffectSeparator = compactEffectSeparator;
+            this.timing = timing;
+            this.contribution = contribution;
+            this.contributionSeparator = contributionSeparator;
+        }
+    }
+
     /** The name a charm family is shown under, for the family id its charms share. */
     [Serializable]
     public sealed class ModifierFamilyWording
@@ -128,7 +169,7 @@ namespace Dice.Presentation
     /**
      * One theme's charm presentation: a presentation for every charm the content uses, the category styles those
      * presentations use, the name of every charm family, the wording of every effect kind, phase and activation limit,
-     * and the wording of score contributions. Loading validates it against the loaded content.
+     * the wording of score contributions and the format that joins them. Loading validates it against the loaded content.
      */
     [CreateAssetMenu(menuName = "Dice/Modifier Skin")]
     public sealed class ModifierSkinAsset : ScriptableObject
@@ -142,6 +183,7 @@ namespace Dice.Presentation
         [SerializeField] private ModifierPhaseWording[] phaseWording = Array.Empty<ModifierPhaseWording>();
         [SerializeField] private ModifierActivationLimitWording[] limitWording = Array.Empty<ModifierActivationLimitWording>();
         [SerializeField] private ModifierContributionWording contributionWording;
+        [SerializeField] private ModifierTextFormat textFormat;
 
         public IReadOnlyList<ModifierPresentationAsset> Modifiers => modifiers;
         public IReadOnlyList<ModifierCategoryPresentationAsset> Categories => categories;
@@ -151,5 +193,6 @@ namespace Dice.Presentation
         public IReadOnlyList<ModifierPhaseWording> PhaseWording => phaseWording;
         public IReadOnlyList<ModifierActivationLimitWording> LimitWording => limitWording;
         public ModifierContributionWording ContributionWording => contributionWording;
+        public ModifierTextFormat TextFormat => textFormat;
     }
 }

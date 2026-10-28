@@ -101,12 +101,12 @@ namespace Dice.Tests
                 new ModifierEffectWording(ModifierEffectKind.AddBaseScore, "spark", "sparks", "S"),
                 new ModifierEffectWording(ModifierEffectKind.AddMultiplier, "flame", "flames", "F")
             });
-            Assert.That(charms.GetEffectText(Definition(charms)), Is.EqualTo("+10 sparks, +7 flames"));
+            Assert.That(charms.GetEffectText(Definition(charms)), Is.EqualTo("[10 sparks] & [7 flames]"));
         }
 
         /** Checks an amount of one takes the singular label and any other amount the plural / fails if the grammar ignores the amount. */
-        [TestCase(1, "+1 spark")]
-        [TestCase(2, "+2 sparks")]
+        [TestCase(1, "[1 spark]")]
+        [TestCase(2, "[2 sparks]")]
         public void EffectTextUsesTheSingularLabelForOneAndThePluralOtherwise(int amount, string expected)
         {
             var charm = synthetic.Charm("test.amount", effects: new AddRerollsEffectConfig(amount));
@@ -128,8 +128,8 @@ namespace Dice.Tests
                     new ModifierEffectWording(ModifierEffectKind.AddBaseScore, "spark", "sparks", "S"),
                     new ModifierEffectWording(ModifierEffectKind.AddMultiplier, "flame", "flames", "F")
                 }), content);
-            Assert.That(charms.GetCompactEffectText(content.GetDefinition(both)), Is.EqualTo("+10 S\n+7 F"));
-            Assert.That(charms.GetCompactEffectText(content.GetDefinition(single)), Is.EqualTo("+3"));
+            Assert.That(charms.GetCompactEffectText(content.GetDefinition(both)), Is.EqualTo("[10 S] # [7 F]"));
+            Assert.That(charms.GetCompactEffectText(content.GetDefinition(single)), Is.EqualTo("[3]"));
         }
 
         /** Checks timing text joins the skin's labels for the charm's phase and activation limit / fails if either label is not the skin's. */
@@ -141,7 +141,7 @@ namespace Dice.Tests
             var charms = Timed(synthetic.Charm("test.timing", phase: phase, limit: limit),
                 new[] { new ModifierPhaseWording(phase, "At dusk", "When dusk falls") },
                 new[] { new ModifierActivationLimitWording(limit, "Rarely", "Only rarely.") });
-            Assert.That(charms.GetTimingText(Definition(charms)), Is.EqualTo("At dusk / Rarely"));
+            Assert.That(charms.GetTimingText(Definition(charms)), Is.EqualTo("At dusk @ Rarely"));
         }
 
         /**
@@ -177,11 +177,11 @@ namespace Dice.Tests
         }
 
         /** Checks contribution text words each nonzero part with the skin's contribution labels / fails if a label is not the skin's, a zero part shows or the reroll grammar ignores the count. */
-        [TestCase(3, 0, 0, "+3 grains")]
-        [TestCase(0, 2, 0, "+2 sparks")]
-        [TestCase(0, 0, 1, "+1 chance")]
-        [TestCase(0, 0, 2, "+2 chances")]
-        [TestCase(4, 5, 2, "+4 grains  /  +5 sparks  /  +2 chances")]
+        [TestCase(3, 0, 0, "[3 grains]")]
+        [TestCase(0, 2, 0, "[2 sparks]")]
+        [TestCase(0, 0, 1, "[1 chance]")]
+        [TestCase(0, 0, 2, "[2 chances]")]
+        [TestCase(4, 5, 2, "[4 grains] ; [5 sparks] ; [2 chances]")]
         [TestCase(0, 0, 0, "")]
         public void ContributionTextUsesTheSkinsContributionWording(long baseScore, long multiplier, long rerolls, string expected)
         {
@@ -351,6 +351,28 @@ namespace Dice.Tests
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category },
                 contribution: new ModifierContributionWording(baseScore, multiplier, reroll, rerolls));
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+        }
+
+        /** Checks a text format missing any field fails at load naming it, while spaces suffice for a separator / fails if charm text could be joined without the skin's format. */
+        [TestCase("effect")]
+        [TestCase("effectSeparator")]
+        [TestCase("compactEffect")]
+        [TestCase("labeledCompactEffect")]
+        [TestCase("compactEffectSeparator")]
+        [TestCase("timing")]
+        [TestCase("contribution")]
+        [TestCase("contributionSeparator")]
+        public void IncompleteTextFormatFailsAtLoadNamingTheField(string field)
+        {
+            var charm = synthetic.Charm("test.format");
+            var category = synthetic.Category();
+            string Value(string name, string value) => name == field ? "" : value;
+            var format = new ModifierTextFormat(Value("effect", "e"), Value("effectSeparator", " "), Value("compactEffect", "c"),
+                Value("labeledCompactEffect", "l"), Value("compactEffectSeparator", "\n"), Value("timing", "t"),
+                Value("contribution", "p"), Value("contributionSeparator", " "));
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, format: format);
+            var failure = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+            Assert.That(failure.Message, Does.Contain("text format " + field + "."));
         }
 
         /** Checks a charm without effects fails at load when the skin has no text for it / fails if its effect text would be empty. */
