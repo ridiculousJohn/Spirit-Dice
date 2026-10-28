@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Security.Cryptography;
 using Dice.Engine;
 using Dice.Presentation;
@@ -17,9 +15,9 @@ namespace Dice.App
     {
         private string encounterId;
         private bool useFixedSeed;
-        private string initialSeed = "60";
+        private ulong initialSeed = EncounterApplication.DefaultSeed;
         private EncounterApplication application;
-        private ulong seed = 60;
+        private ulong seed = EncounterApplication.DefaultSeed;
         private string handPreviewFailure;
         private string modifierInspectionFailure;
         private readonly PlayerProgression progression = new PlayerProgression();
@@ -77,7 +75,7 @@ namespace Dice.App
             PresentationReady = true;
             PresentationInitialized?.Invoke();
         }
-        public void ConfigureSeedPolicy(bool useFixedSeed, string initialSeed)
+        public void ConfigureSeedPolicy(bool useFixedSeed, ulong initialSeed)
         {
             this.useFixedSeed = useFixedSeed;
             this.initialSeed = initialSeed;
@@ -230,7 +228,6 @@ namespace Dice.App
             try
             {
                 transition.Journey.Validate(Catalog);
-                if (useFixedSeed) ParseFixedSeed();
                 if (!progression.PersistProfile()) { SetJourneyStatus(ProfileProblem); return; }
                 if (!ApplyJourneyRewards(transition)) return;
                 if (!progression.PersistVisit(transition.Journey.EncounterId)) { SetJourneyStatus(ProfileProblem); return; }
@@ -326,7 +323,7 @@ namespace Dice.App
 
         private ulong SelectSeed()
         {
-            if (useFixedSeed) return ParseFixedSeed();
+            if (useFixedSeed) return initialSeed;
 
             var bytes = new byte[sizeof(ulong)];
             using (var random = RandomNumberGenerator.Create())
@@ -339,13 +336,6 @@ namespace Dice.App
                 } while (value == seed);
                 return value;
             }
-        }
-
-        private ulong ParseFixedSeed()
-        {
-            if (!ulong.TryParse(initialSeed, NumberStyles.None, CultureInfo.InvariantCulture, out ulong value))
-                throw new FormatException("Seed must be an unsigned 64-bit integer.");
-            return value;
         }
 
         public void ToggleDie(int index)

@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using Dice.Presentation;
 using Dice.UnityContent;
 using UnityEngine;
@@ -17,7 +16,7 @@ namespace Dice.App
         [SerializeField] private string encounterId;
         [SerializeField, Tooltip("Use Initial Seed for repeatable debug runs. Otherwise every new run uses a fresh seed.")]
         private bool useFixedSeed;
-        [SerializeField] private string initialSeed = "60";
+        [SerializeField] private ulong initialSeed = EncounterApplication.DefaultSeed;
 
         public MechanicalCatalogAsset CatalogAsset => catalogAsset;
         public AssetReference FrontendScene => frontendScene;
@@ -25,7 +24,7 @@ namespace Dice.App
         public ModifierSkinAsset ModifierSkin => modifierSkin;
         public string EncounterId => encounterId;
         public bool UseFixedSeed => useFixedSeed;
-        public string InitialSeed => initialSeed;
+        public ulong InitialSeed => initialSeed;
 
         public void Validate()
         {
@@ -33,8 +32,6 @@ namespace Dice.App
             if (modifierSkin == null) throw new InvalidOperationException("A modifier skin is required.");
             if (journeyCatalog == null && string.IsNullOrWhiteSpace(encounterId))
                 throw new InvalidOperationException("A direct encounter ID is required when no journey catalog is configured.");
-            if (useFixedSeed && !ulong.TryParse(initialSeed, NumberStyles.None, CultureInfo.InvariantCulture, out _))
-                throw new InvalidOperationException("Initial Seed must be an unsigned 64-bit integer.");
         }
     }
 }

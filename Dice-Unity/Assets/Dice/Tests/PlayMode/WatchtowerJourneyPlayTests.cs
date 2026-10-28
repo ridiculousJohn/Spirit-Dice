@@ -36,8 +36,7 @@ namespace Dice.Tests
             journey = controller.JourneyCatalog.Find(EncounterId);
             Assert.That(journey, Is.Not.Null, EncounterId);
             flight = FlightIndex();
-            SetField(controller, "useFixedSeed", true);
-            SetField(controller, "initialSeed", "60");
+            controller.ConfigureSeedPolicy(true, 60);
             yield return null;
         }
 

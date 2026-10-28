@@ -3,17 +3,33 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Dice.Tests
 {
     internal static class ContentReady
     {
+        /** Real seconds a test waits for a presentation step, such as routing or an opening roll, before it fails. */
+        internal const float Timeout = 30;
+        /** Real seconds a test waits for a step that plays authored host motion or a whole sequence before it fails. */
+        internal const float SequenceTimeout = 45;
+        /** Real seconds a newly shown button may stay behind another graphic before a click on it fails. */
+        private const float RaycastDepthTimeout = 1;
+        /** The fixed seed the fixtures play their encounters from. */
+        internal const ulong Seed = 60;
+        /** Seeds searched for an opening whose rule draws produce the event a rule playback test needs. */
+        internal const ulong RuleSeedSearchLimit = 4000;
+        /** Player rerolls take the two leftmost dice, so a rule acting on kept dice targets one of the other three. */
+        internal const int RerollMask = 0b00011;
+
         /** Statuses that report a failed startup or campaign opening. */
         private static readonly SpiritStatusKind[] StartupFailures =
         {
@@ -113,20 +129,133 @@ namespace Dice.Tests
         internal static IEnumerator Routed(SpiritEncounterController controller = null)
         {
             var router = Router(controller);
-            float deadline = Time.realtimeSinceStartup + 30;
-            while (!router.IsReady && Time.realtimeSinceStartup < deadline) yield return null;
-            Assert.That(router.IsReady, Is.True, "The authored presentation scene did not become ready.");
+            yield return WaitUntil(() => router.IsReady, "The authored presentation scene did not become ready.");
         }
 
-        internal static Transform Die(SpiritDiceTray tray, int index)
+        /** Loads a fresh application scene and waits for its content, at the investigation board. */
+        internal static IEnumerator LoadApplication()
         {
-            var field = typeof(SpiritDiceTray).GetField("dice",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            Assert.That(field, Is.Not.Null);
-            var dice = (Transform[])field.GetValue(tray);
-            Assert.That(dice, Has.Length.EqualTo(Dice.Engine.DiceValues.Count));
-            Assert.That(dice[index], Is.Not.Null, "Authored die " + index);
-            return dice[index];
+            yield return SceneManager.LoadSceneAsync("Application");
+            yield return Spirit(false);
+        }
+
+        /** Plays the controller's runs from the fixtures' fixed seed. */
+        internal static void UseFixedSeed(SpiritEncounterController controller)
+            => controller.ConfigureSeedPolicy(true, Seed);
+
+        /** Waits until the condition holds, failing with the description when it does not within the timeout. */
+        internal static IEnumerator WaitUntil(Func<bool> condition, string description, float timeout = Timeout)
+        {
+            float deadline = Time.realtimeSinceStartup + timeout;
+            while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(condition(), Is.True, description);
+        }
+
+        /** Waits for routing, then for the controller to finish presenting, then one more frame. */
+        internal static IEnumerator Idle(SpiritEncounterController controller, float timeout = Timeout)
+        {
+            yield return Routed(controller);
+            yield return WaitUntil(() => !controller.IsBusy, "Presentation did not complete: " + controller.Status, timeout);
+            yield return null;
+        }
+
+        /**
+         * Opens the journey's encounter from the investigation board with the given session seed, completing its
+         * prerequisites first and passing any pre-encounter screen, and waits for its opening roll.
+         */
+        internal static IEnumerator EnterEncounter(SpiritEncounterController controller, string journeyId, ulong seed)
+        {
+            controller.ReturnToInvestigation();
+            yield return Routed(controller);
+            SeedJourneyPrerequisites(controller, journeyId);
+            controller.SelectEncounter(journeyId);
+            yield return Routed(controller);
+            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+                controller.AdvanceJourney();
+            controller.ConfigureSeedPolicy(true, seed);
+            controller.AcceptEncounter();
+            yield return Routed(controller);
+            // Encounters that introduce their additions before play show the pre-encounter screen first.
+            var charms = EncounterView(controller).JourneyView.EncounterCharms;
+            if (charms.IsOpen) charms.BeginButton.onClick.Invoke();
+            yield return Idle(controller);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
+        }
+
+        /**
+         * A copy of the catalog in which the encounter has every stage target at 1 and is otherwise as authored, so each
+         * played hand clears its stage.
+         */
+        internal static MechanicalCatalog ShortStages(MechanicalCatalog authored, string encounterId, string version)
+        {
+            var definition = authored.GetEncounter(encounterId);
+            var shortEncounter = new EncounterDefinition(definition.Id,
+                definition.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
+                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
+                definition.SpiritId, definition.UnlockMilestones, definition.EncounterModifierIds,
+                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
+            return new MechanicalCatalog(version, authored.Hands,
+                authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
+                authored.Modifiers, authored.RewardPools);
+        }
+
+        /** The named component under the presentation root, preferring an active one where several screens author the same name. */
+        internal static T Find<T>(SpiritEncounterController controller, string name) where T : Component
+        {
+            var value = PresentationRoot(controller).GetComponentsInChildren<T>(true).Where(item => item.name == name)
+                .OrderByDescending(item => item.gameObject.activeInHierarchy).FirstOrDefault();
+            Assert.That(value, Is.Not.Null, name);
+            return value;
+        }
+
+        /** Clicks the button through the event system as a pointer at its centre does; fails if it is hidden, disabled or covered. */
+        internal static void Click(Button button)
+        {
+            Assert.That(button.gameObject.activeInHierarchy, Is.True, button.name);
+            Assert.That(button.IsInteractable(), Is.True, button.name);
+            var handler = TopClickHandler(button, out var pointer, out var hit);
+            Assert.That(hit.gameObject, Is.Not.Null, button.name);
+            Assert.That(handler, Is.SameAs(button.gameObject), "A graphic blocks " + button.name);
+            pointer.pointerCurrentRaycast = hit;
+            ExecuteEvents.Execute(handler, pointer, ExecuteEvents.pointerClickHandler);
+        }
+
+        /** Clicks a button that may just have been shown, once the canvas has given its graphics their render depth. */
+        internal static IEnumerator ClickWhenShown(Button button)
+        {
+            // Newly shown graphics are skipped by GraphicRaycaster until the canvas assigns their depth when rendering.
+            yield return WaitUntil(() => TopClickHandler(button, out _, out _) == button.gameObject, "A graphic blocks " + button.name,
+                RaycastDepthTimeout);
+            Click(button);
+        }
+
+        /** The click handler a pointer at the button's centre reaches, with that pointer and its topmost hit. */
+        internal static GameObject TopClickHandler(Button button, out PointerEventData pointer, out RaycastResult hit)
+        {
+            Canvas.ForceUpdateCanvases();
+            Assert.That(EventSystem.current, Is.Not.Null);
+            var rect = (RectTransform)button.transform;
+            pointer = new PointerEventData(EventSystem.current)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center)),
+                button = PointerEventData.InputButton.Left,
+                pointerId = -1
+            };
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            hit = hits.Count > 0 ? hits[0] : default;
+            return hits.Count > 0 ? ExecuteEvents.GetEventHandler<IPointerClickHandler>(hits[0].gameObject) : null;
+        }
+
+        /**
+         * Sets an authored field of a fabricated copy of content, such as a journey or its beats. Play Mode tests build
+         * into the player assembly, which has no serialized-object editing, so the field is set directly.
+         */
+        internal static void SetField(object target, string name, object value)
+        {
+            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, target.GetType().Name + "." + name);
+            field.SetValue(target, value);
         }
 
         /**

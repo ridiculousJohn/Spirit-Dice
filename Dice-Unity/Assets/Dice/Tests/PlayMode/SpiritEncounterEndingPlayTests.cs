@@ -37,11 +37,9 @@ namespace Dice.Tests
         /** Loads a fresh application with its own isolated profile and save, ready at the investigation board. */
         private IEnumerator Reload()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.LoadApplication();
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            SetField(controller, "useFixedSeed", true);
-            SetField(controller, "initialSeed", "60");
+            ContentReady.UseFixedSeed(controller);
         }
 
         /** The first authored encounter journey, in catalog order, that authors a presentation of the outcome. */

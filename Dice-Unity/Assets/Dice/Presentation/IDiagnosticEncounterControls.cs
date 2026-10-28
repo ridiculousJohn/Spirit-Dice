@@ -15,7 +15,7 @@ namespace Dice.Presentation
         int SelectedMask { get; }
         string StatusMessage { get; }
         string SavePath { get; }
-        string SeedText { get; }
+        ulong Seed { get; }
 
         void StartNew(string seed);
         void ToggleDie(int index);

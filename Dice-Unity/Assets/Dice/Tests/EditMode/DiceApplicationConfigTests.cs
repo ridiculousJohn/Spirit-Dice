@@ -73,27 +73,6 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(configuration.Validate);
         }
 
-        [TestCase("")]
-        [TestCase("-1")]
-        [TestCase("not a seed")]
-        [TestCase("18446744073709551616")]
-        public void InvalidSeedIsRejectedOnlyWhenFixedSeedIsEnabled(string seed)
-        {
-            Set("initialSeed", seed);
-            Assert.DoesNotThrow(configuration.Validate);
-            Set("useFixedSeed", true);
-            Assert.Throws<InvalidOperationException>(configuration.Validate);
-        }
-
-        [TestCase("0")]
-        [TestCase("18446744073709551615")]
-        public void FixedSeedAcceptsTheEntireUnsignedRange(string seed)
-        {
-            Set("useFixedSeed", true);
-            Set("initialSeed", seed);
-            Assert.DoesNotThrow(configuration.Validate);
-        }
-
         private void Set(string name, object value)
         {
             using var serialized = new SerializedObject(configuration);

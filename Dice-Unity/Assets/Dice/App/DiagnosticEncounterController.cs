@@ -18,7 +18,7 @@ namespace Dice.App
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
         [SerializeField] private ModifierSkinAsset modifierSkin;
         [SerializeField] private string encounterId = "encounter.standard";
-        [SerializeField] private string initialSeed = "60";
+        [SerializeField] private ulong initialSeed = EncounterApplication.DefaultSeed;
         private readonly List<string> eventLog = new List<string>();
         private EncounterApplication application;
         private IReadOnlyList<string> readOnlyEventLog;
@@ -33,13 +33,13 @@ namespace Dice.App
         public int SelectedMask { get; private set; }
         public string StatusMessage { get; private set; } = "Assign a mechanical catalog to start the diagnostic encounter.";
         public string SavePath { get; private set; }
-        public string SeedText { get; private set; } = "60";
+        public ulong Seed { get; private set; } = EncounterApplication.DefaultSeed;
 
         private void Awake()
         {
             BindView();
             SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "diagnostic-encounter.json");
-            SeedText = initialSeed;
+            Seed = initialSeed;
         }
 
         /** Loads the catalog and skin the scene references, the same content and skin the application loads. */
@@ -82,13 +82,19 @@ namespace Dice.App
             InstallNew(next, seed);
         }
 
-        public void StartNew(string seed)
+        /** Starts a run from the seed typed into the diagnostic view; text is parsed only here, at that input. */
+        public void StartNew(string seedText)
         {
-            if (!ulong.TryParse(seed, NumberStyles.None, CultureInfo.InvariantCulture, out ulong value))
+            if (!ulong.TryParse(seedText, NumberStyles.None, CultureInfo.InvariantCulture, out ulong value))
             {
                 StatusMessage = "Seed must be an unsigned 64-bit integer.";
                 return;
             }
+            StartNew(value);
+        }
+
+        public void StartNew(ulong value)
+        {
             if (Catalog == null)
             {
                 StatusMessage = "Assign a mechanical catalog to start the diagnostic encounter.";
@@ -191,12 +197,12 @@ namespace Dice.App
         private void InstallNew(EncounterApplication next, ulong seed)
         {
             application = next;
-            SeedText = seed.ToString(CultureInfo.InvariantCulture);
+            Seed = seed;
             SelectedMask = 0;
             eventLog.Clear();
             application.AttachPresenter(this);
             AppendEvents(application.InitialResolution);
-            StatusMessage = WithCacheStatus("Started encounter with seed " + SeedText);
+            StatusMessage = WithCacheStatus("Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
         }
 
         private void Submit(EncounterAction action, bool clearSelection)

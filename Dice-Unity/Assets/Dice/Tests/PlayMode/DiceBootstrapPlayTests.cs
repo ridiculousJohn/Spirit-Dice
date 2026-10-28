@@ -202,15 +202,11 @@ namespace Dice.Tests
         {
             InstallPendingConfiguration();
             yield return CreateHost();
-            yield return WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
-            var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition("hand.bootstrap." + (int)category, category, 5, 1, 5, 1, 6));
+            yield return ContentReady.WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
             const string encounterId = "encounter.bootstrap.explicit";
-            var table = DirectTable(out var rules);
-            var catalog = new MechanicalCatalog("bootstrap.explicit.v1", hands,
-                new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });
+            var catalog = DirectCatalog("bootstrap.explicit", encounterId, out var table);
             string savePath = ContentReady.SpiritSavePath();
-            controller.ConfigureSeedPolicy(true, "17");
+            controller.ConfigureSeedPolicy(true, 17);
             controller.Initialize(catalog, encounterId, 42, savePath);
             var snapshot = controller.Snapshot;
             var preview = controller.Preview;

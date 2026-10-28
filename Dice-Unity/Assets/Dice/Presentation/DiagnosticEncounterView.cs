@@ -26,8 +26,7 @@ namespace Dice.Presentation
         private int cachedMask = -1;
         private string cachedSavePath;
         private string savePathLabel = "Save file: unavailable";
-        private string seedText = "1";
-        private string lastControlsSeed;
+        private ulong lastControlsSeed;
         private string stageTitle;
         private string stageSummary;
         private string runSummary;
@@ -73,8 +72,8 @@ namespace Dice.Presentation
         {
             controls = encounterControls ?? throw new ArgumentNullException(nameof(encounterControls));
             cachedSnapshot = null; cachedCatalog = null; cachedEvents = null; cachedMask = -1;
-            lastControlsSeed = controls.SeedText; seedText = lastControlsSeed ?? "1";
-            seedInput.SetTextWithoutNotify(seedText);
+            lastControlsSeed = controls.Seed;
+            seedInput.SetTextWithoutNotify(SeedText(lastControlsSeed));
             if (bound) return;
             startButton.onClick.AddListener(() => controls.StartNew(seedInput.text));
             saveButton.onClick.AddListener(() => controls.Save());
@@ -96,11 +95,11 @@ namespace Dice.Presentation
         private void Update()
         {
             if (controls == null) return;
-            string incoming = controls.SeedText ?? "1";
+            ulong incoming = controls.Seed;
             if (incoming != lastControlsSeed && !seedInput.isFocused)
             {
                 lastControlsSeed = incoming;
-                seedInput.SetTextWithoutNotify(incoming);
+                seedInput.SetTextWithoutNotify(SeedText(incoming));
             }
             RefreshText();
             statusText.text = controls.StatusMessage ?? "";
@@ -157,6 +156,8 @@ namespace Dice.Presentation
                     (cachedSnapshot.Phase == EncounterPhase.ChoosingModifier || cachedSnapshot.Phase == EncounterPhase.ChoosingHandUpgrade);
             }
         }
+        private static string SeedText(ulong seed) => seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
         private void RefreshText()
         {
             if (cachedSavePath != controls.SavePath)

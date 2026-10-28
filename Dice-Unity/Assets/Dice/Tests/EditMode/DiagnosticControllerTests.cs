@@ -183,7 +183,7 @@ namespace Dice.Tests
             Assert.That(controller.StatusMessage, Does.Contain(nameof(CommandRejection.EncounterCompleted)));
             Assert.That(controller.Snapshot, Is.SameAs(completed));
             controller.StartNew("00042");
-            Assert.That(controller.SeedText, Is.EqualTo("42"));
+            Assert.That(controller.Seed, Is.EqualTo(42UL));
             AssertSnapshots(EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 42).Snapshot);
             Assert.That(controller.EventLog.Count,
                 Is.EqualTo(EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 42).InitialResolution.Events.Count));
@@ -206,7 +206,7 @@ namespace Dice.Tests
             Assert.That(controller.Preview, Is.SameAs(preview));
             Assert.That(controller.SelectedMask, Is.EqualTo(DiceValues.AllMask));
             Assert.That(controller.EventLog, Is.EqualTo(history));
-            Assert.That(controller.SeedText, Is.EqualTo("42"));
+            Assert.That(controller.Seed, Is.EqualTo(42UL));
         }
 
         [Test]
@@ -226,7 +226,7 @@ namespace Dice.Tests
             AssertSnapshots(expected.Snapshot);
             Assert.That(controller.SelectedMask, Is.Zero);
             Assert.That(controller.EventLog, Is.Empty);
-            Assert.That(controller.SeedText, Is.EqualTo("8"));
+            Assert.That(controller.Seed, Is.EqualTo(8UL));
             Assert.That(controller.StatusMessage, Does.Contain("Loaded"));
             var offer = expected.Snapshot.PendingReward;
             controller.ChooseReward(offer.OfferId, offer.Options[0].OptionId);
@@ -265,7 +265,7 @@ namespace Dice.Tests
             Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
             Assert.That(controller.SelectedMask, Is.EqualTo(4));
             Assert.That(controller.EventLog, Is.EqualTo(history));
-            Assert.That(controller.SeedText, Is.EqualTo("3"));
+            Assert.That(controller.Seed, Is.EqualTo(3UL));
         }
 
         [Test]

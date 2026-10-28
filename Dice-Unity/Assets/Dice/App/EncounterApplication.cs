@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Dice.Engine;
 using Dice.Presentation;
-using Dice.UnityContent;
 
 namespace Dice.App
 {
     public sealed class EncounterApplication
     {
+        /** The seed a fixed-seed run starts from until a configuration names another. */
+        public const ulong DefaultSeed = 60;
         private readonly EncounterSession session;
         private IEncounterPresenter presenter;
 

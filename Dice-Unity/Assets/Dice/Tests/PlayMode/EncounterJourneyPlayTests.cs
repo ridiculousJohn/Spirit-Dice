@@ -27,7 +27,7 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            controller.ConfigureSeedPolicy(true, Seed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            ContentReady.UseFixedSeed(controller);
             resolutions = 0;
             rolls = 0;
             controller.Resolved += resolution =>

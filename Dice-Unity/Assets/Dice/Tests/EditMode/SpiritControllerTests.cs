@@ -370,7 +370,7 @@ namespace Dice.Tests
         [Test]
         public void NewRunSynchronizesTheRememberedSeedAndAbandonUsesAnEngineResolution()
         {
-            ConfigureSeedPolicy(true, "42");
+            ConfigureSeedPolicy(true, 42);
             var catalog = TestContent.Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 42, savePath);
             int resolutions = 0;
@@ -421,7 +421,7 @@ namespace Dice.Tests
         [TestCase(true)]
         public void ExplicitInitializationReplaysItsSeedWithoutChangingTheDebugPolicy(bool fixedSeed)
         {
-            ConfigureSeedPolicy(fixedSeed, "17");
+            ConfigureSeedPolicy(fixedSeed, 17);
             var catalog = TestContent.Catalog();
             for (int run = 0; run < 2; ++run)
             {
@@ -443,7 +443,7 @@ namespace Dice.Tests
         [Test]
         public void FixedDebugSeedRepeatsInitialDiceRerollsAndRewardOffers()
         {
-            ConfigureSeedPolicy(true, "42");
+            ConfigureSeedPolicy(true, 42);
             var catalog = RewardTestContent.Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             byte[] previous = null;
@@ -468,33 +468,6 @@ namespace Dice.Tests
                 if (previous != null) Assert.That(current, Is.EqualTo(previous));
                 previous = current;
             }
-        }
-
-        [TestCase("not a seed")]
-        [TestCase("-1")]
-        [TestCase("18446744073709551616")]
-        public void InvalidFixedSeedPreservesTheRunAndIsIgnoredInNormalMode(string invalidSeed)
-        {
-            controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 3, savePath);
-            controller.ToggleDie(2);
-            var before = controller.Snapshot;
-            var preview = controller.Preview;
-            var inspections = controller.ModifierInspections;
-            ConfigureSeedPolicy(true, invalidSeed);
-            controller.StartNew();
-            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.StartFailed));
-            Assert.That(controller.Status.Detail, Does.Contain("unsigned 64-bit integer"));
-            Assert.That(controller.Snapshot, Is.SameAs(before));
-            Assert.That(controller.Preview, Is.SameAs(preview));
-            Assert.That(controller.ModifierInspections, Is.SameAs(inspections));
-            Assert.That(controller.SelectedMask, Is.EqualTo(4));
-            Assert.That(controller.IsBusy, Is.False);
-            ConfigureSeedPolicy(false, invalidSeed);
-            controller.StartNew();
-            Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started));
-            Assert.That(controller.Snapshot, Is.Not.SameAs(before));
-            Assert.That(controller.Snapshot.Revision, Is.Zero);
-            Assert.That(controller.SelectedMask, Is.Zero);
         }
 
         [Test]
@@ -534,7 +507,7 @@ namespace Dice.Tests
             }
         }
 
-        private void ConfigureSeedPolicy(bool fixedSeed, string value)
+        private void ConfigureSeedPolicy(bool fixedSeed, ulong value)
         {
             controller.ConfigureSeedPolicy(fixedSeed, value);
         }

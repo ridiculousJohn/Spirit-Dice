@@ -90,7 +90,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
-            controller.ConfigureSeedPolicy(true, "1");
+            controller.ConfigureSeedPolicy(true, 1);
             controller.AcceptEncounter();
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);
@@ -273,7 +273,7 @@ namespace Dice.Tests
             var ward = controller.Catalog.GetEncounter(EncounterId).Rules.OfType<BayWardRuleDefinition>().Single();
             var plan = FindPlan(controller.Catalog, kind, ward);
             TestContext.WriteLine("Merchant disturbance capture " + name + ": " + plan.Summary);
-            controller.ConfigureSeedPolicy(true, plan.Seed.ToString(CultureInfo.InvariantCulture));
+            controller.ConfigureSeedPolicy(true, plan.Seed);
             controller.AcceptEncounter();
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);

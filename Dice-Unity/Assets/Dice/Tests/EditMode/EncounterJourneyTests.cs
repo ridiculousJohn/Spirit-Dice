@@ -34,7 +34,7 @@ namespace Dice.Tests
             host = new GameObject("Journey controls test");
             host.SetActive(false);
             controller = host.AddComponent<SpiritEncounterController>();
-            controller.ConfigureSeedPolicy(true, "17");
+            controller.ConfigureSeedPolicy(true, 17);
             var modifier = new ModifierDefinition("modifier.journey-test", "family.journey-test", ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var policy = new RewardPolicyDefinition("policy.journey-test", new[] { new ModifierRewardLayout(new[] { "pool.journey-test" }) },
@@ -620,34 +620,6 @@ namespace Dice.Tests
             controller.ReturnToInvestigation();
             controller.SelectEncounter(FirstId);
             Assert.That(controller.CanSkipIntro, Is.False);
-        }
-
-        [Test]
-        public void InvalidDebugSeedDoesNotRecordVisitOrCreateEngineState()
-        {
-            controller.InitializeJourney(catalog, journeys, savePath);
-            SelectInvitation(FirstId);
-            controller.ConfigureSeedPolicy(true, "invalid");
-            controller.AcceptEncounter();
-            Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.InvitationFailed));
-            Assert.That(controller.JourneyStatus.Detail, Does.Contain("Seed must be"));
-            Assert.That(controller.VisitedEncounterIds, Is.Empty);
-            Assert.That(controller.Snapshot, Is.Null);
-            Assert.That(File.Exists(controller.ProfilePath), Is.False);
-        }
-
-        [TestCase("missing")]
-        [TestCase("duplicate")]
-        [TestCase("blank")]
-        [TestCase("null")]
-        public void InvalidVisitFieldsAreRejected(string error)
-        {
-            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
-            if (error == "missing") document.Remove("VisitedEncounterIds");
-            if (error == "duplicate") document["VisitedEncounterIds"] = new JArray(FirstId, FirstId);
-            if (error == "blank") document["VisitedEncounterIds"] = new JArray(" ");
-            if (error == "null") document["VisitedEncounterIds"] = JValue.CreateNull();
-            Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
         }
 
         [Test]

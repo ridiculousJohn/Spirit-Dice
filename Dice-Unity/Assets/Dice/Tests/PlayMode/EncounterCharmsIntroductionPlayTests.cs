@@ -25,11 +25,9 @@ namespace Dice.Tests
         [UnitySetUp]
         public IEnumerator InvestigationReady()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.LoadApplication();
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            SetField(controller, "useFixedSeed", true);
-            SetField(controller, "initialSeed", "60");
+            ContentReady.UseFixedSeed(controller);
             yield return null;
         }
 
