@@ -451,13 +451,14 @@ namespace Dice.Tests
 
         private static IEnumerator Move(SpiritEncounterController controller, SpiritTablePieceView piece, PiecePosition position)
         {
-            if (piece.Position != position)
+            var placement = piece.GetComponent<SpiritTablePiecePosition>();
+            if (placement.Position != position)
             {
                 controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
                 float deadline = Time.realtimeSinceStartup + 10;
-                while ((controller.IsBusy || piece.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
+                while ((controller.IsBusy || placement.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
             }
-            Assert.That(piece.Position, Is.EqualTo(position), piece.PieceId);
+            Assert.That(placement.Position, Is.EqualTo(position), piece.PieceId);
             Vector3 previous = piece.transform.position;
             int stable = 0;
             float settle = Time.realtimeSinceStartup + 5;

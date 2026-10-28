@@ -76,10 +76,9 @@ namespace Dice.Presentation
         [SerializeField] private List<Button> diceButtons = new List<Button>();
         [SerializeField] private SpiritPauseMenu pauseMenu;
         [SerializeField] private Vector2 portraitReferenceSize = new Vector2(540, 960);
-        [Tooltip("Authored props for the encounter's positioned table pieces; empty when the encounter places none.")]
+        [Tooltip("Authored props for the encounter's table pieces; empty when the encounter places none.")]
         [SerializeField] private List<SpiritTablePieceView> tablePieces = new List<SpiritTablePieceView>();
         private readonly Rect[] pieceSlotRects = new Rect[DiceValues.Count];
-        private readonly Vector3[] pieceBayPoints = new Vector3[DiceValues.Count];
         private bool pieceSlotsMeasured;
         private float[] pieceLightIntensities = Array.Empty<float>();
         private Vector2[] pieceLightUvOffsets = Array.Empty<Vector2>();
@@ -97,7 +96,9 @@ namespace Dice.Presentation
         private readonly SceneLightFlares lightFlares = new SceneLightFlares();
         // Presenters of the configured table's rules for the encounter they were created for; null when no rule card references one.
         private EncounterRulePresenters rulePresenters;
-        private string rulePresentersEncounterId;
+        // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
+        private TablePiecePresenters piecePresenters;
+        private string presentersEncounterId;
         // The configured table's rule card flagged as shown on the HUD; null when the table flags none.
         private EncounterRulePresentationAsset hudRuleCard;
         private bool applicationFocused = true;
@@ -136,8 +137,8 @@ namespace Dice.Presentation
             bool canceledPresentation = presenting;
             ResetPresentation();
             if (canceledPresentation) controls?.CompletePresentation();
-            // Rule presenters are created for a rule definition of the bound controls' catalog.
-            DisposeRulePresenters();
+            // Rule and piece presenters are created for definitions of the bound controls' catalog.
+            DisposePresenters();
             controls = nextControls;
             RewardsPanel.Bind(controls);
             OwnedCharmsPanel.Bind(controls);
@@ -236,8 +237,8 @@ namespace Dice.Presentation
             ReleaseTestLightOverrides();
             ambientActivity =selectedTable.AmbientActivity != null
                 ? new EncounterAmbientActivity(selectedTable.AmbientActivity, this, ambientProps, encounterAudio) : null;
-            // The table's rule presenters are created once the encounter it presents is known.
-            DisposeRulePresenters();
+            // The table's rule and piece presenters are created once the encounter it presents is known.
+            DisposePresenters();
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
             actionModifierCue.ConfigureHost(selectedTable.HostPresentation);
@@ -280,7 +281,7 @@ namespace Dice.Presentation
 
         private void OnDestroy()
         {
-            DisposeRulePresenters();
+            DisposePresenters();
             ClearSceneLighting();
             if (hostPortrait != null) hostPortrait.SpiritGesture -= PlaySpiritCue;
             if (ModifierHistory != null) ModifierHistory.TokenSelected -= InspectHistoryToken;
@@ -506,11 +507,6 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The encounter screen requires five authored dice targets.");
             foreach (var button in diceButtons)
                 if (button == null) throw new InvalidOperationException("An authored dice target is missing.");
-            foreach (var piece in tablePieces)
-            {
-                if (piece == null) throw new InvalidOperationException("An authored table piece is missing.");
-                piece.Initialize(CanMovePiece, RequestPieceMove);
-            }
             GameplayHud.BuildHeader(portrait, ToggleMenu);
             GameplayHud.BuildPlayingPanel();
             GameplayHud.BuildPlayingHud(Reroll, Play);
@@ -738,7 +734,7 @@ namespace Dice.Presentation
                 hud.StatusLabel.text = controls.StatusMessage;
                 return;
             }
-            bool createdPresenters = CreateRulePresenters(snapshot.EncounterId);
+            bool createdPresenters = CreatePresenters(snapshot.EncounterId);
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
@@ -754,7 +750,7 @@ namespace Dice.Presentation
             }
             // New presenters of a presented snapshot show its state at once as well.
             else if (createdPresenters) rulePresenters?.Sync(snapshot, false);
-            BindTablePieces(snapshot);
+            piecePresenters.Bind(snapshot);
             bool playing = snapshot.Phase == EncounterPhase.Playing;
             if (playing && controls.Preview != null)
                 ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog,
@@ -812,20 +808,7 @@ namespace Dice.Presentation
             if (IsHandRanksOpen) RenderHandRanks();
         }
 
-        private void BindTablePieces(EncounterSnapshot snapshot)
-        {
-            if (tablePieces.Count == 0) return;
-            var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
-            foreach (var piece in tablePieces)
-            {
-                var interaction = FindPieceInteraction(snapshot, piece);
-                var definition = FindPositionDefinition(encounter, piece);
-                if (interaction?.State is PiecePositionState state && definition != null) piece.Bind(state.Position, definition);
-                else piece.Unbind();
-            }
-        }
-
-        /** Bay snap points follow the tray's resting dice slots, measured like the authored dice touch targets. */
+        /** Bay points offered to piece presenters follow the tray's resting dice slots, measured like the authored dice touch targets. */
         private void PositionTablePieces()
         {
             if (tablePieces.Count == 0 || DiceTray == null || trayImage == null) return;
@@ -835,30 +818,7 @@ namespace Dice.Presentation
                 for (int bay = 0; bay < DiceValues.Count; ++bay) pieceSlotRects[bay] = DiceTray.GetSlotViewportRect(bay);
                 pieceSlotsMeasured = true;
             }
-            RectTransform frame = trayImage.rectTransform;
-            foreach (var piece in tablePieces)
-            {
-                for (int bay = 0; bay < DiceValues.Count; ++bay)
-                    pieceBayPoints[bay] = frame.TransformPoint(
-                        SpiritTablePieceLayout.ViewportPoint(frame.rect, pieceSlotRects[bay], piece.BayPlacement));
-                piece.Layout(pieceBayPoints);
-            }
-        }
-
-        /** Pieces move whenever the game accepts input during a hand and the piece's interaction is available. */
-        private bool CanMovePiece(SpiritTablePieceView piece)
-        {
-            if (Busy || !isActiveAndEnabled || controls.Snapshot == null || controls.Snapshot.Phase != EncounterPhase.Playing ||
-                journeyControls != null && journeyControls.JourneyPhase != EncounterJourneyPhase.Playing) return false;
-            var interaction = FindPieceInteraction(controls.Snapshot, piece);
-            return interaction != null && interaction.IsAvailable;
-        }
-
-        private bool RequestPieceMove(SpiritTablePieceView piece, PiecePosition position)
-        {
-            if (!CanMovePiece(piece)) return false;
-            controls.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
-            return true;
+            piecePresenters?.Layout();
         }
 
         private SpiritTablePieceView FindTablePiece(string pieceId, string interactionId)
@@ -866,26 +826,6 @@ namespace Dice.Presentation
             foreach (var piece in tablePieces)
                 if (piece != null && string.Equals(piece.PieceId, pieceId, StringComparison.Ordinal) &&
                     string.Equals(piece.InteractionId, interactionId, StringComparison.Ordinal)) return piece;
-            return null;
-        }
-
-        private static PieceInteractionSnapshot FindPieceInteraction(EncounterSnapshot snapshot, SpiritTablePieceView piece)
-        {
-            foreach (var interaction in snapshot.PieceInteractions)
-                if (string.Equals(interaction.PieceId, piece.PieceId, StringComparison.Ordinal) &&
-                    string.Equals(interaction.InteractionId, piece.InteractionId, StringComparison.Ordinal)) return interaction;
-            return null;
-        }
-
-        private static PositionInteractionDefinition FindPositionDefinition(EncounterDefinition encounter, SpiritTablePieceView piece)
-        {
-            foreach (var candidate in encounter.Pieces)
-            {
-                if (!string.Equals(candidate.Id, piece.PieceId, StringComparison.Ordinal)) continue;
-                foreach (var interaction in candidate.Interactions)
-                    if (string.Equals(interaction.Id, piece.InteractionId, StringComparison.Ordinal))
-                        return interaction as PositionInteractionDefinition;
-            }
             return null;
         }
 
@@ -958,7 +898,7 @@ namespace Dice.Presentation
             menuPanel.gameObject.SetActive(false);
             if (resolution.Snapshot.Phase == EncounterPhase.Completed && RewardsPanel.Root.gameObject.activeSelf)
                 SetGameplayVisible(false);
-            CreateRulePresenters(resolution.Snapshot.EncounterId);
+            CreatePresenters(resolution.Snapshot.EncounterId);
             // An opening resolution may already have been refreshed as the installed state; its events build the rule state from nothing.
             if (resolution.PreviousRevision < 0) rulePresenters?.Sync(null, false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
@@ -1057,23 +997,38 @@ namespace Dice.Presentation
             Refresh();
         }
 
-        /** Creates the configured table's rule presenters for the encounter unless they already present it; true when created. */
-        private bool CreateRulePresenters(string encounterId)
+        /**
+         * Creates the configured table's rule presenters and its piece presenters for the encounter unless they already present
+         * it; true when created.
+         */
+        private bool CreatePresenters(string encounterId)
         {
-            if (rulePresentersEncounterId != null && string.Equals(rulePresentersEncounterId, encounterId, StringComparison.Ordinal))
+            if (presentersEncounterId != null && string.Equals(presentersEncounterId, encounterId, StringComparison.Ordinal))
                 return false;
-            DisposeRulePresenters();
-            rulePresenters = EncounterRulePresenters.Create(configuredTable.RulePresentations,
-                controls.Catalog.GetEncounter(encounterId), () => new TableRuleContext(this));
-            rulePresentersEncounterId = encounterId;
+            DisposePresenters();
+            var encounter = controls.Catalog.GetEncounter(encounterId);
+            try
+            {
+                rulePresenters = EncounterRulePresenters.Create(configuredTable.RulePresentations, encounter,
+                    () => new TableRuleContext(this));
+                piecePresenters = TablePiecePresenters.Create(tablePieces, encounter, new TablePieceContext(this));
+            }
+            catch
+            {
+                DisposePresenters();
+                throw;
+            }
+            presentersEncounterId = encounterId;
             return true;
         }
 
-        private void DisposeRulePresenters()
+        private void DisposePresenters()
         {
             rulePresenters?.Dispose();
             rulePresenters = null;
-            rulePresentersEncounterId = null;
+            piecePresenters?.Dispose();
+            piecePresenters = null;
+            presentersEncounterId = null;
         }
 
         /** What the encounter screen offers rule presenters: its tray, host, lights, audio, ambient activity, pieces and HUD. */
@@ -1124,6 +1079,39 @@ namespace Dice.Presentation
             }
 
             public override IEnumerator SweepSpirit(Sprite icon, float duration) => view.GameplayHud.AnimateRuleSpirit(icon, duration);
+        }
+
+        /** What the encounter screen offers piece interaction presenters: its controls' piece interactions and the tray's bay slots. */
+        private sealed class TablePieceContext : PieceInteractionPresenterContext
+        {
+            private readonly SpiritEncounterView view;
+
+            internal TablePieceContext(SpiritEncounterView view) => this.view = view;
+
+            /** Pieces are used whenever the game accepts input during a hand and the piece's interaction is available. */
+            public override bool CanInteract(string pieceId, string interactionId)
+            {
+                if (view.Busy || !view.isActiveAndEnabled || view.controls.Snapshot == null ||
+                    view.controls.Snapshot.Phase != EncounterPhase.Playing ||
+                    view.journeyControls != null && view.journeyControls.JourneyPhase != EncounterJourneyPhase.Playing) return false;
+                foreach (var interaction in view.controls.Snapshot.PieceInteractions)
+                    if (string.Equals(interaction.PieceId, pieceId, StringComparison.Ordinal) &&
+                        string.Equals(interaction.InteractionId, interactionId, StringComparison.Ordinal)) return interaction.IsAvailable;
+                return false;
+            }
+
+            public override bool Interact(string pieceId, string interactionId, PieceInteractionInput input)
+            {
+                if (!CanInteract(pieceId, interactionId)) return false;
+                view.controls.InteractWithPiece(pieceId, interactionId, input);
+                return true;
+            }
+
+            public override Vector3 BayPoint(int bay, Vector2 placement)
+            {
+                RectTransform frame = view.trayImage.rectTransform;
+                return frame.TransformPoint(SpiritTablePieceLayout.ViewportPoint(frame.rect, view.pieceSlotRects[bay], placement));
+            }
         }
     }
 }

@@ -12,7 +12,6 @@ namespace Dice.Tests
 {
     public sealed class SpiritTablePieceTests
     {
-        private const string PieceId = "piece.test";
         private const string InteractionId = "position";
         private static readonly Vector3[] BayPoints =
         {
@@ -20,7 +19,7 @@ namespace Dice.Tests
         };
         private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
         private readonly List<PiecePosition> requests = new List<PiecePosition>();
-        private SpiritTablePieceView piece;
+        private SpiritTablePiecePosition piece;
         private PositionInteractionDefinition definition;
         private bool movable;
         private bool submit;
@@ -37,9 +36,7 @@ namespace Dice.Tests
             anchor.transform.position = new Vector3(-300, 0, 0);
             var prop = new GameObject("Table Piece", typeof(RectTransform));
             prop.transform.SetParent(parent.transform, false);
-            piece = prop.AddComponent<SpiritTablePieceView>();
-            Set(piece, "pieceId", PieceId);
-            Set(piece, "interactionId", InteractionId);
+            piece = prop.AddComponent<SpiritTablePiecePosition>();
             Set(piece, "neutralAnchor", (RectTransform)anchor.transform);
             Set(piece, "snapRadius", 90f);
             Set(piece, "settleDuration", 0f);
@@ -49,7 +46,7 @@ namespace Dice.Tests
             movable = submit = accept = true;
             engine = PiecePosition.Neutral;
             requests.Clear();
-            piece.Initialize(_ => movable, RequestMove);
+            piece.Initialize(() => movable, RequestMove);
             piece.Bind(PiecePosition.Neutral, definition);
             piece.Layout(BayPoints);
         }
@@ -182,19 +179,20 @@ namespace Dice.Tests
             created.Add(flame);
             var image = flame.GetComponent<Image>();
             image.color = new Color(1, .8f, .4f, .8f);
-            Set(piece, "emissiveImages", new Graphic[] { image });
-            piece.SetEmission(.5f);
+            var view = piece.GetComponent<SpiritTablePieceView>();
+            Set(view, "emissiveImages", new Graphic[] { image });
+            view.SetEmission(.5f);
             Assert.That(image.color.a, Is.EqualTo(.4f).Within(.0001f));
             Assert.That(image.color.g, Is.EqualTo(.8f).Within(.0001f));
-            piece.SetEmission(2f);
+            view.SetEmission(2f);
             Assert.That(image.color.a, Is.EqualTo(.8f).Within(.0001f), "Emission never exceeds the authored alpha.");
-            piece.SetEmission(0f);
-            piece.RestoreEmission();
+            view.SetEmission(0f);
+            view.RestoreEmission();
             Assert.That(image.color, Is.EqualTo(new Color(1, .8f, .4f, .8f)));
-            Assert.That(piece.LightIntensity, Is.EqualTo(1f), "A piece only brightens its light while flaring.");
+            Assert.That(view.LightIntensity, Is.EqualTo(1f), "A piece only brightens its light while flaring.");
         }
 
-        /** Checks binding needs a neutral anchor only when neutral is allowed and initializing needs a piece id / fails if a prop binds without them. */
+        /** Checks binding needs a neutral anchor only when neutral is allowed / fails if a prop binds to a neutral position without one. */
         [Test]
         public void BindingRequiresAnAuthoredNeutralAnchorWhenNeutralIsAllowed()
         {
@@ -202,13 +200,10 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(() => piece.Bind(PiecePosition.Neutral, definition));
             Assert.DoesNotThrow(() => piece.Bind(PiecePosition.Bay(0), new PositionInteractionDefinition(InteractionId,
                 PiecePosition.Bay(0), PieceMovementTiming.DuringHand, false)));
-            Set(piece, "pieceId", "");
-            Assert.Throws<InvalidOperationException>(() => piece.Initialize(_ => true, (_, __) => true));
         }
 
-        private bool RequestMove(SpiritTablePieceView view, PiecePosition position)
+        private bool RequestMove(PiecePosition position)
         {
-            Assert.That(view, Is.SameAs(piece));
             if (!submit) return false;
             requests.Add(position);
             // The view submits synchronously; the resulting snapshot rebinds the accepted or unchanged position.
