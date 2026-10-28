@@ -17,6 +17,7 @@ Read this document, [code standards](CODE-STANDARDS.md), [presentation authoring
 
 ## Current workspace and outstanding work
 
+- Agreed next work and its design (content assets and typed ids, the content-validation tool, Bound Tree art) are in Docs/work/outstanding.md, which is git-ignored and kept on this machine; read it before choosing what to do next.
 - Root: C:/Users/jsp73/Projects/Dice; Unity project: Dice-Unity; branch: main.
 - Unity: 6000.6.6f1 at C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe.
 - Entry scene: Dice-Unity/Assets/Scenes/Application.unity; menu: Dice > Open Application.
