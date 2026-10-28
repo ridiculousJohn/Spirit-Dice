@@ -106,7 +106,7 @@ namespace Dice.Tests
             var activity = (EncounterAmbientActivity)typeof(SpiritEncounterView)
                 .GetField("ambientActivity", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
             activity?.Stop();
-            var lighting = (IAmbientLightingTarget)view;
+            var lighting = (IAmbientLightingTarget)view.TableLighting;
             var piece = view.TablePieces.Single();
             var asset = journey.TablePresentation.SceneLighting;
             SceneLightLayer candle = asset.Lights[1];
@@ -298,7 +298,7 @@ namespace Dice.Tests
             Assert.That(controller.SelectedMask, Is.EqualTo(kind == Case.ForcedRerollOnPlayHand ? 0 : RerollMask));
             for (int frame = 0; frame < 3; frame++) yield return null;
 
-            var lighting = (IAmbientLightingTarget)view;
+            var lighting = (IAmbientLightingTarget)view.TableLighting;
             var target = ContentReady.Die(view.DiceTray, plan.Bay);
             Quaternion targetRest = target.localRotation;
             float targetHeight = target.localPosition.y;

@@ -72,7 +72,7 @@ namespace Dice.Tests
             var activity = (EncounterAmbientActivity)typeof(SpiritEncounterView)
                 .GetField("ambientActivity", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
             Assert.That(activity, Is.Not.Null, "The merchant table authors ambient activity.");
-            var lighting = (IAmbientLightingTarget)view;
+            var lighting = (IAmbientLightingTarget)view.TableLighting;
             // A hidden editor reports no focus, which suspends the activity as it does the ambient audio.
             if (!Application.isFocused) view.SendMessage("OnApplicationFocus", true);
             var piece = view.TablePieces.Single();

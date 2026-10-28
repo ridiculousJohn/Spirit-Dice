@@ -22,7 +22,8 @@ namespace Dice.Editor
             var view = (SpiritEncounterView)target;
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Testing: scene lights", EditorStyles.boldLabel);
-            int count = view.TestLightCount;
+            var tableLighting = view.TableLighting;
+            int count = tableLighting != null ? tableLighting.LightCount : 0;
             if (count == 0)
             {
                 EditorGUILayout.HelpBox("The encounter screen has no configured table with scene lights.", MessageType.None);
@@ -37,7 +38,7 @@ namespace Dice.Editor
             var lights = lighting != null ? lighting.Lights : null;
             for (int i = 0; i < count; ++i)
             {
-                bool held = view.GetTestLightOverride(i, out float multiplier);
+                bool held = tableLighting.GetTestLightOverride(i, out float multiplier);
                 if (held && multiplier > 0f) onIntensities[i] = multiplier;
                 Texture2D contribution = lights != null && i < lights.Length && lights[i] != null ? lights[i].Contribution : null;
                 EditorGUILayout.LabelField("Light " + i + " (" + (contribution != null ? contribution.name : "no contribution") + ")",
@@ -46,17 +47,17 @@ namespace Dice.Editor
                 {
                     EditorGUI.BeginChangeCheck();
                     bool on = EditorGUILayout.Toggle("On", multiplier > 0f);
-                    if (EditorGUI.EndChangeCheck()) view.SetTestLightOverride(i, on ? onIntensities[i] : 0f);
+                    if (EditorGUI.EndChangeCheck()) tableLighting.SetTestLightOverride(i, on ? onIntensities[i] : 0f);
                     EditorGUI.BeginChangeCheck();
                     float intensity = EditorGUILayout.Slider("Intensity", Mathf.Min(multiplier, MaximumTestIntensity), 0f, MaximumTestIntensity);
                     if (EditorGUI.EndChangeCheck())
                     {
-                        view.SetTestLightOverride(i, intensity);
+                        tableLighting.SetTestLightOverride(i, intensity);
                         if (intensity > 0f) onIntensities[i] = intensity;
                     }
                 }
             }
-            if (GUILayout.Button("Release overrides")) view.ReleaseTestLightOverrides();
+            if (GUILayout.Button("Release overrides")) tableLighting.ReleaseTestLightOverrides();
         }
     }
 }

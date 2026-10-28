@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -47,6 +48,15 @@ namespace Dice.Presentation
         public GameObject FlareEffect => flareEffect;
         public float FlareDuration => flareDuration;
         public bool IsFlaring => !float.IsNegativeInfinity(flareStart);
+
+        /** The prop among these that presents the piece's interaction, or null when none does. */
+        public static SpiritTablePieceView Find(IReadOnlyList<SpiritTablePieceView> pieces, string pieceId, string interactionId)
+        {
+            foreach (var piece in pieces)
+                if (piece != null && string.Equals(piece.PieceId, pieceId, StringComparison.Ordinal) &&
+                    string.Equals(piece.InteractionId, interactionId, StringComparison.Ordinal)) return piece;
+            return null;
+        }
 
         /** Starts the repel reaction and returns its duration. */
         public float Flare()
