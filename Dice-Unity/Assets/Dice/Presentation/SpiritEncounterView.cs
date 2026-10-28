@@ -246,7 +246,7 @@ namespace Dice.Presentation
             var credits = encounterAudio.Theme?.credits;
             pauseMenu.Credits.text = credits != null ? credits.text : "";
             pauseMenu.CreditsBacking.gameObject.SetActive(credits != null);
-            SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
+            SpiritUi.SetButtonLabel(soundButton, SpiritUi.GetWording(transform).pauseMenu.Sound(encounterAudio.Muted));
         }
 
         private void ConfigureTrays(SpiritTrayPresentationAsset presentation)
@@ -507,6 +507,7 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The encounter screen requires five authored dice targets.");
             foreach (var button in diceButtons)
                 if (button == null) throw new InvalidOperationException("An authored dice target is missing.");
+            SpiritUi.RequireWording(transform);
             GameplayHud.BuildHeader(portrait, ToggleMenu);
             GameplayHud.BuildPlayingPanel();
             GameplayHud.BuildPlayingHud(Reroll, Play);
@@ -633,7 +634,7 @@ namespace Dice.Presentation
         private void ToggleSound()
         {
             encounterAudio.Muted = !encounterAudio.Muted;
-            SpiritUi.SetButtonLabel(soundButton, encounterAudio.Muted ? "Sound: Off" : "Sound: On");
+            SpiritUi.SetButtonLabel(soundButton, SpiritUi.GetWording(transform).pauseMenu.Sound(encounterAudio.Muted));
         }
         private void OpenCollectionFromMenu() { if (!Busy) { menuPanel.gameObject.SetActive(false); ShowCollection(); } }
         private void SaveRun() { if (!Busy) { menuPanel.gameObject.SetActive(false); controls.Save(); } }
@@ -720,6 +721,7 @@ namespace Dice.Presentation
             if (Busy) return;
             var hud = GameplayHud;
             var snapshot = controls.Snapshot;
+            var wording = SpiritUi.GetWording(transform);
             if (snapshot == null)
             {
                 CloseCharmPopup();
@@ -731,7 +733,7 @@ namespace Dice.Presentation
                 RewardsPanel.Root.gameObject.SetActive(false);
                 EncounterCharmsIntroduction.Hide();
                 endingPanel.gameObject.SetActive(false);
-                hud.StatusLabel.text = SpiritStatusText.Describe(controls.Status);
+                hud.StatusLabel.text = SpiritStatusText.Describe(controls.Status, wording.status);
                 return;
             }
             bool createdPresenters = CreatePresenters(snapshot.EncounterId);
@@ -764,20 +766,19 @@ namespace Dice.Presentation
             hud.PlayingPanel.gameObject.SetActive(playing);
             RewardsPanel.Root.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
-            hud.StageLabel.text = "STAGE " + (snapshot.StageIndex + 1) + " / " + snapshot.StageCount;
+            hud.StageLabel.text = wording.hud.Stage(snapshot.StageIndex + 1, snapshot.StageCount);
             hud.TargetLabel.text = DiagnosticText.Number(completed ? snapshot.TotalScore : snapshot.RemainingThreshold);
-            hud.TargetCaption.text = playing ? "TO CLEAR" : completed ? "TOTAL SCORE" : "STAGE CLEARED";
+            hud.TargetCaption.text = playing ? wording.hud.toClear : completed ? wording.hud.totalScore : wording.hud.stageCleared;
             hud.HandsPanel.gameObject.SetActive(playing);
             hud.RerollsPanel.gameObject.SetActive(playing);
             hud.ResourcesLabel.gameObject.SetActive(!playing && !choosingUpgrade && !choosingUnlock);
             hud.SetResources(snapshot.HandsRemaining, snapshot.RerollsRemaining);
             hud.RenderEncounterRule(snapshot, hudRuleCard);
-            hud.ResourcesLabel.text = playing ? snapshot.HandsRemaining + " hands left  /  " + snapshot.RerollsRemaining + " rerolls left" :
-                lastScore != null ? "Last hand  " + DiagnosticText.Number(lastScore.HandScore) + " points" :
-                "Total score  " + DiagnosticText.Number(snapshot.TotalScore);
-            hud.CharmCount.text = snapshot.Modifiers.Count + " kept";
-            SpiritUi.SetButtonLabel(hud.CharmsButton, "CHARMS (" + snapshot.Modifiers.Count + ")");
-            hud.StatusLabel.text = SpiritStatusText.Gameplay(controls.Status);
+            hud.ResourcesLabel.text = playing ? wording.hud.Resources(snapshot.HandsRemaining, snapshot.RerollsRemaining) :
+                lastScore != null ? wording.hud.LastHand(lastScore.HandScore) : wording.hud.TotalScoreLine(snapshot.TotalScore);
+            hud.CharmCount.text = wording.hud.CharmCount(snapshot.Modifiers.Count);
+            SpiritUi.SetButtonLabel(hud.CharmsButton, wording.hud.CharmsButton(snapshot.Modifiers.Count));
+            hud.StatusLabel.text = SpiritStatusText.Gameplay(controls.Status, wording.status);
             RenderProfileSummary();
             if (playing)
             {
@@ -802,7 +803,7 @@ namespace Dice.Presentation
                 SetGameplayVisible(false);
                 endingPanel.gameObject.SetActive(true);
                 endingView.Render(snapshot, journeyControls?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds));
+                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds, wording));
             }
             if (IsCharmsOpen) OwnedCharmsPanel.Render();
             if (IsHandRanksOpen) RenderHandRanks();
@@ -858,7 +859,6 @@ namespace Dice.Presentation
         private void SetDiceSelection(int mask)
         {
             DiceTray.SetSelection(mask);
-            SpiritUi.SetButtonLabel(RerollButton, "Reroll");
         }
 
         private void Present(Resolution resolution)
@@ -902,12 +902,10 @@ namespace Dice.Presentation
             var ids = new HashSet<string>(progression.ProfileUnlockedModifierIds, StringComparer.Ordinal);
             foreach (var modifier in controls.Catalog.Modifiers)
                 if (ids.Contains(modifier.Id)) ++unlocked;
+            var wording = SpiritUi.GetWording(transform).pauseMenu;
             profileSummary.text = progression.ProfileStatus.Kind == PlayerProfileStatusKind.None
-                ? unlocked + (unlocked == 1 ? " charm permanently unlocked\n" : " charms permanently unlocked\n") +
-                    progression.CompletedEncounterIds.Count +
-                    (progression.CompletedEncounterIds.Count == 1 ? " encounter completed" : " encounters completed")
-                : "Player profile needs attention.\n" +
-                    (SpiritCharmVisuals.HasPendingProgress(controls) ? "Progress save is pending." : "Profile could not be loaded.");
+                ? wording.ProfileSummary(unlocked, progression.CompletedEncounterIds.Count)
+                : wording.ProfileAttention(SpiritCharmVisuals.HasPendingProgress(controls));
         }
 
         public void ShowCollection()

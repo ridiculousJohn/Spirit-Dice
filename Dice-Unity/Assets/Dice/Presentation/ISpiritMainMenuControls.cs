@@ -1,34 +1,46 @@
+using System;
 using System.Collections.Generic;
 
 namespace Dice.Presentation
 {
-    /** Read-only presentation of one campaign save slot. */
+    /**
+     * Read-only presentation of one campaign save slot: whether it holds a saved game and, when its progress could be
+     * read, the encounters its profile completed and the charms it collected.
+     */
     public readonly struct SpiritSaveSlotInfo
     {
         public int SlotNumber { get; }
         public bool HasSavedGame { get; }
-        public string Summary { get; }
+        public bool ProgressReadable { get; }
+        public int CompletedEncounters { get; }
+        public int CollectedCharms { get; }
 
-        public SpiritSaveSlotInfo(int slotNumber, bool hasSavedGame, string summary)
+        public SpiritSaveSlotInfo(int slotNumber, bool hasSavedGame, bool progressReadable, int completedEncounters,
+            int collectedCharms)
         {
             SlotNumber = slotNumber;
             HasSavedGame = hasSavedGame;
-            Summary = summary;
+            ProgressReadable = progressReadable;
+            CompletedEncounters = completedEncounters;
+            CollectedCharms = collectedCharms;
         }
     }
 
-    /** Read-only presentation of a campaign awaiting a destination save slot. */
+    /** Read-only presentation of a campaign awaiting a destination save slot; LastSaved is local time. */
     public readonly struct SpiritRecoveryCampaignInfo
     {
         public string CampaignId { get; }
-        public string Summary { get; }
-        public string LastSaved { get; }
+        public int CompletedEncounters { get; }
+        public int CollectedCharms { get; }
+        public DateTime LastSaved { get; }
         public int SuggestedSlot { get; }
 
-        public SpiritRecoveryCampaignInfo(string campaignId, string summary, string lastSaved, int suggestedSlot)
+        public SpiritRecoveryCampaignInfo(string campaignId, int completedEncounters, int collectedCharms, DateTime lastSaved,
+            int suggestedSlot)
         {
             CampaignId = campaignId;
-            Summary = summary;
+            CompletedEncounters = completedEncounters;
+            CollectedCharms = collectedCharms;
             LastSaved = lastSaved;
             SuggestedSlot = suggestedSlot;
         }

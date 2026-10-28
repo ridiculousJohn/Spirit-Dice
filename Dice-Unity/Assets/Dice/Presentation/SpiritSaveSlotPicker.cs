@@ -44,6 +44,7 @@ namespace Dice.Presentation
             for (int i = 0; i < slotButtons.Length; ++i)
                 if (slotButtons[i] == null || slotSummaries[i] == null)
                     throw new InvalidOperationException("The save slot picker requires three authored slots.");
+            SpiritUi.RequireWording(transform);
             RecoveryPicker.Build(Root);
             slotButtons[0].onClick.RemoveListener(SelectFirstSlot);
             slotButtons[0].onClick.AddListener(SelectFirstSlot);
@@ -76,10 +77,11 @@ namespace Dice.Presentation
             recoveryCampaignId = null;
             RecoveryPicker.Close();
             CloseConfirmation();
-            Title.text = newGame ? "New Game" : "Load Game";
-            Subtitle.text = "Choose a save slot.";
-            ConfirmationText.text = "This will reset its chapter progress, collected charms, and current encounter.";
-            SpiritUi.SetButtonLabel(ConfirmReplaceSaveButton, "New Game");
+            var wording = Wording;
+            Title.text = newGame ? wording.newGameTitle : wording.loadGameTitle;
+            Subtitle.text = wording.chooseSlot;
+            ConfirmationText.text = wording.replaceWarning;
+            SpiritUi.SetButtonLabel(ConfirmReplaceSaveButton, wording.newGameButton);
             Root.SetAsLastSibling();
             Root.gameObject.SetActive(true);
             Refresh();
@@ -94,14 +96,15 @@ namespace Dice.Presentation
             int recoveryCount = controls.RecoveryCampaigns?.Count ?? 0;
             bool showRecovery = mode == PickerMode.Select && recoveryCount > 0;
             RecoverSavesButton.gameObject.SetActive(showRecovery);
-            SpiritUi.SetButtonLabel(RecoverSavesButton, "Recover saves (" + recoveryCount + ")");
+            var wording = Wording;
+            SpiritUi.SetButtonLabel(RecoverSavesButton, wording.RecoverSavesButton(recoveryCount));
             for (int i = 0; i < slotButtons.Length; ++i)
             {
                 int slot = i + 1;
                 var info = GetSlot(slot);
-                SpiritUi.SetButtonLabel(slotButtons[i], "Slot " + slot + (controls.ActiveSaveSlot == slot ? " - Active" : ""));
-                slotSummaries[i].text = !string.IsNullOrWhiteSpace(info.Summary) ? info.Summary :
-                    info.HasSavedGame ? "Saved game" : "Empty";
+                SpiritUi.SetButtonLabel(slotButtons[i], wording.Slot(slot, controls.ActiveSaveSlot == slot));
+                slotSummaries[i].text = !info.HasSavedGame ? wording.emptySlot : !info.ProgressReadable ? wording.unreadableSlot :
+                    wording.Progress(info.CompletedEncounters, info.CollectedCharms);
                 slotButtons[i].interactable = mode != PickerMode.Select || info.HasSavedGame;
             }
             ConfirmReplaceSaveButton.interactable = mode == PickerMode.Recover ?
@@ -127,7 +130,7 @@ namespace Dice.Presentation
             if (controls?.SaveSlots != null)
                 foreach (var info in controls.SaveSlots)
                     if (info.SlotNumber == slot) return info;
-            return new SpiritSaveSlotInfo(slot, false, "Empty");
+            return new SpiritSaveSlotInfo(slot, false, false, 0, 0);
         }
 
         private void SelectSlot(int slot)
@@ -149,7 +152,7 @@ namespace Dice.Presentation
                     return;
                 }
                 replacementSlot = slot;
-                ConfirmationTitle.text = "Use save slot " + slot + "?";
+                ConfirmationTitle.text = Wording.UseSlotConfirmation(slot);
                 Confirmation.SetAsLastSibling();
                 Confirmation.gameObject.SetActive(true);
                 return;
@@ -162,7 +165,7 @@ namespace Dice.Presentation
                 return;
             }
             replacementSlot = slot;
-            ConfirmationTitle.text = "Replace save slot " + slot + "?";
+            ConfirmationTitle.text = Wording.ReplaceSlotConfirmation(slot);
             Confirmation.SetAsLastSibling();
             Confirmation.gameObject.SetActive(true);
         }
@@ -187,10 +190,11 @@ namespace Dice.Presentation
             mode = PickerMode.Recover;
             recoveryCampaignId = campaignId;
             CloseConfirmation();
-            Title.text = "Recover save";
-            Subtitle.text = "Choose a destination slot.";
-            ConfirmationText.text = "The existing campaign will remain available under Recover saves.";
-            SpiritUi.SetButtonLabel(ConfirmReplaceSaveButton, "Recover");
+            var wording = Wording;
+            Title.text = wording.recoverTitle;
+            Subtitle.text = wording.chooseDestination;
+            ConfirmationText.text = wording.recoverNote;
+            SpiritUi.SetButtonLabel(ConfirmReplaceSaveButton, wording.recoverButton);
             Root.SetAsLastSibling();
             Root.gameObject.SetActive(true);
             Refresh();
@@ -209,6 +213,8 @@ namespace Dice.Presentation
             if (mode == PickerMode.Recover) Show(false);
             else Close();
         }
+
+        private SpiritUiWording.SaveSlots Wording => SpiritUi.GetWording(transform).saveSlots;
 
         private void SelectFirstSlot() => SelectSlot(1);
         private void SelectSecondSlot() => SelectSlot(2);

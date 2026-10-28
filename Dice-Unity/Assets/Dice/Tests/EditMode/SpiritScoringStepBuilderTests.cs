@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Dice.Tests
 {
-    /** The scoring steps built from fabricated scored hands, synthetic charms and a synthetic theme. */
+    /** The scoring steps built from fabricated scored hands, synthetic charms, a synthetic theme and fabricated wording. */
     public sealed class SpiritScoringStepBuilderTests
     {
         private static readonly DiceValues HighDieDice = new DiceValues(1, 2, 3, 4, 6);
@@ -17,6 +17,7 @@ namespace Dice.Tests
         private const int FormingMask = (1 << 1) | (1 << 4);
         private SyntheticCharms synthetic;
         private SpiritUiTheme theme;
+        private SpiritUiWording wording;
         private ModifierDefinition bank;
         private ModifierDefinition first;
         private ModifierDefinition second;
@@ -36,7 +37,8 @@ namespace Dice.Tests
             second = Definition("test.steps.second", ModifierPhase.PlayHand);
             var catalog = SyntheticCharms.Catalog(bank, first, second);
             charms = synthetic.For(bank, first, second);
-            builder = new SpiritScoringStepBuilder(catalog, charms, theme);
+            wording = SyntheticWording.Create();
+            builder = new SpiritScoringStepBuilder(catalog, charms, theme, wording);
         }
 
         [TearDown]
@@ -44,6 +46,7 @@ namespace Dice.Tests
         {
             synthetic.Dispose();
             UnityEngine.Object.DestroyImmediate(theme);
+            UnityEngine.Object.DestroyImmediate(wording);
             foreach (var card in cards) UnityEngine.Object.DestroyImmediate(card);
             cards.Clear();
         }
@@ -57,8 +60,9 @@ namespace Dice.Tests
             var dice = Build(score, bankedBase, bankedMultiplier)[0];
             Assert.That(dice.BaseScore, Is.EqualTo(bankedBase + score.DiceSum));
             Assert.That(dice.Multiplier, Is.EqualTo(bankedMultiplier));
-            Assert.That(dice.StepLabel, Is.EqualTo("STEP 1 OF 4 - DICE"));
-            Assert.That(dice.SelectionText, Is.EqualTo("DICE\n" + charms.GetContributionText(score.DiceSum, 0, 0)));
+            Assert.That(dice.StepLabel, Is.EqualTo("<scoring.diceStep>"));
+            Assert.That(dice.CategoryText, Is.EqualTo("<scoring.diceCategory>"));
+            Assert.That(dice.SelectionText, Is.EqualTo("<scoring.diceSelection>" + charms.GetContributionText(score.DiceSum, 0, 0)));
             Assert.That(dice.HighlightMask, Is.EqualTo(DiceValues.AllMask));
             Assert.That(dice.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(dice.Charm, Is.Null);
@@ -75,8 +79,9 @@ namespace Dice.Tests
             Assert.That(rank.BaseScore, Is.EqualTo(steps[0].BaseScore + score.CategoryBaseScore + score.UpgradeBaseScore));
             Assert.That(rank.Multiplier, Is.EqualTo(steps[0].Multiplier + score.CategoryMultiplier + score.UpgradeMultiplier));
             Assert.That(score.UpgradeBaseScore != 0 || score.UpgradeMultiplier != 0, Is.EqualTo(upgrades > 0), "Fixture upgrades");
-            Assert.That(rank.StepLabel, Is.EqualTo("STEP 2 OF 4 - HAND RANK"));
-            Assert.That(rank.SelectionText, Does.Contain(" / LEVEL " + upgrades + "\n"));
+            Assert.That(rank.StepLabel, Is.EqualTo("<scoring.handStep>"));
+            Assert.That(rank.CategoryText, Is.EqualTo("<HANDNAMES.PAIR>"), "The hand is named by its wording, upper-cased.");
+            Assert.That(rank.SelectionText, Does.StartWith("<scoring.handSelection><HANDNAMES.PAIR>|" + upgrades + "|"));
             Assert.That(rank.HighlightMask, Is.EqualTo(FormingMask), "Only the dice the score states are highlighted.");
             Assert.That(rank.ResolvingIndex, Is.EqualTo(-1));
         }
@@ -101,7 +106,7 @@ namespace Dice.Tests
                 var previous = steps[index + 1];
                 Assert.That(charmSteps[index].BaseScore, Is.EqualTo(previous.BaseScore + contributions[index].BaseScore));
                 Assert.That(charmSteps[index].Multiplier, Is.EqualTo(previous.Multiplier + contributions[index].Multiplier));
-                Assert.That(charmSteps[index].StepLabel, Is.EqualTo("STEP 3 OF 4 - CHARMS"));
+                Assert.That(charmSteps[index].StepLabel, Is.EqualTo("<scoring.charmStep>"));
                 Assert.That(charmSteps[index].HighlightMask, Is.Zero);
             }
         }
@@ -116,8 +121,8 @@ namespace Dice.Tests
             Assert.That(step.Charm, Is.SameAs(first));
             Assert.That(step.Emblem, Is.SameAs(first));
             Assert.That(step.CategoryText, Is.EqualTo(charms.GetName(first)));
-            Assert.That(step.SelectionText, Is.EqualTo(charms.GetName(first) + "\n" +
-                charms.GetContributionText(baseScore, multiplier, 0) + " (on play)"));
+            Assert.That(step.SelectionText, Is.EqualTo("<scoring.charmSelection>" + charms.GetName(first) + "|" +
+                charms.GetContributionText(baseScore, multiplier, 0)));
             Assert.That(step.SelectionColor, Is.EqualTo(charms.GetEffectColor(first)));
             Assert.That(step.HighlightsBaseScore, Is.EqualTo(baseScore != 0));
             Assert.That(step.HighlightsMultiplier, Is.EqualTo(multiplier != 0));
@@ -184,8 +189,10 @@ namespace Dice.Tests
             var total = steps[steps.Count - 1];
             Assert.That(total.RevealsTotal, Is.True);
             Assert.That(total.Total, Is.EqualTo(score.HandScore));
-            Assert.That(total.StepLabel, Is.EqualTo("STEP 4 OF 4 - " + DiagnosticText.Number(score.BaseScore) + " x " +
+            Assert.That(total.StepLabel, Is.EqualTo("<scoring.totalStep>" + DiagnosticText.Number(score.BaseScore) + "|" +
                 DiagnosticText.Number(score.Multiplier)));
+            Assert.That(total.CategoryText, Is.EqualTo("<scoring.totalCategory>"));
+            Assert.That(total.SelectionText, Is.EqualTo("<scoring.totalSelection>"));
             Assert.That(total.Emblem, Is.Null);
             Assert.That(total.ResolvingIndex, Is.EqualTo(-1));
         }
@@ -211,10 +218,11 @@ namespace Dice.Tests
             var rank = steps[1];
             Assert.That(steps[2], Is.SameAs(rule));
             Assert.That(rule.Rule, Is.SameAs(distinct));
-            Assert.That(rule.SelectionText, Does.StartWith("Distinct\n+" + bonus));
+            Assert.That(rule.SelectionText, Is.EqualTo("<scoring.ruleSelection>Distinct|" + DiagnosticText.Number(bonus)));
             Assert.That(rule.BaseScore, Is.EqualTo(rank.BaseScore));
             Assert.That(rule.Multiplier, Is.EqualTo(rank.Multiplier + bonus));
-            Assert.That(rule.StepLabel, Is.EqualTo("STEP 3 OF 4 - ENCOUNTER RULE"));
+            Assert.That(rule.StepLabel, Is.EqualTo("<scoring.ruleStep>"));
+            Assert.That(rule.CategoryText, Is.EqualTo("<scoring.ruleCategory>"));
             Assert.That(rule.SelectionColor, Is.EqualTo(theme.amber));
 
             var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored, 0, 0, new[] { favor }));
@@ -229,8 +237,8 @@ namespace Dice.Tests
             var step = builder.BuildBankedContribution(new ModifierActivatedEvent(new EncounterState(), contribution), 5, 1);
             Assert.That(step.BaseScore, Is.EqualTo(5 + contribution.BaseScore));
             Assert.That(step.Multiplier, Is.EqualTo(1 + contribution.Multiplier));
-            Assert.That(step.StepLabel, Is.EqualTo("ROLL BONUS"));
-            Assert.That(step.SelectionText, Does.EndWith(" (banked)"));
+            Assert.That(step.StepLabel, Is.EqualTo("<scoring.bankedStep>"));
+            Assert.That(step.SelectionText, Does.StartWith("<scoring.bankedSelection>" + charms.GetName(bank) + "|"));
             Assert.That(step.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(step.RerollCue, Is.True, "A roll-phase charm that scores cues the reroll button.");
             Assert.That(step.PlayCue, Is.False);

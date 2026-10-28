@@ -12,6 +12,8 @@ namespace Dice.Tests
     public sealed class SaveSlotChoiceTests
     {
         private GameObject root;
+        private SpiritUiTheme theme;
+        private SpiritUiWording wording;
         private MenuControls controls;
         private SpiritMainMenu menu;
         private SpiritSaveSlotPicker picker;
@@ -19,7 +21,10 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            root = new GameObject("Save slot choice test", typeof(RectTransform));
+            theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
+            wording = SyntheticWording.Create();
+            root = new GameObject("Save slot choice test", typeof(RectTransform), typeof(SpiritUiContext));
+            root.GetComponent<SpiritUiContext>().Configure(theme, wording);
             controls = new MenuControls();
             picker = BuildPicker(root.transform);
             menu = BuildMenu(root.transform, picker);
@@ -28,20 +33,25 @@ namespace Dice.Tests
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(root);
+        public void TearDown()
+        {
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(theme);
+            Object.DestroyImmediate(wording);
+        }
 
         /** Checks the menu enables Continue and Chapter only when the controls offer them; fails if either is enabled without its save. */
         [Test]
         public void MenuEnablesContinueAndChapterOnlyWhenOffered()
         {
-            menu.Render("");
+            menu.Render(SpiritStatus.None);
             Assert.That(menu.ContinueButton.interactable, Is.False);
             Assert.That(menu.ChapterButton.interactable, Is.False);
             Assert.That(menu.NewGameButton.interactable, Is.True);
 
             controls.CanContinueGame = true;
             controls.CanOpenSavedChapter = true;
-            menu.Render("");
+            menu.Render(SpiritStatus.None);
             Assert.That(menu.ContinueButton.interactable, Is.True);
             Assert.That(menu.ChapterButton.interactable, Is.True);
         }
@@ -219,9 +229,9 @@ namespace Dice.Tests
             public bool CanSelectSaveSlot => true;
             public int ActiveSaveSlot => 1;
             public IReadOnlyList<SpiritSaveSlotInfo> SaveSlots => Enumerable.Range(1, 3)
-                .Select(slot => new SpiritSaveSlotInfo(slot, Occupied.Contains(slot), null)).ToArray();
+                .Select(slot => new SpiritSaveSlotInfo(slot, Occupied.Contains(slot), true, 0, 0)).ToArray();
             public IReadOnlyList<SpiritRecoveryCampaignInfo> RecoveryCampaigns => Recoverable
-                .Select(id => new SpiritRecoveryCampaignInfo(id, null, null, 0)).ToArray();
+                .Select(id => new SpiritRecoveryCampaignInfo(id, 0, 0, default, 0)).ToArray();
 
             public void ContinueGame() => Calls.Add("continue");
             public void OpenSavedChapter() => Calls.Add("chapter");

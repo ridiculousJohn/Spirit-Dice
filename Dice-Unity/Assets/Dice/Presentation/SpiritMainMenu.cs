@@ -26,6 +26,7 @@ namespace Dice.Presentation
                 ChapterButton == null || NewGameButton == null || OptionsButton == null ||
                 SlotSelectorButton == null || SlotPicker == null)
                 throw new InvalidOperationException("The main menu requires authored UI references.");
+            SpiritUi.RequireWording(transform);
             SlotPicker.Build(Root);
             ContinueButton.onClick.RemoveListener(ContinueGame);
             ContinueButton.onClick.AddListener(ContinueGame);
@@ -44,7 +45,7 @@ namespace Dice.Presentation
             controls = menuControls;
         }
 
-        public void Render(string status)
+        public void Render(SpiritStatus status)
         {
             Root.gameObject.SetActive(true);
             ContinueButton.interactable = controls != null && controls.CanContinueGame;
@@ -52,7 +53,7 @@ namespace Dice.Presentation
             NewGameButton.interactable = controls != null && controls.CanStartNewGame;
             SlotSelectorButton.interactable = controls != null && controls.CanSelectSaveSlot;
             OptionsButton.interactable = controls != null;
-            Status.text = status ?? "";
+            Status.text = SpiritStatusText.Describe(status, SpiritUi.GetWording(transform).status);
             SlotPicker.Refresh();
         }
 

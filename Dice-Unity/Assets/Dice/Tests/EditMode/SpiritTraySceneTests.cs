@@ -535,7 +535,9 @@ namespace Dice.Tests
             var theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
             resources.Add(theme);
             var root = Root("Gameplay HUD", typeof(RectTransform));
-            root.AddComponent<SpiritUiContext>().Configure(theme);
+            var wording = SyntheticWording.Create();
+            resources.Add(wording);
+            root.AddComponent<SpiritUiContext>().Configure(theme, wording);
             var hud = root.AddComponent<SpiritGameplayHud>();
             T Ui<T>(string name, Transform parent = null) where T : Component
             {

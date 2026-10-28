@@ -27,6 +27,7 @@ namespace Dice.Presentation
         /** The overlay covers the parent canvas; the panel width follows the portrait. */
         public void Build(Transform parent, RectTransform portraitRect)
         {
+            SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveAllListeners();
             CloseButton.onClick.AddListener(Close);
             dismissButton.onClick.RemoveAllListeners();
@@ -42,10 +43,11 @@ namespace Dice.Presentation
             Effect.text = charms.GetEffectText(definition);
             Effect.color = charms.GetEffectColor(definition);
             var theme = SpiritUi.GetTheme(transform);
-            Description.text = SpiritRewardCard.GetModifierDescription(charms, definition, theme.amber,
+            var wording = SpiritUi.GetWording(transform);
+            Description.text = SpiritRewardCard.GetModifierDescription(charms, definition, wording.charmText, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
             Badge.Render(status);
-            Status.text = status.GetDetailText(definition.Phase, phase);
+            Status.text = status.GetDetailText(definition.Phase, phase, wording.charmStatus);
             Status.color = Badge.Icon.color;
             statusRow.gameObject.SetActive(!string.IsNullOrEmpty(Status.text));
             Root.SetAsLastSibling();

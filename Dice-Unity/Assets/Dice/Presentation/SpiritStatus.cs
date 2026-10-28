@@ -13,6 +13,11 @@ namespace Dice.Presentation
         ApplicationFailed,
         ContentFailed,
         EncounterInitializationFailed,
+        /** The application's state selects a presentation scene that is not authored. */
+        PresentationSceneMissing,
+        LoadingPresentation,
+        PresentationOpenFailed,
+        PresentationInitializationFailed,
         MainMenuReady,
         MainMenuFailed,
         SaveSlotsRecovered,

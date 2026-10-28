@@ -55,14 +55,14 @@ namespace Dice.Tests
             panel.Render(session.Snapshot);
             Assert.That(panel.RefreshButton.gameObject.activeSelf, Is.True);
             Assert.That(panel.RefreshButton.interactable, Is.True);
-            Assert.That(refreshLabel.text, Is.EqualTo("Refresh (2)"));
+            Assert.That(refreshLabel.text, Is.EqualTo("<rewards.refreshButton>2"));
 
             for (int i = 0; i < 2; ++i)
                 session.Execute(new RefreshModifierOfferAction(session.Snapshot.PendingReward.OfferId), session.Snapshot.Revision);
             Assert.That(session.Snapshot.RewardRefreshesAvailable, Is.Zero, "Fixture refreshes");
             panel.Render(session.Snapshot);
             Assert.That(panel.RefreshButton.interactable, Is.False);
-            Assert.That(refreshLabel.text, Is.EqualTo("Refresh (0)"));
+            Assert.That(refreshLabel.text, Is.EqualTo("<rewards.refreshButton>0"));
         }
 
         /** A charm card template, inactive outside the panel, holding what a charm offer binds. */

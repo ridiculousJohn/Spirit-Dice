@@ -44,6 +44,7 @@ namespace Dice.Presentation
                 ChapterButton == null || ChapterSelector == null || chapterLabel == null ||
                 clueCardPrefab == null || completionCluePrefab == null)
                 throw new InvalidOperationException("The investigation board requires authored UI references.");
+            SpiritUi.RequireWording(transform);
             this.resume = resume;
             this.load = load;
             this.openCollection = openCollection;
@@ -80,8 +81,9 @@ namespace Dice.Presentation
             if (chaptersAvailable)
                 for (int i = 0; i < catalog.Chapters.Count; ++i)
                     if (catalog.Chapters[i] == chapter) { chapterIndex = i + 1; break; }
-            chapterLabel.text = chapterIndex > 0 ? "CHAPTER " + chapterIndex + " / Chapters" : "Chapters";
-            Title.text = chapter != null ? chapter.Title : catalog != null ? catalog.Title : "INVESTIGATION";
+            var wording = SpiritUi.GetWording(transform);
+            chapterLabel.text = chapterIndex > 0 ? wording.investigation.ChapterProgress(chapterIndex) : wording.investigation.chapters;
+            Title.text = chapter != null ? chapter.Title : catalog != null ? catalog.Title : wording.investigation.defaultTitle;
             Description.text = chapter != null ? chapter.Description : catalog != null ? catalog.Description : "";
             string progress = Progress(controls, encounter);
             if (rebuild || chapterChanged || renderedProgress != progress)
@@ -103,10 +105,10 @@ namespace Dice.Presentation
             renderedProgress = progress;
             renderedChapter = chapter;
             renderedCatalog = catalog;
-            Status.text = SpiritStatusText.Describe(controls.JourneyStatus);
+            Status.text = SpiritStatusText.Describe(controls.JourneyStatus, wording.status);
             ResumeButton.gameObject.SetActive(controls.CanResume);
             bool hasMainMenu = mainMenuControls != null;
-            SpiritUi.SetButtonLabel(LoadButton, hasMainMenu ? "Main menu" : "Load saved encounter");
+            SpiritUi.SetButtonLabel(LoadButton, hasMainMenu ? wording.investigation.mainMenuButton : wording.investigation.loadButton);
             LoadButton.interactable = hasMainMenu ? encounter == null || !encounter.IsBusy :
                 encounter != null && !encounter.IsBusy;
             CollectionButton.interactable = collectionAvailable;
@@ -119,6 +121,7 @@ namespace Dice.Presentation
             if (controls.JourneyCatalog == null) return null;
             int index = 0;
             RectTransform firstHighlight = null;
+            var wording = SpiritUi.GetWording(transform).investigation;
             foreach (var journey in Entries(controls))
             {
                 if (journey == null || !controls.IsJourneyAvailable(journey.Id)) continue;
@@ -142,8 +145,8 @@ namespace Dice.Presentation
                 else if (encounter is ISpiritProgressionControls progression)
                     foreach (string completedId in progression.CompletedEncounterIds)
                         if (completedId == journey.EncounterId) { completed = true; break; }
-                string state = journey.IsStoryOnly ? completed ? "READ AGAIN" : "FOLLOW THIS LEAD" :
-                    visited ? "VISITED - RETURN TO THE TABLE" : "FOLLOW THIS LEAD";
+                string state = journey.IsStoryOnly ? completed ? wording.readAgain : wording.followLead :
+                    visited ? wording.visitedLead : wording.followLead;
                 card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
                     highlighted, highlighted, true, () => controls.SelectEncounter(selected.Id));
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))

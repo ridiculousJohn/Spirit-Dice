@@ -145,9 +145,10 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks the reward description leads with the skin's phase lead and closes with the limit's note unless the
-         * phase implies the limit or the note is empty / fails if the lead or note is not the skin's, an implied limit is
-         * noted or a note is dropped.
+         * Checks the reward description fills the wording's description template with the skin's phase lead, the
+         * condition with numbers and the wording's terms emphasized, and the limit's note unless the phase implies the
+         * limit or the note is empty / fails if the lead or note is not the skin's, the template is not the wording's, an
+         * implied limit is noted or a note is dropped.
          */
         [TestCase(false, "Only rarely.", "Only rarely.")]
         [TestCase(true, "Only rarely.", "")]
@@ -162,11 +163,16 @@ namespace Dice.Tests
                 new[] { new ModifierActivationLimitWording(ModifierActivationLimit.OncePerStage, "Rarely", note) },
                 "Shows a {parameter}.");
             var definition = Definition(charms);
-            string text = SpiritRewardCard.GetModifierDescription(charms, definition, Color.red);
-            Assert.That(text, Does.StartWith("<b><color=#FF0000>When dusk falls</color></b>: "));
+            var wording = new SpiritUiWording.CharmText
+            {
+                description = "{lead} ~ {condition}", descriptionWithNote = "{lead} ~ {condition} ~ {note}", highlightedTerms = new[] { "shows" }
+            };
+            string text = SpiritRewardCard.GetModifierDescription(charms, definition, wording, Color.red);
+            Assert.That(text, Does.StartWith("<b><color=#FF0000>When dusk falls</color></b> ~ "));
             Assert.That(text, Does.Contain("<b><color=#FF0000>" + face + "</color></b>"));
+            Assert.That(text, Does.Contain("<b><color=#FF0000>Shows</color></b>"), "Highlighted terms match regardless of case.");
             string plain = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "");
-            string expected = "When dusk falls: " + charms.GetConditionText(definition) + (expectedNote.Length > 0 ? " " + expectedNote : "");
+            string expected = "When dusk falls ~ " + charms.GetConditionText(definition) + (expectedNote.Length > 0 ? " ~ " + expectedNote : "");
             Assert.That(plain, Is.EqualTo(expected));
         }
 

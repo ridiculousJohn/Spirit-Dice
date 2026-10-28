@@ -7,14 +7,22 @@ namespace Dice.Tests
 {
     public sealed class SpiritCharmStatusPresentationTests
     {
+        private static SpiritUiWording wording;
+
+        [SetUp]
+        public void SetUp() => wording = SyntheticWording.Create();
+
+        [TearDown]
+        public void TearDown() => UnityEngine.Object.DestroyImmediate(wording);
+
         [Test]
         public void AvailableUsesDoNotImplyThatTheConditionIsReady()
         {
             var ready = Modifier("ready", ModifierPhase.PlayHand, new AlwaysCondition());
             var waiting = Modifier("waiting", ModifierPhase.PlayHand, new NeverCondition());
             var session = Session(ready, waiting);
-            AssertStatus(session, ready, SpiritCharmStatusState.Ready, 1, "Ready");
-            AssertStatus(session, waiting, SpiritCharmStatusState.WaitingCondition, 1, "Waiting");
+            AssertStatus(session, ready, SpiritCharmStatusState.Ready, 1, "<charmStatus.ready>");
+            AssertStatus(session, waiting, SpiritCharmStatusState.WaitingCondition, 1, "<charmStatus.waiting>");
             Assert.That(session.PreviewHandResolution().Events.OfType<ModifierActivatedEvent>()
                 .Select(value => value.DefinitionId), Is.EqualTo(new[] { ready.Id }));
         }
@@ -31,7 +39,7 @@ namespace Dice.Tests
             Assert.That(inspection.ConditionMet, Is.False);
             Assert.That(inspection.ActivationLimitReached, Is.True);
             Assert.That(session.Snapshot.Modifiers.Single().ActivationsThisHand, Is.Zero);
-            AssertStatus(session, first, SpiritCharmStatusState.Used, 0, "Activated this stage");
+            AssertStatus(session, first, SpiritCharmStatusState.Used, 0, "<charmStatus.activatedThisStage>");
         }
 
         [Test]
@@ -42,9 +50,9 @@ namespace Dice.Tests
             var reroll = Modifier("reroll", ModifierPhase.PlayerReroll, new AlwaysCondition());
             var session = Session(initial, initialWaiting, reroll);
             Assert.That(session.InspectModifiersForPlayHand().Select(value => value.ConditionMet), Is.All.Null);
-            AssertStatus(session, initial, SpiritCharmStatusState.Used, 0, "Activated this hand");
-            AssertStatus(session, initialWaiting, SpiritCharmStatusState.OnRoll, 1, "On the initial roll");
-            AssertStatus(session, reroll, SpiritCharmStatusState.OnRoll, 1, "After a reroll");
+            AssertStatus(session, initial, SpiritCharmStatusState.Used, 0, "<charmStatus.activatedThisHand>");
+            AssertStatus(session, initialWaiting, SpiritCharmStatusState.OnRoll, 1, "<charmStatus.onInitialRoll>");
+            AssertStatus(session, reroll, SpiritCharmStatusState.OnRoll, 1, "<charmStatus.afterReroll>");
             Assert.That(session.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);
             AssertStatus(session, reroll, SpiritCharmStatusState.Used, 0);
         }
@@ -120,7 +128,7 @@ namespace Dice.Tests
                 Is.EqualTo(completed ? EncounterPhase.Completed : EncounterPhase.AwaitingRewards));
             AssertStatus(session, initial, SpiritCharmStatusState.Used, 0);
             AssertStatus(session, waiting, SpiritCharmStatusState.Inactive, 1,
-                completed ? "Encounter ended" : "Between stages");
+                completed ? "<charmStatus.encounterEnded>" : "<charmStatus.betweenStages>");
         }
 
         [Test]
@@ -132,7 +140,7 @@ namespace Dice.Tests
                 session.Snapshot.Phase, null);
             Assert.That(status.State, Is.EqualTo(SpiritCharmStatusState.Kept));
             Assert.That(status.RemainingUses, Is.EqualTo(1));
-            Assert.That(status.GetDetailText(definition.Phase, session.Snapshot.Phase), Is.Empty);
+            Assert.That(status.GetDetailText(definition.Phase, session.Snapshot.Phase, wording.charmStatus), Is.Empty);
         }
 
         private static void AssertStatus(EncounterSession session, ModifierDefinition definition,
@@ -145,7 +153,8 @@ namespace Dice.Tests
             Assert.That(status.RemainingUses, Is.EqualTo(remaining), definition.Id);
             Assert.That(status.ActivationLimit, Is.EqualTo(definition.ActivationLimit), definition.Id);
             if (detailText != null)
-                Assert.That(status.GetDetailText(definition.Phase, session.Snapshot.Phase), Is.EqualTo(detailText), definition.Id);
+                Assert.That(status.GetDetailText(definition.Phase, session.Snapshot.Phase, wording.charmStatus), Is.EqualTo(detailText),
+                    definition.Id);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,

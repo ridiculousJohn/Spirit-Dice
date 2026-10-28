@@ -68,6 +68,7 @@ namespace Dice.Presentation
         public void Build(SpiritEncounterAudio encounterAudio,
             Action<SpiritPresentationState, float> presentHostState = null)
         {
+            SpiritUi.RequireWording(transform);
             hostState = presentHostState;
             audio = encounterAudio;
             advanceButton.onClick.RemoveAllListeners();
@@ -126,7 +127,7 @@ namespace Dice.Presentation
             }
             if (journey != null && index >= 0 && index < journey.Beats.Count)
             {
-                journeyStatus.text = SpiritStatusText.Describe(controls.JourneyStatus);
+                journeyStatus.text = SpiritStatusText.Describe(controls.JourneyStatus, SpiritUi.GetWording(transform).status);
                 if (changed) ShowBeat(journey, index);
             }
             renderedJourney = journey;
@@ -171,8 +172,9 @@ namespace Dice.Presentation
             narrativeScroll.verticalNormalizedPosition = 1;
             advanceButton.gameObject.SetActive(!invitation);
             acceptButton.gameObject.SetActive(invitation);
+            var wording = SpiritUi.GetWording(transform).journey;
             SpiritUi.SetButtonLabel(invitation ? acceptButton : advanceButton,
-                string.IsNullOrWhiteSpace(beat.ContinueLabel) ? invitation ? "Accept" : "Continue" : beat.ContinueLabel);
+                string.IsNullOrWhiteSpace(beat.ContinueLabel) ? invitation ? wording.acceptButton : wording.continueButton : beat.ContinueLabel);
             skipButton.gameObject.SetActive(controls.CanSkipIntro && !invitation);
             var backgroundTexture = beat.SceneLighting != null ? beat.SceneLighting.BaseTexture : beat.Background;
             background.texture = backgroundTexture;
@@ -207,7 +209,7 @@ namespace Dice.Presentation
             charmName.text = name;
             charmEffect.text = "<b>" + charms.GetEffectText(definition) + "</b>";
             charmEffect.color = charms.GetEffectColor(definition);
-            charmCondition.text = SpiritRewardCard.GetModifierDescription(charms, definition, theme.amber,
+            charmCondition.text = SpiritRewardCard.GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
             charmIcon.sprite = charms.GetIcon(definition);
             charmIcon.color = charms.GetEffectColor(definition);
@@ -230,7 +232,7 @@ namespace Dice.Presentation
                 }
             }
             bool showRules = invitationRuleCount > 0;
-            ruleHeading.text = invitationRuleCount > 1 ? "ENCOUNTER RULES" : "ENCOUNTER RULE";
+            ruleHeading.text = SpiritUi.GetWording(transform).journey.ruleHeading.For(invitationRuleCount);
             SetInvitationRulesVisible(showRules);
             title.gameObject.SetActive(!showRules);
             LayoutRebuilder.MarkLayoutForRebuild(narrative);

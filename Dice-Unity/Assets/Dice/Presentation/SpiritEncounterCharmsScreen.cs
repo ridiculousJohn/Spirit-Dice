@@ -27,6 +27,7 @@ namespace Dice.Presentation
 
         public void Build(RectTransform parent, Action begin)
         {
+            SpiritUi.RequireWording(transform);
             BeginButton.onClick.RemoveAllListeners();
             BeginButton.onClick.AddListener(() => begin());
             BackButton.onClick.RemoveAllListeners();
@@ -61,7 +62,7 @@ namespace Dice.Presentation
             for (int rowIndex = 0; rowIndex < rows.Count; ++rowIndex)
                 rows[rowIndex].gameObject.SetActive(rowIndex < families.Count);
             bool narrated = !string.IsNullOrWhiteSpace(narration);
-            Narration.text = narrated ? "\"" + narration.Trim() + "\"" : "";
+            Narration.text = narrated ? SpiritUi.GetWording(transform).encounterCharms.Narration(narration.Trim()) : "";
             Narration.gameObject.SetActive(narrated);
             Root.gameObject.SetActive(true);
             Canvas.ForceUpdateCanvases();

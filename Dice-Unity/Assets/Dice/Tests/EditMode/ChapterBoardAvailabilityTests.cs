@@ -19,7 +19,12 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            root = new GameObject("Chapter board test", typeof(RectTransform));
+            var theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
+            var wording = SyntheticWording.Create();
+            assets.Add(theme);
+            assets.Add(wording);
+            root = new GameObject("Chapter board test", typeof(RectTransform), typeof(SpiritUiContext));
+            root.GetComponent<SpiritUiContext>().Configure(theme, wording);
             controls = new JourneyControls();
         }
 

@@ -26,6 +26,7 @@ namespace Dice.Tests
         private ModifierPresentationCatalog charms;
         private EncounterJourneyCatalogAsset journeys;
         private ScriptableObject[] journeyAssets;
+        private SpiritUiWording wording;
 
         [SetUp]
         public void BuildCollection()
@@ -48,14 +49,23 @@ namespace Dice.Tests
                 new[] { starter, locked, unlocked, encounterOnly, discovered, undiscovered, inert });
             charms = synthetic.For(catalog);
             journeys = Journeys("encounter.test", "Test House", out journeyAssets);
+            wording = SyntheticWording.Create();
             root = new GameObject("CollectionTest", typeof(RectTransform), typeof(Canvas), typeof(SpiritUiContext));
             ((RectTransform)root.transform).sizeDelta = new Vector2(443, 960);
             var themePath = AssetDatabase.GUIDToAssetPath(AssetDatabase.FindAssets("t:SpiritUiTheme").First());
-            root.GetComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(themePath));
+            root.GetComponent<SpiritUiContext>().Configure(AssetDatabase.LoadAssetAtPath<SpiritUiTheme>(themePath), wording);
             var prefab = AssetDatabase.LoadAssetAtPath<SpiritCollectionView>(
                 "Assets/Dice/Content/Presentation/UI/SpiritCollectionView.prefab");
             Assert.That(prefab, Is.Not.Null);
             view = UnityEngine.Object.Instantiate(prefab, root.transform, false);
+            // The view and the rows it creates show the fabricated wording: rows come from an inactive copy of the authored row.
+            var viewData = new SerializedObject(view);
+            var rowPrefab = (SpiritModifierFamilyRow)viewData.FindProperty("rowPrefab").objectReferenceValue;
+            var rowTemplate = UnityEngine.Object.Instantiate(rowPrefab, root.transform, false);
+            rowTemplate.gameObject.SetActive(false);
+            viewData.FindProperty("rowPrefab").objectReferenceValue = rowTemplate;
+            viewData.ApplyModifiedPropertiesWithoutUndo();
+            foreach (var context in root.GetComponentsInChildren<SpiritUiContext>(true)) context.Configure(context.Theme, wording);
             view.Build((RectTransform)root.transform, () => view.Hide());
         }
 
@@ -63,6 +73,7 @@ namespace Dice.Tests
         public void ReleaseCollection()
         {
             UnityEngine.Object.DestroyImmediate(root);
+            UnityEngine.Object.DestroyImmediate(wording);
             foreach (var asset in journeyAssets) UnityEngine.Object.DestroyImmediate(asset);
             synthetic.Dispose();
         }
@@ -79,8 +90,8 @@ namespace Dice.Tests
             Assert.That(row.GetComponentsInChildren<Text>().Count(text => text.name == "FamilyCondition"), Is.EqualTo(1));
             Assert.That(Find<Text>(row, "FamilyCondition").text, Does.Contain(charms.GetDescriptionLead(unlocked)));
             Assert.That(row.GetComponentsInChildren<Text>().Where(text => text.name == "VariantState").Select(text => text.text),
-                Is.EqualTo(new[] { "Available", "Locked", "Unlocked" }));
-            Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("Collected 1 / 4  |  Available at start 1"));
+                Is.EqualTo(new[] { "<collection.available>", "<collection.locked>", "<collection.unlocked>" }));
+            Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("<collection.summary>1|4|1"));
             Assert.That(profileIds, Is.EqualTo(new[] { unlocked.Id }));
             Assert.That(Find<Button>(row, "FamilyVariant1").GetComponent<CanvasGroup>().alpha, Is.EqualTo(.35f));
             Assert.That(Find<Button>(row, "FamilyVariant2").GetComponent<CanvasGroup>().alpha, Is.EqualTo(1));
@@ -88,10 +99,11 @@ namespace Dice.Tests
 
             Find<Button>(row, "FamilyVariant1").onClick.Invoke();
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Id));
-            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Locked"));
+            Assert.That(Find<Text>(view, "CollectionDetailTitle").text,
+                Is.EqualTo("<collection.detailTitle>" + charms.GetName(locked) + "|<collection.locked>"));
             Assert.That(Find<Text>(view, "CollectionDetailEffect").text,
                 Is.EqualTo(charms.GetEffectText(locked)));
-            Assert.That(Find<Text>(view, "CollectionDetailSource").text, Does.Contain("after stage 3"));
+            Assert.That(Find<Text>(view, "CollectionDetailSource").text, Does.Contain("<collection.unlockSource.one>Test House|3"));
         }
 
         [Test]
@@ -104,9 +116,9 @@ namespace Dice.Tests
             view.Show(catalog, charms, new[] { unlocked.Id, locked.Id, encounterOnly.Id }, journeys);
             Assert.That(view.IsVisible, Is.True);
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Id));
-            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Unlocked"));
-            Assert.That(Find<Text>(view, "CollectionSummary").text, Does.StartWith("Collected 2 / 4"));
-            Assert.That(SpiritCollectionView.GetStatusText(encounterOnly, true), Is.EqualTo("Encounter only"));
+            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith("|<collection.unlocked>"));
+            Assert.That(Find<Text>(view, "CollectionSummary").text, Does.StartWith("<collection.summary>2|4|"));
+            Assert.That(SpiritCollectionView.GetStatusText(encounterOnly, true, wording.collection), Is.EqualTo("<collection.encounterOnly>"));
         }
 
         [Test]
@@ -118,7 +130,7 @@ namespace Dice.Tests
             var button = Find<Button>(view, "CollectionFilterButton");
             button.onClick.Invoke();
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Discovered));
-            Assert.That(Find<Text>(view, "CollectionFilterButtonLabel").text, Is.EqualTo("Discovered"));
+            Assert.That(Find<Text>(view, "CollectionFilterButtonLabel").text, Is.EqualTo("<collection.discoveredFilter>"));
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EquivalentTo(new[] { starter.FamilyId, discovered.FamilyId }));
             Find<Button>(view.Rows.Single(row => row.FamilyId == discovered.FamilyId), "FamilyVariant0").onClick.Invoke();
             Assert.That(view.SelectedModifierId, Is.EqualTo(discovered.Id));
@@ -130,7 +142,7 @@ namespace Dice.Tests
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             Assert.That(view.Rows.Select(row => row.FamilyId), Is.EqualTo(new[] { starter.FamilyId }));
             Assert.That(view.SelectedModifierId, Is.Not.EqualTo(discovered.Id));
-            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith(" - Available"));
+            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith("|<collection.available>"));
             view.SetFilter(SpiritCollectionFilter.All);
             view.Hide();
             view.Show(catalog, charms, Array.Empty<string>(), journeys);
@@ -150,8 +162,8 @@ namespace Dice.Tests
             string selected = view.SelectedModifierId;
             foreach (var row in view.Rows.Where(row => row.IsUndiscovered))
             {
-                Assert.That(Find<Text>(row, "FamilyName").text, Is.EqualTo("Undiscovered family"));
-                Assert.That(Find<Text>(row, "FamilyCondition").text, Is.EqualTo("Locked"));
+                Assert.That(Find<Text>(row, "FamilyName").text, Is.EqualTo("<familyRow.undiscoveredFamily>"));
+                Assert.That(Find<Text>(row, "FamilyCondition").text, Is.EqualTo("<familyRow.undiscoveredCondition>"));
                 Assert.That(row.GetComponentsInChildren<Button>(), Is.Empty);
                 var rect = (RectTransform)row.transform;
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
@@ -161,7 +173,7 @@ namespace Dice.Tests
                 foreach (var button in row.GetComponentsInChildren<Button>(true)) button.onClick.Invoke();
             }
             Assert.That(view.SelectedModifierId, Is.EqualTo(selected));
-            Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("Collected 1 / 4  |  Available at start 1"));
+            Assert.That(Find<Text>(view, "CollectionSummary").text, Is.EqualTo("<collection.summary>1|4|1"));
         }
 
         [Test]
@@ -177,13 +189,12 @@ namespace Dice.Tests
             view.Show(permanentCatalog, charms, Array.Empty<string>(), journeys);
             Assert.That(view.Rows, Is.Empty);
             Assert.That(view.SelectedModifierId, Is.Null);
-            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Is.EqualTo("No owned families"));
+            Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Is.EqualTo("<collection.noOwnedFamilies>"));
             Assert.That(Find<Text>(view, "CollectionDetailEffect").text, Is.Empty);
             view.SetFilter(SpiritCollectionFilter.All);
             Assert.That(view.Rows.All(row => row.IsUndiscovered), Is.True);
             Assert.That(view.SelectedModifierId, Is.Null);
-            Assert.That(Find<Text>(view, "CollectionDetailSource").text, Does.Contain("Discover charm families")
-                .And.Not.Contain("Unlock choice:"));
+            Assert.That(Find<Text>(view, "CollectionDetailSource").text, Is.EqualTo("<collection.undiscoveredHint>"));
         }
 
         /** Checks a family's variants are listed in the order of their presentations in the skin / fails if they follow the catalog's order or their effects. */
@@ -210,11 +221,13 @@ namespace Dice.Tests
         [Test]
         public void SourcesDescribeAuthoredUnlockScheduleAndDistinguishRunOnlyAdditions()
         {
-            Assert.That(SpiritCollectionView.GetSourceText(locked, catalog, journeys), Does.Contain("Unlock choice:")
-                .And.Contain("after stage 3").And.Contain("Once unlocked, run charm pool:"));
-            Assert.That(SpiritCollectionView.GetSourceText(starter, catalog, journeys), Does.StartWith("Available from the start."));
-            Assert.That(SpiritCollectionView.GetSourceText(encounterOnly, catalog, journeys),
-                Does.StartWith("Encounter only; never permanently collected.").And.Contain("Run charm pool:"));
+            var collection = wording.collection;
+            Assert.That(SpiritCollectionView.GetSourceText(locked, catalog, journeys, collection), Does.StartWith(
+                "<collection.unlockableSource><collection.unlockChoices><collection.unlockSource.one>Test House|3|"));
+            Assert.That(SpiritCollectionView.GetSourceText(starter, catalog, journeys, collection),
+                Does.StartWith("<collection.starterSource>"));
+            Assert.That(SpiritCollectionView.GetSourceText(encounterOnly, catalog, journeys, collection),
+                Does.StartWith("<collection.encounterOnlySource>"));
         }
 
         [Test]
@@ -243,9 +256,9 @@ namespace Dice.Tests
                 entries.arraySize = 1;
                 entries.GetArrayElementAtIndex(0).objectReferenceValue = journey;
                 catalogData.ApplyModifiedPropertiesWithoutUndo();
-                Assert.That(SpiritCollectionView.GetSourceText(discovered, catalog, journeys),
-                    Does.Contain("Gift: Test House - story; Test House - completion")
-                        .And.Not.Contain("Not obtainable yet"));
+                Assert.That(SpiritCollectionView.GetSourceText(discovered, catalog, journeys, wording.collection), Does.StartWith(
+                    "<collection.unlockableSource><collection.gifts><collection.storyGift>Test House |sourceSeparator| " +
+                    "<collection.completionGift>Test House|"));
             }
             finally
             {
@@ -271,10 +284,11 @@ namespace Dice.Tests
             var journeys = Journeys("encounter.sourced", "Test House", out var created);
             try
             {
-                Assert.That(SpiritCollectionView.GetSourceText(locked, sources, journeys),
-                    Is.EqualTo("Unlock choice: Test House - after stages 1, 3.\nOnce unlocked, run charm pool: Not offered in current encounters."));
-                Assert.That(SpiritCollectionView.GetSourceText(discovered, sources, journeys),
-                    Does.EndWith("Once unlocked, run charm pool: Test House."));
+                Assert.That(SpiritCollectionView.GetSourceText(locked, sources, journeys, wording.collection), Is.EqualTo(
+                    "<collection.unlockableSource><collection.unlockChoices><collection.unlockSource.many>Test House|1 |stageSeparator| 3|" +
+                    "<collection.noRunRewards>"));
+                Assert.That(SpiritCollectionView.GetSourceText(discovered, sources, journeys, wording.collection),
+                    Is.EqualTo("<collection.unlockableSource><collection.notObtainable>|Test House"));
             }
             finally
             {
@@ -289,7 +303,8 @@ namespace Dice.Tests
             var journeys = Journeys("encounter.test", "", out var created);
             try
             {
-                var failure = Assert.Throws<InvalidOperationException>(() => SpiritCollectionView.GetSourceText(locked, catalog, journeys));
+                var failure = Assert.Throws<InvalidOperationException>(() =>
+                    SpiritCollectionView.GetSourceText(locked, catalog, journeys, wording.collection));
                 Assert.That(failure.Message, Does.Contain("encounter.test"));
             }
             finally

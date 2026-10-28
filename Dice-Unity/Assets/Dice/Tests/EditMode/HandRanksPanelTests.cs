@@ -35,7 +35,7 @@ namespace Dice.Tests
         [TearDown]
         public void TearDown() => ui.Dispose();
 
-        /** Checks each row shows its category's level and the base score and multiplier the hand states at that level / fails if a row shows another level's values or recomputes them from other figures. */
+        /** Checks each row shows its category's name, level and the base score and multiplier the hand states at that level in the wording's templates / fails if a row shows another level's values, another category's name or recomputes them from other figures. */
         [Test]
         public void EachRowShowsTheValuesItsHandStatesAtTheRunsLevel()
         {
@@ -47,11 +47,12 @@ namespace Dice.Tests
             {
                 var hand = catalog.GetHand(row.Category);
                 int level = upgrades[(int)row.Category];
-                Assert.That(row.LevelLabel.text, Is.EqualTo("Level " + level), row.Category.ToString());
-                Assert.That(row.BaseLabel.text, Is.EqualTo("+Base " + DiagnosticText.Number(hand.BaseScoreAt(level))),
+                Assert.That(row.CategoryLabel.text, Is.EqualTo(ui.Wording.handNames.Name(row.Category)), row.Category.ToString());
+                Assert.That(row.LevelLabel.text, Is.EqualTo("<handRanks.level>" + level), row.Category.ToString());
+                Assert.That(row.BaseLabel.text, Is.EqualTo("<handRanks.baseBonus>" + DiagnosticText.Number(hand.BaseScoreAt(level))),
                     row.Category.ToString());
-                Assert.That(row.MultiplierLabel.text, Is.EqualTo("+Mult " + DiagnosticText.Number(hand.MultiplierAt(level))),
-                    row.Category.ToString());
+                Assert.That(row.MultiplierLabel.text,
+                    Is.EqualTo("<handRanks.multiplierBonus>" + DiagnosticText.Number(hand.MultiplierAt(level))), row.Category.ToString());
             }
         }
     }

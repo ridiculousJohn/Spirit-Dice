@@ -27,7 +27,8 @@ namespace Dice.App
 
         private void Awake()
         {
-            StartupView.ShowStatus(SpiritStatusText.Describe(controller.Status));
+            StartupView.Build();
+            StartupView.ShowStatus(controller.Status);
         }
 
         private IEnumerator Start()
@@ -69,7 +70,7 @@ namespace Dice.App
 
         private void SetStartupStatus(SpiritStatus status)
         {
-            StartupView.ShowStatus(SpiritStatusText.Describe(status));
+            StartupView.ShowStatus(status);
             controller.SetStatus(status);
         }
 

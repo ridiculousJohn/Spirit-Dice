@@ -33,6 +33,7 @@ namespace Dice.Presentation
         public void Build(RectTransform parent, Action close, Func<bool> busy)
         {
             isBusy = busy ?? throw new ArgumentNullException(nameof(busy));
+            SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveAllListeners();
             CloseButton.onClick.AddListener(() => close());
         }
@@ -128,6 +129,7 @@ namespace Dice.Presentation
 
         private void RenderDetail()
         {
+            var wording = SpiritUi.GetWording(transform);
             foreach (var instance in controls.Snapshot.Modifiers)
             {
                 if (instance.InstanceId != SelectedInstanceId) continue;
@@ -138,14 +140,13 @@ namespace Dice.Presentation
                 DetailIcon.gameObject.SetActive(true);
                 DetailCategory.Render(controls.ModifierPresentation, definition);
                 DetailTitle.text = controls.ModifierPresentation.GetName(definition);
-                DetailBody.text = controls.ModifierPresentation.GetConditionText(definition) + "\n" +
-                    "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" +
-                    controls.ModifierPresentation.GetEffectText(definition) + "</color>\n" +
-                    controls.ModifierPresentation.GetTimingText(definition) + "\n" +
-                    SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot);
+                DetailBody.text = wording.ownedCharms.DetailBody(controls.ModifierPresentation.GetConditionText(definition),
+                    "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" + controls.ModifierPresentation.GetEffectText(definition) + "</color>",
+                    controls.ModifierPresentation.GetTimingText(definition),
+                    SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot, wording.charmAvailability));
                 var status = SpiritCharmVisuals.Status(controls, instance, definition);
                 DetailBadge.Render(status);
-                DetailStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase);
+                DetailStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase, wording.charmStatus);
                 DetailStatus.color = DetailBadge.Icon.color;
                 DetailStatusRow.gameObject.SetActive(true);
                 detailsLayout.RefreshLayout();
@@ -157,11 +158,11 @@ namespace Dice.Presentation
                 }
                 return;
             }
-            DetailTitle.text = "No charms yet";
+            DetailTitle.text = wording.ownedCharms.noCharmsTitle;
             DetailIcon.sprite = null;
             DetailIcon.gameObject.SetActive(false);
             DetailCategory.Render(null, null);
-            DetailBody.text = "Clear a stage to choose a charm.";
+            DetailBody.text = wording.ownedCharms.noCharmsBody;
             DetailStatusRow.gameObject.SetActive(false);
             detailsLayout.RefreshLayout();
         }

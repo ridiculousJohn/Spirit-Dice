@@ -37,6 +37,7 @@ namespace Dice.Presentation
             for (int i = 0; i < candidateButtons.Length; ++i)
                 if (candidateButtons[i] == null || summaries[i] == null || details[i] == null || identifiers[i] == null)
                     throw new InvalidOperationException("The recovery picker requires three authored candidates.");
+            SpiritUi.RequireWording(transform);
             candidateButtons[0].onClick.RemoveListener(SelectFirstCandidate);
             candidateButtons[0].onClick.AddListener(SelectFirstCandidate);
             candidateButtons[1].onClick.RemoveListener(SelectSecondCandidate);
@@ -81,6 +82,7 @@ namespace Dice.Presentation
             }
             int pageCount = (campaigns.Count + candidateButtons.Length - 1) / candidateButtons.Length;
             PageIndex = Mathf.Clamp(PageIndex, 0, pageCount - 1);
+            var wording = SpiritUi.GetWording(transform);
             for (int i = 0; i < candidateButtons.Length; ++i)
             {
                 int index = PageIndex * candidateButtons.Length + i;
@@ -89,15 +91,13 @@ namespace Dice.Presentation
                 campaignIds[i] = visible ? campaigns[index].CampaignId : null;
                 if (!visible) continue;
                 var info = campaigns[index];
-                summaries[i].text = string.IsNullOrWhiteSpace(info.Summary) ? "Saved campaign" : info.Summary;
-                string saved = string.IsNullOrWhiteSpace(info.LastSaved) ? "Unknown" : info.LastSaved;
-                details[i].text = "Saved " + saved;
+                summaries[i].text = wording.saveSlots.Progress(info.CompletedEncounters, info.CollectedCharms);
+                details[i].text = wording.recovery.SavedAt(info.LastSaved);
                 string id = info.CampaignId ?? "";
-                identifiers[i].text = "Slot " + (info.SuggestedSlot > 0 ? info.SuggestedSlot.ToString() : "?") +
-                    " / Save " + (id.Length > 10 ? id.Substring(0, 10) : id);
+                identifiers[i].text = wording.recovery.Identifier(info.SuggestedSlot, id.Length > 10 ? id.Substring(0, 10) : id);
                 candidateButtons[i].interactable = !string.IsNullOrEmpty(info.CampaignId);
             }
-            PageLabel.text = (PageIndex + 1) + " / " + pageCount;
+            PageLabel.text = wording.recovery.Page(PageIndex + 1, pageCount);
             PreviousPageButton.interactable = PageIndex > 0;
             NextPageButton.interactable = PageIndex + 1 < pageCount;
         }

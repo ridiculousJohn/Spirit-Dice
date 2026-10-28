@@ -78,10 +78,10 @@ namespace Dice.Tests
             int first = scored.IndexOf(rank);
             int last = scored.LastIndexOf(rank);
             Assert.That(first, Is.GreaterThan(0), "The played hand's scoring shows its rank.");
-            Assert.That(scored.Take(first), Has.Member("COUNTING DICE"), "The dice are counted before the rank shows.");
+            Assert.That(scored.Take(first), Has.Member("<scoring.diceCategory>"), "The dice are counted before the rank shows.");
             Assert.That(scored.Take(first).Intersect(ranks), Is.Empty, "No rank shows before the played hand is scored.");
             Assert.That(scored.Skip(first).Take(last - first + 1), Is.All.EqualTo(rank));
-            Assert.That(scored.Skip(last + 1).First(), Is.EqualTo("FINAL SCORE"));
+            Assert.That(scored.Skip(last + 1).First(), Is.EqualTo("<scoring.totalCategory>"));
             Assert.That(scored.Skip(last + 1).Intersect(ranks), Is.Empty, "No rank shows after the hand is scored.");
             Assert.That(scored.Last(), Is.Empty, "The next hand's roll shows no rank.");
             Assert.That(host.Finished, Is.EqualTo(new[] { reroll, played }));
@@ -105,10 +105,10 @@ namespace Dice.Tests
                 granted ? ResourceChangeCause.ModifierEffect : ResourceChangeCause.RerollDice, 1, 2, activated);
             hud.SelectionLabel.text = "before";
             Run(playback.Play(new Resolution(session.Snapshot.Revision, session.Snapshot, new RuleEvent[] { change }), 0));
-            Assert.That(hud.SelectionLabel.text, Is.EqualTo(granted ? "before" : "2 rerolls remaining"));
+            Assert.That(hud.SelectionLabel.text, Is.EqualTo(granted ? "before" : "<hud.rerollsRemaining.many>2"));
         }
 
-        private static string Rank(HandCategory category) => DiagnosticText.Humanize(category.ToString()).ToUpperInvariant();
+        private string Rank(HandCategory category) => ui.Wording.handNames.Name(category).ToUpperInvariant();
 
         /** Runs the playback to its end and returns the HUD's rank label as it stood at every yield. */
         private List<string> Run(IEnumerator routine)

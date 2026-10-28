@@ -18,12 +18,15 @@ namespace Dice.Tests
         private readonly List<Object> created = new List<Object>();
 
         public RectTransform Root { get; }
+        /** The fabricated wording the root's UI context carries. */
+        public SpiritUiWording Wording { get; }
 
         public SyntheticUi()
         {
             var theme = Own(ScriptableObject.CreateInstance<SpiritUiTheme>());
+            Wording = Own(SyntheticWording.Create());
             var root = Own(new GameObject("Synthetic UI", typeof(RectTransform), typeof(Canvas), typeof(SpiritUiContext)));
-            root.GetComponent<SpiritUiContext>().Configure(theme);
+            root.GetComponent<SpiritUiContext>().Configure(theme, Wording);
             Root = (RectTransform)root.transform;
         }
 

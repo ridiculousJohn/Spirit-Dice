@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Dice.Engine;
 using UnityEngine;
@@ -71,27 +72,32 @@ namespace Dice.Presentation
             SpiritCharmVisuals.SetIcon(charmIcon, charmCategory, charms, definition);
             title.text = charms.GetName(definition);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = GetModifierDescription(charms, definition, theme.amber, theme.GetModifierTriggerColor(definition.Phase));
+            condition.text = GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText, theme.amber,
+                theme.GetModifierTriggerColor(definition.Phase));
             effects.text = "<b>" + charms.GetEffectText(definition) + "</b>";
             effects.color = charms.GetEffectColor(definition);
             SetModifierSelected(false);
         }
 
+        /**
+         * The charm's description in the wording's description template: its phase's lead in the trigger highlight, its
+         * condition with numbers and the wording's highlighted terms in the highlight, and its activation limit's note.
+         */
         public static string GetModifierDescription(ModifierPresentationCatalog charms, ModifierDefinition definition,
-            Color highlight, Color? triggerHighlight = null)
+            SpiritUiWording.CharmText wording, Color highlight, Color? triggerHighlight = null)
         {
             if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
             string color = ColorUtility.ToHtmlStringRGB(highlight);
-            string description = charms.GetConditionText(definition);
-            description = Regex.Replace(description,
-                @"\b(?:\d+|High Die|Two Pair|Pair|Straight|rerolled|rerolls?|hands?|initial roll|previous played hand)\b",
+            var terms = new List<string> { @"\d+" };
+            foreach (string term in wording.highlightedTerms) terms.Add(Regex.Escape(term));
+            string condition = Regex.Replace(charms.GetConditionText(definition), @"\b(?:" + string.Join("|", terms) + @")\b",
                 match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
             string triggerColor = ColorUtility.ToHtmlStringRGB(triggerHighlight ?? highlight);
-            string text = "<b><color=#" + triggerColor + ">" + charms.GetDescriptionLead(definition) + "</color></b>: " + description;
+            string lead = "<b><color=#" + triggerColor + ">" + charms.GetDescriptionLead(definition) + "</color></b>";
             string note = charms.GetDescriptionNote(definition);
-            if (note.Length > 0) text += " <b>" + note + "</b>";
-            return text;
+            return wording.Description(lead, condition, note.Length > 0 ? "<b>" + note + "</b>" : "");
         }
 
         public void SetModifierSelected(bool selected)
@@ -120,7 +126,7 @@ namespace Dice.Presentation
             _ = checked(handMultiplier + handMultiplierIncrement);
             modifierRoot.SetActive(false);
             handRoot.SetActive(true);
-            handTitle.text = DiagnosticText.Humanize(hand.Category.ToString());
+            handTitle.text = SpiritUi.GetWording(transform).handNames.Name(hand.Category);
             handPattern.sprite = pattern;
             SetHandUpgradeSelected(false);
         }
@@ -138,11 +144,9 @@ namespace Dice.Presentation
             handTitle.color = selected ? selectedTitleColor : titleColor;
             handLevelText.color = selected ? selectedTitleColor : handLevelColor;
             handBackground.color = selected ? handSelectedColor : handColor;
-            handLevelText.text = "Level " + handLevel + (selected ? " +1" : "");
-            handValues.text = "BASE " + DiagnosticText.Number(handBase) +
-                (selected ? " +" + DiagnosticText.Number(handBaseIncrement) : "") +
-                "\nMULT " + DiagnosticText.Number(handMultiplier) +
-                (selected ? " +" + DiagnosticText.Number(handMultiplierIncrement) : "");
+            var wording = SpiritUi.GetWording(transform).rewardCard;
+            handLevelText.text = wording.Level(handLevel, selected);
+            handValues.text = wording.Values(handBase, handMultiplier, handBaseIncrement, handMultiplierIncrement, selected);
             selectionMarker.gameObject.SetActive(selected);
         }
     }

@@ -23,6 +23,7 @@ namespace Dice.Presentation
             if (parent == null) throw new ArgumentNullException(nameof(parent));
             if (Root == null || Scroll == null || Content == null || CloseButton == null || chapterCardPrefab == null)
                 throw new InvalidOperationException("The chapter selector requires authored UI references.");
+            SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveListener(Close);
             CloseButton.onClick.AddListener(Close);
             Close();
@@ -37,6 +38,7 @@ namespace Dice.Presentation
             var catalog = controls.JourneyCatalog;
             if (catalog == null || catalog.Chapters == null || catalog.Chapters.Count == 0) return;
 
+            var wording = SpiritUi.GetWording(transform).chapters;
             for (int i = 0; i < catalog.Chapters.Count; ++i)
             {
                 var chapter = catalog.Chapters[i];
@@ -48,9 +50,9 @@ namespace Dice.Presentation
                 bool available = controls.IsChapterAvailable(chapter.Id);
                 bool current = controls.SelectedChapter == chapter;
                 bool completed = controls.IsChapterCompleted(chapter.Id);
-                string state = !available ? "LOCKED" : current ? completed ? "CURRENT - COMPLETED" : "CURRENT" :
-                    completed ? "COMPLETED" : "AVAILABLE";
-                card.Bind(chapter.Artwork, chapter.Title, "", "CHAPTER " + (i + 1), state,
+                string state = !available ? wording.locked : current ? completed ? wording.currentCompleted : wording.current :
+                    completed ? wording.completed : wording.available;
+                card.Bind(chapter.Artwork, chapter.Title, "", wording.Number(i + 1), state,
                     current, false, available, () =>
                     {
                         Close();

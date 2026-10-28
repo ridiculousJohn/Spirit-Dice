@@ -44,6 +44,7 @@ namespace Dice.Presentation
 
         public void Build(RectTransform parent, Action close)
         {
+            SpiritUi.RequireWording(transform);
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() => close());
             filterButton.onClick.RemoveAllListeners();
@@ -99,7 +100,7 @@ namespace Dice.Presentation
                 charms.GetFamilyName(left[0]), charms.GetFamilyName(right[0])));
             foreach (var family in families)
                 family.Sort((left, right) => charms.GetOrder(left).CompareTo(charms.GetOrder(right)));
-            summary.text = "Collected " + unlockedCount + " / " + permanentCount + "  |  Available at start " + starterCount;
+            summary.text = Wording.Summary(unlockedCount, permanentCount, starterCount);
             Root.gameObject.SetActive(true);
             Root.SetAsLastSibling();
             SetFilter(SpiritCollectionFilter.Owned);
@@ -110,7 +111,8 @@ namespace Dice.Presentation
             if (!Enum.IsDefined(typeof(SpiritCollectionFilter), filter)) throw new ArgumentOutOfRangeException(nameof(filter));
             if (catalog == null) throw new InvalidOperationException("Open the collection before selecting a filter.");
             Filter = filter;
-            filterLabel.text = filter.ToString();
+            var wording = Wording;
+            filterLabel.text = wording.FilterName(filter);
             rows.Clear();
             bool selectionExists = false;
             string firstSelectableId = null;
@@ -142,9 +144,9 @@ namespace Dice.Presentation
             if (SelectedModifierId != null) Select(catalog.GetModifier(SelectedModifierId));
             else
             {
-                detailTitle.text = filter == SpiritCollectionFilter.All && rows.Count > 0 ? "Undiscovered families" : "No " + filter.ToString().ToLowerInvariant() + " families";
+                detailTitle.text = filter == SpiritCollectionFilter.All && rows.Count > 0 ? wording.undiscoveredFamilies : wording.NoFamilies(filter);
                 detailEffect.text = "";
-                detailSource.text = "Discover charm families during play to reveal their effects and sources.";
+                detailSource.text = wording.undiscoveredHint;
             }
             Canvas.ForceUpdateCanvases();
             scroll.StopMovement();
@@ -163,22 +165,26 @@ namespace Dice.Presentation
                 if (!row.IsUndiscovered && row.FamilyId == definition.FamilyId) visible = true;
             if (!visible) return;
             SelectedModifierId = definition.Id;
-            detailTitle.text = charms.GetName(definition) + " - " + StatusText(definition);
+            var wording = Wording;
+            detailTitle.text = wording.DetailTitle(charms.GetName(definition), StatusText(definition));
             detailEffect.text = charms.GetEffectText(definition);
             detailEffect.color = charms.GetEffectColor(definition);
-            detailSource.text = GetSourceText(definition, catalog, journeys);
+            detailSource.text = GetSourceText(definition, catalog, journeys, wording);
             foreach (var row in rows) row.SetSelected(definition.Id);
         }
 
-        private string StatusText(ModifierDefinition definition) => GetStatusText(definition, unlockedIds.Contains(definition.Id));
+        private SpiritUiWording.Collection Wording => SpiritUi.GetWording(transform).collection;
 
-        public static string GetStatusText(ModifierDefinition definition, bool unlocked)
+        private string StatusText(ModifierDefinition definition) =>
+            GetStatusText(definition, unlockedIds.Contains(definition.Id), Wording);
+
+        public static string GetStatusText(ModifierDefinition definition, bool unlocked, SpiritUiWording.Collection wording)
         {
             switch (definition.Availability.Access)
             {
-                case ModifierAccess.Starter: return "Available";
-                case ModifierAccess.EncounterExclusive: return "Encounter only";
-                default: return unlocked ? "Unlocked" : "Locked";
+                case ModifierAccess.Starter: return wording.available;
+                case ModifierAccess.EncounterExclusive: return wording.encounterOnly;
+                default: return unlocked ? wording.unlocked : wording.locked;
             }
         }
 
@@ -188,17 +194,16 @@ namespace Dice.Presentation
          * locations; encounters without a journey are not listed.
          */
         public static string GetSourceText(ModifierDefinition definition, MechanicalCatalog mechanicalCatalog,
-            EncounterJourneyCatalogAsset journeyCatalog)
+            EncounterJourneyCatalogAsset journeyCatalog, SpiritUiWording.Collection wording)
         {
             if (journeyCatalog == null) throw new ArgumentNullException(nameof(journeyCatalog));
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
             ModifierSources sources = mechanicalCatalog.GetModifierSources(definition.Id);
             var unlockSources = new List<string>();
             foreach (var unlock in sources.Unlocks)
             {
                 if (!TryGetEncounterName(unlock.Encounter, journeyCatalog, out string name)) continue;
-                var stages = new List<string>();
-                foreach (int stageNumber in unlock.StageNumbers) stages.Add(stageNumber.ToString());
-                unlockSources.Add(name + " - after stage" + (stages.Count > 1 ? "s " : " ") + string.Join(", ", stages));
+                unlockSources.Add(wording.UnlockSource(name, unlock.StageNumbers));
             }
             var rewardSources = new List<string>();
             foreach (var encounter in sources.RunRewards)
@@ -208,18 +213,18 @@ namespace Dice.Presentation
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
                 var journey = journeyCatalog.Find(encounter.Id);
-                if (journey != null) AddGiftSources(journey, definition.Id, giftSources);
+                if (journey != null) AddGiftSources(journey, definition.Id, giftSources, wording);
             }
             foreach (var journey in journeyCatalog.Entries)
-                if (journey != null && journey.IsStoryOnly) AddGiftSources(journey, definition.Id, giftSources);
-            string rewards = rewardSources.Count > 0 ? string.Join(", ", rewardSources) : "Not offered in current encounters";
-            if (definition.Availability.Access == ModifierAccess.EncounterExclusive)
-                return "Encounter only; never permanently collected.\nRun charm pool: " + rewards + ".";
-            if (definition.Availability.Access == ModifierAccess.Starter)
-                return "Available from the start.\nRun charm pool: " + rewards + ".";
-            string source = unlockSources.Count > 0 ? "Unlock choice: " + string.Join("; ", unlockSources) : "";
-            if (giftSources.Count > 0) source += (source.Length > 0 ? ".\n" : "") + "Gift: " + string.Join("; ", giftSources);
-            return (source.Length > 0 ? source : "Not obtainable yet") + ".\nOnce unlocked, run charm pool: " + rewards + ".";
+                if (journey != null && journey.IsStoryOnly) AddGiftSources(journey, definition.Id, giftSources, wording);
+            string rewards = wording.Rewards(rewardSources);
+            if (definition.Availability.Access == ModifierAccess.EncounterExclusive) return wording.EncounterOnlySource(rewards);
+            if (definition.Availability.Access == ModifierAccess.Starter) return wording.StarterSource(rewards);
+            var sourceLines = new List<string>();
+            if (unlockSources.Count > 0) sourceLines.Add(wording.UnlockChoices(unlockSources));
+            if (giftSources.Count > 0) sourceLines.Add(wording.Gifts(giftSources));
+            string source = sourceLines.Count > 0 ? string.Join(wording.sourceLineSeparator, sourceLines) : wording.notObtainable;
+            return wording.UnlockableSource(source, rewards);
         }
 
         /** The encounter's name, its journey's location, or false when the journey catalog has no journey for it. */
@@ -235,16 +240,17 @@ namespace Dice.Presentation
             => !string.IsNullOrWhiteSpace(journey.LocationTitle) ? journey.LocationTitle
                 : throw new InvalidOperationException("Journey " + journey.Id + " has no location title.");
 
-        private static void AddGiftSources(EncounterJourneyAsset journey, string modifierId, List<string> giftSources)
+        private static void AddGiftSources(EncounterJourneyAsset journey, string modifierId, List<string> giftSources,
+            SpiritUiWording.Collection wording)
         {
             foreach (var beat in journey.Beats)
                 if (beat.ProgressionReward != null && beat.ProgressionReward.GrantsModifier(modifierId))
                 {
-                    giftSources.Add(LocationTitle(journey) + " - story");
+                    giftSources.Add(wording.StoryGift(LocationTitle(journey)));
                     break;
                 }
             if (journey.CompletionReward != null && journey.CompletionReward.GrantsModifier(modifierId))
-                giftSources.Add(LocationTitle(journey) + " - completion");
+                giftSources.Add(wording.CompletionGift(LocationTitle(journey)));
         }
     }
 }

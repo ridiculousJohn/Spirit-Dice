@@ -378,7 +378,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 
+  m_Text: UNLOCKS
 --- !u!1 &2533820113256215024
 GameObject:
   m_ObjectHideFlags: 0
@@ -1044,6 +1044,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiContext
   theme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
+  wording: {fileID: 11400000, guid: a32898378b6852b4fa89c2bfbf1e6b94, type: 2}
 --- !u!114 &4472532451279711272
 MonoBehaviour:
   m_ObjectHideFlags: 0

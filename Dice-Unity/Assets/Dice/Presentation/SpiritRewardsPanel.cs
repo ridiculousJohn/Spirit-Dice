@@ -30,6 +30,7 @@ namespace Dice.Presentation
         public void Build(RectTransform parent, Func<bool> busy)
         {
             isBusy = busy ?? throw new ArgumentNullException(nameof(busy));
+            SpiritUi.RequireWording(transform);
             RefreshButton.onClick.RemoveAllListeners();
             RefreshButton.onClick.AddListener(() => { if (!isBusy()) { ClearSelection(); controls.RefreshRewards(); } });
             ConfirmButton.onClick.RemoveAllListeners();
@@ -50,32 +51,32 @@ namespace Dice.Presentation
             bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
             bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
             bool exhausted = unlock && offer.Options.Count == 0;
-            Title.text = handUpgrade ? "Choose a hand to upgrade" : exhausted ? "All charms collected" :
-                unlock ? "Unlock a charm" : "Choose a charm";
+            var wording = SpiritUi.GetWording(transform).rewards;
+            Title.text = handUpgrade ? wording.handUpgradeTitle : exhausted ? wording.exhaustedTitle :
+                unlock ? wording.unlockTitle : wording.charmTitle;
             Step.gameObject.SetActive(false);
             Instruction.gameObject.SetActive(unlock);
             UpcomingStage.gameObject.SetActive(false);
             ConfirmButton.gameObject.SetActive(offer != null);
-            SpiritUi.SetButtonLabel(ConfirmButton, handUpgrade ? "Upgrade" : exhausted ? "Continue" : unlock ? "Unlock" : "Select");
-            Step.text = offer == null ? "REWARDS COMPLETE" : offer.Kind == RewardKind.Modifier ?
-                "CHARM CHOICE" : "HAND UPGRADE CHOICE";
-            Instruction.text = offer == null ? "Preparing the next stage" : offer.Kind == RewardKind.Modifier ?
-                "Choose one free charm to keep for this run" : "Choose one hand upgrade\nScroll to see all choices";
-            if (unlock) Instruction.text = exhausted ? "You own every charm this encounter awards." :
-                "Choose one to add permanently to your collection.";
+            SpiritUi.SetButtonLabel(ConfirmButton, handUpgrade ? wording.upgradeButton : exhausted ? wording.continueButton :
+                unlock ? wording.unlockButton : wording.selectButton);
+            Step.text = offer == null ? wording.completeStep : offer.Kind == RewardKind.Modifier ?
+                wording.charmStep : wording.handUpgradeStep;
+            Instruction.text = offer == null ? wording.preparingInstruction : offer.Kind == RewardKind.Modifier ?
+                wording.charmInstruction : wording.handUpgradeInstruction;
+            if (unlock) Instruction.text = exhausted ? wording.exhaustedInstruction : wording.unlockInstruction;
             var encounter = controls.Catalog.GetEncounter(snapshot.EncounterId);
             int nextStageIndex = offer?.TargetStageIndex ?? snapshot.StageIndex + 1;
             if (nextStageIndex < encounter.Stages.Count)
             {
                 var nextStage = encounter.Stages[nextStageIndex];
-                UpcomingStage.text = "NEXT STAGE " + (nextStageIndex + 1) + " / " + snapshot.StageCount +
-                    " - CLEAR " + DiagnosticText.Number(nextStage.Threshold);
+                UpcomingStage.text = wording.UpcomingStage(nextStageIndex + 1, snapshot.StageCount, nextStage.Threshold);
             }
             else UpcomingStage.text = "";
             bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
             RefreshButton.gameObject.SetActive(canRefresh);
             RefreshButton.interactable = canRefresh && snapshot.RewardRefreshesAvailable > 0;
-            SpiritUi.SetButtonLabel(RefreshButton, "Refresh (" + snapshot.RewardRefreshesAvailable + ")");
+            SpiritUi.SetButtonLabel(RefreshButton, wording.RefreshButton(snapshot.RewardRefreshesAvailable));
             long offerId = offer?.OfferId ?? -1;
             if (renderedOffer == offerId) return;
             renderedOffer = offerId;

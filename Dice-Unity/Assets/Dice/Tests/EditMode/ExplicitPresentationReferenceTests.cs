@@ -102,6 +102,7 @@ namespace Dice.Tests
             SpiritUiTheme authored = Load<SpiritUiTheme>("SpiritHouseTheme.asset");
             var first = ScriptableObject.CreateInstance<SpiritUiTheme>();
             var second = ScriptableObject.CreateInstance<SpiritUiTheme>();
+            var wording = SyntheticWording.Create();
             GameObject firstRoot = null;
             GameObject secondRoot = null;
             try
@@ -126,15 +127,15 @@ namespace Dice.Tests
                 second.disabledTint = Color.white;
                 Assert.That(first.headingFont, Is.Not.SameAs(second.headingFont));
 
-                firstRoot = Hierarchy("First theme", first);
+                firstRoot = Hierarchy("First theme", first, wording);
                 var prefab = AssetDatabase.LoadAssetAtPath<SpiritRewardCard>("Assets/Dice/Content/Presentation/UI/SpiritRewardCard.prefab");
                 Assert.That(prefab, Is.Not.Null);
                 var firstTemplate = UnityEngine.Object.Instantiate(prefab, firstRoot.transform, false);
-                ConfigureCardTemplate(firstTemplate, first);
+                ConfigureCardTemplate(firstTemplate, first, wording);
                 var firstCard = SpiritRewardCard.Create(firstTemplate, "First reward", firstRoot.transform, (offer, option) => { });
-                secondRoot = Hierarchy("Second theme", second);
+                secondRoot = Hierarchy("Second theme", second, wording);
                 var secondTemplate = UnityEngine.Object.Instantiate(prefab, secondRoot.transform, false);
-                ConfigureCardTemplate(secondTemplate, second);
+                ConfigureCardTemplate(secondTemplate, second, wording);
                 var secondCard = SpiritRewardCard.Create(secondTemplate, "Second reward", secondRoot.transform, (offer, option) => { });
                 var nextFirstCard = SpiritRewardCard.Create(firstTemplate, "Next first reward", firstRoot.transform, (offer, option) => { });
                 CheckCard(firstCard, first);
@@ -147,22 +148,23 @@ namespace Dice.Tests
                 if (secondRoot != null) UnityEngine.Object.DestroyImmediate(secondRoot);
                 UnityEngine.Object.DestroyImmediate(first);
                 UnityEngine.Object.DestroyImmediate(second);
+                UnityEngine.Object.DestroyImmediate(wording);
             }
         }
 
-        private static GameObject Hierarchy(string name, SpiritUiTheme theme)
+        private static GameObject Hierarchy(string name, SpiritUiTheme theme, SpiritUiWording wording)
         {
             var root = new GameObject(name, typeof(RectTransform), typeof(SpiritUiContext));
-            root.GetComponent<SpiritUiContext>().Configure(theme);
+            root.GetComponent<SpiritUiContext>().Configure(theme, wording);
             return root;
         }
 
         private static Text CardText(SpiritRewardCard card, string name)
             => card.GetComponentsInChildren<Text>(true).First(label => label.name == name);
 
-        private static void ConfigureCardTemplate(SpiritRewardCard card, SpiritUiTheme theme)
+        private static void ConfigureCardTemplate(SpiritRewardCard card, SpiritUiTheme theme, SpiritUiWording wording)
         {
-            card.GetComponent<SpiritUiContext>().Configure(theme);
+            card.GetComponent<SpiritUiContext>().Configure(theme, wording);
             CardText(card, "Title").font = theme.headingFont;
             CardText(card, "Condition").font = theme.bodyFont;
             CardText(card, "Title").color = CardText(card, "Condition").color = theme.cream;

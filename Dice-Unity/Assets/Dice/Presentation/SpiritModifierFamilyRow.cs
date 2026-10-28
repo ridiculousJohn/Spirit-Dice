@@ -56,7 +56,8 @@ namespace Dice.Presentation
             FamilyId = first.FamilyId;
             familyName.text = charms.GetFamilyName(first);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = SpiritRewardCard.GetModifierDescription(charms, first, theme.amber, theme.GetModifierTriggerColor(first.Phase));
+            condition.text = SpiritRewardCard.GetModifierDescription(charms, first, SpiritUi.GetWording(transform).charmText, theme.amber,
+                theme.GetModifierTriggerColor(first.Phase));
             icon.sprite = charms.GetIcon(first);
             icon.color = SpiritUi.GetTheme(transform).cream;
             icon.gameObject.SetActive(true);
@@ -90,8 +91,9 @@ namespace Dice.Presentation
             artwork.SetActive(false);
             variantRoot.SetActive(false);
             selected = null;
-            familyName.text = "Undiscovered family";
-            condition.text = "Locked";
+            var wording = SpiritUi.GetWording(transform).familyRow;
+            familyName.text = wording.undiscoveredFamily;
+            condition.text = wording.undiscoveredCondition;
             icon.gameObject.SetActive(false);
             foreach (var item in variants)
             {

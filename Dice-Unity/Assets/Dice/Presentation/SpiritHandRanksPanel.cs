@@ -29,6 +29,7 @@ namespace Dice.Presentation
 
         public void Build(RectTransform parent, Action close)
         {
+            SpiritUi.RequireWording(transform);
             CloseButton.onClick.RemoveAllListeners();
             CloseButton.onClick.AddListener(() => close());
         }
@@ -39,13 +40,15 @@ namespace Dice.Presentation
             if (snapshot == null) throw new ArgumentNullException(nameof(snapshot));
             if (Root == null) throw new InvalidOperationException("Build the hand ranks panel before rendering it.");
 
+            var wording = SpiritUi.GetWording(transform);
             foreach (var row in rows)
             {
                 var hand = catalog.GetHand(row.Category);
                 int level = snapshot.HandUpgrades[(int)row.Category];
-                row.LevelLabel.text = "Level " + level;
-                row.BaseLabel.text = "+Base " + DiagnosticText.Number(hand.BaseScoreAt(level));
-                row.MultiplierLabel.text = "+Mult " + DiagnosticText.Number(hand.MultiplierAt(level));
+                row.CategoryLabel.text = wording.handNames.Name(row.Category);
+                row.LevelLabel.text = wording.handRanks.Level(level);
+                row.BaseLabel.text = wording.handRanks.BaseBonus(hand.BaseScoreAt(level));
+                row.MultiplierLabel.text = wording.handRanks.MultiplierBonus(hand.MultiplierAt(level));
                 row.CategoryLabel.color = SpiritUi.GetTheme(transform).cream;
                 row.Background.color = normalBackground;
             }

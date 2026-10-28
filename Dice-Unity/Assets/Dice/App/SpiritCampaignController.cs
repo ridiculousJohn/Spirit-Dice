@@ -154,30 +154,31 @@ namespace Dice.App
             saveSlots.Clear();
             for (int slot = 1; slot <= CampaignSaveSlots.SlotCount; ++slot)
             {
-                bool occupied = slots.HasGame(slot);
-                string summary = "Empty";
-                if (occupied)
+                if (!slots.HasGame(slot))
                 {
-                    try
-                    {
-                        summary = ProgressSummary(slots.GetProfilePath(slot));
-                    }
-                    catch (Exception exception) when (Expected(exception)) { summary = "Saved campaign - unable to read progress"; }
+                    saveSlots.Add(new SpiritSaveSlotInfo(slot, false, false, 0, 0));
+                    continue;
                 }
-                saveSlots.Add(new SpiritSaveSlotInfo(slot, occupied, summary));
+                PlayerProfile profile;
+                try
+                {
+                    profile = PlayerProfileFileStore.LoadOrCreate(slots.GetProfilePath(slot));
+                }
+                catch (Exception exception) when (Expected(exception))
+                {
+                    saveSlots.Add(new SpiritSaveSlotInfo(slot, true, false, 0, 0));
+                    continue;
+                }
+                saveSlots.Add(new SpiritSaveSlotInfo(slot, true, true, profile.CompletedEncounterIds.Count,
+                    profile.UnlockedModifierIds.Count));
             }
             recoveryCampaigns.Clear();
             foreach (var candidate in slots.RecoveryCampaigns)
-                recoveryCampaigns.Add(new SpiritRecoveryCampaignInfo(candidate.CampaignId,
-                    ProgressSummary(candidate.ProfilePath),
-                    candidate.LastWriteTimeUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"), candidate.SuggestedSlot));
-        }
-
-        private static string ProgressSummary(string profilePath)
-        {
-            var profile = PlayerProfileFileStore.LoadOrCreate(profilePath);
-            return profile.CompletedEncounterIds.Count + " encounters completed / " +
-                profile.UnlockedModifierIds.Count + " charms collected";
+            {
+                var profile = PlayerProfileFileStore.LoadOrCreate(candidate.ProfilePath);
+                recoveryCampaigns.Add(new SpiritRecoveryCampaignInfo(candidate.CampaignId, profile.CompletedEncounterIds.Count,
+                    profile.UnlockedModifierIds.Count, candidate.LastWriteTimeUtc.ToLocalTime(), candidate.SuggestedSlot));
+            }
         }
 
         private static bool Expected(Exception exception) => exception is IOException || exception is UnauthorizedAccessException ||

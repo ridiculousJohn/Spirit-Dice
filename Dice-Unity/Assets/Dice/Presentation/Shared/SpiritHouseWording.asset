@@ -1,0 +1,360 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 139d0ea5467194443abc5900dbc8a8a5, type: 3}
+  m_Name: SpiritHouseWording
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiWording
+  status:
+    waitingForStartup: Waiting for application startup.
+    loadingConfiguration: Loading application configuration...
+    configurationFailed: 'Cannot load application configuration: {detail}'
+    applicationFailed: 'Cannot initialize the application: {detail}'
+    contentFailed: 'Cannot load the game content: {detail}'
+    encounterInitializationFailed: 'Cannot initialize the encounter: {detail}'
+    presentationSceneMissing: The selected presentation requires an authored scene reference.
+    loadingPresentation: Loading...
+    presentationOpenFailed: 'Cannot open presentation: {detail}'
+    presentationInitializationFailed: 'Cannot initialize presentation: {detail}'
+    mainMenuReady: Main menu ready.
+    mainMenuFailed: 'Cannot initialize main menu: {detail}'
+    saveSlotsRecovered: Save-slot list recovered.
+    unassignedSavesRecovered: Save-slot list recovered. Open Load Game to recover unassigned saves.
+    saveSlotsFailed: 'Cannot open save slots: {detail}'
+    saveSlotSelectionFailed: 'Cannot select save slot: {detail}'
+    newGameFailed: 'Cannot start a new game: {detail}'
+    previousCampaignNotRemoved: 'The new campaign was saved, but the previous campaign could not be removed: {detail}'
+    campaignRecovered: Campaign recovered to slot {slot}.
+    campaignRecoveryFailed: 'Cannot recover campaign: {detail}'
+    investigationReady: Investigation ready.
+    investigationFailed: 'Cannot initialize investigation: {detail}'
+    chapterNotFound: The chapter does not exist in the investigation.
+    chapterLocked: Follow the current lead before opening this chapter.
+    leadNotFound: The encounter has no investigation lead.
+    locationLocked: Follow the current lead before visiting this location.
+    savedEncounterHasNoLead: 'Cannot load the encounter: no investigation lead exists for the saved encounter.'
+    activeEncounterHasNoLead: The active encounter has no investigation lead.
+    invitationFailed: 'Cannot accept the invitation: {detail}'
+    rewardFailed: 'Cannot award story progress: {detail}'
+    contentNotInitialized: Application content is not initialized.
+    startFailed: 'Cannot start the encounter: {detail}'
+    started: Started encounter with seed {seed}
+    saved: Saved encounter.
+    saveFailed: 'Cannot save the encounter: {detail}'
+    catalogRequired: A mechanical catalog is required to load an encounter.
+    loaded: Loaded encounter.
+    loadFailed: 'Cannot load the encounter: {detail}'
+    ready: Encounter ready.
+    actionAccepted: Accepted action at revision {revision}
+    actionRejected: 'Action rejected: {rejection}'
+    actionFailed: 'Cannot resolve the action: {detail}'
+    noEncounter: Start an encounter first.
+    handPreviewUnavailable: 'Hand preview unavailable: {detail}'
+    modifierInspectionUnavailable: 'Modifier inspection unavailable: {detail}'
+    profileLoadFailed: 'Cannot load player profile: {detail}'
+    encounterSavePending: 'Progress is pending: cannot save the encounter. {detail}'
+    profileSavePending: 'Progress is pending: cannot save player profile. {detail}'
+    storyFailed: 'Cannot finish the story: {detail}'
+    visitFailed: 'Cannot accept the invitation: cannot save player profile. {detail}'
+    separator: ' '
+  saveSlots:
+    newGameTitle: New Game
+    loadGameTitle: Load Game
+    recoverTitle: Recover save
+    chooseSlot: Choose a save slot.
+    chooseDestination: Choose a destination slot.
+    replaceWarning: This will reset its chapter progress, collected charms, and current encounter.
+    recoverNote: The existing campaign will remain available under Recover saves.
+    newGameButton: New Game
+    recoverButton: Recover
+    recoverSavesButton: Recover saves ({count})
+    slot: Slot {slot}
+    activeSlot: Slot {slot} - Active
+    emptySlot: Empty
+    unreadableSlot: Saved campaign - unable to read progress
+    progress: '{encounters} / {charms}'
+    encountersCompleted:
+      singular: '{count} encounters completed'
+      plural: '{count} encounters completed'
+    charmsCollected:
+      singular: '{count} charms collected'
+      plural: '{count} charms collected'
+    useSlotConfirmation: Use save slot {slot}?
+    replaceSlotConfirmation: Replace save slot {slot}?
+  recovery:
+    savedAt: Saved {time}
+    timeFormat: yyyy-MM-dd HH:mm
+    identifier: Slot {slot} / Save {save}
+    unknownSlot: '?'
+    page: '{page} / {pages}'
+  collection:
+    summary: Collected {collected} / {collectable}  |  Available at start {starters}
+    ownedFilter: Owned
+    discoveredFilter: Discovered
+    allFilter: All
+    noOwnedFamilies: No owned families
+    noDiscoveredFamilies: No discovered families
+    noFamilies: No all families
+    undiscoveredFamilies: Undiscovered families
+    undiscoveredHint: Discover charm families during play to reveal their effects and sources.
+    detailTitle: '{name} - {status}'
+    available: Available
+    encounterOnly: Encounter only
+    unlocked: Unlocked
+    locked: Locked
+    unlockSource:
+      singular: '{location} - after stage {stages}'
+      plural: '{location} - after stages {stages}'
+    stageSeparator: ', '
+    storyGift: '{location} - story'
+    completionGift: '{location} - completion'
+    noRunRewards: Not offered in current encounters
+    rewardSeparator: ', '
+    sourceSeparator: '; '
+    unlockChoices: 'Unlock choice: {sources}'
+    gifts: 'Gift: {sources}'
+    sourceLineSeparator: '.
+
+'
+    notObtainable: Not obtainable yet
+    encounterOnlySource: 'Encounter only; never permanently collected.
+
+      Run charm pool: {rewards}.'
+    starterSource: 'Available from the start.
+
+      Run charm pool: {rewards}.'
+    unlockableSource: '{sources}.
+
+      Once unlocked, run charm pool: {rewards}.'
+  familyRow:
+    undiscoveredFamily: Undiscovered family
+    undiscoveredCondition: Locked
+  rewards:
+    handUpgradeTitle: Choose a hand to upgrade
+    exhaustedTitle: All charms collected
+    unlockTitle: Unlock a charm
+    charmTitle: Choose a charm
+    upgradeButton: Upgrade
+    continueButton: Continue
+    unlockButton: Unlock
+    selectButton: Select
+    completeStep: REWARDS COMPLETE
+    charmStep: CHARM CHOICE
+    handUpgradeStep: HAND UPGRADE CHOICE
+    preparingInstruction: Preparing the next stage
+    charmInstruction: Choose one free charm to keep for this run
+    handUpgradeInstruction: 'Choose one hand upgrade
+
+      Scroll to see all choices'
+    exhaustedInstruction: You own every charm this encounter awards.
+    unlockInstruction: Choose one to add permanently to your collection.
+    upcomingStage: NEXT STAGE {stage} / {stages} - CLEAR {threshold}
+    refreshButton: Refresh ({count})
+  rewardCard:
+    level: Level {level}
+    selectedLevel: Level {level} +1
+    values: 'BASE {base}
+
+      MULT {multiplier}'
+    selectedValues: 'BASE {base} +{baseIncrement}
+
+      MULT {multiplier} +{multiplierIncrement}'
+  charmText:
+    description: '{lead}: {condition}'
+    descriptionWithNote: '{lead}: {condition} {note}'
+    highlightedTerms:
+    - High Die
+    - Two Pair
+    - Pair
+    - Straight
+    - rerolled
+    - rerolls
+    - reroll
+    - hands
+    - hand
+    - initial roll
+    - previous played hand
+  handNames:
+    highDie: High Die
+    pair: Pair
+    twoPair: Two Pair
+    threeOfAKind: Three Of A Kind
+    fullHouse: Full House
+    fourOfAKind: Four Of A Kind
+    straight: Straight
+    fiveOfAKind: Five Of A Kind
+  handRanks:
+    level: Level {level}
+    baseBonus: +Base {base}
+    multiplierBonus: +Mult {multiplier}
+  scoring:
+    diceStep: STEP 1 OF 4 - DICE
+    diceCategory: COUNTING DICE
+    diceSelection: 'DICE
+
+      {contribution}'
+    handStep: STEP 2 OF 4 - HAND RANK
+    handSelection: '{hand} / LEVEL {level}
+
+      {contribution}'
+    charmStep: STEP 3 OF 4 - CHARMS
+    bankedStep: ROLL BONUS
+    charmSelection: '{charm}
+
+      {contribution} (on play)'
+    bankedSelection: '{charm}
+
+      {contribution} (banked)'
+    ruleStep: STEP 3 OF 4 - ENCOUNTER RULE
+    ruleCategory: ENCOUNTER RULE
+    ruleSelection: '{rule}
+
+      +{bonus} multiplier'
+    totalStep: STEP 4 OF 4 - {base} x {multiplier}
+    totalCategory: FINAL SCORE
+    totalSelection: TOTAL
+  hud:
+    stage: STAGE {stage} / {stages}
+    toClear: TO CLEAR
+    stageCleared: STAGE CLEARED
+    totalScore: TOTAL SCORE
+    hands: HANDS  {count}
+    rerolls: REROLLS  {count}
+    resources: '{hands}  /  {rerolls}'
+    handsLeft:
+      singular: '{count} hands left'
+      plural: '{count} hands left'
+    rerollsLeft:
+      singular: '{count} rerolls left'
+      plural: '{count} rerolls left'
+    lastHand:
+      singular: Last hand  {score} points
+      plural: Last hand  {score} points
+    totalScoreLine: Total score  {score}
+    charmCount: '{count} kept'
+    charmsButton: CHARMS ({count})
+    newHand: NEW HAND
+    rerollsRemaining:
+      singular: '{count} rerolls remaining'
+      plural: '{count} rerolls remaining'
+    stageIntro:
+      singular: 'CLEAR {threshold} POINTS
+
+        {hands} / {rerolls}'
+      plural: 'CLEAR {threshold} POINTS
+
+        {hands} / {rerolls}'
+    stageHands:
+      singular: '{count} hands'
+      plural: '{count} hands'
+    stageRerolls:
+      singular: '{count} rerolls'
+      plural: '{count} rerolls'
+  pauseMenu:
+    soundOn: 'Sound: On'
+    soundOff: 'Sound: Off'
+    profileSummary: '{charms}
+
+      {encounters}'
+    charmsUnlocked:
+      singular: '{count} charm permanently unlocked'
+      plural: '{count} charms permanently unlocked'
+    encountersCompleted:
+      singular: '{count} encounter completed'
+      plural: '{count} encounters completed'
+    profileAttention: 'Player profile needs attention.
+
+      {problem}'
+    progressPending: Progress save is pending.
+    profileUnreadable: Profile could not be loaded.
+  charmStatus:
+    ready: Ready
+    waiting: Waiting
+    activatedThisStage: Activated this stage
+    activatedThisHand: Activated this hand
+    onInitialRoll: On the initial roll
+    afterReroll: After a reroll
+    encounterEnded: Encounter ended
+    betweenStages: Between stages
+  charmAvailability:
+    permanentlyUnlocked: Permanently unlocked
+    requiresUnlock: Requires permanent unlock
+    encounterExclusive: Encounter exclusive
+    availableFromStart: Available from the start
+    availability: '{access} / {scope}'
+    allEncounters: All encounters
+    spiritEncounters: This spirit's encounters
+    thisEncounter: This encounter
+    scopeTier: '{scope} / Tier {tier}'
+  ownedCharms:
+    noCharmsTitle: No charms yet
+    noCharmsBody: Clear a stage to choose a charm.
+    detailBody: '{condition}
+
+      {effect}
+
+      {timing}
+
+      {availability}'
+  ending:
+    returnButton: Return to the trail
+    abandonedTitle: Until next time
+    lostTitle: Encounter ended
+    wonTitle: Encounter complete
+    abandonedDetail: The trail is waiting.
+    scoreSummary: Total score  {score}
+    farewellScoreSummary: '{farewell}
+
+
+      Total score  {score}'
+    noUnlocks: No new charms unlocked this run.
+    pendingUnlocks: 'UNLOCKED THIS RUN - SAVE PENDING
+
+      Available in future reward pools.
+
+
+      {charms}'
+    permanentUnlocks: 'PERMANENTLY UNLOCKED THIS RUN
+
+      Available in future reward pools.
+
+
+      {charms}'
+    unlockedCharm: '{name}
+
+      {scope}'
+    unlockedCharmSeparator: '
+
+
+'
+  journey:
+    acceptButton: Accept
+    continueButton: Continue
+    ruleHeading:
+      singular: ENCOUNTER RULE
+      plural: ENCOUNTER RULES
+  investigation:
+    chapterProgress: CHAPTER {chapter} / Chapters
+    chapters: Chapters
+    defaultTitle: INVESTIGATION
+    readAgain: READ AGAIN
+    followLead: FOLLOW THIS LEAD
+    visitedLead: VISITED - RETURN TO THE TABLE
+    mainMenuButton: Main menu
+    loadButton: Load saved encounter
+  chapters:
+    locked: LOCKED
+    current: CURRENT
+    currentCompleted: CURRENT - COMPLETED
+    completed: COMPLETED
+    available: AVAILABLE
+    number: CHAPTER {chapter}
+  encounterCharms:
+    narration: '"{narration}"'

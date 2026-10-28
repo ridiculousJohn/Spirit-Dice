@@ -44,6 +44,7 @@ namespace Dice.Presentation
         public void Build(RectTransform parent, Action returnToTrail, Action retry)
         {
             if (parent == null) throw new ArgumentNullException(nameof(parent));
+            SpiritUi.RequireWording(transform);
             if (returnToTrail == null) throw new ArgumentNullException(nameof(returnToTrail));
             if (Root == null || panel == null || content == null || scroll == null || title == null || detail == null ||
                 clueTitle == null || clueText == null || unlockTitle == null || unlocks == null || artworkFrame == null ||
@@ -220,20 +221,20 @@ namespace Dice.Presentation
             retryButton.gameObject.SetActive(canRetry);
             returnButton.interactable = summary;
             retryButton.interactable = canRetry;
+            var wording = SpiritUi.GetWording(transform).ending;
             SpiritUi.SetButtonLabel(returnButton, journey != null && !string.IsNullOrWhiteSpace(journey.ResultContinueLabel)
-                ? journey.ResultContinueLabel : "Return to the trail");
+                ? journey.ResultContinueLabel : wording.returnButton);
             if (!dialogue && !summary) return;
 
-            title.text = dialogue ? journey.SpiritName : abandoned ? "Until next time" : journey == null
-                ? lost ? "Encounter ended" : "Encounter complete"
+            title.text = dialogue ? journey.SpiritName : abandoned ? wording.abandonedTitle : journey == null
+                ? lost ? wording.lostTitle : wording.wonTitle
                 : lost ? journey.DefeatTitle : journey.VictoryTitle;
             if (dialogue)
                 detail.text = FarewellText;
             else if (abandoned)
-                detail.text = !string.IsNullOrWhiteSpace(FarewellText) ? FarewellText : "The trail is waiting.";
+                detail.text = !string.IsNullOrWhiteSpace(FarewellText) ? FarewellText : wording.abandonedDetail;
             else
-                detail.text = (presentation == null && !string.IsNullOrWhiteSpace(FarewellText) ? FarewellText + "\n\n" : "") +
-                    "Total score  " + DiagnosticText.Number(snapshot.TotalScore);
+                detail.text = wording.Summary(presentation == null ? FarewellText : null, snapshot.TotalScore);
             detail.fontSize = dialogue ? detailDialogueSize : detailSummarySize;
             detail.gameObject.SetActive(!string.IsNullOrWhiteSpace(detail.text));
             bool clue = summary && snapshot.Outcome == EncounterOutcome.Won && journey != null;
@@ -243,7 +244,6 @@ namespace Dice.Presentation
             clueText.gameObject.SetActive(!string.IsNullOrWhiteSpace(clueText.text));
             unlocks.text = summary ? unlockSummary : "";
             bool hasUnlocks = !string.IsNullOrWhiteSpace(unlocks.text);
-            unlockTitle.text = "UNLOCKS";
             unlockTitle.gameObject.SetActive(hasUnlocks);
             unlocks.gameObject.SetActive(hasUnlocks);
             artwork.texture = presentation?.Artwork;

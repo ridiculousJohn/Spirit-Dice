@@ -20,18 +20,19 @@ namespace Dice.Presentation
             ActivationLimit = activationLimit;
         }
 
-        public string GetDetailText(ModifierPhase phase, EncounterPhase encounterPhase)
+        public string GetDetailText(ModifierPhase phase, EncounterPhase encounterPhase, SpiritUiWording.CharmStatus wording)
         {
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
             switch (State)
             {
-                case SpiritCharmStatusState.Ready: return "Ready";
-                case SpiritCharmStatusState.WaitingCondition: return "Waiting";
+                case SpiritCharmStatusState.Ready: return wording.ready;
+                case SpiritCharmStatusState.WaitingCondition: return wording.waiting;
                 case SpiritCharmStatusState.Used:
-                    return ActivationLimit == ModifierActivationLimit.OncePerStage ? "Activated this stage" : "Activated this hand";
+                    return ActivationLimit == ModifierActivationLimit.OncePerStage ? wording.activatedThisStage : wording.activatedThisHand;
                 case SpiritCharmStatusState.OnRoll:
-                    return phase == ModifierPhase.InitialRoll ? "On the initial roll" : "After a reroll";
+                    return phase == ModifierPhase.InitialRoll ? wording.onInitialRoll : wording.afterReroll;
                 case SpiritCharmStatusState.Inactive:
-                    return encounterPhase == EncounterPhase.Completed ? "Encounter ended" : "Between stages";
+                    return encounterPhase == EncounterPhase.Completed ? wording.encounterEnded : wording.betweenStages;
                 default: return "";
             }
         }

@@ -1,110 +1,128 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Dice.Presentation
 {
-    /** The player's wording of reported statuses and profile states. */
+    /** The player's wording of reported statuses and profile states, composed from the UI wording's status templates. */
     public static class SpiritStatusText
     {
-        private const string RewardFailed = "Cannot award story progress: ";
-
         /** The full wording of a status; a run state adds its warnings and any profile problem. */
-        public static string Describe(SpiritStatus status)
+        public static string Describe(SpiritStatus status, SpiritUiWording.StatusText wording)
         {
             if (status == null) throw new ArgumentNullException(nameof(status));
-            string text = Base(status);
-            return status.IsRunState ? text + Warnings(status) + ProfileSuffix(status.Profile) : text;
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
+            if (!status.IsRunState) return Base(status, wording);
+            var parts = new List<string> { Base(status, wording) };
+            AddWarnings(status, wording, parts);
+            AddProfile(status.Profile, wording, parts);
+            return string.Join(wording.separator, parts);
         }
 
         /**
          * The wording the gameplay HUD shows: pending progress alone when the status reports it; for a started run, an
          * accepted action or a ready encounter only its warnings, if any; otherwise the full wording.
          */
-        public static string Gameplay(SpiritStatus status)
+        public static string Gameplay(SpiritStatus status, SpiritUiWording.StatusText wording)
         {
             if (status == null) throw new ArgumentNullException(nameof(status));
-            if (status.Profile.IsPending) return Describe(status.Profile);
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
+            if (status.Profile.IsPending) return Describe(status.Profile, wording);
             if (status.Kind == SpiritStatusKind.Started || status.Kind == SpiritStatusKind.ActionAccepted ||
                 status.Kind == SpiritStatusKind.Ready)
             {
-                string warnings = Warnings(status);
-                return warnings.Length == 0 ? "" : (warnings + ProfileSuffix(status.Profile)).Trim();
+                var parts = new List<string>();
+                AddWarnings(status, wording, parts);
+                if (parts.Count == 0) return "";
+                AddProfile(status.Profile, wording, parts);
+                return string.Join(wording.separator, parts).Trim();
             }
-            return Describe(status);
+            return Describe(status, wording);
         }
 
-        public static string Describe(PlayerProfileStatus profile)
+        public static string Describe(PlayerProfileStatus profile, SpiritUiWording.StatusText wording)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
             switch (profile.Kind)
             {
                 case PlayerProfileStatusKind.None: return "";
-                case PlayerProfileStatusKind.LoadFailed: return "Cannot load player profile: " + profile.Detail;
-                case PlayerProfileStatusKind.EncounterSavePending: return "Progress is pending: cannot save the encounter. " + profile.Detail;
-                case PlayerProfileStatusKind.ProfileSavePending: return "Progress is pending: cannot save player profile. " + profile.Detail;
-                case PlayerProfileStatusKind.RewardFailed: return RewardFailed + profile.Detail;
-                case PlayerProfileStatusKind.StoryFailed: return "Cannot finish the story: " + profile.Detail;
-                case PlayerProfileStatusKind.VisitFailed: return "Cannot accept the invitation: cannot save player profile. " + profile.Detail;
+                case PlayerProfileStatusKind.LoadFailed: return Detail(wording.profileLoadFailed, profile.Detail);
+                case PlayerProfileStatusKind.EncounterSavePending: return Detail(wording.encounterSavePending, profile.Detail);
+                case PlayerProfileStatusKind.ProfileSavePending: return Detail(wording.profileSavePending, profile.Detail);
+                case PlayerProfileStatusKind.RewardFailed: return Detail(wording.rewardFailed, profile.Detail);
+                case PlayerProfileStatusKind.StoryFailed: return Detail(wording.storyFailed, profile.Detail);
+                case PlayerProfileStatusKind.VisitFailed: return Detail(wording.visitFailed, profile.Detail);
                 default: throw new ArgumentOutOfRangeException(nameof(profile), profile.Kind, "The profile state has no wording.");
             }
         }
 
-        private static string Warnings(SpiritStatus status) =>
-            (status.HandPreviewFailure == null ? "" : " Hand preview unavailable: " + status.HandPreviewFailure) +
-            (status.ModifierInspectionFailure == null ? "" : " Modifier inspection unavailable: " + status.ModifierInspectionFailure);
+        private static void AddWarnings(SpiritStatus status, SpiritUiWording.StatusText wording, List<string> parts)
+        {
+            if (status.HandPreviewFailure != null) parts.Add(Detail(wording.handPreviewUnavailable, status.HandPreviewFailure));
+            if (status.ModifierInspectionFailure != null)
+                parts.Add(Detail(wording.modifierInspectionUnavailable, status.ModifierInspectionFailure));
+        }
 
-        private static string ProfileSuffix(PlayerProfileStatus profile) =>
-            profile.Kind == PlayerProfileStatusKind.None ? "" : " " + Describe(profile);
+        private static void AddProfile(PlayerProfileStatus profile, SpiritUiWording.StatusText wording, List<string> parts)
+        {
+            if (profile.Kind != PlayerProfileStatusKind.None) parts.Add(Describe(profile, wording));
+        }
 
-        private static string Base(SpiritStatus status)
+        private static string Detail(string template, string detail) => SpiritWordingTemplate.Fill(template, "detail", detail);
+
+        private static string Base(SpiritStatus status, SpiritUiWording.StatusText wording)
         {
             string detail = status.Detail;
             switch (status.Kind)
             {
                 case SpiritStatusKind.None: return "";
-                case SpiritStatusKind.WaitingForStartup: return "Waiting for application startup.";
-                case SpiritStatusKind.LoadingConfiguration: return "Loading application configuration...";
-                case SpiritStatusKind.ConfigurationFailed: return "Cannot load application configuration: " + detail;
-                case SpiritStatusKind.ApplicationFailed: return "Cannot initialize the application: " + detail;
-                case SpiritStatusKind.ContentFailed: return "Cannot load the game content: " + detail;
-                case SpiritStatusKind.EncounterInitializationFailed: return "Cannot initialize the encounter: " + detail;
-                case SpiritStatusKind.MainMenuReady: return "Main menu ready.";
-                case SpiritStatusKind.MainMenuFailed: return "Cannot initialize main menu: " + detail;
-                case SpiritStatusKind.SaveSlotsRecovered: return "Save-slot list recovered.";
-                case SpiritStatusKind.UnassignedSavesRecovered: return "Save-slot list recovered. Open Load Game to recover unassigned saves.";
-                case SpiritStatusKind.SaveSlotsFailed: return "Cannot open save slots: " + detail;
-                case SpiritStatusKind.SaveSlotSelectionFailed: return "Cannot select save slot: " + detail;
-                case SpiritStatusKind.NewGameFailed: return "Cannot start a new game: " + detail;
-                case SpiritStatusKind.PreviousCampaignNotRemoved:
-                    return "The new campaign was saved, but the previous campaign could not be removed: " + detail;
-                case SpiritStatusKind.CampaignRecovered: return "Campaign recovered to slot " + status.Slot + ".";
-                case SpiritStatusKind.CampaignRecoveryFailed: return "Cannot recover campaign: " + detail;
-                case SpiritStatusKind.ProfileProblem: return Describe(status.Profile);
-                case SpiritStatusKind.InvestigationReady: return "Investigation ready.";
-                case SpiritStatusKind.InvestigationFailed: return "Cannot initialize investigation: " + detail;
-                case SpiritStatusKind.ChapterNotFound: return "The chapter does not exist in the investigation.";
-                case SpiritStatusKind.ChapterLocked: return "Follow the current lead before opening this chapter.";
-                case SpiritStatusKind.LeadNotFound: return "The encounter has no investigation lead.";
-                case SpiritStatusKind.LocationLocked: return "Follow the current lead before visiting this location.";
-                case SpiritStatusKind.SavedEncounterHasNoLead:
-                    return "Cannot load the encounter: no investigation lead exists for the saved encounter.";
-                case SpiritStatusKind.ActiveEncounterHasNoLead: return "The active encounter has no investigation lead.";
-                case SpiritStatusKind.InvitationFailed: return "Cannot accept the invitation: " + detail;
-                case SpiritStatusKind.RewardFailed: return RewardFailed + detail;
-                case SpiritStatusKind.ContentNotInitialized: return "Application content is not initialized.";
-                case SpiritStatusKind.StartFailed: return "Cannot start the encounter: " + detail;
-                case SpiritStatusKind.Started: return "Started encounter with seed " + status.Seed.ToString(CultureInfo.InvariantCulture);
-                case SpiritStatusKind.Saved: return "Saved encounter.";
-                case SpiritStatusKind.SaveFailed: return "Cannot save the encounter: " + detail;
-                case SpiritStatusKind.CatalogRequired: return "A mechanical catalog is required to load an encounter.";
-                case SpiritStatusKind.Loaded: return "Loaded encounter.";
-                case SpiritStatusKind.LoadFailed: return "Cannot load the encounter: " + detail;
-                case SpiritStatusKind.Ready: return "Encounter ready.";
-                case SpiritStatusKind.ActionAccepted:
-                    return "Accepted action at revision " + status.Revision.ToString(CultureInfo.InvariantCulture);
-                case SpiritStatusKind.ActionRejected: return "Action rejected: " + status.Rejection;
-                case SpiritStatusKind.ActionFailed: return "Cannot resolve the action: " + detail;
-                case SpiritStatusKind.NoEncounter: return "Start an encounter first.";
+                case SpiritStatusKind.WaitingForStartup: return wording.waitingForStartup;
+                case SpiritStatusKind.LoadingConfiguration: return wording.loadingConfiguration;
+                case SpiritStatusKind.ConfigurationFailed: return Detail(wording.configurationFailed, detail);
+                case SpiritStatusKind.ApplicationFailed: return Detail(wording.applicationFailed, detail);
+                case SpiritStatusKind.ContentFailed: return Detail(wording.contentFailed, detail);
+                case SpiritStatusKind.EncounterInitializationFailed: return Detail(wording.encounterInitializationFailed, detail);
+                case SpiritStatusKind.PresentationSceneMissing: return wording.presentationSceneMissing;
+                case SpiritStatusKind.LoadingPresentation: return wording.loadingPresentation;
+                case SpiritStatusKind.PresentationOpenFailed: return Detail(wording.presentationOpenFailed, detail);
+                case SpiritStatusKind.PresentationInitializationFailed: return Detail(wording.presentationInitializationFailed, detail);
+                case SpiritStatusKind.MainMenuReady: return wording.mainMenuReady;
+                case SpiritStatusKind.MainMenuFailed: return Detail(wording.mainMenuFailed, detail);
+                case SpiritStatusKind.SaveSlotsRecovered: return wording.saveSlotsRecovered;
+                case SpiritStatusKind.UnassignedSavesRecovered: return wording.unassignedSavesRecovered;
+                case SpiritStatusKind.SaveSlotsFailed: return Detail(wording.saveSlotsFailed, detail);
+                case SpiritStatusKind.SaveSlotSelectionFailed: return Detail(wording.saveSlotSelectionFailed, detail);
+                case SpiritStatusKind.NewGameFailed: return Detail(wording.newGameFailed, detail);
+                case SpiritStatusKind.PreviousCampaignNotRemoved: return Detail(wording.previousCampaignNotRemoved, detail);
+                case SpiritStatusKind.CampaignRecovered: return SpiritWordingTemplate.Fill(wording.campaignRecovered, "slot", status.Slot);
+                case SpiritStatusKind.CampaignRecoveryFailed: return Detail(wording.campaignRecoveryFailed, detail);
+                case SpiritStatusKind.ProfileProblem: return Describe(status.Profile, wording);
+                case SpiritStatusKind.InvestigationReady: return wording.investigationReady;
+                case SpiritStatusKind.InvestigationFailed: return Detail(wording.investigationFailed, detail);
+                case SpiritStatusKind.ChapterNotFound: return wording.chapterNotFound;
+                case SpiritStatusKind.ChapterLocked: return wording.chapterLocked;
+                case SpiritStatusKind.LeadNotFound: return wording.leadNotFound;
+                case SpiritStatusKind.LocationLocked: return wording.locationLocked;
+                case SpiritStatusKind.SavedEncounterHasNoLead: return wording.savedEncounterHasNoLead;
+                case SpiritStatusKind.ActiveEncounterHasNoLead: return wording.activeEncounterHasNoLead;
+                case SpiritStatusKind.InvitationFailed: return Detail(wording.invitationFailed, detail);
+                case SpiritStatusKind.RewardFailed: return Detail(wording.rewardFailed, detail);
+                case SpiritStatusKind.ContentNotInitialized: return wording.contentNotInitialized;
+                case SpiritStatusKind.StartFailed: return Detail(wording.startFailed, detail);
+                case SpiritStatusKind.Started:
+                    return SpiritWordingTemplate.Fill(wording.started, "seed", status.Seed.ToString(CultureInfo.InvariantCulture));
+                case SpiritStatusKind.Saved: return wording.saved;
+                case SpiritStatusKind.SaveFailed: return Detail(wording.saveFailed, detail);
+                case SpiritStatusKind.CatalogRequired: return wording.catalogRequired;
+                case SpiritStatusKind.Loaded: return wording.loaded;
+                case SpiritStatusKind.LoadFailed: return Detail(wording.loadFailed, detail);
+                case SpiritStatusKind.Ready: return wording.ready;
+                case SpiritStatusKind.ActionAccepted: return SpiritWordingTemplate.Fill(wording.actionAccepted, "revision", status.Revision);
+                case SpiritStatusKind.ActionRejected:
+                    return SpiritWordingTemplate.Fill(wording.actionRejected, "rejection", status.Rejection.ToString());
+                case SpiritStatusKind.ActionFailed: return Detail(wording.actionFailed, detail);
+                case SpiritStatusKind.NoEncounter: return wording.noEncounter;
                 default: throw new ArgumentOutOfRangeException(nameof(status), status.Kind, "The status has no wording.");
             }
         }

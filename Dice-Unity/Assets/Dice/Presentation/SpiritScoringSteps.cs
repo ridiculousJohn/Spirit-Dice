@@ -19,7 +19,7 @@ namespace Dice.Presentation
         public long Total { get; internal set; }
         /** True when the step animates the total counter instead of the base score and multiplier counters. */
         public bool RevealsTotal { get; internal set; }
-        /** The score detail line, such as "STEP 1 OF 4 - DICE". */
+        /** The score detail line, which names the step. */
         public string StepLabel { get; internal set; }
         public string CategoryText { get; internal set; }
         public string SelectionText { get; internal set; }
@@ -57,7 +57,7 @@ namespace Dice.Presentation
     /**
      * Builds the ordered steps that present a scored hand - dice, hand rank, each PlayHand charm in activation order, the
      * encounter rule bonus and the total - and the step that presents a banked roll bonus. Charm names, colours and
-     * contribution wording come from the charm presentation.
+     * contribution wording come from the charm presentation; step labels and hand names come from the UI wording.
      */
     public sealed class SpiritScoringStepBuilder
     {
@@ -67,12 +67,15 @@ namespace Dice.Presentation
         private readonly MechanicalCatalog catalog;
         private readonly ModifierPresentationCatalog charms;
         private readonly SpiritUiTheme theme;
+        private readonly SpiritUiWording wording;
 
-        public SpiritScoringStepBuilder(MechanicalCatalog catalog, ModifierPresentationCatalog charms, SpiritUiTheme theme)
+        public SpiritScoringStepBuilder(MechanicalCatalog catalog, ModifierPresentationCatalog charms, SpiritUiTheme theme,
+            SpiritUiWording wording)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             this.charms = charms ?? throw new ArgumentNullException(nameof(charms));
             this.theme = theme != null ? theme : throw new ArgumentNullException(nameof(theme));
+            this.wording = wording != null ? wording : throw new ArgumentNullException(nameof(wording));
         }
 
         /**
@@ -86,6 +89,7 @@ namespace Dice.Presentation
             if (scored == null) throw new ArgumentNullException(nameof(scored));
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             ScoreBreakdown score = scored.Score;
+            var labels = wording.scoring;
             var steps = new List<SpiritScoringStep>();
             long baseScore = checked(startingBaseScore + score.DiceSum);
             long multiplier = startingMultiplier;
@@ -93,9 +97,9 @@ namespace Dice.Presentation
             {
                 BaseScore = baseScore,
                 Multiplier = multiplier,
-                StepLabel = "STEP 1 OF 4 - DICE",
-                CategoryText = "COUNTING DICE",
-                SelectionText = "DICE\n" + charms.GetContributionText(score.DiceSum, 0, 0),
+                StepLabel = labels.diceStep,
+                CategoryText = labels.diceCategory,
+                SelectionText = labels.DiceSelection(charms.GetContributionText(score.DiceSum, 0, 0)),
                 SelectionColor = theme.muted,
                 HighlightMask = DiceValues.AllMask,
                 ResolvingIndex = -1,
@@ -107,15 +111,14 @@ namespace Dice.Presentation
             long handMultiplier = checked(score.CategoryMultiplier + score.UpgradeMultiplier);
             baseScore = checked(baseScore + handBase);
             multiplier = checked(multiplier + handMultiplier);
-            string category = DiagnosticText.Humanize(score.Category.ToString()).ToUpperInvariant();
+            string category = wording.handNames.Name(score.Category).ToUpperInvariant();
             steps.Add(new SpiritScoringStep
             {
                 BaseScore = baseScore,
                 Multiplier = multiplier,
-                StepLabel = "STEP 2 OF 4 - HAND RANK",
+                StepLabel = labels.handStep,
                 CategoryText = category,
-                SelectionText = category + " / LEVEL " + score.UpgradeCount + "\n" +
-                    charms.GetContributionText(handBase, handMultiplier, 0),
+                SelectionText = labels.HandSelection(category, score.UpgradeCount, charms.GetContributionText(handBase, handMultiplier, 0)),
                 SelectionColor = theme.muted,
                 HighlightMask = score.FormingDiceMask,
                 ResolvingIndex = -1,
@@ -144,9 +147,9 @@ namespace Dice.Presentation
                 {
                     BaseScore = baseScore,
                     Multiplier = multiplier,
-                    StepLabel = "STEP 3 OF 4 - ENCOUNTER RULE",
-                    CategoryText = "ENCOUNTER RULE",
-                    SelectionText = rule.DisplayName + "\n+" + DiagnosticText.Number(activated.MultiplierBonus) + " multiplier",
+                    StepLabel = labels.ruleStep,
+                    CategoryText = labels.ruleCategory,
+                    SelectionText = labels.RuleSelection(rule.DisplayName, activated.MultiplierBonus),
                     SelectionColor = theme.amber,
                     ResolvingIndex = -1,
                     // The rule bonus is shown beside the last charm's emblem.
@@ -164,10 +167,9 @@ namespace Dice.Presentation
                 Multiplier = multiplier,
                 Total = score.HandScore,
                 RevealsTotal = true,
-                StepLabel = "STEP 4 OF 4 - " + DiagnosticText.Number(score.BaseScore) + " x " +
-                    DiagnosticText.Number(score.Multiplier),
-                CategoryText = "FINAL SCORE",
-                SelectionText = "TOTAL",
+                StepLabel = labels.TotalStep(score.BaseScore, score.Multiplier),
+                CategoryText = labels.totalCategory,
+                SelectionText = labels.totalSelection,
                 SelectionColor = theme.muted,
                 ResolvingIndex = -1,
                 Hold = TotalHold
@@ -211,11 +213,10 @@ namespace Dice.Presentation
             {
                 BaseScore = checked(startingBaseScore + contribution.BaseScore),
                 Multiplier = checked(startingMultiplier + contribution.Multiplier),
-                StepLabel = banked ? "ROLL BONUS" : "STEP 3 OF 4 - CHARMS",
+                StepLabel = banked ? wording.scoring.bankedStep : wording.scoring.charmStep,
                 CategoryText = name,
-                SelectionText = name + "\n" +
-                    charms.GetContributionText(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls) +
-                    (banked ? " (banked)" : " (on play)"),
+                SelectionText = wording.scoring.CharmSelection(name,
+                    charms.GetContributionText(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls), banked),
                 SelectionColor = charms.GetEffectColor(definition),
                 ResolvingIndex = resolvingIndex,
                 Contribution = contribution,

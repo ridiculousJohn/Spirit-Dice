@@ -49,10 +49,11 @@ namespace Dice.Tests
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
-            Assert.That(Find<Text>(view, "RewardTitle").text, Is.EqualTo("All charms collected"));
+            var rewards = Find<Text>(view, "RewardTitle").GetComponentInParent<SpiritUiContext>(true).Wording.rewards;
+            Assert.That(Find<Text>(view, "RewardTitle").text, Is.EqualTo(rewards.exhaustedTitle));
             var confirm = Find<Button>(view, "UpgradeHandButton");
             Assert.That(confirm.interactable, Is.True);
-            Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo("Continue"));
+            Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo(rewards.continueButton));
             confirm.onClick.Invoke();
             yield return ContentReady.Routed();
             view = ContentReady.EncounterView(controller);

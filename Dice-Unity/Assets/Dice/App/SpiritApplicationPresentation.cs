@@ -43,7 +43,7 @@ namespace Dice.App
             requested = atFrontend ? frontend : selectedTable != null ? selectedTable.Scene : defaultEncounterScene;
             if (requested == null || !requested.RuntimeKeyIsValid())
             {
-                startup.ShowStatus("The selected presentation requires an authored scene reference.");
+                startup.ShowStatus(SpiritStatus.Of(SpiritStatusKind.PresentationSceneMissing));
                 return;
             }
             if ((current == requested.AssetGUID && PresentationRoot != null) || transition != null) return;
@@ -54,7 +54,7 @@ namespace Dice.App
         {
             while (requested != null && (current != requested.AssetGUID || PresentationRoot == null))
             {
-                startup.ShowStatus("Loading...");
+                startup.ShowStatus(SpiritStatus.Of(SpiritStatusKind.LoadingPresentation));
                 if (PresentationRoot != null) PresentationRoot.SetActive(false);
                 EncounterView = null;
                 FrontendView = null;
@@ -76,7 +76,7 @@ namespace Dice.App
                 yield return scene;
                 if (scene.Status != AsyncOperationStatus.Succeeded)
                 {
-                    startup.ShowStatus("Cannot open presentation: " + scene.OperationException?.Message);
+                    startup.ShowStatus(SpiritStatus.Of(SpiritStatusKind.PresentationOpenFailed, scene.OperationException?.Message));
                     transition = null;
                     yield break;
                 }
@@ -107,7 +107,7 @@ namespace Dice.App
                 }
                 catch (Exception exception)
                 {
-                    startup.ShowStatus("Cannot initialize presentation: " + exception.Message);
+                    startup.ShowStatus(SpiritStatus.Of(SpiritStatusKind.PresentationInitializationFailed, exception.Message));
                     transition = null;
                     yield break;
                 }

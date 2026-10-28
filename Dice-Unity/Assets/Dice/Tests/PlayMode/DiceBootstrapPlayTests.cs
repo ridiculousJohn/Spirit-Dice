@@ -141,7 +141,8 @@ namespace Dice.Tests
             var view = ContentReady.EncounterView(controller);
             Assert.That(controller.PresentationReady, Is.False);
             Assert.That(bootstrap.StartupView.Root.gameObject.activeInHierarchy, Is.True);
-            Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(SpiritStatusText.Describe(controller.Status)));
+            var wording = bootstrap.StartupView.GetComponentInParent<SpiritUiContext>(true).Wording;
+            Assert.That(bootstrap.StartupView.Status.text, Is.EqualTo(SpiritStatusText.Describe(controller.Status, wording.status)));
             Assert.That(host.transform.Find("SpiritCanvas"), Is.Null);
             Assert.That(view, Is.Null);
             Assert.That(ContentReady.FrontendView(controller), Is.Null);

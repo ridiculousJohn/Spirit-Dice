@@ -164,8 +164,11 @@ namespace Dice.Tests
                 Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(unlocked.Id), journey.Id);
                 Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(unlocked.Id), journey.Id);
             }
-            Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("PERMANENTLY UNLOCKED THIS RUN"), journey.Id);
-            Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain("All encounters"), journey.Id);
+            // The summary opens with the authored wording of permanent unlocks and names each unlock's scope.
+            var wording = Find<Text>("EndingUnlocks").GetComponentInParent<SpiritUiContext>(true).Wording;
+            string permanentHeading = wording.ending.permanentUnlocks.Substring(0, wording.ending.permanentUnlocks.IndexOf("{charms}"));
+            Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain(permanentHeading), journey.Id);
+            Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain(wording.charmAvailability.allEncounters), journey.Id);
 
             Click("EndingNewRunButton");
             yield return ContentReady.Routed(controller);

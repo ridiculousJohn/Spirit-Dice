@@ -114,6 +114,7 @@ namespace Dice.Presentation
                 TargetPanel == null || TargetLabel == null || TargetCaption == null || HandsPanel == null ||
                 HandsLabel == null || RerollsPanel == null || RerollsLabel == null || ResourcesLabel == null)
                 throw new InvalidOperationException("The gameplay HUD requires authored header references.");
+            SpiritUi.RequireWording(transform);
             this.toggleMenu = toggleMenu;
             MenuButton.onClick.RemoveListener(ToggleMenu);
             MenuButton.onClick.AddListener(ToggleMenu);
@@ -261,15 +262,17 @@ namespace Dice.Presentation
 
         public void SetResources(int hands, int rerolls)
         {
-            HandsLabel.text = "HANDS  " + hands;
-            RerollsLabel.text = "REROLLS  " + rerolls;
-            ResourcesLabel.text = hands + " hands left  /  " + rerolls + " rerolls left";
+            var wording = SpiritUi.GetWording(transform).hud;
+            HandsLabel.text = wording.Hands(hands);
+            RerollsLabel.text = wording.Rerolls(rerolls);
+            ResourcesLabel.text = wording.Resources(hands, rerolls);
         }
 
         public void ShowResource(ResourceChangedEvent resource)
         {
-            if (resource.Resource == ResourceKind.Rerolls) RerollsLabel.text = "REROLLS  " + resource.After;
-            else if (resource.Resource == ResourceKind.Hands) HandsLabel.text = "HANDS  " + resource.After;
+            var wording = SpiritUi.GetWording(transform).hud;
+            if (resource.Resource == ResourceKind.Rerolls) RerollsLabel.text = wording.Rerolls(resource.After);
+            else if (resource.Resource == ResourceKind.Hands) HandsLabel.text = wording.Hands(resource.After);
         }
 
         public void ShowActivationIcon(ModifierPresentationCatalog charms, ModifierDefinition definition)

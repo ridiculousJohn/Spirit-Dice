@@ -96,7 +96,7 @@ namespace Dice.Presentation
             {
                 host.Ambient?.End(resolution.Snapshot.Outcome);
                 endingView.Render(resolution.Snapshot, host.Journey?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds));
+                    SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds, Wording));
                 yield return endingView.Present(host.Host, host.SetOpeningOpacity, host.ShowEnding,
                     clip => encounterAudio.PlayCue(clip));
             }
@@ -164,7 +164,7 @@ namespace Dice.Presentation
 
         private IEnumerator PresentThreshold(ThresholdChangedEvent threshold)
         {
-            hud.TargetCaption.text = "TO CLEAR";
+            hud.TargetCaption.text = Wording.hud.toClear;
             yield return hud.AnimateThreshold(threshold.Before, threshold.After, ThresholdCountDuration);
             yield return new WaitForSecondsRealtime(ThresholdHold);
         }
@@ -172,7 +172,7 @@ namespace Dice.Presentation
         private IEnumerator PresentStageCleared(Resolution resolution)
         {
             hud.TargetLabel.text = "0";
-            hud.TargetCaption.text = "STAGE CLEARED";
+            hud.TargetCaption.text = Wording.hud.stageCleared;
             encounterAudio.Play(SpiritAudioCue.StageClear);
             if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
                 host.Journey?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
@@ -184,9 +184,10 @@ namespace Dice.Presentation
 
         private IEnumerator PresentStage(StageStartedEvent stage, Resolution resolution)
         {
-            hud.StageLabel.text = "STAGE " + (stage.StageIndex + 1) + " / " + resolution.Snapshot.StageCount;
+            var wording = Wording.hud;
+            hud.StageLabel.text = wording.Stage(stage.StageIndex + 1, resolution.Snapshot.StageCount);
             hud.TargetLabel.text = DiagnosticText.Number(stage.Threshold);
-            hud.TargetCaption.text = "TO CLEAR";
+            hud.TargetCaption.text = wording.toClear;
             hud.HandsPanel.gameObject.SetActive(true);
             hud.RerollsPanel.gameObject.SetActive(true);
             hud.ResourcesLabel.gameObject.SetActive(false);
@@ -195,8 +196,7 @@ namespace Dice.Presentation
             host.HideRewardsAndEnding();
             hud.StageIntroTitle.text = hud.StageLabel.text;
             hud.StageIntroDetail.fontSize = hud.StageIntroDetailFontSize;
-            hud.StageIntroDetail.text = "CLEAR " + DiagnosticText.Number(stage.Threshold) + " POINTS\n" +
-                stage.Hands + " hands / " + stage.Rerolls + " rerolls";
+            hud.StageIntroDetail.text = wording.StageIntro(stage.Threshold, stage.Hands, stage.Rerolls);
             if (resolution.PreviousRevision >= 0)
             {
                 hud.StageIntroPanel.gameObject.SetActive(true);
@@ -216,7 +216,7 @@ namespace Dice.Presentation
             hud.CategoryLabel.text = "";
             hud.ModifierEmblem.gameObject.SetActive(false);
             hud.SelectionLabel.color = SpiritUi.GetTheme(hud.transform).muted;
-            hud.SelectionLabel.text = "NEW HAND";
+            hud.SelectionLabel.text = Wording.hud.newHand;
             hud.ScoreDetail.text = "";
             if (resolution.PreviousRevision >= 0) yield return new WaitForSecondsRealtime(HandStartHold);
         }
@@ -226,7 +226,7 @@ namespace Dice.Presentation
             // A charm's grant is presented with the charm's own step.
             if (resource.GrantedBy != null) yield break;
             hud.ShowResource(resource);
-            if (resource.Resource == ResourceKind.Rerolls) hud.SelectionLabel.text = resource.After + " rerolls remaining";
+            if (resource.Resource == ResourceKind.Rerolls) hud.SelectionLabel.text = Wording.hud.RerollsRemaining(resource.After);
         }
 
         private IEnumerator FadeOpening(float duration)
@@ -273,7 +273,9 @@ namespace Dice.Presentation
         private float GestureDuration => GestureDurationOf(host.Host);
 
         private SpiritScoringStepBuilder Steps()
-            => new SpiritScoringStepBuilder(host.Controls.Catalog, Charms, SpiritUi.GetTheme(hud.transform));
+            => new SpiritScoringStepBuilder(host.Controls.Catalog, Charms, SpiritUi.GetTheme(hud.transform), Wording);
+
+        private SpiritUiWording Wording => SpiritUi.GetWording(hud.transform);
 
         private ModifierPresentationCatalog Charms => host.Controls.ModifierPresentation;
     }

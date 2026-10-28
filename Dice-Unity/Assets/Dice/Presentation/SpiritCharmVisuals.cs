@@ -27,38 +27,39 @@ namespace Dice.Presentation
             return SpiritCharmStatusPresentation.Create(instance, definition, controls.Snapshot.Phase, inspection);
         }
 
-        internal static string AvailabilityText(ModifierDefinition definition, EncounterSnapshot snapshot)
+        internal static string AvailabilityText(ModifierDefinition definition, EncounterSnapshot snapshot,
+            SpiritUiWording.CharmAvailability wording)
         {
             var availability = definition.Availability;
             var unlocked = new HashSet<string>(snapshot.UnlockedModifierIds, StringComparer.Ordinal);
             string access = availability.Access == ModifierAccess.PermanentUnlock ?
-                (unlocked.Contains(definition.Id) ? "Permanently unlocked" : "Requires permanent unlock") :
-                availability.Access == ModifierAccess.EncounterExclusive ? "Encounter exclusive" : "Available from the start";
-            return access + " / " + AvailabilityScopeText(definition);
+                (unlocked.Contains(definition.Id) ? wording.permanentlyUnlocked : wording.requiresUnlock) :
+                availability.Access == ModifierAccess.EncounterExclusive ? wording.encounterExclusive : wording.availableFromStart;
+            return wording.Availability(access, AvailabilityScopeText(definition, wording));
         }
 
-        internal static string AvailabilityScopeText(ModifierDefinition definition)
+        internal static string AvailabilityScopeText(ModifierDefinition definition, SpiritUiWording.CharmAvailability wording)
         {
             var availability = definition.Availability;
-            string scope = availability.Scope == ModifierAvailabilityScope.Global ? "All encounters" :
-                availability.Scope == ModifierAvailabilityScope.Spirit ? "This spirit's encounters" : "This encounter";
-            return scope + " / Tier " + availability.PowerTier;
+            string scope = availability.Scope == ModifierAvailabilityScope.Global ? wording.allEncounters :
+                availability.Scope == ModifierAvailabilityScope.Spirit ? wording.spiritEncounters : wording.thisEncounter;
+            return wording.ScopeTier(scope, availability.PowerTier);
         }
 
         internal static bool HasPendingProgress(ISpiritEncounterControls controls) =>
             controls is ISpiritProgressionControls progression && progression.ProfileStatus.IsPending;
 
-        internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<string> ids)
+        internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<string> ids, SpiritUiWording wording)
         {
-            if (ids.Count == 0) return "No new charms unlocked this run.";
+            if (ids.Count == 0) return wording.ending.noUnlocks;
             var names = new List<string>();
             foreach (string id in ids)
             {
                 var definition = controls.Catalog.GetModifier(id);
-                names.Add(controls.ModifierPresentation.GetName(definition) + "\n" + AvailabilityScopeText(definition));
+                names.Add(wording.ending.UnlockedCharm(controls.ModifierPresentation.GetName(definition),
+                    AvailabilityScopeText(definition, wording.charmAvailability)));
             }
-            return (HasPendingProgress(controls) ? "UNLOCKED THIS RUN - SAVE PENDING\n" : "PERMANENTLY UNLOCKED THIS RUN\n") +
-                "Available in future reward pools.\n\n" + string.Join("\n\n", names);
+            return wording.ending.Unlocks(names, HasPendingProgress(controls));
         }
     }
 }

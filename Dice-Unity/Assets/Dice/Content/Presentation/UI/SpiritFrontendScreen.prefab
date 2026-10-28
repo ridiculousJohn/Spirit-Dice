@@ -131,6 +131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiContext
   theme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
+  wording: {fileID: 11400000, guid: a32898378b6852b4fa89c2bfbf1e6b94, type: 2}
 --- !u!223 &4124717705140890827
 Canvas:
   m_ObjectHideFlags: 0

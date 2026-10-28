@@ -15,6 +15,7 @@ namespace Dice.Tests
         private readonly List<(long Offer, long Option)> choices = new List<(long Offer, long Option)>();
         private GameObject parent;
         private SpiritRewardCard card;
+        private SpiritUiWording wording;
 
         [SetUp]
         public void SetUp()
@@ -24,10 +25,17 @@ namespace Dice.Tests
             var prefab = AssetDatabase.LoadAssetAtPath<SpiritRewardCard>("Assets/Dice/Content/Presentation/UI/SpiritRewardCard.prefab");
             Assert.That(prefab, Is.Not.Null);
             card = SpiritRewardCard.Create(prefab, "TestRewardCard", parent.transform, (offer, option) => choices.Add((offer, option)));
+            wording = SyntheticWording.Create();
+            var context = card.GetComponent<SpiritUiContext>();
+            context.Configure(context.Theme, wording);
         }
 
         [TearDown]
-        public void TearDown() => Object.DestroyImmediate(parent);
+        public void TearDown()
+        {
+            Object.DestroyImmediate(parent);
+            Object.DestroyImmediate(wording);
+        }
 
         /**
          * Checks that a hand-upgrade card shows the hand's current level and values, adds the next level's increments
@@ -42,20 +50,22 @@ namespace Dice.Tests
             const int level = 3;
             long baseScore = hand.BaseScoreAt(level);
             long multiplier = hand.MultiplierAt(level);
-            string current = "BASE " + DiagnosticText.Number(baseScore) + "\nMULT " + DiagnosticText.Number(multiplier);
-            string upgraded = "BASE " + DiagnosticText.Number(baseScore) + " +" + DiagnosticText.Number(hand.BaseScorePerUpgrade) +
-                "\nMULT " + DiagnosticText.Number(multiplier) + " +" + DiagnosticText.Number(hand.MultiplierPerUpgrade);
+            string current = "<rewardCard.values>" + DiagnosticText.Number(baseScore) + "|" + DiagnosticText.Number(multiplier);
+            string upgraded = "<rewardCard.selectedValues>" + DiagnosticText.Number(baseScore) + "|" +
+                DiagnosticText.Number(hand.BaseScorePerUpgrade) + "|" + DiagnosticText.Number(multiplier) + "|" +
+                DiagnosticText.Number(hand.MultiplierPerUpgrade);
             var levelLabel = Field<Text>("handLevelText");
             var values = Field<Text>("handValues");
 
             card.RenderHandUpgrade(hand, level, 1, 1);
-            Assert.That(levelLabel.text, Is.EqualTo("Level " + level));
+            Assert.That(Field<Text>("handTitle").text, Is.EqualTo("<handNames.pair>"));
+            Assert.That(levelLabel.text, Is.EqualTo("<rewardCard.level>" + level));
             Assert.That(values.text, Is.EqualTo(current));
             card.SetHandUpgradeSelected(true);
-            Assert.That(levelLabel.text, Is.EqualTo("Level " + level + " +1"));
+            Assert.That(levelLabel.text, Is.EqualTo("<rewardCard.selectedLevel>" + level));
             Assert.That(values.text, Is.EqualTo(upgraded));
             card.SetHandUpgradeSelected(false);
-            Assert.That(levelLabel.text, Is.EqualTo("Level " + level));
+            Assert.That(levelLabel.text, Is.EqualTo("<rewardCard.level>" + level));
             Assert.That(values.text, Is.EqualTo(current));
         }
 
