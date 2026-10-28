@@ -228,26 +228,20 @@ namespace Dice.App
 
         private void CachePreview()
         {
-            Preview = null;
-            ModifierInspections = Array.Empty<ModifierInspection>();
-            cacheStatus = string.Empty;
-            // Diagnostic evaluation cannot invalidate a successfully synchronized engine state.
-            try
-            {
-                if (Snapshot.Phase == EncounterPhase.Playing) Preview = application.PreviewHandResolution();
-            }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                cacheStatus = " Hand preview unavailable: " + exception.Message;
-            }
-            try { ModifierInspections = application.InspectModifiersForPlayHand(); }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                cacheStatus += " Modifier inspection unavailable: " + exception.Message;
-            }
+            var display = application.PreviewForDisplay(IsExpectedFailure);
+            Preview = display.HandPreview;
+            ModifierInspections = display.ModifierInspections;
+            cacheStatus = (display.HandPreviewFailure == null ? string.Empty : " Hand preview unavailable: " + display.HandPreviewFailure) +
+                (display.ModifierInspectionFailure == null ? string.Empty : " Modifier inspection unavailable: " + display.ModifierInspectionFailure);
         }
 
         private string WithCacheStatus(string message) => message + cacheStatus;
+
+        /** The diagnostic scene draws no cryptographic seeds, so it reports the shared failures other than cryptography. */
+        private static bool IsExpectedFailure(Exception exception)
+            => exception is IOException || exception is UnauthorizedAccessException || exception is SecurityException
+                || exception is FormatException || exception is NotSupportedException || exception is ArgumentException
+                || exception is InvalidOperationException || exception is OverflowException || exception is KeyNotFoundException;
 
         private void AppendEvents(Resolution resolution)
         {
@@ -255,10 +249,5 @@ namespace Dice.App
                 eventLog.Add(DiagnosticText.DescribeEvent(ruleEvent, Catalog, ModifierPresentation));
             if (eventLog.Count > MaximumEventLogEntries) eventLog.RemoveRange(0, eventLog.Count - MaximumEventLogEntries);
         }
-
-        private static bool IsExpectedFailure(Exception exception)
-            => exception is IOException || exception is UnauthorizedAccessException || exception is SecurityException
-                || exception is FormatException || exception is NotSupportedException || exception is ArgumentException
-                || exception is InvalidOperationException || exception is OverflowException || exception is KeyNotFoundException;
     }
 }

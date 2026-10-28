@@ -25,9 +25,10 @@ namespace Dice.UnityContent
             {
                 if (modifier == null) throw new InvalidOperationException("A charm reference is missing.");
                 if (!seen.Add(modifier)) return;
-                if (byId.TryGetValue(modifier.Id ?? "", out ModifierAsset other))
+                if (string.IsNullOrWhiteSpace(modifier.Id)) throw new InvalidOperationException("The charm asset " + modifier.name + " has no id.");
+                if (byId.TryGetValue(modifier.Id, out ModifierAsset other))
                     throw new InvalidOperationException("Two charm assets share the id " + modifier.Id + ": " + other.name + ", " + modifier.name);
-                byId.Add(modifier.Id ?? "", modifier);
+                byId.Add(modifier.Id, modifier);
                 referenced.Add(modifier);
             }
             var handDefinitions = new HandDefinition[hands.Length];
@@ -132,6 +133,7 @@ namespace Dice.UnityContent
 
         private static RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source)
         {
+            // An encounter without reward offers leaves its policy id empty; it then awaits rewards from outside the engine.
             if (source == null || string.IsNullOrEmpty(source.id)) return null;
             if (source.modifierLayouts == null || source.upgradeHistory == null)
                 throw new InvalidOperationException("Reward policy arrays are missing.");

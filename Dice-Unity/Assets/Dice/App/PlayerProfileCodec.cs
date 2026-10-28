@@ -9,24 +9,30 @@ namespace Dice.App
     public static class PlayerProfileCodec
     {
         public const int MaximumProfileBytes = 1024 * 1024;
-        private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
+        private const int MaximumDepth = 8;
+        private const string FormatVersionField = "ProfileFormatVersion";
+        private const string DiscoveredFamilyIdsField = "DiscoveredFamilyIds";
+        private const string UnlockedModifierIdsField = "UnlockedModifierIds";
+        private const string CompletedEncounterIdsField = "CompletedEncounterIds";
+        private const string CompletedStoryIdsField = "CompletedStoryIds";
+        private const string VisitedEncounterIdsField = "VisitedEncounterIds";
         // To change the format, raise PlayerProfile.CurrentFormatVersion and append a step that upgrades the previous format.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
-            "ProfileFormatVersion", PlayerProfile.CurrentFormatVersion);
+            FormatVersionField, PlayerProfile.CurrentFormatVersion);
 
         public static byte[] Serialize(PlayerProfile profile)
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             var document = new JObject
             {
-                ["ProfileFormatVersion"] = PlayerProfile.CurrentFormatVersion,
-                ["DiscoveredFamilyIds"] = new JArray(profile.DiscoveredFamilyIds),
-                ["UnlockedModifierIds"] = new JArray(profile.UnlockedModifierIds),
-                ["CompletedEncounterIds"] = new JArray(profile.CompletedEncounterIds),
-                ["CompletedStoryIds"] = new JArray(profile.CompletedStoryIds),
-                ["VisitedEncounterIds"] = new JArray(profile.VisitedEncounterIds)
+                [FormatVersionField] = PlayerProfile.CurrentFormatVersion,
+                [DiscoveredFamilyIdsField] = new JArray(profile.DiscoveredFamilyIds),
+                [UnlockedModifierIdsField] = new JArray(profile.UnlockedModifierIds),
+                [CompletedEncounterIdsField] = new JArray(profile.CompletedEncounterIds),
+                [CompletedStoryIdsField] = new JArray(profile.CompletedStoryIds),
+                [VisitedEncounterIdsField] = new JArray(profile.VisitedEncounterIds)
             };
-            byte[] bytes = TextEncoding.GetBytes(document.ToString(Formatting.Indented));
+            byte[] bytes = SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented));
             if (bytes.Length > MaximumProfileBytes) throw new FormatException("The profile exceeds the size limit.");
             return bytes;
         }
@@ -37,9 +43,8 @@ namespace Dice.App
             if (bytes.Length > MaximumProfileBytes) throw new FormatException("The profile exceeds the size limit.");
             try
             {
-                int offset = bytes.Length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf ? 3 : 0;
-                using (var input = new StringReader(TextEncoding.GetString(bytes, offset, bytes.Length - offset)))
-                using (var reader = new JsonTextReader(input) { MaxDepth = 8, DateParseHandling = DateParseHandling.None })
+                using (var input = new StringReader(SaveFileText.Decode(bytes)))
+                using (var reader = new JsonTextReader(input) { MaxDepth = MaximumDepth, DateParseHandling = DateParseHandling.None })
                 {
                     var document = JObject.Load(reader, new JsonLoadSettings
                     {
@@ -52,16 +57,16 @@ namespace Dice.App
                     if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The profile format version is unsupported.");
                     foreach (var property in document.Properties())
-                        if (property.Name != "ProfileFormatVersion" && property.Name != "DiscoveredFamilyIds" &&
-                            property.Name != "UnlockedModifierIds" && property.Name != "CompletedEncounterIds" &&
-                            property.Name != "CompletedStoryIds" && property.Name != "VisitedEncounterIds")
+                        if (property.Name != FormatVersionField && property.Name != DiscoveredFamilyIdsField &&
+                            property.Name != UnlockedModifierIdsField && property.Name != CompletedEncounterIdsField &&
+                            property.Name != CompletedStoryIdsField && property.Name != VisitedEncounterIdsField)
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
-                    ReadIds(document["DiscoveredFamilyIds"], profile.DiscoverFamily);
-                    ReadIds(document["CompletedStoryIds"], profile.CompleteStory);
-                    ReadIds(document["UnlockedModifierIds"], profile.UnlockModifier);
-                    ReadIds(document["CompletedEncounterIds"], profile.CompleteEncounter);
-                    ReadIds(document["VisitedEncounterIds"], profile.VisitEncounter);
+                    ReadIds(document[DiscoveredFamilyIdsField], profile.DiscoverFamily);
+                    ReadIds(document[CompletedStoryIdsField], profile.CompleteStory);
+                    ReadIds(document[UnlockedModifierIdsField], profile.UnlockModifier);
+                    ReadIds(document[CompletedEncounterIdsField], profile.CompleteEncounter);
+                    ReadIds(document[VisitedEncounterIdsField], profile.VisitEncounter);
                     return profile;
                 }
             }

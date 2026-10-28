@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security;
-using System.Security.Cryptography;
 using Dice.Engine;
 using Dice.Presentation;
 
@@ -40,7 +38,7 @@ namespace Dice.App
             if (!PersistProfile()) return false;
             try
             {
-                string path = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(savePath)), "spirit-profile.json");
+                string path = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(savePath)), PlayerProfileFileStore.FileName);
                 var loaded = PlayerProfileFileStore.LoadOrCreate(path);
                 if (profile != null && path == ProfilePath) profile.Merge(loaded);
                 else profile = loaded;
@@ -48,7 +46,7 @@ namespace Dice.App
                 Status = PlayerProfileStatus.None;
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 Status = new PlayerProfileStatus(PlayerProfileStatusKind.LoadFailed, exception.Message);
                 return false;
@@ -67,10 +65,9 @@ namespace Dice.App
         public IReadOnlyList<string> KnownDiscoveredFamilies(MechanicalCatalog catalog)
         {
             if (profile == null || catalog == null) return Array.Empty<string>();
-            var discovered = new HashSet<string>(profile.GetDiscoveredFamilyIds(catalog), StringComparer.Ordinal);
             var known = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var modifier in catalog.Modifiers)
-                if (discovered.Contains(modifier.FamilyId)) known.Add(modifier.FamilyId);
+            foreach (string id in profile.GetDiscoveredFamilyIds(catalog))
+                if (catalog.HasFamily(id)) known.Add(id);
             var result = new List<string>(known);
             result.Sort(StringComparer.Ordinal);
             return result;
@@ -99,49 +96,19 @@ namespace Dice.App
         public bool ApplyProgressionReward(ProgressionRewardDefinition reward, MechanicalCatalog catalog, out bool changed)
         {
             changed = false;
-            if (catalog == null || profile == null) return false;
-            if (!PersistProfile()) return false;
-            try
-            {
-                var nextProfile = new PlayerProfile();
-                nextProfile.Merge(profile);
-                if (!nextProfile.ApplyReward(reward, catalog)) return true;
-                PlayerProfileFileStore.Save(ProfilePath, nextProfile);
-                profile = nextProfile;
-                Status = PlayerProfileStatus.None;
-                changed = true;
-                return true;
-            }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                Status = new PlayerProfileStatus(PlayerProfileStatusKind.RewardFailed, exception.Message);
-                return false;
-            }
+            if (catalog == null) return false;
+            return CommitProfileChange(next => next.ApplyReward(reward, catalog), PlayerProfileStatusKind.RewardFailed, out changed);
         }
 
         public bool CompleteStoryJourney(string storyId, IEnumerable<ProgressionRewardDefinition> rewards,
             MechanicalCatalog catalog)
-        {
-            if (profile == null) return false;
-            if (!PersistProfile()) return false;
-            try
+            => CommitProfileChange(next =>
             {
-                var nextProfile = new PlayerProfile();
-                nextProfile.Merge(profile);
                 foreach (var reward in rewards)
-                    if (reward != null) nextProfile.ApplyReward(reward, catalog);
-                nextProfile.CompleteStory(storyId);
-                PlayerProfileFileStore.Save(ProfilePath, nextProfile);
-                profile = nextProfile;
-                Status = PlayerProfileStatus.None;
+                    if (reward != null) next.ApplyReward(reward, catalog);
+                next.CompleteStory(storyId);
                 return true;
-            }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                Status = new PlayerProfileStatus(PlayerProfileStatusKind.StoryFailed, exception.Message);
-                return false;
-            }
-        }
+            }, PlayerProfileStatusKind.StoryFailed, out _);
 
         public bool PersistProfile()
         {
@@ -155,7 +122,7 @@ namespace Dice.App
                     pendingUnlockSavePath = null;
                     Status = PlayerProfileStatus.None;
                 }
-                catch (Exception exception) when (IsExpectedFailure(exception))
+                catch (Exception exception) when (ExpectedFailures.Includes(exception))
                 {
                     Status = new PlayerProfileStatus(PlayerProfileStatusKind.EncounterSavePending, exception.Message);
                     return false;
@@ -169,7 +136,7 @@ namespace Dice.App
                 Status = PlayerProfileStatus.None;
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 Status = new PlayerProfileStatus(PlayerProfileStatusKind.ProfileSavePending, exception.Message);
                 return false;
@@ -178,29 +145,41 @@ namespace Dice.App
 
         public bool PersistVisit(string id)
         {
+            if (profile == null || !PersistProfile()) return false;
+            // An invalid id throws to the caller instead of reporting a failed write.
+            PlayerProfile.ValidateId(id);
+            return CommitProfileChange(next =>
+            {
+                next.VisitEncounter(id);
+                return true;
+            }, PlayerProfileStatusKind.VisitFailed, out _);
+        }
+
+        /**
+         * Applies a change to a copy of the profile after pending writes are flushed, then saves the copy and adopts it.
+         * A change that reports nothing changed skips the save; a failed write keeps the current profile and reports the failure.
+         */
+        private bool CommitProfileChange(Func<PlayerProfile, bool> change, PlayerProfileStatusKind failure, out bool changed)
+        {
+            changed = false;
             if (profile == null) return false;
             if (!PersistProfile()) return false;
-            var nextProfile = new PlayerProfile();
-            nextProfile.Merge(profile);
-            nextProfile.VisitEncounter(id);
             try
             {
+                var nextProfile = new PlayerProfile();
+                nextProfile.Merge(profile);
+                if (!change(nextProfile)) return true;
                 PlayerProfileFileStore.Save(ProfilePath, nextProfile);
                 profile = nextProfile;
                 Status = PlayerProfileStatus.None;
+                changed = true;
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
-                Status = new PlayerProfileStatus(PlayerProfileStatusKind.VisitFailed, exception.Message);
+                Status = new PlayerProfileStatus(failure, exception.Message);
                 return false;
             }
         }
-
-        private static bool IsExpectedFailure(Exception exception)
-            => exception is IOException || exception is UnauthorizedAccessException || exception is SecurityException
-                || exception is CryptographicException
-                || exception is FormatException || exception is NotSupportedException || exception is ArgumentException
-                || exception is InvalidOperationException || exception is OverflowException || exception is KeyNotFoundException;
     }
 }

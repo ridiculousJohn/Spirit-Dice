@@ -67,7 +67,7 @@ namespace Dice.App
         private void Awake()
         {
             if (SavePath == null)
-                SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "spirit-encounter.json");
+                SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, EncounterSaveFileStore.FileName);
         }
 
         public void PresentationDidInitialize()
@@ -88,10 +88,9 @@ namespace Dice.App
             ModifierPresentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
         }
 
-        internal bool Initialize(MechanicalCatalog catalog, EncounterJourneyCatalogAsset journeys, string encounterId)
+        internal bool Initialize(MechanicalCatalog catalog, string encounterId)
         {
             if (Catalog != null || IsBusy) return false;
-            if (journeys != null) return InitializeJourney(catalog, journeys, SavePath);
             Initialize(catalog, encounterId, SelectSeed(), SavePath);
             return application != null;
         }
@@ -147,7 +146,7 @@ namespace Dice.App
                 StateChanged?.Invoke();
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.MainMenuFailed, exception.Message));
                 return false;
@@ -183,7 +182,7 @@ namespace Dice.App
                 StateChanged?.Invoke();
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.InvestigationFailed, exception.Message));
                 return false;
@@ -245,7 +244,7 @@ namespace Dice.App
                 JourneyChanged?.Invoke();
                 Present(next.InitialResolution);
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.InvitationFailed, exception.Message));
             }
@@ -318,7 +317,7 @@ namespace Dice.App
                 return;
             }
             try { Initialize(Catalog, encounterId, SelectSeed(), SavePath); }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetStatus(SpiritStatus.Of(SpiritStatusKind.StartFailed, exception.Message));
             }
@@ -388,7 +387,7 @@ namespace Dice.App
                 SetStatus(RunStatus(SpiritStatusKind.Saved));
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetStatus(SpiritStatus.Of(SpiritStatusKind.SaveFailed, exception.Message));
                 return false;
@@ -428,7 +427,7 @@ namespace Dice.App
                 JourneyChanged?.Invoke();
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetStatus(SpiritStatus.Of(SpiritStatusKind.LoadFailed, exception.Message));
                 return false;
@@ -480,7 +479,7 @@ namespace Dice.App
                 StateChanged?.Invoke();
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.LoadFailed, exception.Message));
                 return false;
@@ -542,7 +541,7 @@ namespace Dice.App
                 var result = application.Submit(action, Snapshot.Revision);
                 if (!result.Accepted) SetStatus(SpiritStatus.Rejected(result.Rejection));
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetStatus(SpiritStatus.Of(SpiritStatusKind.ActionFailed, exception.Message));
             }
@@ -558,24 +557,11 @@ namespace Dice.App
 
         private void CachePreview()
         {
-            Preview = null;
-            ModifierInspections = Array.Empty<ModifierInspection>();
-            handPreviewFailure = null;
-            modifierInspectionFailure = null;
-            // Display evaluation cannot invalidate a successfully synchronized engine state.
-            try
-            {
-                if (Snapshot.Phase == EncounterPhase.Playing) Preview = application.PreviewHandResolution();
-            }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                handPreviewFailure = exception.Message;
-            }
-            try { ModifierInspections = application.InspectModifiersForPlayHand(); }
-            catch (Exception exception) when (IsExpectedFailure(exception))
-            {
-                modifierInspectionFailure = exception.Message;
-            }
+            var display = application.PreviewForDisplay(ExpectedFailures.Includes);
+            Preview = display.HandPreview;
+            ModifierInspections = display.ModifierInspections;
+            handPreviewFailure = display.HandPreviewFailure;
+            modifierInspectionFailure = display.ModifierInspectionFailure;
         }
 
         /** A run state records the display warnings and profile state it is reported with. */
@@ -641,7 +627,7 @@ namespace Dice.App
                 }
                 return true;
             }
-            catch (Exception exception) when (IsExpectedFailure(exception))
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
             {
                 SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.RewardFailed, exception.Message));
                 return false;
@@ -658,11 +644,5 @@ namespace Dice.App
             }
             StateChanged?.Invoke();
         }
-
-        private static bool IsExpectedFailure(Exception exception)
-            => exception is IOException || exception is UnauthorizedAccessException || exception is SecurityException
-                || exception is CryptographicException
-                || exception is FormatException || exception is NotSupportedException || exception is ArgumentException
-                || exception is InvalidOperationException || exception is OverflowException || exception is KeyNotFoundException;
     }
 }

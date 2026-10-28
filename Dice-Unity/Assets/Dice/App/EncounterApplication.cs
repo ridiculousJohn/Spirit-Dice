@@ -34,12 +34,6 @@ namespace Dice.App
             return result.Success;
         }
 
-        public static EncounterApplication Create(MechanicalCatalogAsset asset, string encounterId, ulong seed)
-        {
-            if (asset == null) throw new ArgumentNullException(nameof(asset));
-            return new EncounterApplication(asset.Build().Catalog, encounterId, seed);
-        }
-
         public void AttachPresenter(IEncounterPresenter value)
         {
             presenter = value;
@@ -53,11 +47,54 @@ namespace Dice.App
             return result;
         }
 
-        public ScoreBreakdown PreviewPlayHand() => session.PreviewPlayHand();
         public HandPreview PreviewHandResolution() => session.PreviewHandResolution();
         public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand() => session.InspectModifiersForPlayHand();
+
+        /** The hand preview and charm inspections a view shows; a failure the caller expects is reported, not thrown. */
+        public EncounterDisplayPreview PreviewForDisplay(Func<Exception, bool> isExpectedFailure)
+        {
+            if (isExpectedFailure == null) throw new ArgumentNullException(nameof(isExpectedFailure));
+            HandPreview preview = null;
+            IReadOnlyList<ModifierInspection> inspections = Array.Empty<ModifierInspection>();
+            string previewFailure = null;
+            string inspectionFailure = null;
+            // Display evaluation cannot invalidate a successfully synchronized engine state.
+            try
+            {
+                if (session.Snapshot.Phase == EncounterPhase.Playing) preview = session.PreviewHandResolution();
+            }
+            catch (Exception exception) when (isExpectedFailure(exception))
+            {
+                previewFailure = exception.Message;
+            }
+            try { inspections = session.InspectModifiersForPlayHand(); }
+            catch (Exception exception) when (isExpectedFailure(exception))
+            {
+                inspectionFailure = exception.Message;
+            }
+            return new EncounterDisplayPreview(preview, inspections, previewFailure, inspectionFailure);
+        }
+
         public EncounterSaveData CaptureSave() => session.CaptureSave();
         public void MergeUnlockedModifiers(IEnumerable<string> modifierIds) => session.AddUnlockedModifiers(modifierIds);
         public void MergeDiscoveredFamilies(IEnumerable<string> familyIds) => session.AddDiscoveredFamilies(familyIds);
+    }
+
+    /** What a view shows of the hand to be played; the failures are developer detail of an unavailable part, or null. */
+    public sealed class EncounterDisplayPreview
+    {
+        public HandPreview HandPreview { get; }
+        public IReadOnlyList<ModifierInspection> ModifierInspections { get; }
+        public string HandPreviewFailure { get; }
+        public string ModifierInspectionFailure { get; }
+
+        internal EncounterDisplayPreview(HandPreview handPreview, IReadOnlyList<ModifierInspection> modifierInspections,
+            string handPreviewFailure, string modifierInspectionFailure)
+        {
+            HandPreview = handPreview;
+            ModifierInspections = modifierInspections;
+            HandPreviewFailure = handPreviewFailure;
+            ModifierInspectionFailure = modifierInspectionFailure;
+        }
     }
 }

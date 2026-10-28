@@ -31,11 +31,15 @@ namespace Dice.App
     internal sealed class CampaignRecoveryStore
     {
         private const string MetadataFileName = "spirit-campaign.json";
-        private const string BackupPrefix = "spirit-slots.corrupt-";
+        /** The file name prefix of a corrupt slot index's backup copy; a campaign identifier and .json follow it. */
+        internal const string BackupPrefix = "spirit-slots.corrupt-";
         private const int MetadataFormatVersion = 1;
+        private const int MaximumMetadataBytes = 256;
+        private const int MetadataMaximumDepth = 3;
+        private const string FormatVersionField = "formatVersion";
+        private const string SlotField = "slot";
         // To change the metadata format, raise MetadataFormatVersion and append a step that upgrades the previous format.
-        private static readonly SaveFormatUpgrades MetadataUpgrades = new SaveFormatUpgrades("formatVersion", MetadataFormatVersion);
-        private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
+        private static readonly SaveFormatUpgrades MetadataUpgrades = new SaveFormatUpgrades(FormatVersionField, MetadataFormatVersion);
         private readonly string root;
         private readonly MechanicalCatalog catalog;
 
@@ -69,8 +73,8 @@ namespace Dice.App
             string directory = CampaignDirectory(id);
             if (!IsSafeCampaignDirectory(id)) return null;
             FileAttributes attributes;
-            string profile = Path.Combine(directory, "spirit-profile.json");
-            string save = Path.Combine(directory, "spirit-encounter.json");
+            string profile = Path.Combine(directory, PlayerProfileFileStore.FileName);
+            string save = Path.Combine(directory, EncounterSaveFileStore.FileName);
             bool hasProfile = TryAttributes(profile, out attributes);
             if (hasProfile && (attributes & (FileAttributes.ReparsePoint | FileAttributes.Directory)) != 0) return null;
             bool hasRun = TryAttributes(save, out attributes);
@@ -98,8 +102,8 @@ namespace Dice.App
             string path = Path.Combine(directory, MetadataFileName);
             RequireRegularFile(path);
             RequireRegularFile(path + ".bak");
-            var document = new JObject { ["formatVersion"] = MetadataFormatVersion, ["slot"] = slot };
-            SaveFileCommit.Write(path, TextEncoding.GetBytes(document.ToString(Formatting.Indented)));
+            var document = new JObject { [FormatVersionField] = MetadataFormatVersion, [SlotField] = slot };
+            SaveFileCommit.Write(path, SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented)));
         }
 
         internal void BackfillSlot(string id, int slot)
@@ -150,14 +154,14 @@ namespace Dice.App
             {
                 using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    if (stream.Length > 256) return 0;
-                    using (var text = new StreamReader(stream, TextEncoding, true))
-                    using (var reader = new JsonTextReader(text) { MaxDepth = 3, DateParseHandling = DateParseHandling.None })
+                    if (stream.Length > MaximumMetadataBytes) return 0;
+                    using (var text = new StreamReader(stream, SaveFileText.Encoding, true))
+                    using (var reader = new JsonTextReader(text) { MaxDepth = MetadataMaximumDepth, DateParseHandling = DateParseHandling.None })
                     {
                         var document = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
                         if (reader.Read() || MetadataUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded) return 0;
-                        if (document.Count != 2 || document["slot"]?.Type != JTokenType.Integer) return 0;
-                        long slot = document["slot"].Value<long>();
+                        if (document.Count != 2 || document[SlotField]?.Type != JTokenType.Integer) return 0;
+                        long slot = document[SlotField].Value<long>();
                         return slot >= 1 && slot <= CampaignSaveSlots.SlotCount ? (int)slot : 0;
                     }
                 }
@@ -178,7 +182,7 @@ namespace Dice.App
             return path;
         }
 
-        private static bool IsCampaignId(string id) => id != null && id.Length == 32 && Guid.TryParseExact(id, "N", out Guid value) && value != Guid.Empty;
+        internal static bool IsCampaignId(string id) => id != null && id.Length == 32 && Guid.TryParseExact(id, "N", out Guid value) && value != Guid.Empty;
 
         private static bool TryAttributes(string path, out FileAttributes attributes)
         {

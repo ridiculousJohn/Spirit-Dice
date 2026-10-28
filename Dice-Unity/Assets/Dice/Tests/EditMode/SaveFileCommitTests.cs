@@ -8,6 +8,8 @@ namespace Dice.Tests
 {
     public sealed class SaveFileCommitTests
     {
+        /** The HRESULT of a Win32 error is this base combined with the error code. */
+        private const int Win32ErrorHResult = unchecked((int)0x80070000);
         private string artifactRoot;
         private string source;
         private string destination;
@@ -41,11 +43,11 @@ namespace Dice.Tests
                 if (calls <= 2)
                 {
                     AssertPreparedFiles();
-                    throw new IOException("Replacement unavailable", unchecked((int)0x80070497));
+                    throw new IOException("Replacement unavailable", SaveFileCommit.UnableToRemoveReplacedHResult);
                 }
                 File.Replace(pending, current, previous);
             });
-            Assert.That(calls, Is.InRange(3, 4));
+            Assert.That(calls, Is.EqualTo(3));
             Assert.That(File.ReadAllText(destination), Is.EqualTo("new save"));
             Assert.That(File.ReadAllText(backup), Is.EqualTo("current save"));
             Assert.That(File.Exists(source), Is.False);
@@ -61,10 +63,10 @@ namespace Dice.Tests
                 (pending, current, previous) =>
                 {
                     ++calls;
-                    final = new IOException("Failure " + calls, unchecked((int)0x80070497));
+                    final = new IOException("Failure " + calls, SaveFileCommit.UnableToRemoveReplacedHResult);
                     throw final;
                 }));
-            Assert.That(calls, Is.EqualTo(4));
+            Assert.That(calls, Is.EqualTo(SaveFileCommit.MaximumReplaceRetries + 1));
             Assert.That(actual, Is.SameAs(final));
             AssertPreparedFiles();
         }
@@ -77,7 +79,7 @@ namespace Dice.Tests
         {
             PrepareFiles();
             int calls = 0;
-            var failure = new IOException("Other file failure", unchecked((int)0x80070000) | error);
+            var failure = new IOException("Other file failure", Win32ErrorHResult | error);
             var actual = Assert.Throws<IOException>(() => SaveFileCommit.ReplaceWithRetry(source, destination, backup,
                 (pending, current, previous) => { ++calls; throw failure; }));
             Assert.That(calls, Is.EqualTo(1));

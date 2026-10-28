@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Dice.Engine;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace Dice.UnityContent
         [SerializeField, Range(-1, DiceValues.Count - 1)] private int startingBay = -1;
         [SerializeField] private PieceMovementTiming timing = PieceMovementTiming.DuringHand;
         [SerializeField] private bool allowsNeutral = true;
-        [SerializeField] private bool[] allowedBays = { true, true, true, true, true };
+        [SerializeField] private bool[] allowedBays = Enumerable.Repeat(true, DiceValues.Count).ToArray();
 
         public override PieceInteractionDefinition Build()
         {

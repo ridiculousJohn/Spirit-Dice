@@ -6,7 +6,11 @@ namespace Dice.App
 {
     internal static class SaveFileCommit
     {
-        private const int UnableToRemoveReplacedHResult = unchecked((int)0x80070497);
+        // Internal so the EditMode tests name the retried failure and the retry count rather than restating them.
+        internal const int UnableToRemoveReplacedHResult = unchecked((int)0x80070497);
+        internal const int MaximumReplaceRetries = 3;
+        /** The first retry waits this long; each later retry doubles the wait. */
+        private const int FirstRetryDelayMilliseconds = 25;
 
         internal static void Write(string path, byte[] bytes)
         {
@@ -33,10 +37,10 @@ namespace Dice.App
                     replace(sourcePath, destinationPath, backupPath);
                     return;
                 }
-                catch (IOException exception) when (exception.HResult == UnableToRemoveReplacedHResult && attempt < 3)
+                catch (IOException exception) when (exception.HResult == UnableToRemoveReplacedHResult && attempt < MaximumReplaceRetries)
                 {
                     // This Windows replacement failure leaves the source and destination filenames intact.
-                    Thread.Sleep(25 << attempt);
+                    Thread.Sleep(FirstRetryDelayMilliseconds << attempt);
                 }
             }
         }

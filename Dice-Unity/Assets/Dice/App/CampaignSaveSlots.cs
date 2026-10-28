@@ -14,9 +14,12 @@ namespace Dice.App
         public const int SlotCount = 3;
         private const int MaximumIndexBytes = 4096;
         private const int IndexFormatVersion = 1;
+        private const int IndexMaximumDepth = 4;
+        private const string FormatVersionField = "formatVersion";
+        private const string ActiveSlotField = "activeSlot";
+        private const string CampaignsField = "campaigns";
         // To change the index format, raise IndexFormatVersion and append a step that upgrades the previous format.
-        private static readonly SaveFormatUpgrades IndexUpgrades = new SaveFormatUpgrades("formatVersion", IndexFormatVersion);
-        private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
+        private static readonly SaveFormatUpgrades IndexUpgrades = new SaveFormatUpgrades(FormatVersionField, IndexFormatVersion);
         private readonly string root;
         private readonly string indexPath;
         private readonly CampaignRecoveryStore recovery;
@@ -48,7 +51,7 @@ namespace Dice.App
             catch (DirectoryNotFoundException) { }
             catch (FormatException)
             {
-                backupPath = Path.Combine(root, "spirit-slots.corrupt-" + Guid.NewGuid().ToString("N") + ".json");
+                backupPath = Path.Combine(root, CampaignRecoveryStore.BackupPrefix + Guid.NewGuid().ToString("N") + ".json");
                 File.Copy(indexPath, backupPath);
             }
             if (loaded != null && backupPath == null)
@@ -87,8 +90,8 @@ namespace Dice.App
             return campaigns[slot - 1] != null;
         }
 
-        public string GetSavePath(int slot) => GetPath(slot, "spirit-encounter.json");
-        public string GetProfilePath(int slot) => GetPath(slot, "spirit-profile.json");
+        public string GetSavePath(int slot) => GetPath(slot, EncounterSaveFileStore.FileName);
+        public string GetProfilePath(int slot) => GetPath(slot, PlayerProfileFileStore.FileName);
 
         public void SelectSlot(int slot)
         {
@@ -103,7 +106,7 @@ namespace Dice.App
             ValidateSlot(slot);
             RequireLoaded();
             string campaign = CreateCampaignDirectory();
-            string path = Path.Combine(root, campaign, "spirit-profile.json");
+            string path = Path.Combine(root, campaign, PlayerProfileFileStore.FileName);
             SaveFileCommit.Write(path, PlayerProfileCodec.Serialize(new PlayerProfile()));
             recovery.WriteSlot(campaign, slot);
             string previous = campaigns[slot - 1];
@@ -177,11 +180,11 @@ namespace Dice.App
         {
             var document = new JObject
             {
-                ["formatVersion"] = IndexFormatVersion,
-                ["activeSlot"] = selected,
-                ["campaigns"] = new JArray(next)
+                [FormatVersionField] = IndexFormatVersion,
+                [ActiveSlotField] = selected,
+                [CampaignsField] = new JArray(next)
             };
-            SaveFileCommit.Write(indexPath, TextEncoding.GetBytes(document.ToString(Formatting.Indented)));
+            SaveFileCommit.Write(indexPath, SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented)));
             campaigns = next;
             activeSlot = selected;
         }
@@ -190,22 +193,9 @@ namespace Dice.App
         {
             try
             {
-                byte[] bytes;
-                using (var stream = new FileStream(indexPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-                {
-                    if (stream.Length > MaximumIndexBytes) throw new FormatException("The save slot index exceeds the size limit.");
-                    bytes = new byte[(int)stream.Length];
-                    int offset = 0;
-                    while (offset < bytes.Length)
-                    {
-                        int count = stream.Read(bytes, offset, bytes.Length - offset);
-                        if (count == 0) throw new FormatException("The save slot index is truncated.");
-                        offset += count;
-                    }
-                }
-                int start = bytes.Length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf ? 3 : 0;
-                using (var input = new StringReader(TextEncoding.GetString(bytes, start, bytes.Length - start)))
-                using (var reader = new JsonTextReader(input) { MaxDepth = 4, DateParseHandling = DateParseHandling.None })
+                byte[] bytes = SaveFileText.ReadBounded(indexPath, MaximumIndexBytes, "The save slot index");
+                using (var input = new StringReader(SaveFileText.Decode(bytes)))
+                using (var reader = new JsonTextReader(input) { MaxDepth = IndexMaximumDepth, DateParseHandling = DateParseHandling.None })
                 {
                     var document = JObject.Load(reader, new JsonLoadSettings
                     {
@@ -215,15 +205,15 @@ namespace Dice.App
                     if (IndexUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded)
                         throw new FormatException("The save slot index format version is unsupported.");
                     foreach (var property in document.Properties())
-                        if (property.Name != "formatVersion" && property.Name != "activeSlot" && property.Name != "campaigns")
+                        if (property.Name != FormatVersionField && property.Name != ActiveSlotField && property.Name != CampaignsField)
                             throw new FormatException("The save slot index contains an unsupported field: " + property.Name);
-                    if (document["activeSlot"]?.Type != JTokenType.Integer)
+                    if (document[ActiveSlotField]?.Type != JTokenType.Integer)
                         throw new FormatException("The active save slot must be an integer.");
-                    long selectedValue = document["activeSlot"].Value<long>();
+                    long selectedValue = document[ActiveSlotField].Value<long>();
                     if (selectedValue < 1 || selectedValue > SlotCount)
                         throw new FormatException("The active save slot is outside its supported range.");
                     selected = (int)selectedValue;
-                    if (!(document["campaigns"] is JArray array) || array.Count != SlotCount)
+                    if (!(document[CampaignsField] is JArray array) || array.Count != SlotCount)
                         throw new FormatException("The save slot index must contain three campaigns.");
                     loaded = new string[SlotCount];
                     var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -234,8 +224,7 @@ namespace Dice.App
                         if (value.Type != JTokenType.String)
                             throw new FormatException("Campaign directories must be identifiers or null.");
                         string campaign = value.Value<string>();
-                        if (campaign.Length != 32 || !Guid.TryParseExact(campaign, "N", out Guid id) || id == Guid.Empty ||
-                            !unique.Add(campaign))
+                        if (!CampaignRecoveryStore.IsCampaignId(campaign) || !unique.Add(campaign))
                             throw new FormatException("Campaign directories must be unique generated identifiers.");
                         if (!recovery.IsSafeCampaignDirectory(campaign))
                             throw new FormatException("The indexed campaign directory is unavailable.");

@@ -5,6 +5,9 @@ namespace Dice.App
 {
     public static class PlayerProfileFileStore
     {
+        /** The profile's file name within a campaign directory. */
+        public const string FileName = "spirit-profile.json";
+
         public static PlayerProfile LoadOrCreate(string path)
         {
             ValidatePath(path);
@@ -16,20 +19,8 @@ namespace Dice.App
         public static PlayerProfile Load(string path)
         {
             ValidatePath(path);
-            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                if (stream.Length > PlayerProfileCodec.MaximumProfileBytes)
-                    throw new FormatException("The profile exceeds the size limit.");
-                var bytes = new byte[(int)stream.Length];
-                int offset = 0;
-                while (offset < bytes.Length)
-                {
-                    int count = stream.Read(bytes, offset, bytes.Length - offset);
-                    if (count == 0) throw new FormatException("The profile is truncated.");
-                    offset += count;
-                }
-                return PlayerProfileCodec.Deserialize(bytes);
-            }
+            byte[] bytes = SaveFileText.ReadBounded(path, PlayerProfileCodec.MaximumProfileBytes, "The profile");
+            return PlayerProfileCodec.Deserialize(bytes);
         }
 
         public static void Save(string path, PlayerProfile profile)

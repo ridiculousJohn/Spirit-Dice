@@ -17,7 +17,6 @@ namespace Dice.App
     {
         public const int MaximumSaveBytes = 16 * 1024 * 1024;
         private const int MaximumDepth = 64;
-        private static readonly Encoding TextEncoding = new UTF8Encoding(false, true);
         private static readonly JsonSerializerSettings Settings = CreateSettings(MissingMemberHandling.Ignore);
         // A rule state belongs to its rule's save class, so a field that class does not define is rejected.
         private static readonly JsonSerializerSettings RuleStateSettings = CreateSettings(MissingMemberHandling.Error);
@@ -39,9 +38,9 @@ namespace Dice.App
                 writer.Flush();
                 text = output.ToString();
             }
-            if (TextEncoding.GetByteCount(text) > MaximumSaveBytes)
+            if (SaveFileText.Encoding.GetByteCount(text) > MaximumSaveBytes)
                 throw new ArgumentException("The save exceeds the size limit.", nameof(save));
-            return TextEncoding.GetBytes(text);
+            return SaveFileText.Encoding.GetBytes(text);
         }
 
         /** The catalog resolves each rule state's type from the rule that owns it. */
@@ -52,8 +51,7 @@ namespace Dice.App
             if (bytes.Length > MaximumSaveBytes) throw new FormatException("The save exceeds the size limit.");
             try
             {
-                int offset = bytes.Length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf ? 3 : 0;
-                string text = TextEncoding.GetString(bytes, offset, bytes.Length - offset);
+                string text = SaveFileText.Decode(bytes);
                 if (text.IndexOf('\0') >= 0) throw new FormatException("The save contains an unescaped null character.");
                 using (var input = new StringReader(text))
                 using (var reader = new JsonTextReader(input) { MaxDepth = MaximumDepth, DateParseHandling = DateParseHandling.None })

@@ -55,9 +55,12 @@ namespace Dice.App
         {
             var chapter = FindChapter(id);
             return chapter != null && progress.HasProfile && chapter.Entries.Count > 0 && chapter.Entries.All(journey =>
-                journey != null && (journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
-                    progress.CompletedEncounterIds.Contains(journey.EncounterId)));
+                journey != null && IsJourneyCompleted(journey, progress));
         }
+
+        private static bool IsJourneyCompleted(EncounterJourneyAsset journey, Progress progress)
+            => journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
+                progress.CompletedEncounterIds.Contains(journey.EncounterId);
 
         public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
         {
@@ -90,8 +93,8 @@ namespace Dice.App
         {
             var journey = JourneyCatalog?.Find(id);
             if (journey == null || !progress.HasProfile) return false;
-            if (journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
-                progress.CompletedEncounterIds.Contains(journey.EncounterId) || progress.VisitedEncounterIds.Contains(journey.EncounterId)) return true;
+            if (IsJourneyCompleted(journey, progress) ||
+                (!journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.EncounterId))) return true;
             return journey.RequiredCompletedEncounterIds.All(progress.CompletedEncounterIds.Contains) &&
                 journey.RequiredCompletedStoryIds.All(progress.CompletedStoryIds.Contains);
         }

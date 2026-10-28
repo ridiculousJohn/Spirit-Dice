@@ -131,7 +131,7 @@ namespace Dice.App
                 {
                     initialized = campaign.Initialize(catalog, configuration.JourneyCatalog, Path.GetDirectoryName(controller.SavePath));
                 }
-                else initialized = controller.Initialize(catalog, configuration.JourneyCatalog, configuration.EncounterId);
+                else initialized = controller.Initialize(catalog, configuration.EncounterId);
                 if (initialized) presentation.Initialize(configuration.FrontendScene);
                 else SetStartupStatus(controller.Status);
             }

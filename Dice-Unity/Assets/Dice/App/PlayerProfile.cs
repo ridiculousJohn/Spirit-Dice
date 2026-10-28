@@ -40,7 +40,7 @@ namespace Dice.App
             var result = new List<string>(discoveredFamilyIds);
             var known = new HashSet<string>(result, StringComparer.Ordinal);
             foreach (var modifier in catalog.Modifiers)
-                if ((modifier.Availability.Access == ModifierAccess.Starter && modifier.IsPlayable ||
+                if ((modifier.IsDiscoveredFromStart ||
                      modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlockedModifierIds.Contains(modifier.Id)) &&
                     known.Add(modifier.FamilyId)) result.Add(modifier.FamilyId);
             return result.AsReadOnly();
@@ -83,8 +83,8 @@ namespace Dice.App
 
         internal static void ValidateId(string id)
         {
-            if (string.IsNullOrWhiteSpace(id) || id.Length > 256 || id.Trim() != id)
-                throw new FormatException("Profile IDs must be nonempty and at most 256 characters.");
+            if (string.IsNullOrWhiteSpace(id) || id.Length > ProgressionRewardDefinition.MaximumIdLength || id.Trim() != id)
+                throw new FormatException("Profile IDs must be nonempty and at most " + ProgressionRewardDefinition.MaximumIdLength + " characters.");
             foreach (char value in id)
                 if (char.IsControl(value)) throw new FormatException("Profile IDs cannot contain control characters.");
         }

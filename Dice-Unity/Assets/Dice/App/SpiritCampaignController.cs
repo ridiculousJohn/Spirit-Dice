@@ -38,8 +38,7 @@ namespace Dice.App
                 var nextSlots = new CampaignSaveSlots(rootDirectory, mechanicalCatalog);
                 string recoveredIndex = nextSlots.Load();
                 string nextRoot = Path.GetFullPath(rootDirectory);
-                string nextSavePath = nextSlots.GetSavePath(nextSlots.ActiveSlot) ??
-                    Path.Combine(nextRoot, "empty-slot-" + nextSlots.ActiveSlot, "spirit-encounter.json");
+                string nextSavePath = SavePath(nextSlots, nextRoot, nextSlots.ActiveSlot);
                 if (!controller.InitializeMenu(mechanicalCatalog, journeyCatalog, nextSavePath)) return false;
                 catalog = mechanicalCatalog;
                 journeys = journeyCatalog;
@@ -146,8 +145,16 @@ namespace Dice.App
             controller.SetStatus(status);
         }
 
-        private string SelectedSavePath() => slots.GetSavePath(ActiveSaveSlot) ??
-            Path.Combine(RootDirectory, "empty-slot-" + ActiveSaveSlot, "spirit-encounter.json");
+        private string SelectedSavePath() => SavePath(slots, RootDirectory, ActiveSaveSlot);
+
+        /** The slot's run save, or for an empty slot a path in a directory named for the slot. */
+        private static string SavePath(CampaignSaveSlots slots, string root, int slot)
+            => slots.GetSavePath(slot) ?? Path.Combine(root, "empty-slot-" + slot, EncounterSaveFileStore.FileName);
+
+        /** The slot and file failures the main menu reports as a status; lookup and seed failures still throw. */
+        private static bool Expected(Exception exception) => exception is IOException || exception is UnauthorizedAccessException ||
+            exception is SecurityException || exception is FormatException || exception is ArgumentException ||
+            exception is InvalidOperationException || exception is NotSupportedException || exception is OverflowException;
 
         private void RefreshSlots()
         {
@@ -181,8 +188,5 @@ namespace Dice.App
             }
         }
 
-        private static bool Expected(Exception exception) => exception is IOException || exception is UnauthorizedAccessException ||
-            exception is SecurityException || exception is FormatException || exception is ArgumentException ||
-            exception is InvalidOperationException || exception is NotSupportedException || exception is OverflowException;
     }
 }
