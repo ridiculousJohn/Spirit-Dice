@@ -102,7 +102,6 @@ namespace Dice.Tests
             yield return Pair(new LastHandCondition(), C(hands: 1), C(hands: 2));
             yield return Pair(new SelectedFaceUnchangedCondition(), C(before: "12346", selected: 1), C(before: "12346", selected: 16));
             yield return Pair(new SelectedMatchingGroupAtLeastCondition(2), C("22345", selected: 3), C("22345", selected: 1));
-            yield return Pair(new ContainsUpperFaceCondition(2), C(), C("13456"));
             yield return Pair(new RankBelowPreviousCondition(), C("12346", previous: "11234"), C("11234", previous: "12346"));
             yield return Pair(new RankAbovePreviousCondition(), C("11234", previous: "12346"), C("12346", previous: "11234"));
             yield return Pair(new RankEqualsPreviousCondition(), C("11234", previous: "22345"), C("12346", previous: "22345"));

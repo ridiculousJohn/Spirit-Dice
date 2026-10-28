@@ -29,7 +29,7 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 1123138582844539013
-      type: {class: ContainsUpperFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      type: {class: ContainsFaceConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
       data:
         face: 6
     - rid: 1123138582930784330
