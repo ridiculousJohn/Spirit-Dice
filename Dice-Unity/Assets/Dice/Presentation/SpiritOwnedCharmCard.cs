@@ -13,7 +13,7 @@ namespace Dice.Presentation
         [field: SerializeField] public Image Icon { get; private set; }
         [field: SerializeField] public SpiritModifierCategoryBadge Category { get; private set; }
         [field: SerializeField] public SpiritCharmStatusBadge Badge { get; private set; }
-        [field: SerializeField] public SpiritCharmSelectionGraphic SelectionOutline { get; private set; }
+        [field: SerializeField] public Image SelectionOutline { get; private set; }
         [field: SerializeField] public Color NormalColor { get; private set; } = Color.white;
         [field: SerializeField] public Color SelectedColor { get; private set; } = new Color32(255, 232, 179, 255);
         public long InstanceId { get; set; }

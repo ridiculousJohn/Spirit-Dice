@@ -1,6 +1,7 @@
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,6 +31,7 @@ namespace Dice.Tests
         private Text handTitle;
         private Text handLevel;
         private Image marker;
+        private Image handPattern;
 
         [SetUp]
         public void SetUp()
@@ -59,7 +61,9 @@ namespace Dice.Tests
             SyntheticUi.Set(card, "charmIcon", ui.Add<Image>(modifierRoot.transform, "Charm Icon"));
             SyntheticUi.Set(card, "charmCategory", ui.CategoryBadge(modifierRoot.transform));
             SyntheticUi.Set(card, "handValues", ui.Add<Text>(handRoot.transform, "Hand Values"));
-            SyntheticUi.Set(card, "handPattern", ui.Add<SpiritHandPatternGraphic>(handRoot.transform, "Hand Pattern"));
+            handPattern = ui.Add<Image>(handRoot.transform, "Hand Pattern");
+            SyntheticUi.Set(card, "handPattern", handPattern);
+            SetHandPatterns(HandCategory.HighDie, HandCategory.Pair);
             SyntheticUi.Set(card, "modifierColor", ModifierColor);
             SyntheticUi.Set(card, "modifierSelectedColor", ModifierSelectedColor);
             SyntheticUi.Set(card, "handColor", HandColor);
@@ -123,6 +127,39 @@ namespace Dice.Tests
             Assert.That(modifierBackground.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(handBackground.type, Is.EqualTo(Image.Type.Tiled));
             Assert.That(card.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(objects));
+        }
+
+        /** Checks a hand upgrade shows the pattern sprite authored for its hand's category and rendering a category without one fails / fails if another category's sprite shows or a missing pattern passes silently. */
+        [Test]
+        public void HandUpgradeShowsItsCategorysAuthoredPattern()
+        {
+            var patterns = SetHandPatterns(HandCategory.Pair, HandCategory.HighDie);
+
+            card.RenderHandUpgrade(Hand(HandCategory.HighDie), 0, 3, 4);
+            Assert.That(handPattern.sprite, Is.SameAs(patterns[1]));
+            card.RenderHandUpgrade(Hand(HandCategory.Pair), 0, 3, 4);
+            Assert.That(handPattern.sprite, Is.SameAs(patterns[0]));
+            Assert.Throws<System.InvalidOperationException>(() => card.RenderHandUpgrade(Hand(HandCategory.Straight), 0, 3, 4));
+        }
+
+        private static HandDefinition Hand(HandCategory category) => System.Array.Find(TestContent.Hands(), hand => hand.Category == category);
+
+        private Sprite[] SetHandPatterns(params HandCategory[] categories)
+        {
+            var sprites = new Sprite[categories.Length];
+            using var serialized = new SerializedObject(card);
+            var entries = serialized.FindProperty("handPatternSprites");
+            entries.arraySize = categories.Length;
+            for (int index = 0; index < categories.Length; ++index)
+            {
+                var texture = ui.Own(new Texture2D(2, 2));
+                sprites[index] = ui.Own(Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * .5f));
+                var entry = entries.GetArrayElementAtIndex(index);
+                entry.FindPropertyRelative("Category").enumValueIndex = (int)categories[index];
+                entry.FindPropertyRelative("Sprite").objectReferenceValue = sprites[index];
+            }
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return sprites;
         }
 
         private void AssertModifierStyle(bool selected)

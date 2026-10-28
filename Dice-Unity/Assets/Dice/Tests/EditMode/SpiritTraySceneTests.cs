@@ -558,7 +558,7 @@ namespace Dice.Tests
                 "HandScoreLabel", "TargetLabel" })
                 Label(property);
             TestTrayRig.Set(hud, "<CategoryLabel>k__BackingField", Ui<Text>("CategoryLabel"));
-            TestTrayRig.Set(hud, "<ModifierEmblem>k__BackingField", Ui<SpiritUiOrnament>("ModifierEmblem"));
+            TestTrayRig.Set(hud, "<ModifierEmblem>k__BackingField", Ui<Image>("ModifierEmblem"));
             TestTrayRig.Set(hud, "<RerollButton>k__BackingField", Ui<Button>("RerollButton"));
             TestTrayRig.Set(hud, "<PlayButton>k__BackingField", Ui<Button>("PlayButton"));
             var badge = Ui<SpiritModifierCategoryBadge>("ModifierActivationCategory");

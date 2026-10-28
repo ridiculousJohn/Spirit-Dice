@@ -189,11 +189,10 @@ def author():
     ]
     host = A.write_asset(FOLDER / 'MerchantHost.asset', A.HOST_SCRIPT, dict(
         PortraitPrefab=A.ref(A.guid(FOLDER / 'MerchantHost.prefab'), 1002, 3),
-        SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/MerchantHostSigil.prefab'), 6469703378660953074, 3),
+        SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/MerchantHostSigil.prefab'), 6413734319605021447, 3),
         SilhouetteShader=A.ref(None), SmokeShader=A.ref(None),
         LitLayerShader=A.ref(A.guid(A.ASSETS / 'Presentation/Shared/SceneLitImage.shader'), 4800000, 3),
-        ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=layers, Sequences=sequences,
-        SigilLines=[], SigilWidth=.035))
+        ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=layers, Sequences=sequences))
     print('Host GUID: ' + host)
     print('MerchantBreathMesh GUID: ' + mesh)
 

@@ -68,7 +68,7 @@ namespace Dice.Presentation
     public sealed class SpiritHostPresentationAsset : ScriptableObject
     {
         public SpiritHostPortrait PortraitPrefab;
-        public Graphic SigilPrefab;
+        public Image SigilPrefab;
         public Shader SilhouetteShader;
         public Shader SmokeShader;
         [Tooltip("Lit-layer shader for lit layers whose authored material does not already use one.")]
@@ -89,10 +89,10 @@ namespace Dice.Presentation
             return portrait;
         }
 
-        public Graphic CreateSigil(string name, RectTransform parent)
+        public Image CreateSigil(string name, RectTransform parent)
         {
             if (SigilPrefab == null) throw new InvalidOperationException("The host requires an authored sigil prefab.");
-            Graphic sigil = Instantiate(SigilPrefab, parent, false);
+            Image sigil = Instantiate(SigilPrefab, parent, false);
             sigil.name = name;
             return sigil;
         }

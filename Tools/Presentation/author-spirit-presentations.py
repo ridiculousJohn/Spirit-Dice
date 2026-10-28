@@ -86,8 +86,7 @@ def write_asset(path, script, data):
                m_Name=path.stem, m_EditorClassIdentifier='')
     if script == HOST_SCRIPT:
         obj.update(SilhouetteShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSilhouette.shader'), 4800000, 3),
-                   SmokeShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSmoke.shader'), 4800000, 3),
-                   SigilColor=Flow(r=210 / 255, g=166 / 255, b=88 / 255, a=1))
+                   SmokeShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSmoke.shader'), 4800000, 3))
     obj.update(data)
     destination.write_text('%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n--- !u!114 &11400000\n' +
                     '\n'.join(yaml({'MonoBehaviour': obj})) + '\n', encoding='utf-8')
@@ -264,16 +263,12 @@ def author_lantern():
             if i != 2:
                 track(seq, i, 5, lambda t: 0, entry=lambda t: 1 - ease(t, 0, duration * .3))
         return seq
-    sigil = [(-.42, .42), (-.33, -.05), (-.42, .42), (-.12, .21), (-.12, .21), (.12, .21),
-             (.12, .21), (.42, .42), (.42, .42), (.33, -.05), (-.33, -.05), (0, -.42),
-             (.33, -.05), (0, -.42), (-.28, .04), (-.08, -.04), (.28, .04), (.08, -.04), (-.05, -.24), (.05, -.24)]
     write_asset(folder / 'LanternKeeperHost.asset', HOST_SCRIPT,
                 dict(ReferenceSize=v2(540, 960), Scale=1.16, Offset=v2(270 - 270 * 1.16, 595.2 - 624 * 1.16),
                      Layers=layers, Sequences=[breath, accent, sweep, reaction(2, 2), reaction(3, 1.8),
                                               outcome('Victory', 4, 1.4, -2.2, 4, .5),
                                               outcome('Defeat', 5, 1.2, 3.5, 1.2, -1),
-                                              outcome('Farewell', 6, .5, -1, 1, .2)],
-                     SigilLines=[v2(*v) for v in sigil], SigilWidth=.035))
+                                              outcome('Farewell', 6, .5, -1, 1, .2)]))
 
 
 def author_watchtower():
@@ -422,7 +417,7 @@ def author_watchtower():
                      Sequences=[breath, feather, glance, waiting, arrival, reaction,
                                 outcome('Victory', 4, 1.5, 6, .06, .18),
                                 outcome('Defeat', 5, 1.2, -3.5, 0, .10),
-                                outcome('Farewell', 6, .5, 1.2, .18, .06)], SigilLines=[], SigilWidth=.035))
+                                outcome('Farewell', 6, .5, 1.2, .18, .06)]))
 
 
 if __name__ == '__main__':

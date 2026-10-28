@@ -76,3 +76,9 @@ MonoBehaviour:
   highlightedTint: {r: 1.1, g: 1.08, b: 1.01, a: 1}
   pressedTint: {r: 0.76, g: 0.71, b: 0.58, a: 1}
   disabledTint: {r: 0.46, g: 0.47, b: 0.43, a: 0.88}
+  readyStatusSymbol: {fileID: 21300000, guid: 770a597074fc2e442ac6cd8f0a36ad7c, type: 3}
+  waitingConditionStatusSymbol: {fileID: 21300000, guid: 67022a876437ab847a17cb2dbe9262ec, type: 3}
+  usedStatusSymbol: {fileID: 21300000, guid: 93eb4f08c6635dc4a9074c8e47239816, type: 3}
+  onRollStatusSymbol: {fileID: 21300000, guid: c2dfaa04834c3fe4f83dd433ef1b4ac9, type: 3}
+  inactiveStatusSymbol: {fileID: 21300000, guid: 15640381bc32cab449cd835a5fc88ff8, type: 3}
+  keptStatusSymbol: {fileID: 21300000, guid: 3a4ffa03fa9544247958291fa61a73da, type: 3}

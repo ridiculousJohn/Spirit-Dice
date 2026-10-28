@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: WatchtowerHost
   m_EditorClassIdentifier: 
   PortraitPrefab: {fileID: 7204224459231257209, guid: 767f2eaaa6b5aed43825ad0e82ed6521, type: 3}
-  SigilPrefab: {fileID: 8985313652744523988, guid: 285b52e244f9c54488d5c5ee1d96bc44, type: 3}
+  SigilPrefab: {fileID: 718444232527304807, guid: 285b52e244f9c54488d5c5ee1d96bc44, type: 3}
   SilhouetteShader: {fileID: 4800000, guid: 762be0bdbd5d4dbf83e93d96e8ea783c, type: 3}
   SmokeShader: {fileID: 4800000, guid: 080d110560e4644488071e7a87d73820, type: 3}
+  LitLayerShader: {fileID: 0}
   ReferenceSize: {x: 540, y: 960}
   Scale: 1
   Offset: {x: 0, y: 0}
@@ -41,6 +42,21 @@ MonoBehaviour:
     - 1
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Spirit Arrival
     Texture: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401004, type: 3}
     Mesh: {fileID: 11400000, guid: ba4c0d35b5d255e9ba1de23815ea3479, type: 2}
@@ -62,6 +78,21 @@ MonoBehaviour:
     - 1
     - 1
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Spirit Settle
     Texture: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401005, type: 3}
     Mesh: {fileID: 11400000, guid: 878853b3e5ca585cb46b71d3a2004242, type: 2}
@@ -83,6 +114,21 @@ MonoBehaviour:
     - 1
     - 1
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Physical Rest
     Texture: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401003, type: 3}
     Mesh: {fileID: 11400000, guid: a082e4d911be5cf0aba1825f75c8a6c5, type: 2}
@@ -104,6 +150,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Physical Arrival
     Texture: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401004, type: 3}
     Mesh: {fileID: 11400000, guid: f717228b08465f20b4200d7d129d5863, type: 2}
@@ -125,6 +186,21 @@ MonoBehaviour:
     - 0
     - 1
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Physical Settle
     Texture: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401005, type: 3}
     Mesh: {fileID: 11400000, guid: 665bab7590dd55e6a5a1d2a91a112064, type: 2}
@@ -146,6 +222,21 @@ MonoBehaviour:
     - 0
     - 1
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   Sequences:
   - Id: Breathing
     State: 0

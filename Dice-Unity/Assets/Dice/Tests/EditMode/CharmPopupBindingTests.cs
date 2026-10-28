@@ -16,6 +16,7 @@ namespace Dice.Tests
         private EncounterSnapshot snapshot;
         private readonly SyntheticCharms synthetic = new SyntheticCharms();
         private ModifierPresentationCatalog charms;
+        private SpiritUiTheme theme;
 
         [SetUp]
         public void SetUp()
@@ -26,7 +27,14 @@ namespace Dice.Tests
             var panel = ui.Rect(popup.transform, "Panel");
             var statusRow = ui.Rect(panel, "Status Row");
             var badge = ui.Add<SpiritCharmStatusBadge>(statusRow, "Status Badge");
-            SyntheticUi.Set(badge, "<Icon>k__BackingField", ui.Add<SpiritCharmStatusGraphic>(badge.transform, "Icon"));
+            SyntheticUi.Set(badge, "<Icon>k__BackingField", ui.Add<Image>(badge.transform, "Icon"));
+            theme = ui.Root.GetComponent<SpiritUiContext>().Theme;
+            theme.readyStatusSymbol = Symbol();
+            theme.waitingConditionStatusSymbol = Symbol();
+            theme.usedStatusSymbol = Symbol();
+            theme.onRollStatusSymbol = Symbol();
+            theme.inactiveStatusSymbol = Symbol();
+            theme.keptStatusSymbol = Symbol();
             SyntheticUi.Set(popup, "dismissButton", backdrop);
             SyntheticUi.Set(popup, "statusRow", statusRow);
             SyntheticUi.Set(popup, "<Panel>k__BackingField", panel);
@@ -90,11 +98,29 @@ namespace Dice.Tests
             Assert.That(popup.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(objects));
         }
 
-        private void Show()
+        /** Checks the badge shows the theme's symbol for the charm's status and fails when the theme lacks it / fails if another state's symbol shows or a missing symbol passes silently. */
+        [Test]
+        public void BadgeShowsTheThemesSymbolForTheStatus()
+        {
+            Show();
+            Assert.That(popup.Badge.Presentation.State, Is.EqualTo(SpiritCharmStatusState.Kept));
+            Assert.That(popup.Badge.Icon.sprite, Is.SameAs(theme.keptStatusSymbol));
+            Show(EncounterPhase.AwaitingRewards);
+            Assert.That(popup.Badge.Presentation.State, Is.EqualTo(SpiritCharmStatusState.Inactive));
+            Assert.That(popup.Badge.Icon.sprite, Is.SameAs(theme.inactiveStatusSymbol));
+
+            theme.keptStatusSymbol = null;
+            Assert.Throws<System.InvalidOperationException>(() => Show());
+        }
+
+        private Sprite Symbol() => ui.Own(Sprite.Create(ui.Own(new Texture2D(2, 2)), new Rect(0, 0, 2, 2), Vector2.one * .5f));
+
+        private void Show() => Show(snapshot.Phase);
+
+        private void Show(EncounterPhase phase)
         {
             var instance = snapshot.Modifiers[0];
-            popup.Show(instance.InstanceId, charms, charm, SpiritCharmStatusPresentation.Create(instance, charm, snapshot.Phase, null),
-                snapshot.Phase);
+            popup.Show(instance.InstanceId, charms, charm, SpiritCharmStatusPresentation.Create(instance, charm, phase, null), phase);
         }
     }
 }

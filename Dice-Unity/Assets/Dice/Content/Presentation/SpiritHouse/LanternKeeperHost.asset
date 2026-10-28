@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: LanternKeeperHost
   m_EditorClassIdentifier: 
   PortraitPrefab: {fileID: 5097274516130487048, guid: 5c81e6157ada86244b4adb9048714204, type: 3}
-  SigilPrefab: {fileID: 6612443150776600360, guid: ea4447ccf2742c04fa05ace0860b3034, type: 3}
+  SigilPrefab: {fileID: 1343975770879351165, guid: ea4447ccf2742c04fa05ace0860b3034, type: 3}
   SilhouetteShader: {fileID: 4800000, guid: 762be0bdbd5d4dbf83e93d96e8ea783c, type: 3}
   SmokeShader: {fileID: 4800000, guid: 080d110560e4644488071e7a87d73820, type: 3}
+  LitLayerShader: {fileID: 0}
   ReferenceSize: {x: 540, y: 960}
   Scale: 1.16
   Offset: {x: -43.2, y: -128.64}
@@ -35,6 +36,21 @@ MonoBehaviour:
     Weights:
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Cyan Tail
     Texture: {fileID: 2800000, guid: 08217cb586464a53a1dbb7a0f2e858a6, type: 3}
     Mesh: {fileID: 11400000, guid: e5da7460fa0d5c40a3104af0f2fa4e72, type: 2}
@@ -50,6 +66,21 @@ MonoBehaviour:
     Weights:
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Body
     Texture: {fileID: 2800000, guid: 08217cb586464a53a1dbb7a0f2e858a6, type: 3}
     Mesh: {fileID: 11400000, guid: 0706dedb007654888824f7af6f6d8d98, type: 2}
@@ -65,6 +96,21 @@ MonoBehaviour:
     Weights:
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Gold Front
     Texture: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -79,6 +125,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Gold Turn
     Texture: {fileID: 2800000, guid: 283d515401fbea140b4b8fa1802d4b07, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -93,6 +154,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Cyan Front
     Texture: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -107,6 +183,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Cyan Turn
     Texture: {fileID: 2800000, guid: 283d515401fbea140b4b8fa1802d4b07, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -121,6 +212,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Physical Front
     Texture: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -135,6 +241,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Physical Turn
     Texture: {fileID: 2800000, guid: 283d515401fbea140b4b8fa1802d4b07, type: 3}
     Mesh: {fileID: 11400000, guid: c56a45f1dbaf5ea1bfb346f8f92a1e61, type: 2}
@@ -149,6 +270,21 @@ MonoBehaviour:
       Enabled: 0
     Weights:
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   Sequences:
   - Id: Breathing
     State: 0

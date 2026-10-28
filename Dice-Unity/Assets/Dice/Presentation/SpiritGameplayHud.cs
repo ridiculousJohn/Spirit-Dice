@@ -75,7 +75,7 @@ namespace Dice.Presentation
         [field: SerializeField] public Text ResourcesLabel { get; private set; }
         [field: SerializeField] public RectTransform PlayingPanel { get; private set; }
         [field: SerializeField] public Text SelectionLabel { get; private set; }
-        [field: SerializeField] public SpiritUiOrnament ModifierEmblem { get; private set; }
+        [field: SerializeField] public Image ModifierEmblem { get; private set; }
         [field: SerializeField] public Image ModifierActivationIcon { get; private set; }
         [field: SerializeField] public Text CategoryLabel { get; private set; }
         [field: SerializeField] public Text ScoreDetail { get; private set; }

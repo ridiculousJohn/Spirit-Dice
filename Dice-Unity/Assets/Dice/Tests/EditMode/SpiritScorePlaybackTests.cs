@@ -125,7 +125,7 @@ namespace Dice.Tests
             foreach (string label in new[] { "SelectionLabel", "CategoryLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
                 "HandScoreLabel", "TargetLabel", "TargetCaption", "HandsLabel", "RerollsLabel", "ResourcesLabel" })
                 SyntheticUi.Set(created, "<" + label + ">k__BackingField", ui.Add<Text>(parent, label));
-            SyntheticUi.Set(created, "<ModifierEmblem>k__BackingField", ui.Add<SpiritUiOrnament>(parent, "Emblem"));
+            SyntheticUi.Set(created, "<ModifierEmblem>k__BackingField", ui.Add<Image>(parent, "Emblem"));
             SyntheticUi.Set(created, "<ModifierActivationIcon>k__BackingField", ui.Add<Image>(parent, "Activation Icon"));
             foreach (string highlight in new[] { "BaseScoreHighlight", "MultiplierHighlight", "RerollsHighlight", "HandsHighlight" })
             {

@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: MothCrossroadsHost
   m_EditorClassIdentifier: 
   PortraitPrefab: {fileID: 7961940214328609397, guid: 2fe626c4e3305c843b5155b0cc4dd75b, type: 3}
-  SigilPrefab: {fileID: 6469703378660953074, guid: 3eb629f6ba52fe7408de21dd53f57bab, type: 3}
+  SigilPrefab: {fileID: 8306177322552289342, guid: 3eb629f6ba52fe7408de21dd53f57bab, type: 3}
   SilhouetteShader: {fileID: 4800000, guid: 762be0bdbd5d4dbf83e93d96e8ea783c, type: 3}
   SmokeShader: {fileID: 4800000, guid: 080d110560e4644488071e7a87d73820, type: 3}
+  LitLayerShader: {fileID: 0}
   ReferenceSize: {x: 540, y: 960}
   Scale: 1
   Offset: {x: 0, y: 0}
@@ -36,6 +37,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Lantern moth 2
     Texture: {fileID: 2800000, guid: daf0c4a4a4b1563a905139202120efc6, type: 3}
     Mesh: {fileID: 11400000, guid: 7c20591ac4495f4aa8844ba19e031672, type: 2}
@@ -52,6 +68,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Lantern moth 3
     Texture: {fileID: 2800000, guid: daf0c4a4a4b1563a905139202120efc6, type: 3}
     Mesh: {fileID: 11400000, guid: 7c20591ac4495f4aa8844ba19e031672, type: 2}
@@ -68,6 +99,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Spectral arrival
     Texture: {fileID: 2800000, guid: daf0c4a4a4b1563a905139202120efc6, type: 3}
     Mesh: {fileID: 11400000, guid: 7c20591ac4495f4aa8844ba19e031672, type: 2}
@@ -84,6 +130,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Body
     Texture: {fileID: 2800000, guid: daf0c4a4a4b1563a905139202120efc6, type: 3}
     Mesh: {fileID: 11400000, guid: 7c20591ac4495f4aa8844ba19e031672, type: 2}
@@ -100,6 +161,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   - Id: Wing smoke
     Texture: {fileID: 2800000, guid: 8cbc4810f62f5d119e2527906db19765, type: 3}
     Mesh: {fileID: 11400000, guid: 7c20591ac4495f4aa8844ba19e031672, type: 2}
@@ -116,6 +192,21 @@ MonoBehaviour:
     - 0
     - 0
     - 0
+    Lighting:
+      BaseTexture: {fileID: 0}
+      Lights: []
+      Depth: {fileID: 0}
+      DepthRange: {x: 0, y: -1}
+      FrameOrigin: {x: 0, y: 0, z: 0}
+      FrameAxisX: {x: 1, y: 0, z: 0}
+      FrameAxisY: {x: 0, y: 1, z: 0}
+      MapRect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1
+        height: 1
+      Wrap: 1
   Sequences:
   - Id: Resting wings
     State: 0

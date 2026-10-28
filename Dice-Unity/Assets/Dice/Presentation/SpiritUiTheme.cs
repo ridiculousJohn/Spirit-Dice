@@ -36,6 +36,12 @@ namespace Dice.Presentation
         public Color highlightedTint = new Color(1.10f, 1.08f, 1.01f, 1);
         public Color pressedTint = new Color(.76f, .71f, .58f, 1);
         public Color disabledTint = new Color(.46f, .47f, .43f, .88f);
+        public Sprite readyStatusSymbol;
+        public Sprite waitingConditionStatusSymbol;
+        public Sprite usedStatusSymbol;
+        public Sprite onRollStatusSymbol;
+        public Sprite inactiveStatusSymbol;
+        public Sprite keptStatusSymbol;
 
         public Color GetModifierTriggerColor(Dice.Engine.ModifierPhase phase)
         {
@@ -46,6 +52,23 @@ namespace Dice.Presentation
                 case Dice.Engine.ModifierPhase.InitialRoll: return initialRollTrigger;
                 default: return amber;
             }
+        }
+
+        public Sprite GetCharmStatusSymbol(SpiritCharmStatusState state)
+        {
+            Sprite symbol;
+            switch (state)
+            {
+                case SpiritCharmStatusState.Ready: symbol = readyStatusSymbol; break;
+                case SpiritCharmStatusState.WaitingCondition: symbol = waitingConditionStatusSymbol; break;
+                case SpiritCharmStatusState.Used: symbol = usedStatusSymbol; break;
+                case SpiritCharmStatusState.OnRoll: symbol = onRollStatusSymbol; break;
+                case SpiritCharmStatusState.Inactive: symbol = inactiveStatusSymbol; break;
+                case SpiritCharmStatusState.Kept: symbol = keptStatusSymbol; break;
+                default: throw new ArgumentOutOfRangeException(nameof(state));
+            }
+            if (symbol == null) throw new InvalidOperationException("The UI theme has no charm status symbol for " + state + ".");
+            return symbol;
         }
 
     }

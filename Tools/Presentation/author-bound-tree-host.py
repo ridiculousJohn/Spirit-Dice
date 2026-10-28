@@ -348,11 +348,10 @@ def author():
     layer['Lighting'] = lighting()
     host = A.write_asset(FOLDER / 'BoundTreeHost.asset', A.HOST_SCRIPT, dict(
         PortraitPrefab=portrait_reference(),
-        SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/BoundTreeHostSigil.prefab'), 6469703378660953074, 3),
+        SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/BoundTreeHostSigil.prefab'), 9079639759384952736, 3),
         SilhouetteShader=A.ref(None), SmokeShader=A.ref(None),
         LitLayerShader=A.ref(A.guid(A.ASSETS / 'Presentation/Shared/SceneLitImage.shader'), 4800000, 3),
-        ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=[layer], Sequences=sequences(),
-        SigilLines=[], SigilWidth=.035))
+        ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=[layer], Sequences=sequences()))
 
     brow, mouth = vertex_offsets(brow_pixels), vertex_offsets(mouth_pixels)
     both = [(a[0] + b[0], a[1] + b[1]) for a, b in zip(brow, mouth)]

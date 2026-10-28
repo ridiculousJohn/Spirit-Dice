@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9075183808123002661}
   - component: {fileID: 9002912500143417845}
-  - component: {fileID: 6612443150776600360}
+  - component: {fileID: 1343975770879351165}
   m_Layer: 0
   m_Name: LanternKeeperHostSigil
   m_TagString: Untagged
@@ -45,7 +45,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2001483411364449582}
   m_CullTransparentMesh: 1
---- !u!114 &6612443150776600360
+--- !u!114 &1343975770879351165
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -54,9 +54,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2001483411364449582}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2f770599b63468eb1ac3eaa65c7b791, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritHostSigilGraphic
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.8235294, g: 0.6509804, b: 0.345098, a: 1}
   m_RaycastTarget: 0
@@ -65,25 +65,13 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  lines:
-  - {x: -0.42, y: 0.42}
-  - {x: -0.33, y: -0.05}
-  - {x: -0.42, y: 0.42}
-  - {x: -0.12, y: 0.21}
-  - {x: -0.12, y: 0.21}
-  - {x: 0.12, y: 0.21}
-  - {x: 0.12, y: 0.21}
-  - {x: 0.42, y: 0.42}
-  - {x: 0.42, y: 0.42}
-  - {x: 0.33, y: -0.05}
-  - {x: -0.33, y: -0.05}
-  - {x: 0, y: -0.42}
-  - {x: 0.33, y: -0.05}
-  - {x: 0, y: -0.42}
-  - {x: -0.28, y: 0.04}
-  - {x: -0.08, y: -0.04}
-  - {x: 0.28, y: 0.04}
-  - {x: 0.08, y: -0.04}
-  - {x: -0.05, y: -0.24}
-  - {x: 0.05, y: -0.24}
-  width: 0.035
+  m_Sprite: {fileID: 21300000, guid: 6bbac5bb26d892a4b83b957a971692f2, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1

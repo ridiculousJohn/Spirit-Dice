@@ -9,6 +9,13 @@ namespace Dice.Presentation
     /** Binds one offer option to authored modifier and hand upgrade presentations. */
     public sealed class SpiritRewardCard : MonoBehaviour
     {
+        [Serializable]
+        private sealed class HandPatternSprite
+        {
+            public HandCategory Category;
+            public Sprite Sprite;
+        }
+
         [SerializeField] private GameObject modifierRoot;
         [SerializeField] private GameObject handRoot;
         [SerializeField] private Text title;
@@ -19,7 +26,8 @@ namespace Dice.Presentation
         [SerializeField] private Text handTitle;
         [SerializeField] private Text handLevelText;
         [SerializeField] private Text handValues;
-        [SerializeField] private SpiritHandPatternGraphic handPattern;
+        [SerializeField] private Image handPattern;
+        [SerializeField] private HandPatternSprite[] handPatternSprites = Array.Empty<HandPatternSprite>();
         [SerializeField] private Graphic selectionMarker;
         [SerializeField] private Image modifierBackground;
         [SerializeField] private Image handBackground;
@@ -98,6 +106,7 @@ namespace Dice.Presentation
         {
             if (hand == null) throw new ArgumentNullException(nameof(hand));
             if (level < 0) throw new ArgumentOutOfRangeException(nameof(level));
+            Sprite pattern = GetHandPatternSprite(hand.Category);
             this.offerId = offerId;
             this.optionId = optionId;
             handUpgradeMode = true;
@@ -112,8 +121,15 @@ namespace Dice.Presentation
             modifierRoot.SetActive(false);
             handRoot.SetActive(true);
             handTitle.text = DiagnosticText.Humanize(hand.Category.ToString());
-            handPattern.Category = hand.Category;
+            handPattern.sprite = pattern;
             SetHandUpgradeSelected(false);
+        }
+
+        private Sprite GetHandPatternSprite(HandCategory category)
+        {
+            foreach (var pattern in handPatternSprites)
+                if (pattern != null && pattern.Category == category && pattern.Sprite != null) return pattern.Sprite;
+            throw new InvalidOperationException("The reward card has no hand pattern sprite for " + category + ".");
         }
 
         public void SetHandUpgradeSelected(bool selected)

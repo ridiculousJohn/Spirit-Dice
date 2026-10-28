@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
@@ -7,14 +8,15 @@ namespace Dice.Presentation
     {
         [SerializeField] private Color readyColor = new Color32(167, 204, 158, 255);
         public SpiritCharmStatusPresentation Presentation { get; private set; }
-        [field: SerializeField] public SpiritCharmStatusGraphic Icon { get; private set; }
+        [field: SerializeField] public Image Icon { get; private set; }
         public void Render(SpiritCharmStatusPresentation presentation)
         {
             Presentation = presentation;
-            Icon.State = presentation.State;
+            var theme = SpiritUi.GetTheme(transform);
+            Icon.sprite = theme.GetCharmStatusSymbol(presentation.State);
             Color tint = presentation.State == SpiritCharmStatusState.Ready ? readyColor :
                 presentation.State == SpiritCharmStatusState.WaitingCondition || presentation.State == SpiritCharmStatusState.OnRoll ?
-                    SpiritUi.GetTheme(transform).amber : SpiritUi.GetTheme(transform).muted;
+                    theme.amber : theme.muted;
             Icon.color = tint;
         }
     }

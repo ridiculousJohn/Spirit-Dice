@@ -616,7 +616,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3951470143995805714}
   - component: {fileID: 8902627875762187733}
-  - component: {fileID: 221198705431852396}
+  - component: {fileID: 3766129719460338556}
   m_Layer: 0
   m_Name: StatusIcon
   m_TagString: Untagged
@@ -651,7 +651,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1728727742593103010}
   m_CullTransparentMesh: 1
---- !u!114 &221198705431852396
+--- !u!114 &3766129719460338556
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -660,9 +660,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1728727742593103010}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20e44b951e44406ca5129d1e4979e577, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmStatusGraphic
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -671,6 +671,16 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 770a597074fc2e442ac6cd8f0a36ad7c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &3443442308565243436
 GameObject:
   m_ObjectHideFlags: 0
@@ -1769,7 +1779,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmStatusBadge
   readyColor: {r: 0.654902, g: 0.8, b: 0.61960787, a: 1}
-  <Icon>k__BackingField: {fileID: 221198705431852396}
+  <Icon>k__BackingField: {fileID: 3766129719460338556}
 --- !u!1 &8689735710771142699
 GameObject:
   m_ObjectHideFlags: 0

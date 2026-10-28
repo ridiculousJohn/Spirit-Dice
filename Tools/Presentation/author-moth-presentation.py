@@ -227,7 +227,7 @@ def author(foot, width):
                         dict(ReferenceSize=A.v2(540, 960), Scale=1, Offset=A.v2(0, 0), Layers=layers,
                              Sequences=[idle, waiting, arrival, reaction,
                                         outcome('Victory', 4, 1.6), outcome('Defeat', 5, 1.2),
-                                        outcome('Farewell', 6, .5)], SigilLines=[], SigilWidth=.035))
+                                        outcome('Farewell', 6, .5)]))
     print('Host GUID: ' + host)
     print('MothHost.png GUID: ' + texture)
     print('MothWingSmoke.png GUID: ' + smoke)

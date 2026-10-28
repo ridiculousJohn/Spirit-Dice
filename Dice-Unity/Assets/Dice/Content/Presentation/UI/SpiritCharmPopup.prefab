@@ -277,6 +277,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 0
   m_VerticalFit: 2
+--- !u!114 &918446532770134220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1931934832854950818}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15b8ecb83fb14f009c448ef086f1d2d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmPopupLayout
+  widthReference: {fileID: 950578738563097395}
+  widthFraction: 0.84
 --- !u!1 &2172999290703549127
 GameObject:
   m_ObjectHideFlags: 0
@@ -567,7 +581,7 @@ GameObject:
   m_Component:
   - component: {fileID: 396026212578549640}
   - component: {fileID: 3110400553660869590}
-  - component: {fileID: 2059177129677923893}
+  - component: {fileID: 5117130678154672145}
   m_Layer: 0
   m_Name: StatusIcon
   m_TagString: Untagged
@@ -602,7 +616,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3089305578576613278}
   m_CullTransparentMesh: 1
---- !u!114 &2059177129677923893
+--- !u!114 &5117130678154672145
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -611,9 +625,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 3089305578576613278}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 20e44b951e44406ca5129d1e4979e577, type: 3}
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmStatusGraphic
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
@@ -622,6 +636,16 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 770a597074fc2e442ac6cd8f0a36ad7c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &4318186241385198105
 GameObject:
   m_ObjectHideFlags: 0
@@ -1136,7 +1160,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmStatusBadge
   readyColor: {r: 0.654902, g: 0.8, b: 0.61960787, a: 1}
-  <Icon>k__BackingField: {fileID: 2059177129677923893}
+  <Icon>k__BackingField: {fileID: 5117130678154672145}
 --- !u!1 &8235694978944407375
 GameObject:
   m_ObjectHideFlags: 0
@@ -1446,17 +1470,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d1a966081f4415c9997b0426c5c1bb8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiButtonVisual
---- !u!114 &918446532770134220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1931934832854950818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15b8ecb83fb14f009c448ef086f1d2d9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritCharmPopupLayout
-  widthReference: {fileID: 950578738563097395}
-  widthFraction: 0.84
