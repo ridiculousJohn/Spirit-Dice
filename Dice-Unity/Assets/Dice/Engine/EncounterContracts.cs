@@ -204,6 +204,9 @@ namespace Dice.Engine
         /** What happened, in the event's own words. */
         protected abstract string DescribeDetail(IDiagnosticFormat format);
 
+        /** Whether the event ends the player's current dice selection: the dice it was made on are no longer in play. */
+        public virtual bool EndsDiceSelection => false;
+
         private protected static string DescribeDice(DiceValues dice)
             => dice[0] + "  " + dice[1] + "  " + dice[2] + "  " + dice[3] + "  " + dice[4];
 
@@ -274,6 +277,8 @@ namespace Dice.Engine
             SelectedMask = selectedMask;
             ChangedMask = changedMask;
         }
+
+        public override bool EndsDiceSelection => true;
 
         protected override string DescribeDetail(IDiagnosticFormat format)
             => format.Humanize(Kind.ToString()) + ": [" + DescribeDice(After) + "]. Rerolled mask " + SelectedMask +

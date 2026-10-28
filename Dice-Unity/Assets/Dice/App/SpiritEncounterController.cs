@@ -503,7 +503,7 @@ namespace Dice.App
             RecordProgression(Snapshot, true, unlockSave);
             foreach (var ruleEvent in resolution.Events)
             {
-                if (ruleEvent is DiceRolledEvent || ruleEvent is HandScoredEvent) SelectedMask = 0;
+                if (ruleEvent.EndsDiceSelection) SelectedMask = 0;
             }
             CachePreview();
             StatusMessage = WithCacheStatus("Accepted action at revision " + Snapshot.Revision.ToString(CultureInfo.InvariantCulture));

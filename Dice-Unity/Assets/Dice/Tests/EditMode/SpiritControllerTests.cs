@@ -95,6 +95,20 @@ namespace Dice.Tests
             Assert.That(controller.SelectedMask, Is.EqualTo(1 << (bay + 1) % DiceValues.Count));
         }
 
+        /** Checks an accepted resolution clears the dice selection exactly when one of its events states it ends the selection / fails if the controller decides by event type or ignores the event's statement. */
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ResolutionClearsTheSelectionWhenAnEventEndsIt(bool ends)
+        {
+            controller.Initialize(TestContent.Catalog(), TestContent.EncounterId, 17, savePath);
+            controller.ToggleDie(0);
+            controller.ToggleDie(2);
+            controller.Present(new Resolution(controller.Snapshot.Revision, controller.Snapshot,
+                new RuleEvent[] { new SelectionEvent(ends) }));
+            Assert.That(controller.SelectedMask, Is.EqualTo(ends ? 0 : 5));
+            controller.CompletePresentation();
+        }
+
         [Test]
         public void NoResolutionSubscriberImmediatelyReleasesPresentation()
         {
@@ -506,5 +520,14 @@ namespace Dice.Tests
 
         private void AssertSnapshots(EncounterSnapshot expected)
             => EncounterSessionTests.AssertSnapshotsEqual(expected, controller.Snapshot);
+
+        /** An event that states whether it ends the dice selection, and nothing else. */
+        private sealed class SelectionEvent : RuleEvent
+        {
+            private readonly bool ends;
+            internal SelectionEvent(bool ends) : base(0, 0) => this.ends = ends;
+            public override bool EndsDiceSelection => ends;
+            protected override string DescribeDetail(IDiagnosticFormat format) => "selection";
+        }
     }
 }
