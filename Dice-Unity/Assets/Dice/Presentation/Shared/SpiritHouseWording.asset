@@ -81,10 +81,10 @@ MonoBehaviour:
     unreadableSlot: Saved campaign - unable to read progress
     progress: '{encounters} / {charms}'
     encountersCompleted:
-      singular: '{count} encounters completed'
+      singular: '{count} encounter completed'
       plural: '{count} encounters completed'
     charmsCollected:
-      singular: '{count} charms collected'
+      singular: '{count} charm collected'
       plural: '{count} charms collected'
     useSlotConfirmation: Use save slot {slot}?
     replaceSlotConfirmation: Replace save slot {slot}?
@@ -229,33 +229,33 @@ MonoBehaviour:
     rerolls: REROLLS  {count}
     resources: '{hands}  /  {rerolls}'
     handsLeft:
-      singular: '{count} hands left'
+      singular: '{count} hand left'
       plural: '{count} hands left'
     rerollsLeft:
-      singular: '{count} rerolls left'
+      singular: '{count} reroll left'
       plural: '{count} rerolls left'
     lastHand:
-      singular: Last hand  {score} points
+      singular: Last hand  {score} point
       plural: Last hand  {score} points
     totalScoreLine: Total score  {score}
     charmCount: '{count} kept'
     charmsButton: CHARMS ({count})
     newHand: NEW HAND
     rerollsRemaining:
-      singular: '{count} rerolls remaining'
+      singular: '{count} reroll remaining'
       plural: '{count} rerolls remaining'
     stageIntro:
-      singular: 'CLEAR {threshold} POINTS
+      singular: 'CLEAR {threshold} POINT
 
         {hands} / {rerolls}'
       plural: 'CLEAR {threshold} POINTS
 
         {hands} / {rerolls}'
     stageHands:
-      singular: '{count} hands'
+      singular: '{count} hand'
       plural: '{count} hands'
     stageRerolls:
-      singular: '{count} rerolls'
+      singular: '{count} reroll'
       plural: '{count} rerolls'
   pauseMenu:
     soundOn: 'Sound: On'
