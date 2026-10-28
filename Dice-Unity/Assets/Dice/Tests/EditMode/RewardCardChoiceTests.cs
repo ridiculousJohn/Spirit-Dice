@@ -40,8 +40,8 @@ namespace Dice.Tests
             // A test-only hand at level 3 whose base and multiplier rise by different amounts per level.
             var hand = new HandDefinition("hand.reward-test", HandCategory.Pair, 17, 3, 7, 2, 6);
             const int level = 3;
-            long baseScore = hand.BaseScore + level * hand.BaseScorePerUpgrade;
-            long multiplier = hand.Multiplier + level * hand.MultiplierPerUpgrade;
+            long baseScore = hand.BaseScoreAt(level);
+            long multiplier = hand.MultiplierAt(level);
             string current = "BASE " + DiagnosticText.Number(baseScore) + "\nMULT " + DiagnosticText.Number(multiplier);
             string upgraded = "BASE " + DiagnosticText.Number(baseScore) + " +" + DiagnosticText.Number(hand.BaseScorePerUpgrade) +
                 "\nMULT " + DiagnosticText.Number(multiplier) + " +" + DiagnosticText.Number(hand.MultiplierPerUpgrade);

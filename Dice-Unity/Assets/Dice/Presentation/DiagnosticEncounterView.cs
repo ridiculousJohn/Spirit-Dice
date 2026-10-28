@@ -250,8 +250,8 @@ namespace Dice.Presentation
             {
                 int level = snapshot.HandUpgrades[(int)hand.Category];
                 upgradeRows.Add(DiagnosticText.Humanize(hand.Category.ToString()) + " | level " + level + " / " +
-                    hand.MaximumUpgrades + " | base " + DiagnosticText.Number(hand.BaseScore + hand.BaseScorePerUpgrade * level) +
-                    " | multiplier " + DiagnosticText.Number(hand.Multiplier + hand.MultiplierPerUpgrade * level));
+                    hand.MaximumUpgrades + " | base " + DiagnosticText.Number(hand.BaseScoreAt(level)) +
+                    " | multiplier " + DiagnosticText.Number(hand.MultiplierAt(level)));
             }
             BuildInventoryText();
         }
@@ -282,10 +282,10 @@ namespace Dice.Presentation
                     HandDefinition hand = cachedCatalog.GetHand(option.Category.Value);
                     int level = cachedSnapshot.HandUpgrades[(int)hand.Category];
                     card.Title = DiagnosticText.Humanize(hand.Category.ToString()) + " | level " + level + " -> " + (level + 1);
-                    card.Body = "Category base " + DiagnosticText.Number(hand.BaseScore + hand.BaseScorePerUpgrade * level) +
-                        " -> " + DiagnosticText.Number(hand.BaseScore + hand.BaseScorePerUpgrade * (level + 1)) +
-                        "\nMultiplier " + DiagnosticText.Number(hand.Multiplier + hand.MultiplierPerUpgrade * level) +
-                        " -> " + DiagnosticText.Number(hand.Multiplier + hand.MultiplierPerUpgrade * (level + 1));
+                    card.Body = "Category base " + DiagnosticText.Number(hand.BaseScoreAt(level)) +
+                        " -> " + DiagnosticText.Number(hand.BaseScoreAt(level + 1)) +
+                        "\nMultiplier " + DiagnosticText.Number(hand.MultiplierAt(level)) +
+                        " -> " + DiagnosticText.Number(hand.MultiplierAt(level + 1));
                     card.Detail = hand.Id + " | option " + option.OptionId;
                 }
                 rewardCards.Add(card);

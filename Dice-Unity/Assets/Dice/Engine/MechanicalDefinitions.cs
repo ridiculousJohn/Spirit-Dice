@@ -50,6 +50,16 @@ namespace Dice.Engine
             MultiplierPerUpgrade = multiplierPerUpgrade;
             MaximumUpgrades = maximumUpgrades;
         }
+
+        /** The category's base score at an upgrade level from zero to the maximum. */
+        public long BaseScoreAt(int level) => BaseScore + BaseScorePerUpgrade * RequireLevel(level);
+
+        /** The category's multiplier at an upgrade level from zero to the maximum. */
+        public long MultiplierAt(int level) => Multiplier + MultiplierPerUpgrade * RequireLevel(level);
+
+        // The constructor proves the values at the maximum level cannot overflow.
+        private int RequireLevel(int level)
+            => level >= 0 && level <= MaximumUpgrades ? level : throw new ArgumentOutOfRangeException(nameof(level));
     }
 
     public sealed class StageDefinition

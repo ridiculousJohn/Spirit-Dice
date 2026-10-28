@@ -43,11 +43,9 @@ namespace Dice.Presentation
             {
                 var hand = catalog.GetHand(row.Category);
                 int level = snapshot.HandUpgrades[(int)row.Category];
-                long baseScore = checked(hand.BaseScore + hand.BaseScorePerUpgrade * level);
-                long multiplier = checked(hand.Multiplier + hand.MultiplierPerUpgrade * level);
                 row.LevelLabel.text = "Level " + level;
-                row.BaseLabel.text = "+Base " + DiagnosticText.Number(baseScore);
-                row.MultiplierLabel.text = "+Mult " + DiagnosticText.Number(multiplier);
+                row.BaseLabel.text = "+Base " + DiagnosticText.Number(hand.BaseScoreAt(level));
+                row.MultiplierLabel.text = "+Mult " + DiagnosticText.Number(hand.MultiplierAt(level));
                 row.CategoryLabel.color = SpiritUi.GetTheme(transform).cream;
                 row.Background.color = normalBackground;
             }

@@ -111,8 +111,8 @@ namespace Dice.Presentation
             this.optionId = optionId;
             handUpgradeMode = true;
             handLevel = level;
-            handBase = checked(hand.BaseScore + hand.BaseScorePerUpgrade * level);
-            handMultiplier = checked(hand.Multiplier + hand.MultiplierPerUpgrade * level);
+            handBase = hand.BaseScoreAt(level);
+            handMultiplier = hand.MultiplierAt(level);
             handBaseIncrement = hand.BaseScorePerUpgrade;
             handMultiplierIncrement = hand.MultiplierPerUpgrade;
             _ = checked(level + 1);
