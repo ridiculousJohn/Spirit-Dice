@@ -74,10 +74,8 @@ namespace Dice.Presentation
             else UpcomingStage.text = "";
             bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
             RefreshButton.gameObject.SetActive(canRefresh);
-            int cost = encounter.RewardPolicy?.RefreshCost ?? 1;
-            RefreshButton.interactable = canRefresh && snapshot.RewardRefreshes >= cost;
-            SpiritUi.SetButtonLabel(RefreshButton, cost > 0
-                ? "Refresh (" + (snapshot.RewardRefreshes / cost) + ")" : "Refresh");
+            RefreshButton.interactable = canRefresh && snapshot.RewardRefreshesAvailable > 0;
+            SpiritUi.SetButtonLabel(RefreshButton, "Refresh (" + snapshot.RewardRefreshesAvailable + ")");
             long offerId = offer?.OfferId ?? -1;
             if (renderedOffer == offerId) return;
             renderedOffer = offerId;

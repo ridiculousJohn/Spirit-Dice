@@ -115,6 +115,10 @@ namespace Dice.Engine
         public ReadOnlyCollection<ModifierContribution> ModifierContributions { get; }
         public RewardOffer PendingReward { get; }
         public int RewardRefreshes { get; }
+        /** The reward refresh points one refresh of a charm offer costs; zero when the encounter offers no refreshes. */
+        public int RewardRefreshCost { get; }
+        /** How many charm offer refreshes the held reward refresh points pay for. */
+        public int RewardRefreshesAvailable { get; }
         public ReadOnlyCollection<string> ExcludedRewardFamilies { get; }
         public ReadOnlyCollection<HandCategory> RecentHandUpgrades { get; }
         public ReadOnlyCollection<string> UnlockedModifierIds { get; }
@@ -164,6 +168,8 @@ namespace Dice.Engine
             ModifierContributions = new List<ModifierContribution>(state.ModifierContributions).AsReadOnly();
             PendingReward = state.PendingReward;
             RewardRefreshes = state.RewardRefreshes;
+            RewardRefreshCost = definition.RewardPolicy?.RefreshCost ?? 0;
+            RewardRefreshesAvailable = RewardRefreshCost > 0 ? state.RewardRefreshes / RewardRefreshCost : 0;
             ExcludedRewardFamilies = new List<string>(state.ExcludedRewardFamilies).AsReadOnly();
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();
             UnlockedModifierIds = new List<string>(state.UnlockedModifierIds).AsReadOnly();

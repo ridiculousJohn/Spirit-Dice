@@ -42,7 +42,6 @@ namespace Dice.Presentation
         private string selectionLabel;
         private string inventoryTitle;
         private string logTitle;
-        private int refreshCost;
 
         private sealed class CardText
         {
@@ -130,7 +129,7 @@ namespace Dice.Presentation
             eventText.text = logTitle + "\nNewest first. Scored hands retain their complete resolution breakdown.\n\n" + string.Join("\n\n", eventRows);
             refreshButton.gameObject.SetActive(exists && cachedSnapshot.PendingReward?.Kind == RewardKind.Modifier);
             refreshButton.interactable = exists && cachedSnapshot.Phase == EncounterPhase.ChoosingModifier
-                && refreshCost > 0 && cachedSnapshot.RewardRefreshes >= refreshCost;
+                && cachedSnapshot.RewardRefreshesAvailable > 0;
             refreshButton.GetComponentInChildren<Text>(true).text = refreshLabel;
             RenderCards(rewardCards, rewardViews, rewardsContent, true);
             RenderCards(inventoryCards, inventoryViews, inventoryContent, false);
@@ -262,9 +261,8 @@ namespace Dice.Presentation
             rewardCards.Clear();
             rewardTitle = offer == null ? "REWARDS" : "CHOOSE " + DiagnosticText.Humanize(offer.Kind.ToString()).ToUpperInvariant();
             rewardDetail = offer == null ? "" : "For stage " + (offer.TargetStageIndex + 1) + " | offer " + offer.OfferId;
-            RewardPolicyDefinition policy = cachedCatalog.GetEncounter(cachedSnapshot.EncounterId).RewardPolicy;
-            refreshCost = policy?.RefreshCost ?? 0;
-            refreshLabel = "Refresh modifiers - cost " + refreshCost + " (available " + cachedSnapshot.RewardRefreshes + ")";
+            refreshLabel = "Refresh modifiers - cost " + cachedSnapshot.RewardRefreshCost + " (available " +
+                cachedSnapshot.RewardRefreshes + ")";
             if (offer == null) return;
             foreach (RewardOption option in offer.Options)
             {

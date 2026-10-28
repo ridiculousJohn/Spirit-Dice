@@ -258,6 +258,25 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.RewardRefreshes, Is.EqualTo(3));
         }
 
+        /** Checks the snapshot states the refresh cost and how many refreshes the held points pay for, and states none for an encounter without a reward policy / fails if the cost or count is missing, rounded up or defaulted. */
+        [Test]
+        public void SnapshotStatesTheRefreshCostAndTheRefreshesAvailable()
+        {
+            var policy = RewardTestContent.Policy(startingRefreshes: 3, refreshesPerClear: 2, refreshCost: 2);
+            var session = RewardTestContent.Session(RewardTestContent.Catalog(policy: policy));
+            Assert.That(session.Snapshot.RewardRefreshCost, Is.EqualTo(2));
+            Assert.That(session.Snapshot.RewardRefreshesAvailable, Is.EqualTo(1));
+            session.Execute(PlayHandAction.Instance, 0);
+            Assert.That(session.Snapshot.RewardRefreshesAvailable, Is.EqualTo(2));
+            for (int i = 0; i < 2; ++i)
+                session.Execute(new RefreshModifierOfferAction(session.Snapshot.PendingReward.OfferId), session.Snapshot.Revision);
+            Assert.That(session.Snapshot.RewardRefreshes, Is.EqualTo(1));
+            Assert.That(session.Snapshot.RewardRefreshesAvailable, Is.Zero);
+            var withoutPolicy = TestContent.Session().Snapshot;
+            Assert.That(withoutPolicy.RewardRefreshCost, Is.Zero);
+            Assert.That(withoutPolicy.RewardRefreshesAvailable, Is.Zero);
+        }
+
         [Test]
         public void RefreshCreditOverflowDoesNotCommitTheClearedHandOrItsFutureDice()
         {
