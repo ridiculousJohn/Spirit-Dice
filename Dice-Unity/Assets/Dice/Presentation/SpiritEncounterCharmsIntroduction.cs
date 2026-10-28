@@ -37,12 +37,8 @@ namespace Dice.Presentation
         public static bool IntroducesOffer(EncounterDefinition encounter, EncounterSnapshot snapshot)
         {
             if (encounter == null || snapshot == null) return false;
-            var offer = snapshot.PendingReward;
-            int firstClearedStage = encounter.EncounterModifiersFirstClearedStageNumber;
-            // An offer's target stage index equals the number of the stage whose clear produced it.
-            return encounter.EncounterModifierIds.Count > 0 && firstClearedStage > 1 &&
-                snapshot.Phase == EncounterPhase.ChoosingModifier && offer != null && offer.Kind == RewardKind.Modifier &&
-                offer.TargetStageIndex == firstClearedStage;
+            return !encounter.EncounterModifiersAvailableFromStart && snapshot.Phase == EncounterPhase.ChoosingModifier &&
+                snapshot.PendingReward != null && snapshot.PendingReward.IntroducesEncounterModifiers;
         }
 
         /** Shows the introduction over the pending offer when it introduces it and was not dismissed; hides it otherwise. */

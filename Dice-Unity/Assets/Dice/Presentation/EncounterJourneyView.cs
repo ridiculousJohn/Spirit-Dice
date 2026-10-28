@@ -87,7 +87,7 @@ namespace Dice.Presentation
             if (journey == null || journey.IsStoryOnly || encounterControls?.Catalog == null) return;
             var encounter = encounterControls.Catalog.GetEncounter(journey.EncounterId);
             // Additions first offered after a later stage are introduced inside the encounter instead.
-            if (encounter.EncounterModifierIds.Count == 0 || encounter.EncounterModifiersFirstClearedStageNumber != 1)
+            if (!encounter.EncounterModifiersAvailableFromStart)
             {
                 controls.AcceptEncounter();
                 return;

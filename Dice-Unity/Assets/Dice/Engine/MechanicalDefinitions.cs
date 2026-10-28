@@ -99,6 +99,8 @@ namespace Dice.Engine
         public ReadOnlyCollection<string> EncounterModifierIds { get; }
         /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
         public int EncounterModifiersFirstClearedStageNumber { get; }
+        /** Whether the encounter has charms of its own and its first charm offer can already contain them. */
+        public bool EncounterModifiersAvailableFromStart => EncounterModifierIds.Count > 0 && EncounterModifiersFirstClearedStageNumber == 1;
         public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
         public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
 

@@ -307,12 +307,12 @@ namespace Dice.Engine
             return id;
         }
 
-        private static void SetOffer(EncounterState next, RewardKind kind, IEnumerable<RewardOption> options,
+        private void SetOffer(EncounterState next, RewardKind kind, IEnumerable<RewardOption> options,
             bool isRefresh, List<RuleEvent> events)
         {
             long id = next.NextOfferId;
             next.NextOfferId = checked(id + 1);
-            next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options);
+            next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options, definition);
             next.Phase = kind == RewardKind.Modifier ? EncounterPhase.ChoosingModifier :
                 kind == RewardKind.ModifierUnlock ? EncounterPhase.ChoosingUnlock : EncounterPhase.ChoosingHandUpgrade;
             events.Add(new RewardOfferedEvent(next, next.PendingReward, isRefresh));

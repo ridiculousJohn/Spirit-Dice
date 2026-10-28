@@ -78,6 +78,44 @@ namespace Dice.Tests
                 new EncounterDefinition("encounter.beyond", stages, encounterModifiersFirstClearedStageNumber: 3));
         }
 
+        /** Checks an encounter states its own charms are available from the start only when it has some and its first offer can contain them / fails if delayed additions or an encounter without additions claim it. */
+        [TestCase(true, 1, true)]
+        [TestCase(true, 2, false)]
+        [TestCase(false, 1, false)]
+        public void EncounterStatesWhetherItsOwnCharmsAreAvailableFromTheStart(bool additions, int firstClearedStage, bool expected)
+        {
+            var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
+            var encounter = new EncounterDefinition("encounter.from_start", stages,
+                encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
+                encounterModifiersFirstClearedStageNumber: firstClearedStage);
+            Assert.That(encounter.EncounterModifiersAvailableFromStart, Is.EqualTo(expected));
+        }
+
+        /** Checks only the charm offers made on the authored first clear state that they introduce the encounter's own charms, a restored one included, and hand-upgrade offers never do / fails if an earlier or later offer, or an upgrade offer, claims it or a restore drops it. */
+        [Test]
+        public void OnlyOffersOnTheFirstClearThatCanContainAdditionsIntroduceThem()
+        {
+            var catalog = Catalog(firstClearedStage: 3, ordinary: new[] { Owned, Other });
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
+            for (int cleared = 1; cleared <= 3; ++cleared)
+            {
+                Execute(session, PlayHandAction.Instance);
+                if (session.Snapshot.Phase == EncounterPhase.ChoosingModifier)
+                {
+                    var offer = session.Snapshot.PendingReward;
+                    Assert.That(offer.IntroducesEncounterModifiers, Is.EqualTo(cleared == 3), "Clearing stage " + cleared);
+                    if (cleared == 3) break;
+                    Execute(session, new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId));
+                }
+                var upgrade = session.Snapshot.PendingReward;
+                Assert.That(upgrade.Kind, Is.EqualTo(RewardKind.HandUpgrade));
+                Assert.That(upgrade.IntroducesEncounterModifiers, Is.False, "Upgrade after clearing stage " + cleared);
+                Execute(session, new SelectHandUpgradeAction(upgrade.OfferId, upgrade.Options[0].OptionId));
+            }
+            Assert.That(session.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier));
+            Assert.That(Restore(catalog, session.CaptureSave()).Snapshot.PendingReward.IntroducesEncounterModifiers, Is.True);
+        }
+
         private static MechanicalCatalog Catalog(int firstClearedStage, string[] ordinary)
         {
             var modifiers = ordinary.Select(id => Modifier(id)).Concat(new[]

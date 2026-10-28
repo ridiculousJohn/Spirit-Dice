@@ -111,13 +111,22 @@ namespace Dice.Engine
         public RewardKind Kind { get; }
         public int TargetStageIndex { get; }
         public ReadOnlyCollection<RewardOption> Options { get; }
+        /**
+         * Whether this is a charm offer made on the first stage clear whose offers can contain the encounter's own charms;
+         * a refresh of that offer is one too.
+         */
+        public bool IntroducesEncounterModifiers { get; }
 
-        internal RewardOffer(long offerId, RewardKind kind, int targetStageIndex, IEnumerable<RewardOption> options)
+        internal RewardOffer(long offerId, RewardKind kind, int targetStageIndex, IEnumerable<RewardOption> options,
+            EncounterDefinition encounter)
         {
             OfferId = offerId;
             Kind = kind;
             TargetStageIndex = targetStageIndex;
             Options = new List<RewardOption>(options).AsReadOnly();
+            // An offer's target stage index is the number of the stage whose clear produced it.
+            IntroducesEncounterModifiers = kind == RewardKind.Modifier && encounter.EncounterModifierIds.Count > 0 &&
+                targetStageIndex == encounter.EncounterModifiersFirstClearedStageNumber;
         }
 
         public bool Equals(RewardOffer other)

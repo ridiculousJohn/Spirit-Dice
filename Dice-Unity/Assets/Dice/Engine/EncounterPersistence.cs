@@ -615,7 +615,7 @@ namespace Dice.Engine
                 foreach (var option in options) categories.Add(option.Category.Value);
                 ValidateUpgradeCategories(catalog, definition, state, categories);
             }
-            state.PendingReward = new RewardOffer(source.OfferId, source.Kind, source.TargetStageIndex, options);
+            state.PendingReward = new RewardOffer(source.OfferId, source.Kind, source.TargetStageIndex, options, definition);
         }
 
         private static void ValidateModifierOptions(MechanicalCatalog catalog, EncounterDefinition definition,
