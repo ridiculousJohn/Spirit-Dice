@@ -19,7 +19,8 @@ namespace Dice.UnityContent
         [SerializeField] private int[] startingUpgrades = new int[HandDefinition.CategoryCount];
         [SerializeField] private ModifierAsset[] startingModifiers = Array.Empty<ModifierAsset>();
         [SerializeField] private StageData[] stages = Array.Empty<StageData>();
-        [SerializeField] private RewardPolicyData rewardPolicy;
+        /** The encounter's reward offers; an encounter without a policy makes none and awaits rewards from outside the engine. */
+        [SerializeReference, SelectImplementation] private RewardPolicyData rewardPolicy;
         [SerializeField] private EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
         [SerializeField] private PieceData[] pieces = Array.Empty<PieceData>();
 
@@ -88,23 +89,23 @@ namespace Dice.UnityContent
                 string where = "The table piece " + source.piece.name + " of the encounter " + name;
                 if (source.interactions == null) throw new InvalidOperationException(where + " has no interaction list.");
                 var interactions = new PieceInteractionDefinition[source.interactions.Length];
-                var kinds = new HashSet<Type>();
                 for (int j = 0; j < interactions.Length; ++j)
                 {
                     var interaction = source.interactions[j] ?? throw new InvalidOperationException(where + " has a missing interaction.");
-                    if (!kinds.Add(interaction.GetType()))
-                        throw new InvalidOperationException(where + " has more than one " + interaction.GetType().Name + ".");
                     interactions[j] = interaction.Build();
                 }
-                definitions[i] = new TablePieceDefinition(source.piece.Identity, interactions);
+                try { definitions[i] = new TablePieceDefinition(source.piece.Identity, interactions); }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidOperationException(where + " is invalid: " + exception.Message, exception);
+                }
             }
             return definitions;
         }
 
         private RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool)
         {
-            // An encounter without reward offers leaves its policy id empty; it then awaits rewards from outside the engine.
-            if (source == null || string.IsNullOrEmpty(source.id)) return null;
+            if (source == null) return null;
             if (source.modifierLayouts == null || source.upgradeHistory == null)
                 throw new InvalidOperationException("Reward policy arrays are missing.");
             var layouts = new ModifierRewardLayout[source.modifierLayouts.Length];
@@ -138,7 +139,7 @@ namespace Dice.UnityContent
                 var milestone = source.tierMilestones[i] ?? throw new InvalidOperationException("A tier milestone is missing.");
                 tierMilestones[i] = new ModifierTierMilestone(milestone.incomingStageNumber, milestone.minimumTier);
             }
-            return new RewardPolicyDefinition(source.id, layouts, source.startingRefreshes,
+            return new RewardPolicyDefinition(layouts, source.startingRefreshes,
                 source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
         }
 
@@ -154,10 +155,13 @@ namespace Dice.UnityContent
             public PieceInteractionConfig[] interactions = Array.Empty<PieceInteractionConfig>();
         }
 
+        /**
+         * An encounter's reward offers: its charm offer layouts, refreshes, hand upgrade offers and charm tiers. It is public
+         * so that code outside the encounter, such as tests, can create an encounter's policy.
+         */
         [Serializable]
-        private sealed class RewardPolicyData
+        public sealed class RewardPolicyData
         {
-            public string id;
             public RewardLayoutData[] modifierLayouts = Array.Empty<RewardLayoutData>();
             public int startingRefreshes;
             public int refreshesPerClear;
@@ -175,14 +179,14 @@ namespace Dice.UnityContent
         }
 
         [Serializable]
-        private sealed class TierRuleData
+        public sealed class TierRuleData
         {
             public int firstIncomingStageNumber;
             public int[] tierWeights = Array.Empty<int>();
         }
 
         [Serializable]
-        private sealed class TierMilestoneData
+        public sealed class TierMilestoneData
         {
             public int incomingStageNumber;
             public int minimumTier;
@@ -190,13 +194,13 @@ namespace Dice.UnityContent
 
         /** One charm offer: each slot draws from the pool it references. */
         [Serializable]
-        private sealed class RewardLayoutData
+        public sealed class RewardLayoutData
         {
             public RewardPoolAsset[] pools = Array.Empty<RewardPoolAsset>();
         }
 
         [Serializable]
-        private sealed class UpgradeHistoryData
+        public sealed class UpgradeHistoryData
         {
             public int maxIncomingStageNumber;
             public int excludedRecentChoices;

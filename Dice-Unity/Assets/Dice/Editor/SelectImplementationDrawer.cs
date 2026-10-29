@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Dice.Editor
 {
-    /** Draws a [SelectImplementation] reference with its fields and a menu of the concrete classes its field type allows. */
+    /** Draws a [SelectImplementation] reference with its fields and a menu of None and the concrete classes its field type allows. */
     [CustomPropertyDrawer(typeof(SelectImplementationAttribute))]
     public sealed class SelectImplementationDrawer : PropertyDrawer
     {
@@ -24,15 +24,19 @@ namespace Dice.Editor
                 var menu = new GenericMenu();
                 var target = property.serializedObject;
                 string path = property.propertyPath;
-                foreach (Type type in TypeCache.GetTypesDerivedFrom(FieldType(property))
+                void Set(object value)
+                {
+                    target.Update();
+                    target.FindProperty(path).managedReferenceValue = value;
+                    target.ApplyModifiedProperties();
+                }
+                // None clears an optional reference; the field type itself is a choice when it is concrete.
+                menu.AddItem(new GUIContent("None"), current == null, () => Set(null));
+                Type fieldType = FieldType(property);
+                foreach (Type type in TypeCache.GetTypesDerivedFrom(fieldType).Prepend(fieldType)
                     .Where(type => !type.IsAbstract && !type.IsGenericType && type.GetConstructor(Type.EmptyTypes) != null)
                     .OrderBy(type => type.Name, StringComparer.Ordinal))
-                    menu.AddItem(new GUIContent(type.Name), type == current, () =>
-                    {
-                        target.Update();
-                        target.FindProperty(path).managedReferenceValue = Activator.CreateInstance(type);
-                        target.ApplyModifiedProperties();
-                    });
+                    menu.AddItem(new GUIContent(type.Name), type == current, () => Set(Activator.CreateInstance(type)));
                 menu.DropDown(menuRect);
             }
             EditorGUI.PropertyField(position, property, label, true);

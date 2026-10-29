@@ -84,7 +84,7 @@ namespace Dice.Tests
                 Modifier(Addition, ModifierAccess.EncounterExclusive),
                 Modifier(Unlock, access: ModifierAccess.PermanentUnlock)
             }).ToArray();
-            var policy = new RewardPolicyDefinition("policy",
+            var policy = new RewardPolicyDefinition(
                 new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", Ordinary) }) },
                 0, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 6)

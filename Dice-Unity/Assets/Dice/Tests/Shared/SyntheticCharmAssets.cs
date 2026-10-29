@@ -52,7 +52,7 @@ namespace Dice.Tests
         /**
          * An encounter asset whose id is the test encounter id of the name (see TestEncounters), with one stage of the
          * given threshold and the given charm lists. With reward layouts, each the pools of its slots, it has a reward
-         * policy offering them with one refresh cost and one hand-upgrade option.
+         * policy offering them with one refresh cost and one hand-upgrade option; without them it has no policy.
          */
         public EncounterAsset Encounter(string name, long threshold = 100, ModifierAsset[] startingModifiers = null,
             ModifierAsset[] encounterModifiers = null, ModifierAsset[] unlockRewardModifiers = null,
@@ -73,7 +73,7 @@ namespace Dice.Tests
             if (rewardLayouts != null)
             {
                 SerializedProperty policy = serialized.FindProperty("rewardPolicy");
-                policy.FindPropertyRelative("id").stringValue = "policy." + name;
+                policy.managedReferenceValue = new EncounterAsset.RewardPolicyData();
                 policy.FindPropertyRelative("refreshCost").intValue = 1;
                 policy.FindPropertyRelative("handUpgradeOptionCount").intValue = 1;
                 SerializedProperty history = policy.FindPropertyRelative("upgradeHistory");

@@ -160,7 +160,6 @@ namespace Dice.Engine
 
     public sealed class RewardPolicyDefinition
     {
-        public string Id { get; }
         public ReadOnlyCollection<ModifierRewardLayout> ModifierLayouts { get; }
         public int StartingRefreshes { get; }
         public int RefreshesPerClear { get; }
@@ -172,12 +171,11 @@ namespace Dice.Engine
         public ReadOnlyCollection<ModifierTierRule> TierRules { get; }
         public ReadOnlyCollection<ModifierTierMilestone> TierMilestones { get; }
 
-        public RewardPolicyDefinition(string id, IEnumerable<ModifierRewardLayout> modifierLayouts,
+        public RewardPolicyDefinition(IEnumerable<ModifierRewardLayout> modifierLayouts,
             int startingRefreshes, int refreshesPerClear, int refreshCost, int handUpgradeOptionCount,
             IEnumerable<HandUpgradeHistoryRule> upgradeHistory, IEnumerable<ModifierTierRule> tierRules = null,
             IEnumerable<ModifierTierMilestone> tierMilestones = null)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
             if (modifierLayouts == null) throw new ArgumentNullException(nameof(modifierLayouts));
             if (upgradeHistory == null) throw new ArgumentNullException(nameof(upgradeHistory));
             if (startingRefreshes < 0) throw new ArgumentOutOfRangeException(nameof(startingRefreshes));
@@ -200,7 +198,6 @@ namespace Dice.Engine
             }
             if (previousBoundary != int.MaxValue)
                 throw new ArgumentException("Upgrade history rules must cover every incoming stage.", nameof(upgradeHistory));
-            Id = id;
             ModifierLayouts = layouts.AsReadOnly();
             StartingRefreshes = startingRefreshes;
             RefreshesPerClear = refreshesPerClear;

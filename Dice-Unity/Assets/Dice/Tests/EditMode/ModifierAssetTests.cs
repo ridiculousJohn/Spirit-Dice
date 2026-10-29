@@ -142,6 +142,18 @@ namespace Dice.Tests
             Assert.That(encounter.RewardPolicy.ModifierLayouts[0].Pools[0].ModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
         }
 
+        /** Checks an encounter with a reward policy builds it and one without builds none, so it makes no reward offers / fails if a missing policy is defaulted or a set one is lost. */
+        [Test]
+        public void EncounterBuildsARewardPolicyOnlyWhenItHasOne()
+        {
+            var pool = content.RewardPool("pool.test", new[] { Modifier("modifier.pooled") });
+            var built = Catalog(content.Encounter("encounter.offering", rewardLayouts: new[] { new[] { pool } }),
+                content.Encounter("encounter.silent")).Build().Catalog;
+
+            Assert.That(built.GetEncounter(TestEncounters.IdOf("encounter.offering")).RewardPolicy, Is.Not.Null);
+            Assert.That(built.GetEncounter(TestEncounters.IdOf("encounter.silent")).RewardPolicy, Is.Null);
+        }
+
         /** Checks every layout slot of every encounter drawing from one pool asset holds one definition named after the asset / fails if a pool is built per slot or encounter, or loses its name. */
         [Test]
         public void CatalogBuildSharesEachRewardPoolAssetAcrossLayouts()

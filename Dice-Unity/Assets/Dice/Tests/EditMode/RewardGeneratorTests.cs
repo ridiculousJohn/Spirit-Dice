@@ -196,7 +196,7 @@ namespace Dice.Tests
         /** A policy of the layouts; without them, three slots drawing from the pool of the default charms. */
         internal static RewardPolicyDefinition Policy(IEnumerable<ModifierRewardLayout> layouts = null,
             int startingRefreshes = 1, int refreshesPerClear = 1, int refreshCost = 1)
-            => new RewardPolicyDefinition("policy.test", layouts ?? ThreeSlots(Pool(Modifiers())),
+            => new RewardPolicyDefinition(layouts ?? ThreeSlots(Pool(Modifiers())),
                 startingRefreshes, refreshesPerClear, refreshCost, 4, new[]
                 {
                     new HandUpgradeHistoryRule(16, 3), new HandUpgradeHistoryRule(21, 2), new HandUpgradeHistoryRule(int.MaxValue, 0)

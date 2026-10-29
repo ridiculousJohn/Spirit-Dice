@@ -41,7 +41,7 @@ namespace Dice.Tests
             var modifier = new ModifierDefinition("modifier.journey-test", TestFamilies.Of("family.journey-test"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
             var pool = new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id });
-            var policy = new RewardPolicyDefinition("policy.journey-test", new[] { new ModifierRewardLayout(new[] { pool }) },
+            var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool }) },
                 1, 1, 1, 3, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             catalog = new MechanicalCatalog("test.journeys.v1", TestContent.Hands(), new[]
             {

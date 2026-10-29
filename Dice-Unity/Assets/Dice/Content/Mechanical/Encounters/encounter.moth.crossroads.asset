@@ -74,43 +74,49 @@ MonoBehaviour:
     startingRerolls: 3
     exitBehavior: 1
   rewardPolicy:
-    id: reward_policy.moth.crossroads
-    modifierLayouts:
-    - pools:
-      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
-      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
-      - {fileID: 11400000, guid: d45fad15d66359b44a6ee4f8e9c4f850, type: 2}
-    - pools:
-      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
-      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
-      - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
-    - pools:
-      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
-      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
-      - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
-    startingRefreshes: 1
-    refreshesPerClear: 1
-    refreshCost: 1
-    handUpgradeOptionCount: 4
-    upgradeHistory:
-    - maxIncomingStageNumber: 2147483647
-      excludedRecentChoices: 1
-    tierRules:
-    - firstIncomingStageNumber: 1
-      tierWeights: 640000000000000000000000i
-    - firstIncomingStageNumber: 4
-      tierWeights: 3c0000002300000005000000i
-    - firstIncomingStageNumber: 7
-      tierWeights: 1e0000003200000014000000i
-    - firstIncomingStageNumber: 10
-      tierWeights: 0f0000002d00000028000000i
-    tierMilestones:
-    - incomingStageNumber: 4
-      minimumTier: 2
-    - incomingStageNumber: 7
-      minimumTier: 2
-    - incomingStageNumber: 10
-      minimumTier: 3
+    rid: 1123138610971803650
   rules:
   - {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
   pieces: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610971803650
+      type: {class: EncounterAsset/RewardPolicyData, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        modifierLayouts:
+        - pools:
+          - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+          - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+          - {fileID: 11400000, guid: d45fad15d66359b44a6ee4f8e9c4f850, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+          - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+          - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+          - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+          - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
+        startingRefreshes: 1
+        refreshesPerClear: 1
+        refreshCost: 1
+        handUpgradeOptionCount: 4
+        upgradeHistory:
+        - maxIncomingStageNumber: 2147483647
+          excludedRecentChoices: 1
+        tierRules:
+        - firstIncomingStageNumber: 1
+          tierWeights: 640000000000000000000000i
+        - firstIncomingStageNumber: 4
+          tierWeights: 3c0000002300000005000000i
+        - firstIncomingStageNumber: 7
+          tierWeights: 1e0000003200000014000000i
+        - firstIncomingStageNumber: 10
+          tierWeights: 0f0000002d00000028000000i
+        tierMilestones:
+        - incomingStageNumber: 4
+          minimumTier: 2
+        - incomingStageNumber: 7
+          minimumTier: 2
+        - incomingStageNumber: 10
+          minimumTier: 3

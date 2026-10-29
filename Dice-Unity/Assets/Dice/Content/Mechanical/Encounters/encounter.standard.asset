@@ -121,50 +121,56 @@ MonoBehaviour:
     startingRerolls: 5
     exitBehavior: 1
   rewardPolicy:
-    id: reward_policy.standard
-    modifierLayouts:
-    - pools:
-      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
-      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
-      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
-    - pools:
-      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
-      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
-      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
-    - pools:
-      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
-      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
-      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
-    - pools:
-      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
-      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
-      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
-    startingRefreshes: 1
-    refreshesPerClear: 1
-    refreshCost: 1
-    handUpgradeOptionCount: 4
-    upgradeHistory:
-    - maxIncomingStageNumber: 16
-      excludedRecentChoices: 3
-    - maxIncomingStageNumber: 21
-      excludedRecentChoices: 2
-    - maxIncomingStageNumber: 2147483647
-      excludedRecentChoices: 0
-    tierRules:
-    - firstIncomingStageNumber: 1
-      tierWeights: 640000000000000000000000i
-    - firstIncomingStageNumber: 9
-      tierWeights: 3c0000002300000005000000i
-    - firstIncomingStageNumber: 17
-      tierWeights: 1e0000003200000014000000i
-    - firstIncomingStageNumber: 23
-      tierWeights: 0f0000002d00000028000000i
-    tierMilestones:
-    - incomingStageNumber: 9
-      minimumTier: 2
-    - incomingStageNumber: 17
-      minimumTier: 2
-    - incomingStageNumber: 23
-      minimumTier: 3
+    rid: 1123138610971803653
   rules: []
   pieces: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610971803653
+      type: {class: EncounterAsset/RewardPolicyData, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        modifierLayouts:
+        - pools:
+          - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+          - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+          - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+          - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+          - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+          - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+          - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+          - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+          - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
+        startingRefreshes: 1
+        refreshesPerClear: 1
+        refreshCost: 1
+        handUpgradeOptionCount: 4
+        upgradeHistory:
+        - maxIncomingStageNumber: 16
+          excludedRecentChoices: 3
+        - maxIncomingStageNumber: 21
+          excludedRecentChoices: 2
+        - maxIncomingStageNumber: 2147483647
+          excludedRecentChoices: 0
+        tierRules:
+        - firstIncomingStageNumber: 1
+          tierWeights: 640000000000000000000000i
+        - firstIncomingStageNumber: 9
+          tierWeights: 3c0000002300000005000000i
+        - firstIncomingStageNumber: 17
+          tierWeights: 1e0000003200000014000000i
+        - firstIncomingStageNumber: 23
+          tierWeights: 0f0000002d00000028000000i
+        tierMilestones:
+        - incomingStageNumber: 9
+          minimumTier: 2
+        - incomingStageNumber: 17
+          minimumTier: 2
+        - incomingStageNumber: 23
+          minimumTier: 3

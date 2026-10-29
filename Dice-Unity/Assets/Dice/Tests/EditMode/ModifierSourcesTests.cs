@@ -40,9 +40,9 @@ namespace Dice.Tests
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
             var pool = new ModifierRewardPoolDefinition("pool", new[] { Pooled }, Fallback);
             var second = new ModifierRewardPoolDefinition("second", new[] { Locked }, Ineligible);
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { pool }) },
+            var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
-            var twoPools = new RewardPolicyDefinition("policy.two_pools", new[] { new ModifierRewardLayout(new[] { pool, second }) },
+            var twoPools = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool, second }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounters = new[]
             {

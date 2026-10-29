@@ -113,7 +113,7 @@ namespace Dice.Tests
 
         private static RewardPolicyDefinition Policy(ModifierRewardPoolDefinition pool, int slots = 1,
             IEnumerable<ModifierTierRule> rules = null, IEnumerable<ModifierTierMilestone> milestones = null)
-            => new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(Enumerable.Repeat(pool, slots)) },
+            => new RewardPolicyDefinition(new[] { new ModifierRewardLayout(Enumerable.Repeat(pool, slots)) },
                 2, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) }, rules, milestones);
 
         /** A catalog of the charms; without a policy, one slot draws from their pool with the fallback. */
@@ -360,7 +360,7 @@ namespace Dice.Tests
         public void AbandonPendingUnlockRetainsRestorableTerminalState(int stages)
         {
             var modifiers = new[] { Modifier("unlock", access: ModifierAccess.PermanentUnlock) };
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
+            var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 0, 1, 2, 1, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy,
                 new[] { new ModifierUnlockMilestone(1) }, stages: stages, unlockRewardModifierIds: new[] { "unlock" });
@@ -407,7 +407,7 @@ namespace Dice.Tests
         public void FailedRewardResolutionAndInvalidProfileMergeDoNotCommitUnlocks()
         {
             var modifiers = new[] { Modifier("locked", access: ModifierAccess.PermanentUnlock), Modifier("starter") };
-            var policy = new RewardPolicyDefinition("overflow", new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
+            var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 int.MaxValue, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy, new[] { new ModifierUnlockMilestone(1) }, unlockRewardModifierIds: new[] { "locked" });
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 5);
