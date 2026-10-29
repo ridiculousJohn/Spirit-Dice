@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
   m_Name: MerchantJourney
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
+  assetGuid: a8ded007d7fa45f3869cf51933250cef
   encounter: {fileID: 11400000, guid: 1360c7668cb1183439942390cf1a70d3, type: 2}
-  storyId: 
   locationTitle: The Unquiet Cart
   spiritName: The Merchant
   leadText: The traveler's trail leaves the road beyond the old bridge, where a merchant's cart stands beside dark water.
@@ -333,9 +333,7 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
-  followUpEncounters:
-  - {fileID: 11400000, guid: 7f52f80f80fb1af44a51e696465c5abb, type: 2}
-  followUpStoryIds: []
-  requiredCompletedEncounters: []
-  requiredCompletedStoryIds:
-  - story.fox.chapter-one-return
+  followUpJourneys:
+  - {fileID: 11400000, guid: 7e4f59fd9c7d6f0458fd325dfa7627b6, type: 2}
+  requiredCompletedJourneys:
+  - {fileID: 11400000, guid: e774c29f8c2e411b953f9dfca49d077b, type: 2}

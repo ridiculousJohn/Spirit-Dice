@@ -29,7 +29,7 @@ namespace Dice.Tests
             controller = host.AddComponent<SpiritEncounterController>();
             campaign = host.AddComponent<SpiritCampaignController>();
             catalog = TestContent.Catalog();
-            var journey = Create<EncounterJourneyAsset>();
+            var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), "journey.test");
             SyntheticUi.Set(journey, "encounter", content.Encounter("encounter.test"));
             SyntheticUi.Set(journey, "locationTitle", "Test location");
             SyntheticUi.Set(journey, "spiritName", "Test host");

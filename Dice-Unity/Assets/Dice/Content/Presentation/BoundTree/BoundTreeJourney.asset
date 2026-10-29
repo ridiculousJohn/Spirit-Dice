@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
   m_Name: BoundTreeJourney
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
+  assetGuid: 7e4f59fd9c7d6f0458fd325dfa7627b6
   encounter: {fileID: 11400000, guid: 7f52f80f80fb1af44a51e696465c5abb, type: 2}
-  storyId: 
   locationTitle: The Bound Tree
   spiritName: The Possessing Spirit
   leadText: The merchant knows a hidden path through the swamp to the dry ground around the great tree, where your traveler was heading.
@@ -469,8 +469,6 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
-  followUpEncounters: []
-  followUpStoryIds: []
-  requiredCompletedEncounters:
-  - {fileID: 11400000, guid: 1360c7668cb1183439942390cf1a70d3, type: 2}
-  requiredCompletedStoryIds: []
+  followUpJourneys: []
+  requiredCompletedJourneys:
+  - {fileID: 11400000, guid: a8ded007d7fa45f3869cf51933250cef, type: 2}

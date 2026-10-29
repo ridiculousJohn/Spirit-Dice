@@ -86,7 +86,7 @@ namespace Dice.Tests
                 profile.UnlockModifier("modifier." + slot);
                 profile.DiscoverFamily(TestFamilies.IdOf("family." + slot));
                 profile.CompleteEncounter(TestEncounters.IdOf("encounter." + slot));
-                profile.CompleteStory("story." + slot);
+                profile.CompleteJourney(TestJourneys.IdOf("journey." + slot));
                 profile.VisitEncounter(TestEncounters.IdOf("visited." + slot));
                 PlayerProfileFileStore.Save(slots.GetProfilePath(slot), profile);
                 var session = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, (ulong)slot);
@@ -107,7 +107,7 @@ namespace Dice.Tests
                 Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "modifier." + slot }));
                 Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family." + slot) }));
                 Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter." + slot) }));
-                Assert.That(profile.CompletedStoryIds, Is.EqualTo(new[] { "story." + slot }));
+                Assert.That(profile.CompletedJourneyIds, Is.EqualTo(new[] { TestJourneys.IdOf("journey." + slot) }));
                 Assert.That(profile.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("visited." + slot) }));
             }
         }
@@ -122,7 +122,7 @@ namespace Dice.Tests
             string previousProfile = slots.GetProfilePath(1);
             var profile = new PlayerProfile();
             profile.UnlockModifier("modifier.previous");
-            profile.CompleteStory("story.previous");
+            profile.CompleteJourney(TestJourneys.IdOf("journey.previous"));
             PlayerProfileFileStore.Save(previousProfile, profile);
             var save = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 17).CaptureSave();
             EncounterSaveFileStore.Save(previousRun, save);
@@ -356,7 +356,7 @@ namespace Dice.Tests
             Assert.That(profile.UnlockedModifierIds, Is.Empty);
             Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
             Assert.That(profile.CompletedEncounterIds, Is.Empty);
-            Assert.That(profile.CompletedStoryIds, Is.Empty);
+            Assert.That(profile.CompletedJourneyIds, Is.Empty);
             Assert.That(profile.VisitedEncounterIds, Is.Empty);
         }
     }

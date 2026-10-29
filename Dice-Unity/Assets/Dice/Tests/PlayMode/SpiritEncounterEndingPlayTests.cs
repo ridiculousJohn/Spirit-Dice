@@ -190,13 +190,14 @@ namespace Dice.Tests
         }
 
         /**
-         * The leads this victory opens are the journeys whose completion prerequisites name its encounter and that are
+         * The leads this victory opens are the journeys whose completion prerequisites name its journey and that are
          * now available. Each is highlighted with a visible new-lead marker, and every other card is unmarked.
          */
         private IEnumerator CheckNewLeads()
         {
             var followUps = controller.JourneyCatalog.Entries.Where(value => value != null &&
-                value.RequiredCompletedEncounters.Contains(journey.Encounter) && controller.IsJourneyAvailable(value)).ToArray();
+                value.RequiredCompletedJourneys.Any(required => required.Identity == journey.Identity) &&
+                controller.IsJourneyAvailable(value)).ToArray();
             foreach (var followUp in followUps)
                 Assert.That(controller.HighlightedJourneys, Does.Contain(followUp), journey.name + " -> " + followUp.name);
             yield return null;

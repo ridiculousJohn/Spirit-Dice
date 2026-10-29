@@ -302,29 +302,21 @@ namespace Dice.Tests
                 Is.True, "Journey prerequisites require an isolated test profile.");
             Assert.That(controller.JourneyCatalog.Entries, Does.Contain(journey));
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
-            SeedPrerequisites(profile, controller.JourneyCatalog, journey, new HashSet<EncounterJourneyAsset>());
+            SeedPrerequisites(profile, journey, new HashSet<EncounterJourneyAsset>());
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, controller.SavePath),
                 Is.True, controller.JourneyStatus.ToString());
             Assert.That(controller.IsJourneyAvailable(journey), Is.True, journey.name);
         }
 
-        private static void SeedPrerequisites(PlayerProfile profile, EncounterJourneyCatalogAsset journeys,
-            EncounterJourneyAsset journey, HashSet<EncounterJourneyAsset> visited)
+        private static void SeedPrerequisites(PlayerProfile profile, EncounterJourneyAsset journey,
+            HashSet<EncounterJourneyAsset> visited)
         {
             if (!visited.Add(journey)) return;
-            foreach (var encounter in journey.RequiredCompletedEncounters)
+            foreach (var required in journey.RequiredCompletedJourneys)
             {
-                var required = journeys.Find(encounter.Identity);
-                if (required != null) SeedPrerequisites(profile, journeys, required, visited);
-                profile.CompleteEncounter(encounter.Identity);
-            }
-            foreach (string id in journey.RequiredCompletedStoryIds)
-            {
-                var required = journeys.FindStory(id);
-                Assert.That(required, Is.Not.Null, id);
-                SeedPrerequisites(profile, journeys, required, visited);
-                profile.CompleteStory(id);
+                SeedPrerequisites(profile, required, visited);
+                profile.CompleteJourney(required.Identity);
             }
         }
     }

@@ -1,5 +1,6 @@
 using System;
 using Dice.Engine;
+using Dice.Presentation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -45,5 +46,7 @@ namespace Dice.App
             new ContentIdConverter<EncounterDefinition.Id>("encounter", value => new EncounterDefinition.Id(value));
         internal static readonly ContentIdConverter<TablePieceDefinition.Id> Piece =
             new ContentIdConverter<TablePieceDefinition.Id>("table piece", value => new TablePieceDefinition.Id(value));
+        internal static readonly ContentIdConverter<EncounterJourneyAsset.Id> Journey =
+            new ContentIdConverter<EncounterJourneyAsset.Id>("journey", value => new EncounterJourneyAsset.Id(value));
     }
 }

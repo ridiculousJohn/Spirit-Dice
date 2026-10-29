@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
   m_Name: LastLanternJourney
   m_EditorClassIdentifier: 
+  assetGuid: 74eb1ce65d124aa9823839f4404df803
   encounter: {fileID: 11400000, guid: bf2a4a0f447fad64897858c232b1c04c, type: 2}
-  storyId: 
   locationTitle: The Last Lantern
   spiritName: The Lantern Keeper
   leadText: A missing traveler was last seen following a lantern through the rain. The light is still burning.
@@ -240,8 +240,6 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
-  followUpEncounters:
-  - {fileID: 11400000, guid: 0c0f31254236f944aa8d686d0ce79d65, type: 2}
-  followUpStoryIds: []
-  requiredCompletedEncounters: []
-  requiredCompletedStoryIds: []
+  followUpJourneys:
+  - {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402003, type: 2}
+  requiredCompletedJourneys: []

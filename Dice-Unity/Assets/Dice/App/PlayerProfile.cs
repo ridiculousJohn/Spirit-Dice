@@ -2,20 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Dice.Engine;
+using Dice.Presentation;
 
 namespace Dice.App
 {
     public sealed class PlayerProfile
     {
-        public const int CurrentFormatVersion = 6;
+        public const int CurrentFormatVersion = 7;
         private readonly List<ModifierFamilyDefinition.Id> discoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
         private readonly List<string> unlockedModifierIds = new List<string>();
         private readonly List<EncounterDefinition.Id> completedEncounterIds = new List<EncounterDefinition.Id>();
-        private readonly List<string> completedStoryIds = new List<string>();
+        private readonly List<EncounterJourneyAsset.Id> completedJourneyIds = new List<EncounterJourneyAsset.Id>();
         private readonly List<EncounterDefinition.Id> visitedEncounterIds = new List<EncounterDefinition.Id>();
         public ReadOnlyCollection<string> UnlockedModifierIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> CompletedEncounterIds { get; }
-        public ReadOnlyCollection<string> CompletedStoryIds { get; }
+        public ReadOnlyCollection<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> VisitedEncounterIds { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
 
@@ -23,14 +24,14 @@ namespace Dice.App
         {
             UnlockedModifierIds = unlockedModifierIds.AsReadOnly();
             CompletedEncounterIds = completedEncounterIds.AsReadOnly();
-            CompletedStoryIds = completedStoryIds.AsReadOnly();
+            CompletedJourneyIds = completedJourneyIds.AsReadOnly();
             VisitedEncounterIds = visitedEncounterIds.AsReadOnly();
             DiscoveredFamilyIds = discoveredFamilyIds.AsReadOnly();
         }
 
         public bool UnlockModifier(string id) => Add(unlockedModifierIds, id);
         public bool CompleteEncounter(EncounterDefinition.Id id) => Add(completedEncounterIds, id);
-        public bool CompleteStory(string id) => Add(completedStoryIds, id);
+        public bool CompleteJourney(EncounterJourneyAsset.Id id) => Add(completedJourneyIds, id);
         public bool VisitEncounter(EncounterDefinition.Id id) => Add(visitedEncounterIds, id);
         public bool DiscoverFamily(ModifierFamilyDefinition.Id id) => Add(discoveredFamilyIds, id);
 
@@ -67,7 +68,7 @@ namespace Dice.App
             foreach (var id in other.DiscoveredFamilyIds) changed |= DiscoverFamily(id);
             foreach (string id in other.UnlockedModifierIds) changed |= UnlockModifier(id);
             foreach (var id in other.CompletedEncounterIds) changed |= CompleteEncounter(id);
-            foreach (string id in other.CompletedStoryIds) changed |= CompleteStory(id);
+            foreach (var id in other.CompletedJourneyIds) changed |= CompleteJourney(id);
             foreach (var id in other.VisitedEncounterIds) changed |= VisitEncounter(id);
             return changed;
         }

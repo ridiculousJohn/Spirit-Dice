@@ -39,7 +39,7 @@ namespace Dice.App
         public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
         public IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
         public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds => progression.CompletedEncounterIds;
-        public IReadOnlyList<string> CompletedStoryIds => progression.CompletedStoryIds;
+        public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds => progression.CompletedJourneyIds;
         public PlayerProfileStatus ProfileStatus => progression.Status;
         public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => progression.VisitedEncounterIds;
         public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => navigation.HighlightedJourneys;
@@ -56,7 +56,7 @@ namespace Dice.App
         public bool CanResume => !IsBusy && navigation.CanResume(HasActiveEncounter);
         public bool CanSkipIntro => navigation.CanSkipIntro(JourneyProgress);
         private EncounterJourneyNavigation.Progress JourneyProgress => new EncounterJourneyNavigation.Progress(
-            progression.HasProfile, VisitedEncounterIds, CompletedEncounterIds, CompletedStoryIds);
+            progression.HasProfile, VisitedEncounterIds, CompletedJourneyIds);
 
         public event Action StateChanged;
         public event Action<Resolution> Resolved;
@@ -263,7 +263,7 @@ namespace Dice.App
         {
             if (transition.CompletesStory)
             {
-                if (!progression.CompleteStoryJourney(transition.Journey.StoryId,
+                if (!progression.CompleteStoryJourney(transition.Journey.Identity,
                     transition.Rewards.Select(reward => reward.Build(Catalog)), Catalog))
                 {
                     SetJourneyStatus(ProfileProblem);
@@ -576,7 +576,7 @@ namespace Dice.App
             if (snapshot.Outcome == EncounterOutcome.Won && highlightFollowUps)
                 navigation.RecordVictory(snapshot.EncounterId, JourneyProgress);
             var completionReward = snapshot.Outcome == EncounterOutcome.Won ? journey?.CompletionReward?.Build(Catalog) : null;
-            progression.RecordProgression(snapshot, Catalog, completionReward, unlockSave, SavePath);
+            progression.RecordProgression(snapshot, Catalog, journey?.Identity, completionReward, unlockSave, SavePath);
         }
 
         public bool ApplyProgressionReward(ProgressionRewardDefinition reward)

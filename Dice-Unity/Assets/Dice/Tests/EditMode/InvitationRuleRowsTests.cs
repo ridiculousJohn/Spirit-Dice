@@ -13,6 +13,7 @@ namespace Dice.Tests
     public sealed class InvitationRuleRowsTests
     {
         private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private Scene preview;
 
         [SetUp]
@@ -25,6 +26,7 @@ namespace Dice.Tests
             foreach (var item in created)
                 if (item != null) UnityEngine.Object.DestroyImmediate(item);
             created.Clear();
+            content.Dispose();
         }
 
         /**
@@ -39,6 +41,7 @@ namespace Dice.Tests
             SyntheticUi.Set(table, "rulePresentations", new[] { Rule("rule.first", "First rule", "First rule text"),
                 Rule("rule.second", "Second rule", "Second rule text") });
             var journey = Create<EncounterJourneyAsset>();
+            SyntheticUi.Set(journey, "encounter", content.Encounter("encounter.rules"));
             TestJourneys.SetBeats(journey, TestJourneys.Beat("dialogue", EncounterJourneyBeatKind.Dialogue),
                 TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
             SyntheticUi.Set(journey, "tablePresentation", table);

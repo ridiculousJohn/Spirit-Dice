@@ -42,43 +42,43 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void StoryCompletionIsPersistedMergedAndIndependentOfEncounters()
+        public void JourneyCompletionIsPersistedMergedAndIndependentOfEncounters()
         {
             var profile = new PlayerProfile();
-            Assert.That(profile.CompleteStory("story.future"), Is.True);
-            Assert.That(profile.CompleteStory("story.future"), Is.False);
+            var future = TestJourneys.IdOf("journey.future");
+            var another = TestJourneys.IdOf("journey.another");
+            Assert.That(profile.CompleteJourney(future), Is.True);
+            Assert.That(profile.CompleteJourney(future), Is.False);
             Assert.That(profile.CompletedEncounterIds, Is.Empty);
             Assert.That(profile.VisitedEncounterIds, Is.Empty);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
-            Assert.That(restored.CompletedStoryIds, Is.EqualTo(new[] { "story.future" }));
+            Assert.That(restored.CompletedJourneyIds, Is.EqualTo(new[] { future }));
             var merged = new PlayerProfile();
             Assert.That(merged.Merge(restored), Is.True);
-            Assert.That(merged.CompletedStoryIds, Is.EqualTo(restored.CompletedStoryIds));
+            Assert.That(merged.CompletedJourneyIds, Is.EqualTo(restored.CompletedJourneyIds));
             Assert.That(merged.Merge(restored), Is.False);
             string path = ArtifactPath();
             PlayerProfileFileStore.Save(path, restored);
             var additional = new PlayerProfile();
-            additional.CompleteStory("story.another");
+            additional.CompleteJourney(another);
             PlayerProfileFileStore.Save(path, additional);
-            Assert.That(PlayerProfileFileStore.Load(path).CompletedStoryIds,
-                Is.EquivalentTo(new[] { "story.future", "story.another" }));
+            Assert.That(PlayerProfileFileStore.Load(path).CompletedJourneyIds, Is.EquivalentTo(new[] { future, another }));
         }
 
         [TestCase("missing")]
         [TestCase("null")]
         [TestCase("number")]
         [TestCase("duplicate")]
-        [TestCase("blank")]
-        [TestCase("control")]
-        public void InvalidStoryCompletionFieldsAreRejected(string invalid)
+        [TestCase("invalid")]
+        public void InvalidJourneyCompletionFieldsAreRejected(string invalid)
         {
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
-            if (invalid == "missing") document.Remove("CompletedStoryIds");
-            if (invalid == "null") document["CompletedStoryIds"] = JValue.CreateNull();
-            if (invalid == "number") document["CompletedStoryIds"] = new JArray(42);
-            if (invalid == "duplicate") document["CompletedStoryIds"] = new JArray("story.a", "story.a");
-            if (invalid == "blank") document["CompletedStoryIds"] = new JArray(" ");
-            if (invalid == "control") document["CompletedStoryIds"] = new JArray("story.\ninvalid");
+            string journey = TestJourneys.IdOf("journey").ToString();
+            if (invalid == "missing") document.Remove("CompletedJourneyIds");
+            if (invalid == "null") document["CompletedJourneyIds"] = JValue.CreateNull();
+            if (invalid == "number") document["CompletedJourneyIds"] = new JArray(42);
+            if (invalid == "duplicate") document["CompletedJourneyIds"] = new JArray(journey, journey);
+            if (invalid == "invalid") document["CompletedJourneyIds"] = new JArray("journey\ninvalid");
             Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
         }
 

@@ -96,12 +96,34 @@ namespace Dice.Presentation
         public float BackgroundScaleTo => backgroundScaleTo;
     }
 
-    /** Authoring data joins the investigation lead, arrival sequence, and encounter presentation. */
+    /**
+     * Authoring data joins the investigation lead, arrival sequence, and encounter presentation. A journey without an
+     * encounter is a story. Its identity is its asset GUID.
+     */
     [CreateAssetMenu(menuName = "Dice/Encounter Journey")]
-    public sealed class EncounterJourneyAsset : ScriptableObject
+    public sealed class EncounterJourneyAsset : ContentAsset
     {
+        /** Identifies a journey where an identity is stored, as in the player profile. */
+        public readonly struct Id : IEquatable<Id>, IContentId
+        {
+            public Guid Value { get; }
+
+            public Id(Guid value)
+            {
+                if (value == Guid.Empty) throw new ArgumentException("A journey id requires a nonempty GUID.", nameof(value));
+                Value = value;
+            }
+
+            public bool Equals(Id other) => Value == other.Value;
+            public override bool Equals(object obj) => obj is Id other && Equals(other);
+            public override int GetHashCode() => Value.GetHashCode();
+            /** The 32 hexadecimal digits, as the journey's asset and its .meta file write its GUID. */
+            public override string ToString() => Value.ToString("N");
+            public static bool operator ==(Id left, Id right) => left.Equals(right);
+            public static bool operator !=(Id left, Id right) => !left.Equals(right);
+        }
+
         [SerializeField] private EncounterAsset encounter;
-        [SerializeField] private string storyId = string.Empty;
         [SerializeField] private string locationTitle;
         [SerializeField] private string spiritName;
         [SerializeField, TextArea] private string leadText;
@@ -123,13 +145,13 @@ namespace Dice.Presentation
         [SerializeField] private EncounterOutcomePresentation victoryPresentation;
         [SerializeField] private EncounterOutcomePresentation defeatPresentation;
         [SerializeField] private EncounterOutcomePresentation abandonPresentation;
-        [SerializeField] private EncounterAsset[] followUpEncounters = Array.Empty<EncounterAsset>();
-        [SerializeField] private string[] followUpStoryIds = Array.Empty<string>();
-        [SerializeField] private EncounterAsset[] requiredCompletedEncounters = Array.Empty<EncounterAsset>();
-        [SerializeField] private string[] requiredCompletedStoryIds = Array.Empty<string>();
+        [SerializeField] private EncounterJourneyAsset[] followUpJourneys = Array.Empty<EncounterJourneyAsset>();
+        [SerializeField] private EncounterJourneyAsset[] requiredCompletedJourneys = Array.Empty<EncounterJourneyAsset>();
 
-        public bool IsStoryOnly => !string.IsNullOrEmpty(storyId);
-        public string StoryId => storyId;
+        // A nested type and a member cannot share a name, so the id property is not called Id.
+        public Id Identity => new Id(AssetGuid);
+        /** A story journey has no encounter; it is complete on its final Continue. */
+        public bool IsStoryOnly => encounter == null;
         /** The encounter the journey leads to; a story journey has none. */
         public EncounterAsset Encounter => encounter;
         public string LocationTitle => locationTitle;
@@ -148,12 +170,10 @@ namespace Dice.Presentation
         public string CompletionClueTitle => completionClueTitle;
         public string CompletionClueText => completionClueText;
         public ProgressionRewardAsset CompletionReward => completionReward;
-        /** The encounter leads the board highlights after the journey's encounter is first won. */
-        public IReadOnlyList<EncounterAsset> FollowUpEncounters => followUpEncounters;
-        /** The story leads the board highlights after the journey's encounter is first won. */
-        public IReadOnlyList<string> FollowUpStoryIds => followUpStoryIds;
-        public IReadOnlyList<EncounterAsset> RequiredCompletedEncounters => requiredCompletedEncounters;
-        public IReadOnlyList<string> RequiredCompletedStoryIds => requiredCompletedStoryIds;
+        /** The leads the board highlights after the journey's encounter is first won. */
+        public IReadOnlyList<EncounterJourneyAsset> FollowUpJourneys => followUpJourneys;
+        /** The journeys the player must complete before this journey is available. */
+        public IReadOnlyList<EncounterJourneyAsset> RequiredCompletedJourneys => requiredCompletedJourneys;
 
         public EncounterOutcomePresentation GetOutcomePresentation(EncounterOutcome outcome)
         {
@@ -169,20 +189,13 @@ namespace Dice.Presentation
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (IsStoryOnly ? !IsStableId(storyId) : encounter == null)
-                throw new FormatException("The journey " + name + " requires a valid story ID or an encounter.");
-            if (IsStoryOnly && encounter != null)
-                throw new FormatException("The story journey " + name + " cannot specify an encounter.");
             var definition = IsStoryOnly ? null : catalog.GetEncounter(encounter.Identity);
             completionReward?.Build(catalog);
             victoryPresentation?.Validate();
             defeatPresentation?.Validate();
             abandonPresentation?.Validate();
-            ValidateEncounters(followUpEncounters, "Journey follow-up encounters");
-            ValidateStoryIds(followUpStoryIds, "Journey follow-up story IDs");
-            ValidateEncounters(requiredCompletedEncounters, "Journey completion prerequisites");
-            ValidateStoryIds(requiredCompletedStoryIds, "Journey completion prerequisite IDs");
-            foreach (var required in requiredCompletedEncounters) catalog.GetEncounter(required.Identity);
+            ValidateJourneys(followUpJourneys, "follow-up journeys");
+            ValidateJourneys(requiredCompletedJourneys, "required completed journeys");
             if (string.IsNullOrWhiteSpace(locationTitle) || string.IsNullOrWhiteSpace(spiritName) ||
                 string.IsNullOrWhiteSpace(leadText))
                 throw new FormatException("An encounter journey requires its location, host, and investigation lead.");
@@ -232,22 +245,14 @@ namespace Dice.Presentation
                 if (!ruleIds.Contains(rule.Id)) throw new FormatException("An encounter rule is missing its presentation.");
         }
 
-        private void ValidateEncounters(EncounterAsset[] encounters, string description)
+        private void ValidateJourneys(EncounterJourneyAsset[] journeys, string description)
         {
-            if (encounters == null) throw new FormatException(description + " require an array.");
-            var unique = new HashSet<EncounterAsset>();
-            foreach (var value in encounters)
-                if (value == null || value == encounter || !unique.Add(value))
-                    throw new FormatException(description + " must be present, unique, and different from the journey's encounter.");
-        }
-
-        private void ValidateStoryIds(string[] storyIds, string description)
-        {
-            if (storyIds == null) throw new FormatException(description + " require an array.");
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in storyIds)
-                if (!IsStableId(id) || id == storyId || !ids.Add(id))
-                    throw new FormatException(description + " must be valid, unique, and different from the journey.");
+            if (journeys == null) throw new FormatException("The journey " + name + " requires an array of " + description + ".");
+            var unique = new HashSet<EncounterJourneyAsset>();
+            foreach (var journey in journeys)
+                if (journey == null || journey == this || !unique.Add(journey))
+                    throw new FormatException("The " + description + " of the journey " + name + " must be present, unique " +
+                        "and different from the journey" + (journey != null ? ": " + journey.name : "") + ".");
         }
 
         private static bool IsStableId(string value)

@@ -60,8 +60,10 @@ namespace Dice.App
         }
 
         private static bool IsJourneyCompleted(EncounterJourneyAsset journey, Progress progress)
-            => journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
-                progress.CompletedEncounterIds.Contains(journey.Encounter.Identity);
+            => progress.CompletedJourneyIds.Contains(journey.Identity);
+
+        private static bool IsJourneyVisited(EncounterJourneyAsset journey, Progress progress)
+            => !journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.Encounter.Identity);
 
         public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
         {
@@ -93,10 +95,8 @@ namespace Dice.App
         public bool IsJourneyAvailable(EncounterJourneyAsset journey, Progress progress)
         {
             if (!IsCatalogJourney(journey) || !progress.HasProfile) return false;
-            if (IsJourneyCompleted(journey, progress) ||
-                (!journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.Encounter.Identity))) return true;
-            return journey.RequiredCompletedEncounters.All(encounter => progress.CompletedEncounterIds.Contains(encounter.Identity)) &&
-                journey.RequiredCompletedStoryIds.All(progress.CompletedStoryIds.Contains);
+            if (IsJourneyCompleted(journey, progress) || IsJourneyVisited(journey, progress)) return true;
+            return journey.RequiredCompletedJourneys.All(required => IsJourneyCompleted(required, progress));
         }
 
         public bool SelectEncounter(EncounterJourneyAsset journey, Progress progress, out SpiritStatusKind error)
@@ -195,16 +195,10 @@ namespace Dice.App
         public void RecordVictory(EncounterDefinition.Id encounterId, Progress progress)
         {
             var journey = JourneyCatalog?.Find(encounterId);
-            if (!progress.HasProfile || progress.CompletedEncounterIds.Contains(encounterId) || journey == null) return;
-            foreach (var encounter in journey.FollowUpEncounters)
-                if (!progress.VisitedEncounterIds.Contains(encounter.Identity) && !progress.CompletedEncounterIds.Contains(encounter.Identity))
-                    Highlight(JourneyCatalog.Find(encounter.Identity));
-            foreach (string id in journey.FollowUpStoryIds) Highlight(JourneyCatalog.FindStory(id));
-        }
-
-        private void Highlight(EncounterJourneyAsset journey)
-        {
-            if (journey != null && !highlightedJourneys.Contains(journey)) highlightedJourneys.Add(journey);
+            if (!progress.HasProfile || journey == null || IsJourneyCompleted(journey, progress)) return;
+            foreach (var followUp in journey.FollowUpJourneys)
+                if (!IsJourneyVisited(followUp, progress) && !IsJourneyCompleted(followUp, progress) &&
+                    !highlightedJourneys.Contains(followUp)) highlightedJourneys.Add(followUp);
         }
 
         // The controller completes required writes and run preparation before committing, then notifies observers.
@@ -224,16 +218,14 @@ namespace Dice.App
         {
             public bool HasProfile { get; }
             public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds { get; }
-            public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds { get; }
-            public IReadOnlyList<string> CompletedStoryIds { get; }
+            public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
 
             public Progress(bool hasProfile, IReadOnlyList<EncounterDefinition.Id> visitedEncounterIds,
-                IReadOnlyList<EncounterDefinition.Id> completedEncounterIds, IReadOnlyList<string> completedStoryIds)
+                IReadOnlyList<EncounterJourneyAsset.Id> completedJourneyIds)
             {
                 HasProfile = hasProfile;
                 VisitedEncounterIds = visitedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
-                CompletedEncounterIds = completedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
-                CompletedStoryIds = completedStoryIds ?? Array.Empty<string>();
+                CompletedJourneyIds = completedJourneyIds ?? Array.Empty<EncounterJourneyAsset.Id>();
             }
         }
 

@@ -34,7 +34,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void StoryWithoutMechanicalEncounterUsesItsIdAndReusesHostPresentation()
+        public void StoryWithoutMechanicalEncounterReusesHostPresentation()
         {
             var story = Journey("story.first");
             var rule = Create<EncounterRulePresentationAsset>();
@@ -43,22 +43,18 @@ namespace Dice.Tests
             var journeys = Catalog(story);
             Assert.That(story.IsStoryOnly, Is.True);
             Assert.That(story.Encounter, Is.Null);
-            Assert.That(story.RequiredCompletedEncounters, Is.Empty);
-            Assert.That(story.RequiredCompletedStoryIds, Is.Empty);
-            Assert.That(journeys.FindStory(story.StoryId), Is.SameAs(story));
+            Assert.That(story.RequiredCompletedJourneys, Is.Empty);
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
         }
 
         [TestCase("invitation")]
         [TestCase("automatic")]
-        [TestCase("encounter")]
         [TestCase("presentation")]
         public void StoryRequiresExplicitCompletionAndNoMechanicalInvitation(string invalid)
         {
             var story = Journey("story.first");
             if (invalid == "invitation") TestJourneys.SetBeat(story, 0, "kind", EncounterJourneyBeatKind.Invitation);
             if (invalid == "automatic") TestJourneys.SetBeat(story, 0, "autoAdvance", true);
-            if (invalid == "encounter") SyntheticUi.Set(story, "encounter", encounterAsset);
             if (invalid == "presentation") SyntheticUi.Set(story, "tablePresentation", null);
             Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog));
         }
@@ -69,7 +65,6 @@ namespace Dice.Tests
             var encounter = EncounterJourney();
             Assert.That(encounter.Encounter, Is.SameAs(encounterAsset));
             Assert.That(encounter.IsStoryOnly, Is.False);
-            Assert.That(encounter.StoryId, Is.Empty);
             var journeys = Catalog(encounter);
             Assert.That(journeys.Find(encounterAsset.Identity), Is.SameAs(encounter));
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
@@ -83,33 +78,30 @@ namespace Dice.Tests
             var encounter = EncounterJourney();
             var story = Journey("story.first");
             var final = Journey("story.return");
-            SyntheticUi.Set(encounter, "followUpStoryIds", new[] { story.StoryId });
-            SyntheticUi.Set(story, "requiredCompletedEncounters", new[] { encounterAsset });
-            SyntheticUi.Set(story, "followUpStoryIds", new[] { final.StoryId });
-            SyntheticUi.Set(final, "requiredCompletedStoryIds", new[] { story.StoryId });
+            SyntheticUi.Set(encounter, "followUpJourneys", new[] { story });
+            SyntheticUi.Set(story, "requiredCompletedJourneys", new[] { encounter });
+            SyntheticUi.Set(story, "followUpJourneys", new[] { final });
+            SyntheticUi.Set(final, "requiredCompletedJourneys", new[] { story });
             Assert.DoesNotThrow(() => Catalog(encounter, story, final).Validate(catalog));
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void MissingCompletionPrerequisitesAreRejected(bool storyPrerequisite)
+        [Test]
+        public void MissingCompletionPrerequisitesAreRejected()
         {
             var story = Journey("story.first");
-            if (storyPrerequisite) SyntheticUi.Set(story, "requiredCompletedStoryIds", new[] { "missing" });
-            else SyntheticUi.Set(story, "requiredCompletedEncounters", new[] { content.Encounter("encounter.missing") });
-            if (storyPrerequisite) Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog));
-            else Assert.Throws<KeyNotFoundException>(() => Catalog(story).Validate(catalog));
+            SyntheticUi.Set(story, "requiredCompletedJourneys", new[] { Journey("story.missing") });
+            Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog));
         }
 
         [TestCase("self")]
         [TestCase("duplicate")]
-        [TestCase("blank")]
-        public void InvalidCompletionPrerequisiteIdsAreRejected(string invalid)
+        [TestCase("null")]
+        public void InvalidCompletionPrerequisitesAreRejected(string invalid)
         {
             var first = Journey("story.first");
             var second = Journey("story.second");
-            SyntheticUi.Set(first, "requiredCompletedStoryIds", invalid == "duplicate" ? new[] { second.StoryId, second.StoryId } :
-                new[] { invalid == "self" ? first.StoryId : " " });
+            SyntheticUi.Set(first, "requiredCompletedJourneys", invalid == "duplicate" ? new[] { second, second } :
+                new[] { invalid == "self" ? first : null });
             Assert.Throws<FormatException>(() => Catalog(first, second).Validate(catalog));
         }
 
@@ -120,10 +112,9 @@ namespace Dice.Tests
             var first = mixed ? EncounterJourney() : Journey("story.first");
             var second = Journey("story.second");
             var third = Journey("story.third");
-            SyntheticUi.Set(first, "requiredCompletedStoryIds", new[] { second.StoryId });
-            SyntheticUi.Set(second, "requiredCompletedStoryIds", new[] { third.StoryId });
-            if (mixed) SyntheticUi.Set(third, "requiredCompletedEncounters", new[] { encounterAsset });
-            else SyntheticUi.Set(third, "requiredCompletedStoryIds", new[] { first.StoryId });
+            SyntheticUi.Set(first, "requiredCompletedJourneys", new[] { second });
+            SyntheticUi.Set(second, "requiredCompletedJourneys", new[] { third });
+            SyntheticUi.Set(third, "requiredCompletedJourneys", new[] { first });
             Assert.Throws<FormatException>(() => Catalog(first, second, third).Validate(catalog));
         }
 
@@ -139,7 +130,6 @@ namespace Dice.Tests
             SyntheticUi.Set(journeys, "chapters", new[] { firstChapter, secondChapter });
             Assert.That(journeys.Chapters, Is.EqualTo(new[] { firstChapter, secondChapter }));
             Assert.That(journeys.Entries, Is.EqualTo(new[] { encounter, story, later }));
-            Assert.That(journeys.FindStory(later.StoryId), Is.SameAs(later));
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
         }
 
@@ -173,30 +163,29 @@ namespace Dice.Tests
         {
             var encounter = EncounterJourney();
             var story = Journey("story.return");
-            SyntheticUi.Set(encounter, "followUpStoryIds", new[] { story.StoryId });
-            SyntheticUi.Set(story, "requiredCompletedEncounters", new[] { encounterAsset });
+            SyntheticUi.Set(encounter, "followUpJourneys", new[] { story });
+            SyntheticUi.Set(story, "requiredCompletedJourneys", new[] { encounter });
             var journeys = Catalog();
             SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.first", encounter), Chapter("chapter.second", story) });
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            SyntheticUi.Set(encounter, "requiredCompletedStoryIds", new[] { cycle ? story.StoryId : "story.missing" });
+            SyntheticUi.Set(encounter, "requiredCompletedJourneys", new[] { cycle ? story : Journey("story.missing") });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
         private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
             => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
 
-        /** A story journey of the story id. */
-        private EncounterJourneyAsset Journey(string storyId) => Journey(storyId, null);
+        /** A story journey identified by the name. */
+        private EncounterJourneyAsset Journey(string name) => Journey(name, null);
 
         /** The journey of the encounter the test catalog holds. */
-        private EncounterJourneyAsset EncounterJourney() => Journey(null, encounterAsset);
+        private EncounterJourneyAsset EncounterJourney() => Journey("journey.chapter", encounterAsset);
 
-        private EncounterJourneyAsset Journey(string storyId, EncounterAsset encounter)
+        private EncounterJourneyAsset Journey(string name, EncounterAsset encounter)
         {
             bool storyOnly = encounter == null;
-            var journey = Create<EncounterJourneyAsset>();
-            if (storyOnly) SyntheticUi.Set(journey, "storyId", storyId);
-            else SyntheticUi.Set(journey, "encounter", encounter);
+            var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), name);
+            SyntheticUi.Set(journey, "encounter", encounter);
             SyntheticUi.Set(journey, "locationTitle", "The clearing");
             SyntheticUi.Set(journey, "spiritName", "Spirit");
             SyntheticUi.Set(journey, "leadText", "A familiar spirit waits.");

@@ -16,7 +16,7 @@ namespace Dice.App
         private const string DiscoveredFamilyIdsField = "DiscoveredFamilyIds";
         private const string UnlockedModifierIdsField = "UnlockedModifierIds";
         private const string CompletedEncounterIdsField = "CompletedEncounterIds";
-        private const string CompletedStoryIdsField = "CompletedStoryIds";
+        private const string CompletedJourneyIdsField = "CompletedJourneyIds";
         private const string VisitedEncounterIdsField = "VisitedEncounterIds";
         // To change the format, raise PlayerProfile.CurrentFormatVersion and append a step that upgrades the previous format.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
@@ -31,7 +31,7 @@ namespace Dice.App
                 [DiscoveredFamilyIdsField] = IdArray(profile.DiscoveredFamilyIds, ContentIds.Family),
                 [UnlockedModifierIdsField] = new JArray(profile.UnlockedModifierIds),
                 [CompletedEncounterIdsField] = IdArray(profile.CompletedEncounterIds, ContentIds.Encounter),
-                [CompletedStoryIdsField] = new JArray(profile.CompletedStoryIds),
+                [CompletedJourneyIdsField] = IdArray(profile.CompletedJourneyIds, ContentIds.Journey),
                 [VisitedEncounterIdsField] = IdArray(profile.VisitedEncounterIds, ContentIds.Encounter)
             };
             byte[] bytes = SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented));
@@ -61,11 +61,11 @@ namespace Dice.App
                     foreach (var property in document.Properties())
                         if (property.Name != FormatVersionField && property.Name != DiscoveredFamilyIdsField &&
                             property.Name != UnlockedModifierIdsField && property.Name != CompletedEncounterIdsField &&
-                            property.Name != CompletedStoryIdsField && property.Name != VisitedEncounterIdsField)
+                            property.Name != CompletedJourneyIdsField && property.Name != VisitedEncounterIdsField)
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
                     ReadIds(document[DiscoveredFamilyIdsField], ContentIds.Family, profile.DiscoverFamily);
-                    ReadIds(document[CompletedStoryIdsField], profile.CompleteStory);
+                    ReadIds(document[CompletedJourneyIdsField], ContentIds.Journey, profile.CompleteJourney);
                     ReadIds(document[UnlockedModifierIdsField], profile.UnlockModifier);
                     ReadIds(document[CompletedEncounterIdsField], ContentIds.Encounter, profile.CompleteEncounter);
                     ReadIds(document[VisitedEncounterIdsField], ContentIds.Encounter, profile.VisitEncounter);

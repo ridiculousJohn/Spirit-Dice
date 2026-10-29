@@ -27,7 +27,7 @@ namespace Dice.Tests
         public SpiritStatus JourneyStatus => SpiritStatus.None;
         public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => Array.Empty<EncounterDefinition.Id>();
         public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => Array.Empty<EncounterJourneyAsset>();
-        public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
+        public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds => Array.Empty<EncounterJourneyAsset.Id>();
         public bool IsJourneyAvailable(EncounterJourneyAsset journey) => JourneyAvailable(journey);
         public bool IsChapterAvailable(string id) => ChapterAvailable(id);
         public bool IsChapterCompleted(string id) => false;

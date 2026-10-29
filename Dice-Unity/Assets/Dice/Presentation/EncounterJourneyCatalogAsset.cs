@@ -30,15 +30,7 @@ namespace Dice.Presentation
         public EncounterJourneyAsset Find(EncounterDefinition.Id encounterId)
         {
             foreach (var entry in Entries)
-                if (entry != null && !entry.IsStoryOnly && entry.Encounter != null && entry.Encounter.Identity == encounterId) return entry;
-            return null;
-        }
-
-        /** The story journey of the story id, or null. */
-        public EncounterJourneyAsset FindStory(string storyId)
-        {
-            foreach (var entry in Entries)
-                if (entry != null && entry.IsStoryOnly && entry.StoryId == storyId) return entry;
+                if (entry != null && !entry.IsStoryOnly && entry.Encounter.Identity == encounterId) return entry;
             return null;
         }
 
@@ -52,24 +44,27 @@ namespace Dice.Presentation
                         throw new FormatException("Chapters require unique nonempty IDs, titles, and journey entries.");
             var journeys = Entries;
             if (journeys == null || journeys.Count == 0) throw new FormatException("An investigation requires encounter journeys.");
+            var journeyIds = new HashSet<EncounterJourneyAsset.Id>();
             var encounterIds = new HashSet<EncounterDefinition.Id>();
-            var storyIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var entry in journeys)
             {
                 if (entry == null) throw new FormatException("Journey entries must be present.");
                 entry.Validate(catalog);
-                if (entry.IsStoryOnly ? !storyIds.Add(entry.StoryId) : !encounterIds.Add(entry.Encounter.Identity))
-                    throw new FormatException("Two journeys lead to the same encounter or story: " + entry.name + ".");
+                if (!journeyIds.Add(entry.Identity))
+                    throw new FormatException("The journey catalog lists the journey " + entry.name + " twice.");
+                if (!entry.IsStoryOnly && !encounterIds.Add(entry.Encounter.Identity))
+                    throw new FormatException("Two journeys lead to the same encounter: " + entry.name + ".");
             }
             foreach (var entry in journeys)
             {
-                foreach (var encounter in entry.FollowUpEncounters)
-                    if (!encounterIds.Contains(encounter.Identity))
-                        throw new FormatException("A follow-up encounter requires an investigation lead in the catalog.");
-                foreach (string id in entry.FollowUpStoryIds)
-                    if (!storyIds.Contains(id)) throw new FormatException("A follow-up story requires an investigation lead in the catalog.");
-                foreach (string id in entry.RequiredCompletedStoryIds)
-                    if (!storyIds.Contains(id)) throw new FormatException("A required completed story must exist in the journey catalog.");
+                foreach (var followUp in entry.FollowUpJourneys)
+                    if (!journeyIds.Contains(followUp.Identity))
+                        throw new FormatException("The follow-up journey " + followUp.name + " of the journey " + entry.name +
+                            " is not in the journey catalog.");
+                foreach (var required in entry.RequiredCompletedJourneys)
+                    if (!journeyIds.Contains(required.Identity))
+                        throw new FormatException("The required completed journey " + required.name + " of the journey " +
+                            entry.name + " is not in the journey catalog.");
             }
             var visiting = new HashSet<EncounterJourneyAsset>();
             var visited = new HashSet<EncounterJourneyAsset>();
@@ -80,13 +75,9 @@ namespace Dice.Presentation
             HashSet<EncounterJourneyAsset> visited)
         {
             if (visited.Contains(entry)) return;
-            if (!visiting.Add(entry)) throw new FormatException("Journey completion prerequisites cannot contain a cycle.");
-            foreach (var encounter in entry.RequiredCompletedEncounters)
-            {
-                var required = Find(encounter.Identity);
-                if (required != null) ValidatePrerequisiteCycles(required, visiting, visited);
-            }
-            foreach (string id in entry.RequiredCompletedStoryIds) ValidatePrerequisiteCycles(FindStory(id), visiting, visited);
+            if (!visiting.Add(entry))
+                throw new FormatException("Journey completion prerequisites cannot contain a cycle: " + entry.name + ".");
+            foreach (var required in entry.RequiredCompletedJourneys) ValidatePrerequisiteCycles(required, visiting, visited);
             visiting.Remove(entry);
             visited.Add(entry);
         }

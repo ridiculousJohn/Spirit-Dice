@@ -1,11 +1,33 @@
+using System;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Dice.Presentation;
+using Dice.UnityContent;
 
 namespace Dice.Tests
 {
-    /** Fills fabricated journey content through its serialized fields: catalogs, chapters and journey beats. */
+    /**
+     * Fills fabricated journey content through its serialized fields: identities, catalogs, chapters and journey beats.
+     */
     internal static class TestJourneys
     {
+        /** The test journey id named by the text: each name has one id, derived from the name. */
+        public static EncounterJourneyAsset.Id IdOf(string name)
+        {
+            if (name == null) throw new ArgumentNullException(nameof(name));
+            using (var hash = MD5.Create())
+                return new EncounterJourneyAsset.Id(new Guid(hash.ComputeHash(Encoding.UTF8.GetBytes("journey:" + name))));
+        }
+
+        /** Names the journey and stores the test journey id of the name as its asset GUID. */
+        public static EncounterJourneyAsset Identify(EncounterJourneyAsset journey, string name)
+        {
+            journey.name = name;
+            SyntheticUi.Set(journey, ContentAsset.AssetGuidField, IdOf(name).Value.ToString("N"));
+            return journey;
+        }
+
         public static (string Id, EncounterJourneyBeatKind Kind) Beat(string id, EncounterJourneyBeatKind kind) => (id, kind);
 
         /** Replaces the journey's beats with new default beats of the given ids and kinds; an arrival beat shows the host arriving. */

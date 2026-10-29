@@ -85,10 +85,10 @@ namespace Dice.Presentation
             chapterLabel.text = chapterIndex > 0 ? wording.investigation.ChapterProgress(chapterIndex) : wording.investigation.chapters;
             Title.text = chapter != null ? chapter.Title : catalog != null ? catalog.Title : wording.investigation.defaultTitle;
             Description.text = chapter != null ? chapter.Description : catalog != null ? catalog.Description : "";
-            string progress = Progress(controls, encounter);
+            string progress = Progress(controls);
             if (rebuild || chapterChanged || renderedProgress != progress)
             {
-                var firstHighlight = BuildClues(controls, encounter);
+                var firstHighlight = BuildClues(controls);
                 Canvas.ForceUpdateCanvases();
                 LayoutRebuilder.ForceRebuildLayoutImmediate(Content);
                 // Highlight focus takes precedence over the chapter's default position at the top.
@@ -114,7 +114,7 @@ namespace Dice.Presentation
             CollectionButton.interactable = collectionAvailable;
         }
 
-        private RectTransform BuildClues(IEncounterJourneyControls controls, ISpiritEncounterControls encounter)
+        private RectTransform BuildClues(IEncounterJourneyControls controls)
         {
             foreach (var card in clueCards) { card.SetActive(false); Destroy(card); }
             clueCards.Clear();
@@ -132,9 +132,7 @@ namespace Dice.Presentation
                 bool highlighted = controls.HighlightedJourneys.Contains(journey);
                 if (highlighted && firstHighlight == null) firstHighlight = (RectTransform)card.transform;
                 bool visited = !journey.IsStoryOnly && controls.VisitedEncounterIds.Contains(journey.Encounter.Identity);
-                bool completed = journey.IsStoryOnly ? controls.CompletedStoryIds.Contains(journey.StoryId) :
-                    encounter is ISpiritProgressionControls progression &&
-                    progression.CompletedEncounterIds.Contains(journey.Encounter.Identity);
+                bool completed = controls.CompletedJourneyIds.Contains(journey.Identity);
                 string state = journey.IsStoryOnly ? completed ? wording.readAgain : wording.followLead :
                     visited ? wording.visitedLead : wording.followLead;
                 card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
@@ -161,7 +159,7 @@ namespace Dice.Presentation
             if (journeyControls != null) ChapterSelector.Show(journeyControls);
         }
 
-        private static string Progress(IEncounterJourneyControls controls, ISpiritEncounterControls encounter)
+        private static string Progress(IEncounterJourneyControls controls)
         {
             var available = new List<string>();
             if (controls.JourneyCatalog != null)
@@ -169,10 +167,8 @@ namespace Dice.Presentation
                     if (journey != null && controls.IsJourneyAvailable(journey)) available.Add(journey.name);
             return (controls.SelectedChapter != null ? controls.SelectedChapter.Id : "") + "\n\n" +
                 string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
-                "\n\n" + string.Join("\n", controls.CompletedStoryIds) + "\n\n" +
-                string.Join("\n", controls.HighlightedJourneys.Select(journey => journey.name)) + "\n\n" +
-                (encounter is ISpiritProgressionControls progression ?
-                    string.Join("\n", progression.CompletedEncounterIds) : "");
+                "\n\n" + string.Join("\n", controls.CompletedJourneyIds) + "\n\n" +
+                string.Join("\n", controls.HighlightedJourneys.Select(journey => journey.name));
         }
 
         private static IReadOnlyList<EncounterJourneyAsset> Entries(IEncounterJourneyControls controls)

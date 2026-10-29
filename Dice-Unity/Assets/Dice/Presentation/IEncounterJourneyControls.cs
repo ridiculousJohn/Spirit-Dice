@@ -20,7 +20,7 @@ namespace Dice.Presentation
         IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds { get; }
         /** The follow-up leads of won encounters, highlighted until they are selected. */
         IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys { get; }
-        IReadOnlyList<string> CompletedStoryIds { get; }
+        IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
         bool IsJourneyAvailable(EncounterJourneyAsset journey);
         bool IsChapterAvailable(string id);
         bool IsChapterCompleted(string id);

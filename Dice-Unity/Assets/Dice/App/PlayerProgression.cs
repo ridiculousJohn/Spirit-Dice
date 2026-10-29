@@ -20,7 +20,8 @@ namespace Dice.App
         public IReadOnlyList<string> ProfileUnlockedModifierIds => profile?.UnlockedModifierIds ?? (IReadOnlyList<string>)Array.Empty<string>();
         public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds =>
             profile?.CompletedEncounterIds ?? (IReadOnlyList<EncounterDefinition.Id>)Array.Empty<EncounterDefinition.Id>();
-        public IReadOnlyList<string> CompletedStoryIds => profile?.CompletedStoryIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds =>
+            profile?.CompletedJourneyIds ?? (IReadOnlyList<EncounterJourneyAsset.Id>)Array.Empty<EncounterJourneyAsset.Id>();
         public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds =>
             profile?.VisitedEncounterIds ?? (IReadOnlyList<EncounterDefinition.Id>)Array.Empty<EncounterDefinition.Id>();
 
@@ -75,7 +76,11 @@ namespace Dice.App
             return result;
         }
 
-        public bool RecordProgression(EncounterSnapshot snapshot, MechanicalCatalog catalog,
+        /**
+         * Records the snapshot's unlocks and, when it is won, its encounter and the journey that led to it (none in direct
+         * play) as completed, with the journey's completion reward.
+         */
+        public bool RecordProgression(EncounterSnapshot snapshot, MechanicalCatalog catalog, EncounterJourneyAsset.Id? journeyId,
             ProgressionRewardDefinition completionReward, EncounterSaveData unlockSave = null, string unlockSavePath = null)
         {
             if (profile == null) return false;
@@ -90,6 +95,7 @@ namespace Dice.App
             if (snapshot.Outcome == EncounterOutcome.Won)
             {
                 profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);
+                if (journeyId.HasValue) profileDirty |= profile.CompleteJourney(journeyId.Value);
                 if (completionReward != null) profileDirty |= profile.ApplyReward(completionReward, catalog);
             }
             return PersistProfile();
@@ -102,13 +108,13 @@ namespace Dice.App
             return CommitProfileChange(next => next.ApplyReward(reward, catalog), PlayerProfileStatusKind.RewardFailed, out changed);
         }
 
-        public bool CompleteStoryJourney(string storyId, IEnumerable<ProgressionRewardDefinition> rewards,
+        public bool CompleteStoryJourney(EncounterJourneyAsset.Id journeyId, IEnumerable<ProgressionRewardDefinition> rewards,
             MechanicalCatalog catalog)
             => CommitProfileChange(next =>
             {
                 foreach (var reward in rewards)
                     if (reward != null) next.ApplyReward(reward, catalog);
-                next.CompleteStory(storyId);
+                next.CompleteJourney(journeyId);
                 return true;
             }, PlayerProfileStatusKind.StoryFailed, out _);
 

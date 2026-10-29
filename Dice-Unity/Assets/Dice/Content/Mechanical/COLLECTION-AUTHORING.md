@@ -48,9 +48,9 @@ lists, and include the granted charms in that region's ordinary run pools so the
 can appear during play. Starter and previously owned families need no explicit
 discovery reward. Permanent Collection excludes inert and encounter-only content.
 
-Chapter 1 follows fox, owl, moth, then the story journey
-`story.fox.chapter-one-return`. Each requires completion of the preceding
-encounter; the first fox visit has no prerequisite. Returning to the fox uses
+Chapter 1 follows fox, owl, moth, then the story journey (a journey without an
+encounter) `ChapterOneReturnJourney`. Each requires completion of the preceding
+journey; the first fox visit has no prerequisite. Returning to the fox uses
 `ChapterOnePreparations` to reveal Sheltering Branch and Boundary Stone, and
 grants Sheltering Branch / Base (+15 Base, tier 2) and Boundary Stone / Mult
 (+2 Mult, tier 1). These ordinary permanent charms already belong to the existing
