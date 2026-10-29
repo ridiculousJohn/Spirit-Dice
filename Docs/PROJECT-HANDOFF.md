@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Current state: October 28, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
+Current state: October 29, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
 
 ## Working contract
 
@@ -217,7 +217,7 @@ Approved art and motion plan (presentation only; nothing saved, no gameplay effe
 
 Implemented:
 - Engine: `DieBindingRuleDefinition` (Engine/DieBinding.cs) with `DieBindingSaveData`, `DieMarkedEvent` and `DieBoundEvent`; generic rule hooks for hand start, reroll resolution and locked dice; the rule's own snapshot `DieBindingRuleSnapshot` (`BoundMask`, `MarkedMask`) and the shared `LockedMask`; the condition `BoundFaceCountAtLeastCondition` (authored as `BoundFaceCountAtLeastConditionConfig`); `encounterModifiersFirstClearedStageNumber` on encounter assets. The pre-play encounter-charms screen is skipped for encounters whose additions are delayed, and tapping a bound die does nothing.
-- Content: the encounter asset `encounter.nymph.bound_tree` (spirit.nymph) in Content/Mechanical/Encounters, NymphBinding.asset (`rule.nymph.binding`), the four Grafted Branch assets (`modifier.play_hand.bound_face_count_at_least.*`, provisional Joined Roots icon), reward pool assets `RewardPools/reward_pool.nymph.bound_tree.*` (Moth's ordinary pools, which already contain Untouched Snow, plus Great Oak and Close Branches), ProgressionRewards/NymphFamilyDiscovery.asset (referenced by BoundTreeJourney.asset), and the Unturned Leaf display names. Details are in Content/Mechanical/COLLECTION-AUTHORING.md.
+- Content: the encounter asset `encounter.nymph.bound_tree` in Content/Mechanical/Encounters, NymphBinding.asset (`rule.nymph.binding`), the four Grafted Branch assets (`modifier.play_hand.bound_face_count_at_least.*`, provisional Joined Roots icon), reward pool assets `RewardPools/reward_pool.nymph.bound_tree.*` (Moth's ordinary pools, which already contain Untouched Snow, plus Great Oak and Close Branches), ProgressionRewards/NymphFamilyDiscovery.asset (referenced by BoundTreeJourney.asset), and the Unturned Leaf display names. Details are in Content/Mechanical/COLLECTION-AUTHORING.md.
 
 Structure and rewards:
 - The player plays the possessing spirit, which is the encounter's host. The nymph is a separate figure in the scene. The merchant leads the player to the edge of the dry ground and returns to his cart.

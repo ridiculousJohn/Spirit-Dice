@@ -37,7 +37,7 @@ the charm or inserts it into an encounter's ordinary pool.
 Reference the asset from an encounter journey beat's `progressionReward` or the
 journey's `completionReward`. Beat rewards apply when continuing past the beat,
 including skipped beats, and invitation rewards apply on acceptance. Completion
-rewards apply on victory, or after the final explicit continue in a story journey.
+rewards apply when the journey completes at its last beat: on victory when that beat is its Encounter beat, otherwise after the final explicit continue.
 Replaying these events is safe: discoveries and ownership
 are sets, so they do not accumulate duplicates. Other story systems can call
 `SpiritEncounterController.ApplyProgressionReward` with a built definition.
@@ -50,7 +50,7 @@ lists, and include the granted charms in that region's ordinary run pools so the
 can appear during play. Starter and previously owned families need no explicit
 discovery reward. Permanent Collection excludes inert and encounter-only content.
 
-Chapter 1 follows fox, owl, moth, then the story journey (a journey without an
+Chapter 1 follows fox, owl, moth, then the return journey (a journey without an
 encounter) `ChapterOneReturnJourney`. Each requires completion of the preceding
 journey; the first fox visit has no prerequisite. Returning to the fox uses
 `ChapterOnePreparations` to reveal Sheltering Branch and Boundary Stone, and
