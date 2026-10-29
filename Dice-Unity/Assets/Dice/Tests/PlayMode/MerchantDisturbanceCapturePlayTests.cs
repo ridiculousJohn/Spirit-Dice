@@ -290,7 +290,7 @@ namespace Dice.Tests
             if (!Application.isFocused) view.SendMessage("OnApplicationFocus", true);
 
             var piece = view.TablePieces.Single();
-            Assert.That(piece.PieceId, Is.EqualTo(ward.PieceId));
+            Assert.That(piece.Piece.Identity, Is.EqualTo(ward.PieceId));
             if (kind == Case.BlockedByCandle) yield return Move(controller, piece, PiecePosition.Bay(plan.Bay));
             if (kind != Case.ForcedRerollOnPlayHand)
                 for (int die = 0; die < DiceValues.Count; die++)
@@ -410,7 +410,8 @@ namespace Dice.Tests
 
             // Moving the candle draws nothing, so the same rule draws target the bay it now wards.
             var warded = EncounterSession.CreateEncounter(catalog, encounterId, seed);
-            var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, ward.InteractionId,
+            var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, catalog.GetEncounter(encounterId).Pieces
+                .Single(value => value.Identity == ward.PieceId).IndexOf<PositionInteractionDefinition>(),
                 new MovePieceInput(PiecePosition.Bay(plan.Bay))), warded.Snapshot.Revision);
             if (!moved.Accepted) return null;
             var attempted = warded.Execute(new RerollDiceAction(RerollMask), warded.Snapshot.Revision);
@@ -454,11 +455,13 @@ namespace Dice.Tests
             var placement = piece.GetComponent<SpiritTablePiecePosition>();
             if (placement.Position != position)
             {
-                controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
+                controller.InteractWithPiece(piece.Piece.Identity, controller.Snapshot.PieceInteractions
+                    .Single(value => value.PieceId == piece.Piece.Identity && value.State is PiecePositionState).InteractionIndex,
+                    new MovePieceInput(position));
                 float deadline = Time.realtimeSinceStartup + 10;
                 while ((controller.IsBusy || placement.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
             }
-            Assert.That(placement.Position, Is.EqualTo(position), piece.PieceId);
+            Assert.That(placement.Position, Is.EqualTo(position), piece.name);
             Vector3 previous = piece.transform.position;
             int stable = 0;
             float settle = Time.realtimeSinceStartup + 5;
@@ -468,7 +471,7 @@ namespace Dice.Tests
                 stable = (piece.transform.position - previous).sqrMagnitude < 1e-6f ? stable + 1 : 0;
                 previous = piece.transform.position;
             }
-            Assert.That(stable, Is.EqualTo(3), piece.PieceId + " must settle.");
+            Assert.That(stable, Is.EqualTo(3), piece.name + " must settle.");
         }
 
         /**

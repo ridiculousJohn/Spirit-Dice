@@ -3,8 +3,8 @@ using System;
 namespace Dice.Engine
 {
     /**
-     * A typed id of content identified by its asset GUID (ModifierFamilyDefinition.Id, EncounterDefinition.Id). Saves
-     * write every such id the same way, through this interface.
+     * A typed id of content identified by its asset GUID (ModifierFamilyDefinition.Id, EncounterDefinition.Id,
+     * TablePieceDefinition.Id). Saves write every such id the same way, through this interface.
      */
     public interface IContentId
     {

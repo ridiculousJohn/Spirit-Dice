@@ -75,21 +75,28 @@ namespace Dice.UnityContent
             return definitions;
         }
 
-        private static TablePieceDefinition[] BuildPieces(PieceData[] sources)
+        private TablePieceDefinition[] BuildPieces(PieceData[] sources)
         {
-            if (sources == null) throw new InvalidOperationException("Table pieces are missing.");
+            if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no table piece list.");
             var definitions = new TablePieceDefinition[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
-                var source = sources[i] ?? throw new InvalidOperationException("A table piece entry is missing.");
-                if (source.interactions == null) throw new InvalidOperationException("Table piece interactions are missing.");
+                var source = sources[i] ??
+                    throw new InvalidOperationException("The encounter " + name + " has a missing table piece entry.");
+                if (source.piece == null)
+                    throw new InvalidOperationException("The encounter " + name + " has a table piece entry without its piece.");
+                string where = "The table piece " + source.piece.name + " of the encounter " + name;
+                if (source.interactions == null) throw new InvalidOperationException(where + " has no interaction list.");
                 var interactions = new PieceInteractionDefinition[source.interactions.Length];
+                var kinds = new HashSet<Type>();
                 for (int j = 0; j < interactions.Length; ++j)
                 {
-                    var interaction = source.interactions[j] ?? throw new InvalidOperationException("A piece interaction asset is missing.");
+                    var interaction = source.interactions[j] ?? throw new InvalidOperationException(where + " has a missing interaction.");
+                    if (!kinds.Add(interaction.GetType()))
+                        throw new InvalidOperationException(where + " has more than one " + interaction.GetType().Name + ".");
                     interactions[j] = interaction.Build();
                 }
-                definitions[i] = new TablePieceDefinition(source.id, interactions);
+                definitions[i] = new TablePieceDefinition(source.piece.Identity, interactions);
             }
             return definitions;
         }
@@ -135,11 +142,16 @@ namespace Dice.UnityContent
                 source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
         }
 
+        /**
+         * A table piece the encounter places and the piece's interactions in this encounter, at most one of each kind;
+         * another encounter can place the same piece with other interactions.
+         */
         [Serializable]
         private sealed class PieceData
         {
-            public string id;
-            public PieceInteractionAsset[] interactions = Array.Empty<PieceInteractionAsset>();
+            public TablePieceAsset piece;
+            [SerializeReference, SelectImplementation]
+            public PieceInteractionConfig[] interactions = Array.Empty<PieceInteractionConfig>();
         }
 
         [Serializable]

@@ -175,9 +175,9 @@ namespace Dice.Engine
             EncounterModifiersFirstClearedStageNumber = encounterModifiersFirstClearedStageNumber;
             UnlockRewardModifierIds = CopyUniqueIds(unlockRewardModifierIds, nameof(unlockRewardModifierIds));
             var pieceList = pieces == null ? new List<TablePieceDefinition>() : new List<TablePieceDefinition>(pieces);
-            var pieceIds = new HashSet<string>(StringComparer.Ordinal);
+            var pieceIds = new HashSet<TablePieceDefinition.Id>();
             foreach (var piece in pieceList)
-                if (piece == null || !pieceIds.Add(piece.Id))
+                if (piece == null || !pieceIds.Add(piece.Identity))
                     throw new ArgumentException("Table piece IDs must be unique and nonnull.", nameof(pieces));
             Pieces = pieceList.AsReadOnly();
             foreach (var rule in Rules) rule.ValidateDefinition(this);

@@ -1,3 +1,4 @@
+using System;
 using Dice.Engine;
 using UnityEngine;
 
@@ -7,10 +8,14 @@ namespace Dice.UnityContent
     public sealed class BayWardRuleAsset : EncounterRuleAsset
     {
         [SerializeField] private string ruleId;
-        [SerializeField] private string pieceId;
-        [SerializeField] private string interactionId = "position";
+        [Tooltip("The table piece whose bay the ward protects; its encounter must place it with a position interaction.")]
+        [SerializeField] private TablePieceAsset piece;
         [SerializeField] private DieInterferenceKind[] blockedEffects = { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip };
 
-        public override EncounterRuleDefinition Build() => new BayWardRuleDefinition(ruleId, pieceId, interactionId, blockedEffects);
+        public override EncounterRuleDefinition Build()
+        {
+            if (piece == null) throw new InvalidOperationException("The ward rule " + name + " references no table piece.");
+            return new BayWardRuleDefinition(ruleId, piece.Identity, blockedEffects);
+        }
     }
 }

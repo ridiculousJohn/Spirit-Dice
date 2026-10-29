@@ -1,23 +1,23 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
+using Dice.UnityContent;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
     /**
-     * Authored prop of a table piece interaction, with what every interaction kind shares: the piece and interaction IDs, the
-     * presenter that binds the prop to the interaction's state and input, and the prop's light and repel flare. Behaviour of
-     * one interaction kind lives in that kind's presenter and the components it owns on the prop.
+     * Authored prop of a table piece, with what every interaction kind shares: the piece, the presenter that binds the prop
+     * to the state and input of the piece's interaction of the presenter's kind, and the prop's light and repel flare.
+     * Behaviour of one interaction kind lives in that kind's presenter and the components it owns on the prop.
      */
     [DisallowMultipleComponent, RequireComponent(typeof(RectTransform))]
     public sealed class SpiritTablePieceView : MonoBehaviour
     {
-        [Tooltip("Table piece ID from the encounter's mechanical content.")]
-        [SerializeField] private string pieceId;
-        [Tooltip("ID of the piece's interaction.")]
-        [SerializeField] private string interactionId;
-        [Tooltip("Presenter kind of the interaction, which binds this prop to the interaction's state and input; it must present the interaction's kind.")]
+        [Tooltip("Table piece from the encounter's mechanical content.")]
+        [SerializeField] private TablePieceAsset piece;
+        [Tooltip("Presenter of one interaction kind, which binds this prop to the piece's interaction of that kind; the encounter must give the piece one.")]
         [SerializeField] private PieceInteractionPresenterAsset presenter;
         [Tooltip("Flame or glow graphics whose alpha follows the bound scene light's sampled intensity.")]
         [SerializeField] private Graphic[] emissiveImages = Array.Empty<Graphic>();
@@ -37,8 +37,7 @@ namespace Dice.Presentation
         private Vector3 flareBaseScale;
         private Color[] emissiveColors;
 
-        public string PieceId => pieceId;
-        public string InteractionId => interactionId;
+        public TablePieceAsset Piece => piece;
         public PieceInteractionPresenterAsset Presenter => presenter;
         /** Multiplies the bound scene light; above one only while flaring. */
         public float LightIntensity => 1f + (flareLightIntensity - 1f) * FlarePulse();
@@ -46,12 +45,11 @@ namespace Dice.Presentation
         public float FlareDuration => flareDuration;
         public bool IsFlaring => !float.IsNegativeInfinity(flareStart);
 
-        /** The prop among these that presents the piece's interaction, or null when none does. */
-        public static SpiritTablePieceView Find(IReadOnlyList<SpiritTablePieceView> pieces, string pieceId, string interactionId)
+        /** The prop among these that presents the piece, or null when none does. */
+        public static SpiritTablePieceView Find(IReadOnlyList<SpiritTablePieceView> pieces, TablePieceDefinition.Id pieceId)
         {
             foreach (var piece in pieces)
-                if (piece != null && string.Equals(piece.PieceId, pieceId, StringComparison.Ordinal) &&
-                    string.Equals(piece.InteractionId, interactionId, StringComparison.Ordinal)) return piece;
+                if (piece != null && piece.piece != null && piece.piece.Identity == pieceId) return piece;
             return null;
         }
 

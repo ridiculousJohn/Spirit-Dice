@@ -205,14 +205,11 @@ namespace Dice.Engine
     public sealed class BayWardRuleDefinition : EncounterRuleDefinition
     {
         private readonly HashSet<DieInterferenceKind> blocked;
-        public string PieceId { get; }
-        public string InteractionId { get; }
+        public TablePieceDefinition.Id PieceId { get; }
 
-        public BayWardRuleDefinition(string id, string pieceId, string interactionId, IEnumerable<DieInterferenceKind> blockedKinds)
+        public BayWardRuleDefinition(string id, TablePieceDefinition.Id pieceId, IEnumerable<DieInterferenceKind> blockedKinds)
             : base(id)
         {
-            DefinitionValidation.RequireId(pieceId, nameof(pieceId));
-            DefinitionValidation.RequireId(interactionId, nameof(interactionId));
             if (blockedKinds == null) throw new ArgumentNullException(nameof(blockedKinds));
             blocked = new HashSet<DieInterferenceKind>();
             foreach (var kind in blockedKinds)
@@ -223,7 +220,6 @@ namespace Dice.Engine
             }
             if (blocked.Count == 0) throw new ArgumentException("A ward must block at least one effect.", nameof(blockedKinds));
             PieceId = pieceId;
-            InteractionId = interactionId;
         }
 
         public bool Blocks(DieInterferenceKind kind) => blocked.Contains(kind);
@@ -232,14 +228,15 @@ namespace Dice.Engine
 
         internal override void ValidateDefinition(EncounterDefinition encounter)
         {
-            if (!TablePieceStates.TryFind(encounter, PieceId, InteractionId, out _, out var interaction) ||
-                !(interaction is PositionInteractionDefinition))
-                throw new ArgumentException("A ward must reference a positioned table piece.", nameof(encounter));
+            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out _, out _))
+                throw new ArgumentException("The ward " + Id + " must reference a positioned table piece of its encounter: piece " +
+                    PieceId + ".", nameof(encounter));
         }
 
         internal override bool ProtectsBay(EncounterDefinition encounter, EncounterState state, int bay, DieInterferenceKind kind)
         {
-            if (!blocked.Contains(kind) || !TablePieceStates.TryFind(encounter, PieceId, InteractionId, out int slot, out _))
+            if (!blocked.Contains(kind) ||
+                !TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out int slot, out _))
                 return false;
             var position = ((PiecePositionState)state.PieceStates[slot]).Position;
             return position.Kind == PiecePositionKind.DiceBay && position.Index == bay;

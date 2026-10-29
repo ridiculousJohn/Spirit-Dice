@@ -11,8 +11,9 @@ namespace Dice.Tests
     /** Table pieces, the die interference rule and the bay ward rule, each on a minimal test-only encounter. */
     public sealed class TablePieceInterferenceTests
     {
-        private const string PieceId = "piece.test";
-        private const string InteractionId = "position";
+        private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.test");
+        // The test piece holds one interaction, its position.
+        private const int InteractionIndex = 0;
         private const string HauntingId = "rule.test.haunting";
         private const string WardId = "rule.test.ward";
         private const int AllButFirstBay = 0b11110;
@@ -41,13 +42,13 @@ namespace Dice.Tests
             var session = Session(Catalog(chance: 0, allowedBays: 0b01111));
             string before = Json(session.CaptureSave());
             long revision = session.Snapshot.Revision;
-            Assert.That(session.Execute(new InteractWithPieceAction("piece.missing", InteractionId, new MovePieceInput(PiecePosition.Bay(0))),
-                revision).Rejection, Is.EqualTo(CommandRejection.InvalidPiece));
-            Assert.That(session.Execute(new InteractWithPieceAction(PieceId, "missing", new MovePieceInput(PiecePosition.Bay(0))),
-                revision).Rejection, Is.EqualTo(CommandRejection.InvalidPiece));
+            Assert.That(session.Execute(new InteractWithPieceAction(TestPieces.IdOf("piece.missing"), InteractionIndex,
+                new MovePieceInput(PiecePosition.Bay(0))), revision).Rejection, Is.EqualTo(CommandRejection.InvalidPiece));
+            Assert.That(session.Execute(new InteractWithPieceAction(PieceId, InteractionIndex + 1,
+                new MovePieceInput(PiecePosition.Bay(0))), revision).Rejection, Is.EqualTo(CommandRejection.InvalidPiece));
             Assert.That(session.Execute(Move(PiecePosition.Neutral), revision).Rejection, Is.EqualTo(CommandRejection.InvalidPieceInput));
             Assert.That(session.Execute(Move(PiecePosition.Bay(4)), revision).Rejection, Is.EqualTo(CommandRejection.InvalidPieceInput));
-            Assert.That(session.Execute(new InteractWithPieceAction(PieceId, InteractionId, null), revision).Rejection,
+            Assert.That(session.Execute(new InteractWithPieceAction(PieceId, InteractionIndex, null), revision).Rejection,
                 Is.EqualTo(CommandRejection.InvalidPieceInput));
             Assert.That(Json(session.CaptureSave()), Is.EqualTo(before));
         }
@@ -98,8 +99,8 @@ namespace Dice.Tests
         public void SaveCarriesTheEncountersPiecesAndOnlyRulesWithSavedState()
         {
             var save = Session(Catalog(chance: 0, ward: true)).CaptureSave();
-            Assert.That(save.Pieces.Select(value => value.PieceId + "/" + value.InteractionId),
-                Is.EqualTo(new[] { PieceId + "/" + InteractionId }));
+            Assert.That(save.Pieces.Select(value => value.PieceId + "/" + value.Interactions.Length),
+                Is.EqualTo(new[] { PieceId + "/1" }));
             Assert.That(save.RuleStates.Select(value => value.RuleId), Is.EqualTo(new[] { HauntingId }));
         }
 
@@ -111,30 +112,31 @@ namespace Dice.Tests
             var session = Session(catalog);
             AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces = null);
             AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces = Array.Empty<EncounterSavePieceData>());
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].PieceId = "piece.other");
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Values = new[] { 1, 5 });
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Values = new[] { 0, 1 });
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Values = new[] { 1 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].PieceId = TestPieces.IdOf("piece.other"));
+            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions = Array.Empty<int[]>());
+            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 1, 5 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 0, 1 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 1 });
             var neutralForbidden = Catalog(chance: 0, allowsNeutral: false, startingBay: 0);
-            AssertInvalid(neutralForbidden, Session(neutralForbidden).CaptureSave(), save => save.Pieces[0].Values = new[] { 0, 0 });
+            AssertInvalid(neutralForbidden, Session(neutralForbidden).CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 0, 0 });
         }
 
         /** Checks piece, interference and ward definitions reject invalid configurations / fails if malformed content constructs. */
         [Test]
         public void DefinitionsValidatePiecesAndWardReferences()
         {
-            var position = new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand);
+            var position = new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand);
             Assert.Throws<ArgumentException>(() => new TablePieceDefinition(PieceId, new[] { position, position }));
             Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(10, 1, 1) },
                 pieces: new[] { new TablePieceDefinition(PieceId, new[] { position }), new TablePieceDefinition(PieceId) }));
             Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(10, 1, 1) }, rules: new[] { Ward() }));
-            Assert.Throws<ArgumentException>(() => new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral,
+            Assert.Throws<ArgumentException>(() => new PositionInteractionDefinition(PiecePosition.Neutral,
                 PieceMovementTiming.DuringHand, allowsNeutral: false));
             Assert.Throws<ArgumentException>(() => new DieInterferenceRuleDefinition(HauntingId, 20, 0, 0, true, true));
             Assert.Throws<ArgumentOutOfRangeException>(() => new DieInterferenceRuleDefinition(HauntingId, 101, 1, 1, true, true));
-            Assert.Throws<ArgumentException>(() => new BayWardRuleDefinition(WardId, PieceId, InteractionId,
+            Assert.Throws<ArgumentException>(() => new BayWardRuleDefinition(WardId, PieceId,
                 Array.Empty<DieInterferenceKind>()));
         }
 
@@ -344,7 +346,7 @@ namespace Dice.Tests
             if (haunting) rules.Add(new DieInterferenceRuleDefinition(HauntingId, chance, rerollWeight, flipWeight, afterReroll, afterPlay));
             if (ward) rules.Add(Ward(blocked));
             var start = startingBay < 0 ? PiecePosition.Neutral : PiecePosition.Bay(startingBay);
-            var pieceList = new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(InteractionId, start, timing,
+            var pieceList = new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(start, timing,
                 allowsNeutral, allowedBays) }) };
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: modifiers?.Select(value => value.Id),
@@ -353,10 +355,10 @@ namespace Dice.Tests
         }
 
         private static BayWardRuleDefinition Ward(DieInterferenceKind[] blocked = null) => new BayWardRuleDefinition(WardId, PieceId,
-            InteractionId, blocked ?? new[] { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip });
+            blocked ?? new[] { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip });
 
         private static InteractWithPieceAction Move(PiecePosition position)
-            => new InteractWithPieceAction(PieceId, InteractionId, new MovePieceInput(position));
+            => new InteractWithPieceAction(PieceId, InteractionIndex, new MovePieceInput(position));
 
         private static PiecePosition Position(EncounterSession session)
             => ((PiecePositionState)session.Snapshot.PieceInteractions.Single().State).Position;

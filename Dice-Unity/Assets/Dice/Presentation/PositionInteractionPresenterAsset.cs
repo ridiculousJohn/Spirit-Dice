@@ -12,14 +12,14 @@ namespace Dice.Presentation
     public sealed class PositionInteractionPresenterAsset : PieceInteractionPresenterAsset<PositionInteractionDefinition>
     {
         protected override PieceInteractionPresenter Create(SpiritTablePieceView piece, PositionInteractionDefinition interaction,
-            PieceInteractionPresenterContext context)
+            int interactionIndex, PieceInteractionPresenterContext context)
         {
             // The position behaviour is authored on the prop beside its shared view, where its scene references live.
             var placement = piece.GetComponent<SpiritTablePiecePosition>();
             if (placement == null)
                 throw new InvalidOperationException("The table piece " + piece.name +
                     " presents a position interaction but has no SpiritTablePiecePosition.");
-            return new PositionInteractionPresenter(piece, placement, interaction, context);
+            return new PositionInteractionPresenter(piece, placement, interaction, interactionIndex, context);
         }
 
         private sealed class PositionInteractionPresenter : PieceInteractionPresenter
@@ -27,15 +27,17 @@ namespace Dice.Presentation
             private readonly SpiritTablePieceView piece;
             private readonly SpiritTablePiecePosition placement;
             private readonly PositionInteractionDefinition definition;
+            private readonly int interactionIndex;
             private readonly PieceInteractionPresenterContext context;
             private readonly Vector3[] bayPoints = new Vector3[DiceValues.Count];
 
             internal PositionInteractionPresenter(SpiritTablePieceView piece, SpiritTablePiecePosition placement,
-                PositionInteractionDefinition definition, PieceInteractionPresenterContext context)
+                PositionInteractionDefinition definition, int interactionIndex, PieceInteractionPresenterContext context)
             {
                 this.piece = piece;
                 this.placement = placement;
                 this.definition = definition;
+                this.interactionIndex = interactionIndex;
                 this.context = context;
                 placement.Initialize(CanMove, RequestMove);
             }
@@ -44,8 +46,8 @@ namespace Dice.Presentation
             {
                 if (interaction == null) { placement.Unbind(); return; }
                 if (!(interaction.State is PiecePositionState state))
-                    throw new InvalidOperationException("The position interaction " + definition.Id + " of piece " + piece.PieceId +
-                        " has a " + interaction.State?.GetType().Name + " state.");
+                    throw new InvalidOperationException("The position interaction of the table piece " + piece.Piece.name + " on " +
+                        piece.name + " has a " + interaction.State?.GetType().Name + " state.");
                 placement.Bind(state.Position, definition);
             }
 
@@ -58,10 +60,10 @@ namespace Dice.Presentation
 
             public override void Dispose() => placement.Unbind();
 
-            private bool CanMove() => context.CanInteract(piece.PieceId, piece.InteractionId);
+            private bool CanMove() => context.CanInteract(piece.Piece.Identity, interactionIndex);
 
             private bool RequestMove(PiecePosition position)
-                => context.Interact(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
+                => context.Interact(piece.Piece.Identity, interactionIndex, new MovePieceInput(position));
         }
     }
 }

@@ -12,9 +12,9 @@ namespace Dice.Presentation
         /** Fails when the table shows no prop for the ward's piece, which the ward would have nothing to flare on. */
         protected override RulePresenter Create(BayWardRuleDefinition rule, RulePresenterContext context)
         {
-            if (!context.ShowsPiece(rule.PieceId, rule.InteractionId))
+            if (!context.ShowsPiece(rule.PieceId))
                 throw new InvalidOperationException("The ward presenter " + name + " presents rule " + rule.Id +
-                    ", but the table shows no prop for its piece " + rule.PieceId + " (" + rule.InteractionId + ").");
+                    ", but the table shows no prop for its piece " + rule.PieceId + ".");
             return new BayWardPresenter(rule, context);
         }
     }
@@ -36,7 +36,7 @@ namespace Dice.Presentation
 
         private IEnumerator Flare()
         {
-            float duration = context.FlarePiece(ward.PieceId, ward.InteractionId);
+            float duration = context.FlarePiece(ward.PieceId);
             if (duration > 0f) yield return new WaitForSecondsRealtime(duration);
         }
     }

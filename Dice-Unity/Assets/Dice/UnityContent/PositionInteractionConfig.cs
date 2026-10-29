@@ -5,10 +5,10 @@ using UnityEngine;
 
 namespace Dice.UnityContent
 {
-    [CreateAssetMenu(menuName = "Dice/Piece Interactions/Position")]
-    public sealed class PositionInteractionAsset : PieceInteractionAsset
+    /** Lets the player move the piece between the neutral position and the dice bays it allows. */
+    [Serializable]
+    public sealed class PositionInteractionConfig : PieceInteractionConfig
     {
-        [SerializeField] private string interactionId = "position";
         [Tooltip("Starting dice bay index, or -1 for the neutral position.")]
         [SerializeField, Range(-1, DiceValues.Count - 1)] private int startingBay = -1;
         [SerializeField] private PieceMovementTiming timing = PieceMovementTiming.DuringHand;
@@ -23,7 +23,7 @@ namespace Dice.UnityContent
             for (int i = 0; i < allowedBays.Length; ++i)
                 if (allowedBays[i]) mask |= 1 << i;
             var start = startingBay < 0 ? PiecePosition.Neutral : PiecePosition.Bay(startingBay);
-            return new PositionInteractionDefinition(interactionId, start, timing, allowsNeutral, mask);
+            return new PositionInteractionDefinition(start, timing, allowsNeutral, mask);
         }
     }
 }

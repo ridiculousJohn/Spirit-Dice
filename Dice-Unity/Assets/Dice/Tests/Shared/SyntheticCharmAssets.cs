@@ -91,6 +91,21 @@ namespace Dice.Tests
 #endif
         }
 
+        /** A table piece asset whose id is the test piece id of the name (see TestPieces). */
+        public TablePieceAsset Piece(string name)
+        {
+#if UNITY_EDITOR
+            var piece = Own(ScriptableObject.CreateInstance<TablePieceAsset>());
+            piece.name = name;
+            var serialized = new SerializedObject(piece);
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = TestPieces.IdOf(name).Value.ToString("N");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return piece;
+#else
+            throw EditorRequired();
+#endif
+        }
+
         /** A reward pool asset of the name, drawing from the charms, with the fallback charm if one is given. */
         public RewardPoolAsset RewardPool(string name, ModifierAsset[] modifiers, ModifierAsset fallback = null)
         {

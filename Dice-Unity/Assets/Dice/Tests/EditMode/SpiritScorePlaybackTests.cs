@@ -236,7 +236,8 @@ namespace Dice.Tests
             public void ToggleDie(int index) => throw new NotSupportedException();
             public void Reroll() => throw new NotSupportedException();
             public void PlayHand() => throw new NotSupportedException();
-            public void InteractWithPiece(string pieceId, string interactionId, PieceInteractionInput input) => throw new NotSupportedException();
+            public void InteractWithPiece(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input)
+                => throw new NotSupportedException();
             public void RefreshRewards() => throw new NotSupportedException();
             public void ChooseReward(long offerId, long optionId) => throw new NotSupportedException();
             public void StartNew() => throw new NotSupportedException();

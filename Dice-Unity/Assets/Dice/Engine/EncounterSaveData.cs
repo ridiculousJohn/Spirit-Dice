@@ -5,7 +5,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 11;
+        public const int CurrentFormatVersion = 12;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -72,9 +72,9 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSavePieceData
     {
-        public string PieceId;
-        public string InteractionId;
-        public int[] Values;
+        public TablePieceDefinition.Id PieceId;
+        /** Each of the piece's interactions' captured state, in the order of the piece's interaction list. */
+        public int[][] Interactions;
     }
 
     /** One stateful encounter rule's state; State is an instance of that rule's SaveDataType. */

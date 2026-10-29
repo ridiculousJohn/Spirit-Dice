@@ -23,11 +23,11 @@ MonoBehaviour:
   sceneLighting: {fileID: 11400000, guid: b741c62d32284c5e9eb3f887027d36a8, type: 2}
   pieceLights:
   - LightIndex: 1
-    PieceId: piece.merchant.candle
-    InteractionId: position
+    Piece: {fileID: 11400000, guid: 9bd9f5a54c6a09a4cb060d91cc64351f, type: 2}
     ReferencePosition: {x: 0.163656, y: 0.336124}
     ReceiverOffsetX: {x: 10, y: 0, z: 0}
     ReceiverOffsetY: {x: 0, y: 8, z: 0}
+  restingLightLevels: []
   hostLightingPosition: {x: 0, y: 1, z: 0}
   hostPresentation: {fileID: 11400000, guid: 0cdb1ba11f1bea50c8b5c0c33a8bfeaa, type: 2}
   audioTheme: {fileID: 11400000, guid: ed94bba6676542b7b017d54e0135c5dc, type: 2}

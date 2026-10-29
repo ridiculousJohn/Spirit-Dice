@@ -64,7 +64,7 @@ namespace Dice.Tests
                 if (attempt == null) continue;
                 // Moving the piece draws nothing, so the same rule draws target the bay it now wards.
                 var warded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Identity, candidate);
-                var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, ward.InteractionId,
+                var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, PositionIndex(encounter, ward),
                     new MovePieceInput(PiecePosition.Bay(attempt.Bay))), warded.Snapshot.Revision);
                 if (!moved.Accepted) continue;
                 var blocked = warded.Execute(Action(), warded.Snapshot.Revision).Events.OfType<DisturbanceBlockedEvent>()
@@ -76,7 +76,7 @@ namespace Dice.Tests
             Assert.That(seed, Is.Not.Zero, context + ": no searched seed attempts interference the ward can repel.");
             yield return ContentReady.EnterEncounter(controller, journey, seed);
             var view = ContentReady.EncounterView(controller);
-            var piece = view.TablePieces.SingleOrDefault(value => value.PieceId == ward.PieceId && value.InteractionId == ward.InteractionId);
+            var piece = SpiritTablePieceView.Find(view.TablePieces, ward.PieceId);
             Assert.That(piece, Is.Not.Null, context + ": the table presents no prop for the ward's piece.");
             yield return Move(controller, piece, PiecePosition.Bay(bay));
             if (afterReroll)
@@ -120,16 +120,22 @@ namespace Dice.Tests
                 (rule.ForcedRerollWeight > 0 && ward.Blocks(DieInterferenceKind.ForcedReroll) ||
                     rule.FlipWeight > 0 && ward.Blocks(DieInterferenceKind.Flip));
 
+        /** The place of the ward's piece's position interaction in the piece's interaction list. */
+        private static int PositionIndex(EncounterDefinition encounter, BayWardRuleDefinition ward)
+            => encounter.Pieces.Single(value => value.Identity == ward.PieceId).IndexOf<PositionInteractionDefinition>();
+
         /** Moves the piece through the controller and waits for its prop to settle at the new position. */
         private static IEnumerator Move(SpiritEncounterController controller, SpiritTablePieceView piece, PiecePosition position)
         {
             var placement = piece.GetComponent<SpiritTablePiecePosition>();
             if (placement.Position != position)
             {
-                controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
-                yield return ContentReady.WaitUntil(() => !controller.IsBusy && placement.Position == position, piece.PieceId + " must move.");
+                controller.InteractWithPiece(piece.Piece.Identity, controller.Snapshot.PieceInteractions
+                    .Single(value => value.PieceId == piece.Piece.Identity && value.State is PiecePositionState).InteractionIndex,
+                    new MovePieceInput(position));
+                yield return ContentReady.WaitUntil(() => !controller.IsBusy && placement.Position == position, piece.name + " must move.");
             }
-            Assert.That(placement.Position, Is.EqualTo(position), piece.PieceId);
+            Assert.That(placement.Position, Is.EqualTo(position), piece.name);
             // The prop has settled once it holds still for a few frames.
             const int SettledFrames = 3;
             Vector3 previous = piece.transform.position;
@@ -141,7 +147,7 @@ namespace Dice.Tests
                 stable = (piece.transform.position - previous).sqrMagnitude < 1e-6f ? stable + 1 : 0;
                 previous = piece.transform.position;
             }
-            Assert.That(stable, Is.EqualTo(SettledFrames), piece.PieceId + " must settle.");
+            Assert.That(stable, Is.EqualTo(SettledFrames), piece.name + " must settle.");
         }
     }
 }

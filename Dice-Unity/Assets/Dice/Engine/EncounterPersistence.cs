@@ -384,28 +384,28 @@ namespace Dice.Engine
             var values = new List<EncounterSavePieceData>();
             int slot = 0;
             foreach (var piece in definition.Pieces)
-                foreach (var interaction in piece.Interactions)
-                    values.Add(new EncounterSavePieceData
-                    {
-                        PieceId = piece.Id, InteractionId = interaction.Id, Values = interaction.Capture(state.PieceStates[slot++])
-                    });
+            {
+                var interactions = new int[piece.Interactions.Count][];
+                for (int i = 0; i < interactions.Length; ++i) interactions[i] = piece.Interactions[i].Capture(state.PieceStates[slot++]);
+                values.Add(new EncounterSavePieceData { PieceId = piece.Identity, Interactions = interactions });
+            }
             return values.ToArray();
         }
 
         private static PieceInteractionState[] RestorePieces(EncounterDefinition definition, EncounterSaveData save)
         {
-            var initial = TablePieceStates.Initial(definition);
-            Require(save.Pieces != null && save.Pieces.Length == initial.Length, "Table piece states disagree with the encounter.");
-            var states = new PieceInteractionState[initial.Length];
+            Require(save.Pieces != null && save.Pieces.Length == definition.Pieces.Count, "Table piece states disagree with the encounter.");
+            var states = new PieceInteractionState[TablePieceStates.Initial(definition).Length];
             int slot = 0;
-            foreach (var piece in definition.Pieces)
-                foreach (var interaction in piece.Interactions)
-                {
-                    var source = save.Pieces[slot];
-                    Require(source != null && source.PieceId == piece.Id && source.InteractionId == interaction.Id &&
-                        interaction.TryRestore(source.Values, out states[slot]), "A table piece state is invalid.");
-                    ++slot;
-                }
+            for (int index = 0; index < save.Pieces.Length; ++index)
+            {
+                var piece = definition.Pieces[index];
+                var source = save.Pieces[index];
+                Require(source != null && source.PieceId == piece.Identity && source.Interactions != null &&
+                    source.Interactions.Length == piece.Interactions.Count, "A table piece state is invalid.");
+                for (int i = 0; i < piece.Interactions.Count; ++i, ++slot)
+                    Require(piece.Interactions[i].TryRestore(source.Interactions[i], out states[slot]), "A table piece state is invalid.");
+            }
             return states;
         }
 

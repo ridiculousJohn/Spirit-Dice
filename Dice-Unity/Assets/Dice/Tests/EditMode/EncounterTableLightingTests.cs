@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Dice.Presentation;
+using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -16,8 +17,8 @@ namespace Dice.Tests
     public sealed class EncounterTableLightingTests
     {
         private const float Tolerance = .00001f;
-        private const string PieceId = "piece.test.prop";
-        private const string InteractionId = "position";
+        private SyntheticCharmAssets assets;
+        private TablePieceAsset pieceAsset;
         private static readonly Vector2 AuthoredUvOffset = new Vector2(.01f, .02f);
         private static readonly Vector3 AuthoredReceiver = new Vector3(1, 2, 3);
         private readonly List<EncounterTableLighting> owners = new List<EncounterTableLighting>();
@@ -37,8 +38,9 @@ namespace Dice.Tests
             room = Image(frame, "Room", new Vector2(0, .4f), Vector2.one, new Rect(0, .4f, 1, .6f));
             table = Image(frame, "Table", Vector2.zero, new Vector2(1, .4f), new Rect(0, 0, 1, .4f));
             piece = ui.Add<SpiritTablePieceView>(frame, "Prop");
-            SyntheticUi.Set(piece, "pieceId", PieceId);
-            SyntheticUi.Set(piece, "interactionId", InteractionId);
+            assets = new SyntheticCharmAssets();
+            pieceAsset = assets.Piece("piece.test.prop");
+            SyntheticUi.Set(piece, "piece", pieceAsset);
             foreach (var rect in ui.Root.GetComponentsInChildren<RectTransform>(true)) rect.ForceUpdateRectTransforms();
             lighting = Lighting(.5f, .8f);
         }
@@ -49,6 +51,7 @@ namespace Dice.Tests
             foreach (var owner in owners) owner.Release();
             owners.Clear();
             ui.Dispose();
+            assets.Dispose();
         }
 
         /**
@@ -103,7 +106,7 @@ namespace Dice.Tests
             var reference = new Vector2(.25f, .3f);
             var bound = Configure(Table(lighting, new EncounterTablePieceLight
             {
-                LightIndex = 0, PieceId = PieceId, InteractionId = InteractionId, ReferencePosition = reference,
+                LightIndex = 0, Piece = pieceAsset, ReferencePosition = reference,
                 ReceiverOffsetX = new Vector3(10, 0, 0), ReceiverOffsetY = new Vector3(0, 8, 0)
             }));
             Place(table, new Vector2(.25f, .1f));
@@ -133,7 +136,7 @@ namespace Dice.Tests
         public void OverridesHoldInPlaceOfTheAmbientMultiplier(bool boundToProp)
         {
             var owner = Configure(boundToProp
-                ? Table(lighting, new EncounterTablePieceLight { LightIndex = 0, PieceId = PieceId, InteractionId = InteractionId })
+                ? Table(lighting, new EncounterTablePieceLight { LightIndex = 0, Piece = pieceAsset })
                 : Table(lighting));
             var ambient = (IAmbientLightingTarget)owner;
             ambient.SetLightIntensity(0, .25f);
@@ -205,7 +208,7 @@ namespace Dice.Tests
         [Test]
         public void ConfiguringFailsForLightsWithoutTheirPropOrWithNegativeRest()
         {
-            var missingProp = Table(lighting, new EncounterTablePieceLight { LightIndex = 0, PieceId = "piece.missing", InteractionId = InteractionId });
+            var missingProp = Table(lighting, new EncounterTablePieceLight { LightIndex = 0, Piece = assets.Piece("piece.missing") });
             Assert.Throws<InvalidOperationException>(() => Configure(missingProp));
             var negativeRest = Table(lighting);
             using (var serialized = new SerializedObject(negativeRest))
@@ -269,8 +272,7 @@ namespace Dice.Tests
             {
                 var element = list.GetArrayElementAtIndex(i);
                 element.FindPropertyRelative("LightIndex").intValue = pieceLights[i].LightIndex;
-                element.FindPropertyRelative("PieceId").stringValue = pieceLights[i].PieceId;
-                element.FindPropertyRelative("InteractionId").stringValue = pieceLights[i].InteractionId;
+                element.FindPropertyRelative("Piece").objectReferenceValue = pieceLights[i].Piece;
                 element.FindPropertyRelative("ReferencePosition").vector2Value = pieceLights[i].ReferencePosition;
                 element.FindPropertyRelative("ReceiverOffsetX").vector3Value = pieceLights[i].ReceiverOffsetX;
                 element.FindPropertyRelative("ReceiverOffsetY").vector3Value = pieceLights[i].ReceiverOffsetY;

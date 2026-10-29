@@ -49,11 +49,11 @@ namespace Dice.Tests
 
         public override void JoltAmbient() => Log.Add("jolt");
 
-        public override bool ShowsPiece(string pieceId, string interactionId) => ShowsPieces;
+        public override bool ShowsPiece(TablePieceDefinition.Id pieceId) => ShowsPieces;
 
-        public override float FlarePiece(string pieceId, string interactionId)
+        public override float FlarePiece(TablePieceDefinition.Id pieceId)
         {
-            Log.Add("flare " + pieceId + " " + interactionId);
+            Log.Add("flare " + pieceId);
             return FlareDuration;
         }
 

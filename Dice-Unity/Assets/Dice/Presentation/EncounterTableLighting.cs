@@ -61,10 +61,13 @@ namespace Dice.Presentation
             for (int i = 0; i < pieceLightProps.Length; ++i)
             {
                 var pieceLight = table.PieceLights[i];
-                pieceLightProps[i] = pieceLight != null ? SpiritTablePieceView.Find(pieces, pieceLight.PieceId, pieceLight.InteractionId) : null;
+                if (pieceLight == null || pieceLight.Piece == null)
+                    throw new InvalidOperationException("Each table piece light of " + table.name + " requires its piece.");
+                pieceLightProps[i] = SpiritTablePieceView.Find(pieces, pieceLight.Piece.Identity);
                 if (pieceLightProps[i] == null || table.SceneLighting != null &&
                     (pieceLight.LightIndex < 0 || pieceLight.LightIndex >= table.SceneLighting.Lights.Length))
-                    throw new InvalidOperationException("Each table piece light requires an authored piece and scene light.");
+                    throw new InvalidOperationException("The piece light of " + pieceLight.Piece.name + " on " + table.name +
+                        " requires an authored prop and scene light.");
             }
             int count = table.SceneLighting != null && table.SceneLighting.Lights != null ? table.SceneLighting.Lights.Length : 0;
             var resting = table.RestingLightLevels;

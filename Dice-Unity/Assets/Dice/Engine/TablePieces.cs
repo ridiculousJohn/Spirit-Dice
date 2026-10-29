@@ -36,32 +36,60 @@ namespace Dice.Engine
     /** An object an encounter places on the table; its interactions decide how the player can affect it. */
     public sealed class TablePieceDefinition
     {
-        public string Id { get; }
+        /** Identifies a table piece where an identity is stored: the run save keeps its interactions' states under it. */
+        public readonly struct Id : IEquatable<Id>, IContentId
+        {
+            public Guid Value { get; }
+
+            public Id(Guid value)
+            {
+                if (value == Guid.Empty) throw new ArgumentException("A table piece id requires a nonempty GUID.", nameof(value));
+                Value = value;
+            }
+
+            public bool Equals(Id other) => Value == other.Value;
+            public override bool Equals(object obj) => obj is Id other && Equals(other);
+            public override int GetHashCode() => Value.GetHashCode();
+            /** The 32 hexadecimal digits, as the piece's asset and its .meta file write its GUID. */
+            public override string ToString() => Value.ToString("N");
+            public static bool operator ==(Id left, Id right) => left.Equals(right);
+            public static bool operator !=(Id left, Id right) => !left.Equals(right);
+        }
+
+        // A nested type and a member cannot share a name, so the id property is not called Id.
+        public Id Identity { get; }
         public ReadOnlyCollection<PieceInteractionDefinition> Interactions { get; }
 
-        public TablePieceDefinition(string id, IEnumerable<PieceInteractionDefinition> interactions = null)
+        /**
+         * The piece's interactions in the encounter that places it, at most one of each kind; an interaction is identified by
+         * the piece's id and its place in this list.
+         */
+        public TablePieceDefinition(Id identity, IEnumerable<PieceInteractionDefinition> interactions = null)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
+            if (identity.Value == Guid.Empty) throw new ArgumentException("A table piece requires an id.", nameof(identity));
             var list = interactions == null ? new List<PieceInteractionDefinition>() : new List<PieceInteractionDefinition>(interactions);
-            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var kinds = new HashSet<Type>();
             foreach (var interaction in list)
-                if (interaction == null || !ids.Add(interaction.Id))
-                    throw new ArgumentException("Piece interaction IDs must be unique and nonnull.", nameof(interactions));
-            Id = id;
+                if (interaction == null || !kinds.Add(interaction.GetType()))
+                    throw new ArgumentException("A table piece holds at most one interaction of each kind and no null entries.",
+                        nameof(interactions));
+            Identity = identity;
             Interactions = list.AsReadOnly();
+        }
+
+        /** The place in Interactions of the piece's interaction of the kind, or -1 when the piece has none. */
+        public int IndexOf<TInteraction>() where TInteraction : PieceInteractionDefinition
+        {
+            for (int i = 0; i < Interactions.Count; ++i)
+                if (Interactions[i] is TInteraction) return i;
+            return -1;
         }
     }
 
     /** A reusable kind of player interaction; each kind validates its input and owns its saved state. */
     public abstract class PieceInteractionDefinition
     {
-        public string Id { get; }
-
-        internal PieceInteractionDefinition(string id)
-        {
-            DefinitionValidation.RequireId(id, nameof(id));
-            Id = id;
-        }
+        internal PieceInteractionDefinition() { }
 
         internal abstract PieceInteractionState InitialState { get; }
         internal abstract bool IsAvailable(EncounterState state);
@@ -107,8 +135,8 @@ namespace Dice.Engine
         public bool AllowsNeutral { get; }
         public int AllowedBayMask { get; }
 
-        public PositionInteractionDefinition(string id, PiecePosition startingPosition, PieceMovementTiming timing,
-            bool allowsNeutral = true, int allowedBayMask = DiceValues.AllMask) : base(id)
+        public PositionInteractionDefinition(PiecePosition startingPosition, PieceMovementTiming timing,
+            bool allowsNeutral = true, int allowedBayMask = DiceValues.AllMask)
         {
             if (timing != PieceMovementTiming.DuringHand && timing != PieceMovementTiming.UntilFirstReroll)
                 throw new ArgumentOutOfRangeException(nameof(timing));
@@ -159,14 +187,15 @@ namespace Dice.Engine
 
     public sealed class InteractWithPieceAction : EncounterAction
     {
-        public string PieceId { get; }
-        public string InteractionId { get; }
+        public TablePieceDefinition.Id PieceId { get; }
+        /** The interaction's place in the piece's interaction list. */
+        public int InteractionIndex { get; }
         public PieceInteractionInput Input { get; }
 
-        public InteractWithPieceAction(string pieceId, string interactionId, PieceInteractionInput input)
+        public InteractWithPieceAction(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input)
         {
             PieceId = pieceId;
-            InteractionId = interactionId;
+            InteractionIndex = interactionIndex;
             Input = input;
         }
 
@@ -174,7 +203,7 @@ namespace Dice.Engine
         {
             EncounterState state = session.State;
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
-            if (!TablePieceStates.TryFind(session.Definition, PieceId, InteractionId, out int slot, out var piece))
+            if (!TablePieceStates.TryFind(session.Definition, PieceId, InteractionIndex, out int slot, out var piece))
                 return CommandRejection.InvalidPiece;
             if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
             return piece.Accepts(state.PieceStates[slot], Input) ? CommandRejection.None : CommandRejection.InvalidPieceInput;
@@ -186,15 +215,17 @@ namespace Dice.Engine
 
     public sealed class PieceInteractionSnapshot
     {
-        public string PieceId { get; }
-        public string InteractionId { get; }
+        public TablePieceDefinition.Id PieceId { get; }
+        /** The interaction's place in the piece's interaction list. */
+        public int InteractionIndex { get; }
         public bool IsAvailable { get; }
         public PieceInteractionState State { get; }
 
-        internal PieceInteractionSnapshot(string pieceId, string interactionId, bool isAvailable, PieceInteractionState state)
+        internal PieceInteractionSnapshot(TablePieceDefinition.Id pieceId, int interactionIndex, bool isAvailable,
+            PieceInteractionState state)
         {
             PieceId = pieceId;
-            InteractionId = interactionId;
+            InteractionIndex = interactionIndex;
             IsAvailable = isAvailable;
             State = state;
         }
@@ -202,22 +233,23 @@ namespace Dice.Engine
 
     public sealed class PieceInteractionChangedEvent : RuleEvent
     {
-        public string PieceId { get; }
-        public string InteractionId { get; }
+        public TablePieceDefinition.Id PieceId { get; }
+        /** The interaction's place in the piece's interaction list. */
+        public int InteractionIndex { get; }
         public PieceInteractionState Before { get; }
         public PieceInteractionState After { get; }
 
-        internal PieceInteractionChangedEvent(EncounterState state, string pieceId, string interactionId,
+        internal PieceInteractionChangedEvent(EncounterState state, TablePieceDefinition.Id pieceId, int interactionIndex,
             PieceInteractionState before, PieceInteractionState after) : base(state.StageIndex, state.HandIndex)
         {
             PieceId = pieceId;
-            InteractionId = interactionId;
+            InteractionIndex = interactionIndex;
             Before = before;
             After = after;
         }
 
         protected override string DescribeDetail(IDiagnosticFormat format)
-            => PieceId + " " + InteractionId + ": " + Before.DescribeDiagnostic(format) + " -> " + After.DescribeDiagnostic(format) + ".";
+            => PieceId + " interaction " + InteractionIndex + ": " + Before.DescribeDiagnostic(format) + " -> " + After.DescribeDiagnostic(format) + ".";
     }
 
     /** Interaction states are stored in definition order: each piece's interactions, piece by piece. */
@@ -231,23 +263,35 @@ namespace Dice.Engine
             return states.ToArray();
         }
 
-        internal static bool TryFind(EncounterDefinition definition, string pieceId, string interactionId,
+        internal static bool TryFind(EncounterDefinition definition, TablePieceDefinition.Id pieceId, int interactionIndex,
             out int slot, out PieceInteractionDefinition interaction)
         {
             slot = 0;
             foreach (var piece in definition.Pieces)
-                foreach (var candidate in piece.Interactions)
+            {
+                if (piece.Identity == pieceId)
                 {
-                    if (string.Equals(piece.Id, pieceId, StringComparison.Ordinal) &&
-                        string.Equals(candidate.Id, interactionId, StringComparison.Ordinal))
-                    {
-                        interaction = candidate;
-                        return true;
-                    }
-                    ++slot;
+                    bool found = (uint)interactionIndex < (uint)piece.Interactions.Count;
+                    slot += found ? interactionIndex : 0;
+                    interaction = found ? piece.Interactions[interactionIndex] : null;
+                    return found;
                 }
+                slot += piece.Interactions.Count;
+            }
             interaction = null;
             return false;
+        }
+
+        /** Finds the piece's interaction of the kind, the one place a piece holds it. */
+        internal static bool TryFind<TInteraction>(EncounterDefinition definition, TablePieceDefinition.Id pieceId, out int slot,
+            out TInteraction interaction) where TInteraction : PieceInteractionDefinition
+        {
+            int index = -1;
+            foreach (var piece in definition.Pieces)
+                if (piece.Identity == pieceId) index = piece.IndexOf<TInteraction>();
+            bool found = TryFind(definition, pieceId, index, out slot, out var candidate);
+            interaction = (TInteraction)candidate;
+            return found;
         }
 
         internal static ReadOnlyCollection<PieceInteractionSnapshot> Capture(EncounterDefinition definition, EncounterState state)
@@ -256,10 +300,10 @@ namespace Dice.Engine
             int slot = 0;
             bool playing = state.Phase == EncounterPhase.Playing;
             foreach (var piece in definition.Pieces)
-                foreach (var interaction in piece.Interactions)
+                for (int index = 0; index < piece.Interactions.Count; ++index)
                 {
-                    values.Add(new PieceInteractionSnapshot(piece.Id, interaction.Id,
-                        playing && interaction.IsAvailable(state), state.PieceStates[slot]));
+                    values.Add(new PieceInteractionSnapshot(piece.Identity, index,
+                        playing && piece.Interactions[index].IsAvailable(state), state.PieceStates[slot]));
                     ++slot;
                 }
             return values.AsReadOnly();

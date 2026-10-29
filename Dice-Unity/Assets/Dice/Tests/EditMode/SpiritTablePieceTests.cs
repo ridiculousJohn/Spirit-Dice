@@ -11,7 +11,6 @@ namespace Dice.Tests
 {
     public sealed class SpiritTablePieceTests
     {
-        private const string InteractionId = "position";
         private static readonly Vector3[] BayPoints =
         {
             new Vector3(0, 0, 0), new Vector3(100, 0, 0), new Vector3(200, 0, 0), new Vector3(300, 0, 0), new Vector3(400, 0, 0)
@@ -40,7 +39,7 @@ namespace Dice.Tests
             SyntheticUi.Set(piece, "snapRadius", 90f);
             SyntheticUi.Set(piece, "settleDuration", 0f);
             // Bay 3 is not an allowed position, so releases near it must not request it.
-            definition = new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand,
+            definition = new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand,
                 true, DiceValues.AllMask & ~(1 << 3));
             movable = submit = accept = true;
             engine = PiecePosition.Neutral;
@@ -197,7 +196,7 @@ namespace Dice.Tests
         {
             SyntheticUi.Set(piece, "neutralAnchor", null);
             Assert.Throws<InvalidOperationException>(() => piece.Bind(PiecePosition.Neutral, definition));
-            Assert.DoesNotThrow(() => piece.Bind(PiecePosition.Bay(0), new PositionInteractionDefinition(InteractionId,
+            Assert.DoesNotThrow(() => piece.Bind(PiecePosition.Bay(0), new PositionInteractionDefinition(
                 PiecePosition.Bay(0), PieceMovementTiming.DuringHand, false)));
         }
 

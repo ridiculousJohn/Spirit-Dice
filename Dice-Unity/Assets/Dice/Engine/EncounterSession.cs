@@ -400,11 +400,11 @@ namespace Dice.Engine
 
         internal void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
         {
-            TablePieceStates.TryFind(definition, action.PieceId, action.InteractionId, out int slot, out var interaction);
+            TablePieceStates.TryFind(definition, action.PieceId, action.InteractionIndex, out int slot, out var interaction);
             var before = next.PieceStates[slot];
             var after = interaction.Apply(before, action.Input);
             next.PieceStates[slot] = after;
-            events.Add(new PieceInteractionChangedEvent(next, action.PieceId, action.InteractionId, before, after));
+            events.Add(new PieceInteractionChangedEvent(next, action.PieceId, action.InteractionIndex, before, after));
         }
 
         internal void Play(EncounterState next, List<RuleEvent> events)

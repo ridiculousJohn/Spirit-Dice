@@ -350,8 +350,8 @@ namespace Dice.App
 
         public void Reroll() => Submit(new RerollDiceAction(SelectedMask));
         public void PlayHand() => Submit(PlayHandAction.Instance);
-        public void InteractWithPiece(string pieceId, string interactionId, PieceInteractionInput input)
-            => Submit(new InteractWithPieceAction(pieceId, interactionId, input));
+        public void InteractWithPiece(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input)
+            => Submit(new InteractWithPieceAction(pieceId, interactionIndex, input));
         public void RefreshRewards() => Submit(new RefreshModifierOfferAction(Snapshot?.PendingReward?.OfferId ?? 0));
         public void Abandon() => Submit(AbandonEncounterAction.Instance);
 

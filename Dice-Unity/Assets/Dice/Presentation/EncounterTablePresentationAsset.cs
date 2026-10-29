@@ -1,20 +1,22 @@
 using System;
 using System.Collections.Generic;
+using Dice.UnityContent;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace Dice.Presentation
 {
-    /** Moves one scene light with a positioned table piece's prop, like SceneLightingSourceBinding but keyed by engine IDs. */
+    /**
+     * Moves one scene light with a positioned table piece's prop, like SceneLightingSourceBinding but keyed by the piece the
+     * prop presents.
+     */
     [Serializable]
     public sealed class EncounterTablePieceLight
     {
         [Tooltip("Index into the scene lighting asset's lights.")]
         [Min(0)] public int LightIndex;
-        [Tooltip("Table piece ID whose authored prop carries the light.")]
-        public string PieceId;
-        [Tooltip("Interaction ID identifying the prop together with the piece ID.")]
-        public string InteractionId;
+        [Tooltip("Table piece whose authored prop carries the light.")]
+        public TablePieceAsset Piece;
         [Tooltip("Prop pivot in normalized bottom-left room-texture coordinates at the light's authored position.")]
         public Vector2 ReferencePosition;
         [Tooltip("Receiver-space displacement produced by one horizontal normalized-texture unit.")]

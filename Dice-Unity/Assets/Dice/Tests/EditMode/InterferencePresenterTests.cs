@@ -19,8 +19,7 @@ namespace Dice.Tests
         private const string HauntingId = "rule.test.haunting";
         private const string OtherHauntingId = "rule.test.other_haunting";
         private const string WardId = "rule.test.ward";
-        private const string PieceId = "piece.test";
-        private const string InteractionId = "position";
+        private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.test");
         // Rerolling every die but the first leaves the first bay as the only target after a reroll.
         private const int RerollAllButFirst = 0b11110;
         private const float Hold = .3f;
@@ -114,7 +113,7 @@ namespace Dice.Tests
             context.FlareDuration = .7f;
             Assert.That(ward.LeadIn(blocked), Is.Zero);
             var waits = TestRulePresenterContext.Waits(ward.Present(blocked));
-            Assert.That(context.Log, Is.EqualTo(new[] { "flare " + PieceId + " " + InteractionId }));
+            Assert.That(context.Log, Is.EqualTo(new[] { "flare " + PieceId }));
             Assert.That(waits, Is.EqualTo(new[] { .7f }));
 
             context.Log.Clear();
@@ -206,10 +205,10 @@ namespace Dice.Tests
             var pieces = new List<TablePieceDefinition>();
             for (int bay = 0; bay < wardedBays; ++bay)
             {
-                string piece = bay == 0 ? PieceId : PieceId + "." + bay;
-                rules.Add(new BayWardRuleDefinition(bay == 0 ? wardId : wardId + "." + bay, piece, InteractionId, new[] { kind }));
-                pieces.Add(new TablePieceDefinition(piece, new[] { new PositionInteractionDefinition(InteractionId,
-                    PiecePosition.Bay(bay), PieceMovementTiming.DuringHand) }));
+                var piece = bay == 0 ? PieceId : TestPieces.IdOf("piece.test." + bay);
+                rules.Add(new BayWardRuleDefinition(bay == 0 ? wardId : wardId + "." + bay, piece, new[] { kind }));
+                pieces.Add(new TablePieceDefinition(piece, new[] { new PositionInteractionDefinition(PiecePosition.Bay(bay),
+                    PieceMovementTiming.DuringHand) }));
             }
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 rules: rules, pieces: pieces);

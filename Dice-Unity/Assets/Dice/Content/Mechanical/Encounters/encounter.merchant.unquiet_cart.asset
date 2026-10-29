@@ -111,6 +111,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
   - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
   pieces:
-  - id: piece.merchant.candle
+  - piece: {fileID: 11400000, guid: 9bd9f5a54c6a09a4cb060d91cc64351f, type: 2}
     interactions:
-    - {fileID: 11400000, guid: f8daef7b2f614458ba4a6d63b4e86d32, type: 2}
+    - rid: 1123138607968944128
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138607968944128
+      type: {class: PositionInteractionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        startingBay: -1
+        timing: 0
+        allowsNeutral: 1
+        allowedBays: 0101010101y

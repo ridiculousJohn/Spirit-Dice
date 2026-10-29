@@ -158,11 +158,13 @@ namespace Dice.Tests
             var placement = piece.GetComponent<SpiritTablePiecePosition>();
             if (placement.Position != position)
             {
-                controller.InteractWithPiece(piece.PieceId, piece.InteractionId, new MovePieceInput(position));
+                controller.InteractWithPiece(piece.Piece.Identity, controller.Snapshot.PieceInteractions
+                    .Single(value => value.PieceId == piece.Piece.Identity && value.State is PiecePositionState).InteractionIndex,
+                    new MovePieceInput(position));
                 float deadline = Time.realtimeSinceStartup + 10;
                 while ((controller.IsBusy || placement.Position != position) && Time.realtimeSinceStartup < deadline) yield return null;
             }
-            Assert.That(placement.Position, Is.EqualTo(position), piece.PieceId);
+            Assert.That(placement.Position, Is.EqualTo(position), piece.name);
             Vector3 previous = piece.transform.position;
             int stable = 0;
             float settle = Time.realtimeSinceStartup + 5;
@@ -172,7 +174,7 @@ namespace Dice.Tests
                 stable = (piece.transform.position - previous).sqrMagnitude < 1e-6f ? stable + 1 : 0;
                 previous = piece.transform.position;
             }
-            Assert.That(stable, Is.EqualTo(3), piece.PieceId + " must settle.");
+            Assert.That(stable, Is.EqualTo(3), piece.name + " must settle.");
         }
 
         /**

@@ -128,7 +128,7 @@ namespace Dice.Tests
             public void ToggleDie(int index) { }
             public void Reroll() { }
             public void PlayHand() { }
-            public void InteractWithPiece(string pieceId, string interactionId, PieceInteractionInput input) { }
+            public void InteractWithPiece(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input) { }
             public void RefreshRewards() { }
             public void ChooseReward(long offerId, long optionId) { }
             public void StartNew() { }

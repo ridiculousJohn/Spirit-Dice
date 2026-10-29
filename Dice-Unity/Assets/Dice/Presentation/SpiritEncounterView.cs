@@ -806,13 +806,13 @@ namespace Dice.Presentation
 
             public override void JoltAmbient() => view.ambientActivity?.Jolt();
 
-            public override bool ShowsPiece(string pieceId, string interactionId)
-                => SpiritTablePieceView.Find(view.tablePieces, pieceId, interactionId) != null;
+            public override bool ShowsPiece(TablePieceDefinition.Id pieceId)
+                => SpiritTablePieceView.Find(view.tablePieces, pieceId) != null;
 
-            public override float FlarePiece(string pieceId, string interactionId)
+            public override float FlarePiece(TablePieceDefinition.Id pieceId)
             {
-                var piece = SpiritTablePieceView.Find(view.tablePieces, pieceId, interactionId) ?? throw new InvalidOperationException(
-                    "The table shows no prop for piece " + pieceId + " (" + interactionId + ").");
+                var piece = SpiritTablePieceView.Find(view.tablePieces, pieceId) ?? throw new InvalidOperationException(
+                    "The table shows no prop for piece " + pieceId + ".");
                 return piece.isActiveAndEnabled ? piece.Flare() : 0f;
             }
 
@@ -835,21 +835,20 @@ namespace Dice.Presentation
             internal TablePieceContext(SpiritEncounterView view) => this.view = view;
 
             /** Pieces are used whenever the game accepts input during a hand and the piece's interaction is available. */
-            public override bool CanInteract(string pieceId, string interactionId)
+            public override bool CanInteract(TablePieceDefinition.Id pieceId, int interactionIndex)
             {
                 if (view.Busy || !view.isActiveAndEnabled || view.controls.Snapshot == null ||
                     view.controls.Snapshot.Phase != EncounterPhase.Playing ||
                     view.journeyControls != null && view.journeyControls.JourneyPhase != EncounterJourneyPhase.Playing) return false;
                 foreach (var interaction in view.controls.Snapshot.PieceInteractions)
-                    if (string.Equals(interaction.PieceId, pieceId, StringComparison.Ordinal) &&
-                        string.Equals(interaction.InteractionId, interactionId, StringComparison.Ordinal)) return interaction.IsAvailable;
+                    if (interaction.PieceId == pieceId && interaction.InteractionIndex == interactionIndex) return interaction.IsAvailable;
                 return false;
             }
 
-            public override bool Interact(string pieceId, string interactionId, PieceInteractionInput input)
+            public override bool Interact(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input)
             {
-                if (!CanInteract(pieceId, interactionId)) return false;
-                view.controls.InteractWithPiece(pieceId, interactionId, input);
+                if (!CanInteract(pieceId, interactionIndex)) return false;
+                view.controls.InteractWithPiece(pieceId, interactionIndex, input);
                 return true;
             }
 

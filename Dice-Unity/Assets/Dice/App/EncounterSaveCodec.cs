@@ -101,6 +101,7 @@ namespace Dice.App
             settings.Converters.Add(new StrictPrimitiveConverter());
             settings.Converters.Add(ContentIds.Family);
             settings.Converters.Add(ContentIds.Encounter);
+            settings.Converters.Add(ContentIds.Piece);
             return settings;
         }
 

@@ -21,13 +21,17 @@ namespace Dice.Tests
         private const string FirstPiece = "piece.test.first";
         private const string SecondPiece = "piece.test.second";
         private const string AbsentPiece = "piece.test.absent";
-        private const string InteractionId = "position";
         private readonly List<Object> created = new List<Object>();
         private readonly List<string> log = new List<string>();
         private RecordingContext context;
+        private SyntheticCharmAssets assets;
 
         [SetUp]
-        public void SetUp() => context = new RecordingContext();
+        public void SetUp()
+        {
+            context = new RecordingContext();
+            assets = new SyntheticCharmAssets();
+        }
 
         [TearDown]
         public void TearDown()
@@ -36,6 +40,7 @@ namespace Dice.Tests
                 if (value != null) Object.DestroyImmediate(value);
             created.Clear();
             log.Clear();
+            assets.Dispose();
         }
 
         /**
@@ -46,11 +51,12 @@ namespace Dice.Tests
         [Test]
         public void PositionPresenterBindsThePositionAndSubmitsAReleaseAsAMove()
         {
-            var definition = new PositionInteractionDefinition(InteractionId, PiecePosition.Bay(2), PieceMovementTiming.DuringHand, false);
+            var definition = new PositionInteractionDefinition(PiecePosition.Bay(2), PieceMovementTiming.DuringHand, false);
             var piece = Piece(FirstPiece, Asset<PositionInteractionPresenterAsset>(), true);
             var position = piece.GetComponent<SpiritTablePiecePosition>();
-            var interaction = Session(Catalog(Piece(FirstPiece, definition))).Snapshot.PieceInteractions.Single();
-            var presenter = piece.Presenter.Create(piece, definition, context);
+            var pieceDefinition = Piece(FirstPiece, definition);
+            var interaction = Session(Catalog(pieceDefinition)).Snapshot.PieceInteractions.Single();
+            var presenter = piece.Presenter.Create(piece, pieceDefinition, context);
 
             presenter.Bind(interaction);
             presenter.Layout();
@@ -60,7 +66,7 @@ namespace Dice.Tests
 
             Drag(position, RecordingContext.Point(2), RecordingContext.Point(0) + new Vector3(10, 5, 0));
             var move = context.Inputs.Single();
-            Assert.That(move.Key, Is.EqualTo(FirstPiece + " " + InteractionId));
+            Assert.That(move.Key, Is.EqualTo(TestPieces.IdOf(FirstPiece) + " 0"));
             Assert.That(((MovePieceInput)move.Value).Position, Is.EqualTo(PiecePosition.Bay(0)));
 
             presenter.Bind(null);
@@ -71,29 +77,30 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks a presenter asset refuses a missing interaction, another kind of interaction and an interaction that is not
-         * its prop's, and the position kind refuses a prop without its position component / fails if a prop is bound to an
-         * interaction it does not present or cannot show.
+         * Checks a presenter asset finds the piece's interaction of its kind by its place in the piece's list, and refuses a
+         * missing piece, a piece without an interaction of its kind and a piece that is not its prop's, and the position kind
+         * refuses a prop without its position component / fails if a prop is bound to an interaction it does not present or
+         * cannot show.
          */
         [Test]
-        public void PresenterAssetRejectsAnInteractionItDoesNotPresent()
+        public void PresenterAssetPresentsOnlyThePropsPieceInteractionOfItsKind()
         {
             var piece = Piece(FirstPiece, Asset<PositionInteractionPresenterAsset>(), true);
+            var position = new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand);
+            Assert.That(piece.Presenter.InteractionIndex(Piece(FirstPiece, new ToggleInteractionDefinition(), position)), Is.EqualTo(1));
             Assert.Throws<ArgumentNullException>(() => piece.Presenter.Create(piece, null, context));
-            Assert.Throws<InvalidOperationException>(() => piece.Presenter.Create(piece, new ToggleInteractionDefinition(InteractionId),
-                context), "Another kind of interaction is rejected.");
-            var other = new PositionInteractionDefinition("position.other", PiecePosition.Neutral, PieceMovementTiming.DuringHand);
-            Assert.Throws<InvalidOperationException>(() => piece.Presenter.Create(piece, other, context));
+            Assert.Throws<InvalidOperationException>(() => piece.Presenter.Create(piece,
+                Piece(FirstPiece, new ToggleInteractionDefinition()), context), "A piece without an interaction of the kind is rejected.");
+            Assert.Throws<InvalidOperationException>(() => piece.Presenter.Create(piece, Piece(SecondPiece, position), context));
             var bare = Piece(FirstPiece, piece.Presenter, false);
-            var definition = new PositionInteractionDefinition(InteractionId, PiecePosition.Neutral, PieceMovementTiming.DuringHand);
-            Assert.Throws<InvalidOperationException>(() => bare.Presenter.Create(bare, definition, context));
+            Assert.Throws<InvalidOperationException>(() => bare.Presenter.Create(bare, Piece(FirstPiece, position), context));
         }
 
         /**
-         * Checks the screen's piece presenters create one presenter per prop whose interaction the encounter has, with that
-         * definition, bind each to its own interaction, lay out and dispose them all, and create none for a prop the
+         * Checks the screen's piece presenters create one presenter per prop whose piece the encounter places, with that
+         * piece's definition, bind each to its own interaction, lay out and dispose them all, and create none for a prop the
          * encounter lacks / fails if a prop is bound through another prop's interaction, a prop the encounter lacks gets a
-         * presenter or a prop without IDs or presenter is accepted.
+         * presenter or a prop without its piece or presenter is accepted.
          */
         [Test]
         public void ScreenBindsEachPropThroughItsOwnPresenter()
@@ -103,24 +110,26 @@ namespace Dice.Tests
             var first = Piece(FirstPiece, recording, false);
             var second = Piece(SecondPiece, recording, false);
             var absent = Piece(AbsentPiece, recording, false);
-            var firstDefinition = new PositionInteractionDefinition(InteractionId, PiecePosition.Bay(1), PieceMovementTiming.DuringHand);
-            var secondDefinition = new PositionInteractionDefinition(InteractionId, PiecePosition.Bay(3), PieceMovementTiming.DuringHand);
-            var catalog = Catalog(Piece(FirstPiece, firstDefinition), Piece(SecondPiece, secondDefinition));
+            var firstDefinition = Piece(FirstPiece,
+                new PositionInteractionDefinition(PiecePosition.Bay(1), PieceMovementTiming.DuringHand));
+            var secondDefinition = Piece(SecondPiece,
+                new PositionInteractionDefinition(PiecePosition.Bay(3), PieceMovementTiming.DuringHand));
+            var catalog = Catalog(firstDefinition, secondDefinition);
             var session = Session(catalog);
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
 
             var presenters = TablePiecePresenters.Create(new[] { first, absent, second }, encounter, context);
             Assert.That(presenters.Presenters.Count, Is.EqualTo(2));
             Assert.That(recording.Received.Count, Is.EqualTo(2));
-            Assert.That(recording.Received[0], Is.SameAs(firstDefinition), "Each presenter is created with its prop's interaction.");
-            Assert.That(recording.Received[1], Is.SameAs(secondDefinition), "Each presenter is created with its prop's interaction.");
+            Assert.That(recording.Received[0], Is.SameAs(firstDefinition), "Each presenter is created with its prop's piece.");
+            Assert.That(recording.Received[1], Is.SameAs(secondDefinition), "Each presenter is created with its prop's piece.");
             presenters.Bind(session.Snapshot);
             presenters.Layout();
             presenters.Dispose();
             Assert.That(log, Is.EqualTo(new[]
             {
                 FirstPiece + " create", SecondPiece + " create",
-                FirstPiece + " bind " + FirstPiece + " " + InteractionId, SecondPiece + " bind " + SecondPiece + " " + InteractionId,
+                FirstPiece + " bind " + TestPieces.IdOf(FirstPiece) + " 0", SecondPiece + " bind " + TestPieces.IdOf(SecondPiece) + " 0",
                 FirstPiece + " layout", SecondPiece + " layout", FirstPiece + " dispose", SecondPiece + " dispose"
             }));
 
@@ -129,7 +138,7 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { first, unpresented }, encounter, context));
             Assert.That(log, Is.EqualTo(new[] { FirstPiece + " create", FirstPiece + " dispose" }),
                 "A failed creation disposes the presenters it created.");
-            var unnamed = Piece("", recording, false);
+            var unnamed = Piece(null, recording, false);
             Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { unnamed }, encounter, context));
         }
 
@@ -141,20 +150,19 @@ namespace Dice.Tests
         }
 
         /**
-         * A prop with the piece's ID and the test interaction ID under a table rect; with a position component that settles at
-         * once when one is asked for.
+         * A prop of the test piece named by the text, without a piece when it is null, under a table rect; with a position
+         * component that settles at once when one is asked for.
          */
-        private SpiritTablePieceView Piece(string pieceId, PieceInteractionPresenterAsset presenter, bool positioned)
+        private SpiritTablePieceView Piece(string pieceName, PieceInteractionPresenterAsset presenter, bool positioned)
         {
             var table = new GameObject("Table", typeof(RectTransform));
             created.Add(table);
-            var prop = new GameObject("Table Piece " + pieceId, typeof(RectTransform));
+            var prop = new GameObject("Table Piece " + pieceName, typeof(RectTransform));
             prop.transform.SetParent(table.transform, false);
             var piece = prop.AddComponent<SpiritTablePieceView>();
             using (var serialized = new SerializedObject(piece))
             {
-                serialized.FindProperty("pieceId").stringValue = pieceId;
-                serialized.FindProperty("interactionId").stringValue = InteractionId;
+                serialized.FindProperty("piece").objectReferenceValue = pieceName != null ? assets.Piece(pieceName) : null;
                 serialized.FindProperty("presenter").objectReferenceValue = presenter;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
@@ -167,8 +175,8 @@ namespace Dice.Tests
             return piece;
         }
 
-        private static TablePieceDefinition Piece(string pieceId, PieceInteractionDefinition interaction)
-            => new TablePieceDefinition(pieceId, new[] { interaction });
+        private static TablePieceDefinition Piece(string pieceName, params PieceInteractionDefinition[] interactions)
+            => new TablePieceDefinition(TestPieces.IdOf(pieceName), interactions);
 
         private static MechanicalCatalog Catalog(params TablePieceDefinition[] pieces)
         {
@@ -192,8 +200,6 @@ namespace Dice.Tests
         /** A further interaction kind, fabricated so presenters can be shown it; the engine never runs it here. */
         private sealed class ToggleInteractionDefinition : PieceInteractionDefinition
         {
-            public ToggleInteractionDefinition(string id) : base(id) { }
-
             internal override PieceInteractionState InitialState => throw new NotSupportedException();
             internal override bool IsAvailable(EncounterState state) => throw new NotSupportedException();
             internal override bool Accepts(PieceInteractionState current, PieceInteractionInput input) => throw new NotSupportedException();
@@ -210,49 +216,51 @@ namespace Dice.Tests
 
             public static Vector3 Point(int bay) => new Vector3(100 * bay, 0, 0);
 
-            public override bool CanInteract(string pieceId, string interactionId) => true;
+            public override bool CanInteract(TablePieceDefinition.Id pieceId, int interactionIndex) => true;
 
-            public override bool Interact(string pieceId, string interactionId, PieceInteractionInput input)
+            public override bool Interact(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input)
             {
-                Inputs.Add(new KeyValuePair<string, PieceInteractionInput>(pieceId + " " + interactionId, input));
+                Inputs.Add(new KeyValuePair<string, PieceInteractionInput>(pieceId + " " + interactionIndex, input));
                 return true;
             }
 
             public override Vector3 BayPoint(int bay, Vector2 placement) => Point(bay);
         }
 
-        /** A presenter kind that records, under its prop's piece ID, what it is created with and asked to do. */
+        /** A presenter kind of the first interaction that records, under its prop's piece name, what it is created with and asked to do. */
         private sealed class RecordingPresenterAsset : PieceInteractionPresenterAsset
         {
             [NonSerialized] public List<string> Log;
-            [NonSerialized] public readonly List<PieceInteractionDefinition> Received = new List<PieceInteractionDefinition>();
+            [NonSerialized] public readonly List<TablePieceDefinition> Received = new List<TablePieceDefinition>();
 
-            public override PieceInteractionPresenter Create(SpiritTablePieceView piece, PieceInteractionDefinition interaction,
+            public override int InteractionIndex(TablePieceDefinition definition) => 0;
+
+            public override PieceInteractionPresenter Create(SpiritTablePieceView piece, TablePieceDefinition definition,
                 PieceInteractionPresenterContext context)
             {
-                Log.Add(piece.PieceId + " create");
-                Received.Add(interaction);
-                return new RecordingPresenter(Log, piece.PieceId);
+                Log.Add(piece.Piece.name + " create");
+                Received.Add(definition);
+                return new RecordingPresenter(Log, piece.Piece.name);
             }
         }
 
         private sealed class RecordingPresenter : PieceInteractionPresenter
         {
             private readonly List<string> log;
-            private readonly string pieceId;
+            private readonly string pieceName;
 
-            public RecordingPresenter(List<string> log, string pieceId)
+            public RecordingPresenter(List<string> log, string pieceName)
             {
                 this.log = log;
-                this.pieceId = pieceId;
+                this.pieceName = pieceName;
             }
 
             public override void Bind(PieceInteractionSnapshot interaction)
-                => log.Add(pieceId + " bind " + interaction.PieceId + " " + interaction.InteractionId);
+                => log.Add(pieceName + " bind " + interaction.PieceId + " " + interaction.InteractionIndex);
 
-            public override void Layout() => log.Add(pieceId + " layout");
+            public override void Layout() => log.Add(pieceName + " layout");
 
-            public override void Dispose() => log.Add(pieceId + " dispose");
+            public override void Dispose() => log.Add(pieceName + " dispose");
         }
     }
 }

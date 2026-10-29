@@ -43,5 +43,7 @@ namespace Dice.App
             new ContentIdConverter<ModifierFamilyDefinition.Id>("charm family", value => new ModifierFamilyDefinition.Id(value));
         internal static readonly ContentIdConverter<EncounterDefinition.Id> Encounter =
             new ContentIdConverter<EncounterDefinition.Id>("encounter", value => new EncounterDefinition.Id(value));
+        internal static readonly ContentIdConverter<TablePieceDefinition.Id> Piece =
+            new ContentIdConverter<TablePieceDefinition.Id>("table piece", value => new TablePieceDefinition.Id(value));
     }
 }
