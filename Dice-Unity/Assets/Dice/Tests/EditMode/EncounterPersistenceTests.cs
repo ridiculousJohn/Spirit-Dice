@@ -45,7 +45,7 @@ namespace Dice.Tests
             mutated.InitialDice[0] = mutated.InitialDice[0] % 6 + 1;
             mutated.DiceBeforeLastReroll[0] = mutated.DiceBeforeLastReroll[0] % 6 + 1;
             mutated.HandUpgrades[0] = 5;
-            mutated.Modifiers[0].DefinitionId = "mutation";
+            mutated.Modifiers[0].DefinitionId = TestModifiers.IdOf("mutation");
             mutated.Modifiers[0].TotalActivations = 99;
             mutated.ModifierContributions[0].BaseScore = 99;
             mutated.ModifierBaseScore = 99;
@@ -71,7 +71,7 @@ namespace Dice.Tests
             input.HandUpgrades[0] = 5;
             input.Modifiers[1].InstanceId = 99;
             input.Modifiers[1].ActivationsThisHand = 99;
-            input.ModifierContributions[0].DefinitionId = "mutation";
+            input.ModifierContributions[0].DefinitionId = TestModifiers.IdOf("mutation");
             input.ModifierContributions = Array.Empty<EncounterSaveContributionData>();
             AssertGraphEqual(expected, resumed.CaptureSave());
             Assert.That(resumed.Snapshot.Modifiers.Select(value => value.InstanceId), Is.EqualTo(new long[] { 1, 2, 3, 4 }));
@@ -121,7 +121,7 @@ namespace Dice.Tests
             var input = uninterrupted.CaptureSave();
             var resumed = Restore(catalog, input);
             var expected = resumed.CaptureSave();
-            input.PendingReward.Options[0].DefinitionId = "mutation";
+            input.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf("mutation");
             input.PendingReward.Options[0].OptionId = 99;
             input.PendingReward.OfferId = 99;
             input.PendingUpgradeCategories[0] = (HandCategory)99;
@@ -193,23 +193,23 @@ namespace Dice.Tests
         public void DuplicateFallbackRewardsRestoreAsDistinctOwnedInstances()
         {
             var normal = RewardTestContent.Modifier("normal", "family.normal");
-            var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
+            var fallback = new ModifierDefinition(TestModifiers.IdOf("fallback"), TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var catalog = RewardTestContent.Catalog(new[] { normal, fallback },
-                RewardTestContent.Policy(RewardTestContent.ThreeSlots(new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id))),
-                upgrades: Enumerable.Repeat(6, HandDefinition.CategoryCount).ToArray(), inventory: new[] { normal.Id });
+                RewardTestContent.Policy(RewardTestContent.ThreeSlots(new ModifierRewardPoolDefinition("pool", new[] { normal.Identity }, fallback.Identity))),
+                upgrades: Enumerable.Repeat(6, HandDefinition.CategoryCount).ToArray(), inventory: new[] { normal.Identity });
             var session = RewardTestContent.Session(catalog);
             for (int i = 0; i < 2; ++i)
             {
                 session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
                 var offer = session.Snapshot.PendingReward;
                 Assert.That(offer.Options, Is.Not.Empty);
-                Assert.That(offer.Options.Select(value => value.DefinitionId), Is.All.EqualTo(fallback.Id));
+                Assert.That(offer.Options.Select(value => value.DefinitionId), Is.All.EqualTo(fallback.Identity));
                 session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), session.Snapshot.Revision);
             }
             var restored = Restore(catalog, session.CaptureSave());
             Assert.That(restored.Snapshot.Modifiers.Select(value => value.InstanceId), Is.EqualTo(new long[] { 1, 2, 3 }));
-            Assert.That(restored.Snapshot.Modifiers.Select(value => value.DefinitionId), Is.EqualTo(new[] { "normal", "fallback", "fallback" }));
+            Assert.That(restored.Snapshot.Modifiers.Select(value => value.DefinitionId), Is.EqualTo(TestModifiers.IdsOf("normal", "fallback", "fallback")));
             AssertContinuation(session, restored, new RerollDiceAction(1));
         }
 
@@ -250,7 +250,7 @@ namespace Dice.Tests
             {
                 new EncounterSaveContributionData
                 {
-                    InstanceId = 4, DefinitionId = "play", Phase = ModifierPhase.PlayHand, BaseScore = 11
+                    InstanceId = 4, DefinitionId = TestModifiers.IdOf("play"), Phase = ModifierPhase.PlayHand, BaseScore = 11
                 }
             }).ToArray();
             save.ModifierBaseScore += 11;
@@ -265,16 +265,16 @@ namespace Dice.Tests
         {
             var normal = new[] { RewardTestContent.Modifier("first", "family.first"),
                 RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third") };
-            var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
+            var fallback = new ModifierDefinition(TestModifiers.IdOf("fallback"), TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[]
-                { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Id), fallback.Id) }) });
+                { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Identity), fallback.Identity) }) });
             var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }), policy);
             var session = RewardTestContent.Session(catalog);
             session.Execute(PlayHandAction.Instance, 0);
             var save = session.CaptureSave();
             Restore(catalog, save);
-            save.PendingReward.Options[0].DefinitionId = fallback.Id;
+            save.PendingReward.Options[0].DefinitionId = fallback.Identity;
             save.ExcludedRewardFamilies = save.ExcludedRewardFamilies.Concat(new[] { fallback.Family.Identity }).ToArray();
             var result = EncounterSession.RestoreEncounter(catalog, save);
             Assert.That(result.Success, Is.False);
@@ -379,7 +379,7 @@ namespace Dice.Tests
             yield return Invalid("random version", value => ++value.RandomAlgorithmVersion, EncounterRestoreError.RandomAlgorithmVersionMismatch);
             yield return Invalid("catalog version", value => value.CatalogVersion = "unknown", EncounterRestoreError.CatalogVersionMismatch);
             yield return Invalid("encounter", value => value.EncounterId = TestEncounters.IdOf("unknown"), EncounterRestoreError.EncounterNotFound);
-            yield return Invalid("modifier definition", value => value.Modifiers[0].DefinitionId = "unknown", EncounterRestoreError.InvalidDefinition);
+            yield return Invalid("modifier definition", value => value.Modifiers[0].DefinitionId = TestModifiers.IdOf("unknown"), EncounterRestoreError.InvalidDefinition);
             yield return Invalid("revision", value => value.Revision = -1);
             yield return Invalid("phase", value => value.Phase = (EncounterPhase)99);
             yield return Invalid("outcome", value => value.Outcome = (EncounterOutcome)99);
@@ -423,7 +423,7 @@ namespace Dice.Tests
             yield return InvalidReward("wrong target stage", value => value.PendingReward.TargetStageIndex = value.StageIndex);
             yield return InvalidReward("offer identity collision", value => value.NextOfferId = value.PendingReward.OfferId);
             yield return InvalidReward("option identity collision", value => value.NextOptionId = value.PendingReward.Options[0].OptionId);
-            yield return InvalidReward("unknown option definition", value => value.PendingReward.Options[0].DefinitionId = "unknown");
+            yield return InvalidReward("unknown option definition", value => value.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf("unknown"));
             yield return InvalidReward("modifier option with category", value => value.PendingReward.Options[0].HasCategory = true);
             yield return InvalidReward("missing cached choices", value => value.PendingUpgradeCategories = null);
             yield return InvalidReward("unknown cached category", value => value.PendingUpgradeCategories[0] = (HandCategory)99);
@@ -442,16 +442,16 @@ namespace Dice.Tests
         {
             var definitions = new[]
             {
-                new ModifierDefinition("initial", TestFamilies.Of("family.initial"), ModifierPhase.InitialRoll,
+                new ModifierDefinition(TestModifiers.IdOf("initial"), TestFamilies.Of("family.initial"), ModifierPhase.InitialRoll,
                     new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) }),
-                new ModifierDefinition("reroll", TestFamilies.Of("family.reroll"), ModifierPhase.PlayerReroll,
+                new ModifierDefinition(TestModifiers.IdOf("reroll"), TestFamilies.Of("family.reroll"), ModifierPhase.PlayerReroll,
                     new AlwaysCondition(), new ModifierEffect[] { new AddMultiplierEffect(2),
                         new AddRerollsEffect(1) }),
-                new ModifierDefinition("play", TestFamilies.Of("family.play"), ModifierPhase.PlayHand,
+                new ModifierDefinition(TestModifiers.IdOf("play"), TestFamilies.Of("family.play"), ModifierPhase.PlayHand,
                     new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(11) })
             };
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                startingModifiers: new[] { "initial", "reroll", "reroll", "play" });
+                startingModifiers: TestModifiers.IdsOf("initial", "reroll", "reroll", "play"));
             return new MechanicalCatalog("test.persistence", TestContent.Hands(), new[] { encounter }, definitions);
         }
 
@@ -501,7 +501,8 @@ namespace Dice.Tests
                 return;
             }
             var type = expected.GetType();
-            if (type.IsPrimitive || type.IsEnum || expected is string)
+            // A typed content id holds its GUID in a property, so it is compared whole.
+            if (type.IsPrimitive || type.IsEnum || expected is string || expected is IContentId)
             {
                 Assert.That(actual, Is.EqualTo(expected), path);
                 return;

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.interior_equals_neighbor_difference.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.interior_equals_neighbor_difference.rerolls
+  assetGuid: 8c889e113ea315f479a694f331e279d7
   family: {fileID: 11400000, guid: 90ed2242c025c954e9c27268211af52d, type: 2}
   phase: 2
   condition:

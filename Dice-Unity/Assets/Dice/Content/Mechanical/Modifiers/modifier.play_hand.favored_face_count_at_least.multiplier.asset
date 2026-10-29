@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.favored_face_count_at_least.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.favored_face_count_at_least.multiplier
+  assetGuid: 4d776a2f625a4b16adce09a547516b3b
   family: {fileID: 11400000, guid: e6deb7958253bdc4695670dc65735007, type: 2}
   phase: 2
   condition:

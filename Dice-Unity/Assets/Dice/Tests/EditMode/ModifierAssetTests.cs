@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using Dice.Engine;
 using Dice.UnityContent;
@@ -45,9 +44,9 @@ namespace Dice.Tests
 
             var family = asset.Family.Build();
             var definition = asset.Build(family);
-            Assert.That(asset.Id, Is.EqualTo("modifier.example"));
+            Assert.That(asset.Identity, Is.EqualTo(TestModifiers.IdOf("modifier.example")));
             Assert.That(family.Identity, Is.EqualTo(new ModifierFamilyDefinition.Id(Guid.ParseExact(FamilyGuid, "N"))));
-            Assert.That(definition.Id, Is.EqualTo(asset.Id));
+            Assert.That(definition.Identity, Is.EqualTo(asset.Identity));
             Assert.That(definition.Family, Is.SameAs(family));
             Assert.That(definition.Phase, Is.EqualTo(ModifierPhase.PlayerReroll));
             Assert.That(definition.Condition, Is.TypeOf<SelectedSumEqualsEitherCondition>());
@@ -85,26 +84,18 @@ namespace Dice.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
         }
 
-        /** Checks the catalog lists its referenced charms by ordinal id whatever their authored order and culture / fails if authored order or culture orders them. */
+        /** Checks the catalog lists its referenced charms by GUID whatever their authored order / fails if authored order orders them. */
         [Test]
-        public void CatalogBuildOrdersModifiersByOrdinalStableIdIndependentOfInputOrder()
+        public void CatalogBuildOrdersModifiersByGuidIndependentOfInputOrder()
         {
-            var modifiers = new[] { Modifier("modifier.z"), Modifier("modifier.a"), Modifier("modifier.A") };
-            var previousCulture = CultureInfo.CurrentCulture;
-            try
-            {
-                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
-                var first = PoolCatalog(modifiers).Build().Catalog;
-                var second = PoolCatalog(modifiers.Reverse().ToArray()).Build().Catalog;
-                Assert.That(first.Modifiers.Select(modifier => modifier.Id),
-                    Is.EqualTo(new[] { "modifier.A", "modifier.a", "modifier.z" }));
-                Assert.That(second.Modifiers.Select(modifier => modifier.Id),
-                    Is.EqualTo(first.Modifiers.Select(modifier => modifier.Id)));
-            }
-            finally
-            {
-                CultureInfo.CurrentCulture = previousCulture;
-            }
+            var low = CharmId("00000000000000000000000000000001");
+            var middle = CharmId("00000000000000000000000000000002");
+            var high = CharmId("00000000000000000000000000000003");
+            var modifiers = new[] { Modifier("modifier.z", id: high), Modifier("modifier.a", id: low), Modifier("modifier.m", id: middle) };
+            var first = PoolCatalog(modifiers).Build().Catalog;
+            var second = PoolCatalog(modifiers.Reverse().ToArray()).Build().Catalog;
+            Assert.That(first.Modifiers.Select(modifier => modifier.Identity), Is.EqualTo(new[] { low, middle, high }));
+            Assert.That(second.Modifiers.Select(modifier => modifier.Identity), Is.EqualTo(new[] { low, middle, high }));
         }
 
         /** Checks the catalog holds every charm its encounters and their reward pools reference, once each, and no other / fails if a referencing list is skipped, a shared charm repeats or an unreferenced charm enters. */
@@ -123,8 +114,8 @@ namespace Dice.Tests
 
             var built = catalog.Build().Catalog;
 
-            Assert.That(built.Modifiers.Select(modifier => modifier.Id), Is.EquivalentTo(new[]
-                { starting.Id, addition.Id, unlock.Id, pooled.Id, fallback.Id }));
+            Assert.That(built.Modifiers.Select(modifier => modifier.Identity), Is.EquivalentTo(new[]
+                { starting.Identity, addition.Identity, unlock.Identity, pooled.Identity, fallback.Identity }));
         }
 
         /** Checks each encounter and pool keeps its charms' ids in authored order / fails if a list is reordered or loses a charm. */
@@ -138,8 +129,8 @@ namespace Dice.Tests
 
             var encounter = catalog.Build().Catalog.GetEncounter(TestEncounters.IdOf("encounter.test"));
 
-            Assert.That(encounter.EncounterModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
-            Assert.That(encounter.RewardPolicy.ModifierLayouts[0].Pools[0].ModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
+            Assert.That(encounter.EncounterModifierIds, Is.EqualTo(new[] { second.Identity, first.Identity }));
+            Assert.That(encounter.RewardPolicy.ModifierLayouts[0].Pools[0].ModifierIds, Is.EqualTo(new[] { second.Identity, first.Identity }));
         }
 
         /** Checks an encounter with a reward policy builds it and one without builds none, so it makes no reward offers / fails if a missing policy is defaulted or a set one is lost. */
@@ -180,8 +171,8 @@ namespace Dice.Tests
 
             var content = PoolCatalog(new[] { first, second }).Build();
 
-            Assert.That(content.GetDefinition(first), Is.SameAs(content.Catalog.GetModifier(first.Id)));
-            Assert.That(content.GetDefinition(second), Is.SameAs(content.Catalog.GetModifier(second.Id)));
+            Assert.That(content.GetDefinition(first), Is.SameAs(content.Catalog.GetModifier(first.Identity)));
+            Assert.That(content.GetDefinition(second), Is.SameAs(content.Catalog.GetModifier(second.Identity)));
             Assert.Throws<InvalidOperationException>(() => content.GetDefinition(unreferenced));
         }
 
@@ -208,8 +199,8 @@ namespace Dice.Tests
             var first = Modifier("modifier.first");
             var second = Modifier("modifier.second");
             var built = PoolCatalog(new[] { first, second }).Build().Catalog;
-            Assert.That(built.GetModifier(second.Id).Family, Is.SameAs(built.GetModifier(first.Id).Family));
-            Assert.That(built.Families, Is.EqualTo(new[] { built.GetModifier(first.Id).Family }));
+            Assert.That(built.GetModifier(second.Identity).Family, Is.SameAs(built.GetModifier(first.Identity).Family));
+            Assert.That(built.Families, Is.EqualTo(new[] { built.GetModifier(first.Identity).Family }));
 
             var catalog = PoolCatalog(new[] { first, Modifier("modifier.copy", family: Family(FamilyGuid, "family.copy")) });
             var failure = Assert.Throws<InvalidOperationException>(() => catalog.Build());
@@ -237,12 +228,19 @@ namespace Dice.Tests
         private MechanicalCatalogAsset PoolCatalog(ModifierAsset[] modifiers)
             => Catalog(content.Encounter("encounter.test", rewardLayouts: new[] { new[] { content.RewardPool("pool.test", modifiers) } }));
 
-        /** A charm; without a family it belongs to the one example family of the test. */
-        private ModifierAsset Modifier(string id, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null)
+        private static ModifierDefinition.Id CharmId(string guid) => new ModifierDefinition.Id(Guid.ParseExact(guid, "N"));
+
+        /**
+         * A charm of the name whose id is the given id, or the test charm id of the name without one; without a family it
+         * belongs to the one example family of the test.
+         */
+        private ModifierAsset Modifier(string name, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null,
+            ModifierDefinition.Id? id = null)
         {
             var asset = Create<ModifierAsset>();
+            asset.name = name;
             using var serialized = new SerializedObject(asset);
-            serialized.FindProperty("id").stringValue = id;
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = (id ?? TestModifiers.IdOf(name)).Value.ToString("N");
             serialized.FindProperty("family").objectReferenceValue = family != null ? family
                 : exampleFamily != null ? exampleFamily : exampleFamily = Family(FamilyGuid, "family.example");
             serialized.FindProperty("condition").managedReferenceValue = new AlwaysConditionConfig();

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.interior_sum_divisible_by.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.interior_sum_divisible_by.base_score
+  assetGuid: 3efb02beaaa789640851f90a59be194a
   family: {fileID: 11400000, guid: 181a5ae66ed814f47a6d978d6704a326, type: 2}
   phase: 2
   condition:

@@ -26,7 +26,7 @@ namespace Dice.Tests
         [Test]
         public void RuleBonusAddsToTheHandMultiplierAndIsAnnouncedBeforeScoring()
         {
-            var modifier = new ModifierDefinition("test.always", TestFamilies.Of("test.always"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("test.always"), TestFamilies.Of("test.always"), ModifierPhase.PlayHand,
                 new AlwaysCondition(),
                 new ModifierEffect[] { new AddMultiplierEffect(7) });
             var catalog = Catalog(modifier);
@@ -51,7 +51,7 @@ namespace Dice.Tests
             => new MechanicalCatalog("test.distinct_faces", TestContent.Hands(), new[]
             {
                 new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 5, 3) },
-                    startingModifiers: modifiers.Select(value => value.Id),
+                    startingModifiers: modifiers.Select(value => value.Identity),
                     rules: new[] { new DistinctFacesMultiplierRuleDefinition(RuleId) })
             }, modifiers);
 

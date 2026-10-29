@@ -24,7 +24,7 @@ namespace Dice.Tests
             AssertStatus(session, ready, SpiritCharmStatusState.Ready, 1, "<charmStatus.ready>");
             AssertStatus(session, waiting, SpiritCharmStatusState.WaitingCondition, 1, "<charmStatus.waiting>");
             Assert.That(session.PreviewHandResolution().Events.OfType<ModifierActivatedEvent>()
-                .Select(value => value.DefinitionId), Is.EqualTo(new[] { ready.Id }));
+                .Select(value => value.DefinitionId), Is.EqualTo(new[] { ready.Identity }));
         }
 
         [Test]
@@ -83,7 +83,7 @@ namespace Dice.Tests
                 ModifierActivationLimit.OncePerStage);
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1, 3, 3), new StageDefinition(1000000, 3, 3) },
-                startingModifiers: new[] { stage.Id });
+                startingModifiers: new[] { stage.Identity });
             var catalog = new MechanicalCatalog("test.charm.status.stage", TestContent.Hands(),
                 new[] { encounter }, new[] { stage });
             var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);
@@ -118,7 +118,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards),
                     new StageDefinition(1000000, 3, 3) },
-                startingModifiers: new[] { initial.Id, waiting.Id });
+                startingModifiers: new[] { initial.Identity, waiting.Identity });
             var catalog = new MechanicalCatalog("test.charm.status.inactive", TestContent.Hands(),
                 new[] { encounter }, new[] { initial, waiting });
             var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);
@@ -146,27 +146,28 @@ namespace Dice.Tests
         private static void AssertStatus(EncounterSession session, ModifierDefinition definition,
             SpiritCharmStatusState state, int? remaining, string detailText = null)
         {
-            var instance = session.Snapshot.Modifiers.Single(value => value.DefinitionId == definition.Id);
+            var instance = session.Snapshot.Modifiers.Single(value => value.DefinitionId == definition.Identity);
             var inspection = session.InspectModifiersForPlayHand().Single(value => value.InstanceId == instance.InstanceId);
             var status = SpiritCharmStatusPresentation.Create(instance, definition, session.Snapshot.Phase, inspection);
-            Assert.That(status.State, Is.EqualTo(state), definition.Id);
-            Assert.That(status.RemainingUses, Is.EqualTo(remaining), definition.Id);
-            Assert.That(status.ActivationLimit, Is.EqualTo(definition.ActivationLimit), definition.Id);
+            string name = TestModifiers.NameOf(definition.Identity);
+            Assert.That(status.State, Is.EqualTo(state), name);
+            Assert.That(status.RemainingUses, Is.EqualTo(remaining), name);
+            Assert.That(status.ActivationLimit, Is.EqualTo(definition.ActivationLimit), name);
             if (detailText != null)
                 Assert.That(status.GetDetailText(definition.Phase, session.Snapshot.Phase, wording.charmStatus), Is.EqualTo(detailText),
-                    definition.Id);
+                    name);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand)
-            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition,
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("test." + id), phase, condition,
                 new ModifierEffect[] { new AddBaseScoreEffect(7) }, limit);
 
         private static EncounterSession Session(params ModifierDefinition[] definitions)
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1000000, 4, 4) },
-                startingModifiers: definitions.Select(value => value.Id));
+                startingModifiers: definitions.Select(value => value.Identity));
             var catalog = new MechanicalCatalog("test.charm.status", TestContent.Hands(),
                 new[] { encounter }, definitions);
             return EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);

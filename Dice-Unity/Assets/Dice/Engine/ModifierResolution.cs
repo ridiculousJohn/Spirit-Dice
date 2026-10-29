@@ -7,7 +7,7 @@ namespace Dice.Engine
     public readonly struct ModifierInstanceSnapshot
     {
         public long InstanceId { get; }
-        public string DefinitionId { get; }
+        public ModifierDefinition.Id DefinitionId { get; }
         public int ActivationsThisHand { get; }
         public int ActivationsThisStage { get; }
         public long TotalActivations { get; }
@@ -25,7 +25,7 @@ namespace Dice.Engine
     public readonly struct ModifierContribution
     {
         public long InstanceId { get; }
-        public string DefinitionId { get; }
+        public ModifierDefinition.Id DefinitionId { get; }
         public ModifierPhase Phase { get; }
         public long BaseScore { get; }
         public long Multiplier { get; }
@@ -34,7 +34,7 @@ namespace Dice.Engine
         internal ModifierContribution(long instanceId, ModifierDefinition definition, long baseScore, long multiplier, int rerolls)
         {
             InstanceId = instanceId;
-            DefinitionId = definition.Id;
+            DefinitionId = definition.Identity;
             Phase = definition.Phase;
             BaseScore = baseScore;
             Multiplier = multiplier;
@@ -45,7 +45,7 @@ namespace Dice.Engine
     public sealed class ModifierActivatedEvent : RuleEvent
     {
         public long InstanceId => Contribution.InstanceId;
-        public string DefinitionId => Contribution.DefinitionId;
+        public ModifierDefinition.Id DefinitionId => Contribution.DefinitionId;
         public ModifierPhase Phase => Contribution.Phase;
         public ModifierContribution Contribution { get; }
         /** The resource changes the activation's effects granted, in order. */
@@ -86,7 +86,7 @@ namespace Dice.Engine
     internal sealed class ModifierInstanceState
     {
         internal long InstanceId;
-        internal string DefinitionId;
+        internal ModifierDefinition.Id DefinitionId;
         internal int ActivationsThisHand;
         internal int ActivationsThisStage;
         internal long TotalActivations;

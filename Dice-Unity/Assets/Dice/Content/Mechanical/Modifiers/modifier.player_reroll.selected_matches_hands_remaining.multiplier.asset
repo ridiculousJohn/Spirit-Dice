@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.player_reroll.selected_matches_hands_remaining.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.player_reroll.selected_matches_hands_remaining.multiplier
+  assetGuid: e1fa233030cff324fa1d0925c30b65f4
   family: {fileID: 11400000, guid: f2a9bba594189a34a8d9c48b58bbc22d, type: 2}
   phase: 1
   condition:

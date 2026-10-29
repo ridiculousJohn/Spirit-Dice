@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.rank_above_previous.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.rank_above_previous.base_score
+  assetGuid: 1bd3c7c554d39e1449aeb214bedae99c
   family: {fileID: 11400000, guid: 84bddac9bfdad664b8df87d34a111ee4, type: 2}
   phase: 2
   condition:

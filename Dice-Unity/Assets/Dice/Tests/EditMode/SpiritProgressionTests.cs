@@ -37,7 +37,7 @@ namespace Dice.Tests
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.Save();
             string olderSavePath = Path.Combine(Path.GetDirectoryName(savePath), "older-run.json");
             File.Copy(savePath, olderSavePath);
@@ -46,7 +46,7 @@ namespace Dice.Tests
             {
                 unlockEvents += resolution.Events.OfType<ModifierUnlockedEvent>().Count();
                 if (resolution.Snapshot.NewlyUnlockedModifierIds.Count != 0)
-                    Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(UnlockedId));
+                    Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
                 controller.CompletePresentation();
             };
             controller.PlayHand();
@@ -56,17 +56,17 @@ namespace Dice.Tests
             controller.Load();
             Assert.That(controller.Snapshot.PendingReward, Is.EqualTo(pending));
             ChooseUnlock();
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(UnlockedId));
-            Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
+            Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
             controller.PlayHand();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
             controller.StartNew();
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(UnlockedId));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
             Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
             controller.Initialize(catalog, TestContent.EncounterId, 17, olderSavePath);
             controller.Load();
             Assert.That(controller.Snapshot.Revision, Is.Zero);
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(UnlockedId));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
             controller.PlayHand();
             ChooseUnlock();
             Assert.That(unlockEvents, Is.EqualTo(1));
@@ -87,7 +87,7 @@ namespace Dice.Tests
             Assert.That(File.Exists(replacementPath), Is.False);
 
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.PlayHand();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
             var pending = EncounterSaveFileStore.Load(savePath, catalog);
@@ -102,8 +102,8 @@ namespace Dice.Tests
             Assert.That(consumed.EncounterId, Is.EqualTo(TestContent.EncounterId));
             Assert.That(consumed.Revision, Is.EqualTo(controller.Snapshot.Revision));
             Assert.That(consumed.PendingReward, Is.Null);
-            Assert.That(consumed.UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(consumed.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
             Assert.That(File.Exists(replacementPath), Is.False);
         }
 
@@ -112,14 +112,14 @@ namespace Dice.Tests
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.Resolved += resolution =>
             {
                 if (resolution.Snapshot.Outcome == EncounterOutcome.Won)
                 {
                     var profile = PlayerProfileFileStore.Load(controller.ProfilePath);
                     Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
-                    Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+                    Assert.That(profile.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
                 }
                 controller.CompletePresentation();
             };
@@ -152,21 +152,21 @@ namespace Dice.Tests
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
             File.WriteAllText(controller.ProfilePath, "{ corrupt external profile");
             ChooseUnlock();
             var before = controller.Snapshot;
-            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(UnlockedId));
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
             Assert.That(controller.Status.Profile.IsPending, Is.True);
             controller.StartNew();
             controller.Load();
             controller.Initialize(catalog, TestContent.EncounterId, 42, savePath);
             controller.PlayHand();
             Assert.That(controller.Snapshot, Is.SameAs(before));
-            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(UnlockedId));
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(TestModifiers.IdOf(UnlockedId)));
             Assert.That(File.ReadAllText(controller.ProfilePath), Is.EqualTo("{ corrupt external profile"));
         }
 
@@ -175,7 +175,7 @@ namespace Dice.Tests
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
@@ -191,7 +191,7 @@ namespace Dice.Tests
             }
             controller.Save();
             Assert.That(controller.ProfileStatus.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
             controller.Load();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             Assert.That(controller.Snapshot.PendingReward, Is.Null);
@@ -201,17 +201,17 @@ namespace Dice.Tests
         public void ValidSavedRunRecoversSeededPermanentUnlocksWhenProfileIsMissing()
         {
             var catalog = Catalog();
-            var seeded = new EncounterApplication(catalog, TestContent.EncounterId, 17, new[] { UnlockedId });
+            var seeded = new EncounterApplication(catalog, TestContent.EncounterId, 17, TestModifiers.IdsOf(UnlockedId));
             EncounterSaveFileStore.Save(savePath, seeded.CaptureSave());
             controller.Initialize(catalog, TestContent.EncounterId, 42, savePath);
             Assert.That(File.Exists(controller.ProfilePath), Is.False);
             Assert.That(controller.Snapshot.UnlockedModifierIds, Is.Empty);
             controller.Load();
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
             Assert.That(controller.Snapshot.NewlyUnlockedModifierIds, Is.Empty);
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
             controller.StartNew();
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Is.EqualTo(new[] { UnlockedId }));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(UnlockedId)));
         }
 
         [Test]
@@ -219,17 +219,17 @@ namespace Dice.Tests
         {
             string profilePath = Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json");
             var profile = new PlayerProfile();
-            profile.UnlockModifier("modifier.future");
+            profile.UnlockModifier(TestModifiers.IdOf("modifier.future"));
             profile.CompleteEncounter(TestEncounters.IdOf("encounter.future"));
             PlayerProfileFileStore.Save(profilePath, profile);
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.Snapshot.UnlockedModifierIds, Is.Empty);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<string>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
             controller.PlayHand();
             ChooseUnlock();
             profile = PlayerProfileFileStore.Load(profilePath);
-            Assert.That(profile.UnlockedModifierIds, Is.EquivalentTo(new[] { "modifier.future", UnlockedId }));
+            Assert.That(profile.UnlockedModifierIds, Is.EquivalentTo(TestModifiers.IdsOf("modifier.future", UnlockedId)));
             Assert.That(profile.CompletedEncounterIds, Is.EquivalentTo(new[] { TestEncounters.IdOf("encounter.future"), TestContent.EncounterId }));
         }
 
@@ -244,14 +244,14 @@ namespace Dice.Tests
 
         private static MechanicalCatalog Catalog(bool finalWin = false)
         {
-            var modifier = new ModifierDefinition(UnlockedId, TestFamilies.Of("family.permanent"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf(UnlockedId), TestFamilies.Of("family.permanent"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
             var stages = finalWin ? new[] { new StageDefinition(1, 1, 0) } :
                 new[] { new StageDefinition(1, 1, 0), new StageDefinition(1000000, 1, 0) };
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages,
                 unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
-                unlockRewardModifierIds: new[] { UnlockedId });
+                unlockRewardModifierIds: TestModifiers.IdsOf(UnlockedId));
             return new MechanicalCatalog("test.progression.v1", TestContent.Hands(), new[] { encounter }, new[] { modifier });
         }
     }

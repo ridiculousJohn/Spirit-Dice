@@ -94,7 +94,7 @@ namespace Dice.Tests
             for (int index = 0; index < 128; ++index)
             {
                 var profile = new PlayerProfile();
-                profile.UnlockModifier("modifier.save-test." + index);
+                profile.UnlockModifier(TestModifiers.IdOf("modifier.save-test." + index));
                 PlayerProfileFileStore.Save(destination, profile);
                 Assert.That(PlayerProfileFileStore.Load(destination).UnlockedModifierIds.Count, Is.EqualTo(index + 1));
                 if (previous != null) Assert.That(File.ReadAllBytes(backup), Is.EqualTo(previous));

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.three_smallest_sum_at_most_maximum.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.three_smallest_sum_at_most_maximum.combined
+  assetGuid: 0e43985acf43db647904a9e4c71d6d75
   family: {fileID: 11400000, guid: 406b24cd7f794654ca7ccb24b15fa8d2, type: 2}
   phase: 2
   condition:

@@ -79,7 +79,7 @@ namespace Dice.Presentation
                 var option = offer.Options[i];
                 if (offer.Kind == RewardKind.Modifier || unlock)
                 {
-                    var definition = controls.Catalog.GetModifier(option.DefinitionId);
+                    var definition = controls.Catalog.GetModifier(option.DefinitionId.Value);
                     card.RenderModifier(controls.ModifierPresentation, definition, offer.OfferId, option.OptionId);
                 }
                 else if (option.Category.HasValue)

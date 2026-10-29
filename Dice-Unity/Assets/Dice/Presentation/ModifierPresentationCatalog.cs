@@ -54,7 +54,7 @@ namespace Dice.Presentation
                 if (modifier == null)
                     throw new InvalidOperationException("The charm presentation " + presentation.name + " has no charm reference.");
                 if (!presented.Add(modifier))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " has more than one presentation for the charm " + modifier.Id + ".");
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has more than one presentation for the charm " + modifier.name + ".");
                 ModifierDefinition definition = content.GetDefinition(modifier);
                 Validate(presentation, categories);
                 order.Add(definition, entries.Count);
@@ -62,7 +62,7 @@ namespace Dice.Presentation
             }
             foreach (ModifierAsset modifier in content.Modifiers)
                 if (!presented.Contains(modifier))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no presentation for the charm " + modifier.Id + ".");
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no presentation for the charm " + modifier.name + ".");
             foreach (ModifierFamilyWording family in skin.FamilyWording)
             {
                 if (family == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has a missing family name.");
@@ -78,7 +78,7 @@ namespace Dice.Presentation
             foreach (ModifierAsset modifier in content.Modifiers)
                 if (!familyNames.ContainsKey(content.GetDefinition(modifier).Family.Identity))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no name for the family " +
-                        modifier.Family.name + " of the charm " + modifier.Id + ".");
+                        modifier.Family.name + " of the charm " + modifier.name + ".");
             foreach (ModifierEffectWording effect in skin.EffectWording)
             {
                 if (effect == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has missing effect wording.");
@@ -124,19 +124,21 @@ namespace Dice.Presentation
             RequireFormat(skin, format.Timing, "timing", false);
             RequireFormat(skin, format.Contribution, "contribution", false);
             RequireFormat(skin, format.ContributionSeparator, "contributionSeparator", true);
-            foreach (ModifierDefinition definition in Catalog.Modifiers)
+            // The content pairs every catalog charm with its asset, whose name names the charm.
+            foreach (ModifierAsset modifier in content.Modifiers)
             {
+                ModifierDefinition definition = content.GetDefinition(modifier);
                 if (definition.Effects.Count == 0 && string.IsNullOrWhiteSpace(skin.NoEffectsText))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no text for the charm without effects " + definition.Id + ".");
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has no text for the charm without effects " + modifier.name + ".");
                 foreach (ModifierEffect effect in definition.Effects)
                     if (!wording.ContainsKey(effect.Kind))
-                        throw new InvalidOperationException("The modifier skin " + skin.name + " has no wording for the effect " + effect.Kind + " of the charm " + definition.Id + ".");
+                        throw new InvalidOperationException("The modifier skin " + skin.name + " has no wording for the effect " + effect.Kind + " of the charm " + modifier.name + ".");
                 if (!phaseWording.ContainsKey(definition.Phase))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no wording for the phase " + definition.Phase +
-                        " of the charm " + definition.Id + ".");
+                        " of the charm " + modifier.name + ".");
                 if (!limitWording.ContainsKey(definition.ActivationLimit))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has no wording for the activation limit " +
-                        definition.ActivationLimit + " of the charm " + definition.Id + ".");
+                        definition.ActivationLimit + " of the charm " + modifier.name + ".");
             }
             noEffectsText = skin.NoEffectsText;
         }
@@ -150,7 +152,7 @@ namespace Dice.Presentation
 
         private static void Validate(ModifierPresentationAsset presentation, HashSet<ModifierCategoryPresentationAsset> categories)
         {
-            string id = presentation.Modifier.Id;
+            string id = presentation.Modifier.name;
             if (string.IsNullOrWhiteSpace(presentation.DisplayName))
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires a display name: " + id);
             if (presentation.Icon == null)
@@ -279,7 +281,7 @@ namespace Dice.Presentation
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (!entries.TryGetValue(definition, out ModifierPresentationAsset entry))
-                throw new InvalidOperationException("The charm " + definition.Id + " is not a charm of the loaded content.");
+                throw new InvalidOperationException("The charm " + definition.Identity + " is not a charm of the loaded content.");
             return entry;
         }
     }

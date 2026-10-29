@@ -9,7 +9,7 @@ namespace Dice.Engine
     public sealed class ModifierInspection
     {
         public long InstanceId { get; }
-        public string DefinitionId { get; }
+        public ModifierDefinition.Id DefinitionId { get; }
         public ModifierPhase Phase { get; }
         public ModifierInspectionStatus Status { get; }
         public bool? ConditionMet { get; }
@@ -19,7 +19,7 @@ namespace Dice.Engine
             ModifierInspectionStatus status, bool? conditionMet, bool activationLimitReached)
         {
             InstanceId = instance.InstanceId;
-            DefinitionId = definition.Id;
+            DefinitionId = definition.Identity;
             Phase = definition.Phase;
             Status = status;
             ConditionMet = conditionMet;

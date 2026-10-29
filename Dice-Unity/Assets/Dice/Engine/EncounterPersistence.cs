@@ -196,8 +196,8 @@ namespace Dice.Engine
             RestoreRuleStates(definition, save, state, postPlay);
             ValidateDiceHistory(definition, state, postPlay);
             state.PieceStates = RestorePieces(definition, save);
-            var definitions = new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
-            foreach (var modifier in catalog.Modifiers) definitions.Add(modifier.Id, modifier);
+            var definitions = new Dictionary<ModifierDefinition.Id, ModifierDefinition>();
+            foreach (var modifier in catalog.Modifiers) definitions.Add(modifier.Identity, modifier);
             ValidateModifiers(catalog, definition, save, state, definitions, postPlay);
             ValidateRerollAccounting(definition, state);
             var excluded = new HashSet<ModifierFamilyDefinition.Id>();
@@ -214,35 +214,35 @@ namespace Dice.Engine
         private static void ValidateUnlocks(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save, EncounterState state)
         {
             Require(save.UnlockedModifierIds != null && save.NewlyUnlockedModifierIds != null, "Unlock arrays are missing.");
-            var unlocked = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in save.UnlockedModifierIds)
+            var unlocked = new HashSet<ModifierDefinition.Id>();
+            foreach (var id in save.UnlockedModifierIds)
             {
-                Require(!string.IsNullOrWhiteSpace(id) && unlocked.Add(id), "Unlock IDs must be valid and unique.");
+                Require(id.Value != Guid.Empty && unlocked.Add(id), "Unlock IDs must be valid and unique.");
                 ModifierDefinition modifier;
                 try { modifier = catalog.GetModifier(id); }
                 catch (KeyNotFoundException) { throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Unlocked modifier is missing from the catalog."); }
                 Require(modifier.Availability.Access == ModifierAccess.PermanentUnlock, "An unlock requires permanent access.");
             }
-            var earned = new HashSet<string>(StringComparer.Ordinal);
+            var earned = new HashSet<ModifierDefinition.Id>();
             int clearedStageNumber = state.StageIndex + (state.RemainingThreshold == 0 ? 1 : 0);
             bool milestoneCleared = false;
             foreach (var milestone in definition.UnlockMilestones)
                 if (milestone.StageNumber <= clearedStageNumber) milestoneCleared = true;
-            foreach (string id in save.NewlyUnlockedModifierIds)
+            foreach (var id in save.NewlyUnlockedModifierIds)
             {
-                Require(id != null && unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
+                Require(unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
                 // Unlock offers draw only from the encounter's unlock rewards, so only those can be earned.
                 Require(milestoneCleared && definition.UnlockRewardModifierIds.Contains(id), "An earned unlock requires a cleared milestone.");
             }
-            state.UnlockedModifierIds = new List<string>(save.UnlockedModifierIds);
-            state.NewlyUnlockedModifierIds = new List<string>(save.NewlyUnlockedModifierIds);
+            state.UnlockedModifierIds = new List<ModifierDefinition.Id>(save.UnlockedModifierIds);
+            state.NewlyUnlockedModifierIds = new List<ModifierDefinition.Id>(save.NewlyUnlockedModifierIds);
             if (state.Phase == EncounterPhase.ChoosingModifier)
             {
                 Require(save.PendingModifierOfferUnlockedIds != null, "Pending offer unlocks are missing.");
-                var pendingUnlocks = new HashSet<string>(StringComparer.Ordinal);
-                foreach (string id in save.PendingModifierOfferUnlockedIds)
-                    Require(id != null && unlocked.Contains(id) && pendingUnlocks.Add(id), "Pending offer unlocks must be unique and currently unlocked.");
-                state.PendingModifierOfferUnlockedIds = new List<string>(save.PendingModifierOfferUnlockedIds);
+                var pendingUnlocks = new HashSet<ModifierDefinition.Id>();
+                foreach (var id in save.PendingModifierOfferUnlockedIds)
+                    Require(unlocked.Contains(id) && pendingUnlocks.Add(id), "Pending offer unlocks must be unique and currently unlocked.");
+                state.PendingModifierOfferUnlockedIds = new List<ModifierDefinition.Id>(save.PendingModifierOfferUnlockedIds);
             }
             else Require(save.PendingModifierOfferUnlockedIds == null, "Pending offer unlocks require a generated modifier offer.");
         }
@@ -258,7 +258,7 @@ namespace Dice.Engine
                     throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "A discovered family is missing from the catalog.");
             }
             state.DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(save.DiscoveredFamilyIds);
-            foreach (string id in state.UnlockedModifierIds)
+            foreach (var id in state.UnlockedModifierIds)
                 Require(discovered.Contains(catalog.GetModifier(id).Family.Identity), "An owned modifier requires a discovered family.");
             if (state.Phase == EncounterPhase.ChoosingUnlock)
             {
@@ -410,7 +410,7 @@ namespace Dice.Engine
         }
 
         private static void ValidateModifiers(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
-            EncounterState state, Dictionary<string, ModifierDefinition> definitions, bool postPlay)
+            EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, bool postPlay)
         {
             Require(state.Modifiers.Length >= definition.StartingModifiers.Count, "Starting modifier inventory is missing.");
             var contributionCounts = new int[state.Modifiers.Length];
@@ -507,7 +507,7 @@ namespace Dice.Engine
         }
 
         private static void ValidateRewards(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
-            EncounterState state, Dictionary<string, ModifierDefinition> definitions, bool postPlay)
+            EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, bool postPlay)
         {
             var policy = definition.RewardPolicy;
             bool choosingModifier = state.Phase == EncounterPhase.ChoosingModifier;
@@ -554,14 +554,14 @@ namespace Dice.Engine
                     spent >= policy.RefreshesPerClear && (spent - policy.RefreshesPerClear) % policy.RefreshCost == 0;
                 Require(spent >= 0 && (spent % policy.RefreshCost == 0 || beforeUnlockChoice),
                     "Refresh resources disagree with reward economy.");
-                var acquiredIds = new HashSet<string>(StringComparer.Ordinal);
+                var acquiredIds = new HashSet<ModifierDefinition.Id>();
                 foreach (var layout in policy.ModifierLayouts)
                     foreach (var pool in layout.Pools)
                     {
-                        foreach (string id in pool.ModifierIds) acquiredIds.Add(id);
-                        if (pool.FallbackModifierId != null) acquiredIds.Add(pool.FallbackModifierId);
+                        foreach (var id in pool.ModifierIds) acquiredIds.Add(id);
+                        if (pool.FallbackModifierId.HasValue) acquiredIds.Add(pool.FallbackModifierId.Value);
                     }
-                foreach (string id in definition.EncounterModifierIds) acquiredIds.Add(id);
+                foreach (var id in definition.EncounterModifierIds) acquiredIds.Add(id);
                 for (int i = definition.StartingModifiers.Count; i < state.Modifiers.Length; ++i)
                     Require(acquiredIds.Contains(state.Modifiers[i].DefinitionId), "Acquired modifier is absent from reward pools.");
             }
@@ -610,22 +610,22 @@ namespace Dice.Engine
             var policy = definition.RewardPolicy;
             var layout = policy.LayoutFor(state.ClearedStageNumber);
             Require(options.Count <= layout.Pools.Count, "Modifier offer has too many options.");
-            var owned = new HashSet<string>(StringComparer.Ordinal);
+            var owned = new HashSet<ModifierDefinition.Id>();
             foreach (var instance in state.Modifiers) owned.Add(instance.DefinitionId);
             var offered = new HashSet<ModifierFamilyDefinition.Id>();
             var history = new HashSet<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies);
-            var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
+            var unlocked = new HashSet<ModifierDefinition.Id>(state.PendingModifierOfferUnlockedIds);
             int nextOption = 0;
             foreach (var pool in layout.Pools)
             {
                 var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.IncomingStageNumber, pool, owned, offered,
                     definition, unlocked);
-                string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, unlocked);
-                if (eligible.Count == 0 && fallback == null) continue;
+                var fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, unlocked);
+                if (eligible.Count == 0 && !fallback.HasValue) continue;
                 Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
-                var option = options[nextOption++];
-                var modifier = catalog.GetModifier(option.DefinitionId);
-                Require(eligible.Count == 0 ? option.DefinitionId == fallback : eligible.Contains(option.DefinitionId),
+                var optionId = options[nextOption++].DefinitionId.Value;
+                var modifier = catalog.GetModifier(optionId);
+                Require(eligible.Count == 0 ? optionId == fallback : eligible.Contains(optionId),
                     "Modifier option violates its unlock, pool, or tier eligibility.");
                 Require(history.Contains(modifier.Family.Identity), "An offered family is absent from reward history.");
                 offered.Add(modifier.Family.Identity);
@@ -636,16 +636,17 @@ namespace Dice.Engine
         private static void ValidateUnlockOptions(MechanicalCatalog catalog, EncounterDefinition definition, EncounterState state, List<RewardOption> options)
         {
             Require(definition.HasUnlockMilestone(state.ClearedStageNumber), "An unlock offer requires a cleared milestone.");
-            var candidates = new HashSet<string>(definition.UnlockCandidates(catalog, state.UnlockedModifierIds,
-                state.PendingUnlockOfferDiscoveredFamilyIds), StringComparer.Ordinal);
-            var offered = new HashSet<string>(StringComparer.Ordinal);
+            var candidates = new HashSet<ModifierDefinition.Id>(definition.UnlockCandidates(catalog, state.UnlockedModifierIds,
+                state.PendingUnlockOfferDiscoveredFamilyIds));
+            var offered = new HashSet<ModifierDefinition.Id>();
             foreach (var option in options)
             {
-                Require(definition.UnlockRewardModifierIds.Contains(option.DefinitionId) && offered.Add(option.DefinitionId) &&
-                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(option.DefinitionId).Family.Identity),
+                var id = option.DefinitionId.Value;
+                Require(definition.UnlockRewardModifierIds.Contains(id) && offered.Add(id) &&
+                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(id).Family.Identity),
                     "Unlock options must be distinct entries from discovered families in the authored unlock pool.");
                 // Profile progress can have been committed before the corresponding run save was written.
-                candidates.Add(option.DefinitionId);
+                candidates.Add(id);
             }
             Require(options.Count == Math.Min(ModifierUnlockMilestone.OfferSize, candidates.Count),
                 "Unlock offer has an incorrect option count.");
@@ -668,9 +669,9 @@ namespace Dice.Engine
             }
         }
 
-        private static ModifierDefinition GetModifier(Dictionary<string, ModifierDefinition> definitions, string id)
+        private static ModifierDefinition GetModifier(Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, ModifierDefinition.Id? id)
         {
-            if (id == null || !definitions.TryGetValue(id, out var definition))
+            if (!id.HasValue || !definitions.TryGetValue(id.Value, out var definition))
                 throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Modifier definition is missing from the catalog.");
             return definition;
         }

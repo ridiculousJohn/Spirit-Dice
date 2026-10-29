@@ -692,9 +692,9 @@ namespace Dice.Presentation
         {
             if (!(controls is ISpiritProgressionControls progression)) { pauseMenu.ProfileSummary.text = ""; return; }
             int unlocked = 0;
-            var ids = new HashSet<string>(progression.ProfileUnlockedModifierIds, StringComparer.Ordinal);
+            var ids = new HashSet<ModifierDefinition.Id>(progression.ProfileUnlockedModifierIds);
             foreach (var modifier in controls.Catalog.Modifiers)
-                if (ids.Contains(modifier.Id)) ++unlocked;
+                if (ids.Contains(modifier.Identity)) ++unlocked;
             var wording = SpiritUi.GetWording(transform).pauseMenu;
             pauseMenu.ProfileSummary.text = progression.ProfileStatus.Kind == PlayerProfileStatusKind.None
                 ? wording.ProfileSummary(unlocked, progression.CompletedEncounterIds.Count)
@@ -707,7 +707,7 @@ namespace Dice.Presentation
             CloseCharmPopup();
             menuPanel.gameObject.SetActive(false);
             collectionView.Show(controls.Catalog, controls.ModifierPresentation,
-                (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
+                (controls as ISpiritProgressionControls)?.ProfileUnlockedModifierIds ?? Array.Empty<ModifierDefinition.Id>(),
                 journeyControls?.JourneyCatalog,
                 (controls as ISpiritProgressionControls)?.ProfileDiscoveredFamilyIds ?? Array.Empty<ModifierFamilyDefinition.Id>());
         }

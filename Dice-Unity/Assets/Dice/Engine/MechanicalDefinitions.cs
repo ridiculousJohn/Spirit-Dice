@@ -122,23 +122,23 @@ namespace Dice.Engine
         public Id Identity { get; }
         public ReadOnlyCollection<StageDefinition> Stages { get; }
         public ReadOnlyCollection<int> StartingUpgrades { get; }
-        public ReadOnlyCollection<string> StartingModifiers { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> StartingModifiers { get; }
         public RewardPolicyDefinition RewardPolicy { get; }
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
-        public ReadOnlyCollection<string> EncounterModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> EncounterModifierIds { get; }
         /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
         public int EncounterModifiersFirstClearedStageNumber { get; }
         /** Whether the encounter has charms of its own and its first charm offer can already contain them. */
         public bool EncounterModifiersAvailableFromStart => EncounterModifierIds.Count > 0 && EncounterModifiersFirstClearedStageNumber == 1;
-        public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> UnlockRewardModifierIds { get; }
         public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
 
         public EncounterDefinition(Id identity, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
-            IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
+            IEnumerable<ModifierDefinition.Id> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null,
-            IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
-            IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
+            IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<ModifierDefinition.Id> encounterModifierIds = null,
+            IEnumerable<ModifierDefinition.Id> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
             int encounterModifiersFirstClearedStageNumber = 1)
         {
             if (identity.Value == Guid.Empty) throw new ArgumentException("An encounter requires an id.", nameof(identity));
@@ -153,8 +153,8 @@ namespace Dice.Engine
             Identity = identity;
             Stages = stageList.AsReadOnly();
             StartingUpgrades = upgrades.AsReadOnly();
-            var modifiers = startingModifiers == null ? new List<string>() : new List<string>(startingModifiers);
-            foreach (string modifierId in modifiers) DefinitionValidation.RequireId(modifierId, nameof(startingModifiers));
+            var modifiers = startingModifiers == null ? new List<ModifierDefinition.Id>() : new List<ModifierDefinition.Id>(startingModifiers);
+            foreach (var modifierId in modifiers) RequireModifierId(modifierId, nameof(startingModifiers));
             StartingModifiers = modifiers.AsReadOnly();
             RewardPolicy = rewardPolicy;
             var ruleList = rules == null ? new List<EncounterRuleDefinition>() : new List<EncounterRuleDefinition>(rules);
@@ -192,32 +192,37 @@ namespace Dice.Engine
         }
 
         /** The unlock rewards an offer draws from: those not yet unlocked whose families are discovered, in authored order. */
-        internal List<string> UnlockCandidates(MechanicalCatalog catalog, ICollection<string> unlockedIds,
+        internal List<ModifierDefinition.Id> UnlockCandidates(MechanicalCatalog catalog, ICollection<ModifierDefinition.Id> unlockedIds,
             ICollection<ModifierFamilyDefinition.Id> discoveredFamilyIds)
         {
-            var candidates = new List<string>();
-            foreach (string id in UnlockRewardModifierIds)
+            var candidates = new List<ModifierDefinition.Id>();
+            foreach (var id in UnlockRewardModifierIds)
                 if (!unlockedIds.Contains(id) && discoveredFamilyIds.Contains(catalog.GetModifier(id).Family.Identity)) candidates.Add(id);
             return candidates;
         }
 
-        private static ReadOnlyCollection<string> CopyUniqueIds(IEnumerable<string> source, string parameter)
+        private static ReadOnlyCollection<ModifierDefinition.Id> CopyUniqueIds(IEnumerable<ModifierDefinition.Id> source, string parameter)
         {
-            var ids = new List<string>(source ?? Array.Empty<string>());
-            var unique = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in ids)
+            var ids = new List<ModifierDefinition.Id>(source ?? Array.Empty<ModifierDefinition.Id>());
+            var unique = new HashSet<ModifierDefinition.Id>();
+            foreach (var id in ids)
             {
-                DefinitionValidation.RequireId(id, parameter);
+                RequireModifierId(id, parameter);
                 if (!unique.Add(id)) throw new ArgumentException("Modifier IDs must be unique.", parameter);
             }
             return ids.AsReadOnly();
+        }
+
+        private static void RequireModifierId(ModifierDefinition.Id id, string parameter)
+        {
+            if (id.Value == Guid.Empty) throw new ArgumentException("A charm id is required.", parameter);
         }
     }
 
     public sealed class MechanicalCatalog
     {
         private readonly Dictionary<EncounterDefinition.Id, EncounterDefinition> encounters;
-        private readonly Dictionary<string, ModifierDefinition> modifiersById;
+        private readonly Dictionary<ModifierDefinition.Id, ModifierDefinition> modifiersById;
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
@@ -241,14 +246,14 @@ namespace Dice.Engine
             }
             if (Array.Exists(byCategory, hand => hand == null))
                 throw new ArgumentException("All eight hand categories are required.", nameof(hands));
-            modifiersById = new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
+            modifiersById = new Dictionary<ModifierDefinition.Id, ModifierDefinition>();
             var modifierList = new List<ModifierDefinition>();
             if (modifiers != null)
                 foreach (var modifier in modifiers)
                 {
-                    if (modifier == null || modifiersById.ContainsKey(modifier.Id))
+                    if (modifier == null || modifiersById.ContainsKey(modifier.Identity))
                         throw new ArgumentException("Modifier IDs must be unique and nonnull.", nameof(modifiers));
-                    modifiersById.Add(modifier.Id, modifier);
+                    modifiersById.Add(modifier.Identity, modifier);
                     modifierList.Add(modifier);
                 }
             Modifiers = modifierList.AsReadOnly();
@@ -277,13 +282,13 @@ namespace Dice.Engine
                 for (int i = 0; i < byCategory.Length; ++i)
                     if (encounter.StartingUpgrades[i] > byCategory[i].MaximumUpgrades)
                         throw new ArgumentException("Starting upgrades exceed the category limit.", nameof(encounters));
-                foreach (string modifierId in encounter.StartingModifiers)
+                foreach (var modifierId in encounter.StartingModifiers)
                 {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier))
                         throw new ArgumentException("A starting modifier is missing from the catalog.", nameof(encounters));
                     modifier.RejectEncounterExclusive("the starting charms of the encounter " + encounter.Identity, nameof(encounters));
                 }
-                foreach (string modifierId in encounter.UnlockRewardModifierIds)
+                foreach (var modifierId in encounter.UnlockRewardModifierIds)
                 {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier))
                         throw new ArgumentException("An unlock reward is missing from the catalog.", nameof(encounters));
@@ -291,7 +296,7 @@ namespace Dice.Engine
                     if (modifier.Availability.Access != ModifierAccess.PermanentUnlock || !modifier.RewardEligible)
                         throw new ArgumentException("Unlock rewards must reference eligible permanent unlocks.", nameof(encounters));
                 }
-                foreach (string modifierId in encounter.EncounterModifierIds)
+                foreach (var modifierId in encounter.EncounterModifierIds)
                     if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                         throw new ArgumentException("Encounter additions must reference eligible modifiers.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
@@ -309,7 +314,7 @@ namespace Dice.Engine
 
         private void ValidatePool(ModifierRewardPoolDefinition pool, string parameter)
         {
-            foreach (string modifierId in pool.ModifierIds)
+            foreach (var modifierId in pool.ModifierIds)
             {
                 if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                     throw new ArgumentException("Reward pool entries must reference eligible modifiers.", parameter);
@@ -317,7 +322,7 @@ namespace Dice.Engine
             }
             if (pool.FallbackModifierId != null)
             {
-                if (!modifiersById.TryGetValue(pool.FallbackModifierId, out var fallback))
+                if (!modifiersById.TryGetValue(pool.FallbackModifierId.Value, out var fallback))
                     throw new ArgumentException("The reward fallback modifier is missing.", parameter);
                 fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Name, parameter);
             }
@@ -329,10 +334,10 @@ namespace Dice.Engine
             return Hands[(int)category];
         }
 
-        public ModifierDefinition GetModifier(string id)
+        public ModifierDefinition GetModifier(ModifierDefinition.Id id)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
-            if (!modifiersById.TryGetValue(id, out var modifier)) throw new KeyNotFoundException(id);
+            if (id.Value == Guid.Empty) throw new ArgumentException("A charm id is required.", nameof(id));
+            if (!modifiersById.TryGetValue(id, out var modifier)) throw new KeyNotFoundException(id.ToString());
             return modifier;
         }
 
@@ -347,23 +352,23 @@ namespace Dice.Engine
         }
 
         /** Where a charm can be obtained in the catalog's encounters. */
-        public ModifierSources GetModifierSources(string modifierId)
+        public ModifierSources GetModifierSources(ModifierDefinition.Id modifierId)
         {
             ModifierDefinition modifier = GetModifier(modifierId);
             var unlocks = new List<ModifierUnlockSource>();
             var runRewards = new List<EncounterDefinition>();
             foreach (var encounter in Encounters)
             {
-                if (encounter.UnlockMilestones.Count > 0 && encounter.UnlockRewardModifierIds.Contains(modifier.Id))
+                if (encounter.UnlockMilestones.Count > 0 && encounter.UnlockRewardModifierIds.Contains(modifier.Identity))
                     unlocks.Add(new ModifierUnlockSource(encounter));
-                if (modifier.RewardEligible && IsRunRewardSource(encounter, modifier.Id))
+                if (modifier.RewardEligible && IsRunRewardSource(encounter, modifier.Identity))
                     runRewards.Add(encounter);
             }
             return new ModifierSources(unlocks, runRewards);
         }
 
         /** Whether the charm is one of the encounter's additions or an entry or fallback of a pool its charm offers draw from. */
-        private static bool IsRunRewardSource(EncounterDefinition encounter, string modifierId)
+        private static bool IsRunRewardSource(EncounterDefinition encounter, ModifierDefinition.Id modifierId)
         {
             if (encounter.EncounterModifierIds.Contains(modifierId)) return true;
             if (encounter.RewardPolicy == null) return false;

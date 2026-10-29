@@ -270,11 +270,11 @@ namespace Dice.Presentation
                 var card = new CardText { OfferId = offer.OfferId, OptionId = option.OptionId };
                 if (offer.Kind == RewardKind.Modifier)
                 {
-                    ModifierDefinition modifier = cachedCatalog.GetModifier(option.DefinitionId);
+                    ModifierDefinition modifier = cachedCatalog.GetModifier(option.DefinitionId.Value);
                     ModifierPresentationCatalog charms = controls.ModifierPresentation;
                     card.Title = charms.GetName(modifier);
                     card.Body = charms.GetConditionText(modifier) + "\n" + charms.GetEffectText(modifier);
-                    card.Detail = charms.GetTimingText(modifier) + "\n" + modifier.Id + " | option " + option.OptionId;
+                    card.Detail = charms.GetTimingText(modifier) + "\n" + charms.GetName(modifier) + " | option " + option.OptionId;
                 }
                 else if (option.Category.HasValue)
                 {
@@ -305,7 +305,7 @@ namespace Dice.Presentation
                     Body = charms.GetConditionText(definition) + "\n" + charms.GetEffectText(definition),
                     Detail = charms.GetTimingText(definition) +
                         "\nActivations: hand " + instance.ActivationsThisHand + ", stage " + instance.ActivationsThisStage +
-                        ", total " + instance.TotalActivations + "\n" + definition.Id,
+                        ", total " + instance.TotalActivations + "\n" + charms.GetName(definition),
                     Status = definition.Phase == ModifierPhase.PlayHand ? "If played now: inspection unavailable" : "Evaluated on roll"
                 };
                 if (cachedInspections != null)

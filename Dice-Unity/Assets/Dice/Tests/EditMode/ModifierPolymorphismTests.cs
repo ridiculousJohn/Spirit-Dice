@@ -13,12 +13,12 @@ namespace Dice.Tests
         {
             IModifierCondition condition = null;
             var typedException = Assert.Throws<ArgumentNullException>(() =>
-                new ModifierDefinition("custom.null", TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
+                new ModifierDefinition(TestModifiers.IdOf("custom.null"), TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
                     condition, Array.Empty<ModifierEffect>()));
             Assert.That(typedException.ParamName, Is.EqualTo("condition"));
 
             var literalException = Assert.Throws<ArgumentNullException>(() =>
-                new ModifierDefinition("custom.null", TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
+                new ModifierDefinition(TestModifiers.IdOf("custom.null"), TestFamilies.Of("test.null"), ModifierPhase.PlayHand,
                     null, Array.Empty<ModifierEffect>()));
             Assert.That(literalException.ParamName, Is.EqualTo("condition"));
         }
@@ -46,7 +46,7 @@ namespace Dice.Tests
             Assert.That(matching.Contexts.Count, Is.EqualTo(1));
             Assert.That(failing.Contexts.Count, Is.EqualTo(1));
             Assert.That(result.Events.OfType<ModifierActivatedEvent>().Select(value => value.DefinitionId),
-                Is.EqualTo(new[] { "custom.match" }));
+                Is.EqualTo(TestModifiers.IdsOf("custom.match")));
             Assert.That(result.Snapshot.ModifierBaseScore, Is.EqualTo(17));
             Assert.That(result.Snapshot.ModifierMultiplier, Is.Zero);
             Assert.That(result.Snapshot.Modifiers.Select(value => value.TotalActivations),
@@ -97,7 +97,7 @@ namespace Dice.Tests
 
             var result = session.Execute(PlayHandAction.Instance, 0);
             Assert.That(result.Events.OfType<ModifierActivatedEvent>().Select(value => value.DefinitionId),
-                Is.EqualTo(definitions.Select(value => value.Id)));
+                Is.EqualTo(definitions.Select(value => value.Identity)));
             Assert.That(result.Events.OfType<HandScoredEvent>().Single().Score.ModifierBaseScore, Is.EqualTo(17));
             Assert.That(result.Snapshot.RerollsRemaining, Is.EqualTo(2));
             foreach (var condition in new[] { grantCondition, exhaustedCondition })
@@ -164,7 +164,7 @@ namespace Dice.Tests
             session.Execute(new RerollDiceAction(3), 0);
             var save = session.CaptureSave();
             Assert.That(save.Modifiers.Select(value => value.DefinitionId),
-                Is.EqualTo(definitions.Select(value => value.Id)));
+                Is.EqualTo(definitions.Select(value => value.Identity)));
             Assert.That(initial.Contexts.Count, Is.EqualTo(1));
             Assert.That(reroll.Contexts.Count, Is.EqualTo(1));
 
@@ -193,13 +193,13 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit, params ModifierEffect[] effects)
-            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition, effects, limit);
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("test." + id), phase, condition, effects, limit);
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] definitions, StageDefinition stage = null)
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { stage ?? new StageDefinition(1000000, 20, 20) },
-                startingModifiers: definitions.Select(value => value.Id));
+                startingModifiers: definitions.Select(value => value.Identity));
             return new MechanicalCatalog("test.polymorphism", TestContent.Hands(), new[] { encounter }, definitions);
         }
 

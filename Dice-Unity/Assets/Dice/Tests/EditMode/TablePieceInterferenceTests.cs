@@ -147,7 +147,7 @@ namespace Dice.Tests
         [Test]
         public void RerollInterferenceFlipsAKeptDieBeforeRerollCharms()
         {
-            var charm = new ModifierDefinition("test.reroll_charm", TestFamilies.Of("test.reroll_charm"), ModifierPhase.PlayerReroll,
+            var charm = new ModifierDefinition(TestModifiers.IdOf("test.reroll_charm"), TestFamilies.Of("test.reroll_charm"), ModifierPhase.PlayerReroll,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(9) },
                 ModifierActivationLimit.Unlimited);
             var catalog = Catalog(chance: 100, rerollWeight: 0, flipWeight: 1, modifiers: new[] { charm });
@@ -200,7 +200,7 @@ namespace Dice.Tests
         public void PlayHandDisturbanceResolvesBeforeCharmsAndScoringAndPreviewsIgnoreIt()
         {
             // Every die shows six, so a flip leaves exactly one one on the table for the charm to find.
-            var charm = new ModifierDefinition("test.play_charm", TestFamilies.Of("test.play_charm"), ModifierPhase.PlayHand,
+            var charm = new ModifierDefinition(TestModifiers.IdOf("test.play_charm"), TestFamilies.Of("test.play_charm"), ModifierPhase.PlayHand,
                 new ContainsFaceCondition(1), new ModifierEffect[] { new AddBaseScoreEffect(9) });
             var catalog = Catalog(chance: 100, rerollWeight: 0, flipWeight: 1, modifiers: new[] { charm });
             var session = WithDice(catalog, 6, 6, 6, 6, 6);
@@ -349,7 +349,7 @@ namespace Dice.Tests
             var pieceList = new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(start, timing,
                 allowsNeutral, allowedBays) }) };
             var encounter = new EncounterDefinition(TestContent.EncounterId,
-                stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: modifiers?.Select(value => value.Id),
+                stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: modifiers?.Select(value => value.Identity),
                 rules: rules, pieces: pieceList);
             return new MechanicalCatalog("test.table_pieces", TestContent.Hands(), new[] { encounter }, modifiers);
         }

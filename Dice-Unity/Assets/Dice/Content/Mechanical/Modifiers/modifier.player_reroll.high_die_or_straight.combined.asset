@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.player_reroll.high_die_or_straight.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.player_reroll.high_die_or_straight.combined
+  assetGuid: 5c1fbc1865531a84b87d6aaa0992771e
   family: {fileID: 11400000, guid: c7bc692b5f87e3541af3b13cf64ce2b1, type: 2}
   phase: 1
   condition:

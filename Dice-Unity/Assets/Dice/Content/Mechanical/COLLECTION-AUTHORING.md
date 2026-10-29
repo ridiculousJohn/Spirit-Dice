@@ -16,9 +16,10 @@ nowhere is not part of the game. Hands are authored inline in `Standard.asset` a
 identified by their category. Each charm references its family, a `ModifierFamilyAsset`
 (Create > Dice > Modifier Family) in `ModifierFamilies`, named after the family as
 its charms are named after themselves; the catalog's families are those of its
-charms. A family's id is its asset GUID, which the family asset stores and the
-editor keeps equal to the GUID in its .meta file. Saves and profiles store charm
-ids, family ids and encounter ids, which resolve through the loaded catalog.
+charms. A charm's or family's id is its asset GUID, which the asset stores and the
+editor keeps equal to the GUID in its .meta file; a charm's asset name names it in
+load errors. Saves and profiles store charm ids, family ids and encounter ids, which
+resolve through the loaded catalog.
 
 Each spirit's encounter asset authors its six `unlockRewardModifiers` and its stage
 3, 6, and 10 unlock opportunities. Each opportunity chooses one still-locked entry
@@ -77,8 +78,8 @@ variants. They trigger when a played hand contains at least two dice showing the
 favored face supplied by the encounter rule. Provisional effects are +10 Base,
 +2 Mult, +5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand.
 Their access is Encounter Exclusive, and the moth's `encounterModifiers` list is the
-only statement of the encounter that offers them: loading fails, naming the charm and
-where it is listed, when an encounter-exclusive charm is in a reward pool or its
+only statement of the encounter that offers them: loading fails, naming the charm's id
+and where it is listed, when an encounter-exclusive charm is in a reward pool or its
 fallback, an unlock reward list, an encounter's starting charms or a progression
 grant. The charm inspector's read-only Offered by section lists each encounter whose
 `encounterModifiers` holds the charm (click to ping, double-click to select) and

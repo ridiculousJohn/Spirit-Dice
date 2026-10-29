@@ -123,23 +123,24 @@ namespace Dice.Tests
         }
 
         /**
-         * A charm asset in the test family named by family, or by its id without one; without a condition it always
-         * activates, and without effects it adds 10 base score.
+         * A charm asset of the name whose id is the test charm id of the name (see TestModifiers), in the test family
+         * named by family, or by the charm's name without one; without a condition it always activates, and without
+         * effects it adds 10 base score.
          */
-        public ModifierAsset Charm(string id, string family = null, ModifierPhase phase = ModifierPhase.PlayHand,
+        public ModifierAsset Charm(string name, string family = null, ModifierPhase phase = ModifierPhase.PlayHand,
             ModifierConditionConfig condition = null, ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand,
             params ModifierEffectConfig[] effects)
-            => CharmIn(Family(family ?? id), id, phase, condition, limit, effects);
+            => CharmIn(Family(family ?? name), TestModifiers.IdOf(name), name, phase, condition, limit, effects);
 
-        private ModifierAsset CharmIn(ModifierFamilyAsset family, string id, ModifierPhase phase = ModifierPhase.PlayHand,
-            ModifierConditionConfig condition = null, ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand,
-            params ModifierEffectConfig[] effects)
+        private ModifierAsset CharmIn(ModifierFamilyAsset family, ModifierDefinition.Id id, string name,
+            ModifierPhase phase = ModifierPhase.PlayHand, ModifierConditionConfig condition = null,
+            ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand, params ModifierEffectConfig[] effects)
         {
 #if UNITY_EDITOR
             var asset = Own(ScriptableObject.CreateInstance<ModifierAsset>());
-            asset.name = id;
+            asset.name = name;
             var serialized = new SerializedObject(asset);
-            serialized.FindProperty("id").stringValue = id;
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = id.Value.ToString("N");
             serialized.FindProperty("family").objectReferenceValue = family;
             serialized.FindProperty("phase").intValue = (int)phase;
             serialized.FindProperty("condition").managedReferenceValue = condition ?? new AlwaysConditionConfig();
@@ -185,10 +186,10 @@ namespace Dice.Tests
         {
 #if UNITY_EDITOR
             var presentation = Own(ScriptableObject.CreateInstance<ModifierPresentationAsset>());
-            presentation.name = "Presentation " + (modifier != null ? modifier.Id : "without charm");
+            presentation.name = "Presentation " + (modifier != null ? modifier.name : "without charm");
             var serialized = new SerializedObject(presentation);
             serialized.FindProperty("modifier").objectReferenceValue = modifier;
-            serialized.FindProperty("displayName").stringValue = displayName ?? "Name of " + modifier?.Id;
+            serialized.FindProperty("displayName").stringValue = displayName ?? "Name of " + modifier?.name;
             serialized.FindProperty("conditionTemplate").stringValue = template;
             serialized.FindProperty("category").objectReferenceValue = category;
             serialized.FindProperty("icon").objectReferenceValue = icon != null ? icon : Icon();
@@ -317,9 +318,9 @@ namespace Dice.Tests
             => new ModifierPresentationCatalog(skin, content);
 
         /**
-         * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id and presented
-         * as "Name of <id>" with the condition text "Condition of <id>", the given category (or one with a fabricated
-         * symbol) and a fabricated icon.
+         * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id, named as
+         * TestModifiers names the id, and presented as "Name of <name>" with the condition text "Condition of <name>", the
+         * given category (or one with a fabricated symbol) and a fabricated icon.
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null)
         {
@@ -328,9 +329,10 @@ namespace Dice.Tests
             var presentations = new List<ModifierPresentationAsset>();
             foreach (ModifierDefinition definition in catalog.Modifiers)
             {
-                ModifierAsset charm = CharmIn(Family(definition.Family), definition.Id);
+                string name = TestModifiers.NameOf(definition.Identity);
+                ModifierAsset charm = CharmIn(Family(definition.Family), definition.Identity, name);
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
-                presentations.Add(Presentation(charm, category, template: "Condition of " + definition.Id));
+                presentations.Add(Presentation(charm, category, template: "Condition of " + name));
             }
             return Load(Skin(presentations, new[] { category }), new MechanicalContent(catalog, pairs));
         }

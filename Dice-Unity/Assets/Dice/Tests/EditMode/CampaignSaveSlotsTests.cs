@@ -83,7 +83,7 @@ namespace Dice.Tests
                 Assert.That(slots.HasGame(slot), Is.True);
                 paths[slot - 1] = slots.GetSavePath(slot);
                 var profile = new PlayerProfile();
-                profile.UnlockModifier("modifier." + slot);
+                profile.UnlockModifier(TestModifiers.IdOf("modifier." + slot));
                 profile.DiscoverFamily(TestFamilies.IdOf("family." + slot));
                 profile.CompleteEncounter(TestEncounters.IdOf("encounter." + slot));
                 profile.CompleteJourney(TestJourneys.IdOf("journey." + slot));
@@ -104,7 +104,7 @@ namespace Dice.Tests
                 Assert.That(slots.GetSavePath(slot), Is.EqualTo(paths[slot - 1]));
                 Assert.That(EncounterSaveCodec.Serialize(EncounterSaveFileStore.Load(paths[slot - 1], TestContent.Catalog())), Is.EqualTo(saves[slot - 1]));
                 var profile = PlayerProfileFileStore.Load(slots.GetProfilePath(slot));
-                Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "modifier." + slot }));
+                Assert.That(profile.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("modifier." + slot)));
                 Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family." + slot) }));
                 Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter." + slot) }));
                 Assert.That(profile.CompletedJourneyIds, Is.EqualTo(new[] { TestJourneys.IdOf("journey." + slot) }));
@@ -121,7 +121,7 @@ namespace Dice.Tests
             string previousRun = slots.GetSavePath(1);
             string previousProfile = slots.GetProfilePath(1);
             var profile = new PlayerProfile();
-            profile.UnlockModifier("modifier.previous");
+            profile.UnlockModifier(TestModifiers.IdOf("modifier.previous"));
             profile.CompleteJourney(TestJourneys.IdOf("journey.previous"));
             PlayerProfileFileStore.Save(previousProfile, profile);
             var save = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 17).CaptureSave();

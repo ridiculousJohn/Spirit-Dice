@@ -120,7 +120,7 @@ namespace Dice.Presentation
             if (root == null) throw new InvalidOperationException("Build the modifier tray before adding activations.");
             if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (definition == null) throw new ArgumentNullException(nameof(definition));
-            if (contribution.DefinitionId != definition.Id)
+            if (contribution.DefinitionId != definition.Identity)
                 throw new ArgumentException("The modifier definition must match the activation.", nameof(definition));
 
             Renderer.Add(contribution, charms, definition, animate);

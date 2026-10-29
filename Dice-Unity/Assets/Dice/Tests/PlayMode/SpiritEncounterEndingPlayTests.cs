@@ -104,7 +104,7 @@ namespace Dice.Tests
             Assert.That(view.HostPortrait.State, Is.Not.EqualTo(outcome.HostState), journey.name);
             var finalOffer = controller.Snapshot.PendingReward;
             Assert.That(finalOffer.Options.Count, Is.InRange(1, 3), journey.name);
-            Assert.That(finalOffer.Options.All(option => !controller.ProfileUnlockedModifierIds.Contains(option.DefinitionId)),
+            Assert.That(finalOffer.Options.All(option => !controller.ProfileUnlockedModifierIds.Contains(option.DefinitionId.Value)),
                 Is.True, journey.name);
             var pendingSave = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
             Assert.That(pendingSave.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock), journey.name);
@@ -158,8 +158,8 @@ namespace Dice.Tests
             foreach (var unlocked in unlockDefinitions)
             {
                 Assert.That(Find<Text>("EndingUnlocks").text, Does.Contain(ContentReady.Charms.GetName(unlocked)), journey.name);
-                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(unlocked.Id), journey.name);
-                Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(unlocked.Id), journey.name);
+                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(unlocked.Identity), journey.name);
+                Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(unlocked.Identity), journey.name);
             }
             // The summary opens with the authored wording of permanent unlocks and names each unlock's scope.
             var wording = Find<Text>("EndingUnlocks").GetComponentInParent<SpiritUiContext>(true).Wording;
@@ -188,7 +188,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None), journey.name);
             Assert.That(controller.Snapshot.Revision, Is.Zero, journey.name);
             foreach (var unlocked in unlockDefinitions)
-                Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(unlocked.Id), "Replay must inherit permanent progress.");
+                Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(unlocked.Identity), "Replay must inherit permanent progress.");
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -226,14 +226,14 @@ namespace Dice.Tests
             var permanent = controller.Catalog.Modifiers.FirstOrDefault(value =>
                 value.Availability.Access == ModifierAccess.PermanentUnlock);
             Assert.That(permanent, Is.Not.Null, "The catalog has no permanent unlock to retain across a retry.");
-            profile.UnlockModifier(permanent.Id);
+            profile.UnlockModifier(permanent.Identity);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             InstallShortEncounter(false, EncounterJourney(EncounterOutcome.Lost));
             yield return EnterEncounter();
             yield return DefeatAndRetry(skipMotion: false);
-            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(permanent.Id), journey.name);
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(permanent.Id), journey.name);
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(permanent.Id), journey.name);
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(permanent.Identity), journey.name);
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(permanent.Identity), journey.name);
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(permanent.Identity), journey.name);
             // A defeat without host motion has nothing to skip.
             if (view.HostPortrait.GetDuration(Ending(journey).GetOutcomePresentation(EncounterOutcome.Lost).HostState) > 0)
                 yield return DefeatAndRetry(skipMotion: true);
@@ -349,16 +349,16 @@ namespace Dice.Tests
             var definition = original.GetEncounter(journey.Encounters.First().Identity);
             int stageCount = winning ? VictoryStages : 1;
             // Charms the journey grants on its own beats are already owned when its milestones are offered.
-            var granted = new HashSet<string>(journey.Beats.Where(beat => beat.ProgressionReward != null)
-                .SelectMany(beat => beat.ProgressionReward.Build(original).GrantedModifierIds), StringComparer.Ordinal);
+            var granted = new HashSet<ModifierDefinition.Id>(journey.Beats.Where(beat => beat.ProgressionReward != null)
+                .SelectMany(beat => beat.ProgressionReward.Build(original).GrantedModifierIds));
             // Each milestone offers up to three unowned charms, so the final one still has a full offer.
             int unlockCount = stageCount + 2;
             unlockDefinitions = original.Modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
-                value.RewardEligible && !granted.Contains(value.Id))
+                value.RewardEligible && !granted.Contains(value.Identity))
                 .Take(unlockCount).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(unlockCount),
                 "The catalog has too few permanent unlocks for a milestone at every stage.");
-            var unlockIds = unlockDefinitions.Select(value => value.Id).ToArray();
+            var unlockIds = unlockDefinitions.Select(value => value.Identity).ToArray();
             var shortEncounter = new EncounterDefinition(definition.Identity,
                 Enumerable.Range(0, stageCount).Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)),
                 rules: definition.Rules,

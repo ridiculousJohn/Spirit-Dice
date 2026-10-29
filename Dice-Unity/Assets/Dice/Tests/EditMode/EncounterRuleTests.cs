@@ -107,7 +107,7 @@ namespace Dice.Tests
             Assert.That(free.Snapshot.Modifiers[0].TotalActivations, Is.EqualTo(1));
             Assert.That(free.Snapshot.ModifierBaseScore, Is.EqualTo(7));
             Assert.That(session.PreviewHandResolution().Events.OfType<ModifierActivatedEvent>()
-                .Any(value => value.DefinitionId == "untouched"), Is.False);
+                .Any(value => value.DefinitionId == TestModifiers.IdOf("untouched")), Is.False);
             Assert.That(session.Snapshot.CanReroll, Is.False);
             Restore(Catalog(paidRerolls: 0, modifiers: modifiers), session.CaptureSave());
         }
@@ -320,14 +320,14 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierEffect effect, ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)
-            => new ModifierDefinition(id, TestFamilies.Of("family." + id), phase, condition, new[] { effect }, limit);
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), phase, condition, new[] { effect }, limit);
 
         private static MechanicalCatalog Catalog(int paidRerolls = 2, int hands = 5,
             IEnumerable<StageDefinition> stages = null, ModifierDefinition[] modifiers = null)
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, hands, paidRerolls) },
-                startingModifiers: modifiers?.Select(value => value.Id),
+                startingModifiers: modifiers?.Select(value => value.Identity),
                 rules: new[] { new FirstRerollFreeRuleDefinition(FreeId) });
             return new MechanicalCatalog("test.encounter_rules", TestContent.Hands(), new[] { encounter }, modifiers);
         }

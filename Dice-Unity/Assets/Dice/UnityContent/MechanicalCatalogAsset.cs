@@ -23,15 +23,14 @@ namespace Dice.UnityContent
                 throw new InvalidOperationException("Catalog arrays are missing.");
             var referenced = new List<ModifierAsset>();
             var seen = new HashSet<ModifierAsset>();
-            var byId = new Dictionary<string, ModifierAsset>(StringComparer.Ordinal);
+            var byId = new Dictionary<ModifierDefinition.Id, ModifierAsset>();
             void Use(ModifierAsset modifier)
             {
                 if (modifier == null) throw new InvalidOperationException("A charm reference is missing.");
                 if (!seen.Add(modifier)) return;
-                if (string.IsNullOrWhiteSpace(modifier.Id)) throw new InvalidOperationException("The charm asset " + modifier.name + " has no id.");
-                if (byId.TryGetValue(modifier.Id, out ModifierAsset other))
-                    throw new InvalidOperationException("Two charm assets share the id " + modifier.Id + ": " + other.name + ", " + modifier.name);
-                byId.Add(modifier.Id, modifier);
+                if (byId.TryGetValue(modifier.Identity, out ModifierAsset other))
+                    throw new InvalidOperationException("Two charm assets share the id " + modifier.Identity + ": " + other.name + ", " + modifier.name);
+                byId.Add(modifier.Identity, modifier);
                 referenced.Add(modifier);
             }
             var handDefinitions = new HandDefinition[hands.Length];
@@ -64,7 +63,8 @@ namespace Dice.UnityContent
                 encountersById.Add(source.Identity, source);
                 encounterDefinitions[i] = source.Build(Use, Pool);
             }
-            referenced.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
+            // Ordered by GUID, so the catalog's charm order does not depend on the order content references them.
+            referenced.Sort((left, right) => left.Identity.Value.CompareTo(right.Identity.Value));
             // Each family asset is built once, so the charms of a family share its definition.
             var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
             var familiesById = new Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyAsset>();
@@ -92,14 +92,14 @@ namespace Dice.UnityContent
         }
 
         /** The ids of the charms, each passed to use first. */
-        internal static string[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
+        internal static ModifierDefinition.Id[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
         {
             if (sources == null) throw new InvalidOperationException("A charm list is missing.");
-            var ids = new string[sources.Length];
+            var ids = new ModifierDefinition.Id[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
                 use(sources[i]);
-                ids[i] = sources[i].Id;
+                ids[i] = sources[i].Identity;
             }
             return ids;
         }

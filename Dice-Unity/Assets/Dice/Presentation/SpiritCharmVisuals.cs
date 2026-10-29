@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
@@ -31,9 +30,8 @@ namespace Dice.Presentation
             SpiritUiWording.CharmAvailability wording)
         {
             var availability = definition.Availability;
-            var unlocked = new HashSet<string>(snapshot.UnlockedModifierIds, StringComparer.Ordinal);
             string access = availability.Access == ModifierAccess.PermanentUnlock ?
-                (unlocked.Contains(definition.Id) ? wording.permanentlyUnlocked : wording.requiresUnlock) :
+                (snapshot.UnlockedModifierIds.Contains(definition.Identity) ? wording.permanentlyUnlocked : wording.requiresUnlock) :
                 availability.Access == ModifierAccess.EncounterExclusive ? wording.encounterExclusive : wording.availableFromStart;
             return wording.Availability(access, AvailabilityScopeText(definition, wording));
         }
@@ -48,11 +46,11 @@ namespace Dice.Presentation
         internal static bool HasPendingProgress(ISpiritEncounterControls controls) =>
             controls is ISpiritProgressionControls progression && progression.ProfileStatus.IsPending;
 
-        internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<string> ids, SpiritUiWording wording)
+        internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<ModifierDefinition.Id> ids, SpiritUiWording wording)
         {
             if (ids.Count == 0) return wording.ending.noUnlocks;
             var names = new List<string>();
-            foreach (string id in ids)
+            foreach (var id in ids)
             {
                 var definition = controls.Catalog.GetModifier(id);
                 names.Add(wording.ending.UnlockedCharm(controls.ModifierPresentation.GetName(definition),

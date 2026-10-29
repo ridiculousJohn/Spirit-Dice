@@ -18,9 +18,9 @@ namespace Dice.Tests
             var catalog = Catalog(firstClearedStage: 3, ordinary: new[] { Owned });
             var encounter = catalog.GetEncounter(TestContent.EncounterId);
             var random = new DeterministicRandom(7);
-            var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, new[] { Owned },
-                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, encounter, Array.Empty<string>());
-            Assert.That(generated.ModifierIds, Is.EqualTo(offered ? new[] { Addition } : Array.Empty<string>()));
+            var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, TestModifiers.IdsOf(Owned),
+                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, encounter, Array.Empty<ModifierDefinition.Id>());
+            Assert.That(generated.ModifierIds, Is.EqualTo(offered ? TestModifiers.IdsOf(Addition) : Array.Empty<ModifierDefinition.Id>()));
         }
 
         [Test]
@@ -32,11 +32,11 @@ namespace Dice.Tests
             {
                 var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
                 Execute(session, PlayHandAction.Instance);
-                string offered = session.Snapshot.PendingReward.Options.Single().DefinitionId;
+                string offered = TestModifiers.NameOf(session.Snapshot.PendingReward.Options.Single().DefinitionId.Value);
                 if (catalog == delayed) Assert.That(offered, Is.EqualTo(Other));
                 string substitute = offered == Other ? Addition : Other;
                 var save = session.CaptureSave();
-                save.PendingReward.Options[0].DefinitionId = substitute;
+                save.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf(substitute);
                 save.ExcludedRewardFamilies = new[] { TestFamilies.IdOf("family." + substitute) };
                 var result = EncounterSession.RestoreEncounter(catalog, save);
                 if (catalog == immediate) Assert.That(result.Success, Is.True, result.Detail);
@@ -60,7 +60,7 @@ namespace Dice.Tests
                 var upgrade = later.Snapshot.PendingReward;
                 Execute(later, new SelectHandUpgradeAction(upgrade.OfferId, upgrade.Options[0].OptionId));
             }
-            Assert.That(later.Snapshot.PendingReward.Options.Single().DefinitionId, Is.EqualTo(Addition));
+            Assert.That(later.Snapshot.PendingReward.Options.Single().DefinitionId, Is.EqualTo(TestModifiers.IdOf(Addition)));
             var restored = Restore(delayed, later.CaptureSave());
             EncounterPersistenceTests.AssertGraphEqual(later.CaptureSave(), restored.CaptureSave());
         }
@@ -86,7 +86,7 @@ namespace Dice.Tests
         {
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
             var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.from_start"), stages,
-                encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
+                encounterModifierIds: additions ? new[] { TestModifiers.IdOf(Addition) } : Array.Empty<ModifierDefinition.Id>(),
                 encounterModifiersFirstClearedStageNumber: firstClearedStage);
             Assert.That(encounter.EncounterModifiersAvailableFromStart, Is.EqualTo(expected));
         }
@@ -123,17 +123,17 @@ namespace Dice.Tests
                 Modifier(Addition, ModifierAccess.EncounterExclusive)
             }).ToArray();
             var policy = new RewardPolicyDefinition(
-                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", ordinary) }) },
+                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", TestModifiers.IdsOf(ordinary)) }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 5)
                     .Select(index => new StageDefinition(1, 2, 1, index < 4 ? StageExitBehavior.AwaitRewards : StageExitBehavior.AdvanceAutomatically)),
-                startingModifiers: new[] { Owned }, rewardPolicy: policy, encounterModifierIds: new[] { Addition },
+                startingModifiers: TestModifiers.IdsOf(Owned), rewardPolicy: policy, encounterModifierIds: TestModifiers.IdsOf(Addition),
                 encounterModifiersFirstClearedStageNumber: firstClearedStage);
             return new MechanicalCatalog("test.delayed_additions", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
-            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(access: access));
 

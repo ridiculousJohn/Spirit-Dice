@@ -20,7 +20,7 @@ namespace Dice.Presentation
         private readonly List<SpiritModifierFamilyRow> rows = new List<SpiritModifierFamilyRow>();
         private readonly List<SpiritModifierFamilyRow> rowPool = new List<SpiritModifierFamilyRow>();
         private readonly List<List<ModifierDefinition>> families = new List<List<ModifierDefinition>>();
-        private readonly HashSet<string> unlockedIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<ModifierDefinition.Id> unlockedIds = new HashSet<ModifierDefinition.Id>();
         private readonly HashSet<ModifierFamilyDefinition.Id> ownedFamilyIds = new HashSet<ModifierFamilyDefinition.Id>();
         private readonly HashSet<ModifierFamilyDefinition.Id> discoveredFamilyIds = new HashSet<ModifierFamilyDefinition.Id>();
         [SerializeField] private Button closeButton;
@@ -39,7 +39,7 @@ namespace Dice.Presentation
 
         public RectTransform Root => (RectTransform)transform;
         public bool IsVisible => Root != null && Root.gameObject.activeSelf;
-        public string SelectedModifierId { get; private set; }
+        public ModifierDefinition.Id? SelectedModifierId { get; private set; }
         public IReadOnlyList<SpiritModifierFamilyRow> Rows => rows;
         [field: SerializeField] public SpiritCollectionFilter Filter { get; private set; }
 
@@ -53,7 +53,7 @@ namespace Dice.Presentation
         }
 
         public void Show(MechanicalCatalog mechanicalCatalog, ModifierPresentationCatalog charmPresentation,
-            IReadOnlyList<string> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog,
+            IReadOnlyList<ModifierDefinition.Id> profileUnlockedModifierIds, EncounterJourneyCatalogAsset journeyCatalog,
             IReadOnlyList<ModifierFamilyDefinition.Id> profileDiscoveredFamilyIds = null)
         {
             if (mechanicalCatalog == null) throw new ArgumentNullException(nameof(mechanicalCatalog));
@@ -67,7 +67,7 @@ namespace Dice.Presentation
             ownedFamilyIds.Clear();
             discoveredFamilyIds.Clear();
             if (profileUnlockedModifierIds != null)
-                foreach (string id in profileUnlockedModifierIds) unlockedIds.Add(id);
+                foreach (var id in profileUnlockedModifierIds) unlockedIds.Add(id);
             if (profileDiscoveredFamilyIds != null)
                 foreach (var id in profileDiscoveredFamilyIds) discoveredFamilyIds.Add(id);
             var grouped = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
@@ -83,7 +83,7 @@ namespace Dice.Presentation
                     grouped.Add(definition.Family, family);
                 }
                 family.Add(definition);
-                if (definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id))
+                if (definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Identity))
                 {
                     ownedFamilyIds.Add(definition.Family.Identity);
                     discoveredFamilyIds.Add(definition.Family.Identity);
@@ -91,7 +91,7 @@ namespace Dice.Presentation
                 if (definition.Availability.Access == ModifierAccess.PermanentUnlock)
                 {
                     ++permanentCount;
-                    if (unlockedIds.Contains(definition.Id)) ++unlockedCount;
+                    if (unlockedIds.Contains(definition.Identity)) ++unlockedCount;
                 }
                 else if (definition.Availability.Access == ModifierAccess.Starter) ++starterCount;
             }
@@ -116,7 +116,7 @@ namespace Dice.Presentation
             filterLabel.text = wording.FilterName(filter);
             rows.Clear();
             bool selectionExists = false;
-            string firstSelectableId = null;
+            ModifierDefinition.Id? firstSelectableId = null;
             foreach (var family in families)
             {
                 var familyId = family[0].Family.Identity;
@@ -135,14 +135,14 @@ namespace Dice.Presentation
                     continue;
                 }
                 row.Render(charms, family, StatusText, Select,
-                    definition => definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Id));
-                if (firstSelectableId == null) firstSelectableId = family[0].Id;
+                    definition => definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Identity));
+                if (!firstSelectableId.HasValue) firstSelectableId = family[0].Identity;
                 foreach (var definition in family)
-                    if (definition.Id == SelectedModifierId) selectionExists = true;
+                    if (definition.Identity == SelectedModifierId) selectionExists = true;
             }
             for (int index = rows.Count; index < rowPool.Count; ++index) rowPool[index].gameObject.SetActive(false);
             if (!selectionExists) SelectedModifierId = firstSelectableId;
-            if (SelectedModifierId != null) Select(catalog.GetModifier(SelectedModifierId));
+            if (SelectedModifierId.HasValue) Select(catalog.GetModifier(SelectedModifierId.Value));
             else
             {
                 detailTitle.text = filter == SpiritCollectionFilter.All && rows.Count > 0 ? wording.undiscoveredFamilies : wording.NoFamilies(filter);
@@ -165,19 +165,19 @@ namespace Dice.Presentation
             foreach (var row in rows)
                 if (!row.IsUndiscovered && row.Family == definition.Family) visible = true;
             if (!visible) return;
-            SelectedModifierId = definition.Id;
+            SelectedModifierId = definition.Identity;
             var wording = Wording;
             detailTitle.text = wording.DetailTitle(charms.GetName(definition), StatusText(definition));
             detailEffect.text = charms.GetEffectText(definition);
             detailEffect.color = charms.GetEffectColor(definition);
             detailSource.text = GetSourceText(definition, catalog, journeys, wording);
-            foreach (var row in rows) row.SetSelected(definition.Id);
+            foreach (var row in rows) row.SetSelected(definition.Identity);
         }
 
         private SpiritUiWording.Collection Wording => SpiritUi.GetWording(transform).collection;
 
         private string StatusText(ModifierDefinition definition) =>
-            GetStatusText(definition, unlockedIds.Contains(definition.Id), Wording);
+            GetStatusText(definition, unlockedIds.Contains(definition.Identity), Wording);
 
         public static string GetStatusText(ModifierDefinition definition, bool unlocked, SpiritUiWording.Collection wording)
         {
@@ -199,7 +199,7 @@ namespace Dice.Presentation
         {
             if (journeyCatalog == null) throw new ArgumentNullException(nameof(journeyCatalog));
             if (wording == null) throw new ArgumentNullException(nameof(wording));
-            ModifierSources sources = mechanicalCatalog.GetModifierSources(definition.Id);
+            ModifierSources sources = mechanicalCatalog.GetModifierSources(definition.Identity);
             var unlockSources = new List<string>();
             foreach (var unlock in sources.Unlocks)
             {
@@ -216,10 +216,10 @@ namespace Dice.Presentation
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
                 var journey = journeyCatalog.Find(encounter.Identity);
-                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Id, giftSources, wording);
+                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Identity, giftSources, wording);
             }
             foreach (var journey in journeyCatalog.Entries)
-                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Id, giftSources, wording);
+                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Identity, giftSources, wording);
             string rewards = wording.Rewards(rewardSources);
             if (definition.Availability.Access == ModifierAccess.EncounterExclusive) return wording.EncounterOnlySource(rewards);
             if (definition.Availability.Access == ModifierAccess.Starter) return wording.StarterSource(rewards);
@@ -243,7 +243,7 @@ namespace Dice.Presentation
             => !string.IsNullOrWhiteSpace(journey.LocationTitle) ? journey.LocationTitle
                 : throw new InvalidOperationException("Journey " + journey.name + " has no location title.");
 
-        private static void AddGiftSources(EncounterJourneyAsset journey, string modifierId, List<string> giftSources,
+        private static void AddGiftSources(EncounterJourneyAsset journey, ModifierDefinition.Id modifierId, List<string> giftSources,
             SpiritUiWording.Collection wording)
         {
             foreach (var beat in journey.Beats)

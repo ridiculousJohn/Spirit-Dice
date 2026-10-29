@@ -272,7 +272,7 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Definition(string id, ModifierPhase phase)
-            => new ModifierDefinition(id, TestFamilies.Of(id), phase, new AlwaysCondition(),
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(id), phase, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(1) });
 
         private static ModifierContribution Contribution(ModifierDefinition definition, long instanceId, long baseScore = 0,

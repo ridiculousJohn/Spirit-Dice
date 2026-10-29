@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.initial_roll.previous_stage_exhausted_hands.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.initial_roll.previous_stage_exhausted_hands.combined
+  assetGuid: 8aeb5c7be989aec4686e0fa9368948ce
   family: {fileID: 11400000, guid: 4517d9cf6eb44c44abd192c2c37270ac, type: 2}
   phase: 0
   condition:

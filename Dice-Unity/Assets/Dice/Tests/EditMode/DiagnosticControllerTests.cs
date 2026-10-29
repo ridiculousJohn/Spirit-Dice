@@ -271,7 +271,7 @@ namespace Dice.Tests
         [Test]
         public void ReadingCachedPreviewAndInspectionsNeverConsumesTheLiveRun()
         {
-            var catalog = RewardTestContent.Catalog(inventory: new[] { "first" });
+            var catalog = RewardTestContent.Catalog(inventory: TestModifiers.IdsOf("first"));
             Initialize(catalog, TestContent.EncounterId, 11, savePath);
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
             var before = controller.Snapshot;
@@ -311,10 +311,10 @@ namespace Dice.Tests
         [Test]
         public void PreviewOverflowKeepsAcceptedCommandsAndRestoredEngineStateUsable()
         {
-            var modifier = new ModifierDefinition("overflow", TestFamilies.Of("family.overflow"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("overflow"), TestFamilies.Of("family.overflow"), ModifierPhase.PlayHand,
                 new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(long.MaxValue) });
-            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Identity });
             Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 17, savePath));
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             Assert.That(controller.Preview, Is.Null);
@@ -344,9 +344,9 @@ namespace Dice.Tests
         [Test]
         public void CustomConditionFaultDoesNotBlockRerollSynchronizationOrReuseStaleCaches()
         {
-            var modifier = new ModifierDefinition("faulting", TestFamilies.Of("family.faulting"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("faulting"), TestFamilies.Of("family.faulting"), ModifierPhase.PlayHand,
                 new FaultingCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
-            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Identity });
             Assert.DoesNotThrow(() => Initialize(catalog, TestContent.EncounterId, 19, savePath));
             Assert.That(controller.Preview, Is.Null);
             Assert.That(controller.ModifierInspections, Is.Empty);

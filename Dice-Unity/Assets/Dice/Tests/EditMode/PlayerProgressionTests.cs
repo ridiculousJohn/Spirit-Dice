@@ -134,7 +134,7 @@ namespace Dice.Tests
             }
             else
             {
-                Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+                Assert.That(saved.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
                 Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
                 if (operation == "journey") Assert.That(saved.CompletedJourneyIds, Is.EqualTo(new[] { ReturnJourneyId }));
                 else Assert.That(saved.CompletedJourneyIds, Is.Empty);
@@ -145,7 +145,7 @@ namespace Dice.Tests
         public void RepeatedRewardSucceedsWithoutWritingOrReportingAChange()
         {
             var catalog = Catalog();
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, new[] { GiftId });
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId));
             Assert.That(progression.PrepareProfile(savePath), Is.True);
             Assert.That(progression.ApplyProgressionReward(reward, catalog, out bool changed), Is.True);
             Assert.That(changed, Is.True);
@@ -154,28 +154,28 @@ namespace Dice.Tests
                 Assert.That(progression.ApplyProgressionReward(reward, catalog, out changed), Is.True);
                 Assert.That(changed, Is.False);
             }
-            Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
         }
 
         [Test]
         public void CatalogProjectionsFilterStoredIdsAndRecomputeStarterFamilies()
         {
             var profile = new PlayerProfile();
-            profile.UnlockModifier(GiftId);
-            profile.UnlockModifier("modifier.future");
+            profile.UnlockModifier(TestModifiers.IdOf(GiftId));
+            profile.UnlockModifier(TestModifiers.IdOf("modifier.future"));
             profile.DiscoverFamily(TestFamilies.IdOf("family.future"));
             PlayerProfileFileStore.Save(ProfilePathFor(savePath), profile);
             Assert.That(progression.PrepareProfile(savePath), Is.True);
 
             var first = Catalog(Modifier(GiftId, GiftFamily), Modifier("modifier.starter", "family.starter", ModifierAccess.Starter));
-            Assert.That(progression.KnownUnlockedModifiers(first), Is.EqualTo(new[] { GiftId }));
+            Assert.That(progression.KnownUnlockedModifiers(first), Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(progression.KnownDiscoveredFamilies(first), Is.EquivalentTo(new[] { GiftFamilyId, TestFamilies.IdOf("family.starter") }));
 
             var second = Catalog(Modifier("modifier.future", "family.future"),
                 Modifier("modifier.other-starter", "family.other-starter", ModifierAccess.Starter));
-            Assert.That(progression.KnownUnlockedModifiers(second), Is.EqualTo(new[] { "modifier.future" }));
+            Assert.That(progression.KnownUnlockedModifiers(second), Is.EqualTo(TestModifiers.IdsOf("modifier.future")));
             Assert.That(progression.KnownDiscoveredFamilies(second), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.future"), TestFamilies.IdOf("family.other-starter") }));
-            Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId, "modifier.future" }));
+            Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId, "modifier.future")));
             Assert.That(PlayerProfileFileStore.Load(progression.ProfilePath).DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family.future") }));
         }
 
@@ -189,7 +189,7 @@ namespace Dice.Tests
             var application = WinningApplication(catalog);
             var savedRun = application.CaptureSave();
             EncounterSaveFileStore.Save(savePath,
-                new EncounterApplication(catalog, TestContent.EncounterId, 17, new[] { GiftId }).CaptureSave());
+                new EncounterApplication(catalog, TestContent.EncounterId, 17, TestModifiers.IdsOf(GiftId)).CaptureSave());
             string otherRun = Path.Combine(Path.GetDirectoryName(savePath), "other-profile", "encounter.json");
 
             using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
@@ -204,7 +204,7 @@ namespace Dice.Tests
             Assert.That(progression.PrepareProfile(otherRun), Is.True);
             Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
             var savedProfile = PlayerProfileFileStore.Load(originalProfile);
-            Assert.That(savedProfile.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(savedProfile.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(savedProfile.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
             Assert.That(progression.ProfilePath, Is.EqualTo(ProfilePathFor(otherRun)));
             Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
@@ -225,7 +225,7 @@ namespace Dice.Tests
                 Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, null, application.CaptureSave(), savePath), Is.False);
                 Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
                 Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.ProfileSavePending));
-                Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+                Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             }
 
             using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
@@ -233,7 +233,7 @@ namespace Dice.Tests
 
             Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.None));
             var saved = PlayerProfileFileStore.Load(progression.ProfilePath);
-            Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(saved.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(saved.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
         }
 
@@ -243,7 +243,7 @@ namespace Dice.Tests
 
         private bool ApplyOperation(string operation, MechanicalCatalog catalog)
         {
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, new[] { GiftId });
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId));
             if (operation == "journey") return progression.CompleteJourney(ReturnJourneyId, new[] { reward }, catalog);
             if (operation == "visit") return progression.PersistVisit(TestContent.EncounterId);
             bool result = progression.ApplyProgressionReward(reward, catalog, out bool changed);
@@ -253,7 +253,7 @@ namespace Dice.Tests
 
         private static EncounterApplication WinningApplication(MechanicalCatalog catalog)
         {
-            var application = new EncounterApplication(catalog, TestContent.EncounterId, 17, new[] { GiftId });
+            var application = new EncounterApplication(catalog, TestContent.EncounterId, 17, TestModifiers.IdsOf(GiftId));
             Assert.That(application.Submit(PlayHandAction.Instance, application.Snapshot.Revision).Accepted, Is.True);
             Assert.That(application.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
             return application;
@@ -269,7 +269,7 @@ namespace Dice.Tests
             }, modifiers.Length == 0 ? new[] { Modifier(GiftId, GiftFamily) } : modifiers);
 
         private static ModifierDefinition Modifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock)
-            => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: access));
     }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.second_fourth_product_at_least_sum.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.second_fourth_product_at_least_sum.base_score
+  assetGuid: 6d5cc140596b4a243a1908eafddc0668
   family: {fileID: 11400000, guid: 89afd29bfb76ee54aa7eb0a69ccce774, type: 2}
   phase: 2
   condition:

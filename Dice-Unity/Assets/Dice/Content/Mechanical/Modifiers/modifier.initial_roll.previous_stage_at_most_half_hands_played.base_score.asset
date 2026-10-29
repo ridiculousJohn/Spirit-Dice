@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.initial_roll.previous_stage_at_most_half_hands_played.base_score
+  assetGuid: 99ad001922f8f90428863e72113295d5
   family: {fileID: 11400000, guid: 48de8f622d2a0fc4b84317296ab52466, type: 2}
   phase: 0
   condition:

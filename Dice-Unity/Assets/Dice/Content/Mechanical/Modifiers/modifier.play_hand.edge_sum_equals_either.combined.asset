@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.edge_sum_equals_either.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.edge_sum_equals_either.combined
+  assetGuid: 0f2d2bb0911dd7b44b91612b30da4145
   family: {fileID: 11400000, guid: f6a098122f7878b4694f4075bdf6b247, type: 2}
   phase: 2
   condition:

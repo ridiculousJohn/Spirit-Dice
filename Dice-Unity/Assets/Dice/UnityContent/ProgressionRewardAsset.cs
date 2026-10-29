@@ -17,18 +17,18 @@ namespace Dice.UnityContent
             for (int i = 0; i < familyIds.Length; ++i)
                 familyIds[i] = families[i] != null ? families[i].Identity
                     : throw new InvalidOperationException("A discovered family reference is missing: " + name);
-            var ids = new string[GrantedModifiers.Length];
-            for (int i = 0; i < ids.Length; ++i) ids[i] = GrantedModifier(i).Id;
+            var ids = new ModifierDefinition.Id[GrantedModifiers.Length];
+            for (int i = 0; i < ids.Length; ++i) ids[i] = GrantedModifier(i).Identity;
             var definition = new ProgressionRewardDefinition(familyIds, ids);
             definition.Validate(catalog);
             return definition;
         }
 
         /** Whether the reward grants the charm, read from its charm references. */
-        public bool GrantsModifier(string modifierId)
+        public bool GrantsModifier(ModifierDefinition.Id modifierId)
         {
             for (int i = 0; i < GrantedModifiers.Length; ++i)
-                if (GrantedModifier(i).Id == modifierId) return true;
+                if (GrantedModifier(i).Identity == modifierId) return true;
             return false;
         }
 

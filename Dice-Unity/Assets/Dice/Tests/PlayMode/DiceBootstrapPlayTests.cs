@@ -245,7 +245,7 @@ namespace Dice.Tests
             var definition = catalog.Modifiers.First();
             string name = ContentReady.Charms.GetName(definition);
             var sprite = ContentReady.Charms.GetIcon(definition);
-            Assert.That(sprite, Is.Not.Null, definition.Id);
+            Assert.That(sprite, Is.Not.Null, name);
             sceneBootstrap.enabled = false;
             yield return null;
             Assert.That(sceneController.Catalog, Is.SameAs(catalog));

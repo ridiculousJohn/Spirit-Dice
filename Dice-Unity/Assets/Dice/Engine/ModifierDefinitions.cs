@@ -19,7 +19,7 @@ namespace Dice.Engine
             Access = access;
         }
 
-        internal bool IsAvailable(ISet<string> unlockedIds, string modifierId)
+        internal bool IsAvailable(ISet<ModifierDefinition.Id> unlockedIds, ModifierDefinition.Id modifierId)
             => Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId);
     }
 
@@ -30,7 +30,28 @@ namespace Dice.Engine
 
     public sealed class ModifierDefinition
     {
-        public string Id { get; }
+        /** Identifies a charm where an identity is stored, as in saves and the player profile. */
+        public readonly struct Id : IEquatable<Id>, IContentId
+        {
+            public Guid Value { get; }
+
+            public Id(Guid value)
+            {
+                if (value == Guid.Empty) throw new ArgumentException("A charm id requires a nonempty GUID.", nameof(value));
+                Value = value;
+            }
+
+            public bool Equals(Id other) => Value == other.Value;
+            public override bool Equals(object obj) => obj is Id other && Equals(other);
+            public override int GetHashCode() => Value.GetHashCode();
+            /** The 32 hexadecimal digits, as the charm's asset and its .meta file write its GUID. */
+            public override string ToString() => Value.ToString("N");
+            public static bool operator ==(Id left, Id right) => left.Equals(right);
+            public static bool operator !=(Id left, Id right) => !left.Equals(right);
+        }
+
+        // A nested type and a member cannot share a name, so the id property is not called Id.
+        public Id Identity { get; }
         public ModifierFamilyDefinition Family { get; }
         public ModifierPhase Phase { get; }
         public IModifierCondition Condition { get; }
@@ -45,11 +66,11 @@ namespace Dice.Engine
         /** A playable starter charm; every player has discovered its family. */
         public bool IsDiscoveredFromStart => Availability.Access == ModifierAccess.Starter && IsPlayable;
 
-        public ModifierDefinition(string id, ModifierFamilyDefinition family, ModifierPhase phase, IModifierCondition condition,
+        public ModifierDefinition(Id identity, ModifierFamilyDefinition family, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
+            if (identity.Value == Guid.Empty) throw new ArgumentException("A charm requires an id.", nameof(identity));
             if (!Enum.IsDefined(typeof(ModifierPhase), phase)) throw new ArgumentOutOfRangeException(nameof(phase));
             if (!Enum.IsDefined(typeof(ModifierActivationLimit), activationLimit)) throw new ArgumentOutOfRangeException(nameof(activationLimit));
             if (condition == null) throw new ArgumentNullException(nameof(condition));
@@ -57,7 +78,7 @@ namespace Dice.Engine
             var entries = new List<ModifierEffect>(effects);
             foreach (var effect in entries)
                 if (effect == null) throw new ArgumentException("An effect is missing.", nameof(effects));
-            Id = id;
+            Identity = identity;
             Family = family ?? throw new ArgumentNullException(nameof(family));
             Phase = phase;
             Condition = condition;
@@ -74,7 +95,7 @@ namespace Dice.Engine
         internal void RejectEncounterExclusive(string place, string parameter)
         {
             if (Availability.Access == ModifierAccess.EncounterExclusive)
-                throw new ArgumentException("The encounter-exclusive charm " + Id + " is listed in " + place +
+                throw new ArgumentException("The encounter-exclusive charm " + Identity + " is listed in " + place +
                     "; only an encounter's own charm list offers it.", parameter);
         }
     }

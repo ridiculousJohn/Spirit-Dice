@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.edges_match_interior.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.edges_match_interior.multiplier
+  assetGuid: 21031780f8914a4419ed6747b54fa63f
   family: {fileID: 11400000, guid: 55e83ec3876eda64f9f70cb064f0d91d, type: 2}
   phase: 2
   condition:

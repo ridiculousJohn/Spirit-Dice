@@ -199,8 +199,8 @@ namespace Dice.Tests
                 session.Execute(new RefreshModifierOfferAction(session.Snapshot.PendingReward.OfferId), 1);
                 var first = session.Snapshot.PendingReward;
                 var second = control.Snapshot.PendingReward;
-                var firstChoice = first.Options.Single(value => value.DefinitionId == "first");
-                var secondChoice = second.Options.Single(value => value.DefinitionId == "first");
+                var firstChoice = first.Options.Single(value => value.DefinitionId == TestModifiers.IdOf("first"));
+                var secondChoice = second.Options.Single(value => value.DefinitionId == TestModifiers.IdOf("first"));
                 session.Execute(new SelectModifierAction(first.OfferId, firstChoice.OptionId), session.Snapshot.Revision);
                 control.Execute(new SelectModifierAction(second.OfferId, secondChoice.OptionId), control.Snapshot.Revision);
                 Assert.That(session.Snapshot.PendingReward.Options.Select(value => value.Category),
@@ -227,7 +227,7 @@ namespace Dice.Tests
         public void ExhaustedModifierAndUpgradePoolsSkipBothDecisionsAndContinueTheEncounter()
         {
             var owned = RewardTestContent.Modifier("owned", "family.owned");
-            var catalog = RewardTestContent.Catalog(modifiers: new[] { owned }, inventory: new[] { owned.Id },
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { owned }, inventory: new[] { owned.Identity },
                 upgrades: Enumerable.Repeat(6, HandDefinition.CategoryCount).ToArray());
             var session = RewardTestContent.Session(catalog);
             var result = session.Execute(PlayHandAction.Instance, 0);
@@ -331,7 +331,7 @@ namespace Dice.Tests
         private static void SelectPair(EncounterSession session, string modifierId, HandCategory category)
         {
             var offer = session.Snapshot.PendingReward;
-            var option = offer.Options.Single(value => value.DefinitionId == modifierId);
+            var option = offer.Options.Single(value => value.DefinitionId == TestModifiers.IdOf(modifierId));
             Assert.That(session.Execute(new SelectModifierAction(offer.OfferId, option.OptionId), session.Snapshot.Revision).Accepted, Is.True);
             offer = session.Snapshot.PendingReward;
             option = offer.Options.Single(value => value.Category == category);

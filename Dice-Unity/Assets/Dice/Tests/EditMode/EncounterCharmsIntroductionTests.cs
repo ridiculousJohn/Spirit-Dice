@@ -85,20 +85,20 @@ namespace Dice.Tests
                 Modifier(Unlock, access: ModifierAccess.PermanentUnlock)
             }).ToArray();
             var policy = new RewardPolicyDefinition(
-                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", Ordinary) }) },
+                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", TestModifiers.IdsOf(Ordinary)) }) },
                 0, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 6)
                     .Select(index => new StageDefinition(1, 2, 1, index < 5 ? StageExitBehavior.AwaitRewards : StageExitBehavior.AdvanceAutomatically)),
-                startingModifiers: new[] { Ordinary[0] }, rewardPolicy: policy,
+                startingModifiers: TestModifiers.IdsOf(Ordinary[0]), rewardPolicy: policy,
                 unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
-                encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
-                unlockRewardModifierIds: new[] { Unlock }, encounterModifiersFirstClearedStageNumber: firstClearedStage);
+                encounterModifierIds: additions ? new[] { TestModifiers.IdOf(Addition) } : Array.Empty<ModifierDefinition.Id>(),
+                unlockRewardModifierIds: TestModifiers.IdsOf(Unlock), encounterModifiersFirstClearedStageNumber: firstClearedStage);
             return new MechanicalCatalog("test.charms_introduction." + firstClearedStage + (additions ? ".additions" : ".none"),
                 TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
-            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 availability: new ModifierAvailabilityDefinition(access: access));
 

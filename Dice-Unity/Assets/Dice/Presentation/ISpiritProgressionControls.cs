@@ -5,7 +5,7 @@ namespace Dice.Presentation
 {
     public interface ISpiritProgressionControls
     {
-        IReadOnlyList<string> ProfileUnlockedModifierIds { get; }
+        IReadOnlyList<ModifierDefinition.Id> ProfileUnlockedModifierIds { get; }
         IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds { get; }
         IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds { get; }
         PlayerProfileStatus ProfileStatus { get; }

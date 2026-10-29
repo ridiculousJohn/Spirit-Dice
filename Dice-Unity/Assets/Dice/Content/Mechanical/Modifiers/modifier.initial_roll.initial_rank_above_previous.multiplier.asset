@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.initial_roll.initial_rank_above_previous.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.initial_roll.initial_rank_above_previous.multiplier
+  assetGuid: 41444f8417690884eb5ef7f559001a34
   family: {fileID: 11400000, guid: ac9f75a6aed785c429dd24108a36e517, type: 2}
   phase: 0
   condition:

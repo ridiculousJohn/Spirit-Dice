@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.high_die.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.high_die.combined
+  assetGuid: fe67f70bd865564428b81bab7a5037e4
   family: {fileID: 11400000, guid: d00fcb4c70279d84cadc3ab94dfccc8c, type: 2}
   phase: 2
   condition:

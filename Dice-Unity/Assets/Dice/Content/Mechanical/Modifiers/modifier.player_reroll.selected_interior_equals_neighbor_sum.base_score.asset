@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.player_reroll.selected_interior_equals_neighbor_sum.base_score
+  assetGuid: 1e0bbd40ded2b3342b38de35ca78a727
   family: {fileID: 11400000, guid: 442e532537b6959448afa1cffdca7f73, type: 2}
   phase: 1
   condition:

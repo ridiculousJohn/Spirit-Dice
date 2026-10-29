@@ -175,7 +175,7 @@ namespace Dice.Tests
         [Test]
         public void ScoringStepShowsItsLinesAndCountsToItsValues()
         {
-            var charm = new ModifierDefinition("test.hud.grant", TestFamilies.Of("test.hud.grant"), ModifierPhase.PlayerReroll,
+            var charm = new ModifierDefinition(TestModifiers.IdOf("test.hud.grant"), TestFamilies.Of("test.hud.grant"), ModifierPhase.PlayerReroll,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
             var state = new EncounterState();
             var step = new SpiritScoringStep

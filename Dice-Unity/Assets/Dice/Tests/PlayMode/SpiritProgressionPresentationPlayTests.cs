@@ -26,11 +26,11 @@ namespace Dice.Tests
             Addressables.Release(configuration);
             var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.collected"), new[] { new StageDefinition(1, 1, 0) },
                 rules: rules, unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
-                unlockRewardModifierIds: new[] { definition.Id });
+                unlockRewardModifierIds: new[] { definition.Identity });
             var catalog = new MechanicalCatalog("collected.test", controller.Catalog.Hands, new[] { encounter }, new[] { definition });
             string path = ContentReady.SpiritSavePath();
             var profile = new PlayerProfile();
-            profile.UnlockModifier(definition.Id);
+            profile.UnlockModifier(definition.Identity);
             profile.DiscoverFamily(definition.Family.Identity);
             PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), PlayerProfileFileStore.FileName), profile);
             controller.Initialize(catalog, encounter.Identity, ContentReady.Seed, path);

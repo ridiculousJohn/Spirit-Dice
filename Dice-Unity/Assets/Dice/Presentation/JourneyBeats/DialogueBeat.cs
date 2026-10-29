@@ -22,7 +22,7 @@ namespace Dice.Presentation
         internal override void Validate(EncounterJourneyAsset journey, int index, MechanicalCatalog catalog)
         {
             base.Validate(journey, index, catalog);
-            if (charm != null) catalog.GetModifier(charm.Id);
+            if (charm != null) catalog.GetModifier(charm.Identity);
         }
     }
 }

@@ -261,7 +261,7 @@ namespace Dice.Editor
             {
                 if (definition.Phase != ModifierPhase.InitialRoll) continue;
                 var definitionEncounter = new EncounterDefinition(PreviewEncounterId, new[] { new StageDefinition(1000000, 3, 3) },
-                    startingModifiers: new[] { definition.Id });
+                    startingModifiers: new[] { definition.Identity });
                 var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
                 var contributions = EncounterSession.CreateEncounter(catalog, PreviewEncounterId, PreviewSeed).Snapshot.ModifierContributions;
                 if (contributions.Count == 0) continue;

@@ -99,6 +99,7 @@ namespace Dice.App
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StrictPrimitiveConverter());
+            settings.Converters.Add(ContentIds.Modifier);
             settings.Converters.Add(ContentIds.Family);
             settings.Converters.Add(ContentIds.Encounter);
             settings.Converters.Add(ContentIds.Piece);

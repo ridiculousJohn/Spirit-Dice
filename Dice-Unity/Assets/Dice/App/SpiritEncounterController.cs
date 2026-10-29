@@ -36,7 +36,7 @@ namespace Dice.App
         // The setter is internal so PlayMode tests isolate the save and profile before Start loads them.
         public string SavePath { get; internal set; }
         public string ProfilePath => progression.ProfilePath;
-        public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
+        public IReadOnlyList<ModifierDefinition.Id> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
         public IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
         public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds => progression.CompletedEncounterIds;
         public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds => progression.CompletedJourneyIds;

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.positive_rerolls_divisible_by.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.positive_rerolls_divisible_by.rerolls
+  assetGuid: ae0240c744e7c434ea4453a36af26a95
   family: {fileID: 11400000, guid: 86b67ad2585408641bacd39c13edfdad, type: 2}
   phase: 2
   condition:

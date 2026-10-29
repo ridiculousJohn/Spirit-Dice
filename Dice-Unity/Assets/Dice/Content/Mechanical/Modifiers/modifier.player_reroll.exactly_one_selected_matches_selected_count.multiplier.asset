@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.player_reroll.exactly_one_selected_matches_selected_count.multiplier
+  assetGuid: fd505a63423578f40a75adee370e4f5d
   family: {fileID: 11400000, guid: f7f2616c096f61e4fbdda9cc30bf84a4, type: 2}
   phase: 1
   condition:

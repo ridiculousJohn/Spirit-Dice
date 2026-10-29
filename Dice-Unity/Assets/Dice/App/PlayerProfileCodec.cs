@@ -29,7 +29,7 @@ namespace Dice.App
             {
                 [FormatVersionField] = PlayerProfile.CurrentFormatVersion,
                 [DiscoveredFamilyIdsField] = IdArray(profile.DiscoveredFamilyIds, ContentIds.Family),
-                [UnlockedModifierIdsField] = new JArray(profile.UnlockedModifierIds),
+                [UnlockedModifierIdsField] = IdArray(profile.UnlockedModifierIds, ContentIds.Modifier),
                 [CompletedEncounterIdsField] = IdArray(profile.CompletedEncounterIds, ContentIds.Encounter),
                 [CompletedJourneyIdsField] = IdArray(profile.CompletedJourneyIds, ContentIds.Journey),
                 [VisitedEncounterIdsField] = IdArray(profile.VisitedEncounterIds, ContentIds.Encounter)
@@ -66,7 +66,7 @@ namespace Dice.App
                     var profile = new PlayerProfile();
                     ReadIds(document[DiscoveredFamilyIdsField], ContentIds.Family, profile.DiscoverFamily);
                     ReadIds(document[CompletedJourneyIdsField], ContentIds.Journey, profile.CompleteJourney);
-                    ReadIds(document[UnlockedModifierIdsField], profile.UnlockModifier);
+                    ReadIds(document[UnlockedModifierIdsField], ContentIds.Modifier, profile.UnlockModifier);
                     ReadIds(document[CompletedEncounterIdsField], ContentIds.Encounter, profile.CompleteEncounter);
                     ReadIds(document[VisitedEncounterIdsField], ContentIds.Encounter, profile.VisitEncounter);
                     return profile;
@@ -90,16 +90,6 @@ namespace Dice.App
             if (!(token is JArray array)) throw new FormatException("Profile IDs must be arrays.");
             foreach (JToken value in array)
                 if (!add(converter.Read(value))) throw new FormatException("Profile IDs must be unique.");
-        }
-
-        private static void ReadIds(JToken token, Func<string, bool> add)
-        {
-            if (!(token is JArray array)) throw new FormatException("Profile IDs must be arrays.");
-            foreach (JToken value in array)
-            {
-                if (value.Type != JTokenType.String) throw new FormatException("Profile IDs must be strings.");
-                if (!add(value.Value<string>())) throw new FormatException("Profile IDs must be unique.");
-            }
         }
     }
 }

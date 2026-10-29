@@ -17,7 +17,8 @@ namespace Dice.App
         public bool HasProfile => profile != null;
         public string ProfilePath { get; private set; }
         public PlayerProfileStatus Status { get; private set; } = PlayerProfileStatus.None;
-        public IReadOnlyList<string> ProfileUnlockedModifierIds => profile?.UnlockedModifierIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<ModifierDefinition.Id> ProfileUnlockedModifierIds =>
+            profile?.UnlockedModifierIds ?? (IReadOnlyList<ModifierDefinition.Id>)Array.Empty<ModifierDefinition.Id>();
         public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds =>
             profile?.CompletedEncounterIds ?? (IReadOnlyList<EncounterDefinition.Id>)Array.Empty<EncounterDefinition.Id>();
         public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds =>
@@ -56,13 +57,13 @@ namespace Dice.App
             }
         }
 
-        public IEnumerable<string> KnownUnlockedModifiers(MechanicalCatalog catalog)
+        public IEnumerable<ModifierDefinition.Id> KnownUnlockedModifiers(MechanicalCatalog catalog)
         {
             if (profile == null || catalog == null) yield break;
-            var unlocked = new HashSet<string>(ProfileUnlockedModifierIds, StringComparer.Ordinal);
+            var unlocked = new HashSet<ModifierDefinition.Id>(ProfileUnlockedModifierIds);
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlocked.Contains(modifier.Id))
-                    yield return modifier.Id;
+                if (modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlocked.Contains(modifier.Identity))
+                    yield return modifier.Identity;
         }
 
         /** The profile's discovered families that the catalog has, in the catalog's family order. */
@@ -91,7 +92,7 @@ namespace Dice.App
                 pendingUnlockSave = unlockSave;
                 pendingUnlockSavePath = unlockSavePath;
             }
-            foreach (string id in snapshot.UnlockedModifierIds) profileDirty |= profile.UnlockModifier(id);
+            foreach (var id in snapshot.UnlockedModifierIds) profileDirty |= profile.UnlockModifier(id);
             if (snapshot.Outcome == EncounterOutcome.Won)
             {
                 profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);

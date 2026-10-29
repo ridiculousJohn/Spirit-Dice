@@ -243,7 +243,7 @@ namespace Dice.Presentation
         {
             if (encounterControls?.Catalog == null) return;
             charmDetail.gameObject.SetActive(true);
-            var definition = encounterControls.Catalog.GetModifier(charm.Id);
+            var definition = encounterControls.Catalog.GetModifier(charm.Identity);
             var charms = encounterControls.ModifierPresentation;
             var theme = SpiritUi.GetTheme(transform);
             string name = charms.GetName(definition);

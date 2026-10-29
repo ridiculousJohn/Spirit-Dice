@@ -8,13 +8,13 @@ namespace Dice.App
 {
     public sealed class PlayerProfile
     {
-        public const int CurrentFormatVersion = 7;
+        public const int CurrentFormatVersion = 8;
         private readonly List<ModifierFamilyDefinition.Id> discoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
-        private readonly List<string> unlockedModifierIds = new List<string>();
+        private readonly List<ModifierDefinition.Id> unlockedModifierIds = new List<ModifierDefinition.Id>();
         private readonly List<EncounterDefinition.Id> completedEncounterIds = new List<EncounterDefinition.Id>();
         private readonly List<EncounterJourneyAsset.Id> completedJourneyIds = new List<EncounterJourneyAsset.Id>();
         private readonly List<EncounterDefinition.Id> visitedEncounterIds = new List<EncounterDefinition.Id>();
-        public ReadOnlyCollection<string> UnlockedModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> UnlockedModifierIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> CompletedEncounterIds { get; }
         public ReadOnlyCollection<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> VisitedEncounterIds { get; }
@@ -29,7 +29,7 @@ namespace Dice.App
             DiscoveredFamilyIds = discoveredFamilyIds.AsReadOnly();
         }
 
-        public bool UnlockModifier(string id) => Add(unlockedModifierIds, id);
+        public bool UnlockModifier(ModifierDefinition.Id id) => Add(unlockedModifierIds, id);
         public bool CompleteEncounter(EncounterDefinition.Id id) => Add(completedEncounterIds, id);
         public bool CompleteJourney(EncounterJourneyAsset.Id id) => Add(completedJourneyIds, id);
         public bool VisitEncounter(EncounterDefinition.Id id) => Add(visitedEncounterIds, id);
@@ -42,7 +42,7 @@ namespace Dice.App
             var known = new HashSet<ModifierFamilyDefinition.Id>(result);
             foreach (var modifier in catalog.Modifiers)
                 if ((modifier.IsDiscoveredFromStart ||
-                     modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlockedModifierIds.Contains(modifier.Id)) &&
+                     modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlockedModifierIds.Contains(modifier.Identity)) &&
                     known.Add(modifier.Family.Identity)) result.Add(modifier.Family.Identity);
             return result.AsReadOnly();
         }
@@ -53,7 +53,7 @@ namespace Dice.App
             reward.Validate(catalog);
             bool changed = false;
             foreach (var id in reward.DiscoveredFamilyIds) changed |= DiscoverFamily(id);
-            foreach (string id in reward.GrantedModifierIds)
+            foreach (var id in reward.GrantedModifierIds)
             {
                 changed |= UnlockModifier(id);
                 changed |= DiscoverFamily(catalog.GetModifier(id).Family.Identity);
@@ -66,17 +66,11 @@ namespace Dice.App
             if (other == null) throw new ArgumentNullException(nameof(other));
             bool changed = false;
             foreach (var id in other.DiscoveredFamilyIds) changed |= DiscoverFamily(id);
-            foreach (string id in other.UnlockedModifierIds) changed |= UnlockModifier(id);
+            foreach (var id in other.UnlockedModifierIds) changed |= UnlockModifier(id);
             foreach (var id in other.CompletedEncounterIds) changed |= CompleteEncounter(id);
             foreach (var id in other.CompletedJourneyIds) changed |= CompleteJourney(id);
             foreach (var id in other.VisitedEncounterIds) changed |= VisitEncounter(id);
             return changed;
-        }
-
-        private static bool Add(List<string> ids, string id)
-        {
-            ValidateId(id);
-            return Add<string>(ids, id);
         }
 
         private static bool Add<T>(List<T> ids, T id)
@@ -84,14 +78,6 @@ namespace Dice.App
             if (ids.Contains(id)) return false;
             ids.Add(id);
             return true;
-        }
-
-        private static void ValidateId(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id) || id.Length > ProgressionRewardDefinition.MaximumIdLength || id.Trim() != id)
-                throw new FormatException("Profile IDs must be nonempty and at most " + ProgressionRewardDefinition.MaximumIdLength + " characters.");
-            foreach (char value in id)
-                if (char.IsControl(value)) throw new FormatException("Profile IDs cannot contain control characters.");
         }
     }
 }

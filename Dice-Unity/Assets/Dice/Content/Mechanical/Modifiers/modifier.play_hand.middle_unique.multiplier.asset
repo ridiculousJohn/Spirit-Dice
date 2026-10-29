@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.middle_unique.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.middle_unique.multiplier
+  assetGuid: 51c83caf9c70b404f83c37841b118095
   family: {fileID: 11400000, guid: a99b67c6a3ec5844583caae4d93428dc, type: 2}
   phase: 2
   condition:

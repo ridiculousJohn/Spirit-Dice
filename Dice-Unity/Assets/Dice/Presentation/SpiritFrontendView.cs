@@ -44,7 +44,7 @@ namespace Dice.Presentation
         public void ShowCollection()
         {
             var progression = encounter as ISpiritProgressionControls;
-            Collection.Show(encounter.Catalog, encounter.ModifierPresentation, progression?.ProfileUnlockedModifierIds ?? Array.Empty<string>(),
+            Collection.Show(encounter.Catalog, encounter.ModifierPresentation, progression?.ProfileUnlockedModifierIds ?? Array.Empty<ModifierDefinition.Id>(),
                 journey.JourneyCatalog, progression?.ProfileDiscoveredFamilyIds ?? Array.Empty<ModifierFamilyDefinition.Id>());
         }
 

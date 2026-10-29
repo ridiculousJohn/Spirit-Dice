@@ -121,8 +121,8 @@ namespace Dice.Engine
         public int RewardRefreshesAvailable { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> ExcludedRewardFamilies { get; }
         public ReadOnlyCollection<HandCategory> RecentHandUpgrades { get; }
-        public ReadOnlyCollection<string> UnlockedModifierIds { get; }
-        public ReadOnlyCollection<string> NewlyUnlockedModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> UnlockedModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> NewlyUnlockedModifierIds { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
 
         internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
@@ -172,8 +172,8 @@ namespace Dice.Engine
             RewardRefreshesAvailable = RewardRefreshCost > 0 ? state.RewardRefreshes / RewardRefreshCost : 0;
             ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies).AsReadOnly();
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();
-            UnlockedModifierIds = new List<string>(state.UnlockedModifierIds).AsReadOnly();
-            NewlyUnlockedModifierIds = new List<string>(state.NewlyUnlockedModifierIds).AsReadOnly();
+            UnlockedModifierIds = new List<ModifierDefinition.Id>(state.UnlockedModifierIds).AsReadOnly();
+            NewlyUnlockedModifierIds = new List<ModifierDefinition.Id>(state.NewlyUnlockedModifierIds).AsReadOnly();
             DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(state.DiscoveredFamilyIds).AsReadOnly();
         }
     }
@@ -187,7 +187,8 @@ namespace Dice.Engine
         string Number(long value);
         /** Spaces an engine identifier or enum name into words. */
         string Humanize(string value);
-        string ModifierName(string definitionId);
+        /** The charm's readable name. */
+        string ModifierName(ModifierDefinition.Id definitionId);
     }
 
     public abstract class RuleEvent
@@ -223,11 +224,11 @@ namespace Dice.Engine
 
     public sealed class ModifierUnlockedEvent : RuleEvent
     {
-        public string ModifierId { get; }
+        public ModifierDefinition.Id ModifierId { get; }
         public ModifierAvailabilityDefinition Availability { get; }
         internal ModifierUnlockedEvent(EncounterState state, ModifierDefinition modifier) : base(state.StageIndex, state.HandIndex)
         {
-            ModifierId = modifier.Id;
+            ModifierId = modifier.Identity;
             Availability = modifier.Availability;
         }
 

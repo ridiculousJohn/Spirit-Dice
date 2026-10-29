@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.sum_less_than_initial.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.sum_less_than_initial.rerolls
+  assetGuid: c2059b6fb13385441af8145c71cd8660
   family: {fileID: 11400000, guid: 4cb2089189ed18041862491417c64b16, type: 2}
   phase: 2
   condition:

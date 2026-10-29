@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.largest_group_equals_hands_or_rerolls.combined
+  assetGuid: 9bac75a166f988e4ab6357f9de012c9c
   family: {fileID: 11400000, guid: 0082012c0b1d91448bc21c5c82f94536, type: 2}
   phase: 2
   condition:

@@ -27,7 +27,7 @@ namespace Dice.UnityContent
                 if (definitions.ContainsKey(pair.Key))
                     throw new ArgumentException("A charm asset is paired more than once: " + pair.Key.name, nameof(modifiers));
                 if (!paired.Add(pair.Value))
-                    throw new ArgumentException("A modifier definition is paired with more than one charm asset: " + pair.Value.Id, nameof(modifiers));
+                    throw new ArgumentException("A modifier definition is paired with more than one charm asset: " + pair.Key.name, nameof(modifiers));
                 definitions.Add(pair.Key, pair.Value);
             }
             if (definitions.Count != catalogModifiers.Count)

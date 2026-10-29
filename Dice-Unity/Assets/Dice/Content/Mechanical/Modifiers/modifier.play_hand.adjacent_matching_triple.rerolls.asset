@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.adjacent_matching_triple.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.adjacent_matching_triple.rerolls
+  assetGuid: c4bd8660ba12e9c409ac8e5e6684f705
   family: {fileID: 11400000, guid: 2bd5e7500e0c8af4ca10bb1c25ad7dd2, type: 2}
   phase: 2
   condition:

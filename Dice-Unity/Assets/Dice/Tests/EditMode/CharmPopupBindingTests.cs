@@ -49,10 +49,10 @@ namespace Dice.Tests
             popup.Build();
             popup.Close();
 
-            charm = new ModifierDefinition("test.popup", TestFamilies.Of("test.popup"), ModifierPhase.PlayHand, new AlwaysCondition(),
+            charm = new ModifierDefinition(TestModifiers.IdOf("test.popup"), TestFamilies.Of("test.popup"), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(5) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(100000, 3, 3) },
-                startingModifiers: new[] { charm.Id });
+                startingModifiers: new[] { charm.Identity });
             var catalog = new MechanicalCatalog("test.popup", TestContent.Hands(), new[] { encounter }, new[] { charm });
             snapshot = EncounterSession.CreateEncounter(catalog, encounter.Identity, 42).Snapshot;
             charms = synthetic.For(catalog);

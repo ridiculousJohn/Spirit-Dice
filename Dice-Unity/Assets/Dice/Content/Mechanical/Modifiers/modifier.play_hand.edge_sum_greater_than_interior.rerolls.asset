@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.edge_sum_greater_than_interior.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.edge_sum_greater_than_interior.rerolls
+  assetGuid: 7e6ee42874db3c641b14a117ed51db8d
   family: {fileID: 11400000, guid: 4526ffd83e644f946a6e477e7c2d7b91, type: 2}
   phase: 2
   condition:

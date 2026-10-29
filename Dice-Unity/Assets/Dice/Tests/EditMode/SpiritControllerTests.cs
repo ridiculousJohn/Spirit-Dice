@@ -319,10 +319,10 @@ namespace Dice.Tests
         [Test]
         public void PreviewFailureDoesNotInvalidateAcceptedOrRestoredState()
         {
-            var modifier = new ModifierDefinition("overflow", TestFamilies.Of("family.overflow"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("overflow"), TestFamilies.Of("family.overflow"), ModifierPhase.PlayHand,
                 new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(long.MaxValue) });
-            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Identity });
             Assert.DoesNotThrow(() => controller.Initialize(catalog, TestContent.EncounterId, 17, savePath));
             var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
             Assert.That(controller.Preview, Is.Null);
@@ -352,9 +352,9 @@ namespace Dice.Tests
             Assert.That(controller.Status.HandPreviewFailure, Is.Null);
             Assert.That(controller.Status.ModifierInspectionFailure, Is.Null);
 
-            var modifier = new ModifierDefinition("faulting", TestFamilies.Of("family.faulting"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("faulting"), TestFamilies.Of("family.faulting"), ModifierPhase.PlayHand,
                 new FaultingCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
-            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Id });
+            var catalog = RewardTestContent.Catalog(modifiers: new[] { modifier }, inventory: new[] { modifier.Identity });
             controller.Initialize(catalog, TestContent.EncounterId, 19, savePath);
             Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.Started));
             Assert.That(controller.Status.Seed, Is.EqualTo(19));

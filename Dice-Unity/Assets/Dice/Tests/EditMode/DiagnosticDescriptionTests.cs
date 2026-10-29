@@ -14,7 +14,7 @@ namespace Dice.Tests
             public WordedEvent(string modifierId) : base(1, 2) => this.modifierId = modifierId;
 
             protected override string DescribeDetail(IDiagnosticFormat format)
-                => format.ModifierName(modifierId) + " gave " + format.Number(12345) + " to " + format.Humanize("HandUpgrade") + ".";
+                => format.ModifierName(TestModifiers.IdOf(modifierId)) + " gave " + format.Number(12345) + " to " + format.Humanize("HandUpgrade") + ".";
         }
 
         [Test]
@@ -23,7 +23,7 @@ namespace Dice.Tests
             using var synthetic = new SyntheticCharms();
             MechanicalCatalog catalog = RewardTestContent.Catalog();
             ModifierPresentationCatalog charms = synthetic.For(catalog);
-            string name = charms.GetName(catalog.GetModifier("first"));
+            string name = charms.GetName(catalog.GetModifier(TestModifiers.IdOf("first")));
             Assert.That(DiagnosticText.DescribeEvent(new WordedEvent("first"), catalog, charms),
                 Is.EqualTo("Stage 2 / hand 3 - " + name + " gave 12,345 to Hand Upgrade."));
         }

@@ -107,10 +107,10 @@ namespace Dice.Presentation
             LayoutRebuilder.MarkLayoutForRebuild((RectTransform)transform);
         }
 
-        public void SetSelected(string modifierId)
+        public void SetSelected(ModifierDefinition.Id modifierId)
         {
             foreach (var item in variants)
-                item.Selection.enabled = item.Definition != null && item.Definition.Id == modifierId;
+                item.Selection.enabled = item.Definition != null && item.Definition.Identity == modifierId;
         }
     }
 }

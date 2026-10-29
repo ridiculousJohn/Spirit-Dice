@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.edge_pair_differences_equal.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.edge_pair_differences_equal.rerolls
+  assetGuid: dedb1f74abc2c9449b78a1869e3ecb76
   family: {fileID: 11400000, guid: fdf2fe1882ef8374fb3c364b95fbe2ba, type: 2}
   phase: 2
   condition:

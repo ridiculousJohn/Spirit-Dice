@@ -102,7 +102,7 @@ namespace Dice.Tests
         [Test]
         public void BindingsPersistThroughPlayHandAndClearWhenTheNextHandStarts()
         {
-            var bonus = new ModifierDefinition("charm.bound", TestFamilies.Of("family.bound"), ModifierPhase.PlayHand,
+            var bonus = new ModifierDefinition(TestModifiers.IdOf("charm.bound"), TestFamilies.Of("family.bound"), ModifierPhase.PlayHand,
                 new BoundFaceCountAtLeastCondition(1),
                 new ModifierEffect[] { new AddBaseScoreEffect(7) });
             var catalog = Catalog(modifiers: new[] { bonus });
@@ -113,7 +113,7 @@ namespace Dice.Tests
             Assert.That(session.InspectModifiersForPlayHand().Single().ConditionMet, Is.True);
             Assert.That(session.PreviewPlayHand().ModifierBaseScore, Is.EqualTo(7));
             var played = Execute(session, PlayHandAction.Instance);
-            Assert.That(played.Events.OfType<ModifierActivatedEvent>().Single().DefinitionId, Is.EqualTo(bonus.Id));
+            Assert.That(played.Events.OfType<ModifierActivatedEvent>().Single().DefinitionId, Is.EqualTo(bonus.Identity));
             int handStarted = played.Events.IndexOf(played.Events.OfType<HandStartedEvent>().Single());
             Assert.That(played.Events.IndexOf(played.Events.OfType<ModifierActivatedEvent>().Single()), Is.LessThan(handStarted));
             Assert.That(played.Events.IndexOf(played.Events.OfType<DieMarkedEvent>().Single()), Is.GreaterThan(handStarted));
@@ -296,7 +296,7 @@ namespace Dice.Tests
                 ? new EncounterRuleDefinition[] { new DieBindingRuleDefinition(BindingId, afterOpening, afterReroll) }
                 : Array.Empty<EncounterRuleDefinition>();
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages ?? new[] { new StageDefinition(1000000, 20, 20) },
-                startingModifiers: modifiers?.Select(value => value.Id), rules: rules);
+                startingModifiers: modifiers?.Select(value => value.Identity), rules: rules);
             return new MechanicalCatalog("test.binding", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 

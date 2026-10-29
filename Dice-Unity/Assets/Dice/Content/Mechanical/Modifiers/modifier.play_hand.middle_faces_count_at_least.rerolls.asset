@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.middle_faces_count_at_least.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.middle_faces_count_at_least.rerolls
+  assetGuid: ec3f466aff72e284b9e82384eb9dab77
   family: {fileID: 11400000, guid: 86fdc0a72782bbd49bfc56bf0d9c00a9, type: 2}
   phase: 2
   condition:

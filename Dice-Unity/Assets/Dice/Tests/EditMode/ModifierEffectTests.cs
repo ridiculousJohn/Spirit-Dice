@@ -27,6 +27,6 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Charm(params ModifierEffect[] effects)
-            => new ModifierDefinition("charm.effects", TestFamilies.Of("family.effects"), ModifierPhase.PlayHand, new AlwaysCondition(), effects);
+            => new ModifierDefinition(TestModifiers.IdOf("charm.effects"), TestFamilies.Of("family.effects"), ModifierPhase.PlayHand, new AlwaysCondition(), effects);
     }
 }

@@ -19,10 +19,10 @@ namespace Dice.Tests
         public void UnlockSourcesListEveryMilestoneOfEncountersWhoseUnlockListHoldsTheCharm()
         {
             var catalog = Catalog();
-            var unlock = catalog.GetModifierSources(Locked).Unlocks.Single();
+            var unlock = catalog.GetModifierSources(TestModifiers.IdOf(Locked)).Unlocks.Single();
             Assert.That(unlock.Encounter.Identity, Is.EqualTo(TestEncounters.IdOf("encounter.unlocks")));
             Assert.That(unlock.StageNumbers, Is.EqualTo(new[] { 1, 3 }));
-            Assert.That(catalog.GetModifierSources(Pooled).Unlocks, Is.Empty);
+            Assert.That(catalog.GetModifierSources(TestModifiers.IdOf(Pooled)).Unlocks, Is.Empty);
         }
 
         /** Checks the run reward sources are the encounters that add the charm or draw offers from a pool holding it as an entry or fallback, when the charm is reward-eligible / fails if a source is missed or an ineligible or unrelated charm is listed. */
@@ -32,14 +32,14 @@ namespace Dice.Tests
         [TestCase(Ineligible, new string[0])]
         [TestCase(Locked, new[] { "encounter.scoped" })]
         public void RunRewardSourcesAreAdditionsPoolEntriesAndFallbacks(string modifierId, string[] encounterIds)
-            => Assert.That(Catalog().GetModifierSources(modifierId).RunRewards.Select(encounter => encounter.Identity),
+            => Assert.That(Catalog().GetModifierSources(TestModifiers.IdOf(modifierId)).RunRewards.Select(encounter => encounter.Identity),
                 Is.EqualTo(encounterIds.Select(TestEncounters.IdOf)));
 
         private static MechanicalCatalog Catalog()
         {
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
-            var pool = new ModifierRewardPoolDefinition("pool", new[] { Pooled }, Fallback);
-            var second = new ModifierRewardPoolDefinition("second", new[] { Locked }, Ineligible);
+            var pool = new ModifierRewardPoolDefinition("pool", TestModifiers.IdsOf(Pooled), TestModifiers.IdOf(Fallback));
+            var second = new ModifierRewardPoolDefinition("second", TestModifiers.IdsOf(Locked), TestModifiers.IdOf(Ineligible));
             var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var twoPools = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool, second }) },
@@ -47,8 +47,8 @@ namespace Dice.Tests
             var encounters = new[]
             {
                 new EncounterDefinition(TestEncounters.IdOf("encounter.unlocks"), stages, unlockMilestones: new[] { new ModifierUnlockMilestone(1),
-                    new ModifierUnlockMilestone(3) }, encounterModifierIds: new[] { Addition }, unlockRewardModifierIds: new[] { Locked }),
-                new EncounterDefinition(TestEncounters.IdOf("encounter.unlisted"), stages, unlockRewardModifierIds: new[] { Locked }),
+                    new ModifierUnlockMilestone(3) }, encounterModifierIds: TestModifiers.IdsOf(Addition), unlockRewardModifierIds: TestModifiers.IdsOf(Locked)),
+                new EncounterDefinition(TestEncounters.IdOf("encounter.unlisted"), stages, unlockRewardModifierIds: TestModifiers.IdsOf(Locked)),
                 new EncounterDefinition(TestEncounters.IdOf("encounter.pooled"), stages, rewardPolicy: policy),
                 new EncounterDefinition(TestEncounters.IdOf("encounter.scoped"), stages, rewardPolicy: twoPools)
             };
@@ -61,7 +61,7 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter, bool eligible = true)
-            => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
                 rewardEligible: eligible, availability: new ModifierAvailabilityDefinition(access: access));
     }
 }

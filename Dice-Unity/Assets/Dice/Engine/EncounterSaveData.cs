@@ -5,7 +5,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 13;
+        public const int CurrentFormatVersion = 14;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -52,18 +52,18 @@ namespace Dice.Engine
         public ModifierFamilyDefinition.Id[] ExcludedRewardFamilies;
         public HandCategory[] RecentHandUpgrades;
         public HandCategory[] PendingUpgradeCategories;
-        public string[] UnlockedModifierIds;
-        public string[] NewlyUnlockedModifierIds;
+        public ModifierDefinition.Id[] UnlockedModifierIds;
+        public ModifierDefinition.Id[] NewlyUnlockedModifierIds;
         public ModifierFamilyDefinition.Id[] DiscoveredFamilyIds;
         public ModifierFamilyDefinition.Id[] PendingUnlockOfferDiscoveredFamilyIds;
-        public string[] PendingModifierOfferUnlockedIds;
+        public ModifierDefinition.Id[] PendingModifierOfferUnlockedIds;
     }
 
     [Serializable]
     public sealed class EncounterSaveModifierData
     {
         public long InstanceId;
-        public string DefinitionId;
+        public ModifierDefinition.Id DefinitionId;
         public int ActivationsThisHand;
         public int ActivationsThisStage;
         public long TotalActivations;
@@ -89,7 +89,7 @@ namespace Dice.Engine
     public sealed class EncounterSaveContributionData
     {
         public long InstanceId;
-        public string DefinitionId;
+        public ModifierDefinition.Id DefinitionId;
         public ModifierPhase Phase;
         public long BaseScore;
         public long Multiplier;
@@ -109,7 +109,8 @@ namespace Dice.Engine
     public sealed class EncounterSaveRewardOptionData
     {
         public long OptionId;
-        public string DefinitionId;
+        /** The offered charm's id; null for a hand upgrade. */
+        public ModifierDefinition.Id? DefinitionId;
         public bool HasCategory;
         public HandCategory Category;
     }

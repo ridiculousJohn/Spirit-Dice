@@ -95,11 +95,11 @@ namespace Dice.Engine
     {
         public long OptionId { get; }
         /** The offered charm's id; null for a hand upgrade. */
-        public string DefinitionId { get; }
+        public ModifierDefinition.Id? DefinitionId { get; }
         /** The hand a hand upgrade upgrades, named by its category alone; null for a charm. */
         public HandCategory? Category { get; }
 
-        internal RewardOption(long optionId, string definitionId, HandCategory? category = null)
+        internal RewardOption(long optionId, ModifierDefinition.Id? definitionId, HandCategory? category = null)
         {
             OptionId = optionId;
             DefinitionId = definitionId;
@@ -175,7 +175,7 @@ namespace Dice.Engine
 
         /** Names a selected charm by its presentation and a hand upgrade by its category. */
         protected override string DescribeDetail(IDiagnosticFormat format)
-            => "Selected " + (Kind == RewardKind.HandUpgrade ? format.Humanize(Option.Category.Value.ToString()) : format.ModifierName(Option.DefinitionId)) +
+            => "Selected " + (Kind == RewardKind.HandUpgrade ? format.Humanize(Option.Category.Value.ToString()) : format.ModifierName(Option.DefinitionId.Value)) +
                 " (offer " + OfferId + ", option " + Option.OptionId + ").";
     }
 
@@ -192,7 +192,7 @@ namespace Dice.Engine
     public sealed class ModifierAcquiredEvent : RuleEvent
     {
         public long InstanceId { get; }
-        public string DefinitionId { get; }
+        public ModifierDefinition.Id DefinitionId { get; }
         internal ModifierAcquiredEvent(EncounterState state, ModifierInstanceState modifier)
             : base(state.StageIndex, state.HandIndex)
         {

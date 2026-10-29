@@ -38,14 +38,14 @@ namespace Dice.Presentation
          * Groups the encounter's charms by family, in authored order, and opens the screen at the top. A narration line
          * shows in quotation marks above the families; without one the narration stays hidden.
          */
-        public void Show(MechanicalCatalog catalog, ModifierPresentationCatalog charms, IReadOnlyList<string> modifierIds,
+        public void Show(MechanicalCatalog catalog, ModifierPresentationCatalog charms, IReadOnlyList<ModifierDefinition.Id> modifierIds,
             string narration = null)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (charms == null) throw new ArgumentNullException(nameof(charms));
             if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
             var families = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
-            foreach (string id in modifierIds)
+            foreach (var id in modifierIds)
             {
                 var definition = catalog.GetModifier(id);
                 if (!families.TryGetValue(definition.Family, out var family))

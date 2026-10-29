@@ -19,7 +19,7 @@ namespace Dice.UnityContent
         {
             if (fallbackModifier != null) use(fallbackModifier);
             return new ModifierRewardPoolDefinition(name, MechanicalCatalogAsset.Ids(modifiers, use),
-                fallbackModifier == null ? null : fallbackModifier.Id);
+                fallbackModifier == null ? (ModifierDefinition.Id?)null : fallbackModifier.Identity);
         }
     }
 }

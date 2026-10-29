@@ -147,11 +147,11 @@ namespace Dice.Tests
         public void DuplicateDefinitionsKeepTheirInstanceIdentityAndInspectionIsImmutable()
         {
             var definition = Modifier("duplicate", ModifierPhase.PlayHand, new AlwaysCondition());
-            var session = Session(Catalog(new[] { definition }, inventory: new[] { "duplicate", "duplicate" }));
+            var session = Session(Catalog(new[] { definition }, inventory: TestModifiers.IdsOf("duplicate", "duplicate")));
             var inspection = session.InspectModifiersForPlayHand();
             Assert.That(((ICollection<ModifierInspection>)inspection).IsReadOnly, Is.True);
             Assert.That(inspection.Select(value => value.InstanceId), Is.EqualTo(new long[] { 1, 2 }));
-            Assert.That(inspection.Select(value => value.DefinitionId), Is.EqualTo(new[] { "duplicate", "duplicate" }));
+            Assert.That(inspection.Select(value => value.DefinitionId), Is.EqualTo(TestModifiers.IdsOf("duplicate", "duplicate")));
             var preview = session.PreviewHandResolution();
             Assert.That(preview.Events.OfType<ModifierActivatedEvent>().Select(value => value.InstanceId),
                 Is.EqualTo(inspection.Select(value => value.InstanceId)));
@@ -247,15 +247,15 @@ namespace Dice.Tests
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierActivationLimit limit = ModifierActivationLimit.OncePerHand, ModifierEffect[] effects = null)
-            => new ModifierDefinition(id, TestFamilies.Of("test." + id), phase, condition,
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("test." + id), phase, condition,
                 effects ?? new ModifierEffect[] { new AddBaseScoreEffect(7) }, limit);
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] definitions, IEnumerable<StageDefinition> stages = null,
-            IEnumerable<string> inventory = null)
+            IEnumerable<ModifierDefinition.Id> inventory = null)
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, 20, 20) },
-                startingModifiers: inventory ?? definitions.Select(value => value.Id));
+                startingModifiers: inventory ?? definitions.Select(value => value.Identity));
             return new MechanicalCatalog("test.inspection", TestContent.Hands(), new[] { encounter }, definitions);
         }
 

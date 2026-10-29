@@ -59,7 +59,7 @@ namespace Dice.Presentation
 
             public string Number(long value) => DiagnosticText.Number(value);
             public string Humanize(string value) => DiagnosticText.Humanize(value);
-            public string ModifierName(string definitionId) => charms.GetName(catalog.GetModifier(definitionId));
+            public string ModifierName(ModifierDefinition.Id definitionId) => charms.GetName(catalog.GetModifier(definitionId));
         }
     }
 }

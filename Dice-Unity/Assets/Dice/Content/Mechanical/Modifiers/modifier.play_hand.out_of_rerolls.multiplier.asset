@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.out_of_rerolls.multiplier
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.out_of_rerolls.multiplier
+  assetGuid: c6f4fa3a7e5e27344bc1bc2afb7a1b6f
   family: {fileID: 11400000, guid: d3b4a439cd12c3648a7e4fa5e46a0115, type: 2}
   phase: 2
   condition:

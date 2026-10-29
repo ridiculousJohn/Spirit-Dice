@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.player_reroll.selected_sum_equals_either.rerolls
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.player_reroll.selected_sum_equals_either.rerolls
+  assetGuid: 0ed8d064ee6178b4a81bf721877ea4f8
   family: {fileID: 11400000, guid: c8a7c2dbd9a6328429cc67b42712ca1c, type: 2}
   phase: 1
   condition:

@@ -21,7 +21,7 @@ namespace Dice.Tests
         [SetUp]
         public void SetUp()
         {
-            var modifier = new ModifierDefinition(ModifierId, TestFamilies.Of(FamilyId), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf(ModifierId), TestFamilies.Of(FamilyId), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
             catalog = new MechanicalCatalog("test.progression-reward-assets", TestContent.Hands(),
@@ -48,10 +48,10 @@ namespace Dice.Tests
 
             var discovered = families.Select(TestFamilies.IdOf).ToArray();
             Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(discovered));
-            Assert.That(definition.GrantedModifierIds, Is.EqualTo(modifiers));
+            Assert.That(definition.GrantedModifierIds, Is.EqualTo(modifiers.Select(TestModifiers.IdOf)));
             if (grants) modifiers[0] = "modifier.changed";
             Assert.That(definition.DiscoveredFamilyIds, Is.EqualTo(discovered));
-            Assert.That(definition.GrantedModifierIds, Is.EqualTo(grants ? new[] { ModifierId } : Array.Empty<string>()));
+            Assert.That(definition.GrantedModifierIds, Is.EqualTo(grants ? TestModifiers.IdsOf(ModifierId) : Array.Empty<ModifierDefinition.Id>()));
         }
 
         [TestCase(true)]
@@ -68,10 +68,10 @@ namespace Dice.Tests
         public void RewardStatesWhetherItGrantsACharmFromItsReferences()
         {
             var reward = Reward(Array.Empty<string>(), new[] { ModifierId });
-            Assert.That(reward.GrantsModifier(ModifierId), Is.True);
-            Assert.That(reward.GrantsModifier("modifier.other"), Is.False);
+            Assert.That(reward.GrantsModifier(TestModifiers.IdOf(ModifierId)), Is.True);
+            Assert.That(reward.GrantsModifier(TestModifiers.IdOf("modifier.other")), Is.False);
             SyntheticUi.Set(reward, "grantedModifiers", new ModifierAsset[] { null });
-            Assert.Throws<InvalidOperationException>(() => reward.GrantsModifier(ModifierId));
+            Assert.Throws<InvalidOperationException>(() => reward.GrantsModifier(TestModifiers.IdOf(ModifierId)));
         }
 
         [TestCase(false)]

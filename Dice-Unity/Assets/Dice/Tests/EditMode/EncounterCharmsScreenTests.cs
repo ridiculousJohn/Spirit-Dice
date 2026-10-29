@@ -46,13 +46,13 @@ namespace Dice.Tests
             });
 
             var charms = synthetic.For(catalog);
-            screen.Show(catalog, charms, new[] { "first.base", "second", "first.more" }, "A spoken line.");
+            screen.Show(catalog, charms, TestModifiers.IdsOf("first.base", "second", "first.more"), "A spoken line.");
             Assert.That(screen.IsOpen, Is.True);
             Assert.That(VisibleFamilies(screen), Is.EqualTo(new[] { TestFamilies.Of("family.first"), TestFamilies.Of("family.second") }));
             Assert.That(screen.Narration.gameObject.activeSelf, Is.True);
             Assert.That(screen.Narration.text, Does.Contain("A spoken line."));
 
-            screen.Show(catalog, charms, new[] { "second" });
+            screen.Show(catalog, charms, TestModifiers.IdsOf("second"));
             Assert.That(VisibleFamilies(screen), Is.EqualTo(new[] { TestFamilies.Of("family.second") }));
             Assert.That(screen.Narration.gameObject.activeSelf, Is.False);
         }
@@ -107,7 +107,7 @@ namespace Dice.Tests
             => screen.Rows.Where(row => row.gameObject.activeSelf).Select(row => row.Family).ToArray();
 
         private static ModifierDefinition Modifier(string id, string family, int amount)
-            => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
+            => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(amount) });
 
         /** Encounter controls that only supply the mechanical catalog. */

@@ -6,14 +6,11 @@ namespace Dice.Engine
 {
     public sealed class ProgressionRewardDefinition
     {
-        /** The longest progression id; saved player progress stores ids up to this length. */
-        public const int MaximumIdLength = 256;
-
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
-        public ReadOnlyCollection<string> GrantedModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> GrantedModifierIds { get; }
 
         public ProgressionRewardDefinition(IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds,
-            IEnumerable<string> grantedModifierIds)
+            IEnumerable<ModifierDefinition.Id> grantedModifierIds)
         {
             if (discoveredFamilyIds == null) throw new ArgumentNullException(nameof(discoveredFamilyIds));
             var families = new List<ModifierFamilyDefinition.Id>(discoveredFamilyIds);
@@ -21,7 +18,12 @@ namespace Dice.Engine
             foreach (var id in families)
                 if (!uniqueFamilies.Add(id)) throw new ArgumentException("Discovered families must be unique.", nameof(discoveredFamilyIds));
             DiscoveredFamilyIds = families.AsReadOnly();
-            GrantedModifierIds = CopyIds(grantedModifierIds, nameof(grantedModifierIds));
+            if (grantedModifierIds == null) throw new ArgumentNullException(nameof(grantedModifierIds));
+            var granted = new List<ModifierDefinition.Id>(grantedModifierIds);
+            var uniqueGranted = new HashSet<ModifierDefinition.Id>();
+            foreach (var id in granted)
+                if (!uniqueGranted.Add(id)) throw new ArgumentException("Granted charms must be unique.", nameof(grantedModifierIds));
+            GrantedModifierIds = granted.AsReadOnly();
         }
 
         public void Validate(MechanicalCatalog catalog)
@@ -30,7 +32,7 @@ namespace Dice.Engine
             foreach (var id in DiscoveredFamilyIds)
                 if (!catalog.HasFamily(id))
                     throw new ArgumentException("A discovered family is missing from the catalog.", nameof(catalog));
-            foreach (string id in GrantedModifierIds)
+            foreach (var id in GrantedModifierIds)
             {
                 ModifierDefinition modifier;
                 try { modifier = catalog.GetModifier(id); }
@@ -43,23 +45,6 @@ namespace Dice.Engine
                     throw new ArgumentException("Progression grants require playable permanent modifiers.", nameof(catalog));
             }
         }
-
-        private static ReadOnlyCollection<string> CopyIds(IEnumerable<string> source, string parameter)
-        {
-            if (source == null) throw new ArgumentNullException(parameter);
-            var entries = new List<string>(source);
-            var unique = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in entries)
-            {
-                DefinitionValidation.RequireId(id, parameter);
-                if (id.Trim() != id || id.Length > MaximumIdLength)
-                    throw new ArgumentException("Progression IDs must be trimmed and at most " + MaximumIdLength + " characters.", parameter);
-                foreach (char value in id)
-                    if (char.IsControl(value)) throw new ArgumentException("Progression IDs cannot contain control characters.", parameter);
-                if (!unique.Add(id)) throw new ArgumentException("Progression IDs must be unique.", parameter);
-            }
-            return entries.AsReadOnly();
-        }
     }
 
     /** The charms a reward slot draws from, and the charm it offers when none of them is eligible. */
@@ -67,25 +52,27 @@ namespace Dice.Engine
     {
         /** Names the pool in diagnostics such as load errors; layouts hold their pools directly, never by name. */
         public string Name { get; }
-        public ReadOnlyCollection<string> ModifierIds { get; }
-        public string FallbackModifierId { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> ModifierIds { get; }
+        public ModifierDefinition.Id? FallbackModifierId { get; }
 
-        public ModifierRewardPoolDefinition(string name, IEnumerable<string> modifierIds, string fallbackModifierId = null)
+        public ModifierRewardPoolDefinition(string name, IEnumerable<ModifierDefinition.Id> modifierIds,
+            ModifierDefinition.Id? fallbackModifierId = null)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("A reward pool requires a name.", nameof(name));
             if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
-            var entries = new List<string>(modifierIds);
-            var unique = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string modifierId in entries)
+            var entries = new List<ModifierDefinition.Id>(modifierIds);
+            var unique = new HashSet<ModifierDefinition.Id>();
+            foreach (var modifierId in entries)
             {
-                DefinitionValidation.RequireId(modifierId, nameof(modifierIds));
+                if (modifierId.Value == Guid.Empty) throw new ArgumentException("A charm id is required.", nameof(modifierIds));
                 if (!unique.Add(modifierId)) throw new ArgumentException("Pool members must be unique.", nameof(modifierIds));
             }
             if (entries.Count == 0) throw new ArgumentException("A reward pool requires at least one member.", nameof(modifierIds));
-            if (fallbackModifierId != null)
+            if (fallbackModifierId.HasValue)
             {
-                DefinitionValidation.RequireId(fallbackModifierId, nameof(fallbackModifierId));
-                if (unique.Contains(fallbackModifierId))
+                if (fallbackModifierId.Value.Value == Guid.Empty)
+                    throw new ArgumentException("A charm id is required.", nameof(fallbackModifierId));
+                if (unique.Contains(fallbackModifierId.Value))
                     throw new ArgumentException("The fallback is separate from normal pool members.", nameof(fallbackModifierId));
             }
             Name = name;
@@ -238,12 +225,12 @@ namespace Dice.Engine
 
     public sealed class ModifierRewardGeneration
     {
-        public ReadOnlyCollection<string> ModifierIds { get; }
+        public ReadOnlyCollection<ModifierDefinition.Id> ModifierIds { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> ExcludedFamilyIds { get; }
 
-        internal ModifierRewardGeneration(IEnumerable<string> modifierIds, IEnumerable<ModifierFamilyDefinition.Id> excludedFamilyIds)
+        internal ModifierRewardGeneration(IEnumerable<ModifierDefinition.Id> modifierIds, IEnumerable<ModifierFamilyDefinition.Id> excludedFamilyIds)
         {
-            ModifierIds = new List<string>(modifierIds).AsReadOnly();
+            ModifierIds = new List<ModifierDefinition.Id>(modifierIds).AsReadOnly();
             ExcludedFamilyIds = new List<ModifierFamilyDefinition.Id>(excludedFamilyIds).AsReadOnly();
         }
     }

@@ -38,9 +38,9 @@ namespace Dice.Tests
             host.SetActive(false);
             controller = host.AddComponent<SpiritEncounterController>();
             controller.ConfigureSeedPolicy(true, 17);
-            var modifier = new ModifierDefinition("modifier.journey-test", TestFamilies.Of("family.journey-test"), ModifierPhase.PlayHand,
+            var modifier = new ModifierDefinition(TestModifiers.IdOf("modifier.journey-test"), TestFamilies.Of("family.journey-test"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
-            var pool = new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id });
+            var pool = new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Identity });
             var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { pool }) },
                 1, 1, 1, 3, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             catalog = new MechanicalCatalog("test.journeys.v1", TestContent.Hands(), new[]
@@ -48,7 +48,7 @@ namespace Dice.Tests
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1000000, 5, 3) }),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1, 2, 3, StageExitBehavior.AwaitRewards),
                     new StageDefinition(1000000, 5, 3) }, rewardPolicy: policy)
-            }, new[] { modifier, new ModifierDefinition(GiftId, TestFamilies.Of(GiftFamily), ModifierPhase.PlayHand,
+            }, new[] { modifier, new ModifierDefinition(TestModifiers.IdOf(GiftId), TestFamilies.Of(GiftFamily), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) },
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) });
             journeys = Create<EncounterJourneyCatalogAsset>();
@@ -84,13 +84,13 @@ namespace Dice.Tests
             controller.AdvanceJourney();
             controller.AdvanceJourney();
             controller.AcceptEncounter();
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
             Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
             controller.ReturnToInvestigation();
             controller.SelectEncounter(journeys.Find(FirstId));
             controller.SkipIntro();
             controller.AcceptEncounter();
-            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
         }
 
         [Test]
@@ -110,7 +110,7 @@ namespace Dice.Tests
             }
             controller.AdvanceJourney();
             Assert.That(controller.BeatIndex, Is.EqualTo(1));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
         }
 
         [TestCase(false)]
@@ -129,7 +129,7 @@ namespace Dice.Tests
             {
                 ++journeyNotifications;
                 Assert.That(controller.BeatIndex, Is.EqualTo(skip ? 3 : 1));
-                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
+                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
             };
             controller.StateChanged += () => ++stateNotifications;
 
@@ -156,10 +156,10 @@ namespace Dice.Tests
             controller.PlayHand();
             controller.CompletePresentation();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             controller.Save();
             controller.Load();
-            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
         }
 
         private ProgressionRewardAsset Reward(bool discover, bool grant)
@@ -208,13 +208,13 @@ namespace Dice.Tests
             Assert.That(File.Exists(savePath), Is.False);
             var saved = PlayerProfileFileStore.Load(controller.ProfilePath);
             Assert.That(saved.CompletedJourneyIds, Is.EqualTo(new[] { story.Identity }));
-            Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(saved.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             controller.SelectEncounter(story);
             controller.AdvanceJourney();
             controller.AdvanceJourney();
-            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(controller.CompletedJourneyIds, Is.EqualTo(new[] { story.Identity }));
         }
 
@@ -261,7 +261,7 @@ namespace Dice.Tests
                 Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(retained.EncounterId));
                 Assert.That(controller.Snapshot.Revision, Is.EqualTo(retained.Revision));
                 Assert.That(controller.Snapshot.CurrentDice, Is.EqualTo(retained.CurrentDice));
-                Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+                Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
                 Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
                 Assert.That(controller.Preview, Is.Not.Null);
                 Assert.That(controller.Preview.RerollsRemaining, Is.EqualTo(controller.Snapshot.RerollsRemaining));
@@ -299,7 +299,7 @@ namespace Dice.Tests
             }
             controller.AdvanceJourney();
             Assert.That(controller.CompletedJourneyIds, Does.Contain(story.Identity));
-            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
         }
 
         private EncounterJourneyAsset AddStory()
@@ -316,11 +316,11 @@ namespace Dice.Tests
         {
             controller.Initialize(catalog, FirstId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(Reward(false, true).Build(catalog)), Is.True);
-            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
+            Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
             Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
-            Assert.That(controller.Snapshot.Modifiers.Select(modifier => modifier.DefinitionId), Does.Not.Contain(GiftId));
+            Assert.That(controller.Snapshot.Modifiers.Select(modifier => modifier.DefinitionId), Has.No.Member(TestModifiers.IdOf(GiftId)));
             Assert.That(controller.ApplyProgressionReward(Reward(false, true).Build(catalog)), Is.True);
-            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
         }
 
         [Test]
@@ -512,7 +512,7 @@ namespace Dice.Tests
             => new MechanicalCatalog("test.journey-notifications.v1", TestContent.Hands(), new[]
             {
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1000000, 5, 3) },
-                    startingModifiers: new[] { "modifier.journey-test" }),
+                    startingModifiers: TestModifiers.IdsOf("modifier.journey-test")),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 7) })
             }, catalog.Modifiers);
 
@@ -799,7 +799,7 @@ namespace Dice.Tests
             controller.AdvanceJourney();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.CompletedJourneyIds, Is.EqualTo(new[] { journey.Identity }));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
         }
 
         private void InitializeWinningJourney()

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
   m_Name: modifier.play_hand.interior_equals_neighbor_sum.combined
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
-  id: modifier.play_hand.interior_equals_neighbor_sum.combined
+  assetGuid: e296eb9ddea908746bc137ebc2257394
   family: {fileID: 11400000, guid: cae1554d8ed886b498cfeb68855c1482, type: 2}
   phase: 2
   condition:
