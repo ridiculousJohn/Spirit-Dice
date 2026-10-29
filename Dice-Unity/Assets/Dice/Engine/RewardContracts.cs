@@ -94,7 +94,9 @@ namespace Dice.Engine
     public readonly struct RewardOption
     {
         public long OptionId { get; }
+        /** The offered charm's id; null for a hand upgrade. */
         public string DefinitionId { get; }
+        /** The hand a hand upgrade upgrades, named by its category alone; null for a charm. */
         public HandCategory? Category { get; }
 
         internal RewardOption(long optionId, string definitionId, HandCategory? category = null)
@@ -171,9 +173,9 @@ namespace Dice.Engine
             Option = option;
         }
 
-        /** Names a selected charm by its presentation and a hand upgrade by its engine id. */
+        /** Names a selected charm by its presentation and a hand upgrade by its category. */
         protected override string DescribeDetail(IDiagnosticFormat format)
-            => "Selected " + (Kind == RewardKind.HandUpgrade ? format.Humanize(Option.DefinitionId) : format.ModifierName(Option.DefinitionId)) +
+            => "Selected " + (Kind == RewardKind.HandUpgrade ? format.Humanize(Option.Category.Value.ToString()) : format.ModifierName(Option.DefinitionId)) +
                 " (offer " + OfferId + ", option " + Option.OptionId + ").";
     }
 
@@ -205,14 +207,12 @@ namespace Dice.Engine
     public sealed class HandUpgradedEvent : RuleEvent
     {
         public HandCategory Category { get; }
-        public string DefinitionId { get; }
         public int Before { get; }
         public int After { get; }
-        internal HandUpgradedEvent(EncounterState state, HandCategory category, string definitionId, int before)
+        internal HandUpgradedEvent(EncounterState state, HandCategory category, int before)
             : base(state.StageIndex, state.HandIndex)
         {
             Category = category;
-            DefinitionId = definitionId;
             Before = before;
             After = state.HandUpgrades[(int)category];
         }

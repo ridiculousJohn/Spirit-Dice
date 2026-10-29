@@ -35,12 +35,9 @@ namespace Dice.Engine
                     throw new ArgumentException("An excluded modifier family is missing from the catalog.", nameof(excludedFamilyIds));
                 if (excluded.Add(familyId)) history.Add(familyId);
             }
-            var layout = policy.LayoutFor(rewardCycleIndex);
-            var pools = new List<ModifierRewardPoolDefinition>();
-            foreach (string poolId in layout.PoolIds) pools.Add(catalog.GetRewardPool(poolId));
             var offeredIds = new List<string>();
             var currentFamilies = new HashSet<ModifierFamilyDefinition.Id>();
-            foreach (var pool in pools)
+            foreach (var pool in policy.LayoutFor(rewardCycleIndex).Pools)
             {
                 var available = AvailableSlotModifiers(catalog, policy, incomingStageNumber, pool, owned, currentFamilies, encounter, unlocked);
                 var candidates = available.FindAll(id => !excluded.Contains(catalog.GetModifier(id).Family.Identity));

@@ -31,8 +31,11 @@ namespace Dice.UnityContent
          */
         public IReadOnlyList<ModifierAsset> EncounterModifiers => encounterModifiers;
 
-        /** The encounter's definition; each charm it references is passed to use, so the catalog collects its charms. */
-        internal EncounterDefinition Build(Action<ModifierAsset> use)
+        /**
+         * The encounter's definition; each charm it references is passed to use, so the catalog collects its charms, and
+         * each reward pool its layouts reference is built by pool.
+         */
+        internal EncounterDefinition Build(Action<ModifierAsset> use, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool)
         {
             if (stages == null) throw new InvalidOperationException("The encounter " + name + " has no stage list.");
             var stageDefinitions = new StageDefinition[stages.Length];
@@ -42,7 +45,7 @@ namespace Dice.UnityContent
                 stageDefinitions[i] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
             }
             return new EncounterDefinition(Identity, stageDefinitions, startingUpgrades, MechanicalCatalogAsset.Ids(startingModifiers, use),
-                BuildRewardPolicy(rewardPolicy), BuildRules(rules),
+                BuildRewardPolicy(rewardPolicy, pool), BuildRules(rules),
                 BuildMilestones(unlockMilestones), MechanicalCatalogAsset.Ids(encounterModifiers, use),
                 MechanicalCatalogAsset.Ids(unlockRewardModifiers, use), BuildPieces(pieces),
                 encounterModifiersFirstClearedStageNumber);
@@ -91,7 +94,7 @@ namespace Dice.UnityContent
             return definitions;
         }
 
-        private static RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source)
+        private RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool)
         {
             // An encounter without reward offers leaves its policy id empty; it then awaits rewards from outside the engine.
             if (source == null || string.IsNullOrEmpty(source.id)) return null;
@@ -101,7 +104,12 @@ namespace Dice.UnityContent
             for (int i = 0; i < layouts.Length; ++i)
             {
                 var layout = source.modifierLayouts[i] ?? throw new InvalidOperationException("A reward layout is missing.");
-                layouts[i] = new ModifierRewardLayout(layout.poolIds);
+                if (layout.pools == null) throw new InvalidOperationException("A reward layout of the encounter " + name + " has no pool list.");
+                var pools = new ModifierRewardPoolDefinition[layout.pools.Length];
+                for (int j = 0; j < pools.Length; ++j)
+                    pools[j] = pool(layout.pools[j] ??
+                        throw new InvalidOperationException("A reward layout of the encounter " + name + " has a missing pool."));
+                layouts[i] = new ModifierRewardLayout(pools);
             }
             var history = new HandUpgradeHistoryRule[source.upgradeHistory.Length];
             for (int i = 0; i < history.Length; ++i)
@@ -134,7 +142,6 @@ namespace Dice.UnityContent
             public PieceInteractionAsset[] interactions = Array.Empty<PieceInteractionAsset>();
         }
 
-        /** The reward policy names the catalog's reward pools by their ids. */
         [Serializable]
         private sealed class RewardPolicyData
         {
@@ -169,10 +176,11 @@ namespace Dice.UnityContent
             public int minimumTier;
         }
 
+        /** One charm offer: each slot draws from the pool it references. */
         [Serializable]
         private sealed class RewardLayoutData
         {
-            public string[] poolIds = Array.Empty<string>();
+            public RewardPoolAsset[] pools = Array.Empty<RewardPoolAsset>();
         }
 
         [Serializable]

@@ -368,7 +368,7 @@ namespace Dice.Tests
             var mechanical = new MechanicalCatalog("ending-playmode.v1", original.Hands,
                 entries.Where(value => !value.IsStoryOnly)
                     .Select(value => value == journey ? shortEncounter : original.GetEncounter(value.Encounter.Identity)),
-                original.Modifiers, original.RewardPools);
+                original.Modifiers);
             var catalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
             ContentReady.SetField(catalog, "chapters", controller.JourneyCatalog.Chapters.Select(chapter =>
             {

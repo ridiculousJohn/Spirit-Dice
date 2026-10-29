@@ -555,11 +555,12 @@ namespace Dice.Engine
                 Require(spent >= 0 && (spent % policy.RefreshCost == 0 || beforeUnlockChoice),
                     "Refresh resources disagree with reward economy.");
                 var acquiredIds = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var pool in catalog.RewardPools)
-                {
-                    foreach (string id in pool.ModifierIds) acquiredIds.Add(id);
-                    if (pool.FallbackModifierId != null) acquiredIds.Add(pool.FallbackModifierId);
-                }
+                foreach (var layout in policy.ModifierLayouts)
+                    foreach (var pool in layout.Pools)
+                    {
+                        foreach (string id in pool.ModifierIds) acquiredIds.Add(id);
+                        if (pool.FallbackModifierId != null) acquiredIds.Add(pool.FallbackModifierId);
+                    }
                 foreach (string id in definition.EncounterModifierIds) acquiredIds.Add(id);
                 for (int i = definition.StartingModifiers.Count; i < state.Modifiers.Length; ++i)
                     Require(acquiredIds.Contains(state.Modifiers[i].DefinitionId), "Acquired modifier is absent from reward pools.");
@@ -588,7 +589,7 @@ namespace Dice.Engine
                 {
                     Require(option.HasCategory, "An upgrade option requires a hand category.");
                     RequireCategory(option.Category);
-                    Require(option.DefinitionId == catalog.GetHand(option.Category).Id, "Upgrade option definition is inconsistent.");
+                    Require(option.DefinitionId == null, "An upgrade option names its hand by its category alone.");
                 }
                 options.Add(new RewardOption(option.OptionId, option.DefinitionId, option.HasCategory ? (HandCategory?)option.Category : null));
             }
@@ -608,16 +609,15 @@ namespace Dice.Engine
         {
             var policy = definition.RewardPolicy;
             var layout = policy.LayoutFor(state.ClearedStageNumber);
-            Require(options.Count <= layout.PoolIds.Count, "Modifier offer has too many options.");
+            Require(options.Count <= layout.Pools.Count, "Modifier offer has too many options.");
             var owned = new HashSet<string>(StringComparer.Ordinal);
             foreach (var instance in state.Modifiers) owned.Add(instance.DefinitionId);
             var offered = new HashSet<ModifierFamilyDefinition.Id>();
             var history = new HashSet<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies);
             var unlocked = new HashSet<string>(state.PendingModifierOfferUnlockedIds, StringComparer.Ordinal);
             int nextOption = 0;
-            foreach (string poolId in layout.PoolIds)
+            foreach (var pool in layout.Pools)
             {
-                var pool = catalog.GetRewardPool(poolId);
                 var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.IncomingStageNumber, pool, owned, offered,
                     definition, unlocked);
                 string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, unlocked);

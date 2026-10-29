@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e41852afa1306e545974155d311b767a, type: 3}
+  m_Name: reward_pool.moth.crossroads.base_score
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.RewardPoolAsset
+  modifiers:
+  - {fileID: 11400000, guid: d41049a5f1bba584980bab80eab5de58, type: 2}
+  - {fileID: 11400000, guid: f4a4ee760d82be1449f07c324ed35ead, type: 2}
+  - {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
+  - {fileID: 11400000, guid: ebb9e51463a67524f9137d4ce5114364, type: 2}
+  - {fileID: 11400000, guid: 7392fe0dac2439f478198eea4f77ef48, type: 2}
+  - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+  - {fileID: 11400000, guid: b274572be0014e5488bc6e6b464c91ef, type: 2}
+  - {fileID: 11400000, guid: b7465ef97624eba4c95a535e29cb77d3, type: 2}
+  - {fileID: 11400000, guid: 986ae5897dc1a6e45bd9354f2bba7dc3, type: 2}
+  - {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
+  - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+  - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+  - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+  fallbackModifier: {fileID: 0}

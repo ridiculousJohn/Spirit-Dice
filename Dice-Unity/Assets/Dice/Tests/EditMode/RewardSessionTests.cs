@@ -60,7 +60,6 @@ namespace Dice.Tests
             Assert.That(upgradeResult.Snapshot.PreviousStageHandsRemaining, Is.EqualTo(2));
             var upgraded = upgradeResult.Events.OfType<HandUpgradedEvent>().Single();
             Assert.That(upgraded.Category, Is.EqualTo(category));
-            Assert.That(upgraded.DefinitionId, Is.EqualTo(catalog.GetHand(category).Id));
             Assert.That(upgraded.Before, Is.Zero);
             Assert.That(upgraded.After, Is.EqualTo(1));
             Assert.That(upgradeResult.Events.OfType<StageStartedEvent>().Single().StageIndex, Is.EqualTo(1));

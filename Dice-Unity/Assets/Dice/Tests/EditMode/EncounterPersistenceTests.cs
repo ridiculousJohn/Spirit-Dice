@@ -196,7 +196,7 @@ namespace Dice.Tests
             var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
             var catalog = RewardTestContent.Catalog(new[] { normal, fallback },
-                new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) },
+                RewardTestContent.Policy(RewardTestContent.ThreeSlots(new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id))),
                 upgrades: Enumerable.Repeat(6, HandDefinition.CategoryCount).ToArray(), inventory: new[] { normal.Id });
             var session = RewardTestContent.Session(catalog);
             for (int i = 0; i < 2; ++i)
@@ -267,9 +267,9 @@ namespace Dice.Tests
                 RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third") };
             var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
-            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
-            var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }),
-                new[] { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Id), fallback.Id) }, policy);
+            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[]
+                { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Id), fallback.Id) }) });
+            var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }), policy);
             var session = RewardTestContent.Session(catalog);
             session.Execute(PlayHandAction.Instance, 0);
             var save = session.CaptureSave();

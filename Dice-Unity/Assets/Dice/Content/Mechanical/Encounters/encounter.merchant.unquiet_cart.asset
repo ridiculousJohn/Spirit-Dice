@@ -72,18 +72,18 @@ MonoBehaviour:
   rewardPolicy:
     id: reward_policy.merchant.unquiet_cart
     modifierLayouts:
-    - poolIds:
-      - reward_pool.merchant.unquiet_cart.base_score
-      - reward_pool.merchant.unquiet_cart.multiplier
-      - reward_pool.merchant.unquiet_cart.rerolls
-    - poolIds:
-      - reward_pool.merchant.unquiet_cart.base_score
-      - reward_pool.merchant.unquiet_cart.multiplier
-      - reward_pool.merchant.unquiet_cart.combined
-    - poolIds:
-      - reward_pool.merchant.unquiet_cart.base_score
-      - reward_pool.merchant.unquiet_cart.multiplier
-      - reward_pool.merchant.unquiet_cart.combined
+    - pools:
+      - {fileID: 11400000, guid: 4cddede3ecd20204ea63714867d09110, type: 2}
+      - {fileID: 11400000, guid: 0dd2d380e9e980843aa8d456ac71e320, type: 2}
+      - {fileID: 11400000, guid: 1aae0fa5e03654f4f8ce722961eead4a, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 4cddede3ecd20204ea63714867d09110, type: 2}
+      - {fileID: 11400000, guid: 0dd2d380e9e980843aa8d456ac71e320, type: 2}
+      - {fileID: 11400000, guid: f35dfae9e21e5c740a042638e591c4f4, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 4cddede3ecd20204ea63714867d09110, type: 2}
+      - {fileID: 11400000, guid: 0dd2d380e9e980843aa8d456ac71e320, type: 2}
+      - {fileID: 11400000, guid: f35dfae9e21e5c740a042638e591c4f4, type: 2}
     startingRefreshes: 1
     refreshesPerClear: 1
     refreshCost: 1

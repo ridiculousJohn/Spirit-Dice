@@ -323,7 +323,7 @@ namespace Dice.Tests
         [Test]
         public void OverflowDoesNotPartiallyCommitAHand()
         {
-            var hands = TestContent.Hands().Select(hand => new HandDefinition(hand.Id, hand.Category, long.MaxValue / 2 - 100, 1, 0, 0, 0));
+            var hands = TestContent.Hands().Select(hand => new HandDefinition(hand.Category, long.MaxValue / 2 - 100, 1, 0, 0, 0));
             var catalog = TestContent.Catalog(new[] { new StageDefinition(long.MaxValue, 4, 0) }, hands: hands);
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 0);
             session.Execute(PlayHandAction.Instance, 0);

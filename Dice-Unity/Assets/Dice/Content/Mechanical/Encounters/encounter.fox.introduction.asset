@@ -72,18 +72,18 @@ MonoBehaviour:
   rewardPolicy:
     id: reward_policy.fox.introduction
     modifierLayouts:
-    - poolIds:
-      - reward_pool.fox.introduction.base_score
-      - reward_pool.fox.introduction.multiplier
-      - reward_pool.fox.introduction.rerolls
-    - poolIds:
-      - reward_pool.fox.introduction.base_score
-      - reward_pool.fox.introduction.multiplier
-      - reward_pool.fox.introduction.combined
-    - poolIds:
-      - reward_pool.fox.introduction.base_score
-      - reward_pool.fox.introduction.multiplier
-      - reward_pool.fox.introduction.combined
+    - pools:
+      - {fileID: 11400000, guid: 0b62ac5250ee15843a7f40cc73107c4f, type: 2}
+      - {fileID: 11400000, guid: 75b0f64aa5a68a146a8102c7ce5f6cda, type: 2}
+      - {fileID: 11400000, guid: fd5222aff1a4ec74e8eaf045940f836a, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 0b62ac5250ee15843a7f40cc73107c4f, type: 2}
+      - {fileID: 11400000, guid: 75b0f64aa5a68a146a8102c7ce5f6cda, type: 2}
+      - {fileID: 11400000, guid: c7848c04018f96a488c24eb7a26df8b6, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 0b62ac5250ee15843a7f40cc73107c4f, type: 2}
+      - {fileID: 11400000, guid: 75b0f64aa5a68a146a8102c7ce5f6cda, type: 2}
+      - {fileID: 11400000, guid: c7848c04018f96a488c24eb7a26df8b6, type: 2}
     startingRefreshes: 1
     refreshesPerClear: 1
     refreshCost: 1

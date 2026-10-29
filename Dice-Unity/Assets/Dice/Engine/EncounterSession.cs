@@ -266,7 +266,7 @@ namespace Dice.Engine
                 ?? throw new InvalidOperationException("The hand-upgrade choices have not been generated.");
             var options = new List<RewardOption>();
             foreach (HandCategory category in categories)
-                options.Add(new RewardOption(AllocateOptionId(next), catalog.GetHand(category).Id, category));
+                options.Add(new RewardOption(AllocateOptionId(next), null, category));
             next.PendingUpgradeCategories = null;
             if (options.Count == 0)
             {
@@ -287,7 +287,7 @@ namespace Dice.Engine
                 throw new InvalidOperationException("An offered hand cannot exceed its upgrade limit.");
             events.Add(new RewardSelectedEvent(next, next.PendingReward, option));
             next.HandUpgrades[(int)category] = checked(before + 1);
-            events.Add(new HandUpgradedEvent(next, category, option.DefinitionId, before));
+            events.Add(new HandUpgradedEvent(next, category, before));
             next.RecentHandUpgrades.Insert(0, category);
             int historyCount = definition.RewardPolicy.MaximumExcludedRecentChoices;
             if (next.RecentHandUpgrades.Count > historyCount)

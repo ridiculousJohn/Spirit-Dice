@@ -76,7 +76,6 @@ namespace Dice.Engine
     public sealed class ScoreBreakdown
     {
         public HandCategory Category { get; }
-        public string HandDefinitionId { get; }
         /** The dice that form the scored category, as a mask of die slots. */
         public int FormingDiceMask { get; }
         public int DiceSum { get; }
@@ -97,7 +96,6 @@ namespace Dice.Engine
             IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier = 0)
         {
             Category = hand.Category;
-            HandDefinitionId = hand.Id;
             FormingDiceMask = formingDiceMask;
             DiceSum = dice.Sum;
             UpgradeCount = upgradeCount;

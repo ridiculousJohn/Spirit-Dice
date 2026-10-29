@@ -62,15 +62,17 @@ namespace Dice.Engine
         }
     }
 
+    /** The charms a reward slot draws from, and the charm it offers when none of them is eligible. */
     public sealed class ModifierRewardPoolDefinition
     {
-        public string Id { get; }
+        /** Names the pool in diagnostics such as load errors; layouts hold their pools directly, never by name. */
+        public string Name { get; }
         public ReadOnlyCollection<string> ModifierIds { get; }
         public string FallbackModifierId { get; }
 
-        public ModifierRewardPoolDefinition(string id, IEnumerable<string> modifierIds, string fallbackModifierId = null)
+        public ModifierRewardPoolDefinition(string name, IEnumerable<string> modifierIds, string fallbackModifierId = null)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("A reward pool requires a name.", nameof(name));
             if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
             var entries = new List<string>(modifierIds);
             var unique = new HashSet<string>(StringComparer.Ordinal);
@@ -86,23 +88,24 @@ namespace Dice.Engine
                 if (unique.Contains(fallbackModifierId))
                     throw new ArgumentException("The fallback is separate from normal pool members.", nameof(fallbackModifierId));
             }
-            Id = id;
+            Name = name;
             ModifierIds = entries.AsReadOnly();
             FallbackModifierId = fallbackModifierId;
         }
     }
 
+    /** One charm offer: each slot draws from its pool. */
     public sealed class ModifierRewardLayout
     {
-        public ReadOnlyCollection<string> PoolIds { get; }
+        public ReadOnlyCollection<ModifierRewardPoolDefinition> Pools { get; }
 
-        public ModifierRewardLayout(IEnumerable<string> poolIds)
+        public ModifierRewardLayout(IEnumerable<ModifierRewardPoolDefinition> pools)
         {
-            if (poolIds == null) throw new ArgumentNullException(nameof(poolIds));
-            var entries = new List<string>(poolIds);
-            foreach (string poolId in entries) DefinitionValidation.RequireId(poolId, nameof(poolIds));
-            if (entries.Count == 0) throw new ArgumentException("A reward layout requires at least one slot.", nameof(poolIds));
-            PoolIds = entries.AsReadOnly();
+            if (pools == null) throw new ArgumentNullException(nameof(pools));
+            var entries = new List<ModifierRewardPoolDefinition>(pools);
+            if (entries.Exists(pool => pool == null)) throw new ArgumentException("Each reward slot requires a pool.", nameof(pools));
+            if (entries.Count == 0) throw new ArgumentException("A reward layout requires at least one slot.", nameof(pools));
+            Pools = entries.AsReadOnly();
         }
     }
 

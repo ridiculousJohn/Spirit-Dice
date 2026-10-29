@@ -89,16 +89,13 @@ namespace Dice.Tests
         [Test]
         public void CatalogBuildOrdersModifiersByOrdinalStableIdIndependentOfInputOrder()
         {
-            var catalog = Catalog();
             var modifiers = new[] { Modifier("modifier.z"), Modifier("modifier.a"), Modifier("modifier.A") };
             var previousCulture = CultureInfo.CurrentCulture;
             try
             {
                 CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("tr-TR");
-                Pool(catalog, modifiers);
-                var first = catalog.Build().Catalog;
-                Pool(catalog, modifiers.Reverse().ToArray());
-                var second = catalog.Build().Catalog;
+                var first = PoolCatalog(modifiers).Build().Catalog;
+                var second = PoolCatalog(modifiers.Reverse().ToArray()).Build().Catalog;
                 Assert.That(first.Modifiers.Select(modifier => modifier.Id),
                     Is.EqualTo(new[] { "modifier.A", "modifier.a", "modifier.z" }));
                 Assert.That(second.Modifiers.Select(modifier => modifier.Id),
@@ -110,7 +107,7 @@ namespace Dice.Tests
             }
         }
 
-        /** Checks the catalog holds every charm its encounters and reward pools reference, once each, and no other / fails if a referencing list is skipped, a shared charm repeats or an unreferenced charm enters. */
+        /** Checks the catalog holds every charm its encounters and their reward pools reference, once each, and no other / fails if a referencing list is skipped, a shared charm repeats or an unreferenced charm enters. */
         [Test]
         public void CatalogIsBuiltFromExactlyTheReferencedCharms()
         {
@@ -121,8 +118,8 @@ namespace Dice.Tests
             var fallback = Modifier("modifier.fallback");
             Modifier("modifier.unreferenced");
             var catalog = Catalog(content.Encounter("encounter.test", startingModifiers: new[] { starting, pooled },
-                encounterModifiers: new[] { addition }, unlockRewardModifiers: new[] { unlock }));
-            Pool(catalog, new[] { pooled }, fallback);
+                encounterModifiers: new[] { addition }, unlockRewardModifiers: new[] { unlock },
+                rewardLayouts: new[] { new[] { content.RewardPool("pool.test", new[] { pooled }, fallback) } }));
 
             var built = catalog.Build().Catalog;
 
@@ -136,26 +133,40 @@ namespace Dice.Tests
         {
             var second = Modifier("modifier.b");
             var first = Modifier("modifier.a");
-            var catalog = Catalog(content.Encounter("encounter.test", encounterModifiers: new[] { second, first }));
-            Pool(catalog, new[] { second, first });
+            var catalog = Catalog(content.Encounter("encounter.test", encounterModifiers: new[] { second, first },
+                rewardLayouts: new[] { new[] { content.RewardPool("pool.test", new[] { second, first }) } }));
 
-            var built = catalog.Build().Catalog;
+            var encounter = catalog.Build().Catalog.GetEncounter(TestEncounters.IdOf("encounter.test"));
 
-            Assert.That(built.GetEncounter(TestEncounters.IdOf("encounter.test")).EncounterModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
-            Assert.That(built.GetRewardPool("pool.test").ModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
+            Assert.That(encounter.EncounterModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
+            Assert.That(encounter.RewardPolicy.ModifierLayouts[0].Pools[0].ModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
+        }
+
+        /** Checks every layout slot of every encounter drawing from one pool asset holds one definition named after the asset / fails if a pool is built per slot or encounter, or loses its name. */
+        [Test]
+        public void CatalogBuildSharesEachRewardPoolAssetAcrossLayouts()
+        {
+            var pool = content.RewardPool("pool.shared", new[] { Modifier("modifier.pooled") });
+            var catalog = Catalog(content.Encounter("encounter.first", rewardLayouts: new[] { new[] { pool, pool }, new[] { pool } }),
+                content.Encounter("encounter.second", rewardLayouts: new[] { new[] { pool } }));
+
+            var slots = catalog.Build().Catalog.Encounters
+                .SelectMany(encounter => encounter.RewardPolicy.ModifierLayouts).SelectMany(layout => layout.Pools).ToArray();
+
+            Assert.That(slots.Length, Is.EqualTo(4));
+            Assert.That(slots, Is.All.SameAs(slots[0]));
+            Assert.That(slots[0].Name, Is.EqualTo("pool.shared"));
         }
 
         /** Checks the content pairs each referenced charm with the catalog's definition of it and refuses an unreferenced charm / fails if a charm maps to another definition or an unused charm resolves. */
         [Test]
         public void ContentPairsEachReferencedCharmWithItsCatalogDefinition()
         {
-            var catalog = Catalog();
             var first = Modifier("modifier.first");
             var second = Modifier("modifier.second");
             var unreferenced = Modifier("modifier.unreferenced");
-            Pool(catalog, new[] { first, second });
 
-            var content = catalog.Build();
+            var content = PoolCatalog(new[] { first, second }).Build();
 
             Assert.That(content.GetDefinition(first), Is.SameAs(content.Catalog.GetModifier(first.Id)));
             Assert.That(content.GetDefinition(second), Is.SameAs(content.Catalog.GetModifier(second.Id)));
@@ -166,8 +177,7 @@ namespace Dice.Tests
         [Test]
         public void CatalogBuildRejectsAMissingCharmReference()
         {
-            var catalog = Catalog();
-            Pool(catalog, new[] { Modifier("modifier.present"), null });
+            var catalog = PoolCatalog(new[] { Modifier("modifier.present"), null });
             Assert.Throws<InvalidOperationException>(() => catalog.Build());
         }
 
@@ -175,8 +185,7 @@ namespace Dice.Tests
         [Test]
         public void CatalogBuildRejectsTwoCharmAssetsSharingAnId()
         {
-            var catalog = Catalog();
-            Pool(catalog, new[] { Modifier("modifier.same"), Modifier("modifier.same") });
+            var catalog = PoolCatalog(new[] { Modifier("modifier.same"), Modifier("modifier.same") });
             Assert.Throws<InvalidOperationException>(() => catalog.Build());
         }
 
@@ -184,15 +193,13 @@ namespace Dice.Tests
         [Test]
         public void CatalogBuildSharesEachFamilyAndRejectsTwoFamilyAssetsSharingAnId()
         {
-            var catalog = Catalog();
             var first = Modifier("modifier.first");
             var second = Modifier("modifier.second");
-            Pool(catalog, new[] { first, second });
-            var built = catalog.Build().Catalog;
+            var built = PoolCatalog(new[] { first, second }).Build().Catalog;
             Assert.That(built.GetModifier(second.Id).Family, Is.SameAs(built.GetModifier(first.Id).Family));
             Assert.That(built.Families, Is.EqualTo(new[] { built.GetModifier(first.Id).Family }));
 
-            Pool(catalog, new[] { first, Modifier("modifier.copy", family: Family(FamilyGuid, "family.copy")) });
+            var catalog = PoolCatalog(new[] { first, Modifier("modifier.copy", family: Family(FamilyGuid, "family.copy")) });
             var failure = Assert.Throws<InvalidOperationException>(() => catalog.Build());
             Assert.That(failure.Message, Does.Contain("family.copy"));
         }
@@ -214,23 +221,9 @@ namespace Dice.Tests
             Assert.That(failure.Message, Does.Contain("encounter.listed").And.Contain("encounter.copy"));
         }
 
-        private static void Pool(MechanicalCatalogAsset catalog, ModifierAsset[] modifiers, ModifierAsset fallback = null)
-        {
-            using var serialized = new SerializedObject(catalog);
-            var pools = serialized.FindProperty("rewardPools");
-            pools.arraySize = 1;
-            var pool = pools.GetArrayElementAtIndex(0);
-            pool.FindPropertyRelative("id").stringValue = "pool.test";
-            References(pool.FindPropertyRelative("modifiers"), modifiers);
-            pool.FindPropertyRelative("fallbackModifier").objectReferenceValue = fallback;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void References(SerializedProperty list, params ModifierAsset[] modifiers)
-        {
-            list.arraySize = modifiers.Length;
-            for (int i = 0; i < modifiers.Length; ++i) list.GetArrayElementAtIndex(i).objectReferenceValue = modifiers[i];
-        }
+        /** A catalog of one test encounter whose one reward slot draws from a pool of the charms. */
+        private MechanicalCatalogAsset PoolCatalog(ModifierAsset[] modifiers)
+            => Catalog(content.Encounter("encounter.test", rewardLayouts: new[] { new[] { content.RewardPool("pool.test", modifiers) } }));
 
         /** A charm; without a family it belongs to the one example family of the test. */
         private ModifierAsset Modifier(string id, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null)
@@ -256,7 +249,7 @@ namespace Dice.Tests
             return asset;
         }
 
-        /** A catalog listing the encounters; without any it lists one test encounter. */
+        /** A catalog listing the encounters. */
         private MechanicalCatalogAsset Catalog(params EncounterAsset[] encounters)
         {
             var asset = Create<MechanicalCatalogAsset>();
@@ -267,11 +260,9 @@ namespace Dice.Tests
             for (int i = 0; i < hands.arraySize; ++i)
             {
                 var hand = hands.GetArrayElementAtIndex(i);
-                hand.FindPropertyRelative("id").stringValue = "hand." + i;
                 hand.FindPropertyRelative("category").intValue = i;
                 hand.FindPropertyRelative("multiplier").longValue = 1;
             }
-            if (encounters.Length == 0) encounters = new[] { content.Encounter("encounter.test") };
             var list = serialized.FindProperty("encounters");
             list.arraySize = encounters.Length;
             for (int i = 0; i < encounters.Length; ++i) list.GetArrayElementAtIndex(i).objectReferenceValue = encounters[i];

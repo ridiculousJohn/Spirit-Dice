@@ -84,7 +84,8 @@ namespace Dice.Tests
                 Modifier(Addition, ModifierAccess.EncounterExclusive),
                 Modifier(Unlock, access: ModifierAccess.PermanentUnlock)
             }).ToArray();
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+            var policy = new RewardPolicyDefinition("policy",
+                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", Ordinary) }) },
                 0, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 6)
                     .Select(index => new StageDefinition(1, 2, 1, index < 5 ? StageExitBehavior.AwaitRewards : StageExitBehavior.AdvanceAutomatically)),
@@ -93,7 +94,7 @@ namespace Dice.Tests
                 encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
                 unlockRewardModifierIds: new[] { Unlock }, encounterModifiersFirstClearedStageNumber: firstClearedStage);
             return new MechanicalCatalog("test.charms_introduction." + firstClearedStage + (additions ? ".additions" : ".none"),
-                TestContent.Hands(), new[] { encounter }, modifiers, new[] { new ModifierRewardPoolDefinition("pool", Ordinary) });
+                TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)

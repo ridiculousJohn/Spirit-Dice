@@ -72,18 +72,18 @@ MonoBehaviour:
   rewardPolicy:
     id: reward_policy.owl.watchtower
     modifierLayouts:
-    - poolIds:
-      - reward_pool.owl.watchtower.base_score
-      - reward_pool.owl.watchtower.multiplier
-      - reward_pool.owl.watchtower.rerolls
-    - poolIds:
-      - reward_pool.owl.watchtower.base_score
-      - reward_pool.owl.watchtower.multiplier
-      - reward_pool.owl.watchtower.combined
-    - poolIds:
-      - reward_pool.owl.watchtower.base_score
-      - reward_pool.owl.watchtower.multiplier
-      - reward_pool.owl.watchtower.combined
+    - pools:
+      - {fileID: 11400000, guid: 872995fdf82256c449df744ba4f11d75, type: 2}
+      - {fileID: 11400000, guid: 99943dd40bd4cd64fb444c6752edcad6, type: 2}
+      - {fileID: 11400000, guid: 454674065f75d694d82686fb10ae6121, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 872995fdf82256c449df744ba4f11d75, type: 2}
+      - {fileID: 11400000, guid: 99943dd40bd4cd64fb444c6752edcad6, type: 2}
+      - {fileID: 11400000, guid: 8d084293ea4421744b6db238159cdff9, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 872995fdf82256c449df744ba4f11d75, type: 2}
+      - {fileID: 11400000, guid: 99943dd40bd4cd64fb444c6752edcad6, type: 2}
+      - {fileID: 11400000, guid: 8d084293ea4421744b6db238159cdff9, type: 2}
     startingRefreshes: 1
     refreshesPerClear: 1
     refreshCost: 1

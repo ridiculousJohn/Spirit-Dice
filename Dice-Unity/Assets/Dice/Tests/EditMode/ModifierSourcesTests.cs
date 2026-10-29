@@ -38,9 +38,11 @@ namespace Dice.Tests
         private static MechanicalCatalog Catalog()
         {
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+            var pool = new ModifierRewardPoolDefinition("pool", new[] { Pooled }, Fallback);
+            var second = new ModifierRewardPoolDefinition("second", new[] { Locked }, Ineligible);
+            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { pool }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
-            var twoPools = new RewardPolicyDefinition("policy.two_pools", new[] { new ModifierRewardLayout(new[] { "pool", "second" }) },
+            var twoPools = new RewardPolicyDefinition("policy.two_pools", new[] { new ModifierRewardLayout(new[] { pool, second }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounters = new[]
             {
@@ -55,11 +57,7 @@ namespace Dice.Tests
                 Modifier(Locked, access: ModifierAccess.PermanentUnlock), Modifier(Addition), Modifier(Pooled), Modifier(Fallback),
                 Modifier(Ineligible, eligible: false)
             };
-            return new MechanicalCatalog("test.modifier_sources", TestContent.Hands(), encounters, modifiers, new[]
-            {
-                new ModifierRewardPoolDefinition("pool", new[] { Pooled }, Fallback),
-                new ModifierRewardPoolDefinition("second", new[] { Locked }, Ineligible)
-            });
+            return new MechanicalCatalog("test.modifier_sources", TestContent.Hands(), encounters, modifiers);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter, bool eligible = true)

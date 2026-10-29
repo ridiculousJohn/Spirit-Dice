@@ -11,15 +11,15 @@ namespace Dice.UnityContent
         [SerializeField] private string catalogVersion;
         [SerializeField] private HandData[] hands = Array.Empty<HandData>();
         [SerializeField] private EncounterAsset[] encounters = Array.Empty<EncounterAsset>();
-        [SerializeField] private RewardPoolData[] rewardPools = Array.Empty<RewardPoolData>();
 
         /**
-         * Builds the engine catalog of the listed encounters from the charms the encounters and reward pools reference.
-         * An encounter played before it joins the list, as in the diagnostic scene, is added to the catalog built for it.
+         * Builds the engine catalog of the listed encounters from the charms the encounters and their reward pools
+         * reference. An encounter played before it joins the list, as in the diagnostic scene, is added to the catalog
+         * built for it.
          */
         public MechanicalContent Build(EncounterAsset played = null)
         {
-            if (hands == null || encounters == null || rewardPools == null)
+            if (hands == null || encounters == null)
                 throw new InvalidOperationException("Catalog arrays are missing.");
             var referenced = new List<ModifierAsset>();
             var seen = new HashSet<ModifierAsset>();
@@ -38,8 +38,19 @@ namespace Dice.UnityContent
             for (int i = 0; i < hands.Length; ++i)
             {
                 var source = hands[i] ?? throw new InvalidOperationException("A hand entry is missing.");
-                handDefinitions[i] = new HandDefinition(source.id, source.category, source.baseScore, source.multiplier,
+                handDefinitions[i] = new HandDefinition(source.category, source.baseScore, source.multiplier,
                     source.baseScorePerUpgrade, source.multiplierPerUpgrade, source.maximumUpgrades);
+            }
+            // Each pool asset is built once, so the layouts drawing from a pool share its definition.
+            var pools = new Dictionary<RewardPoolAsset, ModifierRewardPoolDefinition>();
+            ModifierRewardPoolDefinition Pool(RewardPoolAsset pool)
+            {
+                if (!pools.TryGetValue(pool, out ModifierRewardPoolDefinition built))
+                {
+                    built = pool.Build(Use);
+                    pools.Add(pool, built);
+                }
+                return built;
             }
             var encounterAssets = new List<EncounterAsset>(encounters);
             if (played != null && !encounterAssets.Contains(played)) encounterAssets.Add(played);
@@ -51,15 +62,7 @@ namespace Dice.UnityContent
                 if (encountersById.TryGetValue(source.Identity, out EncounterAsset other))
                     throw new InvalidOperationException("Two encounter assets share the id " + source.Identity + ": " + other.name + ", " + source.name);
                 encountersById.Add(source.Identity, source);
-                encounterDefinitions[i] = source.Build(Use);
-            }
-            var rewardPoolDefinitions = new ModifierRewardPoolDefinition[rewardPools.Length];
-            for (int i = 0; i < rewardPools.Length; ++i)
-            {
-                var source = rewardPools[i] ?? throw new InvalidOperationException("A reward pool entry is missing.");
-                if (source.fallbackModifier != null) Use(source.fallbackModifier);
-                rewardPoolDefinitions[i] = new ModifierRewardPoolDefinition(source.id, Ids(source.modifiers, Use),
-                    source.fallbackModifier == null ? null : source.fallbackModifier.Id);
+                encounterDefinitions[i] = source.Build(Use, Pool);
             }
             referenced.Sort((left, right) => StringComparer.Ordinal.Compare(left.Id, right.Id));
             // Each family asset is built once, so the charms of a family share its definition.
@@ -84,8 +87,7 @@ namespace Dice.UnityContent
                 modifierDefinitions[i] = referenced[i].Build(Family(referenced[i]));
                 pairs[i] = new KeyValuePair<ModifierAsset, ModifierDefinition>(referenced[i], modifierDefinitions[i]);
             }
-            var catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions,
-                modifierDefinitions, rewardPoolDefinitions);
+            var catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions, modifierDefinitions);
             return new MechanicalContent(catalog, pairs);
         }
 
@@ -105,21 +107,12 @@ namespace Dice.UnityContent
         [Serializable]
         private sealed class HandData
         {
-            public string id;
             public HandCategory category;
             public long baseScore;
             public long multiplier;
             public long baseScorePerUpgrade;
             public long multiplierPerUpgrade;
             public int maximumUpgrades;
-        }
-
-        [Serializable]
-        private sealed class RewardPoolData
-        {
-            public string id;
-            public ModifierAsset[] modifiers = Array.Empty<ModifierAsset>();
-            public ModifierAsset fallbackModifier;
         }
     }
 }

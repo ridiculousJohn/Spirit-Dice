@@ -122,14 +122,14 @@ namespace Dice.Tests
             {
                 Modifier(Addition, ModifierAccess.EncounterExclusive)
             }).ToArray();
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+            var policy = new RewardPolicyDefinition("policy",
+                new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", ordinary) }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounter = new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, 5)
                     .Select(index => new StageDefinition(1, 2, 1, index < 4 ? StageExitBehavior.AwaitRewards : StageExitBehavior.AdvanceAutomatically)),
                 startingModifiers: new[] { Owned }, rewardPolicy: policy, encounterModifierIds: new[] { Addition },
                 encounterModifiersFirstClearedStageNumber: firstClearedStage);
-            return new MechanicalCatalog("test.delayed_additions", TestContent.Hands(), new[] { encounter }, modifiers,
-                new[] { new ModifierRewardPoolDefinition("pool", ordinary) });
+            return new MechanicalCatalog("test.delayed_additions", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)

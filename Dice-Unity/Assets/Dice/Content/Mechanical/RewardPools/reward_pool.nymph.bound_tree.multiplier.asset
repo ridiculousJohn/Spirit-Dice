@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e41852afa1306e545974155d311b767a, type: 3}
+  m_Name: reward_pool.nymph.bound_tree.multiplier
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.RewardPoolAsset
+  modifiers:
+  - {fileID: 11400000, guid: 50ce7286fe32cde43afa60af9ba51ff8, type: 2}
+  - {fileID: 11400000, guid: 1175ddbf9ad94f74181f14fce03a972f, type: 2}
+  - {fileID: 11400000, guid: 652805a91d4bf0b4cb5e67542cc69070, type: 2}
+  - {fileID: 11400000, guid: 03addd76d447d5c4d8ea8bd8ab8a5555, type: 2}
+  - {fileID: 11400000, guid: 0dc07f246a1831843b1ab495db59da55, type: 2}
+  - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+  - {fileID: 11400000, guid: 2cb7d2a3294d4c34eaa616152153ee75, type: 2}
+  - {fileID: 11400000, guid: 9c01c569b2335054bbf0c95f04023e44, type: 2}
+  - {fileID: 11400000, guid: 5e9142aa6991938449c05de50c4ccbd5, type: 2}
+  - {fileID: 11400000, guid: e4d914f848589604a83c4274621b0a52, type: 2}
+  - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+  - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+  - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+  - {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
+  - {fileID: 11400000, guid: cfb5aff2cb49a024899c24aeeb751b9e, type: 2}
+  fallbackModifier: {fileID: 0}

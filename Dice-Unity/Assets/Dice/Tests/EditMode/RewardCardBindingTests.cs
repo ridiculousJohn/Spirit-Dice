@@ -157,7 +157,7 @@ namespace Dice.Tests
         public void HandUpgradePreviewsTheNextLevelOnlyWhileSelected()
         {
             // A test-only hand at level 3 whose base and multiplier rise by different amounts per level.
-            var hand = new HandDefinition("hand.reward-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            var hand = new HandDefinition(HandCategory.Pair, 17, 3, 7, 2, 6);
             const int level = 3;
             long baseScore = hand.BaseScoreAt(level);
             long multiplier = hand.MultiplierAt(level);

@@ -285,7 +285,7 @@ namespace Dice.Presentation
                         " -> " + DiagnosticText.Number(hand.BaseScoreAt(level + 1)) +
                         "\nMultiplier " + DiagnosticText.Number(hand.MultiplierAt(level)) +
                         " -> " + DiagnosticText.Number(hand.MultiplierAt(level + 1));
-                    card.Detail = hand.Id + " | option " + option.OptionId;
+                    card.Detail = hand.Category + " | option " + option.OptionId;
                 }
                 rewardCards.Add(card);
             }

@@ -196,7 +196,7 @@ namespace Dice.Tests
                 definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
             return new MechanicalCatalog(version, authored.Hands,
                 authored.Encounters.Select(value => value.Identity == definition.Identity ? shortEncounter : value),
-                authored.Modifiers, authored.RewardPools);
+                authored.Modifiers);
         }
 
         /** The one encounter journey of the catalog whose encounter has a rule of the given kind. */

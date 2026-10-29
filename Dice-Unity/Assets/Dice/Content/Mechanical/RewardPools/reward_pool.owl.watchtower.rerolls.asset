@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e41852afa1306e545974155d311b767a, type: 3}
+  m_Name: reward_pool.owl.watchtower.rerolls
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.RewardPoolAsset
+  modifiers:
+  - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+  - {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
+  - {fileID: 11400000, guid: f7ac80fd4ecb0a840881c2e67b601c39, type: 2}
+  - {fileID: 11400000, guid: 7309326a631c87645856a88eda5c88f1, type: 2}
+  - {fileID: 11400000, guid: 12c5c4e6e39a89d478f4aa7c49047a5f, type: 2}
+  - {fileID: 11400000, guid: 125afe35aca937544b02d61bbf26afa0, type: 2}
+  - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+  - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+  - {fileID: 11400000, guid: 22506e7cae3192a4fb63f28764a2e12a, type: 2}
+  - {fileID: 11400000, guid: f848430cdf55c5f4d993794d3d896b7a, type: 2}
+  - {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
+  - {fileID: 11400000, guid: 6bf97f17f4d067b4db9d77ea0e0788f4, type: 2}
+  - {fileID: 11400000, guid: 6923cb9b3fbed244196b03de24710fda, type: 2}
+  fallbackModifier: {fileID: 0}

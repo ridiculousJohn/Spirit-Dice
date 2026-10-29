@@ -76,18 +76,18 @@ MonoBehaviour:
   rewardPolicy:
     id: reward_policy.moth.crossroads
     modifierLayouts:
-    - poolIds:
-      - reward_pool.moth.crossroads.base_score
-      - reward_pool.moth.crossroads.multiplier
-      - reward_pool.moth.crossroads.rerolls
-    - poolIds:
-      - reward_pool.moth.crossroads.base_score
-      - reward_pool.moth.crossroads.multiplier
-      - reward_pool.moth.crossroads.combined
-    - poolIds:
-      - reward_pool.moth.crossroads.base_score
-      - reward_pool.moth.crossroads.multiplier
-      - reward_pool.moth.crossroads.combined
+    - pools:
+      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+      - {fileID: 11400000, guid: d45fad15d66359b44a6ee4f8e9c4f850, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+      - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+      - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+      - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
     startingRefreshes: 1
     refreshesPerClear: 1
     refreshCost: 1

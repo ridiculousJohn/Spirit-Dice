@@ -253,7 +253,7 @@ namespace Dice.Editor
             EnsureContent();
             var presentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition("preview.hand." + category, category, 1, 1, 0, 0, 0)).ToArray();
+                .Select(category => new HandDefinition(category, 1, 1, 0, 0, 0)).ToArray();
             foreach (ModifierDefinition definition in content.Catalog.Modifiers)
             {
                 if (definition.Phase != ModifierPhase.InitialRoll) continue;

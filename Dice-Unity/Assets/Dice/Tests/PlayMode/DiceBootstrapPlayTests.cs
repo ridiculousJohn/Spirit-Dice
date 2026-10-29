@@ -271,7 +271,7 @@ namespace Dice.Tests
         private MechanicalCatalog DirectCatalog(string version, EncounterDefinition.Id encounterId, out EncounterTablePresentationAsset table)
         {
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition("hand." + version + "." + (int)category, category, 5, 1, 5, 1, 6));
+                .Select(category => new HandDefinition(category, 5, 1, 5, 1, 6));
             table = DirectTable(out var rules);
             return new MechanicalCatalog(version + ".v1", hands,
                 new[] { new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) }, rules: rules) });

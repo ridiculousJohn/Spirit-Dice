@@ -123,22 +123,22 @@ MonoBehaviour:
   rewardPolicy:
     id: reward_policy.standard
     modifierLayouts:
-    - poolIds:
-      - reward_pool.rerolls
-      - reward_pool.rerolls
-      - reward_pool.rerolls
-    - poolIds:
-      - reward_pool.base_score
-      - reward_pool.multiplier
-      - reward_pool.combined
-    - poolIds:
-      - reward_pool.base_score
-      - reward_pool.multiplier
-      - reward_pool.combined
-    - poolIds:
-      - reward_pool.base_score
-      - reward_pool.multiplier
-      - reward_pool.combined
+    - pools:
+      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+      - {fileID: 11400000, guid: fe49a7992e3e12f41b1aad3a39cda777, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
+    - pools:
+      - {fileID: 11400000, guid: 68e40b8a04ecc4a4aaddb519e0afc3bb, type: 2}
+      - {fileID: 11400000, guid: f6477c0415fe56b41a54a65658d97039, type: 2}
+      - {fileID: 11400000, guid: 4b698b090a82cfd4ca05b8e4df802abc, type: 2}
     startingRefreshes: 1
     refreshesPerClear: 1
     refreshCost: 1

@@ -106,11 +106,17 @@ namespace Dice.Tests
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
                 rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, access));
 
-        private static RewardPolicyDefinition Policy(int slots = 1, IEnumerable<ModifierTierRule> rules = null,
-            IEnumerable<ModifierTierMilestone> milestones = null)
-            => new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(Enumerable.Repeat("pool", slots)) },
+        /** The pool of the charms other than the fallback, with that fallback. */
+        private static ModifierRewardPoolDefinition Pool(ModifierDefinition[] modifiers, string fallback = null)
+            => new ModifierRewardPoolDefinition("pool.ordinary",
+                modifiers.Where(modifier => modifier.Id != fallback).Select(modifier => modifier.Id), fallback);
+
+        private static RewardPolicyDefinition Policy(ModifierRewardPoolDefinition pool, int slots = 1,
+            IEnumerable<ModifierTierRule> rules = null, IEnumerable<ModifierTierMilestone> milestones = null)
+            => new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(Enumerable.Repeat(pool, slots)) },
                 2, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) }, rules, milestones);
 
+        /** A catalog of the charms; without a policy, one slot draws from their pool with the fallback. */
         private static MechanicalCatalog Catalog(ModifierDefinition[] modifiers, RewardPolicyDefinition policy = null,
             IEnumerable<ModifierUnlockMilestone> milestones = null, string fallback = null, int stages = 2,
             IEnumerable<string> encounterModifierIds = null, IEnumerable<string> unlockRewardModifierIds = null)
@@ -118,10 +124,9 @@ namespace Dice.Tests
             {
                 new EncounterDefinition(TestContent.EncounterId, Enumerable.Range(0, stages)
                     .Select(_ => new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards)),
-                    rewardPolicy: policy ?? Policy(), unlockMilestones: milestones,
+                    rewardPolicy: policy ?? Policy(Pool(modifiers, fallback)), unlockMilestones: milestones,
                     encounterModifierIds: encounterModifierIds, unlockRewardModifierIds: unlockRewardModifierIds)
-            }, modifiers, new[] { new ModifierRewardPoolDefinition("pool",
-                modifiers.Where(modifier => modifier.Id != fallback).Select(modifier => modifier.Id), fallback) });
+            }, modifiers);
 
         private static ModifierRewardGeneration Generate(MechanicalCatalog catalog, ulong seed = 0,
             IEnumerable<string> unlocked = null, IEnumerable<string> owned = null, IEnumerable<string> history = null, int incomingStage = 2)
@@ -149,14 +154,14 @@ namespace Dice.Tests
         public void CatalogRejectsAnEncounterExclusiveCharmInAPoolNamingIt()
         {
             var exception = Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("lantern", access: ModifierAccess.EncounterExclusive) }));
-            Assert.That(exception.Message, Does.Contain("lantern").And.Contain("pool"));
+            Assert.That(exception.Message, Does.Contain("lantern").And.Contain("pool.ordinary"));
         }
 
         [Test]
         public void TierWeightsSelectTiersWithoutPopulationBias()
         {
             var modifiers = Enumerable.Range(0, 9).Select(i => Modifier("weak." + i)).Concat(new[] { Modifier("strong", 2) }).ToArray();
-            var catalog = Catalog(modifiers, Policy(rules: new[] { new ModifierTierRule(1, new[] { 1, 1 }) }));
+            var catalog = Catalog(modifiers, Policy(Pool(modifiers), rules: new[] { new ModifierTierRule(1, new[] { 1, 1 }) }));
             int strongCount = 0;
             for (ulong seed = 0; seed < 1000; ++seed)
                 if (Generate(catalog, seed).ModifierIds[0] == "strong") ++strongCount;
@@ -168,7 +173,7 @@ namespace Dice.Tests
         {
             var modifiers = new[] { Modifier("weak.0"), Modifier("weak.1"), Modifier("weak.2"),
                 Modifier("strong.0", 3), Modifier("strong.1", 3) };
-            var policy = Policy(3, new[] { new ModifierTierRule(1, new[] { 100, 0, 0 }), new ModifierTierRule(4, new[] { 0, 0, 100 }) },
+            var policy = Policy(Pool(modifiers), 3, new[] { new ModifierTierRule(1, new[] { 100, 0, 0 }), new ModifierTierRule(4, new[] { 0, 0, 100 }) },
                 new[] { new ModifierTierMilestone(3, 3) });
             var catalog = Catalog(modifiers, policy);
             Assert.That(Generate(catalog, incomingStage: 2).ModifierIds.All(id => id.StartsWith("weak.")), Is.True);
@@ -183,8 +188,8 @@ namespace Dice.Tests
         [Test]
         public void TierFilteringAppliesToFallbackAndHistoryBypass()
         {
-            var catalog = Catalog(new[] { Modifier("weak"), Modifier("strong", 2), Modifier("fallback", rewardEligible: false) },
-                Policy(rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) }), fallback: "fallback");
+            var modifiers = new[] { Modifier("weak"), Modifier("strong", 2), Modifier("fallback", rewardEligible: false) };
+            var catalog = Catalog(modifiers, Policy(Pool(modifiers, "fallback"), rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) }));
             Assert.That(Generate(catalog, history: new[] { "family.strong" }).ModifierIds, Is.EqualTo(new[] { "strong" }));
             Assert.That(Generate(catalog, owned: new[] { "strong" }).ModifierIds, Is.Empty);
         }
@@ -232,7 +237,7 @@ namespace Dice.Tests
         public void PendingOffersSurviveProfileMergeAndResumeWithDeterministicRefreshes()
         {
             var modifiers = new[] { Modifier("weak"), Modifier("strong", 2, access: ModifierAccess.PermanentUnlock) };
-            var catalog = Catalog(modifiers, Policy(milestones: new[] { new ModifierTierMilestone(2, 2) }));
+            var catalog = Catalog(modifiers, Policy(Pool(modifiers), milestones: new[] { new ModifierTierMilestone(2, 2) }));
             var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 7);
             original.Execute(PlayHandAction.Instance, 0);
             var pending = original.Snapshot.PendingReward;
@@ -310,12 +315,11 @@ namespace Dice.Tests
         {
             var starter = Modifier("starter");
             var addition = Modifier("addition", 2, ModifierAccess.EncounterExclusive);
-            var policy = Policy(rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) });
+            var policy = Policy(Pool(new[] { starter }), rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) });
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards), new StageDefinition(1, 2, 1) },
                 rewardPolicy: policy, encounterModifierIds: new[] { addition.Id });
-            var catalog = new MechanicalCatalog("additions", TestContent.Hands(), new[] { encounter }, new[] { starter, addition },
-                new[] { new ModifierRewardPoolDefinition("pool", new[] { starter.Id }) });
+            var catalog = new MechanicalCatalog("additions", TestContent.Hands(), new[] { encounter }, new[] { starter, addition });
             Assert.That(Generate(catalog).ModifierIds, Is.EqualTo(new[] { addition.Id }));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
             session.Execute(PlayHandAction.Instance, 0);
@@ -355,9 +359,10 @@ namespace Dice.Tests
         [TestCase(2)]
         public void AbandonPendingUnlockRetainsRestorableTerminalState(int stages)
         {
-            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+            var modifiers = new[] { Modifier("unlock", access: ModifierAccess.PermanentUnlock) };
+            var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 0, 1, 2, 1, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
-            var catalog = Catalog(new[] { Modifier("unlock", access: ModifierAccess.PermanentUnlock) }, policy,
+            var catalog = Catalog(modifiers, policy,
                 new[] { new ModifierUnlockMilestone(1) }, stages: stages, unlockRewardModifierIds: new[] { "unlock" });
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 2);
             session.Execute(PlayHandAction.Instance, 0);
@@ -402,7 +407,7 @@ namespace Dice.Tests
         public void FailedRewardResolutionAndInvalidProfileMergeDoNotCommitUnlocks()
         {
             var modifiers = new[] { Modifier("locked", access: ModifierAccess.PermanentUnlock), Modifier("starter") };
-            var policy = new RewardPolicyDefinition("overflow", new[] { new ModifierRewardLayout(new[] { "pool" }) },
+            var policy = new RewardPolicyDefinition("overflow", new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 int.MaxValue, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy, new[] { new ModifierUnlockMilestone(1) }, unlockRewardModifierIds: new[] { "locked" });
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 5);

@@ -40,7 +40,8 @@ namespace Dice.Tests
             controller.ConfigureSeedPolicy(true, 17);
             var modifier = new ModifierDefinition("modifier.journey-test", TestFamilies.Of("family.journey-test"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) });
-            var policy = new RewardPolicyDefinition("policy.journey-test", new[] { new ModifierRewardLayout(new[] { "pool.journey-test" }) },
+            var pool = new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id });
+            var policy = new RewardPolicyDefinition("policy.journey-test", new[] { new ModifierRewardLayout(new[] { pool }) },
                 1, 1, 1, 3, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             catalog = new MechanicalCatalog("test.journeys.v1", TestContent.Hands(), new[]
             {
@@ -49,8 +50,7 @@ namespace Dice.Tests
                     new StageDefinition(1000000, 5, 3) }, rewardPolicy: policy)
             }, new[] { modifier, new ModifierDefinition(GiftId, TestFamilies.Of(GiftFamily), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) },
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) },
-                new[] { new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id }) });
+                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) });
             journeys = Create<EncounterJourneyCatalogAsset>();
             SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", Journey(FirstName, "Harbor", "Ferryman"),
                 Journey(SecondName, "Observatory", "Astronomer")) });

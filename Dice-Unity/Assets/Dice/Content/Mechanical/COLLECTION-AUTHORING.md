@@ -3,10 +3,15 @@
 Content refers to charms by direct references to their `ModifierAsset`s. The game's
 encounters are the `EncounterAsset`s (Create > Dice > Encounter, in `Encounters`,
 named after the encounter) that `Standard.asset` lists; an encounter's id is its
-asset GUID, kept like a family's. The engine catalog is built from the charms those
-encounters and the reward pools of `Standard.asset` reference (encounter lists,
-unlock rewards and reward pools, including fallbacks), so a charm referenced nowhere
-is not part of the game. An encounter's reward policy names those pools by id. Each charm references its family, a `ModifierFamilyAsset`
+asset GUID, kept like a family's. Each slot of an encounter's reward policy layouts
+references the `RewardPoolAsset` it draws from (Create > Dice > Reward Pool, in
+`RewardPools`, named after the pool): its charms in order and an optional fallback
+charm. A pool has no id and is never saved; one pool asset can serve any number of
+slots and encounters, and load errors name it by its asset name. The engine catalog
+is built from the charms those encounters and their pools reference (encounter
+lists, unlock rewards and pools, including fallbacks), so a charm or pool referenced
+nowhere is not part of the game. Hands are authored inline in `Standard.asset` and
+identified by their category. Each charm references its family, a `ModifierFamilyAsset`
 (Create > Dice > Modifier Family) in `ModifierFamilies`, named after the family as
 its charms are named after themselves; the catalog's families are those of its
 charms. A family's id is its asset GUID, which the family asset stores and the

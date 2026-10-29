@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e41852afa1306e545974155d311b767a, type: 3}
+  m_Name: reward_pool.fox.introduction.rerolls
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.RewardPoolAsset
+  modifiers:
+  - {fileID: 11400000, guid: 9c38d67a0b8620041a2816daa7d37b09, type: 2}
+  - {fileID: 11400000, guid: ba7c79c16939ff641aebac2bfa89ab01, type: 2}
+  - {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
+  - {fileID: 11400000, guid: d6e892332cb7cd744b4082152d204399, type: 2}
+  - {fileID: 11400000, guid: e070ad922c9e7404295aabb099cfc45f, type: 2}
+  - {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
+  - {fileID: 11400000, guid: a404d7ab42322c24483070d33d8f1acf, type: 2}
+  - {fileID: 11400000, guid: c66334d8c99fcc442ad407fb79f0ecd7, type: 2}
+  - {fileID: 11400000, guid: 3f60495e59b48374f852e5aac138e69d, type: 2}
+  - {fileID: 11400000, guid: ba743b83c81bc484f873626d7d336902, type: 2}
+  - {fileID: 11400000, guid: bff633ba5dfab01428d6a809d6d53277, type: 2}
+  - {fileID: 11400000, guid: b2f107f771a02a84c875f26df428ca7d, type: 2}
+  - {fileID: 11400000, guid: 2947d381c9b45d84ead90fdbc2c33f76, type: 2}
+  - {fileID: 11400000, guid: 45431496df70c8848ab139db1fa6c558, type: 2}
+  - {fileID: 11400000, guid: a4193cd7b9ce5394e8eb22b33e3d4e87, type: 2}
+  fallbackModifier: {fileID: 0}

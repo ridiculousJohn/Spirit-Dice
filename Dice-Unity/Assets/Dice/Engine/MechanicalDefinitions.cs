@@ -17,7 +17,6 @@ namespace Dice.Engine
     public sealed class HandDefinition
     {
         public const int CategoryCount = 8;
-        public string Id { get; }
         public HandCategory Category { get; }
         public int Rank => (int)Category;
         public long BaseScore { get; }
@@ -26,10 +25,9 @@ namespace Dice.Engine
         public long MultiplierPerUpgrade { get; }
         public int MaximumUpgrades { get; }
 
-        public HandDefinition(string id, HandCategory category, long baseScore, long multiplier,
+        public HandDefinition(HandCategory category, long baseScore, long multiplier,
             long baseScorePerUpgrade, long multiplierPerUpgrade, int maximumUpgrades)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
             if ((uint)category >= CategoryCount) throw new ArgumentOutOfRangeException(nameof(category));
             if (baseScore < 0) throw new ArgumentOutOfRangeException(nameof(baseScore));
             if (multiplier < 1) throw new ArgumentOutOfRangeException(nameof(multiplier));
@@ -42,7 +40,6 @@ namespace Dice.Engine
                 long maximumMultiplier = multiplier + multiplierPerUpgrade * maximumUpgrades;
                 _ = maximumBase * maximumMultiplier;
             }
-            Id = id;
             Category = category;
             BaseScore = baseScore;
             Multiplier = multiplier;
@@ -221,28 +218,25 @@ namespace Dice.Engine
     {
         private readonly Dictionary<EncounterDefinition.Id, EncounterDefinition> encounters;
         private readonly Dictionary<string, ModifierDefinition> modifiersById;
-        private readonly Dictionary<string, ModifierRewardPoolDefinition> rewardPoolsById;
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
         /** The families of the catalog's charms, in the order their first charms appear. */
         public ReadOnlyCollection<ModifierFamilyDefinition> Families { get; }
-        public ReadOnlyCollection<ModifierRewardPoolDefinition> RewardPools { get; }
         public ReadOnlyCollection<EncounterDefinition> Encounters { get; }
 
         public MechanicalCatalog(string version, IEnumerable<HandDefinition> hands, IEnumerable<EncounterDefinition> encounters,
-            IEnumerable<ModifierDefinition> modifiers = null, IEnumerable<ModifierRewardPoolDefinition> rewardPools = null)
+            IEnumerable<ModifierDefinition> modifiers = null)
         {
             DefinitionValidation.RequireId(version, nameof(version));
             if (hands == null) throw new ArgumentNullException(nameof(hands));
             if (encounters == null) throw new ArgumentNullException(nameof(encounters));
             var byCategory = new HandDefinition[HandDefinition.CategoryCount];
-            var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (var hand in hands)
             {
-                if (hand == null || !ids.Add(hand.Id) || byCategory[(int)hand.Category] != null)
-                    throw new ArgumentException("Hand IDs and categories must be unique and nonnull.", nameof(hands));
+                if (hand == null || byCategory[(int)hand.Category] != null)
+                    throw new ArgumentException("Hand categories must be unique and nonnull.", nameof(hands));
                 byCategory[(int)hand.Category] = hand;
             }
             if (Array.Exists(byCategory, hand => hand == null))
@@ -271,31 +265,10 @@ namespace Dice.Engine
                     throw new ArgumentException("Two charm families share the id " + modifier.Family.Identity + ".", nameof(modifiers));
             }
             Families = families.AsReadOnly();
-            rewardPoolsById = new Dictionary<string, ModifierRewardPoolDefinition>(StringComparer.Ordinal);
-            var poolList = new List<ModifierRewardPoolDefinition>();
-            if (rewardPools != null)
-                foreach (var pool in rewardPools)
-                {
-                    if (pool == null || rewardPoolsById.ContainsKey(pool.Id))
-                        throw new ArgumentException("Reward pool IDs must be unique and nonnull.", nameof(rewardPools));
-                    foreach (string modifierId in pool.ModifierIds)
-                    {
-                        if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
-                            throw new ArgumentException("Reward pool entries must reference eligible modifiers.", nameof(rewardPools));
-                        modifier.RejectEncounterExclusive("the reward pool " + pool.Id, nameof(rewardPools));
-                    }
-                    if (pool.FallbackModifierId != null)
-                    {
-                        if (!modifiersById.TryGetValue(pool.FallbackModifierId, out var fallback))
-                            throw new ArgumentException("The reward fallback modifier is missing.", nameof(rewardPools));
-                        fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Id, nameof(rewardPools));
-                    }
-                    rewardPoolsById.Add(pool.Id, pool);
-                    poolList.Add(pool);
-                }
-            RewardPools = poolList.AsReadOnly();
             this.encounters = new Dictionary<EncounterDefinition.Id, EncounterDefinition>();
             var encounterList = new List<EncounterDefinition>();
+            // Encounters can share a pool, which is validated once.
+            var validatedPools = new HashSet<ModifierRewardPoolDefinition>();
             foreach (var encounter in encounters)
             {
                 if (encounter == null) throw new ArgumentException("Encounters must be nonnull.", nameof(encounters));
@@ -323,9 +296,8 @@ namespace Dice.Engine
                         throw new ArgumentException("Encounter additions must reference eligible modifiers.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
-                        foreach (string poolId in layout.PoolIds)
-                            if (!rewardPoolsById.ContainsKey(poolId))
-                                throw new ArgumentException("A reward layout references a missing pool.", nameof(encounters));
+                        foreach (var pool in layout.Pools)
+                            if (validatedPools.Add(pool)) ValidatePool(pool, nameof(encounters));
                 this.encounters.Add(encounter.Identity, encounter);
                 encounterList.Add(encounter);
             }
@@ -333,6 +305,22 @@ namespace Dice.Engine
             Version = version;
             Hands = Array.AsReadOnly(byCategory);
             Encounters = encounterList.AsReadOnly();
+        }
+
+        private void ValidatePool(ModifierRewardPoolDefinition pool, string parameter)
+        {
+            foreach (string modifierId in pool.ModifierIds)
+            {
+                if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
+                    throw new ArgumentException("Reward pool entries must reference eligible modifiers.", parameter);
+                modifier.RejectEncounterExclusive("the reward pool " + pool.Name, parameter);
+            }
+            if (pool.FallbackModifierId != null)
+            {
+                if (!modifiersById.TryGetValue(pool.FallbackModifierId, out var fallback))
+                    throw new ArgumentException("The reward fallback modifier is missing.", parameter);
+                fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Name, parameter);
+            }
         }
 
         public HandDefinition GetHand(HandCategory category)
@@ -350,13 +338,6 @@ namespace Dice.Engine
 
         /** Whether a charm of the catalog belongs to the family. */
         public bool HasFamily(ModifierFamilyDefinition.Id familyId) => familiesById.ContainsKey(familyId);
-
-        public ModifierRewardPoolDefinition GetRewardPool(string id)
-        {
-            DefinitionValidation.RequireId(id, nameof(id));
-            if (!rewardPoolsById.TryGetValue(id, out var pool)) throw new KeyNotFoundException(id);
-            return pool;
-        }
 
         public EncounterDefinition GetEncounter(EncounterDefinition.Id id)
         {
@@ -382,16 +363,13 @@ namespace Dice.Engine
         }
 
         /** Whether the charm is one of the encounter's additions or an entry or fallback of a pool its charm offers draw from. */
-        private bool IsRunRewardSource(EncounterDefinition encounter, string modifierId)
+        private static bool IsRunRewardSource(EncounterDefinition encounter, string modifierId)
         {
             if (encounter.EncounterModifierIds.Contains(modifierId)) return true;
             if (encounter.RewardPolicy == null) return false;
             foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
-                foreach (string poolId in layout.PoolIds)
-                {
-                    var pool = rewardPoolsById[poolId];
+                foreach (var pool in layout.Pools)
                     if (pool.ModifierIds.Contains(modifierId) || pool.FallbackModifierId == modifierId) return true;
-                }
             return false;
         }
     }

@@ -51,10 +51,12 @@ namespace Dice.Tests
 
         /**
          * An encounter asset whose id is the test encounter id of the name (see TestEncounters), with one stage of the
-         * given threshold and the given charm lists.
+         * given threshold and the given charm lists. With reward layouts, each the pools of its slots, it has a reward
+         * policy offering them with one refresh cost and one hand-upgrade option.
          */
         public EncounterAsset Encounter(string name, long threshold = 100, ModifierAsset[] startingModifiers = null,
-            ModifierAsset[] encounterModifiers = null, ModifierAsset[] unlockRewardModifiers = null)
+            ModifierAsset[] encounterModifiers = null, ModifierAsset[] unlockRewardModifiers = null,
+            RewardPoolAsset[][] rewardLayouts = null)
         {
 #if UNITY_EDITOR
             var encounter = Own(ScriptableObject.CreateInstance<EncounterAsset>());
@@ -68,8 +70,38 @@ namespace Dice.Tests
             SetList(serialized.FindProperty("startingModifiers"), startingModifiers ?? Array.Empty<ModifierAsset>());
             SetList(serialized.FindProperty("encounterModifiers"), encounterModifiers ?? Array.Empty<ModifierAsset>());
             SetList(serialized.FindProperty("unlockRewardModifiers"), unlockRewardModifiers ?? Array.Empty<ModifierAsset>());
+            if (rewardLayouts != null)
+            {
+                SerializedProperty policy = serialized.FindProperty("rewardPolicy");
+                policy.FindPropertyRelative("id").stringValue = "policy." + name;
+                policy.FindPropertyRelative("refreshCost").intValue = 1;
+                policy.FindPropertyRelative("handUpgradeOptionCount").intValue = 1;
+                SerializedProperty history = policy.FindPropertyRelative("upgradeHistory");
+                history.arraySize = 1;
+                history.GetArrayElementAtIndex(0).FindPropertyRelative("maxIncomingStageNumber").intValue = int.MaxValue;
+                SerializedProperty layouts = policy.FindPropertyRelative("modifierLayouts");
+                layouts.arraySize = rewardLayouts.Length;
+                for (int i = 0; i < rewardLayouts.Length; ++i)
+                    SetList(layouts.GetArrayElementAtIndex(i).FindPropertyRelative("pools"), rewardLayouts[i]);
+            }
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return encounter;
+#else
+            throw EditorRequired();
+#endif
+        }
+
+        /** A reward pool asset of the name, drawing from the charms, with the fallback charm if one is given. */
+        public RewardPoolAsset RewardPool(string name, ModifierAsset[] modifiers, ModifierAsset fallback = null)
+        {
+#if UNITY_EDITOR
+            var pool = Own(ScriptableObject.CreateInstance<RewardPoolAsset>());
+            pool.name = name;
+            var serialized = new SerializedObject(pool);
+            SetList(serialized.FindProperty("modifiers"), modifiers);
+            serialized.FindProperty("fallbackModifier").objectReferenceValue = fallback;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return pool;
 #else
             throw EditorRequired();
 #endif

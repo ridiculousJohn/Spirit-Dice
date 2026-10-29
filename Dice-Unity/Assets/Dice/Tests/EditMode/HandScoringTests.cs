@@ -107,7 +107,7 @@ namespace Dice.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(0, 1, 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(1, 0, 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(1, 1, -1));
-            Assert.Throws<OverflowException>(() => new HandDefinition("hand.overflow", HandCategory.Pair, long.MaxValue, 1, 0, 0, 0));
+            Assert.Throws<OverflowException>(() => new HandDefinition(HandCategory.Pair, long.MaxValue, 1, 0, 0, 0));
             Assert.Throws<ArgumentException>(() => HandEvaluator.Evaluate(default));
             Assert.Throws<ArgumentOutOfRangeException>(() => new DiceValues(0, 1, 2, 3, 4));
         }
@@ -149,7 +149,7 @@ namespace Dice.Tests
         [TestCase(6, 59L, 15L)]
         public void HandStatesItsValuesAtAnUpgradeLevel(int level, long baseScore, long multiplier)
         {
-            var hand = new HandDefinition("hand.level-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            var hand = new HandDefinition(HandCategory.Pair, 17, 3, 7, 2, 6);
             Assert.That(hand.BaseScoreAt(level), Is.EqualTo(baseScore));
             Assert.That(hand.MultiplierAt(level), Is.EqualTo(multiplier));
         }
@@ -158,7 +158,7 @@ namespace Dice.Tests
         [TestCase(7)]
         public void HandRejectsAnUpgradeLevelOutsideItsRange(int level)
         {
-            var hand = new HandDefinition("hand.level-test", HandCategory.Pair, 17, 3, 7, 2, 6);
+            var hand = new HandDefinition(HandCategory.Pair, 17, 3, 7, 2, 6);
             Assert.Throws<ArgumentOutOfRangeException>(() => hand.BaseScoreAt(level));
             Assert.Throws<ArgumentOutOfRangeException>(() => hand.MultiplierAt(level));
         }

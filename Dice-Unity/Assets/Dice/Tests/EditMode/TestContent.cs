@@ -15,14 +15,14 @@ namespace Dice.Tests
         {
             return new[]
             {
-                new HandDefinition("hand.high_die", HandCategory.HighDie, 5, 1, 5, 1, 6),
-                new HandDefinition("hand.pair", HandCategory.Pair, 5, 2, 5, 1, 6),
-                new HandDefinition("hand.two_pair", HandCategory.TwoPair, 10, 3, 5, 1, 6),
-                new HandDefinition("hand.three_of_a_kind", HandCategory.ThreeOfAKind, 15, 4, 5, 1, 6),
-                new HandDefinition("hand.full_house", HandCategory.FullHouse, 20, 6, 5, 1, 6),
-                new HandDefinition("hand.four_of_a_kind", HandCategory.FourOfAKind, 25, 8, 5, 1, 6),
-                new HandDefinition("hand.straight", HandCategory.Straight, 25, 10, 5, 1, 6),
-                new HandDefinition("hand.five_of_a_kind", HandCategory.FiveOfAKind, 30, 14, 5, 2, 6)
+                new HandDefinition(HandCategory.HighDie, 5, 1, 5, 1, 6),
+                new HandDefinition(HandCategory.Pair, 5, 2, 5, 1, 6),
+                new HandDefinition(HandCategory.TwoPair, 10, 3, 5, 1, 6),
+                new HandDefinition(HandCategory.ThreeOfAKind, 15, 4, 5, 1, 6),
+                new HandDefinition(HandCategory.FullHouse, 20, 6, 5, 1, 6),
+                new HandDefinition(HandCategory.FourOfAKind, 25, 8, 5, 1, 6),
+                new HandDefinition(HandCategory.Straight, 25, 10, 5, 1, 6),
+                new HandDefinition(HandCategory.FiveOfAKind, 30, 14, 5, 2, 6)
             };
         }
 

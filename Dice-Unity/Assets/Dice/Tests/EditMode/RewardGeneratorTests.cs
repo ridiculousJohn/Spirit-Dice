@@ -12,16 +12,12 @@ namespace Dice.Tests
         public void ModifierLayoutCadenceUsesTheIncomingStageIndex()
         {
             var modifiers = new[] { RewardTestContent.Modifier("first", "family.first"), RewardTestContent.Modifier("second", "family.second") };
-            var pools = new[]
-            {
-                new ModifierRewardPoolDefinition("pool.first", new[] { "first" }),
-                new ModifierRewardPoolDefinition("pool.second", new[] { "second" })
-            };
             var policy = RewardTestContent.Policy(new[]
             {
-                new ModifierRewardLayout(new[] { "pool.first" }), new ModifierRewardLayout(new[] { "pool.second" })
+                new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool.first", new[] { "first" }) }),
+                new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool.second", new[] { "second" }) })
             });
-            var catalog = RewardTestContent.Catalog(modifiers, pools, policy);
+            var catalog = RewardTestContent.Catalog(modifiers, policy);
             var random = new DeterministicRandom(41);
             for (int incomingStageIndex = 1; incomingStageIndex <= 8; ++incomingStageIndex)
             {
@@ -39,9 +35,8 @@ namespace Dice.Tests
                 RewardTestContent.Modifier("first.base", "family.first"), RewardTestContent.Modifier("first.mult", "family.first"),
                 RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third")
             };
-            var pool = new ModifierRewardPoolDefinition("pool", modifiers.Select(value => value.Id));
-            var policy = RewardTestContent.Policy();
-            var catalog = RewardTestContent.Catalog(modifiers, new[] { pool }, policy);
+            var policy = RewardTestContent.Policy(RewardTestContent.ThreeSlots(RewardTestContent.Pool(modifiers)));
+            var catalog = RewardTestContent.Catalog(modifiers, policy);
             for (ulong seed = 0; seed < 30; ++seed)
             {
                 var random = new DeterministicRandom(seed);
@@ -58,9 +53,8 @@ namespace Dice.Tests
         public void FamilyHistoryIsRetainedWithThreeCandidatesAndResetWithTwoCandidates()
         {
             var modifiers = Enumerable.Range(0, 5).Select(i => RewardTestContent.Modifier("modifier." + i, "family." + i)).ToArray();
-            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
-            var catalog = RewardTestContent.Catalog(modifiers,
-                new[] { new ModifierRewardPoolDefinition("pool", modifiers.Select(value => value.Id)) }, policy);
+            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { RewardTestContent.Pool(modifiers) }) });
+            var catalog = RewardTestContent.Catalog(modifiers, policy);
             var random = new DeterministicRandom(7);
             var retained = RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(),
                 new[] { TestFamilies.IdOf("family.0"), TestFamilies.IdOf("family.1") }, ref random);
@@ -79,13 +73,12 @@ namespace Dice.Tests
         public void IgnoringHistoryForOneSmallPoolDoesNotRemoveExclusionsFromTheNextPool()
         {
             var modifiers = Enumerable.Range(0, 8).Select(i => RewardTestContent.Modifier("modifier." + i, "family." + i)).ToArray();
-            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "small", "large" }) });
-            var pools = new[]
+            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[]
             {
                 new ModifierRewardPoolDefinition("small", modifiers.Take(4).Select(value => value.Id)),
                 new ModifierRewardPoolDefinition("large", modifiers.Select(value => value.Id))
-            };
-            var catalog = RewardTestContent.Catalog(modifiers, pools, policy);
+            }) });
+            var catalog = RewardTestContent.Catalog(modifiers, policy);
             var history = new[] { "family.0", "family.1", "family.2" }.Select(TestFamilies.IdOf).ToArray();
             for (ulong seed = 0; seed < 30; ++seed)
             {
@@ -104,16 +97,17 @@ namespace Dice.Tests
             var normal = RewardTestContent.Modifier("normal", "family.normal");
             var fallback = new ModifierDefinition("fallback", TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
-            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { "pool" }) });
-            var ordinary = RewardTestContent.Catalog(new[] { normal, fallback },
-                new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }) }, policy);
+            var ordinaryPolicy = RewardTestContent.Policy(new[]
+                { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }) }) });
+            var ordinary = RewardTestContent.Catalog(new[] { normal, fallback }, ordinaryPolicy);
             var random = new DeterministicRandom(12);
-            var skipped = RewardGenerator.GenerateModifiers(ordinary, policy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
+            var skipped = RewardGenerator.GenerateModifiers(ordinary, ordinaryPolicy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
             Assert.That(skipped.ModifierIds, Is.Empty);
 
-            var withFallback = RewardTestContent.Catalog(new[] { normal, fallback },
-                new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) }, policy);
-            var generated = RewardGenerator.GenerateModifiers(withFallback, policy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
+            var fallbackPolicy = RewardTestContent.Policy(new[]
+                { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", new[] { normal.Id }, fallback.Id) }) });
+            var withFallback = RewardTestContent.Catalog(new[] { normal, fallback }, fallbackPolicy);
+            var generated = RewardGenerator.GenerateModifiers(withFallback, fallbackPolicy, 1, new[] { normal.Id }, Array.Empty<ModifierFamilyDefinition.Id>(), ref random);
             Assert.That(generated.ModifierIds, Is.EqualTo(new[] { fallback.Id }));
         }
 
@@ -191,29 +185,40 @@ namespace Dice.Tests
             => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(10) });
 
+        /** The pool of the reward-eligible charms. */
+        internal static ModifierRewardPoolDefinition Pool(IEnumerable<ModifierDefinition> modifiers)
+            => new ModifierRewardPoolDefinition("pool", modifiers.Where(value => value.RewardEligible).Select(value => value.Id));
+
+        /** One offer of three slots, each drawing from the pool. */
+        internal static ModifierRewardLayout[] ThreeSlots(ModifierRewardPoolDefinition pool)
+            => new[] { new ModifierRewardLayout(new[] { pool, pool, pool }) };
+
+        /** A policy of the layouts; without them, three slots drawing from the pool of the default charms. */
         internal static RewardPolicyDefinition Policy(IEnumerable<ModifierRewardLayout> layouts = null,
             int startingRefreshes = 1, int refreshesPerClear = 1, int refreshCost = 1)
-            => new RewardPolicyDefinition("policy.test", layouts ?? new[] { new ModifierRewardLayout(new[] { "pool", "pool", "pool" }) },
+            => new RewardPolicyDefinition("policy.test", layouts ?? ThreeSlots(Pool(Modifiers())),
                 startingRefreshes, refreshesPerClear, refreshCost, 4, new[]
                 {
                     new HandUpgradeHistoryRule(16, 3), new HandUpgradeHistoryRule(21, 2), new HandUpgradeHistoryRule(int.MaxValue, 0)
                 });
 
+        /** A catalog of the charms, the default ones without any; without a policy, its three slots draw from the pool of the charms. */
         internal static MechanicalCatalog Catalog(IEnumerable<ModifierDefinition> modifiers = null,
-            IEnumerable<ModifierRewardPoolDefinition> pools = null, RewardPolicyDefinition policy = null,
-            IEnumerable<StageDefinition> stages = null, IEnumerable<int> upgrades = null, IEnumerable<string> inventory = null)
+            RewardPolicyDefinition policy = null, IEnumerable<StageDefinition> stages = null, IEnumerable<int> upgrades = null,
+            IEnumerable<string> inventory = null)
         {
-            var modifierList = (modifiers ?? new[] { Modifier("first", "family.first"), Modifier("second", "family.second"),
-                Modifier("third", "family.third") }).ToArray();
+            var modifierList = (modifiers ?? Modifiers()).ToArray();
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages ?? new[]
             {
                 new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards),
                 new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards),
                 new StageDefinition(1000000, 3, 3, StageExitBehavior.AwaitRewards)
-            }, upgrades, inventory, policy ?? Policy());
-            return new MechanicalCatalog("test.rewards", TestContent.Hands(), new[] { encounter }, modifierList,
-                pools ?? new[] { new ModifierRewardPoolDefinition("pool", modifierList.Where(value => value.RewardEligible).Select(value => value.Id)) });
+            }, upgrades, inventory, policy ?? Policy(ThreeSlots(Pool(modifierList))));
+            return new MechanicalCatalog("test.rewards", TestContent.Hands(), new[] { encounter }, modifierList);
         }
+
+        private static ModifierDefinition[] Modifiers()
+            => new[] { Modifier("first", "family.first"), Modifier("second", "family.second"), Modifier("third", "family.third") };
 
         internal static EncounterSession Session(MechanicalCatalog catalog = null, ulong seed = 0)
             => EncounterSession.CreateEncounter(catalog ?? Catalog(), TestContent.EncounterId, seed);
