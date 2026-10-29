@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.merchant.unquiet_cart
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: 1360c7668cb1183439942390cf1a70d3
-  spiritId: spirit.merchant
   unlockMilestones:
   - stageNumber: 3
   - stageNumber: 6

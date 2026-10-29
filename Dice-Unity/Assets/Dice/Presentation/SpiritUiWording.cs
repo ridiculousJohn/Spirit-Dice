@@ -854,7 +854,6 @@ namespace Dice.Presentation
             /** {access} and {scope}: how the charm is obtained and its scope line. */
             public string availability;
             public string allEncounters;
-            public string spiritEncounters;
             public string thisEncounter;
             /** {scope} and {tier}: where the charm can appear and its power tier. */
             public string scopeTier;
@@ -873,7 +872,6 @@ namespace Dice.Presentation
                 check.Text(availableFromStart, nameof(availableFromStart));
                 check.Text(availability, nameof(availability));
                 check.Text(allEncounters, nameof(allEncounters));
-                check.Text(spiritEncounters, nameof(spiritEncounters));
                 check.Text(thisEncounter, nameof(thisEncounter));
                 check.Text(scopeTier, nameof(scopeTier));
             }

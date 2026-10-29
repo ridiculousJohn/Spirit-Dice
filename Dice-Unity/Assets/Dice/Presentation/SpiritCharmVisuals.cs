@@ -41,8 +41,7 @@ namespace Dice.Presentation
         internal static string AvailabilityScopeText(ModifierDefinition definition, SpiritUiWording.CharmAvailability wording)
         {
             var availability = definition.Availability;
-            string scope = availability.Scope == ModifierAvailabilityScope.Global ? wording.allEncounters :
-                availability.Scope == ModifierAvailabilityScope.Spirit ? wording.spiritEncounters : wording.thisEncounter;
+            string scope = availability.Access == ModifierAccess.EncounterExclusive ? wording.thisEncounter : wording.allEncounters;
             return wording.ScopeTier(scope, availability.PowerTier);
         }
 

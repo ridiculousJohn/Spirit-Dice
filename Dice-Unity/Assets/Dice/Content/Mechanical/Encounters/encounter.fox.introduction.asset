@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.fox.introduction
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: bf2a4a0f447fad64897858c232b1c04c
-  spiritId: spirit.fox
   unlockMilestones:
   - stageNumber: 3
   - stageNumber: 6

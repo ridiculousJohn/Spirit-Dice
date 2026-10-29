@@ -24,9 +24,6 @@ MonoBehaviour:
   rewardEligible: 1
   powerTier: 1
   access: 2
-  availabilityScope: 2
-  availabilityScopeId: 
-  availabilityEncounter: {fileID: 11400000, guid: 7f52f80f80fb1af44a51e696465c5abb, type: 2}
   references:
     version: 2
     RefIds:

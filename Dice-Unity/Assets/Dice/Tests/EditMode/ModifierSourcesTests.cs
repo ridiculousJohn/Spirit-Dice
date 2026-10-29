@@ -13,7 +13,6 @@ namespace Dice.Tests
         private const string Pooled = "pooled";
         private const string Fallback = "fallback";
         private const string Ineligible = "ineligible";
-        private const string Scoped = "scoped";
 
         /** Checks the unlock sources are the encounters whose unlock list holds the charm and that make unlock offers, each with every milestone stage / fails if an encounter without the charm or without milestones is listed, or a milestone is dropped. */
         [Test]
@@ -26,12 +25,11 @@ namespace Dice.Tests
             Assert.That(catalog.GetModifierSources(Pooled).Unlocks, Is.Empty);
         }
 
-        /** Checks the run reward sources are the encounters that add the charm or draw offers from a pool holding it as an entry or fallback, when the charm is reward-eligible and matches the encounter / fails if a source is missed or an ineligible, out-of-scope or unrelated charm is listed. */
+        /** Checks the run reward sources are the encounters that add the charm or draw offers from a pool holding it as an entry or fallback, when the charm is reward-eligible / fails if a source is missed or an ineligible or unrelated charm is listed. */
         [TestCase(Addition, new[] { "encounter.unlocks" })]
         [TestCase(Pooled, new[] { "encounter.pooled", "encounter.scoped" })]
         [TestCase(Fallback, new[] { "encounter.pooled", "encounter.scoped" })]
         [TestCase(Ineligible, new string[0])]
-        [TestCase(Scoped, new[] { "encounter.scoped" })]
         [TestCase(Locked, new[] { "encounter.scoped" })]
         public void RunRewardSourcesAreAdditionsPoolEntriesAndFallbacks(string modifierId, string[] encounterIds)
             => Assert.That(Catalog().GetModifierSources(modifierId).RunRewards.Select(encounter => encounter.Identity),
@@ -55,14 +53,11 @@ namespace Dice.Tests
             var modifiers = new[]
             {
                 Modifier(Locked, access: ModifierAccess.PermanentUnlock), Modifier(Addition), Modifier(Pooled), Modifier(Fallback),
-                Modifier(Ineligible, eligible: false),
-                new ModifierDefinition(Scoped, TestFamilies.Of("family." + Scoped), ModifierPhase.PlayHand, new NeverCondition(),
-                    Array.Empty<ModifierEffect>(), availability: new ModifierAvailabilityDefinition(1, ModifierAvailabilityScope.Encounter,
-                        encounterId: TestEncounters.IdOf("encounter.scoped")))
+                Modifier(Ineligible, eligible: false)
             };
             return new MechanicalCatalog("test.modifier_sources", TestContent.Hands(), encounters, modifiers, new[]
             {
-                new ModifierRewardPoolDefinition("pool", new[] { Pooled, Scoped }, Fallback),
+                new ModifierRewardPoolDefinition("pool", new[] { Pooled }, Fallback),
                 new ModifierRewardPoolDefinition("second", new[] { Locked }, Ineligible)
             });
         }

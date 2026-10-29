@@ -22,8 +22,6 @@ MonoBehaviour:
   rewardEligible: 0
   powerTier: 1
   access: 0
-  availabilityScope: 0
-  availabilityScopeId: 
   references:
     version: 2
     RefIds:

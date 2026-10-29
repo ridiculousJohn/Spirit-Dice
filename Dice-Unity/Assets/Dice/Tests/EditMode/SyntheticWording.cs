@@ -237,7 +237,6 @@ namespace Dice.Tests
             availability.availableFromStart = "<charmAvailability.availableFromStart>";
             availability.availability = "<charmAvailability.availability>{access}|{scope}";
             availability.allEncounters = "<charmAvailability.allEncounters>";
-            availability.spiritEncounters = "<charmAvailability.spiritEncounters>";
             availability.thisEncounter = "<charmAvailability.thisEncounter>";
             availability.scopeTier = "<charmAvailability.scopeTier>{scope}|{tier}";
 

@@ -60,7 +60,7 @@ existing charm presentation; keep mechanical descriptions out of dialogue.
 This reference only controls presentation. Ownership still comes from the beat
 or journey's progression reward.
 
-All ordinary modifiers have global availability. Permanent unlock requirements
+Ordinary modifiers can be offered by any encounter whose pools or lists hold them. Permanent unlock requirements
 remain on existing variants, including combined and reroll variants that are not
 currently awarded by these lists. Existing authored ordinary reward pools retain
 their membership.
@@ -69,9 +69,13 @@ Moth's `encounterModifiers` contains four encounter-exclusive Lantern Seekers
 variants. They trigger when a played hand contains at least two dice showing the
 favored face supplied by the encounter rule. Provisional effects are +10 Base,
 +2 Mult, +5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand.
-They use the Encounter availability scope and reference the moth's encounter asset
-in `availabilityEncounter`; a Spirit scope names its spirit in `availabilityScopeId`
-instead, and the charm inspector and loading reject a scope with the other target.
+Their access is Encounter Exclusive, and the moth's `encounterModifiers` list is the
+only statement of the encounter that offers them: loading fails, naming the charm and
+where it is listed, when an encounter-exclusive charm is in a reward pool or its
+fallback, an unlock reward list, an encounter's starting charms or a progression
+grant. The charm inspector's read-only Offered by section lists each encounter whose
+`encounterModifiers` holds the charm (click to ping, double-click to select) and
+warns when no encounter or more than one lists it.
 The family provisionally reuses the existing Last Lantern artwork and the standard
 effect-category assets. Replace the shared artwork only when dedicated art is
 approved. The favored-face rule itself still adds +2 Mult per matching scored die.
@@ -91,7 +95,7 @@ unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDisc
 discovers those three families and grants nothing; the bound tree journey references it.
 
 Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
-variants, scoped to the bound tree's encounter asset like Lantern Seekers to the
+variants, offered only through that list as Lantern Seekers are through the
 moth's. They trigger when at least three dice show the face of a die bound by
 the encounter's binding rule (`rule.nymph.binding`); the bound die counts toward
 the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and

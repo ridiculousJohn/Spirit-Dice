@@ -347,9 +347,7 @@ namespace Dice.Tests
         private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffect effect,
             string family = "family", bool rewardEligible = true)
             => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { effect }, rewardEligible: rewardEligible, availability: access == ModifierAccess.EncounterExclusive
-                    ? new ModifierAvailabilityDefinition(scope: ModifierAvailabilityScope.Encounter, encounterId: TestEncounters.IdOf("encounter.test"), access: access)
-                    : new ModifierAvailabilityDefinition(access: access));
+                new[] { effect }, rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(access: access));
 
         private static T Find<T>(Component parent, string name) where T : Component
             => parent.GetComponentsInChildren<T>(true).Single(component => component.name == name);

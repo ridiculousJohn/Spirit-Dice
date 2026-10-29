@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.nymph.bound_tree
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: 7f52f80f80fb1af44a51e696465c5abb
-  spiritId: spirit.nymph
   unlockMilestones:
   - stageNumber: 3
   - stageNumber: 6

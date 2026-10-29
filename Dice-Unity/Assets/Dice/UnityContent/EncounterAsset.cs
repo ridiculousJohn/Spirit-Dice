@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
 
@@ -11,7 +12,6 @@ namespace Dice.UnityContent
     [CreateAssetMenu(menuName = "Dice/Encounter")]
     public sealed class EncounterAsset : ContentAsset
     {
-        [SerializeField] private string spiritId;
         [SerializeField] private UnlockMilestoneData[] unlockMilestones = Array.Empty<UnlockMilestoneData>();
         [SerializeField] private ModifierAsset[] encounterModifiers = Array.Empty<ModifierAsset>();
         [SerializeField, Min(1)] private int encounterModifiersFirstClearedStageNumber = 1;
@@ -25,6 +25,12 @@ namespace Dice.UnityContent
 
         public EncounterDefinition.Id Identity => new EncounterDefinition.Id(AssetGuid);
 
+        /**
+         * The charms this encounter's offers add to its pools, as authored. For an encounter-exclusive charm this list is
+         * the only statement of the encounter that offers it.
+         */
+        public IReadOnlyList<ModifierAsset> EncounterModifiers => encounterModifiers;
+
         /** The encounter's definition; each charm it references is passed to use, so the catalog collects its charms. */
         internal EncounterDefinition Build(Action<ModifierAsset> use)
         {
@@ -36,7 +42,7 @@ namespace Dice.UnityContent
                 stageDefinitions[i] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
             }
             return new EncounterDefinition(Identity, stageDefinitions, startingUpgrades, MechanicalCatalogAsset.Ids(startingModifiers, use),
-                BuildRewardPolicy(rewardPolicy), BuildRules(rules), string.IsNullOrEmpty(spiritId) ? null : spiritId,
+                BuildRewardPolicy(rewardPolicy), BuildRules(rules),
                 BuildMilestones(unlockMilestones), MechanicalCatalogAsset.Ids(encounterModifiers, use),
                 MechanicalCatalogAsset.Ids(unlockRewardModifiers, use), BuildPieces(pieces),
                 encounterModifiersFirstClearedStageNumber);

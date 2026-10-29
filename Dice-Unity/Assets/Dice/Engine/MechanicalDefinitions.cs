@@ -128,7 +128,6 @@ namespace Dice.Engine
         public ReadOnlyCollection<string> StartingModifiers { get; }
         public RewardPolicyDefinition RewardPolicy { get; }
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
-        public string SpiritId { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
         public ReadOnlyCollection<string> EncounterModifierIds { get; }
         /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
@@ -140,7 +139,7 @@ namespace Dice.Engine
 
         public EncounterDefinition(Id identity, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
-            IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
+            IEnumerable<EncounterRuleDefinition> rules = null,
             IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
             IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
             int encounterModifiersFirstClearedStageNumber = 1)
@@ -167,8 +166,6 @@ namespace Dice.Engine
                 if (rule == null || !ruleIds.Add(rule.Id))
                     throw new ArgumentException("Encounter rule IDs must be unique and nonnull.", nameof(rules));
             Rules = ruleList.AsReadOnly();
-            if (spiritId != null) DefinitionValidation.RequireId(spiritId, nameof(spiritId));
-            SpiritId = spiritId;
             var milestones = unlockMilestones == null ? new List<ModifierUnlockMilestone>() : new List<ModifierUnlockMilestone>(unlockMilestones);
             var milestoneStages = new HashSet<int>();
             foreach (var milestone in milestones)
@@ -282,10 +279,17 @@ namespace Dice.Engine
                     if (pool == null || rewardPoolsById.ContainsKey(pool.Id))
                         throw new ArgumentException("Reward pool IDs must be unique and nonnull.", nameof(rewardPools));
                     foreach (string modifierId in pool.ModifierIds)
+                    {
                         if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                             throw new ArgumentException("Reward pool entries must reference eligible modifiers.", nameof(rewardPools));
-                    if (pool.FallbackModifierId != null && !modifiersById.ContainsKey(pool.FallbackModifierId))
-                        throw new ArgumentException("The reward fallback modifier is missing.", nameof(rewardPools));
+                        modifier.RejectEncounterExclusive("the reward pool " + pool.Id, nameof(rewardPools));
+                    }
+                    if (pool.FallbackModifierId != null)
+                    {
+                        if (!modifiersById.TryGetValue(pool.FallbackModifierId, out var fallback))
+                            throw new ArgumentException("The reward fallback modifier is missing.", nameof(rewardPools));
+                        fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Id, nameof(rewardPools));
+                    }
                     rewardPoolsById.Add(pool.Id, pool);
                     poolList.Add(pool);
                 }
@@ -301,17 +305,22 @@ namespace Dice.Engine
                     if (encounter.StartingUpgrades[i] > byCategory[i].MaximumUpgrades)
                         throw new ArgumentException("Starting upgrades exceed the category limit.", nameof(encounters));
                 foreach (string modifierId in encounter.StartingModifiers)
-                    if (!modifiersById.ContainsKey(modifierId))
+                {
+                    if (!modifiersById.TryGetValue(modifierId, out var modifier))
                         throw new ArgumentException("A starting modifier is missing from the catalog.", nameof(encounters));
+                    modifier.RejectEncounterExclusive("the starting charms of the encounter " + encounter.Identity, nameof(encounters));
+                }
                 foreach (string modifierId in encounter.UnlockRewardModifierIds)
-                    if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
-                        modifier.Availability.Access != ModifierAccess.PermanentUnlock ||
-                        !modifier.RewardEligible || !modifier.Availability.MatchesEncounter(encounter))
-                        throw new ArgumentException("Unlock rewards must reference eligible permanent unlocks within the encounter scope.", nameof(encounters));
+                {
+                    if (!modifiersById.TryGetValue(modifierId, out var modifier))
+                        throw new ArgumentException("An unlock reward is missing from the catalog.", nameof(encounters));
+                    modifier.RejectEncounterExclusive("the unlock rewards of the encounter " + encounter.Identity, nameof(encounters));
+                    if (modifier.Availability.Access != ModifierAccess.PermanentUnlock || !modifier.RewardEligible)
+                        throw new ArgumentException("Unlock rewards must reference eligible permanent unlocks.", nameof(encounters));
+                }
                 foreach (string modifierId in encounter.EncounterModifierIds)
-                    if (!modifiersById.TryGetValue(modifierId, out var modifier) ||
-                        !modifier.RewardEligible || !modifier.Availability.MatchesEncounter(encounter))
-                        throw new ArgumentException("Encounter additions must reference eligible modifiers within the encounter scope.", nameof(encounters));
+                    if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
+                        throw new ArgumentException("Encounter additions must reference eligible modifiers.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
                         foreach (string poolId in layout.PoolIds)
@@ -366,8 +375,7 @@ namespace Dice.Engine
             {
                 if (encounter.UnlockMilestones.Count > 0 && encounter.UnlockRewardModifierIds.Contains(modifier.Id))
                     unlocks.Add(new ModifierUnlockSource(encounter));
-                if (modifier.RewardEligible && modifier.Availability.MatchesEncounter(encounter) &&
-                    IsRunRewardSource(encounter, modifier.Id))
+                if (modifier.RewardEligible && IsRunRewardSource(encounter, modifier.Id))
                     runRewards.Add(encounter);
             }
             return new ModifierSources(unlocks, runRewards);

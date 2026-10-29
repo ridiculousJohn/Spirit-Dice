@@ -139,7 +139,7 @@ namespace Dice.Tests
                 RewardModifier("starter", "family.starter", ModifierAccess.Starter),
                 RewardModifier("owned", "family.owned"), RewardModifier("owned.variant", "family.owned"),
                 RewardModifier("revealed", "family.revealed"),
-                RewardModifier("encounter", "family.encounter", scope: ModifierAvailabilityScope.Encounter),
+                RewardModifier("encounter", "family.encounter", ModifierAccess.EncounterExclusive),
                 RewardModifier("inert", "family.inert", inert: true), RewardModifier("never", "family.never", never: true)
             };
             return new MechanicalCatalog("profile.rewards", TestContent.Hands(), new[]
@@ -149,12 +149,11 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition RewardModifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock,
-            ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, bool inert = false, bool never = false)
+            bool inert = false, bool never = false)
             => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand,
                 never ? new NeverCondition() : (IModifierCondition)new AlwaysCondition(),
                 inert ? Array.Empty<ModifierEffect>() : new ModifierEffect[] { new AddBaseScoreEffect(1) },
-                availability: new ModifierAvailabilityDefinition(scope: scope,
-                    encounterId: scope == ModifierAvailabilityScope.Encounter ? TestContent.EncounterId : (EncounterDefinition.Id?)null, access: access));
+                availability: new ModifierAvailabilityDefinition(access: access));
 
         [Test]
         public void RoundTripKeepsUnknownIdsAndProgressIsIdempotent()

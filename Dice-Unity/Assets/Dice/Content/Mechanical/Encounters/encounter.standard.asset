@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.standard
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: 361544f6e32f7374eae22b215dae15f1
-  spiritId: 
   unlockMilestones: []
   encounterModifiers: []
   encounterModifiersFirstClearedStageNumber: 1

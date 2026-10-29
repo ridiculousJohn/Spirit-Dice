@@ -220,9 +220,8 @@ namespace Dice.Tests
         {
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
             var permanent = controller.Catalog.Modifiers.FirstOrDefault(value =>
-                value.Availability.Access == ModifierAccess.PermanentUnlock &&
-                value.Availability.Scope == ModifierAvailabilityScope.Global);
-            Assert.That(permanent, Is.Not.Null, "The catalog has no global permanent unlock to retain across a retry.");
+                value.Availability.Access == ModifierAccess.PermanentUnlock);
+            Assert.That(permanent, Is.Not.Null, "The catalog has no permanent unlock to retain across a retry.");
             profile.UnlockModifier(permanent.Id);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             InstallShortEncounter(false, EncounterJourney(EncounterOutcome.Lost));
@@ -351,14 +350,14 @@ namespace Dice.Tests
             // Each milestone offers up to three unowned charms, so the final one still has a full offer.
             int unlockCount = stageCount + 2;
             unlockDefinitions = original.Modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
-                value.Availability.Scope == ModifierAvailabilityScope.Global && value.RewardEligible && !granted.Contains(value.Id))
+                value.RewardEligible && !granted.Contains(value.Id))
                 .Take(unlockCount).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(unlockCount),
-                "The catalog has too few global permanent unlocks for a milestone at every stage.");
+                "The catalog has too few permanent unlocks for a milestone at every stage.");
             var unlockIds = unlockDefinitions.Select(value => value.Id).ToArray();
             var shortEncounter = new EncounterDefinition(definition.Identity,
                 Enumerable.Range(0, stageCount).Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)),
-                rules: definition.Rules, spiritId: definition.SpiritId,
+                rules: definition.Rules,
                 unlockMilestones: winning
                     ? Enumerable.Range(1, stageCount).Select(stage => new ModifierUnlockMilestone(stage)).ToArray()
                     : Array.Empty<ModifierUnlockMilestone>(),

@@ -120,7 +120,7 @@ namespace Dice.Tests
         {
             var modifiers = ordinary.Select(id => Modifier(id)).Concat(new[]
             {
-                Modifier(Addition, ModifierAvailabilityScope.Encounter, TestContent.EncounterId, ModifierAccess.EncounterExclusive)
+                Modifier(Addition, ModifierAccess.EncounterExclusive)
             }).ToArray();
             var policy = new RewardPolicyDefinition("policy", new[] { new ModifierRewardLayout(new[] { "pool" }) },
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
@@ -132,11 +132,10 @@ namespace Dice.Tests
                 new[] { new ModifierRewardPoolDefinition("pool", ordinary) });
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
-            EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter)
+        private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
             => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(1, scope, encounterId: encounterId, access: access));
+                availability: new ModifierAvailabilityDefinition(access: access));
 
         private static Resolution Execute(EncounterSession session, EncounterAction action)
         {

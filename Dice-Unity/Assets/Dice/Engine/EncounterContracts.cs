@@ -232,13 +232,8 @@ namespace Dice.Engine
         }
 
         protected override string DescribeDetail(IDiagnosticFormat format)
-            => "Unlocked " + format.ModifierName(ModifierId) + " (" + format.Humanize(Availability.Access.ToString()) + ", " +
-                format.Humanize(Availability.Scope.ToString()) + ScopeDetail() +
+            => "Unlocked " + format.ModifierName(ModifierId) + " (" + format.Humanize(Availability.Access.ToString()) +
                 ", power tier " + Availability.PowerTier + ").";
-
-        private string ScopeDetail()
-            => Availability.SpiritId != null ? " " + Availability.SpiritId
-                : Availability.EncounterId != null ? " " + Availability.EncounterId.Value : "";
     }
 
     public sealed class StageStartedEvent : RuleEvent

@@ -37,8 +37,6 @@ namespace Dice.Tests
             serialized.FindProperty("rewardEligible").boolValue = false;
             serialized.FindProperty("powerTier").intValue = 3;
             serialized.FindProperty("access").intValue = (int)ModifierAccess.PermanentUnlock;
-            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Spirit;
-            serialized.FindProperty("availabilityScopeId").stringValue = "spirit.test";
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 2;
             effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddBaseScoreEffectConfig(25);
@@ -60,9 +58,6 @@ namespace Dice.Tests
             Assert.That(definition.RewardEligible, Is.False);
             Assert.That(definition.Availability.PowerTier, Is.EqualTo(3));
             Assert.That(definition.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
-            Assert.That(definition.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
-            Assert.That(definition.Availability.SpiritId, Is.EqualTo("spirit.test"));
-            Assert.That(definition.Availability.EncounterId, Is.Null);
             Assert.That(definition.Effects.Select(effect => effect.GetType()),
                 Is.EqualTo(new[] { typeof(AddBaseScoreEffect), typeof(AddRerollsEffect) }));
             Assert.That(definition.Effects.Select(effect => effect.Amount), Is.EqualTo(new long[] { 25, 2 }));
@@ -71,34 +66,6 @@ namespace Dice.Tests
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Assert.That(definition.Effects[0], Is.TypeOf<AddBaseScoreEffect>());
             Assert.That(definition.Effects[0].Amount, Is.EqualTo(25));
-        }
-
-        /** Checks an Encounter scope builds the referenced encounter's id and a scope with the wrong target fails, naming the charm / fails if a scope keeps a target it does not use. */
-        [Test]
-        public void EncounterScopeBuildsItsEncounterIdAndAScopeWithTheWrongTargetFails()
-        {
-            var asset = Modifier("modifier.scoped");
-            var encounter = content.Encounter("encounter.scope");
-            using var serialized = new SerializedObject(asset);
-            serialized.FindProperty("access").intValue = (int)ModifierAccess.EncounterExclusive;
-            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Encounter;
-            serialized.FindProperty("availabilityEncounter").objectReferenceValue = encounter;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(asset.AvailabilityProblem, Is.Null);
-            Assert.That(asset.Build(asset.Family.Build()).Availability.EncounterId, Is.EqualTo(encounter.Identity));
-
-            serialized.FindProperty("availabilityScopeId").stringValue = "spirit.test";
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(asset.AvailabilityProblem, Is.Not.Null);
-            Assert.That(Assert.Throws<InvalidOperationException>(() => asset.Build(asset.Family.Build())).Message,
-                Does.Contain("modifier.scoped"));
-
-            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Global;
-            serialized.FindProperty("availabilityScopeId").stringValue = string.Empty;
-            serialized.FindProperty("access").intValue = (int)ModifierAccess.Starter;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.That(asset.AvailabilityProblem, Is.Not.Null);
-            Assert.Throws<InvalidOperationException>(() => asset.Build(asset.Family.Build()));
         }
 
         [Test]

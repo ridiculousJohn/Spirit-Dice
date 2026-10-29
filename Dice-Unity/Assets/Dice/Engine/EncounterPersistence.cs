@@ -620,13 +620,13 @@ namespace Dice.Engine
                 var pool = catalog.GetRewardPool(poolId);
                 var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.IncomingStageNumber, pool, owned, offered,
                     definition, unlocked);
-                string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, definition, unlocked);
+                string fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, unlocked);
                 if (eligible.Count == 0 && fallback == null) continue;
                 Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
                 var option = options[nextOption++];
                 var modifier = catalog.GetModifier(option.DefinitionId);
                 Require(eligible.Count == 0 ? option.DefinitionId == fallback : eligible.Contains(option.DefinitionId),
-                    "Modifier option violates its scope, unlock, pool, or tier eligibility.");
+                    "Modifier option violates its unlock, pool, or tier eligibility.");
                 Require(history.Contains(modifier.Family.Identity), "An offered family is absent from reward history.");
                 offered.Add(modifier.Family.Identity);
             }

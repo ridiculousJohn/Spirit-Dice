@@ -281,7 +281,6 @@ MonoBehaviour:
     availableFromStart: Available from the start
     availability: '{access} / {scope}'
     allEncounters: All encounters
-    spiritEncounters: This spirit's encounters
     thisEncounter: This encounter
     scopeTier: '{scope} / Tier {tier}'
   ownedCharms:

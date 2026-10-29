@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.moth.crossroads
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: 4fad4a8676a7c9c48bca35e892918aaa
-  spiritId: spirit.moth
   unlockMilestones:
   - stageNumber: 3
   - stageNumber: 6

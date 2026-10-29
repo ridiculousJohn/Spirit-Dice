@@ -46,7 +46,7 @@ namespace Dice.Engine
                 var candidates = available.FindAll(id => !excluded.Contains(catalog.GetModifier(id).Family.Identity));
                 if (candidates.Count < MinimumCandidatesBeforeHistoryBypass)
                     candidates = available;
-                string selected = candidates.Count == 0 ? EligibleFallback(catalog, policy, incomingStageNumber, pool, encounter, unlocked)
+                string selected = candidates.Count == 0 ? EligibleFallback(catalog, policy, incomingStageNumber, pool, unlocked)
                     : SelectModifier(catalog, policy, incomingStageNumber, candidates, ref random);
                 if (selected == null) continue;
                 var selectedFamily = catalog.GetModifier(selected).Family.Identity;
@@ -118,7 +118,7 @@ namespace Dice.Engine
             foreach (string id in ids)
             {
                 var modifier = catalog.GetModifier(id);
-                if (modifier.RewardEligible && modifier.Availability.IsAvailable(encounter, unlocked, id) &&
+                if (modifier.RewardEligible && modifier.Availability.IsAvailable(unlocked, id) &&
                     !owned.Contains(id) && !currentFamilies.Contains(modifier.Family.Identity)) candidates.Add(id);
             }
             return candidates;
@@ -131,10 +131,10 @@ namespace Dice.Engine
                 currentFamilies, encounter, unlocked));
 
         internal static string EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy, int incomingStageNumber,
-            ModifierRewardPoolDefinition pool, EncounterDefinition encounter, ISet<string> unlocked)
+            ModifierRewardPoolDefinition pool, ISet<string> unlocked)
         {
             string id = pool.FallbackModifierId;
-            if (id == null || !catalog.GetModifier(id).Availability.IsAvailable(encounter, unlocked, id)) return null;
+            if (id == null || !catalog.GetModifier(id).Availability.IsAvailable(unlocked, id)) return null;
             return RestrictTiers(catalog, policy, incomingStageNumber, new List<string> { id }).Count == 0 ? null : id;
         }
 

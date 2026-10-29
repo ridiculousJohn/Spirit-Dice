@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: encounter.owl.watchtower
   m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
   assetGuid: 0c0f31254236f944aa8d686d0ce79d65
-  spiritId: spirit.owl
   unlockMilestones:
   - stageNumber: 3
   - stageNumber: 6

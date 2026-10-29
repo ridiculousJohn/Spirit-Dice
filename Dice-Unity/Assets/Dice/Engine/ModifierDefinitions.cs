@@ -4,48 +4,23 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
-    public enum ModifierAvailabilityScope { Global, Spirit, Encounter }
     public enum ModifierAccess { Starter, PermanentUnlock, EncounterExclusive }
 
     public sealed class ModifierAvailabilityDefinition
     {
         public int PowerTier { get; }
-        public ModifierAvailabilityScope Scope { get; }
-        /** The spirit whose encounters a Spirit-scoped charm belongs to; null for the other scopes. */
-        public string SpiritId { get; }
-        /** The encounter an Encounter-scoped charm belongs to; null for the other scopes. */
-        public EncounterDefinition.Id? EncounterId { get; }
         public ModifierAccess Access { get; }
 
-        public ModifierAvailabilityDefinition(int powerTier = 1, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
-            string spiritId = null, EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter)
+        public ModifierAvailabilityDefinition(int powerTier = 1, ModifierAccess access = ModifierAccess.Starter)
         {
             if (powerTier < 1) throw new ArgumentOutOfRangeException(nameof(powerTier));
-            if (!Enum.IsDefined(typeof(ModifierAvailabilityScope), scope)) throw new ArgumentOutOfRangeException(nameof(scope));
             if (!Enum.IsDefined(typeof(ModifierAccess), access)) throw new ArgumentOutOfRangeException(nameof(access));
-            if (scope == ModifierAvailabilityScope.Global && access == ModifierAccess.EncounterExclusive)
-                throw new ArgumentException("Global modifiers cannot have exclusive access.");
-            if (scope == ModifierAvailabilityScope.Spirit) DefinitionValidation.RequireId(spiritId, nameof(spiritId));
-            else if (spiritId != null) throw new ArgumentException("Only a Spirit scope names a spirit.", nameof(spiritId));
-            if (scope == ModifierAvailabilityScope.Encounter)
-            {
-                if (encounterId == null || encounterId.Value.Value == Guid.Empty)
-                    throw new ArgumentException("An Encounter scope requires an encounter id.", nameof(encounterId));
-            }
-            else if (encounterId != null) throw new ArgumentException("Only an Encounter scope names an encounter.", nameof(encounterId));
             PowerTier = powerTier;
-            Scope = scope;
-            SpiritId = spiritId;
-            EncounterId = encounterId;
             Access = access;
         }
 
-        public bool MatchesEncounter(EncounterDefinition encounter)
-            => Scope == ModifierAvailabilityScope.Global || (encounter != null &&
-                (Scope == ModifierAvailabilityScope.Spirit ? SpiritId == encounter.SpiritId : EncounterId == encounter.Identity));
-
-        internal bool IsAvailable(EncounterDefinition encounter, ISet<string> unlockedIds, string modifierId)
-            => MatchesEncounter(encounter) && (Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId));
+        internal bool IsAvailable(ISet<string> unlockedIds, string modifierId)
+            => Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId);
     }
 
     public enum ModifierPhase { InitialRoll, PlayerReroll, PlayHand }
@@ -90,6 +65,17 @@ namespace Dice.Engine
             ActivationLimit = activationLimit;
             RewardEligible = rewardEligible;
             Availability = availability ?? new ModifierAvailabilityDefinition();
+        }
+
+        /**
+         * Rejects an encounter-exclusive charm listed at place: an encounter's own charm list is the only statement of
+         * the encounter that offers it.
+         */
+        internal void RejectEncounterExclusive(string place, string parameter)
+        {
+            if (Availability.Access == ModifierAccess.EncounterExclusive)
+                throw new ArgumentException("The encounter-exclusive charm " + Id + " is listed in " + place +
+                    "; only an encounter's own charm list offers it.", parameter);
         }
     }
 
