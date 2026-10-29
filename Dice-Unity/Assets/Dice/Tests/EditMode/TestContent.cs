@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.App;
 using Dice.Engine;
+using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
 
@@ -43,8 +44,8 @@ namespace Dice.Tests
          */
         internal static string LitTablePath()
         {
-            var config = AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>("Assets/Dice/Content/DiceApplicationConfig.asset");
-            Assert.That(config != null && config.JourneyCatalog != null, Is.True, "The application configuration has no journey catalog.");
+            var config = Configuration();
+            Assert.That(config.JourneyCatalog, Is.Not.Null, "The application configuration has no journey catalog.");
             string path = config.JourneyCatalog.Entries
                 .Where(journey => journey != null)
                 .SelectMany(journey => journey.Beats.Select(beat => beat.Scene != null ? beat.Scene.Table : null))
@@ -53,6 +54,23 @@ namespace Dice.Tests
                 .OrderBy(value => value, System.StringComparer.Ordinal).FirstOrDefault();
             Assert.That(path, Is.Not.Null, "The authored journey catalog references no encounter table whose scene has scene lighting.");
             return path;
+        }
+
+        /** One charm the authored content uses; which one does not matter. */
+        internal static ModifierAsset AuthoredCharm()
+        {
+            var config = Configuration();
+            Assert.That(config.CatalogAsset, Is.Not.Null, "The application configuration has no catalog.");
+            var charm = config.CatalogAsset.Build().Modifiers.FirstOrDefault();
+            Assert.That(charm, Is.Not.Null, "The application's catalog references no charm.");
+            return charm;
+        }
+
+        private static DiceApplicationConfig Configuration()
+        {
+            var config = AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>("Assets/Dice/Content/DiceApplicationConfig.asset");
+            Assert.That(config, Is.Not.Null, "The application configuration is missing.");
+            return config;
         }
     }
 }

@@ -84,20 +84,6 @@ namespace Dice.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
         }
 
-        /** Checks the catalog lists its referenced charms by GUID whatever their authored order / fails if authored order orders them. */
-        [Test]
-        public void CatalogBuildOrdersModifiersByGuidIndependentOfInputOrder()
-        {
-            var low = CharmId("00000000000000000000000000000001");
-            var middle = CharmId("00000000000000000000000000000002");
-            var high = CharmId("00000000000000000000000000000003");
-            var modifiers = new[] { Modifier("modifier.z", id: high), Modifier("modifier.a", id: low), Modifier("modifier.m", id: middle) };
-            var first = PoolCatalog(modifiers).Build().Catalog;
-            var second = PoolCatalog(modifiers.Reverse().ToArray()).Build().Catalog;
-            Assert.That(first.Modifiers.Select(modifier => modifier.Identity), Is.EqualTo(new[] { low, middle, high }));
-            Assert.That(second.Modifiers.Select(modifier => modifier.Identity), Is.EqualTo(new[] { low, middle, high }));
-        }
-
         /** Checks the catalog holds every charm its encounters and their reward pools reference, once each, and no other / fails if a referencing list is skipped, a shared charm repeats or an unreferenced charm enters. */
         [Test]
         public void CatalogIsBuiltFromExactlyTheReferencedCharms()
@@ -228,19 +214,13 @@ namespace Dice.Tests
         private MechanicalCatalogAsset PoolCatalog(ModifierAsset[] modifiers)
             => Catalog(content.Encounter("encounter.test", rewardLayouts: new[] { new[] { content.RewardPool("pool.test", modifiers) } }));
 
-        private static ModifierDefinition.Id CharmId(string guid) => new ModifierDefinition.Id(Guid.ParseExact(guid, "N"));
-
-        /**
-         * A charm of the name whose id is the given id, or the test charm id of the name without one; without a family it
-         * belongs to the one example family of the test.
-         */
-        private ModifierAsset Modifier(string name, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null,
-            ModifierDefinition.Id? id = null)
+        /** A charm of the name with the test charm id of the name; without a family it belongs to the one example family of the test. */
+        private ModifierAsset Modifier(string name, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null)
         {
             var asset = Create<ModifierAsset>();
             asset.name = name;
             using var serialized = new SerializedObject(asset);
-            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = (id ?? TestModifiers.IdOf(name)).Value.ToString("N");
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = TestModifiers.IdOf(name).Value.ToString("N");
             serialized.FindProperty("family").objectReferenceValue = family != null ? family
                 : exampleFamily != null ? exampleFamily : exampleFamily = Family(FamilyGuid, "family.example");
             serialized.FindProperty("condition").managedReferenceValue = new AlwaysConditionConfig();

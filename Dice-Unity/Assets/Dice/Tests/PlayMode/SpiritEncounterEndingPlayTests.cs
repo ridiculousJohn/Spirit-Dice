@@ -334,8 +334,8 @@ namespace Dice.Tests
 
         /**
          * Installs a catalog in which the journey's encounter keeps its rules, pieces and additions but has short
-         * stages: a won run clears VictoryStages one-point stages with a milestone at each, offering global permanent
-         * unlocks; a lost or abandoned run has one stage it cannot clear. The journey's prerequisites are completed.
+         * stages: a won run clears VictoryStages one-point stages with a milestone at each, offering the encounter's
+         * unlock rewards; a lost or abandoned run has one stage it cannot clear. The journey's prerequisites are completed.
          */
         private void InstallShortEncounter(bool winning, EncounterJourneyAsset authored)
         {
@@ -353,11 +353,10 @@ namespace Dice.Tests
                 .SelectMany(beat => beat.ProgressionReward.Build(original).GrantedModifierIds));
             // Each milestone offers up to three unowned charms, so the final one still has a full offer.
             int unlockCount = stageCount + 2;
-            unlockDefinitions = original.Modifiers.Where(value => value.Availability.Access == ModifierAccess.PermanentUnlock &&
-                value.RewardEligible && !granted.Contains(value.Identity))
-                .Take(unlockCount).ToArray();
+            unlockDefinitions = definition.UnlockRewardModifierIds.Where(id => !granted.Contains(id))
+                .Take(unlockCount).Select(original.GetModifier).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(unlockCount),
-                "The catalog has too few permanent unlocks for a milestone at every stage.");
+                journey.name + ": the encounter has too few unlock rewards for a milestone at every stage.");
             var unlockIds = unlockDefinitions.Select(value => value.Identity).ToArray();
             var shortEncounter = new EncounterDefinition(definition.Identity,
                 Enumerable.Range(0, stageCount).Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)),

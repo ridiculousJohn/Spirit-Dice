@@ -14,18 +14,23 @@ namespace Dice.Editor
     public sealed class TrayCompositionPreviewWindow : EditorWindow
     {
         private const string TableKey = "Dice.TrayCompositionPreview.Table";
+        private const string HistoryCharmKey = "Dice.TrayCompositionPreview.HistoryCharm";
         // Any fixed seed: the preview samples one repeatable opening.
         private const ulong PreviewSeed = 60;
-        /** The id of the one-charm encounter the history preview fabricates; no content lists it. */
-        private static readonly EncounterDefinition.Id PreviewEncounterId =
-            new EncounterDefinition.Id(new Guid("6d1c3a52f0b84e8e9a7c2b4d5e6f7a81"));
         // The sample opening the gameplay overlay shows: the first of three stages, its threshold and its hands and rerolls.
         private const int SampleStageCount = 3;
         private const long SampleThreshold = 120;
         private const int SampleHands = 3;
         private const int SampleRerolls = 3;
+        // The activation each history entry shows: the first charm instance adding a little base score. The history tray
+        // draws only the charm's icon and category, so these values only make the sample a well-formed activation.
+        private const long SampleActivationInstanceId = 1;
+        private const long SampleActivationBaseScore = 10;
+        private const long SampleActivationMultiplier = 0;
+        private const int SampleActivationRerolls = 0;
         // The preview options, the staged view and its output are internal so EditMode tests drive and inspect the stage.
         internal EncounterTablePresentationAsset table;
+        internal ModifierAsset historyCharm;
         [SerializeField] internal bool showGameplayUi = true;
         [SerializeField] internal bool narrow;
         [SerializeField] internal int historyCount = 6;
@@ -52,8 +57,7 @@ namespace Dice.Editor
         private DiceApplicationConfig configuration;
         private MechanicalContent content;
         private ModifierPresentationCatalog charms;
-        private ModifierDefinition historyDefinition;
-        private ModifierContribution historyContribution;
+        private ModifierAsset stagedHistoryCharm;
         private string message;
         private EncounterSnapshot ruleSnapshot;
         private string ruleMessage;
@@ -74,6 +78,7 @@ namespace Dice.Editor
         private void OnEnable()
         {
             table = PreviewAssetSelection.Load<EncounterTablePresentationAsset>(TableKey);
+            historyCharm = PreviewAssetSelection.Load<ModifierAsset>(HistoryCharmKey);
             EditorApplication.playModeStateChanged += PlayModeChanged;
             EditorApplication.projectChanged += SourceChanged;
             Undo.undoRedoPerformed += SourceChanged;
@@ -103,6 +108,7 @@ namespace Dice.Editor
             showPreviewOptions = EditorGUILayout.Foldout(showPreviewOptions, "Preview options", true);
             if (showPreviewOptions)
             {
+                historyCharm = PreviewAssetSelection.Field("History charm", historyCharm, HistoryCharmKey);
                 historyCount = EditorGUILayout.IntSlider("History dice", historyCount, 0, 18);
                 historyScroll = EditorGUILayout.Slider("History scroll", historyScroll, 0, 1);
                 sampleTime = EditorGUILayout.FloatField("Lighting time", Mathf.Max(0, sampleTime));
@@ -179,7 +185,7 @@ namespace Dice.Editor
             encounter.Resize(narrow);
             trayScene.ApplyPresentationSettings();
             dice.SetValues(new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]));
-            if (history.Count != historyCount) RefreshHistory();
+            if (stagedHistoryCharm != historyCharm || history.Count != HistoryEntryCount) RefreshHistory();
             history.SetScroll(historyScroll);
             RefreshGameplayValues();
             encounter.ShowHud(showGameplayUi);
@@ -238,39 +244,21 @@ namespace Dice.Editor
             configuration = configurations[0];
         }
 
+        /** The history tray shows historyCount activations of the chosen charm, and none without one. */
+        private int HistoryEntryCount => historyCharm != null ? historyCount : 0;
+
+        /** Fills the history tray with sample activations of the chosen charm, built from the application's content and skin. */
         private void RefreshHistory()
         {
             history.Clear();
-            if (historyCount == 0) return;
-            EnsureHistoryCharm();
-            for (int i = 0; i < historyCount; ++i) history.Add(historyContribution, charms, historyDefinition, false);
-        }
-
-        /**
-         * Loads the application's content and skin and shows the first of its charms that activates on the opening roll
-         * of an encounter holding only that charm.
-         */
-        private void EnsureHistoryCharm()
-        {
-            if (charms != null) return;
+            stagedHistoryCharm = historyCharm;
+            if (HistoryEntryCount == 0) return;
             EnsureContent();
-            var presentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
-            var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
-                .Select(category => new HandDefinition(category, 1, 1, 0, 0, 0)).ToArray();
-            foreach (ModifierDefinition definition in content.Catalog.Modifiers)
-            {
-                if (definition.Phase != ModifierPhase.InitialRoll) continue;
-                var definitionEncounter = new EncounterDefinition(PreviewEncounterId, new[] { new StageDefinition(1000000, 3, 3) },
-                    startingModifiers: new[] { definition.Identity });
-                var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
-                var contributions = EncounterSession.CreateEncounter(catalog, PreviewEncounterId, PreviewSeed).Snapshot.ModifierContributions;
-                if (contributions.Count == 0) continue;
-                charms = presentation;
-                historyDefinition = definition;
-                historyContribution = contributions[0];
-                return;
-            }
-            throw new InvalidOperationException("The application's content has no charm that activates on an opening roll.");
+            if (charms == null) charms = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
+            ModifierDefinition definition = content.GetDefinition(historyCharm);
+            var contribution = new ModifierContribution(SampleActivationInstanceId, definition, SampleActivationBaseScore,
+                SampleActivationMultiplier, SampleActivationRerolls);
+            for (int i = 0; i < historyCount; ++i) history.Add(contribution, charms, definition, false);
         }
 
         // Internal so EditMode tests drive the stage without the window's GUI.
@@ -304,7 +292,7 @@ namespace Dice.Editor
             compositor?.Dispose();
             compositor = null;
             charms = null;
-            historyDefinition = null;
+            stagedHistoryCharm = null;
             content = null;
             configuration = null;
             ruleSnapshot = null;

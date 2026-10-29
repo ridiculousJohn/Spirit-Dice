@@ -14,8 +14,8 @@ namespace Dice.UnityContent
 
         /**
          * Builds the engine catalog of the listed encounters from the charms the encounters and their reward pools
-         * reference. An encounter played before it joins the list, as in the diagnostic scene, is added to the catalog
-         * built for it.
+         * reference, listed in the order they are first referenced. An encounter played before it joins the list, as in
+         * the diagnostic scene, is added to the catalog built for it.
          */
         public MechanicalContent Build(EncounterAsset played = null)
         {
@@ -63,8 +63,6 @@ namespace Dice.UnityContent
                 encountersById.Add(source.Identity, source);
                 encounterDefinitions[i] = source.Build(Use, Pool);
             }
-            // Ordered by GUID, so the catalog's charm order does not depend on the order content references them.
-            referenced.Sort((left, right) => left.Identity.Value.CompareTo(right.Identity.Value));
             // Each family asset is built once, so the charms of a family share its definition.
             var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
             var familiesById = new Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyAsset>();

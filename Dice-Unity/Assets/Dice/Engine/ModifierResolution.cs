@@ -31,7 +31,7 @@ namespace Dice.Engine
         public long Multiplier { get; }
         public int Rerolls { get; }
 
-        internal ModifierContribution(long instanceId, ModifierDefinition definition, long baseScore, long multiplier, int rerolls)
+        public ModifierContribution(long instanceId, ModifierDefinition definition, long baseScore, long multiplier, int rerolls)
         {
             InstanceId = instanceId;
             DefinitionId = definition.Identity;

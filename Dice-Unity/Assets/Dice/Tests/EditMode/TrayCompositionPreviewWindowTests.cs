@@ -52,7 +52,8 @@ namespace Dice.Tests
             foreach (bool narrow in new[] { false, true })
             {
                 var table = LoadTable(path);
-                window.table = table; window.narrow = narrow; window.historyCount = 6;
+                window.table = table; window.narrow = narrow;
+                window.historyCharm = TestContent.AuthoredCharm(); window.historyCount = 6;
                 window.EnsureStage();
                 var view = window.view;
                 var scene = view.TrayScene;
@@ -121,6 +122,7 @@ namespace Dice.Tests
         public void PreviewControlsRefreshExistingObjectsAndSampleHostTimeDeterministically()
         {
             window.table = LoadTable(TestContent.LitTablePath());
+            window.historyCharm = TestContent.AuthoredCharm();
             window.EnsureStage();
             var view = window.view;
             var scene = view.TrayScene;
