@@ -5,7 +5,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 12;
+        public const int CurrentFormatVersion = 13;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -81,7 +81,7 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveRuleData
     {
-        public string RuleId;
+        public EncounterRuleDefinition.Id RuleId;
         public object State;
     }
 

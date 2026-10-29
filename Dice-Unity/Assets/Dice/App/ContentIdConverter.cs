@@ -46,6 +46,8 @@ namespace Dice.App
             new ContentIdConverter<EncounterDefinition.Id>("encounter", value => new EncounterDefinition.Id(value));
         internal static readonly ContentIdConverter<TablePieceDefinition.Id> Piece =
             new ContentIdConverter<TablePieceDefinition.Id>("table piece", value => new TablePieceDefinition.Id(value));
+        internal static readonly ContentIdConverter<EncounterRuleDefinition.Id> Rule =
+            new ContentIdConverter<EncounterRuleDefinition.Id>("encounter rule", value => new EncounterRuleDefinition.Id(value));
         internal static readonly ContentIdConverter<EncounterJourneyAsset.Id> Journey =
             new ContentIdConverter<EncounterJourneyAsset.Id>("journey", value => new EncounterJourneyAsset.Id(value));
     }

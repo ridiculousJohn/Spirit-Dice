@@ -14,8 +14,8 @@ namespace Dice.Tests
         private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.test");
         // The test piece holds one interaction, its position.
         private const int InteractionIndex = 0;
-        private const string HauntingId = "rule.test.haunting";
-        private const string WardId = "rule.test.ward";
+        private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
+        private static readonly EncounterRuleDefinition.Id WardId = TestRules.IdOf("ward");
         private const int AllButFirstBay = 0b11110;
 
         /** Checks a piece starts at its authored position and moves without touching dice or random streams / fails if a move rolls, disturbs or is lost. */

@@ -12,3 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a8de163135944b7b3e6fe2b4747e11c, type: 3}
   m_Name: DistinctFacesMultiplier
   m_EditorClassIdentifier:
+  assetGuid: 57ddf15a05484a56b82e2eca70b60ba4

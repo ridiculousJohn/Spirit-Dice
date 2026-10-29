@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using Dice.Engine;
+using Dice.UnityContent;
 
 namespace Dice.Presentation
 {
@@ -10,7 +11,8 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Encounter Rule Presentation")]
     public sealed class EncounterRulePresentationAsset : ScriptableObject
     {
-        [SerializeField] private string ruleId;
+        [Tooltip("The encounter rule this card presents; a table's cards present different rules.")]
+        [SerializeField] private EncounterRuleAsset rule;
         [SerializeField] private string displayName;
         [Tooltip("Optional longer description; a rule without one is described by its available text.")]
         [SerializeField, TextArea] private string description;
@@ -24,7 +26,11 @@ namespace Dice.Presentation
         [Tooltip("Optional presentation the rule brings to playback, such as its activation, marked and bound dice or a disturbance; empty for none.")]
         [SerializeField] private RulePresenterAsset presenter;
 
-        public string RuleId => ruleId;
+        /** The rule asset the card presents; null only on an invalid card, which table validation rejects. */
+        public EncounterRuleAsset Rule => rule;
+        /** The id of the rule the card presents; a card without a rule fails, naming the card. */
+        public EncounterRuleDefinition.Id RuleId
+            => rule != null ? rule.Identity : throw new InvalidOperationException("The rule card " + name + " presents no rule.");
         public string DisplayName => displayName;
         public string Description => string.IsNullOrWhiteSpace(description) ? availableText : description;
         public Sprite Icon => icon;
@@ -43,11 +49,12 @@ namespace Dice.Presentation
         }
 
         /** The card among the cards that presents the rule, or null when none does. */
-        public static EncounterRulePresentationAsset For(IReadOnlyList<EncounterRulePresentationAsset> cards, string ruleId)
+        public static EncounterRulePresentationAsset For(IReadOnlyList<EncounterRulePresentationAsset> cards,
+            EncounterRuleDefinition.Id ruleId)
         {
             if (cards == null) throw new ArgumentNullException(nameof(cards));
             foreach (var card in cards)
-                if (card != null && string.Equals(card.ruleId, ruleId, StringComparison.Ordinal)) return card;
+                if (card != null && card.RuleId == ruleId) return card;
             return null;
         }
     }

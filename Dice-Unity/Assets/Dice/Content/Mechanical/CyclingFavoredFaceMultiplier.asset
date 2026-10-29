@@ -12,3 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 834d242762554f66ab16ead7707ed37e, type: 3}
   m_Name: CyclingFavoredFaceMultiplier
   m_EditorClassIdentifier:
+  assetGuid: 0e22fba110d34ca9b092d82a19b83f77

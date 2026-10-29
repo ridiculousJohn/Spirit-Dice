@@ -62,7 +62,8 @@ namespace Dice.Tests
             var charm = new ModifierDefinition("test.session.scored", TestFamilies.Of("test.session.scored"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(2) });
             var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 0) },
-                startingModifiers: new[] { charm.Id }, rules: new EncounterRuleDefinition[] { new DistinctFacesMultiplierRuleDefinition() });
+                startingModifiers: new[] { charm.Id },
+                rules: new EncounterRuleDefinition[] { new DistinctFacesMultiplierRuleDefinition(TestRules.IdOf("distinct_faces_multiplier")) });
             var session = EncounterSession.CreateEncounter(new MechanicalCatalog("test.session.scored_links", TestContent.Hands(),
                 new[] { encounter }, new[] { charm }), encounterId, 5);
             var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);

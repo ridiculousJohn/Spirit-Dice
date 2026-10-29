@@ -292,10 +292,10 @@ namespace Dice.Engine
 
     public sealed class EncounterRuleActivatedEvent : RuleEvent
     {
-        public string RuleId { get; }
+        public EncounterRuleDefinition.Id RuleId { get; }
         public long MultiplierBonus { get; }
 
-        internal EncounterRuleActivatedEvent(EncounterState state, string ruleId, long multiplierBonus = 0)
+        internal EncounterRuleActivatedEvent(EncounterState state, EncounterRuleDefinition.Id ruleId, long multiplierBonus = 0)
             : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;

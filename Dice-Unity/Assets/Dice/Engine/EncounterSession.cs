@@ -159,7 +159,7 @@ namespace Dice.Engine
                 long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
                 ruleMultiplier = checked(ruleMultiplier + bonus);
-                var activated = new EncounterRuleActivatedEvent(next, rule.Id, bonus);
+                var activated = new EncounterRuleActivatedEvent(next, rule.Identity, bonus);
                 ruleBonuses.Add(activated);
                 events.Add(activated);
             }
@@ -377,7 +377,7 @@ namespace Dice.Engine
             int beforeRerolls = next.RerollsRemaining;
             var costWaiver = EncounterRuleResolver.WaiveRerollCost(definition, next);
             if (costWaiver == null) --next.RerollsRemaining;
-            else events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Id));
+            else events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Identity));
             next.RerollsSpentOnHand = checked(next.RerollsSpentOnHand + 1);
             next.RerollsSpentInStage = checked(next.RerollsSpentInStage + 1);
             next.TotalRerollsSpent = checked(next.TotalRerollsSpent + 1);

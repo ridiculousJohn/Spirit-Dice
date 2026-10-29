@@ -8,6 +8,7 @@ namespace Dice.UnityContent
     {
         [SerializeField, Min(1)] private int multiplierPerFavoredDie = 2;
 
-        public override EncounterRuleDefinition Build() => new CyclingFavoredFaceMultiplierRuleDefinition(multiplierPerFavoredDie);
+        public override EncounterRuleDefinition Build()
+            => new CyclingFavoredFaceMultiplierRuleDefinition(Identity, multiplierPerFavoredDie);
     }
 }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: CandleWard
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterRulePresentationAsset
-  ruleId: rule.merchant.candle_ward
+  rule: {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
   displayName: The Merchant's Candle
   description: "Drag the candle beside a die. That bay is <b>protected</b> from the poltergeist's rerolls and flips.\n\nMove it whenever you can act. Left in its holder, it protects nothing."
   availableText: Wards the candle's bay

@@ -8,7 +8,7 @@ namespace Dice.Tests
     public sealed class DistinctFacesMultiplierRuleTests
     {
         private static readonly EncounterDefinition.Id EncounterId = TestContent.EncounterId;
-        private const string RuleId = DistinctFacesMultiplierRuleDefinition.StableId;
+        private static readonly EncounterRuleDefinition.Id RuleId = TestRules.IdOf("distinct_faces_multiplier");
 
         /** Checks the bonus counts distinct faces / fails if it counts dice or repeated faces. */
         [Test]
@@ -52,7 +52,7 @@ namespace Dice.Tests
             {
                 new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 5, 3) },
                     startingModifiers: modifiers.Select(value => value.Id),
-                    rules: new[] { new DistinctFacesMultiplierRuleDefinition() })
+                    rules: new[] { new DistinctFacesMultiplierRuleDefinition(RuleId) })
             }, modifiers);
 
         private static EncounterSession WithDice(MechanicalCatalog catalog, params int[] dice)

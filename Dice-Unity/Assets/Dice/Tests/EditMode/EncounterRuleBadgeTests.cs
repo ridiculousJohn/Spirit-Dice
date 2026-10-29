@@ -17,6 +17,7 @@ namespace Dice.Tests
      */
     public sealed class EncounterRuleBadgeTests
     {
+        private static readonly EncounterRuleDefinition.Id FreeId = TestRules.IdOf("first_reroll_free");
         private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.rule-badge");
         private readonly List<Object> created = new List<Object>();
         private SyntheticUi ui;
@@ -66,8 +67,8 @@ namespace Dice.Tests
         [Test]
         public void BadgeShowsTheRuleStateAndHidesARuleTheEncounterLacks()
         {
-            var session = Session(new FirstRerollFreeRuleDefinition());
-            var rule = Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "favor ready", "favor spent");
+            var session = Session(new FirstRerollFreeRuleDefinition(FreeId));
+            var rule = Presentation(FreeId, ModifierPhase.PlayerReroll, "favor ready", "favor spent");
             hud.RenderEncounterRule(session.Snapshot, rule);
             Assert.That(badges["reroll"].gameObject.activeSelf, Is.True);
             Assert.That(badgeLabels["reroll"].text, Is.EqualTo("favor ready"));
@@ -81,7 +82,8 @@ namespace Dice.Tests
             Assert.That(badgeLabels["reroll"].text, Is.EqualTo("favor spent"));
             Assert.That(badges["reroll"].alpha, Is.LessThan(1f), "A spent rule is dimmed.");
 
-            hud.RenderEncounterRule(session.Snapshot, Presentation("rule.absent", ModifierPhase.PlayerReroll, "absent", "absent"));
+            hud.RenderEncounterRule(session.Snapshot,
+                Presentation(TestRules.IdOf("absent"), ModifierPhase.PlayerReroll, "absent", "absent"));
             Assert.That(badges["reroll"].gameObject.activeSelf || badges["play"].gameObject.activeSelf, Is.False,
                 "A rule the encounter lacks is not shown.");
         }
@@ -93,14 +95,14 @@ namespace Dice.Tests
         [Test]
         public void BadgeFollowsTheActionOfTheRulesActivationPhase()
         {
-            var session = Session(new FirstRerollFreeRuleDefinition());
+            var session = Session(new FirstRerollFreeRuleDefinition(FreeId));
             hud.RenderEncounterRule(session.Snapshot,
-                Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "reroll", "reroll"));
+                Presentation(FreeId, ModifierPhase.PlayerReroll, "reroll", "reroll"));
             Assert.That(badges["reroll"].gameObject.activeSelf, Is.True);
             Assert.That(badges["play"].gameObject.activeSelf, Is.False);
             Assert.That(badgeLabels["reroll"].text, Is.EqualTo("reroll"));
             hud.RenderEncounterRule(session.Snapshot,
-                Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayHand, "play", "play"));
+                Presentation(FreeId, ModifierPhase.PlayHand, "play", "play"));
             Assert.That(badges["play"].gameObject.activeSelf, Is.True);
             Assert.That(badges["reroll"].gameObject.activeSelf, Is.False);
             Assert.That(badgeLabels["play"].text, Is.EqualTo("play"));
@@ -113,16 +115,16 @@ namespace Dice.Tests
         [Test]
         public void BadgeShowsTheRuleIconOnlyWhenOneIsAuthored()
         {
-            var session = Session(new FirstRerollFreeRuleDefinition());
+            var session = Session(new FirstRerollFreeRuleDefinition(FreeId));
             var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), new Vector2(.5f, .5f));
             created.Add(sprite);
             hud.RenderEncounterRule(session.Snapshot,
-                Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "icon", "icon", sprite));
+                Presentation(FreeId, ModifierPhase.PlayerReroll, "icon", "icon", sprite));
             Assert.That(badgeIcons["reroll"].sprite, Is.SameAs(sprite));
             Assert.That(badgeIcons["reroll"].enabled, Is.True);
 
             hud.RenderEncounterRule(session.Snapshot,
-                Presentation(FirstRerollFreeRuleDefinition.StableId, ModifierPhase.PlayerReroll, "none", "none"));
+                Presentation(FreeId, ModifierPhase.PlayerReroll, "none", "none"));
             Assert.That(badgeIcons["reroll"].sprite == null, Is.True);
             Assert.That(badgeIcons["reroll"].enabled, Is.False);
         }
@@ -134,8 +136,9 @@ namespace Dice.Tests
         [Test]
         public void TheTableShowsItsFlaggedCardOnTheHud()
         {
-            var unflagged = Presentation("rule.unflagged", ModifierPhase.PlayerReroll, "unflagged", "unflagged", shownOnHud: false);
-            var flagged = Presentation("rule.flagged", ModifierPhase.PlayHand, "flagged", "flagged", shownOnHud: true);
+            var unflagged = Presentation(TestRules.IdOf("unflagged"), ModifierPhase.PlayerReroll, "unflagged", "unflagged",
+                shownOnHud: false);
+            var flagged = Presentation(TestRules.IdOf("flagged"), ModifierPhase.PlayHand, "flagged", "flagged", shownOnHud: true);
             Assert.That(Table("table.flagged", unflagged, flagged).HudRuleCard, Is.SameAs(flagged));
             Assert.That(Table("table.unflagged", unflagged).HudRuleCard, Is.Null);
         }
@@ -148,8 +151,8 @@ namespace Dice.Tests
         public void ATableFlaggingMoreThanOneHudCardFails()
         {
             var table = Table("table.two-flagged",
-                Presentation("rule.first", ModifierPhase.PlayerReroll, "first", "first", shownOnHud: true),
-                Presentation("rule.second", ModifierPhase.PlayHand, "second", "second", shownOnHud: true));
+                Presentation(TestRules.IdOf("first"), ModifierPhase.PlayerReroll, "first", "first", shownOnHud: true),
+                Presentation(TestRules.IdOf("second"), ModifierPhase.PlayHand, "second", "second", shownOnHud: true));
             var failure = Assert.Throws<InvalidOperationException>(() => _ = table.HudRuleCard);
             Assert.That(failure.Message, Does.Contain("table.two-flagged"));
         }
@@ -161,10 +164,11 @@ namespace Dice.Tests
         [Test]
         public void RuleWordingFillsTheValuesTheRuleSnapshotSupplies()
         {
-            var presentation = Presentation("rule.favored", ModifierPhase.PlayHand, "Favored {face} of {count}", "Spent {face}");
-            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot("rule.favored", true, 4)), Is.EqualTo("Favored 4 of {count}"));
-            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot("rule.favored", false, 6)), Is.EqualTo("Spent 6"));
-            Assert.That(presentation.TextFor(new EncounterRuleSnapshot("rule.favored", true)), Is.EqualTo("Favored {face} of {count}"));
+            var favored = TestRules.IdOf("favored");
+            var presentation = Presentation(favored, ModifierPhase.PlayHand, "Favored {face} of {count}", "Spent {face}");
+            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot(favored, true, 4)), Is.EqualTo("Favored 4 of {count}"));
+            Assert.That(presentation.TextFor(new FavoredFaceRuleSnapshot(favored, false, 6)), Is.EqualTo("Spent 6"));
+            Assert.That(presentation.TextFor(new EncounterRuleSnapshot(favored, true)), Is.EqualTo("Favored {face} of {count}"));
         }
 
         /** A one-stage test encounter with the given rule. */
@@ -176,15 +180,17 @@ namespace Dice.Tests
                 new MechanicalCatalog("rule-badge.v1", TestContent.Hands(), new[] { encounter }), EncounterId, 1);
         }
 
-        private EncounterRulePresentationAsset Presentation(string ruleId, ModifierPhase phase, string available, string used,
-            Sprite icon = null, bool shownOnHud = false)
+        private EncounterRulePresentationAsset Presentation(EncounterRuleDefinition.Id ruleId, ModifierPhase phase, string available,
+            string used, Sprite icon = null, bool shownOnHud = false)
         {
+            var rule = TestRules.Asset(ruleId);
+            created.Add(rule);
             var asset = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(asset);
-            asset.name = ruleId;
+            asset.name = "Card " + ruleId;
             using var serialized = new SerializedObject(asset);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
-            serialized.FindProperty("displayName").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
+            serialized.FindProperty("displayName").stringValue = asset.name;
             serialized.FindProperty("availableText").stringValue = available;
             serialized.FindProperty("usedText").stringValue = used;
             serialized.FindProperty("icon").objectReferenceValue = icon;

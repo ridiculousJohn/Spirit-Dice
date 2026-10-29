@@ -8,6 +8,7 @@ namespace Dice.Tests
 {
     public sealed class EncounterRuleTests
     {
+        private static readonly EncounterRuleDefinition.Id FreeId = TestRules.IdOf("first_reroll_free");
         [TestCase(1)]
         [TestCase(10)]
         [TestCase(31)]
@@ -15,7 +16,7 @@ namespace Dice.Tests
         {
             var session = Session(Catalog());
             var initial = session.Snapshot;
-            Assert.That(initial.EncounterRules.Single().Id, Is.EqualTo(FirstRerollFreeRuleDefinition.StableId));
+            Assert.That(initial.EncounterRules.Single().Id, Is.EqualTo(FreeId));
             Assert.That(initial.EncounterRules.Single().IsAvailable, Is.True);
             var free = Execute(session, new RerollDiceAction(mask));
             Assert.That(free.Snapshot.RerollsRemaining, Is.EqualTo(2));
@@ -25,7 +26,7 @@ namespace Dice.Tests
             Assert.That(initial.EncounterRules.Single().IsAvailable, Is.True);
             Assert.That(free.Events.Select(value => value.GetType()), Is.EqualTo(new[]
                 { typeof(EncounterRuleActivatedEvent), typeof(DiceRolledEvent) }));
-            Assert.That(((EncounterRuleActivatedEvent)free.Events[0]).RuleId, Is.EqualTo(FirstRerollFreeRuleDefinition.StableId));
+            Assert.That(((EncounterRuleActivatedEvent)free.Events[0]).RuleId, Is.EqualTo(FreeId));
             for (int i = 0; i < DiceValues.Count; ++i)
                 if ((mask & (1 << i)) == 0) Assert.That(free.Snapshot.CurrentDice[i], Is.EqualTo(initial.CurrentDice[i]));
             var paid = Execute(session, new RerollDiceAction(mask));
@@ -225,7 +226,7 @@ namespace Dice.Tests
         [Test]
         public void RulesAreCopiedAndRejectNullOrDuplicateDefinitions()
         {
-            var rules = new List<EncounterRuleDefinition> { new FirstRerollFreeRuleDefinition() };
+            var rules = new List<EncounterRuleDefinition> { new FirstRerollFreeRuleDefinition(FreeId) };
             var stages = new[] { new StageDefinition(1000, 1, 0) };
             var definition = new EncounterDefinition(TestContent.EncounterId, stages, rules: rules);
             rules.Clear();
@@ -233,7 +234,7 @@ namespace Dice.Tests
             Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId, stages,
                 rules: new EncounterRuleDefinition[] { null }));
             Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId, stages,
-                rules: new[] { new FirstRerollFreeRuleDefinition(), new FirstRerollFreeRuleDefinition() }));
+                rules: new[] { new FirstRerollFreeRuleDefinition(FreeId), new FirstRerollFreeRuleDefinition(FreeId) }));
         }
 
         [Test]
@@ -263,7 +264,7 @@ namespace Dice.Tests
             {
                 new EncounterSaveRuleData
                 {
-                    RuleId = FirstRerollFreeRuleDefinition.StableId,
+                    RuleId = FreeId,
                     State = new FirstRerollFreeSaveData { FreeRerollsUsedInStage = 1, TotalFreeRerollsUsed = 1 }
                 }
             };
@@ -277,21 +278,21 @@ namespace Dice.Tests
         [Test]
         public void RuleSnapshotsCompareTheirTypeAndTheirRulesOwnState()
         {
-            var favored = new FavoredFaceRuleSnapshot("rule.a", true, 3);
-            Assert.That(favored, Is.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 3)));
-            Assert.That(favored.GetHashCode(), Is.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 3).GetHashCode()));
-            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.a", true, 4)));
-            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.a", false, 3)));
-            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot("rule.b", true, 3)));
+            var favored = new FavoredFaceRuleSnapshot(TestRules.IdOf("a"), true, 3);
+            Assert.That(favored, Is.EqualTo(new FavoredFaceRuleSnapshot(TestRules.IdOf("a"), true, 3)));
+            Assert.That(favored.GetHashCode(), Is.EqualTo(new FavoredFaceRuleSnapshot(TestRules.IdOf("a"), true, 3).GetHashCode()));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot(TestRules.IdOf("a"), true, 4)));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot(TestRules.IdOf("a"), false, 3)));
+            Assert.That(favored, Is.Not.EqualTo(new FavoredFaceRuleSnapshot(TestRules.IdOf("b"), true, 3)));
 
-            var binding = new DieBindingRuleSnapshot("rule.a", true, 1, 2);
-            Assert.That(binding, Is.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 2)));
-            Assert.That(binding.GetHashCode(), Is.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 2).GetHashCode()));
-            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 2, 2)));
-            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot("rule.a", true, 1, 4)));
+            var binding = new DieBindingRuleSnapshot(TestRules.IdOf("a"), true, 1, 2);
+            Assert.That(binding, Is.EqualTo(new DieBindingRuleSnapshot(TestRules.IdOf("a"), true, 1, 2)));
+            Assert.That(binding.GetHashCode(), Is.EqualTo(new DieBindingRuleSnapshot(TestRules.IdOf("a"), true, 1, 2).GetHashCode()));
+            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot(TestRules.IdOf("a"), true, 2, 2)));
+            Assert.That(binding, Is.Not.EqualTo(new DieBindingRuleSnapshot(TestRules.IdOf("a"), true, 1, 4)));
 
-            var plain = new EncounterRuleSnapshot("rule.a", true);
-            Assert.That(plain, Is.EqualTo(new EncounterRuleSnapshot("rule.a", true)));
+            var plain = new EncounterRuleSnapshot(TestRules.IdOf("a"), true);
+            Assert.That(plain, Is.EqualTo(new EncounterRuleSnapshot(TestRules.IdOf("a"), true)));
             Assert.That(plain, Is.Not.EqualTo(favored));
             Assert.That(favored, Is.Not.EqualTo(plain));
             Assert.That(plain.TextValues, Is.Empty);
@@ -315,7 +316,7 @@ namespace Dice.Tests
             => new TestCaseData(mutate).SetName("EncounterRuleAccounting_" + name);
 
         private static FirstRerollFreeSaveData Free(EncounterSaveData save)
-            => (FirstRerollFreeSaveData)save.RuleStates.Single(value => value.RuleId == FirstRerollFreeRuleDefinition.StableId).State;
+            => (FirstRerollFreeSaveData)save.RuleStates.Single(value => value.RuleId == FreeId).State;
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierEffect effect, ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)
@@ -327,7 +328,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, hands, paidRerolls) },
                 startingModifiers: modifiers?.Select(value => value.Id),
-                rules: new[] { new FirstRerollFreeRuleDefinition() });
+                rules: new[] { new FirstRerollFreeRuleDefinition(FreeId) });
             return new MechanicalCatalog("test.encounter_rules", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 

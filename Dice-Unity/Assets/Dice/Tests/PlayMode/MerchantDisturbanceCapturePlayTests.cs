@@ -338,7 +338,7 @@ namespace Dice.Tests
             {
                 var blocked = events.OfType<DisturbanceBlockedEvent>().Single();
                 Assert.That(blocked.Bay, Is.EqualTo(plan.Bay));
-                Assert.That(blocked.ProtectingRuleId, Is.EqualTo(ward.Id));
+                Assert.That(blocked.ProtectingRuleId, Is.EqualTo(ward.Identity));
                 Assert.That(events.OfType<DieDisturbedEvent>(), Is.Empty);
             }
             else

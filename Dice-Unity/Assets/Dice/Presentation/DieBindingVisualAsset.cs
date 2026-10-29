@@ -51,7 +51,7 @@ namespace Dice.Presentation
             if (diePrefab == null) throw new InvalidOperationException("Binding visuals require a per-die prefab.");
             if (flareLight >= 0 && context.Lights != null && flareLight >= context.Lights.LightCount)
                 throw new InvalidOperationException("The binding flare requires a scene light.");
-            return new DieBindingVisualPresenter(this, rule.Id, context);
+            return new DieBindingVisualPresenter(this, rule.Identity, context);
         }
 
         internal void FlareMark(IRuleSceneLights lights) => Flare(lights, markFlarePeak, markFlareRise, markFlareHold, markFlareFall);
@@ -73,11 +73,12 @@ namespace Dice.Presentation
     public sealed class DieBindingVisualPresenter : RulePresenter
     {
         private readonly DieBindingVisualAsset settings;
-        private readonly string ruleId;
+        private readonly EncounterRuleDefinition.Id ruleId;
         private readonly RulePresenterContext context;
         private readonly DieBindingVisual[] dice = new DieBindingVisual[DiceValues.Count];
 
-        internal DieBindingVisualPresenter(DieBindingVisualAsset settings, string ruleId, RulePresenterContext context)
+        internal DieBindingVisualPresenter(DieBindingVisualAsset settings, EncounterRuleDefinition.Id ruleId,
+            RulePresenterContext context)
         {
             this.settings = settings;
             this.ruleId = ruleId;

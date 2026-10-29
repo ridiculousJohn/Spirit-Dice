@@ -158,9 +158,9 @@ namespace Dice.Engine
             StartingModifiers = modifiers.AsReadOnly();
             RewardPolicy = rewardPolicy;
             var ruleList = rules == null ? new List<EncounterRuleDefinition>() : new List<EncounterRuleDefinition>(rules);
-            var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+            var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in ruleList)
-                if (rule == null || !ruleIds.Add(rule.Id))
+                if (rule == null || !ruleIds.Add(rule.Identity))
                     throw new ArgumentException("Encounter rule IDs must be unique and nonnull.", nameof(rules));
             Rules = ruleList.AsReadOnly();
             var milestones = unlockMilestones == null ? new List<ModifierUnlockMilestone>() : new List<ModifierUnlockMilestone>(unlockMilestones);

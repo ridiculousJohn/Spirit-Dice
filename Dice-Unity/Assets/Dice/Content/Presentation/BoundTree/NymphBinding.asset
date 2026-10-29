@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: NymphBinding
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterRulePresentationAsset
-  ruleId: rule.nymph.binding
+  rule: {fileID: 11400000, guid: 6c1b0abcfde24a46ae3c523210fc5da9, type: 2}
   displayName: Binding
   description: After each roll, the spirit marks a die. Its next result is bound and cannot be rerolled until the hand is played.
   availableText: Binds a marked die

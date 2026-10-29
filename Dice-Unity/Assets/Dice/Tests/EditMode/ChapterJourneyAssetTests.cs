@@ -39,7 +39,7 @@ namespace Dice.Tests
         {
             var story = Journey("story.first");
             var rule = Create<EncounterRulePresentationAsset>();
-            SyntheticUi.Set(rule, "ruleId", "rule.not.in.encounter");
+            SyntheticUi.Set(rule, "rule", content.Own(TestRules.Asset(TestRules.IdOf("not.in.encounter"))));
             SyntheticUi.Set(story.TableSceneAt(0), "rulePresentations", new[] { rule });
             var journeys = Catalog(story);
             Assert.That(story.Encounters, Is.Empty);

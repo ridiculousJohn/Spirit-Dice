@@ -17,7 +17,7 @@ namespace Dice.Tests
      */
     public sealed class DieBindingPresenterTests
     {
-        private const string BindingId = "rule.test.binding";
+        private static readonly EncounterRuleDefinition.Id BindingId = TestRules.IdOf("test.binding");
         private readonly List<Object> created = new List<Object>();
         private readonly List<TestRulePresenterContext> contexts = new List<TestRulePresenterContext>();
 
@@ -114,7 +114,7 @@ namespace Dice.Tests
             fixture.Settle();
             AssertLevels(fixture, 0, 0, "No snapshot");
 
-            var other = EncounterSession.CreateEncounter(Catalog("rule.other.binding"), TestContent.EncounterId, 11);
+            var other = EncounterSession.CreateEncounter(Catalog(TestRules.IdOf("other.binding")), TestContent.EncounterId, 11);
             foreach (var ruleEvent in other.InitialResolution.Events.Where(value => !(value is HandScoredEvent)))
                 Assert.That(fixture.Presenter.Present(ruleEvent), Is.Null, "Another rule's events are not this card's.");
             Assert.That(fixture.Presenter.Present(other.InitialResolution.Events.OfType<HandStartedEvent>().Single()), Is.Null);
@@ -129,12 +129,12 @@ namespace Dice.Tests
         public void OnlyRuleCardsWithPresentersBuildAContextAndPresentersWhoseDisposalRemovesTheirDieVisuals()
         {
             var encounter = Catalog().GetEncounter(TestContent.EncounterId);
-            var plain = new[] { Card("rule.test.plain", null), null, Card("rule.test.other", null) };
+            var plain = new[] { Card(TestRules.IdOf("test.plain"), null), null, Card(TestRules.IdOf("test.other"), null) };
             bool built = false;
             Assert.That(EncounterRulePresenters.Create(plain, encounter, () => { built = true; return null; }), Is.Null);
             Assert.That(built, Is.False, "Cards without presenters build no context.");
 
-            var cards = new[] { Card("rule.test.plain", null), Card(BindingId, BindingAsset()) };
+            var cards = new[] { Card(TestRules.IdOf("test.plain"), null), Card(BindingId, BindingAsset()) };
             var context = Context();
             var presenters = EncounterRulePresenters.Create(cards, encounter, () => context);
             try
@@ -150,7 +150,7 @@ namespace Dice.Tests
          * Marks, binds and releases through the asset's presenter on a session of a binding rule with the given id; the
          * expected flares are the asset's own mark and binding flares.
          */
-        private void AssertBindingSequence(DieBindingVisualAsset asset, string ruleId)
+        private void AssertBindingSequence(DieBindingVisualAsset asset, EncounterRuleDefinition.Id ruleId)
         {
             string name = asset.name;
             var fixture = new PresenterFixture(this, asset, ruleId);
@@ -238,10 +238,10 @@ namespace Dice.Tests
             throw new ArgumentException("No die in the mask.", nameof(mask));
         }
 
-        private static MechanicalCatalog Catalog(string ruleId = BindingId)
+        private static MechanicalCatalog Catalog(EncounterRuleDefinition.Id? ruleId = null)
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                rules: new EncounterRuleDefinition[] { new DieBindingRuleDefinition(ruleId, true, true) });
+                rules: new EncounterRuleDefinition[] { new DieBindingRuleDefinition(ruleId ?? BindingId, true, true) });
             return new MechanicalCatalog("test.binding.visuals", TestContent.Hands(), new[] { encounter });
         }
 
@@ -290,12 +290,14 @@ namespace Dice.Tests
             return asset;
         }
 
-        private EncounterRulePresentationAsset Card(string ruleId, RulePresenterAsset presenter)
+        private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId, RulePresenterAsset presenter)
         {
+            var rule = TestRules.Asset(ruleId);
+            created.Add(rule);
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(card);
             using var serialized = new SerializedObject(card);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.FindProperty("presenter").objectReferenceValue = presenter;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return card;
@@ -314,7 +316,7 @@ namespace Dice.Tests
             public readonly TestRulePresenterContext Context;
             public readonly DieBindingVisualPresenter Presenter;
 
-            public PresenterFixture(DieBindingPresenterTests owner, DieBindingVisualAsset asset, string ruleId)
+            public PresenterFixture(DieBindingPresenterTests owner, DieBindingVisualAsset asset, EncounterRuleDefinition.Id ruleId)
             {
                 Context = owner.Context();
                 var rule = Catalog(ruleId).GetEncounter(TestContent.EncounterId).Rules.Single();

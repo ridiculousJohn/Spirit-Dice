@@ -15,7 +15,7 @@ namespace Dice.Tests
         {
             var stage = new StageDefinition(1000000, 3, 3);
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { stage },
-                rules: new[] { new FirstRerollFreeRuleDefinition() });
+                rules: new[] { new FirstRerollFreeRuleDefinition(TestRules.IdOf("first_reroll_free")) });
             var catalog = new MechanicalCatalog("test.json.free_reroll", TestContent.Hands(), new[] { encounter });
             var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 60);
             Assert.That(original.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);

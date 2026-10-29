@@ -53,7 +53,7 @@ namespace Dice.Tests
             bool afterReroll = encounter.Rules.OfType<DieInterferenceRuleDefinition>()
                 .Any(rule => rule.AfterPlayerReroll && Repels(ward, rule));
             EncounterAction Action() => afterReroll ? (EncounterAction)new RerollDiceAction(ContentReady.RerollMask) : PlayHandAction.Instance;
-            string context = journey.name + " " + ward.Id;
+            string context = journey.name + " " + ward.Identity;
             ulong seed = 0;
             int bay = -1;
             for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)
@@ -68,7 +68,7 @@ namespace Dice.Tests
                     new MovePieceInput(PiecePosition.Bay(attempt.Bay))), warded.Snapshot.Revision);
                 if (!moved.Accepted) continue;
                 var blocked = warded.Execute(Action(), warded.Snapshot.Revision).Events.OfType<DisturbanceBlockedEvent>()
-                    .FirstOrDefault(value => value.Bay == attempt.Bay && value.ProtectingRuleId == ward.Id);
+                    .FirstOrDefault(value => value.Bay == attempt.Bay && value.ProtectingRuleId == ward.Identity);
                 if (blocked == null) continue;
                 seed = candidate;
                 bay = attempt.Bay;
@@ -102,7 +102,7 @@ namespace Dice.Tests
             var events = resolutions[0].Events;
             var repelled = events.OfType<DisturbanceBlockedEvent>().Single();
             Assert.That(repelled.Bay, Is.EqualTo(bay), context);
-            Assert.That(repelled.ProtectingRuleId, Is.EqualTo(ward.Id), context);
+            Assert.That(repelled.ProtectingRuleId, Is.EqualTo(ward.Identity), context);
             Assert.That(events.OfType<DieDisturbedEvent>().Where(value => value.Bay == bay), Is.Empty, context);
             Assert.That(flared, Is.True, context + ": the ward's piece must flare when it repels the attempt.");
             Assert.That(reacted, Is.True, context + ": the host must react to the repelled attempt.");

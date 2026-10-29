@@ -32,7 +32,7 @@ namespace Dice.Presentation
         {
             if (!FiniteValue.Is(hold) || hold < 0f || !FiniteValue.Is(playHandBeat) || playHandBeat < 0f)
                 throw new InvalidOperationException("The interference presenter " + name + " requires nonnegative timings.");
-            return new DieInterferencePresenter(this, rule.Id, context);
+            return new DieInterferencePresenter(this, rule.Identity, context);
         }
     }
 
@@ -40,14 +40,15 @@ namespace Dice.Presentation
     public sealed class DieInterferencePresenter : RulePresenter
     {
         private readonly DieInterferencePresenterAsset settings;
-        private readonly string ruleId;
+        private readonly EncounterRuleDefinition.Id ruleId;
         private readonly RulePresenterContext context;
         // Sound choices are cosmetic and never touch the engine's random streams.
         private readonly System.Random cosmeticRandom = new System.Random();
         private AudioClip lastDisturbanceClip;
         private AudioClip lastBlockedClip;
 
-        internal DieInterferencePresenter(DieInterferencePresenterAsset settings, string ruleId, RulePresenterContext context)
+        internal DieInterferencePresenter(DieInterferencePresenterAsset settings, EncounterRuleDefinition.Id ruleId,
+            RulePresenterContext context)
         {
             this.settings = settings;
             this.ruleId = ruleId;

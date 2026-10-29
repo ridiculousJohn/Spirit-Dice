@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ae25c1529f83454ba0dcae8dfbe7a12, type: 3}
   m_Name: NymphBinding
   m_EditorClassIdentifier: 
-  ruleId: rule.nymph.binding
+  assetGuid: 6c1b0abcfde24a46ae3c523210fc5da9
   marksAfterOpeningRoll: 1
   marksAfterPlayerReroll: 1

@@ -104,7 +104,7 @@ discovers those three families and grants nothing; the bound tree journey refere
 Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
 variants, offered only through that list as Lantern Seekers are through the
 moth's. They trigger when at least three dice show the face of a die bound by
-the encounter's binding rule (`rule.nymph.binding`); the bound die counts toward
+the encounter's binding rule (`NymphBinding.asset`); the bound die counts toward
 the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and
 +1 reroll. Each is tier 1 and once per hand. The family provisionally reuses the
 Joined Roots icon and artwork and the standard effect-category assets until

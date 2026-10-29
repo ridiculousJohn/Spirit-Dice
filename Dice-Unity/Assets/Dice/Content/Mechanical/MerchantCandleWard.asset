@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c8c866ba1f4439b26a7a1fc7669de8, type: 3}
   m_Name: MerchantCandleWard
   m_EditorClassIdentifier: 
-  ruleId: rule.merchant.candle_ward
+  assetGuid: d251210bd317410995b91e23a10daeac
   piece: {fileID: 11400000, guid: 9bd9f5a54c6a09a4cb060d91cc64351f, type: 2}
   blockedEffects: 0000000001000000i

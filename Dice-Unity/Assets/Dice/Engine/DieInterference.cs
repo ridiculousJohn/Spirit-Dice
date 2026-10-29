@@ -8,7 +8,7 @@ namespace Dice.Engine
 
     public sealed class DieDisturbedEvent : RuleEvent
     {
-        public string RuleId { get; }
+        public EncounterRuleDefinition.Id RuleId { get; }
         public int Bay { get; }
         public DieInterferenceKind Kind { get; }
         /** The committed action the disturbance followed. */
@@ -16,8 +16,8 @@ namespace Dice.Engine
         public int Before { get; }
         public int After { get; }
 
-        internal DieDisturbedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind, InterferenceTrigger trigger,
-            int before, int after)
+        internal DieDisturbedEvent(EncounterState state, EncounterRuleDefinition.Id ruleId, int bay, DieInterferenceKind kind,
+            InterferenceTrigger trigger, int before, int after)
             : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
@@ -35,15 +35,15 @@ namespace Dice.Engine
 
     public sealed class DisturbanceBlockedEvent : RuleEvent
     {
-        public string RuleId { get; }
+        public EncounterRuleDefinition.Id RuleId { get; }
         public int Bay { get; }
         public DieInterferenceKind Kind { get; }
         /** The committed action the blocked disturbance followed. */
         public InterferenceTrigger Trigger { get; }
-        public string ProtectingRuleId { get; }
+        public EncounterRuleDefinition.Id ProtectingRuleId { get; }
 
-        internal DisturbanceBlockedEvent(EncounterState state, string ruleId, int bay, DieInterferenceKind kind,
-            InterferenceTrigger trigger, string protectingRuleId)
+        internal DisturbanceBlockedEvent(EncounterState state, EncounterRuleDefinition.Id ruleId, int bay, DieInterferenceKind kind,
+            InterferenceTrigger trigger, EncounterRuleDefinition.Id protectingRuleId)
             : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
@@ -74,7 +74,8 @@ namespace Dice.Engine
         /** The die disturbed by the latest committed action, if any. */
         public int LatestDisturbedMask { get; }
 
-        public DieInterferenceRuleSnapshot(string id, bool isAvailable, int disturbedMask, int latestDisturbedMask) : base(id, isAvailable)
+        public DieInterferenceRuleSnapshot(EncounterRuleDefinition.Id id, bool isAvailable, int disturbedMask, int latestDisturbedMask)
+            : base(id, isAvailable)
         {
             if ((disturbedMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(disturbedMask));
             if ((latestDisturbedMask & ~disturbedMask) != 0) throw new ArgumentOutOfRangeException(nameof(latestDisturbedMask));
@@ -110,8 +111,8 @@ namespace Dice.Engine
         public bool AfterPlayerReroll { get; }
         public bool AfterPlayHand { get; }
 
-        public DieInterferenceRuleDefinition(string id, int chancePercent, int forcedRerollWeight, int flipWeight,
-            bool afterPlayerReroll, bool afterPlayHand) : base(id)
+        public DieInterferenceRuleDefinition(Id identity, int chancePercent, int forcedRerollWeight, int flipWeight,
+            bool afterPlayerReroll, bool afterPlayHand) : base(identity)
         {
             if (chancePercent < 0 || chancePercent > 100) throw new ArgumentOutOfRangeException(nameof(chancePercent));
             if (forcedRerollWeight < 0) throw new ArgumentOutOfRangeException(nameof(forcedRerollWeight));
@@ -133,7 +134,7 @@ namespace Dice.Engine
         internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
         {
             var value = (DieInterferenceState)ruleState;
-            return new DieInterferenceRuleSnapshot(Id, ShowsAvailable(state), value.DisturbedMask, value.LatestDisturbedMask);
+            return new DieInterferenceRuleSnapshot(Identity, ShowsAvailable(state), value.DisturbedMask, value.LatestDisturbedMask);
         }
 
         internal override object CaptureState(EncounterRuleState state)
@@ -188,7 +189,7 @@ namespace Dice.Engine
             var protector = EncounterRuleResolver.Protector(encounter, state, bay, kind);
             if (protector != null)
             {
-                events.Add(new DisturbanceBlockedEvent(state, Id, bay, kind, trigger, protector.Id));
+                events.Add(new DisturbanceBlockedEvent(state, Identity, bay, kind, trigger, protector.Identity));
                 return true;
             }
             int before = state.CurrentDice[bay];
@@ -196,7 +197,7 @@ namespace Dice.Engine
             state.CurrentDice = state.CurrentDice.With(bay, after);
             disturbance.DisturbedMask |= 1 << bay;
             disturbance.LatestDisturbedMask = 1 << bay;
-            events.Add(new DieDisturbedEvent(state, Id, bay, kind, trigger, before, after));
+            events.Add(new DieDisturbedEvent(state, Identity, bay, kind, trigger, before, after));
             return true;
         }
     }
@@ -207,8 +208,8 @@ namespace Dice.Engine
         private readonly HashSet<DieInterferenceKind> blocked;
         public TablePieceDefinition.Id PieceId { get; }
 
-        public BayWardRuleDefinition(string id, TablePieceDefinition.Id pieceId, IEnumerable<DieInterferenceKind> blockedKinds)
-            : base(id)
+        public BayWardRuleDefinition(Id identity, TablePieceDefinition.Id pieceId, IEnumerable<DieInterferenceKind> blockedKinds)
+            : base(identity)
         {
             if (blockedKinds == null) throw new ArgumentNullException(nameof(blockedKinds));
             blocked = new HashSet<DieInterferenceKind>();
@@ -229,7 +230,7 @@ namespace Dice.Engine
         internal override void ValidateDefinition(EncounterDefinition encounter)
         {
             if (!TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out _, out _))
-                throw new ArgumentException("The ward " + Id + " must reference a positioned table piece of its encounter: piece " +
+                throw new ArgumentException("The ward " + Identity + " must reference a positioned table piece of its encounter: piece " +
                     PieceId + ".", nameof(encounter));
         }
 

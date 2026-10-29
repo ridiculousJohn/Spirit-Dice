@@ -13,7 +13,7 @@ namespace Dice.Presentation
         protected override RulePresenter Create(BayWardRuleDefinition rule, RulePresenterContext context)
         {
             if (!context.ShowsPiece(rule.PieceId))
-                throw new InvalidOperationException("The ward presenter " + name + " presents rule " + rule.Id +
+                throw new InvalidOperationException("The ward presenter " + name + " presents rule " + rule.Identity +
                     ", but the table shows no prop for its piece " + rule.PieceId + ".");
             return new BayWardPresenter(rule, context);
         }
@@ -32,7 +32,7 @@ namespace Dice.Presentation
         }
 
         public override IEnumerator Present(RuleEvent ruleEvent)
-            => ruleEvent is DisturbanceBlockedEvent blocked && blocked.ProtectingRuleId == ward.Id ? Flare() : null;
+            => ruleEvent is DisturbanceBlockedEvent blocked && blocked.ProtectingRuleId == ward.Identity ? Flare() : null;
 
         private IEnumerator Flare()
         {

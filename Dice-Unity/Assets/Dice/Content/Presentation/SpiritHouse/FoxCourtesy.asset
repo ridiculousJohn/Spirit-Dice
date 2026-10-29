@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: FoxCourtesy
   m_EditorClassIdentifier:
-  ruleId: rule.first_reroll_free
+  rule: {fileID: 11400000, guid: fe318bf39f5245e59ff45614028ed05c, type: 2}
   displayName: The Host's Courtesy
   description: The first reroll of each hand <b>does not spend a reroll</b>.
   availableText: First reroll free

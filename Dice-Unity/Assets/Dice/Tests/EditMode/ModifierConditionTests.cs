@@ -43,7 +43,7 @@ namespace Dice.Tests
             var condition = new BoundFaceCountAtLeastCondition(3);
             Assert.That(condition.Evaluate(C("21333", rules: new[] { Bound(1), Plain(), Bound(16) })), Is.True);
             Assert.That(condition.Evaluate(C("21333", rules: new[] { Bound(1) })), Is.False);
-            Assert.That(condition.Evaluate(C("21333", rules: new[] { new DieBindingRuleSnapshot("rule.binding", true, 1, 16) })),
+            Assert.That(condition.Evaluate(C("21333", rules: new[] { new DieBindingRuleSnapshot(TestRules.IdOf("binding"), true, 1, 16) })),
                 Is.False);
             Assert.That(condition.Evaluate(C("21333", rules: new[] { Plain() })), Is.False);
         }
@@ -200,10 +200,10 @@ namespace Dice.Tests
                 previous == null ? (DiceValues?)null : D(previous), selected, ever, spent, hands, rerolls,
                 played, starting, priorStarting, priorRemaining, rules);
 
-        private static EncounterRuleSnapshot Plain() => new EncounterRuleSnapshot("rule.plain", true);
-        private static EncounterRuleSnapshot Favored(int face) => new FavoredFaceRuleSnapshot("rule.favored." + face, true, face);
+        private static EncounterRuleSnapshot Plain() => new EncounterRuleSnapshot(TestRules.IdOf("plain"), true);
+        private static EncounterRuleSnapshot Favored(int face) => new FavoredFaceRuleSnapshot(TestRules.IdOf("favored." + face), true, face);
         private static EncounterRuleSnapshot Bound(int boundMask)
-            => new DieBindingRuleSnapshot("rule.binding." + boundMask, true, boundMask, 0);
+            => new DieBindingRuleSnapshot(TestRules.IdOf("binding." + boundMask), true, boundMask, 0);
 
         private static DiceValues D(string values)
             => new DiceValues(values[0] - '0', values[1] - '0', values[2] - '0', values[3] - '0', values[4] - '0');

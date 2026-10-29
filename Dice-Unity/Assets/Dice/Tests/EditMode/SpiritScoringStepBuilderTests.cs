@@ -11,6 +11,8 @@ namespace Dice.Tests
     /** The scoring steps built from fabricated scored hands, synthetic charms, a synthetic theme and fabricated wording. */
     public sealed class SpiritScoringStepBuilderTests
     {
+        private static readonly EncounterRuleDefinition.Id FreeId = TestRules.IdOf("first_reroll_free");
+        private static readonly EncounterRuleDefinition.Id DistinctId = TestRules.IdOf("distinct_faces_multiplier");
         private static readonly DiceValues HighDieDice = new DiceValues(1, 2, 3, 4, 6);
         private static readonly DiceValues PairDice = new DiceValues(2, 5, 2, 3, 6);
         // A fabricated forming mask no category of the fixture dice would derive.
@@ -203,15 +205,18 @@ namespace Dice.Tests
         {
             var encounterId = TestEncounters.IdOf("encounter.test.rule_bonus");
             var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) },
-                rules: new EncounterRuleDefinition[] { new FirstRerollFreeRuleDefinition(), new DistinctFacesMultiplierRuleDefinition() });
+                rules: new EncounterRuleDefinition[]
+                {
+                    new FirstRerollFreeRuleDefinition(FreeId), new DistinctFacesMultiplierRuleDefinition(DistinctId)
+                });
             var session = EncounterSession.CreateEncounter(
                 new MechanicalCatalog("test.steps.rules", TestContent.Hands(), new[] { encounter }), encounterId, 5);
             var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
             Assert.That(played.Accepted, Is.True);
             var scored = played.Events.OfType<HandScoredEvent>().Single();
             long bonus = played.Events.OfType<EncounterRuleActivatedEvent>().Single(value => value.MultiplierBonus != 0).MultiplierBonus;
-            var favor = Card(FirstRerollFreeRuleDefinition.StableId, "Favor");
-            var distinct = Card(DistinctFacesMultiplierRuleDefinition.StableId, "Distinct");
+            var favor = Card(FreeId, "Favor");
+            var distinct = Card(DistinctId, "Distinct");
 
             var steps = builder.BuildHand(scored, 0, 0, new[] { favor, distinct });
             var rule = steps.Single(step => step.RuleCue);
@@ -226,7 +231,7 @@ namespace Dice.Tests
             Assert.That(rule.SelectionColor, Is.EqualTo(theme.amber));
 
             var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored, 0, 0, new[] { favor }));
-            Assert.That(unnamed.Message, Does.Contain(DistinctFacesMultiplierRuleDefinition.StableId));
+            Assert.That(unnamed.Message, Does.Contain(DistinctId.ToString()));
         }
 
         /** Checks a banked roll bonus adds its contribution to the current counters as a roll bonus without a resolving token / fails if it is worded as a scored charm or claims a history token. */
@@ -254,12 +259,13 @@ namespace Dice.Tests
             => new HandScoredEvent(new EncounterState(), score, activations, Array.Empty<EncounterRuleActivatedEvent>());
 
         /** A rule card naming the rule with the given display name. */
-        private EncounterRulePresentationAsset Card(string ruleId, string displayName)
+        private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId, string displayName)
         {
+            var rule = synthetic.Own(TestRules.Asset(ruleId));
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             cards.Add(card);
             using var serialized = new UnityEditor.SerializedObject(card);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.FindProperty("displayName").stringValue = displayName;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return card;

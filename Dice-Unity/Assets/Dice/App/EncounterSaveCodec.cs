@@ -102,6 +102,7 @@ namespace Dice.App
             settings.Converters.Add(ContentIds.Family);
             settings.Converters.Add(ContentIds.Encounter);
             settings.Converters.Add(ContentIds.Piece);
+            settings.Converters.Add(ContentIds.Rule);
             return settings;
         }
 
@@ -119,9 +120,12 @@ namespace Dice.App
                 var ruleId = (entry as JObject)?[nameof(EncounterSaveRuleData.RuleId)];
                 var state = (entry as JObject)?[nameof(EncounterSaveRuleData.State)];
                 Type type = null;
-                if (encounter != null && ruleId != null && ruleId.Type == JTokenType.String)
+                if (encounter != null && ruleId != null)
+                {
+                    EncounterRuleDefinition.Id id = ContentIds.Rule.Read(ruleId);
                     foreach (var rule in encounter.Rules)
-                        if (string.Equals(rule.Id, (string)ruleId, StringComparison.Ordinal)) type = rule.SaveDataType;
+                        if (rule.Identity == id) type = rule.SaveDataType;
+                }
                 if (type == null || state == null || state.Type == JTokenType.Null)
                 {
                     values.Add(state == null || state.Type == JTokenType.Null ? null : state);

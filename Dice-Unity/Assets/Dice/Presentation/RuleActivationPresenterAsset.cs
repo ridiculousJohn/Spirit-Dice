@@ -27,7 +27,7 @@ namespace Dice.Presentation
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (!FiniteValue.Is(sweepDuration) || sweepDuration < 0f)
                 throw new InvalidOperationException("The rule activation presenter " + name + " requires a nonnegative sweep duration.");
-            return new RuleActivationPresenter(this, card, rule.Id, context);
+            return new RuleActivationPresenter(this, card, rule.Identity, context);
         }
     }
 
@@ -36,11 +36,11 @@ namespace Dice.Presentation
     {
         private readonly RuleActivationPresenterAsset settings;
         private readonly EncounterRulePresentationAsset card;
-        private readonly string ruleId;
+        private readonly EncounterRuleDefinition.Id ruleId;
         private readonly RulePresenterContext context;
 
         internal RuleActivationPresenter(RuleActivationPresenterAsset settings, EncounterRulePresentationAsset card,
-            string ruleId, RulePresenterContext context)
+            EncounterRuleDefinition.Id ruleId, RulePresenterContext context)
         {
             this.settings = settings;
             this.card = card;

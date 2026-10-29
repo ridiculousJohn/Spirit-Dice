@@ -6,6 +6,6 @@ namespace Dice.UnityContent
     [CreateAssetMenu(menuName = "Dice/Encounter Rules/First Reroll Free")]
     public sealed class FirstRerollFreeRuleAsset : EncounterRuleAsset
     {
-        public override EncounterRuleDefinition Build() => new FirstRerollFreeRuleDefinition();
+        public override EncounterRuleDefinition Build() => new FirstRerollFreeRuleDefinition(Identity);
     }
 }

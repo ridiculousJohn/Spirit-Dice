@@ -88,10 +88,10 @@ namespace Dice.Presentation
             victoryPresentation?.Validate();
             defeatPresentation?.Validate();
             abandonPresentation?.Validate();
-            var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+            var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in table.RulePresentations) ruleIds.Add(rule.RuleId);
             bool matches = ruleIds.Count == definition.Rules.Count;
-            foreach (var rule in definition.Rules) matches &= ruleIds.Contains(rule.Id);
+            foreach (var rule in definition.Rules) matches &= ruleIds.Contains(rule.Identity);
             if (!matches)
                 throw Invalid(journey, index, "plays in the table scene " + table.name + ", whose rule cards do not match the rules of " +
                     encounter.name);

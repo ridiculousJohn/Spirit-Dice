@@ -649,7 +649,7 @@ namespace Dice.Tests
             SetEncounterBeats(journey, table, encounter);
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
             var rule = Create<EncounterRulePresentationAsset>();
-            SyntheticUi.Set(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
+            SyntheticUi.Set(rule, "rule", charms.Own(TestRules.Asset(TestRules.IdOf("not.in.encounter"))));
             SyntheticUi.Set(table, "rulePresentations", new[] { rule });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }

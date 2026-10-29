@@ -15,6 +15,8 @@ namespace Dice.Tests
      */
     public sealed class RuleActivationPresenterTests
     {
+        private static readonly EncounterRuleDefinition.Id FreeId = TestRules.IdOf("first_reroll_free");
+        private static readonly EncounterRuleDefinition.Id DistinctId = TestRules.IdOf("distinct_faces_multiplier");
         private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.test.rule_activation");
         private const float Sweep = .4f;
         private readonly List<Object> created = new List<Object>();
@@ -37,8 +39,7 @@ namespace Dice.Tests
         public void AnActivationShowsTheCardsRuleAndWaitsForTheSweep()
         {
             var icon = Icon("favor-icon");
-            var presenter = Presenter(Card(FirstRerollFreeRuleDefinition.StableId, "Favor", ModifierPhase.PlayerReroll, icon),
-                FirstRerollFreeRuleDefinition.StableId);
+            var presenter = Presenter(Card(FreeId, "Favor", ModifierPhase.PlayerReroll, icon), FreeId);
             var activated = Reroll().OfType<EncounterRuleActivatedEvent>().Single();
             Assert.That(presenter.LeadIn(activated), Is.Zero);
             var waits = TestRulePresenterContext.Waits(presenter.Present(activated));
@@ -53,10 +54,8 @@ namespace Dice.Tests
         [Test]
         public void ThePresenterPresentsOnlyItsOwnRulesActivationWithoutABonus()
         {
-            var favor = Presenter(Card(FirstRerollFreeRuleDefinition.StableId, "Favor", ModifierPhase.PlayerReroll, null),
-                FirstRerollFreeRuleDefinition.StableId);
-            var distinct = Presenter(Card(DistinctFacesMultiplierRuleDefinition.StableId, "Distinct", ModifierPhase.PlayHand, null),
-                DistinctFacesMultiplierRuleDefinition.StableId);
+            var favor = Presenter(Card(FreeId, "Favor", ModifierPhase.PlayerReroll, null), FreeId);
+            var distinct = Presenter(Card(DistinctId, "Distinct", ModifierPhase.PlayHand, null), DistinctId);
             foreach (var ruleEvent in Reroll().Where(value => !(value is EncounterRuleActivatedEvent)))
                 Assert.That(favor.Present(ruleEvent), Is.Null, ruleEvent.GetType().Name);
             foreach (var ruleEvent in Reroll()) Assert.That(distinct.Present(ruleEvent), Is.Null, ruleEvent.GetType().Name);
@@ -68,23 +67,26 @@ namespace Dice.Tests
             Assert.That(context.Log, Is.Empty);
         }
 
-        private RulePresenter Presenter(EncounterRulePresentationAsset card, string ruleId)
+        private RulePresenter Presenter(EncounterRulePresentationAsset card, EncounterRuleDefinition.Id ruleId)
         {
             var asset = ScriptableObject.CreateInstance<RuleActivationPresenterAsset>();
             created.Add(asset);
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("sweepDuration").floatValue = Sweep;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var rule = Encounter().Rules.Single(value => value.Id == ruleId);
+            var rule = Encounter().Rules.Single(value => value.Identity == ruleId);
             return asset.Create(card, rule, context);
         }
 
-        private EncounterRulePresentationAsset Card(string ruleId, string displayName, ModifierPhase phase, Sprite icon)
+        private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId, string displayName, ModifierPhase phase,
+            Sprite icon)
         {
+            var rule = TestRules.Asset(ruleId);
+            created.Add(rule);
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(card);
             using var serialized = new SerializedObject(card);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.FindProperty("displayName").stringValue = displayName;
             serialized.FindProperty("activationPhase").intValue = (int)phase;
             serialized.FindProperty("icon").objectReferenceValue = icon;
@@ -115,6 +117,9 @@ namespace Dice.Tests
 
         private static EncounterDefinition Encounter()
             => new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) },
-                rules: new EncounterRuleDefinition[] { new FirstRerollFreeRuleDefinition(), new DistinctFacesMultiplierRuleDefinition() });
+                rules: new EncounterRuleDefinition[]
+                {
+                    new FirstRerollFreeRuleDefinition(FreeId), new DistinctFacesMultiplierRuleDefinition(DistinctId)
+                });
     }
 }

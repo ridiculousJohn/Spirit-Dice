@@ -31,13 +31,13 @@ namespace Dice.Tests
         [Test]
         public void RuleSnapshotsLabelOnlyTheDiceTheirStateConcerns()
         {
-            var binding = new DieBindingRuleSnapshot("rule.test.binding", true, 0b00101, 0b01000);
+            var binding = new DieBindingRuleSnapshot(TestRules.IdOf("test.binding"), true, 0b00101, 0b01000);
             Assert.That(Enumerable.Range(0, DiceValues.Count).Select(binding.DiagnosticDieLabel),
                 Is.EqualTo(new[] { "BOUND", null, "BOUND", "MARKED", null }));
-            var interference = new DieInterferenceRuleSnapshot("rule.test.interference", true, 0b10010, 0b10000);
+            var interference = new DieInterferenceRuleSnapshot(TestRules.IdOf("test.interference"), true, 0b10010, 0b10000);
             Assert.That(Enumerable.Range(0, DiceValues.Count).Select(interference.DiagnosticDieLabel),
                 Is.EqualTo(new[] { null, "DISTURBED", null, null, "DISTURBED" }));
-            var plain = new EncounterRuleSnapshot("rule.test.plain", true);
+            var plain = new EncounterRuleSnapshot(TestRules.IdOf("test.plain"), true);
             Assert.That(Enumerable.Range(0, DiceValues.Count).Select(plain.DiagnosticDieLabel), Is.All.Null);
         }
     }

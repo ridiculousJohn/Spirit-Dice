@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: LanternsFavor
   m_EditorClassIdentifier:
-  ruleId: rule.cycling_favored_face_multiplier
+  rule: {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
   activationPhase: 2
   displayName: Lantern's Favor
   description: "Each die matching the favored face adds <b>+2 multiplier</b> when you play a hand.\n\nThe favored face cycles from 1 through 6 after each played hand."

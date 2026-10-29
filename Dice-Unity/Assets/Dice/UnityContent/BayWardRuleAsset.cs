@@ -7,7 +7,6 @@ namespace Dice.UnityContent
     [CreateAssetMenu(menuName = "Dice/Encounter Rules/Bay Ward")]
     public sealed class BayWardRuleAsset : EncounterRuleAsset
     {
-        [SerializeField] private string ruleId;
         [Tooltip("The table piece whose bay the ward protects; its encounter must place it with a position interaction.")]
         [SerializeField] private TablePieceAsset piece;
         [SerializeField] private DieInterferenceKind[] blockedEffects = { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip };
@@ -15,7 +14,7 @@ namespace Dice.UnityContent
         public override EncounterRuleDefinition Build()
         {
             if (piece == null) throw new InvalidOperationException("The ward rule " + name + " references no table piece.");
-            return new BayWardRuleDefinition(ruleId, piece.Identity, blockedEffects);
+            return new BayWardRuleDefinition(Identity, piece.Identity, blockedEffects);
         }
     }
 }

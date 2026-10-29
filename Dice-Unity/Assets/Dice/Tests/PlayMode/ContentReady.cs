@@ -287,7 +287,7 @@ namespace Dice.Tests
             var presented = new List<EncounterRuleDefinition>();
             foreach (var card in table.RulePresentations.Where(card => card != null))
             {
-                var rule = encounter.Rules.FirstOrDefault(value => value.Id == card.RuleId);
+                var rule = encounter.Rules.FirstOrDefault(value => value.Identity == card.RuleId);
                 Assert.That(rule, Is.Not.Null, "The direct encounter lacks the rule its table card " + card.name + " presents.");
                 if (!presented.Contains(rule)) presented.Add(rule);
             }

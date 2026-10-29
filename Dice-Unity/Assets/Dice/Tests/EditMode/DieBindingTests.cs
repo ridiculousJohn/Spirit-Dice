@@ -10,8 +10,8 @@ namespace Dice.Tests
 {
     public sealed class DieBindingTests
     {
-        private const string BindingId = "rule.test.binding";
-        private const string HauntingId = "rule.test.haunting";
+        private static readonly EncounterRuleDefinition.Id BindingId = TestRules.IdOf("binding");
+        private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
 
         [Test]
         public void TheOpeningRollIsMarkedWithoutChangingItsFacesOrTheDiceStream()
@@ -208,7 +208,7 @@ namespace Dice.Tests
             AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).BoundMask = 32);
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = null);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].RuleId = "rule.other");
+            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].RuleId = TestRules.IdOf("other"));
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = null);
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = new DieInterferenceSaveData());
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = new[] { save.RuleStates[0], save.RuleStates[0] });
@@ -230,7 +230,7 @@ namespace Dice.Tests
             Assert.That(text, Does.Not.Contain("$type"));
             var json = JObject.Parse(text);
             var entry = (JObject)((JArray)json[nameof(EncounterSaveData.RuleStates)]).Single();
-            Assert.That((string)entry[nameof(EncounterSaveRuleData.RuleId)], Is.EqualTo(BindingId));
+            Assert.That((string)entry[nameof(EncounterSaveRuleData.RuleId)], Is.EqualTo(BindingId.Value.ToString("N")));
             var state = (JObject)entry[nameof(EncounterSaveRuleData.State)];
             Assert.That(state.Properties().Select(value => value.Name),
                 Is.EquivalentTo(new[] { nameof(DieBindingSaveData.BoundMask), nameof(DieBindingSaveData.MarkedMask) }));
@@ -268,7 +268,8 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => Decode(catalog, entryField));
 
             var foreign = Json(session);
-            foreign[nameof(EncounterSaveData.RuleStates)][0][nameof(EncounterSaveRuleData.RuleId)] = "rule.other";
+            foreign[nameof(EncounterSaveData.RuleStates)][0][nameof(EncounterSaveRuleData.RuleId)] =
+                TestRules.IdOf("other").Value.ToString("N");
             State(foreign).Add("Extra", 1);
             var result = EncounterSession.RestoreEncounter(catalog, Decode(catalog, foreign));
             Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
@@ -278,14 +279,14 @@ namespace Dice.Tests
         public void DieBindingSettingsAndRuleIdsAreAuthoredOnTheDefinition()
         {
             var rule = new DieBindingRuleDefinition(BindingId, true, false);
-            Assert.That(rule.Id, Is.EqualTo(BindingId));
+            Assert.That(rule.Identity, Is.EqualTo(BindingId));
             Assert.That(rule.MarksAfterOpeningRoll, Is.True);
             Assert.That(rule.MarksAfterPlayerReroll, Is.False);
             Assert.That(rule.SaveDataType, Is.EqualTo(typeof(DieBindingSaveData)));
             Assert.That(new DieInterferenceRuleDefinition(HauntingId, 20, 1, 1, true, true).SaveDataType,
                 Is.EqualTo(typeof(DieInterferenceSaveData)));
-            Assert.That(new FirstRerollFreeRuleDefinition().SaveDataType, Is.EqualTo(typeof(FirstRerollFreeSaveData)));
-            Assert.Throws<ArgumentException>(() => new DieBindingRuleDefinition(" ", true, true));
+            Assert.That(new FirstRerollFreeRuleDefinition(TestRules.IdOf("free")).SaveDataType, Is.EqualTo(typeof(FirstRerollFreeSaveData)));
+            Assert.Throws<ArgumentException>(() => new DieBindingRuleDefinition(default, true, true));
         }
 
         private static MechanicalCatalog Catalog(bool binding = true, bool afterOpening = true, bool afterReroll = true,

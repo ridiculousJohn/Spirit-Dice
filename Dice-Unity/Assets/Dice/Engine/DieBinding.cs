@@ -5,10 +5,11 @@ namespace Dice.Engine
 {
     public sealed class DieMarkedEvent : RuleEvent
     {
-        public string RuleId { get; }
+        public EncounterRuleDefinition.Id RuleId { get; }
         public int Bay { get; }
 
-        internal DieMarkedEvent(EncounterState state, string ruleId, int bay) : base(state.StageIndex, state.HandIndex)
+        internal DieMarkedEvent(EncounterState state, EncounterRuleDefinition.Id ruleId, int bay)
+            : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
             Bay = bay;
@@ -19,11 +20,12 @@ namespace Dice.Engine
 
     public sealed class DieBoundEvent : RuleEvent
     {
-        public string RuleId { get; }
+        public EncounterRuleDefinition.Id RuleId { get; }
         public int Bay { get; }
         public int Face { get; }
 
-        internal DieBoundEvent(EncounterState state, string ruleId, int bay, int face) : base(state.StageIndex, state.HandIndex)
+        internal DieBoundEvent(EncounterState state, EncounterRuleDefinition.Id ruleId, int bay, int face)
+            : base(state.StageIndex, state.HandIndex)
         {
             RuleId = ruleId;
             Bay = bay;
@@ -41,7 +43,8 @@ namespace Dice.Engine
         /** The die that binds after the next player reroll. */
         public int MarkedMask { get; }
 
-        public DieBindingRuleSnapshot(string id, bool isAvailable, int boundMask, int markedMask) : base(id, isAvailable)
+        public DieBindingRuleSnapshot(EncounterRuleDefinition.Id id, bool isAvailable, int boundMask, int markedMask)
+            : base(id, isAvailable)
         {
             if ((boundMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(boundMask));
             if ((markedMask & ~DiceValues.AllMask) != 0) throw new ArgumentOutOfRangeException(nameof(markedMask));
@@ -89,7 +92,7 @@ namespace Dice.Engine
         public bool MarksAfterOpeningRoll { get; }
         public bool MarksAfterPlayerReroll { get; }
 
-        public DieBindingRuleDefinition(string id, bool marksAfterOpeningRoll, bool marksAfterPlayerReroll) : base(id)
+        public DieBindingRuleDefinition(Id identity, bool marksAfterOpeningRoll, bool marksAfterPlayerReroll) : base(identity)
         {
             MarksAfterOpeningRoll = marksAfterOpeningRoll;
             MarksAfterPlayerReroll = marksAfterPlayerReroll;
@@ -156,7 +159,7 @@ namespace Dice.Engine
                 int bay = DiceValues.NthBay(binding.MarkedMask, 0);
                 binding.BoundMask |= binding.MarkedMask;
                 binding.MarkedMask = 0;
-                events.Add(new DieBoundEvent(state, Id, bay, state.CurrentDice[bay]));
+                events.Add(new DieBoundEvent(state, Identity, bay, state.CurrentDice[bay]));
             }
             if (MarksAfterPlayerReroll) Mark(state, binding, events);
         }
@@ -166,7 +169,7 @@ namespace Dice.Engine
         internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
         {
             var binding = (DieBindingState)ruleState;
-            return new DieBindingRuleSnapshot(Id, ShowsAvailable(state), binding.BoundMask, binding.MarkedMask);
+            return new DieBindingRuleSnapshot(Identity, ShowsAvailable(state), binding.BoundMask, binding.MarkedMask);
         }
 
         private void Mark(EncounterState state, DieBindingState binding, List<RuleEvent> events)
@@ -175,7 +178,7 @@ namespace Dice.Engine
             if (unbound == 0) return;
             int bay = DiceValues.NthBay(unbound, state.RuleRandom.NextInt(DiceValues.CountBays(unbound)));
             binding.MarkedMask = 1 << bay;
-            events.Add(new DieMarkedEvent(state, Id, bay));
+            events.Add(new DieMarkedEvent(state, Identity, bay));
         }
     }
 }

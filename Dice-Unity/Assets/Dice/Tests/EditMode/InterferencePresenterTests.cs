@@ -16,9 +16,9 @@ namespace Dice.Tests
      */
     public sealed class InterferencePresenterTests
     {
-        private const string HauntingId = "rule.test.haunting";
-        private const string OtherHauntingId = "rule.test.other_haunting";
-        private const string WardId = "rule.test.ward";
+        private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
+        private static readonly EncounterRuleDefinition.Id OtherHauntingId = TestRules.IdOf("other_haunting");
+        private static readonly EncounterRuleDefinition.Id WardId = TestRules.IdOf("ward");
         private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.test");
         // Rerolling every die but the first leaves the first bay as the only target after a reroll.
         private const int RerollAllButFirst = 0b11110;
@@ -90,7 +90,7 @@ namespace Dice.Tests
         {
             var catalog = Catalog(DieInterferenceKind.Flip, wardedBays: 0);
             var events = Execute(catalog, new RerollDiceAction(RerollAllButFirst));
-            var other = Haunting(Catalog(DieInterferenceKind.Flip, wardedBays: 0, hauntingId: OtherHauntingId), OtherHauntingId);
+            var other = Haunting(Catalog(DieInterferenceKind.Flip, wardedBays: 0, hauntingName: "other_haunting"), OtherHauntingId);
             foreach (var ruleEvent in events)
             {
                 Assert.That(other.Present(ruleEvent), Is.Null, ruleEvent.GetType().Name);
@@ -117,7 +117,7 @@ namespace Dice.Tests
             Assert.That(waits, Is.EqualTo(new[] { .7f }));
 
             context.Log.Clear();
-            var otherWard = Ward(Catalog(DieInterferenceKind.Flip, wardedBays: 1, wardId: "rule.test.other_ward"), "rule.test.other_ward");
+            var otherWard = Ward(Catalog(DieInterferenceKind.Flip, wardedBays: 1, wardName: "other_ward"), TestRules.IdOf("other_ward"));
             Assert.That(otherWard.Present(blocked), Is.Null, "Another ward's presenter does not flare for this ward's block.");
             var disturbed = Execute(Catalog(DieInterferenceKind.Flip, wardedBays: 0), new RerollDiceAction(RerollAllButFirst))
                 .OfType<DieDisturbedEvent>().Single();
@@ -132,10 +132,10 @@ namespace Dice.Tests
             var catalog = Catalog(DieInterferenceKind.Flip, wardedBays: 1);
             context.ShowsPieces = false;
             var failure = Assert.Throws<InvalidOperationException>(() => Ward(catalog, WardId));
-            Assert.That(failure.Message, Does.Contain(WardId));
+            Assert.That(failure.Message, Does.Contain(WardId.ToString()));
         }
 
-        private DieInterferencePresenter Haunting(MechanicalCatalog catalog, string ruleId)
+        private DieInterferencePresenter Haunting(MechanicalCatalog catalog, EncounterRuleDefinition.Id ruleId)
         {
             var asset = ScriptableObject.CreateInstance<DieInterferencePresenterAsset>();
             created.Add(asset);
@@ -148,19 +148,21 @@ namespace Dice.Tests
             return (DieInterferencePresenter)asset.Create(Card(ruleId), Rule(catalog, ruleId), context);
         }
 
-        private BayWardPresenter Ward(MechanicalCatalog catalog, string ruleId)
+        private BayWardPresenter Ward(MechanicalCatalog catalog, EncounterRuleDefinition.Id ruleId)
         {
             var asset = ScriptableObject.CreateInstance<BayWardPresenterAsset>();
             created.Add(asset);
             return (BayWardPresenter)asset.Create(Card(ruleId), Rule(catalog, ruleId), context);
         }
 
-        private EncounterRulePresentationAsset Card(string ruleId)
+        private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId)
         {
+            var rule = TestRules.Asset(ruleId);
+            created.Add(rule);
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(card);
             using var serialized = new SerializedObject(card);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return card;
         }
@@ -178,8 +180,8 @@ namespace Dice.Tests
             property.GetArrayElementAtIndex(0).objectReferenceValue = clip;
         }
 
-        private static EncounterRuleDefinition Rule(MechanicalCatalog catalog, string ruleId)
-            => catalog.GetEncounter(TestContent.EncounterId).Rules.Single(rule => rule.Id == ruleId);
+        private static EncounterRuleDefinition Rule(MechanicalCatalog catalog, EncounterRuleDefinition.Id ruleId)
+            => catalog.GetEncounter(TestContent.EncounterId).Rules.Single(rule => rule.Identity == ruleId);
 
         private static IReadOnlyList<RuleEvent> Execute(MechanicalCatalog catalog, EncounterAction action)
         {
@@ -191,22 +193,23 @@ namespace Dice.Tests
 
         /**
          * A test encounter whose haunting always acts with the one effect, after rerolls unless told otherwise and after
-         * Play Hand, with a ward standing on each of the first warded bays: the first bay's ward and piece have the given
-         * ids, each further bay's ward and piece add the bay's number to them.
+         * Play Hand, with a ward standing on each of the first warded bays: the haunting's and the first bay's ward's ids
+         * are named by the given names and the first bay's piece is PieceId; each further bay's ward and piece add the
+         * bay's number to their names.
          */
         private static MechanicalCatalog Catalog(DieInterferenceKind kind, int wardedBays, bool afterReroll = true,
-            string hauntingId = HauntingId, string wardId = WardId)
+            string hauntingName = "haunting", string wardName = "ward")
         {
             var rules = new List<EncounterRuleDefinition>
             {
-                new DieInterferenceRuleDefinition(hauntingId, 100, kind == DieInterferenceKind.ForcedReroll ? 1 : 0,
+                new DieInterferenceRuleDefinition(TestRules.IdOf(hauntingName), 100, kind == DieInterferenceKind.ForcedReroll ? 1 : 0,
                     kind == DieInterferenceKind.Flip ? 1 : 0, afterReroll, true)
             };
             var pieces = new List<TablePieceDefinition>();
             for (int bay = 0; bay < wardedBays; ++bay)
             {
                 var piece = bay == 0 ? PieceId : TestPieces.IdOf("piece.test." + bay);
-                rules.Add(new BayWardRuleDefinition(bay == 0 ? wardId : wardId + "." + bay, piece, new[] { kind }));
+                rules.Add(new BayWardRuleDefinition(TestRules.IdOf(bay == 0 ? wardName : wardName + "." + bay), piece, new[] { kind }));
                 pieces.Add(new TablePieceDefinition(piece, new[] { new PositionInteractionDefinition(PiecePosition.Bay(bay),
                     PieceMovementTiming.DuringHand) }));
             }

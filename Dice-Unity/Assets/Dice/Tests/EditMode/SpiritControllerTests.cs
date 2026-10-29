@@ -77,7 +77,7 @@ namespace Dice.Tests
         public void TappingALockedDieChangesNothing()
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
+                rules: new[] { new DieBindingRuleDefinition(TestRules.IdOf("test.binding"), true, true) });
             var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             int bay = Array.IndexOf(new[] { 1, 2, 4, 8, 16 }, controller.Snapshot.Binding().MarkedMask);

@@ -92,7 +92,7 @@ namespace Dice.Tests
         public void LockedDiceCannotBeSelected()
         {
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
-                rules: new[] { new DieBindingRuleDefinition("rule.test.binding", true, true) });
+                rules: new[] { new DieBindingRuleDefinition(TestRules.IdOf("test.binding"), true, true) });
             var catalog = new MechanicalCatalog("test.binding.controller", TestContent.Hands(), new[] { encounter });
             Initialize(catalog, TestContent.EncounterId, 17, savePath);
             int marked = controller.Snapshot.Binding().MarkedMask;

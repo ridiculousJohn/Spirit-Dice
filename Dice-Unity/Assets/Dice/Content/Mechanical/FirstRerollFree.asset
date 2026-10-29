@@ -12,3 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11b2b487ed8c4e59915df1d15ffb3131, type: 3}
   m_Name: FirstRerollFree
   m_EditorClassIdentifier:
+  assetGuid: fe318bf39f5245e59ff45614028ed05c

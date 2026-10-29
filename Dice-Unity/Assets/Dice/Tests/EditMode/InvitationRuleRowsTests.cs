@@ -38,8 +38,8 @@ namespace Dice.Tests
         public void InvitationShowsOneRowPerTableRuleAndOtherBeatsShowNone()
         {
             var table = Create<EncounterTablePresentationAsset>();
-            SyntheticUi.Set(table, "rulePresentations", new[] { Rule("rule.first", "First rule", "First rule text"),
-                Rule("rule.second", "Second rule", "Second rule text") });
+            SyntheticUi.Set(table, "rulePresentations", new[] { Rule("first", "First rule", "First rule text"),
+                Rule("second", "Second rule", "Second rule text") });
             var journey = Create<EncounterJourneyAsset>();
             TestJourneys.SetEncounterBeats(journey, table, content.Encounter("encounter.rules"), new DialogueBeat());
             var controls = new TestJourneyControls
@@ -68,7 +68,7 @@ namespace Dice.Tests
         private EncounterRulePresentationAsset Rule(string id, string name, string description)
         {
             var rule = Create<EncounterRulePresentationAsset>();
-            SyntheticUi.Set(rule, "ruleId", id);
+            SyntheticUi.Set(rule, "rule", content.Own(TestRules.Asset(TestRules.IdOf(id))));
             SyntheticUi.Set(rule, "displayName", name);
             SyntheticUi.Set(rule, "description", description);
             return rule;

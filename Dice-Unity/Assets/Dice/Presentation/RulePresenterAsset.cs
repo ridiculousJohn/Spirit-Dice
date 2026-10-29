@@ -31,7 +31,7 @@ namespace Dice.Presentation
             if (context == null) throw new ArgumentNullException(nameof(context));
             if (!(rule is TRule typed))
                 throw new InvalidOperationException("The rule presenter " + name + " presents " + typeof(TRule).Name +
-                    " rules, but rule " + rule.Id + " is a " + rule.GetType().Name + ".");
+                    " rules, but the rule of the card " + card.name + " is a " + rule.GetType().Name + ".");
             return Create(typed, context);
         }
 

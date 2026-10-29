@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: Poltergeist
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterRulePresentationAsset
-  ruleId: rule.merchant.haunting
+  rule: {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
   displayName: Poltergeist
   description: "After you reroll, it may <b>reroll</b> one kept die or <b>flip</b> it to its opposite face.\n\nAfter you play a hand, it may disturb <b>any die</b> before scoring."
   availableText: May disturb a die

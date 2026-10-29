@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8239b43a1c9140958ae131559d2f5409, type: 3}
   m_Name: WatchersEye
   m_EditorClassIdentifier:
-  ruleId: rule.distinct_faces_multiplier
+  rule: {fileID: 11400000, guid: 57ddf15a05484a56b82e2eca70b60ba4, type: 2}
   activationPhase: 2
   displayName: The Watcher's Eye
   description: Each distinct face in your scored hand adds <b>+1 multiplier</b>.

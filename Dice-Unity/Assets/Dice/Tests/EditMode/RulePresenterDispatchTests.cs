@@ -18,9 +18,9 @@ namespace Dice.Tests
      */
     public sealed class RulePresenterDispatchTests
     {
-        private const string FirstId = "rule.test.first";
-        private const string SecondId = "rule.test.second";
-        private const string ThirdId = "rule.test.third";
+        private static readonly EncounterRuleDefinition.Id FirstId = TestRules.IdOf("test.first");
+        private static readonly EncounterRuleDefinition.Id SecondId = TestRules.IdOf("test.second");
+        private static readonly EncounterRuleDefinition.Id ThirdId = TestRules.IdOf("test.third");
         private readonly List<Object> created = new List<Object>();
         private readonly List<string> log = new List<string>();
         private TestRulePresenterContext context;
@@ -145,13 +145,14 @@ namespace Dice.Tests
         public void PresentersFailAtCreationForAMissingOrDifferentRule()
         {
             var encounter = Encounter();
-            var missing = new[] { Card("rule.test.missing", new Recording()) };
+            var missing = new[] { Card(TestRules.IdOf("test.missing"), new Recording()) };
             Assert.Throws<InvalidOperationException>(() => EncounterRulePresenters.Create(missing, encounter, () => context));
 
             var interference = ScriptableObject.CreateInstance<DieInterferencePresenterAsset>();
             created.Add(interference);
-            Assert.Throws<InvalidOperationException>(() => interference.Create(Card(FirstRerollFreeRuleDefinition.StableId, null),
-                new FirstRerollFreeRuleDefinition(), context));
+            var free = TestRules.IdOf("first_reroll_free");
+            Assert.Throws<InvalidOperationException>(() => interference.Create(Card(free, null), new FirstRerollFreeRuleDefinition(free),
+                context));
         }
 
         /** Checks the card lookup finds the card of the named rule among the table's cards and nothing for a rule without one / fails if another card is returned. */
@@ -183,7 +184,7 @@ namespace Dice.Tests
                 });
 
         /** A rule card whose test presenter records its presenter's calls into this test's log. */
-        private EncounterRulePresentationAsset Card(string ruleId, Recording recording)
+        private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId, Recording recording)
         {
             RecordingPresenterAsset asset = null;
             if (recording != null)
@@ -193,10 +194,12 @@ namespace Dice.Tests
                 asset.Recording = recording;
                 created.Add(asset);
             }
+            var rule = TestRules.Asset(ruleId);
+            created.Add(rule);
             var card = ScriptableObject.CreateInstance<EncounterRulePresentationAsset>();
             created.Add(card);
             using var serialized = new SerializedObject(card);
-            serialized.FindProperty("ruleId").stringValue = ruleId;
+            serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.FindProperty("presenter").objectReferenceValue = asset;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return card;
@@ -217,15 +220,15 @@ namespace Dice.Tests
 
             public override RulePresenter Create(EncounterRulePresentationAsset card, EncounterRuleDefinition rule,
                 RulePresenterContext context)
-                => new RecordingPresenter(this, rule.Id);
+                => new RecordingPresenter(this, rule.Identity);
         }
 
         private sealed class RecordingPresenter : RulePresenter
         {
             private readonly RecordingPresenterAsset asset;
-            private readonly string ruleId;
+            private readonly EncounterRuleDefinition.Id ruleId;
 
-            public RecordingPresenter(RecordingPresenterAsset asset, string ruleId)
+            public RecordingPresenter(RecordingPresenterAsset asset, EncounterRuleDefinition.Id ruleId)
             {
                 this.asset = asset;
                 this.ruleId = ruleId;

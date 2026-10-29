@@ -6,12 +6,33 @@ namespace Dice.Engine
 {
     public abstract class EncounterRuleDefinition
     {
-        public string Id { get; }
-
-        internal EncounterRuleDefinition(string id)
+        /** Identifies an encounter rule where an identity is stored: the run save keeps the rule's state under it. */
+        public readonly struct Id : IEquatable<Id>, IContentId
         {
-            DefinitionValidation.RequireId(id, nameof(id));
-            Id = id;
+            public Guid Value { get; }
+
+            public Id(Guid value)
+            {
+                if (value == Guid.Empty) throw new ArgumentException("An encounter rule id requires a nonempty GUID.", nameof(value));
+                Value = value;
+            }
+
+            public bool Equals(Id other) => Value == other.Value;
+            public override bool Equals(object obj) => obj is Id other && Equals(other);
+            public override int GetHashCode() => Value.GetHashCode();
+            /** The 32 hexadecimal digits, as the rule's asset and its .meta file write its GUID. */
+            public override string ToString() => Value.ToString("N");
+            public static bool operator ==(Id left, Id right) => left.Equals(right);
+            public static bool operator !=(Id left, Id right) => !left.Equals(right);
+        }
+
+        // A nested type and a member cannot share a name, so the id property is not called Id.
+        public Id Identity { get; }
+
+        internal EncounterRuleDefinition(Id identity)
+        {
+            if (identity.Value == Guid.Empty) throw new ArgumentException("An encounter rule requires an id.", nameof(identity));
+            Identity = identity;
         }
 
         internal abstract bool IsAvailable(EncounterState state);
@@ -32,7 +53,7 @@ namespace Dice.Engine
 
         /** The rule as the snapshot shows it; a rule exposing more state returns its own snapshot type. */
         internal virtual EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
-            => new EncounterRuleSnapshot(Id, ShowsAvailable(state));
+            => new EncounterRuleSnapshot(Identity, ShowsAvailable(state));
 
         /** Snapshots report a rule as available only while the encounter is playing. */
         private protected bool ShowsAvailable(EncounterState state) => state.Phase == EncounterPhase.Playing && IsAvailable(state);
@@ -105,9 +126,7 @@ namespace Dice.Engine
 
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
     {
-        public const string StableId = "rule.first_reroll_free";
-
-        public FirstRerollFreeRuleDefinition() : base(StableId) { }
+        public FirstRerollFreeRuleDefinition(Id identity) : base(identity) { }
 
         internal override bool IsAvailable(EncounterState state) => state.RerollsSpentOnHand == 0;
         internal override bool WaivesRerollCost(EncounterState state) => IsAvailable(state);
@@ -163,9 +182,7 @@ namespace Dice.Engine
 
     public sealed class DistinctFacesMultiplierRuleDefinition : EncounterRuleDefinition
     {
-        public const string StableId = "rule.distinct_faces_multiplier";
-
-        public DistinctFacesMultiplierRuleDefinition() : base(StableId) { }
+        public DistinctFacesMultiplierRuleDefinition(Id identity) : base(identity) { }
 
         internal override bool IsAvailable(EncounterState state) => true;
 
@@ -174,12 +191,10 @@ namespace Dice.Engine
 
     public sealed class CyclingFavoredFaceMultiplierRuleDefinition : EncounterRuleDefinition
     {
-        public const string StableId = "rule.cycling_favored_face_multiplier";
-
         /** The multiplier each scored die showing the favored face adds. */
         public int MultiplierPerFavoredDie { get; }
 
-        public CyclingFavoredFaceMultiplierRuleDefinition(int multiplierPerFavoredDie) : base(StableId)
+        public CyclingFavoredFaceMultiplierRuleDefinition(Id identity, int multiplierPerFavoredDie) : base(identity)
         {
             if (multiplierPerFavoredDie < 1) throw new ArgumentOutOfRangeException(nameof(multiplierPerFavoredDie));
             MultiplierPerFavoredDie = multiplierPerFavoredDie;
@@ -191,7 +206,7 @@ namespace Dice.Engine
         internal static int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % DiceValues.FaceCount) + DiceValues.MinimumFace;
 
         internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
-            => new FavoredFaceRuleSnapshot(Id, ShowsAvailable(state), FavoredFace(state.TotalHandsPlayed));
+            => new FavoredFaceRuleSnapshot(Identity, ShowsAvailable(state), FavoredFace(state.TotalHandsPlayed));
 
         internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
         {
@@ -209,7 +224,7 @@ namespace Dice.Engine
         private static readonly IReadOnlyDictionary<string, int> NoTextValues =
             new ReadOnlyDictionary<string, int>(new Dictionary<string, int>());
 
-        public string Id { get; }
+        public EncounterRuleDefinition.Id Id { get; }
         public bool IsAvailable { get; }
 
         /** Named values the rule's card text may show as {name} placeholders. */
@@ -218,9 +233,9 @@ namespace Dice.Engine
         /** Developer diagnostics, not player-facing text: what this rule's state says about one die, or null for nothing. */
         public virtual string DiagnosticDieLabel(int bay) => null;
 
-        public EncounterRuleSnapshot(string id, bool isAvailable)
+        public EncounterRuleSnapshot(EncounterRuleDefinition.Id id, bool isAvailable)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
+            if (id.Value == Guid.Empty) throw new ArgumentException("A rule snapshot requires its rule's id.", nameof(id));
             Id = id;
             IsAvailable = isAvailable;
         }
@@ -231,7 +246,7 @@ namespace Dice.Engine
 
         public sealed override bool Equals(object obj) => obj is EncounterRuleSnapshot other && Equals(other);
         public sealed override int GetHashCode()
-            => unchecked((StringComparer.Ordinal.GetHashCode(Id) * 397 ^ IsAvailable.GetHashCode()) * 397 ^ StateHash);
+            => unchecked((Id.GetHashCode() * 397 ^ IsAvailable.GetHashCode()) * 397 ^ StateHash);
 
         /** Compares the rule's own state with another snapshot of the same type. */
         private protected virtual bool StateEquals(EncounterRuleSnapshot other) => true;
@@ -246,7 +261,7 @@ namespace Dice.Engine
         public int FavoredFace { get; }
         public override IReadOnlyDictionary<string, int> TextValues => textValues;
 
-        public FavoredFaceRuleSnapshot(string id, bool isAvailable, int favoredFace) : base(id, isAvailable)
+        public FavoredFaceRuleSnapshot(EncounterRuleDefinition.Id id, bool isAvailable, int favoredFace) : base(id, isAvailable)
         {
             if (!DiceValues.IsFace(favoredFace)) throw new ArgumentOutOfRangeException(nameof(favoredFace));
             FavoredFace = favoredFace;

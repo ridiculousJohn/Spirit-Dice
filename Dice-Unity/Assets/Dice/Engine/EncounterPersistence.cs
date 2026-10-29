@@ -345,7 +345,7 @@ namespace Dice.Engine
             {
                 int slot = -1;
                 for (int i = 0; entry != null && i < rules.Count; ++i)
-                    if (string.Equals(rules[i].Id, entry.RuleId, StringComparison.Ordinal)) slot = i;
+                    if (rules[i].Identity == entry.RuleId) slot = i;
                 Require(slot >= 0 && sources[slot] == null && rules[slot].SaveDataType != null && entry.State != null &&
                     entry.State.GetType() == rules[slot].SaveDataType, "A rule state disagrees with the encounter's rules.");
                 sources[slot] = entry.State;
@@ -366,7 +366,7 @@ namespace Dice.Engine
                 if (definition.Rules[i].SaveDataType != null)
                     values.Add(new EncounterSaveRuleData
                     {
-                        RuleId = definition.Rules[i].Id, State = definition.Rules[i].CaptureState(state.RuleStates[i])
+                        RuleId = definition.Rules[i].Identity, State = definition.Rules[i].CaptureState(state.RuleStates[i])
                     });
             return values.ToArray();
         }

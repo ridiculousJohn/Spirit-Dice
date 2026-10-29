@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
 using Dice.UnityContent;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -84,11 +85,16 @@ namespace Dice.Presentation
             sceneLighting?.Validate();
             if (sceneLighting != null && !FiniteValue.Is(hostLightingPosition))
                 throw new FormatException("The table scene " + name + " of " + beat + " has a host lighting position that is not finite.");
-            var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+            var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in RulePresentations)
-                if (rule == null || string.IsNullOrWhiteSpace(rule.RuleId) || !ruleIds.Add(rule.RuleId))
+            {
+                if (rule != null && rule.Rule == null)
+                    throw new FormatException("The rule card " + rule.name + " of the table scene " + name + " of " + beat +
+                        " presents no rule.");
+                if (rule == null || !ruleIds.Add(rule.RuleId))
                     throw new FormatException("The rule cards of the table scene " + name + " of " + beat +
                         " must be present and present different rules.");
+            }
         }
 
         /** The rule card flagged as shown on the HUD, or null when no card is; more than one flagged card fails. */
