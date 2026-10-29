@@ -30,7 +30,7 @@ namespace Dice.App
             JourneyCatalog = catalog;
             SelectedChapter = null;
             highlightedJourneys.Clear();
-            Commit(new Transition(catalog?.Find(encounterId), EncounterJourneyPhase.Playing, -1));
+            Commit(Playing(catalog?.Find(encounterId), encounterId));
         }
 
         public void InitializeJourney(EncounterJourneyCatalogAsset catalog, Progress progress = default)
@@ -63,7 +63,7 @@ namespace Dice.App
             => progress.CompletedJourneyIds.Contains(journey.Identity);
 
         private static bool IsJourneyVisited(EncounterJourneyAsset journey, Progress progress)
-            => !journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.Encounter.Identity);
+            => journey.Encounters.Any(encounter => progress.VisitedEncounterIds.Contains(encounter.Identity));
 
         public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
         {
@@ -106,29 +106,60 @@ namespace Dice.App
             if (!IsCatalogJourney(journey)) { error = SpiritStatusKind.LeadNotFound; return false; }
             if (!IsJourneyAvailable(journey, progress)) { error = SpiritStatusKind.LocationLocked; return false; }
             highlightedJourneys.Remove(journey);
-            Commit(new Transition(journey, EncounterJourneyPhase.Sequence, 0));
+            Commit(new Transition(journey, EncounterJourneyPhase.Sequence, StartBeat(journey, progress)));
             return true;
+        }
+
+        /** A finished journey replays from its start; an unfinished one resumes after its last won Encounter beat. */
+        private static int StartBeat(EncounterJourneyAsset journey, Progress progress)
+        {
+            if (IsJourneyCompleted(journey, progress)) return 0;
+            // Winning the last beat completes the journey, so only an earlier won Encounter beat is resumed after.
+            for (int index = journey.Beats.Count - 2; index >= 0; --index)
+            {
+                var beat = journey.EncounterBeatAt(index);
+                if (beat != null && progress.CompletedEncounterIds.Contains(beat.Encounter.Identity)) return index + 1;
+            }
+            return 0;
         }
 
         private bool IsCatalogJourney(EncounterJourneyAsset journey)
             => journey != null && JourneyCatalog != null && JourneyCatalog.Entries.Contains(journey);
 
-        public bool CanSkipIntro(Progress progress) => JourneyPhase == EncounterJourneyPhase.Sequence &&
-            SelectedJourney != null && !SelectedJourney.IsStoryOnly && BeatIndex < SelectedJourney.Beats.Count - 1 &&
-            progress.HasProfile && progress.VisitedEncounterIds.Contains(SelectedJourney.Encounter.Identity);
+        /** Whether the intro to the next Encounter beat can be skipped: its encounter was visited and its invitation is ahead. */
+        public bool CanSkipIntro(Progress progress)
+        {
+            if (JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null || !progress.HasProfile) return false;
+            int encounter = NextEncounterBeat();
+            return encounter > BeatIndex + 1 &&
+                progress.VisitedEncounterIds.Contains(SelectedJourney.EncounterBeatAt(encounter).Encounter.Identity);
+        }
+
+        /** The index of the first Encounter beat after the current beat, or -1. */
+        private int NextEncounterBeat()
+        {
+            for (int index = BeatIndex + 1; index < SelectedJourney.Beats.Count; ++index)
+                if (SelectedJourney.EncounterBeatAt(index) != null) return index;
+            return -1;
+        }
 
         public bool CanResume(bool hasActiveEncounter) => hasActiveEncounter && JourneyPhase == EncounterJourneyPhase.Investigation;
 
-        public bool AdvanceJourney(out Transition transition)
+        /**
+         * Continues from the current beat to the next, or to the board after the last beat. An invitation waits for Accept
+         * instead, and an Encounter beat continues only once its encounter is won. Continuing from the last beat completes
+         * the journey, except from an Encounter beat, whose win completed it.
+         */
+        public bool AdvanceJourney(EncounterOutcome outcome, out Transition transition)
         {
             transition = null;
-            if (JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null) return false;
-            if (BeatIndex == SelectedJourney.Beats.Count - 1)
-            {
-                if (!SelectedJourney.IsStoryOnly) return false;
-                transition = new Transition(SelectedJourney, EncounterJourneyPhase.Investigation, -1, BeatIndex);
-            }
-            else transition = new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, BeatIndex + 1, BeatIndex);
+            if (SelectedJourney == null) return false;
+            bool encounter = JourneyPhase == EncounterJourneyPhase.Playing;
+            if (encounter ? outcome != EncounterOutcome.Won :
+                JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney.EncounterBeatAt(BeatIndex + 1) != null) return false;
+            transition = BeatIndex < SelectedJourney.Beats.Count - 1
+                ? new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, BeatIndex + 1, BeatIndex)
+                : new Transition(SelectedJourney, EncounterJourneyPhase.Investigation, -1, BeatIndex, !encounter);
             return true;
         }
 
@@ -136,17 +167,18 @@ namespace Dice.App
         {
             transition = null;
             if (!CanSkipIntro(progress)) return false;
-            int last = SelectedJourney.Beats.Count - 1;
-            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, last, last - 1);
+            int invitation = NextEncounterBeat() - 1;
+            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, invitation, invitation - 1);
             return true;
         }
 
         public bool AcceptEncounter(out Transition transition)
         {
             transition = null;
-            if (JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null || SelectedJourney.IsStoryOnly ||
-                SelectedJourney.Beats[BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) return false;
-            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Playing, -1, BeatIndex);
+            // The beat directly before an Encounter beat is its invitation.
+            if (JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney == null ||
+                SelectedJourney.EncounterBeatAt(BeatIndex + 1) == null) return false;
+            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Playing, BeatIndex + 1, BeatIndex);
             return true;
         }
 
@@ -160,7 +192,7 @@ namespace Dice.App
                 error = SpiritStatusKind.SavedEncounterHasNoLead;
                 return false;
             }
-            transition = new Transition(journey, EncounterJourneyPhase.Playing, -1);
+            transition = Playing(journey, encounterId);
             return true;
         }
 
@@ -179,7 +211,7 @@ namespace Dice.App
             if (!CanResume(hasActiveEncounter)) return false;
             var journey = encounterId.HasValue ? JourneyCatalog?.Find(encounterId.Value) : null;
             if (journey == null) { error = SpiritStatusKind.ActiveEncounterHasNoLead; return false; }
-            Commit(new Transition(journey, EncounterJourneyPhase.Playing, -1));
+            Commit(Playing(journey, encounterId.Value));
             return true;
         }
 
@@ -188,7 +220,7 @@ namespace Dice.App
             if (JourneyPhase != EncounterJourneyPhase.Playing || outcome == EncounterOutcome.None) return false;
             var journey = JourneyCatalog?.Find(encounterId);
             if (journey == null) return false;
-            Commit(new Transition(journey, EncounterJourneyPhase.Sequence, journey.Beats.Count - 1));
+            Commit(new Transition(journey, EncounterJourneyPhase.Sequence, journey.IndexOfEncounter(encounterId) - 1));
             return true;
         }
 
@@ -207,11 +239,15 @@ namespace Dice.App
             if (transition == null) throw new ArgumentNullException(nameof(transition));
             if (transition.Phase != EncounterJourneyPhase.Investigation)
                 SelectedChapter = JourneyCatalog?.Chapters?.FirstOrDefault(chapter => chapter != null && chapter.Entries.Contains(transition.Journey));
-            else if (transition.CompletesStory && progress.HasValue) SelectedChapter = CurrentChapter(progress.Value);
+            else if (transition.Journey != null && progress.HasValue) SelectedChapter = CurrentChapter(progress.Value);
             JourneyPhase = transition.Phase;
             SelectedJourney = transition.Phase == EncounterJourneyPhase.Investigation ? null : transition.Journey;
             BeatIndex = transition.BeatIndex;
         }
+
+        /** Playing the encounter at its Encounter beat of the journey; without a journey there is no beat. */
+        private static Transition Playing(EncounterJourneyAsset journey, EncounterDefinition.Id encounterId)
+            => new Transition(journey, EncounterJourneyPhase.Playing, journey != null ? journey.IndexOfEncounter(encounterId) : -1);
 
         /** Read-only facts supplied for a navigation decision; the navigator does not retain the profile. */
         public readonly struct Progress
@@ -219,13 +255,17 @@ namespace Dice.App
             public bool HasProfile { get; }
             public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds { get; }
             public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
+            /** The won encounters, after which an unfinished journey resumes. */
+            public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds { get; }
 
             public Progress(bool hasProfile, IReadOnlyList<EncounterDefinition.Id> visitedEncounterIds,
-                IReadOnlyList<EncounterJourneyAsset.Id> completedJourneyIds)
+                IReadOnlyList<EncounterJourneyAsset.Id> completedJourneyIds,
+                IReadOnlyList<EncounterDefinition.Id> completedEncounterIds = null)
             {
                 HasProfile = hasProfile;
                 VisitedEncounterIds = visitedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
                 CompletedJourneyIds = completedJourneyIds ?? Array.Empty<EncounterJourneyAsset.Id>();
+                CompletedEncounterIds = completedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
             }
         }
 
@@ -236,14 +276,17 @@ namespace Dice.App
             public EncounterJourneyAsset Journey { get; }
             public EncounterJourneyPhase Phase { get; }
             public int BeatIndex { get; }
-            public bool CompletesStory => Phase == EncounterJourneyPhase.Investigation && Journey?.IsStoryOnly == true;
+            /** Whether the transition finishes the journey's last beat, which completes the journey. */
+            public bool CompletesJourney { get; }
 
-            internal Transition(EncounterJourneyAsset journey, EncounterJourneyPhase phase, int beatIndex, int rewardThroughBeat = -1)
+            internal Transition(EncounterJourneyAsset journey, EncounterJourneyPhase phase, int beatIndex, int rewardThroughBeat = -1,
+                bool completesJourney = false)
             {
                 Journey = journey;
                 Phase = phase;
                 BeatIndex = beatIndex;
                 this.rewardThroughBeat = rewardThroughBeat;
+                CompletesJourney = completesJourney;
             }
 
             public IEnumerable<ProgressionRewardAsset> Rewards
@@ -253,7 +296,7 @@ namespace Dice.App
                     // Revisit earlier beats for skipped sequences and retries; grants are idempotent.
                     for (int index = 0; index <= rewardThroughBeat; ++index)
                         if (Journey.Beats[index].ProgressionReward != null) yield return Journey.Beats[index].ProgressionReward;
-                    if (CompletesStory && Journey.CompletionReward != null) yield return Journey.CompletionReward;
+                    if (CompletesJourney && Journey.CompletionReward != null) yield return Journey.CompletionReward;
                 }
             }
         }

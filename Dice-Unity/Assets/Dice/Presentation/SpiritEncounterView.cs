@@ -134,11 +134,7 @@ namespace Dice.Presentation
                 EncounterCharmsIntroduction.ResetDismissal();
                 CloseOverlays();
                 SetGameplayVisible(false);
-                bool seated = journeyControls.JourneyPhase == EncounterJourneyPhase.Sequence &&
-                    journeyControls.SelectedJourney != null && journeyControls.BeatIndex >= 0 &&
-                    journeyControls.BeatIndex < journeyControls.SelectedJourney.Beats.Count &&
-                    journeyControls.SelectedJourney.Beats[journeyControls.BeatIndex].Kind != EncounterJourneyBeatKind.Illustration;
-                hostPortrait?.SetVisible(seated);
+                // The journey screen shows or hides the host as the scene of each beat presents itself.
             }
             else
             {
@@ -346,7 +342,7 @@ namespace Dice.Presentation
             endingView.Build(ReturnFromEnding, RetryEncounter);
             endingPanel = endingView.Root;
             BuildMenu();
-            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait.SetState(state, progress));
+            JourneyView.Build(encounterAudio, (state, progress) => hostPortrait.SetState(state, progress), hostPortrait.SetVisible);
             collectionView.Build(HideCollection);
             CharmPopup.Build();
             scorePlayback = new SpiritScorePlayback(this, GameplayHud, DiceTray, ModifierHistory, encounterAudio,
@@ -454,7 +450,9 @@ namespace Dice.Presentation
         private void ReturnFromEnding()
         {
             if (Busy) return;
-            if (journeyControls != null) journeyControls.ReturnToInvestigation();
+            // A win continues the journey with its next beat, or returns to the board after its last.
+            if (journeyControls != null && controls.Snapshot?.Outcome == EncounterOutcome.Won) journeyControls.AdvanceJourney();
+            else if (journeyControls != null) journeyControls.ReturnToInvestigation();
             else controls.StartNew();
         }
         private void RetryEncounter()
@@ -524,7 +522,7 @@ namespace Dice.Presentation
 
         private bool IsSelectedTable()
         {
-            var selected = journeyControls?.SelectedJourney?.TablePresentation;
+            var selected = journeyControls?.SelectedJourney?.TableSceneAt(journeyControls.BeatIndex);
             if (selected == null) return journeyControls?.JourneyPhase == EncounterJourneyPhase.Playing;
             if (tablePresentation == null) return false;
             if (selected == tablePresentation) return true;

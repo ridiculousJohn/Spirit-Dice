@@ -2,17 +2,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Dice.Engine;
+using Dice.UnityContent;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Presents authored arrival and story beats without creating encounter mechanics. */
-    public sealed class EncounterJourneyView : MonoBehaviour
+    /**
+     * Presents a journey's beats and the scenes they take place in, without creating encounter mechanics. Each kind of beat
+     * and of scene shows itself through this screen.
+     */
+    public sealed class EncounterJourneyView : MonoBehaviour, IJourneyStage
     {
-        /** Fraction of a hidden-narrative beat after which the narrative fades in over the remainder. */
-        private const float NarrativeRevealStart = .9f;
-        /** Seconds the foreground takes to fade in at the start of its beat. */
+        /** Seconds the foreground takes to fade in at the start of the beat that enters its picture. */
         private const float ForegroundFadeInSeconds = .25f;
         /** How far each parting panel travels, as a fraction of the artwork width. */
         private const float PanelPartingDistance = .54f;
@@ -35,6 +37,7 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform invitationRulesRoot;
         private readonly List<SpiritInvitationRuleView> invitationRules = new List<SpiritInvitationRuleView>();
         private int invitationRuleCount;
+        private bool invitationShown;
         [SerializeField] private RectTransform charmDetail;
         [SerializeField] private Image charmIcon;
         [SerializeField] private Text charmName;
@@ -46,6 +49,7 @@ namespace Dice.Presentation
         [SerializeField] private Button skipButton;
         [SerializeField] private Button returnButton;
         private Action<SpiritPresentationState, float> hostState;
+        private Action<bool> hostVisibility;
         [SerializeField] private CanvasGroup narrativeGroup;
         private SpiritEncounterAudio audio;
         private EncounterJourneyAsset renderedJourney;
@@ -53,6 +57,13 @@ namespace Dice.Presentation
         private EncounterJourneyPhase renderedPhase;
         private bool hasRendered;
         private EncounterJourneyBeat activeBeat;
+        // The scene shown and its picture; a table scene shows no picture.
+        private JourneySceneAsset shownScene;
+        private Texture2D shownBackground;
+        private SceneLightingAsset shownLighting;
+        private Color shownForegroundTint;
+        // The foreground fades in over the beat that enters its picture, unless panels part to reveal it.
+        private bool fadingForeground;
         private SceneLightingAsset previousSceneLighting;
         private SceneLightingState sceneLightingState = new SceneLightingState();
         private SceneLightingState previousSceneLightingState = new SceneLightingState();
@@ -73,10 +84,11 @@ namespace Dice.Presentation
         [field: SerializeField] public SpiritEncounterCharmsScreen EncounterCharms { get; private set; }
 
         public void Build(SpiritEncounterAudio encounterAudio,
-            Action<SpiritPresentationState, float> presentHostState = null)
+            Action<SpiritPresentationState, float> presentHostState = null, Action<bool> presentHostVisibility = null)
         {
             SpiritUi.RequireWording(transform);
             hostState = presentHostState;
+            hostVisibility = presentHostVisibility;
             audio = encounterAudio;
             advanceButton.onClick.RemoveAllListeners();
             advanceButton.onClick.AddListener(() => controls.AdvanceJourney());
@@ -92,8 +104,9 @@ namespace Dice.Presentation
         private void ShowEncounterCharms()
         {
             var journey = controls?.SelectedJourney;
-            if (journey == null || journey.IsStoryOnly || encounterControls?.Catalog == null) return;
-            var encounter = encounterControls.Catalog.GetEncounter(journey.Encounter.Identity);
+            var beat = journey != null ? journey.EncounterBeatAt(controls.BeatIndex + 1) : null;
+            if (beat == null || encounterControls?.Catalog == null) return;
+            var encounter = encounterControls.Catalog.GetEncounter(beat.Encounter.Identity);
             // Additions first offered after a later stage are introduced inside the encounter instead.
             if (!encounter.EncounterModifiersAvailableFromStart)
             {
@@ -148,66 +161,89 @@ namespace Dice.Presentation
         {
             EncounterCharms.Hide();
             bool continuingJourney = hasRendered && renderedJourney == journey && renderedPhase == EncounterJourneyPhase.Sequence;
-            Texture2D previous = continuingJourney ? background.texture as Texture2D : null;
-            var previousLighting = continuingJourney ? activeBeat?.SceneLighting : null;
             CancelAnimation();
             var beat = journey.Beats[index];
-            bool parting = beat.Transition == EncounterJourneyTransition.PartingPanels && previous != null;
+            var scene = journey.SceneAt(index);
+            bool entering = !continuingJourney || scene != shownScene;
+            // Only the beat that sets the scene changes it with its transition, and panels part only a picture shown before.
+            bool parting = entering && continuingJourney && beat.Scene != null &&
+                beat.Transition == EncounterJourneyTransition.PartingPanels && background.texture != null;
+            Texture2D previous = parting ? background.texture as Texture2D : null;
             background.material = null;
-            if (parting)
+            if (entering)
             {
-                previousSceneLighting = previousLighting;
-                previousSceneLightingMaterial = sceneLightingMaterial;
-                var state = previousSceneLightingState;
-                previousSceneLightingState = sceneLightingState;
-                sceneLightingState = state;
-                sceneLightingMaterial = null;
+                if (parting)
+                {
+                    previousSceneLighting = shownLighting;
+                    previousSceneLightingMaterial = sceneLightingMaterial;
+                    var state = previousSceneLightingState;
+                    previousSceneLightingState = sceneLightingState;
+                    sceneLightingState = state;
+                    sceneLightingMaterial = null;
+                }
+                else
+                {
+                    sceneLightingMaterial?.Dispose();
+                    sceneLightingMaterial = null;
+                }
+                sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+                shownScene = scene;
+                scene.Present(this);
             }
-            else
-            {
-                sceneLightingMaterial?.Dispose();
-                sceneLightingMaterial = null;
-            }
-            sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
+            fadingForeground = entering && !parting;
             activeBeat = beat;
             title.text = beat.Title;
             body.text = beat.Text;
-            bool invitation = !journey.IsStoryOnly && beat.Kind == EncounterJourneyBeatKind.Invitation;
-            ConfigureCharm(beat);
-            ConfigureInvitation(journey.TablePresentation, invitation);
+            charmDetail.gameObject.SetActive(false);
+            invitationShown = false;
+            invitationRuleCount = 0;
+            beat.Show(this, journey, index);
+            ShowInvitationRules();
             narrativeScroll.StopMovement();
             narrativeScroll.verticalNormalizedPosition = 1;
-            advanceButton.gameObject.SetActive(!invitation);
-            acceptButton.gameObject.SetActive(invitation);
+            advanceButton.gameObject.SetActive(!invitationShown);
+            acceptButton.gameObject.SetActive(invitationShown);
             var wording = SpiritUi.GetWording(transform).journey;
-            SpiritUi.SetButtonLabel(invitation ? acceptButton : advanceButton,
-                string.IsNullOrWhiteSpace(beat.ContinueLabel) ? invitation ? wording.acceptButton : wording.continueButton : beat.ContinueLabel);
-            skipButton.gameObject.SetActive(controls.CanSkipIntro && !invitation);
-            var backgroundTexture = beat.SceneLighting != null ? beat.SceneLighting.BaseTexture : beat.Background;
-            background.texture = backgroundTexture;
-            background.color = backgroundTexture != null ? Color.white : Color.clear;
-            foreground.texture = beat.Foreground;
-            foreground.GetComponent<AspectRatioFitter>().aspectRatio = beat.Foreground != null ?
-                (float)beat.Foreground.width / beat.Foreground.height : 1;
-            foreground.color = beat.Foreground != null ? beat.ForegroundTint : Color.clear;
-            var clip = (RectTransform)foreground.transform.parent;
-            clip.anchorMin = beat.ForegroundRect.min;
-            clip.anchorMax = beat.ForegroundRect.max;
-            clip.offsetMin = clip.offsetMax = Vector2.zero;
+            SpiritUi.SetButtonLabel(invitationShown ? acceptButton : advanceButton, string.IsNullOrWhiteSpace(beat.ContinueLabel)
+                ? invitationShown ? wording.acceptButton : wording.continueButton : beat.ContinueLabel);
+            skipButton.gameObject.SetActive(controls.CanSkipIntro && !invitationShown);
             leftPanel.gameObject.SetActive(parting);
             rightPanel.gameObject.SetActive(parting);
             leftPanel.texture = rightPanel.texture = previous;
             leftPanel.material = rightPanel.material = previousSceneLightingMaterial?.Material;
             if (beat.AudioCue != null) audio?.PlayCue(beat.AudioCue);
-            StartCoroutine(AnimateBeat(journey, index, parting));
+            StartCoroutine(AnimateBeat(journey, index));
         }
 
-        private void ConfigureCharm(EncounterJourneyBeat beat)
+        void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting, Texture2D foregroundTexture,
+            Rect foregroundRect, Color foregroundTint)
         {
-            bool visible = beat.Charm != null && encounterControls?.Catalog != null;
-            charmDetail.gameObject.SetActive(visible);
-            if (!visible) return;
-            var definition = encounterControls.Catalog.GetModifier(beat.Charm.Id);
+            shownBackground = picture;
+            shownLighting = lighting;
+            shownForegroundTint = foregroundTint;
+            var backgroundTexture = lighting != null ? lighting.BaseTexture : picture;
+            background.texture = backgroundTexture;
+            background.color = backgroundTexture != null ? Color.white : Color.clear;
+            foreground.texture = foregroundTexture;
+            foreground.GetComponent<AspectRatioFitter>().aspectRatio = foregroundTexture != null ?
+                (float)foregroundTexture.width / foregroundTexture.height : 1;
+            foreground.color = foregroundTexture != null ? foregroundTint : Color.clear;
+            var clip = (RectTransform)foreground.transform.parent;
+            clip.anchorMin = foregroundRect.min;
+            clip.anchorMax = foregroundRect.max;
+            clip.offsetMin = clip.offsetMax = Vector2.zero;
+        }
+
+        void IJourneyStage.ClearPicture()
+            => ((IJourneyStage)this).ShowPicture(null, null, null, new Rect(0, 0, 1, 1), Color.white);
+
+        void IJourneyStage.ShowHost(bool visible) => hostVisibility?.Invoke(visible);
+
+        void IJourneyStage.ShowCharm(ModifierAsset charm)
+        {
+            if (encounterControls?.Catalog == null) return;
+            charmDetail.gameObject.SetActive(true);
+            var definition = encounterControls.Catalog.GetModifier(charm.Id);
             var charms = encounterControls.ModifierPresentation;
             var theme = SpiritUi.GetTheme(transform);
             string name = charms.GetName(definition);
@@ -223,21 +259,32 @@ namespace Dice.Presentation
             charmIcon.gameObject.SetActive(true);
         }
 
-        private void ConfigureInvitation(EncounterTablePresentationAsset table, bool invitation)
+        void IJourneyStage.ShowInvitation(EncounterTablePresentationAsset table)
         {
-            invitationRuleCount = 0;
-            if (invitation && table != null)
+            invitationShown = true;
+            foreach (var rule in table.RulePresentations)
             {
-                foreach (var rule in table.RulePresentations)
-                {
-                    if (rule == null) continue;
-                    int index = invitationRuleCount++;
-                    if (index == invitationRules.Count)
-                        invitationRules.Add(Instantiate(invitationRulePrefab, invitationRulesRoot, false));
-                    invitationRules[index].Render(rule.DisplayName, rule.Description, rule.Icon,
-                        table.HostPresentation);
-                }
+                if (rule == null) continue;
+                int index = invitationRuleCount++;
+                if (index == invitationRules.Count)
+                    invitationRules.Add(Instantiate(invitationRulePrefab, invitationRulesRoot, false));
+                invitationRules[index].Render(rule.DisplayName, rule.Description, rule.Icon,
+                    table.HostPresentation);
             }
+        }
+
+        void IJourneyStage.MovePicture(Vector2 backgroundOffset, float backgroundScale, Vector2 foregroundOffset,
+            float foregroundScale)
+        {
+            background.rectTransform.anchoredPosition = Vector2.Scale(backgroundOffset, artwork.rect.size);
+            background.rectTransform.localScale = Vector3.one * backgroundScale;
+            foreground.rectTransform.anchoredPosition = Vector2.Scale(foregroundOffset, artwork.rect.size);
+            foreground.rectTransform.localScale = Vector3.one * foregroundScale;
+        }
+
+        /** Shows the rule cards an invitation rendered, in place of the title, or hides the rule section. */
+        private void ShowInvitationRules()
+        {
             bool showRules = invitationRuleCount > 0;
             ruleHeading.text = SpiritUi.GetWording(transform).journey.ruleHeading.For(invitationRuleCount);
             SetInvitationRulesVisible(showRules);
@@ -252,7 +299,7 @@ namespace Dice.Presentation
                 invitationRules[i].gameObject.SetActive(visible && i < invitationRuleCount);
         }
 
-        private IEnumerator AnimateBeat(EncounterJourneyAsset journey, int index, bool parting)
+        private IEnumerator AnimateBeat(EncounterJourneyAsset journey, int index)
         {
             var beat = journey.Beats[index];
             IsAnimating = true;
@@ -260,25 +307,25 @@ namespace Dice.Presentation
             float duration = Mathf.Max(0, beat.Duration);
             float age = 0;
             // Let Refresh finish recording this beat before an immediate continuation can refresh it.
-            if (duration == 0 && beat.AutoAdvance)
+            if (duration == 0 && beat.AdvancesItself)
             {
-                ApplyMotion(beat, 0, parting);
+                ApplyMotion(beat, 0);
                 yield return null;
             }
             while (age < duration)
             {
-                ApplyMotion(beat, duration > 0 ? age / duration : 1, parting);
+                ApplyMotion(beat, duration > 0 ? age / duration : 1);
                 age += Time.unscaledDeltaTime;
                 yield return null;
             }
             if (controls == null || controls.JourneyPhase != EncounterJourneyPhase.Sequence ||
                 controls.SelectedJourney != journey || controls.BeatIndex != index || activeBeat != beat) yield break;
-            ApplyMotion(beat, 1, parting);
+            ApplyMotion(beat, 1);
             leftPanel.gameObject.SetActive(false);
             rightPanel.gameObject.SetActive(false);
             ClearPartingLighting();
             IsAnimating = false;
-            if (beat.AutoAdvance && index + 1 < journey.Beats.Count)
+            if (beat.AdvancesItself && index + 1 < journey.Beats.Count)
             {
                 controls.AdvanceJourney();
                 yield break;
@@ -287,23 +334,17 @@ namespace Dice.Presentation
             SetButtons();
         }
 
-        private void ApplyMotion(EncounterJourneyBeat beat, float value, bool parting)
+        private void ApplyMotion(EncounterJourneyBeat beat, float value)
         {
             float eased = Mathf.SmoothStep(0, 1, value);
             hostState?.Invoke(beat.HostState, value);
-            narrativeGroup.alpha = beat.HideNarrativeDuringMotion ?
-                beat.AutoAdvance ? 0 : Mathf.InverseLerp(NarrativeRevealStart, 1, value) : 1;
-            background.rectTransform.anchoredPosition = Vector2.Scale(
-                Vector2.Lerp(beat.BackgroundMotionFrom, beat.BackgroundMotionTo, eased), artwork.rect.size);
-            background.rectTransform.localScale = Vector3.one * Mathf.Lerp(beat.BackgroundScaleFrom, beat.BackgroundScaleTo, eased);
-            var rect = foreground.rectTransform;
-            rect.anchoredPosition = Vector2.Scale(Vector2.Lerp(beat.MotionFrom, beat.MotionTo, eased), artwork.rect.size);
-            rect.localScale = Vector3.one * Mathf.Lerp(beat.ScaleFrom, beat.ScaleTo, eased);
+            narrativeGroup.alpha = beat.NarrativeOpacity(value);
+            beat.Move(this, eased);
             illustrationGroup.alpha = 1;
-            if (beat.Foreground != null)
+            if (foreground.texture != null)
             {
-                Color tint = beat.ForegroundTint;
-                tint.a *= parting || value >= 1 ? 1 : Mathf.Clamp01(value * beat.Duration / ForegroundFadeInSeconds);
+                Color tint = shownForegroundTint;
+                tint.a *= !fadingForeground || value >= 1 ? 1 : Mathf.Clamp01(value * beat.Duration / ForegroundFadeInSeconds);
                 foreground.color = tint;
             }
             float distance = artwork.rect.width * PanelPartingDistance * eased;
@@ -323,7 +364,7 @@ namespace Dice.Presentation
         {
             if (!IsAnimating || activeBeat == null) return;
             StopAllCoroutines();
-            ApplyMotion(activeBeat, 1, false);
+            ApplyMotion(activeBeat, 1);
             leftPanel.gameObject.SetActive(false);
             rightPanel.gameObject.SetActive(false);
             ClearPartingLighting();
@@ -361,7 +402,7 @@ namespace Dice.Presentation
         internal void LateUpdate()
         {
             double time = Time.unscaledTimeAsDouble;
-            var asset = activeBeat?.SceneLighting;
+            var asset = shownLighting;
             sceneLightingState.Sample(asset, time);
             if (asset != null)
             {
@@ -379,7 +420,7 @@ namespace Dice.Presentation
             }
             if (background != null)
             {
-                var texture = asset != null ? asset.BaseTexture : activeBeat?.Background;
+                var texture = asset != null ? asset.BaseTexture : shownBackground;
                 background.texture = texture;
                 background.color = texture != null ? Color.white : Color.clear;
                 background.material = sceneLightingMaterial?.Material;
@@ -409,6 +450,9 @@ namespace Dice.Presentation
             sceneLightingMaterial = null;
             sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
             activeBeat = null;
+            shownScene = null;
+            shownBackground = null;
+            shownLighting = null;
         }
 
         private void OnDestroy()

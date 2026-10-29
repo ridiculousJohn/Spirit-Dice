@@ -21,7 +21,7 @@ namespace Dice.Tests
             Assert.That(frontendHandle.IsValid(), Is.True);
             var frontendScene = frontendHandle.Result.Scene;
             // Any encounter journey routes from the frontend scene to its own encounter scene.
-            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(entry => entry != null && !entry.IsStoryOnly);
+            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(entry => entry != null && entry.Encounters.Any());
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
             ContentReady.SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);

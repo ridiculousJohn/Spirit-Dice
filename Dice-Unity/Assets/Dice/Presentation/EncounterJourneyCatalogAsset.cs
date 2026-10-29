@@ -26,11 +26,11 @@ namespace Dice.Presentation
             }
         }
 
-        /** The encounter journey of the encounter, or null. */
+        /** The journey with the Encounter beat that plays the encounter, or null. */
         public EncounterJourneyAsset Find(EncounterDefinition.Id encounterId)
         {
             foreach (var entry in Entries)
-                if (entry != null && !entry.IsStoryOnly && entry.Encounter.Identity == encounterId) return entry;
+                if (entry != null && entry.IndexOfEncounter(encounterId) >= 0) return entry;
             return null;
         }
 
@@ -45,15 +45,20 @@ namespace Dice.Presentation
             var journeys = Entries;
             if (journeys == null || journeys.Count == 0) throw new FormatException("An investigation requires encounter journeys.");
             var journeyIds = new HashSet<EncounterJourneyAsset.Id>();
-            var encounterIds = new HashSet<EncounterDefinition.Id>();
+            var encounterJourneys = new Dictionary<EncounterDefinition.Id, EncounterJourneyAsset>();
             foreach (var entry in journeys)
             {
                 if (entry == null) throw new FormatException("Journey entries must be present.");
                 entry.Validate(catalog);
                 if (!journeyIds.Add(entry.Identity))
                     throw new FormatException("The journey catalog lists the journey " + entry.name + " twice.");
-                if (!entry.IsStoryOnly && !encounterIds.Add(entry.Encounter.Identity))
-                    throw new FormatException("Two journeys lead to the same encounter: " + entry.name + ".");
+                foreach (var encounter in entry.Encounters)
+                {
+                    if (encounterJourneys.TryGetValue(encounter.Identity, out var other))
+                        throw new FormatException("The encounter " + encounter.name + " is played by more than one Encounter beat, " +
+                            "in the journeys " + other.name + " and " + entry.name + ".");
+                    encounterJourneys.Add(encounter.Identity, entry);
+                }
             }
             foreach (var entry in journeys)
             {

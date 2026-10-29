@@ -103,12 +103,10 @@ namespace Dice.Tests
         private EncounterJourneyAsset Journey()
         {
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounter", charms.Encounter("encounter.story"));
             SyntheticUi.Set(journey, "locationTitle", "Story table");
             SyntheticUi.Set(journey, "spiritName", "Story keeper");
             SyntheticUi.Set(journey, "leadText", "A keeper waits at the table.");
-            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            TestJourneys.SetBeats(journey, TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
+            TestJourneys.SetEncounterBeats(journey, Create<EncounterTablePresentationAsset>(), charms.Encounter("encounter.story"));
             return journey;
         }
 

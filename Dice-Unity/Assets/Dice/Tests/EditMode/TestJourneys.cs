@@ -28,24 +28,36 @@ namespace Dice.Tests
             return journey;
         }
 
-        public static (string Id, EncounterJourneyBeatKind Kind) Beat(string id, EncounterJourneyBeatKind kind) => (id, kind);
-
-        /** Replaces the journey's beats with new default beats of the given ids and kinds; an arrival beat shows the host arriving. */
-        public static void SetBeats(EncounterJourneyAsset journey, params (string Id, EncounterJourneyBeatKind Kind)[] beats)
+        /**
+         * Replaces the journey's beats with the given new beats; the first beat sets the scene, and an arrival beat shows the
+         * host arriving.
+         */
+        public static void SetBeats(EncounterJourneyAsset journey, JourneySceneAsset scene, params EncounterJourneyBeat[] beats)
         {
-            SyntheticUi.Set(journey, "beats", beats.Select(beat => new EncounterJourneyBeat()).ToArray());
+            SyntheticUi.Set(journey, "beats", beats);
+            if (beats.Length > 0) SetBeat(journey, 0, "scene", scene);
             for (int index = 0; index < beats.Length; ++index)
-            {
-                SetBeat(journey, index, "id", beats[index].Id);
-                SetBeat(journey, index, "kind", beats[index].Kind);
-                if (beats[index].Kind == EncounterJourneyBeatKind.Arrival)
-                    SetBeat(journey, index, "hostState", SpiritPresentationState.Arrival);
-            }
+                if (beats[index] is ArrivalBeat) SetBeat(journey, index, "hostState", SpiritPresentationState.Arrival);
+        }
+
+        /**
+         * Replaces the journey's beats with the intro beats, then an invitation and the Encounter beat that plays the
+         * encounter; the first beat sets the scene.
+         */
+        public static void SetEncounterBeats(EncounterJourneyAsset journey, JourneySceneAsset scene, EncounterAsset encounter,
+            params EncounterJourneyBeat[] intro)
+        {
+            SetBeats(journey, scene, intro.Concat(new EncounterJourneyBeat[] { new InvitationBeat(), new EncounterBeat() }).ToArray());
+            SetBeat(journey, journey.Beats.Count - 1, "encounter", encounter);
         }
 
         /** Sets an authored field of the journey's beat through the journey's serialized form. */
         public static void SetBeat(EncounterJourneyAsset journey, int beat, string field, object value)
             => SyntheticUi.Set(journey, "beats.Array.data[" + beat + "]." + field, value);
+
+        /** Sets an authored field of the journey's Encounter beat of the encounter. */
+        public static void SetEncounterBeat(EncounterJourneyAsset journey, EncounterAsset encounter, string field, object value)
+            => SetBeat(journey, journey.IndexOfEncounter(encounter.Identity), field, value);
 
         /** Fills the chapter with the given id, used as its title too, and journeys. */
         public static EncounterChapterAsset Chapter(EncounterChapterAsset chapter, string id, params EncounterJourneyAsset[] entries)

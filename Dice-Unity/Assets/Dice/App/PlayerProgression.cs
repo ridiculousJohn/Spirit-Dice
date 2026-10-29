@@ -77,8 +77,8 @@ namespace Dice.App
         }
 
         /**
-         * Records the snapshot's unlocks and, when it is won, its encounter and the journey that led to it (none in direct
-         * play) as completed, with the journey's completion reward.
+         * Records the snapshot's unlocks and, when it is won, its encounter and the journey the win completes (none in direct
+         * play or when later beats follow) as completed, with the journey's completion reward.
          */
         public bool RecordProgression(EncounterSnapshot snapshot, MechanicalCatalog catalog, EncounterJourneyAsset.Id? journeyId,
             ProgressionRewardDefinition completionReward, EncounterSaveData unlockSave = null, string unlockSavePath = null)
@@ -108,7 +108,8 @@ namespace Dice.App
             return CommitProfileChange(next => next.ApplyReward(reward, catalog), PlayerProfileStatusKind.RewardFailed, out changed);
         }
 
-        public bool CompleteStoryJourney(EncounterJourneyAsset.Id journeyId, IEnumerable<ProgressionRewardDefinition> rewards,
+        /** Completes the journey on its last beat's Continue, with the rewards it grants, in one profile write. */
+        public bool CompleteJourney(EncounterJourneyAsset.Id journeyId, IEnumerable<ProgressionRewardDefinition> rewards,
             MechanicalCatalog catalog)
             => CommitProfileChange(next =>
             {

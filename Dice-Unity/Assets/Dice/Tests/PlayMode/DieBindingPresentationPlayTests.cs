@@ -22,8 +22,8 @@ namespace Dice.Tests
         {
             yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => !value.IsStoryOnly &&
-                controller.Catalog.GetEncounter(value.Encounter.Identity).Rules.OfType<DieBindingRuleDefinition>().Any());
+            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => value.Encounters.Any() &&
+                controller.Catalog.GetEncounter(value.Encounters.First().Identity).Rules.OfType<DieBindingRuleDefinition>().Any());
             Assert.That(journey, Is.Not.Null, "No authored journey's encounter has a die-binding rule.");
             yield return PresentsTheBindingRule(controller, journey);
             LogAssert.NoUnexpectedReceived();
@@ -32,9 +32,9 @@ namespace Dice.Tests
         private static IEnumerator PresentsTheBindingRule(SpiritEncounterController controller, EncounterJourneyAsset journey)
         {
             string name = journey.name;
-            var rules = controller.Catalog.GetEncounter(journey.Encounter.Identity).Rules.OfType<DieBindingRuleDefinition>().ToArray();
+            var rules = controller.Catalog.GetEncounter(journey.Encounters.First().Identity).Rules.OfType<DieBindingRuleDefinition>().ToArray();
             yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounters.First().Identity));
             var view = ContentReady.EncounterView(controller);
             var visuals = Visuals(view, rules.Length, name);
             yield return Settle(visuals);

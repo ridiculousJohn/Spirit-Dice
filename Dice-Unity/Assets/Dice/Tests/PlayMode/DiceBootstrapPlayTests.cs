@@ -252,16 +252,16 @@ namespace Dice.Tests
             Assert.That(sceneController.JourneyCatalog, Is.SameAs(journeyCatalog));
             Assert.That(ContentReady.Charms.GetName(definition), Is.EqualTo(name));
             Assert.That(ContentReady.Charms.GetIcon(definition), Is.SameAs(sprite));
-            var journey = journeyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly);
+            var journey = journeyCatalog.Entries.FirstOrDefault(value => value != null && value.Encounters.Any());
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
             ContentReady.SeedJourneyPrerequisites(sceneController, journey);
             sceneController.SelectEncounter(journey);
-            while (sceneController.SelectedJourney.Beats[sceneController.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(sceneController.SelectedJourney.Beats[sceneController.BeatIndex] is InvitationBeat))
                 sceneController.AdvanceJourney();
             sceneController.AcceptEncounter();
             yield return ContentReady.WaitUntil(() => !sceneController.IsBusy, "Opening presentation did not complete.");
             Assert.That(sceneController.Snapshot, Is.Not.Null);
-            Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
+            Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.Encounters.First().Identity));
         }
 
         /**

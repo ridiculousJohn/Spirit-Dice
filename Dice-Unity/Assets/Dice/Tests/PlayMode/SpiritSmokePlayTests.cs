@@ -17,7 +17,7 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
-            var authoredHost = controller.JourneyCatalog.Entries.Select(entry => entry.TablePresentation?.HostPresentation)
+            var authoredHost = controller.JourneyCatalog.Entries.Select(entry => entry.TableSceneAt(0)?.HostPresentation)
                 .First(asset => asset != null && asset.SmokeShader != null && asset.Layers.Any(layer => layer.Smoke != null && layer.Smoke.Enabled));
             var host = new GameObject("Smoke Test", typeof(RectTransform));
             var presentation = Object.Instantiate(authoredHost);

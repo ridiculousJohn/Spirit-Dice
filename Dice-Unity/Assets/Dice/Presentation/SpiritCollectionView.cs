@@ -191,7 +191,7 @@ namespace Dice.Presentation
 
         /**
          * Where a charm can be obtained: its unlock and run reward sources as the mechanical catalog states them, and its
-         * story and completion gifts from the journeys' progression rewards. Encounters are named by their journeys'
+         * beat and completion gifts from the journeys' progression rewards. Encounters are named by their journeys'
          * locations; encounters without a journey are not listed.
          */
         public static string GetSourceText(ModifierDefinition definition, MechanicalCatalog mechanicalCatalog,
@@ -210,14 +210,16 @@ namespace Dice.Presentation
             foreach (var encounter in sources.RunRewards)
                 if (TryGetEncounterName(encounter, journeyCatalog, out string name)) rewardSources.Add(name);
             var giftSources = new List<string>();
-            // Encounter journeys are listed in the catalog's encounter order, then story journeys in journey order.
+            // Journeys that play encounters are listed once, in the catalog's order of their first encounter, then the
+            // other journeys in journey order.
+            var listed = new HashSet<EncounterJourneyAsset>();
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
                 var journey = journeyCatalog.Find(encounter.Identity);
-                if (journey != null) AddGiftSources(journey, definition.Id, giftSources, wording);
+                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Id, giftSources, wording);
             }
             foreach (var journey in journeyCatalog.Entries)
-                if (journey != null && journey.IsStoryOnly) AddGiftSources(journey, definition.Id, giftSources, wording);
+                if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Id, giftSources, wording);
             string rewards = wording.Rewards(rewardSources);
             if (definition.Availability.Access == ModifierAccess.EncounterExclusive) return wording.EncounterOnlySource(rewards);
             if (definition.Availability.Access == ModifierAccess.Starter) return wording.StarterSource(rewards);

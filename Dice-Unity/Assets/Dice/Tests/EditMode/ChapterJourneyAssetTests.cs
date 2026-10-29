@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Dice.Engine;
 using Dice.Presentation;
 using Dice.UnityContent;
@@ -34,42 +35,61 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void StoryWithoutMechanicalEncounterReusesHostPresentation()
+        public void JourneyWithoutAnEncounterBeatReusesATableSceneOfOtherRules()
         {
             var story = Journey("story.first");
             var rule = Create<EncounterRulePresentationAsset>();
             SyntheticUi.Set(rule, "ruleId", "rule.not.in.encounter");
-            SyntheticUi.Set(story.TablePresentation, "rulePresentations", new[] { rule });
+            SyntheticUi.Set(story.TableSceneAt(0), "rulePresentations", new[] { rule });
             var journeys = Catalog(story);
-            Assert.That(story.IsStoryOnly, Is.True);
-            Assert.That(story.Encounter, Is.Null);
+            Assert.That(story.Encounters, Is.Empty);
+            Assert.That(journeys.Find(encounterAsset.Identity), Is.Null);
             Assert.That(story.RequiredCompletedJourneys, Is.Empty);
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
         }
 
         [TestCase("invitation")]
         [TestCase("automatic")]
-        [TestCase("presentation")]
-        public void StoryRequiresExplicitCompletionAndNoMechanicalInvitation(string invalid)
+        [TestCase("scene")]
+        public void JourneyRequiresAFirstSceneALastBeatThatWaitsAndInvitationsWithTheirEncounters(string invalid)
         {
             var story = Journey("story.first");
-            if (invalid == "invitation") TestJourneys.SetBeat(story, 0, "kind", EncounterJourneyBeatKind.Invitation);
-            if (invalid == "automatic") TestJourneys.SetBeat(story, 0, "autoAdvance", true);
-            if (invalid == "presentation") SyntheticUi.Set(story, "tablePresentation", null);
-            Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog));
+            var table = story.TableSceneAt(0);
+            if (invalid == "invitation") TestJourneys.SetBeats(story, table, new InvitationBeat());
+            if (invalid == "automatic")
+            {
+                TestJourneys.SetBeats(story, table, new ArrivalBeat());
+                TestJourneys.SetBeat(story, 0, "autoAdvance", true);
+            }
+            if (invalid == "scene") TestJourneys.SetBeat(story, 0, "scene", null);
+            Assert.That(Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog)).Message, Does.Contain(story.name));
         }
 
         [Test]
         public void MechanicalJourneyRetainsItsEncounterIdentityAndInvitation()
         {
             var encounter = EncounterJourney();
-            Assert.That(encounter.Encounter, Is.SameAs(encounterAsset));
-            Assert.That(encounter.IsStoryOnly, Is.False);
+            Assert.That(encounter.Encounters, Is.EqualTo(new[] { encounterAsset }));
             var journeys = Catalog(encounter);
             Assert.That(journeys.Find(encounterAsset.Identity), Is.SameAs(encounter));
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            TestJourneys.SetBeat(encounter, 0, "kind", EncounterJourneyBeatKind.Dialogue);
+            TestJourneys.SetBeats(encounter, encounter.TableSceneAt(0), new DialogueBeat(), new EncounterBeat());
+            TestJourneys.SetBeat(encounter, 1, "encounter", encounterAsset);
             Assert.Throws<FormatException>(() => encounter.Validate(catalog));
+        }
+
+        [Test]
+        public void ABeatThatSetsNoSceneStaysInTheCurrentScene()
+        {
+            var journey = Journey("story.scenes");
+            var picture = Create<PictureSceneAsset>();
+            var table = journey.TableSceneAt(0);
+            TestJourneys.SetBeats(journey, picture, new IllustrationBeat(), new IllustrationBeat(), new DialogueBeat(),
+                new DialogueBeat());
+            TestJourneys.SetBeat(journey, 2, "scene", table);
+            Assert.That(Enumerable.Range(0, 4).Select(journey.SceneAt), Is.EqualTo(new JourneySceneAsset[] { picture, picture, table, table }));
+            Assert.That(Enumerable.Range(0, 4).Select(journey.TableSceneAt), Is.EqualTo(new[] { table, table, table, table }),
+                "The table scene the journey reaches next stays loaded behind a picture.");
         }
 
         [Test]
@@ -181,16 +201,16 @@ namespace Dice.Tests
         /** The journey of the encounter the test catalog holds. */
         private EncounterJourneyAsset EncounterJourney() => Journey("journey.chapter", encounterAsset);
 
+        /** A journey of one dialogue beat, or of an invitation and the encounter's Encounter beat, in a new table scene. */
         private EncounterJourneyAsset Journey(string name, EncounterAsset encounter)
         {
-            bool storyOnly = encounter == null;
             var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), name);
-            SyntheticUi.Set(journey, "encounter", encounter);
             SyntheticUi.Set(journey, "locationTitle", "The clearing");
             SyntheticUi.Set(journey, "spiritName", "Spirit");
             SyntheticUi.Set(journey, "leadText", "A familiar spirit waits.");
-            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            TestJourneys.SetBeats(journey, TestJourneys.Beat("conversation", storyOnly ? EncounterJourneyBeatKind.Dialogue : EncounterJourneyBeatKind.Invitation));
+            var table = Create<EncounterTablePresentationAsset>();
+            if (encounter == null) TestJourneys.SetBeats(journey, table, new DialogueBeat());
+            else TestJourneys.SetEncounterBeats(journey, table, encounter);
             return journey;
         }
 

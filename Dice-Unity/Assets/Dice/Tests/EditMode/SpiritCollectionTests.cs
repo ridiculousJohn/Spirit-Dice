@@ -244,13 +244,11 @@ namespace Dice.Tests
                 grants.GetArrayElementAtIndex(0).objectReferenceValue = synthetic.Charm(discovered.Id);
                 rewardData.ApplyModifiedPropertiesWithoutUndo();
                 var journeyData = new SerializedObject(journey);
-                journeyData.FindProperty("encounter").objectReferenceValue = synthetic.Encounter("encounter.test");
                 journeyData.FindProperty("locationTitle").stringValue = "Test House";
                 journeyData.FindProperty("completionReward").objectReferenceValue = reward;
-                var beats = journeyData.FindProperty("beats");
-                beats.arraySize = 1;
-                beats.GetArrayElementAtIndex(0).FindPropertyRelative("progressionReward").objectReferenceValue = reward;
                 journeyData.ApplyModifiedPropertiesWithoutUndo();
+                TestJourneys.SetEncounterBeats(journey, null, synthetic.Encounter("encounter.test"));
+                TestJourneys.SetBeat(journey, 0, "progressionReward", reward);
                 chapter = OnlyChapter(journeys, journey);
                 Assert.That(SpiritCollectionView.GetSourceText(discovered, catalog, journeys, wording.collection), Does.StartWith(
                     "<collection.unlockableSource><collection.gifts><collection.storyGift>Test House |sourceSeparator| " +
@@ -311,8 +309,8 @@ namespace Dice.Tests
         }
 
         /**
-         * A journey catalog of one journey, named after its encounter, of a new encounter asset of the name with the given
-         * location title; the assets are returned for release.
+         * A journey catalog of one journey, named after its encounter, whose Encounter beat plays a new encounter asset of
+         * the name, with the given location title; the assets are returned for release.
          */
         private EncounterJourneyCatalogAsset Journeys(string encounterName, string locationTitle, out ScriptableObject[] created)
         {
@@ -320,9 +318,9 @@ namespace Dice.Tests
             journey.name = encounterName + " journey";
             var journeys = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
             var journeyData = new SerializedObject(journey);
-            journeyData.FindProperty("encounter").objectReferenceValue = synthetic.Encounter(encounterName);
             journeyData.FindProperty("locationTitle").stringValue = locationTitle;
             journeyData.ApplyModifiedPropertiesWithoutUndo();
+            TestJourneys.SetEncounterBeats(journey, null, synthetic.Encounter(encounterName));
             created = new ScriptableObject[] { journeys, OnlyChapter(journeys, journey), journey };
             return journeys;
         }

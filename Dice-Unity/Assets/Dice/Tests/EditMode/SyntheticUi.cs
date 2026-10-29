@@ -153,6 +153,7 @@ namespace Dice.Tests
                     property.objectReferenceValue = (Object)value;
                     Assert.That(property.objectReferenceValue, Is.SameAs(value), property.propertyPath);
                     break;
+                case SerializedPropertyType.ManagedReference: property.managedReferenceValue = value; break;
                 case SerializedPropertyType.Enum: property.intValue = Convert.ToInt32(value); break;
                 case SerializedPropertyType.Integer: property.longValue = Convert.ToInt64(value); break;
                 case SerializedPropertyType.Float: property.doubleValue = Convert.ToDouble(value); break;

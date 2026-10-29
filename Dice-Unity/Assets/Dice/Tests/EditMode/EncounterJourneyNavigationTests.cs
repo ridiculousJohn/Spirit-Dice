@@ -16,6 +16,7 @@ namespace Dice.Tests
         private static readonly EncounterDefinition.Id FirstId = TestEncounters.IdOf("encounter.harbor");
         private static readonly EncounterDefinition.Id SecondId = TestEncounters.IdOf("encounter.observatory");
         private static readonly EncounterDefinition.Id MissingId = TestEncounters.IdOf("encounter.missing");
+        private static readonly EncounterDefinition.Id OnwardId = TestEncounters.IdOf("encounter.onward");
         private readonly List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
         private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private EncounterJourneyNavigation navigation;
@@ -105,13 +106,14 @@ namespace Dice.Tests
             Assert.That(navigation.SelectEncounter(first, progress, out _), Is.True);
             Assert.That(navigation.CanSkipIntro(new Progress(false, new[] { FirstId }, null)), Is.False);
             Assert.That(navigation.SkipIntro(progress, out var transition), Is.True);
-            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Take(first.Beats.Count - 1).Select(beat => beat.ProgressionReward)));
+            int invitation = first.IndexOfEncounter(FirstId) - 1;
+            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Take(invitation).Select(beat => beat.ProgressionReward)));
             Assert.That(navigation.BeatIndex, Is.Zero);
             navigation.Commit(transition);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(navigation.BeatIndex, Is.EqualTo(first.Beats.Count - 1));
+            Assert.That(navigation.BeatIndex, Is.EqualTo(invitation));
             Assert.That(navigation.CanSkipIntro(progress), Is.False);
-            Assert.That(navigation.AdvanceJourney(out _), Is.False);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out _), Is.False);
         }
 
         [TestCase(false)]
@@ -121,14 +123,15 @@ namespace Dice.Tests
             Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             if (accepting) ReachInvitation();
             int before = navigation.BeatIndex;
-            bool proposed = accepting ? navigation.AcceptEncounter(out var transition) : navigation.AdvanceJourney(out transition);
+            bool proposed = accepting ? navigation.AcceptEncounter(out var transition)
+                : navigation.AdvanceJourney(EncounterOutcome.None, out transition);
             Assert.That(proposed, Is.True);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             Assert.That(navigation.BeatIndex, Is.EqualTo(before));
             Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Take(before + 1).Select(beat => beat.ProgressionReward)));
 
-            bool retried = accepting ? navigation.AcceptEncounter(out var retry) : navigation.AdvanceJourney(out retry);
+            bool retried = accepting ? navigation.AcceptEncounter(out var retry) : navigation.AdvanceJourney(EncounterOutcome.None, out retry);
             Assert.That(retried, Is.True);
             Assert.That(retry.Journey, Is.SameAs(transition.Journey));
             Assert.That(retry.Phase, Is.EqualTo(transition.Phase));
@@ -136,20 +139,20 @@ namespace Dice.Tests
             Assert.That(retry.Rewards, Is.EqualTo(transition.Rewards));
             navigation.Commit(retry);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(accepting ? EncounterJourneyPhase.Playing : EncounterJourneyPhase.Sequence));
-            Assert.That(navigation.BeatIndex, Is.EqualTo(accepting ? -1 : before + 1));
+            // Accepting plays the Encounter beat after the invitation.
+            Assert.That(navigation.BeatIndex, Is.EqualTo(before + 1));
         }
 
         [Test]
-        public void AutomaticBeatsNeverAcceptTheFinalInvitation()
+        public void AdvancingNeverAcceptsTheInvitation()
         {
-            for (int beat = 0; beat < first.Beats.Count; ++beat) TestJourneys.SetBeat(first, beat, "autoAdvance", true);
             Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.AcceptEncounter(out _), Is.False);
             ReachInvitation();
-            Assert.That(navigation.AdvanceJourney(out var transition), Is.False);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.Won, out var transition), Is.False);
             Assert.That(transition, Is.Null);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(navigation.BeatIndex, Is.EqualTo(first.Beats.Count - 1));
+            Assert.That(navigation.BeatIndex, Is.EqualTo(first.IndexOfEncounter(FirstId) - 1));
             Assert.That(navigation.AcceptEncounter(out transition), Is.True);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             navigation.Commit(transition);
@@ -161,18 +164,67 @@ namespace Dice.Tests
         {
             Assert.That(navigation.SelectEncounter(story, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.AcceptEncounter(out _), Is.False);
-            Assert.That(navigation.AdvanceJourney(out var advance), Is.True);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var advance), Is.True);
+            Assert.That(advance.CompletesJourney, Is.False);
             navigation.Commit(advance);
-            Assert.That(navigation.AdvanceJourney(out var completion), Is.True);
-            Assert.That(completion.CompletesStory, Is.True);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var completion), Is.True);
+            Assert.That(completion.CompletesJourney, Is.True);
             Assert.That(completion.Phase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(completion.Rewards, Is.EqualTo(story.Beats.Select(beat => beat.ProgressionReward).Concat(new[] { story.CompletionReward })));
             Assert.That(navigation.SelectedJourney, Is.SameAs(story));
             Assert.That(navigation.BeatIndex, Is.EqualTo(story.Beats.Count - 1));
-            Assert.That(navigation.AdvanceJourney(out var retry), Is.True);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var retry), Is.True);
             Assert.That(retry.Rewards, Is.EqualTo(completion.Rewards));
             navigation.Commit(retry);
             AssertInvestigation();
+        }
+
+        [Test]
+        public void AWinContinuesWithTheNextBeatAndTheLastBeatCompletesTheJourney()
+        {
+            var journey = OnwardJourney();
+            navigation.Initialize(catalog, OnwardId);
+            Assert.That(navigation.BeatIndex, Is.EqualTo(2));
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.Lost, out var refused), Is.False);
+            Assert.That(refused, Is.Null);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.Won, out var onward), Is.True);
+            Assert.That(onward.Phase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+            Assert.That(onward.BeatIndex, Is.EqualTo(3));
+            Assert.That(onward.CompletesJourney, Is.False);
+            Assert.That(onward.Rewards, Is.EqualTo(journey.Beats.Take(3).Select(beat => beat.ProgressionReward)));
+            navigation.Commit(onward);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var completion), Is.True);
+            Assert.That(completion.Phase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(completion.CompletesJourney, Is.True);
+            Assert.That(completion.Rewards,
+                Is.EqualTo(journey.Beats.Select(beat => beat.ProgressionReward).Concat(new[] { journey.CompletionReward })));
+        }
+
+        [Test]
+        public void AWonLastEncounterBeatReturnsToTheBoardItsWinCompleted()
+        {
+            navigation.Initialize(catalog, FirstId);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.Won, out var transition), Is.True);
+            Assert.That(transition.Phase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(transition.CompletesJourney, Is.False);
+            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Select(beat => beat.ProgressionReward)));
+            navigation.Commit(transition);
+            AssertInvestigation();
+        }
+
+        [Test]
+        public void AnUnfinishedJourneyResumesAfterItsLastWonEncounterBeat()
+        {
+            var journey = OnwardJourney();
+            var won = new[] { OnwardId };
+            Assert.That(navigation.SelectEncounter(journey, new Progress(true, null, null, won), out _), Is.True);
+            Assert.That(navigation.BeatIndex, Is.EqualTo(3));
+            navigation.ReturnToInvestigation();
+            Assert.That(navigation.SelectEncounter(journey, new Progress(true, null, Completed(journey), won), out _), Is.True);
+            Assert.That(navigation.BeatIndex, Is.Zero, "A finished journey replays from its start.");
+            navigation.ReturnToInvestigation();
+            Assert.That(navigation.SelectEncounter(journey, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.BeatIndex, Is.Zero);
         }
 
         [Test]
@@ -192,7 +244,7 @@ namespace Dice.Tests
             Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
-            Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
+            Assert.That(navigation.BeatIndex, Is.EqualTo(first.IndexOfEncounter(FirstId)));
         }
 
         [TestCase(EncounterOutcome.None)]
@@ -207,12 +259,12 @@ namespace Dice.Tests
             if (outcome == EncounterOutcome.None)
             {
                 Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-                Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
+                Assert.That(navigation.BeatIndex, Is.EqualTo(first.IndexOfEncounter(FirstId)));
                 return;
             }
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(navigation.BeatIndex, Is.EqualTo(first.Beats.Count - 1));
-            Assert.That(navigation.AdvanceJourney(out _), Is.False);
+            Assert.That(navigation.BeatIndex, Is.EqualTo(first.IndexOfEncounter(FirstId) - 1));
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out _), Is.False);
             Assert.That(navigation.AcceptEncounter(out _), Is.True);
         }
 
@@ -258,7 +310,7 @@ namespace Dice.Tests
             var completed = Journey("encounter.completed");
             SyntheticUi.Set(catalog, "chapters", new[] { Chapter("chapter.all", first, second, story, visited, completed) });
             SyntheticUi.Set(first, "followUpJourneys", new[] { second, visited, completed, story });
-            var visitedIds = new[] { visited.Encounter.Identity };
+            var visitedIds = new[] { TestEncounters.IdOf("encounter.visited") };
             var completedIds = Completed(completed);
             var progress = new Progress(true, visitedIds, completedIds);
             navigation.RecordVictory(FirstId, new Progress(false, null, null));
@@ -353,9 +405,9 @@ namespace Dice.Tests
             var chapters = Chapters();
             var progress = new Progress(true, null, Completed(first));
             Assert.That(navigation.SelectEncounter(story, progress, out _), Is.True);
-            Assert.That(navigation.AdvanceJourney(out var beat), Is.True);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var beat), Is.True);
             navigation.Commit(beat);
-            Assert.That(navigation.AdvanceJourney(out var completion), Is.True);
+            Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var completion), Is.True);
             var afterStory = new Progress(true, null, Completed(first, story));
             navigation.Commit(completion, afterStory);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
@@ -420,14 +472,29 @@ namespace Dice.Tests
             return chapters;
         }
 
+        /** A catalog journey whose Encounter beat, of the onward encounter, is followed by a dialogue beat. */
+        private EncounterJourneyAsset OnwardJourney()
+        {
+            var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), "journey.onward");
+            TestJourneys.SetBeats(journey, Create<EncounterTablePresentationAsset>(), new DialogueBeat(), new InvitationBeat(),
+                new EncounterBeat(), new DialogueBeat());
+            TestJourneys.SetBeat(journey, 2, "encounter", content.Encounter("encounter.onward"));
+            for (int beat = 0; beat < journey.Beats.Count; ++beat)
+                TestJourneys.SetBeat(journey, beat, "progressionReward", Create<ProgressionRewardAsset>());
+            SyntheticUi.Set(journey, "completionReward", Create<ProgressionRewardAsset>());
+            SyntheticUi.Set(catalog, "chapters", new[] { Chapter("chapter.all", first, second, story, journey) });
+            navigation.InitializeJourney(catalog);
+            return journey;
+        }
+
         private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
             => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
 
         private void ReachInvitation()
         {
-            while (navigation.BeatIndex < navigation.SelectedJourney.Beats.Count - 1)
+            while (navigation.SelectedJourney.EncounterBeatAt(navigation.BeatIndex + 1) == null)
             {
-                Assert.That(navigation.AdvanceJourney(out var transition), Is.True);
+                Assert.That(navigation.AdvanceJourney(EncounterOutcome.None, out var transition), Is.True);
                 navigation.Commit(transition);
             }
         }
@@ -444,15 +511,16 @@ namespace Dice.Tests
         private static EncounterJourneyAsset.Id[] Completed(params EncounterJourneyAsset[] journeys)
             => journeys.Select(journey => journey.Identity).ToArray();
 
-        /** A journey identified by the name: a story, or the journey of a new encounter asset of the name. */
+        /**
+         * A journey identified by the name: two dialogue beats without an encounter, or an intro, an invitation and the
+         * Encounter beat of a new encounter asset of the name.
+         */
         private EncounterJourneyAsset Journey(string name, bool storyOnly = false)
         {
             var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), name);
-            if (!storyOnly) SyntheticUi.Set(journey, "encounter", content.Encounter(name));
-            TestJourneys.SetBeats(journey, storyOnly
-                ? new[] { TestJourneys.Beat("report", EncounterJourneyBeatKind.Dialogue), TestJourneys.Beat("prepare", EncounterJourneyBeatKind.Dialogue) }
-                : new[] { TestJourneys.Beat("approach", EncounterJourneyBeatKind.Illustration), TestJourneys.Beat("bargain", EncounterJourneyBeatKind.Dialogue),
-                    TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation) });
+            var table = Create<EncounterTablePresentationAsset>();
+            if (storyOnly) TestJourneys.SetBeats(journey, table, new DialogueBeat(), new DialogueBeat());
+            else TestJourneys.SetEncounterBeats(journey, table, content.Encounter(name), new IllustrationBeat(), new DialogueBeat());
             for (int beat = 0; beat < journey.Beats.Count; ++beat)
                 TestJourneys.SetBeat(journey, beat, "progressionReward", Create<ProgressionRewardAsset>());
             SyntheticUi.Set(journey, "completionReward", Create<ProgressionRewardAsset>());

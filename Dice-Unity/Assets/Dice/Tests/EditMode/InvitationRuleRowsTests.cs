@@ -41,10 +41,7 @@ namespace Dice.Tests
             SyntheticUi.Set(table, "rulePresentations", new[] { Rule("rule.first", "First rule", "First rule text"),
                 Rule("rule.second", "Second rule", "Second rule text") });
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounter", content.Encounter("encounter.rules"));
-            TestJourneys.SetBeats(journey, TestJourneys.Beat("dialogue", EncounterJourneyBeatKind.Dialogue),
-                TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
-            SyntheticUi.Set(journey, "tablePresentation", table);
+            TestJourneys.SetEncounterBeats(journey, table, content.Encounter("encounter.rules"), new DialogueBeat());
             var controls = new TestJourneyControls
             {
                 SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence, BeatIndex = 1

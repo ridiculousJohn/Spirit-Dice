@@ -46,7 +46,8 @@ namespace Dice.Tests
             var config = AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>("Assets/Dice/Content/DiceApplicationConfig.asset");
             Assert.That(config != null && config.JourneyCatalog != null, Is.True, "The application configuration has no journey catalog.");
             string path = config.JourneyCatalog.Entries
-                .Select(journey => journey != null ? journey.TablePresentation : null)
+                .Where(journey => journey != null)
+                .SelectMany(journey => journey.Beats.Select(beat => beat.Scene != null ? beat.Scene.Table : null))
                 .Where(table => table != null && table.SceneLighting != null && table.Scene.RuntimeKeyIsValid())
                 .Select(table => AssetDatabase.GetAssetPath(table))
                 .OrderBy(value => value, System.StringComparer.Ordinal).FirstOrDefault();

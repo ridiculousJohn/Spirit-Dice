@@ -139,7 +139,7 @@ namespace Dice.Tests
         private EncounterJourneyAsset Journey(string id)
         {
             var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), id);
-            SyntheticUi.Set(journey, "encounter", content.Encounter(id));
+            TestJourneys.SetEncounterBeats(journey, null, content.Encounter(id));
             SyntheticUi.Set(journey, "locationTitle", id);
             return journey;
         }

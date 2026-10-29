@@ -30,12 +30,10 @@ namespace Dice.Tests
             campaign = host.AddComponent<SpiritCampaignController>();
             catalog = TestContent.Catalog();
             var journey = TestJourneys.Identify(Create<EncounterJourneyAsset>(), "journey.test");
-            SyntheticUi.Set(journey, "encounter", content.Encounter("encounter.test"));
             SyntheticUi.Set(journey, "locationTitle", "Test location");
             SyntheticUi.Set(journey, "spiritName", "Test host");
             SyntheticUi.Set(journey, "leadText", "A test lead.");
-            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            TestJourneys.SetBeats(journey, TestJourneys.Beat("invitation", EncounterJourneyBeatKind.Invitation));
+            TestJourneys.SetEncounterBeats(journey, Create<EncounterTablePresentationAsset>(), content.Encounter("encounter.test"));
             journeys = TestJourneys.Catalog(Create<EncounterJourneyCatalogAsset>(),
                 TestJourneys.Chapter(Create<EncounterChapterAsset>(), "chapter.test", journey));
             root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",

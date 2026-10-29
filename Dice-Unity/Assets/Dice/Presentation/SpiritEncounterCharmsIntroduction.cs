@@ -53,8 +53,7 @@ namespace Dice.Presentation
             }
             if (screen.IsOpen) return;
             shownTargetStageIndex = snapshot.PendingReward.TargetStageIndex;
-            string narration = journey != null && !journey.IsStoryOnly && journey.Encounter.Identity == encounter.Identity
-                ? journey.EncounterCharmsIntroductionText : null;
+            string narration = journey != null ? journey.EncounterBeatOf(encounter.Identity)?.EncounterCharmsIntroductionText : null;
             screen.Show(catalog, charms, encounter.EncounterModifierIds, narration);
         }
 

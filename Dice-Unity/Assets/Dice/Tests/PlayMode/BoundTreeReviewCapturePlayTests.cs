@@ -33,6 +33,8 @@ namespace Dice.Tests
     public sealed class BoundTreeReviewCapturePlayTests
     {
         private const int Width = 540, NarrowWidth = 443, Height = 960;
+        // The Bound Tree journey's beats where the nymph first speaks and where the spirit takes up the challenge.
+        private const int NymphBeat = 3, ChallengeBeat = 9;
 
         [UnityTest]
         public IEnumerator BoundTreeSliceReviewCapture()
@@ -53,20 +55,20 @@ namespace Dice.Tests
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);
-            Assert.That(view.TablePresentation, Is.SameAs(journey.TablePresentation));
+            Assert.That(view.TablePresentation, Is.SameAs(journey.TableSceneAt(0)));
 
-            yield return ShowBeat(controller, view, journey.Beats[0].Id);
+            yield return ShowBeat(controller, view, 0);
             yield return Capture(root, "a-first-beat.png");
 
-            yield return ShowBeat(controller, view, "nymph");
+            yield return ShowBeat(controller, view, NymphBeat);
             Assert.That(view.HostPortrait.State, Is.EqualTo(SpiritPresentationState.Waiting), "The host is plain bark before the challenge.");
             yield return Capture(root, "b-nymph-beat.png");
 
-            yield return ShowBeat(controller, view, "challenge");
+            yield return ShowBeat(controller, view, ChallengeBeat);
             Assert.That(view.HostPortrait.State, Is.EqualTo(SpiritPresentationState.Arrival), "The face splits open at the challenge.");
             yield return Capture(root, "c-challenge-beat.png");
 
-            yield return ShowBeat(controller, view, "invitation");
+            yield return ShowBeat(controller, view, journey.IndexOfEncounter(journey.Encounters.First().Identity) - 1);
             yield return Capture(root, "d-invitation-beat.png");
 
             controller.AcceptEncounter();
@@ -258,17 +260,18 @@ namespace Dice.Tests
             yield return null;
         }
 
-        /** Advances the journey to the named beat and waits until the view shows it with its motion complete. */
-        private static IEnumerator ShowBeat(SpiritEncounterController controller, SpiritEncounterView view, string id)
+        /** Advances the journey to the beat at the index and waits until the view shows it with its motion complete. */
+        private static IEnumerator ShowBeat(SpiritEncounterController controller, SpiritEncounterView view, int index)
         {
-            Assert.That(controller.SelectedJourney.Beats.Any(beat => beat.Id == id), Is.True, id);
+            Assert.That(index, Is.InRange(0, controller.SelectedJourney.Beats.Count - 1));
+            string id = "beat " + index;
             float deadline = Time.realtimeSinceStartup + 15;
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Id != id && Time.realtimeSinceStartup < deadline)
+            while (controller.BeatIndex != index && Time.realtimeSinceStartup < deadline)
             {
                 controller.AdvanceJourney();
                 yield return null;
             }
-            Assert.That(controller.SelectedJourney.Beats[controller.BeatIndex].Id, Is.EqualTo(id));
+            Assert.That(controller.BeatIndex, Is.EqualTo(index));
             yield return ContentReady.Routed(controller);
             deadline = Time.realtimeSinceStartup + 15;
             while ((view.JourneyView.VisibleBeatIndex != controller.BeatIndex || view.JourneyView.IsAnimating) &&

@@ -131,10 +131,10 @@ namespace Dice.Presentation
                 clueCards.Add(card.gameObject);
                 bool highlighted = controls.HighlightedJourneys.Contains(journey);
                 if (highlighted && firstHighlight == null) firstHighlight = (RectTransform)card.transform;
-                bool visited = !journey.IsStoryOnly && controls.VisitedEncounterIds.Contains(journey.Encounter.Identity);
+                bool visited = journey.Encounters.Any(encounter => controls.VisitedEncounterIds.Contains(encounter.Identity));
                 bool completed = controls.CompletedJourneyIds.Contains(journey.Identity);
-                string state = journey.IsStoryOnly ? completed ? wording.readAgain : wording.followLead :
-                    visited ? wording.visitedLead : wording.followLead;
+                // A journey that plays an encounter is visited before it can be completed.
+                string state = visited ? wording.visitedLead : completed ? wording.readAgain : wording.followLead;
                 card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
                     highlighted, highlighted, true, () => controls.SelectEncounter(selected));
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))

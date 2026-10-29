@@ -42,11 +42,14 @@ namespace Dice.Tests
             ContentReady.UseFixedSeed(controller);
         }
 
+        /** The Encounter beat of the journey's encounter, which holds its endings. */
+        private static EncounterBeat Ending(EncounterJourneyAsset journey) => journey.EncounterBeatOf(journey.Encounters.First().Identity);
+
         /** The first authored encounter journey, in catalog order, that authors a presentation of the outcome. */
         private EncounterJourneyAsset EncounterJourney(EncounterOutcome outcome)
         {
-            var found = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly &&
-                value.GetOutcomePresentation(outcome) != null);
+            var found = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && value.Encounters.Any() &&
+                Ending(value).GetOutcomePresentation(outcome) != null);
             Assert.That(found, Is.Not.Null, "The authored journey catalog has no encounter journey presenting " + outcome + ".");
             return found;
         }
@@ -66,13 +69,13 @@ namespace Dice.Tests
         private IEnumerator VictoryEnding(EncounterJourneyAsset authored)
         {
             InstallShortEncounter(true, authored);
-            var outcome = journey.GetOutcomePresentation(EncounterOutcome.Won);
+            var outcome = Ending(journey).GetOutcomePresentation(EncounterOutcome.Won);
             yield return EnterEncounter();
-            var definition = controller.Catalog.GetEncounter(journey.Encounter.Identity);
+            var definition = controller.Catalog.GetEncounter(journey.Encounters.First().Identity);
             var unlockedBefore = controller.ProfileUnlockedModifierIds.ToArray();
             // A parallel session clears every stage but the last, choosing each milestone's first unlock; the run is
             // then loaded from its save so the final victory follows restored milestones.
-            var session = EncounterSession.CreateEncounter(controller.Catalog, journey.Encounter.Identity, ContentReady.Seed, unlockedBefore,
+            var session = EncounterSession.CreateEncounter(controller.Catalog, journey.Encounters.First().Identity, ContentReady.Seed, unlockedBefore,
                 controller.ProfileDiscoveredFamilyIds);
             for (int stage = 1; stage < definition.Stages.Count; ++stage)
             {
@@ -140,7 +143,7 @@ namespace Dice.Tests
             if (outcome.ShowDialogue)
             {
                 Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.SpiritName), journey.name);
-                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.VictoryText), journey.name);
+                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(Ending(journey).VictoryText), journey.name);
                 Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
                 view.Refresh();
                 Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.True,
@@ -148,7 +151,7 @@ namespace Dice.Tests
                 Click("EndingDialogueContinueButton");
                 yield return null;
             }
-            Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.VictoryTitle), journey.name);
+            Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(Ending(journey).VictoryTitle), journey.name);
             Assert.That(Find<Text>("EndingClueTitle").text, Is.EqualTo(journey.CompletionClueTitle), journey.name);
             Assert.That(Find<Text>("EndingClueText").text, Is.EqualTo(journey.CompletionClueText), journey.name);
             Assert.That(Find<Button>("EndingRetryButton").gameObject.activeInHierarchy, Is.False, journey.name);
@@ -168,8 +171,8 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation), journey.name);
-            Assert.That(controller.CompletedEncounterIds, Does.Contain(journey.Encounter.Identity), journey.name);
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).CompletedEncounterIds, Does.Contain(journey.Encounter.Identity),
+            Assert.That(controller.CompletedEncounterIds, Does.Contain(journey.Encounters.First().Identity), journey.name);
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).CompletedEncounterIds, Does.Contain(journey.Encounters.First().Identity),
                 journey.name);
             Assert.That(ContentReady.PresentationRoot(controller).GetComponentsInChildren<Text>().Where(label => label.name == "ClueTitle")
                 .Select(label => label.text), Is.EquivalentTo(controller.JourneyCatalog.Entries
@@ -178,7 +181,7 @@ namespace Dice.Tests
 
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
-            while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
+            while (!(journey.Beats[controller.BeatIndex] is InvitationBeat)) controller.AdvanceJourney();
             yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, journey.name + " replay invitation", ContentReady.SequenceTimeout);
             controller.AcceptEncounter();
             yield return WaitForPresentation();
@@ -232,13 +235,13 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(permanent.Id), journey.name);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Does.Contain(permanent.Id), journey.name);
             // A defeat without host motion has nothing to skip.
-            if (view.HostPortrait.GetDuration(journey.GetOutcomePresentation(EncounterOutcome.Lost).HostState) > 0)
+            if (view.HostPortrait.GetDuration(Ending(journey).GetOutcomePresentation(EncounterOutcome.Lost).HostState) > 0)
                 yield return DefeatAndRetry(skipMotion: true);
         }
 
         private IEnumerator DefeatAndRetry(bool skipMotion)
         {
-            var outcome = journey.GetOutcomePresentation(EncounterOutcome.Lost);
+            var outcome = Ending(journey).GetOutcomePresentation(EncounterOutcome.Lost);
             controller.PlayHand();
             yield return ContentReady.WaitUntil(() => view.HostPortrait.State == outcome.HostState, journey.name + " defeat motion", ContentReady.SequenceTimeout);
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost), journey.name);
@@ -250,20 +253,20 @@ namespace Dice.Tests
             yield return WaitForPresentation();
             if (outcome.ShowDialogue)
             {
-                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.DefeatText), journey.name);
+                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(Ending(journey).DefeatText), journey.name);
                 Assert.That(Find<Button>("EndingNewRunButton").gameObject.activeInHierarchy, Is.False, journey.name);
                 Click("EndingDialogueContinueButton");
                 yield return ContentReady.Routed();
                 yield return null;
             }
-            Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.DefeatTitle), journey.name);
+            Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(Ending(journey).DefeatTitle), journey.name);
             Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
             Assert.That(controller.CompletedEncounterIds, Is.EquivalentTo(initialCompletedEncounterIds), journey.name);
             Click("EndingRetryButton");
             yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence), journey.name);
-            Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1), journey.name);
+            Assert.That(controller.BeatIndex, Is.EqualTo(journey.IndexOfEncounter(journey.Encounters.First().Identity) - 1), journey.name);
             Assert.That(controller.Snapshot, Is.SameAs(previous), "Retry must wait for invitation acceptance.");
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
@@ -298,7 +301,7 @@ namespace Dice.Tests
         private IEnumerator AbandonEnding(EncounterJourneyAsset authored)
         {
             InstallShortEncounter(false, authored);
-            var outcome = journey.GetOutcomePresentation(EncounterOutcome.Abandoned);
+            var outcome = Ending(journey).GetOutcomePresentation(EncounterOutcome.Abandoned);
             yield return EnterEncounter();
             controller.Abandon();
             yield return ContentReady.WaitUntil(() => view.HostPortrait.State == outcome.HostState, journey.name + " abandon farewell", ContentReady.SequenceTimeout);
@@ -314,9 +317,9 @@ namespace Dice.Tests
                 yield return null;
             }
             // Without authored abandon text the summary shows the screen's own fallback line.
-            if (!string.IsNullOrWhiteSpace(journey.AbandonText))
-                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(journey.AbandonText), journey.name);
-            Assert.That(Find<Text>("EndingTitle").text, Is.Not.EqualTo(journey.DefeatTitle), journey.name);
+            if (!string.IsNullOrWhiteSpace(Ending(journey).AbandonText))
+                Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(Ending(journey).AbandonText), journey.name);
+            Assert.That(Find<Text>("EndingTitle").text, Is.Not.EqualTo(Ending(journey).DefeatTitle), journey.name);
             Assert.That(Find<Button>("EndingRetryButton").gameObject.activeInHierarchy, Is.False, journey.name);
             Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
             Click("EndingNewRunButton");
@@ -341,9 +344,9 @@ namespace Dice.Tests
             foreach (var beat in journey.Beats)
             {
                 ContentReady.SetField(beat, "duration", 0f);
-                ContentReady.SetField(beat, "autoAdvance", false);
+                if (beat is ArrivalBeat) ContentReady.SetField(beat, "autoAdvance", false);
             }
-            var definition = original.GetEncounter(journey.Encounter.Identity);
+            var definition = original.GetEncounter(journey.Encounters.First().Identity);
             int stageCount = winning ? VictoryStages : 1;
             // Charms the journey grants on its own beats are already owned when its milestones are offered.
             var granted = new HashSet<string>(journey.Beats.Where(beat => beat.ProgressionReward != null)
@@ -367,8 +370,8 @@ namespace Dice.Tests
                 encounterModifiersFirstClearedStageNumber: Math.Min(definition.EncounterModifiersFirstClearedStageNumber, stageCount));
             var entries = controller.JourneyCatalog.Entries.Select(value => value == authored ? journey : value).ToArray();
             var mechanical = new MechanicalCatalog("ending-playmode.v1", original.Hands,
-                entries.Where(value => !value.IsStoryOnly)
-                    .Select(value => value == journey ? shortEncounter : original.GetEncounter(value.Encounter.Identity)),
+                entries.Where(value => value.Encounters.Any())
+                    .Select(value => value == journey ? shortEncounter : original.GetEncounter(value.Encounters.First().Identity)),
                 original.Modifiers);
             var catalog = UnityEngine.Object.Instantiate(controller.JourneyCatalog);
             ContentReady.SetField(catalog, "chapters", controller.JourneyCatalog.Chapters.Select(chapter =>
@@ -389,7 +392,7 @@ namespace Dice.Tests
         {
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
-            while (journey.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation) controller.AdvanceJourney();
+            while (!(journey.Beats[controller.BeatIndex] is InvitationBeat)) controller.AdvanceJourney();
             yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, journey.name + " invitation", ContentReady.SequenceTimeout);
             controller.AcceptEncounter();
             yield return ContentReady.Routed(controller);

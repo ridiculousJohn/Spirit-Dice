@@ -12,7 +12,7 @@ namespace Dice.Tests
         private const string GiftId = "modifier.gift";
         private const string GiftFamily = "family.gift";
         private static readonly ModifierFamilyDefinition.Id GiftFamilyId = TestFamilies.IdOf(GiftFamily);
-        private static readonly EncounterJourneyAsset.Id StoryJourneyId = TestJourneys.IdOf("journey.return");
+        private static readonly EncounterJourneyAsset.Id ReturnJourneyId = TestJourneys.IdOf("journey.return");
         private PlayerProgression progression;
         private string savePath;
 
@@ -63,12 +63,12 @@ namespace Dice.Tests
             Assert.That(progression.PersistVisit(TestEncounters.IdOf("encounter.first")), Is.True);
 
             var external = new PlayerProfile();
-            external.CompleteJourney(StoryJourneyId);
+            external.CompleteJourney(ReturnJourneyId);
             PlayerProfileFileStore.Save(progression.ProfilePath, external);
             string anotherRun = Path.Combine(Path.GetDirectoryName(savePath), "another-run.json");
             Assert.That(progression.PrepareProfile(anotherRun), Is.True);
             Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.first") }));
-            Assert.That(progression.CompletedJourneyIds, Is.EqualTo(new[] { StoryJourneyId }));
+            Assert.That(progression.CompletedJourneyIds, Is.EqualTo(new[] { ReturnJourneyId }));
 
             string differentRun = Path.Combine(Path.GetDirectoryName(savePath), "other-profile", "encounter.json");
             string differentProfile = ProfilePathFor(differentRun);
@@ -103,7 +103,7 @@ namespace Dice.Tests
         }
 
         [TestCase("reward")]
-        [TestCase("story")]
+        [TestCase("journey")]
         [TestCase("visit")]
         public void TransactionalWriteFailurePreservesProgressUntilTheOperationIsRetried(string operation)
         {
@@ -136,7 +136,7 @@ namespace Dice.Tests
             {
                 Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
                 Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
-                if (operation == "story") Assert.That(saved.CompletedJourneyIds, Is.EqualTo(new[] { StoryJourneyId }));
+                if (operation == "journey") Assert.That(saved.CompletedJourneyIds, Is.EqualTo(new[] { ReturnJourneyId }));
                 else Assert.That(saved.CompletedJourneyIds, Is.Empty);
             }
         }
@@ -238,13 +238,13 @@ namespace Dice.Tests
         }
 
         private static PlayerProfileStatusKind FailureOf(string operation) =>
-            operation == "story" ? PlayerProfileStatusKind.StoryFailed :
+            operation == "journey" ? PlayerProfileStatusKind.StoryFailed :
             operation == "visit" ? PlayerProfileStatusKind.VisitFailed : PlayerProfileStatusKind.RewardFailed;
 
         private bool ApplyOperation(string operation, MechanicalCatalog catalog)
         {
             var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, new[] { GiftId });
-            if (operation == "story") return progression.CompleteStoryJourney(StoryJourneyId, new[] { reward }, catalog);
+            if (operation == "journey") return progression.CompleteJourney(ReturnJourneyId, new[] { reward }, catalog);
             if (operation == "visit") return progression.PersistVisit(TestContent.EncounterId);
             bool result = progression.ApplyProgressionReward(reward, catalog, out bool changed);
             Assert.That(changed, Is.EqualTo(result));

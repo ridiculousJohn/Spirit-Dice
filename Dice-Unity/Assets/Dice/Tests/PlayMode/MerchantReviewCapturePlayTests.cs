@@ -54,7 +54,7 @@ namespace Dice.Tests
             ContentReady.SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
                 controller.AdvanceJourney();
             controller.AcceptEncounter();
             yield return ContentReady.Routed(controller);

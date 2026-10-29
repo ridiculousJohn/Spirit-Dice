@@ -202,7 +202,7 @@ namespace Dice.Editor
         }
 
         /**
-         * The opening snapshot of the encounter of the first journey, in catalog order, that plays on the table; the HUD
+         * The opening snapshot of the encounter of the first Encounter beat, in catalog order, that plays on the table; the HUD
          * badge fills its card text from that encounter's rule as the game does. Without such a journey there is no rule
          * to fill it from, so the badge shows a selection message in place of its text.
          */
@@ -212,14 +212,17 @@ namespace Dice.Editor
             ruleMessage = null;
             if (table.HudRuleCard == null) return;
             EnsureContent();
-            var journey = configuration.JourneyCatalog?.Entries
-                .FirstOrDefault(entry => entry != null && !entry.IsStoryOnly && entry.TablePresentation == table);
-            if (journey == null)
+            var encounter = configuration.JourneyCatalog?.Entries
+                .Where(entry => entry != null)
+                .SelectMany(entry => Enumerable.Range(0, entry.Beats.Count)
+                    .Where(index => entry.TableSceneAt(index) == table).Select(entry.EncounterBeatAt))
+                .FirstOrDefault(beat => beat != null)?.Encounter;
+            if (encounter == null)
             {
                 ruleMessage = "Select a table a journey plays on to preview its rule badge text.";
                 return;
             }
-            ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, journey.Encounter.Identity, PreviewSeed).Snapshot;
+            ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, encounter.Identity, PreviewSeed).Snapshot;
         }
 
         /** Loads the application's configuration and builds its content once per staged preview. */

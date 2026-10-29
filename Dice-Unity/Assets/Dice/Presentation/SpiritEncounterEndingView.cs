@@ -33,6 +33,8 @@ namespace Dice.Presentation
         private Action<float> activeFade;
         private EncounterSnapshot snapshot;
         private EncounterJourneyAsset journey;
+        // The journey's Encounter beat of the snapshot's encounter, which holds its endings; null without one.
+        private EncounterBeat beat;
         private EncounterOutcomePresentation presentation;
         private string unlockSummary;
         private EndingPhase phase;
@@ -82,7 +84,8 @@ namespace Dice.Presentation
             this.snapshot = snapshot;
             this.journey = journey;
             this.unlockSummary = unlockSummary ?? "";
-            presentation = journey != null ? journey.GetOutcomePresentation(snapshot.Outcome) : null;
+            beat = journey != null ? journey.EncounterBeatOf(snapshot.EncounterId) : null;
+            presentation = beat?.GetOutcomePresentation(snapshot.Outcome);
             Root.gameObject.SetActive(true);
             Refresh();
             if (changed) scroll.verticalNormalizedPosition = 1;
@@ -159,6 +162,7 @@ namespace Dice.Presentation
             CancelFade();
             snapshot = null;
             journey = null;
+            beat = null;
             presentation = null;
             unlockSummary = "";
             phase = EndingPhase.Hidden;
@@ -202,8 +206,8 @@ namespace Dice.Presentation
 
         private void OnDisable() => ClearContext();
 
-        private string FarewellText => journey == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? journey.VictoryText :
-            snapshot.Outcome == EncounterOutcome.Abandoned ? journey.AbandonText : journey.DefeatText;
+        private string FarewellText => beat == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? beat.VictoryText :
+            snapshot.Outcome == EncounterOutcome.Abandoned ? beat.AbandonText : beat.DefeatText;
 
         private void Refresh()
         {
@@ -221,13 +225,13 @@ namespace Dice.Presentation
             returnButton.interactable = summary;
             retryButton.interactable = canRetry;
             var wording = SpiritUi.GetWording(transform).ending;
-            SpiritUi.SetButtonLabel(returnButton, journey != null && !string.IsNullOrWhiteSpace(journey.ResultContinueLabel)
-                ? journey.ResultContinueLabel : wording.returnButton);
+            SpiritUi.SetButtonLabel(returnButton, beat != null && !string.IsNullOrWhiteSpace(beat.ResultContinueLabel)
+                ? beat.ResultContinueLabel : wording.returnButton);
             if (!dialogue && !summary) return;
 
-            title.text = dialogue ? journey.SpiritName : abandoned ? wording.abandonedTitle : journey == null
+            title.text = dialogue ? journey.SpiritName : abandoned ? wording.abandonedTitle : beat == null
                 ? lost ? wording.lostTitle : wording.wonTitle
-                : lost ? journey.DefeatTitle : journey.VictoryTitle;
+                : lost ? beat.DefeatTitle : beat.VictoryTitle;
             if (dialogue)
                 detail.text = FarewellText;
             else if (abandoned)
@@ -236,7 +240,9 @@ namespace Dice.Presentation
                 detail.text = wording.Summary(presentation == null ? FarewellText : null, snapshot.TotalScore);
             detail.fontSize = dialogue ? detailDialogueSize : detailSummarySize;
             detail.gameObject.SetActive(!string.IsNullOrWhiteSpace(detail.text));
-            bool clue = summary && snapshot.Outcome == EncounterOutcome.Won && journey != null;
+            // The clue comes with the journey's completion, which a win brings when the Encounter beat is the last beat.
+            bool clue = summary && snapshot.Outcome == EncounterOutcome.Won && beat != null &&
+                journey.Beats[journey.Beats.Count - 1] == beat;
             clueTitle.text = clue ? journey.CompletionClueTitle : "";
             clueText.text = clue ? journey.CompletionClueText : "";
             clueTitle.gameObject.SetActive(!string.IsNullOrWhiteSpace(clueTitle.text));

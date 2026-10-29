@@ -5,7 +5,7 @@ Start the game from `Dice-Unity/Assets/Scenes/Application.unity` (Dice > Open Ap
 ## Scenes
 
 - `Assets/Scenes/Frontend.unity`: main menu, save selection/recovery, chapters, investigation board, Collection.
-- `Assets/Scenes/FoxEncounter.unity`: inn/fox composition, also used by the return story.
+- `Assets/Scenes/FoxEncounter.unity`: inn/fox composition, also used by the return journey.
 - `Assets/Scenes/WatchtowerEncounter.unity`: owl composition.
 - `Assets/Scenes/MothEncounter.unity`: cart/moth composition.
 - `Assets/Scenes/DiagnosticEncounter.unity`: separate diagnostic UI.
@@ -19,6 +19,23 @@ The old SpiritHousePrototype scene is excluded from the build. Application is th
 `Assets/Dice/Content/Presentation/Rigs` contains tray rigs, modifier-token prefabs, and authored mesh/material assets. Each tray presentation references its rig prefab. Each host presentation references its portrait and sigil prefabs. Dynamic card/token lists instantiate those explicitly referenced prefabs. Render textures, material instances, and animated mesh state are runtime resources, not replacement hierarchy builders.
 
 An encounter table's Scene reference selects its scene. The application's Frontend Scene reference selects the front end. The table and journey assets still provide content, narration, rules, audio, and lighting. Gameplay mechanics and persistence remain separate from these scene references.
+
+## Journeys
+
+A journey (`EncounterJourneyAsset`, Create > Dice > Encounter Journey) is its board card (location, host name, lead, card artwork), its completion clue and reward, its follow-ups and prerequisites, and its beats, played in order. Each beat is an inline element of the Beats list whose kind is chosen in the Inspector; every kind has Title, Text, Continue Label, Duration, Host State, Audio Cue, Progression Reward (granted when the player continues from the beat), and Scene with its Transition. A beat that sets Scene changes to it with its Transition (Fade, or Parting Panels, which parts the picture shown before); a beat with Scene empty stays in the current scene. The first beat must set one, and loading fails otherwise, naming the journey. Host State applies on every beat: during a picture it prepares the host of the table scene behind it, as the Bound Tree arrival sets Waiting before the face appears.
+
+- Illustration: the view's move over its picture, from and to, for the foreground (Motion, Scale) and the background (Background Motion, Background Scale).
+- Arrival: Hide Narrative During Motion and Auto Advance, which continues to the next beat when its motion ends; the last beat cannot advance itself.
+- Dialogue: an optional Charm, shown with the narration, whose family name fills `{charm}` in the text.
+- Invitation: shows the rule cards of the table its Encounter beat plays at, with Accept. Accept, Skip intro and Retry land here.
+- Encounter: the encounter asset it plays, its victory and defeat titles and text, abandon text, result continue label, the victory, defeat and abandon outcome presentations (see "Encounter outcomes" in [the Presentation tools](../Tools/Presentation/README.md)) and its encounter-charms introduction text. It plays in the current table scene and directly follows its Invitation; both must be in a table scene. An encounter is played by at most one Encounter beat across the journey catalog. A win shows its victory ending, then continues with the next beat, or returns to the board after the last beat.
+
+Scenes are of two kinds:
+
+- A picture scene (`PictureSceneAsset`, Create > Dice > Presentation > Picture Scene) holds a wide Background plate, optional Scene Lighting (whose base texture it shows, lit, in place of the plate) and an optional Foreground with its rectangle and tint, which fades in as its scene is entered unless panels part to reveal it. It shows on the journey screen's picture layer and hides the host. Beats showing the same plate share one asset; each lives beside its journey, such as `HauntedMerchant/MerchantRoadPicture.asset`. The Watchtower's approach and climb share `Watchtower/WatchtowerApproachPicture.asset`; the climb sets no scene.
+- A table scene is an encounter table (`EncounterTablePresentationAsset`): its Unity scene and host load, and the picture layer is empty. While a picture shows, the table scene the journey reaches next is already loaded behind it, so arriving there is instant.
+
+The return journey's first beat sets `SpiritHouse/LastLanternTable.asset`, so it plays over the fox's scene and host.
 
 ## Adding or changing presentation
 
@@ -67,7 +84,7 @@ An encounter's own charm families (its encounter modifier IDs) are introduced on
 - Before the encounter: the instance in `EncounterJourneyView.prefab` shows after Accept when the encounter offers its additions from the first stage clear (first cleared stage 1, the moth's Lantern Seekers), with Back to invitation and Begin encounter. Encounters without additions, or with additions first offered after a later clear, start at Accept.
 - Inside the encounter: `EncounterCharmsIntroduction` in `SpiritEncounterScreen.prefab`, under Portrait directly after SpiritRewardsPanel (above the offer, below the ending, charm and hand-rank panels, pause menu, journey and collection), inactive by default, with its Back button inactive and Begin relabelled Continue. Its `SpiritEncounterCharmsIntroduction` component shows it when the encounter's first cleared stage is later than 1 and the pending charm offer targets that stage, so the bound tree shows it at the stage 3 clear after the permanent unlock choice. Its opaque full-portrait backing takes all input until Continue, which is available at once and reveals the offer. Refreshing the offer does not show it again; loading or resuming the run, returning to the table from the investigation board or reloading the presentation while that offer is pending shows it again. Nothing is saved.
 
-The screen's `EncounterCharmsNarration` text sits under the title, above the scope sentence and family list, in the journey narration's typography (left aligned like the screen's other text). The in-encounter instance fills it with the selected journey's Encounter Charms Introduction Text in quotation marks, without a speaker; an empty field, and the pre-encounter screen, leave it hidden. `BoundTree/BoundTreeJourney.asset` sets it to "It keeps what it takes. So build on what it keeps."
+The screen's `EncounterCharmsNarration` text sits under the title, above the scope sentence and family list, in the journey narration's typography (left aligned like the screen's other text). The in-encounter instance fills it with the Encounter Charms Introduction Text of the selected journey's Encounter beat for the encounter, in quotation marks, without a speaker; an empty field, and the pre-encounter screen, leave it hidden. The Encounter beat of `BoundTree/BoundTreeJourney.asset` sets it to "It keeps what it takes. So build on what it keeps."
 
 The tray and lighting preview windows sample the selected table's authored encounter scene. Edit the scene's DiceTrayFrame for tray placement and its rig camera for perspective; normal Inspector Undo applies. An encounter scene places the HUD's TargetPanel, HandsPanel and RerollsPanel through overrides on its HUD instance; the shared SpiritGameplayHud.prefab keeps the default layout. The previews use isolated copies and include unsaved changes from an open source scene. Legacy tray placement/camera seed fields do not override authored scenes.
 

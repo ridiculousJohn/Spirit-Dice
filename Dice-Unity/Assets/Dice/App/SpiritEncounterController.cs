@@ -56,7 +56,7 @@ namespace Dice.App
         public bool CanResume => !IsBusy && navigation.CanResume(HasActiveEncounter);
         public bool CanSkipIntro => navigation.CanSkipIntro(JourneyProgress);
         private EncounterJourneyNavigation.Progress JourneyProgress => new EncounterJourneyNavigation.Progress(
-            progression.HasProfile, VisitedEncounterIds, CompletedJourneyIds);
+            progression.HasProfile, VisitedEncounterIds, CompletedJourneyIds, CompletedEncounterIds);
 
         public event Action StateChanged;
         public event Action<Resolution> Resolved;
@@ -212,7 +212,7 @@ namespace Dice.App
 
         public void AdvanceJourney()
         {
-            if (IsBusy || !navigation.AdvanceJourney(out var transition)) return;
+            if (IsBusy || !navigation.AdvanceJourney(Snapshot?.Outcome ?? EncounterOutcome.None, out var transition)) return;
             ApplyJourneyTransition(transition);
         }
 
@@ -230,7 +230,7 @@ namespace Dice.App
                 transition.Journey.Validate(Catalog);
                 if (!progression.PersistProfile()) { SetJourneyStatus(ProfileProblem); return; }
                 if (!ApplyJourneyRewards(transition)) return;
-                EncounterDefinition.Id selected = transition.Journey.Encounter.Identity;
+                EncounterDefinition.Id selected = transition.Journey.EncounterBeatAt(transition.BeatIndex).Encounter.Identity;
                 if (!progression.PersistVisit(selected)) { SetJourneyStatus(ProfileProblem); return; }
                 ulong nextSeed = SelectSeed();
                 var next = new EncounterApplication(Catalog, selected, nextSeed, progression.KnownUnlockedModifiers(Catalog),
@@ -261,9 +261,9 @@ namespace Dice.App
 
         private void ApplyJourneyTransition(EncounterJourneyNavigation.Transition transition)
         {
-            if (transition.CompletesStory)
+            if (transition.CompletesJourney)
             {
-                if (!progression.CompleteStoryJourney(transition.Journey.Identity,
+                if (!progression.CompleteJourney(transition.Journey.Identity,
                     transition.Rewards.Select(reward => reward.Build(Catalog)), Catalog))
                 {
                     SetJourneyStatus(ProfileProblem);
@@ -274,7 +274,7 @@ namespace Dice.App
             else if (!ApplyJourneyRewards(transition)) return;
             navigation.Commit(transition, JourneyProgress);
             SetJourneyStatus(SpiritStatus.None);
-            if (transition.CompletesStory) StateChanged?.Invoke();
+            if (transition.CompletesJourney) StateChanged?.Invoke();
         }
 
         public void ResumeEncounter()
@@ -575,8 +575,11 @@ namespace Dice.App
             var journey = JourneyCatalog?.Find(snapshot.EncounterId);
             if (snapshot.Outcome == EncounterOutcome.Won && highlightFollowUps)
                 navigation.RecordVictory(snapshot.EncounterId, JourneyProgress);
-            var completionReward = snapshot.Outcome == EncounterOutcome.Won ? journey?.CompletionReward?.Build(Catalog) : null;
-            progression.RecordProgression(snapshot, Catalog, journey?.Identity, completionReward, unlockSave, SavePath);
+            // A win completes the journey when its Encounter beat is the last beat; otherwise the last beat's Continue does.
+            var completed = journey != null && journey.IndexOfEncounter(snapshot.EncounterId) == journey.Beats.Count - 1
+                ? journey : null;
+            var completionReward = snapshot.Outcome == EncounterOutcome.Won ? completed?.CompletionReward?.Build(Catalog) : null;
+            progression.RecordProgression(snapshot, Catalog, completed?.Identity, completionReward, unlockSave, SavePath);
         }
 
         public bool ApplyProgressionReward(ProgressionRewardDefinition reward)

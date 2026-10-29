@@ -13,296 +13,189 @@ MonoBehaviour:
   m_Name: WatchtowerJourney
   m_EditorClassIdentifier: 
   assetGuid: 85a75b59e31c4b169bddb725c4402003
-  encounter: {fileID: 11400000, guid: 0c0f31254236f944aa8d686d0ce79d65, type: 2}
   locationTitle: The Watchtower
   spiritName: The Watcher
   leadText: The fox saw the missing traveler cross the marsh toward the old watchtower. A watcher waits above the steps.
   cardArtwork: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
   beats:
-  - id: approach
-    kind: 0
-    title: The Watchtower
-    text: The fox's directions end at a stairway above the marsh. A small lantern still burns beside the open arch.
-    continueLabel: Climb the steps
-    background: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 3
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: climb
-    kind: 0
-    title: Above the marsh
-    text: Wet stone steps wind upward. The marsh falls quiet below you.
-    continueLabel: Enter the chamber
-    background: {fileID: 2800000, guid: 85a75b59e31c4b169bddb725c4401001, type: 3}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 2
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: -0.035}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1.12
-  - id: perch
-    kind: 2
-    title: A watcher in the window
-    text: An owl watches from the upper arch.
-    continueLabel: Wait
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1.8
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: flight
-    kind: 1
-    title: The watcher descends
-    text: 
-    continueLabel: Meet the watcher
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 4.5
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 2
-    hideNarrativeDuringMotion: 1
-    autoAdvance: 1
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: witness
-    kind: 2
-    title: The Watcher
-    text: I saw your traveler cross the marsh behind a blue light. The reeds bent under their feet. The light did not stir them.
-    continueLabel: Listen
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: bargain
-    kind: 2
-    title: A game of attention
-    text: Something was wrong with that light. Sit. Show me what you see, and I will tell you where it led them.
-    continueLabel: Hear the terms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: discovery
-    kind: 2
-    title: The watcher's patterns
-    text: This bargain reveals Balanced Scales, Woven Mat, and Stepping Stones. Their charms reward patterns an impatient eye misses.
-    continueLabel: Hear the terms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: invitation
-    kind: 3
-    title: The Watcher's Eye
-    text: There is more to see than what repeats. Show me what makes each face different.
-    continueLabel: Accept the bargain
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 11400000, guid: 2faba870df3948c9a29d09c0565c465e, type: 2}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  tablePresentation: {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402002, type: 2}
-  victoryTitle: What the watcher saw
-  victoryText: The blue light went north along the causeway. Your traveler followed, calling to someone I could not see. Beyond the reeds, a moth keeps the fork. Ask what reached the other side.
-  defeatTitle: Look again
-  defeatText: There is more here than you have seen. Come back when you are ready to look again.
-  abandonText: The watcher folds its wings and waits beside the empty chair.
-  encounterCharmsIntroductionText: 
-  resultContinueLabel: Return to the trail
+  - rid: 1123138610053513223
+  - rid: 1123138610053513224
+  - rid: 1123138610053513225
+  - rid: 1123138610053513226
+  - rid: 1123138610053513227
+  - rid: 1123138610053513228
+  - rid: 1123138610053513229
+  - rid: 1123138610053513230
+  - rid: 1123138610053513231
   completionClueTitle: The northern causeway
   completionClueText: The traveler followed a blue light north along the causeway, calling to someone unseen. Find the moth at the fork beyond the reeds.
   completionReward: {fileID: 0}
-  victoryPresentation:
-    enabled: 1
-    hostState: 4
-    holdDuration: 0.3
-    fadeDuration: 0.35
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  defeatPresentation:
-    enabled: 1
-    hostState: 5
-    holdDuration: 0.2
-    fadeDuration: 0.3
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  abandonPresentation:
-    enabled: 1
-    hostState: 6
-    holdDuration: 0
-    fadeDuration: 0.2
-    showDialogue: 0
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
   followUpJourneys:
   - {fileID: 11400000, guid: 4171040a8638595cb32e8b4cae729972, type: 2}
   requiredCompletedJourneys:
   - {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df803, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610053513223
+      type: {class: IllustrationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Watchtower
+        text: The fox's directions end at a stairway above the marsh. A small lantern still burns beside the open arch.
+        continueLabel: Climb the steps
+        duration: 3
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: 2d45dac22b7d2714db5c9726e6cecbde, type: 2}
+        transition: 0
+        motionFrom: {x: 0, y: 0}
+        motionTo: {x: 0, y: 0}
+        scaleFrom: 1
+        scaleTo: 1
+        backgroundMotionFrom: {x: 0, y: 0}
+        backgroundMotionTo: {x: 0, y: 0}
+        backgroundScaleFrom: 1
+        backgroundScaleTo: 1
+    - rid: 1123138610053513224
+      type: {class: IllustrationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Above the marsh
+        text: Wet stone steps wind upward. The marsh falls quiet below you.
+        continueLabel: Enter the chamber
+        duration: 2
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        motionFrom: {x: 0, y: 0}
+        motionTo: {x: 0, y: 0}
+        scaleFrom: 1
+        scaleTo: 1
+        backgroundMotionFrom: {x: 0, y: 0}
+        backgroundMotionTo: {x: 0, y: -0.035}
+        backgroundScaleFrom: 1
+        backgroundScaleTo: 1.12
+    - rid: 1123138610053513225
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A watcher in the window
+        text: An owl watches from the upper arch.
+        continueLabel: Wait
+        duration: 1.8
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402002, type: 2}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513226
+      type: {class: ArrivalBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The watcher descends
+        text: 
+        continueLabel: Meet the watcher
+        duration: 4.5
+        hostState: 2
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        hideNarrativeDuringMotion: 1
+        autoAdvance: 1
+    - rid: 1123138610053513227
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Watcher
+        text: I saw your traveler cross the marsh behind a blue light. The reeds bent under their feet. The light did not stir them.
+        continueLabel: Listen
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513228
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A game of attention
+        text: Something was wrong with that light. Sit. Show me what you see, and I will tell you where it led them.
+        continueLabel: Hear the terms
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513229
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The watcher's patterns
+        text: This bargain reveals Balanced Scales, Woven Mat, and Stepping Stones. Their charms reward patterns an impatient eye misses.
+        continueLabel: Hear the terms
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513230
+      type: {class: InvitationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Watcher's Eye
+        text: There is more to see than what repeats. Show me what makes each face different.
+        continueLabel: Accept the bargain
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 11400000, guid: 2faba870df3948c9a29d09c0565c465e, type: 2}
+        scene: {fileID: 0}
+        transition: 0
+    - rid: 1123138610053513231
+      type: {class: EncounterBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: 
+        text: 
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        encounter: {fileID: 11400000, guid: 0c0f31254236f944aa8d686d0ce79d65, type: 2}
+        victoryTitle: What the watcher saw
+        victoryText: The blue light went north along the causeway. Your traveler followed, calling to someone I could not see. Beyond the reeds, a moth keeps the fork. Ask what reached the other side.
+        defeatTitle: Look again
+        defeatText: There is more here than you have seen. Come back when you are ready to look again.
+        abandonText: The watcher folds its wings and waits beside the empty chair.
+        resultContinueLabel: Return to the trail
+        victoryPresentation:
+          enabled: 1
+          hostState: 4
+          holdDuration: 0.3
+          fadeDuration: 0.35
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        defeatPresentation:
+          enabled: 1
+          hostState: 5
+          holdDuration: 0.2
+          fadeDuration: 0.3
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        abandonPresentation:
+          enabled: 1
+          hostState: 6
+          holdDuration: 0
+          fadeDuration: 0.2
+          showDialogue: 0
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        encounterCharmsIntroductionText: 

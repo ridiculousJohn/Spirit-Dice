@@ -172,8 +172,9 @@ namespace Dice.Presentation
         {
             hud.ShowStageCleared();
             encounterAudio.Play(SpiritAudioCue.StageClear);
+            var encounterBeat = host.Journey?.SelectedJourney?.EncounterBeatOf(resolution.Snapshot.EncounterId);
             if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
-                host.Journey?.SelectedJourney?.GetOutcomePresentation(EncounterOutcome.Won) == null)
+                encounterBeat?.GetOutcomePresentation(EncounterOutcome.Won) == null)
             {
                 host.Host?.React();
                 yield return new WaitForSecondsRealtime(GestureDuration);

@@ -65,7 +65,7 @@ namespace Dice.Tests
             if (!enterEncounter) { yield return Routed(controller); yield break; }
             EncounterJourneyAsset journey = null;
             foreach (var entry in controller.JourneyCatalog.Entries)
-                if (entry != null && !entry.IsStoryOnly && controller.IsJourneyAvailable(entry)
+                if (entry != null && entry.Encounters.Any() && controller.IsJourneyAvailable(entry)
                     && (requirement == null || requirement(entry)))
                 {
                     journey = entry;
@@ -76,7 +76,7 @@ namespace Dice.Tests
                 : "The authored journey catalog has no encounter journey available without prerequisites with the required property.");
             controller.SelectEncounter(journey);
             yield return Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
                 controller.AdvanceJourney();
             controller.AcceptEncounter();
             yield return Routed(controller);
@@ -170,7 +170,7 @@ namespace Dice.Tests
             SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);
             yield return Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
                 controller.AdvanceJourney();
             controller.ConfigureSeedPolicy(true, seed);
             controller.AcceptEncounter();
@@ -202,8 +202,8 @@ namespace Dice.Tests
         /** The one encounter journey of the catalog whose encounter has a rule of the given kind. */
         internal static EncounterJourneyAsset JourneyWithRule<TRule>(SpiritEncounterController controller) where TRule : EncounterRuleDefinition
         {
-            var journeys = controller.JourneyCatalog.Entries.Where(journey => journey != null && !journey.IsStoryOnly &&
-                controller.Catalog.GetEncounter(journey.Encounter.Identity).Rules.OfType<TRule>().Any()).ToArray();
+            var journeys = controller.JourneyCatalog.Entries.Where(journey => journey != null && journey.Encounters.Any() &&
+                controller.Catalog.GetEncounter(journey.Encounters.First().Identity).Rules.OfType<TRule>().Any()).ToArray();
             Assert.That(journeys, Has.Length.EqualTo(1), "One authored encounter journey has the rule " + typeof(TRule).Name + ".");
             return journeys[0];
         }
@@ -258,11 +258,14 @@ namespace Dice.Tests
 
         /**
          * Sets an authored field of a fabricated copy of content, such as a journey or its beats. Play Mode tests build
-         * into the player assembly, which has no serialized-object editing, so the field is set directly.
+         * into the player assembly, which has no serialized-object editing, so the field is set directly. The field may be
+         * declared by a base class, as a beat's shared fields are.
          */
         internal static void SetField(object target, string name, object value)
         {
-            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo field = null;
+            for (var type = target.GetType(); field == null && type != null; type = type.BaseType)
+                field = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
             Assert.That(field, Is.Not.Null, target.GetType().Name + "." + name);
             field.SetValue(target, value);
         }
@@ -277,7 +280,8 @@ namespace Dice.Tests
         {
             Assert.That(configuration.JourneyCatalog, Is.Not.Null, "The application configuration has no journey catalog.");
             Assert.That(configuration.Encounter, Is.Not.Null, "The application configuration has no direct encounter.");
-            var table = configuration.JourneyCatalog.Find(configuration.Encounter.Identity)?.TablePresentation;
+            var journey = configuration.JourneyCatalog.Find(configuration.Encounter.Identity);
+            var table = journey != null ? journey.TableSceneAt(journey.IndexOfEncounter(configuration.Encounter.Identity)) : null;
             Assert.That(table, Is.Not.Null, "The configured direct encounter has no journey with an authored table.");
             var encounter = catalog.GetEncounter(configuration.Encounter.Identity);
             var presented = new List<EncounterRuleDefinition>();

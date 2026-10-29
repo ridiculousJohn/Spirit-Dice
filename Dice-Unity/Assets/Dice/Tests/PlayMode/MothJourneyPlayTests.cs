@@ -87,12 +87,13 @@ namespace Dice.Tests
             yield return null;
             Canvas.ForceUpdateCanvases();
 
-            // Each beat is held for its authored motion, or briefly when it has none.
-            for (int index = 0; index < journey.Beats.Count; ++index)
+            // Each beat up to the invitation is held for its authored motion, or briefly when it has none.
+            int encounterBeat = journey.IndexOfEncounter(journey.Encounters.First().Identity);
+            for (int index = 0; index < encounterBeat; ++index)
             {
                 if (controller.BeatIndex > index) continue;
                 Action begin = controller.BeatIndex == index - 1 ? () => Click("JourneyAdvanceButton") : (Action)null;
-                yield return CaptureMotion(journey.Beats[index].Id, Mathf.Max(journey.Beats[index].Duration, 2f), begin,
+                yield return CaptureMotion("beat-" + index, Mathf.Max(journey.Beats[index].Duration, 2f), begin,
                     () => view.JourneyView.IsAnimating);
             }
             yield return CaptureMotion("accept", .5f, () => Click("JourneyAcceptButton"), () => controller.IsBusy);
@@ -161,7 +162,7 @@ namespace Dice.Tests
         private int ArrivalIndex()
         {
             for (int index = 0; index < journey.Beats.Count; ++index)
-                if (journey.Beats[index].Kind == EncounterJourneyBeatKind.Arrival)
+                if (journey.Beats[index] is ArrivalBeat)
                 {
                     Assert.That(index, Is.GreaterThan(0), "The moth's arrival needs a waiting beat before it.");
                     return index;
@@ -172,7 +173,7 @@ namespace Dice.Tests
 
         private SpiritPortraitImage[] LanternMoths()
         {
-            var host = journey.TablePresentation.HostPresentation;
+            var host = journey.TableSceneAt(0).HostPresentation;
             Assert.That(host, Is.Not.Null);
             var moths = host.Layers.Where(layer => layer.Id.StartsWith(LanternMothLayerPrefix, StringComparison.Ordinal))
                 .Select(layer => Moth().GetLayer(layer.Id)).ToArray();

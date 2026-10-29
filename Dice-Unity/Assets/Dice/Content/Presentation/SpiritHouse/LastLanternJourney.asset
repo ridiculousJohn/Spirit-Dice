@@ -13,233 +13,153 @@ MonoBehaviour:
   m_Name: LastLanternJourney
   m_EditorClassIdentifier: 
   assetGuid: 74eb1ce65d124aa9823839f4404df803
-  encounter: {fileID: 11400000, guid: bf2a4a0f447fad64897858c232b1c04c, type: 2}
   locationTitle: The Last Lantern
   spiritName: The Lantern Keeper
   leadText: A missing traveler was last seen following a lantern through the rain. The light is still burning.
   cardArtwork: {fileID: 2800000, guid: 74eb1ce65d124aa9823839f4404df805, type: 3}
   beats:
-  - id: approach
-    kind: 0
-    title: A light in the rain
-    text: The trail ends at a quiet doorway. Behind the paper, a shadow turns before anyone moves.
-    continueLabel: Approach the door
-    background: {fileID: 2800000, guid: 74eb1ce65d124aa9823839f4404df805, type: 3}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
-    audioCue: {fileID: 0}
-    duration: 6
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: -0.06, y: 0}
-    motionTo: {x: 0.05, y: 0.015}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0.22
-      y: 0.52
-      width: 0.4
-      height: 0.28
-    foregroundTint: {r: 0.04, g: 0.025, b: 0.02, a: 0.36}
-    transition: 0
-    scaleFrom: 0.72
-    scaleTo: 0.8
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: arrival
-    kind: 1
-    title: An unexpected welcome
-    text: The doors part. A place has already been set for you.
-    continueLabel: Take a seat
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 2
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 1
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 2
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: bargain
-    kind: 2
-    title: The Lantern Keeper
-    text: They sheltered here. I know where they went. Spirits trade knowledge through bargains. Win our game, and my answer is yours.
-    continueLabel: Ask about the charms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 5
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: discovery
-    kind: 2
-    title: What a bargain reveals
-    text: Accept to discover Open Gate, Still Reflection, and Rising Sun. Discovery reveals a family's charms; owning a charm lets it appear in future offers.
-    continueLabel: Hear the gift
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: gift
-    kind: 2
-    title: A gift for the road
-    text: Take {charm}. May it open the way when your next bargain begins.
-    continueLabel: Hear the terms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 1
-    progressionReward: {fileID: 0}
-    charm: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: invitation
-    kind: 3
-    title: The Host's Courtesy
-    text: Your first mistake costs you nothing. Accept, and we begin.
-    continueLabel: Accept the bargain
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 2
-    progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
-  victoryTitle: A promise kept
-  victoryText: You have earned an answer. They crossed the marsh before dawn, toward the old watchtower. Climb the steps. The watcher may have seen more.
-  defeatTitle: The lantern is still burning
-  defeatText: Not tonight. The road will wait, and so will I. Come back when you are ready to try again.
-  abandonText: The keeper leaves your place at the table open.
-  encounterCharmsIntroductionText: 
-  resultContinueLabel: Return to the trail
+  - rid: 1123138610053513216
+  - rid: 1123138610053513217
+  - rid: 1123138610053513218
+  - rid: 1123138610053513219
+  - rid: 1123138610053513220
+  - rid: 1123138610053513221
+  - rid: 1123138610053513222
   completionClueTitle: The watchtower above the marsh
   completionClueText: The missing traveler crossed the marsh toward the old watchtower before dawn. Climb the steps and find the watcher.
   completionReward: {fileID: 0}
-  victoryPresentation:
-    enabled: 1
-    hostState: 4
-    holdDuration: 0.25
-    fadeDuration: 0.3
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  defeatPresentation:
-    enabled: 1
-    hostState: 5
-    holdDuration: 0.2
-    fadeDuration: 0.3
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  abandonPresentation:
-    enabled: 1
-    hostState: 6
-    holdDuration: 0
-    fadeDuration: 0.2
-    showDialogue: 0
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
   followUpJourneys:
   - {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402003, type: 2}
   requiredCompletedJourneys: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610053513216
+      type: {class: IllustrationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A light in the rain
+        text: The trail ends at a quiet doorway. Behind the paper, a shadow turns before anyone moves.
+        continueLabel: Approach the door
+        duration: 6
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: 41efed8d79a398a4b927e32c34b537db, type: 2}
+        transition: 0
+        motionFrom: {x: -0.06, y: 0}
+        motionTo: {x: 0.05, y: 0.015}
+        scaleFrom: 0.72
+        scaleTo: 0.8
+        backgroundMotionFrom: {x: 0, y: 0}
+        backgroundMotionTo: {x: 0, y: 0}
+        backgroundScaleFrom: 1
+        backgroundScaleTo: 1
+    - rid: 1123138610053513217
+      type: {class: ArrivalBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: An unexpected welcome
+        text: The doors part. A place has already been set for you.
+        continueLabel: Take a seat
+        duration: 2
+        hostState: 2
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
+        transition: 1
+        hideNarrativeDuringMotion: 0
+        autoAdvance: 0
+    - rid: 1123138610053513218
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Lantern Keeper
+        text: They sheltered here. I know where they went. Spirits trade knowledge through bargains. Win our game, and my answer is yours.
+        continueLabel: Ask about the charms
+        duration: 5
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513219
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: What a bargain reveals
+        text: Accept to discover Open Gate, Still Reflection, and Rising Sun. Discovery reveals a family's charms; owning a charm lets it appear in future offers.
+        continueLabel: Hear the gift
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513220
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A gift for the road
+        text: Take {charm}. May it open the way when your next bargain begins.
+        continueLabel: Hear the terms
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    - rid: 1123138610053513221
+      type: {class: InvitationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Host's Courtesy
+        text: Your first mistake costs you nothing. Accept, and we begin.
+        continueLabel: Accept the bargain
+        duration: 2
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
+        scene: {fileID: 0}
+        transition: 0
+    - rid: 1123138610053513222
+      type: {class: EncounterBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: 
+        text: 
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        encounter: {fileID: 11400000, guid: bf2a4a0f447fad64897858c232b1c04c, type: 2}
+        victoryTitle: A promise kept
+        victoryText: You have earned an answer. They crossed the marsh before dawn, toward the old watchtower. Climb the steps. The watcher may have seen more.
+        defeatTitle: The lantern is still burning
+        defeatText: Not tonight. The road will wait, and so will I. Come back when you are ready to try again.
+        abandonText: The keeper leaves your place at the table open.
+        resultContinueLabel: Return to the trail
+        victoryPresentation:
+          enabled: 1
+          hostState: 4
+          holdDuration: 0.25
+          fadeDuration: 0.3
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        defeatPresentation:
+          enabled: 1
+          hostState: 5
+          holdDuration: 0.2
+          fadeDuration: 0.3
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        abandonPresentation:
+          enabled: 1
+          hostState: 6
+          holdDuration: 0
+          fadeDuration: 0.2
+          showDialogue: 0
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        encounterCharmsIntroductionText: 

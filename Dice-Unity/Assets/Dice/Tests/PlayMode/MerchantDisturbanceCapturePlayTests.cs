@@ -87,7 +87,7 @@ namespace Dice.Tests
             ContentReady.SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
                 controller.AdvanceJourney();
             controller.ConfigureSeedPolicy(true, 1);
             controller.AcceptEncounter();
@@ -107,7 +107,7 @@ namespace Dice.Tests
             activity?.Stop();
             var lighting = (IAmbientLightingTarget)view.TableLighting;
             var piece = view.TablePieces.Single();
-            var asset = journey.TablePresentation.SceneLighting;
+            var asset = journey.TableSceneAt(0).SceneLighting;
             SceneLightLayer candle = asset.Lights[1];
             Texture2D installedFootprint = candle.Contribution, installedResponse = candle.ResponseMap;
             float installedRange = candle.ReceiverRange;
@@ -266,10 +266,10 @@ namespace Dice.Tests
             ContentReady.SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
                 controller.AdvanceJourney();
 
-            var encounterId = journey.Encounter.Identity;
+            var encounterId = journey.Encounters.First().Identity;
             var ward = controller.Catalog.GetEncounter(encounterId).Rules.OfType<BayWardRuleDefinition>().Single();
             var plan = FindPlan(controller.Catalog, encounterId, kind, ward);
             TestContext.WriteLine("Merchant disturbance capture " + name + ": " + plan.Summary);

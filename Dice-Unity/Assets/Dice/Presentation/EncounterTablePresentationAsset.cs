@@ -25,9 +25,12 @@ namespace Dice.Presentation
         public Vector3 ReceiverOffsetY;
     }
 
-    /** Room, host, rules and sound belong to the selected encounter's authored table. */
+    /**
+     * Room, host, rules and sound belong to the selected encounter's authored table. As a journey scene it is the table
+     * scene: it shows itself by loading its Unity scene and host.
+     */
     [CreateAssetMenu(menuName = "Dice/Presentation/Encounter Table")]
-    public sealed class EncounterTablePresentationAsset : ScriptableObject
+    public sealed class EncounterTablePresentationAsset : JourneySceneAsset
     {
         public const float MaximumOpeningFadeDuration = 2f;
         [SerializeField] private string displayTitle;
@@ -65,6 +68,28 @@ namespace Dice.Presentation
             openingFadeDuration <= MaximumOpeningFadeDuration ? openingFadeDuration
             : throw new InvalidOperationException("Encounter table '" + name + "' has an opening fade outside 0 to " +
                 MaximumOpeningFadeDuration + " seconds.");
+
+        public override EncounterTablePresentationAsset Table => this;
+
+        // The application loads the Unity scene of the table the journey is at or reaches next; on the journey screen the
+        // table shows through an empty picture layer, with its host.
+        internal override void Present(IJourneyStage stage)
+        {
+            stage.ClearPicture();
+            stage.ShowHost(true);
+        }
+
+        internal override void Validate(string beat)
+        {
+            sceneLighting?.Validate();
+            if (sceneLighting != null && !FiniteValue.Is(hostLightingPosition))
+                throw new FormatException("The table scene " + name + " of " + beat + " has a host lighting position that is not finite.");
+            var ruleIds = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var rule in RulePresentations)
+                if (rule == null || string.IsNullOrWhiteSpace(rule.RuleId) || !ruleIds.Add(rule.RuleId))
+                    throw new FormatException("The rule cards of the table scene " + name + " of " + beat +
+                        " must be present and present different rules.");
+        }
 
         /** The rule card flagged as shown on the HUD, or null when no card is; more than one flagged card fails. */
         public EncounterRulePresentationAsset HudRuleCard

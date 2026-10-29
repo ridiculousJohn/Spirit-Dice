@@ -188,7 +188,7 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(controller.ProfilePath, saved);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             controller.SelectEncounter(journeys.Find(SecondId));
-            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(SecondId)));
         }
 
         [Test]
@@ -305,8 +305,7 @@ namespace Dice.Tests
         private EncounterJourneyAsset AddStory()
         {
             var story = Journey(null, "A return visit", "The guide");
-            SetBeats(story, Beat("report", EncounterJourneyBeatKind.Dialogue),
-                Beat("prepare", EncounterJourneyBeatKind.Dialogue));
+            SetBeats(story, Create<EncounterTablePresentationAsset>(), new DialogueBeat(), new DialogueBeat());
             SyntheticUi.Set(story, "completionReward", Reward(true, true));
             SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", journeys.Entries[0], journeys.Entries[1], story) });
             return story;
@@ -328,15 +327,14 @@ namespace Dice.Tests
         public void AutomaticContinuationIsOptInAndAdvancingNeverAcceptsAnInvitation()
         {
             var journey = journeys.Entries[0];
-            Assert.That(journey.Beats.All(beat => !beat.AutoAdvance), Is.True);
-            SetBeat(journey, 0, "autoAdvance", true);
-            SetBeat(journey, journey.Beats.Count - 1, "autoAdvance", true);
-            Assert.That(journey.Beats[0].AutoAdvance, Is.True);
+            Assert.That(((ArrivalBeat)journey.Beats[1]).AutoAdvance, Is.False);
+            SetBeat(journey, 1, "autoAdvance", true);
+            Assert.That(((ArrivalBeat)journey.Beats[1]).AutoAdvance, Is.True);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             SelectInvitation(FirstId);
             controller.AdvanceJourney();
             controller.AdvanceJourney();
-            Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
+            Assert.That(controller.BeatIndex, Is.EqualTo(journey.IndexOfEncounter(FirstId) - 1));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.VisitedEncounterIds, Is.Empty);
@@ -347,7 +345,7 @@ namespace Dice.Tests
         [Test]
         public void InitializationFailuresExposeMessageWithoutCreatingApplication()
         {
-            SetBeats(journeys.Entries[0]);
+            SetBeats(journeys.Entries[0], null);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
             Assert.That(controller.Status.Kind, Is.EqualTo(SpiritStatusKind.InvestigationFailed));
             Assert.That(controller.JourneyStatus, Is.SameAs(controller.Status));
@@ -552,7 +550,7 @@ namespace Dice.Tests
             controller.SelectEncounter(journeys.Find(FirstId));
             Assert.That(controller.CanSkipIntro, Is.True);
             controller.SkipIntro();
-            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.Beats.Count - 1));
+            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.IndexOfEncounter(FirstId) - 1));
             Assert.That(controller.Snapshot, Is.SameAs(active));
             Assert.That(controller.VisitedEncounterIds, Is.EqualTo(new[] { FirstId }));
         }
@@ -575,8 +573,8 @@ namespace Dice.Tests
             controller.ReturnToInvestigation();
             controller.ResumeEncounter();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
-            Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(SecondId)));
+            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.IndexOfEncounter(SecondId)));
             Assert.That(controller.Snapshot, Is.SameAs(pending));
             var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath, catalog));
             Assert.That(restored.Success, Is.True);
@@ -595,8 +593,8 @@ namespace Dice.Tests
             controller.Resolved += resolution => ++resolutions;
             controller.Load();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
-            Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(SecondId)));
+            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.IndexOfEncounter(SecondId)));
             Assert.That(resolutions, Is.Zero);
             Assert.That(controller.Snapshot.PendingReward.OfferId, Is.EqualTo(existing.Snapshot.PendingReward.OfferId));
             Assert.That(controller.Snapshot.PendingReward.Options.Select(option => option.OptionId),
@@ -625,23 +623,34 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void JourneyValidationRejectsInvitationOrderUnknownEncounterAndRuleMismatch()
+        public void JourneyValidationRejectsBeatOrderScenesUnknownOrSharedEncountersAndRuleMismatch()
         {
             var journey = journeys.Entries[0];
-            SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation), Beat("later", EncounterJourneyBeatKind.Dialogue));
+            var table = journey.TableSceneAt(0);
+            var encounter = journey.Encounters.Single();
+            SetBeats(journey, table, new InvitationBeat(), new DialogueBeat());
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
             Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.InvestigationFailed));
-            Assert.That(controller.JourneyStatus.Detail, Does.Contain("final journey beat"));
-            SetBeats(journey, Beat("invite-one", EncounterJourneyBeatKind.Invitation), Beat("invite-two", EncounterJourneyBeatKind.Invitation));
+            Assert.That(controller.JourneyStatus.Detail, Does.Contain("followed by an Encounter beat").And.Contain(journey.name));
+            SetBeats(journey, table, new DialogueBeat(), new EncounterBeat());
+            SetBeat(journey, 1, "encounter", encounter);
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
-            SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation));
-            var encounter = journey.Encounter;
-            SyntheticUi.Set(journey, "encounter", charms.Encounter("encounter.missing"));
+            SetEncounterBeats(journey, null, encounter);
+            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message, Does.Contain("must set a scene"));
+            var picture = Create<PictureSceneAsset>();
+            SyntheticUi.Set(picture, "background", Texture2D.whiteTexture);
+            SetEncounterBeats(journey, picture, encounter);
+            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message, Does.Contain("table scene"));
+            SetEncounterBeats(journey, table, charms.Encounter("encounter.missing"));
             Assert.Throws<KeyNotFoundException>(() => journeys.Validate(catalog));
-            SyntheticUi.Set(journey, "encounter", encounter);
+            SetEncounterBeats(journey, table, journeys.Entries[1].Encounters.Single());
+            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message,
+                Does.Contain(journey.name).And.Contain(journeys.Entries[1].name));
+            SetEncounterBeats(journey, table, encounter);
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
             var rule = Create<EncounterRulePresentationAsset>();
             SyntheticUi.Set(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
-            SyntheticUi.Set(journey.TablePresentation, "rulePresentations", new[] { rule });
+            SyntheticUi.Set(table, "rulePresentations", new[] { rule });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
@@ -649,17 +658,19 @@ namespace Dice.Tests
         public void OutcomePresentationIsOptionalAndEnabledPerOutcome()
         {
             var journey = journeys.Entries[0];
+            var encounter = journey.Encounters.Single();
+            EncounterBeat Beat() => journey.EncounterBeatOf(FirstId);
             foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
-                Assert.That(journey.GetOutcomePresentation(outcome), Is.Null);
-            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", 2f);
-            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won), Is.Null, "An authored but disabled outcome is not used.");
-            SyntheticUi.Set(journey, "victoryPresentation.enabled", true);
-            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Won)?.HoldDuration, Is.EqualTo(2f));
-            Assert.That(journey.GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
-            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", float.NaN);
+                Assert.That(Beat().GetOutcomePresentation(outcome), Is.Null);
+            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", 2f);
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won), Is.Null, "An authored but disabled outcome is not used.");
+            SetEncounterBeat(journey, encounter, "victoryPresentation.enabled", true);
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won)?.HoldDuration, Is.EqualTo(2f));
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
+            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", float.NaN);
             Assert.Throws<FormatException>(() => journey.Validate(catalog));
-            SyntheticUi.Set(journey, "victoryPresentation.holdDuration", 0f);
-            SyntheticUi.Set(journey, "victoryPresentation.fadeDuration", -1f);
+            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", 0f);
+            SetEncounterBeat(journey, encounter, "victoryPresentation.fadeDuration", -1f);
             Assert.Throws<FormatException>(() => journey.Validate(catalog));
         }
 
@@ -694,8 +705,8 @@ namespace Dice.Tests
             controller.CompletePresentation();
             controller.RetryEncounter();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(FirstId));
-            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.Beats.Count - 1));
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(FirstId)));
+            Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.IndexOfEncounter(FirstId) - 1));
             Assert.That(controller.Snapshot, Is.SameAs(completed));
             Assert.That(controller.Application, Is.SameAs(application));
             Assert.That(File.ReadAllBytes(controller.ProfilePath), Is.EqualTo(profileBytes));
@@ -743,7 +754,7 @@ namespace Dice.Tests
             Assert.That(controller.HighlightedJourneys, Is.Empty);
             controller.ReturnToInvestigation();
             controller.SelectEncounter(journeys.Find(SecondId));
-            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
+            Assert.That(controller.SelectedJourney, Is.SameAs(journeys.Find(SecondId)));
         }
 
         [Test]
@@ -759,6 +770,36 @@ namespace Dice.Tests
             Assert.That(controller.HighlightedJourneys, Is.Empty);
             controller.ReturnToInvestigation();
             Assert.That(controller.HighlightedJourneys, Is.Empty);
+        }
+
+        [Test]
+        public void AWinBeforeLaterBeatsLeavesTheJourneyToCompleteAtItsLastBeat()
+        {
+            var journey = journeys.Entries[0];
+            var encounter = journey.Encounters.Single();
+            SetBeats(journey, journey.TableSceneAt(0), new DialogueBeat(), new InvitationBeat(), new EncounterBeat(), new DialogueBeat());
+            SetBeat(journey, 2, "encounter", encounter);
+            SyntheticUi.Set(journey, "completionReward", Reward(true, true));
+            var winningCatalog = new MechanicalCatalog("test.later-beats.v1", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
+                new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
+            }, catalog.Modifiers);
+            Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
+            SelectInvitation(FirstId);
+            controller.AcceptEncounter();
+            controller.PlayHand();
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
+            Assert.That(controller.CompletedEncounterIds, Is.EqualTo(new[] { FirstId }));
+            Assert.That(controller.CompletedJourneyIds, Is.Empty);
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+            controller.AdvanceJourney();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
+            Assert.That(controller.BeatIndex, Is.EqualTo(3));
+            controller.AdvanceJourney();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(controller.CompletedJourneyIds, Is.EqualTo(new[] { journey.Identity }));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
         }
 
         private void InitializeWinningJourney()
@@ -1054,26 +1095,27 @@ namespace Dice.Tests
         private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
             => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
 
-        /** A journey identified by its location: of a new encounter asset of the encounter name, or a story without one. */
+        /**
+         * A journey identified by its location, in a new table scene: an intro, an invitation and the Encounter beat of a new
+         * encounter asset of the encounter name, or the intro alone without one.
+         */
         private EncounterJourneyAsset Journey(string encounterName, string location, string spirit)
         {
             var journey = Identify(Create<EncounterJourneyAsset>(), "journey." + location);
-            if (encounterName != null) SyntheticUi.Set(journey, "encounter", charms.Encounter(encounterName));
             SyntheticUi.Set(journey, "locationTitle", location);
             SyntheticUi.Set(journey, "spiritName", spirit);
             SyntheticUi.Set(journey, "leadText", "A strange visitor waits beyond the door.");
-            SyntheticUi.Set(journey, "tablePresentation", Create<EncounterTablePresentationAsset>());
-            SetBeats(journey, Beat("approach", EncounterJourneyBeatKind.Illustration),
-                Beat("arrival", EncounterJourneyBeatKind.Arrival),
-                Beat("bargain", EncounterJourneyBeatKind.Dialogue),
-                Beat("invitation", EncounterJourneyBeatKind.Invitation));
+            var table = Create<EncounterTablePresentationAsset>();
+            if (encounterName == null) SetBeats(journey, table, new IllustrationBeat(), new ArrivalBeat(), new DialogueBeat());
+            else SetEncounterBeats(journey, table, charms.Encounter(encounterName), new IllustrationBeat(), new ArrivalBeat(),
+                new DialogueBeat());
             return journey;
         }
 
         private void SelectInvitation(EncounterDefinition.Id id)
         {
             controller.SelectEncounter(journeys.Find(id));
-            for (int index = 1; index < controller.SelectedJourney.Beats.Count; ++index) controller.AdvanceJourney();
+            for (int index = 1; index < controller.SelectedJourney.IndexOfEncounter(id); ++index) controller.AdvanceJourney();
         }
 
         private T Create<T>() where T : ScriptableObject

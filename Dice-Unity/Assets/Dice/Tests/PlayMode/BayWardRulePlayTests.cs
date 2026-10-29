@@ -31,9 +31,9 @@ namespace Dice.Tests
             yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             (EncounterJourneyAsset Journey, BayWardRuleDefinition Ward)? found = null;
-            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => value != null && !value.IsStoryOnly))
+            foreach (var journey in controller.JourneyCatalog.Entries.Where(value => value != null && value.Encounters.Any()))
             {
-                var definition = controller.Catalog.GetEncounter(journey.Encounter.Identity);
+                var definition = controller.Catalog.GetEncounter(journey.Encounters.First().Identity);
                 var ward = definition.Rules.OfType<BayWardRuleDefinition>().FirstOrDefault(value =>
                     definition.Rules.OfType<DieInterferenceRuleDefinition>().Any(rule => Repels(value, rule)));
                 if (ward == null) continue;
@@ -42,7 +42,7 @@ namespace Dice.Tests
             }
             Assert.That(found, Is.Not.Null,
                 "No authored encounter has a BayWardRuleDefinition together with a die interference rule it can repel.");
-            var encounter = controller.Catalog.GetEncounter(found.Value.Journey.Encounter.Identity);
+            var encounter = controller.Catalog.GetEncounter(found.Value.Journey.Encounters.First().Identity);
             yield return RepelOnWardedBay(controller, found.Value.Journey, encounter, found.Value.Ward);
         }
 

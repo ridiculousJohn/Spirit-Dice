@@ -13,462 +13,263 @@ MonoBehaviour:
   m_Name: BoundTreeJourney
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
   assetGuid: 7e4f59fd9c7d6f0458fd325dfa7627b6
-  encounter: {fileID: 11400000, guid: 7f52f80f80fb1af44a51e696465c5abb, type: 2}
   locationTitle: The Bound Tree
   spiritName: The Possessing Spirit
   leadText: The merchant knows a hidden path through the swamp to the dry ground around the great tree, where your traveler was heading.
   cardArtwork: {fileID: 2800000, guid: 50d7d40a90da474eb494d86f3eef2c27, type: 3}
   beats:
-  - id: arrival
-    kind: 0
-    title: The Bound Tree
-    text: The merchant leads you along the hidden path to a rise of dry ground. A huge black tree fills it, its bark split and its branches bare. He stops at the edge.
-    continueLabel: Stop beside him
-    background: {fileID: 2800000, guid: 50d7d40a90da474eb494d86f3eef2c27, type: 3}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: edge
-    kind: 2
-    title: The Merchant
-    text: This is as far as I go. Mind what you say near it.
-    continueLabel: Let him go
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: departure
-    kind: 2
-    title: Back to the cart
-    text: He turns back toward his cart.
-    continueLabel: Approach the tree
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: nymph
-    kind: 2
-    title: At the roots
-    text: At the base of the tree a young woman sits with her knees drawn up, weeping. Her skin is the grey of old bark.
-    continueLabel: Kneel beside her
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: warning
-    kind: 2
-    title: The Nymph
-    text: You shouldn't be here. It hears everything.
-    continueLabel: Stay beside her
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: creak
-    kind: 2
-    title: Above her
-    text: The tree creaks above her.
-    continueLabel: Ask what holds her
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: reveal
-    kind: 2
-    title: When the water rose
-    text: Something crept into my tree when the water rose. It holds me the way it holds the roots.
-    continueLabel: Ask about the traveler
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: traveler
-    kind: 2
-    title: Where they went
-    text: Your traveler came this way. I saw where they went, but it won't let me speak of it.
-    continueLabel: Ask how to free her
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: terms
-    kind: 2
-    title: Barely a whisper
-    text: It is bound by the old terms. Challenge it, and it must play, and it must honor the result.
-    continueLabel: Challenge the spirit
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 1
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: challenge
-    kind: 1
-    title: The bark splits
-    text: The bark splits into a face.
-    continueLabel: Face it
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 2.5
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 2
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: spirit
-    kind: 2
-    title: The Possessing Spirit
-    text: She talks too much. Play, then. Whatever you leave in my reach, I keep.
-    continueLabel: Ask about the charms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: discovery
-    kind: 2
-    title: What the roots reveal
-    text: 'This challenge reveals Great Oak, Close Branches, and Unturned Leaf. Their charms reward a rooted hand: one great die, close neighbors, and leaves left unturned.'
-    continueLabel: Hear the terms
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 0}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: invitation
-    kind: 3
-    title: The Bound Tree
-    text: The face in the bark waits. Accept, and the game begins.
-    continueLabel: Accept the challenge
-    background: {fileID: 0}
-    sceneLighting: {fileID: 0}
-    foreground: {fileID: 0}
-    audioCue: {fileID: 0}
-    duration: 0
-    progressionReward: {fileID: 11400000, guid: 2677e48e85bb421b8bcc14926f2ee4f4, type: 2}
-    charm: {fileID: 0}
-    motionFrom: {x: 0, y: 0}
-    motionTo: {x: 0, y: 0}
-    foregroundRect:
-      serializedVersion: 2
-      x: 0
-      y: 0
-      width: 1
-      height: 1
-    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
-    transition: 0
-    scaleFrom: 1
-    scaleTo: 1
-    hostState: 0
-    hideNarrativeDuringMotion: 0
-    autoAdvance: 0
-    backgroundMotionFrom: {x: 0, y: 0}
-    backgroundMotionTo: {x: 0, y: 0}
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  tablePresentation: {fileID: 11400000, guid: dd4d6610c11511c40aa8d9f376ed5c33, type: 2}
-  victoryTitle: It had to keep its word.
-  victoryText: 'The roots loosen with a sound like a long breath, and the face sinks back into the bark. The nymph stands as the black fades toward silver.
-
-
-    "It''s gone. It had to keep its word."
-
-
-    "Your traveler went deeper, toward the smoke. A woman lives there who keeps things. Whatever she knows, she''ll want something for it."'
-  defeatTitle: Again? I have nothing but time.
-  defeatText: 'The roots draw tighter, and the nymph flinches.
-
-
-    "Again? I have nothing but time."
-
-
-    "It can''t refuse you," the nymph says. "Try again."'
-  abandonText: The nymph keeps her head bowed. Above her, the bark waits for the next game.
-  encounterCharmsIntroductionText: It keeps what it takes. So build on what it keeps.
-  resultContinueLabel: Return to the trail
+  - rid: 1123138610053513256
+  - rid: 1123138610053513257
+  - rid: 1123138610053513258
+  - rid: 1123138610053513259
+  - rid: 1123138610053513260
+  - rid: 1123138610053513261
+  - rid: 1123138610053513262
+  - rid: 1123138610053513263
+  - rid: 1123138610053513264
+  - rid: 1123138610053513265
+  - rid: 1123138610053513266
+  - rid: 1123138610053513267
+  - rid: 1123138610053513268
+  - rid: 1123138610053513269
   completionClueTitle: Toward the smoke
   completionClueText: The traveler went deeper into the swamp, toward the smoke. A woman lives there who keeps things, and whatever she knows, she will want something for it.
   completionReward: {fileID: 0}
-  victoryPresentation:
-    enabled: 1
-    hostState: 4
-    holdDuration: 0.25
-    fadeDuration: 0.3
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  defeatPresentation:
-    enabled: 1
-    hostState: 5
-    holdDuration: 0.15
-    fadeDuration: 0.25
-    showDialogue: 1
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
-  abandonPresentation:
-    enabled: 1
-    hostState: 6
-    holdDuration: 0
-    fadeDuration: 0.2
-    showDialogue: 0
-    artwork: {fileID: 0}
-    audioCue: {fileID: 0}
   followUpJourneys: []
   requiredCompletedJourneys:
   - {fileID: 11400000, guid: a8ded007d7fa45f3869cf51933250cef, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610053513256
+      type: {class: IllustrationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Bound Tree
+        text: The merchant leads you along the hidden path to a rise of dry ground. A huge black tree fills it, its bark split and its branches bare. He stops at the edge.
+        continueLabel: Stop beside him
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: 37f03d467806340418299f1f181a6243, type: 2}
+        transition: 0
+        motionFrom: {x: 0, y: 0}
+        motionTo: {x: 0, y: 0}
+        scaleFrom: 1
+        scaleTo: 1
+        backgroundMotionFrom: {x: 0, y: 0}
+        backgroundMotionTo: {x: 0, y: 0}
+        backgroundScaleFrom: 1
+        backgroundScaleTo: 1
+    - rid: 1123138610053513257
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Merchant
+        text: This is as far as I go. Mind what you say near it.
+        continueLabel: Let him go
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: dd4d6610c11511c40aa8d9f376ed5c33, type: 2}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513258
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Back to the cart
+        text: He turns back toward his cart.
+        continueLabel: Approach the tree
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513259
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: At the roots
+        text: At the base of the tree a young woman sits with her knees drawn up, weeping. Her skin is the grey of old bark.
+        continueLabel: Kneel beside her
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513260
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Nymph
+        text: You shouldn't be here. It hears everything.
+        continueLabel: Stay beside her
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513261
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Above her
+        text: The tree creaks above her.
+        continueLabel: Ask what holds her
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513262
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: When the water rose
+        text: Something crept into my tree when the water rose. It holds me the way it holds the roots.
+        continueLabel: Ask about the traveler
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513263
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Where they went
+        text: Your traveler came this way. I saw where they went, but it won't let me speak of it.
+        continueLabel: Ask how to free her
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513264
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Barely a whisper
+        text: It is bound by the old terms. Challenge it, and it must play, and it must honor the result.
+        continueLabel: Challenge the spirit
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513265
+      type: {class: ArrivalBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The bark splits
+        text: The bark splits into a face.
+        continueLabel: Face it
+        duration: 2.5
+        hostState: 2
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        hideNarrativeDuringMotion: 0
+        autoAdvance: 0
+    - rid: 1123138610053513266
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Possessing Spirit
+        text: She talks too much. Play, then. Whatever you leave in my reach, I keep.
+        continueLabel: Ask about the charms
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513267
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: What the roots reveal
+        text: 'This challenge reveals Great Oak, Close Branches, and Unturned Leaf. Their charms reward a rooted hand: one great die, close neighbors, and leaves left unturned.'
+        continueLabel: Hear the terms
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513268
+      type: {class: InvitationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Bound Tree
+        text: The face in the bark waits. Accept, and the game begins.
+        continueLabel: Accept the challenge
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 11400000, guid: 2677e48e85bb421b8bcc14926f2ee4f4, type: 2}
+        scene: {fileID: 0}
+        transition: 0
+    - rid: 1123138610053513269
+      type: {class: EncounterBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: 
+        text: 
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        encounter: {fileID: 11400000, guid: 7f52f80f80fb1af44a51e696465c5abb, type: 2}
+        victoryTitle: It had to keep its word.
+        victoryText: 'The roots loosen with a sound like a long breath, and the face sinks back into the bark. The nymph stands as the black fades toward silver.
+
+
+          "It''s gone. It had to keep its word."
+
+
+          "Your traveler went deeper, toward the smoke. A woman lives there who keeps things. Whatever she knows, she''ll want something for it."'
+        defeatTitle: Again? I have nothing but time.
+        defeatText: 'The roots draw tighter, and the nymph flinches.
+
+
+          "Again? I have nothing but time."
+
+
+          "It can''t refuse you," the nymph says. "Try again."'
+        abandonText: The nymph keeps her head bowed. Above her, the bark waits for the next game.
+        resultContinueLabel: Return to the trail
+        victoryPresentation:
+          enabled: 1
+          hostState: 4
+          holdDuration: 0.25
+          fadeDuration: 0.3
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        defeatPresentation:
+          enabled: 1
+          hostState: 5
+          holdDuration: 0.15
+          fadeDuration: 0.25
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        abandonPresentation:
+          enabled: 1
+          hostState: 6
+          holdDuration: 0
+          fadeDuration: 0.2
+          showDialogue: 0
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        encounterCharmsIntroductionText: It keeps what it takes. So build on what it keeps.

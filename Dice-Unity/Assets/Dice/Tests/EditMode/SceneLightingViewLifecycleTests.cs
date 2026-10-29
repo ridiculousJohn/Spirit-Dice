@@ -41,11 +41,9 @@ namespace Dice.Tests
         {
             var journey = UnityEngine.ScriptableObject.CreateInstance<EncounterJourneyAsset>();
             resources.Add(journey);
-            TestJourneys.SetBeats(journey, TestJourneys.Beat("approach", EncounterJourneyBeatKind.Illustration),
-                TestJourneys.Beat("arrival", EncounterJourneyBeatKind.Illustration));
-            TestJourneys.SetBeat(journey, 0, "sceneLighting", first);
+            TestJourneys.SetBeats(journey, Picture(first), new IllustrationBeat(), new IllustrationBeat());
             TestJourneys.SetBeat(journey, 0, "duration", 0f);
-            TestJourneys.SetBeat(journey, 1, "sceneLighting", second);
+            TestJourneys.SetBeat(journey, 1, "scene", Picture(second));
             TestJourneys.SetBeat(journey, 1, "transition", EncounterJourneyTransition.PartingPanels);
             TestJourneys.SetBeat(journey, 1, "duration", 20f);
             var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
@@ -107,6 +105,15 @@ namespace Dice.Tests
             Require(view.SceneLighting.Asset == null &&
                 background.material == background.defaultMaterial,
                 "Returning to investigation retained sequence lighting.");
+        }
+
+        /** A picture scene lit by the lighting. */
+        private PictureSceneAsset Picture(SceneLightingAsset lighting)
+        {
+            var picture = UnityEngine.ScriptableObject.CreateInstance<PictureSceneAsset>();
+            resources.Add(picture);
+            SyntheticUi.Set(picture, "sceneLighting", lighting);
+            return picture;
         }
 
         private static SceneLightingAsset Lighting(List<UnityEngine.Object> resources, Color ambient, float intensity)

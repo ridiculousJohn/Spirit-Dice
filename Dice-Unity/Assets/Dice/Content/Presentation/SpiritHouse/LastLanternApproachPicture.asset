@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95eb2b50a2c3f0647893272ab6d646fe, type: 3}
+  m_Name: LastLanternApproachPicture
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.PictureSceneAsset
+  background: {fileID: 2800000, guid: 74eb1ce65d124aa9823839f4404df805, type: 3}
+  sceneLighting: {fileID: 0}
+  foreground: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
+  foregroundRect:
+    serializedVersion: 2
+    x: 0.22
+    y: 0.52
+    width: 0.4
+    height: 0.28
+  foregroundTint: {r: 0.04, g: 0.025, b: 0.02, a: 0.36}

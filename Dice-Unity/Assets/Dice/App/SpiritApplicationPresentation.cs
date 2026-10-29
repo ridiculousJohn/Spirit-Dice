@@ -41,7 +41,7 @@ namespace Dice.App
         {
             bool atFrontend = controller.JourneyPhase == EncounterJourneyPhase.MainMenu ||
                 controller.JourneyPhase == EncounterJourneyPhase.Investigation;
-            var selectedTable = controller.SelectedJourney?.TablePresentation;
+            var selectedTable = controller.SelectedJourney?.TableSceneAt(controller.BeatIndex);
             requested = atFrontend ? frontend : selectedTable != null ? selectedTable.Scene : defaultEncounterScene;
             if (requested == null || !requested.RuntimeKeyIsValid())
             {

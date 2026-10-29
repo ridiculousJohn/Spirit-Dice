@@ -82,7 +82,7 @@ namespace Dice.Tests
             Vector2 landed = Contact();
             Assert.That(Vector2.Distance(landed, perch), Is.GreaterThan(.01f), "The flight carries the watcher off its perch.");
 
-            yield return AdvanceTo(journey.Beats.Count - 1);
+            yield return AdvanceTo(Invitation());
             yield return WaitForJourney();
             yield return CaptureMotion("transition", 0f, () =>
             {
@@ -207,7 +207,7 @@ namespace Dice.Tests
             Vector2 perch = Contact();
             yield return new WaitForSecondsRealtime(journey.Beats[flight].Duration + .1f);
             Assert.That(controller.BeatIndex, Is.EqualTo(flight - 1), "The canceled flight must not advance the new visit.");
-            yield return AdvanceTo(journey.Beats.Count - 1);
+            yield return AdvanceTo(Invitation());
             yield return WaitForJourney();
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
@@ -231,7 +231,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed();
             yield return WaitForJourney();
             yield return new WaitForSecondsRealtime(journey.Beats[flight].Duration + .1f);
-            Assert.That(controller.BeatIndex, Is.EqualTo(journey.Beats.Count - 1));
+            Assert.That(controller.BeatIndex, Is.EqualTo(Invitation()));
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(controller.Snapshot, Is.SameAs(abandoned));
             Assert.That(controller.HasActiveEncounter, Is.False);
@@ -253,8 +253,7 @@ namespace Dice.Tests
         {
             for (int index = 0; index < journey.Beats.Count; ++index)
             {
-                var beat = journey.Beats[index];
-                if (beat.Kind != EncounterJourneyBeatKind.Arrival || !beat.AutoAdvance) continue;
+                if (!(journey.Beats[index] is ArrivalBeat arrival) || !arrival.AutoAdvance) continue;
                 Assert.That(index, Is.InRange(1, journey.Beats.Count - 2),
                     "The watcher's flight needs a perch beat before it and a landing beat after it.");
                 return index;
@@ -262,6 +261,9 @@ namespace Dice.Tests
             Assert.Fail("The watchtower journey has no automatic arrival for the watcher's flight.");
             return -1;
         }
+
+        /** The invitation to the watchtower's encounter, the beat before its Encounter beat. */
+        private int Invitation() => journey.IndexOfEncounter(journey.Encounters.First().Identity) - 1;
 
         private void AssertRestPose()
         {

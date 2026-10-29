@@ -29,11 +29,11 @@ namespace Dice.Tests
         {
             yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly &&
-                controller.Catalog.GetEncounter(value.Encounter.Identity).Rules.OfType<DieInterferenceRuleDefinition>()
+            var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && value.Encounters.Any() &&
+                controller.Catalog.GetEncounter(value.Encounters.First().Identity).Rules.OfType<DieInterferenceRuleDefinition>()
                     .Any(rule => rule.AfterPlayerReroll));
             Assert.That(journey, Is.Not.Null, "No authored encounter has a DieInterferenceRuleDefinition acting after a reroll.");
-            var encounterId = journey.Encounter.Identity;
+            var encounterId = journey.Encounters.First().Identity;
             DieDisturbedEvent expected = null;
             ulong seed = 0;
             for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)

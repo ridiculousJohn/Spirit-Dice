@@ -42,14 +42,15 @@ namespace Dice.Tests
         public IEnumerator ClueBeatsArrivalAndInvitationPresentWithoutAnEngineUntilAcceptStartsOneOpeningRoll()
         {
             var journey = BoardJourney("has an arrival beat",
-                value => value.Beats.Any(beat => beat.Kind == EncounterJourneyBeatKind.Arrival));
+                value => value.Beats.Any(beat => beat is ArrivalBeat));
             AssertNoEngine();
             Assert.That(ActiveText(), Does.Contain(journey.LocationTitle));
             Assert.That(ActiveText(), Does.Contain(journey.LeadText));
             AssertGameplayVisible(false);
             yield return ClickClue(journey);
 
-            for (int index = 0; index < journey.Beats.Count; ++index)
+            int invitation = journey.IndexOfEncounter(journey.Encounters.First().Identity) - 1;
+            for (int index = 0; index <= invitation; ++index)
             {
                 yield return WaitForJourney();
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
@@ -61,29 +62,30 @@ namespace Dice.Tests
                 Assert.That(Find<Button>("JourneySkipButton").gameObject.activeInHierarchy, Is.False);
                 AssertNoEngine();
                 AssertGameplayVisible(false);
-                if (beat.Kind == EncounterJourneyBeatKind.Arrival)
+                if (beat is ArrivalBeat)
                 {
                     Assert.That(view.HostPortrait, Is.Not.Null);
                     Assert.That(view.HostPortrait.GetComponentsInChildren<RawImage>()
                         .Any(image => image.gameObject.activeInHierarchy), Is.True,
                         "The table host must arrive before the gameplay HUD or engine dice.");
                 }
-                if (beat.Kind != EncounterJourneyBeatKind.Invitation) Click("JourneyAdvanceButton");
+                if (!(beat is InvitationBeat)) Click("JourneyAdvanceButton");
             }
 
-            // The invitation presents every rule of the journey's table, in order.
+            // The invitation presents every rule of its Encounter beat's table, in order.
+            var table = journey.TableSceneAt(invitation + 1);
             var rows = view.JourneyView.GetComponentsInChildren<SpiritInvitationRuleView>(true);
-            Assert.That(rows.Length, Is.GreaterThanOrEqualTo(journey.TablePresentation.RulePresentations.Count));
-            for (int index = 0; index < journey.TablePresentation.RulePresentations.Count; ++index)
+            Assert.That(rows.Length, Is.GreaterThanOrEqualTo(table.RulePresentations.Count));
+            for (int index = 0; index < table.RulePresentations.Count; ++index)
             {
-                var rule = journey.TablePresentation.RulePresentations[index];
+                var rule = table.RulePresentations[index];
                 Assert.That(rows[index].Title.text, Is.EqualTo(rule.DisplayName));
                 Assert.That(rows[index].Description.text, Does.Contain(rule.Description));
             }
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounters.First().Identity));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(resolutions, Is.EqualTo(1));
@@ -101,14 +103,14 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1), "Repeated acceptance must not roll or create another run.");
             Assert.That(rolls, Is.EqualTo(1), "Accepting must roll the opening dice once.");
-            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.Encounter.Identity, ContentReady.Seed);
+            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.Encounters.First().Identity, ContentReady.Seed);
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 Assert.That(controller.Snapshot.CurrentDice[index], Is.EqualTo(expected.Snapshot.CurrentDice[index]));
             }
             AssertVisibleDice(expected.Snapshot.CurrentDice);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).VisitedEncounterIds,
-                Does.Contain(journey.Encounter.Identity));
+                Does.Contain(journey.Encounters.First().Identity));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -122,10 +124,10 @@ namespace Dice.Tests
         {
             var journey = BoardJourney("awaits rewards after its first stage", value =>
             {
-                var stages = controller.Catalog.GetEncounter(value.Encounter.Identity).Stages;
+                var stages = controller.Catalog.GetEncounter(value.Encounters.First().Identity).Stages;
                 return stages.Count > 1 && stages[0].ExitBehavior == StageExitBehavior.AwaitRewards;
             });
-            Assert.That(controller.InitializeJourney(ContentReady.ShortStages(controller.Catalog, journey.Encounter.Identity, "journey-playmode.v1"),
+            Assert.That(controller.InitializeJourney(ContentReady.ShortStages(controller.Catalog, journey.Encounters.First().Identity, "journey-playmode.v1"),
                 controller.JourneyCatalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
             yield return ContentReady.Routed(controller);
             yield return null;
@@ -168,7 +170,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed();
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+            Assert.That(controller.BeatIndex, Is.EqualTo(journey.IndexOfEncounter(journey.Encounters.First().Identity)));
             Assert.That(controller.Snapshot, Is.SameAs(beforeReturn));
             Assert.That(resolutions, Is.EqualTo(rewardedResolutions));
             Assert.That(controller.IsBusy, Is.False);
@@ -180,7 +182,7 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             yield return null;
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.BeatIndex, Is.EqualTo(-1));
+            Assert.That(controller.BeatIndex, Is.EqualTo(journey.IndexOfEncounter(journey.Encounters.First().Identity)));
             Assert.That(controller.IsBusy, Is.False);
             Assert.That(view == null || !view.DiceTray.IsRolling, Is.True);
             Assert.That(resolutions, Is.EqualTo(rewardedResolutions));
@@ -202,10 +204,10 @@ namespace Dice.Tests
          */
         private EncounterJourneyAsset BoardJourney(string requirement, Func<EncounterJourneyAsset, bool> require)
         {
-            var candidates = BoardEntries().Where(journey => !journey.IsStoryOnly && require(journey))
+            var candidates = BoardEntries().Where(journey => journey.Encounters.Any() && require(journey))
                 .Where(journey =>
                 {
-                    var encounter = controller.Catalog.GetEncounter(journey.Encounter.Identity);
+                    var encounter = controller.Catalog.GetEncounter(journey.Encounters.First().Identity);
                     return encounter.EncounterModifierIds.Count == 0 || encounter.EncounterModifiersFirstClearedStageNumber != 1;
                 }).ToArray();
             Assert.That(candidates, Is.Not.Empty,
@@ -308,7 +310,7 @@ namespace Dice.Tests
         private IEnumerator AdvanceToInvitation()
         {
             yield return WaitForJourney();
-            while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
             {
                 Click("JourneyAdvanceButton");
                 yield return ContentReady.Routed();
@@ -323,7 +325,7 @@ namespace Dice.Tests
             yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, controller.JourneyStatus.ToString());
             if (controller.JourneyPhase == EncounterJourneyPhase.Sequence)
             {
-                bool invitation = controller.SelectedJourney.Beats[controller.BeatIndex].Kind == EncounterJourneyBeatKind.Invitation;
+                bool invitation = controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat;
                 var button = Find<Button>(invitation ? "JourneyAcceptButton" : "JourneyAdvanceButton");
                 yield return ContentReady.WaitUntil(() => button.gameObject.activeInHierarchy && button.IsInteractable(),
                     button.name + " becomes available once the beat has shown.");
