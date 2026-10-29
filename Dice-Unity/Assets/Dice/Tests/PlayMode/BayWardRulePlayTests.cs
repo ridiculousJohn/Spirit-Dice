@@ -30,40 +30,40 @@ namespace Dice.Tests
         {
             yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
-            (string Journey, BayWardRuleDefinition Ward)? found = null;
+            (EncounterJourneyAsset Journey, BayWardRuleDefinition Ward)? found = null;
             foreach (var journey in controller.JourneyCatalog.Entries.Where(value => value != null && !value.IsStoryOnly))
             {
-                var definition = controller.Catalog.GetEncounter(journey.EncounterId);
+                var definition = controller.Catalog.GetEncounter(journey.Encounter.Identity);
                 var ward = definition.Rules.OfType<BayWardRuleDefinition>().FirstOrDefault(value =>
                     definition.Rules.OfType<DieInterferenceRuleDefinition>().Any(rule => Repels(value, rule)));
                 if (ward == null) continue;
-                found = (journey.Id, ward);
+                found = (journey, ward);
                 break;
             }
             Assert.That(found, Is.Not.Null,
                 "No authored encounter has a BayWardRuleDefinition together with a die interference rule it can repel.");
-            var encounter = controller.Catalog.GetEncounter(controller.JourneyCatalog.Find(found.Value.Journey).EncounterId);
+            var encounter = controller.Catalog.GetEncounter(found.Value.Journey.Encounter.Identity);
             yield return RepelOnWardedBay(controller, found.Value.Journey, encounter, found.Value.Ward);
         }
 
-        private static IEnumerator RepelOnWardedBay(SpiritEncounterController controller, string journeyId,
+        private static IEnumerator RepelOnWardedBay(SpiritEncounterController controller, EncounterJourneyAsset journey,
             EncounterDefinition encounter, BayWardRuleDefinition ward)
         {
             // An attempt after a player reroll leaves the attacked die on the board; otherwise the ward meets Play Hand.
             bool afterReroll = encounter.Rules.OfType<DieInterferenceRuleDefinition>()
                 .Any(rule => rule.AfterPlayerReroll && Repels(ward, rule));
             EncounterAction Action() => afterReroll ? (EncounterAction)new RerollDiceAction(ContentReady.RerollMask) : PlayHandAction.Instance;
-            string context = encounter.Id + " " + ward.Id;
+            string context = journey.name + " " + ward.Id;
             ulong seed = 0;
             int bay = -1;
             for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)
             {
-                var unwarded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Id, candidate);
+                var unwarded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Identity, candidate);
                 var attempt = unwarded.Execute(Action(), unwarded.Snapshot.Revision).Events.OfType<DieDisturbedEvent>()
                     .FirstOrDefault(value => ward.Blocks(value.Kind));
                 if (attempt == null) continue;
                 // Moving the piece draws nothing, so the same rule draws target the bay it now wards.
-                var warded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Id, candidate);
+                var warded = EncounterSession.CreateEncounter(controller.Catalog, encounter.Identity, candidate);
                 var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, ward.InteractionId,
                     new MovePieceInput(PiecePosition.Bay(attempt.Bay))), warded.Snapshot.Revision);
                 if (!moved.Accepted) continue;
@@ -74,7 +74,7 @@ namespace Dice.Tests
                 bay = attempt.Bay;
             }
             Assert.That(seed, Is.Not.Zero, context + ": no searched seed attempts interference the ward can repel.");
-            yield return ContentReady.EnterEncounter(controller, journeyId, seed);
+            yield return ContentReady.EnterEncounter(controller, journey, seed);
             var view = ContentReady.EncounterView(controller);
             var piece = view.TablePieces.SingleOrDefault(value => value.PieceId == ward.PieceId && value.InteractionId == ward.InteractionId);
             Assert.That(piece, Is.Not.Null, context + ": the table presents no prop for the ward's piece.");

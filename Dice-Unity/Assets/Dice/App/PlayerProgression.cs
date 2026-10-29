@@ -18,9 +18,11 @@ namespace Dice.App
         public string ProfilePath { get; private set; }
         public PlayerProfileStatus Status { get; private set; } = PlayerProfileStatus.None;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => profile?.UnlockedModifierIds ?? (IReadOnlyList<string>)Array.Empty<string>();
-        public IReadOnlyList<string> CompletedEncounterIds => profile?.CompletedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds =>
+            profile?.CompletedEncounterIds ?? (IReadOnlyList<EncounterDefinition.Id>)Array.Empty<EncounterDefinition.Id>();
         public IReadOnlyList<string> CompletedStoryIds => profile?.CompletedStoryIds ?? (IReadOnlyList<string>)Array.Empty<string>();
-        public IReadOnlyList<string> VisitedEncounterIds => profile?.VisitedEncounterIds ?? (IReadOnlyList<string>)Array.Empty<string>();
+        public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds =>
+            profile?.VisitedEncounterIds ?? (IReadOnlyList<EncounterDefinition.Id>)Array.Empty<EncounterDefinition.Id>();
 
         /** Releases profile memory after the controller has safely stopped using the current campaign. */
         public void Clear()
@@ -143,11 +145,9 @@ namespace Dice.App
             }
         }
 
-        public bool PersistVisit(string id)
+        public bool PersistVisit(EncounterDefinition.Id id)
         {
             if (profile == null || !PersistProfile()) return false;
-            // An invalid id throws to the caller instead of reporting a failed write.
-            PlayerProfile.ValidateId(id);
             return CommitProfileChange(next =>
             {
                 next.VisitEncounter(id);

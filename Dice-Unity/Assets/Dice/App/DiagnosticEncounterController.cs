@@ -17,12 +17,14 @@ namespace Dice.App
         [SerializeField] private DiagnosticEncounterView view;
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
         [SerializeField] private ModifierSkinAsset modifierSkin;
-        [SerializeField] private string encounterId = "encounter.standard";
+        [SerializeField, Tooltip("The encounter to play; it need not be on the catalog's encounter list yet.")]
+        private EncounterAsset encounter;
         [SerializeField] private ulong initialSeed = EncounterApplication.DefaultSeed;
         private readonly List<string> eventLog = new List<string>();
         private EncounterApplication application;
         private IReadOnlyList<string> readOnlyEventLog;
         private string cacheStatus = string.Empty;
+        private EncounterDefinition.Id encounterId;
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -42,17 +44,22 @@ namespace Dice.App
             Seed = initialSeed;
         }
 
-        /** Loads the catalog and skin the scene references, the same content and skin the application loads. */
+        /**
+         * Loads the catalog and skin the scene references, the same content and skin the application loads, with the
+         * scene's encounter added to the content when the catalog does not list it.
+         */
         private void Start()
         {
             if (Catalog != null) return;
             if (catalogAsset == null) return;
             try
             {
-                MechanicalContent content = catalogAsset.Build();
+                if (encounter == null) throw new InvalidOperationException("An encounter is required.");
+                MechanicalContent content = catalogAsset.Build(encounter);
                 if (modifierSkin == null) throw new InvalidOperationException("A modifier skin is required.");
                 ModifierPresentation = new ModifierPresentationCatalog(modifierSkin, content);
                 Catalog = content.Catalog;
+                encounterId = encounter.Identity;
             }
             catch (Exception exception)
             {
@@ -69,7 +76,7 @@ namespace Dice.App
         }
 
         /** Uses the charm presentation, which presents the catalog's charms. */
-        public void Initialize(MechanicalCatalog catalog, ModifierPresentationCatalog presentation, string encounterId,
+        public void Initialize(MechanicalCatalog catalog, ModifierPresentationCatalog presentation, EncounterDefinition.Id encounterId,
             ulong seed, string savePath)
         {
             if (presentation == null) throw new ArgumentNullException(nameof(presentation));

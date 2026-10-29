@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Dice.App;
+using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -20,7 +21,6 @@ namespace Dice.Tests
     [Category("ArtAuthoring")]
     public sealed class WatchtowerJourneyPlayTests
     {
-        private const string EncounterId = "encounter.owl.watchtower";
         private SpiritEncounterController controller;
         private SpiritEncounterView view => ContentReady.EncounterView(controller);
         private EncounterJourneyAsset journey;
@@ -32,9 +32,8 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            journey = controller.JourneyCatalog.Find(EncounterId);
-            Assert.That(journey, Is.Not.Null, EncounterId);
+            journey = ContentReady.JourneyWithRule<DistinctFacesMultiplierRuleDefinition>(controller);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
             flight = FlightIndex();
             controller.ConfigureSeedPolicy(true, 60);
             yield return null;
@@ -43,7 +42,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator WatchtowerFlightOpeningIdleAndReactionPlayInRealTime()
         {
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             var portrait = ContentReady.Portrait();
             Assert.That(portrait, Is.Not.Null);
@@ -184,7 +183,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ReturningDuringFlightCancelsMotionAndRevisitSkipSettlesTheOwlAtTheTable()
         {
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             yield return AdvanceTo(flight);
             yield return new WaitForSecondsRealtime(.5f);
@@ -200,7 +199,7 @@ namespace Dice.Tests
                 .Any(layer => layer.isActiveAndEnabled), Is.False,
                 "Returning to clues must remove the active flight presentation.");
 
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             yield return AdvanceTo(flight - 1);
             yield return WaitForJourney();
@@ -222,7 +221,7 @@ namespace Dice.Tests
             Click("EndingNewRunButton");
             yield return ContentReady.Routed();
             yield return null;
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             Assert.That(controller.CanSkipIntro, Is.True);
             yield return AdvanceTo(flight);

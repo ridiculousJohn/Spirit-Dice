@@ -67,7 +67,7 @@ namespace Dice.Presentation
         private EncounterRulePresenters rulePresenters;
         // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
         private TablePiecePresenters piecePresenters;
-        private string presentersEncounterId;
+        private EncounterDefinition.Id? presentersEncounterId;
         // The configured table's rule card flagged as shown on the HUD; null when the table flags none.
         private EncounterRulePresentationAsset hudRuleCard;
         private bool applicationFocused = true;
@@ -754,10 +754,9 @@ namespace Dice.Presentation
          * Creates the configured table's rule presenters and its piece presenters for the encounter unless they already present
          * it; true when created.
          */
-        private bool CreatePresenters(string encounterId)
+        private bool CreatePresenters(EncounterDefinition.Id encounterId)
         {
-            if (presentersEncounterId != null && string.Equals(presentersEncounterId, encounterId, StringComparison.Ordinal))
-                return false;
+            if (presentersEncounterId == encounterId) return false;
             DisposePresenters();
             var encounter = controls.Catalog.GetEncounter(encounterId);
             try

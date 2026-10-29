@@ -65,7 +65,7 @@ namespace Dice.Tests
             if (!enterEncounter) { yield return Routed(controller); yield break; }
             EncounterJourneyAsset journey = null;
             foreach (var entry in controller.JourneyCatalog.Entries)
-                if (entry != null && !entry.IsStoryOnly && controller.IsJourneyAvailable(entry.Id)
+                if (entry != null && !entry.IsStoryOnly && controller.IsJourneyAvailable(entry)
                     && (requirement == null || requirement(entry)))
                 {
                     journey = entry;
@@ -74,7 +74,7 @@ namespace Dice.Tests
             Assert.That(journey, Is.Not.Null, requirement == null
                 ? "The authored journey catalog has no encounter journey available without prerequisites."
                 : "The authored journey catalog has no encounter journey available without prerequisites with the required property.");
-            controller.SelectEncounter(journey.EncounterId);
+            controller.SelectEncounter(journey);
             yield return Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
@@ -163,12 +163,12 @@ namespace Dice.Tests
          * Opens the journey's encounter from the investigation board with the given session seed, completing its
          * prerequisites first and passing any pre-encounter screen, and waits for its opening roll.
          */
-        internal static IEnumerator EnterEncounter(SpiritEncounterController controller, string journeyId, ulong seed)
+        internal static IEnumerator EnterEncounter(SpiritEncounterController controller, EncounterJourneyAsset journey, ulong seed)
         {
             controller.ReturnToInvestigation();
             yield return Routed(controller);
-            SeedJourneyPrerequisites(controller, journeyId);
-            controller.SelectEncounter(journeyId);
+            SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
@@ -186,17 +186,26 @@ namespace Dice.Tests
          * A copy of the catalog in which the encounter has every stage target at 1 and is otherwise as authored, so each
          * played hand clears its stage.
          */
-        internal static MechanicalCatalog ShortStages(MechanicalCatalog authored, string encounterId, string version)
+        internal static MechanicalCatalog ShortStages(MechanicalCatalog authored, EncounterDefinition.Id encounterId, string version)
         {
             var definition = authored.GetEncounter(encounterId);
-            var shortEncounter = new EncounterDefinition(definition.Id,
+            var shortEncounter = new EncounterDefinition(definition.Identity,
                 definition.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
                 definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
                 definition.SpiritId, definition.UnlockMilestones, definition.EncounterModifierIds,
                 definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
             return new MechanicalCatalog(version, authored.Hands,
-                authored.Encounters.Select(value => value.Id == definition.Id ? shortEncounter : value),
+                authored.Encounters.Select(value => value.Identity == definition.Identity ? shortEncounter : value),
                 authored.Modifiers, authored.RewardPools);
+        }
+
+        /** The one encounter journey of the catalog whose encounter has a rule of the given kind. */
+        internal static EncounterJourneyAsset JourneyWithRule<TRule>(SpiritEncounterController controller) where TRule : EncounterRuleDefinition
+        {
+            var journeys = controller.JourneyCatalog.Entries.Where(journey => journey != null && !journey.IsStoryOnly &&
+                controller.Catalog.GetEncounter(journey.Encounter.Identity).Rules.OfType<TRule>().Any()).ToArray();
+            Assert.That(journeys, Has.Length.EqualTo(1), "One authored encounter journey has the rule " + typeof(TRule).Name + ".");
+            return journeys[0];
         }
 
         /** The named component under the presentation root, preferring an active one where several screens author the same name. */
@@ -267,9 +276,10 @@ namespace Dice.Tests
             out EncounterRuleDefinition[] rules)
         {
             Assert.That(configuration.JourneyCatalog, Is.Not.Null, "The application configuration has no journey catalog.");
-            var table = configuration.JourneyCatalog.Find(configuration.EncounterId)?.TablePresentation;
+            Assert.That(configuration.Encounter, Is.Not.Null, "The application configuration has no direct encounter.");
+            var table = configuration.JourneyCatalog.Find(configuration.Encounter.Identity)?.TablePresentation;
             Assert.That(table, Is.Not.Null, "The configured direct encounter has no journey with an authored table.");
-            var encounter = catalog.GetEncounter(configuration.EncounterId);
+            var encounter = catalog.GetEncounter(configuration.Encounter.Identity);
             var presented = new List<EncounterRuleDefinition>();
             foreach (var card in table.RulePresentations.Where(card => card != null))
             {
@@ -284,35 +294,34 @@ namespace Dice.Tests
         internal static string SpiritSavePath() => Path.GetFullPath(Path.Combine(Application.dataPath,
             "..", "..", "Docs", "work", "journey-file-tests", Guid.NewGuid().ToString("N"), "encounter.json"));
 
-        internal static void SeedJourneyPrerequisites(SpiritEncounterController controller, string journeyId)
+        internal static void SeedJourneyPrerequisites(SpiritEncounterController controller, EncounterJourneyAsset journey)
         {
             string workRoot = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work")) +
                 Path.DirectorySeparatorChar;
             Assert.That(Path.GetFullPath(controller.ProfilePath).StartsWith(workRoot, StringComparison.OrdinalIgnoreCase),
                 Is.True, "Journey prerequisites require an isolated test profile.");
-            var journey = controller.JourneyCatalog.Find(journeyId);
-            Assert.That(journey, Is.Not.Null, journeyId);
+            Assert.That(controller.JourneyCatalog.Entries, Does.Contain(journey));
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
-            SeedPrerequisites(profile, controller.JourneyCatalog, journey, new HashSet<string>(StringComparer.Ordinal));
+            SeedPrerequisites(profile, controller.JourneyCatalog, journey, new HashSet<EncounterJourneyAsset>());
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             Assert.That(controller.InitializeJourney(controller.Catalog, controller.JourneyCatalog, controller.SavePath),
                 Is.True, controller.JourneyStatus.ToString());
-            Assert.That(controller.IsJourneyAvailable(journeyId), Is.True, journeyId);
+            Assert.That(controller.IsJourneyAvailable(journey), Is.True, journey.name);
         }
 
         private static void SeedPrerequisites(PlayerProfile profile, EncounterJourneyCatalogAsset journeys,
-            EncounterJourneyAsset journey, HashSet<string> visited)
+            EncounterJourneyAsset journey, HashSet<EncounterJourneyAsset> visited)
         {
-            if (!visited.Add(journey.Id)) return;
-            foreach (string id in journey.RequiredCompletedEncounterIds)
+            if (!visited.Add(journey)) return;
+            foreach (var encounter in journey.RequiredCompletedEncounters)
             {
-                var required = journeys.Find(id);
+                var required = journeys.Find(encounter.Identity);
                 if (required != null) SeedPrerequisites(profile, journeys, required, visited);
-                profile.CompleteEncounter(id);
+                profile.CompleteEncounter(encounter.Identity);
             }
             foreach (string id in journey.RequiredCompletedStoryIds)
             {
-                var required = journeys.Find(id);
+                var required = journeys.FindStory(id);
                 Assert.That(required, Is.Not.Null, id);
                 SeedPrerequisites(profile, journeys, required, visited);
                 profile.CompleteStory(id);

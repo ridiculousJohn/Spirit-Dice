@@ -395,7 +395,7 @@ namespace Dice.Tests
             => EncounterSessionTests.AssertSnapshotsEqual(expected, controller.Snapshot);
 
         /** Starts the controller on the catalog with a test-only presentation of its charms. */
-        private void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string path)
+        private void Initialize(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed, string path)
             => controller.Initialize(catalog, synthetic.For(catalog), encounterId, seed, path);
     }
 }

@@ -5,12 +5,12 @@ namespace Dice.Engine
     [Serializable]
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 9;
+        public const int CurrentFormatVersion = 10;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
         public string CatalogVersion;
-        public string EncounterId;
+        public EncounterDefinition.Id EncounterId;
         public long Revision;
         public EncounterPhase Phase;
         public EncounterOutcome Outcome;

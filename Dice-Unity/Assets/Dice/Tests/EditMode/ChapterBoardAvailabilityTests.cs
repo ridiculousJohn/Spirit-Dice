@@ -9,6 +9,7 @@ namespace Dice.Tests
     /** The investigation board and chapter selector, bound to test-only journey controls on a minimal test hierarchy. */
     public sealed class ChapterBoardAvailabilityTests
     {
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private SyntheticUi ui;
         private TestJourneyControls controls;
 
@@ -23,6 +24,7 @@ namespace Dice.Tests
         public void TearDown()
         {
             ui.Dispose();
+            content.Dispose();
         }
 
         /** Checks the board shows a lead only when it is available and belongs to the selected chapter; fails if a locked lead or another chapter's lead appears. */
@@ -35,7 +37,7 @@ namespace Dice.Tests
             var selected = Chapter("chapter.selected", open, locked);
             controls.JourneyCatalog = Catalog(selected, Chapter("chapter.other", elsewhere));
             controls.SelectedChapter = selected;
-            controls.JourneyAvailable = id => id == open.Id || id == elsewhere.Id;
+            controls.JourneyAvailable = journey => journey == open || journey == elsewhere;
 
             var board = BuildBoard();
             board.Render(controls, null, true, false);
@@ -137,7 +139,7 @@ namespace Dice.Tests
         private EncounterJourneyAsset Journey(string id)
         {
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounterId", id);
+            SyntheticUi.Set(journey, "encounter", content.Encounter(id));
             SyntheticUi.Set(journey, "locationTitle", id);
             return journey;
         }

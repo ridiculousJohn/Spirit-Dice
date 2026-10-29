@@ -31,7 +31,7 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             Assert.That(progression.PrepareProfile(savePath), Is.True);
-            Assert.That(progression.PersistVisit("encounter.previous"), Is.True);
+            Assert.That(progression.PersistVisit(TestEncounters.IdOf("encounter.previous")), Is.True);
             byte[] profileBytes = File.ReadAllBytes(progression.ProfilePath);
             var application = WinningApplication(catalog);
             EncounterSaveFileStore.Save(savePath, new EncounterApplication(catalog, TestContent.EncounterId, 31).CaptureSave());
@@ -51,7 +51,7 @@ namespace Dice.Tests
             Assert.That(File.ReadAllBytes(ProfilePathFor(savePath)), Is.EqualTo(profileBytes));
             Assert.That(progression.PrepareProfile(savePath), Is.True);
             Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
-            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous" }));
+            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.previous") }));
         }
 
         [Test]
@@ -60,33 +60,33 @@ namespace Dice.Tests
             Assert.That(progression.HasProfile, Is.False);
             Assert.That(progression.PrepareProfile(savePath), Is.True);
             Assert.That(progression.HasProfile, Is.True);
-            Assert.That(progression.PersistVisit("encounter.first"), Is.True);
+            Assert.That(progression.PersistVisit(TestEncounters.IdOf("encounter.first")), Is.True);
 
             var external = new PlayerProfile();
             external.CompleteStory(StoryId);
             PlayerProfileFileStore.Save(progression.ProfilePath, external);
             string anotherRun = Path.Combine(Path.GetDirectoryName(savePath), "another-run.json");
             Assert.That(progression.PrepareProfile(anotherRun), Is.True);
-            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.first" }));
+            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.first") }));
             Assert.That(progression.CompletedStoryIds, Is.EqualTo(new[] { StoryId }));
 
             string differentRun = Path.Combine(Path.GetDirectoryName(savePath), "other-profile", "encounter.json");
             string differentProfile = ProfilePathFor(differentRun);
             var other = new PlayerProfile();
-            other.CompleteEncounter("encounter.other");
+            other.CompleteEncounter(TestEncounters.IdOf("encounter.other"));
             PlayerProfileFileStore.Save(differentProfile, other);
             Assert.That(progression.PrepareProfile(differentRun), Is.True);
             Assert.That(progression.ProfilePath, Is.EqualTo(differentProfile));
             Assert.That(progression.VisitedEncounterIds, Is.Empty);
             Assert.That(progression.CompletedStoryIds, Is.Empty);
-            Assert.That(progression.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.other" }));
+            Assert.That(progression.CompletedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.other") }));
         }
 
         [Test]
         public void FailedPreparationRetainsTheProfileAndPath()
         {
             Assert.That(progression.PrepareProfile(savePath), Is.True);
-            Assert.That(progression.PersistVisit("encounter.first"), Is.True);
+            Assert.That(progression.PersistVisit(TestEncounters.IdOf("encounter.first")), Is.True);
             string originalProfile = progression.ProfilePath;
             string differentRun = Path.Combine(Path.GetDirectoryName(savePath), "corrupt-profile", "encounter.json");
             string differentProfile = ProfilePathFor(differentRun);
@@ -97,7 +97,7 @@ namespace Dice.Tests
             Assert.That(progression.PrepareProfile(differentRun), Is.False);
             Assert.That(progression.HasProfile, Is.True);
             Assert.That(progression.ProfilePath, Is.EqualTo(originalProfile));
-            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.first" }));
+            Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.first") }));
             Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.LoadFailed));
             Assert.That(File.ReadAllText(differentProfile), Is.EqualTo(corrupt));
         }
@@ -109,7 +109,7 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             Assert.That(progression.PrepareProfile(savePath), Is.True);
-            Assert.That(progression.PersistVisit("encounter.previous"), Is.True);
+            Assert.That(progression.PersistVisit(TestEncounters.IdOf("encounter.previous")), Is.True);
             byte[] before = File.ReadAllBytes(progression.ProfilePath);
 
             using (var lockedProfile = new FileStream(progression.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
@@ -118,7 +118,7 @@ namespace Dice.Tests
                 Assert.That(progression.ProfileUnlockedModifierIds, Is.Empty);
                 Assert.That(progression.CompletedStoryIds, Is.Empty);
                 Assert.That(progression.CompletedEncounterIds, Is.Empty);
-                Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous" }));
+                Assert.That(progression.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.previous") }));
                 Assert.That(progression.KnownDiscoveredFamilies(catalog), Has.No.Member(GiftFamilyId));
                 Assert.That(progression.Status.Kind, Is.EqualTo(FailureOf(operation)));
                 Assert.That(progression.Status.Detail, Is.Not.Empty);
@@ -129,7 +129,7 @@ namespace Dice.Tests
             var saved = PlayerProfileFileStore.Load(progression.ProfilePath);
             if (operation == "visit")
             {
-                Assert.That(saved.VisitedEncounterIds, Is.EqualTo(new[] { "encounter.previous", TestContent.EncounterId }));
+                Assert.That(saved.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.previous"), TestContent.EncounterId }));
                 Assert.That(saved.UnlockedModifierIds, Is.Empty);
             }
             else

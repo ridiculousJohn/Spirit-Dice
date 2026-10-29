@@ -58,7 +58,7 @@ namespace Dice.Tests
         [Test]
         public void PlayedHandStatesItsActivationsAndRuleBonuses()
         {
-            const string encounterId = "encounter.test.scored_links";
+            var encounterId = TestEncounters.IdOf("encounter.test.scored_links");
             var charm = new ModifierDefinition("test.session.scored", TestFamilies.Of("test.session.scored"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(2) });
             var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 0) },

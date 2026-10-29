@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
 
 namespace Dice.Presentation
 {
@@ -16,16 +17,17 @@ namespace Dice.Presentation
         bool HasActiveEncounter { get; }
         bool CanResume { get; }
         SpiritStatus JourneyStatus { get; }
-        IReadOnlyList<string> VisitedEncounterIds { get; }
-        IReadOnlyList<string> HighlightedEncounterIds { get; }
+        IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds { get; }
+        /** The follow-up leads of won encounters, highlighted until they are selected. */
+        IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys { get; }
         IReadOnlyList<string> CompletedStoryIds { get; }
-        bool IsJourneyAvailable(string id);
+        bool IsJourneyAvailable(EncounterJourneyAsset journey);
         bool IsChapterAvailable(string id);
         bool IsChapterCompleted(string id);
 
         event Action JourneyChanged;
         void SelectChapter(string id);
-        void SelectEncounter(string encounterId);
+        void SelectEncounter(EncounterJourneyAsset journey);
         void AdvanceJourney();
         void SkipIntro();
         void AcceptEncounter();

@@ -17,7 +17,7 @@ namespace Dice.Tests
      */
     public sealed class EncounterRuleBadgeTests
     {
-        private const string EncounterId = "encounter.rule-badge";
+        private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.rule-badge");
         private readonly List<Object> created = new List<Object>();
         private SyntheticUi ui;
         private SpiritGameplayHud hud;

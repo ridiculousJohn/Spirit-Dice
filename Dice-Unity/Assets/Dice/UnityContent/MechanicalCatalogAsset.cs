@@ -10,11 +10,14 @@ namespace Dice.UnityContent
     {
         [SerializeField] private string catalogVersion;
         [SerializeField] private HandData[] hands = Array.Empty<HandData>();
-        [SerializeField] private EncounterData[] encounters = Array.Empty<EncounterData>();
+        [SerializeField] private EncounterAsset[] encounters = Array.Empty<EncounterAsset>();
         [SerializeField] private RewardPoolData[] rewardPools = Array.Empty<RewardPoolData>();
 
-        /** Builds the engine catalog from the charms the encounters and reward pools reference. */
-        public MechanicalContent Build()
+        /**
+         * Builds the engine catalog of the listed encounters from the charms the encounters and reward pools reference.
+         * An encounter played before it joins the list, as in the diagnostic scene, is added to the catalog built for it.
+         */
+        public MechanicalContent Build(EncounterAsset played = null)
         {
             if (hands == null || encounters == null || rewardPools == null)
                 throw new InvalidOperationException("Catalog arrays are missing.");
@@ -38,22 +41,17 @@ namespace Dice.UnityContent
                 handDefinitions[i] = new HandDefinition(source.id, source.category, source.baseScore, source.multiplier,
                     source.baseScorePerUpgrade, source.multiplierPerUpgrade, source.maximumUpgrades);
             }
-            var encounterDefinitions = new EncounterDefinition[encounters.Length];
-            for (int i = 0; i < encounters.Length; ++i)
+            var encounterAssets = new List<EncounterAsset>(encounters);
+            if (played != null && !encounterAssets.Contains(played)) encounterAssets.Add(played);
+            var encounterDefinitions = new EncounterDefinition[encounterAssets.Count];
+            var encountersById = new Dictionary<EncounterDefinition.Id, EncounterAsset>();
+            for (int i = 0; i < encounterDefinitions.Length; ++i)
             {
-                var source = encounters[i] ?? throw new InvalidOperationException("An encounter entry is missing.");
-                if (source.stages == null) throw new InvalidOperationException("Encounter stages are missing.");
-                var stages = new StageDefinition[source.stages.Length];
-                for (int j = 0; j < stages.Length; ++j)
-                {
-                    var stage = source.stages[j] ?? throw new InvalidOperationException("A stage entry is missing.");
-                    stages[j] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
-                }
-                encounterDefinitions[i] = new EncounterDefinition(source.id, stages, source.startingUpgrades,
-                    Ids(source.startingModifiers, Use), BuildRewardPolicy(source.rewardPolicy), BuildRules(source.rules),
-                    string.IsNullOrEmpty(source.spiritId) ? null : source.spiritId, BuildMilestones(source.unlockMilestones),
-                    Ids(source.encounterModifiers, Use), Ids(source.unlockRewardModifiers, Use), BuildPieces(source.pieces),
-                    source.encounterModifiersFirstClearedStageNumber);
+                var source = encounterAssets[i] ?? throw new InvalidOperationException("An encounter reference is missing.");
+                if (encountersById.TryGetValue(source.Identity, out EncounterAsset other))
+                    throw new InvalidOperationException("Two encounter assets share the id " + source.Identity + ": " + other.name + ", " + source.name);
+                encountersById.Add(source.Identity, source);
+                encounterDefinitions[i] = source.Build(Use);
             }
             var rewardPoolDefinitions = new ModifierRewardPoolDefinition[rewardPools.Length];
             for (int i = 0; i < rewardPools.Length; ++i)
@@ -91,7 +89,8 @@ namespace Dice.UnityContent
             return new MechanicalContent(catalog, pairs);
         }
 
-        private static string[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
+        /** The ids of the charms, each passed to use first. */
+        internal static string[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
         {
             if (sources == null) throw new InvalidOperationException("A charm list is missing.");
             var ids = new string[sources.Length];
@@ -101,85 +100,6 @@ namespace Dice.UnityContent
                 ids[i] = sources[i].Id;
             }
             return ids;
-        }
-
-        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
-        {
-            if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
-            var definitions = new ModifierUnlockMilestone[sources.Length];
-            for (int i = 0; i < sources.Length; ++i)
-            {
-                var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
-                definitions[i] = new ModifierUnlockMilestone(source.stageNumber);
-            }
-            return definitions;
-        }
-
-        private static EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
-        {
-            if (sources == null) throw new InvalidOperationException("Encounter rules are missing.");
-            var definitions = new EncounterRuleDefinition[sources.Length];
-            for (int i = 0; i < sources.Length; ++i)
-            {
-                var source = sources[i] ?? throw new InvalidOperationException("An encounter rule asset is missing.");
-                definitions[i] = source.Build();
-            }
-            return definitions;
-        }
-
-        private static TablePieceDefinition[] BuildPieces(PieceData[] sources)
-        {
-            if (sources == null) throw new InvalidOperationException("Table pieces are missing.");
-            var definitions = new TablePieceDefinition[sources.Length];
-            for (int i = 0; i < sources.Length; ++i)
-            {
-                var source = sources[i] ?? throw new InvalidOperationException("A table piece entry is missing.");
-                if (source.interactions == null) throw new InvalidOperationException("Table piece interactions are missing.");
-                var interactions = new PieceInteractionDefinition[source.interactions.Length];
-                for (int j = 0; j < interactions.Length; ++j)
-                {
-                    var interaction = source.interactions[j] ?? throw new InvalidOperationException("A piece interaction asset is missing.");
-                    interactions[j] = interaction.Build();
-                }
-                definitions[i] = new TablePieceDefinition(source.id, interactions);
-            }
-            return definitions;
-        }
-
-        private static RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source)
-        {
-            // An encounter without reward offers leaves its policy id empty; it then awaits rewards from outside the engine.
-            if (source == null || string.IsNullOrEmpty(source.id)) return null;
-            if (source.modifierLayouts == null || source.upgradeHistory == null)
-                throw new InvalidOperationException("Reward policy arrays are missing.");
-            var layouts = new ModifierRewardLayout[source.modifierLayouts.Length];
-            for (int i = 0; i < layouts.Length; ++i)
-            {
-                var layout = source.modifierLayouts[i] ?? throw new InvalidOperationException("A reward layout is missing.");
-                layouts[i] = new ModifierRewardLayout(layout.poolIds);
-            }
-            var history = new HandUpgradeHistoryRule[source.upgradeHistory.Length];
-            for (int i = 0; i < history.Length; ++i)
-            {
-                var rule = source.upgradeHistory[i] ?? throw new InvalidOperationException("An upgrade history rule is missing.");
-                history[i] = new HandUpgradeHistoryRule(rule.maxIncomingStageNumber, rule.excludedRecentChoices);
-            }
-            if (source.tierRules == null || source.tierMilestones == null)
-                throw new InvalidOperationException("Reward tier schedules are missing.");
-            var tierRules = new ModifierTierRule[source.tierRules.Length];
-            for (int i = 0; i < tierRules.Length; ++i)
-            {
-                var rule = source.tierRules[i] ?? throw new InvalidOperationException("A tier rule is missing.");
-                tierRules[i] = new ModifierTierRule(rule.firstIncomingStageNumber, rule.tierWeights);
-            }
-            var tierMilestones = new ModifierTierMilestone[source.tierMilestones.Length];
-            for (int i = 0; i < tierMilestones.Length; ++i)
-            {
-                var milestone = source.tierMilestones[i] ?? throw new InvalidOperationException("A tier milestone is missing.");
-                tierMilestones[i] = new ModifierTierMilestone(milestone.incomingStageNumber, milestone.minimumTier);
-            }
-            return new RewardPolicyDefinition(source.id, layouts, source.startingRefreshes,
-                source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
         }
 
         [Serializable]
@@ -195,91 +115,11 @@ namespace Dice.UnityContent
         }
 
         [Serializable]
-        private sealed class EncounterData
-        {
-            public string id;
-            public string spiritId;
-            public UnlockMilestoneData[] unlockMilestones = Array.Empty<UnlockMilestoneData>();
-            public ModifierAsset[] encounterModifiers = Array.Empty<ModifierAsset>();
-            [Min(1)] public int encounterModifiersFirstClearedStageNumber = 1;
-            public ModifierAsset[] unlockRewardModifiers = Array.Empty<ModifierAsset>();
-            public int[] startingUpgrades = new int[HandDefinition.CategoryCount];
-            public ModifierAsset[] startingModifiers = Array.Empty<ModifierAsset>();
-            public StageData[] stages = Array.Empty<StageData>();
-            public RewardPolicyData rewardPolicy;
-            public EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
-            public PieceData[] pieces = Array.Empty<PieceData>();
-        }
-
-        [Serializable]
-        private sealed class PieceData
-        {
-            public string id;
-            public PieceInteractionAsset[] interactions = Array.Empty<PieceInteractionAsset>();
-        }
-
-        [Serializable]
         private sealed class RewardPoolData
         {
             public string id;
             public ModifierAsset[] modifiers = Array.Empty<ModifierAsset>();
             public ModifierAsset fallbackModifier;
-        }
-
-        [Serializable]
-        private sealed class RewardPolicyData
-        {
-            public string id;
-            public RewardLayoutData[] modifierLayouts = Array.Empty<RewardLayoutData>();
-            public int startingRefreshes;
-            public int refreshesPerClear;
-            public int refreshCost;
-            public int handUpgradeOptionCount;
-            public UpgradeHistoryData[] upgradeHistory = Array.Empty<UpgradeHistoryData>();
-            public TierRuleData[] tierRules = Array.Empty<TierRuleData>();
-            public TierMilestoneData[] tierMilestones = Array.Empty<TierMilestoneData>();
-        }
-
-        [Serializable]
-        private sealed class UnlockMilestoneData
-        {
-            public int stageNumber;
-        }
-
-        [Serializable]
-        private sealed class TierRuleData
-        {
-            public int firstIncomingStageNumber;
-            public int[] tierWeights = Array.Empty<int>();
-        }
-
-        [Serializable]
-        private sealed class TierMilestoneData
-        {
-            public int incomingStageNumber;
-            public int minimumTier;
-        }
-
-        [Serializable]
-        private sealed class RewardLayoutData
-        {
-            public string[] poolIds = Array.Empty<string>();
-        }
-
-        [Serializable]
-        private sealed class UpgradeHistoryData
-        {
-            public int maxIncomingStageNumber;
-            public int excludedRecentChoices;
-        }
-
-        [Serializable]
-        private sealed class StageData
-        {
-            public long threshold;
-            public int startingHands;
-            public int startingRerolls;
-            public StageExitBehavior exitBehavior;
         }
     }
 }

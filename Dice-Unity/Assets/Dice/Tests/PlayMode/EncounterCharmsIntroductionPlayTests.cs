@@ -46,7 +46,7 @@ namespace Dice.Tests
         /** Non-story journeys of the authored catalog whose encounters match. */
         private static EncounterJourneyAsset[] Journeys(SpiritEncounterController controller, Func<EncounterDefinition, bool> match)
             => controller.JourneyCatalog.Entries
-                .Where(journey => !journey.IsStoryOnly && match(controller.Catalog.GetEncounter(journey.EncounterId))).ToArray();
+                .Where(journey => !journey.IsStoryOnly && match(controller.Catalog.GetEncounter(journey.Encounter.Identity))).ToArray();
 
         /**
          * Plays the journey's shortened encounter to the first charm offer that can contain its additions: earlier offers
@@ -58,8 +58,8 @@ namespace Dice.Tests
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
             yield return EnterShortEncounter(controller, authored, journey);
-            int introducedStage = controller.Catalog.GetEncounter(journey.EncounterId).EncounterModifiersFirstClearedStageNumber;
-            yield return ReachIntroducedOffer(controller, journey.EncounterId);
+            int introducedStage = controller.Catalog.GetEncounter(journey.Encounter.Identity).EncounterModifiersFirstClearedStageNumber;
+            yield return ReachIntroducedOffer(controller, journey);
 
             // The first charm offer that can contain the additions is covered by the introduction.
             var introducedOffer = controller.Snapshot.PendingReward;
@@ -67,7 +67,7 @@ namespace Dice.Tests
             yield return AssertOfferCovered(view, true);
 
             yield return ContentReady.ClickWhenShown(view.EncounterCharmsIntroduction.Screen.BeginButton);
-            Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": Continue dismisses the introduction.");
+            Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.name + ": Continue dismisses the introduction.");
             Assert.That(controller.Snapshot.PendingReward.OfferId, Is.EqualTo(introducedOffer.OfferId));
             Assert.That(view.RewardsPanel.Root.gameObject.activeInHierarchy, Is.True);
             yield return AssertOfferCovered(view, false);
@@ -80,7 +80,7 @@ namespace Dice.Tests
                 yield return ContentReady.Idle(controller);
                 Assert.That(controller.Snapshot.PendingReward.OfferId, Is.Not.EqualTo(introducedOffer.OfferId));
                 Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage));
-                Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id + ": refresh does not show it again.");
+                Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.name + ": refresh does not show it again.");
                 yield return AssertOfferCovered(view, false);
             }
 
@@ -106,8 +106,8 @@ namespace Dice.Tests
 
             // Taking a charm moves on without the introduction.
             yield return ChooseFirst(controller, view);
-            Assert.That(controller.Snapshot.Phase, Is.Not.EqualTo(EncounterPhase.ChoosingModifier), journey.Id);
-            Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.Id);
+            Assert.That(controller.Snapshot.Phase, Is.Not.EqualTo(EncounterPhase.ChoosingModifier), journey.name);
+            Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False, journey.name);
         }
 
         /** Takes the first option of the session's pending unlock, charm or hand upgrade choice. */
@@ -139,17 +139,17 @@ namespace Dice.Tests
         internal static IEnumerator EnterShortEncounter(SpiritEncounterController controller, MechanicalCatalog authored,
             EncounterJourneyAsset journey)
         {
-            var mechanical = ContentReady.ShortStages(authored, journey.EncounterId, "charms-introduction-playmode.v1");
+            var mechanical = ContentReady.ShortStages(authored, journey.Encounter.Identity, "charms-introduction-playmode.v1");
             Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
                 controller.JourneyStatus.ToString());
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            yield return SelectToInvitation(controller, journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            yield return SelectToInvitation(controller, journey);
             var view = ContentReady.EncounterView(controller);
             view.JourneyView.AcceptButton.onClick.Invoke();
             Assert.That(view.JourneyView.EncounterCharms.IsOpen, Is.False, "The pre-encounter screen is skipped.");
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
             yield return ContentReady.Idle(controller);
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
         }
 
         /**
@@ -157,9 +157,11 @@ namespace Dice.Tests
          * leaving that charm offer pending. Earlier charm offers and the playing table, shown as resumed runs, and any
          * unlock choice are not introduced.
          */
-        internal static IEnumerator ReachIntroducedOffer(SpiritEncounterController controller, string encounterId)
+        internal static IEnumerator ReachIntroducedOffer(SpiritEncounterController controller, EncounterJourneyAsset journey)
         {
             SpiritEncounterView View() => ContentReady.EncounterView(controller);
+            var encounterId = journey.Encounter.Identity;
+            string context = journey.name;
             int introducedStage = controller.Catalog.GetEncounter(encounterId).EncounterModifiersFirstClearedStageNumber;
             var session = EncounterSession.CreateEncounter(controller.Catalog, encounterId, ContentReady.Seed);
             while (session.Snapshot.StageIndex < introducedStage - 1)
@@ -170,28 +172,28 @@ namespace Dice.Tests
                     if (session.Snapshot.Phase == EncounterPhase.ChoosingModifier)
                     {
                         int target = session.Snapshot.PendingReward.TargetStageIndex;
-                        Assert.That(target, Is.LessThan(introducedStage), encounterId);
+                        Assert.That(target, Is.LessThan(introducedStage), context);
                         yield return LoadSession(controller, session);
-                        Assert.That(View().RewardsPanel.Root.gameObject.activeInHierarchy, Is.True, encounterId);
-                        Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": stage " + target + " offer");
+                        Assert.That(View().RewardsPanel.Root.gameObject.activeInHierarchy, Is.True, context);
+                        Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, context + ": stage " + target + " offer");
                     }
                     ResolveFirst(session);
                 }
             }
-            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(introducedStage - 1), encounterId);
+            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(introducedStage - 1), context);
             yield return LoadSession(controller, session);
-            Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": playing");
+            Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, context + ": playing");
 
             // Clearing the stage offers any permanent unlock first, without the introduction.
             controller.PlayHand();
             yield return ContentReady.Idle(controller);
             while (controller.Snapshot.Phase == EncounterPhase.ChoosingUnlock)
             {
-                Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, encounterId + ": unlock choice");
+                Assert.That(View().EncounterCharmsIntroduction.IsOpen, Is.False, context + ": unlock choice");
                 yield return ChooseFirst(controller, View());
             }
-            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier), encounterId);
-            Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage), encounterId);
+            Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingModifier), context);
+            Assert.That(controller.Snapshot.PendingReward.TargetStageIndex, Is.EqualTo(introducedStage), context);
         }
 
         /** The introduction is open with the journey's narration, if any, the encounter's families, and no Back button. */
@@ -199,24 +201,24 @@ namespace Dice.Tests
             EncounterJourneyAsset journey)
         {
             var introduction = view.EncounterCharmsIntroduction;
-            Assert.That(introduction.IsOpen, Is.True, journey.Id + ": the charm offer is introduced.");
+            Assert.That(introduction.IsOpen, Is.True, journey.name + ": the charm offer is introduced.");
             var screen = introduction.Screen;
             Assert.That(screen.gameObject.activeInHierarchy, Is.True);
             string line = journey.EncounterCharmsIntroductionText;
             bool narrated = !string.IsNullOrWhiteSpace(line);
-            Assert.That(screen.Narration.gameObject.activeInHierarchy, Is.EqualTo(narrated), journey.Id + ": narration shown");
-            if (narrated) Assert.That(screen.Narration.text, Does.Contain(line.Trim()), journey.Id);
+            Assert.That(screen.Narration.gameObject.activeInHierarchy, Is.EqualTo(narrated), journey.name + ": narration shown");
+            if (narrated) Assert.That(screen.Narration.text, Does.Contain(line.Trim()), journey.name);
             Assert.That(screen.BackButton.gameObject.activeInHierarchy, Is.False);
             Assert.That(screen.BeginButton.gameObject.activeInHierarchy, Is.True);
             Assert.That(screen.BeginButton.IsInteractable(), Is.True, "Continue is available immediately.");
-            var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
+            var encounter = controller.Catalog.GetEncounter(journey.Encounter.Identity);
             var families = encounter.EncounterModifierIds.Select(controller.Catalog.GetModifier)
                 .GroupBy(definition => definition.Family).Select(group => group.First()).ToArray();
             var rows = screen.Rows.Where(row => row.gameObject.activeSelf).ToArray();
-            Assert.That(rows.Select(row => row.Family), Is.EquivalentTo(families.Select(family => family.Family)), journey.Id);
+            Assert.That(rows.Select(row => row.Family), Is.EquivalentTo(families.Select(family => family.Family)), journey.name);
             foreach (var family in families)
                 Assert.That(rows.Single(row => row.Family == family.Family).GetComponentsInChildren<Text>().Select(text => text.text),
-                    Does.Contain(ContentReady.Charms.GetFamilyName(family)), journey.Id);
+                    Does.Contain(ContentReady.Charms.GetFamilyName(family)), journey.name);
         }
 
         /** Raycasts at the first offer card: covered, the topmost hit belongs to the introduction; uncovered, it is the card. */
@@ -254,9 +256,9 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Revision, Is.EqualTo(session.Snapshot.Revision));
         }
 
-        private static IEnumerator SelectToInvitation(SpiritEncounterController controller, string encounterId)
+        private static IEnumerator SelectToInvitation(SpiritEncounterController controller, EncounterJourneyAsset journey)
         {
-            controller.SelectEncounter(encounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();

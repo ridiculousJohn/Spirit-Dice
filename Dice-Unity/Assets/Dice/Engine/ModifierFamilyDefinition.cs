@@ -6,7 +6,7 @@ namespace Dice.Engine
     public sealed class ModifierFamilyDefinition
     {
         /** Identifies a charm family where an identity is stored, as in saves and the player profile. */
-        public readonly struct Id : IEquatable<Id>
+        public readonly struct Id : IEquatable<Id>, IContentId
         {
             public Guid Value { get; }
 

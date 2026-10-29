@@ -16,8 +16,10 @@ namespace Dice.Tests
 {
     public sealed class EncounterJourneyTests
     {
-        private const string FirstId = "encounter.harbor";
-        private const string SecondId = "encounter.observatory";
+        private const string FirstName = "encounter.harbor";
+        private const string SecondName = "encounter.observatory";
+        private static readonly EncounterDefinition.Id FirstId = TestEncounters.IdOf(FirstName);
+        private static readonly EncounterDefinition.Id SecondId = TestEncounters.IdOf(SecondName);
         private const string GiftId = "modifier.story-gift";
         private const string GiftFamily = "family.story-gift";
         private static readonly ModifierFamilyDefinition.Id GiftFamilyId = TestFamilies.IdOf(GiftFamily);
@@ -50,8 +52,8 @@ namespace Dice.Tests
                 availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) },
                 new[] { new ModifierRewardPoolDefinition("pool.journey-test", new[] { modifier.Id }) });
             journeys = Create<EncounterJourneyCatalogAsset>();
-            SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", Journey(FirstId, "Harbor", "Ferryman"),
-                Journey(SecondId, "Observatory", "Astronomer")) });
+            SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", Journey(FirstName, "Harbor", "Ferryman"),
+                Journey(SecondName, "Observatory", "Astronomer")) });
             string directory = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, "..", "..", "Docs", "work",
                 "encounter-journey-file-tests", Guid.NewGuid().ToString("N")));
             savePath = Path.Combine(directory, "encounter.json");
@@ -73,7 +75,7 @@ namespace Dice.Tests
             SetBeat(journeys.Entries[0], 0, "progressionReward", Reward(true, false));
             SetBeat(journeys.Entries[0], 3, "progressionReward", Reward(false, true));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             Assert.That(controller.ProfileDiscoveredFamilyIds, Has.No.Member(GiftFamilyId));
             controller.AdvanceJourney();
             Assert.That(controller.ProfileDiscoveredFamilyIds, Does.Contain(GiftFamilyId));
@@ -85,7 +87,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.UnlockedModifierIds, Does.Contain(GiftId));
             Assert.That(controller.Snapshot.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             controller.SkipIntro();
             controller.AcceptEncounter();
             Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
@@ -97,7 +99,7 @@ namespace Dice.Tests
             SetBeat(journeys.Entries[0], 0, "progressionReward", Reward(true, true));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             PlayerProfileFileStore.Save(controller.ProfilePath, new PlayerProfile());
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             using (var lockedProfile = new FileStream(controller.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 controller.AdvanceJourney();
@@ -120,7 +122,7 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json"), profile);
             SetBeat(journeys.Entries[0], 0, "progressionReward", Reward(true, true));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             int journeyNotifications = 0;
             int stateNotifications = 0;
             controller.JourneyChanged += () =>
@@ -171,22 +173,22 @@ namespace Dice.Tests
         [Test]
         public void PrerequisitesGateNewLeadsButPreservePreviouslyVisitedEncounters()
         {
-            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounters", new[] { journeys.Entries[0].Encounter });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            Assert.That(controller.IsJourneyAvailable(FirstId), Is.True);
-            Assert.That(controller.IsJourneyAvailable(SecondId), Is.False);
-            controller.SelectEncounter(SecondId);
+            Assert.That(controller.IsJourneyAvailable(journeys.Find(FirstId)), Is.True);
+            Assert.That(controller.IsJourneyAvailable(journeys.Find(SecondId)), Is.False);
+            controller.SelectEncounter(journeys.Find(SecondId));
             Assert.That(controller.SelectedJourney, Is.Null);
             var saved = new PlayerProfile();
             saved.VisitEncounter(SecondId);
             PlayerProfileFileStore.Save(controller.ProfilePath, saved);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            Assert.That(controller.IsJourneyAvailable(SecondId), Is.True);
+            Assert.That(controller.IsJourneyAvailable(journeys.Find(SecondId)), Is.True);
             saved.CompleteEncounter(FirstId);
             PlayerProfileFileStore.Save(controller.ProfilePath, saved);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(SecondId);
-            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+            controller.SelectEncounter(journeys.Find(SecondId));
+            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
         }
 
         [Test]
@@ -194,7 +196,7 @@ namespace Dice.Tests
         {
             var story = AddStory();
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             Assert.That(controller.CanSkipIntro, Is.False);
             controller.AcceptEncounter();
             Assert.That(controller.Snapshot, Is.Null);
@@ -209,7 +211,7 @@ namespace Dice.Tests
             Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
             Assert.That(saved.DiscoveredFamilyIds, Does.Contain(GiftFamilyId));
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             controller.AdvanceJourney();
             controller.AdvanceJourney();
             Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(new[] { GiftId }));
@@ -228,7 +230,7 @@ namespace Dice.Tests
             byte[] savedRun = File.ReadAllBytes(savePath);
             var before = controller.Snapshot;
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             controller.AdvanceJourney();
             controller.AdvanceJourney();
             Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(before.EncounterId));
@@ -246,7 +248,7 @@ namespace Dice.Tests
             controller.AcceptEncounter();
             var retained = controller.Snapshot;
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             controller.AdvanceJourney();
             int journeyChanges = 0;
             int stateChanges = 0;
@@ -284,7 +286,7 @@ namespace Dice.Tests
             var story = AddStory();
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             PlayerProfileFileStore.Save(controller.ProfilePath, new PlayerProfile());
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             controller.AdvanceJourney();
             using (var lockedProfile = new FileStream(controller.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
@@ -302,7 +304,7 @@ namespace Dice.Tests
 
         private EncounterJourneyAsset AddStory()
         {
-            var story = Journey("", "A return visit", "The guide");
+            var story = Journey(null, "A return visit", "The guide");
             SyntheticUi.Set(story, "storyId", "story.return");
             SetBeats(story, Beat("report", EncounterJourneyBeatKind.Dialogue),
                 Beat("prepare", EncounterJourneyBeatKind.Dialogue));
@@ -363,7 +365,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.Application, Is.Null);
             ulong seed = controller.Seed;
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             controller.SkipIntro();
             controller.AcceptEncounter();
             controller.Reroll();
@@ -382,7 +384,7 @@ namespace Dice.Tests
         public void AcceptanceStartsSelectedDataOnceAndPresentsTheOpeningRoll()
         {
             // The second catalog entry, so starting the first entry instead would fail.
-            const string id = SecondId;
+            var id = SecondId;
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             int presented = 0;
             controller.Resolved += resolution =>
@@ -543,12 +545,12 @@ namespace Dice.Tests
             controller.AcceptEncounter();
             var active = controller.Snapshot;
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(SecondId);
+            controller.SelectEncounter(journeys.Find(SecondId));
             Assert.That(controller.CanSkipIntro, Is.False);
             controller.SkipIntro();
             Assert.That(controller.BeatIndex, Is.Zero);
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             Assert.That(controller.CanSkipIntro, Is.True);
             controller.SkipIntro();
             Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.Beats.Count - 1));
@@ -567,14 +569,14 @@ namespace Dice.Tests
             Assert.That(pending.PendingReward, Is.Not.Null);
             controller.ReturnToInvestigation();
             Assert.That(controller.CanResume, Is.True);
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             controller.PlayHand();
             controller.Abandon();
             Assert.That(controller.Snapshot, Is.SameAs(pending));
             controller.ReturnToInvestigation();
             controller.ResumeEncounter();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(controller.Snapshot, Is.SameAs(pending));
             var restored = EncounterSession.RestoreEncounter(catalog, EncounterSaveFileStore.Load(savePath, catalog));
@@ -594,7 +596,7 @@ namespace Dice.Tests
             controller.Resolved += resolution => ++resolutions;
             controller.Load();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
             Assert.That(controller.BeatIndex, Is.EqualTo(-1));
             Assert.That(resolutions, Is.Zero);
             Assert.That(controller.Snapshot.PendingReward.OfferId, Is.EqualTo(existing.Snapshot.PendingReward.OfferId));
@@ -619,7 +621,7 @@ namespace Dice.Tests
             Assert.That(controller.VisitedEncounterIds, Is.Empty);
             Assert.That(File.ReadAllText(controller.ProfilePath), Is.EqualTo("{ broken external profile"));
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(FirstId);
+            controller.SelectEncounter(journeys.Find(FirstId));
             Assert.That(controller.CanSkipIntro, Is.False);
         }
 
@@ -634,9 +636,10 @@ namespace Dice.Tests
             SetBeats(journey, Beat("invite-one", EncounterJourneyBeatKind.Invitation), Beat("invite-two", EncounterJourneyBeatKind.Invitation));
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
             SetBeats(journey, Beat("invitation", EncounterJourneyBeatKind.Invitation));
-            SyntheticUi.Set(journey, "encounterId", "encounter.missing");
+            var encounter = journey.Encounter;
+            SyntheticUi.Set(journey, "encounter", charms.Encounter("encounter.missing"));
             Assert.Throws<KeyNotFoundException>(() => journeys.Validate(catalog));
-            SyntheticUi.Set(journey, "encounterId", FirstId);
+            SyntheticUi.Set(journey, "encounter", encounter);
             var rule = Create<EncounterRulePresentationAsset>();
             SyntheticUi.Set(rule, "ruleId", FirstRerollFreeRuleDefinition.StableId);
             SyntheticUi.Set(journey.TablePresentation, "rulePresentations", new[] { rule });
@@ -666,10 +669,11 @@ namespace Dice.Tests
         [TestCase("missing")]
         public void FollowUpReferencesMustBeUniqueOtherCatalogJourneys(string invalid)
         {
-            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            var second = journeys.Entries[1].Encounter;
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounters", new[] { second });
             Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", invalid == "duplicate" ? new[] { SecondId, SecondId } :
-                new[] { invalid == "self" ? FirstId : "encounter.missing" });
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounters", invalid == "duplicate" ? new[] { second, second } :
+                new[] { invalid == "self" ? journeys.Entries[0].Encounter : charms.Encounter("encounter.missing") });
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
@@ -691,7 +695,7 @@ namespace Dice.Tests
             controller.CompletePresentation();
             controller.RetryEncounter();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
-            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(FirstId));
+            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(FirstId));
             Assert.That(controller.BeatIndex, Is.EqualTo(controller.SelectedJourney.Beats.Count - 1));
             Assert.That(controller.Snapshot, Is.SameAs(completed));
             Assert.That(controller.Application, Is.SameAs(application));
@@ -710,17 +714,17 @@ namespace Dice.Tests
             controller.AcceptEncounter();
             controller.PlayHand();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-            Assert.That(controller.HighlightedEncounterIds, Is.EqualTo(new[] { SecondId }));
+            Assert.That(controller.HighlightedJourneys, Is.EqualTo(new[] { journeys.Find(SecondId) }));
             Assert.That(controller.CompletedEncounterIds, Is.EqualTo(new[] { FirstId }));
             controller.ReturnToInvestigation();
-            Assert.That(controller.HighlightedEncounterIds, Is.EqualTo(new[] { SecondId }));
-            controller.SelectEncounter(SecondId);
-            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            Assert.That(controller.HighlightedJourneys, Is.EqualTo(new[] { journeys.Find(SecondId) }));
+            controller.SelectEncounter(journeys.Find(SecondId));
+            Assert.That(controller.HighlightedJourneys, Is.Empty);
             controller.ReturnToInvestigation();
             SelectInvitation(FirstId);
             controller.AcceptEncounter();
             controller.PlayHand();
-            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            Assert.That(controller.HighlightedJourneys, Is.Empty);
         }
 
         [TestCase(false)]
@@ -736,10 +740,10 @@ namespace Dice.Tests
             SelectInvitation(FirstId);
             controller.AcceptEncounter();
             controller.PlayHand();
-            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            Assert.That(controller.HighlightedJourneys, Is.Empty);
             controller.ReturnToInvestigation();
-            controller.SelectEncounter(SecondId);
-            Assert.That(controller.SelectedJourney.EncounterId, Is.EqualTo(SecondId));
+            controller.SelectEncounter(journeys.Find(SecondId));
+            Assert.That(controller.SelectedJourney.Encounter.Identity, Is.EqualTo(SecondId));
         }
 
         [Test]
@@ -752,9 +756,9 @@ namespace Dice.Tests
             EncounterSaveFileStore.Save(savePath, existing.CaptureSave());
             controller.Load();
             Assert.That(controller.CompletedEncounterIds, Is.EqualTo(new[] { FirstId }));
-            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            Assert.That(controller.HighlightedJourneys, Is.Empty);
             controller.ReturnToInvestigation();
-            Assert.That(controller.HighlightedEncounterIds, Is.Empty);
+            Assert.That(controller.HighlightedJourneys, Is.Empty);
         }
 
         private void InitializeWinningJourney()
@@ -764,7 +768,7 @@ namespace Dice.Tests
                 new EncounterDefinition(FirstId, new[] { new StageDefinition(1, 2, 3) }),
                 new EncounterDefinition(SecondId, new[] { new StageDefinition(1000000, 5, 3) })
             });
-            SyntheticUi.Set(journeys.Entries[0], "followUpEncounterIds", new[] { SecondId });
+            SyntheticUi.Set(journeys.Entries[0], "followUpEncounters", new[] { journeys.Entries[1].Encounter });
             Assert.That(controller.InitializeJourney(winningCatalog, journeys, savePath), Is.True);
         }
 
@@ -998,7 +1002,7 @@ namespace Dice.Tests
         {
             var first = Chapter("chapter.first", journeys.Entries[0]);
             var second = Chapter("chapter.second", journeys.Entries[1]);
-            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedEncounters", new[] { journeys.Entries[0].Encounter });
             SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
@@ -1030,16 +1034,16 @@ namespace Dice.Tests
             var story = AddStory();
             var first = Chapter("chapter.first", journeys.Entries[0], story);
             var second = Chapter("chapter.second", journeys.Entries[1]);
-            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedStoryIds", new[] { story.Id });
+            SyntheticUi.Set(journeys.Entries[1], "requiredCompletedStoryIds", new[] { story.StoryId });
             SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
-            controller.SelectEncounter(story.Id);
+            controller.SelectEncounter(story);
             controller.AdvanceJourney();
             int changes = 0;
             controller.JourneyChanged += () =>
             {
                 ++changes;
-                Assert.That(controller.CompletedStoryIds, Does.Contain(story.Id));
+                Assert.That(controller.CompletedStoryIds, Does.Contain(story.StoryId));
                 Assert.That(controller.SelectedChapter, Is.SameAs(second));
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             };
@@ -1050,10 +1054,11 @@ namespace Dice.Tests
         private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
             => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
 
-        private EncounterJourneyAsset Journey(string id, string location, string spirit)
+        /** A journey of a new encounter asset of the encounter name, or of no encounter without one. */
+        private EncounterJourneyAsset Journey(string encounterName, string location, string spirit)
         {
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounterId", id);
+            if (encounterName != null) SyntheticUi.Set(journey, "encounter", charms.Encounter(encounterName));
             SyntheticUi.Set(journey, "locationTitle", location);
             SyntheticUi.Set(journey, "spiritName", spirit);
             SyntheticUi.Set(journey, "leadText", "A strange visitor waits beyond the door.");
@@ -1065,9 +1070,9 @@ namespace Dice.Tests
             return journey;
         }
 
-        private void SelectInvitation(string id)
+        private void SelectInvitation(EncounterDefinition.Id id)
         {
-            controller.SelectEncounter(id);
+            controller.SelectEncounter(journeys.Find(id));
             for (int index = 1; index < controller.SelectedJourney.Beats.Count; ++index) controller.AdvanceJourney();
         }
 

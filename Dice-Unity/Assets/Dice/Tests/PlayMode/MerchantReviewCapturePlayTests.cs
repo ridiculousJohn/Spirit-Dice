@@ -26,7 +26,6 @@ namespace Dice.Tests
     [Category("Capture")]
     public sealed class MerchantReviewCapturePlayTests
     {
-        private const string EncounterId = "encounter.merchant.unquiet_cart";
         private const int Width = 540, Height = 960, Zoom = 4;
         private const int Lantern = 0;
         private static readonly string[] MovingProps = { "HangingPot", "HangingPan", "ShelfBottle", "TrunkLid" };
@@ -49,11 +48,11 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == EncounterId);
+            var journey = ContentReady.JourneyWithRule<BayWardRuleDefinition>(controller);
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();

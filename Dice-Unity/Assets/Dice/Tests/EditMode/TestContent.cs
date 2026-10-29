@@ -9,7 +9,7 @@ namespace Dice.Tests
 {
     internal static class TestContent
     {
-        internal const string EncounterId = "encounter.test";
+        internal static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.test");
 
         internal static HandDefinition[] Hands()
         {

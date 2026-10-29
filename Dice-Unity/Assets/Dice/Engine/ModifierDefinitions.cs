@@ -11,30 +11,38 @@ namespace Dice.Engine
     {
         public int PowerTier { get; }
         public ModifierAvailabilityScope Scope { get; }
-        public string ScopeId { get; }
+        /** The spirit whose encounters a Spirit-scoped charm belongs to; null for the other scopes. */
+        public string SpiritId { get; }
+        /** The encounter an Encounter-scoped charm belongs to; null for the other scopes. */
+        public EncounterDefinition.Id? EncounterId { get; }
         public ModifierAccess Access { get; }
 
         public ModifierAvailabilityDefinition(int powerTier = 1, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
-            string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
+            string spiritId = null, EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter)
         {
             if (powerTier < 1) throw new ArgumentOutOfRangeException(nameof(powerTier));
             if (!Enum.IsDefined(typeof(ModifierAvailabilityScope), scope)) throw new ArgumentOutOfRangeException(nameof(scope));
             if (!Enum.IsDefined(typeof(ModifierAccess), access)) throw new ArgumentOutOfRangeException(nameof(access));
-            if (scope == ModifierAvailabilityScope.Global)
+            if (scope == ModifierAvailabilityScope.Global && access == ModifierAccess.EncounterExclusive)
+                throw new ArgumentException("Global modifiers cannot have exclusive access.");
+            if (scope == ModifierAvailabilityScope.Spirit) DefinitionValidation.RequireId(spiritId, nameof(spiritId));
+            else if (spiritId != null) throw new ArgumentException("Only a Spirit scope names a spirit.", nameof(spiritId));
+            if (scope == ModifierAvailabilityScope.Encounter)
             {
-                if (scopeId != null || access == ModifierAccess.EncounterExclusive)
-                    throw new ArgumentException("Global modifiers cannot have a scope ID or exclusive access.");
+                if (encounterId == null || encounterId.Value.Value == Guid.Empty)
+                    throw new ArgumentException("An Encounter scope requires an encounter id.", nameof(encounterId));
             }
-            else DefinitionValidation.RequireId(scopeId, nameof(scopeId));
+            else if (encounterId != null) throw new ArgumentException("Only an Encounter scope names an encounter.", nameof(encounterId));
             PowerTier = powerTier;
             Scope = scope;
-            ScopeId = scopeId;
+            SpiritId = spiritId;
+            EncounterId = encounterId;
             Access = access;
         }
 
         public bool MatchesEncounter(EncounterDefinition encounter)
             => Scope == ModifierAvailabilityScope.Global || (encounter != null &&
-                (Scope == ModifierAvailabilityScope.Spirit ? ScopeId == encounter.SpiritId : ScopeId == encounter.Id));
+                (Scope == ModifierAvailabilityScope.Spirit ? SpiritId == encounter.SpiritId : EncounterId == encounter.Identity));
 
         internal bool IsAvailable(EncounterDefinition encounter, ISet<string> unlockedIds, string modifierId)
             => MatchesEncounter(encounter) && (Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId));

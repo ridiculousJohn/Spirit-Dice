@@ -50,6 +50,32 @@ namespace Dice.Tests
         }
 
         /**
+         * An encounter asset whose id is the test encounter id of the name (see TestEncounters), with one stage of the
+         * given threshold and the given charm lists.
+         */
+        public EncounterAsset Encounter(string name, long threshold = 100, ModifierAsset[] startingModifiers = null,
+            ModifierAsset[] encounterModifiers = null, ModifierAsset[] unlockRewardModifiers = null)
+        {
+#if UNITY_EDITOR
+            var encounter = Own(ScriptableObject.CreateInstance<EncounterAsset>());
+            encounter.name = name;
+            var serialized = new SerializedObject(encounter);
+            serialized.FindProperty(ContentAsset.AssetGuidField).stringValue = TestEncounters.IdOf(name).Value.ToString("N");
+            SerializedProperty stages = serialized.FindProperty("stages");
+            stages.arraySize = 1;
+            stages.GetArrayElementAtIndex(0).FindPropertyRelative("threshold").longValue = threshold;
+            stages.GetArrayElementAtIndex(0).FindPropertyRelative("startingHands").intValue = 3;
+            SetList(serialized.FindProperty("startingModifiers"), startingModifiers ?? Array.Empty<ModifierAsset>());
+            SetList(serialized.FindProperty("encounterModifiers"), encounterModifiers ?? Array.Empty<ModifierAsset>());
+            SetList(serialized.FindProperty("unlockRewardModifiers"), unlockRewardModifiers ?? Array.Empty<ModifierAsset>());
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return encounter;
+#else
+            throw EditorRequired();
+#endif
+        }
+
+        /**
          * A charm asset in the test family named by family, or by its id without one; without a condition it always
          * activates, and without effects it adds 10 base score.
          */

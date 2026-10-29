@@ -31,13 +31,13 @@ namespace Dice.Tests
             var profile = new PlayerProfile();
             profile.UnlockModifier("owned");
             profile.UnlockModifier("future");
-            profile.CompleteEncounter("encounter.future");
+            profile.CompleteEncounter(TestEncounters.IdOf("encounter.future"));
             Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
             Assert.That(profile.GetDiscoveredFamilyIds(RewardCatalog()), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.starter"), TestFamilies.IdOf("family.owned") }));
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.DiscoveredFamilyIds, Is.Empty);
             Assert.That(restored.UnlockedModifierIds, Is.EqualTo(new[] { "owned", "future" }));
-            Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { "encounter.future" }));
+            Assert.That(restored.CompletedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter.future") }));
             Assert.That(restored.GetDiscoveredFamilyIds(RewardCatalog()), Is.EqualTo(profile.GetDiscoveredFamilyIds(RewardCatalog())));
         }
 
@@ -154,7 +154,7 @@ namespace Dice.Tests
                 never ? new NeverCondition() : (IModifierCondition)new AlwaysCondition(),
                 inert ? Array.Empty<ModifierEffect>() : new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(scope: scope,
-                    scopeId: scope == ModifierAvailabilityScope.Encounter ? TestContent.EncounterId : null, access: access));
+                    encounterId: scope == ModifierAvailabilityScope.Encounter ? TestContent.EncounterId : (EncounterDefinition.Id?)null, access: access));
 
         [Test]
         public void RoundTripKeepsUnknownIdsAndProgressIsIdempotent()
@@ -162,8 +162,8 @@ namespace Dice.Tests
             var profile = new PlayerProfile();
             Assert.That(profile.UnlockModifier("modifier.future.unknown"), Is.True);
             Assert.That(profile.UnlockModifier("modifier.future.unknown"), Is.False);
-            Assert.That(profile.CompleteEncounter("encounter.future"), Is.True);
-            Assert.That(profile.CompleteEncounter("encounter.future"), Is.False);
+            Assert.That(profile.CompleteEncounter(TestEncounters.IdOf("encounter.future")), Is.True);
+            Assert.That(profile.CompleteEncounter(TestEncounters.IdOf("encounter.future")), Is.False);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.UnlockedModifierIds, Is.EqualTo(profile.UnlockedModifierIds));
             Assert.That(restored.CompletedEncounterIds, Is.EqualTo(profile.CompletedEncounterIds));
@@ -216,7 +216,7 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(path, first);
             var second = new PlayerProfile();
             second.UnlockModifier("modifier.future.b");
-            second.CompleteEncounter("encounter.done");
+            second.CompleteEncounter(TestEncounters.IdOf("encounter.done"));
             PlayerProfileFileStore.Save(path, second);
             Assert.That(PlayerProfileFileStore.Load(path).UnlockedModifierIds,
                 Is.EquivalentTo(new[] { "modifier.future.a", "modifier.future.b" }));

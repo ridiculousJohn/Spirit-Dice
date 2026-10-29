@@ -16,6 +16,9 @@ namespace Dice.Editor
         private const string TableKey = "Dice.TrayCompositionPreview.Table";
         // Any fixed seed: the preview samples one repeatable opening.
         private const ulong PreviewSeed = 60;
+        /** The id of the one-charm encounter the history preview fabricates; no content lists it. */
+        private static readonly EncounterDefinition.Id PreviewEncounterId =
+            new EncounterDefinition.Id(new Guid("6d1c3a52f0b84e8e9a7c2b4d5e6f7a81"));
         // The sample opening the gameplay overlay shows: the first of three stages, its threshold and its hands and rerolls.
         private const int SampleStageCount = 3;
         private const long SampleThreshold = 120;
@@ -216,7 +219,7 @@ namespace Dice.Editor
                 ruleMessage = "Select a table a journey plays on to preview its rule badge text.";
                 return;
             }
-            ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, journey.EncounterId, PreviewSeed).Snapshot;
+            ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, journey.Encounter.Identity, PreviewSeed).Snapshot;
         }
 
         /** Loads the application's configuration and builds its content once per staged preview. */
@@ -254,10 +257,10 @@ namespace Dice.Editor
             foreach (ModifierDefinition definition in content.Catalog.Modifiers)
             {
                 if (definition.Phase != ModifierPhase.InitialRoll) continue;
-                var definitionEncounter = new EncounterDefinition("preview.table", new[] { new StageDefinition(1000000, 3, 3) },
+                var definitionEncounter = new EncounterDefinition(PreviewEncounterId, new[] { new StageDefinition(1000000, 3, 3) },
                     startingModifiers: new[] { definition.Id });
                 var catalog = new MechanicalCatalog("preview.table", hands, new[] { definitionEncounter }, new[] { definition });
-                var contributions = EncounterSession.CreateEncounter(catalog, definitionEncounter.Id, PreviewSeed).Snapshot.ModifierContributions;
+                var contributions = EncounterSession.CreateEncounter(catalog, PreviewEncounterId, PreviewSeed).Snapshot.ModifierContributions;
                 if (contributions.Count == 0) continue;
                 charms = presentation;
                 historyDefinition = definition;

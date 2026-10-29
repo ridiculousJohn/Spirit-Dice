@@ -521,7 +521,7 @@ namespace Dice.Tests
             score = TestTrayRig.Definition("test.ready.score", ModifierPhase.PlayHand, new AddMultiplierEffect(1));
             grant = TestTrayRig.Definition("test.ready.grant", ModifierPhase.PlayHand, new AddRerollsEffect(1));
             return new MechanicalCatalog("test.ready", TestContent.Hands(),
-                new[] { new EncounterDefinition("test.ready", new[] { new StageDefinition(1, 1, 0) }) }, new[] { roll, score, grant });
+                new[] { new EncounterDefinition(TestEncounters.IdOf("test.ready"), new[] { new StageDefinition(1, 1, 0) }) }, new[] { roll, score, grant });
         }
 
         /** A gameplay HUD built from test-only UI objects; scaled lists the graphics whose scales it captures. */

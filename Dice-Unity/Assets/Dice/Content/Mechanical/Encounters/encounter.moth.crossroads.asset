@@ -1,0 +1,117 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.moth.crossroads
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: 4fad4a8676a7c9c48bca35e892918aaa
+  spiritId: spirit.moth
+  unlockMilestones:
+  - stageNumber: 3
+  - stageNumber: 6
+  - stageNumber: 10
+  encounterModifiers:
+  - {fileID: 11400000, guid: d6bffd73f10944cd9ff44dbe5eda0669, type: 2}
+  - {fileID: 11400000, guid: 4d776a2f625a4b16adce09a547516b3b, type: 2}
+  - {fileID: 11400000, guid: aa83094f29ee45619007f23322156d0f, type: 2}
+  - {fileID: 11400000, guid: 0dc76eeed9084bb68adc4798b800ddec, type: 2}
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers:
+  - {fileID: 11400000, guid: 4c7d69584874d9944af663fb949988b3, type: 2}
+  - {fileID: 11400000, guid: 4d28d1e7806f77748a6d4d02e3a19f21, type: 2}
+  - {fileID: 11400000, guid: c90b718840e4d8d48a60968f3bb4966c, type: 2}
+  - {fileID: 11400000, guid: b8c456bb3f0a4214d841588de12afc09, type: 2}
+  - {fileID: 11400000, guid: a1fa74bbb9efe9a42a77d091f98bbbc1, type: 2}
+  - {fileID: 11400000, guid: 9266fb439c901934aa273b9356d1fa5d, type: 2}
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 120
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 170
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 230
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 300
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 380
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 470
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 570
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 680
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 800
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 930
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  rewardPolicy:
+    id: reward_policy.moth.crossroads
+    modifierLayouts:
+    - poolIds:
+      - reward_pool.moth.crossroads.base_score
+      - reward_pool.moth.crossroads.multiplier
+      - reward_pool.moth.crossroads.rerolls
+    - poolIds:
+      - reward_pool.moth.crossroads.base_score
+      - reward_pool.moth.crossroads.multiplier
+      - reward_pool.moth.crossroads.combined
+    - poolIds:
+      - reward_pool.moth.crossroads.base_score
+      - reward_pool.moth.crossroads.multiplier
+      - reward_pool.moth.crossroads.combined
+    startingRefreshes: 1
+    refreshesPerClear: 1
+    refreshCost: 1
+    handUpgradeOptionCount: 4
+    upgradeHistory:
+    - maxIncomingStageNumber: 2147483647
+      excludedRecentChoices: 1
+    tierRules:
+    - firstIncomingStageNumber: 1
+      tierWeights: 640000000000000000000000i
+    - firstIncomingStageNumber: 4
+      tierWeights: 3c0000002300000005000000i
+    - firstIncomingStageNumber: 7
+      tierWeights: 1e0000003200000014000000i
+    - firstIncomingStageNumber: 10
+      tierWeights: 0f0000002d00000028000000i
+    tierMilestones:
+    - incomingStageNumber: 4
+      minimumTier: 2
+    - incomingStageNumber: 7
+      minimumTier: 2
+    - incomingStageNumber: 10
+      minimumTier: 3
+  rules:
+  - {fileID: 11400000, guid: 0e22fba110d34ca9b092d82a19b83f77, type: 2}
+  pieces: []

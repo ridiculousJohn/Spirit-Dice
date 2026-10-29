@@ -24,7 +24,8 @@ MonoBehaviour:
   powerTier: 1
   access: 2
   availabilityScope: 2
-  availabilityScopeId: encounter.moth.crossroads
+  availabilityScopeId: 
+  availabilityEncounter: {fileID: 11400000, guid: 4fad4a8676a7c9c48bca35e892918aaa, type: 2}
   references:
     version: 2
     RefIds:

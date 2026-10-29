@@ -1,16 +1,19 @@
 # Collection content
 
-Content refers to charms by direct references to their `ModifierAsset`s. The engine
-catalog is built from the charms `Standard.asset` references (encounter lists, unlock
-rewards and reward pools, including fallbacks), so a charm referenced nowhere is
-not part of the game. Each charm references its family, a `ModifierFamilyAsset`
+Content refers to charms by direct references to their `ModifierAsset`s. The game's
+encounters are the `EncounterAsset`s (Create > Dice > Encounter, in `Encounters`,
+named after the encounter) that `Standard.asset` lists; an encounter's id is its
+asset GUID, kept like a family's. The engine catalog is built from the charms those
+encounters and the reward pools of `Standard.asset` reference (encounter lists,
+unlock rewards and reward pools, including fallbacks), so a charm referenced nowhere
+is not part of the game. An encounter's reward policy names those pools by id. Each charm references its family, a `ModifierFamilyAsset`
 (Create > Dice > Modifier Family) in `ModifierFamilies`, named after the family as
 its charms are named after themselves; the catalog's families are those of its
 charms. A family's id is its asset GUID, which the family asset stores and the
 editor keeps equal to the GUID in its .meta file. Saves and profiles store charm
-ids and family ids, which resolve through the loaded catalog.
+ids, family ids and encounter ids, which resolve through the loaded catalog.
 
-`Standard.asset` authors each spirit's six `unlockRewardModifiers` and its stage
+Each spirit's encounter asset authors its six `unlockRewardModifiers` and its stage
 3, 6, and 10 unlock opportunities. Each opportunity chooses one still-locked entry
 from that same list. Fox uses Base and Mult variants of Open Gate, Still Reflection,
 and Rising Sun. Owl and moth use Base and Mult variants of their three established
@@ -66,6 +69,9 @@ Moth's `encounterModifiers` contains four encounter-exclusive Lantern Seekers
 variants. They trigger when a played hand contains at least two dice showing the
 favored face supplied by the encounter rule. Provisional effects are +10 Base,
 +2 Mult, +5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand.
+They use the Encounter availability scope and reference the moth's encounter asset
+in `availabilityEncounter`; a Spirit scope names its spirit in `availabilityScopeId`
+instead, and the charm inspector and loading reject a scope with the other target.
 The family provisionally reuses the existing Last Lantern artwork and the standard
 effect-category assets. Replace the shared artwork only when dedicated art is
 approved. The favored-face rule itself still adds +2 Mult per matching scored die.
@@ -77,7 +83,7 @@ separate ScriptableObjects: the catalog references the modifier and the modifier
 
 ## Tree nymph encounter
 
-`encounter.nymph.bound_tree` authors the Base and Mult variants of Great Oak
+The `encounter.nymph.bound_tree` encounter asset authors the Base and Mult variants of Great Oak
 (`modifier.play_hand.three_smallest_sum_at_most_maximum`), Close Branches
 (`modifier.play_hand.adjacent_difference_at_most`) and Unturned Leaf
 (`modifier.play_hand.no_dice_rerolled`) as its six `unlockRewardModifiers`, with
@@ -85,7 +91,8 @@ unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDisc
 discovers those three families and grants nothing; the bound tree journey references it.
 
 Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
-variants. They trigger when at least three dice show the face of a die bound by
+variants, scoped to the bound tree's encounter asset like Lantern Seekers to the
+moth's. They trigger when at least three dice show the face of a die bound by
 the encounter's binding rule (`rule.nymph.binding`); the bound die counts toward
 the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and
 +1 reroll. Each is tier 1 and once per hand. The family provisionally reuses the

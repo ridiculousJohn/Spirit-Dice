@@ -16,7 +16,7 @@ namespace Dice.App
         public EncounterSnapshot Snapshot => session.Snapshot;
         public Resolution InitialResolution => session.InitialResolution;
 
-        public EncounterApplication(MechanicalCatalog catalog, string encounterId, ulong seed,
+        public EncounterApplication(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed,
             IEnumerable<string> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
         {
             session = EncounterSession.CreateEncounter(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);

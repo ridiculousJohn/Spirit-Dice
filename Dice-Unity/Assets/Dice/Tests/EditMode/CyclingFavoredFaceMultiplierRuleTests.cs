@@ -8,7 +8,7 @@ namespace Dice.Tests
     /** The cycling favored face rule: the favored face follows the encounter-wide hand count and scored matches add multiplier. */
     public sealed class CyclingFavoredFaceMultiplierRuleTests
     {
-        private const string EncounterId = TestContent.EncounterId;
+        private static readonly EncounterDefinition.Id EncounterId = TestContent.EncounterId;
         private const int MultiplierPerFavoredDie = 3;
 
         /** Checks each scored die showing the favored face adds the rule's multiplier / fails if other faces count or matches are ignored. */

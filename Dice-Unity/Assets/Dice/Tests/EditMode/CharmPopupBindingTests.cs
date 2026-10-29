@@ -54,7 +54,7 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(100000, 3, 3) },
                 startingModifiers: new[] { charm.Id });
             var catalog = new MechanicalCatalog("test.popup", TestContent.Hands(), new[] { encounter }, new[] { charm });
-            snapshot = EncounterSession.CreateEncounter(catalog, encounter.Id, 42).Snapshot;
+            snapshot = EncounterSession.CreateEncounter(catalog, encounter.Identity, 42).Snapshot;
             charms = synthetic.For(catalog);
         }
 

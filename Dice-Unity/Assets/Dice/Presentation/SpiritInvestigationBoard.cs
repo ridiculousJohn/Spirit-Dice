@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -123,31 +124,21 @@ namespace Dice.Presentation
             var wording = SpiritUi.GetWording(transform).investigation;
             foreach (var journey in Entries(controls))
             {
-                if (journey == null || !controls.IsJourneyAvailable(journey.Id)) continue;
+                if (journey == null || !controls.IsJourneyAvailable(journey)) continue;
                 var selected = journey;
                 var card = Instantiate(clueCardPrefab, Content, false);
                 card.name = "ClueButton" + index++;
                 clueCards.Add(card.gameObject);
-                bool highlighted = false;
-                foreach (string id in controls.HighlightedEncounterIds)
-                    if (id == journey.Id) { highlighted = true; break; }
+                bool highlighted = controls.HighlightedJourneys.Contains(journey);
                 if (highlighted && firstHighlight == null) firstHighlight = (RectTransform)card.transform;
-                bool visited = false;
-                foreach (string visitedId in controls.VisitedEncounterIds)
-                    if (visitedId == journey.EncounterId) { visited = true; break; }
-                bool completed = false;
-                if (journey.IsStoryOnly)
-                {
-                    foreach (string completedId in controls.CompletedStoryIds)
-                        if (completedId == journey.Id) { completed = true; break; }
-                }
-                else if (encounter is ISpiritProgressionControls progression)
-                    foreach (string completedId in progression.CompletedEncounterIds)
-                        if (completedId == journey.EncounterId) { completed = true; break; }
+                bool visited = !journey.IsStoryOnly && controls.VisitedEncounterIds.Contains(journey.Encounter.Identity);
+                bool completed = journey.IsStoryOnly ? controls.CompletedStoryIds.Contains(journey.StoryId) :
+                    encounter is ISpiritProgressionControls progression &&
+                    progression.CompletedEncounterIds.Contains(journey.Encounter.Identity);
                 string state = journey.IsStoryOnly ? completed ? wording.readAgain : wording.followLead :
                     visited ? wording.visitedLead : wording.followLead;
                 card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
-                    highlighted, highlighted, true, () => controls.SelectEncounter(selected.Id));
+                    highlighted, highlighted, true, () => controls.SelectEncounter(selected));
                 if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))
                 {
                     var discovered = Instantiate(completionCluePrefab, Content, false);
@@ -175,11 +166,11 @@ namespace Dice.Presentation
             var available = new List<string>();
             if (controls.JourneyCatalog != null)
                 foreach (var journey in Entries(controls))
-                    if (journey != null && controls.IsJourneyAvailable(journey.Id)) available.Add(journey.Id);
+                    if (journey != null && controls.IsJourneyAvailable(journey)) available.Add(journey.name);
             return (controls.SelectedChapter != null ? controls.SelectedChapter.Id : "") + "\n\n" +
                 string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
                 "\n\n" + string.Join("\n", controls.CompletedStoryIds) + "\n\n" +
-                string.Join("\n", controls.HighlightedEncounterIds) + "\n\n" +
+                string.Join("\n", controls.HighlightedJourneys.Select(journey => journey.name)) + "\n\n" +
                 (encounter is ISpiritProgressionControls progression ?
                     string.Join("\n", progression.CompletedEncounterIds) : "");
         }

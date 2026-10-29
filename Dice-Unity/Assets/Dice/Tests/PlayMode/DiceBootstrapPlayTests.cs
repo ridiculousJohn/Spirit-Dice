@@ -167,7 +167,7 @@ namespace Dice.Tests
             AssertStartupSurface();
             Assert.DoesNotThrow(controller.StartNew);
 
-            const string encounterId = "encounter.bootstrap.recovery";
+            var encounterId = TestEncounters.IdOf("encounter.bootstrap.recovery");
             var catalog = DirectCatalog("bootstrap.recovery", encounterId, out var table);
             controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
             RestoreOriginalLocators();
@@ -203,7 +203,7 @@ namespace Dice.Tests
             InstallPendingConfiguration();
             yield return CreateHost();
             yield return ContentReady.WaitUntil(() => provider.IsPending, "Bootstrap did not request configuration.");
-            const string encounterId = "encounter.bootstrap.explicit";
+            var encounterId = TestEncounters.IdOf("encounter.bootstrap.explicit");
             var catalog = DirectCatalog("bootstrap.explicit", encounterId, out var table);
             string savePath = ContentReady.SpiritSavePath();
             controller.ConfigureSeedPolicy(true, 17);
@@ -254,21 +254,21 @@ namespace Dice.Tests
             Assert.That(ContentReady.Charms.GetIcon(definition), Is.SameAs(sprite));
             var journey = journeyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly);
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
-            ContentReady.SeedJourneyPrerequisites(sceneController, journey.Id);
-            sceneController.SelectEncounter(journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(sceneController, journey);
+            sceneController.SelectEncounter(journey);
             while (sceneController.SelectedJourney.Beats[sceneController.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 sceneController.AdvanceJourney();
             sceneController.AcceptEncounter();
             yield return ContentReady.WaitUntil(() => !sceneController.IsBusy, "Opening presentation did not complete.");
             Assert.That(sceneController.Snapshot, Is.Not.Null);
-            Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
+            Assert.That(sceneController.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
         }
 
         /**
          * A one-encounter catalog, of the given version and every hand category, whose encounter carries the rules the
          * direct table's cards present, so a run of it opens on that table.
          */
-        private MechanicalCatalog DirectCatalog(string version, string encounterId, out EncounterTablePresentationAsset table)
+        private MechanicalCatalog DirectCatalog(string version, EncounterDefinition.Id encounterId, out EncounterTablePresentationAsset table)
         {
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()
                 .Select(category => new HandDefinition("hand." + version + "." + (int)category, category, 5, 1, 5, 1, 6));

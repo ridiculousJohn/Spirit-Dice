@@ -11,8 +11,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
   m_Name: ChapterOneReturnJourney
-  m_EditorClassIdentifier:
-  encounterId:
+  m_EditorClassIdentifier: 
+  encounter: {fileID: 0}
   storyId: story.fox.chapter-one-return
   locationTitle: Return to the Last Lantern
   spiritName: The Lantern Keeper
@@ -24,11 +24,30 @@ MonoBehaviour:
     title: A message brought home
     text: You tell the fox what the moth saw. He sets down his cup. Alive, then. Beyond the old bridge. You have brought back more than a rumor.
     continueLabel: Ask about the bridge
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   - id: boundary
@@ -36,37 +55,92 @@ MonoBehaviour:
     title: The far arch
     text: That bridge marks a boundary. Beyond it, a familiar voice can lead you astray. Remember who sent you, and do not follow a light merely because it waits.
     continueLabel: Ask for help
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   - id: shelter
     kind: 2
     title: Protection for the road
-    text: 'Take {charm}. It will provide you shelter for the road ahead.'
-    charm: {fileID: 11400000, guid: c9c616a498b9c264a9a9394603f4577f, type: 2}
+    text: Take {charm}. It will provide you shelter for the road ahead.
     continueLabel: Take the second charm
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 11400000, guid: c9c616a498b9c264a9a9394603f4577f, type: 2}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   - id: stone
     kind: 2
     title: A mark to remember
-    text: 'And take {charm}. When the road grows strange, let it remind you where you stand.'
-    charm: {fileID: 11400000, guid: 0703508354705dd4b8fc8ba48c2ca01e, type: 2}
+    text: And take {charm}. When the road grows strange, let it remind you where you stand.
     continueLabel: Prepare for the crossing
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 11400000, guid: 0703508354705dd4b8fc8ba48c2ca01e, type: 2}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   - id: preparations
@@ -74,11 +148,30 @@ MonoBehaviour:
     title: Gifts for the old road
     text: These marks belong to you now. When a spirit offers them, you may call upon them. There are other charms in each family; keep watch for those as you travel.
     continueLabel: Finish the preparations
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   - id: chapter-complete
@@ -86,18 +179,69 @@ MonoBehaviour:
     title: Chapter 1 complete
     text: The traveler is alive. You know where the old road crosses the boundary, and the fox has helped you prepare. The next chapter lies beyond the bridge.
     continueLabel: Return to the trail
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
     autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
     backgroundScaleFrom: 1
     backgroundScaleTo: 1
   tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
+  victoryTitle: 
+  victoryText: 
+  defeatTitle: 
+  defeatText: 
+  abandonText: 
+  encounterCharmsIntroductionText: 
+  resultContinueLabel: 
   completionClueTitle: Chapter 1 complete
   completionClueText: The traveler is alive beyond the old bridge. The fox's gifts are yours. You are ready for the next crossing, in Chapter 2.
   completionReward: {fileID: 11400000, guid: e0348ba120f24b89987fbe2e4c031691, type: 2}
-  followUpEncounterIds: []
-  requiredCompletedEncounterIds:
-  - encounter.moth.crossroads
+  victoryPresentation:
+    enabled: 0
+    hostState: 0
+    holdDuration: 0
+    fadeDuration: 0.3
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  defeatPresentation:
+    enabled: 0
+    hostState: 0
+    holdDuration: 0
+    fadeDuration: 0.3
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  abandonPresentation:
+    enabled: 0
+    hostState: 0
+    holdDuration: 0
+    fadeDuration: 0.3
+    showDialogue: 0
+    artwork: {fileID: 0}
+    audioCue: {fileID: 0}
+  followUpEncounters: []
+  followUpStoryIds: []
+  requiredCompletedEncounters:
+  - {fileID: 11400000, guid: 4fad4a8676a7c9c48bca35e892918aaa, type: 2}
   requiredCompletedStoryIds: []

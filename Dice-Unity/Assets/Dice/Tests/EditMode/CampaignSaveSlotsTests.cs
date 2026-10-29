@@ -85,9 +85,9 @@ namespace Dice.Tests
                 var profile = new PlayerProfile();
                 profile.UnlockModifier("modifier." + slot);
                 profile.DiscoverFamily(TestFamilies.IdOf("family." + slot));
-                profile.CompleteEncounter("encounter." + slot);
+                profile.CompleteEncounter(TestEncounters.IdOf("encounter." + slot));
                 profile.CompleteStory("story." + slot);
-                profile.VisitEncounter("visited." + slot);
+                profile.VisitEncounter(TestEncounters.IdOf("visited." + slot));
                 PlayerProfileFileStore.Save(slots.GetProfilePath(slot), profile);
                 var session = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, (ulong)slot);
                 Assert.That(session.Execute(new RerollDiceAction(3), 0).Accepted, Is.True);
@@ -106,9 +106,9 @@ namespace Dice.Tests
                 var profile = PlayerProfileFileStore.Load(slots.GetProfilePath(slot));
                 Assert.That(profile.UnlockedModifierIds, Is.EqualTo(new[] { "modifier." + slot }));
                 Assert.That(profile.DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family." + slot) }));
-                Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { "encounter." + slot }));
+                Assert.That(profile.CompletedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("encounter." + slot) }));
                 Assert.That(profile.CompletedStoryIds, Is.EqualTo(new[] { "story." + slot }));
-                Assert.That(profile.VisitedEncounterIds, Is.EqualTo(new[] { "visited." + slot }));
+                Assert.That(profile.VisitedEncounterIds, Is.EqualTo(new[] { TestEncounters.IdOf("visited." + slot) }));
             }
         }
 

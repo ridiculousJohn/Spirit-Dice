@@ -7,7 +7,7 @@ namespace Dice.Presentation
     {
         IReadOnlyList<string> ProfileUnlockedModifierIds { get; }
         IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds { get; }
-        IReadOnlyList<string> CompletedEncounterIds { get; }
+        IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds { get; }
         PlayerProfileStatus ProfileStatus { get; }
     }
 }

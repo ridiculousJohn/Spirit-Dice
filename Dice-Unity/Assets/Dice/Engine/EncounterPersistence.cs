@@ -13,7 +13,7 @@ namespace Dice.Engine
                 RulesVersion = EncounterSession.RulesVersion,
                 RandomAlgorithmVersion = DeterministicRandom.AlgorithmVersion,
                 CatalogVersion = catalog.Version,
-                EncounterId = definition.Id,
+                EncounterId = definition.Identity,
                 Revision = state.Revision, Phase = state.Phase, Outcome = state.Outcome,
                 StageIndex = state.StageIndex, HandIndex = state.HandIndex,
                 RemainingThreshold = state.RemainingThreshold, HandsRemaining = state.HandsRemaining,

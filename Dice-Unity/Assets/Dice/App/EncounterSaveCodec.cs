@@ -99,7 +99,8 @@ namespace Dice.App
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StrictPrimitiveConverter());
-            settings.Converters.Add(new ModifierFamilyIdConverter());
+            settings.Converters.Add(ContentIds.Family);
+            settings.Converters.Add(ContentIds.Encounter);
             return settings;
         }
 
@@ -133,10 +134,11 @@ namespace Dice.App
 
         private static EncounterDefinition FindEncounter(JObject document, MechanicalCatalog catalog)
         {
-            var id = document[nameof(EncounterSaveData.EncounterId)];
-            if (id == null || id.Type != JTokenType.String) return null;
+            var token = document[nameof(EncounterSaveData.EncounterId)];
+            if (token == null) return null;
+            EncounterDefinition.Id id = ContentIds.Encounter.Read(token);
             foreach (var encounter in catalog.Encounters)
-                if (string.Equals(encounter.Id, (string)id, StringComparison.Ordinal)) return encounter;
+                if (encounter.Identity == id) return encounter;
             return null;
         }
 
@@ -173,22 +175,6 @@ namespace Dice.App
                 property.Required = property.PropertyType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) == null
                     ? Required.Always : Required.AllowNull;
                 return property;
-            }
-        }
-
-        /** A charm family id is written as its GUID's 32 hexadecimal digits, the text its asset's .meta file holds. */
-        private sealed class ModifierFamilyIdConverter : JsonConverter<ModifierFamilyDefinition.Id>
-        {
-            public override void WriteJson(JsonWriter writer, ModifierFamilyDefinition.Id value, JsonSerializer serializer)
-                => writer.WriteValue(value.Value.ToString("N"));
-
-            public override ModifierFamilyDefinition.Id ReadJson(JsonReader reader, Type objectType,
-                ModifierFamilyDefinition.Id existingValue, bool hasExistingValue, JsonSerializer serializer)
-            {
-                if (reader.TokenType != JsonToken.String || !Guid.TryParseExact((string)reader.Value, "N", out Guid value) ||
-                    value == Guid.Empty)
-                    throw new JsonSerializationException("A saved charm family id requires a GUID string.");
-                return new ModifierFamilyDefinition.Id(value);
             }
         }
 

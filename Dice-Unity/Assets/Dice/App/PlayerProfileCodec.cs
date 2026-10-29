@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Dice.Engine;
@@ -27,11 +28,11 @@ namespace Dice.App
             var document = new JObject
             {
                 [FormatVersionField] = PlayerProfile.CurrentFormatVersion,
-                [DiscoveredFamilyIdsField] = FamilyIdArray(profile),
+                [DiscoveredFamilyIdsField] = IdArray(profile.DiscoveredFamilyIds, ContentIds.Family),
                 [UnlockedModifierIdsField] = new JArray(profile.UnlockedModifierIds),
-                [CompletedEncounterIdsField] = new JArray(profile.CompletedEncounterIds),
+                [CompletedEncounterIdsField] = IdArray(profile.CompletedEncounterIds, ContentIds.Encounter),
                 [CompletedStoryIdsField] = new JArray(profile.CompletedStoryIds),
-                [VisitedEncounterIdsField] = new JArray(profile.VisitedEncounterIds)
+                [VisitedEncounterIdsField] = IdArray(profile.VisitedEncounterIds, ContentIds.Encounter)
             };
             byte[] bytes = SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented));
             if (bytes.Length > MaximumProfileBytes) throw new FormatException("The profile exceeds the size limit.");
@@ -63,11 +64,11 @@ namespace Dice.App
                             property.Name != CompletedStoryIdsField && property.Name != VisitedEncounterIdsField)
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
-                    ReadFamilyIds(document[DiscoveredFamilyIdsField], profile.DiscoverFamily);
+                    ReadIds(document[DiscoveredFamilyIdsField], ContentIds.Family, profile.DiscoverFamily);
                     ReadIds(document[CompletedStoryIdsField], profile.CompleteStory);
                     ReadIds(document[UnlockedModifierIdsField], profile.UnlockModifier);
-                    ReadIds(document[CompletedEncounterIdsField], profile.CompleteEncounter);
-                    ReadIds(document[VisitedEncounterIdsField], profile.VisitEncounter);
+                    ReadIds(document[CompletedEncounterIdsField], ContentIds.Encounter, profile.CompleteEncounter);
+                    ReadIds(document[VisitedEncounterIdsField], ContentIds.Encounter, profile.VisitEncounter);
                     return profile;
                 }
             }
@@ -76,23 +77,19 @@ namespace Dice.App
             catch (OverflowException exception) { throw new FormatException("A profile integer is outside its supported range.", exception); }
         }
 
-        // A family id is written as its GUID's 32 hexadecimal digits, the text its asset's .meta file holds.
-        private static JArray FamilyIdArray(PlayerProfile profile)
+        private static JArray IdArray<TId>(IEnumerable<TId> ids, ContentIdConverter<TId> converter) where TId : struct, IContentId
         {
             var array = new JArray();
-            foreach (var id in profile.DiscoveredFamilyIds) array.Add(id.Value.ToString("N"));
+            foreach (TId id in ids) array.Add(converter.Write(id));
             return array;
         }
 
-        private static void ReadFamilyIds(JToken token, Func<ModifierFamilyDefinition.Id, bool> add)
+        private static void ReadIds<TId>(JToken token, ContentIdConverter<TId> converter, Func<TId, bool> add)
+            where TId : struct, IContentId
         {
             if (!(token is JArray array)) throw new FormatException("Profile IDs must be arrays.");
             foreach (JToken value in array)
-            {
-                if (value.Type != JTokenType.String || !Guid.TryParseExact(value.Value<string>(), "N", out Guid guid) || guid == Guid.Empty)
-                    throw new FormatException("Profile family IDs must be GUIDs.");
-                if (!add(new ModifierFamilyDefinition.Id(guid))) throw new FormatException("Profile IDs must be unique.");
-            }
+                if (!add(converter.Read(value))) throw new FormatException("Profile IDs must be unique.");
         }
 
         private static void ReadIds(JToken token, Func<string, bool> add)

@@ -21,7 +21,7 @@ namespace Dice.Tests
      */
     public sealed class SpiritScorePlaybackTests
     {
-        private const string EncounterId = "encounter.test.playback";
+        private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.test.playback");
         private Scene preview;
         private TestTrayRig rig;
         private SyntheticUi ui;

@@ -1,0 +1,171 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.standard
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: 361544f6e32f7374eae22b215dae15f1
+  spiritId: 
+  unlockMilestones: []
+  encounterModifiers: []
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers: []
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 160
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 225
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 320
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 410
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 520
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 635
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 750
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 860
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 975
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 1090
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 1820
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 2045
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 2275
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 2545
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 2820
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 3090
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 3365
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 3635
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 3955
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 4275
+    startingHands: 4
+    startingRerolls: 4
+    exitBehavior: 1
+  - threshold: 5455
+    startingHands: 5
+    startingRerolls: 5
+    exitBehavior: 1
+  - threshold: 5910
+    startingHands: 5
+    startingRerolls: 5
+    exitBehavior: 1
+  - threshold: 6365
+    startingHands: 5
+    startingRerolls: 5
+    exitBehavior: 1
+  - threshold: 7045
+    startingHands: 5
+    startingRerolls: 5
+    exitBehavior: 1
+  - threshold: 7725
+    startingHands: 5
+    startingRerolls: 5
+    exitBehavior: 1
+  rewardPolicy:
+    id: reward_policy.standard
+    modifierLayouts:
+    - poolIds:
+      - reward_pool.rerolls
+      - reward_pool.rerolls
+      - reward_pool.rerolls
+    - poolIds:
+      - reward_pool.base_score
+      - reward_pool.multiplier
+      - reward_pool.combined
+    - poolIds:
+      - reward_pool.base_score
+      - reward_pool.multiplier
+      - reward_pool.combined
+    - poolIds:
+      - reward_pool.base_score
+      - reward_pool.multiplier
+      - reward_pool.combined
+    startingRefreshes: 1
+    refreshesPerClear: 1
+    refreshCost: 1
+    handUpgradeOptionCount: 4
+    upgradeHistory:
+    - maxIncomingStageNumber: 16
+      excludedRecentChoices: 3
+    - maxIncomingStageNumber: 21
+      excludedRecentChoices: 2
+    - maxIncomingStageNumber: 2147483647
+      excludedRecentChoices: 0
+    tierRules:
+    - firstIncomingStageNumber: 1
+      tierWeights: 640000000000000000000000i
+    - firstIncomingStageNumber: 9
+      tierWeights: 3c0000002300000005000000i
+    - firstIncomingStageNumber: 17
+      tierWeights: 1e0000003200000014000000i
+    - firstIncomingStageNumber: 23
+      tierWeights: 0f0000002d00000028000000i
+    tierMilestones:
+    - incomingStageNumber: 9
+      minimumTier: 2
+    - incomingStageNumber: 17
+      minimumTier: 2
+    - incomingStageNumber: 23
+      minimumTier: 3
+  rules: []
+  pieces: []

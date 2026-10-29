@@ -101,7 +101,28 @@ namespace Dice.Engine
 
     public sealed class EncounterDefinition
     {
-        public string Id { get; }
+        /** Identifies an encounter where an identity is stored, as in saves and the player profile. */
+        public readonly struct Id : IEquatable<Id>, IContentId
+        {
+            public Guid Value { get; }
+
+            public Id(Guid value)
+            {
+                if (value == Guid.Empty) throw new ArgumentException("An encounter id requires a nonempty GUID.", nameof(value));
+                Value = value;
+            }
+
+            public bool Equals(Id other) => Value == other.Value;
+            public override bool Equals(object obj) => obj is Id other && Equals(other);
+            public override int GetHashCode() => Value.GetHashCode();
+            /** The 32 hexadecimal digits, as the encounter's asset and its .meta file write its GUID. */
+            public override string ToString() => Value.ToString("N");
+            public static bool operator ==(Id left, Id right) => left.Equals(right);
+            public static bool operator !=(Id left, Id right) => !left.Equals(right);
+        }
+
+        // A nested type and a member cannot share a name, so the id property is not called Id.
+        public Id Identity { get; }
         public ReadOnlyCollection<StageDefinition> Stages { get; }
         public ReadOnlyCollection<int> StartingUpgrades { get; }
         public ReadOnlyCollection<string> StartingModifiers { get; }
@@ -117,14 +138,14 @@ namespace Dice.Engine
         public ReadOnlyCollection<string> UnlockRewardModifierIds { get; }
         public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
 
-        public EncounterDefinition(string id, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
+        public EncounterDefinition(Id identity, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<string> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null, string spiritId = null,
             IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<string> encounterModifierIds = null,
             IEnumerable<string> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
             int encounterModifiersFirstClearedStageNumber = 1)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
+            if (identity.Value == Guid.Empty) throw new ArgumentException("An encounter requires an id.", nameof(identity));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
             var stageList = new List<StageDefinition>(stages);
             if (stageList.Count == 0 || stageList.Exists(stage => stage == null))
@@ -133,7 +154,7 @@ namespace Dice.Engine
                 ? new List<int>(new int[HandDefinition.CategoryCount]) : new List<int>(startingUpgrades);
             if (upgrades.Count != HandDefinition.CategoryCount || upgrades.Exists(count => count < 0))
                 throw new ArgumentException("One nonnegative upgrade count is required per category.", nameof(startingUpgrades));
-            Id = id;
+            Identity = identity;
             Stages = stageList.AsReadOnly();
             StartingUpgrades = upgrades.AsReadOnly();
             var modifiers = startingModifiers == null ? new List<string>() : new List<string>(startingModifiers);
@@ -201,7 +222,7 @@ namespace Dice.Engine
 
     public sealed class MechanicalCatalog
     {
-        private readonly Dictionary<string, EncounterDefinition> encounters;
+        private readonly Dictionary<EncounterDefinition.Id, EncounterDefinition> encounters;
         private readonly Dictionary<string, ModifierDefinition> modifiersById;
         private readonly Dictionary<string, ModifierRewardPoolDefinition> rewardPoolsById;
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
@@ -269,12 +290,13 @@ namespace Dice.Engine
                     poolList.Add(pool);
                 }
             RewardPools = poolList.AsReadOnly();
-            this.encounters = new Dictionary<string, EncounterDefinition>(StringComparer.Ordinal);
+            this.encounters = new Dictionary<EncounterDefinition.Id, EncounterDefinition>();
             var encounterList = new List<EncounterDefinition>();
             foreach (var encounter in encounters)
             {
-                if (encounter == null || this.encounters.ContainsKey(encounter.Id))
-                    throw new ArgumentException("Encounter IDs must be unique and nonnull.", nameof(encounters));
+                if (encounter == null) throw new ArgumentException("Encounters must be nonnull.", nameof(encounters));
+                if (this.encounters.ContainsKey(encounter.Identity))
+                    throw new ArgumentException("Two encounters share the id " + encounter.Identity + ".", nameof(encounters));
                 for (int i = 0; i < byCategory.Length; ++i)
                     if (encounter.StartingUpgrades[i] > byCategory[i].MaximumUpgrades)
                         throw new ArgumentException("Starting upgrades exceed the category limit.", nameof(encounters));
@@ -295,7 +317,7 @@ namespace Dice.Engine
                         foreach (string poolId in layout.PoolIds)
                             if (!rewardPoolsById.ContainsKey(poolId))
                                 throw new ArgumentException("A reward layout references a missing pool.", nameof(encounters));
-                this.encounters.Add(encounter.Id, encounter);
+                this.encounters.Add(encounter.Identity, encounter);
                 encounterList.Add(encounter);
             }
             if (this.encounters.Count == 0) throw new ArgumentException("At least one encounter is required.", nameof(encounters));
@@ -327,10 +349,10 @@ namespace Dice.Engine
             return pool;
         }
 
-        public EncounterDefinition GetEncounter(string id)
+        public EncounterDefinition GetEncounter(EncounterDefinition.Id id)
         {
-            DefinitionValidation.RequireId(id, nameof(id));
-            if (!encounters.TryGetValue(id, out var definition)) throw new KeyNotFoundException(id);
+            if (id.Value == Guid.Empty) throw new ArgumentException("An encounter id is required.", nameof(id));
+            if (!encounters.TryGetValue(id, out var definition)) throw new KeyNotFoundException(id.ToString());
             return definition;
         }
 

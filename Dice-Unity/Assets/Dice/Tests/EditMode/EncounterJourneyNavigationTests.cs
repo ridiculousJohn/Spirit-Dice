@@ -13,10 +13,12 @@ namespace Dice.Tests
 {
     public sealed class EncounterJourneyNavigationTests
     {
-        private const string FirstId = "encounter.harbor";
-        private const string SecondId = "encounter.observatory";
         private const string StoryId = "story.return";
+        private static readonly EncounterDefinition.Id FirstId = TestEncounters.IdOf("encounter.harbor");
+        private static readonly EncounterDefinition.Id SecondId = TestEncounters.IdOf("encounter.observatory");
+        private static readonly EncounterDefinition.Id MissingId = TestEncounters.IdOf("encounter.missing");
         private readonly List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private EncounterJourneyNavigation navigation;
         private EncounterJourneyCatalogAsset catalog;
         private EncounterJourneyAsset first;
@@ -27,8 +29,8 @@ namespace Dice.Tests
         public void SetUp()
         {
             navigation = new EncounterJourneyNavigation();
-            first = Journey(FirstId);
-            second = Journey(SecondId);
+            first = Journey("encounter.harbor");
+            second = Journey("encounter.observatory");
             story = Journey(StoryId, true);
             catalog = Create<EncounterJourneyCatalogAsset>();
             SyntheticUi.Set(catalog, "chapters", new[] { Chapter("chapter.all", first, second, story) });
@@ -40,33 +42,34 @@ namespace Dice.Tests
         {
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
+            content.Dispose();
         }
 
         [Test]
         public void MainMenuClearsJourneyLocation()
         {
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             navigation.ShowMainMenu();
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
             Assert.That(navigation.SelectedJourney, Is.Null);
             Assert.That(navigation.BeatIndex, Is.EqualTo(-1));
             Assert.That(navigation.CanResume(true), Is.False);
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.False);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.False);
         }
 
         [Test]
         public void AvailabilityRequiresAProfileAndEveryPrerequisite()
         {
-            SyntheticUi.Set(second, "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(second, "requiredCompletedEncounters", new[] { first.Encounter });
             SyntheticUi.Set(second, "requiredCompletedStoryIds", new[] { StoryId });
-            Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(false, null, new[] { FirstId }, new[] { StoryId })), Is.False);
-            Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(true, null, new[] { FirstId }, null)), Is.False);
-            Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(true, null, null, new[] { StoryId })), Is.False);
-            Assert.That(navigation.IsJourneyAvailable(SecondId, new Progress(true, null, new[] { FirstId }, new[] { StoryId })), Is.True);
-            Assert.That(navigation.SelectEncounter(SecondId, EmptyProgress(), out var error), Is.False);
+            Assert.That(navigation.IsJourneyAvailable(second, new Progress(false, null, new[] { FirstId }, new[] { StoryId })), Is.False);
+            Assert.That(navigation.IsJourneyAvailable(second, new Progress(true, null, new[] { FirstId }, null)), Is.False);
+            Assert.That(navigation.IsJourneyAvailable(second, new Progress(true, null, null, new[] { StoryId })), Is.False);
+            Assert.That(navigation.IsJourneyAvailable(second, new Progress(true, null, new[] { FirstId }, new[] { StoryId })), Is.True);
+            Assert.That(navigation.SelectEncounter(second, EmptyProgress(), out var error), Is.False);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.LocationLocked));
             AssertInvestigation();
-            Assert.That(navigation.IsJourneyAvailable("encounter.missing", EmptyProgress()), Is.False);
+            Assert.That(navigation.IsJourneyAvailable(Journey("encounter.missing"), EmptyProgress()), Is.False);
         }
 
         [TestCase("visited")]
@@ -75,13 +78,13 @@ namespace Dice.Tests
         public void ExistingProgressKeepsALeadAvailableWhenItsPrerequisitesAreMissing(string progressKind)
         {
             var selected = progressKind == "story-completed" ? story : second;
-            SyntheticUi.Set(selected, "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(selected, "requiredCompletedEncounters", new[] { first.Encounter });
             var progress = new Progress(true,
                 progressKind == "visited" ? new[] { SecondId } : null,
                 progressKind == "encounter-completed" ? new[] { SecondId } : null,
                 progressKind == "story-completed" ? new[] { StoryId } : null);
-            Assert.That(navigation.IsJourneyAvailable(selected.Id, progress), Is.True);
-            Assert.That(navigation.SelectEncounter(selected.Id, progress, out _), Is.True);
+            Assert.That(navigation.IsJourneyAvailable(selected, progress), Is.True);
+            Assert.That(navigation.SelectEncounter(selected, progress, out _), Is.True);
             Assert.That(navigation.SelectedJourney, Is.SameAs(selected));
             Assert.That(navigation.BeatIndex, Is.Zero);
         }
@@ -91,8 +94,8 @@ namespace Dice.Tests
         public void FirstVisitsAndStoriesCannotSkipTheSequence(bool storyOnly)
         {
             var selected = storyOnly ? story : first;
-            var progress = new Progress(true, storyOnly ? new[] { selected.Id } : null, null, null);
-            Assert.That(navigation.SelectEncounter(selected.Id, progress, out _), Is.True);
+            var progress = new Progress(true, null, null, null);
+            Assert.That(navigation.SelectEncounter(selected, progress, out _), Is.True);
             Assert.That(navigation.CanSkipIntro(progress), Is.False);
             Assert.That(navigation.SkipIntro(progress, out var transition), Is.False);
             Assert.That(transition, Is.Null);
@@ -103,7 +106,7 @@ namespace Dice.Tests
         public void RepeatedVisitSkipProposesEveryIntroRewardAndWaitsAtTheInvitation()
         {
             var progress = new Progress(true, new[] { FirstId }, null, null);
-            Assert.That(navigation.SelectEncounter(FirstId, progress, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, progress, out _), Is.True);
             Assert.That(navigation.CanSkipIntro(new Progress(false, new[] { FirstId }, null, null)), Is.False);
             Assert.That(navigation.SkipIntro(progress, out var transition), Is.True);
             Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Take(first.Beats.Count - 1).Select(beat => beat.ProgressionReward)));
@@ -119,7 +122,7 @@ namespace Dice.Tests
         [TestCase(true)]
         public void AdvanceAndAcceptCanBeRetriedAfterAnUncommittedSideEffect(bool accepting)
         {
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             if (accepting) ReachInvitation();
             int before = navigation.BeatIndex;
             bool proposed = accepting ? navigation.AcceptEncounter(out var transition) : navigation.AdvanceJourney(out transition);
@@ -144,7 +147,7 @@ namespace Dice.Tests
         public void AutomaticBeatsNeverAcceptTheFinalInvitation()
         {
             for (int beat = 0; beat < first.Beats.Count; ++beat) TestJourneys.SetBeat(first, beat, "autoAdvance", true);
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.AcceptEncounter(out _), Is.False);
             ReachInvitation();
             Assert.That(navigation.AdvanceJourney(out var transition), Is.False);
@@ -160,7 +163,7 @@ namespace Dice.Tests
         [Test]
         public void StoryCompletionProposesAllRewardsBeforeReturningToInvestigation()
         {
-            Assert.That(navigation.SelectEncounter(StoryId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(story, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.AcceptEncounter(out _), Is.False);
             Assert.That(navigation.AdvanceJourney(out var advance), Is.True);
             navigation.Commit(advance);
@@ -181,12 +184,12 @@ namespace Dice.Tests
         {
             navigation.Initialize(catalog, FirstId);
             Assert.That(navigation.ReturnToInvestigation(), Is.True);
-            Assert.That(navigation.SelectEncounter(SecondId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(second, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.ResumeEncounter(FirstId, true, out _), Is.False);
             Assert.That(navigation.SelectedJourney, Is.SameAs(second));
             Assert.That(navigation.ReturnToInvestigation(), Is.True);
             Assert.That(navigation.ResumeEncounter(FirstId, false, out _), Is.False);
-            Assert.That(navigation.ResumeEncounter("encounter.missing", true, out var error), Is.False);
+            Assert.That(navigation.ResumeEncounter(MissingId, true, out var error), Is.False);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.ActiveEncounterHasNoLead));
             AssertInvestigation();
             Assert.That(navigation.ResumeEncounter(FirstId, true, out error), Is.True);
@@ -236,14 +239,14 @@ namespace Dice.Tests
         [Test]
         public void MissingLoadLeadRetainsTheCurrentSequenceWhileDirectPlayCanProceed()
         {
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
-            Assert.That(navigation.Load("encounter.missing", true, out var transition, out var error), Is.False);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.Load(MissingId, true, out var transition, out var error), Is.False);
             Assert.That(transition, Is.Null);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.SavedEncounterHasNoLead));
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             Assert.That(navigation.BeatIndex, Is.Zero);
-            Assert.That(navigation.Load("encounter.missing", false, out transition, out error), Is.True);
+            Assert.That(navigation.Load(MissingId, false, out transition, out error), Is.True);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             Assert.That(navigation.SelectedJourney, Is.SameAs(first));
             navigation.Commit(transition);
@@ -258,23 +261,27 @@ namespace Dice.Tests
             var visited = Journey("encounter.visited");
             var completed = Journey("encounter.completed");
             SyntheticUi.Set(catalog, "chapters", new[] { Chapter("chapter.all", first, second, story, visited, completed) });
-            SyntheticUi.Set(first, "followUpEncounterIds", new[] { SecondId, visited.Id, completed.Id });
-            var visitedIds = new[] { visited.Id };
-            var completedIds = new[] { completed.Id };
+            SyntheticUi.Set(first, "followUpEncounters", new[] { second.Encounter, visited.Encounter, completed.Encounter });
+            SyntheticUi.Set(first, "followUpStoryIds", new[] { StoryId });
+            var visitedIds = new[] { visited.Encounter.Identity };
+            var completedIds = new[] { completed.Encounter.Identity };
             var progress = new Progress(true, visitedIds, completedIds, null);
             navigation.RecordVictory(FirstId, new Progress(false, null, null, null));
-            Assert.That(navigation.HighlightedEncounterIds, Is.Empty);
+            Assert.That(navigation.HighlightedJourneys, Is.Empty);
             navigation.RecordVictory(FirstId, progress);
             navigation.RecordVictory(FirstId, progress);
-            Assert.That(navigation.HighlightedEncounterIds, Is.EqualTo(new[] { SecondId }));
-            Assert.That(progress.VisitedEncounterIds, Is.EqualTo(new[] { visited.Id }));
-            Assert.That(progress.CompletedEncounterIds, Is.EqualTo(new[] { completed.Id }));
+            Assert.That(navigation.HighlightedJourneys, Is.EqualTo(new[] { second, story }));
+            Assert.That(progress.VisitedEncounterIds, Is.EqualTo(visitedIds));
+            Assert.That(progress.CompletedEncounterIds, Is.EqualTo(completedIds));
             AssertInvestigation();
-            Assert.That(navigation.SelectEncounter(SecondId, progress, out _), Is.True);
-            Assert.That(navigation.HighlightedEncounterIds, Is.Empty);
+            Assert.That(navigation.SelectEncounter(second, progress, out _), Is.True);
+            Assert.That(navigation.HighlightedJourneys, Is.EqualTo(new[] { story }));
             navigation.ReturnToInvestigation();
-            navigation.RecordVictory(FirstId, new Progress(true, visitedIds, new[] { FirstId, completed.Id }, null));
-            Assert.That(navigation.HighlightedEncounterIds, Is.Empty);
+            Assert.That(navigation.SelectEncounter(story, progress, out _), Is.True);
+            Assert.That(navigation.HighlightedJourneys, Is.Empty);
+            navigation.ReturnToInvestigation();
+            navigation.RecordVictory(FirstId, new Progress(true, visitedIds, new[] { FirstId, completed.Encounter.Identity }, null));
+            Assert.That(navigation.HighlightedJourneys, Is.Empty);
         }
 
         [Test]
@@ -325,7 +332,7 @@ namespace Dice.Tests
             Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             navigation.ReturnToInvestigation(progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
-            Assert.That(navigation.SelectEncounter(FirstId, progress, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, progress, out _), Is.True);
             Assert.That(navigation.SelectChapter(chapters[1].Id, progress, out _), Is.False);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
         }
@@ -339,7 +346,7 @@ namespace Dice.Tests
             navigation.InitializeJourney(catalog, progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
             Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out _), Is.True);
-            Assert.That(navigation.SelectEncounter(storyOnly ? StoryId : FirstId, progress, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(storyOnly ? story : first, progress, out _), Is.True);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
             Assert.That(navigation.SelectedJourney, Is.SameAs(storyOnly ? story : first));
             Assert.That(navigation.CanSkipIntro(progress), Is.EqualTo(!storyOnly));
@@ -350,7 +357,7 @@ namespace Dice.Tests
         {
             var chapters = Chapters();
             var progress = new Progress(true, null, new[] { FirstId }, null);
-            Assert.That(navigation.SelectEncounter(StoryId, progress, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(story, progress, out _), Is.True);
             Assert.That(navigation.AdvanceJourney(out var beat), Is.True);
             navigation.Commit(beat);
             Assert.That(navigation.AdvanceJourney(out var completion), Is.True);
@@ -358,7 +365,7 @@ namespace Dice.Tests
             navigation.Commit(completion, afterStory);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
             AssertInvestigation();
-            Assert.That(navigation.SelectEncounter(FirstId, afterStory, out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, afterStory, out _), Is.True);
             navigation.ReturnToInvestigation(afterStory);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
         }
@@ -389,7 +396,7 @@ namespace Dice.Tests
             navigation.InitializeJourney(replacement, EmptyProgress());
             Assert.That(navigation.SelectedChapter, Is.SameAs(replacementChapter));
             Assert.That(navigation.SelectChapter(chapters[0].Id, EmptyProgress(), out _), Is.False);
-            Assert.That(navigation.SelectEncounter(FirstId, EmptyProgress(), out _), Is.True);
+            Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.SelectedChapter, Is.SameAs(replacementChapter));
             navigation.InitializeJourney(catalog, EmptyProgress());
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
@@ -410,7 +417,7 @@ namespace Dice.Tests
 
         private EncounterChapterAsset[] Chapters()
         {
-            SyntheticUi.Set(story, "requiredCompletedEncounterIds", new[] { FirstId });
+            SyntheticUi.Set(story, "requiredCompletedEncounters", new[] { first.Encounter });
             SyntheticUi.Set(second, "requiredCompletedStoryIds", new[] { StoryId });
             var chapters = new[] { Chapter("chapter.first", first, story), Chapter("chapter.second", second) };
             SyntheticUi.Set(catalog, "chapters", chapters);
@@ -439,10 +446,12 @@ namespace Dice.Tests
 
         private static Progress EmptyProgress() => new Progress(true, null, null, null);
 
+        /** A journey of the story id, or of a new encounter asset named by the id. */
         private EncounterJourneyAsset Journey(string id, bool storyOnly = false)
         {
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, storyOnly ? "storyId" : "encounterId", id);
+            if (storyOnly) SyntheticUi.Set(journey, "storyId", id);
+            else SyntheticUi.Set(journey, "encounter", content.Encounter(id));
             TestJourneys.SetBeats(journey, storyOnly
                 ? new[] { TestJourneys.Beat("report", EncounterJourneyBeatKind.Dialogue), TestJourneys.Beat("prepare", EncounterJourneyBeatKind.Dialogue) }
                 : new[] { TestJourneys.Beat("approach", EncounterJourneyBeatKind.Illustration), TestJourneys.Beat("bargain", EncounterJourneyBeatKind.Dialogue),

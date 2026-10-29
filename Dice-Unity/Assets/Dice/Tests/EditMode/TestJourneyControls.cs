@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Dice.Engine;
 using Dice.Presentation;
 
 namespace Dice.Tests
@@ -12,7 +13,7 @@ namespace Dice.Tests
     {
         public readonly List<string> SelectedChapters = new List<string>();
         public int Accepted;
-        public Func<string, bool> JourneyAvailable { get; set; } = id => true;
+        public Func<EncounterJourneyAsset, bool> JourneyAvailable { get; set; } = journey => true;
         public Func<string, bool> ChapterAvailable { get; set; } = id => false;
 
         public EncounterJourneyPhase JourneyPhase { get; set; }
@@ -24,16 +25,16 @@ namespace Dice.Tests
         public bool HasActiveEncounter => false;
         public bool CanResume => false;
         public SpiritStatus JourneyStatus => SpiritStatus.None;
-        public IReadOnlyList<string> VisitedEncounterIds => Array.Empty<string>();
-        public IReadOnlyList<string> HighlightedEncounterIds => Array.Empty<string>();
+        public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => Array.Empty<EncounterDefinition.Id>();
+        public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => Array.Empty<EncounterJourneyAsset>();
         public IReadOnlyList<string> CompletedStoryIds => Array.Empty<string>();
-        public bool IsJourneyAvailable(string id) => JourneyAvailable(id);
+        public bool IsJourneyAvailable(EncounterJourneyAsset journey) => JourneyAvailable(journey);
         public bool IsChapterAvailable(string id) => ChapterAvailable(id);
         public bool IsChapterCompleted(string id) => false;
 
         public event Action JourneyChanged { add { } remove { } }
         public void SelectChapter(string id) => SelectedChapters.Add(id);
-        public void SelectEncounter(string encounterId) { }
+        public void SelectEncounter(EncounterJourneyAsset journey) { }
         public void AdvanceJourney() { }
         public void SkipIntro() { }
         public void AcceptEncounter() => ++Accepted;

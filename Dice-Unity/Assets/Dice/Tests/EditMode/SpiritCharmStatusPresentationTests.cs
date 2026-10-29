@@ -86,7 +86,7 @@ namespace Dice.Tests
                 startingModifiers: new[] { stage.Id });
             var catalog = new MechanicalCatalog("test.charm.status.stage", TestContent.Hands(),
                 new[] { encounter }, new[] { stage });
-            var session = EncounterSession.CreateEncounter(catalog, encounter.Id, 14);
+            var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);
             Assert.That(session.Execute(new RerollDiceAction(1), 0).Accepted, Is.True);
             AssertStatus(session, stage, SpiritCharmStatusState.Used, 0);
             Assert.That(session.Execute(PlayHandAction.Instance, 1).Accepted, Is.True);
@@ -121,7 +121,7 @@ namespace Dice.Tests
                 startingModifiers: new[] { initial.Id, waiting.Id });
             var catalog = new MechanicalCatalog("test.charm.status.inactive", TestContent.Hands(),
                 new[] { encounter }, new[] { initial, waiting });
-            var session = EncounterSession.CreateEncounter(catalog, encounter.Id, 14);
+            var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);
             Assert.That(session.Execute(completed ? (EncounterAction)AbandonEncounterAction.Instance :
                 PlayHandAction.Instance, 0).Accepted, Is.True);
             Assert.That(session.Snapshot.Phase,
@@ -169,7 +169,7 @@ namespace Dice.Tests
                 startingModifiers: definitions.Select(value => value.Id));
             var catalog = new MechanicalCatalog("test.charm.status", TestContent.Hands(),
                 new[] { encounter }, definitions);
-            return EncounterSession.CreateEncounter(catalog, encounter.Id, 14);
+            return EncounterSession.CreateEncounter(catalog, encounter.Identity, 14);
         }
     }
 }

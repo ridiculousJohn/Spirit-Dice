@@ -378,7 +378,7 @@ namespace Dice.Tests
             yield return Invalid("older rules version", value => --value.RulesVersion, EncounterRestoreError.RulesVersionMismatch);
             yield return Invalid("random version", value => ++value.RandomAlgorithmVersion, EncounterRestoreError.RandomAlgorithmVersionMismatch);
             yield return Invalid("catalog version", value => value.CatalogVersion = "unknown", EncounterRestoreError.CatalogVersionMismatch);
-            yield return Invalid("encounter", value => value.EncounterId = "unknown", EncounterRestoreError.EncounterNotFound);
+            yield return Invalid("encounter", value => value.EncounterId = TestEncounters.IdOf("unknown"), EncounterRestoreError.EncounterNotFound);
             yield return Invalid("modifier definition", value => value.Modifiers[0].DefinitionId = "unknown", EncounterRestoreError.InvalidDefinition);
             yield return Invalid("revision", value => value.Revision = -1);
             yield return Invalid("phase", value => value.Phase = (EncounterPhase)99);

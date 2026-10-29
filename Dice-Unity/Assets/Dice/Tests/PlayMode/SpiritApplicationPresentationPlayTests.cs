@@ -23,8 +23,8 @@ namespace Dice.Tests
             // Any encounter journey routes from the frontend scene to its own encounter scene.
             var journey = controller.JourneyCatalog.Entries.FirstOrDefault(entry => entry != null && !entry.IsStoryOnly);
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.Id);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             Assert.That(frontendHandle.IsValid(), Is.False,
                 "A routed transition must release its previous presentation handle.");

@@ -14,6 +14,7 @@ namespace Dice.Tests
         private MechanicalCatalogAsset catalogAsset;
         private EncounterJourneyCatalogAsset journeyCatalog;
         private ModifierSkinAsset skin;
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
 
         [SetUp]
         public void SetUp()
@@ -24,7 +25,7 @@ namespace Dice.Tests
             skin = ScriptableObject.CreateInstance<ModifierSkinAsset>();
             Set("catalogAsset", catalogAsset);
             Set("modifierSkin", skin);
-            Set("encounterId", TestContent.EncounterId);
+            Set("encounter", content.Encounter("encounter.test"));
         }
 
         [TearDown]
@@ -34,6 +35,7 @@ namespace Dice.Tests
             UnityEngine.Object.DestroyImmediate(catalogAsset);
             UnityEngine.Object.DestroyImmediate(journeyCatalog);
             UnityEngine.Object.DestroyImmediate(skin);
+            content.Dispose();
         }
 
         [Test]
@@ -44,9 +46,9 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void JourneyConfigurationNeedsNoDirectEncounterId()
+        public void JourneyConfigurationNeedsNoDirectEncounter()
         {
-            Set("encounterId", string.Empty);
+            Set("encounter", null);
             Set("journeyCatalog", journeyCatalog);
             Assert.That(configuration.JourneyCatalog, Is.Not.Null);
             Assert.DoesNotThrow(configuration.Validate);
@@ -66,10 +68,10 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(configuration.Validate);
         }
 
-        [TestCase("encounterId")]
-        public void RequiredContentKeysRejectWhitespace(string property)
+        [Test]
+        public void DirectConfigurationWithoutAnEncounterIsRejected()
         {
-            Set(property, " \t");
+            Set("encounter", null);
             Assert.Throws<InvalidOperationException>(configuration.Validate);
         }
 

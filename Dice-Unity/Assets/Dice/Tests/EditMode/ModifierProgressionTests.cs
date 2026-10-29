@@ -101,11 +101,11 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Modifier(string id, int tier = 1,
-            ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, string scopeId = null,
-            ModifierAccess access = ModifierAccess.Starter, bool rewardEligible = true)
+            ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global, string spiritId = null,
+            EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter, bool rewardEligible = true)
             => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, scope, scopeId, access));
+                rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, scope, spiritId, encounterId, access));
 
         private static RewardPolicyDefinition Policy(int slots = 1, IEnumerable<ModifierTierRule> rules = null,
             IEnumerable<ModifierTierMilestone> milestones = null)
@@ -114,11 +114,11 @@ namespace Dice.Tests
 
         private static MechanicalCatalog Catalog(ModifierDefinition[] modifiers, RewardPolicyDefinition policy = null,
             IEnumerable<ModifierUnlockMilestone> milestones = null, string fallback = null, int stages = 2,
-            string encounterId = TestContent.EncounterId, string spiritId = "spirit.first",
+            EncounterDefinition.Id? encounterId = null, string spiritId = "spirit.first",
             IEnumerable<string> encounterModifierIds = null, IEnumerable<string> unlockRewardModifierIds = null)
             => new MechanicalCatalog("progression.tests", TestContent.Hands(), new[]
             {
-                new EncounterDefinition(encounterId, Enumerable.Range(0, stages)
+                new EncounterDefinition(encounterId ?? TestContent.EncounterId, Enumerable.Range(0, stages)
                     .Select(_ => new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards)),
                     rewardPolicy: policy ?? Policy(), spiritId: spiritId, unlockMilestones: milestones,
                     encounterModifierIds: encounterModifierIds, unlockRewardModifierIds: unlockRewardModifierIds)
@@ -140,10 +140,10 @@ namespace Dice.Tests
             var modifiers = new[]
             {
                 Modifier("global"), Modifier("locked", access: ModifierAccess.PermanentUnlock),
-                Modifier("spirit", scope: ModifierAvailabilityScope.Spirit, scopeId: "spirit.first", access: ModifierAccess.EncounterExclusive),
-                Modifier("encounter", scope: ModifierAvailabilityScope.Encounter, scopeId: TestContent.EncounterId, access: ModifierAccess.EncounterExclusive),
-                Modifier("other.spirit", scope: ModifierAvailabilityScope.Spirit, scopeId: "spirit.second", access: ModifierAccess.EncounterExclusive),
-                Modifier("other.encounter", scope: ModifierAvailabilityScope.Encounter, scopeId: "elsewhere", access: ModifierAccess.PermanentUnlock)
+                Modifier("spirit", scope: ModifierAvailabilityScope.Spirit, spiritId: "spirit.first", access: ModifierAccess.EncounterExclusive),
+                Modifier("encounter", scope: ModifierAvailabilityScope.Encounter, encounterId: TestContent.EncounterId, access: ModifierAccess.EncounterExclusive),
+                Modifier("other.spirit", scope: ModifierAvailabilityScope.Spirit, spiritId: "spirit.second", access: ModifierAccess.EncounterExclusive),
+                Modifier("other.encounter", scope: ModifierAvailabilityScope.Encounter, encounterId: TestEncounters.IdOf("elsewhere"), access: ModifierAccess.PermanentUnlock)
             };
             var catalog = Catalog(modifiers, Policy(6));
             Assert.That(Generate(catalog).ModifierIds, Is.EquivalentTo(new[] { "global", "spirit", "encounter" }));
@@ -158,15 +158,15 @@ namespace Dice.Tests
             var modifiers = new[]
             {
                 Modifier("global", access: ModifierAccess.PermanentUnlock),
-                Modifier("spirit", scope: ModifierAvailabilityScope.Spirit, scopeId: "spirit.first", access: ModifierAccess.PermanentUnlock),
-                Modifier("encounter", scope: ModifierAvailabilityScope.Encounter, scopeId: TestContent.EncounterId, access: ModifierAccess.PermanentUnlock)
+                Modifier("spirit", scope: ModifierAvailabilityScope.Spirit, spiritId: "spirit.first", access: ModifierAccess.PermanentUnlock),
+                Modifier("encounter", scope: ModifierAvailabilityScope.Encounter, encounterId: TestContent.EncounterId, access: ModifierAccess.PermanentUnlock)
             };
             var policy = Policy(3);
             var catalog = Catalog(modifiers, policy);
             Assert.That(Generate(catalog).ModifierIds, Is.Empty);
             Assert.That(Generate(catalog, unlocked: modifiers.Select(value => value.Id)).ModifierIds,
                 Is.EquivalentTo(modifiers.Select(value => value.Id)));
-            var otherEncounter = new EncounterDefinition("other", new[] { new StageDefinition(1, 1, 0) }, spiritId: "spirit.second");
+            var otherEncounter = new EncounterDefinition(TestEncounters.IdOf("other"), new[] { new StageDefinition(1, 1, 0) }, spiritId: "spirit.second");
             var random = new DeterministicRandom(1);
             Assert.That(RewardGenerator.GenerateModifiers(catalog, policy, 1, Array.Empty<string>(), Array.Empty<ModifierFamilyDefinition.Id>(),
                 ref random, otherEncounter, modifiers.Select(value => value.Id)).ModifierIds, Is.EqualTo(new[] { "global" }));
@@ -178,10 +178,10 @@ namespace Dice.Tests
             var modifiers = new[]
             {
                 Modifier("global", access: ModifierAccess.PermanentUnlock),
-                Modifier("first.unlock", scope: ModifierAvailabilityScope.Spirit, scopeId: "spirit.first", access: ModifierAccess.PermanentUnlock),
-                Modifier("introduction.unlock", scope: ModifierAvailabilityScope.Encounter, scopeId: TestContent.EncounterId,
+                Modifier("first.unlock", scope: ModifierAvailabilityScope.Spirit, spiritId: "spirit.first", access: ModifierAccess.PermanentUnlock),
+                Modifier("introduction.unlock", scope: ModifierAvailabilityScope.Encounter, encounterId: TestContent.EncounterId,
                     access: ModifierAccess.PermanentUnlock),
-                Modifier("introduction.exclusive", scope: ModifierAvailabilityScope.Encounter, scopeId: TestContent.EncounterId,
+                Modifier("introduction.exclusive", scope: ModifierAvailabilityScope.Encounter, encounterId: TestContent.EncounterId,
                     access: ModifierAccess.EncounterExclusive)
             };
             var policy = Policy(4);
@@ -195,8 +195,8 @@ namespace Dice.Tests
             Assert.That(cleared.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EquivalentTo(modifiers.Select(modifier => modifier.Id)));
 
-            var firstRematch = Catalog(modifiers, policy, encounterId: "encounter.first.rematch", spiritId: "spirit.first");
-            var rematch = EncounterSession.CreateEncounter(firstRematch, "encounter.first.rematch", 10, cleared.UnlockedModifierIds);
+            var firstRematch = Catalog(modifiers, policy, encounterId: TestEncounters.IdOf("encounter.first.rematch"), spiritId: "spirit.first");
+            var rematch = EncounterSession.CreateEncounter(firstRematch, TestEncounters.IdOf("encounter.first.rematch"), 10, cleared.UnlockedModifierIds);
             var firstOffer = rematch.Execute(PlayHandAction.Instance, 0).Snapshot;
             Assert.That(firstOffer.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EquivalentTo(new[] { "global", "first.unlock" }));
@@ -206,8 +206,8 @@ namespace Dice.Tests
             Assert.That(restored.Session.Snapshot.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EquivalentTo(new[] { "global", "first.unlock" }));
 
-            var secondSpiritCatalog = Catalog(modifiers, policy, encounterId: "encounter.second", spiritId: "spirit.second");
-            var secondSpirit = EncounterSession.CreateEncounter(secondSpiritCatalog, "encounter.second", 10, cleared.UnlockedModifierIds);
+            var secondSpiritCatalog = Catalog(modifiers, policy, encounterId: TestEncounters.IdOf("encounter.second"), spiritId: "spirit.second");
+            var secondSpirit = EncounterSession.CreateEncounter(secondSpiritCatalog, TestEncounters.IdOf("encounter.second"), 10, cleared.UnlockedModifierIds);
             Assert.That(secondSpirit.Execute(PlayHandAction.Instance, 0).Snapshot.PendingReward.Options.Select(option => option.DefinitionId),
                 Is.EqualTo(new[] { "global" }));
         }
@@ -223,7 +223,7 @@ namespace Dice.Tests
             Assert.That(Generate(catalog, owned: new[] { "allowed" }, unlocked: new[] { "fallback" }).ModifierIds,
                 Is.EqualTo(new[] { "fallback" }));
             var foreign = Catalog(new[] { Modifier("allowed"), Modifier("foreign", scope: ModifierAvailabilityScope.Spirit,
-                scopeId: "spirit.second", access: ModifierAccess.EncounterExclusive, rewardEligible: false) }, fallback: "foreign");
+                spiritId: "spirit.second", access: ModifierAccess.EncounterExclusive, rewardEligible: false) }, fallback: "foreign");
             Assert.That(Generate(foreign, owned: new[] { "allowed" }).ModifierIds, Is.Empty);
         }
 
@@ -384,8 +384,8 @@ namespace Dice.Tests
         public void EncounterAdditionsJoinOrdinaryPoolAndKeepTierRulesAndSavedEligibility()
         {
             var starter = Modifier("starter");
-            var addition = Modifier("addition", 2, ModifierAvailabilityScope.Encounter, TestContent.EncounterId,
-                ModifierAccess.EncounterExclusive);
+            var addition = Modifier("addition", 2, ModifierAvailabilityScope.Encounter, encounterId: TestContent.EncounterId,
+                access: ModifierAccess.EncounterExclusive);
             var policy = Policy(rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) });
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards), new StageDefinition(1, 2, 1) },
@@ -471,7 +471,7 @@ namespace Dice.Tests
             Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm") }, milestones: milestone,
                 unlockRewardModifierIds: unlocks));
             Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm", scope: ModifierAvailabilityScope.Spirit,
-                scopeId: "spirit.second", access: ModifierAccess.PermanentUnlock) }, milestones: milestone, unlockRewardModifierIds: unlocks));
+                spiritId: "spirit.second", access: ModifierAccess.PermanentUnlock) }, milestones: milestone, unlockRewardModifierIds: unlocks));
             Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm", access: ModifierAccess.PermanentUnlock) },
                 milestones: new[] { new ModifierUnlockMilestone(3) }, unlockRewardModifierIds: unlocks));
         }

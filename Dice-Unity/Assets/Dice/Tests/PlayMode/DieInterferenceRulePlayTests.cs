@@ -30,10 +30,10 @@ namespace Dice.Tests
             yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = controller.JourneyCatalog.Entries.FirstOrDefault(value => value != null && !value.IsStoryOnly &&
-                controller.Catalog.GetEncounter(value.EncounterId).Rules.OfType<DieInterferenceRuleDefinition>()
+                controller.Catalog.GetEncounter(value.Encounter.Identity).Rules.OfType<DieInterferenceRuleDefinition>()
                     .Any(rule => rule.AfterPlayerReroll));
             Assert.That(journey, Is.Not.Null, "No authored encounter has a DieInterferenceRuleDefinition acting after a reroll.");
-            string encounterId = journey.EncounterId;
+            var encounterId = journey.Encounter.Identity;
             DieDisturbedEvent expected = null;
             ulong seed = 0;
             for (ulong candidate = 1; candidate <= ContentReady.RuleSeedSearchLimit && seed == 0; candidate++)
@@ -45,9 +45,9 @@ namespace Dice.Tests
                 expected = disturbed;
                 seed = candidate;
             }
-            Assert.That(seed, Is.Not.Zero, encounterId + ": no searched seed disturbs a kept die after a reroll.");
-            string context = encounterId + " " + expected.Kind;
-            yield return ContentReady.EnterEncounter(controller, journey.Id, seed);
+            Assert.That(seed, Is.Not.Zero, journey.name + ": no searched seed disturbs a kept die after a reroll.");
+            string context = journey.name + " " + expected.Kind;
+            yield return ContentReady.EnterEncounter(controller, journey, seed);
             var view = ContentReady.EncounterView(controller);
             for (int die = 0; die < DiceValues.Count; die++)
                 if ((ContentReady.RerollMask & (1 << die)) != 0) controller.ToggleDie(die);

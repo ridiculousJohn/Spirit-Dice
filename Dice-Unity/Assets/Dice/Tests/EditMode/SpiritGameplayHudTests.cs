@@ -136,9 +136,9 @@ namespace Dice.Tests
         [Test]
         public void SnapshotShowsThePlayingAndCompletedPhases()
         {
-            var encounter = new EncounterDefinition("encounter.test.hud", new[] { new StageDefinition(1000000, 1, 2) });
+            var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.test.hud"), new[] { new StageDefinition(1000000, 1, 2) });
             var catalog = new MechanicalCatalog("test.hud", TestContent.Hands(), new[] { encounter });
-            var session = EncounterSession.CreateEncounter(catalog, encounter.Id, 3);
+            var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 3);
             var playing = session.Snapshot;
             hud.ShowSnapshot(playing, null, SpiritStatus.None, null, 0);
             Assert.That(panels["PlayingPanel"].gameObject.activeSelf, Is.True);

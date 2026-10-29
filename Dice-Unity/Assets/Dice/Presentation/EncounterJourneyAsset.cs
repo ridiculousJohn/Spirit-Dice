@@ -100,7 +100,7 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Encounter Journey")]
     public sealed class EncounterJourneyAsset : ScriptableObject
     {
-        [SerializeField] private string encounterId;
+        [SerializeField] private EncounterAsset encounter;
         [SerializeField] private string storyId = string.Empty;
         [SerializeField] private string locationTitle;
         [SerializeField] private string spiritName;
@@ -123,14 +123,15 @@ namespace Dice.Presentation
         [SerializeField] private EncounterOutcomePresentation victoryPresentation;
         [SerializeField] private EncounterOutcomePresentation defeatPresentation;
         [SerializeField] private EncounterOutcomePresentation abandonPresentation;
-        [SerializeField] private string[] followUpEncounterIds = Array.Empty<string>();
-        [SerializeField] private string[] requiredCompletedEncounterIds = Array.Empty<string>();
+        [SerializeField] private EncounterAsset[] followUpEncounters = Array.Empty<EncounterAsset>();
+        [SerializeField] private string[] followUpStoryIds = Array.Empty<string>();
+        [SerializeField] private EncounterAsset[] requiredCompletedEncounters = Array.Empty<EncounterAsset>();
         [SerializeField] private string[] requiredCompletedStoryIds = Array.Empty<string>();
 
-        public string Id => IsStoryOnly ? storyId : encounterId;
         public bool IsStoryOnly => !string.IsNullOrEmpty(storyId);
         public string StoryId => storyId;
-        public string EncounterId => encounterId;
+        /** The encounter the journey leads to; a story journey has none. */
+        public EncounterAsset Encounter => encounter;
         public string LocationTitle => locationTitle;
         public string SpiritName => spiritName;
         public string LeadText => leadText;
@@ -147,8 +148,11 @@ namespace Dice.Presentation
         public string CompletionClueTitle => completionClueTitle;
         public string CompletionClueText => completionClueText;
         public ProgressionRewardAsset CompletionReward => completionReward;
-        public IReadOnlyList<string> FollowUpEncounterIds => followUpEncounterIds;
-        public IReadOnlyList<string> RequiredCompletedEncounterIds => requiredCompletedEncounterIds;
+        /** The encounter leads the board highlights after the journey's encounter is first won. */
+        public IReadOnlyList<EncounterAsset> FollowUpEncounters => followUpEncounters;
+        /** The story leads the board highlights after the journey's encounter is first won. */
+        public IReadOnlyList<string> FollowUpStoryIds => followUpStoryIds;
+        public IReadOnlyList<EncounterAsset> RequiredCompletedEncounters => requiredCompletedEncounters;
         public IReadOnlyList<string> RequiredCompletedStoryIds => requiredCompletedStoryIds;
 
         public EncounterOutcomePresentation GetOutcomePresentation(EncounterOutcome outcome)
@@ -165,22 +169,20 @@ namespace Dice.Presentation
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (!IsStableId(Id)) throw new FormatException("A journey requires a valid ID.");
-            if (IsStoryOnly && !string.IsNullOrEmpty(encounterId))
-                throw new FormatException("A story journey cannot specify an encounter ID.");
-            var definition = IsStoryOnly ? null : catalog.GetEncounter(encounterId);
+            if (IsStoryOnly ? !IsStableId(storyId) : encounter == null)
+                throw new FormatException("The journey " + name + " requires a valid story ID or an encounter.");
+            if (IsStoryOnly && encounter != null)
+                throw new FormatException("The story journey " + name + " cannot specify an encounter.");
+            var definition = IsStoryOnly ? null : catalog.GetEncounter(encounter.Identity);
             completionReward?.Build(catalog);
             victoryPresentation?.Validate();
             defeatPresentation?.Validate();
             abandonPresentation?.Validate();
-            if (followUpEncounterIds == null) throw new FormatException("Journey follow-up encounters require an array.");
-            var followUpIds = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in followUpEncounterIds)
-                if (!IsStableId(id) || id == Id || !followUpIds.Add(id))
-                    throw new FormatException("Journey follow-up encounter IDs must be valid, unique, and different from the journey.");
-            ValidatePrerequisiteIds(requiredCompletedEncounterIds);
-            ValidatePrerequisiteIds(requiredCompletedStoryIds);
-            foreach (string id in requiredCompletedEncounterIds) catalog.GetEncounter(id);
+            ValidateEncounters(followUpEncounters, "Journey follow-up encounters");
+            ValidateStoryIds(followUpStoryIds, "Journey follow-up story IDs");
+            ValidateEncounters(requiredCompletedEncounters, "Journey completion prerequisites");
+            ValidateStoryIds(requiredCompletedStoryIds, "Journey completion prerequisite IDs");
+            foreach (var required in requiredCompletedEncounters) catalog.GetEncounter(required.Identity);
             if (string.IsNullOrWhiteSpace(locationTitle) || string.IsNullOrWhiteSpace(spiritName) ||
                 string.IsNullOrWhiteSpace(leadText))
                 throw new FormatException("An encounter journey requires its location, host, and investigation lead.");
@@ -230,13 +232,22 @@ namespace Dice.Presentation
                 if (!ruleIds.Contains(rule.Id)) throw new FormatException("An encounter rule is missing its presentation.");
         }
 
-        private void ValidatePrerequisiteIds(string[] prerequisiteIds)
+        private void ValidateEncounters(EncounterAsset[] encounters, string description)
         {
-            if (prerequisiteIds == null) throw new FormatException("Journey completion prerequisites require an array.");
+            if (encounters == null) throw new FormatException(description + " require an array.");
+            var unique = new HashSet<EncounterAsset>();
+            foreach (var value in encounters)
+                if (value == null || value == encounter || !unique.Add(value))
+                    throw new FormatException(description + " must be present, unique, and different from the journey's encounter.");
+        }
+
+        private void ValidateStoryIds(string[] storyIds, string description)
+        {
+            if (storyIds == null) throw new FormatException(description + " require an array.");
             var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string id in prerequisiteIds)
-                if (!IsStableId(id) || id == Id || !ids.Add(id))
-                    throw new FormatException("Journey completion prerequisite IDs must be valid, unique, and different from the journey.");
+            foreach (string id in storyIds)
+                if (!IsStableId(id) || id == storyId || !ids.Add(id))
+                    throw new FormatException(description + " must be valid, unique, and different from the journey.");
         }
 
         private static bool IsStableId(string value)

@@ -34,7 +34,7 @@ namespace Dice.Tests
             SyntheticUi.Set(introduction, "screen", ui.CharmsScreen(introduction.transform));
             introduction.Build();
             journey = ui.Own(ScriptableObject.CreateInstance<EncounterJourneyAsset>());
-            SyntheticUi.Set(journey, "encounterId", TestContent.EncounterId);
+            SyntheticUi.Set(journey, "encounter", synthetic.Encounter("encounter.test"));
             SyntheticUi.Set(journey, "encounterCharmsIntroductionText", Line);
 
             catalog = EncounterCharmsIntroductionTests.Catalog(firstClearedStage: 3, additions: true);

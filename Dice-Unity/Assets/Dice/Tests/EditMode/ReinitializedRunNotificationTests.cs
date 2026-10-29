@@ -12,7 +12,7 @@ namespace Dice.Tests
     /** Notifications the controller publishes while it starts a run from another catalog. */
     public sealed class ReinitializedRunNotificationTests
     {
-        private const string EncounterId = "encounter.reinitialize";
+        private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.reinitialize");
         private const string FirstCharm = "modifier.reinitialize.first";
         private const string SecondCharm = "modifier.reinitialize.second";
         private GameObject host;

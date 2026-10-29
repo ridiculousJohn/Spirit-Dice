@@ -87,7 +87,7 @@ namespace Dice.Tests
         {
             var stages = new[] { new StageDefinition(100, 3, 3) };
             var upgrades = new int[8];
-            var definition = new EncounterDefinition("encounter.immutable", stages, upgrades);
+            var definition = new EncounterDefinition(TestEncounters.IdOf("encounter.immutable"), stages, upgrades);
             stages[0] = new StageDefinition(1, 1, 0);
             upgrades[0] = 6;
             Assert.That(definition.Stages[0].Threshold, Is.EqualTo(100));
@@ -103,7 +103,7 @@ namespace Dice.Tests
             Assert.Throws<ArgumentException>(() => TestContent.Catalog(hands: TestContent.Hands().Take(7)));
             Assert.Throws<ArgumentException>(() => TestContent.Catalog(hands: TestContent.Hands().Concat(new[] { TestContent.Hands()[0] })));
             Assert.Throws<ArgumentException>(() => TestContent.Catalog(upgrades: new[] { 7, 0, 0, 0, 0, 0, 0, 0 }));
-            Assert.Throws<ArgumentException>(() => new EncounterDefinition("encounter.empty", Array.Empty<StageDefinition>()));
+            Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestEncounters.IdOf("encounter.empty"), Array.Empty<StageDefinition>()));
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(0, 1, 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(1, 0, 0));
             Assert.Throws<ArgumentOutOfRangeException>(() => new StageDefinition(1, 1, -1));

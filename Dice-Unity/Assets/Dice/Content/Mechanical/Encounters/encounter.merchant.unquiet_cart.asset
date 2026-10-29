@@ -1,0 +1,117 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.merchant.unquiet_cart
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: 1360c7668cb1183439942390cf1a70d3
+  spiritId: spirit.merchant
+  unlockMilestones:
+  - stageNumber: 3
+  - stageNumber: 6
+  - stageNumber: 10
+  encounterModifiers: []
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers:
+  - {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
+  - {fileID: 11400000, guid: 4215033c96491f946a814edbad3025ed, type: 2}
+  - {fileID: 11400000, guid: 50c6fb656696de049af29ed116d87077, type: 2}
+  - {fileID: 11400000, guid: 547fc958e4d487748bb577b0d89239b3, type: 2}
+  - {fileID: 11400000, guid: 43e2a8d8b36845e4790aa6fed1354249, type: 2}
+  - {fileID: 11400000, guid: e3fd5471554c1854fb29f30e0efbf753, type: 2}
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 120
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 170
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 230
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 300
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 380
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 470
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 570
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 680
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 800
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 930
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  rewardPolicy:
+    id: reward_policy.merchant.unquiet_cart
+    modifierLayouts:
+    - poolIds:
+      - reward_pool.merchant.unquiet_cart.base_score
+      - reward_pool.merchant.unquiet_cart.multiplier
+      - reward_pool.merchant.unquiet_cart.rerolls
+    - poolIds:
+      - reward_pool.merchant.unquiet_cart.base_score
+      - reward_pool.merchant.unquiet_cart.multiplier
+      - reward_pool.merchant.unquiet_cart.combined
+    - poolIds:
+      - reward_pool.merchant.unquiet_cart.base_score
+      - reward_pool.merchant.unquiet_cart.multiplier
+      - reward_pool.merchant.unquiet_cart.combined
+    startingRefreshes: 1
+    refreshesPerClear: 1
+    refreshCost: 1
+    handUpgradeOptionCount: 4
+    upgradeHistory:
+    - maxIncomingStageNumber: 2147483647
+      excludedRecentChoices: 1
+    tierRules:
+    - firstIncomingStageNumber: 1
+      tierWeights: 640000000000000000000000i
+    - firstIncomingStageNumber: 4
+      tierWeights: 3c0000002300000005000000i
+    - firstIncomingStageNumber: 7
+      tierWeights: 1e0000003200000014000000i
+    - firstIncomingStageNumber: 10
+      tierWeights: 0f0000002d00000028000000i
+    tierMilestones:
+    - incomingStageNumber: 4
+      minimumTier: 2
+    - incomingStageNumber: 7
+      minimumTier: 2
+    - incomingStageNumber: 10
+      minimumTier: 3
+  rules:
+  - {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
+  - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
+  pieces:
+  - id: piece.merchant.candle
+    interactions:
+    - {fileID: 11400000, guid: f8daef7b2f614458ba4a6d63b4e86d32, type: 2}

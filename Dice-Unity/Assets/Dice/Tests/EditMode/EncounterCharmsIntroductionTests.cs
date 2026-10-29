@@ -97,10 +97,10 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
-            string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
+            EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter)
             => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(1, scope, scopeId, access));
+                availability: new ModifierAvailabilityDefinition(1, scope, encounterId: encounterId, access: access));
 
         internal static void ContinueAfterUnlock(EncounterSession session)
         {

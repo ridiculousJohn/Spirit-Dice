@@ -71,7 +71,7 @@ namespace Dice.Tests
             SyntheticUi.Set(view, "<EncounterCharms>k__BackingField", screen);
             view.Build(null);
             var journey = ui.Own(ScriptableObject.CreateInstance<EncounterJourneyAsset>());
-            SyntheticUi.Set(journey, "encounterId", TestContent.EncounterId);
+            SyntheticUi.Set(journey, "encounter", synthetic.Encounter("encounter.test"));
             var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
 
             view.Bind(controls, Controls(EncounterCharmsIntroductionTests.Catalog(firstClearedStage: 1, additions: true)));

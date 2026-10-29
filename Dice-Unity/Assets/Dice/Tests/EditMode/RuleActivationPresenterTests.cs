@@ -15,7 +15,7 @@ namespace Dice.Tests
      */
     public sealed class RuleActivationPresenterTests
     {
-        private const string EncounterId = "encounter.test.rule_activation";
+        private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.test.rule_activation");
         private const float Sweep = .4f;
         private readonly List<Object> created = new List<Object>();
         private TestRulePresenterContext context;

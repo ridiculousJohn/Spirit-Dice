@@ -35,7 +35,6 @@ namespace Dice.Tests
     [Category("Capture")]
     public sealed class MerchantDisturbanceCapturePlayTests
     {
-        private const string EncounterId = "encounter.merchant.unquiet_cart";
         private const int Width = 540, Height = 960, FramesPerSecond = 30;
         private const int Lantern = 0;
         private const ulong SeedSearchLimit = 4000;
@@ -82,11 +81,11 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == EncounterId);
+            var journey = ContentReady.JourneyWithRule<BayWardRuleDefinition>(controller);
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
@@ -261,17 +260,18 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == EncounterId);
+            var journey = ContentReady.JourneyWithRule<BayWardRuleDefinition>(controller);
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             while (controller.SelectedJourney.Beats[controller.BeatIndex].Kind != EncounterJourneyBeatKind.Invitation)
                 controller.AdvanceJourney();
 
-            var ward = controller.Catalog.GetEncounter(EncounterId).Rules.OfType<BayWardRuleDefinition>().Single();
-            var plan = FindPlan(controller.Catalog, kind, ward);
+            var encounterId = journey.Encounter.Identity;
+            var ward = controller.Catalog.GetEncounter(encounterId).Rules.OfType<BayWardRuleDefinition>().Single();
+            var plan = FindPlan(controller.Catalog, encounterId, kind, ward);
             TestContext.WriteLine("Merchant disturbance capture " + name + ": " + plan.Summary);
             controller.ConfigureSeedPolicy(true, plan.Seed);
             controller.AcceptEncounter();
@@ -358,12 +358,12 @@ namespace Dice.Tests
         }
 
         /** The first seed whose interference produces the case, preferring one whose result changes the hand rank. */
-        private static Plan FindPlan(MechanicalCatalog catalog, Case kind, BayWardRuleDefinition ward)
+        private static Plan FindPlan(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, Case kind, BayWardRuleDefinition ward)
         {
             Plan fallback = null;
             for (ulong seed = 1; seed <= SeedSearchLimit; seed++)
             {
-                var plan = Trial(catalog, kind, ward, seed);
+                var plan = Trial(catalog, encounterId, kind, ward, seed);
                 if (plan == null) continue;
                 if (plan.Preferred) return plan;
                 if (fallback == null) fallback = plan;
@@ -372,9 +372,9 @@ namespace Dice.Tests
             return fallback;
         }
 
-        private static Plan Trial(MechanicalCatalog catalog, Case kind, BayWardRuleDefinition ward, ulong seed)
+        private static Plan Trial(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, Case kind, BayWardRuleDefinition ward, ulong seed)
         {
-            var session = EncounterSession.CreateEncounter(catalog, EncounterId, seed);
+            var session = EncounterSession.CreateEncounter(catalog, encounterId, seed);
             var opening = session.Snapshot.CurrentDice;
             var plan = new Plan { Seed = seed, Opening = opening };
             if (kind == Case.ForcedRerollOnPlayHand)
@@ -409,7 +409,7 @@ namespace Dice.Tests
             }
 
             // Moving the candle draws nothing, so the same rule draws target the bay it now wards.
-            var warded = EncounterSession.CreateEncounter(catalog, EncounterId, seed);
+            var warded = EncounterSession.CreateEncounter(catalog, encounterId, seed);
             var moved = warded.Execute(new InteractWithPieceAction(ward.PieceId, ward.InteractionId,
                 new MovePieceInput(PiecePosition.Bay(plan.Bay))), warded.Snapshot.Revision);
             if (!moved.Accepted) return null;

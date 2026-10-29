@@ -10,32 +10,33 @@ namespace Dice.App
     /** Owns journey location and transition rules, without changing profile progress or the live encounter. */
     public sealed class EncounterJourneyNavigation
     {
-        private readonly List<string> highlightedEncounterIds = new List<string>();
+        private readonly List<EncounterJourneyAsset> highlightedJourneys = new List<EncounterJourneyAsset>();
 
         public EncounterJourneyCatalogAsset JourneyCatalog { get; private set; }
         public EncounterChapterAsset SelectedChapter { get; private set; }
         public EncounterJourneyPhase JourneyPhase { get; private set; } = EncounterJourneyPhase.Playing;
         public EncounterJourneyAsset SelectedJourney { get; private set; }
         public int BeatIndex { get; private set; } = -1;
-        public IReadOnlyList<string> HighlightedEncounterIds { get; }
+        /** The follow-up leads of won encounters that the board highlights until they are selected. */
+        public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys { get; }
 
         public EncounterJourneyNavigation()
         {
-            HighlightedEncounterIds = highlightedEncounterIds.AsReadOnly();
+            HighlightedJourneys = highlightedJourneys.AsReadOnly();
         }
 
-        public void Initialize(EncounterJourneyCatalogAsset catalog, string encounterId)
+        public void Initialize(EncounterJourneyCatalogAsset catalog, EncounterDefinition.Id encounterId)
         {
             JourneyCatalog = catalog;
             SelectedChapter = null;
-            highlightedEncounterIds.Clear();
+            highlightedJourneys.Clear();
             Commit(new Transition(catalog?.Find(encounterId), EncounterJourneyPhase.Playing, -1));
         }
 
         public void InitializeJourney(EncounterJourneyCatalogAsset catalog, Progress progress = default)
         {
             JourneyCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            highlightedEncounterIds.Clear();
+            highlightedJourneys.Clear();
             SelectedChapter = CurrentChapter(progress);
             Commit(new Transition(null, EncounterJourneyPhase.Investigation, -1));
         }
@@ -43,7 +44,7 @@ namespace Dice.App
         public bool IsChapterAvailable(string id, Progress progress)
         {
             var chapter = FindChapter(id);
-            return chapter != null && chapter.Entries.Any(journey => journey != null && IsJourneyAvailable(journey.Id, progress));
+            return chapter != null && chapter.Entries.Any(journey => journey != null && IsJourneyAvailable(journey, progress));
         }
 
         public void ShowMainMenu()
@@ -60,7 +61,7 @@ namespace Dice.App
 
         private static bool IsJourneyCompleted(EncounterJourneyAsset journey, Progress progress)
             => journey.IsStoryOnly ? progress.CompletedStoryIds.Contains(journey.StoryId) :
-                progress.CompletedEncounterIds.Contains(journey.EncounterId);
+                progress.CompletedEncounterIds.Contains(journey.Encounter.Identity);
 
         public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
         {
@@ -89,31 +90,32 @@ namespace Dice.App
             return incomplete ?? latest;
         }
 
-        public bool IsJourneyAvailable(string id, Progress progress)
+        public bool IsJourneyAvailable(EncounterJourneyAsset journey, Progress progress)
         {
-            var journey = JourneyCatalog?.Find(id);
-            if (journey == null || !progress.HasProfile) return false;
+            if (!IsCatalogJourney(journey) || !progress.HasProfile) return false;
             if (IsJourneyCompleted(journey, progress) ||
-                (!journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.EncounterId))) return true;
-            return journey.RequiredCompletedEncounterIds.All(progress.CompletedEncounterIds.Contains) &&
+                (!journey.IsStoryOnly && progress.VisitedEncounterIds.Contains(journey.Encounter.Identity))) return true;
+            return journey.RequiredCompletedEncounters.All(encounter => progress.CompletedEncounterIds.Contains(encounter.Identity)) &&
                 journey.RequiredCompletedStoryIds.All(progress.CompletedStoryIds.Contains);
         }
 
-        public bool SelectEncounter(string id, Progress progress, out SpiritStatusKind error)
+        public bool SelectEncounter(EncounterJourneyAsset journey, Progress progress, out SpiritStatusKind error)
         {
             error = SpiritStatusKind.None;
             if (JourneyCatalog == null || JourneyPhase != EncounterJourneyPhase.Investigation) return false;
-            var selected = JourneyCatalog.Find(id);
-            if (selected == null) { error = SpiritStatusKind.LeadNotFound; return false; }
-            if (!IsJourneyAvailable(id, progress)) { error = SpiritStatusKind.LocationLocked; return false; }
-            highlightedEncounterIds.Remove(id);
-            Commit(new Transition(selected, EncounterJourneyPhase.Sequence, 0));
+            if (!IsCatalogJourney(journey)) { error = SpiritStatusKind.LeadNotFound; return false; }
+            if (!IsJourneyAvailable(journey, progress)) { error = SpiritStatusKind.LocationLocked; return false; }
+            highlightedJourneys.Remove(journey);
+            Commit(new Transition(journey, EncounterJourneyPhase.Sequence, 0));
             return true;
         }
 
+        private bool IsCatalogJourney(EncounterJourneyAsset journey)
+            => journey != null && JourneyCatalog != null && JourneyCatalog.Entries.Contains(journey);
+
         public bool CanSkipIntro(Progress progress) => JourneyPhase == EncounterJourneyPhase.Sequence &&
             SelectedJourney != null && !SelectedJourney.IsStoryOnly && BeatIndex < SelectedJourney.Beats.Count - 1 &&
-            progress.HasProfile && progress.VisitedEncounterIds.Contains(SelectedJourney.EncounterId);
+            progress.HasProfile && progress.VisitedEncounterIds.Contains(SelectedJourney.Encounter.Identity);
 
         public bool CanResume(bool hasActiveEncounter) => hasActiveEncounter && JourneyPhase == EncounterJourneyPhase.Investigation;
 
@@ -148,7 +150,7 @@ namespace Dice.App
             return true;
         }
 
-        public bool Load(string encounterId, bool requireLead, out Transition transition, out SpiritStatusKind error)
+        public bool Load(EncounterDefinition.Id encounterId, bool requireLead, out Transition transition, out SpiritStatusKind error)
         {
             transition = null;
             error = SpiritStatusKind.None;
@@ -171,17 +173,17 @@ namespace Dice.App
             return true;
         }
 
-        public bool ResumeEncounter(string encounterId, bool hasActiveEncounter, out SpiritStatusKind error)
+        public bool ResumeEncounter(EncounterDefinition.Id? encounterId, bool hasActiveEncounter, out SpiritStatusKind error)
         {
             error = SpiritStatusKind.None;
             if (!CanResume(hasActiveEncounter)) return false;
-            var journey = JourneyCatalog?.Find(encounterId);
+            var journey = encounterId.HasValue ? JourneyCatalog?.Find(encounterId.Value) : null;
             if (journey == null) { error = SpiritStatusKind.ActiveEncounterHasNoLead; return false; }
             Commit(new Transition(journey, EncounterJourneyPhase.Playing, -1));
             return true;
         }
 
-        public bool RetryEncounter(string encounterId, EncounterOutcome outcome)
+        public bool RetryEncounter(EncounterDefinition.Id encounterId, EncounterOutcome outcome)
         {
             if (JourneyPhase != EncounterJourneyPhase.Playing || outcome == EncounterOutcome.None) return false;
             var journey = JourneyCatalog?.Find(encounterId);
@@ -190,13 +192,19 @@ namespace Dice.App
             return true;
         }
 
-        public void RecordVictory(string encounterId, Progress progress)
+        public void RecordVictory(EncounterDefinition.Id encounterId, Progress progress)
         {
             var journey = JourneyCatalog?.Find(encounterId);
             if (!progress.HasProfile || progress.CompletedEncounterIds.Contains(encounterId) || journey == null) return;
-            foreach (string id in journey.FollowUpEncounterIds)
-                if (!progress.VisitedEncounterIds.Contains(id) && !progress.CompletedEncounterIds.Contains(id) &&
-                    !highlightedEncounterIds.Contains(id)) highlightedEncounterIds.Add(id);
+            foreach (var encounter in journey.FollowUpEncounters)
+                if (!progress.VisitedEncounterIds.Contains(encounter.Identity) && !progress.CompletedEncounterIds.Contains(encounter.Identity))
+                    Highlight(JourneyCatalog.Find(encounter.Identity));
+            foreach (string id in journey.FollowUpStoryIds) Highlight(JourneyCatalog.FindStory(id));
+        }
+
+        private void Highlight(EncounterJourneyAsset journey)
+        {
+            if (journey != null && !highlightedJourneys.Contains(journey)) highlightedJourneys.Add(journey);
         }
 
         // The controller completes required writes and run preparation before committing, then notifies observers.
@@ -215,16 +223,16 @@ namespace Dice.App
         public readonly struct Progress
         {
             public bool HasProfile { get; }
-            public IReadOnlyList<string> VisitedEncounterIds { get; }
-            public IReadOnlyList<string> CompletedEncounterIds { get; }
+            public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds { get; }
+            public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds { get; }
             public IReadOnlyList<string> CompletedStoryIds { get; }
 
-            public Progress(bool hasProfile, IReadOnlyList<string> visitedEncounterIds,
-                IReadOnlyList<string> completedEncounterIds, IReadOnlyList<string> completedStoryIds)
+            public Progress(bool hasProfile, IReadOnlyList<EncounterDefinition.Id> visitedEncounterIds,
+                IReadOnlyList<EncounterDefinition.Id> completedEncounterIds, IReadOnlyList<string> completedStoryIds)
             {
                 HasProfile = hasProfile;
-                VisitedEncounterIds = visitedEncounterIds ?? Array.Empty<string>();
-                CompletedEncounterIds = completedEncounterIds ?? Array.Empty<string>();
+                VisitedEncounterIds = visitedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
+                CompletedEncounterIds = completedEncounterIds ?? Array.Empty<EncounterDefinition.Id>();
                 CompletedStoryIds = completedStoryIds ?? Array.Empty<string>();
             }
         }

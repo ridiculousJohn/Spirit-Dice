@@ -81,7 +81,7 @@ namespace Dice.Tests
             var original = controller.Snapshot;
             string replacementPath = Path.Combine(Path.GetDirectoryName(savePath), "replacement-run.json");
             Assert.Throws<System.Collections.Generic.KeyNotFoundException>(() =>
-                controller.Initialize(catalog, "encounter.missing", 42, replacementPath));
+                controller.Initialize(catalog, TestEncounters.IdOf("encounter.missing"), 42, replacementPath));
             Assert.That(controller.Snapshot, Is.SameAs(original));
             Assert.That(controller.SavePath, Is.EqualTo(savePath));
             Assert.That(File.Exists(replacementPath), Is.False);
@@ -220,7 +220,7 @@ namespace Dice.Tests
             string profilePath = Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json");
             var profile = new PlayerProfile();
             profile.UnlockModifier("modifier.future");
-            profile.CompleteEncounter("encounter.future");
+            profile.CompleteEncounter(TestEncounters.IdOf("encounter.future"));
             PlayerProfileFileStore.Save(profilePath, profile);
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.Snapshot.UnlockedModifierIds, Is.Empty);
@@ -230,7 +230,7 @@ namespace Dice.Tests
             ChooseUnlock();
             profile = PlayerProfileFileStore.Load(profilePath);
             Assert.That(profile.UnlockedModifierIds, Is.EquivalentTo(new[] { "modifier.future", UnlockedId }));
-            Assert.That(profile.CompletedEncounterIds, Is.EquivalentTo(new[] { "encounter.future", TestContent.EncounterId }));
+            Assert.That(profile.CompletedEncounterIds, Is.EquivalentTo(new[] { TestEncounters.IdOf("encounter.future"), TestContent.EncounterId }));
         }
 
         private void ChooseUnlock()

@@ -75,7 +75,7 @@ namespace Dice.Engine
 
     public sealed class EncounterSnapshot
     {
-        public string EncounterId { get; }
+        public EncounterDefinition.Id EncounterId { get; }
         public string CatalogVersion { get; }
         public long Revision { get; }
         public EncounterPhase Phase { get; }
@@ -128,7 +128,7 @@ namespace Dice.Engine
         internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
         {
             var stage = definition.Stages[state.StageIndex];
-            EncounterId = definition.Id;
+            EncounterId = definition.Identity;
             CatalogVersion = catalogVersion;
             Revision = state.Revision;
             Phase = state.Phase;
@@ -233,8 +233,12 @@ namespace Dice.Engine
 
         protected override string DescribeDetail(IDiagnosticFormat format)
             => "Unlocked " + format.ModifierName(ModifierId) + " (" + format.Humanize(Availability.Access.ToString()) + ", " +
-                format.Humanize(Availability.Scope.ToString()) + (Availability.ScopeId != null ? " " + Availability.ScopeId : "") +
+                format.Humanize(Availability.Scope.ToString()) + ScopeDetail() +
                 ", power tier " + Availability.PowerTier + ").";
+
+        private string ScopeDetail()
+            => Availability.SpiritId != null ? " " + Availability.SpiritId
+                : Availability.EncounterId != null ? " " + Availability.EncounterId.Value : "";
     }
 
     public sealed class StageStartedEvent : RuleEvent

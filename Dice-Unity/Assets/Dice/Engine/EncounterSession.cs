@@ -19,7 +19,7 @@ namespace Dice.Engine
         internal EncounterDefinition Definition => definition;
         public EncounterSnapshot Snapshot => new EncounterSnapshot(state, definition, catalog.Version);
 
-        private EncounterSession(MechanicalCatalog catalog, string encounterId, ulong seed, IEnumerable<string> unlockedModifierIds,
+        private EncounterSession(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed, IEnumerable<string> unlockedModifierIds,
             IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
@@ -53,7 +53,7 @@ namespace Dice.Engine
             InitialResolution = new Resolution(-1, Snapshot, events);
         }
 
-        public static EncounterSession CreateEncounter(MechanicalCatalog catalog, string encounterId, ulong seed,
+        public static EncounterSession CreateEncounter(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed,
             IEnumerable<string> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
             => new EncounterSession(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);
 

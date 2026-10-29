@@ -14,6 +14,7 @@ namespace Dice.Tests
     {
         private const string FamilyGuid = "0f1e2d3c4b5a69788796a5b4c3d2e1f0";
         private readonly List<ScriptableObject> assets = new List<ScriptableObject>();
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private ModifierFamilyAsset exampleFamily;
 
         [TearDown]
@@ -21,6 +22,7 @@ namespace Dice.Tests
         {
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
+            content.Dispose();
             exampleFamily = null;
         }
 
@@ -59,7 +61,8 @@ namespace Dice.Tests
             Assert.That(definition.Availability.PowerTier, Is.EqualTo(3));
             Assert.That(definition.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
             Assert.That(definition.Availability.Scope, Is.EqualTo(ModifierAvailabilityScope.Spirit));
-            Assert.That(definition.Availability.ScopeId, Is.EqualTo("spirit.test"));
+            Assert.That(definition.Availability.SpiritId, Is.EqualTo("spirit.test"));
+            Assert.That(definition.Availability.EncounterId, Is.Null);
             Assert.That(definition.Effects.Select(effect => effect.GetType()),
                 Is.EqualTo(new[] { typeof(AddBaseScoreEffect), typeof(AddRerollsEffect) }));
             Assert.That(definition.Effects.Select(effect => effect.Amount), Is.EqualTo(new long[] { 25, 2 }));
@@ -68,6 +71,34 @@ namespace Dice.Tests
             serialized.ApplyModifiedPropertiesWithoutUndo();
             Assert.That(definition.Effects[0], Is.TypeOf<AddBaseScoreEffect>());
             Assert.That(definition.Effects[0].Amount, Is.EqualTo(25));
+        }
+
+        /** Checks an Encounter scope builds the referenced encounter's id and a scope with the wrong target fails, naming the charm / fails if a scope keeps a target it does not use. */
+        [Test]
+        public void EncounterScopeBuildsItsEncounterIdAndAScopeWithTheWrongTargetFails()
+        {
+            var asset = Modifier("modifier.scoped");
+            var encounter = content.Encounter("encounter.scope");
+            using var serialized = new SerializedObject(asset);
+            serialized.FindProperty("access").intValue = (int)ModifierAccess.EncounterExclusive;
+            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Encounter;
+            serialized.FindProperty("availabilityEncounter").objectReferenceValue = encounter;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(asset.AvailabilityProblem, Is.Null);
+            Assert.That(asset.Build(asset.Family.Build()).Availability.EncounterId, Is.EqualTo(encounter.Identity));
+
+            serialized.FindProperty("availabilityScopeId").stringValue = "spirit.test";
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(asset.AvailabilityProblem, Is.Not.Null);
+            Assert.That(Assert.Throws<InvalidOperationException>(() => asset.Build(asset.Family.Build())).Message,
+                Does.Contain("modifier.scoped"));
+
+            serialized.FindProperty("availabilityScope").intValue = (int)ModifierAvailabilityScope.Global;
+            serialized.FindProperty("availabilityScopeId").stringValue = string.Empty;
+            serialized.FindProperty("access").intValue = (int)ModifierAccess.Starter;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Assert.That(asset.AvailabilityProblem, Is.Not.Null);
+            Assert.Throws<InvalidOperationException>(() => asset.Build(asset.Family.Build()));
         }
 
         [Test]
@@ -116,21 +147,14 @@ namespace Dice.Tests
         [Test]
         public void CatalogIsBuiltFromExactlyTheReferencedCharms()
         {
-            var catalog = Catalog();
             var starting = Modifier("modifier.starting");
             var addition = Modifier("modifier.addition");
             var unlock = Modifier("modifier.unlock", ModifierAccess.PermanentUnlock);
             var pooled = Modifier("modifier.pooled");
             var fallback = Modifier("modifier.fallback");
             Modifier("modifier.unreferenced");
-            using (var serialized = new SerializedObject(catalog))
-            {
-                var encounter = serialized.FindProperty("encounters").GetArrayElementAtIndex(0);
-                References(encounter.FindPropertyRelative("startingModifiers"), starting, pooled);
-                References(encounter.FindPropertyRelative("encounterModifiers"), addition);
-                References(encounter.FindPropertyRelative("unlockRewardModifiers"), unlock);
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
+            var catalog = Catalog(content.Encounter("encounter.test", startingModifiers: new[] { starting, pooled },
+                encounterModifiers: new[] { addition }, unlockRewardModifiers: new[] { unlock }));
             Pool(catalog, new[] { pooled }, fallback);
 
             var built = catalog.Build().Catalog;
@@ -143,20 +167,14 @@ namespace Dice.Tests
         [Test]
         public void EncounterAndPoolListsKeepTheirReferencedCharmsInAuthoredOrder()
         {
-            var catalog = Catalog();
             var second = Modifier("modifier.b");
             var first = Modifier("modifier.a");
-            using (var serialized = new SerializedObject(catalog))
-            {
-                References(serialized.FindProperty("encounters").GetArrayElementAtIndex(0).FindPropertyRelative("encounterModifiers"),
-                    second, first);
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-            }
+            var catalog = Catalog(content.Encounter("encounter.test", encounterModifiers: new[] { second, first }));
             Pool(catalog, new[] { second, first });
 
             var built = catalog.Build().Catalog;
 
-            Assert.That(built.GetEncounter("encounter.test").EncounterModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
+            Assert.That(built.GetEncounter(TestEncounters.IdOf("encounter.test")).EncounterModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
             Assert.That(built.GetRewardPool("pool.test").ModifierIds, Is.EqualTo(new[] { second.Id, first.Id }));
         }
 
@@ -212,6 +230,23 @@ namespace Dice.Tests
             Assert.That(failure.Message, Does.Contain("family.copy"));
         }
 
+        /** Checks the catalog holds its listed encounters plus a played encounter it does not list, once each, and two encounter assets with one id fail the build, naming both / fails if a played encounter is missing or repeated or a duplicate id loads. */
+        [Test]
+        public void CatalogBuildAddsAnUnlistedPlayedEncounterAndRejectsTwoEncounterAssetsSharingAnId()
+        {
+            var listed = content.Encounter("encounter.listed");
+            var unlisted = content.Encounter("encounter.unlisted");
+            var catalog = Catalog(listed);
+            Assert.That(catalog.Build(listed).Catalog.Encounters.Select(encounter => encounter.Identity), Is.EqualTo(new[] { listed.Identity }));
+            Assert.That(catalog.Build(unlisted).Catalog.Encounters.Select(encounter => encounter.Identity),
+                Is.EqualTo(new[] { listed.Identity, unlisted.Identity }));
+
+            var copy = content.Encounter("encounter.listed");
+            copy.name = "encounter.copy";
+            var failure = Assert.Throws<InvalidOperationException>(() => Catalog(listed, copy).Build());
+            Assert.That(failure.Message, Does.Contain("encounter.listed").And.Contain("encounter.copy"));
+        }
+
         private static void Pool(MechanicalCatalogAsset catalog, ModifierAsset[] modifiers, ModifierAsset fallback = null)
         {
             using var serialized = new SerializedObject(catalog);
@@ -254,7 +289,8 @@ namespace Dice.Tests
             return asset;
         }
 
-        private MechanicalCatalogAsset Catalog()
+        /** A catalog listing the encounters; without any it lists one test encounter. */
+        private MechanicalCatalogAsset Catalog(params EncounterAsset[] encounters)
         {
             var asset = Create<MechanicalCatalogAsset>();
             using var serialized = new SerializedObject(asset);
@@ -268,17 +304,10 @@ namespace Dice.Tests
                 hand.FindPropertyRelative("category").intValue = i;
                 hand.FindPropertyRelative("multiplier").longValue = 1;
             }
-            var encounters = serialized.FindProperty("encounters");
-            encounters.arraySize = 1;
-            var encounter = encounters.GetArrayElementAtIndex(0);
-            encounter.FindPropertyRelative("id").stringValue = "encounter.test";
-            encounter.FindPropertyRelative("startingUpgrades").arraySize = HandDefinition.CategoryCount;
-            encounter.FindPropertyRelative("encounterModifiersFirstClearedStageNumber").intValue = 1;
-            var stages = encounter.FindPropertyRelative("stages");
-            stages.arraySize = 1;
-            var stage = stages.GetArrayElementAtIndex(0);
-            stage.FindPropertyRelative("threshold").longValue = 100;
-            stage.FindPropertyRelative("startingHands").intValue = 3;
+            if (encounters.Length == 0) encounters = new[] { content.Encounter("encounter.test") };
+            var list = serialized.FindProperty("encounters");
+            list.arraySize = encounters.Length;
+            for (int i = 0; i < encounters.Length; ++i) list.GetArrayElementAtIndex(i).objectReferenceValue = encounters[i];
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }

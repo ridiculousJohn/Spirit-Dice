@@ -13,7 +13,7 @@ namespace Dice.Tests
     {
         private const string FamilyId = "family.story";
         private const string ModifierId = "modifier.story.base";
-        private const string EncounterId = "encounter.story";
+        private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.story");
         private readonly List<ScriptableObject> assets = new List<ScriptableObject>();
         private readonly SyntheticCharms charms = new SyntheticCharms();
         private MechanicalCatalog catalog;
@@ -103,7 +103,7 @@ namespace Dice.Tests
         private EncounterJourneyAsset Journey()
         {
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounterId", EncounterId);
+            SyntheticUi.Set(journey, "encounter", charms.Encounter("encounter.story"));
             SyntheticUi.Set(journey, "locationTitle", "Story table");
             SyntheticUi.Set(journey, "spiritName", "Story keeper");
             SyntheticUi.Set(journey, "leadText", "A keeper waits at the table.");

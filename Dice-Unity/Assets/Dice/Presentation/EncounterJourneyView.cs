@@ -93,7 +93,7 @@ namespace Dice.Presentation
         {
             var journey = controls?.SelectedJourney;
             if (journey == null || journey.IsStoryOnly || encounterControls?.Catalog == null) return;
-            var encounter = encounterControls.Catalog.GetEncounter(journey.EncounterId);
+            var encounter = encounterControls.Catalog.GetEncounter(journey.Encounter.Identity);
             // Additions first offered after a later stage are introduced inside the encounter instead.
             if (!encounter.EncounterModifiersAvailableFromStart)
             {

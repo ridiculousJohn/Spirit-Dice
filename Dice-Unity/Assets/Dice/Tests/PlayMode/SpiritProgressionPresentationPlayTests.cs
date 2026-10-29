@@ -24,7 +24,7 @@ namespace Dice.Tests
             yield return configuration;
             var table = ContentReady.DirectTable(configuration.Result, controller.Catalog, out var rules);
             Addressables.Release(configuration);
-            var encounter = new EncounterDefinition("encounter.collected", new[] { new StageDefinition(1, 1, 0) },
+            var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.collected"), new[] { new StageDefinition(1, 1, 0) },
                 rules: rules, unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: new[] { definition.Id });
             var catalog = new MechanicalCatalog("collected.test", controller.Catalog.Hands, new[] { encounter }, new[] { definition });
@@ -33,7 +33,7 @@ namespace Dice.Tests
             profile.UnlockModifier(definition.Id);
             profile.DiscoverFamily(definition.Family.Identity);
             PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(path), PlayerProfileFileStore.FileName), profile);
-            controller.Initialize(catalog, encounter.Id, ContentReady.Seed, path);
+            controller.Initialize(catalog, encounter.Identity, ContentReady.Seed, path);
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);
             Assert.That(view.TablePresentation, Is.SameAs(table));

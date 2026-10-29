@@ -201,7 +201,7 @@ namespace Dice.Tests
         [Test]
         public void EncounterRuleBonusAddsOneMultiplierStepNamedByItsRulesCard()
         {
-            const string encounterId = "encounter.test.rule_bonus";
+            var encounterId = TestEncounters.IdOf("encounter.test.rule_bonus");
             var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(1000000, 3, 3) },
                 rules: new EncounterRuleDefinition[] { new FirstRerollFreeRuleDefinition(), new DistinctFacesMultiplierRuleDefinition() });
             var session = EncounterSession.CreateEncounter(

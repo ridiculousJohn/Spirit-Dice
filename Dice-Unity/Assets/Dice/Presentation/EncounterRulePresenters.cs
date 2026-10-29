@@ -37,7 +37,7 @@ namespace Dice.Presentation
                 {
                     if (card == null || card.Presenter == null) continue;
                     var rule = Definition(encounter, card.RuleId) ?? throw new InvalidOperationException("The rule card " +
-                        card.name + " presents rule " + card.RuleId + ", which encounter " + encounter.Id + " does not have.");
+                        card.name + " presents rule " + card.RuleId + ", which encounter " + encounter.Identity + " does not have.");
                     built ??= context() ?? throw new InvalidOperationException("Rule presenters require a context.");
                     presenters ??= new List<RulePresenter>();
                     presenters.Add(card.Presenter.Create(card, rule, built));

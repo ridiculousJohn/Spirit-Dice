@@ -7,7 +7,7 @@ namespace Dice.Tests
     /** The distinct faces rule: each distinct face of the scored hand adds one multiplier. */
     public sealed class DistinctFacesMultiplierRuleTests
     {
-        private const string EncounterId = TestContent.EncounterId;
+        private static readonly EncounterDefinition.Id EncounterId = TestContent.EncounterId;
         private const string RuleId = DistinctFacesMultiplierRuleDefinition.StableId;
 
         /** Checks the bonus counts distinct faces / fails if it counts dice or repeated faces. */

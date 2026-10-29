@@ -21,6 +21,6 @@ MonoBehaviour:
     m_EditorAssetChanged: 0
   journeyCatalog: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df804, type: 2}
   modifierSkin: {fileID: 11400000, guid: ab6e2e026ae267749af2e8a3f3663615, type: 2}
-  encounterId: encounter.fox.introduction
+  encounter: {fileID: 11400000, guid: bf2a4a0f447fad64897858c232b1c04c, type: 2}
   useFixedSeed: 0
   initialSeed: 60

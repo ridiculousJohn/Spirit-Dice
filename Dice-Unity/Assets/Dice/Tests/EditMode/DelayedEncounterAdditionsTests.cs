@@ -69,13 +69,13 @@ namespace Dice.Tests
         public void TheFirstClearedStageDefaultsToOneAndMustLieWithinTheEncounter()
         {
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
-            Assert.That(new EncounterDefinition("encounter.default", stages).EncounterModifiersFirstClearedStageNumber, Is.EqualTo(1));
-            Assert.That(new EncounterDefinition("encounter.last", stages, encounterModifiersFirstClearedStageNumber: 2)
+            Assert.That(new EncounterDefinition(TestEncounters.IdOf("encounter.default"), stages).EncounterModifiersFirstClearedStageNumber, Is.EqualTo(1));
+            Assert.That(new EncounterDefinition(TestEncounters.IdOf("encounter.last"), stages, encounterModifiersFirstClearedStageNumber: 2)
                 .EncounterModifiersFirstClearedStageNumber, Is.EqualTo(2));
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new EncounterDefinition("encounter.zero", stages, encounterModifiersFirstClearedStageNumber: 0));
+                new EncounterDefinition(TestEncounters.IdOf("encounter.zero"), stages, encounterModifiersFirstClearedStageNumber: 0));
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new EncounterDefinition("encounter.beyond", stages, encounterModifiersFirstClearedStageNumber: 3));
+                new EncounterDefinition(TestEncounters.IdOf("encounter.beyond"), stages, encounterModifiersFirstClearedStageNumber: 3));
         }
 
         /** Checks an encounter states its own charms are available from the start only when it has some and its first offer can contain them / fails if delayed additions or an encounter without additions claim it. */
@@ -85,7 +85,7 @@ namespace Dice.Tests
         public void EncounterStatesWhetherItsOwnCharmsAreAvailableFromTheStart(bool additions, int firstClearedStage, bool expected)
         {
             var stages = new[] { new StageDefinition(1, 1, 0), new StageDefinition(1, 1, 0) };
-            var encounter = new EncounterDefinition("encounter.from_start", stages,
+            var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.from_start"), stages,
                 encounterModifierIds: additions ? new[] { Addition } : Array.Empty<string>(),
                 encounterModifiersFirstClearedStageNumber: firstClearedStage);
             Assert.That(encounter.EncounterModifiersAvailableFromStart, Is.EqualTo(expected));
@@ -133,10 +133,10 @@ namespace Dice.Tests
         }
 
         private static ModifierDefinition Modifier(string id, ModifierAvailabilityScope scope = ModifierAvailabilityScope.Global,
-            string scopeId = null, ModifierAccess access = ModifierAccess.Starter)
+            EncounterDefinition.Id? encounterId = null, ModifierAccess access = ModifierAccess.Starter)
             => new ModifierDefinition(id, TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(1, scope, scopeId, access));
+                availability: new ModifierAvailabilityDefinition(1, scope, encounterId: encounterId, access: access));
 
         private static Resolution Execute(EncounterSession session, EncounterAction action)
         {

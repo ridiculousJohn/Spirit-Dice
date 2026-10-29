@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.fox.introduction
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: bf2a4a0f447fad64897858c232b1c04c
+  spiritId: spirit.fox
+  unlockMilestones:
+  - stageNumber: 3
+  - stageNumber: 6
+  - stageNumber: 10
+  encounterModifiers: []
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers:
+  - {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+  - {fileID: 11400000, guid: 95279f4a19dc67c419724f2b1aba2df0, type: 2}
+  - {fileID: 11400000, guid: 0825100e1c0ccd24ba75accb617fc0ed, type: 2}
+  - {fileID: 11400000, guid: 559af161a5f12484dbab16328c29ae4f, type: 2}
+  - {fileID: 11400000, guid: 26c8135239da0334bafb55ac495fd3a7, type: 2}
+  - {fileID: 11400000, guid: 41444f8417690884eb5ef7f559001a34, type: 2}
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 120
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 170
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 230
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 300
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 380
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 470
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 570
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 680
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 800
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 930
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  rewardPolicy:
+    id: reward_policy.fox.introduction
+    modifierLayouts:
+    - poolIds:
+      - reward_pool.fox.introduction.base_score
+      - reward_pool.fox.introduction.multiplier
+      - reward_pool.fox.introduction.rerolls
+    - poolIds:
+      - reward_pool.fox.introduction.base_score
+      - reward_pool.fox.introduction.multiplier
+      - reward_pool.fox.introduction.combined
+    - poolIds:
+      - reward_pool.fox.introduction.base_score
+      - reward_pool.fox.introduction.multiplier
+      - reward_pool.fox.introduction.combined
+    startingRefreshes: 1
+    refreshesPerClear: 1
+    refreshCost: 1
+    handUpgradeOptionCount: 4
+    upgradeHistory:
+    - maxIncomingStageNumber: 2147483647
+      excludedRecentChoices: 1
+    tierRules:
+    - firstIncomingStageNumber: 1
+      tierWeights: 640000000000000000000000i
+    - firstIncomingStageNumber: 4
+      tierWeights: 3c0000002300000005000000i
+    - firstIncomingStageNumber: 7
+      tierWeights: 1e0000003200000014000000i
+    - firstIncomingStageNumber: 10
+      tierWeights: 0f0000002d00000028000000i
+    tierMilestones:
+    - incomingStageNumber: 4
+      minimumTier: 2
+    - incomingStageNumber: 7
+      minimumTier: 2
+    - incomingStageNumber: 10
+      minimumTier: 3
+  rules:
+  - {fileID: 11400000, guid: fe318bf39f5245e59ff45614028ed05c, type: 2}
+  pieces: []

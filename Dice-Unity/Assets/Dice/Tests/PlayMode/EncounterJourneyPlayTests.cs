@@ -83,7 +83,7 @@ namespace Dice.Tests
             Click("JourneyAcceptButton");
             yield return ContentReady.Routed();
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Playing));
-            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.EncounterId));
+            Assert.That(controller.Snapshot.EncounterId, Is.EqualTo(journey.Encounter.Identity));
             Assert.That(controller.Snapshot.Revision, Is.Zero);
             Assert.That(controller.IsBusy, Is.True);
             Assert.That(resolutions, Is.EqualTo(1));
@@ -101,14 +101,14 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot, Is.SameAs(opening));
             Assert.That(resolutions, Is.EqualTo(1), "Repeated acceptance must not roll or create another run.");
             Assert.That(rolls, Is.EqualTo(1), "Accepting must roll the opening dice once.");
-            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.EncounterId, ContentReady.Seed);
+            var expected = EncounterSession.CreateEncounter(controller.Catalog, journey.Encounter.Identity, ContentReady.Seed);
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 Assert.That(controller.Snapshot.CurrentDice[index], Is.EqualTo(expected.Snapshot.CurrentDice[index]));
             }
             AssertVisibleDice(expected.Snapshot.CurrentDice);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).VisitedEncounterIds,
-                Does.Contain(journey.EncounterId));
+                Does.Contain(journey.Encounter.Identity));
             LogAssert.NoUnexpectedReceived();
         }
 
@@ -122,10 +122,10 @@ namespace Dice.Tests
         {
             var journey = BoardJourney("awaits rewards after its first stage", value =>
             {
-                var stages = controller.Catalog.GetEncounter(value.EncounterId).Stages;
+                var stages = controller.Catalog.GetEncounter(value.Encounter.Identity).Stages;
                 return stages.Count > 1 && stages[0].ExitBehavior == StageExitBehavior.AwaitRewards;
             });
-            Assert.That(controller.InitializeJourney(ContentReady.ShortStages(controller.Catalog, journey.EncounterId, "journey-playmode.v1"),
+            Assert.That(controller.InitializeJourney(ContentReady.ShortStages(controller.Catalog, journey.Encounter.Identity, "journey-playmode.v1"),
                 controller.JourneyCatalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());
             yield return ContentReady.Routed(controller);
             yield return null;
@@ -205,7 +205,7 @@ namespace Dice.Tests
             var candidates = BoardEntries().Where(journey => !journey.IsStoryOnly && require(journey))
                 .Where(journey =>
                 {
-                    var encounter = controller.Catalog.GetEncounter(journey.EncounterId);
+                    var encounter = controller.Catalog.GetEncounter(journey.Encounter.Identity);
                     return encounter.EncounterModifierIds.Count == 0 || encounter.EncounterModifiersFirstClearedStageNumber != 1;
                 }).ToArray();
             Assert.That(candidates, Is.Not.Empty,
@@ -219,7 +219,7 @@ namespace Dice.Tests
             IEnumerable<EncounterJourneyAsset> entries = controller.SelectedChapter != null ? controller.SelectedChapter.Entries
                 : controller.JourneyCatalog.Chapters != null && controller.JourneyCatalog.Chapters.Count > 0
                     ? Array.Empty<EncounterJourneyAsset>() : controller.JourneyCatalog.Entries;
-            return entries.Where(journey => journey != null && controller.IsJourneyAvailable(journey.Id)).ToArray();
+            return entries.Where(journey => journey != null && controller.IsJourneyAvailable(journey)).ToArray();
         }
 
         /**
@@ -248,7 +248,7 @@ namespace Dice.Tests
         private IEnumerator ClickClue(EncounterJourneyAsset journey)
         {
             int index = Array.IndexOf(BoardEntries(), journey);
-            Assert.That(index, Is.GreaterThanOrEqualTo(0), journey.Id + " is not on the investigation board.");
+            Assert.That(index, Is.GreaterThanOrEqualTo(0), journey.name + " is not on the investigation board.");
             string name = "ClueButton" + index;
             var scroll = Find<ScrollRect>("InvestigationClues");
             Canvas.ForceUpdateCanvases();
@@ -259,7 +259,7 @@ namespace Dice.Tests
             Canvas.ForceUpdateCanvases();
             Click(name);
             yield return ContentReady.Routed();
-            Assert.That(controller.SelectedJourney, Is.SameAs(journey), name + " opens " + journey.Id);
+            Assert.That(controller.SelectedJourney, Is.SameAs(journey), name + " opens " + journey.name);
         }
 
         private void AssertNoEngine()

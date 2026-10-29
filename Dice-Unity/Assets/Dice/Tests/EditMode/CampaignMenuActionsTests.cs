@@ -13,6 +13,7 @@ namespace Dice.Tests
     public sealed class CampaignMenuActionsTests
     {
         private readonly List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
+        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
         private GameObject host;
         private SpiritEncounterController controller;
         private SpiritCampaignController campaign;
@@ -29,7 +30,7 @@ namespace Dice.Tests
             campaign = host.AddComponent<SpiritCampaignController>();
             catalog = TestContent.Catalog();
             var journey = Create<EncounterJourneyAsset>();
-            SyntheticUi.Set(journey, "encounterId", TestContent.EncounterId);
+            SyntheticUi.Set(journey, "encounter", content.Encounter("encounter.test"));
             SyntheticUi.Set(journey, "locationTitle", "Test location");
             SyntheticUi.Set(journey, "spiritName", "Test host");
             SyntheticUi.Set(journey, "leadText", "A test lead.");
@@ -49,6 +50,7 @@ namespace Dice.Tests
             UnityEngine.Object.DestroyImmediate(host);
             foreach (var asset in assets) UnityEngine.Object.DestroyImmediate(asset);
             assets.Clear();
+            content.Dispose();
         }
 
         /** Checks Continue needs a run save and Chapter needs a campaign in the active slot; fails if either is offered without them. */

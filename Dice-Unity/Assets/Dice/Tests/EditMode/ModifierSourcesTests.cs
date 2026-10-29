@@ -21,7 +21,7 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             var unlock = catalog.GetModifierSources(Locked).Unlocks.Single();
-            Assert.That(unlock.Encounter.Id, Is.EqualTo("encounter.unlocks"));
+            Assert.That(unlock.Encounter.Identity, Is.EqualTo(TestEncounters.IdOf("encounter.unlocks")));
             Assert.That(unlock.StageNumbers, Is.EqualTo(new[] { 1, 3 }));
             Assert.That(catalog.GetModifierSources(Pooled).Unlocks, Is.Empty);
         }
@@ -34,7 +34,8 @@ namespace Dice.Tests
         [TestCase(Scoped, new[] { "encounter.scoped" })]
         [TestCase(Locked, new[] { "encounter.scoped" })]
         public void RunRewardSourcesAreAdditionsPoolEntriesAndFallbacks(string modifierId, string[] encounterIds)
-            => Assert.That(Catalog().GetModifierSources(modifierId).RunRewards.Select(encounter => encounter.Id), Is.EqualTo(encounterIds));
+            => Assert.That(Catalog().GetModifierSources(modifierId).RunRewards.Select(encounter => encounter.Identity),
+                Is.EqualTo(encounterIds.Select(TestEncounters.IdOf)));
 
         private static MechanicalCatalog Catalog()
         {
@@ -45,11 +46,11 @@ namespace Dice.Tests
                 0, 0, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var encounters = new[]
             {
-                new EncounterDefinition("encounter.unlocks", stages, unlockMilestones: new[] { new ModifierUnlockMilestone(1),
+                new EncounterDefinition(TestEncounters.IdOf("encounter.unlocks"), stages, unlockMilestones: new[] { new ModifierUnlockMilestone(1),
                     new ModifierUnlockMilestone(3) }, encounterModifierIds: new[] { Addition }, unlockRewardModifierIds: new[] { Locked }),
-                new EncounterDefinition("encounter.unlisted", stages, unlockRewardModifierIds: new[] { Locked }),
-                new EncounterDefinition("encounter.pooled", stages, rewardPolicy: policy),
-                new EncounterDefinition("encounter.scoped", stages, rewardPolicy: twoPools)
+                new EncounterDefinition(TestEncounters.IdOf("encounter.unlisted"), stages, unlockRewardModifierIds: new[] { Locked }),
+                new EncounterDefinition(TestEncounters.IdOf("encounter.pooled"), stages, rewardPolicy: policy),
+                new EncounterDefinition(TestEncounters.IdOf("encounter.scoped"), stages, rewardPolicy: twoPools)
             };
             var modifiers = new[]
             {
@@ -57,7 +58,7 @@ namespace Dice.Tests
                 Modifier(Ineligible, eligible: false),
                 new ModifierDefinition(Scoped, TestFamilies.Of("family." + Scoped), ModifierPhase.PlayHand, new NeverCondition(),
                     Array.Empty<ModifierEffect>(), availability: new ModifierAvailabilityDefinition(1, ModifierAvailabilityScope.Encounter,
-                        "encounter.scoped"))
+                        encounterId: TestEncounters.IdOf("encounter.scoped")))
             };
             return new MechanicalCatalog("test.modifier_sources", TestContent.Hands(), encounters, modifiers, new[]
             {

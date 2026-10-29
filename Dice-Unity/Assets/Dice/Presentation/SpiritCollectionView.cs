@@ -213,7 +213,7 @@ namespace Dice.Presentation
             // Encounter journeys are listed in the catalog's encounter order, then story journeys in journey order.
             foreach (var encounter in mechanicalCatalog.Encounters)
             {
-                var journey = journeyCatalog.Find(encounter.Id);
+                var journey = journeyCatalog.Find(encounter.Identity);
                 if (journey != null) AddGiftSources(journey, definition.Id, giftSources, wording);
             }
             foreach (var journey in journeyCatalog.Entries)
@@ -232,14 +232,14 @@ namespace Dice.Presentation
         private static bool TryGetEncounterName(EncounterDefinition encounter, EncounterJourneyCatalogAsset journeyCatalog,
             out string name)
         {
-            var journey = journeyCatalog.Find(encounter.Id);
+            var journey = journeyCatalog.Find(encounter.Identity);
             name = journey != null ? LocationTitle(journey) : null;
             return journey != null;
         }
 
         private static string LocationTitle(EncounterJourneyAsset journey)
             => !string.IsNullOrWhiteSpace(journey.LocationTitle) ? journey.LocationTitle
-                : throw new InvalidOperationException("Journey " + journey.Id + " has no location title.");
+                : throw new InvalidOperationException("Journey " + journey.name + " has no location title.");
 
         private static void AddGiftSources(EncounterJourneyAsset journey, string modifierId, List<string> giftSources,
             SpiritUiWording.Collection wording)

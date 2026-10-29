@@ -32,7 +32,6 @@ namespace Dice.Tests
     [Category("Capture")]
     public sealed class BoundTreeReviewCapturePlayTests
     {
-        private const string EncounterId = "encounter.nymph.bound_tree";
         private const int Width = 540, NarrowWidth = 443, Height = 960;
 
         [UnityTest]
@@ -47,11 +46,11 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == EncounterId);
+            var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             controller.ReturnToInvestigation();
             yield return ContentReady.Routed(controller);
-            ContentReady.SeedJourneyPrerequisites(controller, journey.Id);
-            controller.SelectEncounter(journey.EncounterId);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);
             Assert.That(view.TablePresentation, Is.SameAs(journey.TablePresentation));
@@ -147,9 +146,9 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var journey = controller.JourneyCatalog.Entries.Single(value => !value.IsStoryOnly && value.EncounterId == EncounterId);
+            var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             yield return EncounterCharmsIntroductionPlayTests.EnterShortEncounter(controller, controller.Catalog, journey);
-            yield return EncounterCharmsIntroductionPlayTests.ReachIntroducedOffer(controller, EncounterId);
+            yield return EncounterCharmsIntroductionPlayTests.ReachIntroducedOffer(controller, journey);
             var view = ContentReady.EncounterView(controller);
             yield return SizePortrait(Width);
             EncounterCharmsIntroductionPlayTests.AssertIntroductionOpen(controller, view, journey);

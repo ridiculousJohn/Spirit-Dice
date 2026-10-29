@@ -41,7 +41,7 @@ namespace Dice.Tests
             discovered = Modifier("discovered", ModifierAccess.PermanentUnlock, new AddBaseScoreEffect(1), "family.discovered");
             undiscovered = Modifier("undiscovered", ModifierAccess.PermanentUnlock, new AddMultiplierEffect(1), "family.undiscovered");
             inert = Modifier("inert", ModifierAccess.Starter, new AddRerollsEffect(1), "family.inert", false);
-            var encounter = new EncounterDefinition("encounter.test", new[]
+            var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.test"), new[]
                 {
                     new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3)
                 }, unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
@@ -244,7 +244,7 @@ namespace Dice.Tests
                 grants.GetArrayElementAtIndex(0).objectReferenceValue = synthetic.Charm(discovered.Id);
                 rewardData.ApplyModifiedPropertiesWithoutUndo();
                 var journeyData = new SerializedObject(journey);
-                journeyData.FindProperty("encounterId").stringValue = "encounter.test";
+                journeyData.FindProperty("encounter").objectReferenceValue = synthetic.Encounter("encounter.test");
                 journeyData.FindProperty("locationTitle").stringValue = "Test House";
                 journeyData.FindProperty("completionReward").objectReferenceValue = reward;
                 var beats = journeyData.FindProperty("beats");
@@ -270,10 +270,10 @@ namespace Dice.Tests
         public void SourcesNameTheCatalogsSourcesByTheirJourneysLocations()
         {
             var stages = new[] { new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3) };
-            var sourced = new EncounterDefinition("encounter.sourced", stages,
+            var sourced = new EncounterDefinition(TestEncounters.IdOf("encounter.sourced"), stages,
                 unlockMilestones: new[] { new ModifierUnlockMilestone(1), new ModifierUnlockMilestone(3) },
                 encounterModifierIds: new[] { discovered.Id }, unlockRewardModifierIds: new[] { locked.Id });
-            var unjourneyed = new EncounterDefinition("encounter.unjourneyed", stages,
+            var unjourneyed = new EncounterDefinition(TestEncounters.IdOf("encounter.unjourneyed"), stages,
                 unlockMilestones: new[] { new ModifierUnlockMilestone(2) }, encounterModifierIds: new[] { discovered.Id },
                 unlockRewardModifierIds: new[] { locked.Id });
             var sources = new MechanicalCatalog("collection.sources", TestContent.Hands(), new[] { sourced, unjourneyed },
@@ -310,13 +310,17 @@ namespace Dice.Tests
             }
         }
 
-        /** A journey catalog of one encounter journey with the given location title; the assets are returned for release. */
-        private static EncounterJourneyCatalogAsset Journeys(string encounterId, string locationTitle, out ScriptableObject[] created)
+        /**
+         * A journey catalog of one journey, named after its encounter, of a new encounter asset of the name with the given
+         * location title; the assets are returned for release.
+         */
+        private EncounterJourneyCatalogAsset Journeys(string encounterName, string locationTitle, out ScriptableObject[] created)
         {
             var journey = ScriptableObject.CreateInstance<EncounterJourneyAsset>();
+            journey.name = encounterName + " journey";
             var journeys = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
             var journeyData = new SerializedObject(journey);
-            journeyData.FindProperty("encounterId").stringValue = encounterId;
+            journeyData.FindProperty("encounter").objectReferenceValue = synthetic.Encounter(encounterName);
             journeyData.FindProperty("locationTitle").stringValue = locationTitle;
             journeyData.ApplyModifiedPropertiesWithoutUndo();
             created = new ScriptableObject[] { journeys, OnlyChapter(journeys, journey), journey };
@@ -344,7 +348,7 @@ namespace Dice.Tests
             string family = "family", bool rewardEligible = true)
             => new ModifierDefinition(id, TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new[] { effect }, rewardEligible: rewardEligible, availability: access == ModifierAccess.EncounterExclusive
-                    ? new ModifierAvailabilityDefinition(scope: ModifierAvailabilityScope.Encounter, scopeId: "encounter.test", access: access)
+                    ? new ModifierAvailabilityDefinition(scope: ModifierAvailabilityScope.Encounter, encounterId: TestEncounters.IdOf("encounter.test"), access: access)
                     : new ModifierAvailabilityDefinition(access: access));
 
         private static T Find<T>(Component parent, string name) where T : Component

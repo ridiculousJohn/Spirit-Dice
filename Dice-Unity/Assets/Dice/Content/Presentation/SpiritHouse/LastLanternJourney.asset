@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
   m_Name: LastLanternJourney
   m_EditorClassIdentifier: 
-  encounterId: encounter.fox.introduction
+  encounter: {fileID: 11400000, guid: bf2a4a0f447fad64897858c232b1c04c, type: 2}
+  storyId: 
   locationTitle: The Last Lantern
   spiritName: The Lantern Keeper
   leadText: A missing traveler was last seen following a lantern through the rain. The light is still burning.
@@ -24,95 +25,197 @@ MonoBehaviour:
     text: The trail ends at a quiet doorway. Behind the paper, a shadow turns before anyone moves.
     continueLabel: Approach the door
     background: {fileID: 2800000, guid: 74eb1ce65d124aa9823839f4404df805, type: 3}
+    sceneLighting: {fileID: 0}
     foreground: {fileID: 2800000, guid: 8ae3013c2027a8f468aa392a983c3918, type: 3}
+    audioCue: {fileID: 0}
     duration: 6
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
     motionFrom: {x: -0.06, y: 0}
     motionTo: {x: 0.05, y: 0.015}
-    foregroundRect: {serializedVersion: 2, x: 0.22, y: 0.52, width: 0.40, height: 0.28}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0.22
+      y: 0.52
+      width: 0.4
+      height: 0.28
     foregroundTint: {r: 0.04, g: 0.025, b: 0.02, a: 0.36}
     transition: 0
     scaleFrom: 0.72
     scaleTo: 0.8
     hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   - id: arrival
     kind: 1
     title: An unexpected welcome
     text: The doors part. A place has already been set for you.
     continueLabel: Take a seat
     background: {fileID: 0}
+    sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 2
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
     motionFrom: {x: 0, y: 0}
     motionTo: {x: 0, y: 0}
-    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
     foregroundTint: {r: 1, g: 1, b: 1, a: 1}
     transition: 1
     scaleFrom: 1
     scaleTo: 1
     hostState: 2
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   - id: bargain
     kind: 2
     title: The Lantern Keeper
     text: They sheltered here. I know where they went. Spirits trade knowledge through bargains. Win our game, and my answer is yours.
     continueLabel: Ask about the charms
     background: {fileID: 0}
+    sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
+    audioCue: {fileID: 0}
     duration: 5
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
     motionFrom: {x: 0, y: 0}
     motionTo: {x: 0, y: 0}
-    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
     foregroundTint: {r: 1, g: 1, b: 1, a: 1}
     transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   - id: discovery
     kind: 2
     title: What a bargain reveals
     text: Accept to discover Open Gate, Still Reflection, and Rising Sun. Discovery reveals a family's charms; owning a charm lets it appear in future offers.
     continueLabel: Hear the gift
-    duration: 1
-    scaleFrom: 1
-    scaleTo: 1
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: gift
-    kind: 2
-    title: A gift for the road
-    text: 'Take {charm}. May it open the way when your next bargain begins.'
-    charm: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
-    continueLabel: Hear the terms
-    duration: 1
-    scaleFrom: 1
-    scaleTo: 1
-    backgroundScaleFrom: 1
-    backgroundScaleTo: 1
-  - id: invitation
-    kind: 3
-    progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
-    title: The Host's Courtesy
-    text: Your first mistake costs you nothing. Accept, and we begin.
-    continueLabel: Accept the bargain
     background: {fileID: 0}
+    sceneLighting: {fileID: 0}
     foreground: {fileID: 0}
-    duration: 2
+    audioCue: {fileID: 0}
+    duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 0}
     motionFrom: {x: 0, y: 0}
     motionTo: {x: 0, y: 0}
-    foregroundRect: {serializedVersion: 2, x: 0, y: 0, width: 1, height: 1}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
     foregroundTint: {r: 1, g: 1, b: 1, a: 1}
     transition: 0
     scaleFrom: 1
     scaleTo: 1
     hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: gift
+    kind: 2
+    title: A gift for the road
+    text: Take {charm}. May it open the way when your next bargain begins.
+    continueLabel: Hear the terms
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 1
+    progressionReward: {fileID: 0}
+    charm: {fileID: 11400000, guid: 054e2e3d1a532dc43901c60a7cad575a, type: 2}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
+  - id: invitation
+    kind: 3
+    title: The Host's Courtesy
+    text: Your first mistake costs you nothing. Accept, and we begin.
+    continueLabel: Accept the bargain
+    background: {fileID: 0}
+    sceneLighting: {fileID: 0}
+    foreground: {fileID: 0}
+    audioCue: {fileID: 0}
+    duration: 2
+    progressionReward: {fileID: 11400000, guid: 701803fca1c94eca85a9db2afa2296ab, type: 2}
+    charm: {fileID: 0}
+    motionFrom: {x: 0, y: 0}
+    motionTo: {x: 0, y: 0}
+    foregroundRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 1
+      height: 1
+    foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+    transition: 0
+    scaleFrom: 1
+    scaleTo: 1
+    hostState: 0
+    hideNarrativeDuringMotion: 0
+    autoAdvance: 0
+    backgroundMotionFrom: {x: 0, y: 0}
+    backgroundMotionTo: {x: 0, y: 0}
+    backgroundScaleFrom: 1
+    backgroundScaleTo: 1
   tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
   victoryTitle: A promise kept
   victoryText: You have earned an answer. They crossed the marsh before dawn, toward the old watchtower. Climb the steps. The watcher may have seen more.
   defeatTitle: The lantern is still burning
   defeatText: Not tonight. The road will wait, and so will I. Come back when you are ready to try again.
   abandonText: The keeper leaves your place at the table open.
+  encounterCharmsIntroductionText: 
   resultContinueLabel: Return to the trail
   completionClueTitle: The watchtower above the marsh
   completionClueText: The missing traveler crossed the marsh toward the old watchtower before dawn. Climb the steps and find the watcher.
+  completionReward: {fileID: 0}
   victoryPresentation:
     enabled: 1
     hostState: 4
@@ -137,7 +240,8 @@ MonoBehaviour:
     showDialogue: 0
     artwork: {fileID: 0}
     audioCue: {fileID: 0}
-  followUpEncounterIds:
-  - encounter.owl.watchtower
-  requiredCompletedEncounterIds: []
+  followUpEncounters:
+  - {fileID: 11400000, guid: 0c0f31254236f944aa8d686d0ce79d65, type: 2}
+  followUpStoryIds: []
+  requiredCompletedEncounters: []
   requiredCompletedStoryIds: []

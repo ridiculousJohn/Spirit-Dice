@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Dice.App;
+using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
@@ -18,7 +19,6 @@ namespace Dice.Tests
     /** The moth's own choreography: its lantern moths circle while it waits and carry that flight into its arrival. */
     public sealed class MothJourneyPlayTests
     {
-        private const string EncounterId = "encounter.moth.crossroads";
         private const string LanternMothLayerPrefix = "Lantern moth";
         private SpiritEncounterController controller;
         private SpiritEncounterView view => ContentReady.EncounterView(controller);
@@ -30,9 +30,8 @@ namespace Dice.Tests
             yield return SceneManager.LoadSceneAsync("Application");
             yield return ContentReady.Spirit(false);
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            ContentReady.SeedJourneyPrerequisites(controller, EncounterId);
-            journey = controller.JourneyCatalog.Find(EncounterId);
-            Assert.That(journey, Is.Not.Null, EncounterId);
+            journey = ContentReady.JourneyWithRule<CyclingFavoredFaceMultiplierRuleDefinition>(controller);
+            ContentReady.SeedJourneyPrerequisites(controller, journey);
             controller.ConfigureSeedPolicy(true, 60);
             yield return null;
         }
@@ -43,7 +42,7 @@ namespace Dice.Tests
         public IEnumerator MothArrivalStartsFromTheVisibleWaitingFlightOfItsLanternMoths()
         {
             int arrival = ArrivalIndex();
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             while (controller.BeatIndex < arrival - 1) controller.AdvanceJourney();
             yield return WaitForJourney();
@@ -79,7 +78,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(captureRoot);
             TestContext.WriteLine("Moth motion capture: " + captureRoot);
 
-            controller.SelectEncounter(EncounterId);
+            controller.SelectEncounter(journey);
             yield return ContentReady.Routed(controller);
             var portrait = ContentReady.Portrait();
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);

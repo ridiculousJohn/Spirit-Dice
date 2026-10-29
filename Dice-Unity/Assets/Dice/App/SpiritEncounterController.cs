@@ -13,7 +13,7 @@ namespace Dice.App
 {
     public sealed class SpiritEncounterController : MonoBehaviour, ISpiritEncounterControls, ISpiritProgressionControls, IEncounterJourneyControls, IEncounterPresenter
     {
-        private string encounterId;
+        private EncounterDefinition.Id encounterId;
         private bool useFixedSeed;
         private ulong initialSeed = EncounterApplication.DefaultSeed;
         private EncounterApplication application;
@@ -38,11 +38,11 @@ namespace Dice.App
         public string ProfilePath => progression.ProfilePath;
         public IReadOnlyList<string> ProfileUnlockedModifierIds => progression.ProfileUnlockedModifierIds;
         public IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
-        public IReadOnlyList<string> CompletedEncounterIds => progression.CompletedEncounterIds;
+        public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds => progression.CompletedEncounterIds;
         public IReadOnlyList<string> CompletedStoryIds => progression.CompletedStoryIds;
         public PlayerProfileStatus ProfileStatus => progression.Status;
-        public IReadOnlyList<string> VisitedEncounterIds => progression.VisitedEncounterIds;
-        public IReadOnlyList<string> HighlightedEncounterIds => navigation.HighlightedEncounterIds;
+        public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => progression.VisitedEncounterIds;
+        public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => navigation.HighlightedJourneys;
         public EncounterJourneyPhase JourneyPhase => navigation.JourneyPhase;
         public EncounterJourneyCatalogAsset JourneyCatalog => navigation.JourneyCatalog;
         public EncounterChapterAsset SelectedChapter => navigation.SelectedChapter;
@@ -87,7 +87,7 @@ namespace Dice.App
             ModifierPresentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
         }
 
-        internal bool Initialize(MechanicalCatalog catalog, string encounterId)
+        internal bool Initialize(MechanicalCatalog catalog, EncounterDefinition.Id encounterId)
         {
             if (Catalog != null || IsBusy) return false;
             Initialize(catalog, encounterId, SelectSeed(), SavePath);
@@ -99,7 +99,7 @@ namespace Dice.App
             application?.AttachPresenter(null);
         }
 
-        public void Initialize(MechanicalCatalog catalog, string encounterId, ulong seed, string savePath)
+        public void Initialize(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed, string savePath)
         {
             if (IsBusy) return;
             if (!PrepareProfile(savePath)) return;
@@ -199,10 +199,10 @@ namespace Dice.App
             SetJourneyStatus(SpiritStatus.None);
         }
 
-        public void SelectEncounter(string id)
+        public void SelectEncounter(EncounterJourneyAsset journey)
         {
             if (IsBusy || Catalog == null) return;
-            if (!navigation.SelectEncounter(id, JourneyProgress, out SpiritStatusKind error))
+            if (!navigation.SelectEncounter(journey, JourneyProgress, out SpiritStatusKind error))
             {
                 if (error != SpiritStatusKind.None) SetJourneyStatus(SpiritStatus.Of(error));
                 return;
@@ -230,11 +230,12 @@ namespace Dice.App
                 transition.Journey.Validate(Catalog);
                 if (!progression.PersistProfile()) { SetJourneyStatus(ProfileProblem); return; }
                 if (!ApplyJourneyRewards(transition)) return;
-                if (!progression.PersistVisit(transition.Journey.EncounterId)) { SetJourneyStatus(ProfileProblem); return; }
+                EncounterDefinition.Id selected = transition.Journey.Encounter.Identity;
+                if (!progression.PersistVisit(selected)) { SetJourneyStatus(ProfileProblem); return; }
                 ulong nextSeed = SelectSeed();
-                var next = new EncounterApplication(Catalog, transition.Journey.EncounterId, nextSeed, progression.KnownUnlockedModifiers(Catalog),
+                var next = new EncounterApplication(Catalog, selected, nextSeed, progression.KnownUnlockedModifiers(Catalog),
                     ProfileDiscoveredFamilyIds);
-                encounterId = transition.Journey.EncounterId;
+                encounterId = selected;
                 seed = nextSeed;
                 navigation.Commit(transition);
                 JourneyStatus = SpiritStatus.None;
@@ -254,7 +255,7 @@ namespace Dice.App
             SetJourneyStatus(SpiritStatus.None);
         }
 
-        public bool IsJourneyAvailable(string id) => navigation.IsJourneyAvailable(id, JourneyProgress);
+        public bool IsJourneyAvailable(EncounterJourneyAsset journey) => navigation.IsJourneyAvailable(journey, JourneyProgress);
         public bool IsChapterAvailable(string id) => navigation.IsChapterAvailable(id, JourneyProgress);
         public bool IsChapterCompleted(string id) => navigation.IsChapterCompleted(id, JourneyProgress);
 
