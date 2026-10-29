@@ -11,13 +11,13 @@ namespace Dice.App
     /** A validated campaign whose files are not currently assigned to a save slot. */
     public sealed class CampaignRecoveryInfo
     {
-        public string CampaignId { get; }
+        public Guid CampaignId { get; }
         public string ProfilePath { get; }
         public string SavePath { get; }
         public DateTime LastWriteTimeUtc { get; }
         public int SuggestedSlot { get; }
 
-        internal CampaignRecoveryInfo(string campaignId, string profilePath, string savePath, DateTime lastWriteTimeUtc, int suggestedSlot)
+        internal CampaignRecoveryInfo(Guid campaignId, string profilePath, string savePath, DateTime lastWriteTimeUtc, int suggestedSlot)
         {
             CampaignId = campaignId;
             ProfilePath = profilePath;
@@ -31,7 +31,7 @@ namespace Dice.App
     internal sealed class CampaignRecoveryStore
     {
         private const string MetadataFileName = "spirit-campaign.json";
-        /** The file name prefix of a corrupt slot index's backup copy; a campaign identifier and .json follow it. */
+        /** The file name prefix of a corrupt slot index's backup copy; a random GUID as 32 hex digits and .json follow it. */
         internal const string BackupPrefix = "spirit-slots.corrupt-";
         private const int MetadataFormatVersion = 1;
         private const int MaximumMetadataBytes = 256;
@@ -49,26 +49,27 @@ namespace Dice.App
             this.catalog = catalog;
         }
 
-        internal bool IsSafeCampaignDirectory(string id) => TryAttributes(CampaignDirectory(id), out var attributes) &&
+        internal bool IsSafeCampaignDirectory(Guid id) => TryAttributes(CampaignDirectory(id), out var attributes) &&
             (attributes & FileAttributes.Directory) != 0 && (attributes & FileAttributes.ReparsePoint) == 0;
 
-        internal List<CampaignRecoveryInfo> Scan(string[] assigned)
+        internal List<CampaignRecoveryInfo> Scan(Guid?[] assigned)
         {
             var result = new List<CampaignRecoveryInfo>();
             if (!TryAttributes(root, out _)) return result;
-            var mapped = new HashSet<string>(assigned, StringComparer.OrdinalIgnoreCase);
+            var mapped = new HashSet<Guid>();
+            foreach (var campaign in assigned)
+                if (campaign != null) mapped.Add(campaign.Value);
             foreach (string directory in Directory.GetDirectories(root))
             {
-                string id = Path.GetFileName(directory);
-                if (!IsCampaignId(id) || mapped.Contains(id)) continue;
+                if (!TryParseCampaignId(Path.GetFileName(directory), out Guid id) || mapped.Contains(id)) continue;
                 var info = ReadCampaign(id);
                 if (info != null) result.Add(info);
             }
-            result.Sort((left, right) => string.CompareOrdinal(left.CampaignId, right.CampaignId));
+            result.Sort((left, right) => left.CampaignId.CompareTo(right.CampaignId));
             return result;
         }
 
-        internal CampaignRecoveryInfo ReadCampaign(string id)
+        internal CampaignRecoveryInfo ReadCampaign(Guid id)
         {
             string directory = CampaignDirectory(id);
             if (!IsSafeCampaignDirectory(id)) return null;
@@ -94,7 +95,7 @@ namespace Dice.App
             return new CampaignRecoveryInfo(id, profile, save, written, ReadSlot(directory));
         }
 
-        internal void WriteSlot(string id, int slot)
+        internal void WriteSlot(Guid id, int slot)
         {
             string directory = CampaignDirectory(id);
             if (!TryAttributes(directory, out var attributes) || (attributes & FileAttributes.ReparsePoint) != 0)
@@ -106,7 +107,7 @@ namespace Dice.App
             SaveFileCommit.Write(path, SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented)));
         }
 
-        internal void BackfillSlot(string id, int slot)
+        internal void BackfillSlot(Guid id, int slot)
         {
             // The committed index remains usable even when auxiliary metadata cannot be repaired.
             try
@@ -118,7 +119,7 @@ namespace Dice.App
             catch (UnauthorizedAccessException) { }
         }
 
-        internal void DeleteCampaign(string id)
+        internal void DeleteCampaign(Guid id)
         {
             string directory = CampaignDirectory(id);
             if (!TryAttributes(directory, out _)) return;
@@ -136,7 +137,7 @@ namespace Dice.App
             {
                 string name = Path.GetFileName(path);
                 string id = name.Substring(BackupPrefix.Length, name.Length - BackupPrefix.Length - ".json".Length);
-                if (string.Equals(path, keep, StringComparison.OrdinalIgnoreCase) || !IsCampaignId(id)) continue;
+                if (string.Equals(path, keep, StringComparison.OrdinalIgnoreCase) || !TryParseCampaignId(id, out _)) continue;
                 try
                 {
                     if (IsRegularFile(path)) File.Delete(path);
@@ -173,16 +174,21 @@ namespace Dice.App
             catch (FileNotFoundException) { return 0; }
         }
 
-        private string CampaignDirectory(string id)
+        private string CampaignDirectory(Guid id)
         {
-            if (!IsCampaignId(id)) throw new ArgumentException("A generated campaign identifier is required.", nameof(id));
-            string path = Path.GetFullPath(Path.Combine(root, id));
+            if (id == Guid.Empty) throw new ArgumentException("A generated campaign identifier is required.", nameof(id));
+            string path = Path.GetFullPath(Path.Combine(root, FormatCampaignId(id)));
             if (!string.Equals(Path.GetDirectoryName(path), root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar), StringComparison.OrdinalIgnoreCase))
                 throw new IOException("The campaign directory is outside the save root.");
             return path;
         }
 
-        internal static bool IsCampaignId(string id) => id != null && id.Length == 32 && Guid.TryParseExact(id, "N", out Guid value) && value != Guid.Empty;
+        /** The text of a campaign identifier in its folder name and the slot index: 32 lowercase hexadecimal digits. */
+        internal static string FormatCampaignId(Guid id) => id.ToString("N");
+
+        /** Accepts only the exact text FormatCampaignId writes for a generated identifier, so the text names one folder on any file system. */
+        internal static bool TryParseCampaignId(string text, out Guid id) =>
+            Guid.TryParseExact(text, "N", out id) && id != Guid.Empty && text == FormatCampaignId(id);
 
         private static bool TryAttributes(string path, out FileAttributes attributes)
         {

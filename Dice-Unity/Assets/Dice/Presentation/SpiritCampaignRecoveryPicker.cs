@@ -12,13 +12,13 @@ namespace Dice.Presentation
         /** Characters of a campaign id shown to tell candidates apart. */
         private const int IdentifierExcerptLength = 10;
         private ISpiritMainMenuControls controls;
-        private Action<string> selectCampaign;
+        private Action<Guid> selectCampaign;
         private Action cancel;
         [SerializeField] private Button[] candidateButtons = Array.Empty<Button>();
         [SerializeField] private Text[] summaries = Array.Empty<Text>();
         [SerializeField] private Text[] details = Array.Empty<Text>();
         [SerializeField] private Text[] identifiers = Array.Empty<Text>();
-        private string[] campaignIds = Array.Empty<string>();
+        private Guid?[] campaignIds = Array.Empty<Guid?>();
         private UnityAction[] candidateSelections;
 
         [field: SerializeField] public RectTransform Root { get; private set; }
@@ -44,7 +44,7 @@ namespace Dice.Presentation
             SpiritUi.RequireWording(transform);
             if (candidateSelections == null)
             {
-                campaignIds = new string[candidateButtons.Length];
+                campaignIds = new Guid?[candidateButtons.Length];
                 candidateSelections = new UnityAction[candidateButtons.Length];
                 for (int i = 0; i < candidateSelections.Length; ++i)
                 {
@@ -66,7 +66,7 @@ namespace Dice.Presentation
             Close();
         }
 
-        public void Bind(ISpiritMainMenuControls menuControls, Action<string> onSelectCampaign, Action onCancel)
+        public void Bind(ISpiritMainMenuControls menuControls, Action<Guid> onSelectCampaign, Action onCancel)
         {
             Close();
             controls = menuControls;
@@ -101,14 +101,13 @@ namespace Dice.Presentation
                 int index = PageIndex * candidateButtons.Length + i;
                 bool visible = index < campaigns.Count;
                 candidateButtons[i].gameObject.SetActive(visible);
-                campaignIds[i] = visible ? campaigns[index].CampaignId : null;
+                campaignIds[i] = visible ? campaigns[index].CampaignId : (Guid?)null;
                 if (!visible) continue;
                 var info = campaigns[index];
                 summaries[i].text = wording.saveSlots.Progress(info.CompletedEncounters, info.CollectedCharms);
                 details[i].text = wording.recovery.SavedAt(info.LastSaved);
-                string id = info.CampaignId ?? "";
-                identifiers[i].text = wording.recovery.Identifier(info.SuggestedSlot, id.Length > IdentifierExcerptLength ? id.Substring(0, IdentifierExcerptLength) : id);
-                candidateButtons[i].interactable = !string.IsNullOrEmpty(info.CampaignId);
+                identifiers[i].text = wording.recovery.Identifier(info.SuggestedSlot,
+                    info.CampaignId.ToString("N").Substring(0, IdentifierExcerptLength));
             }
             PageLabel.text = wording.recovery.Page(PageIndex + 1, pageCount);
             PreviousPageButton.interactable = PageIndex > 0;
@@ -135,8 +134,8 @@ namespace Dice.Presentation
 
         private void SelectCandidate(int index)
         {
-            if (!IsOpen || controls == null || !controls.CanSelectSaveSlot || string.IsNullOrEmpty(campaignIds[index])) return;
-            string campaignId = campaignIds[index];
+            if (!IsOpen || controls == null || !controls.CanSelectSaveSlot || campaignIds[index] == null) return;
+            Guid campaignId = campaignIds[index].Value;
             Close();
             selectCampaign?.Invoke(campaignId);
         }

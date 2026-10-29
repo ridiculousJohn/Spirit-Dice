@@ -13,7 +13,7 @@ namespace Dice.Presentation
         private ISpiritMainMenuControls controls;
         private PickerMode mode;
         private int replacementSlot;
-        private string recoveryCampaignId;
+        private Guid? recoveryCampaignId;
         [SerializeField] private Button[] slotButtons = Array.Empty<Button>();
         [SerializeField] private Text[] slotSummaries = Array.Empty<Text>();
         private UnityAction[] slotSelections;
@@ -154,7 +154,7 @@ namespace Dice.Presentation
             }
             if (mode == PickerMode.Recover)
             {
-                if (!controls.CanSelectSaveSlot || string.IsNullOrEmpty(recoveryCampaignId)) return;
+                if (!controls.CanSelectSaveSlot || recoveryCampaignId == null) return;
                 if (!GetSlot(slot).HasSavedGame)
                 {
                     RecoverCampaign(slot);
@@ -193,9 +193,9 @@ namespace Dice.Presentation
             controls.NewGame(slot);
         }
 
-        private void ShowRecovery(string campaignId)
+        private void ShowRecovery(Guid campaignId)
         {
-            if (controls == null || !controls.CanSelectSaveSlot || string.IsNullOrEmpty(campaignId)) return;
+            if (controls == null || !controls.CanSelectSaveSlot) return;
             mode = PickerMode.Recover;
             recoveryCampaignId = campaignId;
             CloseConfirmation();
@@ -211,7 +211,7 @@ namespace Dice.Presentation
 
         private void RecoverCampaign(int slot)
         {
-            string campaignId = recoveryCampaignId;
+            Guid campaignId = recoveryCampaignId.Value;
             Close();
             controls.RecoverCampaign(campaignId, slot);
             Show(false);

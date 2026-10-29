@@ -98,7 +98,7 @@ namespace Dice.App
             if (File.Exists(controller.SavePath) && !controller.TryLoad()) ReturnWithError();
         }
 
-        public void RecoverCampaign(string campaignId, int slot)
+        public void RecoverCampaign(Guid campaignId, int slot)
         {
             if (!CanSelectSaveSlot) return;
             try

@@ -158,6 +158,7 @@ namespace Dice.Tests
         [TestCase("empty")]
         [TestCase("number")]
         [TestCase("duplicate-directory")]
+        [TestCase("uppercase-directory")]
         [TestCase("duplicate-field")]
         [TestCase("trailing")]
         [TestCase("oversized")]
@@ -189,7 +190,8 @@ namespace Dice.Tests
             if (invalid == "relative") document["campaigns"][0] = "../saves";
             if (invalid == "empty") document["campaigns"][0] = "";
             if (invalid == "number") document["campaigns"][0] = 12;
-            if (invalid == "duplicate-directory") document["campaigns"][0] = document["campaigns"][1].Value<string>().ToUpperInvariant();
+            if (invalid == "duplicate-directory") document["campaigns"][0] = document["campaigns"][1].Value<string>();
+            if (invalid == "uppercase-directory") document["campaigns"][1] = document["campaigns"][1].Value<string>().ToUpperInvariant();
             string json = document.ToString();
             if (invalid == "duplicate-field") json = json.Replace("\"activeSlot\": 2", "\"activeSlot\": 2, \"activeSlot\": 1");
             if (invalid == "trailing") json += " {}";

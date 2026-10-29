@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dice.Presentation;
@@ -90,19 +91,20 @@ namespace Dice.Tests
         public void RecoveryConfirmsOnlyBeforeUsingAnOccupiedSlot()
         {
             controls.Occupied.Add(1);
-            controls.Recoverable.Add("campaign.preserved");
+            var preserved = Guid.NewGuid();
+            controls.Recoverable.Add(preserved);
             ChooseRecoveryCandidate(0);
             Assert.That(picker.Mode, Is.EqualTo(SpiritSaveSlotPicker.PickerMode.Recover));
             picker.SlotButtons[0].onClick.Invoke();
             Assert.That(picker.IsConfirmingReplacement, Is.True);
             Assert.That(controls.Calls, Is.Empty);
             picker.ConfirmReplaceSaveButton.onClick.Invoke();
-            Assert.That(controls.Calls, Is.EqualTo(new[] { "recover campaign.preserved 1" }));
+            Assert.That(controls.Calls, Is.EqualTo(new[] { "recover " + preserved + " 1" }));
 
             ChooseRecoveryCandidate(0);
             picker.SlotButtons[1].onClick.Invoke();
             Assert.That(picker.IsConfirmingReplacement, Is.False);
-            Assert.That(controls.Calls, Is.EqualTo(new[] { "recover campaign.preserved 1", "recover campaign.preserved 2" }));
+            Assert.That(controls.Calls, Is.EqualTo(new[] { "recover " + preserved + " 1", "recover " + preserved + " 2" }));
         }
 
         /** Checks recovery paging reaches a campaign beyond the first page; fails if later campaigns cannot be chosen. */
@@ -110,8 +112,8 @@ namespace Dice.Tests
         public void RecoveryPagingReachesEveryPreservedCampaign()
         {
             for (int index = 1; index <= picker.RecoveryPicker.CandidateButtons.Count + 1; ++index)
-                controls.Recoverable.Add("campaign." + index);
-            string last = controls.Recoverable.Last();
+                controls.Recoverable.Add(Guid.NewGuid());
+            Guid last = controls.Recoverable.Last();
             picker.Show(false);
             picker.RecoverSavesButton.onClick.Invoke();
             var recovery = picker.RecoveryPicker;
@@ -191,7 +193,7 @@ namespace Dice.Tests
         private sealed class MenuControls : ISpiritMainMenuControls
         {
             public readonly HashSet<int> Occupied = new HashSet<int>();
-            public readonly List<string> Recoverable = new List<string>();
+            public readonly List<Guid> Recoverable = new List<Guid>();
             public readonly List<string> Calls = new List<string>();
             public bool CanContinueGame { get; set; }
             public bool CanOpenSavedChapter { get; set; }
@@ -207,7 +209,7 @@ namespace Dice.Tests
             public void OpenSavedChapter() => Calls.Add("chapter");
             public void SelectSaveSlot(int slot) => Calls.Add("select " + slot);
             public void NewGame(int slot) => Calls.Add("new game " + slot);
-            public void RecoverCampaign(string campaignId, int slot) => Calls.Add("recover " + campaignId + " " + slot);
+            public void RecoverCampaign(Guid campaignId, int slot) => Calls.Add("recover " + campaignId + " " + slot);
             public void ShowMainMenu() => Calls.Add("main menu");
         }
     }

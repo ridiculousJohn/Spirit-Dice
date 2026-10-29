@@ -24,7 +24,7 @@ namespace Dice.App
         private readonly string indexPath;
         private readonly CampaignRecoveryStore recovery;
         private IReadOnlyList<CampaignRecoveryInfo> recoveryCampaigns = Array.Empty<CampaignRecoveryInfo>();
-        private string[] campaigns;
+        private Guid?[] campaigns;
         private int activeSlot;
 
         public int ActiveSlot { get { RequireLoaded(); return activeSlot; } }
@@ -44,7 +44,7 @@ namespace Dice.App
         {
             string backupPath = null;
             int selected = 1;
-            string[] loaded = null;
+            Guid?[] loaded = null;
             // A missing index is rebuilt from the campaigns' slot claims, like a corrupt one but without a backup.
             try { ReadIndex(out selected, out loaded); }
             catch (FileNotFoundException) { }
@@ -57,7 +57,7 @@ namespace Dice.App
             if (loaded != null && backupPath == null)
             {
                 for (int index = 0; index < loaded.Length; ++index)
-                    if (loaded[index] != null) recovery.BackfillSlot(loaded[index], index + 1);
+                    if (loaded[index] != null) recovery.BackfillSlot(loaded[index].Value, index + 1);
                 var unresolved = recovery.Scan(loaded);
                 campaigns = loaded;
                 activeSlot = selected;
@@ -65,7 +65,7 @@ namespace Dice.App
                 return null;
             }
 
-            var initial = new string[SlotCount];
+            var initial = new Guid?[SlotCount];
             var candidates = recovery.Scan(initial);
             foreach (var candidate in candidates)
             {
@@ -105,23 +105,23 @@ namespace Dice.App
         {
             ValidateSlot(slot);
             RequireLoaded();
-            string campaign = CreateCampaignDirectory();
-            string path = Path.Combine(root, campaign, PlayerProfileFileStore.FileName);
+            Guid campaign = CreateCampaignDirectory();
+            string path = Path.Combine(root, CampaignRecoveryStore.FormatCampaignId(campaign), PlayerProfileFileStore.FileName);
             SaveFileCommit.Write(path, PlayerProfileCodec.Serialize(new PlayerProfile()));
             recovery.WriteSlot(campaign, slot);
-            string previous = campaigns[slot - 1];
-            var next = (string[])campaigns.Clone();
+            Guid? previous = campaigns[slot - 1];
+            var next = (Guid?[])campaigns.Clone();
             next[slot - 1] = campaign;
             // Publish the prepared campaign before removing the explicitly replaced campaign.
             Commit(slot, next);
             if (previous == null) return null;
-            try { recovery.DeleteCampaign(previous); }
-            catch (IOException exception) { return CleanupFailure(previous, exception); }
-            catch (UnauthorizedAccessException exception) { return CleanupFailure(previous, exception); }
+            try { recovery.DeleteCampaign(previous.Value); }
+            catch (IOException exception) { return CleanupFailure(previous.Value, exception); }
+            catch (UnauthorizedAccessException exception) { return CleanupFailure(previous.Value, exception); }
             return null;
         }
 
-        private string CleanupFailure(string previous, Exception exception)
+        private string CleanupFailure(Guid previous, Exception exception)
         {
             try
             {
@@ -137,24 +137,24 @@ namespace Dice.App
             return exception.Message;
         }
 
-        public void RecoverCampaign(string campaignId, int slot)
+        public void RecoverCampaign(Guid campaignId, int slot)
         {
             ValidateSlot(slot);
             RequireLoaded();
             CampaignRecoveryInfo candidate = null;
             foreach (var available in recoveryCampaigns)
-                if (string.Equals(available.CampaignId, campaignId, StringComparison.OrdinalIgnoreCase)) candidate = available;
+                if (available.CampaignId == campaignId) candidate = available;
             if (candidate == null) throw new ArgumentException("The campaign is not available for recovery.", nameof(campaignId));
             if (recovery.ReadCampaign(candidate.CampaignId) == null)
                 throw new FormatException("The recovery campaign no longer contains readable saves.");
-            string previous = campaigns[slot - 1];
-            var displaced = previous == null ? null : recovery.ReadCampaign(previous);
-            var next = (string[])campaigns.Clone();
+            Guid? previous = campaigns[slot - 1];
+            var displaced = previous == null ? null : recovery.ReadCampaign(previous.Value);
+            var next = (Guid?[])campaigns.Clone();
             next[slot - 1] = candidate.CampaignId;
             recovery.WriteSlot(candidate.CampaignId, slot);
             Commit(slot, next);
             var unresolved = new List<CampaignRecoveryInfo>(recoveryCampaigns);
-            unresolved.RemoveAll(value => string.Equals(value.CampaignId, candidate.CampaignId, StringComparison.OrdinalIgnoreCase));
+            unresolved.RemoveAll(value => value.CampaignId == candidate.CampaignId);
             if (displaced != null) unresolved.Add(displaced);
             recoveryCampaigns = unresolved.AsReadOnly();
         }
@@ -163,33 +163,38 @@ namespace Dice.App
         {
             ValidateSlot(slot);
             RequireLoaded();
-            string campaign = campaigns[slot - 1];
-            return campaign == null ? null : Path.Combine(root, campaign, fileName);
+            Guid? campaign = campaigns[slot - 1];
+            return campaign == null ? null : Path.Combine(root, CampaignRecoveryStore.FormatCampaignId(campaign.Value), fileName);
         }
 
-        private string CreateCampaignDirectory()
+        private Guid CreateCampaignDirectory()
         {
-            string campaign;
-            do { campaign = Guid.NewGuid().ToString("N"); }
-            while (Directory.Exists(Path.Combine(root, campaign)) || File.Exists(Path.Combine(root, campaign)));
-            Directory.CreateDirectory(Path.Combine(root, campaign));
+            Guid campaign;
+            string directory;
+            do
+            {
+                campaign = Guid.NewGuid();
+                directory = Path.Combine(root, CampaignRecoveryStore.FormatCampaignId(campaign));
+            }
+            while (Directory.Exists(directory) || File.Exists(directory));
+            Directory.CreateDirectory(directory);
             return campaign;
         }
 
-        private void Commit(int selected, string[] next)
+        private void Commit(int selected, Guid?[] next)
         {
             var document = new JObject
             {
                 [FormatVersionField] = IndexFormatVersion,
                 [ActiveSlotField] = selected,
-                [CampaignsField] = new JArray(next)
+                [CampaignsField] = new JArray(Array.ConvertAll(next, campaign => campaign == null ? null : CampaignRecoveryStore.FormatCampaignId(campaign.Value)))
             };
             SaveFileCommit.Write(indexPath, SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented)));
             campaigns = next;
             activeSlot = selected;
         }
 
-        private void ReadIndex(out int selected, out string[] loaded)
+        private void ReadIndex(out int selected, out Guid?[] loaded)
         {
             try
             {
@@ -215,16 +220,15 @@ namespace Dice.App
                     selected = (int)selectedValue;
                     if (!(document[CampaignsField] is JArray array) || array.Count != SlotCount)
                         throw new FormatException("The save slot index must contain three campaigns.");
-                    loaded = new string[SlotCount];
-                    var unique = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    loaded = new Guid?[SlotCount];
+                    var unique = new HashSet<Guid>();
                     for (int index = 0; index < SlotCount; ++index)
                     {
                         JToken value = array[index];
                         if (value.Type == JTokenType.Null) continue;
                         if (value.Type != JTokenType.String)
                             throw new FormatException("Campaign directories must be identifiers or null.");
-                        string campaign = value.Value<string>();
-                        if (!CampaignRecoveryStore.IsCampaignId(campaign) || !unique.Add(campaign))
+                        if (!CampaignRecoveryStore.TryParseCampaignId(value.Value<string>(), out Guid campaign) || !unique.Add(campaign))
                             throw new FormatException("Campaign directories must be unique generated identifiers.");
                         if (!recovery.IsSafeCampaignDirectory(campaign))
                             throw new FormatException("The indexed campaign directory is unavailable.");

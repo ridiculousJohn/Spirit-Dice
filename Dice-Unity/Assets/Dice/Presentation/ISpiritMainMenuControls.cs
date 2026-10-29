@@ -29,13 +29,13 @@ namespace Dice.Presentation
     /** Read-only presentation of a campaign awaiting a destination save slot; LastSaved is local time. */
     public readonly struct SpiritRecoveryCampaignInfo
     {
-        public string CampaignId { get; }
+        public Guid CampaignId { get; }
         public int CompletedEncounters { get; }
         public int CollectedCharms { get; }
         public DateTime LastSaved { get; }
         public int SuggestedSlot { get; }
 
-        public SpiritRecoveryCampaignInfo(string campaignId, int completedEncounters, int collectedCharms, DateTime lastSaved,
+        public SpiritRecoveryCampaignInfo(Guid campaignId, int completedEncounters, int collectedCharms, DateTime lastSaved,
             int suggestedSlot)
         {
             CampaignId = campaignId;
@@ -61,7 +61,7 @@ namespace Dice.Presentation
         void OpenSavedChapter();
         void SelectSaveSlot(int slot);
         void NewGame(int slot);
-        void RecoverCampaign(string campaignId, int slot);
+        void RecoverCampaign(Guid campaignId, int slot);
         void ShowMainMenu();
     }
 }

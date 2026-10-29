@@ -30,8 +30,8 @@ namespace Dice.Tests
         [TestCase(true)]
         public void MissingOrCorruptIndexRestoresUniqueMetadataClaims(bool corrupt)
         {
-            string first = CreateCampaign(1);
-            string third = CreateCampaign(3);
+            Guid first = CreateCampaign(1);
+            Guid third = CreateCampaign(3);
             if (corrupt) File.WriteAllText(IndexPath, "invalid index");
             var slots = new CampaignSaveSlots(root, TestContent.Catalog());
             Assert.That(slots.Load() != null, Is.EqualTo(corrupt));
@@ -46,7 +46,7 @@ namespace Dice.Tests
         [TestCase(true)]
         public void RecoverySelectsTheFirstOccupiedSlot(bool corrupt)
         {
-            string third = CreateCampaign(3);
+            Guid third = CreateCampaign(3);
             if (corrupt) File.WriteAllText(IndexPath, "invalid index");
             var slots = Load();
             Assert.That(slots.GetProfilePath(3), Is.EqualTo(ProfilePath(third)));
@@ -57,10 +57,9 @@ namespace Dice.Tests
         [Test]
         public void PublishedRunOnlyCampaignWithoutMetadataRemainsSelectable()
         {
-            string id = Guid.NewGuid().ToString("N");
-            string directory = Path.Combine(root, id);
-            Directory.CreateDirectory(directory);
-            string run = Path.Combine(directory, "spirit-encounter.json");
+            Guid id = Guid.NewGuid();
+            Directory.CreateDirectory(Path.Combine(root, id.ToString("N")));
+            string run = CampaignFile(id, "spirit-encounter.json");
             EncounterSaveFileStore.Save(run,
                 EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave());
             var slots = Load();
@@ -78,8 +77,8 @@ namespace Dice.Tests
         [Test]
         public void ReadableRunDoesNotMakeAPresentCorruptProfileRecoverable()
         {
-            string id = CreateCampaign(1);
-            EncounterSaveFileStore.Save(Path.Combine(root, id, "spirit-encounter.json"),
+            Guid id = CreateCampaign(1);
+            EncounterSaveFileStore.Save(CampaignFile(id, "spirit-encounter.json"),
                 EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave());
             File.WriteAllText(ProfilePath(id), "invalid profile");
             var slots = Load();
@@ -91,9 +90,9 @@ namespace Dice.Tests
         [Test]
         public void ConflictingClaimsAndUnmarkedCampaignsRemainSelectableAcrossRestart()
         {
-            string first = CreateCampaign(2);
-            string second = CreateCampaign(2);
-            string unmarked = CreateCampaign();
+            Guid first = CreateCampaign(2);
+            Guid second = CreateCampaign(2);
+            Guid unmarked = CreateCampaign();
             File.SetLastWriteTimeUtc(ProfilePath(first), DateTime.UtcNow.AddDays(-5));
             var slots = Load();
             Assert.That(slots.HasGame(1) || slots.HasGame(2) || slots.HasGame(3), Is.False);
@@ -105,11 +104,11 @@ namespace Dice.Tests
         [Test]
         public void ValidIndexBackfillsMissingCampaignMetadata()
         {
-            string id = CreateCampaign();
+            Guid id = CreateCampaign();
             WriteIndex(null, id, null);
             var slots = Load();
             Assert.That(slots.RecoveryCampaigns, Is.Empty);
-            Assert.That(JObject.Parse(File.ReadAllText(Path.Combine(root, id, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(2));
+            Assert.That(JObject.Parse(File.ReadAllText(CampaignFile(id, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(2));
             File.WriteAllText(IndexPath, "invalid index");
             slots.Load();
             Assert.That(slots.GetProfilePath(2), Is.EqualTo(ProfilePath(id)));
@@ -118,9 +117,9 @@ namespace Dice.Tests
         [Test]
         public void UnreadableAuxiliaryMetadataDoesNotBlockAValidAssignedIndex()
         {
-            string id = CreateCampaign(1);
+            Guid id = CreateCampaign(1);
             WriteIndex(id, null, null);
-            string metadata = Path.Combine(root, id, "spirit-campaign.json");
+            string metadata = CampaignFile(id, "spirit-campaign.json");
             using (var locked = new FileStream(metadata, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 var slots = Load();
@@ -132,14 +131,14 @@ namespace Dice.Tests
         [Test]
         public void ManualAssignmentPersistsAndKeepsTheDisplacedCampaignRecoverable()
         {
-            string occupied = CreateCampaign(1);
-            string candidate = CreateCampaign();
+            Guid occupied = CreateCampaign(1);
+            Guid candidate = CreateCampaign();
             WriteIndex(occupied, null, null);
             var slots = Load();
             var info = slots.RecoveryCampaigns.Single();
             Assert.That(info.CampaignId, Is.EqualTo(candidate));
             Assert.That(info.ProfilePath, Is.EqualTo(ProfilePath(candidate)));
-            Assert.That(info.SavePath, Is.EqualTo(Path.Combine(root, candidate, "spirit-encounter.json")));
+            Assert.That(info.SavePath, Is.EqualTo(CampaignFile(candidate, "spirit-encounter.json")));
             Assert.That(info.LastWriteTimeUtc, Is.EqualTo(File.GetLastWriteTimeUtc(info.ProfilePath)));
             slots.RecoverCampaign(candidate, 1);
             Assert.That(slots.GetProfilePath(1), Is.EqualTo(ProfilePath(candidate)));
@@ -148,14 +147,14 @@ namespace Dice.Tests
             slots = Load();
             Assert.That(slots.GetProfilePath(1), Is.EqualTo(ProfilePath(candidate)));
             Assert.That(slots.RecoveryCampaigns.Single().CampaignId, Is.EqualTo(occupied));
-            Assert.That(JObject.Parse(File.ReadAllText(Path.Combine(root, candidate, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(1));
+            Assert.That(JObject.Parse(File.ReadAllText(CampaignFile(candidate, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(1));
         }
 
         [Test]
         public void FailedManualAssignmentKeepsTheCommittedMappingAndAllCampaignFiles()
         {
-            string occupied = CreateCampaign(1);
-            string candidate = CreateCampaign();
+            Guid occupied = CreateCampaign(1);
+            Guid candidate = CreateCampaign();
             WriteIndex(occupied, null, null);
             var slots = Load();
             byte[] index = File.ReadAllBytes(IndexPath);
@@ -171,9 +170,9 @@ namespace Dice.Tests
         [Test]
         public void RecoveryRevalidatesTheChosenCampaignAndRejectsUnknownIdentifiers()
         {
-            string candidate = CreateCampaign();
+            Guid candidate = CreateCampaign();
             var slots = Load();
-            Assert.Throws<ArgumentException>(() => slots.RecoverCampaign("../outside", 1));
+            Assert.Throws<ArgumentException>(() => slots.RecoverCampaign(Guid.NewGuid(), 1));
             Assert.Throws<ArgumentOutOfRangeException>(() => slots.RecoverCampaign(candidate, 4));
             File.WriteAllText(ProfilePath(candidate), "invalid profile");
             Assert.Throws<FormatException>(() => slots.RecoverCampaign(candidate, 1));
@@ -183,11 +182,11 @@ namespace Dice.Tests
         [Test]
         public void InvalidProfileOrPresentInvalidRunIsPreservedWithoutAssignment()
         {
-            string invalidProfile = CreateCampaign(1);
-            string invalidRun = CreateCampaign(2);
-            string valid = CreateCampaign(3);
+            Guid invalidProfile = CreateCampaign(1);
+            Guid invalidRun = CreateCampaign(2);
+            Guid valid = CreateCampaign(3);
             File.WriteAllText(ProfilePath(invalidProfile), "invalid profile");
-            string runPath = Path.Combine(root, invalidRun, "spirit-encounter.json");
+            string runPath = CampaignFile(invalidRun, "spirit-encounter.json");
             File.WriteAllText(runPath, "invalid run");
             var slots = Load();
             Assert.That(slots.HasGame(1), Is.False);
@@ -203,7 +202,7 @@ namespace Dice.Tests
         {
             var slots = Load();
             slots.StartNewGame(2);
-            string candidate = CreateCampaign();
+            Guid candidate = CreateCampaign();
             byte[] index = File.ReadAllBytes(IndexPath);
             using (var locked = new FileStream(ProfilePath(candidate), FileMode.Open, FileAccess.Read, FileShare.None))
                 Assert.Throws<IOException>(() => slots.Load());
@@ -229,7 +228,7 @@ namespace Dice.Tests
         [Test]
         public void RecoveryAndNewGameLeaveUnresolvedAndForeignDirectoriesUntouched()
         {
-            string unresolved = CreateCampaign();
+            Guid unresolved = CreateCampaign();
             string foreign = Path.Combine(root, "unrelated-data");
             Directory.CreateDirectory(foreign);
             File.WriteAllText(Path.Combine(foreign, "keep.txt"), "keep");
@@ -303,7 +302,7 @@ namespace Dice.Tests
             Assert.That(slots.StartNewGame(1), Is.Not.Null);
             Assert.That(Path.GetDirectoryName(slots.GetProfilePath(1)), Is.Not.EqualTo(previous));
             Assert.That(Directory.Exists(previous), Is.True);
-            Assert.That(slots.RecoveryCampaigns.Single().CampaignId, Is.EqualTo(Path.GetFileName(previous)));
+            Assert.That(slots.RecoveryCampaigns.Single().CampaignId, Is.EqualTo(Guid.ParseExact(Path.GetFileName(previous), "N")));
             Assert.That(File.ReadAllText(sentinel), Is.EqualTo("keep"));
         }
 
@@ -369,21 +368,27 @@ namespace Dice.Tests
             }
         }
 
-        private string CreateCampaign(int slot = 0)
+        private Guid CreateCampaign(int slot = 0)
         {
-            string id = Guid.NewGuid().ToString("N");
-            Directory.CreateDirectory(Path.Combine(root, id));
+            Guid id = Guid.NewGuid();
+            Directory.CreateDirectory(Path.Combine(root, id.ToString("N")));
             File.WriteAllBytes(ProfilePath(id), PlayerProfileCodec.Serialize(new PlayerProfile()));
             if (slot != 0)
-                File.WriteAllText(Path.Combine(root, id, "spirit-campaign.json"),
+                File.WriteAllText(CampaignFile(id, "spirit-campaign.json"),
                     new JObject { ["formatVersion"] = 1, ["slot"] = slot }.ToString());
             return id;
         }
 
-        private string ProfilePath(string id) => Path.Combine(root, id, "spirit-profile.json");
+        private string CampaignFile(Guid id, string fileName) => Path.Combine(root, id.ToString("N"), fileName);
 
-        private void WriteIndex(params string[] campaigns) => File.WriteAllText(IndexPath,
-            new JObject { ["formatVersion"] = 1, ["activeSlot"] = 1, ["campaigns"] = new JArray(campaigns) }.ToString());
+        private string ProfilePath(Guid id) => CampaignFile(id, "spirit-profile.json");
+
+        private void WriteIndex(params Guid?[] campaigns) => File.WriteAllText(IndexPath, new JObject
+        {
+            ["formatVersion"] = 1,
+            ["activeSlot"] = 1,
+            ["campaigns"] = new JArray(campaigns.Select(id => id?.ToString("N")).ToArray())
+        }.ToString());
 
         private CampaignSaveSlots Load()
         {
