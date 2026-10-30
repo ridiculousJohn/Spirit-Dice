@@ -192,7 +192,7 @@ namespace Dice.Tests
             return created;
         }
 
-        /** A playback host with the encounter's controls and no host portrait, journey, rule cards or ambient activity. */
+        /** A playback host with the encounter's controls and no host portrait, journey, rule cards, ambient activity or figures. */
         private sealed class PlaybackHost : ISpiritScorePlaybackHost
         {
             public readonly List<Resolution> Finished = new List<Resolution>();
@@ -211,6 +211,7 @@ namespace Dice.Tests
             public void SetOpeningOpacity(float opacity) { }
             public void ShowEnding() { }
             public void RecordScore(ScoreBreakdown score) { }
+            public void PlayOutcome(EncounterOutcome outcome) { }
             public void FinishPresentation(Resolution resolution) => Finished.Add(resolution);
         }
 

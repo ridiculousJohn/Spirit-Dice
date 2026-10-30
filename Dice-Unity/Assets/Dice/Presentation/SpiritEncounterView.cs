@@ -63,6 +63,8 @@ namespace Dice.Presentation
         [Tooltip("Scene transforms for the table's ambient prop actors; empty when the encounter authors none.")]
         [SerializeField] private List<EncounterAmbientPropBinding> ambientProps = new List<EncounterAmbientPropBinding>();
         private EncounterAmbientActivity ambientActivity;
+        [Tooltip("Scene figures that play an authored clip for the encounter's outcome; empty when the table scene authors none.")]
+        [SerializeField] private List<EncounterOutcomeAnimation> outcomeAnimations = new List<EncounterOutcomeAnimation>();
         // Presenters of the configured table's rules for the encounter they were created for; null when no rule card references one.
         private EncounterRulePresenters rulePresenters;
         // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
@@ -81,6 +83,8 @@ namespace Dice.Presentation
         public RawImage TableImage => tableImage;
         public EncounterTablePresentationAsset TablePresentation => tablePresentation;
         public IReadOnlyList<SpiritTablePieceView> TablePieces => tablePieces;
+        /** Scene figures told the encounter's outcome as it is presented. */
+        public IReadOnlyList<EncounterOutcomeAnimation> OutcomeAnimations => outcomeAnimations;
         /** Scene lighting of the configured table, which the play-mode testing controls address; null before a table is configured. */
         public EncounterTableLighting TableLighting => tableLighting;
 
@@ -307,6 +311,11 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The encounter screen requires five authored dice targets.");
             foreach (var button in diceButtons)
                 if (button == null) throw new InvalidOperationException("An authored dice target is missing.");
+            foreach (var figure in outcomeAnimations)
+            {
+                if (figure == null) throw new InvalidOperationException("The encounter screen " + name + " lists a missing outcome animation.");
+                figure.Validate();
+            }
             SpiritUi.RequireWording(transform);
             GameplayHud.BuildHeader(portrait, ToggleMenu);
             GameplayHud.BuildPlayingPanel();
@@ -635,7 +644,13 @@ namespace Dice.Presentation
             scorePlayback?.CancelRoll();
             presenting = false;
             presentationSnapshot = null;
-            if (resetHost) hostPortrait?.ResetPose();
+            if (resetHost)
+            {
+                hostPortrait?.ResetPose();
+                // A figure unloaded with its scene before the screen has nothing to reset.
+                foreach (var figure in outcomeAnimations)
+                    if (figure != null) figure.ResetToIdle();
+            }
             // Leaving play for the journey lets the ambient activity settle; every other reset ends it at rest.
             if (resetHost) ambientActivity?.Stop();
             else ambientActivity?.Settle();
@@ -723,6 +738,11 @@ namespace Dice.Presentation
         void ISpiritScorePlaybackHost.SetDiceSelection(int mask) => SetDiceSelection(mask);
         void ISpiritScorePlaybackHost.SetOpeningOpacity(float opacity) => SetOpeningOpacity(opacity);
         void ISpiritScorePlaybackHost.RecordScore(ScoreBreakdown score) => lastScore = score;
+
+        void ISpiritScorePlaybackHost.PlayOutcome(EncounterOutcome outcome)
+        {
+            foreach (var figure in outcomeAnimations) figure.Play(outcome);
+        }
 
         void ISpiritScorePlaybackHost.HideRewardsAndEnding()
         {

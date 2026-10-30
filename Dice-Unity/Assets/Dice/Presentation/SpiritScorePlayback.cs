@@ -26,6 +26,8 @@ namespace Dice.Presentation
         void SetOpeningOpacity(float opacity);
         void ShowEnding();
         void RecordScore(ScoreBreakdown score);
+        /** Tells the table scene's figures the outcome of the encounter whose ending is being presented. */
+        void PlayOutcome(EncounterOutcome outcome);
         void FinishPresentation(Resolution resolution);
     }
 
@@ -95,6 +97,7 @@ namespace Dice.Presentation
             if (resolution.Snapshot.Phase == EncounterPhase.Completed)
             {
                 host.Ambient?.End(resolution.Snapshot.Outcome);
+                host.PlayOutcome(resolution.Snapshot.Outcome);
                 endingView.Render(resolution.Snapshot, host.Journey?.SelectedJourney,
                     SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds, Wording));
                 yield return endingView.Present(host.Host, host.SetOpeningOpacity, host.ShowEnding,

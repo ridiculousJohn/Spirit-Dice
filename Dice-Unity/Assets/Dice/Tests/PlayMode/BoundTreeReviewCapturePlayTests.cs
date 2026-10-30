@@ -24,9 +24,11 @@ namespace Dice.Tests
      * marked and bound dice at once, the gold selection beside a bound die and on a marked die, and the table after Play
      * Hand once the bindings have released. It writes PNGs under DICE_SPIRIT_CAPTURE_ROOT and is ignored without it; it is a capture, not a regression test.
      * A second capture shows the stage 3 charms introduction over the stage 3 charm offer at 540 x 960 and 443 x 960, then the offer
-     * after Continue, under DICE_SPIRIT_CAPTURE_ROOT/stage3-intro. The fixture is explicit: it runs only when a run selects
-     * it by name, never in a run of the whole suite. The binding behaviour it shows is tested by
-     * DieBindingPresentationPlayTests, the introduction by EncounterCharmsIntroductionPlayTests.
+     * after Continue, under DICE_SPIRIT_CAPTURE_ROOT/stage3-intro. A third capture loses the encounter's first hand and shows
+     * the nymph mid-flinch and then back in her sob after the flinch, under DICE_SPIRIT_CAPTURE_ROOT/defeat-flinch. The
+     * fixture is explicit: it runs only when a run selects it by name, never in a run of the whole suite. The binding
+     * behaviour it shows is tested by DieBindingPresentationPlayTests, the introduction by
+     * EncounterCharmsIntroductionPlayTests, the outcome animation by EncounterOutcomeAnimationTests.
      */
     [Explicit("Review capture tool; select it by name with DICE_SPIRIT_CAPTURE_ROOT set.")]
     [Category("Capture")]
@@ -167,6 +169,54 @@ namespace Dice.Tests
             yield return EncounterCharmsIntroductionPlayTests.AssertOfferCovered(view, false);
             yield return Capture(root, "b-stage3-offer-after-continue-" + Width + "x" + Height + ".png");
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator BoundTreeDefeatFlinchCapture()
+        {
+            string root = Environment.GetEnvironmentVariable("DICE_SPIRIT_CAPTURE_ROOT");
+            if (string.IsNullOrEmpty(root)) Assert.Ignore("Review capture only; set DICE_SPIRIT_CAPTURE_ROOT to write it.");
+            root = Path.Combine(root, "defeat-flinch");
+            Assert.That(Directory.Exists(root), Is.False, "Capture output must be fresh.");
+            Directory.CreateDirectory(root);
+
+            yield return SceneManager.LoadSceneAsync("Application");
+            yield return ContentReady.Spirit(false);
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
+            var mechanical = LosingFirstHand(controller.Catalog, journey.Encounters.First().Identity);
+            Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
+                controller.JourneyStatus.ToString());
+            yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);
+            var view = ContentReady.EncounterView(controller);
+            var nymph = view.OutcomeAnimations.Single();
+
+            controller.PlayHand();
+            yield return ContentReady.WaitUntil(() => nymph.IsPlayingOutcome, "The nymph flinches on defeat.", ContentReady.SequenceTimeout);
+            Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Lost));
+            // Into the flinch's held peak, which NymphFlinch.anim keeps from 0.12 s to 0.58 s.
+            yield return new WaitForSecondsRealtime(.3f);
+            yield return Capture(root, "a-defeat-mid-flinch.png");
+            yield return ContentReady.WaitUntil(() => !nymph.IsPlayingOutcome, "The flinch plays once.", ContentReady.SequenceTimeout);
+            // Into the sob that continues under the flinch and after it.
+            yield return new WaitForSecondsRealtime(1f);
+            yield return Capture(root, "b-defeat-after-flinch-sob.png");
+            yield return WaitIdle(controller);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /** A copy of the catalog in which the encounter's first stage has one hand and a target no hand reaches, so playing it loses. */
+        private static MechanicalCatalog LosingFirstHand(MechanicalCatalog authored, EncounterDefinition.Id encounterId)
+        {
+            var definition = authored.GetEncounter(encounterId);
+            var losing = new EncounterDefinition(definition.Identity,
+                definition.Stages.Select((stage, index) => index == 0
+                    ? new StageDefinition(1000000, 1, stage.StartingRerolls, stage.ExitBehavior) : stage),
+                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
+                definition.UnlockMilestones, definition.EncounterModifierIds,
+                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
+            return new MechanicalCatalog("bound-tree-defeat-capture.v1", authored.Hands,
+                authored.Encounters.Select(value => value.Identity == definition.Identity ? losing : value), authored.Modifiers);
         }
 
         /** Sizes the portrait to the given width at the authoring height. */
