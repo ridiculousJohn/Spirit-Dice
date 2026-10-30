@@ -317,10 +317,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 8400000, guid: 09369e975323105429be208ebf2ee218, type: 2}
     - target: {fileID: 6748815316298513384, guid: 79f23dd05b115f548ba889e2dd85bf52, type: 3}
-      propertyPath: roomTexture
-      value: 
-      objectReference: {fileID: 2800000, guid: 040d019fb84746198c82fb7749d72601, type: 3}
-    - target: {fileID: 6748815316298513384, guid: 79f23dd05b115f548ba889e2dd85bf52, type: 3}
       propertyPath: hostPortrait
       value: 
       objectReference: {fileID: 1925849858}

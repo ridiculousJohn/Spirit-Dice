@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: modifier.play_hand.never.rerolls
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a4809a433d068c54189945b5e2aeb77d, type: 2}
-  displayName: Sleeping Stone / Rerolls
+  displayName: Sleeping Stone
   conditionTemplate: Never activates.

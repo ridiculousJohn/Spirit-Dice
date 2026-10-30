@@ -279,11 +279,13 @@ class Prefab:
 def author(name,folder_name,width,spacing,scale,style,pitch,composition,distance=10):
     destination=BASE/folder_name
     wood_tint=(1,.96,.89) if style=='fox' else ((.55,.47,.35) if style=='moth' else (.46,.48,.47))
-    dark_tint=(.63,.52,.40) if style=='fox' else ((.30,.28,.23) if style=='moth' else (.32,.35,.35))
+    dark_tint=(.30,.28,.23) if style=='moth' else (.32,.35,.35)
     surface_kind=1 if style=='fox' else (8 if style=='moth' else 7)
     grain=(8,5,18,0) if style=='fox' else (1,1,1,0)
     wood=material(destination,name+'Wood',wood_tint,surface_kind,11,grain)
-    dark=material(destination,name+'DarkWood',dark_tint,surface_kind,37,grain)
+    dark=None
+    if style!='fox':
+        dark=material(destination,name+'DarkWood',dark_tint,surface_kind,37,grain)
     metal=material(destination,name+('Brass' if style=='fox' else 'Iron'),
                    (.66,.43,.16) if style=='fox' else (.18,.20,.22),3,19)
     felt=None

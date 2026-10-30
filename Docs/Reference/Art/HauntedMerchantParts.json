@@ -117,7 +117,6 @@
           "renderMask": "MerchantHeadCompleteMask.png",
           "renderMaskGuid": "ddd1c2dae8c34f2bbd42701ea782b552",
           "renderMaskFilter": "Bilinear",
-          "mesh": "MerchantHeadMesh.asset",
           "shapes": ["Nod", "Tilt"],
           "motion": "Rigid face and hat above a lower-neck blend over source y730..760; full nod moves the face approximately ten native pixels."
         },
@@ -244,7 +243,6 @@
           ],
           "maskGuid": "876f7ddd5777ea72265cb7972de86aae",
           "materialGuid": "ad3f76e09f486f1e3d194233ccd948e8",
-          "mesh": "MerchantRestingArmMesh.asset",
           "shapes": ["Lift"],
           "motionPivot": [570, 955],
           "motion": "Upper shoulder remains fixed; lower forearm lifts about seven native pixels at the hand with a y860..920 blend."
@@ -443,7 +441,6 @@
           "renderMask": "MerchantSupportingForearmAnimationMask.png",
           "renderMaskGuid": "f74b8c1271b44cc983a8e21ff2bd4510",
           "renderMaskFilter": "Bilinear",
-          "mesh": "MerchantSupportingArmMesh.asset",
           "shapes": ["Release"],
           "motionPivot": [165, 924],
           "motion": "Bare hand and forearm rotate rigidly to the elbow, with cuff flex over y940..980. Reaction hand release is approximately 31 native pixels; combined idle and gesture rotation remains within eight screen degrees. Upper sleeve renders in static Torso."

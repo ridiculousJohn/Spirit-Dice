@@ -678,9 +678,6 @@ MonoBehaviour:
   modifierSelectedColor: {r: 1.12, g: 1.08, b: 0.82, a: 1}
   handColor: {r: 0.101960786, g: 0.15686275, b: 0.1254902, a: 0.84313726}
   handSelectedColor: {r: 0.16862746, g: 0.25490198, b: 0.19215687, a: 1}
-  titleColor: {r: 0.965, g: 0.906, b: 0.745, a: 1}
-  selectedTitleColor: {r: 0.824, g: 0.651, b: 0.345, a: 1}
-  handLevelColor: {r: 0.749, g: 0.733, b: 0.635, a: 1}
   <Button>k__BackingField: {fileID: 115767824223368626}
 --- !u!222 &2517984317907117207
 CanvasRenderer:

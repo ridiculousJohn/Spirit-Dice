@@ -49,7 +49,6 @@ MonoBehaviour:
   renderRoot: {fileID: 8051287026557288389}
   renderCamera: {fileID: 6743757386215684746}
   geometry: {fileID: 6144667862822075294}
-  light: {fileID: 6794087612272435721}
 --- !u!1 &761746081155058301
 GameObject:
   m_ObjectHideFlags: 0

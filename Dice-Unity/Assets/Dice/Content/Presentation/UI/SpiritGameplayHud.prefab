@@ -81,7 +81,6 @@ MonoBehaviour:
   portrait: {fileID: 2276031064286471458}
   <DiceTrayFrame>k__BackingField: {fileID: 8129790601908033355}
   <DiceTrayImage>k__BackingField: {fileID: 3653656540349259077}
-  diceTrayFrame: {fileID: 8129790601908033355}
   rerollEncounterRuleGroup: {fileID: 3244202056910847514}
   rerollEncounterRuleLabel: {fileID: 8489556161143010273}
   rerollEncounterRuleIcon: {fileID: 4982453443002004762}

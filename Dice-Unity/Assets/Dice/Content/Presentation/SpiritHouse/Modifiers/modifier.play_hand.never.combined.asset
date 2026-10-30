@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: modifier.play_hand.never.combined
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 0a641797fd9e44c4fb75e2e152d28d42, type: 2}
-  displayName: Sleeping Stone / Base + Mult
+  displayName: Sleeping Stone
   conditionTemplate: Never activates.

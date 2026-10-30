@@ -128,7 +128,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c761e12fb9184fc4a7697d4bd3f3c85a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyView
-  sequence: {fileID: 7142558474522418972}
   artwork: {fileID: 2216929401910939101}
   background: {fileID: 3758076260723764314}
   foreground: {fileID: 7477350097592912315}
@@ -140,12 +139,10 @@ MonoBehaviour:
   narrative: {fileID: 6791697952761309280}
   narrativeScroll: {fileID: 4595136711438639182}
   ruleHeading: {fileID: 790218025232126042}
-  ruleScope: {fileID: 5410954663444192254}
   invitationRulePrefab: {fileID: 6944307953543385193, guid: 652e7f29df2e3334aaf5104b739c0729, type: 3}
   invitationSection: {fileID: 5461668366109232143}
   invitationRulesRoot: {fileID: 5996617263422851356}
   charmDetail: {fileID: 8652615148325879093}
-  charmIconRoot: {fileID: 5321032832293503042}
   charmIcon: {fileID: 2484446725149627609}
   charmName: {fileID: 2571998751754525679}
   charmEffect: {fileID: 6734681882252534588}

@@ -2678,9 +2678,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c8046a4d802c4aa9a69c6d579c17ad41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritEncounterView
-  roomTexture: {fileID: 0}
   tablePresentation: {fileID: 0}
-  uiTheme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
   <GameplayHud>k__BackingField: {fileID: 7264475943120696788}
   <RewardsPanel>k__BackingField: {fileID: 8694808668177316413}
   <EncounterCharmsIntroduction>k__BackingField: {fileID: 846402103365709119}
@@ -2693,16 +2691,12 @@ MonoBehaviour:
   canvas: {fileID: 3955674382443750106}
   safeArea: {fileID: 7034531704444395453}
   portrait: {fileID: 7933117846715117231}
-  diceTrayFrame: {fileID: 1888980411233909113}
-  trayImage: {fileID: 6364067402564629367}
   endingPanel: {fileID: 4637851513589102787}
   menuPanel: {fileID: 1801505774480075361}
   handRanksPanel: {fileID: 7710116189638323059}
   hostPortrait: {fileID: 0}
-  mainMenuButton: {fileID: 5796936815703639846}
   roomImage: {fileID: 3569424527262013457}
   tableImage: {fileID: 1370378555788206615}
-  menuTitle: {fileID: 8967921711744586143}
   endingView: {fileID: 5569225309624585007}
   collectionView: {fileID: 974795576611316879}
   encounterAudio: {fileID: 8134371657336994496}
@@ -2720,8 +2714,6 @@ MonoBehaviour:
   - {fileID: 669383634185450594}
   - {fileID: 2603349642466351742}
   - {fileID: 1768753039503764962}
-  profileSummary: {fileID: 3962896631759396489}
-  soundButton: {fileID: 2973417510317468865}
   diceButtons:
   - {fileID: 5045414400957992940}
   - {fileID: 6922108192556909119}
