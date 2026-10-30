@@ -32,8 +32,9 @@ MonoBehaviour:
   - rid: 1123138610053513267
   - rid: 1123138610053513268
   - rid: 1123138610053513269
-  completionClueTitle: Toward the smoke
-  completionClueText: The traveler went deeper into the swamp, toward the smoke. A woman lives there who keeps things, and whatever she knows, she will want something for it.
+  - rid: 1123138610053513270
+  clueBeat:
+    rid: 1123138610053513270
   completionReward: {fileID: 0}
   followUpJourneys: []
   requiredCompletedJourneys:
@@ -273,3 +274,16 @@ MonoBehaviour:
           artwork: {fileID: 0}
           audioCue: {fileID: 0}
         encounterCharmsIntroductionText: It keeps what it takes. So build on what it keeps.
+    - rid: 1123138610053513270
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Toward the smoke
+        text: The traveler went deeper into the swamp, toward the smoke. A woman lives there who keeps things, and whatever she knows, she will want something for it.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}

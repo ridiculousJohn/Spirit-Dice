@@ -66,6 +66,17 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void ClueBeatMustBeOneOfTheJourneysBeats()
+        {
+            var story = Journey("story.first");
+            SyntheticUi.Set(story, "clueBeat", story.Beats[0]);
+            Assert.That(story.ClueBeat, Is.SameAs(story.Beats[0]));
+            Assert.DoesNotThrow(() => Catalog(story).Validate(catalog));
+            SyntheticUi.Set(story, "clueBeat", new DialogueBeat());
+            Assert.That(Assert.Throws<FormatException>(() => Catalog(story).Validate(catalog)).Message, Does.Contain(story.name));
+        }
+
+        [Test]
         public void MechanicalJourneyRetainsItsEncounterIdentityAndInvitation()
         {
             var encounter = EncounterJourney();

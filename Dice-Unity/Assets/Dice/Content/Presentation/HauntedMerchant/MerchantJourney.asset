@@ -28,8 +28,9 @@ MonoBehaviour:
   - rid: 1123138610053513253
   - rid: 1123138610053513254
   - rid: 1123138610053513255
-  completionClueTitle: Dry ground by the great tree
-  completionClueText: The traveler left the road and entered the swamp, heading for the dry ground around the great tree. The merchant knows the way through.
+  - rid: 1123138610053513256
+  clueBeat:
+    rid: 1123138610053513256
   completionReward: {fileID: 0}
   followUpJourneys:
   - {fileID: 11400000, guid: 7e4f59fd9c7d6f0458fd325dfa7627b6, type: 2}
@@ -206,3 +207,16 @@ MonoBehaviour:
           artwork: {fileID: 0}
           audioCue: {fileID: 0}
         encounterCharmsIntroductionText: 
+    - rid: 1123138610053513256
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Dry ground by the great tree
+        text: The traveler left the road and entered the swamp, heading for the dry ground around the great tree. The merchant knows the way through.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}

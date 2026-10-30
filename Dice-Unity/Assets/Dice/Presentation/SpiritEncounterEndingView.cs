@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace Dice.Presentation
 {
-    /** Presents the host's farewell before the encounter's clue and unlock summary. */
+    /** Presents the host's farewell before the encounter's summary and unlocks. */
     public sealed class SpiritEncounterEndingView : MonoBehaviour
     {
         private enum EndingPhase { Hidden, PendingSummary, Holding, Reaction, Fading, Dialogue, Summary }
@@ -18,8 +18,6 @@ namespace Dice.Presentation
         [SerializeField] private ScrollRect scroll;
         [SerializeField] private Text title;
         [SerializeField] private Text detail;
-        [SerializeField] private Text clueTitle;
-        [SerializeField] private Text clueText;
         [SerializeField] private Text unlockTitle;
         [SerializeField] private Text unlocks;
         [SerializeField] private RectTransform artworkFrame;
@@ -48,7 +46,7 @@ namespace Dice.Presentation
             SpiritUi.RequireWording(transform);
             if (returnToTrail == null) throw new ArgumentNullException(nameof(returnToTrail));
             if (Root == null || panel == null || content == null || scroll == null || title == null || detail == null ||
-                clueTitle == null || clueText == null || unlockTitle == null || unlocks == null || artworkFrame == null ||
+                unlockTitle == null || unlocks == null || artworkFrame == null ||
                 artwork == null || artworkAspect == null || returnButton == null || retryButton == null ||
                 dialogueContinueButton == null || skipButton == null)
                 throw new InvalidOperationException("The encounter ending requires authored UI references.");
@@ -247,13 +245,6 @@ namespace Dice.Presentation
                 detail.text = wording.Summary(presentation == null ? FarewellText : null, snapshot.TotalScore);
             detail.fontSize = dialogue ? detailDialogueSize : detailSummarySize;
             detail.gameObject.SetActive(!string.IsNullOrWhiteSpace(detail.text));
-            // The clue comes with the journey's completion, which a win brings when the Encounter beat is the last beat.
-            bool clue = summary && snapshot.Outcome == EncounterOutcome.Won && beat != null &&
-                journey.Beats[journey.Beats.Count - 1] == beat;
-            clueTitle.text = clue ? journey.CompletionClueTitle : "";
-            clueText.text = clue ? journey.CompletionClueText : "";
-            clueTitle.gameObject.SetActive(!string.IsNullOrWhiteSpace(clueTitle.text));
-            clueText.gameObject.SetActive(!string.IsNullOrWhiteSpace(clueText.text));
             unlocks.text = summary ? unlockSummary : "";
             bool hasUnlocks = !string.IsNullOrWhiteSpace(unlocks.text);
             unlockTitle.gameObject.SetActive(hasUnlocks);

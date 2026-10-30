@@ -56,9 +56,10 @@ namespace Dice.Tests
 
         /**
          * Checks, on one encounter journey, that the final milestone offer precedes the victory, the host plays its
-         * authored victory motion before the dialogue, the summary shows the clue and every permanent unlock earned in
-         * the run (including milestones restored from a save), every journey this victory makes available is marked
-         * as a new lead, and a replay inherits the unlocks. Fails if any of these does not happen.
+         * authored victory motion before the dialogue, the summary shows every permanent unlock earned in the run
+         * (including milestones restored from a save), the journey continues through the beats after its Encounter beat
+         * to the board, every journey this victory makes available is marked as a new lead, and a replay inherits the
+         * unlocks. Fails if any of these does not happen.
          */
         [UnityTest]
         public IEnumerator VictoryPlaysHostMotionThenDialogueBeforeShowingClueUnlocksAndNewLeads()
@@ -144,7 +145,6 @@ namespace Dice.Tests
             {
                 Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(journey.SpiritName), journey.name);
                 Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(Ending(journey).VictoryText), journey.name);
-                Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
                 view.Refresh();
                 Assert.That(Find<Button>("EndingDialogueContinueButton").gameObject.activeInHierarchy, Is.True,
                     "Refreshing the same result must retain the current dialogue.");
@@ -152,8 +152,6 @@ namespace Dice.Tests
                 yield return null;
             }
             Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(Ending(journey).VictoryTitle), journey.name);
-            Assert.That(Find<Text>("EndingClueTitle").text, Is.EqualTo(journey.CompletionClueTitle), journey.name);
-            Assert.That(Find<Text>("EndingClueText").text, Is.EqualTo(journey.CompletionClueText), journey.name);
             Assert.That(Find<Button>("EndingRetryButton").gameObject.activeInHierarchy, Is.False, journey.name);
             foreach (var unlocked in unlockDefinitions)
             {
@@ -170,6 +168,17 @@ namespace Dice.Tests
             Click("EndingNewRunButton");
             yield return ContentReady.Routed(controller);
             yield return null;
+            // A win continues with the beats after the Encounter beat; continuing from the last completes the journey.
+            for (int beat = journey.IndexOfEncounter(journey.Encounters.First().Identity) + 1; beat < journey.Beats.Count; ++beat)
+            {
+                Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence), journey.name);
+                Assert.That(controller.BeatIndex, Is.EqualTo(beat), journey.name);
+                yield return ContentReady.WaitUntil(() => !view.JourneyView.IsAnimating, journey.name + " beat " + beat,
+                    ContentReady.SequenceTimeout);
+                Click("JourneyAdvanceButton");
+                yield return ContentReady.Routed(controller);
+                yield return null;
+            }
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation), journey.name);
             Assert.That(controller.CompletedEncounterIds, Does.Contain(journey.Encounters.First().Identity), journey.name);
             Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).CompletedEncounterIds, Does.Contain(journey.Encounters.First().Identity),
@@ -260,7 +269,6 @@ namespace Dice.Tests
                 yield return null;
             }
             Assert.That(Find<Text>("EndingTitle").text, Is.EqualTo(Ending(journey).DefeatTitle), journey.name);
-            Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
             Assert.That(controller.CompletedEncounterIds, Is.EquivalentTo(initialCompletedEncounterIds), journey.name);
             Click("EndingRetryButton");
             yield return ContentReady.Routed();
@@ -289,7 +297,7 @@ namespace Dice.Tests
 
         /**
          * Checks, on one encounter journey, that abandoning plays the host's authored farewell state, shows the abandon
-         * text without the defeat title, a retry or a clue, and returns to the board without a completion, a resumable
+         * text without the defeat title or a retry, and returns to the board without a completion, a resumable
          * run or a highlighted lead. Fails if any of these does not hold.
          */
         [UnityTest]
@@ -321,7 +329,6 @@ namespace Dice.Tests
                 Assert.That(Find<Text>("EndingDetail").text, Is.EqualTo(Ending(journey).AbandonText), journey.name);
             Assert.That(Find<Text>("EndingTitle").text, Is.Not.EqualTo(Ending(journey).DefeatTitle), journey.name);
             Assert.That(Find<Button>("EndingRetryButton").gameObject.activeInHierarchy, Is.False, journey.name);
-            Assert.That(Find<Text>("EndingClueTitle").gameObject.activeInHierarchy, Is.False, journey.name);
             Click("EndingNewRunButton");
             yield return ContentReady.Routed();
             yield return null;

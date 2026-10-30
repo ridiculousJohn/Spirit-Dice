@@ -38,8 +38,9 @@ namespace Dice.Presentation
         [SerializeField, TextArea] private string leadText;
         [SerializeField] private Texture2D cardArtwork;
         [SerializeReference, SelectImplementation] private EncounterJourneyBeat[] beats = Array.Empty<EncounterJourneyBeat>();
-        [SerializeField] private string completionClueTitle;
-        [SerializeField, TextArea] private string completionClueText;
+        [Tooltip("The beat whose title and text are the clue the board shows once the journey is completed; one of the " +
+            "journey's beats. Empty when the journey has no clue.")]
+        [SerializeReference] private EncounterJourneyBeat clueBeat;
         [SerializeField] private ProgressionRewardAsset completionReward;
         [SerializeField] private EncounterJourneyAsset[] followUpJourneys = Array.Empty<EncounterJourneyAsset>();
         [SerializeField] private EncounterJourneyAsset[] requiredCompletedJourneys = Array.Empty<EncounterJourneyAsset>();
@@ -51,8 +52,8 @@ namespace Dice.Presentation
         public string LeadText => leadText;
         public Texture2D CardArtwork => cardArtwork;
         public IReadOnlyList<EncounterJourneyBeat> Beats => beats;
-        public string CompletionClueTitle => completionClueTitle;
-        public string CompletionClueText => completionClueText;
+        /** The beat whose title and text are the journey's clue, one of its beats; null when the journey has none. */
+        public EncounterJourneyBeat ClueBeat => clueBeat;
         /** Applied when the journey completes, with the clue. */
         public ProgressionRewardAsset CompletionReward => completionReward;
         /** The leads the board highlights after an encounter of the journey is first won. */
@@ -123,6 +124,8 @@ namespace Dice.Presentation
             for (int index = 0; index < beats.Length; ++index)
                 if (beats[index] == null) throw new FormatException("Beat " + index + " of the journey " + name + " is empty.");
             if (beats[0].Scene == null) throw new FormatException("The first beat of the journey " + name + " must set a scene.");
+            if (clueBeat != null && Array.IndexOf(beats, clueBeat) < 0)
+                throw new FormatException("The clue beat of the journey " + name + " must be one of its beats.");
             for (int index = 0; index < beats.Length; ++index) beats[index].Validate(this, index, catalog);
         }
 

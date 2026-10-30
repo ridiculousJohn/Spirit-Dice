@@ -25,8 +25,9 @@ MonoBehaviour:
   - rid: 1123138610053513220
   - rid: 1123138610053513221
   - rid: 1123138610053513222
-  completionClueTitle: The watchtower above the marsh
-  completionClueText: The missing traveler crossed the marsh toward the old watchtower before dawn. Climb the steps and find the watcher.
+  - rid: 1123138610053513223
+  clueBeat:
+    rid: 1123138610053513223
   completionReward: {fileID: 0}
   followUpJourneys:
   - {fileID: 11400000, guid: 85a75b59e31c4b169bddb725c4402003, type: 2}
@@ -163,3 +164,16 @@ MonoBehaviour:
           artwork: {fileID: 0}
           audioCue: {fileID: 0}
         encounterCharmsIntroductionText: 
+    - rid: 1123138610053513223
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The watchtower above the marsh
+        text: The missing traveler crossed the marsh toward the old watchtower before dawn. Climb the steps and find the watcher.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}

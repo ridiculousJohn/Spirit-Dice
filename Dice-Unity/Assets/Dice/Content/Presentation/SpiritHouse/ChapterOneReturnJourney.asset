@@ -24,8 +24,9 @@ MonoBehaviour:
   - rid: 1123138610053513243
   - rid: 1123138610053513244
   - rid: 1123138610053513245
-  completionClueTitle: Chapter 1 complete
-  completionClueText: The traveler is alive beyond the old bridge. The fox's gifts are yours. You are ready for the next crossing, in Chapter 2.
+  - rid: 1123138610053513246
+  clueBeat:
+    rid: 1123138610053513246
   completionReward: {fileID: 11400000, guid: e0348ba120f24b89987fbe2e4c031691, type: 2}
   followUpJourneys: []
   requiredCompletedJourneys:
@@ -104,6 +105,19 @@ MonoBehaviour:
         title: Chapter 1 complete
         text: The traveler is alive. You know where the old road crosses the boundary, and the fox has helped you prepare. The next chapter lies beyond the bridge.
         continueLabel: Return to the trail
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513246
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Chapter 1 complete
+        text: The traveler is alive beyond the old bridge. The fox's gifts are yours. You are ready for the next crossing, in Chapter 2.
+        continueLabel: 
         duration: 1
         hostState: 0
         audioCue: {fileID: 0}

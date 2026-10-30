@@ -26,8 +26,9 @@ MonoBehaviour:
   - rid: 1123138610053513237
   - rid: 1123138610053513238
   - rid: 1123138610053513239
-  completionClueTitle: Alive beyond the boundary
-  completionClueText: The moth spoke with the traveler and witnessed their crossing. Beyond the old bridge's far arch, the road vanished. Return to the fox with their message.
+  - rid: 1123138610053513240
+  clueBeat:
+    rid: 1123138610053513240
   completionReward: {fileID: 0}
   followUpJourneys:
   - {fileID: 11400000, guid: e774c29f8c2e411b953f9dfca49d077b, type: 2}
@@ -178,3 +179,16 @@ MonoBehaviour:
           artwork: {fileID: 0}
           audioCue: {fileID: 0}
         encounterCharmsIntroductionText: 
+    - rid: 1123138610053513240
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Alive beyond the boundary
+        text: The moth spoke with the traveler and witnessed their crossing. Beyond the old bridge's far arch, the road vanished. Return to the fox with their message.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}

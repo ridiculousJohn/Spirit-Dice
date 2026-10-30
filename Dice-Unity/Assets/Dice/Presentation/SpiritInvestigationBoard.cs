@@ -132,11 +132,11 @@ namespace Dice.Presentation
                 string state = visited ? wording.visitedLead : completed ? wording.readAgain : wording.followLead;
                 card.Bind(journey.CardArtwork, journey.LocationTitle, journey.LeadText, "", state,
                     highlighted, highlighted, true, () => controls.SelectEncounter(selected));
-                if (completed && !string.IsNullOrWhiteSpace(journey.CompletionClueText))
+                if (completed && journey.ClueBeat != null)
                 {
                     var discovered = Instantiate(completionCluePrefab, Content, false);
                     clueCards.Add(discovered.gameObject);
-                    discovered.Bind(journey.CompletionClueTitle, journey.CompletionClueText);
+                    discovered.Bind(journey.ClueBeat.Title, journey.ClueBeat.Text);
                 }
             }
             return firstHighlight;

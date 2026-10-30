@@ -45,6 +45,28 @@ namespace Dice.Tests
                 Is.EqualTo(new[] { open.LocationTitle }));
         }
 
+        /** Checks a completed journey shows a clue card with its clue beat's title and text; fails if a journey without a clue beat shows one or the card shows other text. */
+        [Test]
+        public void BoardShowsACompletedJourneysClueFromItsClueBeat()
+        {
+            var withClue = Journey("encounter.clue");
+            var withoutClue = Journey("encounter.plain");
+            TestJourneys.SetBeats(withClue, null, withClue.Beats.Append(new DialogueBeat()).ToArray());
+            TestJourneys.SetBeat(withClue, 2, "title", "The far shore");
+            TestJourneys.SetBeat(withClue, 2, "text", "The traveler crossed at dawn.");
+            SyntheticUi.Set(withClue, "clueBeat", withClue.Beats[2]);
+            var chapter = Chapter("chapter.selected", withClue, withoutClue);
+            controls.JourneyCatalog = Catalog(chapter);
+            controls.SelectedChapter = chapter;
+            controls.CompletedJourneyIds = new[] { withClue.Identity, withoutClue.Identity };
+
+            var board = BuildBoard();
+            board.Render(controls, null, true, false);
+            Assert.That(board.Content.GetComponentsInChildren<SpiritCompletionClue>(true)
+                .Select(clue => clue.GetComponentsInChildren<Text>(true).Select(label => label.text).ToArray()),
+                Is.EqualTo(new[] { new[] { "The far shore", "The traveler crossed at dawn." } }));
+        }
+
         /** Checks the selector lets only available chapters be chosen and closes on a choice; fails if a locked chapter is choosable or the selector stays open. */
         [Test]
         public void SelectorOffersOnlyAvailableChaptersAndClosesOnAChoice()
@@ -83,7 +105,18 @@ namespace Dice.Tests
             SyntheticUi.Set(board, "<ChapterSelector>k__BackingField", BuildSelector(boardRoot));
             SyntheticUi.Set(board, "chapterLabel", ui.Label(boardRoot, "ChapterLabel"));
             SyntheticUi.Set(board, "clueCardPrefab", CardTemplate(ui.Root));
+            SyntheticUi.Set(board, "completionCluePrefab", CompletionClueTemplate(ui.Root));
             return board;
+        }
+
+        // A completion clue template outside every list, like the card template.
+        private SpiritCompletionClue CompletionClueTemplate(Transform parent)
+        {
+            var clueRoot = ui.Rect(parent, "CompletionClueTemplate");
+            var clue = clueRoot.gameObject.AddComponent<SpiritCompletionClue>();
+            SyntheticUi.Set(clue, "title", ui.Label(clueRoot, "Title"));
+            SyntheticUi.Set(clue, "description", ui.Label(clueRoot, "Description"));
+            return clue;
         }
 
         private SpiritChapterSelector BuildSelector(Transform parent)
