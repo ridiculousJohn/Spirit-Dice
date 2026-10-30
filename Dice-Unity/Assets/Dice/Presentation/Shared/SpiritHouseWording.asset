@@ -350,7 +350,6 @@ MonoBehaviour:
     followLead: FOLLOW THIS LEAD
     visitedLead: VISITED - RETURN TO THE TABLE
     mainMenuButton: Main menu
-    loadButton: Load saved encounter
   chapters:
     locked: LOCKED
     current: CURRENT

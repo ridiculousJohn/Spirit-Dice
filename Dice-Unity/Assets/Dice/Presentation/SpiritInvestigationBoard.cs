@@ -19,7 +19,6 @@ namespace Dice.Presentation
         [SerializeField] private SpiritJourneyCard clueCardPrefab;
         [SerializeField] private SpiritCompletionClue completionCluePrefab;
         private Action resume;
-        private Action load;
         private Action openCollection;
 
         [field: SerializeField] public RectTransform Root { get; private set; }
@@ -34,10 +33,9 @@ namespace Dice.Presentation
         [field: SerializeField] public Button ChapterButton { get; private set; }
         [field: SerializeField] public SpiritChapterSelector ChapterSelector { get; private set; }
 
-        public void Build(Action resume, Action load, Action openCollection)
+        public void Build(Action resume, Action openCollection)
         {
             if (resume == null) throw new ArgumentNullException(nameof(resume));
-            if (load == null) throw new ArgumentNullException(nameof(load));
             if (openCollection == null) throw new ArgumentNullException(nameof(openCollection));
             if (Root == null || Title == null || Description == null || Scroll == null || Content == null ||
                 Status == null || ResumeButton == null || LoadButton == null || CollectionButton == null ||
@@ -46,7 +44,6 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The investigation board requires authored UI references.");
             SpiritUi.RequireWording(transform);
             this.resume = resume;
-            this.load = load;
             this.openCollection = openCollection;
             ResumeButton.onClick.RemoveListener(Resume);
             ResumeButton.onClick.AddListener(Resume);
@@ -59,9 +56,10 @@ namespace Dice.Presentation
             ChapterSelector.Build();
         }
 
+        /** The board's Load button opens the main menu, where saved encounters are loaded. */
         public void BindMainMenu(ISpiritMainMenuControls menu)
         {
-            mainMenuControls = menu;
+            mainMenuControls = menu ?? throw new ArgumentNullException(nameof(menu));
         }
 
         /** Clue cards rebuild when forced or when availability, visits, highlights, or completions change. */
@@ -107,10 +105,8 @@ namespace Dice.Presentation
             renderedCatalog = catalog;
             Status.text = SpiritStatusText.Describe(controls.JourneyStatus, wording.status);
             ResumeButton.gameObject.SetActive(controls.CanResume);
-            bool hasMainMenu = mainMenuControls != null;
-            SpiritUi.SetButtonLabel(LoadButton, hasMainMenu ? wording.investigation.mainMenuButton : wording.investigation.loadButton);
-            LoadButton.interactable = hasMainMenu ? encounter == null || !encounter.IsBusy :
-                encounter != null && !encounter.IsBusy;
+            SpiritUi.SetButtonLabel(LoadButton, wording.investigation.mainMenuButton);
+            LoadButton.interactable = encounter == null || !encounter.IsBusy;
             CollectionButton.interactable = collectionAvailable;
         }
 
@@ -148,11 +144,7 @@ namespace Dice.Presentation
         }
 
         private void Resume() => resume?.Invoke();
-        private void Load()
-        {
-            if (mainMenuControls != null) mainMenuControls.ShowMainMenu();
-            else load?.Invoke();
-        }
+        private void Load() => mainMenuControls.ShowMainMenu();
         private void OpenCollection() => openCollection?.Invoke();
         private void OpenChapters()
         {

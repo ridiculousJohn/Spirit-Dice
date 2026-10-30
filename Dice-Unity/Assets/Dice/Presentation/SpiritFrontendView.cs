@@ -17,12 +17,13 @@ namespace Dice.Presentation
         public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journeyControls,
             ISpiritMainMenuControls menuControls)
         {
+            if (menuControls == null) throw new ArgumentNullException(nameof(menuControls));
             Unbind();
             encounter = encounterControls;
             journey = journeyControls;
             MainMenu.Build();
             MainMenu.Bind(menuControls);
-            Board.Build(journey.ResumeEncounter, encounter.Load, ShowCollection);
+            Board.Build(journey.ResumeEncounter, ShowCollection);
             Board.BindMainMenu(menuControls);
             Collection.Build(Collection.Hide);
             encounter.StateChanged += Refresh;

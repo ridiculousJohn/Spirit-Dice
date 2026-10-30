@@ -1028,7 +1028,6 @@ namespace Dice.Presentation
             public string followLead;
             public string visitedLead;
             public string mainMenuButton;
-            public string loadButton;
 
             public string ChapterProgress(int chapter) => SpiritWordingTemplate.Fill(chapterProgress, "chapter", chapter);
 
@@ -1041,7 +1040,6 @@ namespace Dice.Presentation
                 check.Text(followLead, nameof(followLead));
                 check.Text(visitedLead, nameof(visitedLead));
                 check.Text(mainMenuButton, nameof(mainMenuButton));
-                check.Text(loadButton, nameof(loadButton));
             }
         }
 

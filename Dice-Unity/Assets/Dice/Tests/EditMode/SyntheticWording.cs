@@ -272,7 +272,6 @@ namespace Dice.Tests
             investigation.followLead = "<investigation.followLead>";
             investigation.visitedLead = "<investigation.visitedLead>";
             investigation.mainMenuButton = "<investigation.mainMenuButton>";
-            investigation.loadButton = "<investigation.loadButton>";
 
             var chapters = w.chapters;
             chapters.locked = "<chapters.locked>";
