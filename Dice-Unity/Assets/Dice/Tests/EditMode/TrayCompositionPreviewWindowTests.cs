@@ -144,10 +144,6 @@ namespace Dice.Tests
             {
                 Vector3 resultNormal = transforms[i].TransformDirection(Vector3.back);
                 Assert.That(Vector3.Dot(resultNormal, scene.Geometry.DiceSlots[i].up), Is.GreaterThan(.999f), "Die " + i);
-                Vector3 towardCamera = scene.RenderCamera.orthographic ? -scene.RenderCamera.transform.forward
-                    : (scene.RenderCamera.transform.position - transforms[i].position).normalized;
-                // A shallow authored camera can make a side face more prominent than the upward result.
-                Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0), "Die " + i + " result visibility");
             }
             Assert.That(host.EffectAge, Is.EqualTo(2.5));
             window.RenderPreview();

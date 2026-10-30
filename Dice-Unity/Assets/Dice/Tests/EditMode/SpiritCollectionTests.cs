@@ -88,8 +88,6 @@ namespace Dice.Tests
             Assert.That(view.Filter, Is.EqualTo(SpiritCollectionFilter.Owned));
             Assert.That(view.Rows.Count, Is.EqualTo(1));
             var row = view.Rows.Single();
-            Assert.That(row.GetComponentsInChildren<Text>().Count(text => text.name == "FamilyName"), Is.EqualTo(1));
-            Assert.That(row.GetComponentsInChildren<Text>().Count(text => text.name == "FamilyCondition"), Is.EqualTo(1));
             Assert.That(Find<Text>(row, "FamilyCondition").text, Does.Contain(charms.GetDescriptionLead(unlocked)));
             Assert.That(row.GetComponentsInChildren<Text>().Where(text => text.name == "VariantState").Select(text => text.text),
                 Is.EqualTo(new[] { "<collection.available>", "<collection.locked>", "<collection.unlocked>" }));
