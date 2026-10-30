@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b4e11f130266e6d44b1ba1180933194c, type: 2}
   displayName: Quiet Grove / Rerolls
-  icon: {fileID: 21300000, guid: b19db761df472b14ba0e59be235b6f5d, type: 3}
   conditionTemplate: No die shows {parameter} or {secondaryParameter}.

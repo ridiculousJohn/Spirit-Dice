@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 12f84913e92769748ba4573cba564eb4, type: 2}
   displayName: Boundary Stone / Base + Mult
-  icon: {fileID: 21300000, guid: 7d54e29219cc574598487ac6f0e2536f, type: 3}
   conditionTemplate: Smallest or largest face equals hands remaining + 1 in the evaluation context.

@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3b12467cb8ea0e6498eaf7664e6d7e16, type: 2}
   displayName: Counting Lantern / Base
-  icon: {fileID: 21300000, guid: f5449072bed15678883d4e095da3592a, type: 3}
   conditionTemplate: Die 3 equals the number of odd faces.

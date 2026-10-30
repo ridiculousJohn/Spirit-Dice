@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2479f8c1c97b52247ae72585ee7ca62c, type: 2}
   displayName: Low Roof / Base + Mult
-  icon: {fileID: 21300000, guid: 63ca1f4174ad57a4afc8af5769785f8a, type: 3}
   conditionTemplate: Largest face is at most rerolls remaining.

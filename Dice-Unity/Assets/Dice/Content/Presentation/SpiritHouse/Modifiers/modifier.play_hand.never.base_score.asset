@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: db3d1d79bec7b5b4cb61a393742a03e4, type: 2}
   displayName: Sleeping Stone / Base
-  icon: {fileID: 21300000, guid: e4dfb2c9fcfb52c48e0129b1e2fbc0ff, type: 3}
   conditionTemplate: Never activates.

@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 1a73984e262e5c54f9f65d53ac25eef1, type: 2}
   displayName: Turning Wheel / Base + Mult
-  icon: {fileID: 21300000, guid: 027a69377ff95fc8b16f34324ae0ac6e, type: 3}
   conditionTemplate: Every die has been rerolled at least once this hand.

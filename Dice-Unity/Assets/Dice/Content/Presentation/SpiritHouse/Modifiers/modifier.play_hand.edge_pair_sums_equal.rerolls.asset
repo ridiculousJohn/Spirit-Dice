@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 31369d75ffec7b0458619f147a8e9d91, type: 2}
   displayName: Balanced Scales / Rerolls
-  icon: {fileID: 21300000, guid: ed2ed3bcc40457f0a15e5cd692d2b0c2, type: 3}
   conditionTemplate: Dice 1 + 2 equal dice 4 + 5.

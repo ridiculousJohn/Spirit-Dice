@@ -328,159 +328,235 @@ MonoBehaviour:
     category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}
   - effects: 
     category: {fileID: 11400000, guid: c3f2a82aa177a62459b4ea2c4e79b96c, type: 2}
-  familyWording:
+  families:
   - family: {fileID: 11400000, guid: 1099eae1ed344ad4d8ffaea3413c1123, type: 2}
     name: Open Gate
+    icon: {fileID: 21300000, guid: a1f4804bbf9753938db337d18a05f5d9, type: 3}
   - family: {fileID: 11400000, guid: 2126fc8efd2f38744906ef6572f1f278, type: 2}
     name: Welcoming Pair
+    icon: {fileID: 21300000, guid: 976a31b8b892b8144a3d410d055f9e0b, type: 3}
   - family: {fileID: 11400000, guid: ac9f75a6aed785c429dd24108a36e517, type: 2}
     name: Rising Sun
+    icon: {fileID: 21300000, guid: a13dbc3cdf8c545da3adb9114fb74c60, type: 3}
   - family: {fileID: 11400000, guid: 36664f84193508a41a58bed5bfd97c3f, type: 2}
     name: Evening Bell
+    icon: {fileID: 21300000, guid: d291a3800c1f5629be46be05142a1bd2, type: 3}
   - family: {fileID: 11400000, guid: dedd772da411b474eacbc2be43f21e8d, type: 2}
     name: Midday Shade
+    icon: {fileID: 21300000, guid: 3fffba4a7cb05bd4a95173f06b84147e, type: 3}
   - family: {fileID: 11400000, guid: 48de8f622d2a0fc4b84317296ab52466, type: 2}
     name: Spare Candle
+    icon: {fileID: 21300000, guid: f1149d7f4502532094c863c456cf317b, type: 3}
   - family: {fileID: 11400000, guid: 4517d9cf6eb44c44abd192c2c37270ac, type: 2}
     name: Last Ember
+    icon: {fileID: 21300000, guid: 2a976a11f77250f89155bc204da452de, type: 3}
   - family: {fileID: 11400000, guid: 92527cd3ee1eb384bb61dbf31be896bf, type: 2}
     name: Close Branches
+    icon: {fileID: 21300000, guid: 804de957606e5517bcea17e6faf6950d, type: 3}
   - family: {fileID: 11400000, guid: f469276432174f14d8a1710ff89bdf6e, type: 2}
     name: Mixed Pebbles
+    icon: {fileID: 21300000, guid: a1954908afb45448aadd77a30f4764c2, type: 3}
   - family: {fileID: 11400000, guid: 2bd5e7500e0c8af4ca10bb1c25ad7dd2, type: 2}
     name: Braided Cord
+    icon: {fileID: 21300000, guid: 61db2b803ce55e438bfa8bc4fe9efdd1, type: 3}
   - family: {fileID: 11400000, guid: ea1d4c217d40525448d88d335d9b8978, type: 2}
     name: Woven Mat
+    icon: {fileID: 21300000, guid: b2e9561858f75029a2cc5dbf33814613, type: 3}
   - family: {fileID: 11400000, guid: bcf0a3e08e64b424d898c543f1c0de3b, type: 2}
     name: Grafted Branch
+    icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   - family: {fileID: 11400000, guid: bfe9d32a8729f3e40a61a4ab4890c659, type: 2}
     name: One Spark
+    icon: {fileID: 21300000, guid: 04716263b8fa23e45b2c132d2556751e, type: 3}
   - family: {fileID: 11400000, guid: 3b02df1d11f5ae54b9396a7a89f3b619, type: 2}
     name: Stored Acorn
+    icon: {fileID: 21300000, guid: 876771b626965e719b777d73a1b4a861, type: 3}
   - family: {fileID: 11400000, guid: cc7f74bbc4b88bf47a7ae43cf6dbb204, type: 2}
     name: Tall Pine
+    icon: {fileID: 21300000, guid: 0939cdbdbf88547a959f4cbc54778a45, type: 3}
   - family: {fileID: 11400000, guid: fdf2fe1882ef8374fb3c364b95fbe2ba, type: 2}
     name: Twin Footprints
+    icon: {fileID: 21300000, guid: 0e2114e4dbd658b6b20628c7b9f42ce8, type: 3}
   - family: {fileID: 11400000, guid: 22cc9a4d75dd5a3408954e3d3b8a6404, type: 2}
     name: Balanced Scales
+    icon: {fileID: 21300000, guid: ed2ed3bcc40457f0a15e5cd692d2b0c2, type: 3}
   - family: {fileID: 11400000, guid: f6a098122f7878b4694f4075bdf6b247, type: 2}
     name: Two Gateposts
+    icon: {fileID: 21300000, guid: 8d405e5a27e35f0c83358a641000d63d, type: 3}
   - family: {fileID: 11400000, guid: 868f977f43310db4399ceb1099ce6ab8, type: 2}
     name: Gatekeeper's Bowl
+    icon: {fileID: 21300000, guid: 10eb5672133e57068f2fd242479096d6, type: 3}
   - family: {fileID: 11400000, guid: 4526ffd83e644f946a6e477e7c2d7b91, type: 2}
     name: Strong Fence
+    icon: {fileID: 21300000, guid: de8bc03a5fcf501c9907caf21e2be568, type: 3}
   - family: {fileID: 11400000, guid: 55e83ec3876eda64f9f70cb064f0d91d, type: 2}
     name: Echoing Bells
+    icon: {fileID: 21300000, guid: 580b083597035912a89e7f0aede6613e, type: 3}
   - family: {fileID: 11400000, guid: 1bfe919232cb12846a3e1a29706fbcb0, type: 2}
     name: Turning Wheel
+    icon: {fileID: 21300000, guid: 027a69377ff95fc8b16f34324ae0ac6e, type: 3}
   - family: {fileID: 11400000, guid: e4e05aa38f66f594c861700bd24b8050, type: 2}
     name: Solitary Blossom
+    icon: {fileID: 21300000, guid: 20e759c998545a349dda79437898907d, type: 3}
   - family: {fileID: 11400000, guid: 321a59622f851724cb426e8ef6efcfbd, type: 2}
     name: Boundary Stone
+    icon: {fileID: 21300000, guid: 7d54e29219cc574598487ac6f0e2536f, type: 3}
   - family: {fileID: 11400000, guid: e89b13b5136b2dd4aa5d774063477e71, type: 2}
     name: Marked Stepping Stone
+    icon: {fileID: 21300000, guid: 8c43c6591c315a548f0a5e14069ac1e9, type: 3}
   - family: {fileID: 11400000, guid: e6deb7958253bdc4695670dc65735007, type: 2}
     name: Lantern Seekers
+    icon: {fileID: 21300000, guid: a447bed290b620c4dae2d62b1adeb903, type: 3}
   - family: {fileID: 11400000, guid: 792cf9de5176adc489ba84c8079256b3, type: 2}
     name: Paired Gloves
+    icon: {fileID: 21300000, guid: 8e1b1c5390e5556eb0d3a34da3c2fa34, type: 3}
   - family: {fileID: 11400000, guid: d00fcb4c70279d84cadc3ab94dfccc8c, type: 2}
     name: Lone Mountain
+    icon: {fileID: 21300000, guid: 58020fe66d555849b6f4af60fc79838e, type: 3}
   - family: {fileID: 11400000, guid: 4b7d9a4c0dc7a4e4b94d884301883d81, type: 2}
     name: Nestled Twins
+    icon: {fileID: 21300000, guid: a02087bed68851f689d87efdfc151fb6, type: 3}
   - family: {fileID: 11400000, guid: 90ed2242c025c954e9c27268211af52d, type: 2}
     name: Hollow Reed
+    icon: {fileID: 21300000, guid: 3f960d25a9fc5e42896b8e365bc252ad, type: 3}
   - family: {fileID: 11400000, guid: cae1554d8ed886b498cfeb68855c1482, type: 2}
     name: Joined Roots
+    icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   - family: {fileID: 11400000, guid: 52cfce392db9a5c4ea4ae6b8a3ee26cb, type: 2}
     name: Sheltering Branch
+    icon: {fileID: 21300000, guid: 158835fc5c015dcba2f79e6a60e18882, type: 3}
   - family: {fileID: 11400000, guid: 181a5ae66ed814f47a6d978d6704a326, type: 2}
     name: Bundled Reeds
+    icon: {fileID: 21300000, guid: c26105a247a75d8b9128774b40fef374, type: 3}
   - family: {fileID: 11400000, guid: 0082012c0b1d91448bc21c5c82f94536, type: 2}
     name: Measured Bundle
+    icon: {fileID: 21300000, guid: 326aebd9010b5f06a77b99ad76b87f12, type: 3}
   - family: {fileID: 11400000, guid: 86f1a7fcc5b34ed41a68ff578c47b5d0, type: 2}
     name: Low Roof
+    icon: {fileID: 21300000, guid: 63ca1f4174ad57a4afc8af5769785f8a, type: 3}
   - family: {fileID: 11400000, guid: f18ae0c4e5062b44f96720352eae10ad, type: 2}
     name: Counting Lantern
+    icon: {fileID: 21300000, guid: f5449072bed15678883d4e095da3592a, type: 3}
   - family: {fileID: 11400000, guid: 86fdc0a72782bbd49bfc56bf0d9c00a9, type: 2}
     name: Gathered Ferns
+    icon: {fileID: 21300000, guid: a0603af9c8b4575c94569b0593c9414b, type: 3}
   - family: {fileID: 11400000, guid: a99b67c6a3ec5844583caae4d93428dc, type: 2}
     name: Lone Watcher
+    icon: {fileID: 21300000, guid: 0763a593b113c224aa5cacee813ad7e3, type: 3}
   - family: {fileID: 11400000, guid: cf0b44ef7333b34479501c4aac1cf9db, type: 2}
     name: Worn Pebble
+    icon: {fileID: 21300000, guid: 149e681a96d95333b9233900d8426b04, type: 3}
   - family: {fileID: 11400000, guid: eae10bb6593c7da40a2ab7bfd8aacb96, type: 2}
     name: Sleeping Stone
+    icon: {fileID: 21300000, guid: e4dfb2c9fcfb52c48e0129b1e2fbc0ff, type: 3}
   - family: {fileID: 11400000, guid: 4a05af4b0c0f6c54e97d080e2a19dd1e, type: 2}
     name: Unturned Leaf
+    icon: {fileID: 21300000, guid: 03ef151ca207597eb2e85402a53c5543, type: 3}
   - family: {fileID: 11400000, guid: 38f1105b18a3fe949be438c5034aaf1d, type: 2}
     name: Quiet Grove
+    icon: {fileID: 21300000, guid: b19db761df472b14ba0e59be235b6f5d, type: 3}
   - family: {fileID: 11400000, guid: 560edf3fcb9b58b428640986f3ea4263, type: 2}
     name: Uneven Scales
+    icon: {fileID: 21300000, guid: f7b146c6dd12538885319e6199c3ce11, type: 3}
   - family: {fileID: 11400000, guid: ed4b0af5c54e49e4a96b27e759090601, type: 2}
     name: Stepping Stones
+    icon: {fileID: 21300000, guid: 266518f03e4c5849b5535605b8d82dd4, type: 3}
   - family: {fileID: 11400000, guid: d3b4a439cd12c3648a7e4fa5e46a0115, type: 2}
     name: Empty Cup
+    icon: {fileID: 21300000, guid: b8f2f6564b2051cb8460efbd5b3abbf8, type: 3}
   - family: {fileID: 11400000, guid: 86b67ad2585408641bacd39c13edfdad, type: 2}
     name: Spare Beads
+    icon: {fileID: 21300000, guid: 7270284106975186b72b3e638a456af5, type: 3}
   - family: {fileID: 11400000, guid: fe2bc84a6c119ff49bede7e8f4726e4a, type: 2}
     name: Wide Valley
+    icon: {fileID: 21300000, guid: 370bbad52bff57c8a2ca042c0bca0114, type: 3}
   - family: {fileID: 11400000, guid: 851428006cfb4ee4a823bbbcaf27001b, type: 2}
     name: Narrow Bridge
+    icon: {fileID: 21300000, guid: edfeb47ece3c5f25812f625104752942, type: 3}
   - family: {fileID: 11400000, guid: 84bddac9bfdad664b8df87d34a111ee4, type: 2}
     name: Climbing Vine
+    icon: {fileID: 21300000, guid: 50b329c50d695a1bb47514b6bb64ca45, type: 3}
   - family: {fileID: 11400000, guid: 0699bba82f3c4524a8718bb70793e436, type: 2}
     name: Descending Stream
+    icon: {fileID: 21300000, guid: f74e87086cb457a48c5762ffd335f2e2, type: 3}
   - family: {fileID: 11400000, guid: 1211f4554118b8c4fa4a03fb8c44a741, type: 2}
     name: Returning Echo
+    icon: {fileID: 21300000, guid: be89a1a6b5275b5b956eb1f1f1210b5a, type: 3}
   - family: {fileID: 11400000, guid: 802e23181fd7c1748a685b2e1b63ecc3, type: 2}
     name: Full Seed Pouch
+    icon: {fileID: 21300000, guid: b40fc5c56b205965b2238706a796c978, type: 3}
   - family: {fileID: 11400000, guid: 9fc27001f11749145ab8066e57355041, type: 2}
     name: Patient Mill
+    icon: {fileID: 21300000, guid: f6a239815302542a9c132513d020106a, type: 3}
   - family: {fileID: 11400000, guid: 5c513ad32cd643943a690f6045ba2413, type: 2}
     name: Matching Shells
+    icon: {fileID: 21300000, guid: 06aa714b13e95edd89d136c1ab0a84ed, type: 3}
   - family: {fileID: 11400000, guid: 89afd29bfb76ee54aa7eb0a69ccce774, type: 2}
     name: Crossed Beams
+    icon: {fileID: 21300000, guid: e7094dad924e572b8d5900c77ad8ca99, type: 3}
   - family: {fileID: 11400000, guid: a5de7e5498534004e8b6a5f0777f9105, type: 2}
     name: Counted Coins
+    icon: {fileID: 21300000, guid: cb65c031339e54d5b1c61bb59d290e6b, type: 3}
   - family: {fileID: 11400000, guid: f704e8141cc5a514d867f42dcc34ec8a, type: 2}
     name: Full Basket
+    icon: {fileID: 21300000, guid: 12dfd240b92051fba41eafd0771acb79, type: 3}
   - family: {fileID: 11400000, guid: 19a798ebe214e4a47bea2a4f8d85e031, type: 2}
     name: Light Basket
+    icon: {fileID: 21300000, guid: 30d7001f8467517eb875a26ee8e028a7, type: 3}
   - family: {fileID: 11400000, guid: 4cb2089189ed18041862491417c64b16, type: 2}
     name: Draining Bowl
+    icon: {fileID: 21300000, guid: 99fcd3a9b9ed5818ae7c1e187ae1c66c, type: 3}
   - family: {fileID: 11400000, guid: 357dee333f898bf42a0349e6fe81ce7b, type: 2}
     name: Unbroken Stone
+    icon: {fileID: 21300000, guid: 79c79fce36445b5f94a2b4048e4f815a, type: 3}
   - family: {fileID: 11400000, guid: 406b24cd7f794654ca7ccb24b15fa8d2, type: 2}
     name: Great Oak
+    icon: {fileID: 21300000, guid: 63d45ee2bc1c5cbc83d4434ac87978b5, type: 3}
   - family: {fileID: 11400000, guid: fae17c1bf307826478cf0109bd50d689, type: 2}
     name: Twin Knots
+    icon: {fileID: 21300000, guid: 8bea5845137ea5b4b89e99ed74e09dce, type: 3}
   - family: {fileID: 11400000, guid: 9dd3551dea8f91e4a81624ae54fa59c4, type: 2}
     name: Polished Shells
+    icon: {fileID: 21300000, guid: 27c4baf8116c5af79f531c14e4f33f63, type: 3}
   - family: {fileID: 11400000, guid: 10941da6ab5644742b704ac8d815cb30, type: 2}
     name: Leaping Stones
+    icon: {fileID: 21300000, guid: dfb21e9dcfb05b699ffbb5a7f3e34295, type: 3}
   - family: {fileID: 11400000, guid: ff337a712cf7c5d43bbb4255c2b0ae34, type: 2}
     name: Single Firefly
+    icon: {fileID: 21300000, guid: 67362e19221f5bb1b5044eb3fc2569f2, type: 3}
   - family: {fileID: 11400000, guid: f7f2616c096f61e4fbdda9cc30bf84a4, type: 2}
     name: Counting Bead
+    icon: {fileID: 21300000, guid: 91cf35f50aeb5b678ac88707f1bc112b, type: 3}
   - family: {fileID: 11400000, guid: c7bc692b5f87e3541af3b13cf64ce2b1, type: 2}
     name: Forked Path
+    icon: {fileID: 21300000, guid: 3bbcd2b9675e5c92908d7ada3109334e, type: 3}
   - family: {fileID: 11400000, guid: ad247eb4086a67448a0a6e26092edecd, type: 2}
     name: Last Lantern
+    icon: {fileID: 21300000, guid: a447bed290b620c4dae2d62b1adeb903, type: 3}
   - family: {fileID: 11400000, guid: 0eb5a30963f77e848935d9f9159e9076, type: 2}
     name: Winding Stair
+    icon: {fileID: 21300000, guid: 9069dfd6eb175e90b730e6a5f996b2df, type: 3}
   - family: {fileID: 11400000, guid: 38eb81382c41ede49bdf0e388ac9394f, type: 2}
     name: Falling Leaf
+    icon: {fileID: 21300000, guid: 79d57455a98f5fb5a8e2fb456d1e774d, type: 3}
   - family: {fileID: 11400000, guid: 8497be2805ff7c04ebfddecab5c9446e, type: 2}
     name: Still Reflection
+    icon: {fileID: 21300000, guid: 51879f5dcdbe51f19e7ed067e47deaea, type: 3}
   - family: {fileID: 11400000, guid: b11d022f961dde84284256c38396a394, type: 2}
     name: Second Chance
+    icon: {fileID: 21300000, guid: b13cfb3966706d84289cf3aa1b5d79f1, type: 3}
   - family: {fileID: 11400000, guid: 442e532537b6959448afa1cffdca7f73, type: 2}
     name: Gathering Basket
+    icon: {fileID: 21300000, guid: a59fffbf9d1e5bf6bdf1e6172d06b1d3, type: 3}
   - family: {fileID: 11400000, guid: f2a9bba594189a34a8d9c48b58bbc22d, type: 2}
     name: Handful of Seeds
+    icon: {fileID: 21300000, guid: 9d89383b13505a0db99957107e613b1e, type: 3}
   - family: {fileID: 11400000, guid: f9e019000bc2eae4988ef7e7c1523af4, type: 2}
     name: Flocking Birds
+    icon: {fileID: 21300000, guid: 8363a304e9105abe9ec6f345f9c80c61, type: 3}
   - family: {fileID: 11400000, guid: c8a7c2dbd9a6328429cc67b42712ca1c, type: 2}
     name: Twin Bowls
+    icon: {fileID: 21300000, guid: eddc68de510254cd9deb728ac247abc7, type: 3}
   effectWording:
   - kind: 0
     singularLabel: base score

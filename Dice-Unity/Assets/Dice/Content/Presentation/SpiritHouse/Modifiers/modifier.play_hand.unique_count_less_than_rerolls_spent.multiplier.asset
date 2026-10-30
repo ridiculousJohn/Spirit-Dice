@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3f21655d6220ea24198f33b4f912e73f, type: 2}
   displayName: Polished Shells / Mult
-  icon: {fileID: 21300000, guid: 27c4baf8116c5af79f531c14e4f33f63, type: 3}
   conditionTemplate: Number of distinct faces is below rerolls spent on this hand.

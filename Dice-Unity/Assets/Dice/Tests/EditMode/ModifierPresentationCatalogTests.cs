@@ -20,29 +20,25 @@ namespace Dice.Tests
         [TearDown]
         public void TearDown() => synthetic.Dispose();
 
-        /** Checks each charm gets the name, condition text and icon of its own presentation / fails if charms share or swap their presentation. */
+        /** Checks each charm gets the name and condition text of its own presentation / fails if charms share or swap their presentation. */
         [Test]
-        public void EachCharmShowsItsOwnPresentationsNameConditionAndIcon()
+        public void EachCharmShowsItsOwnPresentationsNameAndCondition()
         {
             var first = synthetic.Charm("test.first");
             var second = synthetic.Charm("test.second");
-            var firstIcon = synthetic.Icon();
-            var secondIcon = synthetic.Icon();
             var content = SyntheticCharms.Content(first, second);
             var charms = synthetic.Load(synthetic.Skin(new[]
             {
-                synthetic.Presentation(second, "Second", "Second condition.", icon: secondIcon),
-                synthetic.Presentation(first, "First", "First condition.", icon: firstIcon)
+                synthetic.Presentation(second, "Second", "Second condition."),
+                synthetic.Presentation(first, "First", "First condition.")
             }), content);
 
             var firstDefinition = content.GetDefinition(first);
             var secondDefinition = content.GetDefinition(second);
             Assert.That(charms.GetName(firstDefinition), Is.EqualTo("First"));
             Assert.That(charms.GetConditionText(firstDefinition), Is.EqualTo("First condition."));
-            Assert.That(charms.GetIcon(firstDefinition), Is.SameAs(firstIcon));
             Assert.That(charms.GetName(secondDefinition), Is.EqualTo("Second"));
             Assert.That(charms.GetConditionText(secondDefinition), Is.EqualTo("Second condition."));
-            Assert.That(charms.GetIcon(secondDefinition), Is.SameAs(secondIcon));
         }
 
         /** Checks a definition outside the loaded content has no presentation / fails if a charm without presentation is named or drawn anyway. */
@@ -273,13 +269,18 @@ namespace Dice.Tests
             Assert.That(failure.Message, Does.Contain(skin.name));
         }
 
-        /** Checks every variant of a family shows the skin's name of the family / fails if the name comes from a variant's own display name. */
+        /**
+         * Checks every variant of a family shows the skin's name and icon of the family / fails if the name comes from a
+         * variant's own display name or a variant shows another family's icon.
+         */
         [Test]
-        public void EachVariantShowsTheSkinsNameOfItsFamily()
+        public void EachVariantShowsTheSkinsNameAndIconOfItsFamily()
         {
             var first = synthetic.Charm("test.first", "family.shared");
             var second = synthetic.Charm("test.second", "family.shared");
             var other = synthetic.Charm("test.other", "family.other");
+            var sharedIcon = synthetic.Icon();
+            var otherIcon = synthetic.Icon();
             var content = SyntheticCharms.Content(first, second, other);
             var charms = synthetic.Load(synthetic.Skin(new[]
             {
@@ -288,13 +289,16 @@ namespace Dice.Tests
                 synthetic.Presentation(other, "Other / Variant")
             }, families: new[]
             {
-                new ModifierFamilyWording(synthetic.Family("family.shared"), "Shared family"),
-                new ModifierFamilyWording(synthetic.Family("family.other"), "Other family")
+                new ModifierFamilyPresentation(synthetic.Family("family.other"), "Other family", otherIcon),
+                new ModifierFamilyPresentation(synthetic.Family("family.shared"), "Shared family", sharedIcon)
             }), content);
 
             Assert.That(charms.GetFamilyName(content.GetDefinition(first)), Is.EqualTo("Shared family"));
             Assert.That(charms.GetFamilyName(content.GetDefinition(second)), Is.EqualTo("Shared family"));
             Assert.That(charms.GetFamilyName(content.GetDefinition(other)), Is.EqualTo("Other family"));
+            Assert.That(charms.GetIcon(content.GetDefinition(first)), Is.SameAs(sharedIcon));
+            Assert.That(charms.GetIcon(content.GetDefinition(second)), Is.SameAs(sharedIcon));
+            Assert.That(charms.GetIcon(content.GetDefinition(other)), Is.SameAs(otherIcon));
         }
 
         /** Checks a content family without a name, with a blank name or named twice fails at load / fails if a family loads unnamed or ambiguous. */
@@ -304,9 +308,10 @@ namespace Dice.Tests
         public void AFamilyWithoutExactlyOneNameFailsAtLoad(string fault)
         {
             var charm = synthetic.Charm("test.charm", "family.test");
-            var families = fault == "missing" ? new ModifierFamilyWording[0] :
-                fault == "blank" ? new[] { new ModifierFamilyWording(synthetic.Family("family.test"), " ") } :
-                new[] { new ModifierFamilyWording(synthetic.Family("family.test"), "One"), new ModifierFamilyWording(synthetic.Family("family.test"), "Two") };
+            var family = synthetic.Family("family.test");
+            var families = fault == "missing" ? new ModifierFamilyPresentation[0] :
+                fault == "blank" ? new[] { new ModifierFamilyPresentation(family, " ", synthetic.Icon()) } :
+                new[] { new ModifierFamilyPresentation(family, "One", synthetic.Icon()), new ModifierFamilyPresentation(family, "Two", synthetic.Icon()) };
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, families: families);
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
@@ -475,18 +480,15 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
-        /** Checks a presentation without an icon fails at load with a message naming the charm / fails if a charm loads without artwork or the failure does not say which charm. */
+        /** Checks a family entry without an icon fails at load with a message naming the family / fails if a family loads without artwork or the failure does not say which family. */
         [Test]
-        public void APresentationWithoutAnIconFailsAtLoadNamingTheCharm()
+        public void AFamilyWithoutAnIconFailsAtLoadNamingTheFamily()
         {
-            var charm = synthetic.Charm("test.without_icon");
-            var presentation = synthetic.Presentation(charm);
-            var serialized = new SerializedObject(presentation);
-            serialized.FindProperty("icon").objectReferenceValue = null;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            var skin = synthetic.Skin(new[] { presentation });
+            var charm = synthetic.Charm("test.charm", "family.without_icon");
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) },
+                families: new[] { new ModifierFamilyPresentation(synthetic.Family("family.without_icon"), "Family", null) });
             var error = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
-            Assert.That(error.Message, Does.Contain("test.without_icon"));
+            Assert.That(error.Message, Does.Contain("family.without_icon"));
         }
 
         /** Checks condition text with a placeholder other than {parameter} or {secondaryParameter} fails at load / fails if a broken placeholder loads. */

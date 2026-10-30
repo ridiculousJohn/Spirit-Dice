@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 5ee55b60d08e06c4a98676f778661b25, type: 2}
   displayName: Twin Knots / Base + Mult
-  icon: {fileID: 21300000, guid: 8bea5845137ea5b4b89e99ed74e09dce, type: 3}
   conditionTemplate: Category is Two Pair.

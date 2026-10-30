@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 3bd287ad475b3194cbe4000f7eb75e32, type: 2}
   displayName: Second Chance / Base + Mult
-  icon: {fileID: 21300000, guid: b13cfb3966706d84289cf3aa1b5d79f1, type: 3}
   conditionTemplate: At least one rerolled die kept its previous face.

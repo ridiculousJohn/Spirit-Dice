@@ -170,34 +170,39 @@ namespace Dice.Presentation
         }
     }
 
-    /** The name a charm family is shown under. */
+    /** How a charm family is shown: the name it is shown under and its artwork, shared by every variant of the family. */
     [Serializable]
-    public sealed class ModifierFamilyWording
+    public sealed class ModifierFamilyPresentation
     {
         [SerializeField] private ModifierFamilyAsset family;
         [SerializeField] private string name;
+        [Tooltip("The family's artwork, shown for every variant of the family wherever a charm is shown; loading fails without one.")]
+        [SerializeField] private Sprite icon;
 
         public ModifierFamilyAsset Family => family;
         public string Name => name;
+        public Sprite Icon => icon;
 
-        public ModifierFamilyWording(ModifierFamilyAsset family, string name)
+        public ModifierFamilyPresentation(ModifierFamilyAsset family, string name, Sprite icon)
         {
             this.family = family;
             this.name = name;
+            this.icon = icon;
         }
     }
 
     /**
      * One theme's charm presentation: a presentation for every charm the content uses, the category style shown for each
-     * set of effect kinds, the name of every charm family, the wording of every effect kind, phase and activation limit,
-     * the wording of score contributions and the format that joins them. Loading validates it against the loaded content.
+     * set of effect kinds, the name and artwork of every charm family, the wording of every effect kind, phase and
+     * activation limit, the wording of score contributions and the format that joins them. Loading validates it against
+     * the loaded content.
      */
     [CreateAssetMenu(menuName = "Dice/Modifier Skin")]
     public sealed class ModifierSkinAsset : ScriptableObject
     {
         [SerializeField] private ModifierPresentationAsset[] modifiers = Array.Empty<ModifierPresentationAsset>();
         [SerializeField] private ModifierEffectsCategory[] categories = Array.Empty<ModifierEffectsCategory>();
-        [SerializeField] private ModifierFamilyWording[] familyWording = Array.Empty<ModifierFamilyWording>();
+        [SerializeField] private ModifierFamilyPresentation[] families = Array.Empty<ModifierFamilyPresentation>();
         [SerializeField] private ModifierEffectWording[] effectWording = Array.Empty<ModifierEffectWording>();
         /** Shown as the effect text of a charm without effects. */
         [SerializeField] private string noEffectsText;
@@ -208,7 +213,7 @@ namespace Dice.Presentation
 
         public IReadOnlyList<ModifierPresentationAsset> Modifiers => modifiers;
         public IReadOnlyList<ModifierEffectsCategory> Categories => categories;
-        public IReadOnlyList<ModifierFamilyWording> FamilyWording => familyWording;
+        public IReadOnlyList<ModifierFamilyPresentation> Families => families;
         public IReadOnlyList<ModifierEffectWording> EffectWording => effectWording;
         public string NoEffectsText => noEffectsText;
         public IReadOnlyList<ModifierPhaseWording> PhaseWording => phaseWording;

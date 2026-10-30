@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 04dc3b1a65e9fa84c958b65a678d5aaa, type: 2}
   displayName: Mixed Pebbles / Base + Mult
-  icon: {fileID: 21300000, guid: a1954908afb45448aadd77a30f4764c2, type: 3}
   conditionTemplate: Every adjacent pair has different faces.

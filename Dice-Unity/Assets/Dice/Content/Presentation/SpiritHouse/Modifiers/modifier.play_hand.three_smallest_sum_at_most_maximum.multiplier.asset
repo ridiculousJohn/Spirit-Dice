@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d182d278633e4c040a9a3e7195261dd1, type: 2}
   displayName: Great Oak / Mult
-  icon: {fileID: 21300000, guid: 63d45ee2bc1c5cbc83d4434ac87978b5, type: 3}
   conditionTemplate: Sum of the three smallest faces is at most the largest face.

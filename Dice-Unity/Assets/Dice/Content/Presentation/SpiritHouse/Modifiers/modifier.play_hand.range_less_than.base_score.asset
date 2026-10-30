@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f79da9b472e0f7a4fb30c4d2cba93dc7, type: 2}
   displayName: Narrow Bridge / Base
-  icon: {fileID: 21300000, guid: edfeb47ece3c5f25812f625104752942, type: 3}
   conditionTemplate: Largest minus smallest face is less than {parameter}.

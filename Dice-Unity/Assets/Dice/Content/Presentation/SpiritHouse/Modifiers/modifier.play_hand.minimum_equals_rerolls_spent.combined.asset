@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 045e5ee7068675e44a4259f4eeb06072, type: 2}
   displayName: Worn Pebble / Base + Mult
-  icon: {fileID: 21300000, guid: 149e681a96d95333b9233900d8426b04, type: 3}
   conditionTemplate: Smallest face equals rerolls spent on this hand.

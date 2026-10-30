@@ -208,7 +208,9 @@ def main():
         folder_meta = destination.with_suffix(".meta")
         if not folder_meta.exists():
             folder_meta.write_text(f"fileFormatVersion: 2\nguid: {guid('ModifierFamilies')}\nfolderAsset: yes\nDefaultImporter:\n  userData:\n  assetBundleName:\n  assetBundleVariant:\n")
-        presentations = ROOT / "Dice-Unity/Assets/Dice/Content/Presentation/SpiritHouse/Modifiers"
+        families = ROOT / "Dice-Unity/Assets/Dice/Content/Mechanical/ModifierFamilies"
+        skin_path = ROOT / "Dice-Unity/Assets/Dice/Content/Presentation/SpiritHouse/SpiritHouseModifierSkin.asset"
+        skin = skin_path.read_bytes().decode("utf-8")
         for entry, icon in images:
             name = Path(entry["file"]).stem + ".png"
             icon.save(destination / name)
@@ -216,15 +218,17 @@ def main():
             if not meta.exists():
                 meta.write_text(sprite_meta(name))
             sprite_guid = re.search(r"^guid: (\w+)$", meta.read_text(), re.M)[1]
-            variants = list(presentations.glob(entry["family"] + ".*.asset"))
-            if len(variants) != 4:
-                raise ValueError("Expected four presentation variants: " + entry["family"])
-            for path in variants:
-                content, count = re.subn(r"(?m)^  icon: .+$",
-                    f"  icon: {{fileID: 21300000, guid: {sprite_guid}, type: 3}}", path.read_text())
-                if count != 1:
-                    raise ValueError("Expected one icon reference: " + str(path))
-                path.write_text(content)
+            family_meta = families / (entry["family"] + ".asset.meta")
+            if not family_meta.exists():
+                raise ValueError("Missing family asset: " + entry["family"])
+            family_guid = re.search(r"^guid: (\w+)$", family_meta.read_text(), re.M)[1]
+            # The skin's entry for the family holds its icon, shared by every variant of the family.
+            skin, count = re.subn(
+                rf"(?m)^(  - family: \{{fileID: 11400000, guid: {family_guid}, type: 2\}}\n    name: .*\n)    icon: .+$",
+                rf"\g<1>    icon: {{fileID: 21300000, guid: {sprite_guid}, type: 3}}", skin)
+            if count != 1:
+                raise ValueError("Expected one skin entry with an icon for the family: " + entry["family"])
+        skin_path.write_bytes(skin.encode("utf-8"))
     print(f"Rendered {len(images)} authored family icons: {output}")
 
 

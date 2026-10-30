@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: fd505a63423578f40a75adee370e4f5d, type: 2}
   displayName: Counting Bead / Mult
-  icon: {fileID: 21300000, guid: 91cf35f50aeb5b678ac88707f1bc112b, type: 3}
   conditionTemplate: Exactly one rerolled die face equals the number of dice rerolled.

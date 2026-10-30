@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 1f9bca2dbb13ca74bab5b178ca2189fe, type: 2}
   displayName: Unbroken Stone / Mult
-  icon: {fileID: 21300000, guid: 79c79fce36445b5f94a2b4048e4f815a, type: 3}
   conditionTemplate: Dice sum is prime.

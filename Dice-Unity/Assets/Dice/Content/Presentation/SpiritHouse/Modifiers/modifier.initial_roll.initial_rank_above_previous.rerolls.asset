@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 04c6419f8983fe649abe0595e2a85dad, type: 2}
   displayName: Rising Sun / Rerolls
-  icon: {fileID: 21300000, guid: a13dbc3cdf8c545da3adb9114fb74c60, type: 3}
   conditionTemplate: Initial roll category ranks above the previous played hand; requires a previous hand.

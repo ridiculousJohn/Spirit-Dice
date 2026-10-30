@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: e8421512c77f47399025de9a65be0f92, type: 2}
   displayName: Grafted Branch / Rerolls
-  icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   conditionTemplate: At least {parameter} dice show the face of a bound die.

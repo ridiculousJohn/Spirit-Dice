@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 26cf6f230bff10a44835bc78ba963580, type: 2}
   displayName: Braided Cord / Base + Mult
-  icon: {fileID: 21300000, guid: 61db2b803ce55e438bfa8bc4fe9efdd1, type: 3}
   conditionTemplate: Three consecutive dice show the same face.

@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: aadb6fa8f52cac7488356d0cb094357a, type: 2}
   displayName: Gathered Ferns / Mult
-  icon: {fileID: 21300000, guid: a0603af9c8b4575c94569b0593c9414b, type: 3}
   conditionTemplate: At least {parameter} dice show 3 or 4.

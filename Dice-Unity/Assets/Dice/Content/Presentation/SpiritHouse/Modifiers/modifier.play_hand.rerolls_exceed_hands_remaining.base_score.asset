@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 559fb63ecd56d2641ad00b247e295987, type: 2}
   displayName: Full Seed Pouch / Base
-  icon: {fileID: 21300000, guid: b40fc5c56b205965b2238706a796c978, type: 3}
   conditionTemplate: Rerolls remaining exceed hands remaining + 1 in the evaluation context.

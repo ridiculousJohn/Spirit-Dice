@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 48641385b01342a4bb63d37730c66144, type: 2}
   displayName: Leaping Stones / Rerolls
-  icon: {fileID: 21300000, guid: dfb21e9dcfb05b699ffbb5a7f3e34295, type: 3}
   conditionTemplate: Every adjacent face difference is at least {parameter}.

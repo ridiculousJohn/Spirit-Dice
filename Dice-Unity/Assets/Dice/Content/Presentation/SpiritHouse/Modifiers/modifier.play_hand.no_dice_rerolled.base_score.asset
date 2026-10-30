@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: ad0c8e67db04b7e4d8c016f723895d70, type: 2}
   displayName: Unturned Leaf / Base
-  icon: {fileID: 21300000, guid: 03ef151ca207597eb2e85402a53c5543, type: 3}
   conditionTemplate: No rerolls spent on this hand.

@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 359921b8ca81b0542829cc8a41da090f, type: 2}
   displayName: Close Branches / Base + Mult
-  icon: {fileID: 21300000, guid: 804de957606e5517bcea17e6faf6950d, type: 3}
   conditionTemplate: Every adjacent face difference is at most {parameter}.

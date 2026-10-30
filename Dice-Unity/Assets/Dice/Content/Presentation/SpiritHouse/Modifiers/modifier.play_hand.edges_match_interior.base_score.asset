@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a87dd8734c4211f47be3ba3aea8061e6, type: 2}
   displayName: Echoing Bells / Base
-  icon: {fileID: 21300000, guid: 580b083597035912a89e7f0aede6613e, type: 3}
   conditionTemplate: Dice 1 and 5 match, and an interior die has that face.

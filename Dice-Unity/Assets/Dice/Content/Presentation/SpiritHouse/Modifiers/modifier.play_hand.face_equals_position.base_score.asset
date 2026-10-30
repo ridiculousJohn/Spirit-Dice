@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: b7775947b3a05904cb7babae1711c995, type: 2}
   displayName: Marked Stepping Stone / Base
-  icon: {fileID: 21300000, guid: 8c43c6591c315a548f0a5e14069ac1e9, type: 3}
   conditionTemplate: At least one face equals its die position (1 through 5).

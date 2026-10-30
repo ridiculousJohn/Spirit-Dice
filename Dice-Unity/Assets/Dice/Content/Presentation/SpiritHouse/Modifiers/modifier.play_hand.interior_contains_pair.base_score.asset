@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: f1750df61c3e3994389a8855b4ed8b3d, type: 2}
   displayName: Nestled Twins / Base
-  icon: {fileID: 21300000, guid: a02087bed68851f689d87efdfc151fb6, type: 3}
   conditionTemplate: At least two of dice 2, 3, 4 share a face.

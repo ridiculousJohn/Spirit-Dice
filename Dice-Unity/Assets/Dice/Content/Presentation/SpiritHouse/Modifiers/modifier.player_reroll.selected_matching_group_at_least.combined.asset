@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 63a4d1a40c8e8b84e91e7ae1cdb63140, type: 2}
   displayName: Flocking Birds / Base + Mult
-  icon: {fileID: 21300000, guid: 8363a304e9105abe9ec6f345f9c80c61, type: 3}
   conditionTemplate: At least {parameter} rerolled dice share one face.

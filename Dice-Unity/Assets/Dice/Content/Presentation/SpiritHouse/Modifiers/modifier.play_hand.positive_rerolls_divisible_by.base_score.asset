@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 680fd1906a58a0840b79aea91edf39d9, type: 2}
   displayName: Spare Beads / Base
-  icon: {fileID: 21300000, guid: 7270284106975186b72b3e638a456af5, type: 3}
   conditionTemplate: Rerolls remaining are positive and divisible by {parameter}.

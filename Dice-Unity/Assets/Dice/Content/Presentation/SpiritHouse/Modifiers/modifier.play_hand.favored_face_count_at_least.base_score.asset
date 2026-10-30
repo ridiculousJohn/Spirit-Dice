@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: d6bffd73f10944cd9ff44dbe5eda0669, type: 2}
   displayName: Lantern Seekers / Base
-  icon: {fileID: 21300000, guid: a447bed290b620c4dae2d62b1adeb903, type: 3}
   conditionTemplate: At least {parameter} dice show the favored face.

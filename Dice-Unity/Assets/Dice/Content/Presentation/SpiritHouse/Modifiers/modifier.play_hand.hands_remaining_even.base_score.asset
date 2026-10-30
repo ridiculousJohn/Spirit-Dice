@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2b300083b73b4d84b82f78cd48f9db21, type: 2}
   displayName: Paired Gloves / Base
-  icon: {fileID: 21300000, guid: 8e1b1c5390e5556eb0d3a34da3c2fa34, type: 3}
   conditionTemplate: Hands remaining + 1 is even in the evaluation context.

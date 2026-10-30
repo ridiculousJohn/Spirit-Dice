@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 2649263da3f073041b2750272a415116, type: 2}
   displayName: Winding Stair / Mult
-  icon: {fileID: 21300000, guid: 9069dfd6eb175e90b730e6a5f996b2df, type: 3}
   conditionTemplate: Faces are in ascending or descending order; ties allowed.

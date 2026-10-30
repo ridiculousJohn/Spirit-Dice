@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: a3a6d67ac31250c4fa7300f3a9d6f62d, type: 2}
   displayName: Lone Watcher / Base + Mult
-  icon: {fileID: 21300000, guid: 0763a593b113c224aa5cacee813ad7e3, type: 3}
   conditionTemplate: The middle die has a face no other die shows.

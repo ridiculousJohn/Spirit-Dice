@@ -180,9 +180,9 @@ namespace Dice.Tests
 #endif
         }
 
-        /** A charm presentation; without a given icon it shows a fabricated one. */
+        /** A charm presentation. */
         public ModifierPresentationAsset Presentation(ModifierAsset modifier, string displayName = null,
-            string template = "Test condition.", Sprite icon = null)
+            string template = "Test condition.")
         {
 #if UNITY_EDITOR
             var presentation = Own(ScriptableObject.CreateInstance<ModifierPresentationAsset>());
@@ -191,7 +191,6 @@ namespace Dice.Tests
             serialized.FindProperty("modifier").objectReferenceValue = modifier;
             serialized.FindProperty("displayName").stringValue = displayName ?? "Name of " + modifier?.name;
             serialized.FindProperty("conditionTemplate").stringValue = template;
-            serialized.FindProperty("icon").objectReferenceValue = icon != null ? icon : Icon();
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return presentation;
 #else
@@ -233,21 +232,24 @@ namespace Dice.Tests
         public static ModifierTextFormat TextFormat() => new ModifierTextFormat("[{amount} {label}]", " & ", "[{amount}]",
             "[{amount} {label}]", " # ", "{phase} @ {limit}", "[{amount} {label}]", " ; ");
 
-        /** Test family names: "Family of <family asset name>" for every family of the given charm presentations. */
-        public static ModifierFamilyWording[] FamilyWording(IEnumerable<ModifierPresentationAsset> modifiers) => modifiers
+        /**
+         * Test family entries for every family of the given charm presentations: each named "Family of <family asset
+         * name>" with a fabricated icon of its own.
+         */
+        public ModifierFamilyPresentation[] Families(IEnumerable<ModifierPresentationAsset> modifiers) => modifiers
             .Where(presentation => presentation != null && presentation.Modifier != null)
             .Select(presentation => presentation.Modifier.Family).Distinct()
-            .Select(family => new ModifierFamilyWording(family, "Family of " + family.name)).ToArray();
+            .Select(family => new ModifierFamilyPresentation(family, "Family of " + family.name, Icon())).ToArray();
 
         /**
          * A skin of the given presentations and categories of effect sets; without categories it shows every effect set
-         * in one category without a mark, and without family names it names every family as FamilyWording does.
+         * in one category without a mark, and without family entries it presents every family as Families does.
          */
         public ModifierSkinAsset Skin(IEnumerable<ModifierPresentationAsset> modifiers,
             IEnumerable<ModifierEffectsCategory> categories = null, IEnumerable<ModifierEffectWording> wording = null,
             string noEffectsText = "No effects", IEnumerable<ModifierPhaseWording> phases = null,
             IEnumerable<ModifierActivationLimitWording> limits = null, ModifierContributionWording contribution = null,
-            IEnumerable<ModifierFamilyWording> families = null, ModifierTextFormat format = null)
+            IEnumerable<ModifierFamilyPresentation> families = null, ModifierTextFormat format = null)
         {
 #if UNITY_EDITOR
             var skin = Own(ScriptableObject.CreateInstance<ModifierSkinAsset>());
@@ -267,14 +269,15 @@ namespace Dice.Tests
                     kinds.GetArrayElementAtIndex(j).intValue = (int)categoryRows[i].Effects[j];
                 element.FindPropertyRelative("category").objectReferenceValue = categoryRows[i].Category;
             }
-            ModifierFamilyWording[] familyRows = (families ?? FamilyWording(presentations)).ToArray();
-            SerializedProperty familyList = serialized.FindProperty("familyWording");
+            ModifierFamilyPresentation[] familyRows = (families ?? Families(presentations)).ToArray();
+            SerializedProperty familyList = serialized.FindProperty("families");
             familyList.arraySize = familyRows.Length;
             for (int i = 0; i < familyRows.Length; ++i)
             {
                 SerializedProperty element = familyList.GetArrayElementAtIndex(i);
                 element.FindPropertyRelative("family").objectReferenceValue = familyRows[i].Family;
                 element.FindPropertyRelative("name").stringValue = familyRows[i].Name;
+                element.FindPropertyRelative("icon").objectReferenceValue = familyRows[i].Icon;
             }
             ModifierEffectWording[] effects = (wording ?? Wording()).ToArray();
             SerializedProperty list = serialized.FindProperty("effectWording");
@@ -341,8 +344,9 @@ namespace Dice.Tests
 
         /**
          * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id, named as
-         * TestModifiers names the id, and presented as "Name of <name>" with the condition text "Condition of <name>" and a
-         * fabricated icon; every effect set shows the given category (or one with a fabricated symbol).
+         * TestModifiers names the id, and presented as "Name of <name>" with the condition text "Condition of <name>";
+         * every family has a fabricated icon, and every effect set shows the given category (or one with a fabricated
+         * symbol).
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null)
         {

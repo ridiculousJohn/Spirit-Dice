@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: 8168785bfcd55f643a3b8ba0f0b08f83, type: 2}
   displayName: Draining Bowl / Base
-  icon: {fileID: 21300000, guid: 99fcd3a9b9ed5818ae7c1e187ae1c66c, type: 3}
   conditionTemplate: Dice sum is below the initial roll's sum.

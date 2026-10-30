@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ModifierPresentationAsset
   modifier: {fileID: 11400000, guid: c85d9864c875cbc45b5e4763aac04bd7, type: 2}
   displayName: Returning Echo / Rerolls
-  icon: {fileID: 21300000, guid: be89a1a6b5275b5b956eb1f1f1210b5a, type: 3}
   conditionTemplate: Category matches the previous played hand (High Die if none).

@@ -63,8 +63,9 @@ merchant and then the bound tree; each requires completion of the preceding jour
 
 A journey beat can reference a `charm` mechanical asset to show a compact detail
 panel below its narration. Use `{charm}` in the narration for the highlighted
-family name without the variant suffix. The icon, effect, condition, and trigger wording come from the
-existing charm presentation; keep mechanical descriptions out of dialogue.
+family name without the variant suffix. The icon comes from the family's entry in the modifier skin,
+and the effect, condition, and trigger wording from the existing charm presentation and skin; keep
+mechanical descriptions out of dialogue.
 This reference only controls presentation. Ownership still comes from the beat
 or journey's progression reward.
 
@@ -84,14 +85,15 @@ fallback, an unlock reward list, an encounter's starting charms or a progression
 grant. The charm inspector's read-only Offered by section lists each encounter whose
 `encounterModifiers` holds the charm (click to ping, double-click to select) and
 warns when no encounter or more than one lists it.
-The family provisionally reuses the existing Last Lantern artwork; its variants show
+The family's skin entry provisionally reuses the existing Last Lantern icon; its variants show
 the standard categories of their effects. Replace the shared artwork only when
 dedicated art is approved. The favored-face rule itself still adds +2 Mult per matching scored die.
 
 The mechanical condition is `FavoredFaceCountAtLeastConditionConfig` with
 `count: 2`, which builds `FavoredFaceCountAtLeastCondition`. Each modifier and its presentation remain
 separate ScriptableObjects: the catalog references the modifier and the modifier skin
-(`Presentation/SpiritHouse/SpiritHouseModifierSkin.asset`) lists its presentation.
+(`Presentation/SpiritHouse/SpiritHouseModifierSkin.asset`) lists its presentation and its family's name
+and icon.
 
 ## Tree nymph encounter
 
