@@ -9,7 +9,7 @@ namespace Dice.Editor
      * Previews an authored smoke material over aligned base and smoke textures. The material supplies the flow noise,
      * motion mask and starting values; the sliders change only the preview's own copy.
      */
-    public sealed class SpiritSmokePreviewWindow : EditorWindow, IDisposable
+    public sealed class SpiritSmokePreviewWindow : EditorWindow
     {
         private const int PreviewPass = 1;
         private const string BaseKey = "Dice.SpiritSmokePreview.Base";
@@ -47,10 +47,10 @@ namespace Dice.Editor
         private void OnDisable()
         {
             EditorApplication.update -= UpdatePreview;
-            Dispose();
+            ReleasePreview();
         }
 
-        public void Dispose()
+        private void ReleasePreview()
         {
             ReleaseOutput();
             smoke?.Dispose();
@@ -104,7 +104,7 @@ namespace Dice.Editor
         /** Rebuilds the preview's copy of the selected material and takes its values as the slider values. */
         private void Reload()
         {
-            Dispose();
+            ReleasePreview();
             message = null;
             try
             {

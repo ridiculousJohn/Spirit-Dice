@@ -187,8 +187,6 @@ namespace Dice.Editor
                 lighting = Instantiate(sourceLighting);
                 lighting.name = "Encounter Preview Lighting";
                 lighting.hideFlags = HideFlags.HideAndDontSave;
-                lighting.Lights = new SceneLightLayer[sourceLighting.Lights.Length];
-                for (int i = 0; i < lighting.Lights.Length; ++i) lighting.Lights[i] = Copy(sourceLighting.Lights[i]);
                 compositor = new SceneLightingMaterial(lighting.Shader);
             }
             if (showTable)
@@ -280,18 +278,6 @@ namespace Dice.Editor
             image.color = texture != null ? Color.white : Color.clear;
             image.material = compositor?.Material;
         }
-
-        private static SceneLightLayer Copy(SceneLightLayer source) => new SceneLightLayer
-        {
-            Contribution = source.Contribution, ResponseMap = source.ResponseMap, UvOffset = source.UvOffset,
-            ModulateByBaseColor = source.ModulateByBaseColor, Tint = source.Tint,
-            Intensity = source.Intensity, DistanceFalloff = source.DistanceFalloff, SourceResponse = source.SourceResponse,
-            FlickerAmount = source.FlickerAmount, FlickerSpeed = source.FlickerSpeed, Seed = source.Seed,
-            ContributionIncludesBase = source.ContributionIncludesBase,
-            ConstrainAmbientToReference = source.ConstrainAmbientToReference,
-            ReceiverPosition = source.ReceiverPosition, ReceiverColor = source.ReceiverColor,
-            ReceiverIntensity = source.ReceiverIntensity, ReceiverRange = source.ReceiverRange
-        };
 
         private GameObject Object(string name, params Type[] components)
         {

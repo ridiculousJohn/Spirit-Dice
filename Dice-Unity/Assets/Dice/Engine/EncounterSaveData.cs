@@ -1,8 +1,5 @@
-using System;
-
 namespace Dice.Engine
 {
-    [Serializable]
     public sealed class EncounterSaveData
     {
         public const int CurrentFormatVersion = 14;
@@ -59,7 +56,6 @@ namespace Dice.Engine
         public ModifierDefinition.Id[] PendingModifierOfferUnlockedIds;
     }
 
-    [Serializable]
     public sealed class EncounterSaveModifierData
     {
         public long InstanceId;
@@ -69,7 +65,6 @@ namespace Dice.Engine
         public long TotalActivations;
     }
 
-    [Serializable]
     public sealed class EncounterSavePieceData
     {
         public TablePieceDefinition.Id PieceId;
@@ -78,14 +73,12 @@ namespace Dice.Engine
     }
 
     /** One stateful encounter rule's state; State is an instance of that rule's SaveDataType. */
-    [Serializable]
     public sealed class EncounterSaveRuleData
     {
         public EncounterRuleDefinition.Id RuleId;
         public object State;
     }
 
-    [Serializable]
     public sealed class EncounterSaveContributionData
     {
         public long InstanceId;
@@ -96,7 +89,6 @@ namespace Dice.Engine
         public int Rerolls;
     }
 
-    [Serializable]
     public sealed class EncounterSaveRewardData
     {
         public long OfferId;
@@ -105,7 +97,6 @@ namespace Dice.Engine
         public EncounterSaveRewardOptionData[] Options;
     }
 
-    [Serializable]
     public sealed class EncounterSaveRewardOptionData
     {
         public long OptionId;

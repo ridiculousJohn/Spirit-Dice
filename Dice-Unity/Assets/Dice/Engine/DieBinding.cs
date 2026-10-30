@@ -68,7 +68,6 @@ namespace Dice.Engine
     }
 
     /** The dice a binding rule has bound and the die it has marked during the current hand. */
-    [Serializable]
     public sealed class DieBindingSaveData
     {
         public int BoundMask;

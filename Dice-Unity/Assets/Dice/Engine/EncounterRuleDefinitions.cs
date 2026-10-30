@@ -112,7 +112,6 @@ namespace Dice.Engine
     }
 
     /** The rerolls whose cost the first-reroll-free rule waived during the current stage and across the encounter. */
-    [Serializable]
     public sealed class FirstRerollFreeSaveData
     {
         public int FreeRerollsUsedInStage;

@@ -9,6 +9,7 @@ using UnityEngine;
 namespace Dice.App
 {
     /** Owns campaign slot selection and main menu actions; encounter state stays with the encounter controller. */
+    [RequireComponent(typeof(SpiritEncounterController))]
     public sealed class SpiritCampaignController : MonoBehaviour, ISpiritMainMenuControls
     {
         private SpiritEncounterController controller;

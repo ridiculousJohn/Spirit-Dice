@@ -59,7 +59,6 @@ namespace Dice.Engine
     }
 
     /** The dice an interference rule disturbed during the current hand. */
-    [Serializable]
     public sealed class DieInterferenceSaveData
     {
         public int DisturbedMask;
