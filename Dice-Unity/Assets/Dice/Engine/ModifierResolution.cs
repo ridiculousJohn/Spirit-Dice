@@ -103,11 +103,14 @@ namespace Dice.Engine
             return Array.AsReadOnly(values);
         }
 
-        /** Activates the phase's eligible charms and returns their activations in order. */
+        /**
+         * Activates the phase's eligible charms and returns their activations in order. The caller passes the hands remaining
+         * including the hand being resolved, since playing a hand spends it before its charms resolve.
+         */
         internal static List<ModifierActivatedEvent> Resolve(EncounterState state, MechanicalCatalog catalog,
-            EncounterDefinition encounter, ModifierPhase phase, List<RuleEvent> events)
+            EncounterDefinition encounter, ModifierPhase phase, int handsRemaining, List<RuleEvent> events)
         {
-            var context = CreateContext(state, encounter, state.HandsRemaining);
+            var context = CreateContext(state, encounter, handsRemaining);
             var contributions = new List<ModifierContribution>();
 
             // Predicates observe one phase snapshot; resource grants cannot change later eligibility.
@@ -151,8 +154,8 @@ namespace Dice.Engine
             MechanicalCatalog catalog, EncounterDefinition encounter)
         {
             bool playing = state.Phase == EncounterPhase.Playing;
-            // PlayHand predicates see the hands spent on submission and resources before any phase effects.
-            var context = playing ? CreateContext(state, encounter, state.HandsRemaining - 1) : default;
+            // PlayHand predicates see the hand being played as remaining and resources before any phase effects.
+            var context = playing ? CreateContext(state, encounter, state.HandsRemaining) : default;
             var values = new ModifierInspection[state.Modifiers.Length];
             for (int i = 0; i < values.Length; ++i)
             {

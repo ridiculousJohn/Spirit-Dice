@@ -4,12 +4,6 @@ namespace Dice.Engine
 {
     internal static class ModifierConditionHelpers
     {
-        internal static void ValidateContext(in ModifierContext context)
-        {
-            if (!context.CurrentDice.IsValid || !context.InitialDice.IsValid)
-                throw new ArgumentException("A valid modifier context is required.", nameof(context));
-        }
-
         internal static int CountOf(DiceValues dice, int face)
         {
             int count = 0;

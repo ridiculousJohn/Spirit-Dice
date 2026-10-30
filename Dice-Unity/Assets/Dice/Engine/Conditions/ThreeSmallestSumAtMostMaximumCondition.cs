@@ -6,7 +6,6 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
             // Each smallest starts above every face and the maximum at the lowest face.
             int first = DiceValues.MaximumFace + 1, second = first, third = first, maximum = DiceValues.MinimumFace;

@@ -6,7 +6,6 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             return false;
         }
     }

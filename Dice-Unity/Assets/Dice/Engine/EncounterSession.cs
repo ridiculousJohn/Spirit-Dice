@@ -151,7 +151,7 @@ namespace Dice.Engine
             --next.HandsRemaining;
             events.Add(new ResourceChangedEvent(next, ResourceKind.Hands, ResourceChangeCause.PlayHand,
                 beforeHands, next.HandsRemaining));
-            activations = ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, events);
+            activations = ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, beforeHands, events);
             ruleBonuses = new List<EncounterRuleActivatedEvent>();
             long ruleMultiplier = 0;
             foreach (var rule in definition.Rules)
@@ -361,7 +361,7 @@ namespace Dice.Engine
             next.InitialDice = next.CurrentDice;
             events.Add(new DiceRolledEvent(next, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask));
             EncounterRuleResolver.HandStarted(definition, next, events);
-            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, events);
+            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, next.HandsRemaining, events);
         }
 
         private static DiceValues Roll(EncounterState next, int selectedMask)
@@ -395,7 +395,7 @@ namespace Dice.Engine
             // Interference targets kept dice, then reroll charms observe the disturbed faces.
             EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayerReroll,
                 DiceValues.AllMask & ~selectedMask, events);
-            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, events);
+            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, next.HandsRemaining, events);
         }
 
         internal void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)

@@ -20,11 +20,11 @@ namespace Dice.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public void CustomConditionsSeePostSubmissionHandsAndResourcesBeforeAllEffects(bool reverse)
+        public void CustomConditionsSeeTheHandBeingPlayedAndResourcesBeforeAllEffects(bool reverse)
         {
             var grantCondition = new RecordingCondition(context => true);
             var resourceCondition = new RecordingCondition(context =>
-                context.HandsRemaining == 3 && context.RerollsRemaining == 2 &&
+                context.HandsRemaining == 4 && context.RerollsRemaining == 2 &&
                 context.SelectedMask == 5 && context.EverRerolledMask == 5 && context.RerollsSpentOnHand == 1);
             var grant = Modifier("grant", ModifierPhase.PlayHand, grantCondition,
                 effects: new ModifierEffect[] { new AddRerollsEffect(2) });
@@ -41,7 +41,7 @@ namespace Dice.Tests
             {
                 Assert.That(condition.Contexts.Count, Is.EqualTo(1));
                 var context = condition.Contexts[0];
-                Assert.That(context.HandsRemaining, Is.EqualTo(snapshot.HandsRemaining - 1));
+                Assert.That(context.HandsRemaining, Is.EqualTo(snapshot.HandsRemaining));
                 Assert.That(context.RerollsRemaining, Is.EqualTo(snapshot.RerollsRemaining));
                 Assert.That(context.HandsPlayedInStage, Is.Zero);
                 Assert.That(context.StartingHands, Is.EqualTo(4));

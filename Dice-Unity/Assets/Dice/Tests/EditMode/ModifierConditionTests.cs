@@ -125,14 +125,14 @@ namespace Dice.Tests
             yield return Pair(new EveryDieRerolledCondition(), C(ever: 31), C(ever: 30));
             yield return Pair(new ExactlyOneSelectedMatchesSelectedCountCondition(), C(selected: 3), C("22345", selected: 3));
             yield return Pair(new MinimumEqualsRerollsSpentCondition(), C("22345", spent: 2), C("22345", spent: 1));
-            yield return Pair(new RerollsExceedHandsRemainingCondition(), C(hands: 2, rerolls: 4), C(hands: 2, rerolls: 3));
+            yield return Pair(new RerollsExceedHandsRemainingCondition(), C(hands: 3, rerolls: 4), C(hands: 3, rerolls: 3));
             yield return Pair(new MaximumAtMostRerollsRemainingCondition(), C(rerolls: 5), C(rerolls: 4));
-            yield return Pair(new LargestGroupEqualsHandsOrRerollsCondition(), C("11234", hands: 1, rerolls: 4),
-                C("11234", hands: 2, rerolls: 4));
+            yield return Pair(new LargestGroupEqualsHandsOrRerollsCondition(), C("11234", hands: 2, rerolls: 4),
+                C("11234", hands: 3, rerolls: 4));
             yield return Pair(new EdgeSumEqualsEitherCondition(7, 9), C("12346"), C());
             yield return Pair(new FaceEqualsPositionCondition(), C("22345"), C("23456"));
             yield return Pair(new FirstHandCondition(), C(played: 0), C(played: 1));
-            yield return Pair(new ExtremeEqualsHandsRemainingCondition(), C(hands: 0), C("22346", hands: 2));
+            yield return Pair(new ExtremeEqualsHandsRemainingCondition(), C(hands: 1), C("22346", hands: 3));
             yield return Pair(new SumLessThanCondition(10), C("11115"), C("11116"));
             yield return Pair(new TwoPairCondition(), C("11223"), C("11234"));
             yield return Pair(new SelectedSumEqualsEitherCondition(3, 5), C(selected: 3), C("23456", selected: 10));
@@ -147,7 +147,7 @@ namespace Dice.Tests
                 C(priorStarting: 3, priorRemaining: 1));
             yield return Pair(new SameParityCondition(), C("13513"), C());
             yield return Pair(new InteriorSumDivisibleByCondition(2), C("11341"), C("11261"));
-            yield return Pair(new EdgeSumEqualsHandsOrRerollsCondition(), C(hands: 5, rerolls: 4), C(hands: 4, rerolls: 4));
+            yield return Pair(new EdgeSumEqualsHandsOrRerollsCondition(), C(hands: 6, rerolls: 4), C(hands: 5, rerolls: 4));
             yield return Pair(new PreviousStageAtMostHalfHandsPlayedCondition(), C(priorStarting: 3, priorRemaining: 2),
                 C(priorStarting: 3, priorRemaining: 1));
             yield return Pair(new LastRerollOnLastHandCondition(), C(hands: 1, rerolls: 0), C(hands: 2, rerolls: 0));
@@ -158,7 +158,7 @@ namespace Dice.Tests
             yield return Pair(new InteriorEqualsNeighborDifferenceCondition(), C("31245"), C("33333"));
             yield return Pair(new MiddleEqualsOddCountCondition(), C("22122"), C("22222"));
             yield return Pair(new SumGreaterThanCondition(20), C("55551"), C("55541"));
-            yield return Pair(new HandsRemainingEvenCondition(), C(hands: 1), C(hands: 2));
+            yield return Pair(new HandsRemainingEvenCondition(), C(hands: 2), C(hands: 3));
             yield return Pair(new EdgePairDifferencesEqualCondition(), C("21345"), C("12346"));
             yield return Pair(new InteriorContainsPairCondition(), C("12234"), C());
             yield return Pair(new OddSumGreaterThanEvenSumCondition(), C("11345"), C("22466"));

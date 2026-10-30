@@ -14,7 +14,6 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
             return (dice[1] + dice[2] + dice[3]) % Parameter == 0;
         }

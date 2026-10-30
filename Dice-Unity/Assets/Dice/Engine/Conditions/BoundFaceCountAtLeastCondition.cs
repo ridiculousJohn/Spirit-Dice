@@ -15,7 +15,6 @@ namespace Dice.Engine
         /** Counts the dice showing each bound die's face, the bound die included, over the dice every binding rule has bound. */
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             int boundMask = 0;
             foreach (var rule in context.EncounterRules)
                 if (rule is DieBindingRuleSnapshot binding) boundMask |= binding.BoundMask;

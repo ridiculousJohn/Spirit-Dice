@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
-            return ((context.HandsRemaining + 1L) & 1) == 0;
+            return (context.HandsRemaining & 1) == 0;
         }
     }
 }

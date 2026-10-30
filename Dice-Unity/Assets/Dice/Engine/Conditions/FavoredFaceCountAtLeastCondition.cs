@@ -15,7 +15,6 @@ namespace Dice.Engine
         /** Reads the first favored-face rule; without one the condition is false. */
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             foreach (var rule in context.EncounterRules)
                 if (rule is FavoredFaceRuleSnapshot favored)
                     return ModifierConditionHelpers.CountOf(context.CurrentDice, favored.FavoredFace) >= Parameter;

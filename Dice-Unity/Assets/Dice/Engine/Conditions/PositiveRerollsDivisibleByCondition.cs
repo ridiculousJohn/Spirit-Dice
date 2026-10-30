@@ -14,7 +14,6 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             return context.RerollsRemaining > 0 && context.RerollsRemaining % Parameter == 0;
         }
     }

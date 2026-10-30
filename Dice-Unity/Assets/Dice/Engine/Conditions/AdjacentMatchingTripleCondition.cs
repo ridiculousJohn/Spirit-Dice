@@ -4,7 +4,6 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
             for (int i = 0; i < DiceValues.Count - 2; ++i)
                 if (dice[i] == dice[i + 1] && dice[i] == dice[i + 2]) return true;

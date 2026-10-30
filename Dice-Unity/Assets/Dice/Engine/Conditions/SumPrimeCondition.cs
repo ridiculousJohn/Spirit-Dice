@@ -4,7 +4,6 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
             for (int divisor = 2; divisor * divisor <= dice.Sum; ++divisor) if (dice.Sum % divisor == 0) return false;
             return true;

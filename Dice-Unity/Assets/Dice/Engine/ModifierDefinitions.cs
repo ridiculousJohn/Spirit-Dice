@@ -109,6 +109,10 @@ namespace Dice.Engine
         public int SelectedMask { get; }
         public int EverRerolledMask { get; }
         public int RerollsSpentOnHand { get; }
+        /**
+         * The stage's hands remaining including the hand being resolved, in every phase: a hand being played still counts, so
+         * the last hand sees 1 and HandsPlayedInStage + HandsRemaining == StartingHands.
+         */
         public int HandsRemaining { get; }
         public int RerollsRemaining { get; }
         public int HandsPlayedInStage { get; }

@@ -4,7 +4,6 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            ModifierConditionHelpers.ValidateContext(in context);
             DiceValues dice = context.CurrentDice;
             bool ascending = true, descending = true;
             for (int i = 1; i < DiceValues.Count; ++i)

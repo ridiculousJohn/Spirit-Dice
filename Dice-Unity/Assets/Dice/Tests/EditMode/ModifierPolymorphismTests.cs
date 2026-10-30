@@ -87,7 +87,7 @@ namespace Dice.Tests
         {
             var grantCondition = new RecordingCondition(context => true);
             var exhaustedCondition = new RecordingCondition(context =>
-                context.HandsRemaining == 2 && context.RerollsRemaining == 0);
+                context.HandsRemaining == 3 && context.RerollsRemaining == 0);
             var grant = Modifier("custom.grant", ModifierPhase.PlayHand, grantCondition,
                 ModifierActivationLimit.Unlimited, new AddRerollsEffect(2));
             var exhausted = Modifier("custom.exhausted", ModifierPhase.PlayHand, exhaustedCondition,
@@ -103,7 +103,7 @@ namespace Dice.Tests
             foreach (var condition in new[] { grantCondition, exhaustedCondition })
             {
                 Assert.That(condition.Contexts.Count, Is.EqualTo(1));
-                Assert.That(condition.Contexts[0].HandsRemaining, Is.EqualTo(2));
+                Assert.That(condition.Contexts[0].HandsRemaining, Is.EqualTo(3));
                 Assert.That(condition.Contexts[0].RerollsRemaining, Is.Zero);
                 Assert.That(condition.Contexts[0].HandsPlayedInStage, Is.Zero);
             }
@@ -113,7 +113,7 @@ namespace Dice.Tests
         public void CustomConditionPreviewPreservesStateAndMatchesCommittedPlayAndFutureDice()
         {
             var condition = new RecordingCondition(context =>
-                context.HandsRemaining == 19 && context.RerollsRemaining == 20);
+                context.HandsRemaining == 20 && context.RerollsRemaining == 20);
             var definition = Modifier("custom.preview", ModifierPhase.PlayHand, condition,
                 ModifierActivationLimit.OncePerHand,
                 new AddBaseScoreEffect(11),
