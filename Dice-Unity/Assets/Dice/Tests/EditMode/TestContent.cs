@@ -64,21 +64,20 @@ namespace Dice.Tests
         }
 
         /**
-         * The one authored encounter table the scene-level tests run on: the first, by asset path, that the authored
-         * journey catalog references whose encounter scene has scene lighting.
+         * The asset path of an authored encounter table with an encounter scene. The preview windows mirror a table's
+         * authored encounter scene, so their tests need authored content; any such table serves, so this is the first the
+         * authored journey catalog references.
          */
-        internal static string LitTablePath()
+        internal static string AuthoredTablePath()
         {
             var config = Configuration();
             Assert.That(config.JourneyCatalog, Is.Not.Null, "The application configuration has no journey catalog.");
-            string path = config.JourneyCatalog.Entries
+            var table = config.JourneyCatalog.Entries
                 .Where(journey => journey != null)
                 .SelectMany(journey => journey.Beats.Select(beat => beat.Scene != null ? beat.Scene.Table : null))
-                .Where(table => table != null && table.SceneLighting != null && table.Scene.RuntimeKeyIsValid())
-                .Select(table => AssetDatabase.GetAssetPath(table))
-                .OrderBy(value => value, System.StringComparer.Ordinal).FirstOrDefault();
-            Assert.That(path, Is.Not.Null, "The authored journey catalog references no encounter table whose scene has scene lighting.");
-            return path;
+                .FirstOrDefault(value => value != null && value.Scene.RuntimeKeyIsValid());
+            Assert.That(table, Is.Not.Null, "The authored journey catalog references no encounter table with an encounter scene.");
+            return AssetDatabase.GetAssetPath(table);
         }
 
         /** One charm the authored content uses; which one does not matter. */

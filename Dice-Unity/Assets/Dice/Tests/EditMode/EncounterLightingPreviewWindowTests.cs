@@ -40,10 +40,10 @@ namespace Dice.Tests
             UnityEngine.Object.DestroyImmediate(texture);
         }
 
-        /** A copy of the authored lit table that keeps its encounter scene and tray but draws this fixture's synthetic lighting. */
+        /** A copy of the authored table that keeps its encounter scene and tray but draws this fixture's synthetic lighting. */
         private void UseTable()
         {
-            string tablePath = TestContent.LitTablePath();
+            string tablePath = TestContent.AuthoredTablePath();
             var authored = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(tablePath);
             Assert.That(authored, Is.Not.Null, tablePath);
             table = UnityEngine.Object.Instantiate(authored);

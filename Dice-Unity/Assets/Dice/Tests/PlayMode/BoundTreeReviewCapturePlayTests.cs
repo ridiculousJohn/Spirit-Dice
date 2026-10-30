@@ -50,7 +50,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             controller.ReturnToInvestigation();
@@ -150,7 +150,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             yield return EncounterCharmsIntroductionPlayTests.EnterShortEncounter(controller, controller.Catalog, journey);
@@ -183,7 +183,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             var mechanical = LosingFirstHand(controller.Catalog, journey.Encounters.First().Identity);
@@ -234,7 +234,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);

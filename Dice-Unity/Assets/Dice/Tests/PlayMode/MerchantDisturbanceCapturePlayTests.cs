@@ -79,7 +79,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(root);
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<BayWardRuleDefinition>(controller);
             controller.ReturnToInvestigation();
@@ -258,7 +258,7 @@ namespace Dice.Tests
             Directory.CreateDirectory(Path.Combine(root, "frames"));
 
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             var journey = ContentReady.JourneyWithRule<BayWardRuleDefinition>(controller);
             controller.ReturnToInvestigation();

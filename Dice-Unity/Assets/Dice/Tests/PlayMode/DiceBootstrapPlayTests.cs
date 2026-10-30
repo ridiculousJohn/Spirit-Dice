@@ -240,17 +240,13 @@ namespace Dice.Tests
             Assert.That(sceneBootstrap, Is.Not.Null);
             var catalog = sceneController.Catalog;
             var journeyCatalog = sceneController.JourneyCatalog;
-            // Any modifier: the installed theme must keep presenting it exactly as it did before the bootstrap was disabled.
-            var definition = catalog.Modifiers.First();
-            string name = ContentReady.Charms.GetName(definition);
-            var sprite = ContentReady.Charms.GetIcon(definition);
-            Assert.That(sprite, Is.Not.Null, name);
+            var charms = ContentReady.Charms;
             sceneBootstrap.enabled = false;
             yield return null;
             Assert.That(sceneController.Catalog, Is.SameAs(catalog));
             Assert.That(sceneController.JourneyCatalog, Is.SameAs(journeyCatalog));
-            Assert.That(ContentReady.Charms.GetName(definition), Is.EqualTo(name));
-            Assert.That(ContentReady.Charms.GetIcon(definition), Is.SameAs(sprite));
+            Assert.That(ContentReady.Charms, Is.SameAs(charms), "Disabling the bootstrap must keep its installed charm presentation.");
+            // Opening an encounter needs an authored journey; any encounter journey serves, so this is the first found.
             var journey = journeyCatalog.Entries.FirstOrDefault(value => value != null && value.Encounters.Any());
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
             ContentReady.SeedJourneyPrerequisites(sceneController, journey);

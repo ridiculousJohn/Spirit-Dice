@@ -37,7 +37,7 @@ namespace Dice.Tests
             Assert.That(original.isDirty, Is.EqualTo(originalDirty));
         }
 
-        /** The authored lit table, loaded from its asset path. */
+        /** The authored table, loaded from its asset path. */
         private static EncounterTablePresentationAsset LoadTable(string path)
         {
             var table = AssetDatabase.LoadAssetAtPath<EncounterTablePresentationAsset>(path);
@@ -48,7 +48,7 @@ namespace Dice.Tests
         [Test]
         public void AuthoredTablePreviewRendersSplitArtworkAndSharedRuntimeBaysAtBothWidths()
         {
-            string path = TestContent.LitTablePath();
+            string path = TestContent.AuthoredTablePath();
             foreach (bool narrow in new[] { false, true })
             {
                 var table = LoadTable(path);
@@ -89,7 +89,7 @@ namespace Dice.Tests
         [Test]
         public void GameplayOverlayUsesLiveControlsAndTogglesWithoutRebuildingTray()
         {
-            string path = TestContent.LitTablePath();
+            string path = TestContent.AuthoredTablePath();
             foreach (bool narrow in new[] { false, true })
             {
                 window.table = LoadTable(path);
@@ -121,7 +121,7 @@ namespace Dice.Tests
         [Test]
         public void PreviewControlsRefreshExistingObjectsAndSampleHostTimeDeterministically()
         {
-            window.table = LoadTable(TestContent.LitTablePath());
+            window.table = LoadTable(TestContent.AuthoredTablePath());
             window.historyCharm = TestContent.AuthoredCharm();
             window.EnsureStage();
             var view = window.view;
@@ -153,7 +153,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator UndoAndRedoRestoreScenePlacementCameraAndSurfaceOverrides()
         {
-            string tablePath = TestContent.LitTablePath();
+            string tablePath = TestContent.AuthoredTablePath();
             var table = LoadTable(tablePath);
             string path = AssetDatabase.GUIDToAssetPath(table.Scene.AssetGUID);
             Assert.That(SceneManager.GetSceneByPath(path).isLoaded, Is.False, "This fixture opens its own source scene.");
@@ -221,7 +221,7 @@ namespace Dice.Tests
         [Test]
         public void RebuildingAndClosingReleaseOwnedStageWhilePreservingAuthoredAssetsAndPipeline()
         {
-            window.table = LoadTable(TestContent.LitTablePath());
+            window.table = LoadTable(TestContent.AuthoredTablePath());
             window.EnsureStage();
             var scene = window.view.TrayScene;
             var camera = scene.RenderCamera;

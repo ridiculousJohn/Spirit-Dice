@@ -40,10 +40,10 @@ namespace Dice.Tests
         };
 
         /**
-         * Loads the authored content and, when entering an encounter, opens the first encounter journey in catalog order
-         * that a fresh profile can play without prerequisites and that has the property the caller requires.
+         * Waits for the application in the loaded scene to load its authored content, then initializes the journey with a
+         * fresh save and waits for its presentation at the investigation board.
          */
-        internal static IEnumerator Spirit(bool enterEncounter = true, Func<EncounterJourneyAsset, bool> requirement = null)
+        internal static IEnumerator JourneyAtBoard()
         {
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             Assert.That(controller, Is.Not.Null);
@@ -62,26 +62,7 @@ namespace Dice.Tests
                 controller.Status.ToString());
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(controller.Snapshot, Is.Null);
-            if (!enterEncounter) { yield return Routed(controller); yield break; }
-            EncounterJourneyAsset journey = null;
-            foreach (var entry in controller.JourneyCatalog.Entries)
-                if (entry != null && entry.Encounters.Any() && controller.IsJourneyAvailable(entry)
-                    && (requirement == null || requirement(entry)))
-                {
-                    journey = entry;
-                    break;
-                }
-            Assert.That(journey, Is.Not.Null, requirement == null
-                ? "The authored journey catalog has no encounter journey available without prerequisites."
-                : "The authored journey catalog has no encounter journey available without prerequisites with the required property.");
-            controller.SelectEncounter(journey);
             yield return Routed(controller);
-            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
-                controller.AdvanceJourney();
-            controller.AcceptEncounter();
-            yield return Routed(controller);
-            yield return WaitUntil(() => !controller.IsBusy, "Opening encounter presentation did not complete.");
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
         }
 
         /**
@@ -136,7 +117,7 @@ namespace Dice.Tests
         internal static IEnumerator LoadApplication()
         {
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return Spirit(false);
+            yield return JourneyAtBoard();
         }
 
         /** Plays the controller's runs from the fixtures' fixed seed. */

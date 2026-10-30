@@ -14,13 +14,14 @@ namespace Dice.Tests
         public IEnumerator SingleSceneReplacementReleasesTheRoutedSceneOnce()
         {
             yield return SceneManager.LoadSceneAsync("Application", LoadSceneMode.Single);
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var router = ContentReady.Router(controller);
             var frontendHandle = router.SceneHandle;
             Assert.That(frontendHandle.IsValid(), Is.True);
             var frontendScene = frontendHandle.Result.Scene;
-            // Any encounter journey routes from the frontend scene to its own encounter scene.
+            // Routing loads and releases real scene handles, so it needs an authored encounter scene. Any encounter journey
+            // routes from the frontend scene to its own encounter scene and serves, so this is the first found.
             var journey = controller.JourneyCatalog.Entries.FirstOrDefault(entry => entry != null && entry.Encounters.Any());
             Assert.That(journey, Is.Not.Null, "No encounter journey is authored.");
             ContentReady.SeedJourneyPrerequisites(controller, journey);
@@ -36,7 +37,7 @@ namespace Dice.Tests
             Assert.That(ContentReady.EncounterView(controller).gameObject.scene, Is.EqualTo(encounterScene),
                 "The routed scene holds the encounter view.");
             yield return SceneManager.LoadSceneAsync("Application", LoadSceneMode.Single);
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             yield return ContentReady.WaitUntil(() => !encounterHandle.IsValid(),
                 "Application teardown must release its presentation handle after Unity unloads the scene.");
             Assert.That(router == null, Is.True, "Single scene loading must destroy the previous router.");

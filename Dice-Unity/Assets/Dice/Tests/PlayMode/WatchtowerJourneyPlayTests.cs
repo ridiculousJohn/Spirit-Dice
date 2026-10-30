@@ -30,7 +30,7 @@ namespace Dice.Tests
         public IEnumerator InvestigationReady()
         {
             yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit(false);
+            yield return ContentReady.JourneyAtBoard();
             controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             journey = ContentReady.JourneyWithRule<DistinctFacesMultiplierRuleDefinition>(controller);
             ContentReady.SeedJourneyPrerequisites(controller, journey);

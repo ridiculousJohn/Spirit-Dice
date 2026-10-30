@@ -39,8 +39,9 @@ namespace Dice.Tests
 
             yield return ContentReady.LoadApplication();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            // No authored encounter starts with a charm, so the first journey's encounter starts with the first starter
-            // charm in a copy of the catalog; the popup inspects it as it would a charm taken from an offer.
+            // The capture shows the popup over an authored encounter table; any encounter journey serves, so this is the
+            // first found. No authored encounter starts with a charm, so its encounter starts with the first starter charm
+            // in a copy of the catalog; the popup inspects it as it would a charm taken from an offer.
             var journey = controller.JourneyCatalog.Entries.First(entry => entry != null && entry.Encounters.Any());
             var starter = controller.Catalog.Modifiers.FirstOrDefault(modifier => modifier.Availability.Access == ModifierAccess.Starter);
             Assert.That(starter, Is.Not.Null, "The authored catalog has no starter charm to equip.");
@@ -56,7 +57,8 @@ namespace Dice.Tests
             {
                 view.CloseCharmPopup();
                 yield return ResizeScreen(size);
-                // The view fits its portrait to the screen in Update; the popup sizes its panel from it when shown.
+                // The view fits its portrait to the screen when the screen size changes; the popup sizes its panel from it
+                // when shown.
                 yield return null;
                 view.ShowCharmPopup(charm.InstanceId);
                 Assert.That(view.IsCharmPopupOpen, Is.True, "The charm popup did not open on " + charm.DefinitionId);
