@@ -5,6 +5,7 @@ using Dice.App;
 using Dice.Engine;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
@@ -17,6 +18,7 @@ namespace Dice.Tests
         private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
         private static readonly EncounterRuleDefinition.Id WardId = TestRules.IdOf("ward");
         private const int AllButFirstBay = 0b11110;
+        private const ulong Seed = 14;
 
         /** Checks a piece starts at its authored position and moves without touching dice or random streams / fails if a move rolls, disturbs or is lost. */
         [Test]
@@ -203,7 +205,7 @@ namespace Dice.Tests
             var charm = new ModifierDefinition(TestModifiers.IdOf("test.play_charm"), TestFamilies.Of("test.play_charm"), ModifierPhase.PlayHand,
                 new ContainsFaceCondition(1), new ModifierEffect[] { new AddBaseScoreEffect(9) });
             var catalog = Catalog(chance: 100, rerollWeight: 0, flipWeight: 1, modifiers: new[] { charm });
-            var session = WithDice(catalog, 6, 6, 6, 6, 6);
+            var session = WithDice(catalog, Seed, 6, 6, 6, 6, 6);
             ulong ruleStream = session.CaptureSave().RuleRandomState;
 
             var preview = session.PreviewHandResolution();
@@ -363,30 +365,7 @@ namespace Dice.Tests
         private static PiecePosition Position(EncounterSession session)
             => ((PiecePositionState)session.Snapshot.PieceInteractions.Single().State).Position;
 
-        private static EncounterSession Session(MechanicalCatalog catalog) => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14);
-
-        /** A fresh session whose opening dice are replaced with the given faces. */
-        private static EncounterSession WithDice(MechanicalCatalog catalog, params int[] dice)
-        {
-            var save = Session(catalog).CaptureSave();
-            save.CurrentDice = dice;
-            save.InitialDice = (int[])dice.Clone();
-            return Restore(catalog, save);
-        }
-
-        private static Resolution Execute(EncounterSession session, EncounterAction action)
-        {
-            var result = session.Execute(action, session.Snapshot.Revision);
-            Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
-            return result;
-        }
-
-        private static EncounterSession Restore(MechanicalCatalog catalog, EncounterSaveData save)
-        {
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.True, result.Error + ": " + result.Detail);
-            return result.Session;
-        }
+        private static EncounterSession Session(MechanicalCatalog catalog) => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, Seed);
 
         private static void AssertInvalid(MechanicalCatalog catalog, EncounterSaveData save, Action<EncounterSaveData> mutate,
             string detail = null)

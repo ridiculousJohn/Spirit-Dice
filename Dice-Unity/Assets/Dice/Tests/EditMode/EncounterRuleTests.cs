@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.Engine;
 using NUnit.Framework;
+using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
@@ -334,19 +335,5 @@ namespace Dice.Tests
 
         private static EncounterSession Session(MechanicalCatalog catalog, ulong seed = 14)
             => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, seed);
-
-        private static Resolution Execute(EncounterSession session, EncounterAction action)
-        {
-            var result = session.Execute(action, session.Snapshot.Revision);
-            Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
-            return result;
-        }
-
-        private static EncounterSession Restore(MechanicalCatalog catalog, EncounterSaveData save)
-        {
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.True, result.Error + ": " + result.Detail);
-            return result.Session;
-        }
     }
 }

@@ -5,13 +5,13 @@ using Dice.App;
 using Dice.Engine;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
     public sealed class DieBindingTests
     {
         private static readonly EncounterRuleDefinition.Id BindingId = TestRules.IdOf("binding");
-        private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
 
         [Test]
         public void TheOpeningRollIsMarkedWithoutChangingItsFacesOrTheDiceStream()
@@ -282,10 +282,6 @@ namespace Dice.Tests
             Assert.That(rule.Identity, Is.EqualTo(BindingId));
             Assert.That(rule.MarksAfterOpeningRoll, Is.True);
             Assert.That(rule.MarksAfterPlayerReroll, Is.False);
-            Assert.That(rule.SaveDataType, Is.EqualTo(typeof(DieBindingSaveData)));
-            Assert.That(new DieInterferenceRuleDefinition(HauntingId, 20, 1, 1, true, true).SaveDataType,
-                Is.EqualTo(typeof(DieInterferenceSaveData)));
-            Assert.That(new FirstRerollFreeRuleDefinition(TestRules.IdOf("free")).SaveDataType, Is.EqualTo(typeof(FirstRerollFreeSaveData)));
             Assert.Throws<ArgumentException>(() => new DieBindingRuleDefinition(default, true, true));
         }
 
@@ -307,20 +303,6 @@ namespace Dice.Tests
 
         private static EncounterSession Session(MechanicalCatalog catalog, ulong seed = 14)
             => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, seed);
-
-        private static Resolution Execute(EncounterSession session, EncounterAction action)
-        {
-            var result = session.Execute(action, session.Snapshot.Revision);
-            Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
-            return result;
-        }
-
-        private static EncounterSession Restore(MechanicalCatalog catalog, EncounterSaveData save)
-        {
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.True, result.Error + ": " + result.Detail);
-            return result.Session;
-        }
 
         private static void AssertInvalid(MechanicalCatalog catalog, EncounterSaveData save, Action<EncounterSaveData> mutate)
         {

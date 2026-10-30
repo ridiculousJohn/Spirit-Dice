@@ -1,6 +1,7 @@
 using System.Linq;
 using Dice.Engine;
 using NUnit.Framework;
+using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
@@ -9,14 +10,15 @@ namespace Dice.Tests
     {
         private static readonly EncounterDefinition.Id EncounterId = TestContent.EncounterId;
         private static readonly EncounterRuleDefinition.Id RuleId = TestRules.IdOf("distinct_faces_multiplier");
+        private const ulong Seed = 27;
 
         /** Checks the bonus counts distinct faces / fails if it counts dice or repeated faces. */
         [Test]
         public void ScoredHandAddsOneMultiplierPerDistinctFace()
         {
             var catalog = Catalog();
-            Assert.That(WithDice(catalog, 2, 2, 3, 5, 6).PreviewPlayHand().EncounterRuleMultiplier, Is.EqualTo(4));
-            Assert.That(WithDice(catalog, 4, 4, 4, 4, 4).PreviewPlayHand().EncounterRuleMultiplier, Is.EqualTo(1));
+            Assert.That(WithDice(catalog, Seed, 2, 2, 3, 5, 6).PreviewPlayHand().EncounterRuleMultiplier, Is.EqualTo(4));
+            Assert.That(WithDice(catalog, Seed, 4, 4, 4, 4, 4).PreviewPlayHand().EncounterRuleMultiplier, Is.EqualTo(1));
         }
 
         /**
@@ -30,7 +32,7 @@ namespace Dice.Tests
                 new AlwaysCondition(),
                 new ModifierEffect[] { new AddMultiplierEffect(7) });
             var catalog = Catalog(modifier);
-            var session = WithDice(catalog, 2, 2, 3, 5, 6);
+            var session = WithDice(catalog, Seed, 2, 2, 3, 5, 6);
             var preview = session.PreviewPlayHand();
             Assert.That(preview.ModifierMultiplier, Is.EqualTo(7));
             Assert.That(preview.EncounterRuleMultiplier, Is.EqualTo(4));
@@ -54,15 +56,5 @@ namespace Dice.Tests
                     startingModifiers: modifiers.Select(value => value.Identity),
                     rules: new[] { new DistinctFacesMultiplierRuleDefinition(RuleId) })
             }, modifiers);
-
-        private static EncounterSession WithDice(MechanicalCatalog catalog, params int[] dice)
-        {
-            var save = EncounterSession.CreateEncounter(catalog, EncounterId, 27).CaptureSave();
-            save.CurrentDice = dice;
-            save.InitialDice = (int[])dice.Clone();
-            var restored = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(restored.Success, Is.True, restored.Error + ": " + restored.Detail);
-            return restored.Session;
-        }
     }
 }

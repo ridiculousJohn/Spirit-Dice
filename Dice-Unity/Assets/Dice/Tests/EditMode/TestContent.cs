@@ -38,6 +38,31 @@ namespace Dice.Tests
         internal static EncounterSession Session(ulong seed = 0, IEnumerable<StageDefinition> stages = null)
             => EncounterSession.CreateEncounter(Catalog(stages), EncounterId, seed);
 
+        /** Executes the action at the session's current revision and asserts the session accepted it. */
+        internal static Resolution Execute(EncounterSession session, EncounterAction action)
+        {
+            var result = session.Execute(action, session.Snapshot.Revision);
+            Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
+            return result;
+        }
+
+        /** Restores the save into a session of the catalog and asserts the restore succeeded. */
+        internal static EncounterSession Restore(MechanicalCatalog catalog, EncounterSaveData save)
+        {
+            var result = EncounterSession.RestoreEncounter(catalog, save);
+            Assert.That(result.Success, Is.True, result.Error + ": " + result.Detail);
+            return result.Session;
+        }
+
+        /** A fresh session of the catalog's test encounter from the seed, whose opening dice are replaced with the given faces. */
+        internal static EncounterSession WithDice(MechanicalCatalog catalog, ulong seed, params int[] dice)
+        {
+            var save = EncounterSession.CreateEncounter(catalog, EncounterId, seed).CaptureSave();
+            save.CurrentDice = dice;
+            save.InitialDice = (int[])dice.Clone();
+            return Restore(catalog, save);
+        }
+
         /**
          * The one authored encounter table the scene-level tests run on: the first, by asset path, that the authored
          * journey catalog references whose encounter scene has scene lighting.

@@ -1,7 +1,7 @@
 using System.Linq;
 using Dice.Engine;
 using NUnit.Framework;
-using Resolution = Dice.Engine.Resolution;
+using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
@@ -11,17 +11,19 @@ namespace Dice.Tests
         private static readonly EncounterRuleDefinition.Id RuleId = TestRules.IdOf("cycling_favored_face_multiplier");
         private static readonly EncounterDefinition.Id EncounterId = TestContent.EncounterId;
         private const int MultiplierPerFavoredDie = 3;
+        // The favored face a test reads must come from the same seed its dice are set on.
+        private const ulong Seed = 27;
 
         /** Checks each scored die showing the favored face adds the rule's multiplier / fails if other faces count or matches are ignored. */
         [Test]
         public void EachScoredDieShowingTheFavoredFaceAddsTheRulesMultiplier()
         {
             var catalog = RuleCatalog(new StageDefinition(1000000, 12, 3));
-            int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, 27));
+            int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, Seed));
             int other = favored % 6 + 1;
-            Assert.That(WithDice(catalog, favored, favored, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
+            Assert.That(WithDice(catalog, Seed, favored, favored, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
                 Is.EqualTo(2 * MultiplierPerFavoredDie));
-            Assert.That(WithDice(catalog, other, other, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
+            Assert.That(WithDice(catalog, Seed, other, other, other, other, other).PreviewPlayHand().EncounterRuleMultiplier,
                 Is.Zero);
         }
 
@@ -29,7 +31,7 @@ namespace Dice.Tests
         [Test]
         public void FavoredFaceAdvancesWithPlayedHandsAndNotWithRerolls()
         {
-            var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 12, 7)), EncounterId, 27);
+            var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 12, 7)), EncounterId, Seed);
             for (int hand = 0; hand < 7; ++hand)
             {
                 Assert.That(FavoredFace(session), Is.EqualTo(hand % 6 + 1));
@@ -44,7 +46,7 @@ namespace Dice.Tests
         public void FavoredFaceCountsHandsAcrossStages()
         {
             var session = EncounterSession.CreateEncounter(
-                RuleCatalog(new StageDefinition(1, 3, 3), new StageDefinition(1000000, 3, 3)), EncounterId, 27);
+                RuleCatalog(new StageDefinition(1, 3, 3), new StageDefinition(1000000, 3, 3)), EncounterId, Seed);
             int first = FavoredFace(session);
             Execute(session, PlayHandAction.Instance);
             Assert.That(session.Snapshot.StageIndex, Is.EqualTo(1));
@@ -63,11 +65,11 @@ namespace Dice.Tests
                 startingModifiers: new[] { charm.Identity },
                 rules: new[] { new CyclingFavoredFaceMultiplierRuleDefinition(RuleId, MultiplierPerFavoredDie) });
             var catalog = new MechanicalCatalog("test.favored_face.charms", TestContent.Hands(), new[] { encounter }, new[] { charm });
-            int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, 27));
+            int favored = FavoredFace(EncounterSession.CreateEncounter(catalog, EncounterId, Seed));
             int other = favored % 6 + 1;
-            Assert.That(WithDice(catalog, favored, favored, other, other, other).InspectModifiersForPlayHand().Single().ConditionMet,
+            Assert.That(WithDice(catalog, Seed, favored, favored, other, other, other).InspectModifiersForPlayHand().Single().ConditionMet,
                 Is.EqualTo(true));
-            Assert.That(WithDice(catalog, favored, other, other, other, other).InspectModifiersForPlayHand().Single().ConditionMet,
+            Assert.That(WithDice(catalog, Seed, favored, other, other, other, other).InspectModifiersForPlayHand().Single().ConditionMet,
                 Is.EqualTo(false));
         }
 
@@ -78,7 +80,7 @@ namespace Dice.Tests
         [Test]
         public void DeclaredTextValueNamesAreTheSnapshotsTextValueKeys()
         {
-            var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 3, 3)), EncounterId, 27);
+            var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 3, 3)), EncounterId, Seed);
             var definition = session.Definition.Rules.Single();
             Assert.That(session.Snapshot.EncounterRules.Single().TextValues.Keys, Is.EquivalentTo(definition.TextValueNames));
             Assert.That(definition.TextValueNames, Is.Not.Empty);
@@ -93,22 +95,5 @@ namespace Dice.Tests
 
         private static int FavoredFace(EncounterSession session)
             => ((FavoredFaceRuleSnapshot)session.Snapshot.EncounterRules.Single()).FavoredFace;
-
-        private static EncounterSession WithDice(MechanicalCatalog catalog, params int[] dice)
-        {
-            var save = EncounterSession.CreateEncounter(catalog, EncounterId, 27).CaptureSave();
-            save.CurrentDice = dice;
-            save.InitialDice = (int[])dice.Clone();
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.True, result.Error + ": " + result.Detail);
-            return result.Session;
-        }
-
-        private static Resolution Execute(EncounterSession session, EncounterAction action)
-        {
-            var result = session.Execute(action, session.Snapshot.Revision);
-            Assert.That(result.Accepted, Is.True, result.Rejection.ToString());
-            return result;
-        }
     }
 }
