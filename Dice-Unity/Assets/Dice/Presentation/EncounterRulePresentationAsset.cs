@@ -48,13 +48,18 @@ namespace Dice.Presentation
 
         /**
          * Fails, naming the card and its rule, when its available or used text has a placeholder the rule's snapshots do
-         * not supply, which would show on screen as written.
+         * not supply, which would show on screen as written, or when it has no description and its available text has any
+         * placeholder, since the invitation describes the rule by that text with no rule snapshot to fill it.
          */
         internal void ValidateText(EncounterRuleDefinition definition)
         {
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             RequireSuppliedPlaceholders(availableText, "available", definition);
             RequireSuppliedPlaceholders(usedText, "used", definition);
+            if (string.IsNullOrWhiteSpace(description) && !SpiritWordingTemplate.UsesOnly(availableText, Array.Empty<string>()))
+                throw new FormatException("The rule card " + name + " of the rule " + (rule != null ? rule.name : "(none)") +
+                    " has no description, so the invitation describes it by its available text, which has a placeholder the" +
+                    " invitation cannot fill.");
         }
 
         private void RequireSuppliedPlaceholders(string text, string field, EncounterRuleDefinition definition)

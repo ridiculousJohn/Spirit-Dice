@@ -172,21 +172,28 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks that a card whose available and used text use only the placeholders its rule supplies passes, and that a
-         * card using one its rule does not supply, in either text, fails naming the card. Fails if a supplied placeholder is
-         * rejected or an unsupplied one is accepted.
+         * Checks that a card with a description whose available and used text use only the placeholders its rule supplies
+         * passes, that a card using one its rule does not supply, in either text, fails naming the card, and that a card
+         * with no description whose available text has a placeholder fails naming the card, since the invitation shows that
+         * text unfilled. Fails if a supplied placeholder is rejected, an unsupplied one is accepted, or an undescribed card
+         * with a placeholder is accepted.
          */
         [Test]
         public void ARuleCardMayUseOnlyThePlaceholdersItsRuleSupplies()
         {
             var favored = TestRules.IdOf("favored");
             var rule = new CyclingFavoredFaceMultiplierRuleDefinition(favored, 2);
-            Assert.DoesNotThrow(() => Presentation(favored, ModifierPhase.PlayHand, "Face {face}", "Spent {face}").ValidateText(rule));
-            var unknownAvailable = Presentation(favored, ModifierPhase.PlayHand, "Face {count}", "Spent {face}");
+            Assert.DoesNotThrow(() => Presentation(favored, ModifierPhase.PlayHand, "Face {face}", "Spent {face}",
+                description: "The favored face").ValidateText(rule));
+            var unknownAvailable = Presentation(favored, ModifierPhase.PlayHand, "Face {count}", "Spent {face}",
+                description: "The favored face");
             Assert.That(Assert.Throws<FormatException>(() => unknownAvailable.ValidateText(rule)).Message,
                 Does.Contain(unknownAvailable.name));
             Assert.Throws<FormatException>(() => Presentation(favored, ModifierPhase.PlayHand, "Face", "Spent {face}")
                 .ValidateText(new FirstRerollFreeRuleDefinition(favored)));
+            var undescribed = Presentation(favored, ModifierPhase.PlayHand, "Face {face}", "Spent {face}");
+            Assert.That(Assert.Throws<FormatException>(() => undescribed.ValidateText(rule)).Message,
+                Does.Contain(undescribed.name));
         }
 
         /** A one-stage test encounter with the given rule. */
@@ -199,7 +206,7 @@ namespace Dice.Tests
         }
 
         private EncounterRulePresentationAsset Presentation(EncounterRuleDefinition.Id ruleId, ModifierPhase phase, string available,
-            string used, Sprite icon = null, bool shownOnHud = false)
+            string used, Sprite icon = null, bool shownOnHud = false, string description = "")
         {
             var rule = TestRules.Asset(ruleId);
             created.Add(rule);
@@ -209,6 +216,7 @@ namespace Dice.Tests
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("rule").objectReferenceValue = rule;
             serialized.FindProperty("displayName").stringValue = asset.name;
+            serialized.FindProperty("description").stringValue = description;
             serialized.FindProperty("availableText").stringValue = available;
             serialized.FindProperty("usedText").stringValue = used;
             serialized.FindProperty("icon").objectReferenceValue = icon;

@@ -235,13 +235,13 @@ namespace Dice.Editor
         private void EnsureContent()
         {
             if (content != null) return;
-            DiceApplicationConfig[] configurations = AssetDatabase.FindAssets("t:DiceApplicationConfig")
-                .Select(guid => AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>(AssetDatabase.GUIDToAssetPath(guid))).ToArray();
-            if (configurations.Length != 1)
+            var configurations = ApplicationConfigurationAssets.FindAll();
+            if (configurations.Count != 1)
                 throw new InvalidOperationException("The preview requires exactly one application configuration.");
-            configurations[0].Validate();
-            content = configurations[0].CatalogAsset.Build();
-            configuration = configurations[0];
+            var found = configurations[0].Configuration;
+            found.Validate();
+            content = found.CatalogAsset.Build();
+            configuration = found;
         }
 
         /** The history tray shows historyCount activations of the chosen charm, and none without one. */

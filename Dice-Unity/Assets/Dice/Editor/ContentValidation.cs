@@ -101,15 +101,14 @@ namespace Dice.Editor
         private static LoadedContent LoadContent(ContentValidationCheck check)
         {
             var loaded = new LoadedContent();
-            string[] guids = AssetDatabase.FindAssets("t:" + nameof(DiceApplicationConfig));
-            if (guids.Length != 1)
+            var configurations = ApplicationConfigurationAssets.FindAll();
+            if (configurations.Count != 1)
             {
                 check.Add("", "The project requires exactly one application configuration (DiceApplicationConfig); it has " +
-                    guids.Length + ". The checks that need it are skipped.");
+                    configurations.Count + ". The checks that need it are skipped.");
                 return loaded;
             }
-            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var configuration = AssetDatabase.LoadAssetAtPath<DiceApplicationConfig>(path);
+            var (path, configuration) = configurations[0];
             loaded.Configuration = configuration;
             Record(check, path, configuration.Validate);
             if (configuration.CatalogAsset != null)
