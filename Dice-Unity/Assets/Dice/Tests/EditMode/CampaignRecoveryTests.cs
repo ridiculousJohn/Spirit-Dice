@@ -240,20 +240,6 @@ namespace Dice.Tests
             Assert.That(Load().RecoveryCampaigns.Single().CampaignId, Is.EqualTo(unresolved));
         }
 
-        [Test]
-        public void PruningBackupsPreservesFilesOutsideTheExactGeneratedNamingPattern()
-        {
-            string unknown = Path.Combine(root, "spirit-slots.corrupt-user-copy.json");
-            File.WriteAllText(unknown, "keep");
-            var slots = Load();
-            File.WriteAllText(IndexPath, "first invalid index");
-            string first = slots.Load();
-            File.WriteAllText(IndexPath, "second invalid index");
-            string second = slots.Load();
-            Assert.That(File.Exists(first), Is.False);
-            Assert.That(File.ReadAllText(second), Is.EqualTo("second invalid index"));
-            Assert.That(File.ReadAllText(unknown), Is.EqualTo("keep"));
-        }
 
         [Test]
         public void InterruptedRecoveryRetainsEveryBackupUntilARecoveryCommitSucceeds()

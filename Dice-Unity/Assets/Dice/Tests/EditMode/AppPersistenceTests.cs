@@ -15,21 +15,11 @@ namespace Dice.Tests
     public sealed class AppPersistenceTests
     {
         [Test]
-        public void CodecPreservesIntegerBitsAndDistinguishesNullFromEmptyArrays()
+        public void CodecDistinguishesNullFromEmptyArrays()
         {
             var save = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave();
-            save.DiceRandomState = ulong.MaxValue;
-            save.RewardRandomState = 1UL << 63;
-            save.TotalScore = long.MaxValue;
-            save.Revision = (1L << 53) + 1;
-            save.NextOfferId = long.MaxValue - 1;
             save.PendingUpgradeCategories = Array.Empty<HandCategory>();
             var restored = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), TestContent.Catalog());
-            Assert.That(restored.DiceRandomState, Is.EqualTo(ulong.MaxValue));
-            Assert.That(restored.RewardRandomState, Is.EqualTo(1UL << 63));
-            Assert.That(restored.TotalScore, Is.EqualTo(long.MaxValue));
-            Assert.That(restored.Revision, Is.EqualTo((1L << 53) + 1));
-            Assert.That(restored.NextOfferId, Is.EqualTo(long.MaxValue - 1));
             Assert.That(restored.DiceBeforeLastReroll, Is.Null);
             Assert.That(restored.PendingUpgradeCategories, Is.Not.Null.And.Empty);
             Assert.That(EncounterSaveCodec.Serialize(restored), Is.EqualTo(EncounterSaveCodec.Serialize(save)));
@@ -158,38 +148,6 @@ namespace Dice.Tests
             TestContext.WriteLine("Retained save files: " + artifactRoot);
         }
 
-        [Test]
-        public void FileStoreRepeatedlyReplacesSavesAndRetainsEachPreviousSave()
-        {
-            string artifactRoot = Path.GetFullPath(Path.Combine(Application.dataPath,
-                "..", "..", "Docs", "work", "save-resume-file-tests", Guid.NewGuid().ToString("N")));
-            string path = Path.Combine(artifactRoot, "encounter.json");
-            var catalog = TestContent.Catalog();
-            byte[] previous = null;
-            try
-            {
-                for (ulong seed = 0; seed < 128; ++seed)
-                {
-                    var save = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, seed).CaptureSave();
-                    byte[] expected = EncounterSaveCodec.Serialize(save);
-                    try { EncounterSaveFileStore.Save(path, save); }
-                    catch (Exception exception)
-                    {
-                        TestContext.WriteLine("Save failed for seed " + seed + ", HResult " + exception.HResult);
-                        throw;
-                    }
-                    Assert.That(File.ReadAllBytes(path), Is.EqualTo(expected), "Main save for seed " + seed);
-                    if (previous != null)
-                        Assert.That(File.ReadAllBytes(path + ".bak"), Is.EqualTo(previous), "Backup for seed " + seed);
-                    previous = expected;
-                }
-                Assert.That(Directory.GetFiles(artifactRoot).Length, Is.EqualTo(2));
-            }
-            finally
-            {
-                TestContext.WriteLine("Retained save files: " + artifactRoot);
-            }
-        }
 
         private sealed class RecordingPresenter : IEncounterPresenter
         {

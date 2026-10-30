@@ -241,6 +241,9 @@ namespace Dice.Tests
         [Test]
         public void RepeatedCorruptionRetainsOnlyTheLatestGeneratedBackup()
         {
+            // A file that only resembles a generated backup name is not the store's to prune.
+            string unknown = Path.Combine(root, "spirit-slots.corrupt-user-copy.json");
+            File.WriteAllText(unknown, "keep");
             var slots = Load();
             byte[] first = Encoding.UTF8.GetBytes("first corrupt index");
             File.WriteAllBytes(IndexPath, first);
@@ -251,7 +254,8 @@ namespace Dice.Tests
             Assert.That(secondBackup, Is.Not.EqualTo(firstBackup));
             Assert.That(File.Exists(firstBackup), Is.False);
             Assert.That(File.ReadAllBytes(secondBackup), Is.EqualTo(second));
-            Assert.That(Directory.GetFiles(root, "spirit-slots.corrupt-*.json"), Is.EqualTo(new[] { secondBackup }));
+            Assert.That(Directory.GetFiles(root, "spirit-slots.corrupt-*.json").Except(new[] { unknown }), Is.EqualTo(new[] { secondBackup }));
+            Assert.That(File.ReadAllText(unknown), Is.EqualTo("keep"));
             AssertEmptySlots(Load());
         }
 

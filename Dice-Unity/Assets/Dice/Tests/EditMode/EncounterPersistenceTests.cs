@@ -176,7 +176,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void LegacyAwaitingRewardsWithNoPolicyRemainsRestorable()
+        public void AwaitingRewardsWithoutARewardPolicyRestoresAndContinues()
         {
             var catalog = TestContent.Catalog(new[]
             {
