@@ -367,7 +367,6 @@ namespace Dice.Tests
             var definition = TestTrayRig.Definition("test.tray.pointer");
             int last = tray.Renderer.Capacity + 4;
             for (int i = 0; i <= last; ++i) tray.Add(TestTrayRig.Contribution(definition, i + 1), Rig.Charms(definition), definition, false);
-            tray.LateUpdate();
             var root = (RectTransform)tray.transform;
             var visible = (RectTransform)tray.Content.GetChild(0);
             Rect projected = tray.Renderer.GetDieViewportRect(0);

@@ -31,6 +31,8 @@ namespace Dice.Presentation
         private bool bound;
         private bool hasBayPoints;
         private bool dragging;
+        // Whether the prop is easing into its position; only then does it move itself each frame.
+        private bool settling;
         private int dragPointer;
         private Vector3 grabOffset;
         private Vector3 settleFrom;
@@ -58,6 +60,7 @@ namespace Dice.Presentation
             definition = interaction;
             position = current;
             bound = true;
+            Place();
         }
 
         /** The current snapshot has no matching interaction; the prop keeps its place and cannot be moved. */
@@ -68,16 +71,32 @@ namespace Dice.Presentation
             bound = false;
         }
 
-        /** Places the prop at its bound position using the tray's current bay points in world space. */
+        /** Takes the tray's bay points in world space and places the prop at its bound position. */
         public void Layout(IReadOnlyList<Vector3> bayWorldPoints)
         {
             if (bayWorldPoints == null || bayWorldPoints.Count != DiceValues.Count)
                 throw new ArgumentException("Five bay points are required.", nameof(bayWorldPoints));
             for (int i = 0; i < DiceValues.Count; ++i) bayPoints[i] = bayWorldPoints[i];
             hasBayPoints = true;
-            if (!bound || dragging || !TryGetPoint(position, out Vector3 target)) return;
+            Place();
+        }
+
+        private void Update()
+        {
+            if (settling) Place();
+        }
+
+        /** Moves the prop to its bound position, easing in while it settles; a held or unbound prop stays where it is. */
+        private void Place()
+        {
+            if (!bound || dragging || !TryGetPoint(position, out Vector3 target))
+            {
+                settling = false;
+                return;
+            }
             float progress = settleDuration > 0f ? (Time.unscaledTime - settleStart) / settleDuration : 1f;
-            transform.position = progress >= 1f ? target : Vector3.Lerp(settleFrom, target, Mathf.SmoothStep(0f, 1f, progress));
+            settling = progress < 1f;
+            transform.position = settling ? Vector3.Lerp(settleFrom, target, Mathf.SmoothStep(0f, 1f, progress)) : target;
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -149,6 +168,7 @@ namespace Dice.Presentation
         {
             settleFrom = transform.position;
             settleStart = Time.unscaledTime;
+            settling = true;
         }
 
         private void CancelDrag()

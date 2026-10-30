@@ -10,21 +10,15 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform safeArea;
         [SerializeField] private RectTransform portrait;
         [SerializeField] private Vector2 referenceSize = DefaultReferenceSize;
-        private Rect previousSafeArea;
-        private Vector2 previousScreenSize;
 
         private void OnEnable() => Fit();
 
-        private void Update()
-        {
-            if (previousSafeArea != Screen.safeArea || previousScreenSize != new Vector2(Screen.width, Screen.height)) Fit();
-        }
+        // The canvas resizes its root object, which carries this fit, whenever the screen changes size or orientation.
+        private void OnRectTransformDimensionsChange() => Fit();
 
         private void Fit()
         {
             if (safeArea == null || portrait == null || Screen.width <= 0 || Screen.height <= 0) return;
-            previousSafeArea = Screen.safeArea;
-            previousScreenSize = new Vector2(Screen.width, Screen.height);
             FitToScreen(safeArea, portrait, referenceSize);
         }
 

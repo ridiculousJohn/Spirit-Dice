@@ -36,12 +36,13 @@ namespace Dice.App
         public string StatusMessage { get; private set; } = "Assign a mechanical catalog to start the diagnostic encounter.";
         public string SavePath { get; private set; }
         public ulong Seed { get; private set; } = EncounterApplication.DefaultSeed;
+        public event Action Changed;
 
         private void Awake()
         {
-            BindView();
             SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "diagnostic-encounter.json");
             Seed = initialSeed;
+            BindView();
         }
 
         /**
@@ -63,7 +64,7 @@ namespace Dice.App
             }
             catch (Exception exception)
             {
-                StatusMessage = "Cannot initialize the encounter: " + exception.Message;
+                SetStatus("Cannot initialize the encounter: " + exception.Message);
                 return;
             }
             StartNew(initialSeed);
@@ -94,7 +95,7 @@ namespace Dice.App
         {
             if (!ulong.TryParse(seedText, NumberStyles.None, CultureInfo.InvariantCulture, out ulong value))
             {
-                StatusMessage = "Seed must be an unsigned 64-bit integer.";
+                SetStatus("Seed must be an unsigned 64-bit integer.");
                 return;
             }
             StartNew(value);
@@ -104,13 +105,13 @@ namespace Dice.App
         {
             if (Catalog == null)
             {
-                StatusMessage = "Assign a mechanical catalog to start the diagnostic encounter.";
+                SetStatus("Assign a mechanical catalog to start the diagnostic encounter.");
                 return;
             }
             try { InstallNew(new EncounterApplication(Catalog, encounterId, value), value); }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                StatusMessage = "Cannot start the encounter: " + exception.Message;
+                SetStatus("Cannot start the encounter: " + exception.Message);
             }
         }
 
@@ -119,14 +120,21 @@ namespace Dice.App
             if (Snapshot == null || Snapshot.Phase != EncounterPhase.Playing || index < 0 || index >= DiceValues.Count ||
                 (Snapshot.LockedMask & (1 << index)) != 0) return;
             SelectedMask ^= 1 << index;
+            Changed?.Invoke();
         }
 
         public void SelectAllDice()
         {
-            if (Snapshot != null && Snapshot.Phase == EncounterPhase.Playing) SelectedMask = DiceValues.AllMask & ~Snapshot.LockedMask;
+            if (Snapshot == null || Snapshot.Phase != EncounterPhase.Playing) return;
+            SelectedMask = DiceValues.AllMask & ~Snapshot.LockedMask;
+            Changed?.Invoke();
         }
 
-        public void ClearDiceSelection() => SelectedMask = 0;
+        public void ClearDiceSelection()
+        {
+            SelectedMask = 0;
+            Changed?.Invoke();
+        }
         public void Reroll() => Submit(new RerollDiceAction(SelectedMask), true);
         public void PlayHand() => Submit(PlayHandAction.Instance, true);
         public void RefreshRewards() => Submit(new RefreshModifierOfferAction(Snapshot?.PendingReward?.OfferId ?? 0), false);
@@ -145,11 +153,11 @@ namespace Dice.App
             try
             {
                 EncounterSaveFileStore.Save(SavePath, application.CaptureSave());
-                StatusMessage = WithCacheStatus("Saved encounter to " + SavePath);
+                SetStatus(WithCacheStatus("Saved encounter to " + SavePath));
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                StatusMessage = "Cannot save the encounter: " + exception.Message;
+                SetStatus("Cannot save the encounter: " + exception.Message);
             }
         }
 
@@ -157,7 +165,7 @@ namespace Dice.App
         {
             if (Catalog == null)
             {
-                StatusMessage = "A mechanical catalog is required to load an encounter.";
+                SetStatus("A mechanical catalog is required to load an encounter.");
                 return;
             }
             try
@@ -165,7 +173,7 @@ namespace Dice.App
                 var save = EncounterSaveFileStore.Load(SavePath, Catalog);
                 if (!EncounterApplication.TryRestore(Catalog, save, out var next, out var result))
                 {
-                    StatusMessage = "Cannot load the encounter: " + result.Error + ". " + result.Detail;
+                    SetStatus("Cannot load the encounter: " + result.Error + ". " + result.Detail);
                     return;
                 }
                 application = next;
@@ -173,25 +181,39 @@ namespace Dice.App
                 SelectedMask = 0;
                 eventLog.Clear();
                 application.AttachPresenter(this);
-                StatusMessage = WithCacheStatus("Loaded encounter from " + SavePath);
+                SetStatus(WithCacheStatus("Loaded encounter from " + SavePath));
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                StatusMessage = "Cannot load the encounter: " + exception.Message;
+                SetStatus("Cannot load the encounter: " + exception.Message);
             }
         }
 
         public void Synchronize(EncounterSnapshot snapshot)
+        {
+            ApplySnapshot(snapshot);
+            Changed?.Invoke();
+        }
+
+        public void Present(Resolution resolution)
+        {
+            ApplySnapshot(resolution.Snapshot);
+            AppendEvents(resolution);
+            Changed?.Invoke();
+        }
+
+        private void ApplySnapshot(EncounterSnapshot snapshot)
         {
             Snapshot = snapshot;
             CachePreview();
             StatusMessage = WithCacheStatus("Synchronized encounter at revision " + Snapshot.Revision.ToString(CultureInfo.InvariantCulture));
         }
 
-        public void Present(Resolution resolution)
+        /** Sets the status message and raises Changed. */
+        private void SetStatus(string message)
         {
-            Synchronize(resolution.Snapshot);
-            AppendEvents(resolution);
+            StatusMessage = message;
+            Changed?.Invoke();
         }
 
         private void BindView()
@@ -208,7 +230,7 @@ namespace Dice.App
             eventLog.Clear();
             application.AttachPresenter(this);
             AppendEvents(application.InitialResolution);
-            StatusMessage = WithCacheStatus("Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture));
+            SetStatus(WithCacheStatus("Started encounter with seed " + seed.ToString(CultureInfo.InvariantCulture)));
         }
 
         private void Submit(EncounterAction action, bool clearSelection)
@@ -219,22 +241,22 @@ namespace Dice.App
                 var result = application.Submit(action, Snapshot.Revision);
                 if (!result.Accepted)
                 {
-                    StatusMessage = "Action rejected: " + result.Rejection;
+                    SetStatus("Action rejected: " + result.Rejection);
                     return;
                 }
                 if (clearSelection) SelectedMask = 0;
-                StatusMessage = WithCacheStatus("Accepted action at revision " + Snapshot.Revision.ToString(CultureInfo.InvariantCulture));
+                SetStatus(WithCacheStatus("Accepted action at revision " + Snapshot.Revision.ToString(CultureInfo.InvariantCulture)));
             }
             catch (Exception exception) when (IsExpectedFailure(exception))
             {
-                StatusMessage = "Cannot resolve the action: " + exception.Message;
+                SetStatus("Cannot resolve the action: " + exception.Message);
             }
         }
 
         private bool RequireApplication()
         {
             if (application != null) return true;
-            StatusMessage = "Start an encounter first.";
+            SetStatus("Start an encounter first.");
             return false;
         }
 

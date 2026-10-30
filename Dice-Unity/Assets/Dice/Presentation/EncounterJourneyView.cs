@@ -57,9 +57,8 @@ namespace Dice.Presentation
         private EncounterJourneyPhase renderedPhase;
         private bool hasRendered;
         private EncounterJourneyBeat activeBeat;
-        // The scene shown and its picture; a table scene shows no picture.
+        // The scene shown and its picture's lighting; a table scene shows no picture.
         private JourneySceneAsset shownScene;
-        private Texture2D shownBackground;
         private SceneLightingAsset shownLighting;
         private Color shownForegroundTint;
         // The foreground fades in over the beat that enters its picture, unless panels part to reveal it.
@@ -169,7 +168,6 @@ namespace Dice.Presentation
             bool parting = entering && continuingJourney && beat.Scene != null &&
                 beat.Transition == EncounterJourneyTransition.PartingPanels && background.texture != null;
             Texture2D previous = parting ? background.texture as Texture2D : null;
-            background.material = null;
             if (entering)
             {
                 if (parting)
@@ -189,7 +187,10 @@ namespace Dice.Presentation
                 sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
                 shownScene = scene;
                 scene.Present(this);
+                // A lit picture gets a compositor of its own; LateUpdate samples its lighting onto it.
+                if (shownLighting != null) sceneLightingMaterial = new SceneLightingMaterial(shownLighting.Shader);
             }
+            background.material = sceneLightingMaterial?.Material;
             fadingForeground = entering && !parting;
             activeBeat = beat;
             title.text = beat.Title;
@@ -218,7 +219,6 @@ namespace Dice.Presentation
         void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting, Texture2D foregroundTexture,
             Rect foregroundRect, Color foregroundTint)
         {
-            shownBackground = picture;
             shownLighting = lighting;
             shownForegroundTint = foregroundTint;
             var backgroundTexture = lighting != null ? lighting.BaseTexture : picture;
@@ -399,38 +399,19 @@ namespace Dice.Presentation
             hasRendered = false;
         }
 
+        /** Samples the shown and departing pictures' lighting from one clock onto their compositors while there is any. */
         internal void LateUpdate()
         {
+            if (shownLighting == null && previousSceneLighting == null) return;
             double time = Time.unscaledTimeAsDouble;
-            var asset = shownLighting;
-            sceneLightingState.Sample(asset, time);
-            if (asset != null)
+            if (shownLighting != null)
             {
-                if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
-                {
-                    sceneLightingMaterial?.Dispose();
-                    sceneLightingMaterial = new SceneLightingMaterial(asset.Shader);
-                }
+                sceneLightingState.Sample(shownLighting, time);
                 sceneLightingMaterial.Apply(sceneLightingState);
-            }
-            else
-            {
-                sceneLightingMaterial?.Dispose();
-                sceneLightingMaterial = null;
-            }
-            if (background != null)
-            {
-                var texture = asset != null ? asset.BaseTexture : shownBackground;
-                background.texture = texture;
-                background.color = texture != null ? Color.white : Color.clear;
-                background.material = sceneLightingMaterial?.Material;
             }
             if (previousSceneLighting == null) return;
             previousSceneLightingState.Sample(previousSceneLighting, time);
-            if (previousSceneLightingMaterial == null) previousSceneLightingMaterial = new SceneLightingMaterial(previousSceneLighting.Shader);
             previousSceneLightingMaterial.Apply(previousSceneLightingState);
-            leftPanel.texture = rightPanel.texture = previousSceneLighting.BaseTexture;
-            leftPanel.material = rightPanel.material = previousSceneLightingMaterial.Material;
         }
 
         private void ClearPartingLighting()
@@ -445,13 +426,17 @@ namespace Dice.Presentation
 
         private void ClearSceneLighting()
         {
-            if (background != null) background.material = null;
+            if (background != null)
+            {
+                background.texture = null;
+                background.color = Color.clear;
+                background.material = null;
+            }
             sceneLightingMaterial?.Dispose();
             sceneLightingMaterial = null;
             sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
             activeBeat = null;
             shownScene = null;
-            shownBackground = null;
             shownLighting = null;
         }
 

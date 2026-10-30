@@ -83,7 +83,7 @@ namespace Dice.Presentation
          */
         public abstract void Bind(PieceInteractionSnapshot interaction);
 
-        /** Places the prop for the frame, after the tray has placed its dice. */
+        /** Places the prop at its bay points; runs when presenters are created, when the screen fits and when a roll or flip ends. */
         public virtual void Layout() { }
 
         /** Leaves the prop in place and unusable; the presenter is not used afterwards. */

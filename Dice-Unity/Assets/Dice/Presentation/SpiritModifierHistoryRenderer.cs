@@ -192,16 +192,20 @@ namespace Dice.Presentation
             }
         }
 
-        public void Advance(float seconds)
+        /** Advances arriving dice; true when any die moved. */
+        public bool Advance(float seconds)
         {
             if (seconds < 0 || !FiniteValue.Is(seconds)) throw new ArgumentOutOfRangeException(nameof(seconds));
+            bool moved = false;
             for (int i = 0; i < entries.Count; ++i)
             {
                 Entry entry = entries[i];
                 if (entry.Elapsed >= ArrivalDuration) continue;
                 entry.Elapsed = Mathf.Min(ArrivalDuration, entry.Elapsed + seconds);
                 Position(entry, i, true);
+                moved = true;
             }
+            return moved;
         }
 
         public Transform GetDieTransform(int index) => entries[index].Die;
@@ -211,6 +215,8 @@ namespace Dice.Presentation
         public Rect GetDieViewportRect(int index)
         {
             Transform die = entries[index].Die;
+            // A die destroyed during shutdown has no area, as SetResolving skips it.
+            if (die == null) return Rect.zero;
             Vector2 min = Vector2.one * float.MaxValue;
             Vector2 max = Vector2.one * float.MinValue;
             float localMin = float.MaxValue;

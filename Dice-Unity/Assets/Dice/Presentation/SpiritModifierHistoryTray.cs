@@ -18,7 +18,6 @@ namespace Dice.Presentation
         [SerializeField] private RectTransform content;
         [SerializeField] private ScrollRect scroll;
         private bool interactable = true;
-        private bool scrollToLatest;
         private SpiritTrayScene sharedScene;
         [SerializeField] private RectTransform frame;
         [SerializeField] private RawImage image;
@@ -68,6 +67,8 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The modifier tray requires authored UI and renderer references.");
             InitializeRenderer();
             ResizeContent();
+            scroll.onValueChanged.RemoveListener(OnScrolled);
+            scroll.onValueChanged.AddListener(OnScrolled);
         }
 
         private void InitializeRenderer()
@@ -105,7 +106,6 @@ namespace Dice.Presentation
             }
             tokens.Clear();
             contributions.Clear();
-            scrollToLatest = false;
             if (scroll != null)
             {
                 scroll.StopMovement();
@@ -137,7 +137,14 @@ namespace Dice.Presentation
             contributions.Add(contribution);
             tokens.Add(token);
             ResizeContent();
-            if (animate) scrollToLatest = true;
+            if (animate)
+            {
+                // An arriving activation scrolls the tray to the latest one.
+                scroll.StopMovement();
+                scroll.horizontalNormalizedPosition = 1;
+            }
+            Renderer.SetScroll(scroll.horizontalNormalizedPosition);
+            PlaceTokens();
         }
 
         public void SynchronizeReady(IReadOnlyList<ModifierContribution> previewContributions, MechanicalCatalog catalog,
@@ -169,13 +176,19 @@ namespace Dice.Presentation
                 if (!Matches(contributions[index], contribution) || occurrence-- > 0) continue;
                 Renderer.SetResolving(index);
                 Reveal(index);
+                PlaceTokens();
                 return true;
             }
             ClearResolving();
             return false;
         }
 
-        public void ClearResolving() => Renderer?.SetResolving(-1);
+        public void ClearResolving()
+        {
+            if (Renderer == null) return;
+            Renderer.SetResolving(-1);
+            PlaceTokens();
+        }
 
         private void Reveal(int index)
         {
@@ -194,29 +207,38 @@ namespace Dice.Presentation
                 first.Phase == second.Phase && first.BaseScore == second.BaseScore &&
                 first.Multiplier == second.Multiplier && first.Rerolls == second.Rerolls;
 
+        /** Advances arriving dice; their pointer targets follow them while they move. */
         public void Advance(float deltaTime)
         {
             if (!FiniteValue.Is(deltaTime) || deltaTime < 0)
                 throw new ArgumentOutOfRangeException(nameof(deltaTime));
-            if (Renderer != null) Renderer.Advance(deltaTime);
+            if (Renderer != null && Renderer.Advance(deltaTime)) PlaceTokens();
         }
 
         private void Update() => Advance(Time.unscaledDeltaTime);
 
-        // Internal so EditMode tests, where Unity sends no lifecycle messages, drive it directly.
-        internal void LateUpdate()
+        private void OnEnable() => Relayout();
+
+        // The tray's size follows the screen; the bay frame, content width and pointer targets follow the tray's size.
+        private void OnRectTransformDimensionsChange() => Relayout();
+
+        private void Relayout()
         {
             UpdateBayFrame();
             ResizeContent();
-            if (scroll == null || Renderer == null) return;
-            if (scrollToLatest)
-            {
-                scroll.StopMovement();
-                scroll.horizontalNormalizedPosition = 1;
-                scrollToLatest = false;
-            }
+            PlaceTokens();
+        }
+
+        private void OnScrolled(Vector2 position)
+        {
             Renderer.SetScroll(scroll.horizontalNormalizedPosition);
-            // Invisible pointer targets follow the projected dice while the frame stays fixed.
+            PlaceTokens();
+        }
+
+        /** Invisible pointer targets sit over the projected dice while the frame stays fixed; clipped dice have none. */
+        private void PlaceTokens()
+        {
+            if (root == null || Renderer == null) return;
             for (int index = 0; index < tokens.Count; ++index)
             {
                 Rect bounds = Renderer.GetDieViewportRect(index);

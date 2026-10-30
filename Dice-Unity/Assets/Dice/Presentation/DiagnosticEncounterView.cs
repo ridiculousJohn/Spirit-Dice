@@ -16,16 +16,6 @@ namespace Dice.Presentation
         private readonly string[] dieLabels = new string[DiceValues.Count];
         private readonly List<string> dieStates = new List<string>();
         private IDiagnosticEncounterControls controls;
-        private EncounterSnapshot cachedSnapshot;
-        private MechanicalCatalog cachedCatalog;
-        private HandPreview cachedPreview;
-        private IReadOnlyList<ModifierInspection> cachedInspections;
-        private IReadOnlyList<string> cachedEvents;
-        private int cachedEventCount = -1;
-        private string cachedLastEvent;
-        private int cachedMask = -1;
-        private string cachedSavePath;
-        private string savePathLabel = "Save file: unavailable";
         private ulong lastControlsSeed;
         private string stageTitle;
         private string stageSummary;
@@ -70,11 +60,18 @@ namespace Dice.Presentation
 
         public void Bind(IDiagnosticEncounterControls encounterControls)
         {
-            controls = encounterControls ?? throw new ArgumentNullException(nameof(encounterControls));
-            cachedSnapshot = null; cachedCatalog = null; cachedEvents = null; cachedMask = -1;
+            var next = encounterControls ?? throw new ArgumentNullException(nameof(encounterControls));
+            if (controls != null) controls.Changed -= Render;
+            controls = next;
+            controls.Changed += Render;
             lastControlsSeed = controls.Seed;
             seedInput.SetTextWithoutNotify(SeedText(lastControlsSeed));
-            if (bound) return;
+            if (!bound) BindButtons();
+            Render();
+        }
+
+        private void BindButtons()
+        {
             startButton.onClick.AddListener(() => controls.StartNew(seedInput.text));
             saveButton.onClick.AddListener(() => controls.Save());
             loadButton.onClick.AddListener(() => controls.Load());
@@ -92,49 +89,61 @@ namespace Dice.Presentation
             bound = true;
         }
 
-        private void Update()
+        private void OnEnable() => Render();
+
+        private void OnDestroy()
         {
-            if (controls == null) return;
+            if (controls != null) controls.Changed -= Render;
+        }
+
+        /** Shows the controls' state; a disabled view shows it when it is enabled. */
+        private void Render()
+        {
+            if (controls == null || !isActiveAndEnabled) return;
             ulong incoming = controls.Seed;
+            // A seed being typed is kept; the field takes the controls' seed at the first render after it loses focus.
             if (incoming != lastControlsSeed && !seedInput.isFocused)
             {
                 lastControlsSeed = incoming;
                 seedInput.SetTextWithoutNotify(SeedText(incoming));
             }
-            RefreshText();
+            EncounterSnapshot snapshot = controls.Snapshot;
+            HandPreview preview = controls.Preview;
+            BuildText(snapshot, controls.Catalog, preview, controls.ModifierInspections);
             statusText.text = controls.StatusMessage ?? "";
-            savePathText.text = savePathLabel;
-            bool exists = cachedSnapshot != null;
-            bool playing = exists && cachedSnapshot.Phase == EncounterPhase.Playing;
+            savePathText.text = "Save file: " + (controls.SavePath ?? "unavailable");
+            bool exists = snapshot != null;
+            bool playing = exists && snapshot.Phase == EncounterPhase.Playing;
             saveButton.interactable = exists;
-            abandonButton.interactable = exists && cachedSnapshot.Phase != EncounterPhase.Completed;
-            rerollButton.interactable = exists && cachedSnapshot.CanReroll && controls.SelectedMask != 0;
-            playButton.interactable = playing && cachedSnapshot.HandsRemaining > 0;
-            selectAllButton.interactable = clearSelectionButton.interactable = exists && cachedSnapshot.CanReroll;
+            abandonButton.interactable = exists && snapshot.Phase != EncounterPhase.Completed;
+            rerollButton.interactable = exists && snapshot.CanReroll && controls.SelectedMask != 0;
+            playButton.interactable = playing && snapshot.HandsRemaining > 0;
+            selectAllButton.interactable = clearSelectionButton.interactable = exists && snapshot.CanReroll;
             for (int i = 0; i < dieButtons.Length; ++i)
             {
-                dieButtons[i].interactable = exists && cachedSnapshot.CanReroll;
+                dieButtons[i].interactable = exists && snapshot.CanReroll;
                 dieTexts[i].text = exists ? dieLabels[i] : "DIE " + (i + 1);
                 dieSelection[i].enabled = exists && (controls.SelectedMask & (1 << i)) != 0;
             }
             runText.text = exists ? stageTitle + "\n" + stageSummary + "\n" + runSummary + "\n" + runDetail
                 : "Start a run or load a saved encounter.";
             selectionText.text = exists ? selectionLabel : "";
-            previewText.text = cachedPreview == null ? "Available while the encounter is playing." :
+            previewText.text = preview == null ? "Available while the encounter is playing." :
                 previewCategory + "\n" + previewScore + "\n" + previewBreakdown + "\n" + previewResources;
             rewardText.text = exists ? rewardTitle + "\n" + rewardDetail : "REWARDS";
             upgradesText.text = "HAND UPGRADES / CATEGORY VALUES\nCategory base excludes the dice sum and modifier contributions.\n" + string.Join("\n", upgradeRows);
             inventoryText.text = exists ? inventoryTitle : "OWNED MODIFIERS";
             eventText.text = logTitle + "\nNewest first. Scored hands retain their complete resolution breakdown.\n\n" + string.Join("\n\n", eventRows);
-            bool refreshable = exists && cachedSnapshot.PendingReward != null && cachedSnapshot.PendingReward.Kind.Refreshable;
+            bool refreshable = exists && snapshot.PendingReward != null && snapshot.PendingReward.Kind.Refreshable;
             refreshButton.gameObject.SetActive(refreshable);
-            refreshButton.interactable = refreshable && cachedSnapshot.RewardRefreshesAvailable > 0;
+            refreshButton.interactable = refreshable && snapshot.RewardRefreshesAvailable > 0;
             refreshButton.GetComponentInChildren<Text>(true).text = refreshLabel;
-            RenderCards(rewardCards, rewardViews, rewardsContent, true);
-            RenderCards(inventoryCards, inventoryViews, inventoryContent, false);
+            RenderCards(rewardCards, rewardViews, rewardsContent, true, snapshot);
+            RenderCards(inventoryCards, inventoryViews, inventoryContent, false, snapshot);
         }
 
-        private void RenderCards(List<CardText> cards, List<DiagnosticEncounterCard> views, RectTransform parent, bool rewards)
+        private void RenderCards(List<CardText> cards, List<DiagnosticEncounterCard> views, RectTransform parent, bool rewards,
+            EncounterSnapshot snapshot)
         {
             while (views.Count < cards.Count)
             {
@@ -152,36 +161,22 @@ namespace Dice.Presentation
                 view.Title.text = card.Title;
                 view.Body.text = string.Join("\n", new[] { card.Status, card.Body, card.Detail, card.Contributions });
                 view.Choose.gameObject.SetActive(rewards);
-                view.Choose.interactable = rewards && cachedSnapshot?.PendingReward != null;
+                view.Choose.interactable = rewards && snapshot?.PendingReward != null;
             }
         }
         private static string SeedText(ulong seed) => seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        private void RefreshText()
+        private void BuildText(EncounterSnapshot snapshot, MechanicalCatalog catalog, HandPreview preview,
+            IReadOnlyList<ModifierInspection> inspections)
         {
-            if (cachedSavePath != controls.SavePath)
+            if (snapshot != null && catalog != null) BuildStateText(snapshot, catalog, preview, inspections);
+            if (snapshot != null)
             {
-                cachedSavePath = controls.SavePath;
-                savePathLabel = "Save file: " + (cachedSavePath ?? "unavailable");
-            }
-            EncounterSnapshot snapshot = controls.Snapshot;
-            MechanicalCatalog catalog = controls.Catalog;
-            HandPreview preview = controls.Preview;
-            IReadOnlyList<ModifierInspection> inspections = controls.ModifierInspections;
-            bool stateChanged = !ReferenceEquals(snapshot, cachedSnapshot) || !ReferenceEquals(catalog, cachedCatalog) ||
-                !ReferenceEquals(preview, cachedPreview) || !ReferenceEquals(inspections, cachedInspections);
-            cachedSnapshot = snapshot;
-            cachedCatalog = catalog;
-            cachedPreview = preview;
-            cachedInspections = inspections;
-            if (stateChanged && snapshot != null && catalog != null) BuildStateText();
-            if (snapshot != null && (stateChanged || cachedMask != controls.SelectedMask))
-            {
-                cachedMask = controls.SelectedMask;
+                int mask = controls.SelectedMask;
                 int selectedCount = 0;
                 for (int index = 0; index < DiceValues.Count; ++index)
                 {
-                    bool selected = (cachedMask & (1 << index)) != 0;
+                    bool selected = (mask & (1 << index)) != 0;
                     if (selected) ++selectedCount;
                     // A locked die cannot be rerolled, so only the rules' labels describe it.
                     dieStates.Clear();
@@ -193,27 +188,20 @@ namespace Dice.Presentation
                     }
                     dieLabels[index] = "DIE " + (index + 1) + "\n" + snapshot.CurrentDice[index] + "\n" + string.Join(" / ", dieStates);
                 }
-                selectionLabel = "Select dice FOR REROLL. " + selectedCount + " selected | mask " + cachedMask +
+                selectionLabel = "Select dice FOR REROLL. " + selectedCount + " selected | mask " + mask +
                     " | rerolls spent on this hand " + snapshot.RerollsSpentOnHand;
             }
             IReadOnlyList<string> events = controls.EventLog;
             int count = events?.Count ?? 0;
-            string latest = count > 0 ? events[count - 1] : null;
-            if (!ReferenceEquals(events, cachedEvents) || count != cachedEventCount || latest != cachedLastEvent)
-            {
-                cachedEvents = events;
-                cachedEventCount = count;
-                cachedLastEvent = latest;
-                eventRows.Clear();
-                for (int index = count - 1; index >= Math.Max(0, count - VisibleEventLimit); --index)
-                    eventRows.Add(events[index]);
-                logTitle = "RECENT EVENTS / " + eventRows.Count + " SHOWN";
-            }
+            eventRows.Clear();
+            for (int index = count - 1; index >= Math.Max(0, count - VisibleEventLimit); --index)
+                eventRows.Add(events[index]);
+            logTitle = "RECENT EVENTS / " + eventRows.Count + " SHOWN";
         }
 
-        private void BuildStateText()
+        private void BuildStateText(EncounterSnapshot snapshot, MechanicalCatalog catalog, HandPreview preview,
+            IReadOnlyList<ModifierInspection> inspections)
         {
-            EncounterSnapshot snapshot = cachedSnapshot;
             stageTitle = "RUN / STAGE " + (snapshot.StageIndex + 1) + " OF " + snapshot.StageCount +
                 " / " + DiagnosticText.Humanize(snapshot.Phase.ToString()).ToUpperInvariant();
             if (snapshot.Phase == EncounterPhase.Completed) stageTitle += " / " + snapshot.Outcome.ToString().ToUpperInvariant();
@@ -227,9 +215,9 @@ namespace Dice.Presentation
             runDetail = "Hand " + (snapshot.HandIndex + 1) + " | stage hands played " + snapshot.HandsPlayedInStage +
                 " | run hands " + snapshot.TotalHandsPlayed + " | run rerolls " + snapshot.TotalRerollsSpent +
                 "\n" + snapshot.EncounterId + " | catalog " + snapshot.CatalogVersion + " | revision " + snapshot.Revision;
-            if (cachedPreview != null)
+            if (preview != null)
             {
-                ScoreBreakdown score = cachedPreview.Score;
+                ScoreBreakdown score = preview.Score;
                 previewCategory = DiagnosticText.Humanize(score.Category.ToString()) + " | upgrade level " + score.UpgradeCount;
                 previewScore = DiagnosticText.Number(score.BaseScore) + " x " + DiagnosticText.Number(score.Multiplier) +
                     " = " + DiagnosticText.Number(score.HandScore);
@@ -241,35 +229,35 @@ namespace Dice.Presentation
                     " + upgrades " + DiagnosticText.Number(score.UpgradeMultiplier) +
                     " + modifiers " + DiagnosticText.Number(score.ModifierMultiplier);
                 previewResources = "After playing: " + (snapshot.HandsRemaining - 1) + " hands, " +
-                    cachedPreview.RerollsRemaining + " rerolls (before any stage transition).";
+                    preview.RerollsRemaining + " rerolls (before any stage transition).";
             }
-            BuildRewardText();
+            BuildRewardText(snapshot, catalog);
             upgradeRows.Clear();
-            foreach (HandDefinition hand in cachedCatalog.Hands)
+            foreach (HandDefinition hand in catalog.Hands)
             {
                 int level = snapshot.HandUpgrades[(int)hand.Category];
                 upgradeRows.Add(DiagnosticText.Humanize(hand.Category.ToString()) + " | level " + level + " / " +
                     hand.MaximumUpgrades + " | base " + DiagnosticText.Number(hand.BaseScoreAt(level)) +
                     " | multiplier " + DiagnosticText.Number(hand.MultiplierAt(level)));
             }
-            BuildInventoryText();
+            BuildInventoryText(snapshot, catalog, preview, inspections);
         }
 
-        private void BuildRewardText()
+        private void BuildRewardText(EncounterSnapshot snapshot, MechanicalCatalog catalog)
         {
-            RewardOffer offer = cachedSnapshot.PendingReward;
+            RewardOffer offer = snapshot.PendingReward;
             rewardCards.Clear();
             rewardTitle = offer == null ? "REWARDS" : "CHOOSE " + DiagnosticText.Humanize(offer.Kind.Id).ToUpperInvariant();
             rewardDetail = offer == null ? "" : "For stage " + (offer.TargetStageIndex + 1) + " | offer " + offer.OfferId;
-            refreshLabel = "Refresh modifiers - cost " + cachedSnapshot.RewardRefreshCost + " (available " +
-                cachedSnapshot.RewardRefreshes + ")";
+            refreshLabel = "Refresh modifiers - cost " + snapshot.RewardRefreshCost + " (available " +
+                snapshot.RewardRefreshes + ")";
             if (offer == null) return;
             foreach (RewardOption option in offer.Options)
             {
                 var card = new CardText { OfferId = offer.OfferId, OptionId = option.OptionId };
                 if (option.DefinitionId.HasValue)
                 {
-                    ModifierDefinition modifier = cachedCatalog.GetModifier(option.DefinitionId.Value);
+                    ModifierDefinition modifier = catalog.GetModifier(option.DefinitionId.Value);
                     ModifierPresentationCatalog charms = controls.ModifierPresentation;
                     card.Title = charms.GetName(modifier);
                     card.Body = charms.GetConditionText(modifier) + "\n" + charms.GetEffectText(modifier);
@@ -277,8 +265,8 @@ namespace Dice.Presentation
                 }
                 else
                 {
-                    HandDefinition hand = cachedCatalog.GetHand(option.Category.Value);
-                    int level = cachedSnapshot.HandUpgrades[(int)hand.Category];
+                    HandDefinition hand = catalog.GetHand(option.Category.Value);
+                    int level = snapshot.HandUpgrades[(int)hand.Category];
                     card.Title = DiagnosticText.Humanize(hand.Category.ToString()) + " | level " + level + " -> " + (level + 1);
                     card.Body = "Category base " + DiagnosticText.Number(hand.BaseScoreAt(level)) +
                         " -> " + DiagnosticText.Number(hand.BaseScoreAt(level + 1)) +
@@ -290,13 +278,14 @@ namespace Dice.Presentation
             }
         }
 
-        private void BuildInventoryText()
+        private void BuildInventoryText(EncounterSnapshot snapshot, MechanicalCatalog catalog, HandPreview preview,
+            IReadOnlyList<ModifierInspection> inspections)
         {
             inventoryCards.Clear();
-            inventoryTitle = "OWNED MODIFIERS / " + cachedSnapshot.Modifiers.Count + " INSTANCES";
-            foreach (ModifierInstanceSnapshot instance in cachedSnapshot.Modifiers)
+            inventoryTitle = "OWNED MODIFIERS / " + snapshot.Modifiers.Count + " INSTANCES";
+            foreach (ModifierInstanceSnapshot instance in snapshot.Modifiers)
             {
-                ModifierDefinition definition = cachedCatalog.GetModifier(instance.DefinitionId);
+                ModifierDefinition definition = catalog.GetModifier(instance.DefinitionId);
                 ModifierPresentationCatalog charms = controls.ModifierPresentation;
                 var card = new CardText
                 {
@@ -307,8 +296,8 @@ namespace Dice.Presentation
                         ", total " + instance.TotalActivations + "\n" + charms.GetName(definition),
                     Status = definition.Phase == ModifierPhase.PlayHand ? "If played now: inspection unavailable" : "Evaluated on roll"
                 };
-                if (cachedInspections != null)
-                    foreach (ModifierInspection inspection in cachedInspections)
+                if (inspections != null)
+                    foreach (ModifierInspection inspection in inspections)
                     {
                         if (inspection.InstanceId != instance.InstanceId) continue;
                         if (definition.Phase == ModifierPhase.PlayHand)
@@ -322,10 +311,10 @@ namespace Dice.Presentation
                         }
                         break;
                     }
-                card.Contributions = "This hand so far: " + DescribeContributions(cachedSnapshot.ModifierContributions, instance.InstanceId);
-                if (cachedPreview != null && definition.Phase == ModifierPhase.PlayHand)
+                card.Contributions = "This hand so far: " + DescribeContributions(snapshot.ModifierContributions, instance.InstanceId);
+                if (preview != null && definition.Phase == ModifierPhase.PlayHand)
                     card.Contributions += "\nIf played now, hand total: " +
-                        DescribeContributions(cachedPreview.Score.ModifierContributions, instance.InstanceId);
+                        DescribeContributions(preview.Score.ModifierContributions, instance.InstanceId);
                 inventoryCards.Add(card);
             }
         }

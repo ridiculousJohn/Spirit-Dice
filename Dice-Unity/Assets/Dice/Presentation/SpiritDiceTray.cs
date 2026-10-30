@@ -55,6 +55,8 @@ namespace Dice.Presentation
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         public bool IsRolling { get; private set; }
+        /** Raised when a roll or flip ends with its dice at rest in their slots. */
+        public event Action RollEnded;
         /** The authored die in each slot; objects parented to it follow its rolls, flips and rest pose. */
         public IReadOnlyList<Transform> Dice => dice;
         public int ScoringHighlightMask => scoringHighlightMask;
@@ -198,6 +200,7 @@ namespace Dice.Presentation
                 {
                     rollingMask = 0;
                     IsRolling = false;
+                    RollEnded?.Invoke();
                 }
             }
         }
@@ -254,6 +257,7 @@ namespace Dice.Presentation
                     }
                     rollingMask = 0;
                     IsRolling = false;
+                    RollEnded?.Invoke();
                 }
             }
         }

@@ -9,8 +9,8 @@ namespace Dice.Presentation
      * Scene lighting of one configured encounter table. Each update samples the table's lights onto the room and table
      * images and the tray, modifier history and host receivers; lights bound to table pieces follow their props. Every
      * light's multiplier of its authored intensity combines the table's resting level, the ambient activity's multiplier,
-     * any rule flare and any play-mode testing override. The encounter view creates one when it configures a table, updates
-     * it every frame and releases it with the table.
+     * any rule flare and any play-mode testing override. The encounter view creates one when it configures a table, which
+     * binds it, updates it every frame, releases it when the view is disabled and binds it again when the view is enabled.
      */
     public sealed class EncounterTableLighting : IAmbientLightingTarget, IRuleSceneLights
     {
@@ -86,9 +86,10 @@ namespace Dice.Presentation
             }
             lightFlares.Resize(count);
             ReleaseTestLightOverrides();
+            Bind();
         }
 
-        /** The table's lights as last sampled; empty before the first update and after a release. */
+        /** The table's lights as last sampled; empty for a table without scene lighting and after a release. */
         public SceneLightingState State => state;
 
         /** Lights of the table that ambient actors, rule flares and the testing controls address. */
@@ -97,37 +98,53 @@ namespace Dice.Presentation
         /** The lights rule presenters may flare, or null when the table authors no scene lighting. */
         public IRuleSceneLights RuleLights => table.SceneLighting != null ? this : null;
 
-        /** Samples the table's lights now and shows them on the images, pieces and receivers. */
+        /**
+         * Puts the table's lighting on the images, pieces and receivers and shows its current sample, or leaves the images
+         * and receivers unlit for a table without scene lighting. Constructing binds; Bind is the counterpart of Release.
+         */
+        public void Bind()
+        {
+            var asset = table.SceneLighting;
+            if (asset == null)
+            {
+                roomImage.material = tableImage.material = null;
+                trayScene?.SetSceneLighting(null);
+                diceTray?.SetSceneLighting(null);
+                historyRenderer?.SetSceneLighting(null);
+                host?.SetSceneLighting(null, Vector3.zero);
+                return;
+            }
+            if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
+            {
+                sceneLightingMaterial?.Dispose();
+                sceneLightingMaterial = new SceneLightingMaterial(asset.Shader);
+            }
+            roomImage.material = tableImage.material = sceneLightingMaterial.Material;
+            Update();
+        }
+
+        /**
+         * Samples the table's lights now and, while bound, shows them on the images, pieces and receivers; a table without
+         * scene lighting has nothing to sample.
+         */
         public void Update()
         {
             var asset = table.SceneLighting;
-            if (asset != null && pieceLightProps.Length > 0) SamplePieceLights(asset, table.PieceLights);
+            if (asset == null) return;
+            if (pieceLightProps.Length > 0) SamplePieceLights(asset, table.PieceLights);
             else state.Sample(asset, Time.unscaledTimeAsDouble, AmbientLightIntensities(asset));
-            if (asset != null)
-            {
-                if (sceneLightingMaterial == null || sceneLightingMaterial.Material.shader != asset.Shader)
-                {
-                    sceneLightingMaterial?.Dispose();
-                    sceneLightingMaterial = new SceneLightingMaterial(asset.Shader);
-                }
-                sceneLightingMaterial.Apply(state);
-            }
-            else
-            {
-                sceneLightingMaterial?.Dispose();
-                sceneLightingMaterial = null;
-            }
-            roomImage.material = tableImage.material = sceneLightingMaterial?.Material;
-            var shown = asset != null ? state : null;
-            trayScene?.SetSceneLighting(shown);
-            diceTray?.SetSceneLighting(shown);
-            historyRenderer?.SetSceneLighting(shown);
-            host?.SetSceneLighting(shown, table.HostLightingPosition);
+            if (sceneLightingMaterial == null) return;
+            sceneLightingMaterial.Apply(state);
+            ShowPieceEmission(asset, table.PieceLights);
+            trayScene?.SetSceneLighting(state);
+            diceTray?.SetSceneLighting(state);
+            historyRenderer?.SetSceneLighting(state);
+            host?.SetSceneLighting(state, table.HostLightingPosition);
         }
 
         /**
          * Takes the lighting off the images, pieces and receivers and frees its material; the multipliers are kept, so a
-         * later update shows the lighting again.
+         * later bind shows the lighting again.
          */
         public void Release()
         {
@@ -221,6 +238,11 @@ namespace Dice.Presentation
                 pieceLightIntensities[index] = piece.LightIntensity * AmbientLightIntensity(index);
             }
             state.Sample(asset, Time.unscaledTimeAsDouble, pieceLightIntensities, pieceLightUvOffsets, pieceLightReceivers);
+        }
+
+        /** Each piece light's prop glows with its light's sampled intensity relative to the authored one. */
+        private void ShowPieceEmission(SceneLightingAsset asset, IReadOnlyList<EncounterTablePieceLight> pieceLights)
+        {
             for (int i = 0; i < pieceLightProps.Length; ++i)
             {
                 int index = pieceLights[i].LightIndex;

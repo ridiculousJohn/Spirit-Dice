@@ -33,7 +33,6 @@ namespace Dice.Presentation
         [SerializeField] private Canvas canvas;
         [SerializeField] private RectTransform safeArea;
         [SerializeField] private RectTransform portrait;
-        private Vector2 previousPortraitSize;
         [SerializeField] private RectTransform endingPanel;
         [SerializeField] private RectTransform menuPanel;
         [SerializeField] private SpiritHandRanksPanel handRanksPanel;
@@ -91,8 +90,6 @@ namespace Dice.Presentation
         private EncounterSnapshot presentedSnapshot;
         private EncounterSnapshot presentationSnapshot;
         private bool presenting;
-        private Rect previousSafeArea;
-        private Vector2 previousScreenSize;
 
         public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journey)
         {
@@ -168,10 +165,11 @@ namespace Dice.Presentation
             if (selectedTable != tablePresentation)
                 throw new InvalidOperationException("The selected encounter must use its authored table scene.");
             if (configuredTable == selectedTable) return;
+            // The previous table's lighting comes off the shared images and receivers before the new one binds to them.
+            tableLighting?.Release();
             var lighting = new EncounterTableLighting(selectedTable, tablePieces, roomImage, tableImage, TrayScene, DiceTray,
                 ModifierHistory.Renderer, hostPortrait);
             var shownRule = selectedTable.HudRuleCard;
-            tableLighting?.Release();
             ambientActivity?.Stop();
             configuredTable = selectedTable;
             hudRuleCard = shownRule;
@@ -201,11 +199,20 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The encounter rig requires authored dice and modifier renderers.");
             DiceTray.Configure(presentation, TrayScene);
             DiceTray.Initialize();
+            DiceTray.RollEnded -= LayoutTable;
+            DiceTray.RollEnded += LayoutTable;
             ModifierHistory.BindRenderer(TrayScene.HistoryRenderer);
             ModifierHistory.Configure(presentation, TrayScene);
             ModifierHistory.Build();
             GameplayHud.DiceTrayImage.texture = TrayScene.Texture;
             PositionTrays();
+        }
+
+        /** Lays the dice touch targets and the table pieces out over the tray's dice. */
+        private void LayoutTable()
+        {
+            PositionTrays();
+            PositionTablePieces();
         }
 
         private void PositionTrays()
@@ -228,6 +235,7 @@ namespace Dice.Presentation
             tableLighting = null;
             if (hostPortrait != null) hostPortrait.SpiritGesture -= PlaySpiritCue;
             if (ModifierHistory != null) ModifierHistory.TokenSelected -= InspectHistoryToken;
+            if (DiceTray != null) DiceTray.RollEnded -= LayoutTable;
             Unsubscribe();
         }
 
@@ -246,6 +254,9 @@ namespace Dice.Presentation
             applicationFocused = Application.isFocused;
             Subscribe();
             if (canvas == null) return;
+            // Disabling released the table's lighting, and the screen may have changed size meanwhile.
+            tableLighting?.Bind();
+            if (scorePlayback != null) FitScreen();
             if (journeyControls != null) RefreshJourney();
             else Refresh();
         }
@@ -272,26 +283,20 @@ namespace Dice.Presentation
             if (journeyControls != null) journeyControls.JourneyChanged -= RefreshJourney;
         }
 
-        private void Update()
+        // The canvas resizes this root object whenever the screen changes size or orientation; a built screen fits to it.
+        private void OnRectTransformDimensionsChange()
         {
-            if (canvas != null && (previousSafeArea != Screen.safeArea ||
-                previousScreenSize != new Vector2(Screen.width, Screen.height))) FitScreen();
+            if (scorePlayback != null) FitScreen();
         }
 
         private void LateUpdate()
         {
             if (scorePlayback == null) return;
-            PositionTablePieces();
             // Ambient activity suspends with focus and pause like the encounter's ambient audio.
             if (ambientActivity != null && applicationFocused && !applicationPaused) ambientActivity.Tick(Time.unscaledDeltaTime);
             tableLighting?.Update();
-            if (portrait == null || ModifierHistory == null) return;
-            PositionTrays();
-            Vector2 size = portrait.rect.size;
-            if (size == previousPortraitSize) return;
-            previousPortraitSize = size;
-            if (RewardsPanel.Root.gameObject.activeSelf) RewardsPanel.UpdateLayout();
-            if (IsCharmPopupOpen) CharmPopup.Layout();
+            // Dice touch targets follow the dice a roll or flip carries; resting dice are laid out when it ends.
+            if (DiceTray.IsRolling) PositionTrays();
         }
 
         private void OnApplicationFocus(bool focus) => applicationFocused = focus;
@@ -359,11 +364,13 @@ namespace Dice.Presentation
             FitScreen();
         }
 
+        /** Fits the portrait to the screen's safe area and lays out what follows the portrait's size. */
         private void FitScreen()
         {
-            previousSafeArea = Screen.safeArea;
-            previousScreenSize = new Vector2(Screen.width, Screen.height);
             SpiritPortraitSafeArea.FitToScreen(safeArea, portrait, portraitReferenceSize);
+            if (RewardsPanel.Root.gameObject.activeSelf) RewardsPanel.UpdateLayout();
+            if (IsCharmPopupOpen) CharmPopup.Layout();
+            LayoutTable();
         }
 
         /**
@@ -779,6 +786,8 @@ namespace Dice.Presentation
             DisposePresenters();
             CreatePresenters(controls.Catalog.GetEncounter(encounterId));
             presentersEncounterId = encounterId;
+            // New piece presenters place their props over the tray's current bay slots.
+            PositionTablePieces();
             return true;
         }
 
@@ -806,6 +815,8 @@ namespace Dice.Presentation
         internal void ValidateContent(EncounterDefinition encounter)
         {
             if (scorePlayback == null) Build();
+            // An edit-mode copy receives no OnDestroy, so the table lighting that building bound is released here.
+            tableLighting?.Release();
             encounterAudio.Initialize();
             if (encounter == null) return;
             try { CreatePresenters(encounter); }

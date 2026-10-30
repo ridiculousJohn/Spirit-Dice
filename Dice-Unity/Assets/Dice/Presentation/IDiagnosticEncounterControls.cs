@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Dice.Engine;
 
@@ -16,6 +17,8 @@ namespace Dice.Presentation
         string StatusMessage { get; }
         string SavePath { get; }
         ulong Seed { get; }
+        /** Raised after any of the state or status above changes. */
+        event Action Changed;
 
         void StartNew(string seed);
         void ToggleDie(int index);
