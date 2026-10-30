@@ -17,6 +17,10 @@ Docs/Reference/Art/HauntedMerchantHostLayers.md. Stages:
            plate shows the faceless trunk wherever the face layer is transparent. BoundTreeFacelessPlateUnlit.png
            (base), BoundTreeFacelessPlateGlow.png (light 0 reference) and BoundTreeFacelessPlateGlowLit.png (light 1
            reference), with review images and report.json.
+  arrival  From the textures in --from (default: the installed Relight folder), write the plain-bark arrival picture
+           BoundTreeArrivalPlainBark.png: the concept frame with the face closed and its glow out, the nymph
+           (BoundTreeNymphUnlit.png) over the ambient faceless plate (BoundTreeFacelessPlateUnlit.png) in linear light,
+           with the concept beside it and their difference as review images and report.json.
 
 Python 3.10 or later with numpy, Pillow and scipy (on this machine the venv
 Docs/work/merchant-table-clear/.venv/Scripts/python.exe). The registration, ratio-map, highlight-cap and harmonic-fill
@@ -28,6 +32,8 @@ the repository root:
   python Tools/Presentation/author-bound-tree-relight.py build --write-assets  # also writes Art/BoundTree/Relight
   python Tools/Presentation/author-bound-tree-relight.py plates                # fresh Docs/work/bound-tree-plates-*
   python Tools/Presentation/author-bound-tree-relight.py plates --write-assets # also writes the three plates
+  python Tools/Presentation/author-bound-tree-relight.py arrival               # fresh Docs/work/bound-tree-arrival-*
+  python Tools/Presentation/author-bound-tree-relight.py arrival --write-assets  # also writes the arrival picture
 
 The default build output is a fresh ignored Docs/work/bound-tree-relight-* directory (textures under textures/,
 review images under review/, report.json); --output chooses an unused directory under Docs/work. --write-assets also
@@ -37,7 +43,9 @@ HauntedMerchant/MerchantLanternResponse.png.meta). Source artwork and donors are
 the same textures. `plates` writes a fresh Docs/work/bound-tree-plates-* directory (or --output); its --write-assets
 writes the three plates to Art/BoundTree/Relight with a .meta copied, under a fresh GUID, from the texture each
 replaces on the background (BoundTreeAmbientUnlit.png, BoundTreeBackground.png and BoundTreeGlowLit.png) and keeps
-an existing .meta. It only reads the installed textures, so repeated runs give the same plates.
+an existing .meta. It only reads the installed textures, so repeated runs give the same plates. `arrival` writes a
+fresh Docs/work/bound-tree-arrival-* directory (or --output); its --write-assets writes the picture to Art/BoundTree
+with a .meta copied from BoundTreeOriginal.png.meta under a fresh GUID and keeps an existing .meta.
 """
 from pathlib import Path
 import argparse
@@ -750,13 +758,106 @@ def stage_plates(args):
     print(f'Wrote {out_dir}')
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Plain-bark arrival picture: the concept frame before the challenge, the face closed and its glow out.
+# With no face there is no glow source, so neither scene light contributes: the plate is the background's ambient
+# base (the faceless trunk under moonlight) and the nymph is her ambient texture. She is blended in linear light,
+# as the lit nymph layer is drawn over the plate in the game's linear colour space.
+ARRIVAL = 'BoundTreeArrivalPlainBark.png'
+ARRIVAL_PLATE = 'BoundTreeFacelessPlateUnlit.png'
+ARRIVAL_NYMPH = 'BoundTreeNymphUnlit.png'
+GLOW_RULE = 'G > 60 and G - max(R, B) > 12'
+
+
+def glow_pixels(rgb, region):
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    return int(((g > 60) & (g - np.maximum(r, b) > 12) & region).sum())
+
+
+def stage_arrival(args):
+    src = Path(args.source).resolve() if args.source else OUT
+    if args.output:
+        out_dir = (Path.cwd() / args.output).resolve()
+        if WORK.resolve() not in out_dir.parents:
+            raise SystemExit('--output must be under Docs/work.')
+        out_dir.mkdir(parents=True, exist_ok=False)
+    else:
+        WORK.mkdir(parents=True, exist_ok=True)
+        out_dir = Path(tempfile.mkdtemp(prefix='bound-tree-arrival-', dir=WORK))
+    plate = load(src / ARRIVAL_PLATE, 'RGB')
+    nymph = load(src / ARRIVAL_NYMPH, 'RGBA')
+    a = nymph[..., 3:4] / 255.0
+    picture = np.rint(to_srgb(to_linear(nymph[..., :3]) * a + to_linear(plate) * (1 - a)))
+    picture = np.where(a <= 0, plate, np.where(a >= 1, nymph[..., :3], picture))
+    path = save_png(out_dir / 'textures' / ARRIVAL, picture, 'RGB')
+
+    # Every change from the concept must come from a declared layer difference: the face region, the painted glow
+    # the ambient base removes, the plate's reconstruction behind the nymph, or the nymph herself.
+    concept = art('BoundTreeOriginal.png', 'RGB')
+    background = art('BoundTreeBackground.png', 'RGB')
+    unlit = load(src / 'BoundTreeAmbientUnlit.png', 'RGB')
+    face = art('BoundTreeFaceMask.png')[..., 3] > 0
+    glow = np.any(unlit != background, -1) & ~face
+    behind = np.any(background != concept, -1) | (nymph[..., 3] > 0)
+    changed = np.any(picture != concept, -1)
+    delta = np.abs(picture - concept).max(-1)
+
+    def stats(region):
+        hit = changed & region
+        return {'pixels': int(region.sum()), 'changed': int(hit.sum()),
+                'max_abs_difference': int(delta[region].max()) if region.any() else 0}
+
+    report = {
+        'plate': ARRIVAL_PLATE, 'nymph': ARRIVAL_NYMPH,
+        'formula': 'nymph over plate in linear light; plate bytes where her alpha is 0, her bytes where it is 1',
+        'from': src.relative_to(ROOT).as_posix() if ROOT in src.parents else str(src),
+        'changed_from_concept': int(changed.sum()),
+        'face_region': stats(face),
+        'glow_removed_outside_face': stats(glow),
+        'nymph_and_plate_reconstruction': stats(behind & ~face & ~glow),
+        'changed_outside_declared_regions': int((changed & ~(face | glow | behind)).sum()),
+        'glow_pixels_in_face_region': {'concept': glow_pixels(concept, face), 'arrival': glow_pixels(picture, face),
+                                       'rule': GLOW_RULE},
+    }
+    if not np.array_equal(load(path, 'RGB'), picture):
+        raise SystemExit(f'{path} does not read back equal to the composite.')
+
+    rdir = out_dir / 'review'
+    rdir.mkdir(parents=True, exist_ok=True)
+    diff = to_srgb(np.clip(np.repeat(delta[..., None], 3, -1) / 255.0 * 4, 0, 1))
+    full = (0, 0, SIZE[0], SIZE[1])
+    save_png(rdir / 'concept-arrival-difference.png',
+             row([label(crop2x(concept, full, 1), 'BoundTreeOriginal.png'), label(crop2x(picture, full, 1), ARRIVAL),
+                  label(crop2x(diff, full, 1), 'difference x4')]), 'RGB')
+    for name, box in (('face', FACE_BOX), ('nymph', NYMPH_BOX)):
+        save_png(rdir / f'concept-arrival-difference-{name}-2x.png',
+                 row([label(crop2x(concept, box), 'concept'), label(crop2x(picture, box), 'arrival'),
+                      label(crop2x(diff, box), 'difference x4')]), 'RGB')
+
+    if args.write_assets:
+        target = save_png(ART / ARRIVAL, picture, 'RGB')
+        meta = Path(str(target) + '.meta')
+        created = []
+        if not meta.exists():
+            lines = (ART / 'BoundTreeOriginal.png.meta').read_text(encoding='ascii').splitlines()
+            lines = ['guid: ' + fresh_guid(used_guids()) if ln.startswith('guid:') else ln for ln in lines]
+            meta.write_text('\n'.join(lines) + '\n', encoding='ascii', newline='\n')
+            created.append(meta.relative_to(ROOT).as_posix())
+        if not np.array_equal(load(target, 'RGB'), picture):
+            raise SystemExit(f'{target} does not read back equal to the composite.')
+        report['installed'] = {'texture': target.relative_to(ROOT).as_posix(), 'created_meta': created}
+    (out_dir / 'report.json').write_text(json.dumps(report, indent=2), encoding='ascii')
+    print(json.dumps(report, indent=2))
+    print(f'Wrote {out_dir}')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('stage', choices=['targets', 'build', 'plates'])
+    parser.add_argument('stage', choices=['targets', 'build', 'plates', 'arrival'])
     parser.add_argument('--replace', action='store_true', help='targets: allow replacing earlier edit targets.')
-    parser.add_argument('--from', dest='source', help='targets, plates: folder holding a build\'s textures (default: the installed Relight folder).')
-    parser.add_argument('--output', help='build, plates: unused directory under Docs/work (default: a fresh bound-tree-relight-* or bound-tree-plates-* directory).')
-    parser.add_argument('--write-assets', action='store_true', help='build, plates: also write the textures to Art/BoundTree/Relight.')
+    parser.add_argument('--from', dest='source', help='targets, plates, arrival: folder holding a build\'s textures (default: the installed Relight folder).')
+    parser.add_argument('--output', help='build, plates, arrival: unused directory under Docs/work (default: a fresh bound-tree-relight-*, bound-tree-plates-* or bound-tree-arrival-* directory).')
+    parser.add_argument('--write-assets', action='store_true', help='build, plates: also write the textures to Art/BoundTree/Relight; arrival: also write Art/BoundTree/BoundTreeArrivalPlainBark.png.')
     parser.add_argument('--save-registered', action='store_true', help='build: also write the registered donors.')
     parser.add_argument('--donor-unlit', help='build: substitute a candidate plate unlit donor.')
     parser.add_argument('--donor-glow', help='build: substitute a candidate plate glow donor.')
@@ -767,6 +868,9 @@ def main():
         return
     if args.stage == 'plates':
         stage_plates(args)
+        return
+    if args.stage == 'arrival':
+        stage_arrival(args)
         return
     if args.output:
         out_dir = (Path.cwd() / args.output).resolve()

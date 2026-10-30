@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95eb2b50a2c3f0647893272ab6d646fe, type: 3}
   m_Name: BoundTreeArrivalPicture
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.PictureSceneAsset
-  background: {fileID: 2800000, guid: 50d7d40a90da474eb494d86f3eef2c27, type: 3}
+  background: {fileID: 2800000, guid: bc99f3c6f7764969a51e93294b019566, type: 3}
   sceneLighting: {fileID: 0}
   foreground: {fileID: 0}
   foregroundRect:
