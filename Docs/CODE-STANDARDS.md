@@ -36,6 +36,7 @@ The architecture boundaries in [the handoff](PROJECT-HANDOFF.md) ("Architecture 
 
 - **Prefer explicit dependencies.** Pass what a class needs, or reference it, rather than finding it through global state. Statics are fine for pure functions, constants and stateless helpers. A static that holds state or hides a lookup needs a stated reason.
 - **Fail loudly on missing or invalid content**, at load or author time, with a message naming what is wrong. A fallback is fine when it is designed behaviour (a defeat sound that falls back to the hit sound by design); it is not fine when it hides content that should exist.
+- **Fix failures at their cause.** When code reaches a state it should never be in (a destroyed object, a call during teardown, a value that cannot be missing), stop the call or the state where it originates; never add a downstream null check, early return or catch so it survives. Why: the guard hides the real defect and spreads.
 
 ## Changing code
 
