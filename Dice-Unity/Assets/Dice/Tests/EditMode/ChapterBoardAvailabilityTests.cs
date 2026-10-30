@@ -53,7 +53,7 @@ namespace Dice.Tests
             var locked = Chapter("chapter.locked", Journey("encounter.locked"));
             controls.JourneyCatalog = Catalog(open, locked);
             controls.SelectedChapter = open;
-            controls.ChapterAvailable = id => id == open.Id;
+            controls.ChapterAvailable = chapter => chapter == open;
 
             var selector = BuildSelector(ui.Root);
             selector.Show(controls);
@@ -62,7 +62,7 @@ namespace Dice.Tests
             Assert.That(cards.Select(card => card.Button.interactable), Is.EqualTo(new[] { true, false }));
             cards[0].Button.onClick.Invoke();
             Assert.That(selector.IsOpen, Is.False);
-            Assert.That(controls.SelectedChapters, Is.EqualTo(new[] { open.Id }));
+            Assert.That(controls.SelectedChapters, Is.EqualTo(new[] { open }));
         }
 
         private SpiritInvestigationBoard BuildBoard()
@@ -133,8 +133,8 @@ namespace Dice.Tests
         private EncounterJourneyCatalogAsset Catalog(params EncounterChapterAsset[] chapters)
             => TestJourneys.Catalog(Create<EncounterJourneyCatalogAsset>(), chapters);
 
-        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
-            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
+        private EncounterChapterAsset Chapter(string title, params EncounterJourneyAsset[] entries)
+            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), title, entries);
 
         private EncounterJourneyAsset Journey(string id)
         {

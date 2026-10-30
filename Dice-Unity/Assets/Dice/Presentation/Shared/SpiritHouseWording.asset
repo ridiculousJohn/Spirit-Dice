@@ -349,7 +349,6 @@ MonoBehaviour:
     readAgain: READ AGAIN
     followLead: FOLLOW THIS LEAD
     visitedLead: VISITED - RETURN TO THE TABLE
-    mainMenuButton: Main menu
   chapters:
     locked: LOCKED
     current: CURRENT

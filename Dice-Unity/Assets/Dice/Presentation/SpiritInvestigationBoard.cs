@@ -105,7 +105,6 @@ namespace Dice.Presentation
             renderedCatalog = catalog;
             Status.text = SpiritStatusText.Describe(controls.JourneyStatus, wording.status);
             ResumeButton.gameObject.SetActive(controls.CanResume);
-            SpiritUi.SetButtonLabel(LoadButton, wording.investigation.mainMenuButton);
             LoadButton.interactable = encounter == null || !encounter.IsBusy;
             CollectionButton.interactable = collectionAvailable;
         }
@@ -157,7 +156,7 @@ namespace Dice.Presentation
             if (controls.JourneyCatalog != null)
                 foreach (var journey in Entries(controls))
                     if (journey != null && controls.IsJourneyAvailable(journey)) available.Add(journey.name);
-            return (controls.SelectedChapter != null ? controls.SelectedChapter.Id : "") + "\n\n" +
+            return (controls.SelectedChapter != null ? controls.SelectedChapter.name : "") + "\n\n" +
                 string.Join("\n", available) + "\n\n" + string.Join("\n", controls.VisitedEncounterIds) +
                 "\n\n" + string.Join("\n", controls.CompletedJourneyIds) + "\n\n" +
                 string.Join("\n", controls.HighlightedJourneys.Select(journey => journey.name));

@@ -41,10 +41,9 @@ namespace Dice.App
             Commit(new Transition(null, EncounterJourneyPhase.Investigation, -1));
         }
 
-        public bool IsChapterAvailable(string id, Progress progress)
+        public bool IsChapterAvailable(EncounterChapterAsset chapter, Progress progress)
         {
-            var chapter = FindChapter(id);
-            return chapter != null && chapter.Entries.Any(journey => journey != null && IsJourneyAvailable(journey, progress));
+            return IsCatalogChapter(chapter) && chapter.Entries.Any(journey => journey != null && IsJourneyAvailable(journey, progress));
         }
 
         public void ShowMainMenu()
@@ -52,10 +51,9 @@ namespace Dice.App
             Commit(new Transition(null, EncounterJourneyPhase.MainMenu, -1));
         }
 
-        public bool IsChapterCompleted(string id, Progress progress)
+        public bool IsChapterCompleted(EncounterChapterAsset chapter, Progress progress)
         {
-            var chapter = FindChapter(id);
-            return chapter != null && progress.HasProfile && chapter.Entries.Count > 0 && chapter.Entries.All(journey =>
+            return IsCatalogChapter(chapter) && progress.HasProfile && chapter.Entries.Count > 0 && chapter.Entries.All(journey =>
                 journey != null && IsJourneyCompleted(journey, progress));
         }
 
@@ -65,18 +63,18 @@ namespace Dice.App
         private static bool IsJourneyVisited(EncounterJourneyAsset journey, Progress progress)
             => journey.Encounters.Any(encounter => progress.VisitedEncounterIds.Contains(encounter.Identity));
 
-        public bool SelectChapter(string id, Progress progress, out SpiritStatusKind error)
+        public bool SelectChapter(EncounterChapterAsset chapter, Progress progress, out SpiritStatusKind error)
         {
             error = SpiritStatusKind.None;
             if (JourneyPhase != EncounterJourneyPhase.Investigation || JourneyCatalog == null) return false;
-            var chapter = FindChapter(id);
-            if (chapter == null) { error = SpiritStatusKind.ChapterNotFound; return false; }
-            if (!IsChapterAvailable(id, progress)) { error = SpiritStatusKind.ChapterLocked; return false; }
+            if (!IsCatalogChapter(chapter)) { error = SpiritStatusKind.ChapterNotFound; return false; }
+            if (!IsChapterAvailable(chapter, progress)) { error = SpiritStatusKind.ChapterLocked; return false; }
             SelectedChapter = chapter;
             return true;
         }
 
-        private EncounterChapterAsset FindChapter(string id) => JourneyCatalog?.Chapters?.FirstOrDefault(chapter => chapter != null && chapter.Id == id);
+        private bool IsCatalogChapter(EncounterChapterAsset chapter)
+            => chapter != null && JourneyCatalog?.Chapters != null && JourneyCatalog.Chapters.Contains(chapter);
 
         private EncounterChapterAsset CurrentChapter(Progress progress)
         {
@@ -85,9 +83,9 @@ namespace Dice.App
             if (JourneyCatalog?.Chapters == null) return null;
             foreach (var chapter in JourneyCatalog.Chapters)
             {
-                if (chapter == null || !IsChapterAvailable(chapter.Id, progress)) continue;
+                if (chapter == null || !IsChapterAvailable(chapter, progress)) continue;
                 latest = chapter;
-                if (!IsChapterCompleted(chapter.Id, progress)) incomplete = chapter;
+                if (!IsChapterCompleted(chapter, progress)) incomplete = chapter;
             }
             return incomplete ?? latest;
         }

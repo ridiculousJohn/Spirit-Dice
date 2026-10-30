@@ -66,11 +66,10 @@ namespace Dice.Tests
         public static void SetEncounterBeat(EncounterJourneyAsset journey, EncounterAsset encounter, string field, object value)
             => SetBeat(journey, journey.IndexOfEncounter(encounter.Identity), field, value);
 
-        /** Fills the chapter with the given id, used as its title too, and journeys. */
-        public static EncounterChapterAsset Chapter(EncounterChapterAsset chapter, string id, params EncounterJourneyAsset[] entries)
+        /** Fills the chapter with the given title and journeys. */
+        public static EncounterChapterAsset Chapter(EncounterChapterAsset chapter, string title, params EncounterJourneyAsset[] entries)
         {
-            SyntheticUi.Set(chapter, "id", id);
-            SyntheticUi.Set(chapter, "title", id);
+            SyntheticUi.Set(chapter, "title", title);
             SyntheticUi.Set(chapter, "entries", entries);
             return chapter;
         }

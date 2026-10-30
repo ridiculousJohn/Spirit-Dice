@@ -11,10 +11,10 @@ namespace Dice.Tests
      */
     internal sealed class TestJourneyControls : IEncounterJourneyControls
     {
-        public readonly List<string> SelectedChapters = new List<string>();
+        public readonly List<EncounterChapterAsset> SelectedChapters = new List<EncounterChapterAsset>();
         public int Accepted;
         public Func<EncounterJourneyAsset, bool> JourneyAvailable { get; set; } = journey => true;
-        public Func<string, bool> ChapterAvailable { get; set; } = id => false;
+        public Func<EncounterChapterAsset, bool> ChapterAvailable { get; set; } = chapter => false;
 
         public EncounterJourneyPhase JourneyPhase { get; set; }
         public EncounterJourneyCatalogAsset JourneyCatalog { get; set; }
@@ -29,11 +29,11 @@ namespace Dice.Tests
         public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => Array.Empty<EncounterJourneyAsset>();
         public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds => Array.Empty<EncounterJourneyAsset.Id>();
         public bool IsJourneyAvailable(EncounterJourneyAsset journey) => JourneyAvailable(journey);
-        public bool IsChapterAvailable(string id) => ChapterAvailable(id);
-        public bool IsChapterCompleted(string id) => false;
+        public bool IsChapterAvailable(EncounterChapterAsset chapter) => ChapterAvailable(chapter);
+        public bool IsChapterCompleted(EncounterChapterAsset chapter) => false;
 
         public event Action JourneyChanged { add { } remove { } }
-        public void SelectChapter(string id) => SelectedChapters.Add(id);
+        public void SelectChapter(EncounterChapterAsset chapter) => SelectedChapters.Add(chapter);
         public void SelectEncounter(EncounterJourneyAsset journey) { }
         public void AdvanceJourney() { }
         public void SkipIntro() { }

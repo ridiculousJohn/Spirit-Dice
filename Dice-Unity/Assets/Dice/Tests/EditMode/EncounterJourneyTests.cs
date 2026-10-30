@@ -993,7 +993,7 @@ namespace Dice.Tests
             SyntheticUi.Set(journeys, "chapters", new[] { first, second });
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
-            controller.SelectChapter(second.Id);
+            controller.SelectChapter(second);
             Assert.That(controller.SelectedChapter, Is.SameAs(first));
             Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.ChapterLocked));
             var profile = new PlayerProfile();
@@ -1001,9 +1001,9 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.True);
             Assert.That(controller.SelectedChapter, Is.SameAs(second));
-            Assert.That(controller.IsChapterAvailable(first.Id), Is.True);
-            Assert.That(controller.IsChapterCompleted(first.Id), Is.True);
-            Assert.That(controller.IsChapterCompleted(second.Id), Is.False);
+            Assert.That(controller.IsChapterAvailable(first), Is.True);
+            Assert.That(controller.IsChapterCompleted(first), Is.True);
+            Assert.That(controller.IsChapterCompleted(second), Is.False);
             int changes = 0;
             controller.JourneyChanged += () =>
             {
@@ -1011,7 +1011,7 @@ namespace Dice.Tests
                 Assert.That(controller.SelectedChapter, Is.SameAs(first));
                 Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             };
-            controller.SelectChapter(first.Id);
+            controller.SelectChapter(first);
             Assert.That(changes, Is.EqualTo(1));
         }
 
@@ -1038,8 +1038,8 @@ namespace Dice.Tests
             Assert.That(changes, Is.EqualTo(1));
         }
 
-        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
-            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
+        private EncounterChapterAsset Chapter(string title, params EncounterJourneyAsset[] entries)
+            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), title, entries);
 
         /**
          * A journey identified by its location, in a new table scene: an intro, an invitation and the Encounter beat of a new

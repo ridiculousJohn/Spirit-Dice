@@ -336,18 +336,20 @@ namespace Dice.Tests
         {
             var chapters = Chapters();
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
-            Assert.That(navigation.IsChapterAvailable(chapters[0].Id, new Progress(false, null, null)), Is.False);
-            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, EmptyProgress()), Is.False);
-            Assert.That(navigation.IsChapterAvailable("chapter.missing", EmptyProgress()), Is.False);
-            Assert.That(navigation.IsChapterCompleted("chapter.missing", EmptyProgress()), Is.False);
+            Assert.That(navigation.IsChapterAvailable(chapters[0], new Progress(false, null, null)), Is.False);
+            Assert.That(navigation.IsChapterAvailable(chapters[1], EmptyProgress()), Is.False);
+            // A chapter outside the catalog is neither available nor completed, though its journeys are.
+            var outside = Chapter("chapter.outside", first, story);
+            Assert.That(navigation.IsChapterAvailable(outside, EmptyProgress()), Is.False);
+            Assert.That(navigation.IsChapterCompleted(outside, new Progress(true, null, Completed(first, story))), Is.False);
             var afterEncounter = new Progress(true, null, Completed(first));
-            Assert.That(navigation.IsChapterCompleted(chapters[0].Id, afterEncounter), Is.False);
-            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, afterEncounter), Is.False);
+            Assert.That(navigation.IsChapterCompleted(chapters[0], afterEncounter), Is.False);
+            Assert.That(navigation.IsChapterAvailable(chapters[1], afterEncounter), Is.False);
             var afterStory = new Progress(true, null, Completed(first, story));
-            Assert.That(navigation.IsChapterCompleted(chapters[0].Id, afterStory), Is.True);
-            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, afterStory), Is.True);
-            Assert.That(navigation.IsChapterCompleted(chapters[1].Id, afterStory), Is.False);
-            Assert.That(navigation.IsChapterCompleted(chapters[0].Id,
+            Assert.That(navigation.IsChapterCompleted(chapters[0], afterStory), Is.True);
+            Assert.That(navigation.IsChapterAvailable(chapters[1], afterStory), Is.True);
+            Assert.That(navigation.IsChapterCompleted(chapters[1], afterStory), Is.False);
+            Assert.That(navigation.IsChapterCompleted(chapters[0],
                 new Progress(false, null, Completed(first, story))), Is.False);
         }
 
@@ -369,18 +371,18 @@ namespace Dice.Tests
         public void ChapterSelectionIsAvailableOnlyOnTheBoardAndSurvivesBoardRefresh()
         {
             var chapters = Chapters();
-            Assert.That(navigation.SelectChapter(chapters[1].Id, EmptyProgress(), out SpiritStatusKind error), Is.False);
+            Assert.That(navigation.SelectChapter(chapters[1], EmptyProgress(), out SpiritStatusKind error), Is.False);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.ChapterLocked));
-            Assert.That(navigation.SelectChapter("chapter.missing", EmptyProgress(), out error), Is.False);
+            Assert.That(navigation.SelectChapter(Chapter("chapter.outside", first), EmptyProgress(), out error), Is.False);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.ChapterNotFound));
             var progress = new Progress(true, null, Completed(first, story));
             navigation.InitializeJourney(catalog, progress);
-            Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out error), Is.True);
+            Assert.That(navigation.SelectChapter(chapters[0], progress, out error), Is.True);
             Assert.That(error, Is.EqualTo(SpiritStatusKind.None));
             navigation.ReturnToInvestigation(progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
             Assert.That(navigation.SelectEncounter(first, progress, out _), Is.True);
-            Assert.That(navigation.SelectChapter(chapters[1].Id, progress, out _), Is.False);
+            Assert.That(navigation.SelectChapter(chapters[1], progress, out _), Is.False);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
         }
 
@@ -392,7 +394,7 @@ namespace Dice.Tests
             var progress = new Progress(true, new[] { FirstId }, Completed(first, second, story));
             navigation.InitializeJourney(catalog, progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[1]));
-            Assert.That(navigation.SelectChapter(chapters[0].Id, progress, out _), Is.True);
+            Assert.That(navigation.SelectChapter(chapters[0], progress, out _), Is.True);
             Assert.That(navigation.SelectEncounter(storyOnly ? story : first, progress, out _), Is.True);
             Assert.That(navigation.SelectedChapter, Is.SameAs(chapters[0]));
             Assert.That(navigation.SelectedJourney, Is.SameAs(storyOnly ? story : first));
@@ -442,7 +444,7 @@ namespace Dice.Tests
             SyntheticUi.Set(replacement, "chapters", new[] { replacementChapter });
             navigation.InitializeJourney(replacement, EmptyProgress());
             Assert.That(navigation.SelectedChapter, Is.SameAs(replacementChapter));
-            Assert.That(navigation.SelectChapter(chapters[0].Id, EmptyProgress(), out _), Is.False);
+            Assert.That(navigation.SelectChapter(chapters[0], EmptyProgress(), out _), Is.False);
             Assert.That(navigation.SelectEncounter(first, EmptyProgress(), out _), Is.True);
             Assert.That(navigation.SelectedChapter, Is.SameAs(replacementChapter));
             navigation.InitializeJourney(catalog, EmptyProgress());
@@ -457,7 +459,7 @@ namespace Dice.Tests
         {
             var chapters = Chapters();
             var progress = new Progress(true, completed ? null : new[] { SecondId }, completed ? Completed(second) : null);
-            Assert.That(navigation.IsChapterAvailable(chapters[1].Id, progress), Is.True);
+            Assert.That(navigation.IsChapterAvailable(chapters[1], progress), Is.True);
             navigation.InitializeJourney(catalog, progress);
             Assert.That(navigation.SelectedChapter, Is.SameAs(completed ? chapters[0] : chapters[1]));
         }
@@ -487,8 +489,8 @@ namespace Dice.Tests
             return journey;
         }
 
-        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
-            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
+        private EncounterChapterAsset Chapter(string title, params EncounterJourneyAsset[] entries)
+            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), title, entries);
 
         private void ReachInvitation()
         {

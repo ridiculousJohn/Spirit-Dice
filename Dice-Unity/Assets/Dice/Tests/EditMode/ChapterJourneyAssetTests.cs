@@ -211,8 +211,7 @@ namespace Dice.Tests
         }
 
         [TestCase("null")]
-        [TestCase("blank-id")]
-        [TestCase("duplicate-id")]
+        [TestCase("duplicate-chapter")]
         [TestCase("blank-title")]
         [TestCase("empty-entries")]
         [TestCase("null-journey")]
@@ -223,15 +222,16 @@ namespace Dice.Tests
             var story = Journey("story.return");
             var firstChapter = Chapter("chapter.first", encounter);
             var secondChapter = Chapter("chapter.second", story);
-            if (invalid == "blank-id") SyntheticUi.Set(firstChapter, "id", " ");
-            if (invalid == "duplicate-id") SyntheticUi.Set(secondChapter, "id", firstChapter.Id);
             if (invalid == "blank-title") SyntheticUi.Set(firstChapter, "title", " ");
             if (invalid == "empty-entries") SyntheticUi.Set(firstChapter, "entries", Array.Empty<EncounterJourneyAsset>());
             if (invalid == "null-journey") SyntheticUi.Set(firstChapter, "entries", new EncounterJourneyAsset[] { null });
             if (invalid == "duplicate-journey") SyntheticUi.Set(secondChapter, "entries", new[] { encounter });
             var journeys = Catalog();
-            SyntheticUi.Set(journeys, "chapters", new[] { invalid == "null" ? null : firstChapter, secondChapter });
-            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+            SyntheticUi.Set(journeys, "chapters", new[] { invalid == "null" ? null : firstChapter,
+                invalid == "duplicate-chapter" ? firstChapter : secondChapter });
+            var exception = Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+            // A chapter listed twice also lists its journeys twice; the chapter is named before its journeys are checked.
+            if (invalid == "duplicate-chapter") Assert.That(exception.Message, Does.Contain("lists the chapter"));
         }
 
         [TestCase(false)]
@@ -249,8 +249,8 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
-        private EncounterChapterAsset Chapter(string id, params EncounterJourneyAsset[] entries)
-            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), id, entries);
+        private EncounterChapterAsset Chapter(string title, params EncounterJourneyAsset[] entries)
+            => TestJourneys.Chapter(Create<EncounterChapterAsset>(), title, entries);
 
         /** A story journey identified by the name. */
         private EncounterJourneyAsset Journey(string name) => Journey(name, null);

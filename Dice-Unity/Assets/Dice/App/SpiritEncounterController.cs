@@ -188,10 +188,10 @@ namespace Dice.App
             }
         }
 
-        public void SelectChapter(string id)
+        public void SelectChapter(EncounterChapterAsset chapter)
         {
             if (IsBusy || Catalog == null) return;
-            if (!navigation.SelectChapter(id, JourneyProgress, out SpiritStatusKind error))
+            if (!navigation.SelectChapter(chapter, JourneyProgress, out SpiritStatusKind error))
             {
                 if (error != SpiritStatusKind.None) SetJourneyStatus(SpiritStatus.Of(error));
                 return;
@@ -256,8 +256,8 @@ namespace Dice.App
         }
 
         public bool IsJourneyAvailable(EncounterJourneyAsset journey) => navigation.IsJourneyAvailable(journey, JourneyProgress);
-        public bool IsChapterAvailable(string id) => navigation.IsChapterAvailable(id, JourneyProgress);
-        public bool IsChapterCompleted(string id) => navigation.IsChapterCompleted(id, JourneyProgress);
+        public bool IsChapterAvailable(EncounterChapterAsset chapter) => navigation.IsChapterAvailable(chapter, JourneyProgress);
+        public bool IsChapterCompleted(EncounterChapterAsset chapter) => navigation.IsChapterCompleted(chapter, JourneyProgress);
 
         private void ApplyJourneyTransition(EncounterJourneyNavigation.Transition transition)
         {
@@ -394,14 +394,12 @@ namespace Dice.App
             try
             {
                 if (!PrepareProfile(SavePath)) return false;
-                var save = EncounterSaveFileStore.Load(SavePath, Catalog);
-                if (!EncounterApplication.TryRestore(Catalog, save, out var next, out var result))
+                var next = RestoreSavedRun(out var failure);
+                if (next == null)
                 {
-                    SetStatus(SpiritStatus.Of(SpiritStatusKind.LoadFailed, result.Error + ". " + result.Detail));
+                    SetStatus(failure);
                     return false;
                 }
-                next.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
-                next.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
                 if (!navigation.Load(next.Snapshot.EncounterId, JourneyCatalog != null && !directGameplay, out var transition, out SpiritStatusKind error))
                 {
                     SetStatus(SpiritStatus.Of(error));
@@ -430,10 +428,10 @@ namespace Dice.App
                 EncounterApplication restored = null;
                 if (File.Exists(SavePath))
                 {
-                    var save = EncounterSaveFileStore.Load(SavePath, Catalog);
-                    if (!EncounterApplication.TryRestore(Catalog, save, out restored, out var result))
+                    restored = RestoreSavedRun(out var failure);
+                    if (restored == null)
                     {
-                        SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.LoadFailed, result.Error + ". " + result.Detail));
+                        SetJourneyStatus(failure);
                         return false;
                     }
                     var journey = JourneyCatalog.Find(restored.Snapshot.EncounterId);
@@ -443,16 +441,14 @@ namespace Dice.App
                         return false;
                     }
                     chapter = JourneyCatalog.Chapters?.FirstOrDefault(candidate => candidate != null && candidate.Entries.Contains(journey));
-                    if (chapter != null && !navigation.IsChapterAvailable(chapter.Id, JourneyProgress))
+                    if (chapter != null && !navigation.IsChapterAvailable(chapter, JourneyProgress))
                     {
                         SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.ChapterLocked));
                         return false;
                     }
-                    restored.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
-                    restored.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
                 }
                 navigation.ReturnToInvestigation(JourneyProgress);
-                if (chapter != null && !navigation.SelectChapter(chapter.Id, JourneyProgress, out SpiritStatusKind error))
+                if (chapter != null && !navigation.SelectChapter(chapter, JourneyProgress, out SpiritStatusKind error))
                 {
                     SetJourneyStatus(SpiritStatus.Of(error));
                     return false;
@@ -593,13 +589,30 @@ namespace Dice.App
 
         private void MergeProgression()
         {
-            application?.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
-            application?.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
-            if (application != null)
+            if (application == null) return;
+            MergeProfileProgress(application);
+            Snapshot = application.Snapshot;
+            CachePreview();
+        }
+
+        /** The run saved at SavePath with the profile's progress merged in, or null with the failure status. */
+        private EncounterApplication RestoreSavedRun(out SpiritStatus failure)
+        {
+            var save = EncounterSaveFileStore.Load(SavePath, Catalog);
+            if (!EncounterApplication.TryRestore(Catalog, save, out var restored, out var result))
             {
-                Snapshot = application.Snapshot;
-                CachePreview();
+                failure = SpiritStatus.Of(SpiritStatusKind.LoadFailed, result.Error + ". " + result.Detail);
+                return null;
             }
+            MergeProfileProgress(restored);
+            failure = SpiritStatus.None;
+            return restored;
+        }
+
+        private void MergeProfileProgress(EncounterApplication target)
+        {
+            target.MergeUnlockedModifiers(progression.KnownUnlockedModifiers(Catalog));
+            target.MergeDiscoveredFamilies(ProfileDiscoveredFamilyIds);
         }
 
         private bool ApplyJourneyRewards(EncounterJourneyNavigation.Transition transition)

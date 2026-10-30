@@ -36,12 +36,16 @@ namespace Dice.Presentation
 
         public void Validate(MechanicalCatalog catalog)
         {
-            var chapterIds = new HashSet<string>(StringComparer.Ordinal);
+            var listedChapters = new HashSet<EncounterChapterAsset>();
             if (chapters != null)
                 foreach (var chapter in chapters)
-                    if (chapter == null || string.IsNullOrWhiteSpace(chapter.Id) || !chapterIds.Add(chapter.Id) ||
-                        string.IsNullOrWhiteSpace(chapter.Title) || chapter.Entries == null || chapter.Entries.Count == 0)
-                        throw new FormatException("Chapters require unique nonempty IDs, titles, and journey entries.");
+                {
+                    if (chapter == null) throw new FormatException("Chapters must be present.");
+                    if (!listedChapters.Add(chapter))
+                        throw new FormatException("The journey catalog lists the chapter " + chapter.name + " twice.");
+                    if (string.IsNullOrWhiteSpace(chapter.Title) || chapter.Entries == null || chapter.Entries.Count == 0)
+                        throw new FormatException("The chapter " + chapter.name + " requires a title and journey entries.");
+                }
             var journeys = Entries;
             if (journeys == null || journeys.Count == 0) throw new FormatException("An investigation requires encounter journeys.");
             var journeyIds = new HashSet<EncounterJourneyAsset.Id>();

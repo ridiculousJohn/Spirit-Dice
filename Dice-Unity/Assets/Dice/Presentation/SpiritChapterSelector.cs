@@ -46,16 +46,16 @@ namespace Dice.Presentation
                 var card = Instantiate(chapterCardPrefab, Content, false);
                 card.name = "ChapterButton" + i;
                 chapterCards.Add(card.gameObject);
-                bool available = controls.IsChapterAvailable(chapter.Id);
+                bool available = controls.IsChapterAvailable(chapter);
                 bool current = controls.SelectedChapter == chapter;
-                bool completed = controls.IsChapterCompleted(chapter.Id);
+                bool completed = controls.IsChapterCompleted(chapter);
                 string state = !available ? wording.locked : current ? completed ? wording.currentCompleted : wording.current :
                     completed ? wording.completed : wording.available;
                 card.Bind(chapter.Artwork, chapter.Title, "", wording.Number(i + 1), state,
                     current, false, available, () =>
                     {
                         Close();
-                        controls.SelectChapter(selected.Id);
+                        controls.SelectChapter(selected);
                     });
             }
 

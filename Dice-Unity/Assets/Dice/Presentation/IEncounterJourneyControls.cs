@@ -22,11 +22,11 @@ namespace Dice.Presentation
         IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys { get; }
         IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
         bool IsJourneyAvailable(EncounterJourneyAsset journey);
-        bool IsChapterAvailable(string id);
-        bool IsChapterCompleted(string id);
+        bool IsChapterAvailable(EncounterChapterAsset chapter);
+        bool IsChapterCompleted(EncounterChapterAsset chapter);
 
         event Action JourneyChanged;
-        void SelectChapter(string id);
+        void SelectChapter(EncounterChapterAsset chapter);
         void SelectEncounter(EncounterJourneyAsset journey);
         void AdvanceJourney();
         void SkipIntro();
