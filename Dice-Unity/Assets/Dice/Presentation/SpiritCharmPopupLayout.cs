@@ -11,8 +11,6 @@ namespace Dice.Presentation
         [SerializeField, Range(0, 1)] private float widthFraction = .84f;
 
         private void OnEnable() => FitWidth();
-        private void OnValidate() => FitWidth();
-        private void LateUpdate() => FitWidth();
         private void OnRectTransformDimensionsChange() => FitWidth();
         public void SetLayoutHorizontal() => FitWidth();
         public void SetLayoutVertical() { }
