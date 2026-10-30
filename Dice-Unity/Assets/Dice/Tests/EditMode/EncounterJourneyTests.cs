@@ -305,7 +305,8 @@ namespace Dice.Tests
         private EncounterJourneyAsset AddStory()
         {
             var story = Journey(null, "A return visit", "The guide");
-            SetBeats(story, Create<EncounterTablePresentationAsset>(), new DialogueBeat(), new DialogueBeat());
+            SetBeats(story, WithTray(Create<EncounterTablePresentationAsset>(), Create<SpiritTrayPresentationAsset>()), new DialogueBeat(),
+                new DialogueBeat());
             SyntheticUi.Set(story, "completionReward", Reward(true, true));
             SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", journeys.Entries[0], journeys.Entries[1], story) });
             return story;
@@ -1105,7 +1106,7 @@ namespace Dice.Tests
             SyntheticUi.Set(journey, "locationTitle", location);
             SyntheticUi.Set(journey, "spiritName", spirit);
             SyntheticUi.Set(journey, "leadText", "A strange visitor waits beyond the door.");
-            var table = Create<EncounterTablePresentationAsset>();
+            var table = WithTray(Create<EncounterTablePresentationAsset>(), Create<SpiritTrayPresentationAsset>());
             if (encounterName == null) SetBeats(journey, table, new IllustrationBeat(), new ArrivalBeat(), new DialogueBeat());
             else SetEncounterBeats(journey, table, charms.Encounter(encounterName), new IllustrationBeat(), new ArrivalBeat(),
                 new DialogueBeat());

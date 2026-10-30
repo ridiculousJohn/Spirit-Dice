@@ -179,7 +179,6 @@ MonoBehaviour:
   roomTexture: {fileID: 2800000, guid: 30162e8d21cc427dbaaba6cba020cccb, type: 3}
   tablePresentation: {fileID: 11400000, guid: 74eb1ce65d124aa9823839f4404df802, type: 2}
   uiTheme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
-  trayPresentation: {fileID: 11400000, guid: 9df042d8698942b0a018185f688bde5e, type: 2}
   encounterRulePresentation: {fileID: 11400000, guid: 90bf42108a3248c18075ae2ddad9c893, type: 2}
 --- !u!114 &675357730
 MonoBehaviour:

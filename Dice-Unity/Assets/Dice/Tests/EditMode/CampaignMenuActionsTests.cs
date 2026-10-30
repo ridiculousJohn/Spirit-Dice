@@ -33,7 +33,8 @@ namespace Dice.Tests
             SyntheticUi.Set(journey, "locationTitle", "Test location");
             SyntheticUi.Set(journey, "spiritName", "Test host");
             SyntheticUi.Set(journey, "leadText", "A test lead.");
-            TestJourneys.SetEncounterBeats(journey, Create<EncounterTablePresentationAsset>(), content.Encounter("encounter.test"));
+            TestJourneys.SetEncounterBeats(journey, TestJourneys.WithTray(Create<EncounterTablePresentationAsset>(),
+                Create<SpiritTrayPresentationAsset>()), content.Encounter("encounter.test"));
             journeys = TestJourneys.Catalog(Create<EncounterJourneyCatalogAsset>(),
                 TestJourneys.Chapter(Create<EncounterChapterAsset>(), "chapter.test", journey));
             root = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Docs", "work",

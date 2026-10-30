@@ -1291,10 +1291,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 792143287}
     - target: {fileID: 6748815316298513384, guid: 79f23dd05b115f548ba889e2dd85bf52, type: 3}
-      propertyPath: trayPresentation
-      value: 
-      objectReference: {fileID: 11400000, guid: 574c21a7431340f4b884c0150c5a466e, type: 2}
-    - target: {fileID: 6748815316298513384, guid: 79f23dd05b115f548ba889e2dd85bf52, type: 3}
       propertyPath: tablePresentation
       value: 
       objectReference: {fileID: 11400000, guid: 9b5e590776ad40cc9ff5b6dd060c37a6, type: 2}

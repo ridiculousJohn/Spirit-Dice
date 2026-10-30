@@ -14,7 +14,6 @@ namespace Dice.Presentation
     public sealed class SpiritEncounterView : MonoBehaviour, ISpiritScorePlaybackHost
     {
         [SerializeField] private EncounterTablePresentationAsset tablePresentation;
-        [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
 
         public bool IsCharmsOpen => OwnedCharmsPanel != null && OwnedCharmsPanel.Root.gameObject.activeSelf;
         public bool IsCharmPopupOpen => CharmPopup != null && CharmPopup.IsOpen;
@@ -323,7 +322,7 @@ namespace Dice.Presentation
             GameplayHud.BuildEncounterRule();
             GameplayHud.BuildStageIntro();
             GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, ReturnToInvestigation);
-            ConfigureTrays(tablePresentation.TrayPresentation ?? trayPresentation);
+            ConfigureTrays(tablePresentation.TrayPresentation);
             hostPortrait.Build(tablePresentation.HostPresentation);
             hostPortrait.SpiritGesture -= PlaySpiritCue;
             hostPortrait.SpiritGesture += PlaySpiritCue;
@@ -535,6 +534,8 @@ namespace Dice.Presentation
             if (selected == null) return journeyControls?.JourneyPhase == EncounterJourneyPhase.Playing;
             if (tablePresentation == null) return false;
             if (selected == tablePresentation) return true;
+            // A table scene loaded through Addressables can hold its own instance of the table asset the journey references, so
+            // identity falls back to the scene address the application loads the table scene by.
             return selected.Scene != null && selected.Scene.RuntimeKeyIsValid() &&
                 selected.Scene.AssetGUID == tablePresentation.Scene?.AssetGUID;
         }

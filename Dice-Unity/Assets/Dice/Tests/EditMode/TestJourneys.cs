@@ -51,6 +51,13 @@ namespace Dice.Tests
             SetBeat(journey, journey.Beats.Count - 1, "encounter", encounter);
         }
 
+        /** Authors the tray of the table scene, which every table scene must author to validate. */
+        public static EncounterTablePresentationAsset WithTray(EncounterTablePresentationAsset table, SpiritTrayPresentationAsset tray)
+        {
+            SyntheticUi.Set(table, "trayPresentation", tray);
+            return table;
+        }
+
         /** Sets an authored field of the journey's beat through the journey's serialized form. */
         public static void SetBeat(EncounterJourneyAsset journey, int beat, string field, object value)
             => SyntheticUi.Set(journey, "beats.Array.data[" + beat + "]." + field, value);

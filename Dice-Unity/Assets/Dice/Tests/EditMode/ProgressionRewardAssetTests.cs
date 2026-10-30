@@ -106,7 +106,8 @@ namespace Dice.Tests
             SyntheticUi.Set(journey, "locationTitle", "Story table");
             SyntheticUi.Set(journey, "spiritName", "Story keeper");
             SyntheticUi.Set(journey, "leadText", "A keeper waits at the table.");
-            TestJourneys.SetEncounterBeats(journey, Create<EncounterTablePresentationAsset>(), charms.Encounter("encounter.story"));
+            TestJourneys.SetEncounterBeats(journey, TestJourneys.WithTray(Create<EncounterTablePresentationAsset>(),
+                Create<SpiritTrayPresentationAsset>()), charms.Encounter("encounter.story"));
             return journey;
         }
 

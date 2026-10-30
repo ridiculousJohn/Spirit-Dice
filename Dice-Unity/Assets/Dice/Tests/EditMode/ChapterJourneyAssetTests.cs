@@ -208,7 +208,7 @@ namespace Dice.Tests
             SyntheticUi.Set(journey, "locationTitle", "The clearing");
             SyntheticUi.Set(journey, "spiritName", "Spirit");
             SyntheticUi.Set(journey, "leadText", "A familiar spirit waits.");
-            var table = Create<EncounterTablePresentationAsset>();
+            var table = TestJourneys.WithTray(Create<EncounterTablePresentationAsset>(), Create<SpiritTrayPresentationAsset>());
             if (encounter == null) TestJourneys.SetBeats(journey, table, new DialogueBeat());
             else TestJourneys.SetEncounterBeats(journey, table, encounter);
             return journey;

@@ -2681,7 +2681,6 @@ MonoBehaviour:
   roomTexture: {fileID: 0}
   tablePresentation: {fileID: 0}
   uiTheme: {fileID: 11400000, guid: 248205a3c4c64a7d918f93e0f7e46b4b, type: 2}
-  trayPresentation: {fileID: 0}
   <GameplayHud>k__BackingField: {fileID: 7264475943120696788}
   <RewardsPanel>k__BackingField: {fileID: 8694808668177316413}
   <EncounterCharmsIntroduction>k__BackingField: {fileID: 846402103365709119}

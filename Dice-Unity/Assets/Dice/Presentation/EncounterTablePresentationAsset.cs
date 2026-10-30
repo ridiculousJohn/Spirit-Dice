@@ -82,6 +82,8 @@ namespace Dice.Presentation
 
         internal override void Validate(string beat)
         {
+            if (trayPresentation == null)
+                throw new FormatException("The table scene " + name + " of " + beat + " authors no tray presentation.");
             sceneLighting?.Validate();
             if (audioTheme != null) audioTheme.Validate();
             if (sceneLighting != null && !FiniteValue.Is(hostLightingPosition))
