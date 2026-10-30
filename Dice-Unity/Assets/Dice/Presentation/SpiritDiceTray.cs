@@ -119,9 +119,8 @@ namespace Dice.Presentation
 
         public void SetScoringHighlight(int mask)
         {
+            Initialize();
             scoringHighlightMask = mask & DiceValues.AllMask;
-            // Clearing feedback during scene shutdown must not recreate the shared render scene.
-            if (!initialized) return;
             RefreshHighlights();
         }
 
@@ -129,12 +128,10 @@ namespace Dice.Presentation
         {
             for (int index = 0; index < DiceValues.Count; index++)
             {
-                if (dice[index] == null || selectionOutlines[index] == null || selectionFrames[index] == null) continue;
                 bool selected = ((selectionMask | scoringHighlightMask) & (1 << index)) != 0;
                 selectionOutlines[index].SetActive(selected);
                 selectionFrames[index].SetActive(selected);
-                // A tray never initialized has no support points and keeps its authored pose.
-                if (supportPoints != null && (rollingMask & (1 << index)) == 0) dice[index].localPosition = SlotPosition(index);
+                if ((rollingMask & (1 << index)) == 0) dice[index].localPosition = SlotPosition(index);
             }
         }
 
@@ -191,7 +188,6 @@ namespace Dice.Presentation
                 for (int index = 0; version == presentationVersion && index < DiceValues.Count; index++)
                 {
                     if ((rollingMask & (1 << index)) == 0) continue;
-                    if (dice[index] == null) continue;
                     dice[index].localRotation = endRotations[index];
                     dice[index].localPosition = SlotPosition(index);
                     SetShadowHeight(index, 0f);
@@ -249,12 +245,9 @@ namespace Dice.Presentation
             {
                 if (version == presentationVersion)
                 {
-                    if (dice[index] != null)
-                    {
-                        dice[index].localRotation = endRotation;
-                        dice[index].localPosition = SlotPosition(index);
-                        SetShadowHeight(index, 0f);
-                    }
+                    dice[index].localRotation = endRotation;
+                    dice[index].localPosition = SlotPosition(index);
+                    SetShadowHeight(index, 0f);
                     rollingMask = 0;
                     IsRolling = false;
                     RollEnded?.Invoke();
@@ -318,7 +311,6 @@ namespace Dice.Presentation
 
         private void SetShadowHeight(int index, float lift)
         {
-            if (contactShadows[index] == null) return;
             Vector3 scale = shadowScales[index];
             contactShadows[index].transform.localScale = new Vector3(scale.x * (1 + lift * ShadowGrowthX), scale.y,
                 scale.z * (1 + lift * ShadowGrowthZ));
@@ -361,12 +353,24 @@ namespace Dice.Presentation
             return Quaternion.AngleAxis(index % 4 * 90f + (index - 2) * SlotYawStep, ResultUp) * result;
         }
 
+        /**
+         * Unbinds the tray so it can be configured again: it ends its animations, rests its dice in their slots and clears
+         * the highlights and shadow lift it set. A tray never initialized has set nothing.
+         */
         public void ReleasePresentation()
         {
+            bool wasInitialized = initialized;
+            Unbind();
+            if (!wasInitialized) return;
+            for (int index = 0; index < DiceValues.Count; ++index)
+                contactShadows[index].transform.localScale = shadowScales[index];
+            RefreshHighlights();
+        }
+
+        /** Ends the tray's animations, clears its masks and drops its binding to the shared scene. */
+        private void Unbind()
+        {
             ++presentationVersion;
-            if (initialized)
-                for (int index = 0; index < contactShadows.Length; ++index)
-                    if (contactShadows[index] != null) contactShadows[index].transform.localScale = shadowScales[index];
             texture = null;
             renderCamera = null;
             initialized = false;
@@ -374,7 +378,6 @@ namespace Dice.Presentation
             scoringHighlightMask = 0;
             rollingMask = 0;
             IsRolling = false;
-            RefreshHighlights();
         }
 
         private void SetContentActive(bool active)
@@ -387,6 +390,7 @@ namespace Dice.Presentation
         // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
         internal void OnEnable() => SetContentActive(true);
         internal void OnDisable() => SetContentActive(false);
-        private void OnDestroy() => ReleasePresentation();
+        // Teardown destroys the authored dice, shadows and highlights in no fixed order, so it leaves their visuals alone.
+        private void OnDestroy() => Unbind();
     }
 }

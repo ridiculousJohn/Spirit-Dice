@@ -50,13 +50,13 @@ namespace Dice.Presentation
             if (trayPresentation != presentation || sharedScene != scene) ReleasePresentation();
             trayPresentation = presentation;
             sharedScene = scene;
-            Renderer?.Configure(presentation, scene);
+            Renderer.Configure(presentation, scene);
         }
 
         public void ReleasePresentation()
         {
             Clear();
-            Renderer?.ReleasePresentation();
+            Renderer.ReleasePresentation();
             if (image != null) { image.texture = null; image.enabled = false; }
             sharedScene = null;
         }
@@ -98,7 +98,7 @@ namespace Dice.Presentation
 
         public void Clear()
         {
-            if (Renderer != null) Renderer.Clear();
+            Renderer.Clear();
             foreach (Token token in tokens)
             {
                 token.Rect.gameObject.SetActive(false);

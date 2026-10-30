@@ -120,37 +120,54 @@ namespace Dice.Presentation
                 SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
         }
 
+        /**
+         * Unbinds the scene so it can be configured again: the camera, stage and renderers get their authored target,
+         * aspect, active state and materials back, and the texture and material instances the scene created are destroyed.
+         * A scene never initialized has a texture of none and changed nothing.
+         */
         public void ReleasePresentation()
         {
             if (Texture != null)
             {
-                if (RenderCamera != null)
-                {
-                    RenderCamera.targetTexture = authoredTarget;
-                    RenderCamera.aspect = authoredAspect;
-                }
-                Texture.Release();
-                OwnedObject.Release(Texture);
-                if (renderRoot != null) renderRoot.SetActive(authoredStageActive);
+                RenderCamera.targetTexture = authoredTarget;
+                RenderCamera.aspect = authoredAspect;
+                renderRoot.SetActive(authoredStageActive);
             }
             ReleaseMaterialInstances();
-            Texture = null;
-            authoredTarget = null;
-            initialized = false;
+            ReleaseOwnedResources();
         }
 
         private void ReleaseMaterialInstances()
         {
-            foreach (var pair in authoredMaterials)
-                if (pair.Key != null) pair.Key.sharedMaterials = pair.Value;
+            foreach (var pair in authoredMaterials) pair.Key.sharedMaterials = pair.Value;
+            DestroyMaterialInstances();
+        }
+
+        private void DestroyMaterialInstances()
+        {
             authoredMaterials.Clear();
             foreach (Material material in materials) OwnedObject.Release(material);
             materials.Clear();
         }
 
+        /** Destroys the texture and material instances the scene created, which are assets the scene does not unload. */
+        private void ReleaseOwnedResources()
+        {
+            if (Texture != null)
+            {
+                Texture.Release();
+                OwnedObject.Release(Texture);
+            }
+            DestroyMaterialInstances();
+            Texture = null;
+            authoredTarget = null;
+            initialized = false;
+        }
+
         // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
         internal void OnEnable() { if (renderRoot != null) renderRoot.SetActive(true); }
         internal void OnDisable() { if (renderRoot != null) renderRoot.SetActive(false); }
-        private void OnDestroy() => ReleasePresentation();
+        // Teardown destroys the camera, stage and renderers in no fixed order, so it leaves their authored state alone.
+        private void OnDestroy() => ReleaseOwnedResources();
     }
 }

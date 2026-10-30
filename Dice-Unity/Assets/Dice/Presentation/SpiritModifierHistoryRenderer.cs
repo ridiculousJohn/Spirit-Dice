@@ -113,11 +113,8 @@ namespace Dice.Presentation
         {
             foreach (Entry entry in entries)
             {
-                if (entry.Token != null)
-                {
-                    entry.Token.SetActive(false);
-                    OwnedObject.Release(entry.Token);
-                }
+                entry.Token.SetActive(false);
+                OwnedObject.Release(entry.Token);
                 ownedResources.Remove(entry.Material);
                 OwnedObject.Release(entry.Material);
                 ownedResources.Remove(entry.ShadowMaterial);
@@ -320,18 +317,31 @@ namespace Dice.Presentation
             if (renderRoot != null) renderRoot.SetActive(false);
         }
 
+        /** Unbinds the renderer so it can be configured again: it destroys its tokens and the materials it created. */
         public void ReleasePresentation()
         {
             Clear();
+            Unbind();
+        }
+
+        /**
+         * Destroys the materials the renderer created, which are assets the scene does not unload, forgets its tokens and
+         * drops its binding to the shared scene.
+         */
+        private void Unbind()
+        {
             foreach (UnityEngine.Object resource in ownedResources) OwnedObject.Release(resource);
             ownedResources.Clear();
+            entries.Clear();
             texture = null;
             renderCamera = null;
             sharedScene = null;
             initialized = false;
             normalizedScroll = 0;
+            resolvingIndex = -1;
         }
 
-        private void OnDestroy() => ReleasePresentation();
+        // Teardown destroys the tokens with the rest of the scene in no fixed order, so it leaves them alone.
+        private void OnDestroy() => Unbind();
     }
 }

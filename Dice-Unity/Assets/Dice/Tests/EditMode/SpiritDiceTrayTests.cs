@@ -69,19 +69,16 @@ namespace Dice.Tests
             AssertHighlights(DiceValues.AllMask);
         }
 
-        /** Checks release clears every highlight and later scoring feedback does not reinitialize the tray / fails if highlights survive release or clearing feedback rebinds the shared scene. */
+        /** Checks release unbinds the tray and clears every highlight it set / fails if highlights or the shared texture survive release. */
         [Test]
-        public void ReleaseClearsHighlightsAndLaterFeedbackDoesNotReinitialize()
+        public void ReleaseClearsHighlights()
         {
             tray.SetSelection(1 << 2);
             tray.SetScoringHighlight(DiceValues.AllMask);
             tray.ReleasePresentation();
             Assert.That(tray.ScoringHighlightMask, Is.Zero);
+            Assert.That(tray.Texture, Is.Null);
             AssertHighlights(0);
-            tray.SetScoringHighlight(0);
-            Assert.That(tray.Texture, Is.Null, "Clearing feedback leaves a released tray released.");
-            tray.SetSelection(0);
-            Assert.That(tray.Texture, Is.Not.Null, "A selection binds the tray again.");
         }
 
         /** Checks ending a roll early settles its dice on their results while it blocks other changes during the roll / fails if an interrupted roll leaves dice mid-air or moves unmasked dice. */
