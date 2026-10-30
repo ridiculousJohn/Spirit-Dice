@@ -18,6 +18,9 @@ namespace Dice.Tests
     public sealed class DieBindingPresenterTests
     {
         private static readonly EncounterRuleDefinition.Id BindingId = TestRules.IdOf("test.binding");
+        // The test binding asset's mark and binding flares, distinct so each step's flare is identifiable.
+        private static readonly RecordedFlare MarkFlare = new RecordedFlare(1, .25f, .1f, .05f, .6f);
+        private static readonly RecordedFlare BindFlare = new RecordedFlare(1, .9f, .2f, .4f, 1.1f);
         private readonly List<Object> created = new List<Object>();
         private readonly List<TestRulePresenterContext> contexts = new List<TestRulePresenterContext>();
 
@@ -148,14 +151,14 @@ namespace Dice.Tests
 
         /**
          * Marks, binds and releases through the asset's presenter on a session of a binding rule with the given id; the
-         * expected flares are the asset's own mark and binding flares.
+         * expected flares are the test asset's mark and binding flares.
          */
         private void AssertBindingSequence(DieBindingVisualAsset asset, EncounterRuleDefinition.Id ruleId)
         {
             string name = asset.name;
             var fixture = new PresenterFixture(this, asset, ruleId);
-            var markFlare = asset.FlareLight >= 0 ? new[] { Flare(asset, "mark") } : Array.Empty<RecordedFlare>();
-            var bindFlare = asset.FlareLight >= 0 ? new[] { Flare(asset, "bind") } : Array.Empty<RecordedFlare>();
+            var markFlare = asset.FlareLight >= 0 ? new[] { MarkFlare } : Array.Empty<RecordedFlare>();
+            var bindFlare = asset.FlareLight >= 0 ? new[] { BindFlare } : Array.Empty<RecordedFlare>();
             var session = EncounterSession.CreateEncounter(Catalog(ruleId), TestContent.EncounterId, 7);
             var opening = session.InitialResolution;
             int marked = Bay(session.Snapshot.Binding().MarkedMask);
@@ -218,19 +221,6 @@ namespace Dice.Tests
             }
         }
 
-        /** The asset's serialized mark or binding flare, as the presenter hands it to the scene lights. */
-        private static RecordedFlare Flare(DieBindingVisualAsset asset, string prefix)
-        {
-            using var serialized = new SerializedObject(asset);
-            float Value(string field)
-            {
-                var property = serialized.FindProperty(prefix + field);
-                Assert.That(property, Is.Not.Null, prefix + field);
-                return property.floatValue;
-            }
-            return new RecordedFlare(asset.FlareLight, Value("FlarePeak"), Value("FlareRise"), Value("FlareHold"), Value("FlareFall"));
-        }
-
         private static int Bay(int mask)
         {
             for (int bay = 0; bay < DiceValues.Count; ++bay)
@@ -277,15 +267,15 @@ namespace Dice.Tests
             created.Add(asset);
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("diePrefab").objectReferenceValue = ShellPrefab();
-            serialized.FindProperty("flareLight").intValue = 1;
-            serialized.FindProperty("markFlarePeak").floatValue = .25f;
-            serialized.FindProperty("markFlareRise").floatValue = .1f;
-            serialized.FindProperty("markFlareHold").floatValue = .05f;
-            serialized.FindProperty("markFlareFall").floatValue = .6f;
-            serialized.FindProperty("bindFlarePeak").floatValue = .9f;
-            serialized.FindProperty("bindFlareRise").floatValue = .2f;
-            serialized.FindProperty("bindFlareHold").floatValue = .4f;
-            serialized.FindProperty("bindFlareFall").floatValue = 1.1f;
+            serialized.FindProperty("flareLight").intValue = MarkFlare.Index;
+            serialized.FindProperty("markFlarePeak").floatValue = MarkFlare.Peak;
+            serialized.FindProperty("markFlareRise").floatValue = MarkFlare.Rise;
+            serialized.FindProperty("markFlareHold").floatValue = MarkFlare.Hold;
+            serialized.FindProperty("markFlareFall").floatValue = MarkFlare.Fall;
+            serialized.FindProperty("bindFlarePeak").floatValue = BindFlare.Peak;
+            serialized.FindProperty("bindFlareRise").floatValue = BindFlare.Rise;
+            serialized.FindProperty("bindFlareHold").floatValue = BindFlare.Hold;
+            serialized.FindProperty("bindFlareFall").floatValue = BindFlare.Fall;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }
