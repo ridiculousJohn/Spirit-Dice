@@ -44,7 +44,7 @@ MonoBehaviour:
   stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
   ambience: {fileID: 0}
   creakClips: []
-  credits: {fileID: 4900000, guid: a9ff53d5f1f641608da38a309e46eee6, type: 3}
+  credits: {fileID: 4900000, guid: 7e2b7b166ddefa7054aebbebd3d679a8, type: 3}
   ambienceVolume: 0.25
   effectsVolume: 0.65
   creakVolume: 0.16

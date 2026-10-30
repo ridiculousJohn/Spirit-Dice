@@ -48,7 +48,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: eab02a49246d4068961577b05e146889, type: 3}
   - {fileID: 8300000, guid: 1cc583a8ad1c4e60b79d7b69e9779117, type: 3}
   - {fileID: 8300000, guid: 47eba34444064a2dbe8900d8c3e356d8, type: 3}
-  credits: {fileID: 4900000, guid: a9ff53d5f1f641608da38a309e46eee6, type: 3}
+  credits: {fileID: 4900000, guid: ecfd430ee799131fd390e7390fbb630e, type: 3}
   ambienceVolume: 0.25
   effectsVolume: 0.65
   creakVolume: 0.16
