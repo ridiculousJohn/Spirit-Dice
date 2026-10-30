@@ -277,21 +277,8 @@ namespace Dice.Tests
 
         private void AssertVisibleDice(DiceValues values)
         {
-            var faceNormals = new[] { Vector3.forward, Vector3.up, Vector3.right,
-                Vector3.left, Vector3.down, Vector3.back };
             for (int index = 0; index < DiceValues.Count; ++index)
-            {
-                var slot = view.TrayScene.Geometry.DiceSlots[index];
-                var die = view.DiceTray.Dice[index];
-                Assert.That(die, Is.Not.Null, "Die " + index);
-                Assert.That(die.IsChildOf(slot), Is.True, "The authored die belongs to its tray slot.");
-                Vector3 resultNormal = die.TransformDirection(faceNormals[values[index] - 1]);
-                Assert.That(Vector3.Dot(resultNormal, slot.up), Is.GreaterThan(.999f), "Die " + index + " result face");
-                var camera = view.DiceTray.RenderCamera;
-                Vector3 towardCamera = camera.orthographic ? -camera.transform.forward
-                    : (camera.transform.position - die.position).normalized;
-                Assert.That(Vector3.Dot(resultNormal, towardCamera), Is.GreaterThan(0f), "Die " + index + " result visibility");
-            }
+                Assert.That(view.DiceTray.GetVisibleFace(index), Is.EqualTo(values[index]), "Die " + index + " result face");
         }
 
         private void AssertGameplayVisible(bool visible)

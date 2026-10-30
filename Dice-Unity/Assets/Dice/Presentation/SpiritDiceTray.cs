@@ -24,6 +24,8 @@ namespace Dice.Presentation
         private const float SupportVertexDistance = .3f;
         /** Degrees each slot's resting die turns beyond its quarter turn, so the row does not look stamped. */
         private const float SlotYawStep = 3f;
+        /** Axis, in the space of each die's parent, along which a resting die's result face points. */
+        private static readonly Vector3 ResultUp = Vector3.up;
         private static readonly Vector3[] FaceNormals =
         {
             Vector3.forward, Vector3.up, Vector3.right,
@@ -256,17 +258,21 @@ namespace Dice.Presentation
             }
         }
 
+        /**
+         * The face a die shows: the one turned up along the axis the tray lands results on. It is measured in the
+         * die's parent space, the space its rest rotation is set in, so a shallow camera that sees a side face better
+         * than the top does not change the answer.
+         */
         public int GetVisibleFace(int index)
         {
             if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
             Initialize();
-            Vector3 towardCamera = renderCamera.orthographic ? -renderCamera.transform.forward
-                : (renderCamera.transform.position - dice[index].position).normalized;
+            Quaternion rotation = dice[index].localRotation;
             float bestAlignment = float.NegativeInfinity;
             int visibleFace = 1;
             for (int face = 1; face <= 6; face++)
             {
-                float alignment = Vector3.Dot(dice[index].TransformDirection(FaceNormals[face - 1]), towardCamera);
+                float alignment = Vector3.Dot(rotation * FaceNormals[face - 1], ResultUp);
                 if (alignment <= bestAlignment) continue;
                 bestAlignment = alignment;
                 visibleFace = face;
@@ -347,8 +353,8 @@ namespace Dice.Presentation
         private static Quaternion RotationForFace(int face, int index)
         {
             // Results face upward, so a resting die always has a flat base on the felt.
-            Quaternion result = Quaternion.FromToRotation(FaceNormals[face - 1], Vector3.up);
-            return Quaternion.AngleAxis(index % 4 * 90f + (index - 2) * SlotYawStep, Vector3.up) * result;
+            Quaternion result = Quaternion.FromToRotation(FaceNormals[face - 1], ResultUp);
+            return Quaternion.AngleAxis(index % 4 * 90f + (index - 2) * SlotYawStep, ResultUp) * result;
         }
 
         public void ReleasePresentation()

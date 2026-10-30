@@ -30,9 +30,9 @@ namespace Dice.Tests
             if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
         }
 
-        /** Checks each requested face is the one turned toward the camera in every slot / fails if a face's rest rotation shows another face. */
+        /** Checks each requested face is the one turned up in every slot / fails if a face's rest rotation shows another face. */
         [Test]
-        public void SetValuesTurnsEachRequestedFaceTowardTheCamera()
+        public void SetValuesTurnsEachRequestedFaceUp()
         {
             for (int face = 1; face <= 6; face++)
             {
