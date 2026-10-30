@@ -324,11 +324,11 @@ def author_watchtower():
     def idle_tilt(t, spectral):
         direction = 1 if t < 7.8 else -1
         return direction * 5 * turn(t % 7.8 - 3.7 - (0 if spectral else .18), 0, .28, .85, 1.3)
-    def add_angle(seq, i, fn, entry=None):
-        track(seq, i, 6, lambda t: math.cos(math.radians(fn(t))) - 1, channel=1, entry=entry)
-        track(seq, i, 6, lambda t: math.sin(math.radians(fn(t))), channel=2, entry=entry)
+    def add_angle(seq, i, fn, add=False, entry=None):
+        track(seq, i, 6, lambda t: math.cos(math.radians(fn(t))) - 1, channel=1, add=add, entry=entry)
+        track(seq, i, 6, lambda t: math.sin(math.radians(fn(t))), channel=2, add=add, entry=entry)
         if i < 3:
-            track(seq, i, 6, fn, channel=4, entry=entry)
+            track(seq, i, 6, fn, channel=4, add=add, entry=entry)
     for i in range(6):
         spectral = i < 3
         track(breath, i, 6, lambda t: math.sin(t * 1.2) * .7)
@@ -383,7 +383,7 @@ def author_watchtower():
         track(arrival, i, 3, lambda t, index=index: size(t, index)[1])
         track(arrival, i, 5, lambda t, index=index, s=spectral: weights(t)[index] *
               (.025 + min(1, abs(arrival_tilt(t, True) - arrival_tilt(t, False)) / 7) * .3 + abs(edge_motion(t, True) - edge_motion(t, False)) * .12 if s else 1))
-        add_angle(arrival, i, lambda t, s=spectral: arrival_tilt(t, s))
+        add_angle(arrival, i, lambda t, s=spectral: arrival_tilt(t, s), entry=lambda t: 1 - ease(t / 4.5, 0, .1))
         track(arrival, i, 6, lambda t, s=spectral: edge_motion(t, s), channel=3)
         track(arrival, i, 6, lambda t, index=index: settle(t) if index != 1 else 0, channel=7)
     reaction = sequence('Reaction', 3, 1.8, idle=True, gesture=True)
@@ -391,7 +391,8 @@ def author_watchtower():
         return -10 * turn(t - (0 if spectral else .18), 0, .3, 1.1, 1.55)
     for i in range(6):
         spectral = i < 3
-        add_angle(reaction, i, lambda t, s=spectral: reaction_tilt(t, s),
+        # The nod adds to the included idle glance, which continues under it and after it ends.
+        add_angle(reaction, i, lambda t, s=spectral: reaction_tilt(t, s), add=True,
                   entry=lambda t, s=spectral: 1 - ease(t - (0 if s else .18), 0, .3))
         track(reaction, i, 6, lambda t, s=spectral: .22 * turn(t - (0 if s else .18), 0, .3, .7, 1.4), channel=3, add=True)
     # The visible spectral layer carries the anticipation alpha; other poses remain transparent.
