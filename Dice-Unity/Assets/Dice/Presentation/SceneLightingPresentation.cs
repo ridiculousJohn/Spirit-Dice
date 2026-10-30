@@ -78,7 +78,7 @@ namespace Dice.Presentation
             receivers = imageReceivers ?? Array.Empty<SceneLightingImageReceiver>();
             hosts = hostReceivers ?? Array.Empty<SceneLightingHostReceiver>();
             litImages = litLayers ?? Array.Empty<SceneLitImage>();
-            if (isActiveAndEnabled) ApplyAtTime(Time.unscaledTimeAsDouble);
+            if (isActiveAndEnabled) Apply();
         }
 
         public float GetLightIntensity(int index)
@@ -171,16 +171,31 @@ namespace Dice.Presentation
                 receiver.Image.color = color;
             }
             foreach (SceneLightingHostReceiver receiver in hosts)
+                if (receiver != null && receiver.Portrait != null) receiver.Portrait.SetSceneLighting(state, receiver.Position);
+            if (litImages != null)
+                foreach (SceneLitImage image in litImages)
+                    if (image != null) image.Bind(state);
+        }
+
+        /** Applies a newly set configuration: builds its host portraits, then samples; LateUpdate only samples. */
+        private void Apply()
+        {
+            BuildHosts();
+            ApplyAtTime(Time.unscaledTimeAsDouble);
+        }
+
+        /** Building a host portrait is one-time setup, so it runs when the host list is set, not per frame. */
+        private void BuildHosts()
+        {
+            // Hosts are lit only while this presentation has a lighting asset and background to sample.
+            if (lightingAsset == null || background == null) return;
+            foreach (SceneLightingHostReceiver receiver in hosts)
             {
                 if (receiver == null) continue;
                 if (receiver.Portrait == null || receiver.Presentation == null || !(receiver.Portrait.transform is RectTransform))
                     throw new InvalidOperationException("Scene lighting hosts require a portrait, presentation and RectTransform.");
                 receiver.Portrait.Build(receiver.Presentation);
-                receiver.Portrait.SetSceneLighting(state, receiver.Position);
             }
-            if (litImages != null)
-                foreach (SceneLitImage image in litImages)
-                    if (image != null) image.Bind(state);
         }
 
         private Color OriginalColor(RawImage image)
@@ -222,7 +237,7 @@ namespace Dice.Presentation
                 throw new ArgumentOutOfRangeException(nameof(index));
         }
 
-        private void OnEnable() => ApplyAtTime(Time.unscaledTimeAsDouble);
+        private void OnEnable() => Apply();
         private void LateUpdate() => ApplyAtTime(Time.unscaledTimeAsDouble);
         private void OnDisable()
         {
@@ -243,7 +258,7 @@ namespace Dice.Presentation
 #if UNITY_EDITOR
         private void ApplyValidated()
         {
-            if (this != null && isActiveAndEnabled) ApplyAtTime(Time.unscaledTimeAsDouble);
+            if (this != null && isActiveAndEnabled) Apply();
         }
 #endif
 
