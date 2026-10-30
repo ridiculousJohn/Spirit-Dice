@@ -177,7 +177,7 @@
   {
     "family": "modifier.play_hand.no_dice_rerolled",
     "name": "Unturned Leaf",
-    "file": "untouched-snow.svg"
+    "file": "unturned-leaf.svg"
   },
   {
     "family": "modifier.play_hand.odd_sum_greater_than_even_sum",
