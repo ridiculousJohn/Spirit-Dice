@@ -16,7 +16,7 @@ namespace Dice.Presentation
         [SerializeField] private EncounterTablePresentationAsset tablePresentation;
 
         public bool IsCharmsOpen => OwnedCharmsPanel != null && OwnedCharmsPanel.Root.gameObject.activeSelf;
-        public bool IsCharmPopupOpen => CharmPopup != null && CharmPopup.IsOpen;
+        public bool IsCharmPopupOpen => CharmPopup.IsOpen;
         public bool IsHandRanksOpen => handRanksPanel != null && handRanksPanel.Root.gameObject.activeSelf;
         [field: SerializeField] public SpiritGameplayHud GameplayHud { get; private set; }
         [field: SerializeField] public SpiritRewardsPanel RewardsPanel { get; private set; }
@@ -115,7 +115,7 @@ namespace Dice.Presentation
             RewardsPanel.Bind(controls);
             OwnedCharmsPanel.Bind(controls);
             presentedSnapshot = null;
-            hostPortrait?.ResetPose();
+            hostPortrait.ResetPose();
             Subscribe();
             if (isActiveAndEnabled) Refresh();
         }
@@ -138,8 +138,8 @@ namespace Dice.Presentation
             }
             else
             {
-                hostPortrait?.SetVisible(true);
-                hostPortrait?.SetState(SpiritPresentationState.Idle, 1);
+                hostPortrait.SetVisible(true);
+                hostPortrait.SetState(SpiritPresentationState.Idle, 1);
                 SetGameplayVisible(true);
             }
             JourneyView.Refresh();
@@ -228,14 +228,15 @@ namespace Dice.Presentation
             }
         }
 
+        // Teardown destroys the images, pieces, tray, host and the presenters' die visuals in no fixed order, so the screen
+        // frees only the lighting's material and drops its subscriptions.
         private void OnDestroy()
         {
-            DisposePresenters();
-            tableLighting?.Release();
+            tableLighting?.ReleaseOwnedResources();
             tableLighting = null;
-            if (hostPortrait != null) hostPortrait.SpiritGesture -= PlaySpiritCue;
-            if (ModifierHistory != null) ModifierHistory.TokenSelected -= InspectHistoryToken;
-            if (DiceTray != null) DiceTray.RollEnded -= LayoutTable;
+            hostPortrait.SpiritGesture -= PlaySpiritCue;
+            ModifierHistory.TokenSelected -= InspectHistoryToken;
+            DiceTray.RollEnded -= LayoutTable;
             Unsubscribe();
         }
 
@@ -255,19 +256,15 @@ namespace Dice.Presentation
             if (canceled) controls.CompletePresentation();
         }
 
-        private void OnDisable()
-        {
-            Unsubscribe();
-            tableLighting?.Release();
-        }
+        // An inactive screen shows nothing and its table's lighting stays bound, so disabling only stops following the controls.
+        private void OnDisable() => Unsubscribe();
 
         private void OnEnable()
         {
             applicationFocused = Application.isFocused;
             Subscribe();
             if (canvas == null) return;
-            // Disabling released the table's lighting, and the screen may have changed size meanwhile.
-            tableLighting?.Bind();
+            // The screen may have changed size while it was disabled.
             if (scorePlayback != null) FitScreen();
             if (journeyControls != null) RefreshJourney();
             else Refresh();
@@ -306,7 +303,7 @@ namespace Dice.Presentation
             if (scorePlayback == null) return;
             // Ambient activity suspends with focus and pause like the encounter's ambient audio.
             if (ambientActivity != null && applicationFocused && !applicationPaused) ambientActivity.Tick(Time.unscaledDeltaTime);
-            tableLighting?.Update();
+            tableLighting.Update();
             // Dice touch targets follow the dice a roll or flip carries; resting dice are laid out when it ends.
             if (DiceTray.IsRolling) PositionTrays();
         }
@@ -438,7 +435,7 @@ namespace Dice.Presentation
 
         public void CloseCharmPopup()
         {
-            if (CharmPopup != null) CharmPopup.Close();
+            CharmPopup.Close();
         }
 
         private void BuildMenu()
@@ -600,7 +597,7 @@ namespace Dice.Presentation
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
-                hostPortrait?.ResetPose();
+                hostPortrait.ResetPose();
                 lastScore = null;
                 RewardsPanel.Invalidate();
                 OwnedCharmsPanel.Invalidate();
@@ -659,29 +656,29 @@ namespace Dice.Presentation
         {
             CloseCharmPopup();
             StopAllCoroutines();
-            endingView?.Reset();
+            endingView.Reset();
             SetOpeningOpacity(1);
-            scorePlayback?.CancelRoll();
+            scorePlayback.CancelRoll();
             presenting = false;
             presentationSnapshot = null;
             if (resetHost)
             {
-                hostPortrait?.ResetPose();
+                hostPortrait.ResetPose();
                 foreach (var figure in outcomeAnimations) figure.ResetToIdle();
             }
             // Leaving play for the journey lets the ambient activity settle; every other reset ends it at rest.
             if (resetHost) ambientActivity?.Stop();
             else ambientActivity?.Settle();
-            tableLighting?.ResetPresentation();
+            tableLighting.ResetPresentation();
             ResetTransientVisuals();
         }
 
         private void ResetTransientVisuals()
         {
-            actionModifierCue?.Clear();
-            DiceTray?.SetScoringHighlight(0);
-            ModifierHistory?.ClearResolving();
-            if (GameplayHud != null && scorePlayback != null) GameplayHud.ResetTransientVisuals();
+            actionModifierCue.Clear();
+            DiceTray.SetScoringHighlight(0);
+            ModifierHistory.ClearResolving();
+            GameplayHud.ResetTransientVisuals();
         }
 
         private void SetDiceSelection(int mask)
@@ -826,7 +823,7 @@ namespace Dice.Presentation
         {
             if (scorePlayback == null) Build();
             // An edit-mode copy receives no OnDestroy, so the table lighting that building bound is released here.
-            tableLighting?.Release();
+            tableLighting.Release();
             encounterAudio.Initialize();
             if (encounter == null) return;
             try { CreatePresenters(encounter); }
@@ -849,11 +846,11 @@ namespace Dice.Presentation
 
             internal TableRuleContext(SpiritEncounterView view) : base(view.DiceTray.Dice) => this.view = view;
 
-            public override IRuleSceneLights Lights => view.tableLighting?.RuleLights;
+            public override IRuleSceneLights Lights => view.tableLighting.RuleLights;
 
             public override void ReactHost()
             {
-                if (view.hostPortrait != null) view.hostPortrait.React();
+                view.hostPortrait.React();
             }
 
             public override IEnumerator FlipDie(int bay, int face) => view.DiceTray.Flip(bay, face);

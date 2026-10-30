@@ -157,6 +157,8 @@ namespace Dice.Editor
                 View.TrayScene.HistoryRenderer?.ReleasePresentation();
                 View.TrayScene.ReleasePresentation();
             }
+            // An edit-mode portrait receives no OnDestroy; a preview that failed before checking its host may have none.
+            if (View != null && View.HostPortrait != null) View.HostPortrait.ReleaseOwnedResources();
             if (Scene.IsValid()) EditorSceneManager.ClosePreviewScene(Scene);
             if (Output != null) { Output.Release(); UnityEngine.Object.DestroyImmediate(Output); }
             Output = null;

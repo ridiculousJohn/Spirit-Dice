@@ -235,6 +235,8 @@ namespace Dice.Editor
                     view.TrayScene.HistoryRenderer?.ReleasePresentation();
                     view.TrayScene.ReleasePresentation();
                 }
+                // Building the screen built its host, which receives no OnDestroy in edit mode.
+                if (view != null && view.HostPortrait != null) view.HostPortrait.ReleaseOwnedResources();
                 if (scene.IsValid()) EditorSceneManager.ClosePreviewScene(scene);
             }
             foreach (string message in logged) check.Add(path, label + "logged while opening and validating: " + message);
@@ -297,13 +299,14 @@ namespace Dice.Editor
             {
                 string path = AssetPath(host);
                 Scene scene = default;
+                SpiritHostPortrait portrait = null;
                 try
                 {
                     if (host.PortraitPrefab == null) throw new InvalidOperationException("The host has no portrait prefab.");
                     scene = EditorSceneManager.NewPreviewScene();
                     var instance = (GameObject)PrefabUtility.InstantiatePrefab(host.PortraitPrefab.transform.root.gameObject, scene);
                     instance.SetActive(true);
-                    var portrait = instance.GetComponentsInChildren<SpiritHostPortrait>(true).Single();
+                    portrait = instance.GetComponentsInChildren<SpiritHostPortrait>(true).Single();
                     portrait.Build(host);
                     portrait.SetVisible(true);
                     foreach (var jump in HostTransitionJumps.Measure(portrait, host))
@@ -318,6 +321,8 @@ namespace Dice.Editor
                 catch (Exception exception) { check.Add(path, Describe(exception)); }
                 finally
                 {
+                    // An edit-mode portrait receives no OnDestroy; a check that failed before finding one has none.
+                    if (portrait != null) portrait.ReleaseOwnedResources();
                     if (scene.IsValid()) EditorSceneManager.ClosePreviewScene(scene);
                 }
             }

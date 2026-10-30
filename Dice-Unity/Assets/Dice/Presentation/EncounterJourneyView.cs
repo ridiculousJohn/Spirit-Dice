@@ -378,7 +378,6 @@ namespace Dice.Presentation
             StopAllCoroutines();
             IsAnimating = false;
             ClearPartingLighting();
-            if (illustrationGroup == null) return;
             illustrationGroup.alpha = 1;
             leftPanel.rectTransform.anchoredPosition = rightPanel.rectTransform.anchoredPosition = Vector2.zero;
             leftPanel.gameObject.SetActive(false);
@@ -416,8 +415,10 @@ namespace Dice.Presentation
 
         private void ClearPartingLighting()
         {
-            if (leftPanel != null) { leftPanel.material = null; leftPanel.texture = null; }
-            if (rightPanel != null) { rightPanel.material = null; rightPanel.texture = null; }
+            leftPanel.material = null;
+            leftPanel.texture = null;
+            rightPanel.material = null;
+            rightPanel.texture = null;
             previousSceneLightingMaterial?.Dispose();
             previousSceneLightingMaterial = null;
             previousSceneLighting = null;
@@ -426,12 +427,9 @@ namespace Dice.Presentation
 
         private void ClearSceneLighting()
         {
-            if (background != null)
-            {
-                background.texture = null;
-                background.color = Color.clear;
-                background.material = null;
-            }
+            background.texture = null;
+            background.color = Color.clear;
+            background.material = null;
             sceneLightingMaterial?.Dispose();
             sceneLightingMaterial = null;
             sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);
@@ -440,10 +438,14 @@ namespace Dice.Presentation
             shownLighting = null;
         }
 
+        // Teardown destroys the background and panels in no fixed order, so the screen frees only the compositors it created,
+        // which are assets the scene does not unload.
         private void OnDestroy()
         {
-            ClearPartingLighting();
-            ClearSceneLighting();
+            sceneLightingMaterial?.Dispose();
+            sceneLightingMaterial = null;
+            previousSceneLightingMaterial?.Dispose();
+            previousSceneLightingMaterial = null;
         }
     }
 }

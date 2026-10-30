@@ -419,22 +419,26 @@ namespace Dice.Presentation
             }
         }
 
-        private void OnDestroy()
+        /**
+         * Frees the smoke and lit materials the portrait created, which are assets no scene unloads, and leaves the layer
+         * images as they are; the portrait is discarded afterwards. Teardown calls it, and so do the editor tools that build
+         * a portrait in an edit-mode scene, where no OnDestroy runs. A portrait never built created none.
+         */
+        public void ReleaseOwnedResources()
         {
-            if (layers != null)
-                foreach (LayerRuntime layer in layers)
-                {
-                    if (layer != null && layer.Smoke != null)
-                    {
-                        if (layer.Image != null) layer.Image.material = null;
-                        layer.Smoke.Dispose();
-                    }
-                    if (layer != null && layer.Lit != null)
-                    {
-                        if (layer.Image != null && layer.Image.material == layer.Lit.Material) layer.Image.material = layer.AuthoredMaterial;
-                        layer.Lit.Dispose();
-                    }
-                }
+            if (layers == null) return;
+            foreach (LayerRuntime layer in layers)
+            {
+                // A build that failed part way left later layers unbuilt.
+                if (layer == null) continue;
+                layer.Smoke?.Dispose();
+                layer.Smoke = null;
+                layer.Lit?.Dispose();
+                layer.Lit = null;
+            }
         }
+
+        // Teardown destroys the layer images in no fixed order, so the portrait leaves them as they are.
+        private void OnDestroy() => ReleaseOwnedResources();
     }
 }

@@ -382,9 +382,9 @@ namespace Dice.Presentation
 
         private void SetContentActive(bool active)
         {
-            if (renderRoot != null && renderRoot != gameObject) renderRoot.SetActive(active);
-            foreach (Transform slot in slotRoots)
-                if (slot != null) slot.gameObject.SetActive(active);
+            // A render root on the tray's own object follows the tray's own activation.
+            if (renderRoot != gameObject) renderRoot.SetActive(active);
+            foreach (Transform slot in slotRoots) slot.gameObject.SetActive(active);
         }
 
         // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.

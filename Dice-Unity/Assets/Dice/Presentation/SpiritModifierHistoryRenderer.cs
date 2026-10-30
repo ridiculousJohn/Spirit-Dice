@@ -63,7 +63,6 @@ namespace Dice.Presentation
         public void SetSceneLighting(SceneLightingState state)
         {
             sceneLighting = state;
-            if (renderRoot == null) return;
             foreach (UnityEngine.Object resource in ownedResources)
                 if (resource is Material material)
                     SceneLightingReceiverMaterial.Apply(material, state, sharedScene.RenderRoot);
@@ -307,15 +306,8 @@ namespace Dice.Presentation
         }
 
         // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
-        internal void OnEnable()
-        {
-            if (renderRoot != null) renderRoot.SetActive(true);
-        }
-
-        internal void OnDisable()
-        {
-            if (renderRoot != null) renderRoot.SetActive(false);
-        }
+        internal void OnEnable() => renderRoot.SetActive(true);
+        internal void OnDisable() => renderRoot.SetActive(false);
 
         /** Unbinds the renderer so it can be configured again: it destroys its tokens and the materials it created. */
         public void ReleasePresentation()

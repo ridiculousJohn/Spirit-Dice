@@ -31,8 +31,8 @@ namespace Dice.Presentation
         [field: SerializeField] public Button ConfirmReplaceSaveButton { get; private set; }
         [field: SerializeField] public Button CancelReplaceSaveButton { get; private set; }
         public System.Collections.Generic.IReadOnlyList<Button> SlotButtons => slotButtons;
-        public bool IsOpen => Root != null && Root.gameObject.activeSelf;
-        public bool IsConfirmingReplacement => Confirmation != null && Confirmation.gameObject.activeSelf;
+        public bool IsOpen => Root.gameObject.activeSelf;
+        public bool IsConfirmingReplacement => Confirmation.gameObject.activeSelf;
 
         public void Build()
         {
@@ -124,14 +124,14 @@ namespace Dice.Presentation
         public void Close()
         {
             CloseConfirmation();
-            RecoveryPicker?.Close();
-            if (Root != null) Root.gameObject.SetActive(false);
+            RecoveryPicker.Close();
+            Root.gameObject.SetActive(false);
         }
 
         public void CloseConfirmation()
         {
             replacementSlot = 0;
-            if (Confirmation != null) Confirmation.gameObject.SetActive(false);
+            Confirmation.gameObject.SetActive(false);
         }
 
         private SpiritSaveSlotInfo GetSlot(int slot)

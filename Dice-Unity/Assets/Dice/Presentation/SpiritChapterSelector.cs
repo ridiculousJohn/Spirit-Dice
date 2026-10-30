@@ -16,7 +16,7 @@ namespace Dice.Presentation
         [field: SerializeField] public ScrollRect Scroll { get; private set; }
         [field: SerializeField] public RectTransform Content { get; private set; }
         [field: SerializeField] public Button CloseButton { get; private set; }
-        public bool IsOpen => Root != null && Root.gameObject.activeSelf;
+        public bool IsOpen => Root.gameObject.activeSelf;
 
         public void Build()
         {
@@ -69,7 +69,7 @@ namespace Dice.Presentation
 
         public void Close()
         {
-            if (Root != null) Root.gameObject.SetActive(false);
+            Root.gameObject.SetActive(false);
         }
 
         private void OnDisable()

@@ -70,9 +70,9 @@ namespace Dice.Presentation
         private void OnDisable()
         {
             start = float.NegativeInfinity;
+            // Parts are built on the first play-mode enable; a burst never played has none.
             if (glow != null) glow.gameObject.SetActive(false);
-            foreach (var spark in sparks)
-                if (spark != null) spark.gameObject.SetActive(false);
+            foreach (var spark in sparks) spark.gameObject.SetActive(false);
         }
 
         private void Update()

@@ -252,11 +252,11 @@ namespace Dice.Presentation
 
         private void StopPlayback()
         {
-            if (ambienceSource != null) ambienceSource.Stop();
-            if (creakSource != null) creakSource.Stop();
-            if (rollSource != null) rollSource.Stop();
-            foreach (var source in cueSources) if (source != null) source.Stop();
-            if (propSources != null) foreach (var source in propSources) if (source != null) source.Stop();
+            ambienceSource.Stop();
+            creakSource.Stop();
+            rollSource.Stop();
+            foreach (var source in cueSources) source.Stop();
+            foreach (var source in propSources) source.Stop();
         }
 
         private void OnApplicationFocus(bool focus)
@@ -271,9 +271,7 @@ namespace Dice.Presentation
             RefreshPlayback();
         }
 
+        // Destroying an enabled component disables it first, and a disabled one plays nothing, so teardown needs no stop of its own.
         private void OnDisable() => StopPlayback();
-
-        private void OnDestroy() => StopPlayback();
-
     }
 }

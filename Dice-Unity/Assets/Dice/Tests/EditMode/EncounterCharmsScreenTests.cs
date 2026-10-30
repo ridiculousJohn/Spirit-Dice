@@ -5,6 +5,7 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.UI;
 using Resolution = Dice.Engine.Resolution;
 
 namespace Dice.Tests
@@ -62,6 +63,14 @@ namespace Dice.Tests
         public void AcceptOpensTheScreenBeforePlayOnlyForAdditionsOfferedFromTheFirstClear()
         {
             var view = ui.Add<EncounterJourneyView>(ui.Root, "Journey");
+            // Binding cancels any beat animation and clears the shown picture, which reads the illustration and narrative.
+            var artwork = ui.Rect(view.transform, "Artwork");
+            SyntheticUi.Set(view, "background", ui.Add<RawImage>(artwork, "Background"));
+            SyntheticUi.Set(view, "foreground", ui.Add<RawImage>(artwork, "Foreground"));
+            SyntheticUi.Set(view, "leftPanel", ui.Add<RawImage>(artwork, "Left Panel"));
+            SyntheticUi.Set(view, "rightPanel", ui.Add<RawImage>(artwork, "Right Panel"));
+            SyntheticUi.Set(view, "illustrationGroup", artwork.gameObject.AddComponent<CanvasGroup>());
+            SyntheticUi.Set(view, "narrativeGroup", ui.Rect(view.transform, "Narrative").gameObject.AddComponent<CanvasGroup>());
             var accept = ui.NewButton(view.transform, "Accept");
             SyntheticUi.Set(view, "advanceButton", ui.NewButton(view.transform, "Advance"));
             SyntheticUi.Set(view, "acceptButton", accept);

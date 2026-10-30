@@ -56,8 +56,8 @@ namespace Dice.Tests
 
         /**
          * Checks an update shows the table's sampled lights through one material shared by the room and table images and
-         * follows live asset edits, a release takes the lighting off and frees the material, and a later bind shows it
-         * again / fails if the images do not share the sample, an edit is missed or a release leaves lighting behind.
+         * follows live asset edits, and a release takes the lighting off and frees the material / fails if the images do not
+         * share the sample, an edit is missed or a release leaves lighting behind.
          */
         [Test]
         public void UpdateShowsTheLightingAndReleaseTakesItOff()
@@ -77,8 +77,6 @@ namespace Dice.Tests
             Assert.That(owner.State.Asset == null && owner.State.Count == 0, Is.True, "A release kept the sample.");
             Assert.That(room.material == room.defaultMaterial && table.material == table.defaultMaterial, Is.True);
             Assert.That(material == null, Is.True, "A release kept its compositor.");
-            owner.Bind();
-            Assert.That(owner.State.Asset, Is.SameAs(lighting), "A bind after a release did not show the lighting again.");
         }
 
         /** Checks a table without scene lighting shows none and offers no lights to rules / fails if an unlit table binds a compositor or flare target. */
@@ -88,7 +86,6 @@ namespace Dice.Tests
             var lit = Configure(Table(lighting));
             Assert.That(lit.RuleLights, Is.SameAs(lit));
             var unlit = Configure(Table(null));
-            unlit.Bind();
             Assert.That(unlit.State.Asset, Is.Null);
             Assert.That(room.material == room.defaultMaterial && table.material == table.defaultMaterial, Is.True);
             Assert.That(unlit.LightCount, Is.Zero);

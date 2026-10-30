@@ -106,12 +106,9 @@ namespace Dice.Presentation
             }
             tokens.Clear();
             contributions.Clear();
-            if (scroll != null)
-            {
-                scroll.StopMovement();
-                content.anchoredPosition = Vector2.zero;
-                ResizeContent();
-            }
+            scroll.StopMovement();
+            content.anchoredPosition = Vector2.zero;
+            ResizeContent();
         }
 
         public void Add(ModifierContribution contribution, ModifierPresentationCatalog charms, ModifierDefinition definition,
@@ -252,7 +249,6 @@ namespace Dice.Presentation
 
         private void ResizeContent()
         {
-            if (content == null || scroll == null) return;
             // Activations exist only while the renderer is configured, which gives the bay's capacity.
             int overflow = contributions.Count > 0 ? Mathf.Max(0, contributions.Count - Renderer.Capacity) : 0;
             content.sizeDelta = new Vector2(scroll.viewport.rect.width + overflow * TokenSpacing, 0);

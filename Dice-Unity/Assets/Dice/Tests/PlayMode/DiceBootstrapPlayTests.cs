@@ -57,7 +57,14 @@ namespace Dice.Tests
             {
                 var router = host.GetComponent<SpiritApplicationPresentation>();
                 if (router != null && router.PresentationRoot != null)
+                {
                     presentationScene = router.PresentationRoot.scene;
+                    // The application is otherwise destroyed only with its scene, in the pass that unloads its presentation.
+                    // Destroying it alone leaves the presentation running until its unload completes, so the teardown first
+                    // leaves it as the router leaves a scene: the encounter screen closed, then the root deactivated.
+                    if (router.EncounterView != null) router.EncounterView.Close();
+                    router.PresentationRoot.SetActive(false);
+                }
             }
             if (host != null) UnityEngine.Object.Destroy(host);
             yield return null;

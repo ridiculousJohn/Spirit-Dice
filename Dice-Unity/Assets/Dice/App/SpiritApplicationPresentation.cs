@@ -120,13 +120,11 @@ namespace Dice.App
 
         private void OnDestroy()
         {
-            // The controller is destroyed with this object, so teardown leaves the screen as it is and only stops it running.
-            if (PresentationRoot != null) PresentationRoot.SetActive(false);
-            if (controller != null)
-            {
-                controller.JourneyChanged -= RequestScene;
-                controller.StateChanged -= RequestScene;
-            }
+            // This object is destroyed only when its scene unloads at quit or a single-scene load, which unloads the
+            // presentation scene in the same pass, so teardown leaves the screen to that unload and releases only the
+            // routed scene handle and its own subscriptions.
+            controller.JourneyChanged -= RequestScene;
+            controller.StateChanged -= RequestScene;
             StopAllCoroutines();
             var ownedScene = scene;
             scene = default;

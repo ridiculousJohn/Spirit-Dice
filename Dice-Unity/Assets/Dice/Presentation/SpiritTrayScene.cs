@@ -115,7 +115,6 @@ namespace Dice.Presentation
         public void SetSceneLighting(SceneLightingState state)
         {
             sceneLighting = state;
-            if (renderRoot == null) return;
             foreach (Material material in materials)
                 SceneLightingReceiverMaterial.Apply(material, state, renderRoot.transform);
         }
@@ -165,8 +164,8 @@ namespace Dice.Presentation
         }
 
         // Internal so EditMode tests, where Unity sends no lifecycle messages, drive them directly.
-        internal void OnEnable() { if (renderRoot != null) renderRoot.SetActive(true); }
-        internal void OnDisable() { if (renderRoot != null) renderRoot.SetActive(false); }
+        internal void OnEnable() => renderRoot.SetActive(true);
+        internal void OnDisable() => renderRoot.SetActive(false);
         // Teardown destroys the camera, stage and renderers in no fixed order, so it leaves their authored state alone.
         private void OnDestroy() => ReleaseOwnedResources();
     }

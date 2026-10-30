@@ -115,8 +115,8 @@ namespace Dice.Presentation
 
         public void Clear()
         {
-            if (active != null && active.Label != null) active.Label.alpha = active.LabelAlpha;
-            if (secondary != null && secondary.Label != null) secondary.Label.alpha = secondary.LabelAlpha;
+            if (active != null) active.Label.alpha = active.LabelAlpha;
+            if (secondary != null) secondary.Label.alpha = secondary.LabelAlpha;
             foreach (var cue in new[] { reroll, play })
             {
                 if (cue == null) continue;

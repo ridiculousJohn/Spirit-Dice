@@ -10,7 +10,7 @@ namespace Dice.Presentation
      * images and the tray, modifier history and host receivers; lights bound to table pieces follow their props. Every
      * light's multiplier of its authored intensity combines the table's resting level, the ambient activity's multiplier,
      * any rule flare and any play-mode testing override. The encounter view creates one when it configures a table, which
-     * binds it, updates it every frame, releases it when the view is disabled and binds it again when the view is enabled.
+     * binds it, and updates it every frame; destroying the view frees only the lighting's material.
      */
     public sealed class EncounterTableLighting : IAmbientLightingTarget, IRuleSceneLights
     {
@@ -100,9 +100,9 @@ namespace Dice.Presentation
 
         /**
          * Puts the table's lighting on the images, pieces and receivers and shows its current sample, or leaves the images
-         * and receivers unlit for a table without scene lighting. Constructing binds; Bind is the counterpart of Release.
+         * and receivers unlit for a table without scene lighting. Constructing binds.
          */
-        public void Bind()
+        private void Bind()
         {
             var asset = table.SceneLighting;
             if (asset == null)
@@ -148,17 +148,25 @@ namespace Dice.Presentation
          */
         public void Release()
         {
-            foreach (var piece in pieces)
-                if (piece != null) piece.RestoreEmission();
-            if (roomImage != null) roomImage.material = null;
-            if (tableImage != null) tableImage.material = null;
-            sceneLightingMaterial?.Dispose();
-            sceneLightingMaterial = null;
+            foreach (var piece in pieces) piece.RestoreEmission();
+            roomImage.material = null;
+            tableImage.material = null;
+            ReleaseOwnedResources();
             state.Sample(null, Time.unscaledTimeAsDouble);
             trayScene?.SetSceneLighting(null);
             diceTray?.SetSceneLighting(null);
             historyRenderer?.SetSceneLighting(null);
             host?.SetSceneLighting(null, Vector3.zero);
+        }
+
+        /**
+         * Frees the material the lighting created, an asset the scene does not unload, and leaves the images, pieces and
+         * receivers as they are; teardown destroys them in no fixed order. A table without scene lighting has none.
+         */
+        public void ReleaseOwnedResources()
+        {
+            sceneLightingMaterial?.Dispose();
+            sceneLightingMaterial = null;
         }
 
         /** A presentation reset ends every rule flare and returns every light to the ambient activity. */

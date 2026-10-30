@@ -58,8 +58,8 @@ namespace Dice.Presentation
 
         public void Hide()
         {
-            SlotPicker?.Close();
-            if (Root != null) Root.gameObject.SetActive(false);
+            SlotPicker.Close();
+            Root.gameObject.SetActive(false);
         }
 
         private void ContinueGame() => controls?.ContinueGame();
@@ -69,7 +69,7 @@ namespace Dice.Presentation
 
         private void OnDisable()
         {
-            SlotPicker?.Close();
+            SlotPicker.Close();
         }
     }
 }

@@ -126,7 +126,7 @@ namespace Dice.Presentation
         {
             for (int i = 0; i < dice.Length; ++i)
             {
-                if (dice[i] != null) OwnedObject.Release(dice[i].gameObject);
+                OwnedObject.Release(dice[i].gameObject);
                 dice[i] = null;
             }
         }

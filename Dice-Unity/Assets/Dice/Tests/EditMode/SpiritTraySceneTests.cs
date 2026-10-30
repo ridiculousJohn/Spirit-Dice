@@ -600,11 +600,14 @@ namespace Dice.Tests
 
             var dice = new Transform[DiceValues.Count];
             var shadows = new MeshRenderer[DiceValues.Count];
+            var slotContents = new Transform[DiceValues.Count];
             for (int i = 0; i < DiceValues.Count; ++i)
             {
                 Transform slot = Child("Dice Slot " + i, Geometry.transform);
                 slot.localPosition = new Vector3((i - 2) * 1.45f, 0, 0);
                 Geometry.DiceSlots[i] = slot;
+                // The content the tray shows and hides with itself, as each rig authors one per slot.
+                slotContents[i] = Child("Dice Slot Content " + i, slot);
                 Transform label = Child("Dice Label " + i, Geometry.transform);
                 label.localPosition = new Vector3((i - 2) * 1.45f, .35f, -1.13f);
                 Geometry.DiceLabelAnchors[i] = label;
@@ -627,6 +630,7 @@ namespace Dice.Tests
             SyntheticUi.Set(Dice, "selectionFrames", Frames);
             SyntheticUi.Set(Dice, "contactShadows", shadows);
             SyntheticUi.Set(Dice, "renderRoot", dicePresentation);
+            SyntheticUi.Set(Dice, "slotRoots", slotContents);
 
             var template = Root("Modifier Token Template");
             Token = template.AddComponent<SpiritModifierToken>();

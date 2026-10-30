@@ -160,7 +160,7 @@ namespace Dice.Presentation
         public void Reset()
         {
             ClearContext();
-            if (Root != null) Root.gameObject.SetActive(false);
+            Root.gameObject.SetActive(false);
         }
 
         private void ClearContext()
