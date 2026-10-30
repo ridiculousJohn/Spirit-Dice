@@ -463,27 +463,6 @@ namespace Dice.Tests
             Assert.That(tray.Renderer.GetDieViewportRect(last).width, Is.GreaterThan(0));
         }
 
-        /** Checks clearing a highlight after its token or the whole stage was destroyed neither throws nor rebuilds anything / fails if shutdown order breaks clearing or recreates the destroyed presentation. */
-        [TestCase(false)]
-        [TestCase(true)]
-        public void ClearingResolvingAfterStageDestructionDoesNotRebuild(bool destroyWholeStage)
-        {
-            var tray = Rig.CreateHistoryTray();
-            var definition = TestTrayRig.Definition("test.tray.shutdown");
-            ModifierContribution contribution = TestTrayRig.Contribution(definition);
-            tray.Add(contribution, Rig.Charms(definition), definition, false);
-            Assert.That(tray.SetResolving(contribution), Is.True);
-            var renderer = tray.Renderer;
-            Transform stage = renderer.RenderRoot;
-            if (destroyWholeStage) UnityEngine.Object.DestroyImmediate(stage.gameObject);
-            else UnityEngine.Object.DestroyImmediate(renderer.GetDieTransform(0).gameObject);
-            Assert.DoesNotThrow(() => tray.ClearResolving());
-            Assert.That(tray.ResolvingIndex, Is.EqualTo(-1));
-            if (destroyWholeStage) Assert.That(renderer == null, Is.True);
-            else Assert.That(renderer.RenderRoot, Is.SameAs(stage));
-            if (!destroyWholeStage) Assert.That(renderer.GetDieTransform(0) == null, Is.True);
-        }
-
         private GameObject Root(string name, params Type[] components)
         {
             var root = new GameObject(name, components) { hideFlags = HideFlags.HideAndDontSave };

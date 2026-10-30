@@ -57,6 +57,7 @@ namespace Dice.App
             while (requested != null && (current != requested.AssetGUID || PresentationRoot == null))
             {
                 startup.ShowStatus(SpiritStatus.Of(SpiritStatusKind.LoadingPresentation));
+                if (EncounterView != null) EncounterView.Close();
                 if (PresentationRoot != null) PresentationRoot.SetActive(false);
                 EncounterView = null;
                 FrontendView = null;
@@ -119,6 +120,7 @@ namespace Dice.App
 
         private void OnDestroy()
         {
+            // The controller is destroyed with this object, so teardown leaves the screen as it is and only stops it running.
             if (PresentationRoot != null) PresentationRoot.SetActive(false);
             if (controller != null)
             {

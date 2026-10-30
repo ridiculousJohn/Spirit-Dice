@@ -182,11 +182,9 @@ namespace Dice.Presentation
         {
             if (index < -1 || index >= entries.Count) throw new ArgumentOutOfRangeException(nameof(index));
             resolvingIndex = index;
-            if (renderRoot == null || contentRoot == null) return;
             for (int i = 0; i < entries.Count; ++i)
             {
                 Entry entry = entries[i];
-                if (entry.Die == null || entry.Shadow == null || entry.Material == null) continue;
                 entry.Material.SetColor("_BaseColor", i == index ? ResolvingColor : entry.BoneColor);
                 Position(entry, i, false);
             }
@@ -215,8 +213,6 @@ namespace Dice.Presentation
         public Rect GetDieViewportRect(int index)
         {
             Transform die = entries[index].Die;
-            // A die destroyed during shutdown has no area, as SetResolving skips it.
-            if (die == null) return Rect.zero;
             Vector2 min = Vector2.one * float.MaxValue;
             Vector2 max = Vector2.one * float.MinValue;
             float localMin = float.MaxValue;

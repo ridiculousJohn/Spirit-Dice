@@ -239,14 +239,26 @@ namespace Dice.Presentation
             Unsubscribe();
         }
 
+        /**
+         * Leaves the screen before its owner deactivates it: the screen stops following its controls, resets what it shows,
+         * hides the journey and reports a presentation it interrupts as cancelled. Enabling the screen again follows the
+         * controls again.
+         */
+        public void Close()
+        {
+            Unsubscribe();
+            // An unbuilt screen has presented nothing.
+            if (scorePlayback == null) return;
+            bool canceled = presenting;
+            ResetPresentation();
+            JourneyView.gameObject.SetActive(false);
+            if (canceled) controls.CompletePresentation();
+        }
+
         private void OnDisable()
         {
             Unsubscribe();
             tableLighting?.Release();
-            bool canceled = presenting;
-            ResetPresentation();
-            if (JourneyView != null) JourneyView.gameObject.SetActive(false);
-            if (canceled) controls?.CompletePresentation();
         }
 
         private void OnEnable()
@@ -655,9 +667,7 @@ namespace Dice.Presentation
             if (resetHost)
             {
                 hostPortrait?.ResetPose();
-                // A figure unloaded with its scene before the screen has nothing to reset.
-                foreach (var figure in outcomeAnimations)
-                    if (figure != null) figure.ResetToIdle();
+                foreach (var figure in outcomeAnimations) figure.ResetToIdle();
             }
             // Leaving play for the journey lets the ambient activity settle; every other reset ends it at rest.
             if (resetHost) ambientActivity?.Stop();
