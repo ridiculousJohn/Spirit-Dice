@@ -23,19 +23,19 @@ namespace Dice.Presentation
         public void Validate()
         {
             long count = ((long)Columns + 1) * ((long)Rows + 1);
-            SpiritHostPresentationAsset.Require(Columns > 0 && Rows > 0 && count < 65000, "Mesh topology must have positive dimensions and fewer than 65000 vertices.");
-            SpiritHostPresentationAsset.Require(Alpha == null || Alpha.Length == 0 || Alpha.Length == count, "Mesh Alpha must match the grid vertex count.");
+            SpiritHostPresentationAsset.Require(Columns > 0 && Rows > 0 && count < 65000, this, "Mesh topology must have positive dimensions and fewer than 65000 vertices.");
+            SpiritHostPresentationAsset.Require(Alpha == null || Alpha.Length == 0 || Alpha.Length == count, this, "Mesh Alpha must match the grid vertex count.");
             if (Alpha != null)
                 foreach (float alpha in Alpha)
-                    SpiritHostPresentationAsset.Require(FiniteValue.Is(alpha) && alpha >= 0f && alpha <= 1f, "Mesh Alpha must be in [0,1].");
-            SpiritHostPresentationAsset.Require(Shapes != null, "Mesh Shapes cannot be null.");
+                    SpiritHostPresentationAsset.Require(FiniteValue.Is(alpha) && alpha >= 0f && alpha <= 1f, this, "Mesh Alpha must be in [0,1].");
+            SpiritHostPresentationAsset.Require(Shapes != null, this, "Mesh Shapes cannot be null.");
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (SpiritPortraitShape shape in Shapes)
             {
-                SpiritHostPresentationAsset.Require(shape != null && !string.IsNullOrWhiteSpace(shape.Id) && ids.Add(shape.Id), "Mesh shape ids must be nonempty and unique.");
-                SpiritHostPresentationAsset.Require(shape.Offsets != null && shape.Offsets.Length == count, "Shape Offsets must match the grid vertex count.");
+                SpiritHostPresentationAsset.Require(shape != null && !string.IsNullOrWhiteSpace(shape.Id) && ids.Add(shape.Id), this, "Mesh shape ids must be nonempty and unique.");
+                SpiritHostPresentationAsset.Require(shape.Offsets != null && shape.Offsets.Length == count, this, "Shape Offsets must match the grid vertex count.");
                 foreach (Vector2 offset in shape.Offsets)
-                    SpiritHostPresentationAsset.Require(FiniteValue.Is(offset), "Shape Offsets must be finite.");
+                    SpiritHostPresentationAsset.Require(FiniteValue.Is(offset), this, "Shape Offsets must be finite.");
             }
         }
     }

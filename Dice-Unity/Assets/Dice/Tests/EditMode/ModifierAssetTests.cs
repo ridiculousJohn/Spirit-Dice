@@ -74,14 +74,14 @@ namespace Dice.Tests
             using var serialized = new SerializedObject(asset);
             serialized.FindProperty("condition").managedReferenceValue = new ContainsFaceConditionConfig(7);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
+            AssertInvalidCharm(asset);
 
             serialized.FindProperty("condition.face").intValue = 1;
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 1;
             effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddRerollsEffectConfig((long)int.MaxValue + 1);
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            Assert.Throws<ArgumentOutOfRangeException>(() => asset.Build(asset.Family.Build()));
+            AssertInvalidCharm(asset);
         }
 
         /** Checks the catalog holds every charm its encounters and their reward pools reference, once each, and no other / fails if a referencing list is skipped, a shared charm repeats or an unreferenced charm enters. */
@@ -208,6 +208,14 @@ namespace Dice.Tests
             copy.name = "encounter.copy";
             var failure = Assert.Throws<InvalidOperationException>(() => Catalog(listed, copy).Build());
             Assert.That(failure.Message, Does.Contain("encounter.listed").And.Contain("encounter.copy"));
+        }
+
+        /** Asserts the charm's build fails naming it, from the engine's out-of-range validation. */
+        private static void AssertInvalidCharm(ModifierAsset asset)
+        {
+            var failure = Assert.Throws<InvalidOperationException>(() => asset.Build(asset.Family.Build()));
+            Assert.That(failure.Message, Does.Contain(asset.name));
+            Assert.That(failure.InnerException, Is.TypeOf<ArgumentOutOfRangeException>());
         }
 
         /** A catalog of one test encounter whose one reward slot draws from a pool of the charms. */

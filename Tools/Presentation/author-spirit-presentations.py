@@ -85,8 +85,7 @@ def write_asset(path, script, data):
                m_Enabled=1, m_EditorHideFlags=0, m_Script=ref(script, 11500000, 3),
                m_Name=path.stem, m_EditorClassIdentifier='')
     if script == HOST_SCRIPT:
-        obj.update(SilhouetteShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSilhouette.shader'), 4800000, 3),
-                   SmokeShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSmoke.shader'), 4800000, 3))
+        obj.update(SmokeShader=ref(guid(ASSETS / 'Presentation/Shared/SpiritSmoke.shader'), 4800000, 3))
     obj.update(data)
     destination.write_text('%YAML 1.1\n%TAG !u! tag:unity3d.com,2011:\n--- !u!114 &11400000\n' +
                     '\n'.join(yaml({'MonoBehaviour': obj})) + '\n', encoding='utf-8')

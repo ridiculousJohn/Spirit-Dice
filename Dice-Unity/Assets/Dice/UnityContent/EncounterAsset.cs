@@ -43,35 +43,65 @@ namespace Dice.UnityContent
             for (int i = 0; i < stageDefinitions.Length; ++i)
             {
                 var stage = stages[i] ?? throw new InvalidOperationException("The encounter " + name + " has a missing stage.");
-                stageDefinitions[i] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
+                try
+                {
+                    stageDefinitions[i] = new StageDefinition(stage.threshold, stage.startingHands, stage.startingRerolls, stage.exitBehavior);
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidOperationException("Stage " + (i + 1) + " of the encounter " + name + " is invalid: " +
+                        exception.Message, exception);
+                }
             }
-            return new EncounterDefinition(Identity, stageDefinitions, startingUpgrades, MechanicalCatalogAsset.Ids(startingModifiers, use),
-                BuildRewardPolicy(rewardPolicy, pool), BuildRules(rules),
-                BuildMilestones(unlockMilestones), MechanicalCatalogAsset.Ids(encounterModifiers, use),
-                MechanicalCatalogAsset.Ids(unlockRewardModifiers, use), BuildPieces(pieces),
-                encounterModifiersFirstClearedStageNumber);
+            // Built in this order, the charms reach use in the order the catalog lists them.
+            var startingIds = MechanicalCatalogAsset.Ids(startingModifiers, "the starting charms of the encounter " + name, use);
+            RewardPolicyDefinition policy = BuildRewardPolicy(rewardPolicy, pool);
+            EncounterRuleDefinition[] ruleDefinitions = BuildRules(rules);
+            ModifierUnlockMilestone[] milestones = BuildMilestones(unlockMilestones);
+            var additionIds = MechanicalCatalogAsset.Ids(encounterModifiers, "the charm additions of the encounter " + name, use);
+            var unlockIds = MechanicalCatalogAsset.Ids(unlockRewardModifiers, "the unlock rewards of the encounter " + name, use);
+            TablePieceDefinition[] pieceDefinitions = BuildPieces(pieces);
+            try
+            {
+                return new EncounterDefinition(Identity, stageDefinitions, startingUpgrades, startingIds, policy, ruleDefinitions,
+                    milestones, additionIds, unlockIds, pieceDefinitions, encounterModifiersFirstClearedStageNumber);
+            }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidOperationException("The encounter " + name + " is invalid: " + exception.Message, exception);
+            }
         }
 
-        private static ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
+        private ModifierUnlockMilestone[] BuildMilestones(UnlockMilestoneData[] sources)
         {
-            if (sources == null) throw new InvalidOperationException("Unlock milestones are missing.");
+            if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no unlock milestone list.");
             var definitions = new ModifierUnlockMilestone[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
-                var source = sources[i] ?? throw new InvalidOperationException("An unlock milestone is missing.");
-                definitions[i] = new ModifierUnlockMilestone(source.stageNumber);
+                var source = sources[i] ?? throw new InvalidOperationException("The encounter " + name + " has a missing unlock milestone.");
+                try { definitions[i] = new ModifierUnlockMilestone(source.stageNumber); }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidOperationException("Unlock milestone " + (i + 1) + " of the encounter " + name + " is invalid: " +
+                        exception.Message, exception);
+                }
             }
             return definitions;
         }
 
-        private static EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
+        private EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
         {
-            if (sources == null) throw new InvalidOperationException("Encounter rules are missing.");
+            if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no rule list.");
             var definitions = new EncounterRuleDefinition[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
-                var source = sources[i] ?? throw new InvalidOperationException("An encounter rule asset is missing.");
-                definitions[i] = source.Build();
+                var source = sources[i] ?? throw new InvalidOperationException("The encounter " + name + " has a missing rule asset.");
+                try { definitions[i] = source.Build(); }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidOperationException("The rule " + source.name + " of the encounter " + name + " is invalid: " +
+                        exception.Message, exception);
+                }
             }
             return definitions;
         }
@@ -92,7 +122,12 @@ namespace Dice.UnityContent
                 for (int j = 0; j < interactions.Length; ++j)
                 {
                     var interaction = source.interactions[j] ?? throw new InvalidOperationException(where + " has a missing interaction.");
-                    interactions[j] = interaction.Build();
+                    // An interaction config has no name of its own, so the piece and encounter name its failures.
+                    try { interactions[j] = interaction.Build(); }
+                    catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
+                    {
+                        throw new InvalidOperationException(where + " has an invalid interaction: " + exception.Message, exception);
+                    }
                 }
                 try { definitions[i] = new TablePieceDefinition(source.piece.Identity, interactions); }
                 catch (ArgumentException exception)
@@ -106,41 +141,49 @@ namespace Dice.UnityContent
         private RewardPolicyDefinition BuildRewardPolicy(RewardPolicyData source, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool)
         {
             if (source == null) return null;
+            string where = "The reward policy of the encounter " + name;
             if (source.modifierLayouts == null || source.upgradeHistory == null)
-                throw new InvalidOperationException("Reward policy arrays are missing.");
-            var layouts = new ModifierRewardLayout[source.modifierLayouts.Length];
-            for (int i = 0; i < layouts.Length; ++i)
-            {
-                var layout = source.modifierLayouts[i] ?? throw new InvalidOperationException("A reward layout is missing.");
-                if (layout.pools == null) throw new InvalidOperationException("A reward layout of the encounter " + name + " has no pool list.");
-                var pools = new ModifierRewardPoolDefinition[layout.pools.Length];
-                for (int j = 0; j < pools.Length; ++j)
-                    pools[j] = pool(layout.pools[j] ??
-                        throw new InvalidOperationException("A reward layout of the encounter " + name + " has a missing pool."));
-                layouts[i] = new ModifierRewardLayout(pools);
-            }
-            var history = new HandUpgradeHistoryRule[source.upgradeHistory.Length];
-            for (int i = 0; i < history.Length; ++i)
-            {
-                var rule = source.upgradeHistory[i] ?? throw new InvalidOperationException("An upgrade history rule is missing.");
-                history[i] = new HandUpgradeHistoryRule(rule.maxIncomingStageNumber, rule.excludedRecentChoices);
-            }
+                throw new InvalidOperationException(where + " has no layout or upgrade history list.");
             if (source.tierRules == null || source.tierMilestones == null)
-                throw new InvalidOperationException("Reward tier schedules are missing.");
-            var tierRules = new ModifierTierRule[source.tierRules.Length];
-            for (int i = 0; i < tierRules.Length; ++i)
+                throw new InvalidOperationException(where + " has no tier rule or tier milestone list.");
+            try
             {
-                var rule = source.tierRules[i] ?? throw new InvalidOperationException("A tier rule is missing.");
-                tierRules[i] = new ModifierTierRule(rule.firstIncomingStageNumber, rule.tierWeights);
+                var layouts = new ModifierRewardLayout[source.modifierLayouts.Length];
+                for (int i = 0; i < layouts.Length; ++i)
+                {
+                    var layout = source.modifierLayouts[i] ?? throw new InvalidOperationException(where + " has a missing reward layout.");
+                    if (layout.pools == null) throw new InvalidOperationException(where + " has a reward layout without a pool list.");
+                    var pools = new ModifierRewardPoolDefinition[layout.pools.Length];
+                    for (int j = 0; j < pools.Length; ++j)
+                        pools[j] = pool(layout.pools[j] ??
+                            throw new InvalidOperationException(where + " has a reward layout with a missing pool."));
+                    layouts[i] = new ModifierRewardLayout(pools);
+                }
+                var history = new HandUpgradeHistoryRule[source.upgradeHistory.Length];
+                for (int i = 0; i < history.Length; ++i)
+                {
+                    var rule = source.upgradeHistory[i] ?? throw new InvalidOperationException(where + " has a missing upgrade history rule.");
+                    history[i] = new HandUpgradeHistoryRule(rule.maxIncomingStageNumber, rule.excludedRecentChoices);
+                }
+                var tierRules = new ModifierTierRule[source.tierRules.Length];
+                for (int i = 0; i < tierRules.Length; ++i)
+                {
+                    var rule = source.tierRules[i] ?? throw new InvalidOperationException(where + " has a missing tier rule.");
+                    tierRules[i] = new ModifierTierRule(rule.firstIncomingStageNumber, rule.tierWeights);
+                }
+                var tierMilestones = new ModifierTierMilestone[source.tierMilestones.Length];
+                for (int i = 0; i < tierMilestones.Length; ++i)
+                {
+                    var milestone = source.tierMilestones[i] ?? throw new InvalidOperationException(where + " has a missing tier milestone.");
+                    tierMilestones[i] = new ModifierTierMilestone(milestone.incomingStageNumber, milestone.minimumTier);
+                }
+                return new RewardPolicyDefinition(layouts, source.startingRefreshes,
+                    source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
             }
-            var tierMilestones = new ModifierTierMilestone[source.tierMilestones.Length];
-            for (int i = 0; i < tierMilestones.Length; ++i)
+            catch (ArgumentException exception)
             {
-                var milestone = source.tierMilestones[i] ?? throw new InvalidOperationException("A tier milestone is missing.");
-                tierMilestones[i] = new ModifierTierMilestone(milestone.incomingStageNumber, milestone.minimumTier);
+                throw new InvalidOperationException(where + " is invalid: " + exception.Message, exception);
             }
-            return new RewardPolicyDefinition(layouts, source.startingRefreshes,
-                source.refreshesPerClear, source.refreshCost, source.handUpgradeOptionCount, history, tierRules, tierMilestones);
         }
 
         /**

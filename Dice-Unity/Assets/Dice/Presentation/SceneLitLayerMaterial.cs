@@ -6,7 +6,6 @@ namespace Dice.Presentation
     /** Own one lit-layer material per image; each sample writes the shared state's light levels and positions. */
     public sealed class SceneLitLayerMaterial : IDisposable
     {
-        public const string PreviewShaderName = "Hidden/Dice/Scene Lit Image Preview";
         private const int Off = 0, Reference = 1, Computed = 2;
         private static readonly int SourceTextureId = Shader.PropertyToID("_SourceTex");
         private static readonly int LayerMaskId = Shader.PropertyToID("_LayerMask");

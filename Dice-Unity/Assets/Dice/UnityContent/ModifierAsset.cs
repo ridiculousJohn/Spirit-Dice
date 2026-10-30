@@ -31,14 +31,21 @@ namespace Dice.UnityContent
             if (condition == null) throw new InvalidOperationException("The charm " + name + " has no condition.");
             if (effects == null) throw new InvalidOperationException("The charm " + name + " has no effect list.");
             var effectDefinitions = new ModifierEffect[effects.Length];
-            for (int i = 0; i < effects.Length; ++i)
+            try
             {
-                var source = effects[i] ?? throw new InvalidOperationException("The charm " + name + " has a missing effect.");
-                effectDefinitions[i] = source.Build();
+                for (int i = 0; i < effects.Length; ++i)
+                {
+                    var source = effects[i] ?? throw new InvalidOperationException("The charm " + name + " has a missing effect.");
+                    effectDefinitions[i] = source.Build();
+                }
+                return new ModifierDefinition(Identity, familyDefinition, phase, condition.Build(),
+                    effectDefinitions, activationLimit, rewardEligible,
+                    new ModifierAvailabilityDefinition(powerTier, access));
             }
-            return new ModifierDefinition(Identity, familyDefinition, phase, condition.Build(),
-                effectDefinitions, activationLimit, rewardEligible,
-                new ModifierAvailabilityDefinition(powerTier, access));
+            catch (ArgumentException exception)
+            {
+                throw new InvalidOperationException("The charm " + name + " is invalid: " + exception.Message, exception);
+            }
         }
     }
 }

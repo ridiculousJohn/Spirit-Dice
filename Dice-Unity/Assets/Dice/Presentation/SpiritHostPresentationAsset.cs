@@ -69,7 +69,6 @@ namespace Dice.Presentation
     {
         public SpiritHostPortrait PortraitPrefab;
         public Image SigilPrefab;
-        public Shader SilhouetteShader;
         public Shader SmokeShader;
         [Tooltip("Lit-layer shader for lit layers whose authored material does not already use one.")]
         public Shader LitLayerShader;
@@ -116,7 +115,7 @@ namespace Dice.Presentation
                 if (layer.Smoke != null && layer.Smoke.Enabled)
                 {
                     Require(!layer.Silhouette, "Layer " + layer.Id + " cannot use both silhouette and smoke materials.");
-                    Require(SmokeShader != null, "Layer " + layer.Id + " of the host " + name + " animates as smoke and requires the host's Smoke Shader.");
+                    Require(SmokeShader != null, "Layer " + layer.Id + " animates as smoke and requires the host's Smoke Shader.");
                 }
                 if (layer.Lighting != null && layer.Lighting.Configured)
                 {
@@ -157,7 +156,7 @@ namespace Dice.Presentation
             }
         }
 
-        private static void ValidateCurve(AnimationCurve curve, bool required)
+        private void ValidateCurve(AnimationCurve curve, bool required)
         {
             Require(!required || curve != null && curve.length > 0, "A track requires a nonempty Curve.");
             if (curve == null) return;
@@ -169,9 +168,12 @@ namespace Dice.Presentation
         internal static bool ValidState(SpiritPresentationState state) => state >= SpiritPresentationState.Idle && state <= SpiritPresentationState.Farewell;
         internal static bool DirectedState(SpiritPresentationState state) => state == SpiritPresentationState.Arrival
             || state >= SpiritPresentationState.Victory && state <= SpiritPresentationState.Farewell;
-        internal static void Require(bool condition, string message)
+        private void Require(bool condition, string message) => Require(condition, this, message);
+
+        /** Fails validation of the given presentation asset, naming it. */
+        internal static void Require(bool condition, UnityEngine.Object asset, string message)
         {
-            if (!condition) throw new InvalidOperationException("Invalid spirit presentation: " + message);
+            if (!condition) throw new InvalidOperationException("Invalid spirit presentation " + asset.name + ": " + message);
         }
     }
 }

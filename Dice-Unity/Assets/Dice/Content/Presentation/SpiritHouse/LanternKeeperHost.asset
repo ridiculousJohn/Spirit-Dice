@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PortraitPrefab: {fileID: 5097274516130487048, guid: 5c81e6157ada86244b4adb9048714204, type: 3}
   SigilPrefab: {fileID: 1343975770879351165, guid: ea4447ccf2742c04fa05ace0860b3034, type: 3}
-  SilhouetteShader: {fileID: 4800000, guid: 762be0bdbd5d4dbf83e93d96e8ea783c, type: 3}
   SmokeShader: {fileID: 4800000, guid: 080d110560e4644488071e7a87d73820, type: 3}
   LitLayerShader: {fileID: 0}
   ReferenceSize: {x: 540, y: 960}

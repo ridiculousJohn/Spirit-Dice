@@ -18,7 +18,6 @@ namespace Dice.Engine
     {
         public const int CategoryCount = 8;
         public HandCategory Category { get; }
-        public int Rank => (int)Category;
         public long BaseScore { get; }
         public long Multiplier { get; }
         public long BaseScorePerUpgrade { get; }
@@ -281,24 +280,29 @@ namespace Dice.Engine
                     throw new ArgumentException("Two encounters share the id " + encounter.Identity + ".", nameof(encounters));
                 for (int i = 0; i < byCategory.Length; ++i)
                     if (encounter.StartingUpgrades[i] > byCategory[i].MaximumUpgrades)
-                        throw new ArgumentException("Starting upgrades exceed the category limit.", nameof(encounters));
+                        throw new ArgumentException("The starting upgrades of the encounter " + encounter.Identity +
+                            " exceed the limit of the category " + (HandCategory)i + ".", nameof(encounters));
                 foreach (var modifierId in encounter.StartingModifiers)
                 {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier))
-                        throw new ArgumentException("A starting modifier is missing from the catalog.", nameof(encounters));
+                        throw new ArgumentException("The charm " + modifierId + " in the starting charms of the encounter " +
+                            encounter.Identity + " is missing from the catalog.", nameof(encounters));
                     modifier.RejectEncounterExclusive("the starting charms of the encounter " + encounter.Identity, nameof(encounters));
                 }
                 foreach (var modifierId in encounter.UnlockRewardModifierIds)
                 {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier))
-                        throw new ArgumentException("An unlock reward is missing from the catalog.", nameof(encounters));
+                        throw new ArgumentException("The charm " + modifierId + " in the unlock rewards of the encounter " +
+                            encounter.Identity + " is missing from the catalog.", nameof(encounters));
                     modifier.RejectEncounterExclusive("the unlock rewards of the encounter " + encounter.Identity, nameof(encounters));
                     if (modifier.Availability.Access != ModifierAccess.PermanentUnlock || !modifier.RewardEligible)
-                        throw new ArgumentException("Unlock rewards must reference eligible permanent unlocks.", nameof(encounters));
+                        throw new ArgumentException("The charm " + modifier.Identity + " in the unlock rewards of the encounter " +
+                            encounter.Identity + " is not a reward-eligible permanent unlock.", nameof(encounters));
                 }
                 foreach (var modifierId in encounter.EncounterModifierIds)
                     if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
-                        throw new ArgumentException("Encounter additions must reference eligible modifiers.", nameof(encounters));
+                        throw new ArgumentException("The charm " + modifierId + " in the charm additions of the encounter " +
+                            encounter.Identity + " is missing from the catalog or not reward-eligible.", nameof(encounters));
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
                         foreach (var pool in layout.Pools)
@@ -317,13 +321,15 @@ namespace Dice.Engine
             foreach (var modifierId in pool.ModifierIds)
             {
                 if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
-                    throw new ArgumentException("Reward pool entries must reference eligible modifiers.", parameter);
+                    throw new ArgumentException("The charm " + modifierId + " in the reward pool " + pool.Name +
+                        " is missing from the catalog or not reward-eligible.", parameter);
                 modifier.RejectEncounterExclusive("the reward pool " + pool.Name, parameter);
             }
             if (pool.FallbackModifierId != null)
             {
                 if (!modifiersById.TryGetValue(pool.FallbackModifierId.Value, out var fallback))
-                    throw new ArgumentException("The reward fallback modifier is missing.", parameter);
+                    throw new ArgumentException("The fallback charm " + pool.FallbackModifierId.Value + " of the reward pool " + pool.Name +
+                        " is missing from the catalog.", parameter);
                 fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Name, parameter);
             }
         }

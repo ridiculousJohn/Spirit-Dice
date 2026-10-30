@@ -20,13 +20,12 @@ namespace Dice.UnityContent
         public MechanicalContent Build(EncounterAsset played = null)
         {
             if (hands == null || encounters == null)
-                throw new InvalidOperationException("Catalog arrays are missing.");
+                throw new InvalidOperationException("The mechanical catalog " + name + " has no hand or encounter list.");
             var referenced = new List<ModifierAsset>();
             var seen = new HashSet<ModifierAsset>();
             var byId = new Dictionary<ModifierDefinition.Id, ModifierAsset>();
             void Use(ModifierAsset modifier)
             {
-                if (modifier == null) throw new InvalidOperationException("A charm reference is missing.");
                 if (!seen.Add(modifier)) return;
                 if (byId.TryGetValue(modifier.Identity, out ModifierAsset other))
                     throw new InvalidOperationException("Two charm assets share the id " + modifier.Identity + ": " + other.name + ", " + modifier.name);
@@ -36,9 +35,17 @@ namespace Dice.UnityContent
             var handDefinitions = new HandDefinition[hands.Length];
             for (int i = 0; i < hands.Length; ++i)
             {
-                var source = hands[i] ?? throw new InvalidOperationException("A hand entry is missing.");
-                handDefinitions[i] = new HandDefinition(source.category, source.baseScore, source.multiplier,
-                    source.baseScorePerUpgrade, source.multiplierPerUpgrade, source.maximumUpgrades);
+                var source = hands[i] ?? throw new InvalidOperationException("The mechanical catalog " + name + " has a missing hand entry.");
+                try
+                {
+                    handDefinitions[i] = new HandDefinition(source.category, source.baseScore, source.multiplier,
+                        source.baseScorePerUpgrade, source.multiplierPerUpgrade, source.maximumUpgrades);
+                }
+                catch (ArgumentException exception)
+                {
+                    throw new InvalidOperationException("Hand entry " + (i + 1) + " of the mechanical catalog " + name + " is invalid: " +
+                        exception.Message, exception);
+                }
             }
             // Each pool asset is built once, so the layouts drawing from a pool share its definition.
             var pools = new Dictionary<RewardPoolAsset, ModifierRewardPoolDefinition>();
@@ -46,7 +53,11 @@ namespace Dice.UnityContent
             {
                 if (!pools.TryGetValue(pool, out ModifierRewardPoolDefinition built))
                 {
-                    built = pool.Build(Use);
+                    try { built = pool.Build(Use); }
+                    catch (ArgumentException exception)
+                    {
+                        throw new InvalidOperationException("The reward pool " + pool.name + " is invalid: " + exception.Message, exception);
+                    }
                     pools.Add(pool, built);
                 }
                 return built;
@@ -57,7 +68,8 @@ namespace Dice.UnityContent
             var encountersById = new Dictionary<EncounterDefinition.Id, EncounterAsset>();
             for (int i = 0; i < encounterDefinitions.Length; ++i)
             {
-                var source = encounterAssets[i] ?? throw new InvalidOperationException("An encounter reference is missing.");
+                var source = encounterAssets[i] ??
+                    throw new InvalidOperationException("The mechanical catalog " + name + " has a missing encounter reference.");
                 if (encountersById.TryGetValue(source.Identity, out EncounterAsset other))
                     throw new InvalidOperationException("Two encounter assets share the id " + source.Identity + ": " + other.name + ", " + source.name);
                 encountersById.Add(source.Identity, source);
@@ -85,17 +97,23 @@ namespace Dice.UnityContent
                 modifierDefinitions[i] = referenced[i].Build(Family(referenced[i]));
                 pairs[i] = new KeyValuePair<ModifierAsset, ModifierDefinition>(referenced[i], modifierDefinitions[i]);
             }
-            var catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions, modifierDefinitions);
+            MechanicalCatalog catalog;
+            try { catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions, modifierDefinitions); }
+            catch (ArgumentException exception)
+            {
+                throw new InvalidOperationException("The mechanical catalog " + name + " is invalid: " + exception.Message, exception);
+            }
             return new MechanicalContent(catalog, pairs);
         }
 
-        /** The ids of the charms, each passed to use first. */
-        internal static ModifierDefinition.Id[] Ids(ModifierAsset[] sources, Action<ModifierAsset> use)
+        /** The ids of the charms, each passed to use first; list names the charm list in errors, such as "the reward pool X". */
+        internal static ModifierDefinition.Id[] Ids(ModifierAsset[] sources, string list, Action<ModifierAsset> use)
         {
-            if (sources == null) throw new InvalidOperationException("A charm list is missing.");
+            if (sources == null) throw new InvalidOperationException("The charm list for " + list + " is missing.");
             var ids = new ModifierDefinition.Id[sources.Length];
             for (int i = 0; i < sources.Length; ++i)
             {
+                if (sources[i] == null) throw new InvalidOperationException("A charm reference in " + list + " is missing.");
                 use(sources[i]);
                 ids[i] = sources[i].Identity;
             }

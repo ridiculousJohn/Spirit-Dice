@@ -54,33 +54,33 @@ namespace Dice.Presentation
         public void Validate()
         {
             if (Shader == null) throw new InvalidOperationException("The scene lighting " + name + " requires a shader.");
-            if (BaseTexture == null) throw new InvalidOperationException("Scene lighting requires a base texture.");
+            if (BaseTexture == null) throw new InvalidOperationException("The scene lighting " + name + " requires a base texture.");
             if (Lights == null || Lights.Length > MaximumLights)
-                throw new InvalidOperationException("Scene lighting supports up to " + MaximumLights + " light layers.");
+                throw new InvalidOperationException("The scene lighting " + name + " supports up to " + MaximumLights + " light layers.");
             if (!ValidColor(ReceiverAmbient) || !ValidColor(ReceiverKeyColor)
                 || !FiniteValue.Is(ReceiverKeyDirection) || ReceiverKeyDirection.sqrMagnitude < .0001f)
-                throw new InvalidOperationException("Scene receiver ambient and key settings are invalid.");
+                throw new InvalidOperationException("The scene lighting " + name + " has invalid receiver ambient and key settings.");
             for (int i = 0; i < Lights.Length; ++i)
             {
                 SceneLightLayer light = Lights[i];
                 if (light == null || light.Contribution == null)
-                    throw new InvalidOperationException("Scene lighting layers require contribution textures.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " requires a contribution texture.");
                 if (!FiniteValue.Is(light.UvOffset))
-                    throw new InvalidOperationException("Scene light UV offsets must be finite.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " has a nonfinite UV offset.");
                 if (!FiniteValue.Is(light.Intensity) || light.Intensity < 0f || !FiniteValue.Is(light.FlickerAmount)
                     || light.FlickerAmount < 0f || light.FlickerAmount > 1f
                     || !FiniteValue.Is(light.FlickerSpeed) || light.FlickerSpeed < 0f)
-                    throw new InvalidOperationException("Scene light intensity and flicker settings are invalid.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " has invalid intensity or flicker settings.");
                 if (!FiniteValue.Is(light.DistanceFalloff) || light.DistanceFalloff < 0f || light.DistanceFalloff > SceneLightLayer.MaximumDistanceFalloff
                     || !FiniteValue.Is(light.SourceResponse) || light.SourceResponse < SceneLightLayer.MinimumSourceResponse
                     || light.SourceResponse > SceneLightLayer.MaximumSourceResponse)
-                    throw new InvalidOperationException("Scene light distance falloff and source response settings are invalid.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " has invalid distance falloff or source response settings.");
                 if (!FiniteValue.Is(light.Tint) || light.Tint.r < 0f || light.Tint.g < 0f || light.Tint.b < 0f)
-                    throw new InvalidOperationException("Scene light tint must be finite and nonnegative.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " requires a finite, nonnegative tint.");
                 if (!FiniteValue.Is(light.ReceiverPosition) || !ValidColor(light.ReceiverColor)
                     || !FiniteValue.Is(light.ReceiverIntensity) || light.ReceiverIntensity < 0f
                     || !FiniteValue.Is(light.ReceiverRange) || light.ReceiverRange < SceneLightLayer.MinimumReceiverRange)
-                    throw new InvalidOperationException("Scene light receiver settings are invalid.");
+                    throw new InvalidOperationException("Light " + i + " of the scene lighting " + name + " has invalid receiver settings.");
             }
         }
 

@@ -349,7 +349,7 @@ def author():
     host = A.write_asset(FOLDER / 'BoundTreeHost.asset', A.HOST_SCRIPT, dict(
         PortraitPrefab=portrait_reference(),
         SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/BoundTreeHostSigil.prefab'), 9079639759384952736, 3),
-        SilhouetteShader=A.ref(None), SmokeShader=A.ref(None),
+        SmokeShader=A.ref(None),
         LitLayerShader=A.ref(A.guid(A.ASSETS / 'Presentation/Shared/SceneLitImage.shader'), 4800000, 3),
         ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=[layer], Sequences=sequences()))
 

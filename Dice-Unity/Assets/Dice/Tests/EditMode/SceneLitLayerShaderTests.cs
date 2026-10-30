@@ -27,10 +27,8 @@ namespace Dice.Tests
             Assert.That(litShader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(litShader), Is.False);
             previewShader = TestShaders.Load(TestShaders.SceneLitImagePreview);
-            Assert.That(previewShader.name, Is.EqualTo(SceneLitLayerMaterial.PreviewShaderName));
             Assert.That(previewShader.isSupported, Is.True);
             Assert.That(ShaderUtil.ShaderHasError(previewShader), Is.False);
-            Assert.That(Shader.Find(SceneLitLayerMaterial.PreviewShaderName), Is.SameAs(previewShader));
         }
 
         [TearDown]

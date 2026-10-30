@@ -18,7 +18,7 @@ namespace Dice.UnityContent
         internal ModifierRewardPoolDefinition Build(Action<ModifierAsset> use)
         {
             if (fallbackModifier != null) use(fallbackModifier);
-            return new ModifierRewardPoolDefinition(name, MechanicalCatalogAsset.Ids(modifiers, use),
+            return new ModifierRewardPoolDefinition(name, MechanicalCatalogAsset.Ids(modifiers, "the reward pool " + name, use),
                 fallbackModifier == null ? (ModifierDefinition.Id?)null : fallbackModifier.Identity);
         }
     }
