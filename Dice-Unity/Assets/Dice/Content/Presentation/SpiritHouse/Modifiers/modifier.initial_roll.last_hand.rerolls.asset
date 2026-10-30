@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Evening Bell / Rerolls
   icon: {fileID: 21300000, guid: d291a3800c1f5629be46be05142a1bd2, type: 3}
   conditionTemplate: One hand remains in the evaluation context.
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

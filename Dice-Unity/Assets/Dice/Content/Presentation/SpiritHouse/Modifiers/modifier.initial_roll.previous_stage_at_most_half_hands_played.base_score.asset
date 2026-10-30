@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Spare Candle / Base
   icon: {fileID: 21300000, guid: f1149d7f4502532094c863c456cf317b, type: 3}
   conditionTemplate: First hand of this stage; previous stage used at most half its hands.
-  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

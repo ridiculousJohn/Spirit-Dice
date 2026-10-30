@@ -24,7 +24,6 @@ namespace Dice.Tests
         [Test]
         public void EachCharmShowsItsOwnPresentationsNameConditionAndIcon()
         {
-            var category = synthetic.Category();
             var first = synthetic.Charm("test.first");
             var second = synthetic.Charm("test.second");
             var firstIcon = synthetic.Icon();
@@ -32,9 +31,9 @@ namespace Dice.Tests
             var content = SyntheticCharms.Content(first, second);
             var charms = synthetic.Load(synthetic.Skin(new[]
             {
-                synthetic.Presentation(second, category, "Second", "Second condition.", icon: secondIcon),
-                synthetic.Presentation(first, category, "First", "First condition.", icon: firstIcon)
-            }, new[] { category }), content);
+                synthetic.Presentation(second, "Second", "Second condition.", icon: secondIcon),
+                synthetic.Presentation(first, "First", "First condition.", icon: firstIcon)
+            }), content);
 
             var firstDefinition = content.GetDefinition(first);
             var secondDefinition = content.GetDefinition(second);
@@ -120,10 +119,9 @@ namespace Dice.Tests
         {
             var both = synthetic.Charm("test.both", effects: new ModifierEffectConfig[] { new AddBaseScoreEffectConfig(10), new AddMultiplierEffectConfig(7) });
             var single = synthetic.Charm("test.single", effects: new AddBaseScoreEffectConfig(3));
-            var category = synthetic.Category();
             var content = SyntheticCharms.Content(both, single);
-            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(both, category), synthetic.Presentation(single, category) },
-                new[] { category }, new[]
+            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(both), synthetic.Presentation(single) },
+                wording: new[]
                 {
                     new ModifierEffectWording(ModifierEffectKind.AddBaseScore, "spark", "sparks", "S"),
                     new ModifierEffectWording(ModifierEffectKind.AddMultiplier, "flame", "flames", "F")
@@ -186,42 +184,109 @@ namespace Dice.Tests
         public void ContributionTextUsesTheSkinsContributionWording(long baseScore, long multiplier, long rerolls, string expected)
         {
             var charm = synthetic.Charm("test.contribution");
-            var category = synthetic.Category();
-            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category },
+            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm) },
                 contribution: new ModifierContributionWording("grains", "sparks", "chance", "chances")), SyntheticCharms.Content(charm));
             Assert.That(charms.GetContributionText(baseScore, multiplier, rerolls), Is.EqualTo(expected));
         }
 
-        /** Checks category styling and mark come from the presentation's category even when the effects suggest another role / fails if styling or the mark is inferred from effects or identity. */
+        /**
+         * Checks each charm shows the category, styling and mark the skin maps the set of its effect kinds to, whatever
+         * the order or number of its effects / fails if the category is not the one of exactly the charm's effect kinds,
+         * or a repeated kind or the effects' order changes it.
+         */
         [Test]
-        public void CategoryStylingComesFromThePresentationsCategory()
+        public void EachCharmShowsTheCategoryOfItsSetOfEffectKinds()
         {
-            var rerolls = synthetic.Category(synthetic.Icon(), new Color(.2f, .6f, .9f), new Color(.1f, .3f, .5f));
-            var charm = synthetic.Charm("test.lookup.base_score", effects: new AddBaseScoreEffectConfig(10));
-            var content = SyntheticCharms.Content(charm);
-            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, rerolls) }, new[] { rerolls }), content);
-            var definition = content.GetDefinition(charm);
-            Assert.That(charms.GetCategory(definition), Is.SameAs(rerolls));
-            Assert.That(charms.GetEffectColor(definition), Is.EqualTo(rerolls.AccentColor));
-            Assert.That(charms.GetInkColor(definition), Is.EqualTo(rerolls.InkColor));
-            Assert.That(charms.GetCategorySprite(definition), Is.SameAs(rerolls.Symbol));
+            var baseScore = synthetic.Category(synthetic.Icon(), new Color(.9f, .6f, .2f), new Color(.5f, .3f, .1f));
+            var combined = synthetic.Category(synthetic.Icon(), new Color(.2f, .6f, .9f), new Color(.1f, .3f, .5f));
+            var rerolls = synthetic.Category(synthetic.Icon());
+            var none = synthetic.Category();
+            var single = synthetic.Charm("test.base_score", effects: new AddBaseScoreEffectConfig(10));
+            var both = synthetic.Charm("test.both", effects: new ModifierEffectConfig[]
+            {
+                new AddMultiplierEffectConfig(2), new AddBaseScoreEffectConfig(10), new AddBaseScoreEffectConfig(5)
+            });
+            var reroll = synthetic.Charm("test.rerolls", effects: new AddRerollsEffectConfig(1));
+            var inert = synthetic.Charm("test.inert");
+            var serialized = new SerializedObject(inert);
+            serialized.FindProperty("effects").arraySize = 0;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            var content = SyntheticCharms.Content(single, both, reroll, inert);
+            var charms = synthetic.Load(synthetic.Skin(new[] { single, both, reroll, inert }.Select(charm => synthetic.Presentation(charm)), new[]
+            {
+                new ModifierEffectsCategory(rerolls, ModifierEffectKind.AddRerolls),
+                new ModifierEffectsCategory(combined, ModifierEffectKind.AddBaseScore, ModifierEffectKind.AddMultiplier),
+                new ModifierEffectsCategory(none),
+                new ModifierEffectsCategory(baseScore, ModifierEffectKind.AddBaseScore)
+            }), content);
+
+            Assert.That(charms.GetCategory(content.GetDefinition(single)), Is.SameAs(baseScore));
+            Assert.That(charms.GetCategory(content.GetDefinition(both)), Is.SameAs(combined));
+            Assert.That(charms.GetCategory(content.GetDefinition(reroll)), Is.SameAs(rerolls));
+            Assert.That(charms.GetCategory(content.GetDefinition(inert)), Is.SameAs(none));
+            var definition = content.GetDefinition(both);
+            Assert.That(charms.GetEffectColor(definition), Is.EqualTo(combined.AccentColor));
+            Assert.That(charms.GetInkColor(definition), Is.EqualTo(combined.InkColor));
+            Assert.That(charms.GetCategorySprite(definition), Is.SameAs(combined.Symbol));
+        }
+
+        /** Checks a charm whose set of effect kinds the skin maps to no category fails at load naming the charm / fails if it loads with another set's category. */
+        [Test]
+        public void ACharmWhoseEffectKindsHaveNoCategoryFailsAtLoadNamingTheCharm()
+        {
+            var charm = synthetic.Charm("test.unmatched", effects: new ModifierEffectConfig[]
+            {
+                new AddBaseScoreEffectConfig(10), new AddRerollsEffectConfig(1)
+            });
+            var category = synthetic.Category();
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, new[]
+            {
+                new ModifierEffectsCategory(category, ModifierEffectKind.AddBaseScore),
+                new ModifierEffectsCategory(category, ModifierEffectKind.AddRerolls)
+            });
+            var failure = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+            Assert.That(failure.Message, Does.Contain("test.unmatched"));
+        }
+
+        /**
+         * Checks a skin entry without a category, repeating an effect kind or mapping the set of another entry fails at
+         * load naming the skin / fails if an incomplete or ambiguous mapping loads.
+         */
+        [TestCase("no category")]
+        [TestCase("repeated kind")]
+        [TestCase("same set")]
+        public void AFaultyCategoryEntryFailsAtLoadNamingTheSkin(string fault)
+        {
+            var charm = synthetic.Charm("test.charm");
+            var first = synthetic.Category();
+            var second = synthetic.Category();
+            var faulty = fault == "no category" ? new ModifierEffectsCategory(null, ModifierEffectKind.AddMultiplier) :
+                fault == "repeated kind" ? new ModifierEffectsCategory(second, ModifierEffectKind.AddMultiplier, ModifierEffectKind.AddMultiplier) :
+                new ModifierEffectsCategory(second, ModifierEffectKind.AddMultiplier, ModifierEffectKind.AddBaseScore);
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, new[]
+            {
+                new ModifierEffectsCategory(first, ModifierEffectKind.AddBaseScore),
+                new ModifierEffectsCategory(first, ModifierEffectKind.AddBaseScore, ModifierEffectKind.AddMultiplier),
+                faulty
+            });
+            var failure = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
+            Assert.That(failure.Message, Does.Contain(skin.name));
         }
 
         /** Checks every variant of a family shows the skin's name of the family / fails if the name comes from a variant's own display name. */
         [Test]
         public void EachVariantShowsTheSkinsNameOfItsFamily()
         {
-            var category = synthetic.Category();
             var first = synthetic.Charm("test.first", "family.shared");
             var second = synthetic.Charm("test.second", "family.shared");
             var other = synthetic.Charm("test.other", "family.other");
             var content = SyntheticCharms.Content(first, second, other);
             var charms = synthetic.Load(synthetic.Skin(new[]
             {
-                synthetic.Presentation(first, category, "Shared / First"),
-                synthetic.Presentation(second, category, "Second"),
-                synthetic.Presentation(other, category, "Other / Variant")
-            }, new[] { category }, families: new[]
+                synthetic.Presentation(first, "Shared / First"),
+                synthetic.Presentation(second, "Second"),
+                synthetic.Presentation(other, "Other / Variant")
+            }, families: new[]
             {
                 new ModifierFamilyWording(synthetic.Family("family.shared"), "Shared family"),
                 new ModifierFamilyWording(synthetic.Family("family.other"), "Other family")
@@ -238,12 +303,11 @@ namespace Dice.Tests
         [TestCase("twice")]
         public void AFamilyWithoutExactlyOneNameFailsAtLoad(string fault)
         {
-            var category = synthetic.Category();
             var charm = synthetic.Charm("test.charm", "family.test");
             var families = fault == "missing" ? new ModifierFamilyWording[0] :
                 fault == "blank" ? new[] { new ModifierFamilyWording(synthetic.Family("family.test"), " ") } :
                 new[] { new ModifierFamilyWording(synthetic.Family("family.test"), "One"), new ModifierFamilyWording(synthetic.Family("family.test"), "Two") };
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, families: families);
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, families: families);
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
@@ -251,10 +315,9 @@ namespace Dice.Tests
         [Test]
         public void ACharmWithoutPresentationFailsAtLoad()
         {
-            var category = synthetic.Category();
             var presented = synthetic.Charm("test.presented");
             var missing = synthetic.Charm("test.missing");
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(presented, category) }, new[] { category });
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(presented) });
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(presented, missing)));
         }
 
@@ -262,10 +325,8 @@ namespace Dice.Tests
         [Test]
         public void TwoPresentationsOfOneCharmFailAtLoad()
         {
-            var category = synthetic.Category();
             var charm = synthetic.Charm("test.twice");
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category, "First"), synthetic.Presentation(charm, category, "Second") },
-                new[] { category });
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, "First"), synthetic.Presentation(charm, "Second") });
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
@@ -273,11 +334,9 @@ namespace Dice.Tests
         [Test]
         public void APresentationOfACharmOutsideTheContentFailsAtLoad()
         {
-            var category = synthetic.Category();
             var used = synthetic.Charm("test.used");
             var unused = synthetic.Charm("test.unused");
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(used, category), synthetic.Presentation(unused, category) },
-                new[] { category });
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(used), synthetic.Presentation(unused) });
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(used)));
         }
 
@@ -347,8 +406,7 @@ namespace Dice.Tests
         public void IncompleteContributionWordingFailsAtLoad(string baseScore, string multiplier, string reroll, string rerolls)
         {
             var charm = synthetic.Charm("test.contribution");
-            var category = synthetic.Category();
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category },
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) },
                 contribution: new ModifierContributionWording(baseScore, multiplier, reroll, rerolls));
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
@@ -365,12 +423,11 @@ namespace Dice.Tests
         public void IncompleteTextFormatFailsAtLoadNamingTheField(string field)
         {
             var charm = synthetic.Charm("test.format");
-            var category = synthetic.Category();
             string Value(string name, string value) => name == field ? "" : value;
             var format = new ModifierTextFormat(Value("effect", "e"), Value("effectSeparator", " "), Value("compactEffect", "c"),
                 Value("labeledCompactEffect", "l"), Value("compactEffectSeparator", "\n"), Value("timing", "t"),
                 Value("contribution", "p"), Value("contributionSeparator", " "));
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, format: format);
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, format: format);
             var failure = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
             Assert.That(failure.Message, Does.Contain("text format " + field + "."));
         }
@@ -383,8 +440,7 @@ namespace Dice.Tests
             var serialized = new SerializedObject(charm);
             serialized.FindProperty("effects").arraySize = 0;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var category = synthetic.Category();
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, noEffectsText: " ");
+            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, noEffectsText: " ");
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
@@ -396,29 +452,26 @@ namespace Dice.Tests
             var serialized = new SerializedObject(charm);
             serialized.FindProperty("effects").arraySize = 0;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var category = synthetic.Category();
             var content = SyntheticCharms.Content(charm);
-            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category },
+            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm) },
                 noEffectsText: "Nothing happens"), content);
             Assert.That(charms.GetEffectText(content.GetDefinition(charm)), Is.EqualTo("Nothing happens"));
         }
 
-        /** Checks a presentation without its charm reference, name, condition text or category fails at load / fails if an incomplete presentation loads. */
+        /** Checks a presentation without its charm reference, name or condition text fails at load / fails if an incomplete presentation loads. */
         [TestCase("modifier")]
         [TestCase("displayName")]
         [TestCase("conditionTemplate")]
-        [TestCase("category")]
         public void AnIncompletePresentationFailsAtLoad(string field)
         {
-            var category = synthetic.Category();
             var charm = synthetic.Charm("test.incomplete");
-            var presentation = synthetic.Presentation(charm, category);
+            var presentation = synthetic.Presentation(charm);
             var serialized = new SerializedObject(presentation);
             SerializedProperty property = serialized.FindProperty(field);
             if (property.propertyType == SerializedPropertyType.ObjectReference) property.objectReferenceValue = null;
             else property.stringValue = " ";
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var skin = synthetic.Skin(new[] { presentation }, new[] { category });
+            var skin = synthetic.Skin(new[] { presentation });
             Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
@@ -426,26 +479,14 @@ namespace Dice.Tests
         [Test]
         public void APresentationWithoutAnIconFailsAtLoadNamingTheCharm()
         {
-            var category = synthetic.Category();
             var charm = synthetic.Charm("test.without_icon");
-            var presentation = synthetic.Presentation(charm, category);
+            var presentation = synthetic.Presentation(charm);
             var serialized = new SerializedObject(presentation);
             serialized.FindProperty("icon").objectReferenceValue = null;
             serialized.ApplyModifiedPropertiesWithoutUndo();
-            var skin = synthetic.Skin(new[] { presentation }, new[] { category });
+            var skin = synthetic.Skin(new[] { presentation });
             var error = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
             Assert.That(error.Message, Does.Contain("test.without_icon"));
-        }
-
-        /** Checks a presentation whose category the skin does not list fails at load / fails if an unlisted category is used. */
-        [Test]
-        public void ACategoryTheSkinDoesNotListFailsAtLoad()
-        {
-            var listed = synthetic.Category();
-            var unlisted = synthetic.Category();
-            var charm = synthetic.Charm("test.unlisted");
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm, unlisted) }, new[] { listed });
-            Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
         }
 
         /** Checks condition text with a placeholder other than {parameter} or {secondaryParameter} fails at load / fails if a broken placeholder loads. */
@@ -462,16 +503,14 @@ namespace Dice.Tests
         /** A presentation of one charm with the given condition text and the standard test wording. */
         private ModifierPresentationCatalog Single(ModifierAsset charm, string template = "Test condition.")
         {
-            var category = synthetic.Category();
-            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category, template: template) }, new[] { category }),
+            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, template: template) }),
                 SyntheticCharms.Content(charm));
         }
 
         /** A presentation of one charm with the given effect wording. */
         private ModifierPresentationCatalog Worded(ModifierAsset charm, ModifierEffectWording[] wording)
         {
-            var category = synthetic.Category();
-            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category) }, new[] { category }, wording),
+            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm) }, wording: wording),
                 SyntheticCharms.Content(charm));
         }
 
@@ -479,8 +518,7 @@ namespace Dice.Tests
         private ModifierPresentationCatalog Timed(ModifierAsset charm, ModifierPhaseWording[] phases,
             ModifierActivationLimitWording[] limits, string template = "Test condition.")
         {
-            var category = synthetic.Category();
-            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, category, template: template) }, new[] { category },
+            return synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm, template: template) },
                 phases: phases, limits: limits), SyntheticCharms.Content(charm));
         }
 

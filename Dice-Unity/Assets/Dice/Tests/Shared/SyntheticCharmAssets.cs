@@ -181,8 +181,8 @@ namespace Dice.Tests
         }
 
         /** A charm presentation; without a given icon it shows a fabricated one. */
-        public ModifierPresentationAsset Presentation(ModifierAsset modifier, ModifierCategoryPresentationAsset category,
-            string displayName = null, string template = "Test condition.", Sprite icon = null)
+        public ModifierPresentationAsset Presentation(ModifierAsset modifier, string displayName = null,
+            string template = "Test condition.", Sprite icon = null)
         {
 #if UNITY_EDITOR
             var presentation = Own(ScriptableObject.CreateInstance<ModifierPresentationAsset>());
@@ -191,13 +191,21 @@ namespace Dice.Tests
             serialized.FindProperty("modifier").objectReferenceValue = modifier;
             serialized.FindProperty("displayName").stringValue = displayName ?? "Name of " + modifier?.name;
             serialized.FindProperty("conditionTemplate").stringValue = template;
-            serialized.FindProperty("category").objectReferenceValue = category;
             serialized.FindProperty("icon").objectReferenceValue = icon != null ? icon : Icon();
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return presentation;
 #else
             throw EditorRequired();
 #endif
+        }
+
+        /** The category shown for every set of effect kinds, the set without kinds included. */
+        public static ModifierEffectsCategory[] EveryEffectSet(ModifierCategoryPresentationAsset category)
+        {
+            ModifierEffectKind[] kinds = Enum.GetValues(typeof(ModifierEffectKind)).Cast<ModifierEffectKind>().ToArray();
+            return Enumerable.Range(0, 1 << kinds.Length)
+                .Select(set => new ModifierEffectsCategory(category, kinds.Where((kind, index) => (set & (1 << index)) != 0).ToArray()))
+                .ToArray();
         }
 
         /** Distinct test wording for every effect kind. */
@@ -231,9 +239,12 @@ namespace Dice.Tests
             .Select(presentation => presentation.Modifier.Family).Distinct()
             .Select(family => new ModifierFamilyWording(family, "Family of " + family.name)).ToArray();
 
-        /** A skin of the given presentations and categories; without family names it names every family as FamilyWording does. */
+        /**
+         * A skin of the given presentations and categories of effect sets; without categories it shows every effect set
+         * in one category without a mark, and without family names it names every family as FamilyWording does.
+         */
         public ModifierSkinAsset Skin(IEnumerable<ModifierPresentationAsset> modifiers,
-            IEnumerable<ModifierCategoryPresentationAsset> categories, IEnumerable<ModifierEffectWording> wording = null,
+            IEnumerable<ModifierEffectsCategory> categories = null, IEnumerable<ModifierEffectWording> wording = null,
             string noEffectsText = "No effects", IEnumerable<ModifierPhaseWording> phases = null,
             IEnumerable<ModifierActivationLimitWording> limits = null, ModifierContributionWording contribution = null,
             IEnumerable<ModifierFamilyWording> families = null, ModifierTextFormat format = null)
@@ -244,7 +255,18 @@ namespace Dice.Tests
             var serialized = new SerializedObject(skin);
             ModifierPresentationAsset[] presentations = modifiers.ToArray();
             SetList(serialized.FindProperty("modifiers"), presentations);
-            SetList(serialized.FindProperty("categories"), categories.ToArray());
+            ModifierEffectsCategory[] categoryRows = (categories ?? EveryEffectSet(Category())).ToArray();
+            SerializedProperty categoryList = serialized.FindProperty("categories");
+            categoryList.arraySize = categoryRows.Length;
+            for (int i = 0; i < categoryRows.Length; ++i)
+            {
+                SerializedProperty element = categoryList.GetArrayElementAtIndex(i);
+                SerializedProperty kinds = element.FindPropertyRelative("effects");
+                kinds.arraySize = categoryRows[i].Effects.Count;
+                for (int j = 0; j < categoryRows[i].Effects.Count; ++j)
+                    kinds.GetArrayElementAtIndex(j).intValue = (int)categoryRows[i].Effects[j];
+                element.FindPropertyRelative("category").objectReferenceValue = categoryRows[i].Category;
+            }
             ModifierFamilyWording[] familyRows = (families ?? FamilyWording(presentations)).ToArray();
             SerializedProperty familyList = serialized.FindProperty("familyWording");
             familyList.arraySize = familyRows.Length;
@@ -319,8 +341,8 @@ namespace Dice.Tests
 
         /**
          * A presentation of every modifier of an engine catalog: each is paired with a charm asset of its id, named as
-         * TestModifiers names the id, and presented as "Name of <name>" with the condition text "Condition of <name>", the
-         * given category (or one with a fabricated symbol) and a fabricated icon.
+         * TestModifiers names the id, and presented as "Name of <name>" with the condition text "Condition of <name>" and a
+         * fabricated icon; every effect set shows the given category (or one with a fabricated symbol).
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null)
         {
@@ -332,9 +354,9 @@ namespace Dice.Tests
                 string name = TestModifiers.NameOf(definition.Identity);
                 ModifierAsset charm = CharmIn(Family(definition.Family), definition.Identity, name);
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
-                presentations.Add(Presentation(charm, category, template: "Condition of " + name));
+                presentations.Add(Presentation(charm, template: "Condition of " + name));
             }
-            return Load(Skin(presentations, new[] { category }), new MechanicalContent(catalog, pairs));
+            return Load(Skin(presentations, EveryEffectSet(category)), new MechanicalContent(catalog, pairs));
         }
 
         public void Dispose()

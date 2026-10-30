@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Measured Bundle / Base + Mult
   icon: {fileID: 21300000, guid: 326aebd9010b5f06a77b99ad76b87f12, type: 3}
   conditionTemplate: Largest matching group size equals hands remaining + 1 or rerolls remaining.
-  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

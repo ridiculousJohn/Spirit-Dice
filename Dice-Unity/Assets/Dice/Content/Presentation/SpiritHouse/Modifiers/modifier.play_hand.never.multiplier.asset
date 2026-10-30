@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Sleeping Stone / Mult
   icon: {fileID: 21300000, guid: e4dfb2c9fcfb52c48e0129b1e2fbc0ff, type: 3}
   conditionTemplate: Never activates.
-  category: {fileID: 11400000, guid: c3f2a82aa177a62459b4ea2c4e79b96c, type: 2}

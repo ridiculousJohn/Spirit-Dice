@@ -9,15 +9,19 @@ namespace Dice.Presentation
 {
     /**
      * The presentation of every charm of one loaded content, built at load from a skin. Each presentation is matched
-     * to its charm's definition through the presentation's own charm reference; a content charm without exactly one
-     * presentation, a content charm family without exactly one name, an effect kind, phase or activation limit the content uses without wording, or incomplete
-     * contribution wording or text format fails construction.
+     * to its charm's definition through the presentation's own charm reference, and each charm shows the category the
+     * skin maps the set of its effect kinds to. A content charm without exactly one presentation, a charm whose effect
+     * kinds the skin maps to no category, a content charm family without exactly one name, an effect kind, phase or
+     * activation limit the content uses without wording, or incomplete contribution wording or text format fails
+     * construction.
      */
     public sealed class ModifierPresentationCatalog
     {
         private readonly Dictionary<ModifierDefinition, ModifierPresentationAsset> entries =
             new Dictionary<ModifierDefinition, ModifierPresentationAsset>();
         private readonly Dictionary<ModifierDefinition, int> order = new Dictionary<ModifierDefinition, int>();
+        private readonly Dictionary<ModifierDefinition, ModifierCategoryPresentationAsset> categories =
+            new Dictionary<ModifierDefinition, ModifierCategoryPresentationAsset>();
         private readonly Dictionary<ModifierFamilyDefinition.Id, string> familyNames = new Dictionary<ModifierFamilyDefinition.Id, string>();
         private readonly Dictionary<ModifierEffectKind, ModifierEffectWording> wording =
             new Dictionary<ModifierEffectKind, ModifierEffectWording>();
@@ -39,12 +43,21 @@ namespace Dice.Presentation
                 skin.PhaseWording == null || skin.LimitWording == null)
                 throw new InvalidOperationException("The modifier skin " + skin.name + " has missing lists.");
             Catalog = content.Catalog;
-            var categories = new HashSet<ModifierCategoryPresentationAsset>();
-            foreach (ModifierCategoryPresentationAsset category in skin.Categories)
+            var effectCategories = new List<KeyValuePair<HashSet<ModifierEffectKind>, ModifierCategoryPresentationAsset>>();
+            foreach (ModifierEffectsCategory entry in skin.Categories)
             {
-                if (category == null) throw new InvalidOperationException("The modifier skin " + skin.name + " has a missing category.");
-                if (!categories.Add(category))
-                    throw new InvalidOperationException("The modifier skin " + skin.name + " lists the category " + category.name + " twice.");
+                if (entry == null || entry.Category == null || entry.Effects == null)
+                    throw new InvalidOperationException("The modifier skin " + skin.name + " has a missing category.");
+                var kinds = new HashSet<ModifierEffectKind>();
+                foreach (ModifierEffectKind kind in entry.Effects)
+                    if (!kinds.Add(kind))
+                        throw new InvalidOperationException("The modifier skin " + skin.name + " lists the effect " + kind +
+                            " twice for the category " + entry.Category.name + ".");
+                foreach (var listed in effectCategories)
+                    if (listed.Key.SetEquals(kinds))
+                        throw new InvalidOperationException("The modifier skin " + skin.name + " maps the effects " + Describe(kinds) +
+                            " to more than one category.");
+                effectCategories.Add(new KeyValuePair<HashSet<ModifierEffectKind>, ModifierCategoryPresentationAsset>(kinds, entry.Category));
             }
             var presented = new HashSet<ModifierAsset>();
             foreach (ModifierPresentationAsset presentation in skin.Modifiers)
@@ -56,7 +69,8 @@ namespace Dice.Presentation
                 if (!presented.Add(modifier))
                     throw new InvalidOperationException("The modifier skin " + skin.name + " has more than one presentation for the charm " + modifier.name + ".");
                 ModifierDefinition definition = content.GetDefinition(modifier);
-                Validate(presentation, categories);
+                Validate(presentation);
+                categories.Add(definition, CategoryOf(skin, effectCategories, definition, modifier));
                 order.Add(definition, entries.Count);
                 entries.Add(definition, presentation);
             }
@@ -150,7 +164,31 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The modifier skin " + skin.name + " has no text format " + field + ".");
         }
 
-        private static void Validate(ModifierPresentationAsset presentation, HashSet<ModifierCategoryPresentationAsset> categories)
+        /**
+         * The category the skin maps the set of the charm's effect kinds to. Several effects of one kind count as that
+         * kind once; every effect counts, since the engine rejects an effect whose amount is not positive.
+         */
+        private static ModifierCategoryPresentationAsset CategoryOf(ModifierSkinAsset skin,
+            List<KeyValuePair<HashSet<ModifierEffectKind>, ModifierCategoryPresentationAsset>> effectCategories,
+            ModifierDefinition definition, ModifierAsset modifier)
+        {
+            var kinds = new HashSet<ModifierEffectKind>();
+            foreach (ModifierEffect effect in definition.Effects) kinds.Add(effect.Kind);
+            foreach (var listed in effectCategories)
+                if (listed.Key.SetEquals(kinds)) return listed.Value;
+            throw new InvalidOperationException("The modifier skin " + skin.name + " has no category for the effects " + Describe(kinds) +
+                " of the charm " + modifier.name + ".");
+        }
+
+        /** The effect kinds in their declared order, as "(A, B)", or "(none)". */
+        private static string Describe(HashSet<ModifierEffectKind> kinds)
+        {
+            var sorted = new List<ModifierEffectKind>(kinds);
+            sorted.Sort();
+            return sorted.Count == 0 ? "(none)" : "(" + string.Join(", ", sorted) + ")";
+        }
+
+        private static void Validate(ModifierPresentationAsset presentation)
         {
             string id = presentation.Modifier.name;
             if (string.IsNullOrWhiteSpace(presentation.DisplayName))
@@ -164,11 +202,6 @@ namespace Dice.Presentation
             foreach (var value in presentation.Modifier.Condition.TextValues) unplaced = unplaced.Replace(Placeholder(value.Key), "");
             if (unplaced.IndexOf('{') >= 0 || unplaced.IndexOf('}') >= 0)
                 throw new InvalidOperationException("The condition template of " + presentation.name + " contains an unknown placeholder: " + id);
-            if (presentation.Category == null)
-                throw new InvalidOperationException("The charm presentation " + presentation.name + " requires a category: " + id);
-            if (!categories.Contains(presentation.Category))
-                throw new InvalidOperationException("The charm presentation " + presentation.name + " uses the category " +
-                    presentation.Category.name + ", which its skin does not list: " + id);
         }
 
         public string GetName(ModifierDefinition definition) => Entry(definition).DisplayName;
@@ -271,7 +304,13 @@ namespace Dice.Presentation
 
         public Sprite GetIcon(ModifierDefinition definition) => Entry(definition).Icon;
 
-        public ModifierCategoryPresentationAsset GetCategory(ModifierDefinition definition) => Entry(definition).Category;
+        /** The category the skin shows for the set of the charm's effect kinds. */
+        public ModifierCategoryPresentationAsset GetCategory(ModifierDefinition definition)
+        {
+            Entry(definition);
+            return categories[definition];
+        }
+
         public Color GetEffectColor(ModifierDefinition definition) => GetCategory(definition).AccentColor;
         public Color GetInkColor(ModifierDefinition definition) => GetCategory(definition).InkColor;
         /** The mark of the charm's category; null for a category without one. */

@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Crossed Beams / Mult
   icon: {fileID: 21300000, guid: e7094dad924e572b8d5900c77ad8ca99, type: 3}
   conditionTemplate: Die 2 times die 4 is at least the full dice sum.
-  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

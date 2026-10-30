@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Twin Knots / Rerolls
   icon: {fileID: 21300000, guid: 8bea5845137ea5b4b89e99ed74e09dce, type: 3}
   conditionTemplate: Category is Two Pair.
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

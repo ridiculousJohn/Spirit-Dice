@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Full Basket / Rerolls
   icon: {fileID: 21300000, guid: 12dfd240b92051fba41eafd0771acb79, type: 3}
   conditionTemplate: Dice sum exceeds {parameter}.
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Descending Stream / Rerolls
   icon: {fileID: 21300000, guid: f74e87086cb457a48c5762ffd335f2e2, type: 3}
   conditionTemplate: Category ranks below the previous played hand (High Die if none).
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

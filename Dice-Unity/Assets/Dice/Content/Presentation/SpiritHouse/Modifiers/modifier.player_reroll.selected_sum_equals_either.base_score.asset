@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Twin Bowls / Base
   icon: {fileID: 21300000, guid: eddc68de510254cd9deb728ac247abc7, type: 3}
   conditionTemplate: Rerolled dice sum to {parameter} or {secondaryParameter}; at least one die was rerolled.
-  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Counting Bead / Mult
   icon: {fileID: 21300000, guid: 91cf35f50aeb5b678ac88707f1bc112b, type: 3}
   conditionTemplate: Exactly one rerolled die face equals the number of dice rerolled.
-  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

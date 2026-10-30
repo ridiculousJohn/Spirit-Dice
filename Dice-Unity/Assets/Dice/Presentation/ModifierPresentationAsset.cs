@@ -13,12 +13,10 @@ namespace Dice.Presentation
         [SerializeField] private Sprite icon;
         /** The condition's wording; each {name} shows the text value of that name of the referenced modifier's condition. */
         [SerializeField] private string conditionTemplate;
-        [SerializeField] private ModifierCategoryPresentationAsset category;
 
         public ModifierAsset Modifier => modifier;
         public string DisplayName => displayName;
         public Sprite Icon => icon;
         public string ConditionTemplate => conditionTemplate;
-        public ModifierCategoryPresentationAsset Category => category;
     }
 }

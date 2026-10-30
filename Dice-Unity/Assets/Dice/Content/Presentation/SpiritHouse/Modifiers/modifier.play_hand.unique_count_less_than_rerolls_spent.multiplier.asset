@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Polished Shells / Mult
   icon: {fileID: 21300000, guid: 27c4baf8116c5af79f531c14e4f33f63, type: 3}
   conditionTemplate: Number of distinct faces is below rerolls spent on this hand.
-  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}

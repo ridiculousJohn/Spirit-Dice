@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Nestled Twins / Base + Mult
   icon: {fileID: 21300000, guid: a02087bed68851f689d87efdfc151fb6, type: 3}
   conditionTemplate: At least two of dice 2, 3, 4 share a face.
-  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

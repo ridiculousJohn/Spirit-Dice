@@ -84,9 +84,9 @@ fallback, an unlock reward list, an encounter's starting charms or a progression
 grant. The charm inspector's read-only Offered by section lists each encounter whose
 `encounterModifiers` holds the charm (click to ping, double-click to select) and
 warns when no encounter or more than one lists it.
-The family provisionally reuses the existing Last Lantern artwork and the standard
-effect-category assets. Replace the shared artwork only when dedicated art is
-approved. The favored-face rule itself still adds +2 Mult per matching scored die.
+The family provisionally reuses the existing Last Lantern artwork; its variants show
+the standard categories of their effects. Replace the shared artwork only when
+dedicated art is approved. The favored-face rule itself still adds +2 Mult per matching scored die.
 
 The mechanical condition is `FavoredFaceCountAtLeastConditionConfig` with
 `count: 2`, which builds `FavoredFaceCountAtLeastCondition`. Each modifier and its presentation remain
@@ -108,8 +108,8 @@ moth's. They trigger when at least three dice show the face of a die bound by
 the encounter's binding rule (`NymphBinding.asset`); the bound die counts toward
 the three. Provisional effects are +10 Base, +2 Mult, +5 Base and +1 Mult, and
 +1 reroll. Each is tier 1 and once per hand. The family provisionally reuses the
-Joined Roots icon and artwork and the standard effect-category assets until
-dedicated art is approved. The mechanical condition is
+Joined Roots icon and artwork until dedicated art is approved; its variants show the
+standard categories of their effects. The mechanical condition is
 `BoundFaceCountAtLeastConditionConfig` with `count: 3`, which builds
 `BoundFaceCountAtLeastCondition`.
 

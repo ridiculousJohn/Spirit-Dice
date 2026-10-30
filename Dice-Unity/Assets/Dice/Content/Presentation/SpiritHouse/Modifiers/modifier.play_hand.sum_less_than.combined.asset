@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Light Basket / Base + Mult
   icon: {fileID: 21300000, guid: 30d7001f8467517eb875a26ee8e028a7, type: 3}
   conditionTemplate: Dice sum is less than {parameter}.
-  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

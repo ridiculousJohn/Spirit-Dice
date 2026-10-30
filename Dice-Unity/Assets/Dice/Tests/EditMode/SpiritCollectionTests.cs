@@ -205,8 +205,8 @@ namespace Dice.Tests
             var multiplier = synthetic.Charm("order.multiplier", "order", effects: new AddMultiplierEffectConfig(1));
             var rerolls = synthetic.Charm("order.rerolls", "order", effects: new AddRerollsEffectConfig(1));
             var content = SyntheticCharms.Content(baseScore, multiplier, rerolls);
-            var skin = synthetic.Skin(new[] { rerolls, baseScore, multiplier }.Select(charm => synthetic.Presentation(charm, category)),
-                new[] { category });
+            var skin = synthetic.Skin(new[] { rerolls, baseScore, multiplier }.Select(charm => synthetic.Presentation(charm)),
+                SyntheticCharms.EveryEffectSet(category));
             view.Show(content.Catalog, synthetic.Load(skin, content), Array.Empty<ModifierDefinition.Id>(), journeys);
             var row = view.Rows.Single();
             var listed = Enumerable.Range(0, 3).Select(index =>

@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Joined Roots / Base
   icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   conditionTemplate: An interior die equals the sum of its two neighbors.
-  category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}

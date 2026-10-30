@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Strong Fence / Rerolls
   icon: {fileID: 21300000, guid: de8bc03a5fcf501c9907caf21e2be568, type: 3}
   conditionTemplate: Dice 1 + 5 exceed the sum of dice 2 + 3 + 4.
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

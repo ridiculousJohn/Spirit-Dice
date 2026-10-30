@@ -318,11 +318,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2256094b59a49b5409c1dd2069316d5d, type: 2}
   - {fileID: 11400000, guid: d4a1839958afd284197a52beede231fb, type: 2}
   categories:
-  - {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}
-  - {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}
-  - {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}
-  - {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}
-  - {fileID: 11400000, guid: c3f2a82aa177a62459b4ea2c4e79b96c, type: 2}
+  - effects: 00000000i
+    category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}
+  - effects: 01000000i
+    category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}
+  - effects: 0000000001000000i
+    category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}
+  - effects: 02000000i
+    category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}
+  - effects: 
+    category: {fileID: 11400000, guid: c3f2a82aa177a62459b4ea2c4e79b96c, type: 2}
   familyWording:
   - family: {fileID: 11400000, guid: 1099eae1ed344ad4d8ffaea3413c1123, type: 2}
     name: Open Gate

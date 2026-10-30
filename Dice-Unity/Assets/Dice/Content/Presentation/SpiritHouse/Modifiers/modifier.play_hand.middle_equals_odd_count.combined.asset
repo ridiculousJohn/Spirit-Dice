@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Counting Lantern / Base + Mult
   icon: {fileID: 21300000, guid: f5449072bed15678883d4e095da3592a, type: 3}
   conditionTemplate: Die 3 equals the number of odd faces.
-  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

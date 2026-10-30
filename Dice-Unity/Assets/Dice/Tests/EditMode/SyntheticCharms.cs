@@ -27,7 +27,7 @@ namespace Dice.Tests
         /** A presentation of the given modifiers in a one-encounter catalog, as For(catalog) presents them. */
         public ModifierPresentationCatalog For(params ModifierDefinition[] definitions) => For(Catalog(definitions));
 
-        /** A presentation of the given modifiers in a one-encounter catalog with the given category. */
+        /** A presentation of the given modifiers in a one-encounter catalog, every effect set showing the given category. */
         public ModifierPresentationCatalog For(ModifierCategoryPresentationAsset category, params ModifierDefinition[] definitions)
             => For(Catalog(definitions), category);
 

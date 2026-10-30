@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Woven Mat / Base + Mult
   icon: {fileID: 21300000, guid: b2e9561858f75029a2cc5dbf33814613, type: 3}
   conditionTemplate: Odd and even faces alternate across all five dice.
-  category: {fileID: 11400000, guid: eb0a78f151b7437f9047e0f18a3e69dd, type: 2}

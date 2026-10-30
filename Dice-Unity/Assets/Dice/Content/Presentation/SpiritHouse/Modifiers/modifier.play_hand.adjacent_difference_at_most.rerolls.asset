@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Close Branches / Rerolls
   icon: {fileID: 21300000, guid: 804de957606e5517bcea17e6faf6950d, type: 3}
   conditionTemplate: Every adjacent face difference is at most {parameter}.
-  category: {fileID: 11400000, guid: 61df79abdc6f43cc83188d1d5ee8585a, type: 2}

@@ -16,4 +16,3 @@ MonoBehaviour:
   displayName: Second Chance / Mult
   icon: {fileID: 21300000, guid: b13cfb3966706d84289cf3aa1b5d79f1, type: 3}
   conditionTemplate: At least one rerolled die kept its previous face.
-  category: {fileID: 11400000, guid: c870c39947b5424f952b4230813d2b6b, type: 2}
