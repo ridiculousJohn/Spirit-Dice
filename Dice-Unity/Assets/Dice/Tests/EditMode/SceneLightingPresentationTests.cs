@@ -216,6 +216,16 @@ namespace Dice.Tests
             Assert.That(physical.color, Is.EqualTo(original));
         }
 
+        /** Checks scene lighting without a shader fails validation, naming the asset / fails if it passes until first drawn. */
+        [Test]
+        public void SceneLightingWithoutAShaderFailsValidation()
+        {
+            Assert.DoesNotThrow(asset.Validate);
+            asset.name = "Synthetic Scene Lighting";
+            asset.Shader = null;
+            Assert.That(Assert.Throws<InvalidOperationException>(asset.Validate).Message, Does.Contain(asset.name));
+        }
+
         [Test]
         public void InstanceOverrideArraysAreCopiedAndMalformedInputDoesNotReplaceTheCurrentSample()
         {

@@ -114,7 +114,10 @@ namespace Dice.Presentation
                     "Layer " + layer.Id + " has invalid Pivot.");
                 Require(FiniteValue.Is(layer.Rotation) && FiniteValue.Is(layer.Tint), "Layer " + layer.Id + " has invalid tint or rotation.");
                 if (layer.Smoke != null && layer.Smoke.Enabled)
+                {
                     Require(!layer.Silhouette, "Layer " + layer.Id + " cannot use both silhouette and smoke materials.");
+                    Require(SmokeShader != null, "Layer " + layer.Id + " of the host " + name + " animates as smoke and requires the host's Smoke Shader.");
+                }
                 if (layer.Lighting != null && layer.Lighting.Configured)
                 {
                     Require(!layer.Silhouette && (layer.Smoke == null || !layer.Smoke.Enabled) && layer.ReceiveSceneLighting,

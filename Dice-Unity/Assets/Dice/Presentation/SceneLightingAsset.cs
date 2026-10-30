@@ -53,6 +53,7 @@ namespace Dice.Presentation
 
         public void Validate()
         {
+            if (Shader == null) throw new InvalidOperationException("The scene lighting " + name + " requires a shader.");
             if (BaseTexture == null) throw new InvalidOperationException("Scene lighting requires a base texture.");
             if (Lights == null || Lights.Length > MaximumLights)
                 throw new InvalidOperationException("Scene lighting supports up to " + MaximumLights + " light layers.");

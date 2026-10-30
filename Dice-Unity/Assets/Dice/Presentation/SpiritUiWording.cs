@@ -31,6 +31,18 @@ namespace Dice.Presentation
         /** Fills a placeholder with a score, written with the digit grouping of score counters. */
         public static string FillScore(string template, string name, long value) =>
             Fill(template, name, DiagnosticText.Number(value));
+
+        /**
+         * Whether every brace in the template belongs to a {name} placeholder of the given names; any brace left once
+         * those placeholders are removed is an unknown or malformed placeholder. A null template has none.
+         */
+        public static bool UsesOnly(string template, IEnumerable<string> names)
+        {
+            if (names == null) throw new ArgumentNullException(nameof(names));
+            if (template == null) return true;
+            foreach (string name in names) template = Fill(template, name, "");
+            return template.IndexOf('{') < 0 && template.IndexOf('}') < 0;
+        }
     }
 
     /** Checks one section of a wording asset; a missing field fails with its asset, section and field names. */

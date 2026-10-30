@@ -84,6 +84,7 @@ namespace Dice.Tests
             Assert.That(instance, Is.Not.SameAs(Rig.SurfaceMaterial));
             var lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
             resources.Add(lighting);
+            lighting.Shader = TestShaders.Load(TestShaders.SceneLighting);
             lighting.BaseTexture = Texture2D.whiteTexture;
             lighting.Lights = new SceneLightLayer[0];
             var state = new SceneLightingState();

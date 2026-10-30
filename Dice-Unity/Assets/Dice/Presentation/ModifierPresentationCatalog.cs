@@ -198,10 +198,7 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires a display name: " + id);
             if (string.IsNullOrWhiteSpace(presentation.ConditionTemplate))
                 throw new InvalidOperationException("The charm presentation " + presentation.name + " requires condition text: " + id);
-            // Any brace left once the condition's own placeholders are removed is an unknown or malformed placeholder.
-            string unplaced = presentation.ConditionTemplate;
-            foreach (var value in presentation.Modifier.Condition.TextValues) unplaced = unplaced.Replace(Placeholder(value.Key), "");
-            if (unplaced.IndexOf('{') >= 0 || unplaced.IndexOf('}') >= 0)
+            if (!SpiritWordingTemplate.UsesOnly(presentation.ConditionTemplate, presentation.Modifier.Condition.TextValues.Keys))
                 throw new InvalidOperationException("The condition template of " + presentation.name + " contains an unknown placeholder: " + id);
         }
 

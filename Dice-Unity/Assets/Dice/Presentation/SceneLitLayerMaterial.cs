@@ -20,7 +20,8 @@ namespace Dice.Presentation
         private static readonly int FrameTransformId = Shader.PropertyToID("_SceneLitFrameTransform");
         private static readonly int MapRectId = Shader.PropertyToID("_SceneLitMapRect");
         private static readonly int WrapId = Shader.PropertyToID("_SceneLitWrap");
-        private static readonly int[] ModeIds = SceneLightingAsset.LightPropertyIds("_SceneLitMode");
+        private const string ModeProperty = "_SceneLitMode";
+        private static readonly int[] ModeIds = SceneLightingAsset.LightPropertyIds(ModeProperty);
         private static readonly int[] ReferenceIds = SceneLightingAsset.LightPropertyIds("_SceneLitReferenceTex");
         private static readonly int[] ResponseMapIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseTex");
         private static readonly int[] ResponseEnabledIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseEnabled");
@@ -84,6 +85,8 @@ namespace Dice.Presentation
 
         public static bool UsesLitShader(Material material) => material != null && material.HasProperty(ModeIds[0]);
 
+        /** Whether the shader has scene lit layer properties, so a lit layer material can be made from it. */
+        public static bool IsLitShader(Shader shader) => shader != null && shader.FindPropertyIndex(ModeProperty + 0) >= 0;
         /**
          * A copy of a lit material's properties on the preview shader, whose single pass (pass 0) blits the lit composition
          * opaque, without vertex color, alpha or layer mask. It is a separate shader because UGUI draws every pass of a

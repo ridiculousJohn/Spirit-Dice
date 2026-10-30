@@ -93,6 +93,7 @@ namespace Dice.Tests
         [TestCase("shape offsets off the grid")]
         [TestCase("nonfinite layer weight")]
         [TestCase("mesh alpha above one")]
+        [TestCase("smoke layer without a smoke shader")]
         public void ValidateRejectsInvalidAuthoredData(string error)
         {
             SpiritPortraitTrack track = Track(Figure, X, Add, AnimationCurve.Linear(0f, 0f, 1f, 1f));
@@ -115,6 +116,7 @@ namespace Dice.Tests
                 case "shape offsets off the grid": mesh.Shapes[0].Offsets = new Vector2[3]; break;
                 case "nonfinite layer weight": presentation.Layers[Figure].Weights = new[] { float.NaN }; break;
                 case "mesh alpha above one": mesh.Alpha = new[] { 0f, 0f, 0f, 2f }; break;
+                case "smoke layer without a smoke shader": presentation.Layers[Ribbon].Smoke = new SpiritPortraitSmoke { Enabled = true }; break;
             }
             Assert.Throws<InvalidOperationException>(presentation.Validate);
         }

@@ -103,6 +103,40 @@ namespace Dice.Tests
             foreach (var source in voices) source.Stop();
         }
 
+        /**
+         * Checks encounter audio accepts prop sources of their own and refuses a prop source shared with another prop voice
+         * or with a cue, ambience, creak or roll source, naming the component / fails if a shared source, whose next sound
+         * would cut the other off, passes or distinct sources are refused.
+         */
+        [Test]
+        public void EachPropVoiceHasASourceOfItsOwn()
+        {
+            var root = new GameObject("Synthetic Encounter Audio");
+            resources.Add(root);
+            root.SetActive(false);
+            var audio = root.AddComponent<SpiritEncounterAudio>();
+            AudioSource Voice(string name)
+            {
+                var child = new GameObject(name);
+                child.transform.SetParent(root.transform, false);
+                return child.AddComponent<AudioSource>();
+            }
+            AudioSource ambience = Voice("Ambience"), creak = Voice("Creak"), roll = Voice("Roll"), cue = Voice("Cue");
+            AudioSource prop = Voice("Prop"), otherProp = Voice("Other Prop");
+            SyntheticUi.Set(audio, "ambienceSource", ambience);
+            SyntheticUi.Set(audio, "creakSource", creak);
+            SyntheticUi.Set(audio, "rollSource", roll);
+            SyntheticUi.Set(audio, "cueSources", new[] { cue, Voice("Second Cue") });
+            SyntheticUi.Set(audio, "propSources", new[] { prop, otherProp });
+            Assert.DoesNotThrow(() => audio.BeginRoll(1));
+            foreach (AudioSource shared in new[] { prop, cue, ambience, creak, roll })
+            {
+                SyntheticUi.Set(audio, "propSources", new[] { prop, shared });
+                Assert.That(Assert.Throws<System.InvalidOperationException>(() => audio.BeginRoll(1), shared.name).Message,
+                    Does.Contain(root.name));
+            }
+        }
+
         private AudioClip Clip(string name)
         {
             var clip = AudioClip.Create(name, 4410, 1, 44100, false);

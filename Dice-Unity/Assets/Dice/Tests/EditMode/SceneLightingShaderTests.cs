@@ -267,6 +267,7 @@ namespace Dice.Tests
         {
             var asset = ScriptableObject.CreateInstance<SceneLightingAsset>();
             objects.Add(asset);
+            asset.Shader = TestShaders.Load(TestShaders.SceneLighting);
             asset.BaseTexture = Texture(ambient);
             asset.Lights = lights;
             return asset;

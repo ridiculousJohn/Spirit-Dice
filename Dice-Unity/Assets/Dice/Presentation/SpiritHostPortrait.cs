@@ -96,6 +96,19 @@ namespace Dice.Presentation
             if (portraitRoot == null || authoredLayers == null || authoredLayers.Length != asset.Layers.Length)
                 throw new InvalidOperationException("The host portrait requires its authored image layers.");
             asset.Validate();
+            // Whether a lit layer needs the host's lit-layer shader depends on the material authored on the portrait's image,
+            // so it is checked here, before anything is built.
+            for (int i = 0; i < asset.Layers.Length; ++i)
+            {
+                SpiritPortraitLayer source = asset.Layers[i];
+                var image = authoredLayers[i];
+                if (image == null) throw new InvalidOperationException("An authored portrait layer is missing.");
+                if (source.Lighting != null && source.Lighting.Configured && !SceneLitLayerMaterial.UsesLitShader(image.material) &&
+                    !SceneLitLayerMaterial.IsLitShader(asset.LitLayerShader))
+                    throw new InvalidOperationException("The lit layer " + source.Id + " of the host " + asset.name + " has an " +
+                        "authored material without a lit-layer shader and requires the host's Lit Layer Shader, a shader with " +
+                        "scene lit layer properties.");
+            }
             presentation = asset;
             referenceSize = portraitRoot.rect.size;
             portraitOffset = portraitRoot.anchoredPosition;
@@ -116,7 +129,6 @@ namespace Dice.Presentation
             {
                 SpiritPortraitLayer source = asset.Layers[i];
                 var image = authoredLayers[i];
-                if (image == null) throw new InvalidOperationException("An authored portrait layer is missing.");
                 SpiritSmokeMaterial smoke = source.Smoke != null && source.Smoke.Enabled
                     ? new SpiritSmokeMaterial(asset.SmokeShader, image.material) : null;
                 if (smoke != null) image.material = smoke.Material;

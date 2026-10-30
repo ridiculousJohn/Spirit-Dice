@@ -95,6 +95,8 @@ namespace Dice.Presentation
             if (!matches)
                 throw Invalid(journey, index, "plays in the table scene " + table.name + ", whose rule cards do not match the rules of " +
                     encounter.name);
+            foreach (var rule in definition.Rules)
+                EncounterRulePresentationAsset.For(table.RulePresentations, rule.Identity).ValidateText(rule);
         }
     }
 }

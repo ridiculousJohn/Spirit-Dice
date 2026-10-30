@@ -80,9 +80,15 @@ namespace Dice.Presentation
                 throw new InvalidOperationException("Encounter audio requires authored audio sources.");
             foreach (AudioSource source in cueSources)
                 if (source == null) throw new InvalidOperationException("An encounter audio cue source is missing.");
-            foreach (AudioSource source in propSources)
-                if (source == null || Array.IndexOf(cueSources, source) >= 0)
-                    throw new InvalidOperationException("Encounter audio prop sources must be authored apart from the cue sources.");
+            // A source playing a new clip cuts off the one it was playing, so each prop voice has its own source.
+            for (int i = 0; i < propSources.Length; ++i)
+            {
+                AudioSource source = propSources[i];
+                if (source == null || Array.IndexOf(propSources, source) != i || Array.IndexOf(cueSources, source) >= 0 ||
+                    source == ambienceSource || source == creakSource || source == rollSource)
+                    throw new InvalidOperationException("The encounter audio " + name + " requires prop source " + i + " to be " +
+                        "authored, apart from the other prop sources and from the cue, ambience, creak and roll sources.");
+            }
         }
 
         /** Times a roll of the dice count and schedules its recording; the timing holds even when audio is muted or suspended. */

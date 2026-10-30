@@ -55,6 +55,9 @@ namespace Dice.Engine
         internal virtual EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
             => new EncounterRuleSnapshot(Identity, ShowsAvailable(state));
 
+        /** The names of the values this rule's snapshots supply in TextValues, which its card text may show as {name}. */
+        public virtual IReadOnlyList<string> TextValueNames => Array.Empty<string>();
+
         /** Snapshots report a rule as available only while the encounter is playing. */
         private protected bool ShowsAvailable(EncounterState state) => state.Phase == EncounterPhase.Playing && IsAvailable(state);
 
@@ -191,6 +194,10 @@ namespace Dice.Engine
 
     public sealed class CyclingFavoredFaceMultiplierRuleDefinition : EncounterRuleDefinition
     {
+        /** The name the snapshot supplies the favored face under, shown in card text as {face}. */
+        internal const string FavoredFaceTextName = "face";
+        private static readonly IReadOnlyList<string> FavoredFaceTextNames = Array.AsReadOnly(new[] { FavoredFaceTextName });
+
         /** The multiplier each scored die showing the favored face adds. */
         public int MultiplierPerFavoredDie { get; }
 
@@ -201,6 +208,8 @@ namespace Dice.Engine
         }
 
         internal override bool IsAvailable(EncounterState state) => true;
+
+        public override IReadOnlyList<string> TextValueNames => FavoredFaceTextNames;
 
         /** The persisted encounter-wide hand count keeps the cycle stable through stage changes and resume. */
         internal static int FavoredFace(long totalHandsPlayed) => (int)(totalHandsPlayed % DiceValues.FaceCount) + DiceValues.MinimumFace;
@@ -265,7 +274,8 @@ namespace Dice.Engine
         {
             if (!DiceValues.IsFace(favoredFace)) throw new ArgumentOutOfRangeException(nameof(favoredFace));
             FavoredFace = favoredFace;
-            textValues = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(StringComparer.Ordinal) { ["face"] = favoredFace });
+            textValues = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>(StringComparer.Ordinal)
+                { [CyclingFavoredFaceMultiplierRuleDefinition.FavoredFaceTextName] = favoredFace });
         }
 
         private protected override bool StateEquals(EncounterRuleSnapshot other) => FavoredFace == ((FavoredFaceRuleSnapshot)other).FavoredFace;

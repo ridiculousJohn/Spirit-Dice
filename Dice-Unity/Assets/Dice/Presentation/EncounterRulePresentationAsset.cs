@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using UnityEngine;
 using Dice.Engine;
 using Dice.UnityContent;
@@ -43,9 +42,28 @@ namespace Dice.Presentation
         {
             string text = rule.IsAvailable ? availableText : usedText;
             if (text == null) return null;
-            foreach (var value in rule.TextValues)
-                text = text.Replace("{" + value.Key + "}", value.Value.ToString(CultureInfo.InvariantCulture));
+            foreach (var value in rule.TextValues) text = SpiritWordingTemplate.Fill(text, value.Key, value.Value);
             return text;
+        }
+
+        /**
+         * Fails, naming the card and its rule, when its available or used text has a placeholder the rule's snapshots do
+         * not supply, which would show on screen as written.
+         */
+        internal void ValidateText(EncounterRuleDefinition definition)
+        {
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            RequireSuppliedPlaceholders(availableText, "available", definition);
+            RequireSuppliedPlaceholders(usedText, "used", definition);
+        }
+
+        private void RequireSuppliedPlaceholders(string text, string field, EncounterRuleDefinition definition)
+        {
+            if (SpiritWordingTemplate.UsesOnly(text, definition.TextValueNames)) return;
+            string supplied = definition.TextValueNames.Count == 0 ? "none"
+                : "{" + string.Join("}, {", definition.TextValueNames) + "}";
+            throw new FormatException("The " + field + " text of the rule card " + name + " has a placeholder its rule " +
+                (rule != null ? rule.name : "(none)") + " does not supply, or a stray brace; the rule supplies " + supplied + ".");
         }
 
         /** The card among the cards that presents the rule, or null when none does. */

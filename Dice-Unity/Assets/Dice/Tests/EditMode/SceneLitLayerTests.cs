@@ -222,6 +222,26 @@ namespace Dice.Tests
             Assert.Throws<InvalidOperationException>(host.Validate);
         }
 
+        /**
+         * Checks a host lit layer whose authored material is not lit fails the portrait's build, naming the host, without
+         * the host's lit-layer shader, and builds once its authored material is lit / fails if the missing shader passes the
+         * build or a lit authored material is refused without it.
+         */
+        [Test]
+        public void HostLitLayerOverAnUnlitMaterialRequiresTheLitLayerShader()
+        {
+            var host = Own(ScriptableObject.CreateInstance<SpiritHostPresentationAsset>());
+            host.name = "Synthetic Lit Host";
+            host.Layers = new[] { new SpiritPortraitLayer { Id = "lit", Texture = Texture2D.whiteTexture, Size = new Vector2(32, 32),
+                Lighting = new SceneLitLayer { Lights = new[] { new SceneLitLayerLight() } } } };
+            RectTransform parent = Own(new GameObject("Host Parent", typeof(RectTransform))).GetComponent<RectTransform>();
+            SpiritHostPortrait portrait = SpiritPortraitTestAuthoring.Create(host, parent);
+            Own(portrait.gameObject);
+            Assert.That(Assert.Throws<InvalidOperationException>(() => portrait.Build(host)).Message, Does.Contain(host.name));
+            portrait.GetComponentsInChildren<SpiritPortraitImage>(true).Single().material = Own(new Material(shader));
+            Assert.DoesNotThrow(() => portrait.Build(host));
+        }
+
         /** Checks host layers lit per pixel take the shared sample through a lit material while other layers keep the uniform tint, and clearing restores both / fails if a lit layer is also tinted, ignores the sample or keeps its runtime material. */
         [Test]
         public void HostLitLayersUseTheSharedSampleWhileUnconfiguredLayersKeepUniformTint()

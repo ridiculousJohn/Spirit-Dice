@@ -21,6 +21,7 @@ namespace Dice.Tests
             rig.Stage.localPosition = new Vector3(3, -2, 5);
             rig.Stage.localRotation = Quaternion.Euler(0, 30, 0);
             lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
+            lighting.Shader = TestShaders.Load(TestShaders.SceneLighting);
             lighting.BaseTexture = Texture2D.whiteTexture;
             lighting.Lights = new[]
             {

@@ -171,6 +171,24 @@ namespace Dice.Tests
             Assert.That(presentation.TextFor(new EncounterRuleSnapshot(favored, true)), Is.EqualTo("Favored {face} of {count}"));
         }
 
+        /**
+         * Checks that a card whose available and used text use only the placeholders its rule supplies passes, and that a
+         * card using one its rule does not supply, in either text, fails naming the card. Fails if a supplied placeholder is
+         * rejected or an unsupplied one is accepted.
+         */
+        [Test]
+        public void ARuleCardMayUseOnlyThePlaceholdersItsRuleSupplies()
+        {
+            var favored = TestRules.IdOf("favored");
+            var rule = new CyclingFavoredFaceMultiplierRuleDefinition(favored, 2);
+            Assert.DoesNotThrow(() => Presentation(favored, ModifierPhase.PlayHand, "Face {face}", "Spent {face}").ValidateText(rule));
+            var unknownAvailable = Presentation(favored, ModifierPhase.PlayHand, "Face {count}", "Spent {face}");
+            Assert.That(Assert.Throws<FormatException>(() => unknownAvailable.ValidateText(rule)).Message,
+                Does.Contain(unknownAvailable.name));
+            Assert.Throws<FormatException>(() => Presentation(favored, ModifierPhase.PlayHand, "Face", "Spent {face}")
+                .ValidateText(new FirstRerollFreeRuleDefinition(favored)));
+        }
+
         /** A one-stage test encounter with the given rule. */
         private static EncounterSession Session(EncounterRuleDefinition rule)
         {

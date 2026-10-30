@@ -71,6 +71,19 @@ namespace Dice.Tests
                 Is.EqualTo(false));
         }
 
+        /**
+         * Checks the names the rule declares for its card text are exactly the keys of the values its snapshot supplies /
+         * fails if a card could use a declared name the snapshot never fills, or the snapshot fills a name no card may use.
+         */
+        [Test]
+        public void DeclaredTextValueNamesAreTheSnapshotsTextValueKeys()
+        {
+            var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 3, 3)), EncounterId, 27);
+            var definition = session.Definition.Rules.Single();
+            Assert.That(session.Snapshot.EncounterRules.Single().TextValues.Keys, Is.EquivalentTo(definition.TextValueNames));
+            Assert.That(definition.TextValueNames, Is.Not.Empty);
+        }
+
         private static MechanicalCatalog RuleCatalog(params StageDefinition[] stages)
             => new MechanicalCatalog("test.cycling_favored_face", TestContent.Hands(), new[]
             {

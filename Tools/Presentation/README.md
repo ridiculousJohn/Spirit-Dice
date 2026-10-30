@@ -47,7 +47,7 @@ The production body and wing smoke use aligned 1536x1024 canvases. `--foot-x` an
 
 The small moths follow independent closed waypoint schedules with short darts, holds, reversals and banking. Their arrival tracks use `EntryWeight` to start at the currently displayed waiting pose, then decay that offset before the blue layers appear. Entry weights apply to state transitions through the shared host renderer; repeated arrival progress updates retain the original entry pose. The departing moth doubles back before growing toward the rail. Arrival continues directly into dialogue, static narration waits for input without a timed lock, and gameplay fades in for 0.3 seconds before rolling.
 
-Any host layer can enable `Smoke` and supply its own motion mask and repeating flow-noise texture. Missing textures use generated defaults. Import custom mask/noise textures as linear data; smoke artwork uses ordinary color and alpha. Smoke and silhouette materials belong on separate layers. Tint, deformation and timeline opacity still apply to smoke layers.
+Any host layer can enable `Smoke` and supply its own motion mask and repeating flow-noise texture. The layer's authored smoke material must supply both textures; a missing one fails when the host is built. Import custom mask/noise textures as linear data; smoke artwork uses ordinary color and alpha. Smoke and silhouette materials belong on separate layers. Tint, deformation and timeline opacity still apply to smoke layers.
 
 ## Haunted merchant
 
