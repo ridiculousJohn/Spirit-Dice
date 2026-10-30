@@ -1,0 +1,12 @@
+Use case: edit: precise-object-removal, background reconstruction
+Asset type: clean background plate for a 2D game scene (painted digital illustration, night swamp, upper left of a huge black tree)
+Primary request: Remove all the long hanging Spanish moss strands that hang down from the near tree's branches, and reconstruct the scene behind them as if the moss had never been there.
+Input images: Image 1: edit target
+What to remove (all of it, completely): every hanging moss strand and tassel of the near tree, pale olive-green and grey-brown, including the bright pale strand near the middle, the dark thin strands on the left and the strands hanging in front of the trunk on the right, with their thin wispy tips.
+Reconstruction: continue the dark blue cloudy night sky behind the strands; continue the bare dark branches and thin twigs where the strands hung over them, with the same shapes, thickness and silhouettes; continue the near tree's dark trunk and bark on the right; continue the distant misty swamp trees and their silhouettes near the bottom.
+Keep unchanged: the branches, twigs and trunk themselves, the sky and clouds outside the strands, the distant swamp trees and their own distant moss at the bottom, all colours and the cool dim moonlit night lighting.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Avoid: any moss strand or tassel left behind, new branches, leaves, animals, lights or objects, brightening, text or watermark
+
+Input: Docs/Reference/Art/BoundTreeMossLeftTarget.png. Donor: Docs/Reference/Art/BoundTreeMossLeftRemovalDonor.png (the first of two candidates). Registered by Tools/Presentation/author-bound-tree-ambient.py and transferred inside the moss region into Relight/BoundTreeFacelessPlate{Unlit,Glow,GlowLit}MossRemoved.png.

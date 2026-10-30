@@ -43,7 +43,7 @@ MonoBehaviour:
   score: {fileID: 8300000, guid: b84699ef9b4c42b5bfc60b29ece30a84, type: 3}
   stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
   ambience: {fileID: 0}
-  creak: {fileID: 0}
+  creakClips: []
   ambientOneShotClips:
   - {fileID: 8300000, guid: eab02a49246d4068961577b05e146889, type: 3}
   - {fileID: 8300000, guid: 1cc583a8ad1c4e60b79d7b69e9779117, type: 3}

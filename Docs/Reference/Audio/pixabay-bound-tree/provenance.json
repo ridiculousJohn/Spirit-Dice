@@ -1,0 +1,904 @@
+{
+  "title": "Bound Tree swamp night beds, tree creaks and groans, and the nymph's sobs",
+  "license": "Pixabay Content License",
+  "license_url": "https://pixabay.com/service/license-summary/",
+  "license_terms": "Free for commercial use; attribution not required.",
+  "processor": "Tools/Audio/process_bound_tree_audio.ps1",
+  "ffmpeg": "N-122467-gc3d3377fe1-20260116",
+  "status": "Installed in Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/BoundTree: bound_tree_swamp_bed_with_frogs_loop.wav (ambience), bound_tree_creak_01-11 and bound_tree_tree_creak_01-06 (creaks), bound_tree_groan_01-03 (mark and bind reaction), bound_tree_sob_01-07 (ambient one-shots) and bound_tree_sob_roots_01 (At the roots beat cue), referenced by Content/Presentation/BoundTree/BoundTreeAudio.asset and BoundTreeJourney.asset. The separate swamp bed and frogs layer loops and the soft-crying sobs (bound_tree_sob_soft_01-04) are recorded for later swaps and are not installed.",
+  "downloads": "Raw downloads stay local in ignored Docs/work/bound-tree-audio/downloads, as for the other Pixabay sets; the sha256 values identify them. Authors are as recorded from the Pixabay pages in Docs/work/bound-tree-audio/candidates.md.",
+  "processing": {
+    "loops": "Stereo 44.1 kHz; highpass 60 Hz; the listed source segments joined with 1 second equal-power (qsin) crossfades, each segment ending before and starting after a removed range; loop closed with a 2.5 second equal-power tail/head crossfade (joined segment S of length L + X becomes S[X, L] followed by S[L, L + X] fading out summed with S[0, X] fading in, total length L); one gain step to the integrated loudness target (swamp bed -39.5 LUFS, matching the InspectorJ rain bed; frogs layer -47.5 LUFS, 8 LU below); no lowpass, echo or chorus; signed 16-bit PCM WAV. The sources are 24 kHz MP3, so nothing above 12 kHz exists and none is added. loop_boundary_delta is the first minus the last 16-bit sample per channel.",
+    "bed_with_frogs": "The installed ambience loop. The theme plays one ambience loop, so the frogs layer is baked into the swamp bed: the Frogs and Crickets source, highpassed at 60 Hz, is cut at 44.1 kHz from the listed start to the swamp bed's length plus the 2.5 second loop crossfade, closed with the same equal-power tail/head crossfade to exactly the swamp bed's length, given one gain step to the frogs layer's -47.5 LUFS target (8 LU below the bed) measured alone, and summed sample-aligned with the swamp bed WAV unchanged; signed 16-bit PCM WAV. Both loops have the same length, so the sum loops where each does.",
+    "creaks": "Mono 44.1 kHz; sliced at the source range with the listed fade in (3 ms for Wood Creak, 0.15 s for the woodland creaks, which rise out of continuous wind); brought to -3 dBFS; highpass 40 Hz; lowpass 9000 Hz; no room tail; trailing silence below -60 dB trimmed with the listed fade out (which also ends a slice cut inside sound); peak-normalized to -14 dBFS (random creak slot); signed 16-bit PCM WAV.",
+    "groans": "As the creaks, with a pitch-down after the slice (asetrate=37044, aresample=44100: factor 0.84, about 3 semitones lower and 16 percent slower); peak-normalized to -12 dBFS (mark/bind reaction).",
+    "sobs": "Mono 44.1 kHz; sliced at the source range with an 8 ms fade in; brought to -3 dBFS; highpass 120 Hz; lowpass 7500 Hz; no chorus, echo or denoise; trailing silence below -62 dB trimmed with a 0.35 second fade out; peak-normalized to -15 dBFS (ambient one-shot) or -12 dBFS (At the roots beat cue); signed 16-bit PCM WAV."
+  },
+  "sources": [
+    {
+      "title": "Kingdoms of the Night (A Virtual Walk-Through of the Swamp, Sans Feet)",
+      "author": "freesound_community",
+      "original_author": "ecfike (Freesound)",
+      "source": "https://pixabay.com/sound-effects/nature-kingdoms-of-the-night-a-virtual-walk-through-of-the-swamp-sans-feet-24133/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_a2bb666536.mp3",
+      "download": "bed-kingdoms-of-the-night.mp3",
+      "duration_seconds": 122.328,
+      "format": "MP3, 24 kHz stereo, 160 kbps",
+      "sha256": "9ad1f0d4b3b911f35bf98536f3bdc2dea60659277da5e92f6838e5074b7adb5e"
+    },
+    {
+      "title": "FrogsAndCrickets_ExcerptB_JMA_24Bit_48k",
+      "author": "freesound_community",
+      "original_author": "greysound (Freesound)",
+      "source": "https://pixabay.com/sound-effects/nature-frogsandcrickets-excerptb-jma-24bit-48k-22436/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_ab4ec58fbf.mp3",
+      "download": "bed-frogs-and-crickets-excerpt-b.mp3",
+      "duration_seconds": 81.192,
+      "format": "MP3, 24 kHz stereo, 160 kbps",
+      "sha256": "b0fe14d6ce67269c140aa240136d65fa1bc5e4c72318fbb0b5be638e32f45f22"
+    },
+    {
+      "title": "Wood Creak",
+      "author": "freesound_community",
+      "original_author": "cclaretc (Freesound)",
+      "source": "https://pixabay.com/sound-effects/film-special-effects-wood-creak-72307/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_b37ef3480a.mp3",
+      "download": "creak-wood-creak.mp3",
+      "duration_seconds": 33.816,
+      "format": "MP3, 24 kHz stereo, 160 kbps",
+      "sha256": "b8b9cb4aaa625f5a148f11cc89934cd5466d52c3cbf4759e8ad6c6a1a105601e"
+    },
+    {
+      "title": "Creaky tree in woodland",
+      "author": "freesound_community",
+      "original_author": "jackmichaelking (Freesound)",
+      "source": "https://pixabay.com/sound-effects/nature-creaky-tree-in-woodland-20187/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2022/02/10/audio_114c49aca6.mp3",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "duration_seconds": 72.696,
+      "format": "MP3, 24 kHz stereo, 160 kbps",
+      "sha256": "8f45e6449cef358182c683c4e37dc9d01554c5bb2076350be2f8086673565edb"
+    },
+    {
+      "title": "Sobbing+Breathing",
+      "author": "freesound_community",
+      "original_author": "jmr_online (Freesound)",
+      "source": "https://pixabay.com/sound-effects/people-sobbingbreathing-75635/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_59ee1904d8.mp3",
+      "download": "sob-sobbing-breathing.mp3",
+      "duration_seconds": 15.528,
+      "format": "MP3, 24 kHz stereo, 160 kbps",
+      "sha256": "34fff8f2c547e30f3edb07ec8ee4bad74bc18230d504cf2dff53a910b1dd89a5"
+    },
+    {
+      "title": "woman crying softly",
+      "author": "FreeEverythingxx",
+      "source": "https://pixabay.com/sound-effects/people-woman-crying-softly-268484/",
+      "cdn_url": "https://cdn.pixabay.com/download/audio/2024/11/25/audio_42f7f127b1.mp3",
+      "download": "sob-woman-crying-softly.mp3",
+      "duration_seconds": 8.098,
+      "format": "MP3, 44.1 kHz stereo, 256 kbps",
+      "sha256": "ffe06aeb532dc0c3df048569375555fc9d38df1a8c1ad4a91a99341dbca97ab9"
+    }
+  ],
+  "events": [
+    {
+      "id": "E1",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        4.4,
+        6.75
+      ],
+      "excluded_from_bed": true,
+      "reason": "Abrupt broadband block with hard edges at about 4.55 s and 6.45 s (+25 dB at 3-6 kHz and +22 dB above 8 kHz over the local median) and isolated tonal partials near 1.9 and 2.8 kHz at 5.0 s. The 4.4 s before it is a different scene without the insect band.",
+      "audition_clip": "events/kingdoms_event_E1_4.4-6.75s.mp3",
+      "audition_range_seconds": [
+        3,
+        7.75
+      ]
+    },
+    {
+      "id": "E2",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        35.25,
+        37.4
+      ],
+      "excluded_from_bed": true,
+      "reason": "Smooth 1.7 s broadband swell (+15.6 dB above 7.5 kHz, +10 dB at 60-250 Hz) with evenly spaced comb notches sweeping across the spectrum, a moving-reflection signature unlike the insect and frog texture.",
+      "audition_clip": "events/kingdoms_event_E2_35.25-37.4s.mp3",
+      "audition_range_seconds": [
+        34,
+        38.4
+      ]
+    },
+    {
+      "id": "E3",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        64.2,
+        66.5
+      ],
+      "excluded_from_bed": true,
+      "reason": "Broadband swell of the same comb-swept kind as E2, weaker (+8.6 dB above 7.5 kHz, +9 dB at 60-250 Hz).",
+      "audition_clip": "events/kingdoms_event_E3_64.2-66.5s.mp3",
+      "audition_range_seconds": [
+        63,
+        67.5
+      ]
+    },
+    {
+      "id": "E4",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        108.15,
+        110.45
+      ],
+      "excluded_from_bed": true,
+      "reason": "Broadband swell of the same comb-swept kind as E2, the strongest (+16.5 dB above 7.5 kHz, +15 dB at 60-250 Hz).",
+      "audition_clip": "events/kingdoms_event_E4_108.15-110.45s.mp3",
+      "audition_range_seconds": [
+        107,
+        111.45
+      ]
+    },
+    {
+      "id": "E5",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        92.65,
+        93.5
+      ],
+      "excluded_from_bed": true,
+      "reason": "Single 0.3 s broadband thump (+11 dB above 7.5 kHz, +9 dB at 60-250 Hz) with a low tail: a handling bump or knock, possibly a splash.",
+      "audition_clip": "events/kingdoms_event_E5_92.65-93.5s.mp3",
+      "audition_range_seconds": [
+        92,
+        94.5
+      ]
+    },
+    {
+      "id": "E6",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        118.0,
+        120.2
+      ],
+      "excluded_from_bed": true,
+      "reason": "Three steady tonal glides near 400 Hz (118.3, 118.9 and 119.6 s) over a low rumble (+18 dB at 400-3000 Hz, +10 dB at 60-250 Hz): a bullfrog or a hinge squeal, uncertain.",
+      "audition_clip": "events/kingdoms_event_E6_118-120.2s.mp3",
+      "audition_range_seconds": [
+        117,
+        121.2
+      ]
+    },
+    {
+      "id": "M1",
+      "source": "bed-kingdoms-of-the-night.mp3",
+      "range_seconds": [
+        52.9,
+        53.3
+      ],
+      "excluded_from_bed": false,
+      "reason": "Single short broadband click with a low tail inside the bed window; likely a drip or a frog. Kept in the bed; listed for confirmation.",
+      "audition_clip": "events/kingdoms_event_M1_52.9-53.3s.mp3",
+      "audition_range_seconds": [
+        52,
+        54.3
+      ]
+    }
+  ],
+  "beds": [
+    {
+      "file": "bound_tree_swamp_bed_loop.wav",
+      "use": "Swamp night bed (ambience slot)",
+      "download": "bed-kingdoms-of-the-night.mp3",
+      "source_segments_seconds": [
+        [
+          37.4,
+          64.2
+        ],
+        [
+          66.5,
+          92.65
+        ],
+        [
+          93.5,
+          108.15
+        ]
+      ],
+      "removed_ranges_seconds": [
+        [
+          64.2,
+          66.5
+        ],
+        [
+          92.65,
+          93.5
+        ]
+      ],
+      "cut_crossfade_seconds": 1.0,
+      "loop_crossfade_seconds": 2.5,
+      "target_lufs": -39.5,
+      "gain_db": 0.2,
+      "loop_duration_seconds": 63.1,
+      "loop_boundary_delta": [
+        -24,
+        -7
+      ],
+      "integrated_lufs": -39.5,
+      "true_peak_dbfs": -17.0,
+      "peak_dbfs": -18.41,
+      "rms_dbfs": -42.96,
+      "sha256": "fbb14ec80a66a15958b2aad244500df59e00064834938e885b6f7c61010d06f3"
+    },
+    {
+      "file": "bound_tree_frogs_layer_loop.wav",
+      "use": "Quiet frog and cricket layer, with or instead of the swamp bed",
+      "download": "bed-frogs-and-crickets-excerpt-b.mp3",
+      "source_segments_seconds": [
+        [
+          0.5,
+          79.0
+        ]
+      ],
+      "removed_ranges_seconds": [],
+      "cut_crossfade_seconds": 1.0,
+      "loop_crossfade_seconds": 2.5,
+      "target_lufs": -47.5,
+      "gain_db": -32.7,
+      "loop_duration_seconds": 76.0,
+      "loop_boundary_delta": [
+        2,
+        5
+      ],
+      "integrated_lufs": -47.5,
+      "true_peak_dbfs": -33.4,
+      "peak_dbfs": -33.39,
+      "rms_dbfs": -53.39,
+      "sha256": "2c2ce6a82d45c1d58362ff7b68c088531d1d5bbc780c42a13fc0c29c07768c14"
+    }
+  ],
+  "bed_mix_preview": {
+    "file": "preview/bound_tree_swamp_bed_with_frogs_mix.mp3",
+    "integrated_lufs": -38.9,
+    "true_peak_dbfs": -16.9
+  },
+  "bed_with_frogs": {
+    "file": "bound_tree_swamp_bed_with_frogs_loop.wav",
+    "use": "Swamp night bed with the quiet frog and cricket layer (ambience slot)",
+    "bed": "bound_tree_swamp_bed_loop.wav",
+    "bed_sha256": "fbb14ec80a66a15958b2aad244500df59e00064834938e885b6f7c61010d06f3",
+    "frogs_download": "bed-frogs-and-crickets-excerpt-b.mp3",
+    "frogs_source_range_seconds": [
+      0.5,
+      66.1
+    ],
+    "frogs_loop_crossfade_seconds": 2.5,
+    "frogs_target_lufs": -47.5,
+    "frogs_gain_db": -32.7,
+    "loop_duration_seconds": 63.1,
+    "loop_boundary_delta": [
+      -22,
+      -2
+    ],
+    "integrated_lufs": -38.9,
+    "true_peak_dbfs": -17.0,
+    "peak_dbfs": -18.4,
+    "rms_dbfs": -42.58,
+    "sha256": "43aaf8a7540fb49533276f8e6d0c28599d1729174ef9aa996be78e67f07c2103"
+  },
+  "clips": [
+    {
+      "file": "bound_tree_creak_01.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        0.57,
+        1.55
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.12,
+      "target_peak_dbfs": -14,
+      "gain_db": 19.0,
+      "duration_seconds": 0.98,
+      "peak_dbfs": -14.01,
+      "rms_dbfs": -31.53,
+      "sha256": "fe107399522afd43cbc1d29061e45453c911ac5122366f01338c726fd61e6520"
+    },
+    {
+      "file": "bound_tree_creak_02.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        10.39,
+        11.85
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -14,
+      "gain_db": 23.0,
+      "duration_seconds": 1.46,
+      "peak_dbfs": -13.96,
+      "rms_dbfs": -27.81,
+      "sha256": "c8d3ff0dc433952acdd024f27ec017a78e39e0cc7261a8879df1b69b25db557c"
+    },
+    {
+      "file": "bound_tree_creak_03.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        12.27,
+        13.55
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -14,
+      "gain_db": 14.0,
+      "duration_seconds": 1.28,
+      "peak_dbfs": -14.03,
+      "rms_dbfs": -27.82,
+      "sha256": "f4b2c9eca5964577c64b49d20237809a8bd6a0e640dd309306715135137423f7"
+    },
+    {
+      "file": "bound_tree_creak_04.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        13.75,
+        14.78
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.12,
+      "target_peak_dbfs": -14,
+      "gain_db": 19.4,
+      "duration_seconds": 1.03,
+      "peak_dbfs": -14.03,
+      "rms_dbfs": -28.37,
+      "sha256": "bb8cec0a14a23798c3c88fff77a7594a7a838f19e4ba4e4544a84874b5ab2e3d"
+    },
+    {
+      "file": "bound_tree_creak_05.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        14.95,
+        15.52
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.1,
+      "target_peak_dbfs": -14,
+      "gain_db": 18.7,
+      "duration_seconds": 0.57,
+      "peak_dbfs": -13.97,
+      "rms_dbfs": -26.33,
+      "sha256": "5d23d5f99b6b0ca031f4fc7b2ccf3819a1d26e697a433fabb51b79493dbbaf34"
+    },
+    {
+      "file": "bound_tree_creak_06.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        17.45,
+        19.48
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 20.0,
+      "duration_seconds": 2.03,
+      "peak_dbfs": -13.97,
+      "rms_dbfs": -30.16,
+      "sha256": "8756e5dee14c493778b804176577d4f79d6eeb90b86ada318869bc4df11f0dc1"
+    },
+    {
+      "file": "bound_tree_creak_07.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        19.97,
+        20.5
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.1,
+      "target_peak_dbfs": -14,
+      "gain_db": 16.8,
+      "duration_seconds": 0.53,
+      "peak_dbfs": -14.0,
+      "rms_dbfs": -29.88,
+      "sha256": "66f5c9afaf31156d37748b170fbcd6499d0fef81175c9844348adca0a5a4ce54"
+    },
+    {
+      "file": "bound_tree_creak_08.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        21.59,
+        22.88
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -14,
+      "gain_db": 20.7,
+      "duration_seconds": 1.29,
+      "peak_dbfs": -14.0,
+      "rms_dbfs": -29.8,
+      "sha256": "b817385c7caa337ee2595b375f893ae210431af79964cbce6c599d7a76976548"
+    },
+    {
+      "file": "bound_tree_creak_09.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        24.25,
+        24.82
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.1,
+      "target_peak_dbfs": -14,
+      "gain_db": 20.5,
+      "duration_seconds": 0.57,
+      "peak_dbfs": -13.99,
+      "rms_dbfs": -27.89,
+      "sha256": "d72068b823b48dee2283a30988831bb13470b7c647b70fdab139f1cea8f607f2"
+    },
+    {
+      "file": "bound_tree_creak_10.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        29.31,
+        30.98
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 19.3,
+      "duration_seconds": 1.67,
+      "peak_dbfs": -14.02,
+      "rms_dbfs": -31.24,
+      "sha256": "36a00b3df8e93531e6078c50d7b35f2921dddbd105d802d8cefec085eaf551e0"
+    },
+    {
+      "file": "bound_tree_creak_11.wav",
+      "use": "Random tree creak",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        31.39,
+        32.45
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -14,
+      "gain_db": 26.8,
+      "duration_seconds": 1.06,
+      "peak_dbfs": -14.02,
+      "rms_dbfs": -28.06,
+      "sha256": "13f9a2d653d7b89f8ca138bae7dad885a222957ee7ec751957e9a294eae9c2c1"
+    },
+    {
+      "file": "bound_tree_tree_creak_01.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        2.0,
+        4.2
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 27.3,
+      "duration_seconds": 2.2,
+      "peak_dbfs": -14.01,
+      "rms_dbfs": -27.9,
+      "sha256": "06f776e8b2ce078e175373c007bdd3503975a8678b0c2c38906e8d6cc7a5d506"
+    },
+    {
+      "file": "bound_tree_tree_creak_02.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        17.0,
+        18.8
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 23.0,
+      "duration_seconds": 1.8,
+      "peak_dbfs": -13.99,
+      "rms_dbfs": -31.71,
+      "sha256": "fc26d6d2e0a1a9c388ec2f125d19ae15dac3c4e19eeb404411ce22c417771d20"
+    },
+    {
+      "file": "bound_tree_tree_creak_03.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        20.8,
+        22.4
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 22.4,
+      "duration_seconds": 1.6,
+      "peak_dbfs": -13.96,
+      "rms_dbfs": -29.73,
+      "sha256": "094af6e44137b040eaf8f1d256af97453caa09bc598035afcddc6b6121d674b3"
+    },
+    {
+      "file": "bound_tree_tree_creak_04.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        27.2,
+        29.6
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 20.0,
+      "duration_seconds": 2.4,
+      "peak_dbfs": -14.0,
+      "rms_dbfs": -28.25,
+      "sha256": "b9e21f8a003b565844b1314c5c15b8a0f6ee4cdae94a7ebf5dc71fbd4d21e029"
+    },
+    {
+      "file": "bound_tree_tree_creak_05.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        35.0,
+        37.6
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 21.6,
+      "duration_seconds": 2.6,
+      "peak_dbfs": -14.04,
+      "rms_dbfs": -29.63,
+      "sha256": "1fa38dfce67cc4b5b3aae8933482215458fd0a8b2c334d56258920a7281fbe10"
+    },
+    {
+      "file": "bound_tree_tree_creak_06.wav",
+      "use": "Random tree creak, woodland alternative",
+      "kind": "creak",
+      "tier": "creak",
+      "download": "creak-creaky-tree-in-woodland.mp3",
+      "source_range_seconds": [
+        47.6,
+        50.0
+      ],
+      "fade_in_seconds": 0.15,
+      "fade_out_seconds": 0.2,
+      "target_peak_dbfs": -14,
+      "gain_db": 23.2,
+      "duration_seconds": 2.4,
+      "peak_dbfs": -13.96,
+      "rms_dbfs": -28.93,
+      "sha256": "632db5547da2a38f475c431cffdefb5e4b28ee40f2cb9022cc624b8271440e1c"
+    },
+    {
+      "file": "bound_tree_groan_01.wav",
+      "use": "Deep groan on mark and bind",
+      "kind": "groan",
+      "tier": "groan",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        12.27,
+        13.55
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.25,
+      "target_peak_dbfs": -12,
+      "gain_db": 15.9,
+      "duration_seconds": 1.524,
+      "peak_dbfs": -11.96,
+      "rms_dbfs": -26.02,
+      "sha256": "b788ad053659afba6502d8430f6970e419e08c73e9a9f83342cf649e3a17a0d4",
+      "pitch_factor": 0.84
+    },
+    {
+      "file": "bound_tree_groan_02.wav",
+      "use": "Deep groan on mark and bind",
+      "kind": "groan",
+      "tier": "groan",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        17.45,
+        19.48
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.25,
+      "target_peak_dbfs": -12,
+      "gain_db": 21.8,
+      "duration_seconds": 2.417,
+      "peak_dbfs": -11.97,
+      "rms_dbfs": -28.43,
+      "sha256": "886ce95f519e3a7d1e23d3cd279412fd7ec2528d2204b5db331fa6d0264286bf",
+      "pitch_factor": 0.84
+    },
+    {
+      "file": "bound_tree_groan_03.wav",
+      "use": "Deep groan on mark and bind",
+      "kind": "groan",
+      "tier": "groan",
+      "download": "creak-wood-creak.mp3",
+      "source_range_seconds": [
+        29.31,
+        30.98
+      ],
+      "fade_in_seconds": 0.003,
+      "fade_out_seconds": 0.25,
+      "target_peak_dbfs": -12,
+      "gain_db": 21.8,
+      "duration_seconds": 1.988,
+      "peak_dbfs": -11.98,
+      "rms_dbfs": -28.86,
+      "sha256": "98c5fc0f0d3b716f8ece992ef879d40ebaa60c4896cb03be215909d7ca343f8a",
+      "pitch_factor": 0.84
+    },
+    {
+      "file": "bound_tree_sob_01.wav",
+      "use": "Nymph sob, ambient one-shot",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        0.72,
+        2.15
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -5.4,
+      "duration_seconds": 1.43,
+      "peak_dbfs": -15.01,
+      "rms_dbfs": -35.17,
+      "sha256": "d88b7b76fa336a86655a4edc9275c3f9ccdd046c3e3fdbeae9026cbf8b849bc2"
+    },
+    {
+      "file": "bound_tree_sob_02.wav",
+      "use": "Nymph sob, ambient one-shot",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        2.15,
+        3.9
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -4.2,
+      "duration_seconds": 1.75,
+      "peak_dbfs": -14.98,
+      "rms_dbfs": -30.96,
+      "sha256": "38a128a8db15f82ff897b3ae023e0c90fc68ab2dd91e7cadefc19a6454101d53"
+    },
+    {
+      "file": "bound_tree_sob_03.wav",
+      "use": "Nymph sob, ambient one-shot",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        4.25,
+        5.35
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -6.3,
+      "duration_seconds": 1.1,
+      "peak_dbfs": -15.01,
+      "rms_dbfs": -33.66,
+      "sha256": "e748f226aaf82b96aee0f2a44dab47c391e22df3937dd9c846438beca5118729"
+    },
+    {
+      "file": "bound_tree_sob_04.wav",
+      "use": "Nymph sob, ambient one-shot",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        5.35,
+        7.7
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -6.3,
+      "duration_seconds": 2.35,
+      "peak_dbfs": -14.96,
+      "rms_dbfs": -31.17,
+      "sha256": "7d74a02ac2f46289069cd305cf6a854294df2653bad39886598afb00910b588d"
+    },
+    {
+      "file": "bound_tree_sob_05.wav",
+      "use": "Nymph sob, ambient one-shot (voiced, the most intense)",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        7.95,
+        10.3
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -5.2,
+      "duration_seconds": 2.35,
+      "peak_dbfs": -15.03,
+      "rms_dbfs": -27.07,
+      "sha256": "4b125a1103131a665cd858114bb4c6b821c3e15040300d920339a150cd4ed955"
+    },
+    {
+      "file": "bound_tree_sob_06.wav",
+      "use": "Nymph sob, ambient one-shot",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        11.05,
+        12.75
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -6.6,
+      "duration_seconds": 1.7,
+      "peak_dbfs": -15.05,
+      "rms_dbfs": -32.21,
+      "sha256": "0d5d7c7f6a5f5e0a4485b499e6839649f248f84f4c18ad5f23a599c523f4db97"
+    },
+    {
+      "file": "bound_tree_sob_07.wav",
+      "use": "Nymph sob, ambient one-shot (fading whimper)",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        12.75,
+        14.4
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": 7.2,
+      "duration_seconds": 1.65,
+      "peak_dbfs": -15.05,
+      "rms_dbfs": -30.73,
+      "sha256": "92c4a558aeecaccc78a8736c20e862b8726ba55673828d8260a3faa1557d89ae"
+    },
+    {
+      "file": "bound_tree_sob_roots_01.wav",
+      "use": "Nymph sob, At the roots beat cue",
+      "kind": "sob",
+      "tier": "sob_cue",
+      "download": "sob-sobbing-breathing.mp3",
+      "source_range_seconds": [
+        4.25,
+        7.7
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -12,
+      "gain_db": -3.3,
+      "duration_seconds": 3.45,
+      "peak_dbfs": -11.96,
+      "rms_dbfs": -28.78,
+      "sha256": "1ae013c752fd312a5221438744bdffe05c12a5b55d4ccace284aec5f6656d6cb"
+    },
+    {
+      "file": "bound_tree_sob_soft_01.wav",
+      "use": "Nymph sob, soft crying alternative",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-woman-crying-softly.mp3",
+      "source_range_seconds": [
+        0.1,
+        1.95
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -8.2,
+      "duration_seconds": 1.744,
+      "peak_dbfs": -14.98,
+      "rms_dbfs": -33.48,
+      "sha256": "9b8c945f87c8f7989142ada6374f049fd827c673aaff50a7686125d5dea87d2f"
+    },
+    {
+      "file": "bound_tree_sob_soft_02.wav",
+      "use": "Nymph sob, soft crying alternative",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-woman-crying-softly.mp3",
+      "source_range_seconds": [
+        2.15,
+        3.45
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -13.4,
+      "duration_seconds": 1.114,
+      "peak_dbfs": -14.99,
+      "rms_dbfs": -34.69,
+      "sha256": "c381ab3a9a113edce6f878f0bfe4c88953cb1f35613ff1f4e68ed5218f1a328e"
+    },
+    {
+      "file": "bound_tree_sob_soft_03.wav",
+      "use": "Nymph sob, soft crying alternative",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-woman-crying-softly.mp3",
+      "source_range_seconds": [
+        3.85,
+        5.15
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -8.2,
+      "duration_seconds": 1.118,
+      "peak_dbfs": -15.03,
+      "rms_dbfs": -36.36,
+      "sha256": "fe88f9dbec78ee0625cfc24cd13b09108b4d6f441c6eac70895d11ee87474564"
+    },
+    {
+      "file": "bound_tree_sob_soft_04.wav",
+      "use": "Nymph sob, soft crying alternative",
+      "kind": "sob",
+      "tier": "sob",
+      "download": "sob-woman-crying-softly.mp3",
+      "source_range_seconds": [
+        5.4,
+        8.05
+      ],
+      "fade_in_seconds": 0.008,
+      "fade_out_seconds": 0.35,
+      "target_peak_dbfs": -15,
+      "gain_db": -9.1,
+      "duration_seconds": 2.508,
+      "peak_dbfs": -15.03,
+      "rms_dbfs": -37.03,
+      "sha256": "ef49ddcf517eee42b489571f7354959768179bb22f91dee74618b3fbae839c5b"
+    }
+  ]
+}

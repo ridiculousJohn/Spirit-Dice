@@ -83,6 +83,7 @@ namespace Dice.Presentation
         internal override void Validate(string beat)
         {
             sceneLighting?.Validate();
+            if (audioTheme != null) audioTheme.Validate();
             if (sceneLighting != null && !FiniteValue.Is(hostLightingPosition))
                 throw new FormatException("The table scene " + name + " of " + beat + " has a host lighting position that is not finite.");
             var ruleIds = new HashSet<EncounterRuleDefinition.Id>();

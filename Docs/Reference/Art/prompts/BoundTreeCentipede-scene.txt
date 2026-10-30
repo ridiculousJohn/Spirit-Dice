@@ -1,0 +1,12 @@
+Use case: edit: precise-object-edit, compositing
+Asset type: in-scene painting of a creature for a 2D game scene (painted digital illustration, night swamp, the bark of a huge black tree trunk); the creature is cut out afterwards and animated crawling over the bark
+Primary request: Paint one large centipede crawling up the bark of the trunk in Image 1, fully visible, in the left half of the image.
+Input images: Image 1: edit target
+Subject: a large swamp centipede with a dark reddish-brown segmented body, slightly lighter amber legs, about twenty pairs of thin legs spread evenly along both sides, two antennae at the head and two short tail appendages. Seen from directly above its back (dorsal view, as if looking straight at the trunk), head pointing up the trunk, its body in one gentle shallow curve. Length from antennae to tail about 0.4 times the width of Image 1, body width about one twenty-fifth of the image width.
+Placement: on the bark in the left half of the image, below the hanging pale moss and clear of the moss tufts; every leg, both antennae and the tail visible, nothing of it hidden in a crack or behind moss.
+Lighting/mood: lit like the bark around it in Image 1: cool dim moonlight, small soft wet highlights along its back, dark undersides, a faint contact shadow on the bark; same brightness and contrast as the bark around it.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; change nothing except adding the centipede and its contact shadow; do not crop, zoom, rotate, shift or pad
+Avoid: changing the bark, moss, water or roots; more than one creature; glowing parts or lights; a coiled pose; brightening; text or watermark
+
+Input: Docs/Reference/Art/BoundTreeCentipedeTarget.png, the Lanczos 1024 x 1536 upscale of Art/BoundTree/BoundTreeOriginal.png box (540, 560)-(740, 860). Donor: Docs/Reference/Art/BoundTreeCentipedeSceneDonor.png (candidate 2 of two; the other is a working file under Docs/work/bound-tree-ambient-layers/donors). It is the input of the extraction (BoundTreeCentipede-extraction.txt) and fixes the creature's painted scale.

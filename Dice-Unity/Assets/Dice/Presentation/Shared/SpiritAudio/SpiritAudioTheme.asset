@@ -43,7 +43,8 @@ MonoBehaviour:
   score: {fileID: 8300000, guid: b84699ef9b4c42b5bfc60b29ece30a84, type: 3}
   stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
   ambience: {fileID: 8300000, guid: 585be0a61e34414dad9b6a2f6ff4e552, type: 3}
-  creak: {fileID: 8300000, guid: 1da60aabb7134bf68e11dca245e6762c, type: 3}
+  creakClips:
+  - {fileID: 8300000, guid: 1da60aabb7134bf68e11dca245e6762c, type: 3}
   credits: {fileID: 4900000, guid: a9ff53d5f1f641608da38a309e46eee6, type: 3}
   ambienceVolume: 0.25
   effectsVolume: 0.65

@@ -29,6 +29,7 @@ namespace Dice.Presentation
         private int nextCueSource;
         private int nextPropSource;
         private AudioClip lastSpiritClip;
+        private AudioClip lastCreakClip;
         private AudioClip lastAmbientOneShotClip;
 
         public SpiritAudioTheme Theme => theme;
@@ -38,6 +39,7 @@ namespace Dice.Presentation
             StopPlayback();
             theme = selectedTheme;
             lastSpiritClip = null;
+            lastCreakClip = null;
             lastAmbientOneShotClip = null;
             RefreshPlayback();
         }
@@ -56,6 +58,7 @@ namespace Dice.Presentation
         }
 
         private bool CanPlay => isActiveAndEnabled && !muted && hasFocus && !paused && theme != null;
+        private bool HasCreaks => theme != null && theme.creakClips != null && theme.creakClips.Length > 0;
         private bool HasAmbientOneShots => theme != null && theme.ambientOneShotClips != null && theme.ambientOneShotClips.Length > 0;
 
         private void Awake()
@@ -201,9 +204,10 @@ namespace Dice.Presentation
         private void Update()
         {
             if (!CanPlay) return;
-            if (theme.creak != null && Time.unscaledTime >= nextCreak)
+            if (HasCreaks && Time.unscaledTime >= nextCreak)
             {
-                creakSource.clip = theme.creak;
+                lastCreakClip = ChooseClip(theme.creakClips, lastCreakClip, null, cosmeticRandom);
+                creakSource.clip = lastCreakClip;
                 creakSource.volume = Mathf.Clamp01(theme.creakVolume);
                 creakSource.Play();
                 ScheduleCreak();

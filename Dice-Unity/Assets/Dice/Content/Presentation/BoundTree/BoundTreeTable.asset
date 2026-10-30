@@ -19,7 +19,7 @@ MonoBehaviour:
     m_SubObjectType: 
     m_SubObjectGUID: 
     m_EditorAssetChanged: 0
-  roomTexture: {fileID: 2800000, guid: 5ffe23df8daa4e2ea2eca8fb672412da, type: 3}
+  roomTexture: {fileID: 2800000, guid: 0e45e566acc24fc69b3d5ed8b64eddeb, type: 3}
   sceneLighting: {fileID: 11400000, guid: 354dbbc621d6175468e24d525fdc5987, type: 2}
   pieceLights: []
   restingLightLevels:
@@ -27,9 +27,9 @@ MonoBehaviour:
   - 0
   hostLightingPosition: {x: 0, y: 0, z: 0}
   hostPresentation: {fileID: 11400000, guid: 95847fc938965b5db26e91a9f3dd4545, type: 2}
-  audioTheme: {fileID: 11400000, guid: ed94bba6676542b7b017d54e0135c5dc, type: 2}
-  trayPresentation: {fileID: 11400000, guid: 574c21a7431340f4b884c0150c5a466e, type: 2}
+  audioTheme: {fileID: 11400000, guid: 5ae5745f56bc48df81f185bb63e10d9c, type: 2}
+  trayPresentation: {fileID: 11400000, guid: 3dda7c54b4b644808d567f85dd3ca52b, type: 2}
   rulePresentations:
   - {fileID: 11400000, guid: a09fa264a658af84f85c9abb0716f7e2, type: 2}
-  ambientActivity: {fileID: 0}
+  ambientActivity: {fileID: 11400000, guid: 206ed7a6b28f06d41a67f7b6235e009a, type: 2}
   openingFadeDuration: 0.3

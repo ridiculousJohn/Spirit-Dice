@@ -17,7 +17,8 @@ namespace Dice.Presentation
 
     /**
      * Runs an encounter's ambient activity on its own clock and presentation random, never the engine's streams.
-     * Lights and props idle on their schedules from the first hand; a jolt adds a stutter, a burst sound and a prop strike;
+     * Lights and props idle on their schedules from the first hand, and each prop group's members take turns on the group's
+     * schedule; a jolt adds a stutter, a burst sound and a strike on one of the activity's own props that answers jolts;
      * the encounter's end settles everything or knocks one prop, as the asset authors for its outcome, after which the
      * activity stops at rest.
      * Struck props play their authored sound for the kind of jolt through the optional sound target.
@@ -32,6 +33,10 @@ namespace Dice.Presentation
         private readonly IAmbientSoundTarget sound;
         private readonly LightActorState[] lights;
         private readonly PropActorState[] props;
+        // The activity's own props whose motion answers jolts; group members move only on their group's schedule.
+        private readonly PropActorState[] joltable;
+        private readonly PropGroupState[] groups;
+        private readonly PropActorState[] allProps;
         private System.Random random = new System.Random(0);
         // Sound choices draw from their own random so authored clips never change the lights' and props' sequence.
         private System.Random soundRandom = new System.Random(1);
@@ -54,21 +59,34 @@ namespace Dice.Presentation
                     throw new InvalidOperationException("Each ambient light actor requires a scene light.");
                 lights[i] = new LightActorState(actor);
             }
+            var all = new List<PropActorState>();
             props = new PropActorState[asset.Props.Count];
-            for (int i = 0; i < props.Length; ++i)
+            for (int i = 0; i < props.Length; ++i) all.Add(props[i] = Bind(asset.Props[i], bindings));
+            joltable = Array.FindAll(props, prop => prop.Motion.AnswersJolts);
+            groups = new PropGroupState[asset.PropGroups.Count];
+            for (int i = 0; i < groups.Length; ++i)
             {
-                var actor = asset.Props[i];
-                Transform target = null;
-                if (bindings != null)
-                    foreach (var binding in bindings)
-                        if (binding != null && string.Equals(binding.ActorId, actor.Id, StringComparison.Ordinal))
-                        {
-                            target = binding.Target;
-                            break;
-                        }
-                if (target == null) throw new InvalidOperationException("Ambient prop " + actor.Id + " requires a bound scene transform.");
-                props[i] = new PropActorState(actor, actor.Motion.Create(target));
+                var group = asset.PropGroups[i];
+                var members = new PropActorState[group.Members.Count];
+                for (int m = 0; m < members.Length; ++m) all.Add(members[m] = Bind(group.Members[m], bindings));
+                groups[i] = new PropGroupState(group, members);
             }
+            allProps = all.ToArray();
+        }
+
+        private PropActorState Bind(AmbientPropActor actor, IReadOnlyList<EncounterAmbientPropBinding> bindings)
+        {
+            Transform target = null;
+            if (bindings != null)
+                foreach (var binding in bindings)
+                    if (binding != null && string.Equals(binding.ActorId, actor.Id, StringComparison.Ordinal))
+                    {
+                        target = binding.Target;
+                        break;
+                    }
+            if (target == null)
+                throw new InvalidOperationException("Ambient activity " + asset.name + " prop " + actor.Id + " requires a bound scene transform.");
+            return new PropActorState(actor, actor.Motion.Create(target));
         }
 
         /** True from the first hand until the encounter ends; idle events and jolts act only then. */
@@ -81,7 +99,7 @@ namespace Dice.Presentation
             {
                 foreach (var light in lights)
                     if (light.Steps.Count > 0 || !double.IsNaN(light.RecoveryStart) || light.Level != 1f) return false;
-                foreach (var prop in props)
+                foreach (var prop in allProps)
                     if (prop.Motion.IsMoving || prop.Motion.IsOffset) return false;
                 return true;
             }
@@ -100,11 +118,13 @@ namespace Dice.Presentation
             time = 0;
             state = State.Running;
             foreach (var light in lights) light.NextIdle = time + light.Actor.IdleInterval.Pick(random);
-            foreach (var prop in props)
+            foreach (var prop in props) prop.NextIdle = time + prop.Actor.IdleInterval.Pick(random);
+            foreach (var group in groups)
             {
-                prop.NextIdle = time + prop.Actor.IdleInterval.Pick(random);
-                prop.LastIdleClip = prop.LastHitClip = null;
+                group.Moving = null;
+                group.NextTurn = time + group.Group.IdleInterval.Pick(random);
             }
+            foreach (var prop in allProps) prop.LastIdleClip = prop.LastHitClip = null;
         }
 
         /** Advances the activity clock; idle events fall due at their scheduled times even across long steps. */
@@ -134,10 +154,11 @@ namespace Dice.Presentation
                 if (struck) PlayJolt(prop, JoltKind.Idle);
                 prop.Motion.Apply(time);
             }
+            foreach (var group in groups) UpdateGroup(group);
             if (state == State.Ending && IsAtRest) state = State.Stopped;
         }
 
-        /** A jolt to the room: lights not already out stutter briefly, the burst sounds once and one random prop is struck. */
+        /** A jolt to the room: lights not already out stutter briefly, the burst sounds once and one random prop that answers jolts is struck. */
         public void Jolt()
         {
             if (state != State.Running) return;
@@ -148,8 +169,8 @@ namespace Dice.Presentation
                 lastBurstClip = SpiritEncounterAudio.ChooseClip(asset.BurstClips, lastBurstClip, null, soundRandom);
                 if (lastBurstClip != null) sound.PlayAmbientSound(lastBurstClip, asset.BurstVolume);
             }
-            if (props.Length == 0) return;
-            var prop = props[random.Next(props.Length)];
+            if (joltable.Length == 0) return;
+            var prop = joltable[random.Next(joltable.Length)];
             prop.Motion.Strike(time, prop.Actor.Strength * asset.JoltStrength);
             PlayJolt(prop, JoltKind.Hit);
         }
@@ -164,23 +185,23 @@ namespace Dice.Presentation
             }
         }
 
-        /** Pending outages cancel, lights return steadily to full, props damp to rest and idle events stop. */
+        /** Pending outages cancel, lights return steadily to full, props damp to rest (a run along a path finishes and hides) and idle events stop. */
         public void Settle()
         {
             if (state != State.Running) return;
             state = State.Ending;
             RecoverLights();
-            foreach (var prop in props) prop.Motion.Settle(time, asset.SettleTime);
+            foreach (var prop in allProps) prop.Motion.Settle(time, asset.SettleTime);
         }
 
-        /** One random prop knocks hard, lights return steadily to full, and idle events stop. */
+        /** One random prop that answers jolts knocks hard, lights return steadily to full, and idle events stop. */
         public void Knock()
         {
             if (state != State.Running) return;
             state = State.Ending;
             RecoverLights();
-            if (props.Length == 0) return;
-            var prop = props[random.Next(props.Length)];
+            if (joltable.Length == 0) return;
+            var prop = joltable[random.Next(joltable.Length)];
             prop.Motion.Strike(time, prop.Actor.Strength * asset.DefeatStrength);
             PlayJolt(prop, JoltKind.Defeat);
         }
@@ -198,7 +219,28 @@ namespace Dice.Presentation
                 light.Written = 1f;
                 lighting.SetLightIntensity(light.Actor.LightIndex, 1f);
             }
-            foreach (var prop in props) prop.Motion.Rest();
+            foreach (var prop in allProps) prop.Motion.Rest();
+            foreach (var group in groups) group.Moving = null;
+        }
+
+        /**
+         * Gives one member, chosen at random, its turn when the group's turn falls due and no member is moving; the next
+         * turn is timed from the moment that member comes to rest.
+         */
+        private void UpdateGroup(PropGroupState group)
+        {
+            foreach (var member in group.Members) member.Motion.Apply(time);
+            if (group.Moving != null && !group.Moving.Motion.IsMoving)
+            {
+                group.Moving = null;
+                group.NextTurn = time + group.Group.IdleInterval.Pick(random);
+            }
+            if (state != State.Running || group.Moving != null || time < group.NextTurn) return;
+            var prop = group.Members[random.Next(group.Members.Length)];
+            prop.Motion.Strike(group.NextTurn, prop.Actor.Strength * prop.Actor.IdleStrength.Pick(random));
+            prop.Motion.Apply(time);
+            group.Moving = prop;
+            PlayJolt(prop, JoltKind.Idle);
         }
 
         /** Plays one of the prop's clips for the kind of jolt, other than the one it played last for that kind. */
@@ -328,6 +370,20 @@ namespace Dice.Presentation
             public float RecoveryFrom = 1f;
 
             public LightActorState(AmbientLightActor actor) => Actor = actor;
+        }
+
+        private sealed class PropGroupState
+        {
+            public readonly AmbientPropGroup Group;
+            public readonly PropActorState[] Members;
+            public PropActorState Moving;
+            public double NextTurn;
+
+            public PropGroupState(AmbientPropGroup group, PropActorState[] members)
+            {
+                Group = group;
+                Members = members;
+            }
         }
 
         private sealed class PropActorState

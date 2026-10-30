@@ -122,6 +122,7 @@ Shader "Dice/Spirit Dice Surface"
                 float face : TEXCOORD4;
                 float2 surfaceUV : TEXCOORD5;
                 float3 surfacePosition : TEXCOORD6;
+                float2 texturePosition : TEXCOORD7;
             };
 
             Varyings vert(Attributes input)
@@ -137,6 +138,25 @@ Shader "Dice/Spirit Dice Surface"
                 float3 objectScale = float3(length(unity_ObjectToWorld._m00_m10_m20),
                     length(unity_ObjectToWorld._m01_m11_m21), length(unity_ObjectToWorld._m02_m12_m22));
                 output.surfacePosition = input.positionOS.xyz * objectScale;
+                // Painted textures project along the face's dominant local axis, as the meshes' own UVs do, at
+                // physical scale; the object's world origin offsets each piece so neighbours continue one surface.
+                float3 axis = abs(input.normalOS);
+                float3 origin = unity_ObjectToWorld._m03_m13_m23;
+                float2 planar = output.surfacePosition.xz;
+                float2 originPlanar = origin.xz;
+                if (axis.z > axis.y && axis.z >= axis.x)
+                {
+                    planar = output.surfacePosition.xy;
+                    originPlanar = origin.xy;
+                }
+                else if (axis.x > axis.y && axis.x > axis.z)
+                {
+                    planar = output.surfacePosition.zy;
+                    originPlanar = origin.zy;
+                }
+                // The per-object offset is wrapped to one tile so far-placed rigs keep texel precision.
+                output.texturePosition = planar * _SurfaceTexture_ST.xy
+                    + frac(originPlanar * _SurfaceTexture_ST.xy) + _SurfaceTexture_ST.zw;
                 return output;
             }
 
@@ -319,7 +339,7 @@ Shader "Dice/Spirit Dice Surface"
                     surfaceHeight = mineral * 0.004 + aggregate * 0.002 - cracks * 0.003 - pits * 0.004;
                     roughness = 0.98;
                 }
-                else if (_SurfaceKind > 7.5)
+                else if (_SurfaceKind > 7.5 && _SurfaceKind < 8.5)
                 {
                     // Long fibers follow the plank's local X, including planks rotated across the tray.
                     float3 woodPosition = input.surfacePosition * _GrainScale.xyz
@@ -345,6 +365,16 @@ Shader "Dice/Spirit Dice Surface"
                     cavity = 1 - splits * 0.24;
                     surfaceHeight = wornGrain * 0.012 + grain * 0.004 + fiber * 0.0015 - splits * 0.006;
                     roughness = 0.99;
+                }
+                else if (_SurfaceKind > 8.5)
+                {
+                    // A painted albedo texture at physical scale: its colour is the surface's, its brightness a
+                    // shallow relief, and Smoothness sets how wet it reads.
+                    float2 paintedUV = input.texturePosition + _Seed * float2(0.37, 0.61);
+                    half3 painted = SAMPLE_TEXTURE2D(_SurfaceTexture, sampler_SurfaceTexture, paintedUV).rgb;
+                    albedo *= painted;
+                    surfaceHeight = sqrt(dot(painted, half3(0.299, 0.587, 0.114))) * 0.004;
+                    roughness = saturate(1 - _Smoothness);
                 }
 
                 half3 normal = normalize(input.normalWS);

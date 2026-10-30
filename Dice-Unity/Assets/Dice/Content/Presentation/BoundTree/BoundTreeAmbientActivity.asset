@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab911ba188c74560b38bb0ed4261a80d, type: 3}
+  m_Name: BoundTreeAmbientActivity
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterAmbientActivityAsset
+  lights: []
+  props: []
+  propGroups:
+  - IdleInterval:
+      Min: 30
+      Max: 60
+    Props:
+    - Id: beetle
+      Motion: {fileID: 11400000, guid: 9ce61961562e5e079e9409a717afe1e7, type: 2}
+      Strength: 1
+      IdleInterval:
+        Min: 30
+        Max: 60
+      IdleStrength:
+        Min: 1
+        Max: 1
+      IdleClips: []
+      IdleVolume: 0
+      HitClips: []
+      HitVolume: 0
+      DefeatClips: []
+      DefeatVolume: 0
+    - Id: centipede
+      Motion: {fileID: 11400000, guid: b0d66b57c57f59ae86c49ff760c2df2f, type: 2}
+      Strength: 1
+      IdleInterval:
+        Min: 30
+        Max: 60
+      IdleStrength:
+        Min: 1
+        Max: 1
+      IdleClips: []
+      IdleVolume: 0
+      HitClips: []
+      HitVolume: 0
+      DefeatClips: []
+      DefeatVolume: 0
+  joltStrength: 1
+  defeatStrength: 2.5
+  wonEnding: 0
+  lostEnding: 0
+  abandonedEnding: 0
+  lightRecovery: 1
+  settleTime: 0.35
+  burstClips: []
+  burstVolume: 0.4

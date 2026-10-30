@@ -95,7 +95,7 @@ MonoBehaviour:
         continueLabel: Kneel beside her
         duration: 0
         hostState: 1
-        audioCue: {fileID: 0}
+        audioCue: {fileID: 8300000, guid: b7b9cd953c78406e80bdf0766d05a80f, type: 3}
         progressionReward: {fileID: 0}
         scene: {fileID: 0}
         transition: 0

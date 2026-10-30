@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: "cda682b9e506d164393b67eeb3f02194", type: 3}
+  m_Name: "BoundTreeBeetlePath"
+  m_EditorClassIdentifier: ""
+  waypoints:
+    - Position: {x: -2.2954, y: 8.0383}
+      Pause: 0
+    - Position: {x: -2.2954, y: 4.5933}
+      Pause: 0
+    - Position: {x: -2.6483, y: 1.0089}
+      Pause: 0
+    - Position: {x: -3.6933, y: -2.4378}
+      Pause: 0
+    - Position: {x: -5.3902, y: -5.6143}
+      Pause: 0
+    - Position: {x: -7.674, y: -8.3985}
+      Pause: 0
+    - Position: {x: -10.4567, y: -10.6835}
+      Pause: 0
+    - Position: {x: -13.6315, y: -12.3813}
+      Pause: 0
+    - Position: {x: -17.0763, y: -13.4269}
+      Pause: 0
+    - Position: {x: -20.6589, y: -13.7799}
+      Pause: 0
+    - Position: {x: -44.7609, y: -13.7799}
+      Pause: 0
+    - Position: {x: -48.3364, y: -13.3768}
+      Pause: 0
+    - Position: {x: -51.7325, y: -12.1878}
+      Pause: 0
+    - Position: {x: -54.7791, y: -10.2725}
+      Pause: 0
+    - Position: {x: -57.3234, y: -7.7269}
+      Pause: 0
+    - Position: {x: -59.2377, y: -4.6787}
+      Pause: 0
+    - Position: {x: -60.426, y: -1.2807}
+      Pause: 0
+    - Position: {x: -60.8289, y: 2.2967}
+      Pause: 1.2
+    - Position: {x: -60.426, y: 5.874}
+      Pause: 0
+    - Position: {x: -59.2377, y: 9.272}
+      Pause: 0
+    - Position: {x: -57.3234, y: 12.3202}
+      Pause: 0
+    - Position: {x: -54.7791, y: 14.8658}
+      Pause: 0
+    - Position: {x: -51.7325, y: 16.7811}
+      Pause: 0
+    - Position: {x: -48.3364, y: 17.9701}
+      Pause: 0
+    - Position: {x: -44.7609, y: 18.3732}
+      Pause: 0
+    - Position: {x: -18.3634, y: 18.3732}
+      Pause: 0
+    - Position: {x: -14.7809, y: 18.0202}
+      Pause: 0
+    - Position: {x: -11.3361, y: 16.9746}
+      Pause: 0
+    - Position: {x: -8.1613, y: 15.2768}
+      Pause: 0
+    - Position: {x: -5.3785, y: 12.9918}
+      Pause: 0
+    - Position: {x: -3.0948, y: 10.2076}
+      Pause: 0
+    - Position: {x: -1.3978, y: 7.0311}
+      Pause: 0
+    - Position: {x: -0.3528, y: 3.5844}
+      Pause: 0
+    - Position: {x: 0, y: 0}
+      Pause: 0
+  speed: 11.4772
+  faceTravel: 1
+  facingOffset: -90

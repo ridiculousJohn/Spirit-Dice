@@ -1,0 +1,11 @@
+Use case: illustration-story (transparent element for compositing)
+Asset type: transparent mist layer for a 2D game scene (painted digital illustration, night swamp); it is drawn over the swamp water behind a huge black tree and scrolls slowly sideways, repeating
+Primary request: Paint a single wide horizontal band of thin, low-lying swamp mist on a genuinely transparent background (real alpha channel, not a painted checkerboard and not a flat colour), matching the mist and lighting of the reference.
+Input images: Image 1: reference only (style, colour and lighting of the scene the mist will sit in; do not reproduce its content)
+Subject: soft, thin, translucent ground mist drifting low over still water: a long irregular band of pale blue-grey haze with gentle rolling wisps and slightly denser soft clumps, thickest along its lower middle and thinning out into transparency above and below, with soft ragged upper edges. Mostly see-through: at its densest it should veil, not hide, what is behind it.
+Composition/framing: landscape 3:2; the band runs across the full width from the left edge to the right edge, occupying roughly the middle third of the height, fully transparent at the top and bottom of the image; the density along the left edge should match the density along the right edge so that copies placed side by side join without a visible seam; no single striking feature that would be noticed when it repeats.
+Lighting/mood: cool dim moonlight as in Image 1: pale blue-grey, faintly brighter on the upper surfaces of the wisps, never white, no glow source.
+Style/medium: identical painterly digital illustration style, same softness and brush texture as the haze over the water in Image 1
+Avoid: trees, water, ground, horizon, moon, sky or any scenery; hard edges; bright white; a checkerboard pattern; text or watermark
+
+Input: Docs/Reference/Art/BoundTreeMistReference.png (concept rows 380 to 1010, style reference only). Donors: Docs/Reference/Art/BoundTreeMistNearDonor.png (first candidate) and BoundTreeMistFarDonor.png (second candidate). Made to wrap and scaled by Tools/Presentation/author-bound-tree-ambient.py into BoundTreeMistNear.png and BoundTreeMistFar.png.

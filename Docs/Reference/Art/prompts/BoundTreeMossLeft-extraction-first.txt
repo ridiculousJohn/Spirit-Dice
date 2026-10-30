@@ -1,0 +1,13 @@
+Use case: edit: background-extraction, identity-preserve
+Asset type: transparent layer of hanging moss strands for a 2D game scene (painted digital illustration, night swamp, upper left of a huge black tree); the strands are composited back over a clean plate of the same scene and sway gently
+Primary request: Cut out every strand of the long hanging Spanish moss that hangs down from the near tree's branches in Image 1, alone on a genuinely transparent background (real alpha channel, not a painted checkerboard and not a flat colour), at exactly the same positions, lengths, sizes and shapes as in Image 1.
+Input images: Image 1: edit target
+Subject (keep exactly as in Image 1): all the hanging moss strands of the near tree: the long pale olive-green and grey-brown tattered strands and tassels that hang straight down from the dark branches, including the bright pale strand near the middle, the dark thin strands on the left and the strands hanging in front of the trunk on the right; each strand with its own ragged outline, its thin wispy tips and the small gaps between its threads.
+Edges: natural soft alpha on the thin threads and wispy tips so they fade out softly; no hard cut-out outline, no halo or fringe of sky colour, no dark or light rim.
+Remove completely: the branches and twigs the moss hangs from, the tree trunk and bark, the night sky and clouds, the distant swamp trees and their own distant moss on the horizon at the bottom, and the water. Nothing but the near hanging moss strands remains; every other pixel is fully transparent.
+Lighting/mood: keep the moss exactly as lit in Image 1: cool dim moonlight, same brightness, contrast and colours; do not relight, brighten, saturate or sharpen it.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; every strand stays at exactly the same position and length; do not crop, zoom, rotate, shift, centre or pad
+Avoid: new strands, longer or thicker strands, leaves, branches or twigs, sky or cloud remnants, a checkerboard pattern, text or watermark
+
+Input: Docs/Reference/Art/BoundTreeMossLeftTarget.png. Both candidates (working files Docs/work/bound-tree-ambient-layers/donors/moss-left-extract-1.png and -2.png) lost the faint strands; superseded by BoundTreeMossLeft-extraction.txt. Not installed.

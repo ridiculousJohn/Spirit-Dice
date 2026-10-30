@@ -1,0 +1,142 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BoundTreeHidingPlacesLit
+  m_Shader: {fileID: 4800000, guid: 1381d22630ca4363815c8e4751f13ca1, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _LayerMask:
+        m_Texture: {fileID: 2800000, guid: 32eb7892de3f407a875b5ea7b8e2c573, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitDepthTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitReferenceTex3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SceneLitResponseTex3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SourceTex:
+        m_Texture: {fileID: 2800000, guid: 0e45e566acc24fc69b3d5ed8b64eddeb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _ColorMask: 15
+    - _InvertMask: 0
+    - _SceneLitConstrainAmbient0: 0
+    - _SceneLitConstrainAmbient1: 0
+    - _SceneLitConstrainAmbient2: 0
+    - _SceneLitConstrainAmbient3: 0
+    - _SceneLitDistanceFalloff0: 0
+    - _SceneLitDistanceFalloff1: 0
+    - _SceneLitDistanceFalloff2: 0
+    - _SceneLitDistanceFalloff3: 0
+    - _SceneLitIncludesBase0: 1
+    - _SceneLitIncludesBase1: 1
+    - _SceneLitIncludesBase2: 1
+    - _SceneLitIncludesBase3: 1
+    - _SceneLitIntensity0: 0
+    - _SceneLitIntensity1: 0
+    - _SceneLitIntensity2: 0
+    - _SceneLitIntensity3: 0
+    - _SceneLitMode0: 0
+    - _SceneLitMode1: 0
+    - _SceneLitMode2: 0
+    - _SceneLitMode3: 0
+    - _SceneLitModulateByBase0: 0
+    - _SceneLitModulateByBase1: 0
+    - _SceneLitModulateByBase2: 0
+    - _SceneLitModulateByBase3: 0
+    - _SceneLitResponseEnabled0: 0
+    - _SceneLitResponseEnabled1: 0
+    - _SceneLitResponseEnabled2: 0
+    - _SceneLitResponseEnabled3: 0
+    - _SceneLitSourceResponse0: 1
+    - _SceneLitSourceResponse1: 1
+    - _SceneLitSourceResponse2: 1
+    - _SceneLitSourceResponse3: 1
+    - _SceneLitStrength0: 1
+    - _SceneLitStrength1: 1
+    - _SceneLitStrength2: 1
+    - _SceneLitStrength3: 1
+    - _SceneLitWrap: 1
+    - _Stencil: 0
+    - _StencilComp: 8
+    - _StencilOp: 0
+    - _StencilReadMask: 255
+    - _StencilWriteMask: 255
+    - _UseUIAlphaClip: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitColor0: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitColor1: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitColor2: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitColor3: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitDepthRange: {r: 0, g: -1, b: 0, a: 0}
+    - _SceneLitFrameAxisX: {r: 1, g: 0, b: 0, a: 0}
+    - _SceneLitFrameAxisY: {r: 0, g: 1, b: 0, a: 0}
+    - _SceneLitFrameOrigin: {r: 0, g: 0, b: 0, a: 0}
+    - _SceneLitFrameTransform: {r: 1, g: 1, b: 0, a: 0}
+    - _SceneLitMapRect: {r: 0, g: 0, b: 1, a: 1}
+    - _SceneLitPosition0: {r: 0, g: 0, b: 0, a: 1}
+    - _SceneLitPosition1: {r: 0, g: 0, b: 0, a: 1}
+    - _SceneLitPosition2: {r: 0, g: 0, b: 0, a: 1}
+    - _SceneLitPosition3: {r: 0, g: 0, b: 0, a: 1}
+    - _SceneLitTint0: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitTint1: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitTint2: {r: 1, g: 1, b: 1, a: 1}
+    - _SceneLitTint3: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

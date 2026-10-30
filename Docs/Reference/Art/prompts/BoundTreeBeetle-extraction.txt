@@ -1,0 +1,13 @@
+Use case: edit: background-extraction, identity-preserve
+Asset type: transparent creature cutout for a 2D game scene (painted digital illustration, night swamp); the creature is composited over the scene and moved along a path
+Primary request: Cut out the large dark beetle on the bark: its head with both curved mandibles and both antennae, its thorax, its glossy shell and all six jointed legs to their tips, alone on a genuinely transparent background (real alpha channel, not a painted checkerboard and not a flat colour), at exactly the same position, size, pose and orientation as in Image 1.
+Input images: Image 1: edit target
+Subject (keep exactly as in Image 1): the large dark beetle on the bark: its head with both curved mandibles and both antennae, its thorax, its glossy shell and all six jointed legs to their tips; same colours, markings, proportions and pose.
+Edges: clean natural edges with a one-pixel soft anti-aliased fade; thin legs, antennae and tail tips stay complete and fade out softly; no hard cut-out outline, no halo or fringe of background colour, no dark or light rim.
+Remove completely: the bark, roots, moss, leaves, ferns, ground and everything else in the scene, and the contact shadow the creature casts on the surface under it. Nothing but the creature remains; every other pixel is fully transparent.
+Lighting/mood: keep the lighting on the creature exactly as in Image 1: cool dim moonlight, same brightness, contrast and colours; do not relight, brighten, saturate or sharpen it.
+Style/medium: identical painterly digital illustration style, same brush texture, softness and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale and perspective as Image 1; the creature stays at exactly the same position and size; do not crop, zoom, rotate, shift, centre or pad
+Avoid: changing its pose, proportions or markings; extra legs or a second creature; scenery remnants or shadow; background colour on its edges; a checkerboard pattern; text or watermark
+
+Input: Docs/Reference/Art/BoundTreeBeetleSceneDonor.png. Donor: Docs/Reference/Art/BoundTreeBeetleExtractionDonor.png (candidate 2 of two). Registered to the in-scene donor by Tools/Presentation/author-bound-tree-ambient.py, colour-matched to it and installed, resampled to the creature's length, as Relight/BoundTreeBeetleUnlit.png and its lit versions.

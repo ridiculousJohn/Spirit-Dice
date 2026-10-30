@@ -51,6 +51,22 @@ namespace Dice.Tests
             Assert.That(SpiritEncounterAudio.ChooseClip(new AudioClip[] { null }, null, null, random), Is.Null);
         }
 
+        /** Checks a theme accepts no creaks or a list of assigned creaks and refuses an empty creak entry, naming the theme / fails if an empty entry passes or a valid list is refused. */
+        [Test]
+        public void ThemeRefusesAnEmptyCreakEntryNamingTheTheme()
+        {
+            var theme = ScriptableObject.CreateInstance<SpiritAudioTheme>();
+            resources.Add(theme);
+            theme.name = "Synthetic Theme";
+            Assert.DoesNotThrow(theme.Validate);
+            theme.creakClips = new AudioClip[0];
+            Assert.DoesNotThrow(theme.Validate);
+            theme.creakClips = new[] { Clip("creak-a"), Clip("creak-b") };
+            Assert.DoesNotThrow(theme.Validate);
+            theme.creakClips = new[] { Clip("creak-a"), null };
+            Assert.That(Assert.Throws<System.FormatException>(theme.Validate).Message, Does.Contain(theme.name));
+        }
+
         /** Checks an interval maps exactly one cosmetic draw uniformly onto its range / fails if scheduling consumes extra draws or leaves the range. */
         [Test]
         public void IntervalMapsOneCosmeticDrawOntoItsRange()

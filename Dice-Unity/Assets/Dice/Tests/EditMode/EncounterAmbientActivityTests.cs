@@ -356,6 +356,53 @@ namespace Dice.Tests
             Assert.That(voicedAngles, Is.EqualTo(silentAngles), "Sound choices never draw from the props' random.");
         }
 
+        [Test]
+        public void APropGroupGivesOneRandomMemberATurnAtATimeTimedFromTheLastComingToRest()
+        {
+            // Each member's turn is a two second run that starts away from its rest, so a member is out exactly while offset.
+            var path = Path(10f, 0f, new AmbientPathMotionAsset.Waypoint(new Vector2(5f, 0f)),
+                new AmbientPathMotionAsset.Waypoint(new Vector2(25f, 0f)));
+            string[] ids = { "a", "b", "c" };
+            var group = new AmbientPropGroup { IdleInterval = new AmbientRange(3f, 3f), Props = ids.Select(id => PropActor(id, path)).ToArray() };
+            var asset = Activity(Array.Empty<AmbientLightActor>(), Array.Empty<AmbientPropActor>());
+            SyntheticUi.Set(asset, "propGroups", new[] { group });
+            List<(string Id, double Start, double End)> Record(int seed, bool jolt)
+            {
+                var props = ids.Select(Prop).ToArray();
+                var lighting = new RecordingLighting(0);
+                var activity = new EncounterAmbientActivity(asset, lighting, ids.Select((id, i) => Binding(id, props[i])).ToArray());
+                activity.Begin(seed);
+                var turns = new List<(string Id, double Start, double End)>();
+                for (int frame = 1; frame <= 60 / Step; ++frame)
+                {
+                    lighting.Clock += Step;
+                    activity.Tick(Step);
+                    if (jolt && frame % 20 == 0) activity.Jolt();
+                    var outside = props.Where(prop => prop.anchoredPosition3D != Vector3.zero).ToArray();
+                    Assert.That(outside.Length, Is.LessThanOrEqualTo(1), "Never two members at once, at " + lighting.Clock);
+                    bool wasOut = turns.Count > 0 && double.IsNaN(turns[turns.Count - 1].End);
+                    if (outside.Length == 1 && !wasOut) turns.Add((outside[0].name, lighting.Clock, double.NaN));
+                    else if (outside.Length == 0 && wasOut) turns[turns.Count - 1] = (turns[turns.Count - 1].Id, turns[turns.Count - 1].Start, lighting.Clock);
+                }
+                return turns;
+            }
+
+            var seeded = Record(11, false);
+            Assert.That(seeded.Count, Is.GreaterThan(8));
+            Assert.That(seeded[0].Start, Is.EqualTo(3.0).Within(Step), "The first turn falls due after the group's interval.");
+            for (int i = 0; i < seeded.Count; ++i)
+            {
+                if (double.IsNaN(seeded[i].End)) continue;
+                Assert.That(seeded[i].End - seeded[i].Start, Is.EqualTo(2.0).Within(2 * Step), "Turn " + i + " runs its path.");
+                if (i > 0) Assert.That(seeded[i].Start - seeded[i - 1].End, Is.EqualTo(3.0).Within(2 * Step),
+                    "Turn " + i + " falls due the interval after the last member came to rest.");
+            }
+            Assert.That(seeded.Select(turn => turn.Id).Distinct().Count(), Is.GreaterThan(1), "The member is chosen at random.");
+            Assert.That(Record(11, false), Is.EqualTo(seeded), "The activity's seeded random chooses the members.");
+            Assert.That(Record(12, false).Select(turn => turn.Id), Is.Not.EqualTo(seeded.Select(turn => turn.Id)), "Another seed chooses others.");
+            Assert.That(Record(11, true), Is.EqualTo(seeded), "Jolts never strike a group's members or change its turns.");
+        }
+
         // Ambient motion
 
         [Test]
@@ -505,6 +552,49 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void PathRunsItsWaypointsAtItsSpeedFacingItsTravelWaitingWhereAuthoredAndRestsAtTheEnd()
+        {
+            // Legs of 30, 40 and 50 units at 10 units per second with a one second wait at the second point: 13 seconds.
+            // The art faces up at rest, so travelling right turns it by -90 degrees.
+            var path = Path(10f, -90f, new AmbientPathMotionAsset.Waypoint(Vector2.zero),
+                new AmbientPathMotionAsset.Waypoint(new Vector2(30f, 0f), 1f), new AmbientPathMotionAsset.Waypoint(new Vector2(30f, 40f)),
+                new AmbientPathMotionAsset.Waypoint(Vector2.zero));
+            RectTransform prop = Prop("Creature");
+            var rest = new Vector3(12f, -7f, 0f);
+            Quaternion restRotation = Quaternion.Euler(0f, 0f, 10f);
+            prop.anchoredPosition3D = rest;
+            prop.localRotation = restRotation;
+            AmbientMotion motion = path.Create(prop);
+            void At(double time, Vector2 offset, float turn, string message)
+            {
+                motion.Apply(time);
+                AssertAt(prop, rest + (Vector3)offset, restRotation * Quaternion.Euler(0f, 0f, turn), message);
+            }
+            motion.Strike(2, .4f);
+            At(2, Vector2.zero, -90f, "The run starts at its first point facing its first leg.");
+            At(3.5, new Vector2(15f, 0f), -90f, "Halfway along the first leg.");
+            At(5.5, new Vector2(30f, 0f), -90f, "Waiting at the second point keeps the facing it arrived with.");
+            motion.Strike(5.5, 1f);
+            motion.Settle(5.5, .05f);
+            At(8, new Vector2(30f, 20f), 0f, "A strike or settle during the run leaves it on its path; halfway up the second leg.");
+            At(12.5, new Vector2(15f, 20f), Mathf.Atan2(-40f, -30f) * Mathf.Rad2Deg - 90f, "Halfway along the last leg.");
+            Assert.That(motion.IsMoving, Is.True);
+            motion.Apply(15);
+            Assert.That(motion.IsMoving || motion.IsOffset, Is.False, "The run has ended.");
+            AssertAt(prop, rest, restRotation, "The prop returns to its rest pose when the run ends.");
+
+            RectTransform hidden = Prop("Hidden");
+            var activity = new EncounterAmbientActivity(Activity(Array.Empty<AmbientLightActor>(), new[] { PropActor("creature", path) }),
+                new RecordingLighting(0), new[] { Binding("creature", hidden) });
+            activity.Begin(3);
+            activity.Jolt();
+            activity.Tick(.5f);
+            activity.Knock();
+            activity.Tick(.5f);
+            AssertAt(hidden, Vector3.zero, Quaternion.identity, "Jolts and knocks pass a path by.");
+        }
+
+        [Test]
         public void MotionReturnsToTheAnchoredRestPoseWhenItsFrameResizesMidMotion()
         {
             // A prop anchored at the top-left corner of a frame that resizes while the prop moves.
@@ -614,6 +704,15 @@ namespace Dice.Tests
         {
             var asset = Track(ScriptableObject.CreateInstance<AmbientSwingMotionAsset>());
             SyntheticUi.Set(asset, "amplitude", amplitude);
+            return asset;
+        }
+
+        private AmbientPathMotionAsset Path(float speed, float facingOffset, params AmbientPathMotionAsset.Waypoint[] waypoints)
+        {
+            var asset = Track(ScriptableObject.CreateInstance<AmbientPathMotionAsset>());
+            SyntheticUi.Set(asset, "waypoints", waypoints);
+            SyntheticUi.Set(asset, "speed", speed);
+            SyntheticUi.Set(asset, "facingOffset", facingOffset);
             return asset;
         }
 

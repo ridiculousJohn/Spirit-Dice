@@ -93,7 +93,7 @@ namespace Dice.Presentation
         public AmbientMotionAsset Motion;
         [Tooltip("Strike strength for this prop; the motion kind scales its amplitudes by it.")]
         [Min(0)] public float Strength = 1f;
-        [Tooltip("Seconds between idle jolts.")]
+        [Tooltip("Seconds between idle jolts; a prop group's members take the group's interval instead.")]
         public AmbientRange IdleInterval = new AmbientRange(15f, 35f);
         [Tooltip("Fraction of the prop's strength used by an idle jolt.")]
         public AmbientRange IdleStrength = new AmbientRange(.3f, .7f);
@@ -107,18 +107,51 @@ namespace Dice.Presentation
         public AudioClip[] DefeatClips = Array.Empty<AudioClip>();
         [Range(0, 1)] public float DefeatVolume = .6f;
 
-        internal void Validate()
+        /** Fails with a message naming the owning activity asset and this prop. */
+        internal void Validate(string activity)
         {
-            if (string.IsNullOrWhiteSpace(Id)) throw new InvalidOperationException("Ambient prop actors require an ID.");
-            if (Motion == null) throw new InvalidOperationException("Ambient prop " + Id + " requires a motion.");
+            if (string.IsNullOrWhiteSpace(Id)) throw new InvalidOperationException(activity + " requires an ID on each ambient prop actor.");
+            string prop = activity + " prop " + Id;
+            if (Motion == null) throw new InvalidOperationException(prop + " requires a motion.");
             if (!FiniteValue.Is(Strength) || Strength < 0f)
-                throw new InvalidOperationException("Ambient prop " + Id + " requires a finite nonnegative strength.");
-            IdleInterval.Validate(nameof(IdleInterval));
-            IdleStrength.Validate(nameof(IdleStrength));
-            if (IdleInterval.Min <= 0f) throw new InvalidOperationException("Ambient prop " + Id + " requires a positive idle interval.");
+                throw new InvalidOperationException(prop + " requires a finite nonnegative strength.");
+            IdleInterval.Validate(prop + " idle interval");
+            IdleStrength.Validate(prop + " idle strength");
+            if (IdleInterval.Min <= 0f) throw new InvalidOperationException(prop + " requires a positive idle interval.");
             if (!EncounterAmbientActivityAsset.ValidVolume(IdleVolume) || !EncounterAmbientActivityAsset.ValidVolume(HitVolume) ||
                 !EncounterAmbientActivityAsset.ValidVolume(DefeatVolume))
-                throw new InvalidOperationException("Ambient prop " + Id + " requires volumes between zero and one.");
+                throw new InvalidOperationException(prop + " requires volumes between zero and one.");
+            Motion.Validate(prop);
+        }
+    }
+
+    /**
+     * Props that take turns on one shared idle schedule, such as creatures that come out of hiding one at a time.
+     * When the schedule falls due one member, chosen by the activity's random, makes its idle motion; the next turn falls due
+     * the group's interval after that member comes to rest, so no two members ever move at once. Members move only on this
+     * schedule: jolts and knocks strike only the activity's own props.
+     */
+    [Serializable]
+    public sealed class AmbientPropGroup
+    {
+        [Tooltip("Seconds from activation, or from the moment the last member to move came to rest, to the next member's turn.")]
+        public AmbientRange IdleInterval = new AmbientRange(30f, 60f);
+        [Tooltip("Props that take turns; each is bound by ID in the encounter scene like the activity's own props.")]
+        public AmbientPropActor[] Props = Array.Empty<AmbientPropActor>();
+
+        public IReadOnlyList<AmbientPropActor> Members => Props ?? Array.Empty<AmbientPropActor>();
+
+        /** Fails with a message naming the owning activity asset, this group and the failing member. */
+        internal void Validate(string group)
+        {
+            IdleInterval.Validate(group + " idle interval");
+            if (IdleInterval.Min <= 0f) throw new InvalidOperationException(group + " requires a positive idle interval.");
+            if (Members.Count == 0) throw new InvalidOperationException(group + " requires at least one prop.");
+            foreach (var member in Members)
+            {
+                if (member == null) throw new InvalidOperationException(group + " has a missing prop actor.");
+                member.Validate(group);
+            }
         }
     }
 
@@ -131,12 +164,14 @@ namespace Dice.Presentation
         Knock
     }
 
-    /** Presentation-only ambient activity authored per encounter table: light outages, prop jolts and their sounds with no effect on play. */
+    /** Presentation-only ambient activity authored per encounter table: light outages, prop jolts, props taking turns and their sounds with no effect on play. */
     [CreateAssetMenu(menuName = "Dice/Presentation/Encounter Ambient Activity")]
     public sealed class EncounterAmbientActivityAsset : ScriptableObject
     {
         [SerializeField] private AmbientLightActor[] lights = Array.Empty<AmbientLightActor>();
         [SerializeField] private AmbientPropActor[] props = Array.Empty<AmbientPropActor>();
+        [Tooltip("Groups of props that move one at a time on a shared idle schedule, such as creatures that come out of hiding in turn.")]
+        [SerializeField] private AmbientPropGroup[] propGroups = Array.Empty<AmbientPropGroup>();
         [Tooltip("Strength multiplier for the prop struck by each jolt a rule presenter asks for.")]
         [SerializeField, Min(0)] private float joltStrength = 1f;
         [Tooltip("Strength multiplier for the final knock when the encounter ends with one.")]
@@ -157,6 +192,7 @@ namespace Dice.Presentation
 
         public IReadOnlyList<AmbientLightActor> Lights => lights ?? Array.Empty<AmbientLightActor>();
         public IReadOnlyList<AmbientPropActor> Props => props ?? Array.Empty<AmbientPropActor>();
+        public IReadOnlyList<AmbientPropGroup> PropGroups => propGroups ?? Array.Empty<AmbientPropGroup>();
         public float JoltStrength => joltStrength;
         public float DefeatStrength => defeatStrength;
         public float LightRecovery => lightRecovery;
@@ -188,12 +224,21 @@ namespace Dice.Presentation
                 if (!lightIndices.Add(light.LightIndex))
                     throw new InvalidOperationException("Ambient light actors require distinct light indices.");
             }
+            string activity = "Ambient activity " + name;
             var propIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var prop in Props)
             {
-                if (prop == null) throw new InvalidOperationException("An ambient prop actor is missing.");
-                prop.Validate();
-                if (!propIds.Add(prop.Id)) throw new InvalidOperationException("Ambient prop actors require distinct IDs.");
+                if (prop == null) throw new InvalidOperationException(activity + " has a missing prop actor.");
+                prop.Validate(activity);
+                if (!propIds.Add(prop.Id)) throw new InvalidOperationException(activity + " prop " + prop.Id + " requires a distinct ID.");
+            }
+            for (int i = 0; i < PropGroups.Count; ++i)
+            {
+                string group = activity + " prop group " + i;
+                if (PropGroups[i] == null) throw new InvalidOperationException(group + " is missing.");
+                PropGroups[i].Validate(group);
+                foreach (var member in PropGroups[i].Members)
+                    if (!propIds.Add(member.Id)) throw new InvalidOperationException(group + " prop " + member.Id + " requires a distinct ID.");
             }
             if (!FiniteValue.Is(joltStrength) || joltStrength < 0f ||
                 !FiniteValue.Is(defeatStrength) || defeatStrength < 0f ||

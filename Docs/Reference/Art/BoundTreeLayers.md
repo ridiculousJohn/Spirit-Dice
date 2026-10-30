@@ -1,6 +1,6 @@
 # Bound Tree layers
 
-Reference for the tree nymph encounter's scene art: what each texture and mask is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/BoundTree` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts and their lighting split (see Relighting); moss, mist and creature layers are not built yet.
+Reference for the tree nymph encounter's scene art: what each texture and mask is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/BoundTree` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, their lighting split (see Relighting) and the ambient moss, mist and creature layers (see Ambient layers).
 
 ## Textures
 
@@ -251,3 +251,71 @@ The Nymph's Animation component lists both clips, with `NymphSob` as its default
 Enter Play mode in `Assets/Scenes/BoundTreePreview.unity`: the sob starts at once and loops. To see the flinch pose, select `Bound Tree Plate/Nymph/Flinch`, set the Spirit Portrait Deformation Channel's Weight (1 is the full flinch, combined additively with the breath) and then turn the component's enabled checkbox off and on. The channel applies its weight when it is enabled and when an animation samples it; the sob clip does not sample the Flinch channel, so a changed Weight alone shows nothing until the component is re-enabled (measured in the Play-mode check). Set it back to 0 the same way. The same works in Edit Mode but then saves the weight into the scene. In Edit Mode the Animation window can also preview either clip with the Nymph selected.
 
 Captures, difference images and the contact strip of one sob loop are in `Docs/work/bound-tree-nymph-motion/captures`.
+
+## Ambient layers
+
+Swaying hanging moss, mist drifting over the water and three creatures that come out of hiding, built by `Tools/Presentation/author-bound-tree-ambient.py` (see "Bound Tree ambient layers" in the [Presentation tools](../../../Tools/Presentation/README.md)) from the concept, the faceless plates and the kept sources in Docs/Reference/Art. Each generated image is a donor: an imagegen edit of a Lanczos 1024 x 1536 upscale of a concept box, registered to the concept frame and used only inside a declared region, as under "Generated edits".
+
+| Source | Edit target (concept box) | Used for |
+| --- | --- | --- |
+| BoundTreeMossLeftRemovalDonor.png, BoundTreeMossRightRemovalDonor.png | BoundTreeMossLeftTarget.png (0, 40)-(340, 550), BoundTreeMossRightTarget.png (601, 0)-(941, 510) | the plates behind the moss |
+| BoundTreeMossLeftExtractionDonor.png, BoundTreeMossRightExtractionDonor.png | the same targets | the moss strands (generated transparent extractions) |
+| BoundTreeMistFarDonor.png, BoundTreeMistNearDonor.png | none; BoundTreeMistReference.png (concept rows 380 to 1010) is a style reference | the mist tiles |
+| BoundTree{Snake,Beetle,Centipede}SceneDonor.png | BoundTreeSnakeTarget.png (440, 760)-(720, 1180), BoundTreeBeetleTarget.png (300, 560)-(500, 860), BoundTreeCentipedeTarget.png (540, 560)-(740, 860) | each creature painted into its scene, fixing its painted scale |
+| BoundTree{Snake,Beetle,Centipede}ExtractionDonor.png | the creature's scene donor | the creature sprites (generated transparent extractions) |
+
+Prompts are in [prompts/](prompts/README.md); the other candidates of each generation are working files under `Docs/work/bound-tree-ambient-layers/donors`.
+
+### Ambient textures
+
+| Texture | Format | Content |
+| --- | --- | --- |
+| Relight/BoundTreeFacelessPlate{Unlit,Glow,GlowLit}MossRemoved.png | RGB, 941 x 1672 | The three faceless plates with the swaying moss removed: inside the moss region (222511 px; full weight within 10 px of a strand, none at 16 px) the cleaned light 0 plate, with the base and light 1 plates following through the plates' own linear gain field, harmonically filled inside the region; byte-identical to the faceless plates elsewhere. Each imports like the plate it replaces. |
+| Relight/BoundTreeMoss{Left,Right}{Unlit,Glow,GlowLit}.png | RGBA crops | The moss strands: base, light 0 reference, light 1 reference. Left crop rect (1, 41, 335, 508), right (602, 2, 306, 507) (x, y, w, h). Alpha is the extraction's matte (levels 2 and 250); colour is low-frequency matched (24, 10, 4 px) to the light 0 plate on the visible strands, and the base and light 1 versions carry the plates' linear ratio over the painted moss. At rest the composite differs from the plate by p95 20 levels (left) and 21 (right): the extractions redraw the strands. |
+| BoundTreeMist{Far,Near}.png | RGBA tiles | Straight-alpha mist bands, made to wrap by a premultiplied cross-fade of the donor's last 256 columns into its first; far 486 x 148 px, near 666 x 252 px. They import like BoundTreeNymph.png with wrap U Repeat. |
+| BoundTreeMistMask.png | RGBA, white, 941 x 1672 | Alpha where mist shows: 1 minus the relight's receiver weight (0 on sky and distant swamp) within rows 470 to 1060 (20 px soft edge), specks under 600 px dropped, 0 on the nymph and inside the hiding places. No glow reaches it (light 0 and light 1 over base are 1.0 at the 99th percentile), so the mist has no lit versions. |
+| BoundTreeSnake.png | RGBA 104 x 38 | The snake at 170 px long (painted at 252), with moonlight added (its linear colour times 1 + 0.35 times the moon's colour at luma 1), cropped to the front 100 px of its body, the most that ever leaves its hiding place. No flare reaches its path (light 1 over base at most 1.001), so it has no lit version. |
+| Relight/BoundTreeBeetle{Unlit,GlowLit}.png | RGBA 69 x 102 | The beetle at 100 px (painted at 98), head up, resampled from its in-scene donor (5.03 donor px per sprite px), with moonlight added as on the snake; the light 1 reference is the moonlit base times the plates' mean flare gain along its visible path (light 1 over base 1.00 to 1.53, mean 1.20). |
+| Relight/BoundTreeCentipede{Unlit,GlowLit}.png | RGBA 29 x 111 | The centipede at 110 px (painted at 169), head up; light 1 reference as the beetle's (1.00 to 2.43, mean 1.31). |
+| BoundTreeHidingPlacesMask.png | RGBA, white, 941 x 1672 | Alpha over the three hiding places (polygons in the script) and the painted trunk-edge moss strand that stays on the plate, so a creature passing behind the strand is hidden by it. |
+
+The creatures' base textures are also their light 0 reference: no painted glow reaches their paths. Masks import like BoundTreeFaceMask.png and the other textures like BoundTreeNymph.png.
+
+### Moss sway
+
+Each side's strands are connected components of the matte (smaller ones join the nearest), ordered left to right and spread over three sway channels (left 8 strands, right 7). A strand's pixels move horizontally by its tip sway times ((y - top) / length) ^ 1.5, the tip sway 3 percent of its length between 2 and 8 px, so the attachments stay still. `Content/Presentation/BoundTree/BoundTreeMoss{Left,Right}Mesh.asset` hold this field per channel as three shapes (Sway0 to Sway2) on a 4 px grid over the crop (84 x 127 and 76 x 127 cells): every pixel within 14 px of a strand takes its nearest strand's displacement, in that strand's channel. The largest displacement on a strand pixel is 7.96 px (left) and 7.87 px (right), inside the removal's 10 px of full weight, so no sway uncovers painted moss. The strand down the trunk's right edge (13485 px) touches the face mask, which draws the painted plate there, so it stays painted and still.
+
+The clips are legacy AnimationClips like CanopyFlutter.anim: `BoundTreeMossLeftSway.anim` (36 s loop) and `BoundTreeMossRightSway.anim` (40 s loop) drive the three channels' weights between -1 and 1 with eased turns, periods 6, 9 and 12 s (left) and 8, 10 and 13.3 s (right), phases apart and turn amplitudes cycling 1, 0.7, 0.9, 0.6, 0.85 and 0.75, so each loop repeats seamlessly.
+
+### Mist drift
+
+`BoundTreeMistFarDrift.anim` and `BoundTreeMistNearDrift.anim` (legacy, Loop Time on) move each band RawImage's uvRect x linearly from 0 to -1 over one tile's drift period, so the band drifts right and the texture wraps: far 4 px/s over 486 px (121.5 s), near 7 px/s over 666 px (95.1 s). The bands sit at rows 574 to 722 (far, opacity 0.35) and 634 to 886 (near, opacity 0.45), the opacity being the image colour's alpha, with uvRect widths 941 / 486 and 941 / 666. Content validation (check 4) lists each clip's uvRect x jump of 1 at the loop: one whole tile, which the repeating texture shows unchanged.
+
+### Creatures
+
+Each creature is a RawImage turned about its centre and moved by a Path motion (`AmbientPathMotionAsset`) through waypoints written by the script; the run's first and last waypoints are hidden. The hiding places' occluder (below) draws the plate over the creatures through BoundTreeHidingPlacesMask.png, so a creature appears and disappears at the mask's edge, which follows the painted lip.
+
+| Creature | Hiding place | Course | Asset |
+| --- | --- | --- | --- |
+| Snake | the dark gap between the root columns at the trunk's base | Face Travel off, rest rotation -33.7 degrees so its neck runs along the slide: the head and neck slide 96 px straight out of the gap, down to the right over the big root (to 84 px past the mouth at (577, 914)), wait 3 s and slide straight back; 24 px/s, 11.0 s. Not in the creature group: at phone size the HUD's target panel covers the gap and the slide, so the snake takes no turns until it has a hiding hollow in the visible roots above the panel | BoundTreeSnakePath.asset |
+| Beetle | the dark crevice behind the hanging moss above the hollow left of the trunk's middle | Face Travel on (facing offset -90, art drawn facing up): its body is longer than the crevice is wide (88 px), so it lies lengthwise facing down in the crevice at both ends; from (494, 752) a turn of radius 32 px out to the left onto the bark at row 790, a clockwise turn of radius 28 px up the bark with a 1.2 s wait facing up at its leftmost point (392, 762), back to the right along row 734 into the crevice above where it came out and a turn of radius 32 px to face down again at its rest (498, 766); 20 px/s, 15.3 s | BoundTreeBeetlePath.asset |
+| Centipede | behind the knotted roots at the lower end of the crack right of the trunk's middle | Face Travel on (facing offset -90): up the crack out of hiding, a counter-clockwise turn of radius 28 px over the bark and back down behind the roots left of where it came out; 26 px/s, 11.2 s | BoundTreeCentipedePath.asset |
+
+Courses follow curves with waypoints 6 px apart, so a rigid creature turns a few degrees per leg. The script sweeps every path in 2 px steps: no visible creature pixel on the playing surface, the nymph, the face mask, the mist or another creature's hiding place; no hiding place on the nymph, the face mask, the mist or the playing surface; every creature fully hidden at both ends.
+
+### Ambient scene layers
+
+In `Assets/Scenes/BoundTreeEncounter.unity` the Bound Tree Scene frame (540 x 960, under the encounter screen's Portrait after the TeaRoom and ForegroundTable plates) draws, in order:
+
+| Object | Content |
+| --- | --- |
+| Mist Far, Mist Near | RawImage of the tile, colour alpha the band's opacity, uvRect width the band's tile count; an Animation plays its drift clip. |
+| Mist Occluder | RawImage over rows 574 to 886 (uvRect and map rect the same crop of the full frame), `BoundTreeMistOccluderLit.mat` (Scene Lit Image, `_SourceTex` the moss-removed base plate, `_LayerMask` BoundTreeMistMask.png, `_InvertMask` 1) and a SceneLitImage on BoundTreeSceneLighting.asset with the moss-removed plates as base, light 0 and light 1 references and BoundTreeGlowResponse.png. It draws the background, lit as the plates are, wherever the mask is below 1, so the tree and roots stay in front of the mist. |
+| Snake, Beetle, Centipede | RawImages at their rest pose (pivot at the centre, anchored to the frame's top-left). The beetle and centipede are bound as `beetle` and `centipede` in the encounter screen's Ambient Props; the snake, which is not in the creature group, is inactive and unbound (props bind from the activity's IDs, so nothing would move it). The beetle and centipede draw `BoundTree{Beetle,Centipede}Lit.mat` with a SceneLitImage: base the Unlit texture, light 1 reference the GlowLit texture, response through the map rect of their rect at the middle of their run; the snake is an unlit RawImage. |
+| Hiding Places | As Mist Occluder over the hiding places' bounding box, with `BoundTreeHidingPlacesLit.mat` (`_LayerMask` BoundTreeHidingPlacesMask.png, `_InvertMask` 0). |
+| Moss Left, Moss Right | SpiritPortraitImage of the Unlit crop with its mesh and `BoundTreeMoss{Left,Right}Lit.mat`, a SceneLitImage (base Unlit, light 0 reference Glow, light 1 reference GlowLit, response through the crop's map rect), children Sway0 to Sway2 with a SpiritPortraitDeformationChannel each, and an Animation playing its sway clip. |
+| Spirit Host, Nymph | The host's face and the nymph. |
+
+The background (TeaRoom, ForegroundTable, BoundTreeTable.asset's room texture) and BoundTreeSceneLighting.asset use the moss-removed plates; the faceless plates stay on disk as the arrival picture's source. `Content/Presentation/BoundTree/BoundTreeAmbientActivity.asset`, referenced by BoundTreeTable.asset, holds no lights or props of its own and one prop group: the beetle and centipede (the creatures the script marks `in_group`; its placement report carries the flag), one at a time, every 30 to 60 s after the last one hid (idle only; jolts and knocks never reach group members), with no sounds. Every ending settles, so a creature that is out finishes its run and hides. `Assets/Scenes/BoundTreePreview.unity` draws Moss Left and Moss Right under Bound Tree Plate before the Spirit Host, listed in the plate's Lit Images; it has no mist or creatures.
+
+Review captures: `BoundTreeReviewCapturePlayTests.BoundTreeAmbientCapture` (DICE_SPIRIT_CAPTURE_ROOT/ambient) shows the table at rest, the moss at two sway extremes, the mist drifted half a tile and each creature of the group half out, in the middle of its run and half hidden, at 540 x 960 and 443 x 960. At phone size the HUD's target panel covers the snake's gap and slide (concept rows from about 860 down), which is why the snake is out of the group; the centipede reads as a small reddish shape.
