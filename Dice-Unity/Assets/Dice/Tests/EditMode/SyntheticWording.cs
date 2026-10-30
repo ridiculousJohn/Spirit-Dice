@@ -1,3 +1,5 @@
+using System.Linq;
+using Dice.Engine;
 using Dice.Presentation;
 using UnityEngine;
 
@@ -136,16 +138,16 @@ namespace Dice.Tests
             w.familyRow.undiscoveredCondition = "<familyRow.undiscoveredCondition>";
 
             var r = w.rewards;
-            r.handUpgradeTitle = "<rewards.handUpgradeTitle>";
-            r.exhaustedTitle = "<rewards.exhaustedTitle>";
-            r.unlockTitle = "<rewards.unlockTitle>";
-            r.charmTitle = "<rewards.charmTitle>";
-            r.upgradeButton = "<rewards.upgradeButton>";
-            r.continueButton = "<rewards.continueButton>";
-            r.unlockButton = "<rewards.unlockButton>";
-            r.selectButton = "<rewards.selectButton>";
-            r.exhaustedInstruction = "<rewards.exhaustedInstruction>";
-            r.unlockInstruction = "<rewards.unlockInstruction>";
+            r.kinds = RewardKind.All.Select(kind => new SpiritUiWording.RewardKindWording
+            {
+                kind = kind.Id,
+                title = "<rewards.kinds[" + kind.Id + "].title>",
+                confirmButton = "<rewards.kinds[" + kind.Id + "].confirmButton>",
+                instruction = "<rewards.kinds[" + kind.Id + "].instruction>",
+                emptyTitle = "<rewards.kinds[" + kind.Id + "].emptyTitle>",
+                emptyInstruction = "<rewards.kinds[" + kind.Id + "].emptyInstruction>",
+                emptyConfirmButton = "<rewards.kinds[" + kind.Id + "].emptyConfirmButton>"
+            }).ToArray();
             r.refreshButton = "<rewards.refreshButton>{count}";
 
             var card = w.rewardCard;

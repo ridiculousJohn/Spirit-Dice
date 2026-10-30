@@ -46,19 +46,18 @@ namespace Dice.Presentation
         public void Render(EncounterSnapshot snapshot)
         {
             var offer = snapshot.PendingReward;
-            bool handUpgrade = offer != null && offer.Kind == RewardKind.HandUpgrade;
-            bool unlock = offer != null && offer.Kind == RewardKind.ModifierUnlock;
-            bool exhausted = unlock && offer.Options.Count == 0;
+            // An offer without options, made only of a kind offered when nothing is eligible, is acknowledged.
+            bool empty = offer != null && offer.Options.Count == 0;
             var wording = SpiritUi.GetWording(transform).rewards;
-            Title.text = handUpgrade ? wording.handUpgradeTitle : exhausted ? wording.exhaustedTitle :
-                unlock ? wording.unlockTitle : wording.charmTitle;
-            Instruction.gameObject.SetActive(unlock);
+            var kindWording = offer == null ? null : wording.For(offer.Kind);
+            string instruction = kindWording == null ? null : empty ? kindWording.emptyInstruction : kindWording.instruction;
+            Title.text = kindWording == null ? string.Empty : empty ? kindWording.emptyTitle : kindWording.title;
+            Instruction.gameObject.SetActive(!string.IsNullOrWhiteSpace(instruction));
+            Instruction.text = instruction ?? string.Empty;
             ConfirmButton.gameObject.SetActive(offer != null);
-            SpiritUi.SetButtonLabel(ConfirmButton, handUpgrade ? wording.upgradeButton : exhausted ? wording.continueButton :
-                unlock ? wording.unlockButton : wording.selectButton);
-            // Only an unlock offer shows an instruction.
-            if (unlock) Instruction.text = exhausted ? wording.exhaustedInstruction : wording.unlockInstruction;
-            bool canRefresh = offer != null && offer.Kind == RewardKind.Modifier;
+            if (kindWording != null)
+                SpiritUi.SetButtonLabel(ConfirmButton, empty ? kindWording.emptyConfirmButton : kindWording.confirmButton);
+            bool canRefresh = offer != null && offer.Kind.Refreshable;
             RefreshButton.gameObject.SetActive(canRefresh);
             RefreshButton.interactable = canRefresh && snapshot.RewardRefreshesAvailable > 0;
             SpiritUi.SetButtonLabel(RefreshButton, wording.RefreshButton(snapshot.RewardRefreshesAvailable));
@@ -66,7 +65,7 @@ namespace Dice.Presentation
             if (renderedOffer == offerId) return;
             renderedOffer = offerId;
             ClearSelection();
-            ConfirmButton.interactable = exhausted;
+            ConfirmButton.interactable = empty;
             int count = offer?.Options.Count ?? 0;
             while (cards.Count < count)
                 cards.Add(SpiritRewardCard.Create(cardPrefab, "RewardCard" + (cards.Count + 1), Content,
@@ -77,16 +76,16 @@ namespace Dice.Presentation
                 card.Button.gameObject.SetActive(i < count);
                 if (i >= count) continue;
                 var option = offer.Options[i];
-                if (offer.Kind == RewardKind.Modifier || unlock)
-                {
-                    var definition = controls.Catalog.GetModifier(option.DefinitionId.Value);
-                    card.RenderModifier(controls.ModifierPresentation, definition, offer.OfferId, option.OptionId);
-                }
-                else if (option.Category.HasValue)
+                if (option.Category.HasValue)
                 {
                     var hand = controls.Catalog.GetHand(option.Category.Value);
                     int level = snapshot.HandUpgrades[(int)option.Category.Value];
                     card.RenderHandUpgrade(hand, level, offer.OfferId, option.OptionId);
+                }
+                else
+                {
+                    var definition = controls.Catalog.GetModifier(option.DefinitionId.Value);
+                    card.RenderModifier(controls.ModifierPresentation, definition, offer.OfferId, option.OptionId);
                 }
             }
             Content.anchoredPosition = Vector2.zero;
@@ -107,7 +106,7 @@ namespace Dice.Presentation
                 for (int i = 0; i < offer.Options.Count; ++i)
                 {
                     bool selected = offer.Options[i].OptionId == optionId;
-                    if (offer.Kind == RewardKind.HandUpgrade) cards[i].SetHandUpgradeSelected(selected);
+                    if (offer.Options[i].Category.HasValue) cards[i].SetHandUpgradeSelected(selected);
                     else cards[i].SetModifierSelected(selected);
                 }
                 ConfirmButton.interactable = true;
@@ -120,7 +119,7 @@ namespace Dice.Presentation
             if (isBusy()) return;
             var offer = controls.Snapshot?.PendingReward;
             if (offer == null || offer.OfferId != renderedOffer) return;
-            if (offer.Kind == RewardKind.ModifierUnlock && offer.Options.Count == 0)
+            if (offer.Options.Count == 0)
             {
                 controls.ChooseReward(offer.OfferId, 0);
                 return;

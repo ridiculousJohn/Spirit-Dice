@@ -84,6 +84,20 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => Decode(json));
         }
 
+        /** Checks a pending offer whose saved kind no reward kind declares fails loading / fails if it loads as some kind. */
+        [TestCase("\"Charm\"")]
+        [TestCase("\"modifier\"")]
+        [TestCase("0")]
+        [TestCase("null")]
+        public void AnUnknownRewardKindIsRejected(string kind)
+        {
+            var session = RewardTestContent.Session();
+            session.Execute(PlayHandAction.Instance, 0);
+            var json = SaveJson(session);
+            json["PendingReward"]["Kind"] = JToken.Parse(kind);
+            Assert.Throws<FormatException>(() => Decode(json));
+        }
+
         [Test]
         public void DuplicateRootPropertiesAreRejectedEvenWhenTheirValuesAgree()
         {

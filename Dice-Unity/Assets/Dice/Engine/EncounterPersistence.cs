@@ -571,9 +571,9 @@ namespace Dice.Engine
             if (choosingModifier) ValidateUpgradeCategories(catalog, definition, state, state.PendingUpgradeCategories);
             if (save.PendingReward == null) return;
             var source = save.PendingReward;
-            Require(source.Kind == (choosingModifier ? RewardKind.Modifier : choosingUnlock ? RewardKind.ModifierUnlock : RewardKind.HandUpgrade) &&
+            Require(source.Kind != null && source.Kind.WaitingPhase == state.Phase &&
                 source.TargetStageIndex == state.StageIndex + 1 && source.OfferId > 0 &&
-                source.OfferId == state.NextOfferId - 1 && source.Options != null && (source.Options.Length > 0 || choosingUnlock) &&
+                source.OfferId == state.NextOfferId - 1 && source.Options != null && (source.Options.Length > 0 || source.Kind.OfferedWhenEmpty) &&
                 state.NextOptionId > source.Options.Length, "Pending offer metadata is inconsistent.");
             var options = new List<RewardOption>();
             foreach (var option in source.Options)

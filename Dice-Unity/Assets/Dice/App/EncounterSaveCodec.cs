@@ -99,6 +99,7 @@ namespace Dice.App
             };
             settings.Converters.Add(new StringEnumConverter());
             settings.Converters.Add(new StrictPrimitiveConverter());
+            settings.Converters.Add(new RewardKindConverter());
             settings.Converters.Add(ContentIds.Modifier);
             settings.Converters.Add(ContentIds.Family);
             settings.Converters.Add(ContentIds.Encounter);
@@ -181,6 +182,24 @@ namespace Dice.App
                 property.Required = property.PropertyType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) == null
                     ? Required.Always : Required.AllowNull;
                 return property;
+            }
+        }
+
+        /** Writes a reward kind as its id and reads it back as the kind declaring that id, rejecting any other value. */
+        private sealed class RewardKindConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) => typeof(RewardKind).IsAssignableFrom(objectType);
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+                => writer.WriteValue(((RewardKind)value).Id);
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                if (reader.TokenType != JsonToken.String)
+                    throw new JsonSerializationException("A saved reward kind requires a string.");
+                var id = (string)reader.Value;
+                return RewardKind.TryFind(id, out var kind) ? kind
+                    : throw new JsonSerializationException("A saved reward kind is unknown: " + id);
             }
         }
 

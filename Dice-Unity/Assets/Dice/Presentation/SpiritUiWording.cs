@@ -82,6 +82,13 @@ namespace Dice.Presentation
             for (int i = 0; i < values.Length; ++i) Text(values[i], field + "[" + i + "]");
         }
 
+        /** Fails naming the field and its problem, for a check the other helpers do not express. */
+        public void Require(bool condition, string field, string problem)
+        {
+            if (!condition)
+                throw new InvalidOperationException("The UI wording " + asset + " " + section + "." + field + " " + problem + ".");
+        }
+
         private InvalidOperationException Missing(string field) =>
             new InvalidOperationException("The UI wording " + asset + " has no " + section + "." + field + ".");
     }
@@ -471,37 +478,66 @@ namespace Dice.Presentation
             }
         }
 
-        /** The rewards panel for charm, hand upgrade and unlock offers. */
+        /** The rewards panel's wording for one kind of reward offer, found by the kind's id. */
+        [Serializable]
+        public sealed class RewardKindWording
+        {
+            /** The id of the reward kind this wording presents (RewardKind.Id). */
+            public string kind;
+            public string title;
+            /** The confirm button's label. */
+            public string confirmButton;
+            /** The instruction under the title; a kind without one leaves it empty and the panel shows none. */
+            public string instruction;
+            /**
+             * For a kind offered even when nothing is eligible, the wording of an offer without options: its title, its
+             * instruction (empty shows none) and the label of the button that acknowledges it. Other kinds leave them empty.
+             */
+            public string emptyTitle;
+            public string emptyInstruction;
+            public string emptyConfirmButton;
+        }
+
+        /** The rewards panel, worded per reward kind. */
         [Serializable]
         public sealed class Rewards : SpiritWordingSection
         {
-            public string handUpgradeTitle;
-            public string exhaustedTitle;
-            public string unlockTitle;
-            public string charmTitle;
-            public string upgradeButton;
-            public string continueButton;
-            public string unlockButton;
-            public string selectButton;
-            public string exhaustedInstruction;
-            public string unlockInstruction;
+            /** One entry per reward kind. */
+            public RewardKindWording[] kinds;
             /** {count}: the refreshes available. */
             public string refreshButton;
 
             public string RefreshButton(int count) => SpiritWordingTemplate.Fill(refreshButton, "count", count);
 
+            /** The kind's wording; validation guarantees every kind has exactly one entry. */
+            public RewardKindWording For(RewardKind kind)
+            {
+                if (kind == null) throw new ArgumentNullException(nameof(kind));
+                foreach (var entry in kinds)
+                    if (entry != null && entry.kind == kind.Id) return entry;
+                throw new InvalidOperationException("The rewards wording has no entry for the reward kind " + kind.Id + ".");
+            }
+
             public override void Validate(SpiritWordingCheck check)
             {
-                check.Text(handUpgradeTitle, nameof(handUpgradeTitle));
-                check.Text(exhaustedTitle, nameof(exhaustedTitle));
-                check.Text(unlockTitle, nameof(unlockTitle));
-                check.Text(charmTitle, nameof(charmTitle));
-                check.Text(upgradeButton, nameof(upgradeButton));
-                check.Text(continueButton, nameof(continueButton));
-                check.Text(unlockButton, nameof(unlockButton));
-                check.Text(selectButton, nameof(selectButton));
-                check.Text(exhaustedInstruction, nameof(exhaustedInstruction));
-                check.Text(unlockInstruction, nameof(unlockInstruction));
+                check.Require(kinds != null, nameof(kinds), "is missing");
+                for (int i = 0; i < kinds.Length; ++i)
+                    check.Require(kinds[i] != null && RewardKind.TryFind(kinds[i].kind, out _), nameof(kinds) + "[" + i + "]",
+                        "names no reward kind");
+                foreach (var kind in RewardKind.All)
+                {
+                    string field = nameof(kinds) + "[" + kind.Id + "]";
+                    int count = 0;
+                    foreach (var entry in kinds)
+                        if (entry.kind == kind.Id) ++count;
+                    check.Require(count == 1, field, count == 0 ? "is missing" : "is listed more than once");
+                    var wording = For(kind);
+                    check.Text(wording.title, field + "." + nameof(RewardKindWording.title));
+                    check.Text(wording.confirmButton, field + "." + nameof(RewardKindWording.confirmButton));
+                    if (!kind.OfferedWhenEmpty) continue;
+                    check.Text(wording.emptyTitle, field + "." + nameof(RewardKindWording.emptyTitle));
+                    check.Text(wording.emptyConfirmButton, field + "." + nameof(RewardKindWording.emptyConfirmButton));
+                }
                 check.Text(refreshButton, nameof(refreshButton));
             }
         }

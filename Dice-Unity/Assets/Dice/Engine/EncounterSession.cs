@@ -175,16 +175,16 @@ namespace Dice.Engine
             return action.Validate(this);
         }
 
-        internal CommandRejection ValidateRewardOffer(EncounterPhase phase, long offerId)
+        internal CommandRejection ValidateRewardOffer(RewardKind kind, long offerId)
         {
-            if (state.Phase != phase) return CommandRejection.InvalidPhase;
+            if (state.Phase != kind.WaitingPhase) return CommandRejection.InvalidPhase;
             if (state.PendingReward == null || state.PendingReward.OfferId != offerId) return CommandRejection.InvalidOffer;
             return CommandRejection.None;
         }
 
-        internal CommandRejection ValidateRewardSelection(EncounterPhase phase, long offerId, long optionId)
+        internal CommandRejection ValidateRewardSelection(RewardKind kind, long offerId, long optionId)
         {
-            var rejection = ValidateRewardOffer(phase, offerId);
+            var rejection = ValidateRewardOffer(kind, offerId);
             if (rejection != CommandRejection.None) return rejection;
             foreach (var option in state.PendingReward.Options)
                 if (option.OptionId == optionId) return CommandRejection.None;
@@ -316,8 +316,7 @@ namespace Dice.Engine
             long id = next.NextOfferId;
             next.NextOfferId = checked(id + 1);
             next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options, definition);
-            next.Phase = kind == RewardKind.Modifier ? EncounterPhase.ChoosingModifier :
-                kind == RewardKind.ModifierUnlock ? EncounterPhase.ChoosingUnlock : EncounterPhase.ChoosingHandUpgrade;
+            next.Phase = kind.WaitingPhase;
             events.Add(new RewardOfferedEvent(next, next.PendingReward, isRefresh));
         }
 

@@ -92,6 +92,7 @@ namespace Dice.Engine
     public sealed class EncounterSaveRewardData
     {
         public long OfferId;
+        /** Written as the kind's id. */
         public RewardKind Kind;
         public int TargetStageIndex;
         public EncounterSaveRewardOptionData[] Options;

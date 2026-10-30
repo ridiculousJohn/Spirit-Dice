@@ -37,8 +37,8 @@ namespace Dice.Presentation
         public static bool IntroducesOffer(EncounterDefinition encounter, EncounterSnapshot snapshot)
         {
             if (encounter == null || snapshot == null) return false;
-            return !encounter.EncounterModifiersAvailableFromStart && snapshot.Phase == EncounterPhase.ChoosingModifier &&
-                snapshot.PendingReward != null && snapshot.PendingReward.IntroducesEncounterModifiers;
+            return !encounter.EncounterModifiersAvailableFromStart && snapshot.PendingReward != null &&
+                snapshot.PendingReward.IntroducesEncounterModifiers;
         }
 
         /** Shows the introduction over the pending offer when it introduces it and was not dismissed; hides it otherwise. */

@@ -132,12 +132,11 @@ namespace Dice.App
         public void RefreshRewards() => Submit(new RefreshModifierOfferAction(Snapshot?.PendingReward?.OfferId ?? 0), false);
         public void Abandon() => Submit(AbandonEncounterAction.Instance, false);
 
+        /** Answers the pending offer; without one there is nothing to choose. */
         public void ChooseReward(long offerId, long optionId)
         {
-            EncounterAction action = Snapshot?.Phase == EncounterPhase.ChoosingHandUpgrade
-                ? (EncounterAction)new SelectHandUpgradeAction(offerId, optionId)
-                : new SelectModifierAction(offerId, optionId);
-            Submit(action, false);
+            var offer = Snapshot?.PendingReward;
+            if (offer != null) Submit(offer.Answer(offerId, optionId), false);
         }
 
         public void Save()

@@ -126,9 +126,9 @@ namespace Dice.Presentation
             upgradesText.text = "HAND UPGRADES / CATEGORY VALUES\nCategory base excludes the dice sum and modifier contributions.\n" + string.Join("\n", upgradeRows);
             inventoryText.text = exists ? inventoryTitle : "OWNED MODIFIERS";
             eventText.text = logTitle + "\nNewest first. Scored hands retain their complete resolution breakdown.\n\n" + string.Join("\n\n", eventRows);
-            refreshButton.gameObject.SetActive(exists && cachedSnapshot.PendingReward?.Kind == RewardKind.Modifier);
-            refreshButton.interactable = exists && cachedSnapshot.Phase == EncounterPhase.ChoosingModifier
-                && cachedSnapshot.RewardRefreshesAvailable > 0;
+            bool refreshable = exists && cachedSnapshot.PendingReward != null && cachedSnapshot.PendingReward.Kind.Refreshable;
+            refreshButton.gameObject.SetActive(refreshable);
+            refreshButton.interactable = refreshable && cachedSnapshot.RewardRefreshesAvailable > 0;
             refreshButton.GetComponentInChildren<Text>(true).text = refreshLabel;
             RenderCards(rewardCards, rewardViews, rewardsContent, true);
             RenderCards(inventoryCards, inventoryViews, inventoryContent, false);
@@ -152,8 +152,7 @@ namespace Dice.Presentation
                 view.Title.text = card.Title;
                 view.Body.text = string.Join("\n", new[] { card.Status, card.Body, card.Detail, card.Contributions });
                 view.Choose.gameObject.SetActive(rewards);
-                view.Choose.interactable = rewards && cachedSnapshot != null &&
-                    (cachedSnapshot.Phase == EncounterPhase.ChoosingModifier || cachedSnapshot.Phase == EncounterPhase.ChoosingHandUpgrade);
+                view.Choose.interactable = rewards && cachedSnapshot?.PendingReward != null;
             }
         }
         private static string SeedText(ulong seed) => seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -260,7 +259,7 @@ namespace Dice.Presentation
         {
             RewardOffer offer = cachedSnapshot.PendingReward;
             rewardCards.Clear();
-            rewardTitle = offer == null ? "REWARDS" : "CHOOSE " + DiagnosticText.Humanize(offer.Kind.ToString()).ToUpperInvariant();
+            rewardTitle = offer == null ? "REWARDS" : "CHOOSE " + DiagnosticText.Humanize(offer.Kind.Id).ToUpperInvariant();
             rewardDetail = offer == null ? "" : "For stage " + (offer.TargetStageIndex + 1) + " | offer " + offer.OfferId;
             refreshLabel = "Refresh modifiers - cost " + cachedSnapshot.RewardRefreshCost + " (available " +
                 cachedSnapshot.RewardRefreshes + ")";
@@ -268,7 +267,7 @@ namespace Dice.Presentation
             foreach (RewardOption option in offer.Options)
             {
                 var card = new CardText { OfferId = offer.OfferId, OptionId = option.OptionId };
-                if (offer.Kind == RewardKind.Modifier)
+                if (option.DefinitionId.HasValue)
                 {
                     ModifierDefinition modifier = cachedCatalog.GetModifier(option.DefinitionId.Value);
                     ModifierPresentationCatalog charms = controls.ModifierPresentation;
@@ -276,7 +275,7 @@ namespace Dice.Presentation
                     card.Body = charms.GetConditionText(modifier) + "\n" + charms.GetEffectText(modifier);
                     card.Detail = charms.GetTimingText(modifier) + "\n" + charms.GetName(modifier) + " | option " + option.OptionId;
                 }
-                else if (option.Category.HasValue)
+                else
                 {
                     HandDefinition hand = cachedCatalog.GetHand(option.Category.Value);
                     int level = cachedSnapshot.HandUpgrades[(int)hand.Category];

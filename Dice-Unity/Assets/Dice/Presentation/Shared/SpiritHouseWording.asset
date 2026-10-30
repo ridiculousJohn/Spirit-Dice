@@ -137,16 +137,28 @@ MonoBehaviour:
     undiscoveredFamily: Undiscovered family
     undiscoveredCondition: Locked
   rewards:
-    handUpgradeTitle: Choose a hand to upgrade
-    exhaustedTitle: All charms collected
-    unlockTitle: Unlock a charm
-    charmTitle: Choose a charm
-    upgradeButton: Upgrade
-    continueButton: Continue
-    unlockButton: Unlock
-    selectButton: Select
-    exhaustedInstruction: You own every charm this encounter awards.
-    unlockInstruction: Choose one to add permanently to your collection.
+    kinds:
+    - kind: Modifier
+      title: Choose a charm
+      confirmButton: Select
+      instruction: 
+      emptyTitle: 
+      emptyInstruction: 
+      emptyConfirmButton: 
+    - kind: HandUpgrade
+      title: Choose a hand to upgrade
+      confirmButton: Upgrade
+      instruction: 
+      emptyTitle: 
+      emptyInstruction: 
+      emptyConfirmButton: 
+    - kind: ModifierUnlock
+      title: Unlock a charm
+      confirmButton: Unlock
+      instruction: Choose one to add permanently to your collection.
+      emptyTitle: All charms collected
+      emptyInstruction: You own every charm this encounter awards.
+      emptyConfirmButton: Continue
     refreshButton: Refresh ({count})
   rewardCard:
     level: Level {level}

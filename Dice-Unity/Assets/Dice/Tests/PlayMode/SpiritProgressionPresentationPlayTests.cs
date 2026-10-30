@@ -43,11 +43,12 @@ namespace Dice.Tests
             controller.PlayHand();
             yield return ContentReady.WaitUntil(() => !controller.IsBusy, "The played hand's presentation did not complete.");
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
-            var rewards = ContentReady.Find<Text>(controller, "RewardTitle").GetComponentInParent<SpiritUiContext>(true).Wording.rewards;
-            Assert.That(ContentReady.Find<Text>(controller, "RewardTitle").text, Is.EqualTo(rewards.exhaustedTitle));
+            var rewards = ContentReady.Find<Text>(controller, "RewardTitle").GetComponentInParent<SpiritUiContext>(true).Wording.rewards
+                .For(RewardKind.ModifierUnlock);
+            Assert.That(ContentReady.Find<Text>(controller, "RewardTitle").text, Is.EqualTo(rewards.emptyTitle));
             var confirm = ContentReady.Find<Button>(controller, "UpgradeHandButton");
             Assert.That(confirm.interactable, Is.True);
-            Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo(rewards.continueButton));
+            Assert.That(confirm.GetComponentInChildren<Text>().text, Is.EqualTo(rewards.emptyConfirmButton));
             confirm.onClick.Invoke();
             yield return ContentReady.Routed();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
