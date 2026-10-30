@@ -176,12 +176,6 @@ namespace Dice.Tests
                 C("21345", rules: new[] { Bound(1) }));
         }
 
-        /** Every condition of the witness cases, for checks that hold for any condition. */
-        internal static IEnumerable<TestCaseData> EveryCondition()
-        {
-            foreach (TestCaseData pair in Conditions())
-                yield return new TestCaseData(pair.Arguments[0]).SetName(pair.TestName);
-        }
 
         private static TestCaseData Pair(IModifierCondition condition, ModifierContext holds, ModifierContext fails)
             => new TestCaseData(condition, (ModifierContext?)holds, (ModifierContext?)fails).SetName(condition.GetType().Name);

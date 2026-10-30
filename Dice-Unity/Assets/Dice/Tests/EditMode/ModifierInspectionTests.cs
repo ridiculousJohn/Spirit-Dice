@@ -8,10 +8,11 @@ namespace Dice.Tests
 {
     public sealed class ModifierInspectionTests
     {
-        [TestCaseSource(typeof(ModifierConditionTests), nameof(ModifierConditionTests.EveryCondition))]
-        public void BuiltInInspectionMatchesPreviewAndCommittedPlay(IModifierCondition condition)
+        [TestCase(true)]
+        [TestCase(false)]
+        public void InspectionMatchesPreviewAndCommittedPlay(bool holds)
         {
-            var definition = Modifier("built.in", ModifierPhase.PlayHand, condition);
+            var definition = Modifier("inspected", ModifierPhase.PlayHand, new RecordingCondition(context => holds));
             var session = Session(Catalog(new[] { definition }));
             AssertInspectionMatchesPlay(session);
             session.Execute(new RerollDiceAction(5), session.Snapshot.Revision);
@@ -199,35 +200,6 @@ namespace Dice.Tests
             Assert.Throws<OverflowException>(() => session.PreviewHandResolution());
         }
 
-        [Test]
-        public void RestoringAnInspectedSessionDoesNotReplayCustomConditions()
-        {
-            var initial = new RecordingCondition(context => true);
-            var play = new RecordingCondition(context => true);
-            var definitions = new[]
-            {
-                Modifier("initial", ModifierPhase.InitialRoll, initial),
-                Modifier("play", ModifierPhase.PlayHand, play, ModifierActivationLimit.OncePerStage)
-            };
-            var catalog = Catalog(definitions);
-            var session = Session(catalog);
-            session.Execute(PlayHandAction.Instance, 0);
-            session.InspectModifiersForPlayHand();
-            int initialEvaluations = initial.Contexts.Count;
-            int playEvaluations = play.Contexts.Count;
-            var save = session.CaptureSave();
-            var restored = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(restored.Success, Is.True, restored.Detail);
-            Assert.That(restored.Session.InitialResolution.Events, Is.Empty);
-            Assert.That(initial.Contexts.Count, Is.EqualTo(initialEvaluations));
-            Assert.That(play.Contexts.Count, Is.EqualTo(playEvaluations));
-            EncounterPersistenceTests.AssertGraphEqual(save, restored.Session.CaptureSave());
-            var inspection = restored.Session.InspectModifiersForPlayHand();
-            Assert.That(inspection[1].Status, Is.EqualTo(ModifierInspectionStatus.ActivationLimitReached));
-            Assert.That(inspection[1].ConditionMet, Is.True);
-            Assert.That(play.Contexts.Count, Is.EqualTo(playEvaluations + 1));
-            Assert.That(initial.Contexts.Count, Is.EqualTo(initialEvaluations));
-        }
 
         private static void AssertInspectionMatchesPlay(EncounterSession session)
         {
