@@ -79,6 +79,63 @@ namespace Dice.Tests
         }
 
         [Test]
+        public void EncounterBeatsRequireATableSceneAKnownUnsharedEncounterAndOnlyItsRules()
+        {
+            var journey = EncounterJourney();
+            var other = Journey("journey.other", encounterAsset);
+            var table = journey.TableSceneAt(0);
+            var journeys = Catalog(journey);
+            var picture = Create<PictureSceneAsset>();
+            SyntheticUi.Set(picture, "background", Texture2D.whiteTexture);
+            TestJourneys.SetEncounterBeats(journey, picture, encounterAsset);
+            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message, Does.Contain("table scene"));
+            TestJourneys.SetEncounterBeats(journey, table, content.Encounter("encounter.missing"));
+            Assert.Throws<KeyNotFoundException>(() => journeys.Validate(catalog));
+            TestJourneys.SetEncounterBeats(journey, table, encounterAsset);
+            Assert.That(Assert.Throws<FormatException>(() => Catalog(journey, other).Validate(catalog)).Message,
+                Does.Contain(journey.name).And.Contain(other.name));
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+            var rule = Create<EncounterRulePresentationAsset>();
+            SyntheticUi.Set(rule, "rule", content.Own(TestRules.Asset(TestRules.IdOf("not.in.encounter"))));
+            SyntheticUi.Set(table, "rulePresentations", new[] { rule });
+            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [Test]
+        public void OutcomePresentationIsOptionalAndEnabledPerOutcome()
+        {
+            var journey = EncounterJourney();
+            EncounterBeat Beat() => journey.EncounterBeatOf(encounterAsset.Identity);
+            foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
+                Assert.That(Beat().GetOutcomePresentation(outcome), Is.Null);
+            TestJourneys.SetEncounterBeat(journey, encounterAsset, "victoryPresentation.holdDuration", 2f);
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won), Is.Null, "An authored but disabled outcome is not used.");
+            TestJourneys.SetEncounterBeat(journey, encounterAsset, "victoryPresentation.enabled", true);
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won)?.HoldDuration, Is.EqualTo(2f));
+            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
+            TestJourneys.SetEncounterBeat(journey, encounterAsset, "victoryPresentation.holdDuration", float.NaN);
+            Assert.Throws<FormatException>(() => journey.Validate(catalog));
+            TestJourneys.SetEncounterBeat(journey, encounterAsset, "victoryPresentation.holdDuration", 0f);
+            TestJourneys.SetEncounterBeat(journey, encounterAsset, "victoryPresentation.fadeDuration", -1f);
+            Assert.Throws<FormatException>(() => journey.Validate(catalog));
+        }
+
+        [TestCase("duplicate")]
+        [TestCase("self")]
+        [TestCase("missing")]
+        public void FollowUpReferencesMustBeUniqueOtherCatalogJourneys(string invalid)
+        {
+            var first = EncounterJourney();
+            var second = Journey("story.second");
+            var journeys = Catalog(first, second);
+            SyntheticUi.Set(first, "followUpJourneys", new[] { second });
+            Assert.DoesNotThrow(() => journeys.Validate(catalog));
+            SyntheticUi.Set(first, "followUpJourneys", invalid == "duplicate" ? new[] { second, second } :
+                new[] { invalid == "self" ? first : Journey("story.missing") });
+            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
+        }
+
+        [Test]
         public void ABeatThatSetsNoSceneStaysInTheCurrentScene()
         {
             var journey = Journey("story.scenes");

@@ -624,68 +624,13 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void JourneyValidationRejectsBeatOrderScenesUnknownOrSharedEncountersAndRuleMismatch()
+        public void AnInvalidJourneyCatalogFailsInitializationNamingTheJourney()
         {
             var journey = journeys.Entries[0];
-            var table = journey.TableSceneAt(0);
-            var encounter = journey.Encounters.Single();
-            SetBeats(journey, table, new InvitationBeat(), new DialogueBeat());
+            SetBeats(journey, journey.TableSceneAt(0), new InvitationBeat(), new DialogueBeat());
             Assert.That(controller.InitializeJourney(catalog, journeys, savePath), Is.False);
             Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.InvestigationFailed));
             Assert.That(controller.JourneyStatus.Detail, Does.Contain("followed by an Encounter beat").And.Contain(journey.name));
-            SetBeats(journey, table, new DialogueBeat(), new EncounterBeat());
-            SetBeat(journey, 1, "encounter", encounter);
-            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
-            SetEncounterBeats(journey, null, encounter);
-            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message, Does.Contain("must set a scene"));
-            var picture = Create<PictureSceneAsset>();
-            SyntheticUi.Set(picture, "background", Texture2D.whiteTexture);
-            SetEncounterBeats(journey, picture, encounter);
-            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message, Does.Contain("table scene"));
-            SetEncounterBeats(journey, table, charms.Encounter("encounter.missing"));
-            Assert.Throws<KeyNotFoundException>(() => journeys.Validate(catalog));
-            SetEncounterBeats(journey, table, journeys.Entries[1].Encounters.Single());
-            Assert.That(Assert.Throws<FormatException>(() => journeys.Validate(catalog)).Message,
-                Does.Contain(journey.name).And.Contain(journeys.Entries[1].name));
-            SetEncounterBeats(journey, table, encounter);
-            Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            var rule = Create<EncounterRulePresentationAsset>();
-            SyntheticUi.Set(rule, "rule", charms.Own(TestRules.Asset(TestRules.IdOf("not.in.encounter"))));
-            SyntheticUi.Set(table, "rulePresentations", new[] { rule });
-            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
-        }
-
-        [Test]
-        public void OutcomePresentationIsOptionalAndEnabledPerOutcome()
-        {
-            var journey = journeys.Entries[0];
-            var encounter = journey.Encounters.Single();
-            EncounterBeat Beat() => journey.EncounterBeatOf(FirstId);
-            foreach (EncounterOutcome outcome in Enum.GetValues(typeof(EncounterOutcome)))
-                Assert.That(Beat().GetOutcomePresentation(outcome), Is.Null);
-            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", 2f);
-            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won), Is.Null, "An authored but disabled outcome is not used.");
-            SetEncounterBeat(journey, encounter, "victoryPresentation.enabled", true);
-            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Won)?.HoldDuration, Is.EqualTo(2f));
-            Assert.That(Beat().GetOutcomePresentation(EncounterOutcome.Lost), Is.Null);
-            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", float.NaN);
-            Assert.Throws<FormatException>(() => journey.Validate(catalog));
-            SetEncounterBeat(journey, encounter, "victoryPresentation.holdDuration", 0f);
-            SetEncounterBeat(journey, encounter, "victoryPresentation.fadeDuration", -1f);
-            Assert.Throws<FormatException>(() => journey.Validate(catalog));
-        }
-
-        [TestCase("duplicate")]
-        [TestCase("self")]
-        [TestCase("missing")]
-        public void FollowUpReferencesMustBeUniqueOtherCatalogJourneys(string invalid)
-        {
-            var second = journeys.Entries[1];
-            SyntheticUi.Set(journeys.Entries[0], "followUpJourneys", new[] { second });
-            Assert.DoesNotThrow(() => journeys.Validate(catalog));
-            SyntheticUi.Set(journeys.Entries[0], "followUpJourneys", invalid == "duplicate" ? new[] { second, second } :
-                new[] { invalid == "self" ? journeys.Entries[0] : Journey(null, "Missing lead", "Nobody") });
-            Assert.Throws<FormatException>(() => journeys.Validate(catalog));
         }
 
         [Test]
