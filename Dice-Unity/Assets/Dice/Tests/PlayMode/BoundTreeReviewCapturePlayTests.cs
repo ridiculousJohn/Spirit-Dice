@@ -23,7 +23,7 @@ namespace Dice.Tests
      * grown and settled after a player reroll with the next mark, that run loaded from the investigation board showing its
      * marked and bound dice at once, the gold selection beside a bound die and on a marked die, and the table after Play
      * Hand once the bindings have released. It writes PNGs under DICE_SPIRIT_CAPTURE_ROOT and is ignored without it; it is a capture, not a regression test.
-     * A second capture shows the stage 3 charms introduction over the stage 3 charm offer at 540 x 960, then the offer
+     * A second capture shows the stage 3 charms introduction over the stage 3 charm offer at 540 x 960 and 443 x 960, then the offer
      * after Continue, under DICE_SPIRIT_CAPTURE_ROOT/stage3-intro. The fixture is explicit: it runs only when a run selects
      * it by name, never in a run of the whole suite. The binding behaviour it shows is tested by
      * DieBindingPresentationPlayTests, the introduction by EncounterCharmsIntroductionPlayTests.
@@ -157,6 +157,10 @@ namespace Dice.Tests
             AssertIntroductionLayout(view);
             yield return EncounterCharmsIntroductionPlayTests.AssertOfferCovered(view, true);
             yield return Capture(root, "a-stage3-introduction-" + Width + "x" + Height + ".png");
+            yield return SizePortrait(NarrowWidth);
+            AssertIntroductionLayout(view);
+            yield return Capture(root, "a-stage3-introduction-" + NarrowWidth + "x" + Height + ".png", NarrowWidth);
+            yield return SizePortrait(Width);
 
             view.EncounterCharmsIntroduction.Screen.BeginButton.onClick.Invoke();
             Assert.That(view.EncounterCharmsIntroduction.IsOpen, Is.False);
