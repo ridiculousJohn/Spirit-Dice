@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Dice.Engine;
 using UnityEngine;
 using UnityEngine.UI;
@@ -69,32 +67,11 @@ namespace Dice.Presentation
             SpiritCharmVisuals.SetIcon(charmIcon, charmCategory, charms, definition);
             title.text = charms.GetName(definition);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText, theme.amber,
-                theme.GetModifierTriggerColor(definition.Phase));
+            condition.text = SpiritCharmVisuals.GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText,
+                theme.amber, theme.GetModifierTriggerColor(definition.Phase));
             effects.text = "<b>" + charms.GetEffectText(definition) + "</b>";
             effects.color = charms.GetEffectColor(definition);
             SetModifierSelected(false);
-        }
-
-        /**
-         * The charm's description in the wording's description template: its phase's lead in the trigger highlight, its
-         * condition with numbers and the wording's highlighted terms in the highlight, and its activation limit's note.
-         */
-        public static string GetModifierDescription(ModifierPresentationCatalog charms, ModifierDefinition definition,
-            SpiritUiWording.CharmText wording, Color highlight, Color? triggerHighlight = null)
-        {
-            if (charms == null) throw new ArgumentNullException(nameof(charms));
-            if (definition == null) throw new ArgumentNullException(nameof(definition));
-            if (wording == null) throw new ArgumentNullException(nameof(wording));
-            string color = ColorUtility.ToHtmlStringRGB(highlight);
-            var terms = new List<string> { @"\d+" };
-            foreach (string term in wording.highlightedTerms) terms.Add(Regex.Escape(term));
-            string condition = Regex.Replace(charms.GetConditionText(definition), @"\b(?:" + string.Join("|", terms) + @")\b",
-                match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
-            string triggerColor = ColorUtility.ToHtmlStringRGB(triggerHighlight ?? highlight);
-            string lead = "<b><color=#" + triggerColor + ">" + charms.GetDescriptionLead(definition) + "</color></b>";
-            string note = charms.GetDescriptionNote(definition);
-            return wording.Description(lead, condition, note.Length > 0 ? "<b>" + note + "</b>" : "");
         }
 
         public void SetModifierSelected(bool selected)
@@ -119,9 +96,6 @@ namespace Dice.Presentation
             handMultiplier = hand.MultiplierAt(level);
             handBaseIncrement = hand.BaseScorePerUpgrade;
             handMultiplierIncrement = hand.MultiplierPerUpgrade;
-            _ = checked(level + 1);
-            _ = checked(handBase + handBaseIncrement);
-            _ = checked(handMultiplier + handMultiplierIncrement);
             modifierRoot.SetActive(false);
             handRoot.SetActive(true);
             handTitle.text = SpiritUi.GetWording(transform).handNames.Name(hand.Category);

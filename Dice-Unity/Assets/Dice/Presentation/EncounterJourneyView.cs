@@ -252,8 +252,8 @@ namespace Dice.Presentation
             charmName.text = name;
             charmEffect.text = "<b>" + charms.GetEffectText(definition) + "</b>";
             charmEffect.color = charms.GetEffectColor(definition);
-            charmCondition.text = SpiritRewardCard.GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText, theme.amber,
-                theme.GetModifierTriggerColor(definition.Phase));
+            charmCondition.text = SpiritCharmVisuals.GetModifierDescription(charms, definition, SpiritUi.GetWording(transform).charmText,
+                theme.amber, theme.GetModifierTriggerColor(definition.Phase));
             charmIcon.sprite = charms.GetIcon(definition);
             charmIcon.color = charms.GetEffectColor(definition);
             charmIcon.gameObject.SetActive(true);

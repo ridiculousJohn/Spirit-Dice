@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Dice.Engine;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +17,27 @@ namespace Dice.Presentation
             icon.color = definition == null ? Color.white : charms.GetEffectColor(definition);
             icon.gameObject.SetActive(icon.sprite != null);
             category.Render(charms, definition);
+        }
+
+        /**
+         * The charm's description in the wording's description template: its phase's lead in the trigger highlight, its
+         * condition with numbers and the wording's highlighted terms in the highlight, and its activation limit's note.
+         */
+        internal static string GetModifierDescription(ModifierPresentationCatalog charms, ModifierDefinition definition,
+            SpiritUiWording.CharmText wording, Color highlight, Color? triggerHighlight = null)
+        {
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
+            if (definition == null) throw new ArgumentNullException(nameof(definition));
+            if (wording == null) throw new ArgumentNullException(nameof(wording));
+            string color = ColorUtility.ToHtmlStringRGB(highlight);
+            var terms = new List<string> { @"\d+" };
+            foreach (string term in wording.highlightedTerms) terms.Add(Regex.Escape(term));
+            string condition = Regex.Replace(charms.GetConditionText(definition), @"\b(?:" + string.Join("|", terms) + @")\b",
+                match => "<b><color=#" + color + ">" + match.Value + "</color></b>", RegexOptions.IgnoreCase);
+            string triggerColor = ColorUtility.ToHtmlStringRGB(triggerHighlight ?? highlight);
+            string lead = "<b><color=#" + triggerColor + ">" + charms.GetDescriptionLead(definition) + "</color></b>";
+            string note = charms.GetDescriptionNote(definition);
+            return wording.Description(lead, condition, note.Length > 0 ? "<b>" + note + "</b>" : "");
         }
 
         internal static SpiritCharmStatusPresentation Status(ISpiritEncounterControls controls,

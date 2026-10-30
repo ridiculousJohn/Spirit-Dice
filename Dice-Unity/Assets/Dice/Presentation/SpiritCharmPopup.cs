@@ -43,7 +43,7 @@ namespace Dice.Presentation
             Effect.color = charms.GetEffectColor(definition);
             var theme = SpiritUi.GetTheme(transform);
             var wording = SpiritUi.GetWording(transform);
-            Description.text = SpiritRewardCard.GetModifierDescription(charms, definition, wording.charmText, theme.amber,
+            Description.text = SpiritCharmVisuals.GetModifierDescription(charms, definition, wording.charmText, theme.amber,
                 theme.GetModifierTriggerColor(definition.Phase));
             Badge.Render(status);
             Status.text = status.GetDetailText(definition.Phase, phase, wording.charmStatus);

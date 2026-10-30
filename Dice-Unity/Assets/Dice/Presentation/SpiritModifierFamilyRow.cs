@@ -58,8 +58,8 @@ namespace Dice.Presentation
             Family = first.Family;
             familyName.text = charms.GetFamilyName(first);
             var theme = SpiritUi.GetTheme(transform);
-            condition.text = SpiritRewardCard.GetModifierDescription(charms, first, SpiritUi.GetWording(transform).charmText, theme.amber,
-                theme.GetModifierTriggerColor(first.Phase));
+            condition.text = SpiritCharmVisuals.GetModifierDescription(charms, first, SpiritUi.GetWording(transform).charmText,
+                theme.amber, theme.GetModifierTriggerColor(first.Phase));
             icon.sprite = charms.GetIcon(first);
             icon.color = SpiritUi.GetTheme(transform).cream;
             icon.gameObject.SetActive(true);

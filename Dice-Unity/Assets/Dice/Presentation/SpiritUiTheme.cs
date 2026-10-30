@@ -49,7 +49,7 @@ namespace Dice.Presentation
                 case Dice.Engine.ModifierPhase.PlayHand: return playHandTrigger;
                 case Dice.Engine.ModifierPhase.PlayerReroll: return rerollTrigger;
                 case Dice.Engine.ModifierPhase.InitialRoll: return initialRollTrigger;
-                default: return amber;
+                default: throw new ArgumentOutOfRangeException(nameof(phase), phase, "The UI theme has no trigger colour for the phase.");
             }
         }
 

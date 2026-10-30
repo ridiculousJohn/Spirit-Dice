@@ -161,7 +161,7 @@ namespace Dice.Tests
             {
                 description = "{lead} ~ {condition}", descriptionWithNote = "{lead} ~ {condition} ~ {note}", highlightedTerms = new[] { "shows" }
             };
-            string text = SpiritRewardCard.GetModifierDescription(charms, definition, wording, Color.red);
+            string text = SpiritCharmVisuals.GetModifierDescription(charms, definition, wording, Color.red);
             Assert.That(text, Does.StartWith("<b><color=#FF0000>When dusk falls</color></b> ~ "));
             Assert.That(text, Does.Contain("<b><color=#FF0000>" + face + "</color></b>"));
             Assert.That(text, Does.Contain("<b><color=#FF0000>Shows</color></b>"), "Highlighted terms match regardless of case.");
