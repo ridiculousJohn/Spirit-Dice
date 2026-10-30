@@ -103,7 +103,7 @@ namespace Dice.Tests
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.None), journey.name);
             Assert.That(view.HostPortrait.State, Is.Not.EqualTo(outcome.HostState), journey.name);
             var finalOffer = controller.Snapshot.PendingReward;
-            Assert.That(finalOffer.Options.Count, Is.InRange(1, 3), journey.name);
+            Assert.That(finalOffer.Options.Count, Is.InRange(1, ModifierUnlockMilestone.OfferSize), journey.name);
             Assert.That(finalOffer.Options.All(option => !controller.ProfileUnlockedModifierIds.Contains(option.DefinitionId.Value)),
                 Is.True, journey.name);
             var pendingSave = EncounterSaveFileStore.Load(controller.SavePath, controller.Catalog);
@@ -351,8 +351,8 @@ namespace Dice.Tests
             // Charms the journey grants on its own beats are already owned when its milestones are offered.
             var granted = new HashSet<ModifierDefinition.Id>(journey.Beats.Where(beat => beat.ProgressionReward != null)
                 .SelectMany(beat => beat.ProgressionReward.Build(original).GrantedModifierIds));
-            // Each milestone offers up to three unowned charms, so the final one still has a full offer.
-            int unlockCount = stageCount + 2;
+            // Each milestone offers up to OfferSize unowned charms, so the final one still has a full offer.
+            int unlockCount = stageCount - 1 + ModifierUnlockMilestone.OfferSize;
             unlockDefinitions = definition.UnlockRewardModifierIds.Where(id => !granted.Contains(id))
                 .Take(unlockCount).Select(original.GetModifier).ToArray();
             Assert.That(unlockDefinitions.Length, Is.EqualTo(unlockCount),

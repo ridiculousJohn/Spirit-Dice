@@ -64,7 +64,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator AmbientOneShotsFollowTheCreakScheduleAndSuspension()
         {
-            Set("theme", Theme(ambientClips));
+            sound.SetTheme(Theme(ambientClips));
             root.SetActive(true);
             sound.SendMessage("OnApplicationFocus", true);
             AssertScheduled();
@@ -132,7 +132,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator ThemesWithoutAmbientOneShotsLeaveTheCueVoicesIdle()
         {
-            Set("theme", Theme(null));
+            sound.SetTheme(Theme(null));
             root.SetActive(true);
             sound.SendMessage("OnApplicationFocus", true);
             for (int frame = 0; frame < 3; frame++)
@@ -151,7 +151,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator PropSoundsUseTheirOwnVoicesAndFollowMuteAndSuspension()
         {
-            Set("theme", Theme(null));
+            sound.SetTheme(Theme(null));
             root.SetActive(true);
             sound.SendMessage("OnApplicationFocus", true);
             var knock = ambientClips[0];

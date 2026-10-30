@@ -4,7 +4,6 @@ using Dice.App;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace Dice.Tests
@@ -14,8 +13,7 @@ namespace Dice.Tests
         [UnityTest]
         public IEnumerator SmokePhaseSurvivesPoseResetsVisibilityAndPresentationStates()
         {
-            yield return SceneManager.LoadSceneAsync("Application");
-            yield return ContentReady.Spirit();
+            yield return ContentReady.LoadApplication();
             var controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var authoredHost = controller.JourneyCatalog.Entries.Select(entry => entry.TableSceneAt(0)?.HostPresentation)
                 .First(asset => asset != null && asset.SmokeShader != null && asset.Layers.Any(layer => layer.Smoke != null && layer.Smoke.Enabled));
@@ -36,8 +34,8 @@ namespace Dice.Tests
                 var solidLayer = presentation.Layers.First(layer => layer.Smoke == null || !layer.Smoke.Enabled);
                 var smoke = portrait.GetLayer(smokeLayer.Id);
                 var solid = portrait.GetLayer(solidLayer.Id);
-                Assert.That(smoke.material.shader.name, Is.EqualTo("Dice/Spirit Smoke"));
-                Assert.That(solid.material.shader.name, Is.Not.EqualTo(smoke.material.shader.name));
+                Assert.That(smoke.material.shader, Is.SameAs(presentation.SmokeShader));
+                Assert.That(solid.material.shader, Is.Not.SameAs(presentation.SmokeShader));
                 portrait.Advance(.25f);
                 float elapsed = .25f;
 

@@ -5,7 +5,6 @@ using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -37,9 +36,6 @@ namespace Dice.Tests
             yield return ContentReady.Routed(controller);
             var view = ContentReady.EncounterView(controller);
             Assert.That(view.TablePresentation, Is.SameAs(table));
-            var portrait = ContentReady.Portrait();
-            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-            portrait.sizeDelta = new Vector2(443, 912);
             controller.PlayHand();
             yield return ContentReady.WaitUntil(() => !controller.IsBusy, "The played hand's presentation did not complete.");
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
