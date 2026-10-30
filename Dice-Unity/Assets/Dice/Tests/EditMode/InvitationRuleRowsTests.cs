@@ -1,31 +1,28 @@
-using System.Collections.Generic;
 using System.Linq;
 using Dice.Presentation;
 using NUnit.Framework;
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Dice.Tests
 {
-    /** The encounter rule rows the journey view shows on an invitation, driven by a synthetic journey. */
+    /** The encounter rule rows a synthetic journey view shows on an invitation, driven by a synthetic journey. */
     public sealed class InvitationRuleRowsTests
     {
-        private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
-        private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
-        private Scene preview;
+        private SyntheticUi ui;
+        private SyntheticCharmAssets content;
 
         [SetUp]
-        public void SetUp() => preview = EditorSceneManager.NewPreviewScene();
+        public void SetUp()
+        {
+            ui = new SyntheticUi();
+            content = new SyntheticCharmAssets();
+        }
 
         [TearDown]
         public void TearDown()
         {
-            if (preview.IsValid()) EditorSceneManager.ClosePreviewScene(preview);
-            foreach (var item in created)
-                if (item != null) UnityEngine.Object.DestroyImmediate(item);
-            created.Clear();
+            ui.Dispose();
             content.Dispose();
         }
 
@@ -46,10 +43,7 @@ namespace Dice.Tests
             {
                 SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence, BeatIndex = 1
             };
-            var prefab = AssetDatabase.LoadAssetAtPath<EncounterJourneyView>("Assets/Dice/Content/Presentation/UI/EncounterJourneyView.prefab");
-            Assert.That(prefab, Is.Not.Null);
-            var view = UnityEngine.Object.Instantiate(prefab);
-            SceneManager.MoveGameObjectToScene(view.gameObject, preview);
+            var view = JourneyView();
             view.Build(null);
             view.Bind(controls, null);
 
@@ -65,6 +59,55 @@ namespace Dice.Tests
             => view.GetComponentsInChildren<SpiritInvitationRuleView>(true).Where(row => row.gameObject.activeSelf)
                 .Select(row => row.Title.text + " / " + row.Description.text).ToArray();
 
+        /** A journey view holding only what showing a beat of a table scene and its invitation rule rows reads. */
+        private EncounterJourneyView JourneyView()
+        {
+            var view = ui.Add<EncounterJourneyView>(ui.Root, "Journey");
+            var artwork = ui.Rect(view.transform, "Artwork");
+            SyntheticUi.Set(view, "artwork", artwork);
+            SyntheticUi.Set(view, "background", ui.Add<RawImage>(artwork, "Background"));
+            var foreground = ui.Add<RawImage>(ui.Rect(artwork, "Foreground Clip"), "Foreground");
+            foreground.gameObject.AddComponent<AspectRatioFitter>();
+            SyntheticUi.Set(view, "foreground", foreground);
+            SyntheticUi.Set(view, "leftPanel", ui.Add<RawImage>(artwork, "Left Panel"));
+            SyntheticUi.Set(view, "rightPanel", ui.Add<RawImage>(artwork, "Right Panel"));
+            SyntheticUi.Set(view, "illustrationGroup", artwork.gameObject.AddComponent<CanvasGroup>());
+            var narrative = ui.Rect(view.transform, "Narrative");
+            SyntheticUi.Set(view, "narrative", narrative);
+            SyntheticUi.Set(view, "narrativeGroup", narrative.gameObject.AddComponent<CanvasGroup>());
+            var scroll = ui.Add<ScrollRect>(narrative, "Narrative Scroll");
+            scroll.content = ui.Rect(scroll.transform, "Content");
+            SyntheticUi.Set(view, "narrativeScroll", scroll);
+            SyntheticUi.Set(view, "title", ui.Label(narrative, "Title"));
+            SyntheticUi.Set(view, "body", ui.Label(narrative, "Body"));
+            SyntheticUi.Set(view, "ruleHeading", ui.Label(narrative, "Rule Heading"));
+            var invitation = ui.Rect(narrative, "Invitation");
+            SyntheticUi.Set(view, "invitationSection", invitation.gameObject);
+            SyntheticUi.Set(view, "invitationRulesRoot", ui.Rect(invitation, "Rules"));
+            SyntheticUi.Set(view, "invitationRulePrefab", RuleRow());
+            SyntheticUi.Set(view, "charmDetail", ui.Rect(narrative, "Charm Detail"));
+            SyntheticUi.Set(view, "journeyStatus", ui.Label(view.transform, "Status"));
+            SyntheticUi.Set(view, "advanceButton", ui.NewButton(view.transform, "Advance"));
+            SyntheticUi.Set(view, "acceptButton", ui.NewButton(view.transform, "Accept"));
+            SyntheticUi.Set(view, "skipButton", ui.NewButton(view.transform, "Skip"));
+            SyntheticUi.Set(view, "returnButton", ui.NewButton(view.transform, "Return"));
+            SyntheticUi.Set(view, "<EncounterCharms>k__BackingField", ui.CharmsScreen(view.transform));
+            return view;
+        }
+
+        /** An invitation rule row template, inactive outside the view, with its texts and icon. */
+        private SpiritInvitationRuleView RuleRow()
+        {
+            var row = ui.Add<SpiritInvitationRuleView>(ui.Root, "Rule Row Template");
+            var iconRoot = ui.Rect(row.transform, "Icon Root");
+            SyntheticUi.Set(row, "title", ui.Label(row.transform, "Title"));
+            SyntheticUi.Set(row, "description", ui.Label(row.transform, "Description"));
+            SyntheticUi.Set(row, "iconRoot", iconRoot);
+            SyntheticUi.Set(row, "icon", ui.Add<Image>(iconRoot, "Icon"));
+            row.gameObject.SetActive(false);
+            return row;
+        }
+
         private EncounterRulePresentationAsset Rule(string id, string name, string description)
         {
             var rule = Create<EncounterRulePresentationAsset>();
@@ -74,11 +117,6 @@ namespace Dice.Tests
             return rule;
         }
 
-        private T Create<T>() where T : ScriptableObject
-        {
-            var asset = ScriptableObject.CreateInstance<T>();
-            created.Add(asset);
-            return asset;
-        }
+        private T Create<T>() where T : ScriptableObject => ui.Own(ScriptableObject.CreateInstance<T>());
     }
 }
