@@ -85,11 +85,18 @@ namespace Dice.Presentation
             this.journey = journey;
             this.unlockSummary = unlockSummary ?? "";
             beat = journey != null ? journey.EncounterBeatOf(snapshot.EncounterId) : null;
-            presentation = beat?.GetOutcomePresentation(snapshot.Outcome);
+            presentation = OutcomePresentation(journey, snapshot);
             Root.gameObject.SetActive(true);
             Refresh();
             if (changed) scroll.verticalNormalizedPosition = 1;
         }
+
+        /**
+         * The outcome presentation the ending plays for the snapshot's outcome, authored on the journey's Encounter beat of
+         * its encounter; null without a journey or when the beat authors none for the outcome.
+         */
+        internal static EncounterOutcomePresentation OutcomePresentation(EncounterJourneyAsset journey, EncounterSnapshot snapshot)
+            => journey != null ? journey.EncounterBeatOf(snapshot.EncounterId)?.GetOutcomePresentation(snapshot.Outcome) : null;
 
         public IEnumerator Present(SpiritHostPortrait host, Action<float> fadeGameplay, Action hideGameplay, Action<AudioClip> playCue)
         {

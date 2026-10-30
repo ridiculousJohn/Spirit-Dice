@@ -175,9 +175,10 @@ namespace Dice.Presentation
         {
             hud.ShowStageCleared();
             encounterAudio.Play(SpiritAudioCue.StageClear);
-            var encounterBeat = host.Journey?.SelectedJourney?.EncounterBeatOf(resolution.Snapshot.EncounterId);
+            // A win with an outcome presentation hands the host's reaction to the ending, which plays it as the
+            // presentation's host state; reacting here as well would play the reaction twice.
             if (resolution.Snapshot.Outcome != EncounterOutcome.Won ||
-                encounterBeat?.GetOutcomePresentation(EncounterOutcome.Won) == null)
+                SpiritEncounterEndingView.OutcomePresentation(host.Journey?.SelectedJourney, resolution.Snapshot) == null)
             {
                 host.Host?.React();
                 yield return new WaitForSecondsRealtime(GestureDuration);
