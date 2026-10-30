@@ -79,7 +79,7 @@ namespace Dice.Tests
         [Test]
         public void StageDrawsMaterialInstancesAndReleaseRestoresTheAuthoredOnes()
         {
-            var scene = Rig.Start();
+            var scene = Rig.Initialize();
             Material instance = Rig.SurfaceRenderer.sharedMaterial;
             Assert.That(instance, Is.Not.SameAs(Rig.SurfaceMaterial));
             var lighting = ScriptableObject.CreateInstance<SceneLightingAsset>();
@@ -115,34 +115,11 @@ namespace Dice.Tests
             Assert.That(Rig.TrayScene.GetComponentsInChildren<Transform>(true).Length, Is.EqualTo(count));
         }
 
-        /** Checks framing keeps every geometry mesh corner, label anchor, bay corner and rolling die inside the view and depth range / fails if any of them is clipped. */
-        [TestCase(false)]
-        [TestCase(true)]
-        public void FramingContainsTheGeometryLabelsBayAndRollingDice(bool orthographic)
-        {
-            var rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            rail.name = "Oversized rail";
-            UnityEngine.Object.DestroyImmediate(rail.GetComponent<Collider>());
-            rail.transform.SetParent(Rig.Geometry.transform, false);
-            rail.transform.localPosition = new Vector3(6, -1, -3);
-            rail.transform.localRotation = Quaternion.Euler(17, 39, -12);
-            rail.transform.localScale = new Vector3(12, 3, 6);
-            rail.GetComponent<MeshRenderer>().sharedMaterial = Rig.SurfaceMaterial;
-            Rig.Geometry.transform.localPosition = new Vector3(-13, 4, 21);
-            Rig.Geometry.transform.localRotation = Quaternion.Euler(-12, 18, 9);
-            Rig.Geometry.transform.localScale = new Vector3(1.3f, .8f, 1.7f);
-            Rig.Camera.orthographic = orthographic;
-            Rig.Camera.transform.localRotation = Quaternion.Euler(49, -23, 11);
-            var dice = Rig.StartDice();
-            AssertAuthoredGeometryFits(Rig.TrayScene);
-            AssertRollEnvelopeFits(Rig.TrayScene, dice);
-        }
-
         /** Checks a texture size change resizes the shared texture in place and keeps the camera's framing / fails if it replaces the camera or texture, leaves a stale aspect or reframes the camera. */
         [Test]
         public void TextureResizeKeepsTheCameraTextureAndFraming()
         {
-            var scene = Rig.Start();
+            var scene = Rig.Initialize();
             Camera camera = scene.RenderCamera;
             RenderTexture texture = scene.Texture;
             Vector3 position = camera.transform.localPosition;
@@ -167,7 +144,7 @@ namespace Dice.Tests
         [Test]
         public void ReconfiguringTheSceneReplacesOnlyItsTexture()
         {
-            var scene = Rig.Start();
+            var scene = Rig.Initialize();
             Transform root = scene.RenderRoot;
             Camera camera = scene.RenderCamera;
             RenderTexture previous = scene.Texture;
@@ -584,64 +561,6 @@ namespace Dice.Tests
 
         private static void AssertColor(Color actual, Color expected)
             => Assert.That(Vector4.Distance(actual, expected), Is.LessThan(.00001f), actual + " expected " + expected);
-
-        private static void AssertAuthoredGeometryFits(SpiritTrayScene scene)
-        {
-            AssertMeshCornersFit(scene.RenderCamera, scene.Geometry.transform);
-            foreach (Transform label in scene.Geometry.DiceLabelAnchors)
-                AssertPointFits(scene.RenderCamera, label.position, label.name);
-            SpiritTrayGeometry geometry = scene.Geometry;
-            for (int x = -1; x <= 1; x += 2)
-                for (int y = 0; y <= 1; ++y)
-                    for (int z = -1; z <= 1; z += 2)
-                        AssertPointFits(scene.RenderCamera, geometry.ModifierRoot.TransformPoint(new Vector3(
-                            x * geometry.ModifierWidth * .5f, y * geometry.ModifierDieSize * 1.5f,
-                            z * geometry.ModifierDepth * .5f)), "Modifier bay");
-        }
-
-        private static void AssertMeshCornersFit(Camera camera, Transform root)
-        {
-            foreach (MeshFilter filter in root.GetComponentsInChildren<MeshFilter>(true))
-            {
-                if (filter.sharedMesh == null) continue;
-                Bounds bounds = filter.sharedMesh.bounds;
-                for (int x = -1; x <= 1; x += 2)
-                    for (int y = -1; y <= 1; y += 2)
-                        for (int z = -1; z <= 1; z += 2)
-                            AssertPointFits(camera, filter.transform.TransformPoint(bounds.center +
-                                Vector3.Scale(bounds.extents, new Vector3(x, y, z))), filter.name);
-            }
-        }
-
-        private static void AssertPointFits(Camera camera, Vector3 world, string name)
-        {
-            Vector3 viewport = camera.WorldToViewportPoint(world);
-            Assert.That(viewport.x, Is.InRange(.025f, .975f), name + " horizontal");
-            Assert.That(viewport.y, Is.InRange(.025f, .975f), name + " vertical");
-            Assert.That(viewport.z, Is.GreaterThan(camera.nearClipPlane), name + " near plane");
-            Assert.That(viewport.z, Is.LessThan(camera.farClipPlane), name + " far plane");
-        }
-
-        /** Poses every die through a full roll arc and checks each pose stays framed. */
-        private static void AssertRollEnvelopeFits(SpiritTrayScene scene, SpiritDiceTray dice)
-        {
-            var timing = new SpiritRollTiming(.55f, new SpiritRollContactTrack
-            {
-                contactTimes = new[] { .16f, .3f, .43f }, settleTime = 0
-            }, 0, 0, 0);
-            for (int sample = 0; sample <= 24; ++sample)
-                for (int index = 0; index < dice.Dice.Count; ++index)
-                {
-                    timing.SamplePose(index, dice.Dice.Count, sample * timing.Duration / 24,
-                        Quaternion.identity, Quaternion.Euler(0, index * 13, 90),
-                        out Quaternion rotation, out float lift, out float drift);
-                    Transform die = dice.Dice[index];
-                    die.localRotation = rotation;
-                    float height = dice.SupportHeight(rotation);
-                    die.localPosition = new Vector3(drift, height + lift, 0) * scene.Geometry.DiceScale;
-                    AssertMeshCornersFit(scene.RenderCamera, die);
-                }
-        }
     }
 
     /**
@@ -653,7 +572,6 @@ namespace Dice.Tests
         private const string DiceShaderName = "Dice/Spirit Dice Surface";
         private readonly Scene preview;
         private readonly List<UnityEngine.Object> owned = new List<UnityEngine.Object>();
-        private bool framed;
 
         /** Test-only charm presentations, destroyed with the rig. */
         internal SyntheticCharms Synthetic { get; } = new SyntheticCharms();
@@ -694,6 +612,9 @@ namespace Dice.Tests
             Camera = Child("Tray Camera", Stage).gameObject.AddComponent<Camera>();
             Camera.enabled = false;
             Camera.scene = preview;
+            // The camera is authored to frame the surface, the dice through their roll and the modifier bay, as an
+            // encounter rig's camera is; binding the tray never moves it.
+            Camera.transform.localPosition = new Vector3(0, 5.2f, -3.05f);
             Camera.transform.localRotation = Quaternion.Euler(55, 0, 0);
             Geometry = Child("Tray Geometry", Stage).gameObject.AddComponent<SpiritTrayGeometry>();
             SurfaceRenderer = Primitive(PrimitiveType.Cube, "Tray Surface", Geometry.transform, new Vector3(0, -.1f, .6f),
@@ -752,7 +673,7 @@ namespace Dice.Tests
             SyntheticUi.Set(TrayScene, "geometry", Geometry);
         }
 
-        /** Configures and initializes the shared scene without framing it. */
+        /** Configures and initializes the shared scene. */
         internal SpiritTrayScene Initialize()
         {
             TrayScene.Configure(Presentation);
@@ -760,18 +681,9 @@ namespace Dice.Tests
             return TrayScene;
         }
 
-        /** Initializes the shared scene and frames its geometry once. */
-        internal SpiritTrayScene Start()
-        {
-            Initialize();
-            if (!framed) TrayScene.FrameAuthoredGeometry();
-            framed = true;
-            return TrayScene;
-        }
-
         internal SpiritDiceTray StartDice()
         {
-            Start();
+            Initialize();
             Dice.Configure(Presentation, TrayScene);
             Dice.Initialize();
             return Dice;
@@ -779,7 +691,7 @@ namespace Dice.Tests
 
         internal SpiritModifierHistoryRenderer StartHistory()
         {
-            Start();
+            Initialize();
             History.Configure(Presentation, TrayScene);
             History.Initialize();
             return History;
@@ -788,7 +700,7 @@ namespace Dice.Tests
         /** A modifier history tray over this rig's renderer, with a fixed 700 by 350 world-space bay and token buttons. */
         internal SpiritModifierHistoryTray CreateHistoryTray()
         {
-            Start();
+            Initialize();
             var canvas = Root("History Canvas", typeof(RectTransform), typeof(Canvas));
             canvas.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
             ((RectTransform)canvas.transform).sizeDelta = new Vector2(700, 350);

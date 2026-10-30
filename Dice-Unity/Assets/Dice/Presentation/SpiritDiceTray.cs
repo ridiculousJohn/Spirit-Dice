@@ -322,8 +322,7 @@ namespace Dice.Presentation
             return Vector3.up * (SupportHeight(dice[index].localRotation) * DieScale);
         }
 
-        // Internal so EditMode tests pose dice through a roll arc as the roll does.
-        internal float SupportHeight(Quaternion rotation)
+        private float SupportHeight(Quaternion rotation)
         {
             Vector3 downward = Quaternion.Inverse(rotation) * Vector3.down;
             float height = 0f;

@@ -44,7 +44,7 @@ namespace Dice.Tests
         [Test]
         public void StageMaterialsReceiveTheSampleInStageSpace()
         {
-            var scene = rig.Start();
+            var scene = rig.Initialize();
             var state = new SceneLightingState();
             state.Sample(lighting, 2.5);
             scene.SetSceneLighting(state);
@@ -61,7 +61,7 @@ namespace Dice.Tests
         [Test]
         public void StageMaterialsClearSlotsTheSampleDoesNotLight()
         {
-            var scene = rig.Start();
+            var scene = rig.Initialize();
             var state = new SceneLightingState();
             state.Sample(lighting, 2.5);
             scene.SetSceneLighting(state);
