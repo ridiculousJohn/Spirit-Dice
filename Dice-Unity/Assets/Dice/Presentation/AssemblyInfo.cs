@@ -4,3 +4,5 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Dice.Tests.EditMode")]
 // PlayMode tests refresh the encounter screen and read the audio schedule through internal members.
 [assembly: InternalsVisibleTo("Dice.Tests.PlayMode")]
+// The editor's content validation runs the screen's, scenes' and journeys' own load-time checks through internal members.
+[assembly: InternalsVisibleTo("Dice.Editor")]

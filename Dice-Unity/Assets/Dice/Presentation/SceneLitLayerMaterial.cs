@@ -12,7 +12,8 @@ namespace Dice.Presentation
         private static readonly int LayerMaskId = Shader.PropertyToID("_LayerMask");
         private static readonly int InvertMaskId = Shader.PropertyToID("_InvertMask");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
-        private static readonly int DepthTextureId = Shader.PropertyToID("_SceneLitDepthTex");
+        // Internal, with the response map ids, so the editor's content validation finds the data textures a lit material holds.
+        internal static readonly int DepthTextureId = Shader.PropertyToID("_SceneLitDepthTex");
         private static readonly int DepthRangeId = Shader.PropertyToID("_SceneLitDepthRange");
         private static readonly int FrameOriginId = Shader.PropertyToID("_SceneLitFrameOrigin");
         private static readonly int FrameAxisXId = Shader.PropertyToID("_SceneLitFrameAxisX");
@@ -23,7 +24,7 @@ namespace Dice.Presentation
         private const string ModeProperty = "_SceneLitMode";
         private static readonly int[] ModeIds = SceneLightingAsset.LightPropertyIds(ModeProperty);
         private static readonly int[] ReferenceIds = SceneLightingAsset.LightPropertyIds("_SceneLitReferenceTex");
-        private static readonly int[] ResponseMapIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseTex");
+        internal static readonly int[] ResponseMapIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseTex");
         private static readonly int[] ResponseEnabledIds = SceneLightingAsset.LightPropertyIds("_SceneLitResponseEnabled");
         private static readonly int[] StrengthIds = SceneLightingAsset.LightPropertyIds("_SceneLitStrength");
         private static readonly int[] IntensityIds = SceneLightingAsset.LightPropertyIds("_SceneLitIntensity");

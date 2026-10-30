@@ -72,7 +72,8 @@ namespace Dice.Presentation
             RefreshPlayback();
         }
 
-        private void Initialize()
+        // Internal so the encounter screen's content validation runs it where Awake does not run, in an edit-mode scene copy.
+        internal void Initialize()
         {
             if (cosmeticRandom == null) cosmeticRandom = new System.Random();
             if (ambienceSource == null || creakSource == null || rollSource == null || cueSources == null || cueSources.Length == 0

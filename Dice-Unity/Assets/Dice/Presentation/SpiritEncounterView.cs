@@ -756,7 +756,13 @@ namespace Dice.Presentation
         {
             if (presentersEncounterId == encounterId) return false;
             DisposePresenters();
-            var encounter = controls.Catalog.GetEncounter(encounterId);
+            CreatePresenters(controls.Catalog.GetEncounter(encounterId));
+            presentersEncounterId = encounterId;
+            return true;
+        }
+
+        private void CreatePresenters(EncounterDefinition encounter)
+        {
             try
             {
                 rulePresenters = EncounterRulePresenters.Create(configuredTable.RulePresentations, encounter,
@@ -768,8 +774,21 @@ namespace Dice.Presentation
                 DisposePresenters();
                 throw;
             }
-            presentersEncounterId = encounterId;
-            return true;
+        }
+
+        /**
+         * Builds the screen for its table, readies its encounter audio and, given an encounter, creates the table's rule and
+         * piece presenters for it, as binding the screen, loading it and showing the encounter do, then disposes the
+         * presenters; it fails as they fail. The editor's content validation runs it on an edit-mode copy of the encounter
+         * scene, where Awake does not run and no controls are bound.
+         */
+        internal void ValidateContent(EncounterDefinition encounter)
+        {
+            if (scorePlayback == null) Build();
+            encounterAudio.Initialize();
+            if (encounter == null) return;
+            try { CreatePresenters(encounter); }
+            finally { DisposePresenters(); }
         }
 
         private void DisposePresenters()

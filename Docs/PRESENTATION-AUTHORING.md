@@ -47,6 +47,22 @@ The migration generators, their helpers, and repair commands are removed. Dice >
 
 Safe-area fitting, standard Unity layout groups, projected dice hit regions, and animation still adapt at runtime. Their controlling references and parameters are authored. Ordinary binding must preserve Inspector typography and layout settings.
 
+## Content validation
+
+Dice > Validate Content (`Editor/ContentValidationWindow.cs`) checks authored content without playing. Nothing runs until Run is pressed; each check lists what it found with the asset, or the object's path inside its scene or prefab, and a Select button that pings it, and states what it examined. A failure for one asset is recorded against that asset and the check continues. The tool only reads: scenes and prefabs are opened in preview scenes and closed again, so nothing is modified, saved or dirtied and the open scenes stay as they are; scenes are read as saved. The checks (`Editor/ContentValidation.cs`):
+
+1. Game validation: the checks the game makes at startup, journey validation, opening a table scene and starting its encounter, run through the game's own code from the single application configuration: the configuration, the catalog build, the charm skin, each journey and the journey catalog against the catalog, then, for each table a journey uses and each encounter played there, starting the encounter and building a copy of its encounter scene's screen (`SpiritEncounterView.ValidateContent`: screen references and table, host build with its lit-layer shader check, host sigils, tray presentation and rig, piece lights, ambient activity bindings, encounter audio, and the table's rule and piece presenters for the encounter). Errors logged while the scene opens are listed too.
+2. Host loop ends: for each host a table uses, every track of a looping sequence, its value and slope at the loop's end against its start.
+3. Host transitions: each host's portrait prefab built in a preview scene and driven through `SpiritHostPortrait`'s public API; the largest jump of each layer value as Arrival starts (from Waiting), a Reaction starts and ends, and each outcome state is entered (from Idle), over 128 phases of the longest idle loop (`HostTransitionJumps.IdlePhaseCount`). Position, size, rotation and deformation jumps count only where the layer shows before and after.
+4. Looping animation clips: every clip with Loop Time on, each curve's value and slope at its length against 0.
+5. Response and depth map imports: every texture a scene lighting light, a lit layer (in assets, prefabs or scenes) or a lit-layer material uses as a response map or depth map, listed when it imports with sRGB on.
+6. Application scene references: `Assets/Scenes/Application.unity`'s recursive dependencies, listed when one is a journey scene asset, host or tray presentation, prefab with an encounter screen or another scene.
+7. Missing scripts: every object of every prefab and scene under `Assets/Dice` and `Assets/Scenes` with a missing script.
+
+Checks 2 to 4 report magnitudes for judgement, not pass or fail: entries above the noise floor (`ContentValidation.ValueNoiseFloor` 0.0001 in the property's unit, `SlopeNoiseFloor` 0.001 per second), largest first, in the property's own unit (position and size in units, rotation in degrees, alpha, deformation weight). Whether a jump is visible is judged by looking at it.
+
+Batch mode, with the editor closed, writes the report as text: `Unity.exe -batchmode -projectPath Dice-Unity -executeMethod Dice.Editor.ContentValidation.RunFromCommandLine -contentValidationReport <path> -quit`. Keep reports under ignored `Docs/work`.
+
 ## UI wording
 
 Player-facing text never comes from string literals in code. Text that never changes (a heading, a button that always reads the same) is typed on the Text component in its prefab or scene, and no code writes it. Text that code composes - with numbers, names or a choice between wordings - comes from one wording asset for the Spirit House UI, `Presentation/Shared/SpiritHouseWording.asset` (`SpiritUiWording`, Create > Dice > Spirit UI Wording). Every `SpiritUiContext` references it beside the theme, and screens reach it the same way they reach the theme, from the nearest context above them. Developer diagnostics, log and exception messages, the diagnostic scene and editor windows keep their own text, and the `{detail}` a failure status shows is developer text such as an exception message.
