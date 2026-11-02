@@ -30,6 +30,11 @@ Read this document, [code standards](CODE-STANDARDS.md), [presentation authoring
 - Before release, John revisits:
   - The direct-play route (DiceApplicationConfig's `encounter` field and `directGameplay`: a configuration without a journey catalog plays one encounter with no campaign). It is a potential gameplay hack and must be analysed before release; the shipped configuration sets both a journey catalog and an encounter, so the game never takes it, and many tests start runs through it.
   - The Bound Tree creatures (snake, beetle, centipede): out of play because they read too large and too mechanical; their assets, Path motions and ambient activity stay on disk for a rework (see "Tree nymph encounter" below).
+- Recorded for later, not scheduled (Bound Tree):
+  - The nymph's standing pose on victory; a win plays nothing on her.
+  - A new hiding hollow for the snake in the visible roots above the HUD target panel: its current hollow and slide sit under the TO CLEAR panel at 540 and 443 wide, so it never shows; it stays out of the creature group until then.
+  - Bending a creature along its path (the snake curling along the root) needs a new deformation; the first creatures move rigidly along simpler paths.
+  - Tray bays carved as hollows into the flat root top instead of a separate tray object (new geometry); the first Bound Tree tray is the merchant tray re-skinned as bark and root.
 - This handoff does not authorize further code changes, a commit, or an Android build. Follow John's next request.
 
 ### Working practices
