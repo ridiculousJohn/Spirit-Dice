@@ -281,12 +281,16 @@ namespace Dice.Presentation
             SetResources(hands, rerolls);
         }
 
-        /** Shows a hand waiting for play: the score counters at these values and no rank, total, step or selection text. */
-        public void ShowIdleScore(long baseScore, long multiplier)
+        /**
+         * Shows a hand waiting for play: the score counters at these values, the current rank of the dice as they lie (none
+         * without one) and no total, step or selection text.
+         */
+        public void ShowIdleScore(long baseScore, long multiplier, HandCategory? currentCategory)
         {
             ModifierEmblem.gameObject.SetActive(false);
-            // The hand rank shows only while a played hand is scored.
-            CategoryLabel.text = "";
+            // Between actions the current rank shows; a played hand's scoring steps name its final rank.
+            CategoryLabel.text = currentCategory == null ? ""
+                : SpiritUi.GetWording(transform).handNames.Name(currentCategory.Value).ToUpperInvariant();
             SetScoreValues(baseScore, multiplier);
             HandScoreLabel.text = "0";
             ScoreDetail.text = "";
@@ -306,11 +310,11 @@ namespace Dice.Presentation
 
         /**
          * Shows a snapshot at rest: its stage, target, resources, rule badge, charm count and status, and while it plays an
-         * idle hand at its charm scores with the actions its reroll selection allows. The resources line shows the last
-         * hand's score when one was scored, and the total score otherwise.
+         * idle hand at its charm scores with the current rank of its dice and the actions its reroll selection allows. The
+         * resources line shows the last hand's score when one was scored, and the total score otherwise.
          */
         public void ShowSnapshot(EncounterSnapshot snapshot, EncounterRulePresentationAsset ruleCard, SpiritStatus status,
-            ScoreBreakdown lastScore, int selectedMask)
+            ScoreBreakdown lastScore, HandCategory? currentCategory, int selectedMask)
         {
             var wording = SpiritUi.GetWording(transform);
             bool playing = snapshot.Phase == EncounterPhase.Playing;
@@ -333,7 +337,7 @@ namespace Dice.Presentation
             SpiritUi.SetButtonLabel(CharmsButton, wording.hud.CharmsButton(snapshot.Modifiers.Count));
             ShowStatus(SpiritStatusText.Gameplay(status, wording.status));
             if (!playing) return;
-            ShowIdleScore(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier);
+            ShowIdleScore(snapshot.ModifierBaseScore, snapshot.ModifierMultiplier, currentCategory);
             PlayButton.interactable = true;
             RerollButton.interactable = selectedMask != 0 && snapshot.CanReroll;
         }
@@ -361,12 +365,12 @@ namespace Dice.Presentation
 
         public void HideStageIntro() => StageIntroPanel.gameObject.SetActive(false);
 
-        /** Shows a starting hand: its rule badge and resources, cleared score counters and the new hand line. */
+        /** Shows a starting hand: its rule badge and resources, cleared score counters and rank, and the new hand line. */
         public void ShowHandStart(HandStartedEvent hand, EncounterSnapshot snapshot, EncounterRulePresentationAsset ruleCard)
         {
             RenderEncounterRule(snapshot, ruleCard);
             SetResources(hand.HandsRemaining, hand.RerollsRemaining);
-            ShowIdleScore(0, 0);
+            ShowIdleScore(0, 0, null);
             SelectionLabel.color = Theme.muted;
             SelectionLabel.text = SpiritUi.GetWording(transform).hud.newHand;
         }

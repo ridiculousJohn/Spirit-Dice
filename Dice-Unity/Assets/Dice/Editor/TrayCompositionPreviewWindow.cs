@@ -200,7 +200,7 @@ namespace Dice.Editor
             hud.ShowEncounterTitle(table.DisplayTitle);
             hud.ShowStageTarget(1, SampleStageCount, SampleThreshold);
             hud.ShowHandCounters(SampleHands, SampleRerolls);
-            hud.ShowIdleScore(0, 0);
+            hud.ShowIdleScore(0, 0, null);
             hud.ShowStatus("COMPOSITION PREVIEW");
             var rule = table.HudRuleCard;
             if (ruleMessage != null) hud.RenderEncounterRuleBadge(rule, true, true, ruleMessage);

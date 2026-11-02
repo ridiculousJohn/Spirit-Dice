@@ -518,8 +518,12 @@ namespace Dice.Presentation
 
         private void RenderHandRanks()
         {
-            handRanksPanel.Render(controls.Catalog, controls.Snapshot);
+            handRanksPanel.Render(controls.Catalog, controls.Snapshot, CurrentCategory);
         }
+
+        /** The rank of the dice as they lie, from the controller's preview while a hand is in play; none otherwise. */
+        private HandCategory? CurrentCategory
+            => controls.Snapshot.Phase == EncounterPhase.Playing ? controls.Preview?.Score.Category : null;
 
         public void ShowTable()
         {
@@ -616,7 +620,7 @@ namespace Dice.Presentation
                     controls.ModifierPresentation);
             else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
-            GameplayHud.ShowSnapshot(snapshot, hudRuleCard, controls.Status, lastScore, controls.SelectedMask);
+            GameplayHud.ShowSnapshot(snapshot, hudRuleCard, controls.Status, lastScore, CurrentCategory, controls.SelectedMask);
             RewardsPanel.Root.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
             RenderProfileSummary();

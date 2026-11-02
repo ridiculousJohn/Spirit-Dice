@@ -81,6 +81,16 @@ namespace Dice.Tests
             Assert.That(hud.DisplayedBaseScore == 0 && hud.DisplayedMultiplier == 0, Is.True);
         }
 
+        /** Checks an idle hand shows the given current rank by its hand name, and no rank without one / fails if the rank line stays empty with a rank, names another rank or keeps a rank without one. */
+        [Test]
+        public void IdleHandShowsTheCurrentRankOrNoneWithoutOne()
+        {
+            hud.ShowIdleScore(0, 0, HandCategory.FullHouse);
+            Assert.That(labels["CategoryLabel"].text, Is.EqualTo(ui.Wording.handNames.Name(HandCategory.FullHouse).ToUpperInvariant()));
+            hud.ShowIdleScore(0, 0, null);
+            Assert.That(labels["CategoryLabel"].text, Is.Empty);
+        }
+
         /** Checks a rule presenter's selection line shows marked as the rule's / fails if its text or mark is missing. */
         [Test]
         public void RuleSelectionShowsItsTextMarkedAsTheRules()
@@ -140,7 +150,7 @@ namespace Dice.Tests
             var catalog = new MechanicalCatalog("test.hud", TestContent.Hands(), new[] { encounter });
             var session = EncounterSession.CreateEncounter(catalog, encounter.Identity, 3);
             var playing = session.Snapshot;
-            hud.ShowSnapshot(playing, null, SpiritStatus.None, null, 0);
+            hud.ShowSnapshot(playing, null, SpiritStatus.None, null, null, 0);
             Assert.That(panels["PlayingPanel"].gameObject.activeSelf, Is.True);
             Assert.That(labels["StageLabel"].text, Is.EqualTo(Wording.Stage(1, 1)));
             Assert.That(labels["TargetLabel"].text, Is.EqualTo(DiagnosticText.Number(1000000)));
@@ -154,12 +164,12 @@ namespace Dice.Tests
             Assert.That(labels["SelectionLabel"].text, Is.Empty);
             Assert.That(buttons["PlayButton"].interactable, Is.True);
             Assert.That(buttons["RerollButton"].interactable, Is.False, "Reroll waits for a selection.");
-            hud.ShowSnapshot(playing, null, SpiritStatus.None, null, 0b00001);
+            hud.ShowSnapshot(playing, null, SpiritStatus.None, null, null, 0b00001);
             Assert.That(buttons["RerollButton"].interactable, Is.True);
 
             var played = session.Execute(PlayHandAction.Instance, playing.Revision);
             Assert.That(played.Snapshot.Phase, Is.EqualTo(EncounterPhase.Completed), "The stage's only hand cannot clear it.");
-            hud.ShowSnapshot(played.Snapshot, null, SpiritStatus.None, null, 0);
+            hud.ShowSnapshot(played.Snapshot, null, SpiritStatus.None, null, null, 0);
             Assert.That(panels["PlayingPanel"].gameObject.activeSelf, Is.False);
             Assert.That(labels["TargetLabel"].text, Is.EqualTo(DiagnosticText.Number(played.Snapshot.TotalScore)));
             Assert.That(labels["TargetCaption"].text, Is.EqualTo(Wording.totalScore));

@@ -26,7 +26,7 @@ namespace Dice.Tests
                 var parent = ui.Rect(panel.transform, "Row " + index);
                 row.FindPropertyRelative("<Category>k__BackingField").enumValueIndex = index;
                 row.FindPropertyRelative("<Background>k__BackingField").objectReferenceValue = ui.Add<Image>(parent, "Background");
-                foreach (string label in new[] { "CategoryLabel", "LevelLabel", "BaseLabel", "MultiplierLabel" })
+                foreach (string label in new[] { "CategoryLabel", "LevelLabel", "BaseLabel", "MultiplierLabel", "CurrentLabel" })
                     row.FindPropertyRelative("<" + label + ">k__BackingField").objectReferenceValue = ui.Add<Text>(parent, label);
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -41,7 +41,7 @@ namespace Dice.Tests
         {
             var upgrades = new[] { 0, 2, 0, 1, 0, 0, 6, 0 };
             var catalog = TestContent.Catalog(upgrades: upgrades);
-            panel.Render(catalog, EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3).Snapshot);
+            panel.Render(catalog, EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3).Snapshot, null);
             Assert.That(panel.Rows.Count, Is.EqualTo(HandDefinition.CategoryCount));
             foreach (var row in panel.Rows)
             {
@@ -53,6 +53,31 @@ namespace Dice.Tests
                     row.Category.ToString());
                 Assert.That(row.MultiplierLabel.text,
                     Is.EqualTo("<handRanks.multiplierBonus>" + DiagnosticText.Number(hand.MultiplierAt(level))), row.Category.ToString());
+            }
+        }
+
+        /** Checks no row is marked without a current rank and only the current rank's row is marked and highlighted with one / fails if a row is marked without one, another row is marked or the current row is not. */
+        [Test]
+        public void OnlyTheCurrentRanksRowIsMarked()
+        {
+            var catalog = TestContent.Catalog();
+            var snapshot = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3).Snapshot;
+            var theme = SpiritUi.GetTheme(panel.transform);
+            panel.Render(catalog, snapshot, null);
+            var normalBackground = panel.Rows[0].Background.color;
+            foreach (var row in panel.Rows)
+            {
+                Assert.That(row.CurrentLabel.gameObject.activeSelf, Is.False, row.Category.ToString());
+                Assert.That(row.CategoryLabel.color, Is.EqualTo(theme.cream), row.Category.ToString());
+                Assert.That(row.Background.color, Is.EqualTo(normalBackground), row.Category.ToString());
+            }
+            panel.Render(catalog, snapshot, HandCategory.Straight);
+            foreach (var row in panel.Rows)
+            {
+                bool current = row.Category == HandCategory.Straight;
+                Assert.That(row.CurrentLabel.gameObject.activeSelf, Is.EqualTo(current), row.Category.ToString());
+                Assert.That(row.CategoryLabel.color, Is.EqualTo(current ? theme.amber : theme.cream), row.Category.ToString());
+                Assert.That(row.Background.color == normalBackground, Is.EqualTo(!current), row.Category.ToString());
             }
         }
     }

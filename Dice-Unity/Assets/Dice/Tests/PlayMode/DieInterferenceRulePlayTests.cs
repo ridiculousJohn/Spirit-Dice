@@ -21,8 +21,8 @@ namespace Dice.Tests
     {
         /**
          * Checks that a disturbed kept die visibly moves after a player reroll, the host reacts, the die shows the
-         * disturbed face once playback settles, and the score panel shows no hand rank after the reroll. Fails if the
-         * die does not move, the host does not react, the tray shows the undisturbed face or the panel shows a rank.
+         * disturbed face once playback settles, and the score panel then names the current rank of the disturbed dice.
+         * Fails if the die does not move, the host does not react, or the tray or panel shows the undisturbed result.
          */
         [UnityTest]
         public IEnumerator RerollDisturbanceMovesTheKeptDieToItsNewFaceAndTheHostReacts()
@@ -79,8 +79,8 @@ namespace Dice.Tests
             Assert.That(view.DiceTray.GetVisibleFace(expected.Bay), Is.EqualTo(expected.After),
                 context + ": the disturbed die shows its new face.");
             Assert.That(view.GameplayHud.GetComponentsInChildren<UnityEngine.UI.Text>(true).Single(label => label.name == "HandCategory").text,
-                Is.Empty,
-                context + ": the hand rank shows only while a played hand is scored.");
+                Is.EqualTo(SpiritUi.GetWording(view.GameplayHud.transform).handNames.Name(controller.Preview.Score.Category).ToUpperInvariant()),
+                context + ": the panel names the current rank of the disturbed dice.");
             LogAssert.NoUnexpectedReceived();
         }
     }
