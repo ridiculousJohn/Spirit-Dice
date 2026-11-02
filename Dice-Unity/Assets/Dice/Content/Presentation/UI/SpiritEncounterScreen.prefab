@@ -2721,7 +2721,7 @@ MonoBehaviour:
   - {fileID: 5030817280957590308}
   - {fileID: 7735694274433331866}
   pauseMenu: {fileID: 6903189206629420999}
-  portraitReferenceSize: {x: 540, y: 960}
+  portraitReferenceWidth: 540
   tablePieces: []
   ambientProps: []
 --- !u!223 &3955674382443750106

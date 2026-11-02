@@ -32,16 +32,18 @@ namespace Dice.Tests
             Assert.That(Directory.Exists(root), Is.False, "Capture output must be fresh.");
             Directory.CreateDirectory(root);
 
-            // The screen takes the phone size before the encounter screen is built, as on a device.
-            yield return ResizeScreen(PhoneSize);
             yield return ContentReady.LoadApplication();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
             // Any encounter journey shows the HUD and the panel; this is the first found.
             var journey = controller.JourneyCatalog.Entries.First(entry => entry != null && entry.Encounters.Any());
             yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);
             var view = ContentReady.EncounterView(controller);
+            // The screen takes the phone size once the encounter screen is built, as on a device rotated or resized in play;
+            // the view refits its portrait in the frame the canvas resizes.
+            yield return ResizeScreen(PhoneSize);
             Assert.That(controller.Preview, Is.Not.Null, journey.name + " has no hand preview after its opening roll.");
-            Debug.Log("Hand ranks review capture: current rank " + controller.Preview.Score.Category);
+            Debug.Log("Hand ranks review capture: current rank " + controller.Preview.Score.Category + ", screen " +
+                Screen.width + "x" + Screen.height + ", portrait width " + view.Portrait.rect.width);
 
             yield return Capture(root, "a-hud-current-rank-" + PhoneSize.x + "x" + PhoneSize.y + ".png");
 

@@ -9,33 +9,30 @@ namespace Dice.Presentation
         public static readonly Vector2 DefaultReferenceSize = new Vector2(540, 960);
         [SerializeField] private RectTransform safeArea;
         [SerializeField] private RectTransform portrait;
-        [SerializeField] private Vector2 referenceSize = DefaultReferenceSize;
+        [Tooltip("The portrait layout's authored width; the portrait never grows wider.")]
+        [SerializeField] private float referenceWidth = DefaultReferenceSize.x;
 
         private void OnEnable() => Fit();
 
         // The canvas resizes its root object, which carries this fit, whenever the screen changes size or orientation.
         private void OnRectTransformDimensionsChange() => Fit();
 
-        private void Fit()
-        {
-            if (safeArea == null || portrait == null || Screen.width <= 0 || Screen.height <= 0) return;
-            FitToScreen(safeArea, portrait, referenceSize);
-        }
+        private void Fit() => FitToScreen(safeArea, portrait, referenceWidth);
 
         /**
-         * Anchors the safe area to the device's safe area and narrows the portrait to fit it when scaled to the screen height,
-         * never wider than the reference width.
+         * Anchors the safe area, a stretched child of the canvas root, to the device's safe area and narrows the portrait
+         * to the safe area's width, never wider than the reference width. The canvas has sized the root before this runs,
+         * so the safe area's rect is current even in a frame where the Screen size still reports the previous size; the
+         * safe area's anchors are fractions of the Screen size, read together with the Screen safe area.
          */
-        public static void FitToScreen(RectTransform safeArea, RectTransform portrait, Vector2 referenceSize)
+        public static void FitToScreen(RectTransform safeArea, RectTransform portrait, float referenceWidth)
         {
             if (Screen.width <= 0 || Screen.height <= 0) return;
             Rect area = Screen.safeArea;
             safeArea.anchorMin = new Vector2(area.xMin / Screen.width, area.yMin / Screen.height);
             safeArea.anchorMax = new Vector2(area.xMax / Screen.width, area.yMax / Screen.height);
             safeArea.offsetMin = safeArea.offsetMax = Vector2.zero;
-            float scale = Screen.height / referenceSize.y;
-            float width = Mathf.Min(referenceSize.x, area.width / scale);
-            portrait.sizeDelta = new Vector2(width, portrait.sizeDelta.y);
+            portrait.sizeDelta = new Vector2(Mathf.Min(referenceWidth, safeArea.rect.width), portrait.sizeDelta.y);
         }
     }
 }

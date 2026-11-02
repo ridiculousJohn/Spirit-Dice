@@ -53,7 +53,7 @@ namespace Dice.Presentation
         [SerializeField] private List<CanvasGroup> openingGroups = new List<CanvasGroup>();
         [SerializeField] private List<Button> diceButtons = new List<Button>();
         [SerializeField] private SpiritPauseMenu pauseMenu;
-        [SerializeField] private Vector2 portraitReferenceSize = SpiritPortraitSafeArea.DefaultReferenceSize;
+        [SerializeField] private float portraitReferenceWidth = SpiritPortraitSafeArea.DefaultReferenceSize.x;
         [Tooltip("Authored props for the encounter's table pieces; empty when the encounter places none.")]
         [SerializeField] private List<SpiritTablePieceView> tablePieces = new List<SpiritTablePieceView>();
         private readonly Rect[] pieceSlotRects = new Rect[DiceValues.Count];
@@ -376,7 +376,7 @@ namespace Dice.Presentation
         /** Fits the portrait to the screen's safe area and lays out what follows the portrait's size. */
         private void FitScreen()
         {
-            SpiritPortraitSafeArea.FitToScreen(safeArea, portrait, portraitReferenceSize);
+            SpiritPortraitSafeArea.FitToScreen(safeArea, portrait, portraitReferenceWidth);
             if (RewardsPanel.Root.gameObject.activeSelf) RewardsPanel.UpdateLayout();
             if (IsCharmPopupOpen) CharmPopup.Layout();
             LayoutTable();

@@ -226,7 +226,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritPortraitSafeArea
   safeArea: {fileID: 4874982907341376138}
   portrait: {fileID: 6926429104069845825}
-  referenceSize: {x: 540, y: 960}
+  referenceWidth: 540
 --- !u!1 &8606744014224955594
 GameObject:
   m_ObjectHideFlags: 0
