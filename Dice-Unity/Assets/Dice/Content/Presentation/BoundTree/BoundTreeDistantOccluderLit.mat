@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: BoundTreeMistOccluderLit
+  m_Name: BoundTreeDistantOccluderLit
   m_Shader: {fileID: 4800000, guid: 1381d22630ca4363815c8e4751f13ca1, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

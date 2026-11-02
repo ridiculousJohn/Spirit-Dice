@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
@@ -27,7 +26,7 @@ namespace Dice.Tests
      * A second capture shows the stage 3 charms introduction over the stage 3 charm offer at 540 x 960 and 443 x 960, then the offer
      * after Continue, under DICE_SPIRIT_CAPTURE_ROOT/stage3-intro. A third capture loses the encounter's first hand and shows
      * the nymph mid-flinch and then back in her sob after the flinch, under DICE_SPIRIT_CAPTURE_ROOT/defeat-flinch. A fourth
-     * capture shows the ambient moss, mist and creatures, under DICE_SPIRIT_CAPTURE_ROOT/ambient. The
+     * capture shows the scene's continuous ambient motion (cloud, mist and moss) over two minutes, under DICE_SPIRIT_CAPTURE_ROOT/ambient. The
      * fixture is explicit: it runs only when a run selects it by name, never in a run of the whole suite. The binding
      * behaviour it shows is tested by DieBindingPresentationPlayTests, the introduction by
      * EncounterCharmsIntroductionPlayTests, the outcome animation by EncounterOutcomeAnimationTests.
@@ -207,22 +206,17 @@ namespace Dice.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
-        // Seconds into the run of each creature in the group at which it is half out of hiding, in the middle of its run and
-        // half hidden again, from Tools/Presentation/author-bound-tree-ambient.py (report.json, creatures.*.capture_times_s).
-        private static readonly (string Id, float Emerging, float Middle, float Hiding)[] CreatureMoments =
-        {
-            ("beetle", 3.6f, 7.66f, 12.1f), ("centipede", 2.85f, 5.61f, 7.38f),
-        };
-        // Activity clock step while the capture drives the creatures' group; a run starts within one step of its detection.
-        private const float CreatureStep = .01f;
+        // The ambient capture samples the scene's clips every AmbientStep seconds of drift time from 0 to AmbientSpan.
+        private const float AmbientStep = 10f, AmbientSpan = 120f;
+        // The ambient layers the capture must find playing in the Bound Tree Scene frame.
+        private static readonly string[] AmbientLayers = { "Cloud", "Mist Far", "Mist Near", "Moss Left", "Moss Right" };
 
         /**
-         * The ambient layers at 540 x 960 and 443 x 960: the table at rest with the moss and mist, the moss at two opposite sway
-         * extremes (its three sway channels at +1, -1, +1 and at -1, +1, -1), the mist at two drift positions (offset 0 and half a
-         * tile) and each creature of the group half emerged, in the middle of its run and half hidden again. Moss and mist are held by
-         * stopping their clips and setting their pose; the creature group is driven by seeding the ambient activity and
-         * ticking its clock with the view's own ticking suspended, finding for each creature a seed whose first turn is
-         * that creature's. Written under DICE_SPIRIT_CAPTURE_ROOT/ambient.
+         * The scene's continuous ambient motion at 540 x 960 and 443 x 960, as a timed sequence: every clip playing in the Bound
+         * Tree Scene frame (the cloud drifting past the moon, the far and near mist bands drifting at their own speeds with the near
+         * band's bob and swell, the moss swaying and the nymph's sob) sampled together at drift times 0, AmbientStep, ... AmbientSpan
+         * seconds. Each clip's state is held at speed 0 and set to the time, so a frame shows exactly that moment whatever the frame
+         * rate. Written under DICE_SPIRIT_CAPTURE_ROOT/ambient.
          */
         [UnityTest]
         public IEnumerator BoundTreeAmbientCapture()
@@ -239,80 +233,26 @@ namespace Dice.Tests
             var journey = ContentReady.JourneyWithRule<DieBindingRuleDefinition>(controller);
             yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);
             var view = ContentReady.EncounterView(controller);
-            var activity = (EncounterAmbientActivity)typeof(SpiritEncounterView)
-                .GetField("ambientActivity", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
-            Assert.That(activity, Is.Not.Null, "The bound tree table authors ambient activity.");
-            // The capture drives the activity's clock itself, so the view's own ticking is suspended as on focus loss.
-            view.SendMessage("OnApplicationFocus", false);
-            activity.Stop();
-            var transforms = view.GetComponentsInChildren<RectTransform>(true);
-            RectTransform Layer(string name) => transforms.Single(rect => rect.name == name);
-            var moss = new[] { "Moss Left", "Moss Right" }.Select(name => Layer(name).GetComponent<SpiritPortraitImage>()).ToArray();
-            var mist = new[] { "Mist Far", "Mist Near" }.Select(name => Layer(name).GetComponent<RawImage>()).ToArray();
-            var clips = moss.Cast<Component>().Concat(mist).Select(layer => layer.GetComponent<Animation>()).ToArray();
-            foreach (var clip in clips) clip.enabled = false;
-            void Pose(float[] sway, float drift)
-            {
-                foreach (var image in moss) image.SetWeights(sway);
-                foreach (var band in mist) band.uvRect = new Rect(drift, 0f, band.uvRect.width, band.uvRect.height);
-            }
-            IEnumerator Both(string name)
-            {
-                yield return Capture(root, name + "-" + Width + "x" + Height + ".png");
-                yield return Capture(root, name + "-" + NarrowWidth + "x" + Height + ".png", NarrowWidth);
-            }
+            var frame = view.GetComponentsInChildren<RectTransform>(true).Single(rect => rect.name == "Bound Tree Scene");
+            var clips = frame.GetComponentsInChildren<Animation>().Where(animation => animation.isPlaying).ToArray();
+            foreach (var layer in AmbientLayers)
+                Assert.That(clips.Count(animation => animation.name == layer), Is.EqualTo(1), layer + " plays its clip.");
+            var states = clips.Select(animation => animation[animation.clip.name]).ToArray();
+            foreach (var state in states) state.speed = 0f;
 
-            Pose(new[] { 0f, 0f, 0f }, 0f);
-            yield return Both("a-table-at-rest");
-            Pose(new[] { 1f, -1f, 1f }, 0f);
-            yield return Both("b-moss-sway-extreme-1");
-            Pose(new[] { -1f, 1f, -1f }, 0f);
-            yield return Both("b-moss-sway-extreme-2");
-            Pose(new[] { 0f, 0f, 0f }, -.5f);
-            yield return Both("c-mist-drifted-half-tile");
-            Pose(new[] { 0f, 0f, 0f }, 0f);
-
-            var bindings = CreatureMoments.ToDictionary(moment => moment.Id,
-                moment => transforms.Single(rect => rect.name.Equals(moment.Id, StringComparison.OrdinalIgnoreCase)));
-            var rest = bindings.ToDictionary(pair => pair.Key, pair => (pair.Value.anchoredPosition, pair.Value.localRotation));
-            string Moving() => bindings.Keys.FirstOrDefault(id => (bindings[id].anchoredPosition - rest[id].anchoredPosition).sqrMagnitude > 1e-8f
-                || Quaternion.Angle(bindings[id].localRotation, rest[id].localRotation) > 1e-3f);
-            foreach (var moment in CreatureMoments)
+            for (int step = 0; step * AmbientStep <= AmbientSpan; ++step)
             {
-                // Each seed's first turn falls due 30 to 60 s after the activity begins; the first seed giving this creature that turn is used.
-                int seed = -1;
-                float elapsed = 0f;
-                for (int candidate = 0; candidate < 200 && seed < 0; ++candidate)
+                float time = step * AmbientStep;
+                for (int index = 0; index < clips.Length; ++index)
                 {
-                    activity.Stop();
-                    activity.Begin(candidate);
-                    string moving = null;
-                    for (elapsed = 0f; elapsed < 61f && moving == null; elapsed += CreatureStep)
-                    {
-                        activity.Tick(CreatureStep);
-                        moving = Moving();
-                    }
-                    if (moving == moment.Id) seed = candidate;
+                    states[index].time = time;
+                    clips[index].Sample();
                 }
-                Assert.That(seed, Is.GreaterThanOrEqualTo(0), moment.Id + " takes a turn for some seed.");
-                float run = 0f;
-                foreach (var (label, at) in new[] { ("emerging", moment.Emerging), ("middle", moment.Middle), ("hiding", moment.Hiding) })
-                {
-                    for (; run < at; run += CreatureStep) activity.Tick(CreatureStep);
-                    TestContext.WriteLine("Bound tree ambient capture: " + moment.Id + " seed " + seed + ", run from " + elapsed.ToString("F2")
-                        + " s, " + label + " at " + run.ToString("F2") + " s, offset " + (bindings[moment.Id].anchoredPosition - rest[moment.Id].anchoredPosition)
-                        + ", rotation " + bindings[moment.Id].localEulerAngles.z.ToString("F1"));
-                    yield return Both("d-" + moment.Id + "-" + label);
-                }
+                string name = "a-ambient-" + time.ToString("000") + "s-";
+                yield return Capture(root, name + Width + "x" + Height + ".png");
+                yield return Capture(root, name + NarrowWidth + "x" + Height + ".png", NarrowWidth);
             }
-            activity.Stop();
-            foreach (var id in bindings.Keys)
-            {
-                Assert.That(bindings[id].anchoredPosition, Is.EqualTo(rest[id].anchoredPosition), id + " rests.");
-                Assert.That(Quaternion.Angle(bindings[id].localRotation, rest[id].localRotation), Is.LessThan(.01f), id + " rests.");
-            }
-            foreach (var clip in clips) clip.enabled = true;
-            view.SendMessage("OnApplicationFocus", true);
+            foreach (var state in states) state.speed = 1f;
             yield return WaitIdle(controller);
             LogAssert.NoUnexpectedReceived();
         }

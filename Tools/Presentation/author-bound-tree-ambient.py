@@ -1,10 +1,10 @@
-"""Author the Bound Tree's ambient layers: hanging moss that sways, mist that drifts and creatures that come out of hiding.
+"""Author the Bound Tree's ambient layers: hanging moss that sways, clouds and mist that drift and creatures that come out of hiding.
 
 Python 3.10 or later with numpy, Pillow and scipy (on this machine Docs/work/merchant-table-clear/.venv/Scripts/python.exe).
 Run from the repository root:
 
     python Tools/Presentation/author-bound-tree-ambient.py                 # fresh Docs/work/bound-tree-ambient-* folder
-    python Tools/Presentation/author-bound-tree-ambient.py --write-assets  # also installs textures, meshes and paths
+    python Tools/Presentation/author-bound-tree-ambient.py --write-assets  # also installs textures, meshes, paths and clips
 
 It reads the concept, the installed Bound Tree plates and layers, and the kept donors in Docs/Reference/Art (see
 Docs/Reference/Art/BoundTreeLayers.md, "Ambient layers"), so reruns give the same files. The method is the merchant's and
@@ -22,10 +22,19 @@ strand sways horizontally by its tip sway times ((y - top) / length) ** 1.5; str
 channels, and each side's deformation mesh holds one shape per channel (the moss's own nearest-strand field on a
 GRID_PX grid), driven by a looping clip like CanopyFlutter.anim.
 
-Mist: two transparent bands made to wrap by a premultiplied cross-fade of their ends, scaled to the frame; the mask
-(where mist shows) is 1 minus the relight's receiver weight within MIST_ROWS, without specks and zero on the nymph and
-the hiding places. The scene draws the bands unmasked and keeps the tree in front with an occluder: the background's
-plates drawn above them through the inverted mask.
+Cloud and mist: three transparent bands (BANDS), each a wrapping tile scaled to the frame: the mist bands made to
+wrap by a premultiplied cross-fade of their ends, tinted and cut to their rows; the cloud, whose donor's ends are
+transparent, with clear columns appended and a vertical blur, so no straight horizontal alpha edge crosses the moon.
+The distant mask (sky and distant swamp) is the sky matte of the moss-removed base plate (a dark-on-bright unmixing
+matte, see sky_mask) and below it 1 minus the relight's receiver weight within MIST_ROWS, without specks and zero on
+the nymph and the hiding places; the near mask adds everything outside NEAR_TREE (the mid-ground cypress knees and the
+near water), with the same exclusions, so the trunk and roots stay in front. The scene draws the cloud and the far
+band, then the distant occluder (the background's plates drawn above them through the inverted distant mask), then
+the near band and the near occluder (the plates through the inverted near mask), so the cloud passes behind the trunk,
+branch and twigs, the far band behind the knees and the near band in front of them. Each band's legacy clip drifts its
+uvRect x over one tile from the band's start offset and keys the near band's bob (uvRect y) and opacity swell (colour
+alpha) in whole cycles of that period. Every band is checked to show nowhere on the face mask, the nymph or the
+playing surface and to draw only inside its occluder's rows.
 
 Creatures: each is painted into its scene by an in-scene donor (fixing its painted scale), extracted by a transparent
 donor registered to it, colour-matched to it and resampled from the donor's resolution to its length; a creature that
@@ -48,7 +57,7 @@ import uuid
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from scipy.ndimage import (gaussian_filter, map_coordinates, distance_transform_edt, binary_erosion, binary_dilation,
-                           label)
+                           binary_fill_holes, label)
 from scipy.optimize import minimize
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -109,15 +118,75 @@ FACE_KEEP_PX = 4      # strands within this distance of the face mask (plus its 
 SWAY_REACH = 14       # the sway field reaches pixels this far from a strand, so a strand's edge moves with it
 GRID_PX = 4           # deformation mesh cell size in concept pixels
 
-# ----------------------------------------------------------------------------------------------------------- mist
-MIST_OVERLAP = 256    # donor columns cross-faded at the wrap
-MIST = {
-    # scale: frame px per donor px; centre_y: band centre row; opacity: the layer colour's alpha; speed: frame px per s
-    'Far': {'donor': 'BoundTreeMistFarDonor.png', 'scale': 0.38, 'centre_y': 648, 'opacity': 0.35, 'speed': 4.0},
-    'Near': {'donor': 'BoundTreeMistNearDonor.png', 'scale': 0.52, 'centre_y': 760, 'opacity': 0.45, 'speed': 7.0},
+# ------------------------------------------------------------------------------------------------- cloud and mist
+MIST_OVERLAP = 256    # donor columns cross-faded at the wrap of a mist band
+# The drifting bands, in draw order. donor: the kept transparent donor; asset: the tile's texture name (its clip is
+# <asset>Drift.anim); scale: frame px per donor px; overlap: donor columns cross-faded at the wrap (0 for a donor whose
+# ends are transparent); end_fade: donor columns at each end faded to 0; gap: clear donor columns appended, so part of
+# each period is clear; soften: sigma (donor px) of a vertical blur of the tile, so no straight horizontal alpha edge
+# remains; top: concept row of the tile's first row; cut: the tile fades out over MIST_CUT_FADE rows to nothing at this
+# row (None keeps the tile's height); opacity: the layer colour's alpha at rest; speed: frame px per s, drifting right;
+# start: the tile's offset to the right at the clip's start, px; tint: linear-light gain on the tile's colour; mask: the
+# mask its occluder draws the plates through; bob: the band's vertical bob in px either way, bob_cycles times per drift
+# period; swell: the opacity's swell either way, swell_cycles times per drift period.
+# Cloud veils the moon (opacity 0.8) and is clear for about a third of each period; its start puts the trailing wisp
+# over the moon (tile column 520 at the moon's centre, x 796) and the long mass follows within the first minute. Far is
+# small, thin and blue near the horizon, behind the knees; near is large, denser and quicker, in front of them, above
+# the HUD's target panel at phone size (from about row 862).
+BANDS = {
+    'Cloud': {'donor': 'BoundTreeCloudDonor.png', 'asset': 'BoundTreeCloud', 'scale': 0.40, 'overlap': 0, 'end_fade': 16,
+              'gap': 1000, 'soften': 14.0, 'top': 109, 'cut': None, 'opacity': 0.8, 'speed': 3.0, 'start': 276.0,
+              'tint': (1.0, 1.0, 1.0), 'mask': 'distant', 'bob': 0.0, 'bob_cycles': 0, 'swell': 0.0, 'swell_cycles': 0},
+    'Far': {'donor': 'BoundTreeMistFarDonor.png', 'asset': 'BoundTreeMistFar', 'scale': 0.26, 'overlap': MIST_OVERLAP,
+            'end_fade': 0, 'gap': 0, 'soften': 0.0, 'top': 560, 'cut': None, 'opacity': 0.35, 'speed': 2.5, 'start': 0.0,
+            'tint': (0.74, 0.86, 1.0), 'mask': 'distant', 'bob': 0.0, 'bob_cycles': 0, 'swell': 0.0, 'swell_cycles': 0},
+    'Near': {'donor': 'BoundTreeMistNearDonor.png', 'asset': 'BoundTreeMistNear', 'scale': 0.75, 'overlap': MIST_OVERLAP,
+             'end_fade': 0, 'gap': 0, 'soften': 0.0, 'top': 615, 'cut': 856, 'opacity': 0.55, 'speed': 9.5, 'start': 0.0,
+             'tint': (1.0, 1.0, 1.0), 'mask': 'near', 'bob': 5.0, 'bob_cycles': 4, 'swell': 0.1, 'swell_cycles': 3},
 }
+# The sky matte (the distant mask's sky: 1 on open sky and the moon, 0 on the trunk, canopy, branches, twigs and the
+# distant tree tops, each edge pixel at its sky coverage), unmixed from the moss-removed base plate; see sky_mask().
+SKY_MOON = ((796.0, 183.0), 70.0)    # painted moon disc: centre, radius (MOON's circle is offset from the limb)
+SKY_MOON_HALO = (4.0, 4.0)   # the moon rule holds to this far outside the limb, then fades over the second value (px)
+SKY_FG_CHROMA = 2.0          # B - R of the near-black bark (sRGB levels)
+SKY_FG_LUMA = 8.0            # luminance of the near-black bark (sRGB levels)
+SKY_SEED_CHROMA = 22.0       # first pass: a pixel with at least this B - R ...
+SKY_SEED_LUMA = 26.0         # ... and this luminance counts as sky
+SKY_SIGMA = 4.0              # local sky reference, px
+SKY_SIGMA_WIDE = 14.0        # fallback where little sky is near (between twigs, at the trunk's edge)
+SKY_REFINE_PASSES = 2        # sky reference recomputed with the previous matte as weight
+SKY_REMAP = (0.18, 0.82)     # coverage mapped to the matte's 0..1
+SKY_MIN_COMPONENT = 30       # sky specks smaller than this are dropped ...
+SKY_SPECK_LEVEL = 0.1        # ... counting pixels over this matte level ...
+SKY_SPECK_GREY = (600, 0.7)  # ... and specks up to this size whose median log2(B / R) is below this (moonlit glints and
+                             # crevices on the trunk 0.38 to 0.65; sky between twigs 0.77 to 1.4) or whose mean matte is
+SKY_SPECK_FAINT = 0.45       # below this (the lit knot on the thick branch, 0.40; open sky between twigs 0.6 to 0.96)
+SKY_MOON_DARK = (26.0, 44.0)  # on the moon, blue pixels count as sky only above this luminance (crater pits about 50,
+                              # the bluish bark on the branch's upper edge about 20 to 30), smoothstep
+SKY_RECEIVER_CORE = (0.55, 0.75)  # relight receiver weight over which the matte is 0 (deep inside the trunk and thick
+                                  # branches, where moonlit bluish glints would read as sky), off the moon
+SKY_BARK_HOLE_MAX = 2500     # gaps in the receiver's bark (weight over 0.5, frame border counted as bark) smaller than
+                             # this many px are bark: dark bluish crevices and moss drips in the trunk, not sky ...
+SKY_BARK_HOLE_GREY = (8000, 0.8)  # ... and gaps up to this size whose median log2(B / R) is below this (crevices about
+                                  # 0.65; enclosed sky 1.1 to 1.2)
+SKY_ROWS_FADE = (330, 380)   # the matte fades from 1 to 0 between these rows (the distant tree tops start near 360)
+MOON_REVIEW_BOX = (700, 90, 900, 280)   # the moon region of the cloud review, concept px
+MIST_CUT_FADE = 36        # rows over which a cut tile fades out
 MIST_MIN_COMPONENT_PX = 600
 MIST_ROWS = (470, 1060)   # mist never shows above or below these rows (soft 20 px edge)
+# The trunk, roots and ground in front of the near band: outside this polygon the near mask is 1 (the mid-ground knees
+# and the near water); inside it, the distant mask. Its edge runs through the water just off the trunk's edge, down to
+# the big root on the right (whose top edge it follows) and the ground on the left, taking in the twigs off the trunk.
+NEAR_TREE = [(240, 440), (660, 440), (657, 560), (748, 586), (748, 648), (718, 668), (716, 730), (733, 778), (752, 793),
+             (772, 806), (800, 822), (825, 834), (840, 840), (880, 852), (920, 860), (941, 863), (941, 1120), (0, 1120),
+             (0, 797), (60, 793), (84, 775), (112, 760), (124, 740), (128, 712), (134, 690), (138, 640), (190, 560)]
+NEAR_TREE_SOFTEN = 3.0   # sigma (px) of the polygon's edge, soft where it crosses dark roots and knee bases
+# The scene layer that draws the plates through each band mask, drawn after the bands that use it, and the mask's texture.
+OCCLUDERS = {'distant': 'DistantOccluder', 'near': 'NearOccluder'}
+MASK_FILES = {'distant': 'BoundTreeDistantMask.png', 'near': 'BoundTreeNearMask.png'}
+# The legacy clips' RawImage binding (com.unity.ugui RawImage script).
+RAW_IMAGE_SCRIPT = '1344c3c82d62a2a41a3576d8abb8e3ea'
+CLIP_KEYS_PER_CYCLE = 8   # keys per cycle of a bob or swell curve (Hermite keys with the sine's own slopes)
 
 # ------------------------------------------------------------------------------------------------------ creatures
 PLAYING_SURFACE = [(0, 1092), (60, 1060), (130, 1035), (220, 1012), (320, 1000), (450, 996), (560, 998), (640, 1008),
@@ -542,19 +611,112 @@ def build_moss(P, report):
     return plates, layers, static
 
 
+# ======================================================================================================= sky matte
+def smoothstep(x):
+    x = np.clip(x, 0, 1)
+    return x * x * (3 - 2 * x)
+
+
+def sky_moon_disc():
+    """1 on the painted moon and its halo out to SKY_MOON_HALO[0] past the limb, fading to 0 over SKY_MOON_HALO[1]."""
+    (cx, cy), r = SKY_MOON
+    reach, soft = SKY_MOON_HALO
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float64) + 0.5
+    return np.clip((r + reach + soft - np.hypot(xx - cx, yy - cy)) / soft, 0, 1)
+
+
+def sky_reference(value, weight):
+    """Normalised Gaussian average of value over weight: the local sky level, wide fallback where weight is thin."""
+    wn = gaussian_filter(weight, SKY_SIGMA)
+    near = gaussian_filter(value * weight, SKY_SIGMA) / np.maximum(wn, 1e-6)
+    ww = gaussian_filter(weight, SKY_SIGMA_WIDE)
+    wide = gaussian_filter(value * weight, SKY_SIGMA_WIDE) / np.maximum(ww, 1e-6)
+    t = np.clip(wn / 0.3, 0, 1)
+    return near * t + wide * (1 - t)
+
+
+def sky_coverage(value, sky, fg):
+    return np.clip((value - fg) / np.maximum(sky - fg, 1e-3), 0, 1)
+
+
+def bark_holes(receiver, plate):
+    """Gaps enclosed by the receiver's bark (the frame border counting as bark) that are small, or not much bigger
+    and grey rather than sky blue, grown 2 px with a soft edge."""
+    bark = np.pad(receiver > 0.5, 1, constant_values=True)
+    holes = (binary_fill_holes(bark) & ~bark)[1:-1, 1:-1]
+    lab, n = label(holes)
+    sizes = np.bincount(lab.ravel())
+    log_br = np.log2((plate[..., 2] + 1) / (plate[..., 0] + 1))
+    limit, grey = SKY_BARK_HOLE_GREY
+    ids = [i for i in range(1, n + 1) if sizes[i] < SKY_BARK_HOLE_MAX
+           or (sizes[i] < limit and np.median(log_br[lab == i]) < grey)]
+    small = np.isin(lab, ids) & (lab > 0)
+    return np.clip(gaussian_filter(binary_dilation(small, iterations=2).astype(np.float64), 0.7) * 1.5, 0, 1)
+
+
+def drop_sky_specks(m, plate):
+    lab, n = label(m > SKY_SPECK_LEVEL)
+    sizes = np.bincount(lab.ravel())
+    log_br = np.log2((plate[..., 2] + 1) / (plate[..., 0] + 1))
+    limit, grey = SKY_SPECK_GREY
+    ids = [i for i in range(1, n + 1) if sizes[i] < SKY_MIN_COMPONENT
+           or (sizes[i] < limit and (np.median(log_br[lab == i]) < grey or m[lab == i].mean() < SKY_SPECK_FAINT))]
+    return np.where(np.isin(lab, ids) & (lab > 0), 0.0, m)
+
+
+def sky_mask(plate):
+    """The sky matte over the moss-removed base plate, a dark-on-bright unmixing matte. Chroma (B - R) and luminance
+    (Rec. 709 on sRGB levels), unblurred so a 1 px twig keeps its pixels, are each unmixed against the local sky
+    (sky_reference over pixels already judged sky, refined with the previous matte) and the near-black bark, so a twig
+    edge pixel keeps its own coverage and no sky halo shows around it. Off the moon a pixel is sky when blue AND as bright
+    as the sky near it (the distant tree tops are blue but darker); on the disc when bright OR blue and not dark (the limb
+    is neutral, the crater pits bluish), so only the dark branch and twigs crossing it are cut. Deep inside the trunk and
+    thick branches (the relight's receiver core) and in the small or grey gaps its bark encloses the matte is 0; specks
+    are dropped and it fades out over SKY_ROWS_FADE."""
+    chroma = plate[..., 2] - plate[..., 0]
+    luma = plate @ np.array([0.2126, 0.7152, 0.0722])
+    disc = sky_moon_disc()
+    weight = np.maximum(((chroma >= SKY_SEED_CHROMA) & (luma >= SKY_SEED_LUMA)).astype(np.float64), disc * (luma > 120))
+    lo, hi = SKY_MOON_DARK
+    r0, r1 = SKY_REMAP
+    for _ in range(SKY_REFINE_PASSES + 1):
+        c_ch = sky_coverage(chroma, sky_reference(chroma, weight), SKY_FG_CHROMA)
+        c_lu = sky_coverage(luma, sky_reference(luma, weight), SKY_FG_LUMA)
+        c_moon = np.maximum(c_lu, c_ch * smoothstep((luma - lo) / (hi - lo)))
+        c = np.minimum(c_ch, c_lu) * (1 - disc) + c_moon * disc
+        m = np.clip((c - r0) / (r1 - r0), 0, 1)
+        weight = m ** 2
+    lo, hi = SKY_RECEIVER_CORE
+    receiver = BT.receivers(plate)
+    core = np.maximum(smoothstep((receiver - lo) / (hi - lo)), bark_holes(receiver, plate)) * (1 - disc)
+    yy = np.arange(H, dtype=np.float64)[:, None] + 0.5
+    lo, hi = SKY_ROWS_FADE
+    return drop_sky_specks(m * (1 - core), plate) * np.clip((hi - yy) / (hi - lo), 0, 1)
+
+
 # ============================================================================================================== mist
-def tile_band(path):
+def tile_band(path, overlap=MIST_OVERLAP, end_fade=0, gap=0, soften=0.0):
+    """A wrapping band at donor scale, premultiplied: the donor's alpha levels, colour spread under transparent texels,
+    its ends faded over end_fade columns, its last overlap columns cross-faded into its first, gap clear columns
+    appended, a vertical blur of sigma soften, and its rows cropped to the band."""
     D = load(path, 'RGBA')
     a = alpha_levels(D[..., 3])
     rgb = D[..., :3]
     w = (a > 0.02) * a
     spread = gaussian_filter(rgb * w[..., None], (3, 3, 0)) / np.maximum(gaussian_filter(w, 3), 1e-6)[..., None]
     rgb = np.where((a > 0.02)[..., None], rgb, spread)
+    if end_fade:
+        ramp = np.clip((np.arange(D.shape[1]) + 0.5) / end_fade, 0, 1)
+        a = a * np.minimum(ramp, ramp[::-1])[None, :]
     pm = np.concatenate([rgb * a[..., None], a[..., None]], -1)
-    n = D.shape[1] - MIST_OVERLAP
+    n = D.shape[1] - overlap
     t = pm[:, :n].copy()
-    ramp = (np.arange(MIST_OVERLAP) + 0.5) / MIST_OVERLAP
-    t[:, :MIST_OVERLAP] = pm[:, :MIST_OVERLAP] * ramp[None, :, None] + pm[:, n:n + MIST_OVERLAP] * (1 - ramp[None, :, None])
+    ramp = (np.arange(overlap) + 0.5) / max(1, overlap)
+    t[:, :overlap] = pm[:, :overlap] * ramp[None, :, None] + pm[:, n:n + overlap] * (1 - ramp[None, :, None])
+    if gap:
+        t = np.concatenate([t, np.zeros((t.shape[0], gap, 4))], 1)
+    if soften > 0:
+        t = gaussian_filter(t, (soften, 0, 0), mode='constant')
     rows = np.nonzero(t[..., 3].max(1) > 0.004)[0]
     return t[max(0, rows.min() - 4):rows.max() + 5]
 
@@ -574,53 +736,160 @@ def straight(pm):
     return np.concatenate([np.clip(pm[..., :3] / np.maximum(a, 1e-6)[..., None], 0, 255), (a * 255)[..., None]], -1)
 
 
-def place_band(tile_pm, centre_y, offset_x, opacity):
-    """Premultiplied RGB and alpha over the frame of a wrapping band, its tile origin at offset_x."""
+def place_band(tile_pm, top, offset_x, opacity, dy=0.0):
+    """Premultiplied RGB and alpha over the frame of a wrapping band, its tile origin at offset_x and its first row at
+    top + dy (dy may be fractional)."""
     th, tw = tile_pm.shape[:2]
     rgb, a = np.zeros((H, W, 3)), np.zeros((H, W))
-    y0 = int(round(centre_y - th / 2))
     cols = (np.arange(W) - offset_x) % tw
     ci = np.floor(cols).astype(int)
     fr = (cols - ci)[None, :, None]
     strip = tile_pm[:, ci] * (1 - fr) + tile_pm[:, (ci + 1) % tw] * fr
-    ys = slice(max(0, y0), min(H, y0 + th))
+    y0 = int(math.floor(top + dy))
+    fy = top + dy - y0
+    # rows between the tile's rows interpolate, as bilinear sampling of the shifted uvRect does
+    strip = np.concatenate([np.zeros_like(strip[:1]), strip, np.zeros_like(strip[:1])], 0)
+    strip = strip[1:] * (1 - fy) + strip[:-1] * fy
+    ys = slice(max(0, y0), min(H, y0 + th + 1))
     sy = slice(ys.start - y0, ys.stop - y0)
     rgb[ys] = strip[sy, :, :3] * opacity
     a[ys] = strip[sy, :, 3] * opacity
     return rgb, a
 
 
-def build_mist(P, hides, report):
-    rep = report.setdefault('mist', {'bands': {}})
-    tiles = {}
-    for name, b in MIST.items():
-        t = tile_band(REF / b['donor'])
-        tf = resize_pm(t, b['scale'])
-        th, tw = tf.shape[:2]
-        tiles[name] = tf
-        y0 = b['centre_y'] - th / 2
-        rep['bands'][name] = dict(b, tile_size_px=[tw, th], rect_xywh=[0, y0, W, th],
-                                  wrap_alpha_jump=float(np.abs(tf[:, -1, 3] - tf[:, 0, 3]).max()),
-                                  largest_inner_alpha_step=float(np.abs(np.diff(tf[..., 3], axis=1)).max()),
-                                  uv_width=W / tw, drift_period_s=tw / b['speed'])
+def band_tile(b):
+    """A band's tile: the donor's wrapping band scaled, tinted in linear light, cut to its rows and padded with transparent
+    rows for its bob. Returns the premultiplied tile and the concept row of its first row."""
+    tf = resize_pm(tile_band(REF / b['donor'], b['overlap'], b['end_fade'], b['gap'], b['soften']), b['scale'])
+    a = tf[..., 3]
+    straight = tf[..., :3] / np.maximum(a, 1e-6)[..., None]
+    tinted = to_srgb(to_linear(straight) * np.array(b['tint'], float))
+    tf = np.concatenate([np.clip(tinted, 0, 255) * a[..., None], a[..., None]], -1)
+    top = float(b['top'])
+    if b['cut'] is not None:
+        y = top + np.arange(tf.shape[0]) + 0.5
+        envelope = np.clip((b['cut'] - y) / MIST_CUT_FADE, 0, 1)
+        tf = tf * (envelope * envelope * (3 - 2 * envelope))[:, None, None]
+        tf = tf[:int(np.ceil(b['cut'] - top))]
+    pad = int(math.ceil(b['bob'])) + 1 if b['bob'] > 0 else 0
+    if pad:
+        tf = np.concatenate([np.zeros((pad,) + tf.shape[1:]), tf, np.zeros((pad,) + tf.shape[1:])], 0)
+    return tf, top - pad
+
+
+def band_state(b, tile, t):
+    """A band at t seconds of its clip: tile offset (px right), vertical offset (px down) and opacity."""
+    period = tile.shape[1] / b['speed']
+    phase = 2 * math.pi * t / period
+    return ((b['start'] + b['speed'] * t) % tile.shape[1], b['bob'] * math.sin(b['bob_cycles'] * phase),
+            b['opacity'] + b['swell'] * math.sin(b['swell_cycles'] * phase))
+
+
+def distant_mask(P, base, hides, nymph):
+    """Where the sky and distant swamp show: the sky matte of the moss-removed base plate, and below it 1 minus the
+    relight's receiver weight within MIST_ROWS without specks; zero on the nymph, the face mask (bark the spirit's face
+    draws over, where faint bluish glints would otherwise take a little matte) and inside the hiding places."""
     rec = BT.receivers(P['unlit'])
     yy = np.arange(H)[:, None].repeat(W, 1).astype(float)
     rows = np.clip((yy - MIST_ROWS[0]) / 20, 0, 1) * np.clip((MIST_ROWS[1] - yy) / 20, 0, 1)
-    nymph = load(NYMPH, 'RGBA')[..., 3] / 255.0
-    mask = np.clip(1 - rec, 0, 1) * rows * (1 - np.clip(gaussian_filter(nymph, 1.0) * 1.5, 0, 1))
+    mask = np.clip(1 - rec, 0, 1) * rows * off_nymph(nymph)
     # drop specks (dark bark whose blue-to-red ratio reads as distant swamp), grown back 3 px for their soft edge
     lab, n = label(mask > 0.5)
     sizes = np.bincount(lab.ravel())
     keep = np.isin(lab, [i for i in range(1, n + 1) if sizes[i] >= MIST_MIN_COMPONENT_PX])
     mask = mask * gaussian_filter(binary_dilation(keep, iterations=3).astype(float), 1.0)
-    # no mist inside the hiding places: their occluder draws the plate without mist above the creatures
-    mask = mask * (1 - np.clip(gaussian_filter(binary_dilation(hides > 0, iterations=2).astype(float), 1.0) * 1.5, 0, 1))
+    face = load(FACE_MASK, 'RGBA')[..., 3] / 255.0
+    off_face = 1 - np.clip(gaussian_filter(binary_dilation(face > 0, iterations=2).astype(float), 1.0) * 1.5, 0, 1)
+    mask = np.maximum(mask, sky_mask(base) * off_nymph(nymph)) * off_face
+    # nothing behind the moving layers inside the hiding places: their occluder draws the plate above the creatures
+    return mask * off_hiding_places(hides), rows
+
+
+def off_nymph(nymph):
+    """1 away from the nymph, 0 on her, with a soft edge just outside her."""
+    return 1 - np.clip(gaussian_filter(nymph, 1.0) * 1.5, 0, 1)
+
+
+def off_hiding_places(hides):
+    """1 away from the hiding places, 0 inside them, with a soft edge just outside."""
+    return 1 - np.clip(gaussian_filter(binary_dilation(hides > 0, iterations=2).astype(float), 1.0) * 1.5, 0, 1)
+
+
+def build_mist(P, base, hides, report):
+    rep = report.setdefault('mist', {'bands': {}})
+    tiles, tops = {}, {}
+    for name, b in BANDS.items():
+        tf, top = band_tile(b)
+        th, tw = tf.shape[:2]
+        tiles[name], tops[name] = tf, top
+        rep['bands'][name] = dict(b, tile_size_px=[tw, th], rect_xywh=[0, top, W, th],
+                                  wrap_alpha_jump=float(np.abs(tf[:, -1, 3] - tf[:, 0, 3]).max()),
+                                  largest_inner_alpha_step=float(np.abs(np.diff(tf[..., 3], axis=1)).max()),
+                                  uv_width=W / tw, uv_x=-b['start'] / tw, drift_period_s=tw / b['speed'],
+                                  bob_uv=b['bob'] / th, bob_period_s=(tw / b['speed'] / b['bob_cycles']) if b['bob_cycles'] else None,
+                                  swell_period_s=(tw / b['speed'] / b['swell_cycles']) if b['swell_cycles'] else None)
+    nymph = load(NYMPH, 'RGBA')[..., 3] / 255.0
+    distant, rows = distant_mask(P, base, hides, nymph)
+    outside = 1 - np.clip(gaussian_filter(poly_mask(NEAR_TREE), NEAR_TREE_SOFTEN), 0, 1)
+    near = np.maximum(distant, outside * rows * off_nymph(nymph) * off_hiding_places(hides))
+    masks = {'distant': distant, 'near': near}
     lu, lg, lgl = to_linear(P['unlit']), to_linear(P['glow']), to_linear(P['glowlit'])
-    m = mask > 0.5
-    rep['mask'] = {'rows': list(MIST_ROWS), 'pixels_over_half': int(m.sum()),
-                   'light1_over_base_in_mask_luma_p99': float(np.percentile(luma_linear((lgl + 1e-4) / (lu + 1e-4))[m], 99)),
-                   'light0_over_base_in_mask_luma_p99': float(np.percentile(luma_linear((lg + 1e-4) / (lu + 1e-4))[m], 99))}
-    return tiles, mask
+    rep['masks'] = {}
+    for key, mask in masks.items():
+        m = mask > 0.5
+        rep['masks'][key] = {
+            'rows': list(MIST_ROWS), 'pixels_over_half': int(m.sum()),
+            'light1_over_base_in_mask_luma_p99': float(np.percentile(luma_linear((lgl + 1e-4) / (lu + 1e-4))[m], 99)),
+            'light0_over_base_in_mask_luma_p99': float(np.percentile(luma_linear((lg + 1e-4) / (lu + 1e-4))[m], 99))}
+    rep['masks']['near']['tree_polygon'] = NEAR_TREE
+    return tiles, tops, masks
+
+
+def band_reach(tile, top, b):
+    """Per frame row, the most alpha the band ever draws there across its drift, bob and swell."""
+    profile = tile[..., 3].max(1)
+    rows = np.arange(H) + 0.5
+    reach = np.zeros(H)
+    for dy in np.linspace(-b['bob'], b['bob'], 4 * int(math.ceil(b['bob'])) + 1) if b['bob'] > 0 else [0.0]:
+        centres = top + dy + np.arange(len(profile)) + 0.5
+        reach = np.maximum(reach, np.interp(rows, centres, profile, left=0.0, right=0.0))
+    return reach * (b['opacity'] + b['swell'])
+
+
+def occluder_rects(bands):
+    """Each band mask's occluder rect (x, y, w, h in concept px): the full width over the rows of every band drawn
+    through that mask."""
+    rects = {}
+    for b in bands.values():
+        x, y, w, h = b['rect_xywh']
+        top, bottom = int(math.floor(y)), int(math.ceil(y + h))
+        if b['mask'] in rects:
+            _, t, _, hh = rects[b['mask']]
+            top, bottom = min(top, t), max(bottom, t + hh)
+        rects[b['mask']] = (0, top, W, bottom - top)
+    return rects
+
+
+def check_bands(bands, report):
+    """Fails loudly when a band would show on the face mask, the nymph or the playing surface: its visible alpha (the most
+    it draws in a row times the mask its occluder draws through) above half a level on any of their pixels, or any of its
+    rows outside its occluder's rect."""
+    protected = {'face mask': load(FACE_MASK, 'RGBA')[..., 3] > 0, 'nymph': load(NYMPH, 'RGBA')[..., 3] / 255.0 >= 0.02,
+                 'playing surface': poly_mask(PLAYING_SURFACE) > 0.5}
+    rep = report.setdefault('band_checks', {})
+    for name, band in bands.items():
+        visible = band['reach'][:, None] * band['mask']
+        found = {region: int((visible[px] > 0.5 / 255).sum()) for region, px in protected.items()}
+        x, y, w, h = band['occluder_rect']
+        drawn = np.nonzero(band['reach'] > 0)[0]
+        outside = int(((drawn < y) | (drawn >= y + h)).sum())
+        rep[name] = {'visible_px': found, 'largest_visible_alpha': float(visible.max()), 'rows_outside_occluder': outside,
+                     'drawn_rows': [int(drawn.min()), int(drawn.max())], 'occluder_rect_xywh': list(band['occluder_rect'])}
+        for region, count in found.items():
+            if count:
+                raise SystemExit(f'The {name} band would show on the {region} ({count} px above half a level).')
+        if outside:
+            raise SystemExit(f'The {name} band draws {outside} rows outside its occluder.')
 
 
 # ========================================================================================================= creatures
@@ -959,7 +1228,7 @@ def map_rect(rect):
     return [x / W, 1 - (y + h) / H, w / W, h / H]
 
 
-def placement(report, layers, creatures, tiles, mist_mask, hides_all):
+def placement(report, layers, creatures, hides_all):
     """RectTransform values in the Bound Tree Scene frame (anchored to its top-left corner) for every layer."""
     def rect_values(x, y, w, h, pivot=(0.0, 1.0)):
         return {'anchored_position': [round((x + pivot[0] * w) * SX, 4), round(-(y + (1 - pivot[1]) * h) * SY, 4)],
@@ -970,18 +1239,16 @@ def placement(report, layers, creatures, tiles, mist_mask, hides_all):
         out['Moss' + name] = dict(rect_values(x, y, w, h), map_rect=map_rect(l['rect']))
     for name, b in report['mist']['bands'].items():
         x, y, w, h = b['rect_xywh']
-        out['Mist' + name] = dict(rect_values(x, y, w, h), uv_rect=[0, 0, b['uv_width'], 1])
+        out[b['asset'][len('BoundTree'):]] = dict(rect_values(x, y, w, h), uv_rect=[b['uv_x'], 0, b['uv_width'], 1])
 
     def full_frame_crop(m, margin=4):
         ys, xs = np.nonzero(m > 0)
         x0, y0, x1, y1 = max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin), min(H, ys.max() + 1 + margin)
         return (int(x0), int(y0), int(x1 - x0), int(y1 - y0))
-    # the mist occluder covers the bands' rows; the hiding places' occluder their bounding box
-    top = min(b['rect_xywh'][1] for b in report['mist']['bands'].values())
-    bottom = max(b['rect_xywh'][1] + b['rect_xywh'][3] for b in report['mist']['bands'].values())
-    mrect = (0, int(math.floor(top)), W, int(math.ceil(bottom)) - int(math.floor(top)))
+    # each band occluder covers the rows of the bands drawn through its mask; the hiding places' occluder their bounding box
     hrect = full_frame_crop(hides_all)
-    for key, r in (('MistOccluder', mrect), ('HidingPlaces', hrect)):
+    rects = [(OCCLUDERS[k], r) for k, r in occluder_rects(report['mist']['bands']).items()] + [('HidingPlaces', hrect)]
+    for key, r in rects:
         x, y, w, h = r
         out[key] = dict(rect_values(x, y, w, h), uv_rect=[x / W, 1 - (y + h) / H, w / W, h / H], map_rect=map_rect(r))
     for name, c in creatures.items():
@@ -999,7 +1266,7 @@ def placement(report, layers, creatures, tiles, mist_mask, hides_all):
 
 
 # ========================================================================================================= reviews
-def reviews(rdir, P, plates, layers, static, tiles, mist_mask, creatures, report):
+def reviews(rdir, P, plates, layers, static, mist, creatures, report):
     concept = load(CONCEPT)
     nymph = load(NYMPH, 'RGBA')
     bg = load(BACKGROUND)
@@ -1023,12 +1290,25 @@ def reviews(rdir, P, plates, layers, static, tiles, mist_mask, creatures, report
         a = s[..., 3]
         return np.concatenate([s[..., :3] / np.maximum(a, 1e-6)[..., None], a[..., None] * 255], -1)
 
-    def scene(mist_frac=0.0, moss_weights=None, creature=None):
+    tiles, tops, masks = mist['tiles'], mist['tops'], mist['masks']
+    rects = occluder_rects(report['mist']['bands'])
+
+    def scene(t=0.0, moss_weights=None, creature=None, colours=None):
+        """The scene with the bands at t seconds of their clips; `colours` paints each band flat in a colour of its own."""
         img = removed.copy()
-        for name, b in MIST.items():
-            prgb, pa = place_band(tiles[name], b['centre_y'], mist_frac * tiles[name].shape[1], b['opacity'])
-            img = prgb + img * (1 - pa[..., None])
-        img = img * mist_mask[..., None] + removed * (1 - mist_mask[..., None])     # occluder: plate through ~mask
+        for key in OCCLUDERS:
+            for name, b in BANDS.items():
+                if b['mask'] != key:
+                    continue
+                offset, dy, opacity = band_state(b, tiles[name], t)
+                prgb, pa = place_band(tiles[name], tops[name], offset, opacity, dy)
+                if colours:
+                    prgb = pa[..., None] * np.array(colours[name], float)
+                img = prgb + img * (1 - pa[..., None])
+            # the band occluder: the plates through the inverted mask over its rect
+            x, y, w, h = rects[key]
+            m = masks[key][y:y + h, :, None]
+            img[y:y + h] = img[y:y + h] * m + removed[y:y + h] * (1 - m)
         if creature is not None:
             sprite, centre, angle = creature
             prgb, pa, o = render(sprite, centre, angle)
@@ -1060,22 +1340,32 @@ def reviews(rdir, P, plates, layers, static, tiles, mist_mask, creatures, report
              row([labelled(crop(over(chk, l['full']['glow']), box), 'layer on checker'),
                   labelled(crop(np.repeat(l['full']['glow'][..., 3:], 3, -1), box), 'matte')]))
     half = lambda im: crop(im, (0, 0, W, H), 0.5)
-    save(rdir / 'mist' / 'mist-drift.png', row([labelled(half(over(bg, nymph)), 'no mist'), labelled(half(rest), 'mist, offset 0'),
-                                                 labelled(half(scene(1 / 3)), 'drifted 1/3 tile'), labelled(half(scene(2 / 3)), 'drifted 2/3 tile')]))
-    for nm, bx in {'left': (0, 520, 330, 880), 'right': (600, 560, 941, 1060)}.items():
-        save(rdir / 'mist' / f'mist-{nm}-water-2x.png', row([labelled(crop(over(bg, nymph), bx, 2), 'no mist'),
-                                                              labelled(crop(rest, bx, 2), 'mist at rest'),
-                                                              labelled(crop(scene(0.5), bx, 2), 'drifted 1/2 tile')]))
+    times = (0.0, 15.0, 30.0, 45.0)
+    save(rdir / 'mist' / 'mist-drift.png', row([labelled(half(over(bg, nymph)), 'no mist')] +
+                                                [labelled(half(scene(t)), f'mist at {t:.0f} s') for t in times]))
+    false = {'Cloud': (60, 120, 255), 'Far': (255, 40, 40), 'Near': (40, 255, 90)}
+    save(rdir / 'mist' / 'mist-layers-false-colour.png',
+         row([labelled(half(scene(t, colours=false)), f'{t:.0f} s: cloud blue, far red, near green') for t in times]))
+    for nm, bx in {'left': (0, 520, 330, 880), 'right': (600, 540, 941, 900)}.items():
+        save(rdir / 'mist' / f'mist-{nm}-water-2x.png', row([labelled(crop(over(bg, nymph), bx, 2), 'no mist')] +
+                                                              [labelled(crop(scene(t), bx, 2), f'mist at {t:.0f} s') for t in times[:3]]))
     strips = []
     for k, t in tiles.items():
         two = np.concatenate([t, t], 1)
         img = two[..., :3] + 25.0 * (1 - two[..., 3:4])
         img = np.concatenate([img, np.zeros((6, img.shape[1], 3))], 0)
         img[-6:, t.shape[1] - 1:t.shape[1] + 1] = (255, 0, 0)
-        strips.append(labelled(img, f'mist {k.lower()}: two tiles side by side, wrap seam at the red mark'))
+        strips.append(labelled(img, f'{k.lower()}: two tiles side by side, wrap seam at the red mark'))
     save(rdir / 'mist' / 'mist-wrap-seam.png', column(strips))
-    save(rdir / 'mist' / 'mist-mask.png', row([labelled(half(np.repeat(mist_mask[..., None] * 255, 3, -1)), 'mist mask (white: mist shows)'),
-                                               labelled(half(np.where(((mist_mask > 0.5) & ~binary_erosion(mist_mask > 0.5))[..., None], (0, 255, 255), over(bg, nymph))), 'mask edge')]))
+    edges = over(bg, nymph)
+    for key, colour in (('distant', (0, 255, 255)), ('near', (255, 200, 0))):
+        m = masks[key] > 0.5
+        edges = np.where((m & ~binary_erosion(m))[..., None], colour, edges)
+    save(rdir / 'mist' / 'mist-masks.png', row([labelled(half(np.repeat(masks[k][..., None] * 255, 3, -1)), f'{k} mask (white: shows)')
+                                                for k in masks] + [labelled(half(edges), 'edges: distant cyan, near amber')]))
+    # the cloud over the moon: the trailing wisp from the start, the long mass following
+    save(rdir / 'mist' / 'cloud-moon-3x.png', row([labelled(crop(scene(t), MOON_REVIEW_BOX, 3), f'cloud at {t:.0f} s, 3x')
+                                                    for t in (0.0, 12.0, 24.0, 60.0, 90.0, 120.0)]))
     # creatures: three moments of each run over the scene, the paths and hiding places, the sprites
     ov = Image.fromarray(np.clip(np.rint(rest), 0, 255).astype(np.uint8))
     dr = ImageDraw.Draw(ov)
@@ -1121,6 +1411,87 @@ def reviews(rdir, P, plates, layers, static, tiles, mist_mask, creatures, report
     ov.crop((340, 520, 760, 1060)).resize((840, 1080), Image.LANCZOS).save(rdir / 'creatures' / 'paths-overview-2x.png')
 
 
+# =========================================================================================================== clips
+def sine_keys(amplitude, cycles, length, base=0.0):
+    """Keys (time, value, slope) of base + amplitude sin(2 pi cycles t / length) over [0, length], CLIP_KEYS_PER_CYCLE
+    a cycle, each with the sine's own slope, so the curve loops with matching value and slope."""
+    w = 2 * math.pi * cycles / length
+    n = CLIP_KEYS_PER_CYCLE * cycles
+    return [(length * k / n, base + amplitude * math.sin(w * length * k / n), amplitude * w * math.cos(w * length * k / n))
+            for k in range(n + 1)]
+
+
+def clip_yaml(name, curves, length):
+    """A legacy AnimationClip (Loop Time on, wrap Loop) with float curves on the GameObject's RawImage."""
+    def num(v):
+        return format(v if abs(v) > 1e-12 else 0, '.9g')
+    lines = ['%YAML 1.1', '%TAG !u! tag:unity3d.com,2011:', '--- !u!74 &7400000', 'AnimationClip:',
+             '  m_ObjectHideFlags: 0', '  m_CorrespondingSourceObject: {fileID: 0}', '  m_PrefabInstance: {fileID: 0}',
+             '  m_PrefabAsset: {fileID: 0}', f'  m_Name: {name}', '  serializedVersion: 8', '  m_Legacy: 1',
+             '  m_Compressed: 0', '  m_UseHighQualityCurve: 1', '  m_RotationCurves: []', '  m_CompressedRotationCurves: []',
+             '  m_EulerCurves: []', '  m_PositionCurves: []', '  m_ScaleCurves: []', '  m_FloatCurves:']
+    for attribute, keys in curves:
+        lines += ['  - serializedVersion: 2', '    curve:', '      serializedVersion: 2', '      m_Curve:']
+        for t, v, slope in keys:
+            lines += ['      - serializedVersion: 3', f'        time: {num(t)}', f'        value: {num(v)}',
+                      f'        inSlope: {num(slope)}', f'        outSlope: {num(slope)}', '        tangentMode: 0',
+                      '        weightedMode: 0', '        inWeight: 0', '        outWeight: 0']
+        lines += ['      m_PreInfinity: 2', '      m_PostInfinity: 2', '      m_RotationOrder: 4', f'    attribute: {attribute}',
+                  '    path: ', '    classID: 114', f'    script: {{fileID: 11500000, guid: {RAW_IMAGE_SCRIPT}, type: 3}}',
+                  '    flags: 0']
+    lines += ['  m_PPtrCurves: []', '  m_SampleRate: 60', '  m_WrapMode: 2', '  m_Bounds:', '    m_Center: {x: 0, y: 0, z: 0}',
+              '    m_Extent: {x: 0, y: 0, z: 0}', '  m_ClipBindingConstant:', '    genericBindings: []',
+              '    pptrCurveMapping: []', '  m_AnimationClipSettings:', '    serializedVersion: 2',
+              '    m_AdditiveReferencePoseClip: {fileID: 0}', '    m_AdditiveReferencePoseTime: 0', '    m_StartTime: 0',
+              f'    m_StopTime: {num(length)}', '    m_OrientationOffsetY: 0', '    m_Level: 0', '    m_CycleOffset: 0',
+              '    m_HasAdditiveReferencePose: 0', '    m_LoopTime: 1', '    m_LoopBlend: 0', '    m_LoopBlendOrientation: 0',
+              '    m_LoopBlendPositionY: 0', '    m_LoopBlendPositionXZ: 0', '    m_KeepOriginalOrientation: 0',
+              '    m_KeepOriginalPositionY: 1', '    m_KeepOriginalPositionXZ: 0', '    m_HeightFromFeet: 0', '    m_Mirror: 0',
+              '  m_EditorCurves: []', '  m_EulerEditorCurves: []', '  m_HasGenericRootTransform: 0',
+              '  m_HasMotionFloatCurves: 0', '  m_Events: []']
+    return '\n'.join(lines) + '\n'
+
+
+def band_clip(b, tile):
+    """A band's clip curves over one drift period: uvRect x from 0 to -1 (the band drifts right by one tile and the
+    texture wraps) from the start offset, and, when the band has them, its bob on uvRect y and its swell on the colour's alpha."""
+    th, tw = tile.shape[:2]
+    period = tw / b['speed']
+    u0 = -b['start'] / tw
+    curves = [('m_UVRect.x', [(0.0, u0, -1 / period), (period, u0 - 1.0, -1 / period)])]
+    if b['bob'] > 0:
+        # uvRect y up moves the band down; its transparent padding keeps the tile inside the rect
+        curves.append(('m_UVRect.y', sine_keys(b['bob'] / th, b['bob_cycles'], period)))
+    if b['swell'] > 0:
+        curves.append(('m_Color.a', sine_keys(b['swell'], b['swell_cycles'], period, b['opacity'])))
+    return curves, period
+
+
+def write_clip(path, curves, length):
+    """Writes the clip under OUT unless installing; a new clip gets a .meta under a fresh GUID, an existing one keeps its."""
+    destination = A.output_path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(clip_yaml(path.stem, curves, length), encoding='ascii', newline='\n')
+    if not Path(str(path) + '.meta').exists():
+        used = used_guids()
+        value = uuid.uuid4().hex
+        while value in used:
+            value = uuid.uuid4().hex
+        Path(str(destination) + '.meta').write_text(
+            f'fileFormatVersion: 2\nguid: {value}\nNativeFormatImporter:\n  externalObjects: {{}}\n  mainObjectFileID: 7400000\n'
+            '  userData: \n  assetBundleName: \n  assetBundleVariant: \n', encoding='ascii', newline='\n')
+    return rel(path)
+
+
+def write_band_clips(tiles, report):
+    written = report.setdefault('clips', {})
+    for name, b in BANDS.items():
+        curves, period = band_clip(b, tiles[name])
+        written[b['asset'] + 'Drift.anim'] = {
+            'path': write_clip(CONTENT / (b['asset'] + 'Drift.anim'), curves, period), 'length_s': period,
+            'curves': [c for c, _ in curves]}
+
+
 # ========================================================================================================= install
 TEMPLATES = {
     'plate_unlit': RELIGHT / 'BoundTreeFacelessPlateUnlit.png.meta',
@@ -1163,7 +1534,7 @@ def write_texture(path, arr, template, used, created, wrap_u_repeat=False):
     created.append(rel(meta))
 
 
-def outputs(plates, layers, tiles, mist_mask, creatures):
+def outputs(plates, layers, mist):
     """Every installed texture: (path, array, meta template, wraps horizontally)."""
     files = []
     for k, suffix in VERSION.items():
@@ -1172,10 +1543,11 @@ def outputs(plates, layers, tiles, mist_mask, creatures):
         x, y, w, h = l['rect']
         for k, suffix in VERSION.items():
             files.append((RELIGHT / f'BoundTreeMoss{name}{suffix}.png', l['full'][k][y:y + h, x:x + w], 'rgba', False))
-    for name, t in tiles.items():
-        files.append((ART / f'BoundTreeMist{name}.png', straight(t), 'rgba', True))
+    for name, t in mist['tiles'].items():
+        files.append((ART / (BANDS[name]['asset'] + '.png'), straight(t), 'rgba', True))
     white = np.full((H, W, 3), 255.0)
-    files.append((ART / 'BoundTreeMistMask.png', np.concatenate([white, (mist_mask * 255)[..., None]], -1), 'mask', False))
+    for key, mask in mist['masks'].items():
+        files.append((ART / MASK_FILES[key], np.concatenate([white, (mask * 255)[..., None]], -1), 'mask', False))
     return files
 
 
@@ -1224,7 +1596,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--output', help='Unused directory under Docs/work (default: a fresh bound-tree-ambient-* directory).')
     parser.add_argument('--write-assets', action='store_true',
-                        help='Also install the textures (keeping existing .meta files), the moss meshes and the creature paths.')
+                        help='Also install the textures (keeping existing .meta files), the moss meshes, the creature paths and the band clips.')
     args = parser.parse_args()
     if args.output:
         OUT = (Path.cwd() / args.output).resolve()
@@ -1242,17 +1614,25 @@ def main():
     hides_all = np.maximum.reduce([c['hide'] for c in creatures.values()])
     # the painted trunk-edge strand stays on the plate; it occludes creatures that pass behind it
     occluder = np.maximum(hides_all, np.clip(static * 1.0, 0, 1))
-    tiles, mist_mask = build_mist(P, hides_all, report)
-    report['mist']['mask']['occluder_px_in_mist_mask'] = int(((occluder > 0.05) & (mist_mask > 0.05)).sum())
-    check_creatures(creatures, gain, gain0, mist_mask, report)
-    placement(report, layers, creatures, tiles, mist_mask, occluder)
-    files = outputs(plates, layers, tiles, mist_mask, creatures) + creature_textures(creatures, P)
+    tiles, tops, masks = build_mist(P, plates['unlit'], hides_all, report)
+    mist = {'tiles': tiles, 'tops': tops, 'masks': masks}
+    # every pixel where a moving band can show
+    shown = np.maximum.reduce(list(masks.values()))
+    for key, mask in masks.items():
+        report['mist']['masks'][key]['occluder_px_in_mask'] = int(((occluder > 0.05) & (mask > 0.05)).sum())
+    rects = occluder_rects(report['mist']['bands'])
+    check_bands({name: {'reach': band_reach(tiles[name], tops[name], b), 'mask': masks[b['mask']],
+                        'occluder_rect': rects[b['mask']]} for name, b in BANDS.items()}, report)
+    check_creatures(creatures, gain, gain0, shown, report)
+    placement(report, layers, creatures, occluder)
+    files = outputs(plates, layers, mist) + creature_textures(creatures, P)
     white = np.full((H, W, 3), 255.0)
     files.append((ART / 'BoundTreeHidingPlacesMask.png', np.concatenate([white, (occluder * 255)[..., None]], -1), 'mask', False))
     for path, arr, _, _ in files:
         save(OUT / 'textures' / path.name, arr)
     write_meshes_and_paths(layers, creatures, report)
-    reviews(OUT / 'review', P, plates, layers, static, tiles, mist_mask, creatures, report)
+    write_band_clips(tiles, report)
+    reviews(OUT / 'review', P, plates, layers, static, mist, creatures, report)
     if args.write_assets:
         used, created = used_guids(), []
         for path, arr, template, wrap in files:
@@ -1264,7 +1644,10 @@ def main():
                'creatures': {k: {kk: v[kk] for kk in ('sprite_size', 'max_visible_px', 'visible_alpha_at_start', 'visible_alpha_at_end',
                                                        'hiding_place_px', 'run_seconds', 'capture_times_s', 'lit_by_light_1',
                                                        'light1_over_base_along_visible_path_luma', 'in_group')}
-                             for k, v in report['creatures'].items() if k in CREATURES}}
+                             for k, v in report['creatures'].items() if k in CREATURES},
+               'bands': {k: {kk: v[kk] for kk in ('tile_size_px', 'rect_xywh', 'uv_width', 'drift_period_s', 'bob_uv')}
+                         for k, v in report['mist']['bands'].items()},
+               'band_checks': report['band_checks'], 'clips': report['clips']}
     print(json.dumps(summary, indent=1, default=float))
     print('Wrote ' + str(OUT))
 
