@@ -117,7 +117,8 @@ namespace Dice.Presentation
      * A rule's presentation for the lifetime of the encounter table's presentation. Sync shows a snapshot's state,
      * without animation on configure and resume, animated when settling after a resolution. For every event score playback
      * first waits the longest lead-in any presenter asks for, presents the event's core changes, then runs every
-     * presenter's routine for the event at once and waits for all of them.
+     * presenter's routine for the event at once and waits for all of them; events a presenter claims during the roll before
+     * them start with that roll instead (PresentsDuringRoll).
      */
     public abstract class RulePresenter : IDisposable
     {
@@ -132,6 +133,14 @@ namespace Dice.Presentation
 
         /** Seconds playback pauses before presenting the event; zero when the presenter needs no pause. */
         public virtual float LeadIn(RuleEvent ruleEvent) => 0f;
+
+        /**
+         * Whether the presenter presents the event while the dice of the roll before it are in the air. Playback starts the
+         * routines of the events right after a roll that a presenter claims together with that roll and waits for all of
+         * them; a claimed event gets no lead-in and no core presentation of its own, so an event the core presents cannot be
+         * claimed.
+         */
+        public virtual bool PresentsDuringRoll(RuleEvent ruleEvent) => false;
 
         /** Presents one resolution event; returns the routine the playback waits for, or null when there is nothing to present. */
         public abstract IEnumerator Present(RuleEvent ruleEvent);

@@ -20,4 +20,4 @@ MonoBehaviour:
   icon: {fileID: 0}
   activationPhase: 1
   shownOnHud: 1
-  presenter: {fileID: 0}
+  presenter: {fileID: 11400000, guid: 718643d0987e4638a6d2dbc7204db21e, type: 2}

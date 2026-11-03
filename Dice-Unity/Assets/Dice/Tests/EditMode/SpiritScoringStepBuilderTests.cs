@@ -53,19 +53,22 @@ namespace Dice.Tests
             cards.Clear();
         }
 
-        /** Checks the dice step adds the dice sum to the banked base, keeps the banked multiplier and highlights every die / fails if it ignores the banked counters, the dice sum or the full highlight. */
-        [TestCase(0L, 0L)]
-        [TestCase(7L, 3L)]
-        public void DiceStepAddsTheDiceSumToTheBankedCountersAndHighlightsEveryDie(long bankedBase, long bankedMultiplier)
+        /** Checks the dice step adds the counted dice's sum to the banked base, keeps the banked multiplier and highlights only the dice the hand counts / fails if it ignores the banked counters, the dice sum or highlights a die that does not count. */
+        [TestCase(0L, 0L, DiceValues.AllMask)]
+        [TestCase(7L, 3L, DiceValues.AllMask)]
+        [TestCase(7L, 3L, (1 << 0) | (1 << 2) | (1 << 3))]
+        public void DiceStepAddsTheCountedDiceSumToTheBankedCountersAndHighlightsTheCountedDice(long bankedBase,
+            long bankedMultiplier, int countedMask)
         {
-            var score = Score(HighDieDice, HandCategory.HighDie, 0);
+            var score = Score(new HandDice(HighDieDice, countedMask), HandCategory.HighDie, 0,
+                Array.Empty<ModifierContribution>(), 0);
             var dice = Build(score, bankedBase, bankedMultiplier)[0];
             Assert.That(dice.BaseScore, Is.EqualTo(bankedBase + score.DiceSum));
             Assert.That(dice.Multiplier, Is.EqualTo(bankedMultiplier));
             Assert.That(dice.StepLabel, Is.EqualTo("<scoring.diceStep>"));
             Assert.That(dice.CategoryText, Is.EqualTo("<scoring.diceCategory>"));
             Assert.That(dice.SelectionText, Is.EqualTo("<scoring.diceSelection>" + charms.GetContributionText(score.DiceSum, 0, 0)));
-            Assert.That(dice.HighlightMask, Is.EqualTo(DiceValues.AllMask));
+            Assert.That(dice.HighlightMask, Is.EqualTo(countedMask));
             Assert.That(dice.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(dice.Charm, Is.Null);
         }
@@ -283,10 +286,15 @@ namespace Dice.Tests
             params ModifierContribution[] contributions)
             => Score(dice, category, upgrades, contributions, 0);
 
-        /** A scored hand of the given dice under a synthetic category definition, formed by the dice of FormingMask. */
+        /** A scored hand of the given dice, every one counted, under a synthetic category definition, formed by the dice of FormingMask. */
         private static ScoreBreakdown Score(DiceValues dice, HandCategory category, int upgrades,
             IEnumerable<ModifierContribution> contributions, long ruleMultiplier)
-            => new ScoreBreakdown(HandDice.Full(dice), FormingMask, new HandDefinition(category, 6, 2, 3, 1, 6), upgrades,
+            => Score(HandDice.Full(dice), category, upgrades, contributions, ruleMultiplier);
+
+        /** A scored hand under a synthetic category definition, formed by the dice of FormingMask. */
+        private static ScoreBreakdown Score(HandDice hand, HandCategory category, int upgrades,
+            IEnumerable<ModifierContribution> contributions, long ruleMultiplier)
+            => new ScoreBreakdown(hand, FormingMask, new HandDefinition(category, 6, 2, 3, 1, 6), upgrades,
                 contributions, ruleMultiplier);
     }
 }

@@ -78,6 +78,14 @@ namespace Dice.Presentation
             return leadIn;
         }
 
+        /** Whether any presenter presents the event while the dice of the roll before it are in the air. */
+        public bool PresentsDuringRoll(RuleEvent ruleEvent)
+        {
+            foreach (var presenter in presenters)
+                if (presenter.PresentsDuringRoll(ruleEvent)) return true;
+            return false;
+        }
+
         /**
          * Every rule's presentation of the event, started in card order and run side by side; the routine ends when all
          * have ended. Null when no presenter presents the event.

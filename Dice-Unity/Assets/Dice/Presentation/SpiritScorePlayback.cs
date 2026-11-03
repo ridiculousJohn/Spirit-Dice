@@ -34,7 +34,9 @@ namespace Dice.Presentation
     /**
      * Plays an accepted resolution's ordered events on the HUD, tray, host, and audio, then hands completion back to the
      * view. For each event it waits the longest lead-in the rule presenters ask for, presents the core changes, then runs
-     * every rule presenter's presentation of the event side by side and waits for all of them.
+     * every rule presenter's presentation of the event side by side and waits for all of them. The events right after a
+     * roll that rule presenters claim during the roll are presented side by side with it, without lead-ins or core
+     * presentations, and playback continues once the roll and all of them have ended.
      */
     internal sealed class SpiritScorePlayback
     {
@@ -71,7 +73,10 @@ namespace Dice.Presentation
             this.endingView = endingView;
         }
 
-        /** Releases an interrupted roll and the rule presentations still running; the view stops the playback coroutine itself. */
+        /**
+         * Releases an interrupted roll and the rule presentations still running, including those running with the roll;
+         * the view stops the playback coroutine itself.
+         */
         internal void CancelRoll()
         {
             (activeRoll as IDisposable)?.Dispose();
@@ -83,12 +88,31 @@ namespace Dice.Presentation
         internal IEnumerator Play(Resolution resolution, float openingFade)
         {
             // The committed snapshot may include a new hand; only event dice are shown until presentation completes.
-            foreach (var ruleEvent in resolution.Events)
+            var events = resolution.Events;
+            for (int index = 0; index < events.Count; ++index)
             {
+                var ruleEvent = events[index];
                 var presenters = host.RulePresenters;
                 float leadIn = presenters != null ? presenters.LeadIn(ruleEvent) : 0f;
                 if (leadIn > 0f) yield return new WaitForSecondsRealtime(leadIn);
                 IEnumerator core = PresentCore(ruleEvent, resolution, openingFade);
+                int claimed = ruleEvent is DiceRolledEvent && presenters != null
+                    ? ClaimedDuringRoll(events, index + 1, presenters, resolution, openingFade) : 0;
+                if (claimed > 0)
+                {
+                    // The roll, then the roll's own rule presentations, run side by side with the claimed events' presentations.
+                    var routines = new List<IEnumerator> { RollThenItsRules(core, ruleEvent, presenters) };
+                    for (int next = index + 1; next <= index + claimed; ++next)
+                    {
+                        var presented = presenters.Present(events[next]);
+                        if (presented != null) routines.Add(presented);
+                    }
+                    activeRules = new ConcurrentRoutines(routines);
+                    yield return activeRules;
+                    activeRules = null;
+                    index += claimed;
+                    continue;
+                }
                 if (core != null) yield return core;
                 activeRules = presenters?.Present(ruleEvent);
                 if (activeRules != null) yield return activeRules;
@@ -104,6 +128,33 @@ namespace Dice.Presentation
                     clip => encounterAudio.PlayCue(clip));
             }
             host.FinishPresentation(resolution);
+        }
+
+        /**
+         * How many events from the start index on form the contiguous run that rule presenters claim during the roll before
+         * them. Fails when a claimed event is one the core presents, since a claimed event gets no core presentation.
+         */
+        private int ClaimedDuringRoll(IReadOnlyList<RuleEvent> events, int start, EncounterRulePresenters presenters,
+            Resolution resolution, float openingFade)
+        {
+            int count = 0;
+            for (int index = start; index < events.Count && presenters.PresentsDuringRoll(events[index]); ++index)
+            {
+                // Core presentations are created lazily, so asking for one starts nothing.
+                if (PresentCore(events[index], resolution, openingFade) != null)
+                    throw new InvalidOperationException("A rule presenter cannot present a " + events[index].GetType().Name +
+                        " during the roll before it, since score playback presents that event itself.");
+                ++count;
+            }
+            return count;
+        }
+
+        /** The roll's core presentation, then every rule presenter's presentation of the roll, as playback runs them for any event. */
+        private static IEnumerator RollThenItsRules(IEnumerator core, RuleEvent rolled, EncounterRulePresenters presenters)
+        {
+            if (core != null) yield return core;
+            var rules = presenters.Present(rolled);
+            if (rules != null) yield return rules;
         }
 
         /** The core presentation of an event the core presents, or null for an event only rule presenters present. */

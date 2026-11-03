@@ -101,7 +101,8 @@ namespace Dice.Presentation
                 CategoryText = labels.diceCategory,
                 SelectionText = labels.DiceSelection(charms.GetContributionText(score.DiceSum, 0, 0)),
                 SelectionColor = theme.muted,
-                HighlightMask = DiceValues.AllMask,
+                // Only the dice the hand counts make up its sum.
+                HighlightMask = score.CountedDiceMask,
                 ResolvingIndex = -1,
                 HostReacts = true,
                 Hold = ScoreStepHold
