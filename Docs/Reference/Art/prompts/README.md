@@ -45,3 +45,11 @@ Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/BoundTree`. The l
 - [BoundTreeCloud-band.txt](BoundTreeCloud-band.txt) -> Docs/Reference/Art/BoundTreeCloudDonor.png, the drifting cloud band in front of the moon
 - [BoundTreeSnake-scene.txt](BoundTreeSnake-scene.txt), [BoundTreeBeetle-scene.txt](BoundTreeBeetle-scene.txt), [BoundTreeCentipede-scene.txt](BoundTreeCentipede-scene.txt) -> Docs/Reference/Art/BoundTree{Snake,Beetle,Centipede}SceneDonor.png, the creatures painted into their scenes
 - [BoundTreeSnake-extraction.txt](BoundTreeSnake-extraction.txt), [BoundTreeBeetle-extraction.txt](BoundTreeBeetle-extraction.txt), [BoundTreeCentipede-extraction.txt](BoundTreeCentipede-extraction.txt) -> Docs/Reference/Art/BoundTree{Snake,Beetle,Centipede}ExtractionDonor.png, installed as the creature sprites
+
+## Sunken Larder
+
+Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/SunkenLarder`. The layers are described in [../SunkenLarderLayers.md](../SunkenLarderLayers.md).
+
+- [SunkenLarderHag-extraction.txt](SunkenLarderHag-extraction.txt) -> Docs/Reference/Art/SunkenLarderHagDonor.png, registered and colour-matched into SunkenLarderHag.png
+- [SunkenLarderBackground-hag-removal.txt](SunkenLarderBackground-hag-removal.txt) -> Docs/Reference/Art/SunkenLarderBackgroundDonor.png, transferred into SunkenLarderBackground.png
+- [../SunkenLarderConceptPrompt.txt](../SunkenLarderConceptPrompt.txt) -> SunkenLarderOriginal.png, the scene concept
