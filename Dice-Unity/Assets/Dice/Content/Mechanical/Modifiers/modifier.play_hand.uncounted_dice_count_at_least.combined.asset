@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
+  m_Name: modifier.play_hand.uncounted_dice_count_at_least.combined
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
+  assetGuid: 49ebb09f10304fb7969616bde0896a42
+  family: {fileID: 11400000, guid: 4d89d34a1c8f472fb1a03142e381eee8, type: 2}
+  phase: 2
+  condition:
+    rid: 3561090371429912742
+  effects:
+  - rid: 2468555009208122143
+  - rid: 2209625331929471374
+  activationLimit: 1
+  rewardEligible: 1
+  powerTier: 1
+  access: 2
+  references:
+    version: 2
+    RefIds:
+    - rid: 3561090371429912742
+      type: {class: UncountedDiceCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 1
+    - rid: 2468555009208122143
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 2209625331929471374
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 1

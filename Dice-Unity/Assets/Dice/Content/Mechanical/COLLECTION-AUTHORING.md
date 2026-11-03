@@ -118,3 +118,34 @@ standard categories of their effects. The mechanical condition is
 `encounterModifiersFirstClearedStageNumber: 3` makes the stage 3 clear's charm
 offer the first that can contain Grafted Branch. Encounters that do not author
 the field use 1 and can offer their additions from the first clear.
+
+## Rot encounter
+
+The `encounter.hag.sunken_larder` encounter asset uses Moth's ten-stage curve as a
+placeholder and the rot rule (`HagRot.asset`, endpoint Wither) as its only rule. It
+authors the Base and Mult variants of Worn Pebble
+(`modifier.play_hand.minimum_equals_rerolls_spent`), Light Basket
+(`modifier.play_hand.sum_less_than`) and Patient Mill
+(`modifier.play_hand.rerolls_spent_at_least`) as its six `unlockRewardModifiers`, with
+unlock opportunities at stages 3, 6, and 10. Its reward pools
+`RewardPools/reward_pool.hag.sunken_larder.*` copy Moth's ordinary pools, which
+already contain Light Basket, plus the four variants of Worn Pebble and Patient Mill.
+`ProgressionRewards/HagFamilyDiscovery` discovers the three families and grants
+nothing; no journey references it yet. All four Light Basket variants are permanent
+unlocks, so Light Basket is not a starter family; its pairing, Full Basket
+(`modifier.play_hand.sum_greater_than`), is a starter. Worn Pebble and Light Basket
+are tier 2, so they enter ordinary offers from stage 4.
+
+Its `encounterModifiers` contains four encounter-exclusive Bog Offering variants,
+offered only through that list as Lantern Seekers are through the moth's. They
+trigger when at least one die of the played hand does not count, which in this
+encounter is a die withered by rot. Provisional effects are +10 Base, +2 Mult,
++5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand. The family
+provisionally reuses the Bundled Reeds icon and artwork until dedicated art is
+approved; its variants show the standard categories of their effects, and their
+condition wording calls the dice withered. The mechanical condition is
+`UncountedDiceCountAtLeastConditionConfig` with `count: 1`, which builds
+`UncountedDiceCountAtLeastCondition`: it counts the dice of the played hand that do
+not count toward it, whichever rule reports them, and knows nothing of rot.
+`encounterModifiersFirstClearedStageNumber: 1` lets the first clear's charm offer
+contain Bog Offering, with no introduction inside the encounter.

@@ -64,6 +64,20 @@ namespace Dice.Tests
         }
 
         /**
+         * Checks the uncounted dice count holds at and above its count of dice that do not count and not below it / fails if
+         * it counts the counted dice, reads faces or is off by one.
+         */
+        [Test]
+        public void UncountedDiceCountHoldsAtAndAboveItsCount()
+        {
+            var condition = new UncountedDiceCountAtLeastCondition(2);
+            Assert.That(condition.Evaluate(C("12345", counted: 0b11100)), Is.True, "two dice do not count");
+            Assert.That(condition.Evaluate(C("12345", counted: 0b10000)), Is.True, "four dice do not count");
+            Assert.That(condition.Evaluate(C("12345", counted: 0b11110)), Is.False, "one die does not count");
+            Assert.That(condition.Evaluate(C("12345")), Is.False, "every die counts");
+        }
+
+        /**
          * Checks two contexts built separately from equal values and equal rule snapshots are equal, and differ when a rule's
          * state or a resource differs / fails if equality compares rule list references or ignores a rule's state.
          */

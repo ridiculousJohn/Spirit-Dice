@@ -61,6 +61,10 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 708fd7e14d464bb6b73c4e10f2a9cf30, type: 2}
   - {fileID: 11400000, guid: 599f7f3d0bc94541b097e89499f94e89, type: 2}
   - {fileID: 11400000, guid: ffc4e6f114b641848050f926644a7c12, type: 2}
+  - {fileID: 11400000, guid: 2bafe1926ff14f8186b3c34d40a5b67d, type: 2}
+  - {fileID: 11400000, guid: 75fbf9b86d4b4a6fb4dda793e7a96f37, type: 2}
+  - {fileID: 11400000, guid: 8fe083cb5c534baf8eaf91358028cf25, type: 2}
+  - {fileID: 11400000, guid: 6675b8da5cf84b4ab5dedcb2a10bec47, type: 2}
   - {fileID: 11400000, guid: ff330541e1ad64346a3971b8ab32a197, type: 2}
   - {fileID: 11400000, guid: c6fea02e137888141a8eab936c39c3bf, type: 2}
   - {fileID: 11400000, guid: db10754426dd75e49ae026e9f0ede90d, type: 2}
@@ -365,6 +369,9 @@ MonoBehaviour:
   - family: {fileID: 11400000, guid: bcf0a3e08e64b424d898c543f1c0de3b, type: 2}
     name: Grafted Branch
     icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
+  - family: {fileID: 11400000, guid: 4d89d34a1c8f472fb1a03142e381eee8, type: 2}
+    name: Bog Offering
+    icon: {fileID: 21300000, guid: c26105a247a75d8b9128774b40fef374, type: 3}
   - family: {fileID: 11400000, guid: bfe9d32a8729f3e40a61a4ab4890c659, type: 2}
     name: One Spark
     icon: {fileID: 21300000, guid: 04716263b8fa23e45b2c132d2556751e, type: 3}

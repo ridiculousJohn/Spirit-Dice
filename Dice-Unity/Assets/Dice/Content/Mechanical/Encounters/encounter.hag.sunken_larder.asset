@@ -1,0 +1,122 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.hag.sunken_larder
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: 2149f169e85f405a885c490e78f5fc2c
+  unlockMilestones:
+  - stageNumber: 3
+  - stageNumber: 6
+  - stageNumber: 10
+  encounterModifiers:
+  - {fileID: 11400000, guid: 6c922d31ba5444c8b93ebf74b97a8656, type: 2}
+  - {fileID: 11400000, guid: c0766b2acdd34e11a5ea8fa9afec8764, type: 2}
+  - {fileID: 11400000, guid: 49ebb09f10304fb7969616bde0896a42, type: 2}
+  - {fileID: 11400000, guid: d1f03e6beb87486cac7a29c7a7f352b3, type: 2}
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers:
+  - {fileID: 11400000, guid: 984c7c2fbf7175847b2cfba0699fbb98, type: 2}
+  - {fileID: 11400000, guid: 0f4ce5ee620e8a04b8f42e9b24b9fdce, type: 2}
+  - {fileID: 11400000, guid: f89ecf196e0eee343b55b1383f81b62e, type: 2}
+  - {fileID: 11400000, guid: eaa8689205c440640954dffb4b8fa33e, type: 2}
+  - {fileID: 11400000, guid: b69a7ad4368e1664f88c700253bdf447, type: 2}
+  - {fileID: 11400000, guid: 089cf1156a4946a4592644af1eccc4e5, type: 2}
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 120
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 170
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 230
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 300
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 380
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 470
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 570
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 680
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 800
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 930
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  rewardPolicy:
+    rid: 5594711933550877958
+  rules:
+  - {fileID: 11400000, guid: 4b3349830f074222b5a7898b76917a9f, type: 2}
+  pieces: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 5594711933550877958
+      type: {class: EncounterAsset/RewardPolicyData, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        modifierLayouts:
+        - pools:
+          - {fileID: 11400000, guid: 724579345a4649df8bc29d2c7708dcc9, type: 2}
+          - {fileID: 11400000, guid: cc99ebb5eba44a78befdd6f6ce9f2501, type: 2}
+          - {fileID: 11400000, guid: 512e4955747b42cf9ebe5e71525d9d73, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 724579345a4649df8bc29d2c7708dcc9, type: 2}
+          - {fileID: 11400000, guid: cc99ebb5eba44a78befdd6f6ce9f2501, type: 2}
+          - {fileID: 11400000, guid: 2edbe21139ba444a93144fdf01660116, type: 2}
+        - pools:
+          - {fileID: 11400000, guid: 724579345a4649df8bc29d2c7708dcc9, type: 2}
+          - {fileID: 11400000, guid: cc99ebb5eba44a78befdd6f6ce9f2501, type: 2}
+          - {fileID: 11400000, guid: 2edbe21139ba444a93144fdf01660116, type: 2}
+        startingRefreshes: 1
+        refreshesPerClear: 1
+        refreshCost: 1
+        handUpgradeOptionCount: 4
+        upgradeHistory:
+        - maxIncomingStageNumber: 2147483647
+          excludedRecentChoices: 1
+        tierRules:
+        - firstIncomingStageNumber: 1
+          tierWeights: 640000000000000000000000i
+        - firstIncomingStageNumber: 4
+          tierWeights: 3c0000002300000005000000i
+        - firstIncomingStageNumber: 7
+          tierWeights: 1e0000003200000014000000i
+        - firstIncomingStageNumber: 10
+          tierWeights: 0f0000002d00000028000000i
+        tierMilestones:
+        - incomingStageNumber: 4
+          minimumTier: 2
+        - incomingStageNumber: 7
+          minimumTier: 2
+        - incomingStageNumber: 10
+          minimumTier: 3
