@@ -54,4 +54,6 @@ Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/SunkenLarder`. Th
 - [SunkenLarderBackground-hag-removal.txt](SunkenLarderBackground-hag-removal.txt) -> Docs/Reference/Art/SunkenLarderBackgroundDonor.png, transferred into SunkenLarderBackground.png
 - [SunkenLarderAmbientUnlit-relight.txt](SunkenLarderAmbientUnlit-relight.txt) -> Docs/Reference/Art/SunkenLarderRelightUnlitDonor.png, transferred into Relight/SunkenLarderAmbientUnlit.png
 - [SunkenLarderHagUnlit-relight.txt](SunkenLarderHagUnlit-relight.txt) -> Docs/Reference/Art/SunkenLarderRelightHagUnlitDonor.png, transferred into Relight/SunkenLarderHagUnlit.png
+- [SunkenLarderHagBlink-donor.txt](SunkenLarderHagBlink-donor.txt) -> Docs/Reference/Art/SunkenLarderHagBlinkDonor.png, transferred into SunkenLarderHagBlink.png, her closed-eyelid overlay
+- [SunkenLarderHagDowncast-donor.txt](SunkenLarderHagDowncast-donor.txt) -> Docs/Reference/Art/SunkenLarderHagDowncastDonor.png, transferred into SunkenLarderHagDowncast.png, her downcast-eyelid overlay
 - [../SunkenLarderConceptPrompt.txt](../SunkenLarderConceptPrompt.txt) -> SunkenLarderOriginal.png, the scene concept

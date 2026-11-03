@@ -1,6 +1,6 @@
 # Sunken Larder layers
 
-Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, and their lighting split (see Relighting). Her host, motion and ambient layers are not built.
+Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, their lighting split (see Relighting) and her host with its eyelid overlays (see Host). Her ambient layers are not built.
 
 ## Textures
 
@@ -68,7 +68,7 @@ Colour textures import like SunkenLarderOriginal.png.meta, her texture like Sunk
 ### Conventions
 
 - Lighting pairs follow SceneLighting.shader in linear light: fire 1 = unlit + max(reference - unlit, 0) * tint * response scale; fire 0 = unlit. The reference is at least the unlit value in every channel of every pixel.
-- One scene light, the hearth fire, light 0, by the Bound Tree's light 0 convention: the reference is the painted plate itself, SunkenLarderBackground.png, so light 0 at 1 (tint white) reproduces the concept exactly; the fire flickers around 1 at rest and jolts when a die withers. Her figure's pair is SunkenLarderHagUnlit.png (base) and SunkenLarderHag.png (light 0 reference) with the same response map; her host uses it when it is built.
+- One scene light, the hearth fire, light 0, by the Bound Tree's light 0 convention: the reference is the painted plate itself, SunkenLarderBackground.png, so light 0 at 1 (tint white) reproduces the concept exactly; the fire flickers around 1 at rest and jolts when a die withers. Her figure's pair is SunkenLarderHagUnlit.png (base) and SunkenLarderHag.png (light 0 reference) with the same response map, which her host uses (see Host).
 - Response: R = min(1, hypot((x - 85) / 880, (y - 690) / 1000)) in continuous concept pixels (pixel centres at +0.5), centred on the fire under the cauldron, the convention of MerchantLanternResponse.png; the far right of the room at the fire's height is at R 0.97, and R reaches 1 at the right edge above and below it. G is 1 inside the flames under the cauldron and the hearth opening (`FIRE_POT` and `FIRE_OPENING` in the script), falling to 0 over 6 px outside (smoothstep).
 
 ### Method
@@ -118,3 +118,105 @@ python Tools/Presentation/author-sunken-larder-relight.py build --write-assets  
 - Reproduction: at a sampled intensity of exactly 1 the response scale is 1 for every pixel, so the light adds max(SunkenLarderBackground.png - base, 0) and reproduces the plate; her layer reproduces SunkenLarderHag.png the same way. The tint is white because the shader multiplies the contribution by it, so any other tint would change the reproduced concept; the fire's warmth is the painted plate's own, and its receiver colour is warm. Below 1, Distance Falloff 0.8 dims the room farther from the fire (response R) sooner than near it, and Source Response 0.5 keeps the flames (response G) burning longer.
 - Flicker: the shared flicker noise, intensity = multiplier * (1 + 0.1 * noise), quicker than the Bound Tree's glow pulse. The wither jolt and any ambient activity light actor are authored with the table.
 - Receivers: none (Receiver Intensity 0); the table scene sets them.
+
+## Host
+
+The old woman is the encounter's host: `Content/Presentation/SunkenLarder/SunkenLarderHost.asset` (a SpiritHostPresentationAsset) with portrait `SunkenLarderHost.prefab`, deformation mesh `SunkenLarderHostMesh.asset` and the layer materials `SunkenLarderHost{Figure,Downcast,Blink}.mat` (under `Dice-Unity/Assets/Dice`), all written by `Tools/Presentation/author-sunken-larder-host.py`. She is a living still like the merchant (see "Merchant layers" in [HauntedMerchantHostLayers.md](HauntedMerchantHostLayers.md)): every layer keeps the 941 x 1672 concept frame and shares one deformation mesh, so her figure and the overlays move identically and no seam can open; her timelines are on the shared host state API, reauthored by the script rather than edited by hand.
+
+### Layers
+
+Her figure is one layer: no part of her moves in front of another (her breathing, head and mouth are smooth deformations of the same pixels), so nothing needs splitting, and her forearms, hands and the shawl's hem at the table stay still because every shape is zero there. Two painted overlays draw over her face, made as the merchant's blink was (see Eyelid overlays).
+
+| Layer | Texture (Source Masked Image `_SourceTex`) | `_LayerMask`, `_InvertMask` | Lighting: base, light 0 reference | UV rect | Colour alpha at rest |
+| --- | --- | --- | --- | --- | --- |
+| Figure | SunkenLarderHag.png | none, 1 | Relight/SunkenLarderHagUnlit.png, SunkenLarderHag.png | full | 1 |
+| Downcast | SunkenLarderHagDowncast.png | SunkenLarderHagDowncastMask.png, 0 | Relight/SunkenLarderHagDowncastUnlit.png, SunkenLarderHagDowncast.png | overlay crop | 0 |
+| Blink | SunkenLarderHagBlink.png | SunkenLarderHagBlinkMask.png, 0 | Relight/SunkenLarderHagBlinkUnlit.png, SunkenLarderHagBlink.png | overlay crop | 0 |
+
+- Prefab: root SunkenLarderHost (RectTransform 941 x 1672, anchors and pivot 0, SpiritHostPortrait with Portrait Root `Portrait Layers` and the three layers in draw order), `Portrait Layers` (941 x 1672 at the root's origin), and per layer a SpiritPortraitImage (its texture and material, mesh SunkenLarderHostMesh.asset, five weights at 0, anchored position (470.5, 836) with pivot 0.5 so its rect covers the frame, no raycast target, cull transparent mesh on).
+- The overlays' textures are crops of concept box (404, 436)-(548, 494) (144 x 58); their UV rect (-2.80556, -20.31034, 6.53472, 28.82759) stretches the crop over the full frame, so they keep the concept registration and deform with the figure; the clamped crop's mask is 0 at its border, so nothing draws outside it.
+- Lighting: every layer is lit per pixel by light 0, the hearth fire of SunkenLarderSceneLighting.asset, by reference through Relight/SunkenLarderFireResponse.png over the full map rect, exactly as the plate is: at light 0 = 1 each layer draws its painted texture, and below it fades toward its unlit base. No depth or computed light.
+- Asset: Reference Size 941 x 1672, Scale 1, Offset 0, Lit Layer Shader `Dice/Scene Lit Image`, no smoke and no sigil prefab (an encounter HUD needs a host sigil; none is authored yet).
+
+### Eyelid overlays
+
+| Texture | Format | Content |
+| --- | --- | --- |
+| SunkenLarderHagBlink.png | RGBA 144 x 58, alpha 1 | Her closed eyelids, as painted (light 0 reference): the registered, colour-matched donor over the crop. |
+| SunkenLarderHagDowncast.png | RGBA 144 x 58, alpha 1 | Her eyelids lowered over eyes looking down and slightly toward the hearth, as painted. |
+| SunkenLarderHag{Blink,Downcast}Mask.png | RGBA 144 x 58, white | Alpha is the soft eyelid regions; imports like HauntedMerchant/MerchantBlinkMask.png (sRGB off). |
+| Relight/SunkenLarderHag{Blink,Downcast}Unlit.png | RGBA 144 x 58, alpha 1 | The overlay with the fire out: its colour times her own unlit-over-painted ratio. |
+
+The colour textures import like SunkenLarderHag.png.meta. The method is the merchant's blink (`Docs/work/merchant-blink`):
+
+- Edit target: the visible composite (SunkenLarderHag.png over SunkenLarderBackground.png) in concept box (370, 380)-(630, 640), Lanczos-upscaled 4x to 1040 x 1040 (`target`). Donors: Docs/Reference/Art/SunkenLarderHagBlinkDonor.png and SunkenLarderHagDowncastDonor.png (1254 x 1254 each, the first of two candidates); prompts in [prompts/](prompts/README.md).
+- Registration: `donor = M (p - c) + t` (c the box centre (500, 510)), fitted by normalized cross-correlation of high-passed luminance (6 px) over her face in (395, 415)-(595, 600), excluding the eye ellipses ((436, 474) and (515, 457), radii 30 x 19) and pixels where her alpha is below 0.99; the donor is anti-aliased with a Gaussian of 0.45 donor px per unit of upscale before sampling. Blink: M = [[4.8267, -0.0040], [0.0037, 4.8219]], t = (627.25, 626.33), NCC 0.9718 to 0.9744. Downcast: M = [[4.8263, -0.0032], [0.0099, 4.8154]], t = (627.27, 626.70), NCC 0.9675 to 0.9696.
+- Transfer: only inside two soft elliptical eyelid regions, centres (437, 476) and (515, 461), radii 22 x 13 and 23 x 13 (Blink) or 22 x 14 and 23 x 14 (Downcast); the mask is 1 inside 0.72 of the normalized radius and 0 beyond 1.12. The donor's low-frequency colour is matched to her face by a per-channel gain, a normalized Gaussian (7 px) of face over donor in the ring between 1.15 and 1.9 radii (her alpha above 250), extended inward. Gain in the mask: Blink 0.82 to 1.14 (mean 0.94, 0.96, 1.04), Downcast 0.87 to 1.27 (mean 1.01, 1.04, 1.09). Mask pixels: Blink 2308 nonzero, 948 at full; Downcast 2500 and 1036. The script checks that each mask vanishes at the crop's border.
+- Unlit base: the overlay times her ratio SunkenLarderHagUnlit.png / SunkenLarderHag.png per channel in linear light, a normalized Gaussian (3 px) over her interior, at most 1 (0.15 to 0.92 in the mask, mean 0.53).
+
+### Deformation mesh
+
+SunkenLarderHostMesh.asset is a 48 x 84 grid over the 941 x 1672 frame (about 19.6 x 19.9 px cells, the merchant's grid) with five shapes. Every layer's vertices are rebuilt each frame while she breathes, so the grid is as coarse as the shapes allow: against the nymph's 96 x 168 grid, rendered with the same timelines, her face crops differ by at most 26 levels (99th percentile 4) at the smile's peak and the two smiles and head poses look alike, with no folds on either grid. The coarser grid departs from the authored fields over her face (380, 380)-(620, 620) by up to 1.49 px (Smile, at the mouth corners, whose bumps span about one cell), 0.34 px (HeadLower) and 0.19 px (HeadTurn), against 0.62, 0.12 and 0.06 px on 96 x 168. Two envelopes recur: the head, a soft ellipse centred (485, 450) with radii 160 x 230 (full inside 0.8, none beyond 1.25) faded out below the chin between rows 590 and 670, so the shoulders never follow a head shape; and the body, full above row 670 and zero from row 770, so everything from row 770 down (the sleeves, forearms and hands from row 790, the shawl's hem at the table, row 900) never moves and no gap opens at the table.
+
+| Shape | Region | Full weight (right, up) |
+| --- | --- | --- |
+| Breath (0) | The body envelope; the head envelope takes 70% of the lift; the chest (soft ellipse (485, 660), 230 x 150) widens sideways. | Shoulders and chest up 4.5 px, head up 3.15 px, chest sides out 1.5 px. |
+| HeadLower (1) | The head envelope. | Down 7 px from the brow (row 430) to the chin, easing to 3 px at the crown (row 300): the hair above the brow stretches and the neck below the chin takes up the rest, as a head pitching down. |
+| HeadTurn (2) | The head envelope; the front of the face (soft ellipse (482, 495), 80 x 105, full inside 0.5, none beyond 1.2) most. | Left (toward the hearth) 4.5 px at the face, 1.5 px at the head's outline. |
+| Smile (3) | The mouth corners (467, 546) and (521, 535) within 22 px, the cheeks (446, 522) and (538, 512) within 30 px (full inside 0.3 of the radius). | Corners 1.5 px outward and 2.4 px up, cheeks 0.6 px outward and 1.2 px up. A negative weight relaxes her painted faint smile. |
+| Settle (4) | The body envelope. | Everything above it shrinks by 0.99 about her face (485, 470) and rises 2 px: the shoulders draw in and up and the head stays almost in place, as she leans back from her hunch. |
+
+Measured by the script on the rendered grid over her pixels (alpha at least 0.02): largest displacement Breath 4.6 px, HeadLower 7.0 px, HeadTurn 4.5 px, Smile 2.7 px (the authored 3.1 px, softened by the grid), Settle 5.0 px; nothing at or below row 780 moves under any shape or state (0 px); largest strain 0.14 for a single shape (HeadLower) and 0.17 in Waiting (HeadLower with HeadTurn); no folds. Over every state's timeline the largest displacement on her is 9.5 px at (792, 676), the shawl's edge at her left shoulder (image right), in Victory at 1.65 s (Breath 1.16 with the victory breath, Settle 0.98, Smile -0.49); her face moves at most 6.2 px (Waiting). The plate is reconstructed at full weight within 22 px of her silhouette, so no motion uncovers unreconstructed plate.
+
+### States
+
+Idle loops; Waiting and Reaction play in real time; Arrival, Victory, Defeat and Farewell follow the progress their caller sets, so their durations set relative timing and their idle is sampled at progress times duration. Waiting and every directed state include the idle and enter through entry weights from the pose on screen: shapes over 0.35 to 0.8 s, an interrupted expression relaxing over 0.6 s, a blink in progress fading over 0.1 s. An eyelid overlay never sits between 0 and 1 longer than a blink: every change of its alpha is a quick step of 0.1 s (OVERLAY_STEP; the merchant's blink fades in over 0.04 s and out over 0.055 s), so the painted eye and the lids never show together for longer than that; the script reports the longest stretch each overlay track spends between 0.02 and 0.98 (0.083 s for every step, 0.046 s for the idle blink). All transitions are eased (smoothstep). Deformation tracks drive all three layers alike.
+
+| State | Sequence | Duration | Timeline |
+| --- | --- | --- | --- |
+| Idle | Living still | 19.9 s loop | Four breaths (an eased inhale over 40% of the breath, a brief turn, a longer exhale and a pause, as the merchant's) of 4.8, 5.3, 4.6 and 5.2 s at depths 1.0, 0.84, 0.95 and 0.9; blinks (Blink alpha up to 1 for about 120 ms) at 1.9, 6.35, 9.2, 14.8 and 17.55 s. |
+| Waiting | Head lowered over the pot | 1.5 s, then held | HeadLower and HeadTurn to 1 over 1.5 s; once the head has begun to lower, her eyes drop in one quick step (Downcast alpha 0 to 1 over 0.3 to 0.4 s; lids already down stay down); no blinks (Blink alpha held at 0); the breathing continues from a restarted idle. No stirring. |
+| Arrival | Looks up | 3 s | Her eyes open in one quick step first (Downcast alpha 1 to 0 over 0.15 to 0.25 s), so she looks up from under her brow; then HeadLower 1 to 0 over 0.35 to 2.2 s and HeadTurn 1 to 0 over 0.5 to 2.5 s, with an intake of breath (additive Breath 0.45, settling to -0.12 and back by 2.95 s). It ends in the concept pose. |
+| Reaction | Slight smile | 2.4 s | Additive, gesture on start: Smile 0 to 0.8 over 0.4 s, held to 1.3 s, back to 0 by 2.3 s. A reaction restarted mid-smile blends from its pose over 0.1 s. |
+| Victory | Settles back | 3.5 s | Settle 0 to 1 and Smile 0 to -0.5 over 0.1 to 1.8 s (she leans back a little and her smile eases), held to the end; her eyes close for a moment, a slow blink of quick fades: Blink alpha 0 to 1 over 1.0 to 1.1 s, held closed to 1.9 s, open by 2.0 s; a quiet breath (additive Breath 0.4, settling to -0.2 and back by 3.4 s). She stays settled. The spoon is part of the plate and does not move. |
+| Defeat | Satisfied nod | 4 s | Smile 0 to 1 over 0.1 to 1.3 s and held; a slow small nod, HeadLower 0 to 0.45 over 1.0 to 2.1 s and back over 2.3 to 3.6 s. |
+| Farewell | Farewell settle | 3 s | The merchant's farewell: additive Breath 0.15, settling to -0.3 and back by 2.9 s; any expression relaxes to rest over 0.6 s. |
+
+A held outcome pose (Victory's settled pose, Defeat's smile) lasts until the next state is set: the host system has no entry weights into Idle, so setting Idle after an ending returns her to the concept pose at once.
+
+### Preview
+
+`Assets/Scenes/SunkenLarderPreview.unity` is the isolated art preview, made like BoundTreePreview.unity; it is not registered in the campaign, Addressables or build scenes, and no image is a raycast target.
+
+| Object | Content |
+| --- | --- |
+| Preview Camera | Orthographic size 480, solid dark background, UI layer only. |
+| Sunken Larder Preview Canvas | Screen Space - Camera on the preview camera; Canvas Scaler 540 x 960, match 0.5. No raycaster. |
+| Sunken Larder Plate | RawImage `Relight/SunkenLarderAmbientUnlit.png` filling the 540 x 960 authoring frame, with a SceneLightingPresentation: Lighting Asset SunkenLarderSceneLighting.asset, Background this image, Intensity Multipliers [1], Hosts [Old Woman Host with SunkenLarderHost.asset, Position (0, 0, 0)]. It draws the ambient base plus the fire, builds the host and passes it the same lighting sample every frame. |
+| Sunken Larder Plate/Old Woman Host | Instance of SunkenLarderHost.prefab, its root stretched over the plate's rect (anchors 0 to 1, pivot 0, size 0). |
+
+Enter Play mode to see the idle; drive the fire with the plate's Scene Lighting Presentation > Intensity Multipliers element 0 (1 is rest; values above 1 brighten further). As for the Bound Tree host, the other states are reached only through `SpiritHostPortrait.SetState(state, progress)` and `React()`.
+
+### Review captures
+
+`SunkenLarderHostCaptureTests` (EditMode, [Explicit], [Category("Capture")]) renders the preview scene in batch mode with the fire at its resting level (light 0 sampled where its flicker is exactly 1). For idle and each state it renders nine frames at evenly spaced times across it (idle across its loop, Waiting over twice its duration, Reaction over its duration, the directed states at progress 0 to 1), each at the concept's scale with the face (concept box (370, 360)-(630, 640)) and the table edge and hands ((100, 720)-(920, 940)) at 2x, and the idle at each blink. Its frames.txt lists every frame's state, progress and layer values, and the transition jumps content validation measures for a host a table uses (Arrival from Waiting, Reaction start and end, each outcome's entry) plus Waiting's entry from Idle. Run it by name with DICE_SPIRIT_CAPTURE_ROOT set (output under `sunken-larder-host` in it):
+
+```
+Unity.exe -batchmode -projectPath Dice-Unity -runTests -testPlatform EditMode -testFilter Dice.Tests.SunkenLarderHostCaptureTests -testResults <dir>/results.xml -logFile <dir>/unity.log
+```
+
+At rest the render equals her layer over the plate (against the linear-light composite, resampled to the concept frame, a mean of 0.95 levels). The largest transition jump listed is 0.04 in Blink alpha at Reaction end, which is the idle blink's own motion during the 2 ms the measurement straddles, not a jump.
+
+### Rebuilding the host
+
+`Tools/Presentation/author-sunken-larder-host.py` (Python 3.10+ with numpy, Pillow and scipy; on this machine `Docs/work/merchant-table-clear/.venv/Scripts/python.exe`) runs from the repository root; its constants (overlay boxes and regions, shape regions and magnitudes, timelines) are at the top of the script:
+
+```
+python Tools/Presentation/author-sunken-larder-host.py target                    # the overlays' edit target under Docs/work/sunken-larder-host/targets
+python Tools/Presentation/author-sunken-larder-host.py overlays                  # fresh Docs/work/sunken-larder-host-* folder
+python Tools/Presentation/author-sunken-larder-host.py overlays --write-assets   # also writes the six overlay textures
+python Tools/Presentation/author-sunken-larder-host.py host                      # fresh Docs/work/sunken-larder-host-* folder
+python Tools/Presentation/author-sunken-larder-host.py host --write-assets       # reauthors the host in place
+```
+
+`overlays` writes the textures under `textures/`, `review/overlays-face-3x.png` (her face painted and unlit, each overlay at 0, 0.5 and 1, and the registered donor with the mask's full and edge ellipses) and `report.json` (registrations, gains, mask counts, unlit ratio); `--donor-blink` and `--donor-downcast` substitute a candidate donor for review, and `--write-assets` installs only from the preserved donors. `host` writes the mesh, the three materials, the prefab and the host asset (to the output folder, or in place with `--write-assets`) and `report.json` with the measurements above. Existing .meta files are kept; a missing one is written (textures copy SunkenLarderHag.png.meta or MerchantBlinkMask.png.meta under a fresh GUID). Re-run `host` after changing a constant rather than editing the assets; the prefab's object ids are fixed, so scene instances keep their overrides.

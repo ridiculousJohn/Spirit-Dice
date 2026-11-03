@@ -1,0 +1,12 @@
+Use case: edit: precise-object-edit, identity-preserve
+Asset type: downcast-eyes frame for a 2D game character portrait animation (painted digital illustration, close crop of the face)
+Primary request: Make the old woman look down, eyes lowered toward the pot in front of her and slightly to her right (the left of the image). Change only the eyelids and eyes.
+Input images: Image 1: edit target
+Subject: the same very old woman with a deeply wrinkled weathered face and long grey hair
+Style/medium: identical painterly digital illustration style, same brush texture and detail level as Image 1
+Composition/framing: keep exactly the same framing, crop, aspect ratio, scale, head position and perspective as Image 1; do not crop, zoom, rotate, shift or pad
+Lighting/mood: identical warm firelight from the left, same shadows and highlights as Image 1
+Constraints: Change ONLY the two eyes: heavy upper eyelids lowered most of the way, covering the upper two thirds of each iris, with the irises turned down and a little toward the left of the image, the dark lashes of the lowered lids pointing down; a sliver of iris shows at the bottom of each eye, no white above the iris. The lowered eyelid skin matches the surrounding skin color, texture, wrinkles and lighting exactly. Keep the eyebrows, forehead wrinkles, crow's feet, nose, cheeks, mouth, chin, hair and background exactly as they are. Keep her identity and her faint smile.
+Avoid: fully closed eyes, squinting, raised or lowered eyebrows, changing the head pose, smoothing or beautifying the skin, makeup, changing colors, adding any text or watermark
+
+Input: Docs/work/sunken-larder-host/targets/face-target.png (written by author-sunken-larder-host.py target): Lanczos 4x upscale (1040 x 1040) of Art/SunkenLarder/SunkenLarderHag.png over SunkenLarderBackground.png, concept box (370, 380)-(630, 640). Donor: Docs/Reference/Art/SunkenLarderHagDowncastDonor.png (1254 x 1254, the first of two candidates; the second, Docs/work/sunken-larder-host/donors/downcast-2.png, lowers the lids slightly less). Transferred by author-sunken-larder-host.py overlays into SunkenLarderHagDowncast.png (with SunkenLarderHagDowncastMask.png and Relight/SunkenLarderHagDowncastUnlit.png) inside the two soft eyelid ellipses.
