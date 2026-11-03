@@ -12,6 +12,8 @@ namespace Dice.App
     public sealed class CampaignSaveSlots
     {
         public const int SlotCount = 3;
+        /** The slot index's file name within the save root. */
+        internal const string IndexFileName = "spirit-slots.json";
         private const int MaximumIndexBytes = 4096;
         private const int IndexFormatVersion = 2;
         private const int IndexMaximumDepth = 4;
@@ -38,7 +40,7 @@ namespace Dice.App
             if (string.IsNullOrWhiteSpace(root)) throw new ArgumentException("A save directory is required.", nameof(root));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             this.root = Path.GetFullPath(root);
-            indexPath = Path.Combine(this.root, "spirit-slots.json");
+            indexPath = Path.Combine(this.root, IndexFileName);
             recovery = new CampaignRecoveryStore(this.root, catalog);
         }
 

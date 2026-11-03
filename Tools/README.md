@@ -8,6 +8,17 @@ Reusable source, dependency declarations, and usage instructions belong here. Du
 
 Generated previews, extraction output, downloaded tool installations, dependency environments, temporary test harnesses, logs, and art iterations belong under ignored `Docs/work`. Do not commit those files merely because a tool produced them. Review any new evidence before explicitly promoting it to `Docs/Reference`.
 
+## Save games
+
+Dice > Save Games (Dice-Unity/Assets/Dice/Editor/SaveGamesWindow.cs, with its operations in SaveGameStore.cs) shows and edits the save games in Application.persistentDataPath. It reads and writes them only through the game's save code (CampaignSaveSlots, the profile store and codec, SaveFileCommit), so seals and formats stay valid, and it reads the content through the project's application configuration.
+
+- Slots: the three slots, the active one, each slot's campaign id, its profile (with load errors) and whether it has a run in progress, and the campaigns available for recovery. Set active selects the slot; New game starts a new game in the slot as the game's New Game does, replacing the campaign it holds; Delete run deletes the slot's run save and nothing else.
+- Profile of the selected slot: completed journeys, completed encounters, visited encounters, discovered families and unlocked charms as checkboxes named from the content; stored ids the content does not list appear under "Not in the content". Families the game treats as discovered without a stored entry (starter families, families of unlocked charms) show as checked and not editable. Save writes the profile through SaveFileCommit as it is, keeping the replaced file as .bak; Revert reads it again.
+- Presets: "Everything before journey..." writes the profile of a player who completed every journey before the chosen one in chapter order, playing each through the game's journey navigation with every beat, invitation and completion reward and every milestone unlock applied; the chosen journey stays available and not started. Fresh writes a new player's profile. Both leave the run save as it is.
+- Back up saves copies every save file and campaign folder in the save root to a new timestamped folder under Docs/work/save-backups. Clear saves makes the same backup, then moves every save file and campaign folder out of the save root into that backup's `moved` folder; nothing is deleted. Save files are the slot index, its corrupt-index copies, the root run saves and profile of direct play and the diagnostic scene, and the .bak and temporary files beside them.
+
+Destructive actions ask for confirmation. In Play Mode the window shows the saves read-only. It reads the saves again on focus, on Refresh and after every write and shows the load errors the game reports; Save refuses to write when the profile file changed on disk after it was read.
+
 ## Unity tests
 
 Regression tests belong in `Dice-Unity/Assets/Dice/Tests/EditMode` or `PlayMode`, using the existing NUnit test assemblies. Run them through the Unity CLI. If the project is open in the editor, stop and tell John so he can close it or explicitly choose another approach. Do not close the editor or substitute menu-driven checks without his direction.

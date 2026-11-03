@@ -14,6 +14,8 @@ namespace Dice.App
     public sealed class DiagnosticEncounterController : MonoBehaviour, IDiagnosticEncounterControls, IEncounterPresenter
     {
         private const int MaximumEventLogEntries = 160;
+        /** The diagnostic run save's file name within the save root. */
+        internal const string SaveFileName = "diagnostic-encounter.json";
         [SerializeField] private DiagnosticEncounterView view;
         [SerializeField] private MechanicalCatalogAsset catalogAsset;
         [SerializeField] private ModifierSkinAsset modifierSkin;
@@ -40,7 +42,7 @@ namespace Dice.App
 
         private void Awake()
         {
-            SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, "diagnostic-encounter.json");
+            SavePath = Path.Combine(UnityEngine.Application.persistentDataPath, SaveFileName);
             Seed = initialSeed;
             BindView();
         }
