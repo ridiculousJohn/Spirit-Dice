@@ -17,7 +17,7 @@ MonoBehaviour:
   description: Every die you don't reroll rots by one. A 1 that rots withers and counts for nothing until you reroll it.
   availableText: Kept dice rot by one
   usedText: Kept dice rot by one
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: fb6ac9fe43ca41e6b36123fb73c94843, type: 3}
   activationPhase: 1
   shownOnHud: 1
   presenter: {fileID: 11400000, guid: 718643d0987e4638a6d2dbc7204db21e, type: 2}

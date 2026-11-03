@@ -1,0 +1,26 @@
+Generated using built-in image_gen (Codex imagegen skill, 2026-11-03). Mould textures for the Sunken Larder's rot dice visuals: the raw outputs are SunkenLarderDiceMouldRaw.png and SunkenLarderDiceSpotsRaw.png beside this file. Tools/Presentation/build-sunken-larder-dice-mould.py builds the installed textures Dice-Unity/Assets/Dice/Art/SunkenLarder/Dice/SunkenLarderDiceMould.png and SunkenLarderDiceSpots.png from them. Both calls attached Dice-Unity/Assets/Dice/Art/SunkenLarder/SunkenLarderOriginal.png as Image 1.
+
+Mould (the warning on a kept 1 and the withered die), output SunkenLarderDiceMouldRaw.png (1254 x 1254 RGB, opaque):
+
+Use case: stylized-concept
+Asset type: game texture for Spirit Dice, a dark folkloric tabletop dice game. A tileable texture strip of mould that is wrapped around the four sides and over the top of a small cube-shaped die in a 3D scene, so the die looks swallowed by rot. Image 1 is the encounter's scene concept (a swamp hag's hut full of jars).
+Input images: Image 1: style, colour and rendering reference only. Do not copy its composition, figures, jars or scenery.
+Primary request: a dense, fully covering surface of thick furred mould and black rot, in the same painted style as Image 1.
+Subject: the whole image is solid mould with no gaps: a matted, velvety fur of green-black mould with clumps and tufts, small pale grey-green fuzzy spore heads and fine hair-like filaments catching the light, wet black rot showing between the clumps. The bottom half is green-black furred mould with the most visible tufts; it darkens upward, and the top third is almost black, blackened shrivelled rot with only a faint dark green sheen.
+Style/medium: richly painted dark fantasy illustration matching Image 1: detailed fur texture, deep shadows, readable at small size.
+Composition/framing: square, flat, front-on texture with no perspective and no ground or horizon. The pattern must tile seamlessly left to right: mould leaving the right edge continues exactly at the left edge. Even coverage across the full width; fully opaque, every pixel is mould.
+Lighting/mood: even soft light from above with no cast shadows and no highlights from one side.
+Color palette: black, green-black, dark olive and murky swamp green, with sparse pale grey-green fuzz; no bright colours.
+Avoid: no text, no watermark, no die, no faces, no jars, no background, no transparent areas, no frame, no border, no vignette, no drop shadow.
+
+Spots (the faint mark on a kept die), output SunkenLarderDiceSpotsRaw.png (1254 x 1254 RGB, grey on black; the build turns brightness into alpha):
+
+Use case: stylized-concept
+Asset type: game texture for Spirit Dice, a dark folkloric tabletop dice game. A tileable mask of small mould spots, wrapped around the four sides and over the top of a small cube-shaped die in a 3D scene and drawn as a faint dark stain, marking the die as starting to rot. The game turns the brightness into opacity.
+Input images: Image 1: reference only for the organic, painted shape language. Do not copy its composition, figures, scenery or colours.
+Primary request: scattered small mould spots on a pure black background.
+Subject: sparse, irregular round colonies of mould, each a soft blotch with a denser core and a fuzzy, slightly hairy fringe; a mix of sizes from tiny specks to a few spots about one twelfth of the image wide, some in small clusters. Spots are densest along the bottom edge, thin out going up, and the top third holds only a few tiny specks. Clear empty black space between spots; no lines, no veins, no tendrils.
+Style/medium: soft painted mask.
+Composition/framing: square, flat, front-on texture with no perspective. The pattern must tile seamlessly left to right: spots crossing the right edge continue exactly at the left edge. Even coverage across the full width.
+Color palette: white and light grey spots on a pure black (#000000) background; no other colours.
+Avoid: no text, no watermark, no die, no faces, no lines, no colour, no frame, no border, no vignette.

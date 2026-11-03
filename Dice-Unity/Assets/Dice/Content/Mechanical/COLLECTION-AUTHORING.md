@@ -140,9 +140,9 @@ Its `encounterModifiers` contains four encounter-exclusive Bog Offering variants
 offered only through that list as Lantern Seekers are through the moth's. They
 trigger when at least one die of the played hand does not count, which in this
 encounter is a die withered by rot. Provisional effects are +10 Base, +2 Mult,
-+5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand. The family
-provisionally reuses the Bundled Reeds icon and artwork until dedicated art is
-approved; its variants show the standard categories of their effects, and their
++5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand. The family's
+icon, `Art/ModifierFamilies/bog-offering.png`, is a small tied bundle sinking into
+water; its variants show the standard categories of their effects, and their
 condition wording calls the dice withered. The mechanical condition is
 `UncountedDiceCountAtLeastConditionConfig` with `count: 1`, which builds
 `UncountedDiceCountAtLeastCondition`: it counts the dice of the played hand that do

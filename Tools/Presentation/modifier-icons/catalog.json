@@ -275,6 +275,11 @@
     "file": "great-oak.svg"
   },
   {
+    "family": "modifier.play_hand.uncounted_dice_count_at_least",
+    "name": "Bog Offering",
+    "file": "bog-offering.svg"
+  },
+  {
     "family": "modifier.play_hand.unique_count_less_than_rerolls_spent",
     "name": "Polished Shells",
     "file": "polished-shells.svg"

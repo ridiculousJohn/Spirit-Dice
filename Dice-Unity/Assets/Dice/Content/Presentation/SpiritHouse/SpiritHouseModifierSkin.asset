@@ -371,7 +371,7 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 0d2b49c065155ebd8bfc15d0cc22dff2, type: 3}
   - family: {fileID: 11400000, guid: 4d89d34a1c8f472fb1a03142e381eee8, type: 2}
     name: Bog Offering
-    icon: {fileID: 21300000, guid: c26105a247a75d8b9128774b40fef374, type: 3}
+    icon: {fileID: 21300000, guid: 4f3f43073e0459dc85ba95aecb9d6ea6, type: 3}
   - family: {fileID: 11400000, guid: bfe9d32a8729f3e40a61a4ab4890c659, type: 2}
     name: One Spark
     icon: {fileID: 21300000, guid: 04716263b8fa23e45b2c132d2556751e, type: 3}

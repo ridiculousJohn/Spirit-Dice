@@ -7,16 +7,17 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: RotDieStandInMark
+  m_Name: RotDieMouldCover
   m_Shader: {fileID: 4800000, guid: be83ccb5e763c7549903b14b151bac06, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _ZWRITE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3035
+  m_CustomRenderQueue: 2450
   stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
@@ -24,31 +25,31 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: e1ec18476a91416789947dce7413c9b9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _Coverage: 1
     - _Cull: 2
-    - _Cutoff: 0
-    - _DstBlend: 10
-    - _FrontGlow: 0
-    - _FrontWidth: 0.12
+    - _Cutoff: 0.5
+    - _DstBlend: 0
+    - _FrontGlow: 0.12
+    - _FrontWidth: 0.03
     - _Glow: 0
     - _GlowFromTexture: 0
-    - _GrowthSoftness: 0.12
+    - _GrowthSoftness: 0.16
     - _HalfExtent: 0.5
     - _Opacity: 1
     - _Pulse: 1
     - _Repeats: 1
-    - _SideShare: 0.7
+    - _SideShare: 0.55
     - _SrcBlend: 1
-    - _ZWrite: 0
+    - _ZWrite: 1
     m_Colors:
     - _Ambient: {r: 0.3, g: 0.31, b: 0.36, a: 1}
-    - _GlowColor: {r: 0.78, g: 0.9, b: 0.32, a: 1}
+    - _GlowColor: {r: 0.62, g: 0.68, b: 0.52, a: 1}
     - _KeyColor: {r: 0.7, g: 0.7, b: 0.78, a: 1}
-    - _Tint: {r: 0.5, g: 0.6, b: 0.48, a: 1}
+    - _Tint: {r: 0.8, g: 0.85, b: 0.75, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
