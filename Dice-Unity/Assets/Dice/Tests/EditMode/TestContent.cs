@@ -59,7 +59,7 @@ namespace Dice.Tests
         {
             var save = EncounterSession.CreateEncounter(catalog, EncounterId, seed).CaptureSave();
             save.CurrentDice = dice;
-            save.InitialDice = (int[])dice.Clone();
+            save.InitialHand.Faces = (int[])dice.Clone();
             return Restore(catalog, save);
         }
 

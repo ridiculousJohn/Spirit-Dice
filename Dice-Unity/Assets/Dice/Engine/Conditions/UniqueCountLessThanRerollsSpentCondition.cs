@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return dice.DistinctFaceCount < context.RerollsSpentOnHand;
+            return context.CurrentHand.DistinctFaceCount < context.RerollsSpentOnHand;
         }
     }
 }

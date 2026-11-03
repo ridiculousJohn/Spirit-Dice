@@ -385,10 +385,10 @@ namespace Dice.Tests
                     return null;
                 var scored = played.Events.OfType<HandScoredEvent>().Single().Dice;
                 plan.Bay = disturbed.Bay;
-                plan.Preferred = HandEvaluator.Evaluate(opening) != HandEvaluator.Evaluate(scored);
+                plan.Preferred = HandEvaluator.Evaluate(HandDice.Full(opening)) != HandEvaluator.Evaluate(HandDice.Full(scored));
                 plan.Summary = "seed " + seed + ", opening " + Faces(opening) + ", Play Hand; bay " + (plan.Bay + 1) +
                     " forced reroll " + disturbed.Before + " -> " + disturbed.After + ", scored " + Faces(scored) + " as " +
-                    HandEvaluator.Evaluate(scored) + " (undisturbed " + HandEvaluator.Evaluate(opening) + ")";
+                    HandEvaluator.Evaluate(HandDice.Full(scored)) + " (undisturbed " + HandEvaluator.Evaluate(HandDice.Full(opening)) + ")";
                 return plan;
             }
 
@@ -401,10 +401,10 @@ namespace Dice.Tests
             {
                 if (disturbance.Kind != DieInterferenceKind.Flip) return null;
                 var flipped = With(rolled.After, disturbance.Bay, disturbance.After);
-                plan.Preferred = HandEvaluator.Evaluate(rolled.After) != HandEvaluator.Evaluate(flipped);
+                plan.Preferred = HandEvaluator.Evaluate(HandDice.Full(rolled.After)) != HandEvaluator.Evaluate(HandDice.Full(flipped));
                 plan.Summary = "seed " + seed + ", opening " + Faces(opening) + ", reroll dice 1-2 -> " + Faces(rolled.After) +
                     "; bay " + (plan.Bay + 1) + " flipped " + disturbance.Before + " -> " + disturbance.After + ", hand " +
-                    Faces(flipped) + " as " + HandEvaluator.Evaluate(flipped) + " (undisturbed " + HandEvaluator.Evaluate(rolled.After) + ")";
+                    Faces(flipped) + " as " + HandEvaluator.Evaluate(HandDice.Full(flipped)) + " (undisturbed " + HandEvaluator.Evaluate(HandDice.Full(rolled.After)) + ")";
                 return plan;
             }
 

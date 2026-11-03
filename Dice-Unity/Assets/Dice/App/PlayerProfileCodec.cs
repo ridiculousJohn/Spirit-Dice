@@ -19,8 +19,12 @@ namespace Dice.App
         private const string CompletedJourneyIdsField = "CompletedJourneyIds";
         private const string VisitedEncounterIdsField = "VisitedEncounterIds";
         // To change the format, raise PlayerProfile.CurrentFormatVersion and append a step that upgrades the previous format.
+        // Format 8 is format 9 written without a seal.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
-            FormatVersionField, PlayerProfile.CurrentFormatVersion);
+            FormatVersionField, PlayerProfile.CurrentFormatVersion, document => { });
+
+        /** The oldest profile format the codec reads. */
+        internal static int OldestFormatVersion => FormatUpgrades.OldestVersion;
 
         public static byte[] Serialize(PlayerProfile profile)
         {
@@ -39,7 +43,11 @@ namespace Dice.App
             return bytes;
         }
 
-        public static PlayerProfile Deserialize(byte[] bytes)
+        /** Reads a sealed payload. */
+        public static PlayerProfile Deserialize(byte[] bytes) => Deserialize(bytes, true);
+
+        /** Reads a payload; isSealed says whether the file layer verified its seal. */
+        internal static PlayerProfile Deserialize(byte[] bytes, bool isSealed)
         {
             if (bytes == null) throw new ArgumentNullException(nameof(bytes));
             if (bytes.Length > MaximumProfileBytes) throw new FormatException("The profile exceeds the size limit.");
@@ -53,9 +61,10 @@ namespace Dice.App
                         DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error
                     });
                     if (reader.Read()) throw new FormatException("The profile contains trailing content.");
-                    var check = FormatUpgrades.Upgrade(document);
+                    var check = FormatUpgrades.Upgrade(document, isSealed);
                     if (check == SaveFormatCheck.VersionNotInteger)
                         throw new FormatException("The profile format version must be an integer.");
+                    if (check == SaveFormatCheck.Unsealed) throw new FormatException("The profile is not sealed.");
                     if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The profile format version is unsupported.");
                     foreach (var property in document.Properties())

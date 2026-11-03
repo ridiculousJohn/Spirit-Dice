@@ -31,14 +31,17 @@ namespace Dice.App
          * Validates the document's version token and, when its version is supported, runs the steps from that version in order,
          * writing each step's resulting version. A rejected document is left unchanged; each caller maps the result to its own error.
          * A version beyond the long range throws OverflowException, which callers already treat as an out-of-range integer.
+         * Every current-format file is written sealed, so an unsealed document is accepted only below the current version,
+         * through an upgrade step; isSealed says whether the file layer verified the document's seal.
          */
-        internal SaveFormatCheck Upgrade(JObject document)
+        internal SaveFormatCheck Upgrade(JObject document, bool isSealed)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
             var version = document[versionField];
             if (version == null || version.Type != JTokenType.Integer) return SaveFormatCheck.VersionNotInteger;
             long value = version.Value<long>();
             if (value < OldestVersion || value > CurrentVersion) return SaveFormatCheck.VersionUnsupported;
+            if (!isSealed && value == CurrentVersion) return SaveFormatCheck.Unsealed;
             for (int next = (int)value; next < CurrentVersion; ++next)
             {
                 steps[next - OldestVersion](document);
@@ -48,5 +51,5 @@ namespace Dice.App
         }
     }
 
-    internal enum SaveFormatCheck { Upgraded, VersionNotInteger, VersionUnsupported }
+    internal enum SaveFormatCheck { Upgraded, VersionNotInteger, VersionUnsupported, Unsealed }
 }

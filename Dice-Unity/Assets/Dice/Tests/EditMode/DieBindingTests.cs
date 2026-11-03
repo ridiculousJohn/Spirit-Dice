@@ -25,7 +25,7 @@ namespace Dice.Tests
                 Assert.That(snapshot.Binding().BoundMask, Is.Zero);
                 Assert.That(snapshot.LockedMask, Is.Zero);
                 Assert.That(snapshot.CurrentDice, Is.EqualTo(plain.Snapshot.CurrentDice), "Marking never changes a face.");
-                Assert.That(snapshot.InitialDice, Is.EqualTo(snapshot.CurrentDice));
+                Assert.That(snapshot.InitialHand.Faces, Is.EqualTo(snapshot.CurrentDice));
                 var events = session.InitialResolution.Events;
                 var marked = events.OfType<DieMarkedEvent>().Single();
                 Assert.That(marked.RuleId, Is.EqualTo(BindingId));
@@ -191,30 +191,22 @@ namespace Dice.Tests
             }
         }
 
+        /** Checks restore rejects binding records it cannot use / fails if a mask outside the bays or a rule state the encounter cannot own loads. */
         [Test]
-        public void RestoreRejectsBindingStatesThatDisagreeWithTheHand()
+        public void RestoreRejectsBindingStatesItCannotUse()
         {
             var catalog = Catalog();
             var session = Session(catalog, 9);
             Execute(session, new RerollDiceAction(session.Snapshot.Binding().MarkedMask));
-            int bound = session.Snapshot.Binding().BoundMask;
-            int marked = session.Snapshot.Binding().MarkedMask;
-            int spare = Lowest(DiceValues.AllMask & ~bound & ~marked);
-            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).MarkedMask = bound);
-            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).MarkedMask = marked | spare);
-            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).MarkedMask = 0);
-            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).BoundMask = 0);
-            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).BoundMask = bound | spare);
             AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).BoundMask = 32);
+            AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).MarkedMask = 32);
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = null);
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].RuleId = TestRules.IdOf("other"));
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = null);
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = new DieInterferenceSaveData());
             AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = new[] { save.RuleStates[0], save.RuleStates[0] });
-            AssertInvalid(catalog, Session(catalog, 9).CaptureSave(), save => Binding(save).MarkedMask = 0);
             var plain = Catalog(binding: false);
-            AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleRandomState = 1);
             AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleStates = new[]
                 { new EncounterSaveRuleData { RuleId = BindingId, State = new DieBindingSaveData() } });
         }

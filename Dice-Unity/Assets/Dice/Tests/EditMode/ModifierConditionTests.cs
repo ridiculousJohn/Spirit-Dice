@@ -20,6 +20,21 @@ namespace Dice.Tests
         }
 
         /**
+         * Checks a condition over the whole hand sees only the counted dice and a condition naming positions is false
+         * when a position it reads does not count / fails if an uncounted die's face is counted or read.
+         */
+        [Test]
+        public void UncountedDiceCountTowardNothing()
+        {
+            var sum = new SumLessThanCondition(15);
+            Assert.That(sum.Evaluate(C("12345")), Is.False);
+            Assert.That(sum.Evaluate(C("12345", counted: 30)), Is.True, "The uncounted die adds nothing to the sum.");
+            var position = new FaceEqualsPositionCondition();
+            Assert.That(position.Evaluate(C("12345")), Is.True);
+            Assert.That(position.Evaluate(C("12345", counted: 30)), Is.False, "An uncounted die has no face to read.");
+        }
+
+        /**
          * Checks the favored face count reads the first favored-face rule among the encounter's rules / fails if it counts a
          * face without such a rule, reads a later rule's face or ignores the snapshot's face.
          */
@@ -189,15 +204,17 @@ namespace Dice.Tests
         private static ModifierContext C(string dice = "12345", string initial = null, string before = null,
             string previous = null, int selected = 0, int ever = 0, int spent = 0, int hands = 3,
             int rerolls = 3, int played = 0, int starting = 3, int? priorStarting = null, int? priorRemaining = null,
-            EncounterRuleSnapshot[] rules = null)
-            => new ModifierContext(D(dice), D(initial ?? dice), before == null ? (DiceValues?)null : D(before),
-                previous == null ? (DiceValues?)null : D(previous), selected, ever, spent, hands, rerolls,
+            EncounterRuleSnapshot[] rules = null, int counted = DiceValues.AllMask)
+            => new ModifierContext(new HandDice(D(dice), counted), H(initial ?? dice), before == null ? (HandDice?)null : H(before),
+                previous == null ? (HandDice?)null : H(previous), selected, ever, spent, hands, rerolls,
                 played, starting, priorStarting, priorRemaining, rules);
 
         private static EncounterRuleSnapshot Plain() => new EncounterRuleSnapshot(TestRules.IdOf("plain"), true);
         private static EncounterRuleSnapshot Favored(int face) => new FavoredFaceRuleSnapshot(TestRules.IdOf("favored." + face), true, face);
         private static EncounterRuleSnapshot Bound(int boundMask)
             => new DieBindingRuleSnapshot(TestRules.IdOf("binding." + boundMask), true, boundMask, 0);
+
+        private static HandDice H(string values) => HandDice.Full(D(values));
 
         private static DiceValues D(string values)
             => new DiceValues(values[0] - '0', values[1] - '0', values[2] - '0', values[3] - '0', values[4] - '0');

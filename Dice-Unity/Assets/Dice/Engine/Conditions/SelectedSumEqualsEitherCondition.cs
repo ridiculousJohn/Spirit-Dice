@@ -16,10 +16,7 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            int selectedSum = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if ((context.SelectedMask & (1 << i)) != 0) selectedSum += dice[i];
+            int selectedSum = context.CurrentHand.SumOf(context.SelectedMask);
             return context.SelectedMask != 0 &&
                 (selectedSum == Parameter || selectedSum == SecondaryParameter);
         }

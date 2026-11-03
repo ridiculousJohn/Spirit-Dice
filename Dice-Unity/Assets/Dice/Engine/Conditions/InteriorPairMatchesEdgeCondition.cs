@@ -4,7 +4,8 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
+            if (!context.CurrentHand.Counts(DiceValues.AllMask)) return false;
+            DiceValues dice = context.CurrentHand.Faces;
             int firstEdgeCount = 0, lastEdgeCount = 0;
             for (int i = 1; i < DiceValues.Count - 1; ++i)
             { if (dice[i] == dice[0]) ++firstEdgeCount; if (dice[i] == dice[4]) ++lastEdgeCount; }

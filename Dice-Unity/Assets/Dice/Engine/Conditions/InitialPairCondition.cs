@@ -4,7 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            return HandEvaluator.Evaluate(context.InitialDice) == HandCategory.Pair;
+            return HandEvaluator.Evaluate(context.InitialHand) == HandCategory.Pair;
         }
     }
 }

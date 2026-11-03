@@ -974,14 +974,14 @@ namespace Dice.Tests
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
             var json = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(new EncounterApplication(catalog, FirstId, 17).CaptureSave())));
             json["RulesVersion"] = 99;
-            string contents = failure == "malformed" ? "{ broken run" : json.ToString();
-            File.WriteAllText(savePath, contents);
+            SaveFileCommit.Write(savePath, Encoding.UTF8.GetBytes(failure == "malformed" ? "{ broken run" : json.ToString()));
+            byte[] contents = File.ReadAllBytes(savePath);
             Assert.That(controller.OpenSavedChapter(), Is.False);
             Assert.That(controller.JourneyStatus.Kind, Is.EqualTo(SpiritStatusKind.LoadFailed));
             Assert.That(controller.Snapshot, Is.Null);
             Assert.That(controller.ShowMainMenu(), Is.True);
             Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.MainMenu));
-            Assert.That(File.ReadAllText(savePath), Is.EqualTo(contents));
+            Assert.That(File.ReadAllBytes(savePath), Is.EqualTo(contents));
         }
 
         [Test]

@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using Dice.App;
 using NUnit.Framework;
 using UnityEngine;
@@ -101,6 +103,35 @@ namespace Dice.Tests
                 previous = File.ReadAllBytes(destination);
             }
             Assert.That(Directory.GetFiles(artifactRoot).Length, Is.EqualTo(2));
+        }
+
+        /** Checks a written file is its seal line followed by the payload and reads back sealed / fails if the layout or payload changes. */
+        [Test]
+        public void WrittenFilesAreSealedAndReadBackTheirPayload()
+        {
+            byte[] payload = Encoding.UTF8.GetBytes("{ \"value\": 1 }");
+            SaveFileCommit.Write(destination, payload);
+            byte[] file = File.ReadAllBytes(destination);
+            string seal = Encoding.ASCII.GetString(file, 0, SaveFileText.SealLength);
+            Assert.That(seal, Does.Match("^sha256 [0-9a-f]{64}\n$"));
+            Assert.That(file.Skip(SaveFileText.SealLength), Is.EqualTo(payload));
+            Assert.That(SaveFileText.ReadBounded(destination, payload.Length, "The test file", out bool isSealed), Is.EqualTo(payload));
+            Assert.That(isSealed, Is.True);
+        }
+
+        /** Checks a sealed file whose payload, checksum or seal line changed fails to read / fails if any of them reads. */
+        [TestCase("payload")]
+        [TestCase("checksum")]
+        [TestCase("truncated")]
+        public void AChangedSealedFileFailsToRead(string change)
+        {
+            SaveFileCommit.Write(destination, Encoding.UTF8.GetBytes("{ \"value\": 1 }"));
+            byte[] file = File.ReadAllBytes(destination);
+            if (change == "payload") file[file.Length - 2] ^= 1;
+            if (change == "checksum") file[10] = file[10] == (byte)'0' ? (byte)'1' : (byte)'0';
+            if (change == "truncated") file = file.Take(20).ToArray();
+            File.WriteAllBytes(destination, file);
+            Assert.Throws<FormatException>(() => SaveFileText.ReadBounded(destination, 1024, "The test file", out _));
         }
 
         private void PrepareFiles()

@@ -2,7 +2,7 @@ namespace Dice.Engine
 {
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 14;
+        public const int CurrentFormatVersion = 15;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
@@ -17,9 +17,12 @@ namespace Dice.Engine
         public int HandsRemaining;
         public int RerollsRemaining;
         public int[] CurrentDice;
-        public int[] InitialDice;
-        public int[] DiceBeforeLastReroll;
-        public int[] PreviousPlayedDice;
+        /** Never null. */
+        public EncounterSaveHandData InitialHand;
+        /** Null before the hand's first player reroll. */
+        public EncounterSaveHandData HandBeforeLastReroll;
+        /** Null until a hand is played. */
+        public EncounterSaveHandData PreviousPlayedHand;
         public int LatestRerollMask;
         public int LatestChangedMask;
         public int EverRerolledMask;
@@ -35,8 +38,6 @@ namespace Dice.Engine
         public int[] HandUpgrades;
         public ulong DiceRandomState;
         public EncounterSaveModifierData[] Modifiers;
-        public long ModifierBaseScore;
-        public long ModifierMultiplier;
         public EncounterSaveContributionData[] ModifierContributions;
         public ulong RewardRandomState;
         public ulong RuleRandomState;
@@ -52,8 +53,13 @@ namespace Dice.Engine
         public ModifierDefinition.Id[] UnlockedModifierIds;
         public ModifierDefinition.Id[] NewlyUnlockedModifierIds;
         public ModifierFamilyDefinition.Id[] DiscoveredFamilyIds;
-        public ModifierFamilyDefinition.Id[] PendingUnlockOfferDiscoveredFamilyIds;
-        public ModifierDefinition.Id[] PendingModifierOfferUnlockedIds;
+    }
+
+    /** A recorded hand: its five faces and the mask of the dice that count. */
+    public sealed class EncounterSaveHandData
+    {
+        public int[] Faces;
+        public int CountedMask;
     }
 
     public sealed class EncounterSaveModifierData
@@ -83,7 +89,6 @@ namespace Dice.Engine
     {
         public long InstanceId;
         public ModifierDefinition.Id DefinitionId;
-        public ModifierPhase Phase;
         public long BaseScore;
         public long Multiplier;
         public int Rerolls;

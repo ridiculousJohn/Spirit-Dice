@@ -177,8 +177,8 @@ namespace Dice.Tests
             File.WriteAllBytes(originalRun, runBytes);
             byte[] profileBytes = File.ReadAllBytes(originalProfile);
             string[] originalDirectories = Directory.GetDirectories(root);
-            var document = JObject.Parse(File.ReadAllText(IndexPath));
-            if (invalid == "version") document["formatVersion"] = 2;
+            var document = JObject.Parse(SaveFileText.Decode(SaveFileText.ReadBounded(IndexPath, 4096, "The index", out _)));
+            if (invalid == "version") document["formatVersion"] = 3;
             if (invalid == "older-version") document["formatVersion"] = 0;
             if (invalid == "active-zero") document["activeSlot"] = 0;
             if (invalid == "active-four") document["activeSlot"] = 4;
@@ -200,8 +200,8 @@ namespace Dice.Tests
             if (invalid == "root-array") json = "[]";
             if (invalid == "blank") json = "";
             if (invalid == "integer-overflow") json = json.Replace("\"activeSlot\": 2", "\"activeSlot\": 9223372036854775808");
-            File.WriteAllText(IndexPath, json);
-            if (invalid == "invalid-utf8") File.WriteAllBytes(IndexPath, new byte[] { 0xef, 0xbb, 0xbf, 0xff });
+            // Each case is sealed, so the index is rejected for its own contents.
+            SaveFileCommit.Write(IndexPath, invalid == "invalid-utf8" ? new byte[] { 0xef, 0xbb, 0xbf, 0xff } : Encoding.UTF8.GetBytes(json));
             byte[] invalidBytes = File.ReadAllBytes(IndexPath);
 
             string backupPath = slots.Load();

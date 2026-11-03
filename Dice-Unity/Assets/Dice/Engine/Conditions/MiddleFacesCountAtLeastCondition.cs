@@ -14,8 +14,7 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.CountOf(dice, 3) + ModifierConditionHelpers.CountOf(dice, 4) >= Parameter;
+            return context.CurrentHand.CountOf(3) + context.CurrentHand.CountOf(4) >= Parameter;
         }
     }
 }

@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            int largestGroup = ModifierConditionHelpers.LargestGroup(dice);
+            int largestGroup = ModifierConditionHelpers.LargestGroup(context);
             return largestGroup == context.HandsRemaining || largestGroup == context.RerollsRemaining;
         }
     }

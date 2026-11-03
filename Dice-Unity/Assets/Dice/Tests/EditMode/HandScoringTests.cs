@@ -21,7 +21,7 @@ namespace Dice.Tests
                     remaining /= 6;
                 }
                 var dice = new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]);
-                HandCategory actual = HandEvaluator.Evaluate(dice);
+                HandCategory actual = HandEvaluator.Evaluate(HandDice.Full(dice));
                 Assert.That(actual, Is.EqualTo(Oracle(faces)), "Ordered hand " + encoded);
                 Assert.That(dice.ToArray(), Is.EqualTo(faces));
                 ++distribution[(int)actual];
@@ -48,7 +48,7 @@ namespace Dice.Tests
         {
             var counts = new int[8];
             counts[(int)HandCategory.FullHouse] = upgrades;
-            var result = HandScorer.Calculate(new DiceValues(2, 2, 2, 5, 5), TestContent.Catalog(), counts);
+            var result = HandScorer.Calculate(HandDice.Full(new DiceValues(2, 2, 2, 5, 5)), TestContent.Catalog(), counts);
             Assert.That(result.HandScore, Is.EqualTo(expectedScore));
             Assert.That(result.DiceSum, Is.EqualTo(16));
             Assert.That(result.CategoryBaseScore, Is.EqualTo(20));
@@ -60,7 +60,7 @@ namespace Dice.Tests
         {
             var counts = new int[8];
             counts[(int)HandCategory.FiveOfAKind] = 6;
-            var result = HandScorer.Calculate(new DiceValues(6, 6, 6, 6, 6), TestContent.Catalog(), counts);
+            var result = HandScorer.Calculate(HandDice.Full(new DiceValues(6, 6, 6, 6, 6)), TestContent.Catalog(), counts);
             Assert.That(result.BaseScore, Is.EqualTo(90));
             Assert.That(result.Multiplier, Is.EqualTo(26));
             Assert.That(result.HandScore, Is.EqualTo(2340));
@@ -69,7 +69,7 @@ namespace Dice.Tests
         [Test]
         public void HighDieHasNoExtraUniversalMultiplier()
         {
-            var result = HandScorer.Calculate(new DiceValues(1, 2, 3, 4, 6), TestContent.Catalog(), new int[8]);
+            var result = HandScorer.Calculate(HandDice.Full(new DiceValues(1, 2, 3, 4, 6)), TestContent.Catalog(), new int[8]);
             Assert.That(result.Category, Is.EqualTo(HandCategory.HighDie));
             Assert.That(result.Multiplier, Is.EqualTo(1));
             Assert.That(result.HandScore, Is.EqualTo(21));
@@ -78,8 +78,8 @@ namespace Dice.Tests
         [Test]
         public void AllSameParityDoesNotIntroduceInactiveFlushCategory()
         {
-            Assert.That(HandEvaluator.Evaluate(new DiceValues(2, 2, 4, 4, 6)), Is.EqualTo(HandCategory.TwoPair));
-            Assert.That(HandEvaluator.Evaluate(new DiceValues(1, 1, 1, 3, 3)), Is.EqualTo(HandCategory.FullHouse));
+            Assert.That(HandEvaluator.Evaluate(HandDice.Full(new DiceValues(2, 2, 4, 4, 6))), Is.EqualTo(HandCategory.TwoPair));
+            Assert.That(HandEvaluator.Evaluate(HandDice.Full(new DiceValues(1, 1, 1, 3, 3))), Is.EqualTo(HandCategory.FullHouse));
         }
 
         [Test]
@@ -130,8 +130,30 @@ namespace Dice.Tests
         public void EvaluatorStatesTheDiceThatFormTheCategory(int first, int second, int third, int fourth, int fifth,
             HandCategory category, int expectedMask)
         {
-            Assert.That(HandEvaluator.Evaluate(new DiceValues(first, second, third, fourth, fifth), out int mask), Is.EqualTo(category));
+            Assert.That(HandEvaluator.Evaluate(HandDice.Full(new DiceValues(first, second, third, fourth, fifth)), out int mask), Is.EqualTo(category));
             Assert.That(mask, Is.EqualTo(expectedMask));
+        }
+
+        /**
+         * Checks a die that does not count counts toward nothing in the category, its forming dice, the counted dice and the
+         * sum, and a hand counts at least one die / fails if an uncounted die completes a hand, forms one or adds to the sum.
+         */
+        [Test]
+        public void UncountedDiceCountTowardNothing()
+        {
+            Assert.That(HandEvaluator.Evaluate(new HandDice(new DiceValues(1, 2, 3, 4, 5), 30), out int highMask),
+                Is.EqualTo(HandCategory.HighDie));
+            Assert.That(highMask, Is.EqualTo(1 << 4), "The high die is the highest counted die.");
+            Assert.That(HandEvaluator.Evaluate(new HandDice(new DiceValues(1, 1, 1, 3, 3), 30), out int pairsMask),
+                Is.EqualTo(HandCategory.TwoPair));
+            Assert.That(pairsMask, Is.EqualTo(30));
+            var score = HandScorer.Calculate(new HandDice(new DiceValues(1, 2, 2, 4, 6), 30), TestContent.Catalog(), new int[8]);
+            Assert.That(score.Category, Is.EqualTo(HandCategory.Pair));
+            Assert.That(score.FormingDiceMask, Is.EqualTo(6));
+            Assert.That(score.CountedDiceMask, Is.EqualTo(30));
+            Assert.That(score.DiceSum, Is.EqualTo(14));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new HandDice(new DiceValues(1, 1, 1, 1, 1), 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new HandDice(new DiceValues(1, 1, 1, 1, 1), 32));
         }
 
         /** Checks the score breakdown states the dice that form its category / fails if the breakdown's dice differ from the evaluator's or are left empty. */
@@ -139,7 +161,7 @@ namespace Dice.Tests
         [TestCase(1, 2, 3, 4, 6, 16)]
         public void ScoreStatesTheDiceThatFormItsCategory(int first, int second, int third, int fourth, int fifth, int expectedMask)
         {
-            var score = HandScorer.Calculate(new DiceValues(first, second, third, fourth, fifth), TestContent.Catalog(), new int[8]);
+            var score = HandScorer.Calculate(HandDice.Full(new DiceValues(first, second, third, fourth, fifth)), TestContent.Catalog(), new int[8]);
             Assert.That(score.FormingDiceMask, Is.EqualTo(expectedMask));
         }
 
@@ -169,7 +191,7 @@ namespace Dice.Tests
         {
             var upgrades = new int[8];
             upgrades[0] = count;
-            Assert.Throws<ArgumentOutOfRangeException>(() => HandScorer.Calculate(new DiceValues(1, 2, 3, 4, 6), TestContent.Catalog(), upgrades));
+            Assert.Throws<ArgumentOutOfRangeException>(() => HandScorer.Calculate(HandDice.Full(new DiceValues(1, 2, 3, 4, 6)), TestContent.Catalog(), upgrades));
         }
     }
 }

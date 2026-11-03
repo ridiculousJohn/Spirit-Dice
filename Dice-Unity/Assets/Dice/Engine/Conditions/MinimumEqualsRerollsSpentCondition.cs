@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.Minimum(dice) == context.RerollsSpentOnHand;
+            return context.CurrentHand.Minimum == context.RerollsSpentOnHand;
         }
     }
 }

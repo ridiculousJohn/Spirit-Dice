@@ -18,8 +18,8 @@ namespace Dice.App
         public static EncounterSaveData Load(string path, MechanicalCatalog catalog)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("A save path is required.", nameof(path));
-            byte[] bytes = SaveFileText.ReadBounded(path, EncounterSaveCodec.MaximumSaveBytes, "The save");
-            return EncounterSaveCodec.Deserialize(bytes, catalog);
+            byte[] bytes = SaveFileText.ReadBounded(path, EncounterSaveCodec.MaximumSaveBytes, "The save", out bool isSealed);
+            return EncounterSaveCodec.Deserialize(bytes, catalog, isSealed);
         }
     }
 }

@@ -142,21 +142,15 @@ namespace Dice.Engine
             return new DieInterferenceSaveData { DisturbedMask = value.DisturbedMask, LatestDisturbedMask = value.LatestDisturbedMask };
         }
 
-        internal override bool TryRestoreState(EncounterState restored, object saved, bool postPlay, out EncounterRuleState state,
-            out string detail)
+        /** The disturbed mask names dice within the five bays and holds the latest disturbed die, as the snapshot requires. */
+        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
         {
             var source = (DieInterferenceSaveData)saved;
             state = null;
             int disturbed = source.DisturbedMask;
             int latest = source.LatestDisturbedMask;
-            if ((disturbed & ~DiceValues.AllMask) != 0 || (latest & ~disturbed) != 0 || (latest & (latest - 1)) != 0)
-                detail = "Disturbed dice masks are inconsistent.";
-            // Before a hand is played, the latest disturbance followed a reroll and could only target a kept die.
-            else if (!postPlay && (latest & restored.LatestRerollMask) != 0)
-                detail = "A reroll disturbance must target a kept die.";
-            // Each committed action resolves at most one disturbance.
-            else if (DiceValues.CountBays(disturbed) > (long)restored.RerollsSpentOnHand + (postPlay ? 1 : 0))
-                detail = "Disturbed dice exceed the hand's committed actions.";
+            if ((disturbed & ~DiceValues.AllMask) != 0 || (latest & ~disturbed) != 0)
+                detail = "Disturbed dice lie outside the five bays or the latest disturbed die is not among them.";
             else
             {
                 detail = null;
@@ -171,9 +165,6 @@ namespace Dice.Engine
             value.DisturbedMask = 0;
             value.LatestDisturbedMask = 0;
         }
-
-        internal override int DiceChangedOutsideRerollsMask(EncounterRuleState ruleState)
-            => ((DieInterferenceState)ruleState).DisturbedMask;
 
         internal override bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
             InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events)

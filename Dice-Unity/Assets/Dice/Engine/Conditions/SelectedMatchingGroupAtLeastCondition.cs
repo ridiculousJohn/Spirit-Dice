@@ -14,9 +14,8 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
             for (int face = DiceValues.MinimumFace; face <= DiceValues.MaximumFace; ++face)
-                if (ModifierConditionHelpers.SelectedCountOf(dice, context.SelectedMask, face) >= Parameter) return true;
+                if (context.CurrentHand.CountOf(face, context.SelectedMask) >= Parameter) return true;
             return false;
         }
     }

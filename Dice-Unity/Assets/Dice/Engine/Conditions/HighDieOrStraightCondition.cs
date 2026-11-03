@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            var category = HandEvaluator.Evaluate(dice);
+            var category = HandEvaluator.Evaluate(context.CurrentHand);
             return category == HandCategory.HighDie || category == HandCategory.Straight;
         }
     }

@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return DiceValues.IsFace(context.RerollsRemaining) && ModifierConditionHelpers.CountOf(dice, context.RerollsRemaining) > 0;
+            return DiceValues.IsFace(context.RerollsRemaining) && context.CurrentHand.CountOf(context.RerollsRemaining) > 0;
         }
     }
 }

@@ -108,37 +108,19 @@ namespace Dice.Engine
             return new DieBindingSaveData { BoundMask = value.BoundMask, MarkedMask = value.MarkedMask };
         }
 
-        internal override bool TryRestoreState(EncounterState restored, object saved, bool postPlay, out EncounterRuleState state,
-            out string detail)
+        /** The bound and marked masks name dice within the five bays. */
+        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
         {
             var source = (DieBindingSaveData)saved;
             state = null;
-            int bound = source.BoundMask;
-            int marked = source.MarkedMask;
-            ExpectedBindings(restored.RerollsSpentOnHand, out int expectedBound, out bool expectsMark);
-            if ((bound & ~DiceValues.AllMask) != 0 || (marked & ~DiceValues.AllMask) != 0 || (bound & marked) != 0 ||
-                (marked & (marked - 1)) != 0)
-                detail = "Bound and marked dice masks are inconsistent.";
-            else if (DiceValues.CountBays(bound) != expectedBound || (marked != 0) != expectsMark)
-                detail = "Bound and marked dice disagree with the hand's rerolls.";
+            if ((source.BoundMask & ~DiceValues.AllMask) != 0 || (source.MarkedMask & ~DiceValues.AllMask) != 0)
+                detail = "Bound or marked dice lie outside the five bays.";
             else
             {
                 detail = null;
-                state = new DieBindingState { BoundMask = bound, MarkedMask = marked };
+                state = new DieBindingState { BoundMask = source.BoundMask, MarkedMask = source.MarkedMask };
             }
             return state != null;
-        }
-
-        /** Replays the marking schedule for a hand; it settles once every die is bound or nothing remains to mark. */
-        private void ExpectedBindings(int rerollsSpentOnHand, out int bound, out bool marked)
-        {
-            bound = 0;
-            marked = MarksAfterOpeningRoll;
-            for (int i = 0; i < rerollsSpentOnHand && (marked || (MarksAfterPlayerReroll && bound < DiceValues.Count)); ++i)
-            {
-                if (marked) ++bound;
-                marked = MarksAfterPlayerReroll && bound < DiceValues.Count;
-            }
         }
 
         internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events)

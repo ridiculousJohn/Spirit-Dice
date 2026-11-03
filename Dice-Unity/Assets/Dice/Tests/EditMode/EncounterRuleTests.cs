@@ -38,29 +38,6 @@ namespace Dice.Tests
             Assert.That(session.CaptureSave().RerollsSpentInStage, Is.EqualTo(2));
         }
 
-        /** Checks the rule counts only the rerolls whose cost it waived and its stage count restarts when a stage starts. */
-        [Test]
-        public void TheRuleCountsOnlyWaivedRerollsAndRestartsItsStageCountAtEachStage()
-        {
-            var catalog = Catalog(stages: new[] { new StageDefinition(1, 1, 1), new StageDefinition(1000000, 2, 0) });
-            var session = Session(catalog);
-            Assert.That(Free(session.CaptureSave()).FreeRerollsUsedInStage, Is.Zero);
-            Assert.That(Free(session.CaptureSave()).TotalFreeRerollsUsed, Is.Zero);
-            Execute(session, new RerollDiceAction(1));
-            Execute(session, new RerollDiceAction(1));
-            Assert.That(session.Snapshot.RerollsRemaining, Is.Zero, "The second reroll is paid.");
-            Assert.That(Free(session.CaptureSave()).FreeRerollsUsedInStage, Is.EqualTo(1));
-            Assert.That(Free(session.CaptureSave()).TotalFreeRerollsUsed, Is.EqualTo(1));
-            Execute(session, PlayHandAction.Instance);
-            Assert.That(session.Snapshot.StageIndex, Is.EqualTo(1));
-            Assert.That(Free(session.CaptureSave()).FreeRerollsUsedInStage, Is.Zero);
-            Assert.That(Free(session.CaptureSave()).TotalFreeRerollsUsed, Is.EqualTo(1));
-            Execute(session, new RerollDiceAction(1));
-            Assert.That(Free(session.CaptureSave()).FreeRerollsUsedInStage, Is.EqualTo(1));
-            Assert.That(Free(session.CaptureSave()).TotalFreeRerollsUsed, Is.EqualTo(2));
-            Restore(catalog, session.CaptureSave());
-        }
-
         [Test]
         public void InvalidAndStaleRequestsLeaveTheFreeActionAvailableAtZeroPaidResources()
         {
@@ -212,18 +189,6 @@ namespace Dice.Tests
             }
         }
 
-        [TestCaseSource(nameof(InvalidAccounting))]
-        public void RestoreRejectsImpossibleFreeAndPaidAccounting(Action<EncounterSaveData> mutate)
-        {
-            var catalog = Catalog();
-            var session = Session(catalog);
-            Execute(session, new RerollDiceAction(1));
-            var save = session.CaptureSave();
-            mutate(save);
-            var restored = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(restored.Error, Is.EqualTo(EncounterRestoreError.InvalidState), restored.Detail);
-        }
-
         [Test]
         public void RulesAreCopiedAndRejectNullOrDuplicateDefinitions()
         {
@@ -239,20 +204,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void RestoreRejectsFreeHistoryOnAHandWithNoAcceptedReroll()
-        {
-            var catalog = Catalog();
-            var save = Session(catalog).CaptureSave();
-            save.Revision = 1;
-            save.RerollsSpentInStage = 1;
-            save.TotalRerollsSpent = 1;
-            Free(save).FreeRerollsUsedInStage = 1;
-            Free(save).TotalFreeRerollsUsed = 1;
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-        }
-
-        [Test]
-        public void EncountersWithoutRulesKeepPaidCostsAndRejectInventedFreeHistory()
+        public void EncountersWithoutRulesKeepPaidCosts()
         {
             var catalog = TestContent.Catalog();
             var session = Session(catalog);
@@ -260,16 +212,6 @@ namespace Dice.Tests
             var reroll = Execute(session, new RerollDiceAction(1));
             Assert.That(reroll.Snapshot.RerollsRemaining, Is.EqualTo(19));
             Assert.That(reroll.Events.OfType<EncounterRuleActivatedEvent>(), Is.Empty);
-            var save = session.CaptureSave();
-            save.RuleStates = new[]
-            {
-                new EncounterSaveRuleData
-                {
-                    RuleId = FreeId,
-                    State = new FirstRerollFreeSaveData { FreeRerollsUsedInStage = 1, TotalFreeRerollsUsed = 1 }
-                }
-            };
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
         }
 
         /**
@@ -298,26 +240,6 @@ namespace Dice.Tests
             Assert.That(favored, Is.Not.EqualTo(plain));
             Assert.That(plain.TextValues, Is.Empty);
         }
-
-        private static IEnumerable<TestCaseData> InvalidAccounting()
-        {
-            yield return Invalid("negative stage actions", save => save.RerollsSpentInStage = -1);
-            yield return Invalid("negative stage free", save => Free(save).FreeRerollsUsedInStage = -1);
-            yield return Invalid("negative total free", save => Free(save).TotalFreeRerollsUsed = -1);
-            yield return Invalid("missing stage free", save => Free(save).FreeRerollsUsedInStage = 0);
-            yield return Invalid("missing total free", save => Free(save).TotalFreeRerollsUsed = 0);
-            yield return Invalid("inflated stage free", save => Free(save).FreeRerollsUsedInStage = 2);
-            yield return Invalid("inflated total free", save => Free(save).TotalFreeRerollsUsed = 2);
-            yield return Invalid("missing stage action", save => save.RerollsSpentInStage = 0);
-            yield return Invalid("invented paid spending", save => --save.RerollsRemaining);
-            yield return Invalid("invented total action", save => { ++save.TotalRerollsSpent; ++save.Revision; });
-        }
-
-        private static TestCaseData Invalid(string name, Action<EncounterSaveData> mutate)
-            => new TestCaseData(mutate).SetName("EncounterRuleAccounting_" + name);
-
-        private static FirstRerollFreeSaveData Free(EncounterSaveData save)
-            => (FirstRerollFreeSaveData)save.RuleStates.Single(value => value.RuleId == FreeId).State;
 
         private static ModifierDefinition Modifier(string id, ModifierPhase phase, IModifierCondition condition,
             ModifierEffect effect, ModifierActivationLimit limit = ModifierActivationLimit.Unlimited)

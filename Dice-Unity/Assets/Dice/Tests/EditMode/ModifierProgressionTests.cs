@@ -80,7 +80,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void CurrentSaveRejectsUnknownDiscoveryAndUnlockFromAnUndiscoveredFamily()
+        public void CurrentSaveRejectsUnknownDiscovery()
         {
             var modifiers = new[] { Modifier("visible", access: ModifierAccess.PermanentUnlock),
                 Modifier("hidden", access: ModifierAccess.PermanentUnlock) };
@@ -92,12 +92,6 @@ namespace Dice.Tests
             var save = session.CaptureSave();
             save.DiscoveredFamilyIds = new[] { TestFamilies.IdOf("unknown.family") };
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
-            save = session.CaptureSave();
-            save.PendingReward.Options[0].DefinitionId = modifiers[1].Identity;
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            save = session.CaptureSave();
-            save.PendingUnlockOfferDiscoveredFamilyIds = null;
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
         }
 
         private static ModifierDefinition Modifier(string id, int tier = 1, ModifierAccess access = ModifierAccess.Starter,
@@ -378,19 +372,12 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void NewSaveRejectsIneligiblePendingChoiceAndInvalidEarnedUnlocks()
+        public void CurrentSaveRequiresTheUnlockedModifiers()
         {
             var modifiers = new[] { Modifier("starter"), Modifier("locked", access: ModifierAccess.PermanentUnlock) };
             var catalog = Catalog(modifiers);
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 9);
             session.Execute(PlayHandAction.Instance, 0);
-            var save = session.CaptureSave();
-            save.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf("locked");
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            save = session.CaptureSave();
-            save.UnlockedModifierIds = TestModifiers.IdsOf("locked");
-            save.NewlyUnlockedModifierIds = TestModifiers.IdsOf("locked");
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
             var document = JObject.Parse(System.Text.Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(session.CaptureSave())));
             document.Remove(nameof(EncounterSaveData.UnlockedModifierIds));
             Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(System.Text.Encoding.UTF8.GetBytes(document.ToString()), catalog));

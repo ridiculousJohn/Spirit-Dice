@@ -20,7 +20,7 @@ namespace Dice.Tests
             var save = EncounterSession.CreateEncounter(TestContent.Catalog(), TestContent.EncounterId, 42).CaptureSave();
             save.PendingUpgradeCategories = Array.Empty<HandCategory>();
             var restored = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), TestContent.Catalog());
-            Assert.That(restored.DiceBeforeLastReroll, Is.Null);
+            Assert.That(restored.HandBeforeLastReroll, Is.Null);
             Assert.That(restored.PendingUpgradeCategories, Is.Not.Null.And.Empty);
             Assert.That(EncounterSaveCodec.Serialize(restored), Is.EqualTo(EncounterSaveCodec.Serialize(save)));
         }
@@ -43,7 +43,7 @@ namespace Dice.Tests
             var invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
             invalid["HasPreviousStage"] = 2;
             Assert.Throws<FormatException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(invalid.ToString()), TestContent.Catalog()));
-            foreach (int version in new[] { EncounterSaveData.CurrentFormatVersion - 1, EncounterSaveData.CurrentFormatVersion + 1 })
+            foreach (int version in new[] { EncounterSaveCodec.OldestFormatVersion - 1, EncounterSaveData.CurrentFormatVersion + 1 })
             {
                 invalid = JObject.Parse(Encoding.UTF8.GetString(bytes));
                 invalid["SaveFormatVersion"] = version;
@@ -62,26 +62,29 @@ namespace Dice.Tests
                 document => { seen.Add("second from " + document["version"]); document["second"] = true; });
             Assert.That(upgrades.OldestVersion, Is.EqualTo(2));
             var oldest = new JObject { ["version"] = 2 };
-            Assert.That(upgrades.Upgrade(oldest), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(upgrades.Upgrade(oldest, false), Is.EqualTo(SaveFormatCheck.Upgraded), "An unsealed older document upgrades.");
             Assert.That(seen, Is.EqualTo(new[] { "first from 2", "second from 3" }));
             Assert.That((int)oldest["version"], Is.EqualTo(4));
             Assert.That((bool)oldest["first"] && (bool)oldest["second"], Is.True);
             seen.Clear();
             var newer = new JObject { ["version"] = 3 };
-            Assert.That(upgrades.Upgrade(newer), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(upgrades.Upgrade(newer, true), Is.EqualTo(SaveFormatCheck.Upgraded));
             Assert.That(seen, Is.EqualTo(new[] { "second from 3" }));
             Assert.That((int)newer["version"], Is.EqualTo(4));
             seen.Clear();
-            Assert.That(upgrades.Upgrade(new JObject { ["version"] = 4 }), Is.EqualTo(SaveFormatCheck.Upgraded));
+            Assert.That(upgrades.Upgrade(new JObject { ["version"] = 4 }, true), Is.EqualTo(SaveFormatCheck.Upgraded));
+            var unsealed = new JObject { ["version"] = 4 };
+            Assert.That(upgrades.Upgrade(unsealed, false), Is.EqualTo(SaveFormatCheck.Unsealed));
+            Assert.That((int)unsealed["version"], Is.EqualTo(4));
             Assert.That(seen, Is.Empty);
             foreach (int version in new[] { 1, 5 })
             {
                 var unsupported = new JObject { ["version"] = version };
-                Assert.That(upgrades.Upgrade(unsupported), Is.EqualTo(SaveFormatCheck.VersionUnsupported), version.ToString());
+                Assert.That(upgrades.Upgrade(unsupported, true), Is.EqualTo(SaveFormatCheck.VersionUnsupported), version.ToString());
                 Assert.That((int)unsupported["version"], Is.EqualTo(version), "A rejected document is left unchanged.");
             }
-            Assert.That(upgrades.Upgrade(new JObject()), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
-            Assert.That(upgrades.Upgrade(new JObject { ["version"] = "2" }), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
+            Assert.That(upgrades.Upgrade(new JObject(), true), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
+            Assert.That(upgrades.Upgrade(new JObject { ["version"] = "2" }, true), Is.EqualTo(SaveFormatCheck.VersionNotInteger));
             Assert.That(seen, Is.Empty);
         }
 

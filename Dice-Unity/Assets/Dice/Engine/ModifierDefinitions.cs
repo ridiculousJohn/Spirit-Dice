@@ -102,10 +102,17 @@ namespace Dice.Engine
 
     public readonly struct ModifierContext : IEquatable<ModifierContext>
     {
-        public DiceValues CurrentDice { get; }
-        public DiceValues InitialDice { get; }
-        public DiceValues? BeforeRerollDice { get; }
-        public DiceValues? PreviousPlayedDice { get; }
+        /**
+         * The hand as it stands. Conditions over the whole hand see only its counted dice, and a condition that names
+         * positions is false when a position it reads does not count.
+         */
+        public HandDice CurrentHand { get; }
+        /** The hand as the rules leave it after the opening roll of this hand. */
+        public HandDice InitialHand { get; }
+        /** The hand as it stood when the latest player reroll of this hand was committed; null before the first. */
+        public HandDice? BeforeRerollHand { get; }
+        /** The hand last played in the encounter, as it scored; null until a hand is played. */
+        public HandDice? PreviousPlayedHand { get; }
         public int SelectedMask { get; }
         public int EverRerolledMask { get; }
         public int RerollsSpentOnHand { get; }
@@ -121,26 +128,26 @@ namespace Dice.Engine
         public int? PreviousStageHandsRemaining { get; }
         /** The encounter's rules as conditions observe them; a condition depending on a rule reads that rule's snapshot type. */
         public IReadOnlyList<EncounterRuleSnapshot> EncounterRules { get; }
-        public ModifierContext(DiceValues currentDice, DiceValues initialDice, DiceValues? beforeRerollDice,
-            DiceValues? previousPlayedDice, int selectedMask, int everRerolledMask, int rerollsSpentOnHand,
+        public ModifierContext(HandDice currentHand, HandDice initialHand, HandDice? beforeRerollHand,
+            HandDice? previousPlayedHand, int selectedMask, int everRerolledMask, int rerollsSpentOnHand,
             int handsRemaining, int rerollsRemaining, int handsPlayedInStage, int startingHands,
             int? previousStageStartingHands, int? previousStageHandsRemaining,
             IReadOnlyList<EncounterRuleSnapshot> encounterRules = null)
         {
-            if (!currentDice.IsValid || !initialDice.IsValid ||
-                (beforeRerollDice.HasValue && !beforeRerollDice.Value.IsValid) ||
-                (previousPlayedDice.HasValue && !previousPlayedDice.Value.IsValid))
-                throw new ArgumentException("Context dice must contain five valid faces.");
+            if (!currentHand.IsValid || !initialHand.IsValid ||
+                (beforeRerollHand.HasValue && !beforeRerollHand.Value.IsValid) ||
+                (previousPlayedHand.HasValue && !previousPlayedHand.Value.IsValid))
+                throw new ArgumentException("Context hands must contain five valid faces and at least one counted die.");
             if ((selectedMask & ~DiceValues.AllMask) != 0 || (everRerolledMask & ~DiceValues.AllMask) != 0)
                 throw new ArgumentOutOfRangeException(nameof(selectedMask));
             if (rerollsSpentOnHand < 0 || handsRemaining < 0 || rerollsRemaining < 0 ||
                 handsPlayedInStage < 0 || startingHands < 1 || previousStageStartingHands < 1 ||
                 previousStageHandsRemaining < 0)
                 throw new ArgumentOutOfRangeException(nameof(handsRemaining));
-            CurrentDice = currentDice;
-            InitialDice = initialDice;
-            BeforeRerollDice = beforeRerollDice;
-            PreviousPlayedDice = previousPlayedDice;
+            CurrentHand = currentHand;
+            InitialHand = initialHand;
+            BeforeRerollHand = beforeRerollHand;
+            PreviousPlayedHand = previousPlayedHand;
             SelectedMask = selectedMask;
             EverRerolledMask = everRerolledMask;
             RerollsSpentOnHand = rerollsSpentOnHand;
@@ -155,8 +162,8 @@ namespace Dice.Engine
 
         public bool Equals(ModifierContext other)
         {
-            if (CurrentDice != other.CurrentDice || InitialDice != other.InitialDice ||
-                BeforeRerollDice != other.BeforeRerollDice || PreviousPlayedDice != other.PreviousPlayedDice ||
+            if (CurrentHand != other.CurrentHand || InitialHand != other.InitialHand ||
+                BeforeRerollHand != other.BeforeRerollHand || PreviousPlayedHand != other.PreviousPlayedHand ||
                 SelectedMask != other.SelectedMask || EverRerolledMask != other.EverRerolledMask ||
                 RerollsSpentOnHand != other.RerollsSpentOnHand || HandsRemaining != other.HandsRemaining ||
                 RerollsRemaining != other.RerollsRemaining || HandsPlayedInStage != other.HandsPlayedInStage ||
@@ -177,8 +184,8 @@ namespace Dice.Engine
         {
             unchecked
             {
-                int hash = CurrentDice.GetHashCode();
-                hash = hash * 397 ^ InitialDice.GetHashCode();
+                int hash = CurrentHand.GetHashCode();
+                hash = hash * 397 ^ InitialHand.GetHashCode();
                 hash = hash * 397 ^ SelectedMask;
                 hash = hash * 397 ^ EverRerolledMask;
                 hash = hash * 397 ^ HandsRemaining;

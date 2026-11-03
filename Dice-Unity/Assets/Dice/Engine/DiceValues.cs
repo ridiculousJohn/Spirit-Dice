@@ -52,22 +52,6 @@ namespace Dice.Engine
         public bool IsValid => IsFace(first) && IsFace(second) && IsFace(third) && IsFace(fourth) && IsFace(fifth);
         public int[] ToArray() => new[] { first, second, third, fourth, fifth };
 
-        /** The number of different faces among the dice. */
-        public int DistinctFaceCount
-        {
-            get
-            {
-                int seen = 0, distinct = 0;
-                for (int i = 0; i < Count; ++i)
-                {
-                    int bit = 1 << this[i];
-                    if ((seen & bit) == 0) ++distinct;
-                    seen |= bit;
-                }
-                return distinct;
-            }
-        }
-
         /** The dice whose faces differ from the other dice in the same bays. */
         public int DifferingMask(DiceValues other)
         {

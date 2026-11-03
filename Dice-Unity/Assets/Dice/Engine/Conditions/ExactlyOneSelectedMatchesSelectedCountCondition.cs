@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.SelectedCountOf(dice, context.SelectedMask, DiceValues.CountBays(context.SelectedMask)) == 1;
+            return context.CurrentHand.CountOf(DiceValues.CountBays(context.SelectedMask), context.SelectedMask) == 1;
         }
     }
 }

@@ -42,6 +42,20 @@ namespace Dice.Tests
             Assert.That(Load().GetProfilePath(3), Is.EqualTo(ProfilePath(third)));
         }
 
+        /** Checks a slot claim changed after it was sealed is no claim / fails if the changed claim assigns its campaign. */
+        [Test]
+        public void AChangedSlotClaimIsNoClaim()
+        {
+            Guid id = CreateCampaign(2);
+            string metadata = CampaignFile(id, "spirit-campaign.json");
+            byte[] file = File.ReadAllBytes(metadata);
+            file[Array.LastIndexOf(file, (byte)'2')] = (byte)'3';
+            File.WriteAllBytes(metadata, file);
+            var slots = Load();
+            Assert.That(slots.HasGame(2) || slots.HasGame(3), Is.False);
+            Assert.That(slots.RecoveryCampaigns.Single().SuggestedSlot, Is.Zero);
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void RecoverySelectsTheFirstOccupiedSlot(bool corrupt)
@@ -108,7 +122,7 @@ namespace Dice.Tests
             WriteIndex(null, id, null);
             var slots = Load();
             Assert.That(slots.RecoveryCampaigns, Is.Empty);
-            Assert.That(JObject.Parse(File.ReadAllText(CampaignFile(id, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(2));
+            Assert.That(ReadSealed(CampaignFile(id, "spirit-campaign.json"))["slot"].Value<int>(), Is.EqualTo(2));
             File.WriteAllText(IndexPath, "invalid index");
             slots.Load();
             Assert.That(slots.GetProfilePath(2), Is.EqualTo(ProfilePath(id)));
@@ -147,7 +161,7 @@ namespace Dice.Tests
             slots = Load();
             Assert.That(slots.GetProfilePath(1), Is.EqualTo(ProfilePath(candidate)));
             Assert.That(slots.RecoveryCampaigns.Single().CampaignId, Is.EqualTo(occupied));
-            Assert.That(JObject.Parse(File.ReadAllText(CampaignFile(candidate, "spirit-campaign.json")))["slot"].Value<int>(), Is.EqualTo(1));
+            Assert.That(ReadSealed(CampaignFile(candidate, "spirit-campaign.json"))["slot"].Value<int>(), Is.EqualTo(1));
         }
 
         [Test]
@@ -265,7 +279,7 @@ namespace Dice.Tests
         {
             string outside = Path.Combine(root, "outside");
             Directory.CreateDirectory(outside);
-            File.WriteAllBytes(Path.Combine(outside, "spirit-profile.json"), PlayerProfileCodec.Serialize(new PlayerProfile()));
+            SaveFileCommit.Write(Path.Combine(outside, "spirit-profile.json"), PlayerProfileCodec.Serialize(new PlayerProfile()));
             string linked = Path.Combine(root, Guid.NewGuid().ToString("N"));
             CreateJunction(linked, outside);
             var slots = Load();
@@ -358,10 +372,9 @@ namespace Dice.Tests
         {
             Guid id = Guid.NewGuid();
             Directory.CreateDirectory(Path.Combine(root, id.ToString("N")));
-            File.WriteAllBytes(ProfilePath(id), PlayerProfileCodec.Serialize(new PlayerProfile()));
+            SaveFileCommit.Write(ProfilePath(id), PlayerProfileCodec.Serialize(new PlayerProfile()));
             if (slot != 0)
-                File.WriteAllText(CampaignFile(id, "spirit-campaign.json"),
-                    new JObject { ["formatVersion"] = 1, ["slot"] = slot }.ToString());
+                WriteSealed(CampaignFile(id, "spirit-campaign.json"), new JObject { ["formatVersion"] = 2, ["slot"] = slot });
             return id;
         }
 
@@ -369,12 +382,22 @@ namespace Dice.Tests
 
         private string ProfilePath(Guid id) => CampaignFile(id, "spirit-profile.json");
 
-        private void WriteIndex(params Guid?[] campaigns) => File.WriteAllText(IndexPath, new JObject
+        private void WriteIndex(params Guid?[] campaigns) => WriteSealed(IndexPath, new JObject
         {
-            ["formatVersion"] = 1,
+            ["formatVersion"] = 2,
             ["activeSlot"] = 1,
             ["campaigns"] = new JArray(campaigns.Select(id => id?.ToString("N")).ToArray())
-        }.ToString());
+        });
+
+        private static void WriteSealed(string path, JObject document)
+            => SaveFileCommit.Write(path, SaveFileText.Encoding.GetBytes(document.ToString()));
+
+        private static JObject ReadSealed(string path)
+        {
+            byte[] payload = SaveFileText.ReadBounded(path, 4096, "The test file", out bool isSealed);
+            Assert.That(isSealed, Is.True, path);
+            return JObject.Parse(SaveFileText.Decode(payload));
+        }
 
         private CampaignSaveSlots Load()
         {

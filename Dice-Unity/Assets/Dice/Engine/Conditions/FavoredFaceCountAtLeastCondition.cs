@@ -17,7 +17,7 @@ namespace Dice.Engine
         {
             foreach (var rule in context.EncounterRules)
                 if (rule is FavoredFaceRuleSnapshot favored)
-                    return ModifierConditionHelpers.CountOf(context.CurrentDice, favored.FavoredFace) >= Parameter;
+                    return context.CurrentHand.CountOf(favored.FavoredFace) >= Parameter;
             return false;
         }
     }

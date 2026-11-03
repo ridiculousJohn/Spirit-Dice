@@ -13,13 +13,15 @@ namespace Dice.App
     {
         public const int SlotCount = 3;
         private const int MaximumIndexBytes = 4096;
-        private const int IndexFormatVersion = 1;
+        private const int IndexFormatVersion = 2;
         private const int IndexMaximumDepth = 4;
         private const string FormatVersionField = "formatVersion";
         private const string ActiveSlotField = "activeSlot";
         private const string CampaignsField = "campaigns";
         // To change the index format, raise IndexFormatVersion and append a step that upgrades the previous format.
-        private static readonly SaveFormatUpgrades IndexUpgrades = new SaveFormatUpgrades(FormatVersionField, IndexFormatVersion);
+        // Format 1 is format 2 written without a seal.
+        private static readonly SaveFormatUpgrades IndexUpgrades = new SaveFormatUpgrades(FormatVersionField, IndexFormatVersion,
+            document => { });
         private readonly string root;
         private readonly string indexPath;
         private readonly CampaignRecoveryStore recovery;
@@ -198,7 +200,7 @@ namespace Dice.App
         {
             try
             {
-                byte[] bytes = SaveFileText.ReadBounded(indexPath, MaximumIndexBytes, "The save slot index");
+                byte[] bytes = SaveFileText.ReadBounded(indexPath, MaximumIndexBytes, "The save slot index", out bool isSealed);
                 using (var input = new StringReader(SaveFileText.Decode(bytes)))
                 using (var reader = new JsonTextReader(input) { MaxDepth = IndexMaximumDepth, DateParseHandling = DateParseHandling.None })
                 {
@@ -207,8 +209,8 @@ namespace Dice.App
                         DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error
                     });
                     if (reader.Read()) throw new FormatException("The save slot index contains trailing content.");
-                    if (IndexUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded)
-                        throw new FormatException("The save slot index format version is unsupported.");
+                    if (IndexUpgrades.Upgrade(document, isSealed) != SaveFormatCheck.Upgraded)
+                        throw new FormatException("The save slot index format version is unsupported or the index is not sealed.");
                     foreach (var property in document.Properties())
                         if (property.Name != FormatVersionField && property.Name != ActiveSlotField && property.Name != CampaignsField)
                             throw new FormatException("The save slot index contains an unsupported field: " + property.Name);

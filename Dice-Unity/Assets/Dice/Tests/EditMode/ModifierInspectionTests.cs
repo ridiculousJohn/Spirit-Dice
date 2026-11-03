@@ -46,10 +46,10 @@ namespace Dice.Tests
                 Assert.That(context.RerollsRemaining, Is.EqualTo(snapshot.RerollsRemaining));
                 Assert.That(context.HandsPlayedInStage, Is.Zero);
                 Assert.That(context.StartingHands, Is.EqualTo(4));
-                Assert.That(context.CurrentDice, Is.EqualTo(snapshot.CurrentDice));
-                Assert.That(context.InitialDice, Is.EqualTo(snapshot.InitialDice));
-                Assert.That(context.BeforeRerollDice, Is.EqualTo(snapshot.DiceBeforeLastReroll));
-                Assert.That(context.PreviousPlayedDice, Is.Null);
+                Assert.That(context.CurrentHand, Is.EqualTo(new HandDice(snapshot.CurrentDice, snapshot.CountedMask)));
+                Assert.That(context.InitialHand, Is.EqualTo(snapshot.InitialHand));
+                Assert.That(context.BeforeRerollHand, Is.EqualTo(snapshot.HandBeforeLastReroll));
+                Assert.That(context.PreviousPlayedHand, Is.Null);
             }
             var preview = session.PreviewHandResolution();
             Assert.That(preview.RerollsRemaining, Is.EqualTo(4));

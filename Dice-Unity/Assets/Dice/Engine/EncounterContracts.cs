@@ -92,14 +92,19 @@ namespace Dice.Engine
         public bool CanReroll { get; }
         public ReadOnlyCollection<EncounterRuleSnapshot> EncounterRules { get; }
         public DiceValues CurrentDice { get; }
-        public DiceValues InitialDice { get; }
-        public DiceValues? DiceBeforeLastReroll { get; }
-        public DiceValues? PreviousPlayedDice { get; }
+        /** The hand as the rules leave it after the opening roll of this hand. */
+        public HandDice InitialHand { get; }
+        /** The hand as it stood when the latest player reroll of this hand was committed; null before the first. */
+        public HandDice? HandBeforeLastReroll { get; }
+        /** The hand last played in the encounter, as it scored; null until a hand is played. */
+        public HandDice? PreviousPlayedHand { get; }
         public int LatestRerollMask { get; }
         public int LatestChangedMask { get; }
         public int EverRerolledMask { get; }
         /** Dice that cannot be selected for a player reroll. */
         public int LockedMask { get; }
+        /** The dice that count in the current hand: scoring, hand ranks and charm conditions read only these. */
+        public int CountedMask { get; }
         public ReadOnlyCollection<PieceInteractionSnapshot> PieceInteractions { get; }
         public int RerollsSpentOnHand { get; }
         public int HandsPlayedInStage { get; }
@@ -143,13 +148,14 @@ namespace Dice.Engine
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
             LockedMask = EncounterRuleResolver.LockedDice(definition, state);
+            CountedMask = EncounterRuleResolver.CurrentHand(definition, state).CountedMask;
             CanReroll = state.Phase == EncounterPhase.Playing && LockedMask != DiceValues.AllMask &&
                 EncounterRuleResolver.CanAffordReroll(definition, state);
             EncounterRules = EncounterRuleResolver.Snapshots(definition, state);
             CurrentDice = state.CurrentDice;
-            InitialDice = state.InitialDice;
-            DiceBeforeLastReroll = state.DiceBeforeLastReroll;
-            PreviousPlayedDice = state.PreviousPlayedDice;
+            InitialHand = state.InitialHand;
+            HandBeforeLastReroll = state.HandBeforeLastReroll;
+            PreviousPlayedHand = state.PreviousPlayedHand;
             LatestRerollMask = state.LatestRerollMask;
             LatestChangedMask = state.LatestChangedMask;
             EverRerolledMask = state.EverRerolledMask;

@@ -8,7 +8,7 @@ namespace Dice.App
 {
     public sealed class PlayerProfile
     {
-        public const int CurrentFormatVersion = 8;
+        public const int CurrentFormatVersion = 9;
         private readonly List<ModifierFamilyDefinition.Id> discoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
         private readonly List<ModifierDefinition.Id> unlockedModifierIds = new List<ModifierDefinition.Id>();
         private readonly List<EncounterDefinition.Id> completedEncounterIds = new List<EncounterDefinition.Id>();

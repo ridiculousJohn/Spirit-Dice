@@ -19,8 +19,8 @@ namespace Dice.App
         public static PlayerProfile Load(string path)
         {
             ValidatePath(path);
-            byte[] bytes = SaveFileText.ReadBounded(path, PlayerProfileCodec.MaximumProfileBytes, "The profile");
-            return PlayerProfileCodec.Deserialize(bytes);
+            byte[] bytes = SaveFileText.ReadBounded(path, PlayerProfileCodec.MaximumProfileBytes, "The profile", out bool isSealed);
+            return PlayerProfileCodec.Deserialize(bytes, isSealed);
         }
 
         public static void Save(string path, PlayerProfile profile)

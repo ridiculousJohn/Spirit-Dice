@@ -14,8 +14,7 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return dice.Sum > Parameter;
+            return context.CurrentHand.Sum > Parameter;
         }
     }
 }

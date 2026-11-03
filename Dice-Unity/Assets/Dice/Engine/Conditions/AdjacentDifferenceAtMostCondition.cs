@@ -14,8 +14,7 @@ namespace Dice.Engine
 
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.AdjacentDifferences(dice, 0, Parameter);
+            return ModifierConditionHelpers.AdjacentDifferences(context, 0, Parameter);
         }
     }
 }

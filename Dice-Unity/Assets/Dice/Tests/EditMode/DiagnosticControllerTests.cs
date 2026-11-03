@@ -251,7 +251,7 @@ namespace Dice.Tests
                 var json = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(save)));
                 if (failure == "format") json["SaveFormatVersion"] = 99;
                 if (failure == "rules") json["RulesVersion"] = 99;
-                File.WriteAllText(savePath, failure == "malformed" ? "{ broken JSON" : json.ToString());
+                SaveFileCommit.Write(savePath, Encoding.UTF8.GetBytes(failure == "malformed" ? "{ broken JSON" : json.ToString()));
             }
             controller.ToggleDie(2);
             var before = controller.Snapshot;

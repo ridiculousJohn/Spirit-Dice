@@ -9,25 +9,30 @@ namespace Dice.Engine
         /** The face masks, one bit per face, of the straights 1 to 5 and 2 to 6. */
         private const int LowStraightFaces = 0x3e, HighStraightFaces = 0x7c;
 
-        public static HandCategory Evaluate(DiceValues dice) => Evaluate(dice, out _);
+        /** The hand's category, over its counted dice. */
+        public static HandCategory Evaluate(HandDice hand) => Evaluate(hand, out _);
 
         /**
          * The hand's category and the dice that form it, as a mask of die slots: every die of a full house, straight or
          * five of a kind, the matched dice of a pair, two pair, three or four of a kind, and the first highest die of a
-         * high die.
+         * high die. Only the counted dice rank: with fewer than five a straight, full house or five of a kind cannot be
+         * made, and the forming dice are counted dice.
          */
-        public static HandCategory Evaluate(DiceValues dice, out int formingMask)
+        public static HandCategory Evaluate(HandDice hand, out int formingMask)
         {
-            if (!dice.IsValid) throw new ArgumentException("Five valid die faces are required.", nameof(dice));
+            if (!hand.IsValid) throw new ArgumentException("Five valid die faces and at least one counted die are required.", nameof(hand));
+            DiceValues dice = hand.Faces;
+            int countedMask = hand.CountedMask;
             var counts = new int[DiceValues.MaximumFace + 1];
             int faceMask = 0;
             for (int i = 0; i < DiceValues.Count; ++i)
             {
+                if ((countedMask & (1 << i)) == 0) continue;
                 ++counts[dice[i]];
                 faceMask |= 1 << dice[i];
             }
             HandCategory category = Categorize(counts, faceMask);
-            formingMask = FormingMask(dice, counts, category);
+            formingMask = FormingMask(dice, countedMask, counts, category);
             return category;
         }
 
@@ -50,7 +55,7 @@ namespace Dice.Engine
             return HandCategory.HighDie;
         }
 
-        private static int FormingMask(DiceValues dice, int[] counts, HandCategory category)
+        private static int FormingMask(DiceValues dice, int countedMask, int[] counts, HandCategory category)
         {
             switch (category)
             {
@@ -59,15 +64,16 @@ namespace Dice.Engine
                 case HandCategory.FiveOfAKind:
                     return DiceValues.AllMask;
                 case HandCategory.HighDie:
-                    int highestIndex = 0;
-                    for (int index = 1; index < DiceValues.Count; ++index)
-                        if (dice[index] > dice[highestIndex]) highestIndex = index;
+                    int highestIndex = -1;
+                    for (int index = 0; index < DiceValues.Count; ++index)
+                        if ((countedMask & (1 << index)) != 0 && (highestIndex < 0 || dice[index] > dice[highestIndex]))
+                            highestIndex = index;
                     return 1 << highestIndex;
                 default:
                     int matchingCount = category == HandCategory.ThreeOfAKind ? 3 : category == HandCategory.FourOfAKind ? 4 : 2;
                     int mask = 0;
                     for (int index = 0; index < DiceValues.Count; ++index)
-                        if (counts[dice[index]] == matchingCount) mask |= 1 << index;
+                        if ((countedMask & (1 << index)) != 0 && counts[dice[index]] == matchingCount) mask |= 1 << index;
                     return mask;
             }
         }
@@ -78,6 +84,9 @@ namespace Dice.Engine
         public HandCategory Category { get; }
         /** The dice that form the scored category, as a mask of die slots. */
         public int FormingDiceMask { get; }
+        /** The dice the hand counts, as a mask of die slots. */
+        public int CountedDiceMask { get; }
+        /** The sum of the counted dice. */
         public int DiceSum { get; }
         public int UpgradeCount { get; }
         public long CategoryBaseScore { get; }
@@ -92,12 +101,13 @@ namespace Dice.Engine
         public long EncounterRuleMultiplier { get; }
         public ReadOnlyCollection<ModifierContribution> ModifierContributions { get; }
 
-        internal ScoreBreakdown(DiceValues dice, int formingDiceMask, HandDefinition hand, int upgradeCount,
-            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier = 0)
+        internal ScoreBreakdown(HandDice scoredHand, int formingDiceMask, HandDefinition hand, int upgradeCount,
+            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier)
         {
             Category = hand.Category;
             FormingDiceMask = formingDiceMask;
-            DiceSum = dice.Sum;
+            CountedDiceMask = scoredHand.CountedMask;
+            DiceSum = scoredHand.Sum;
             UpgradeCount = upgradeCount;
             CategoryBaseScore = hand.BaseScore;
             CategoryMultiplier = hand.Multiplier;
@@ -121,11 +131,11 @@ namespace Dice.Engine
 
     public static class HandScorer
     {
-        public static ScoreBreakdown Calculate(DiceValues dice, MechanicalCatalog catalog, IReadOnlyList<int> upgrades)
-            => Calculate(dice, catalog, upgrades, Array.Empty<ModifierContribution>());
+        public static ScoreBreakdown Calculate(HandDice hand, MechanicalCatalog catalog, IReadOnlyList<int> upgrades)
+            => Calculate(hand, catalog, upgrades, Array.Empty<ModifierContribution>(), 0);
 
-        internal static ScoreBreakdown Calculate(DiceValues dice, MechanicalCatalog catalog, IReadOnlyList<int> upgrades,
-            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier = 0)
+        internal static ScoreBreakdown Calculate(HandDice hand, MechanicalCatalog catalog, IReadOnlyList<int> upgrades,
+            IEnumerable<ModifierContribution> contributions, long encounterRuleMultiplier)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (upgrades == null) throw new ArgumentNullException(nameof(upgrades));
@@ -133,9 +143,9 @@ namespace Dice.Engine
             for (int i = 0; i < upgrades.Count; ++i)
                 if (upgrades[i] < 0 || upgrades[i] > catalog.Hands[i].MaximumUpgrades)
                     throw new ArgumentOutOfRangeException(nameof(upgrades));
-            HandCategory category = HandEvaluator.Evaluate(dice, out int formingDiceMask);
-            return new ScoreBreakdown(dice, formingDiceMask, catalog.GetHand(category), upgrades[(int)category], contributions,
-                encounterRuleMultiplier);
+            HandCategory category = HandEvaluator.Evaluate(hand, out int formingDiceMask);
+            return new ScoreBreakdown(hand, formingDiceMask, catalog.GetHand(category),
+                upgrades[(int)category], contributions, encounterRuleMultiplier);
         }
     }
 }

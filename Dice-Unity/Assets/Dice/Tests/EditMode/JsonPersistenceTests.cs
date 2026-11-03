@@ -55,7 +55,7 @@ namespace Dice.Tests
             Assert.That((string)json["PendingReward"]["Options"][0]["DefinitionId"],
                 Is.EqualTo(session.Snapshot.PendingReward.Options[0].DefinitionId.Value.Value.ToString("N")));
             Assert.That(json["PendingUpgradeCategories"].Children().All(value => value.Type == JTokenType.String), Is.True);
-            Assert.That(json["DiceBeforeLastReroll"].Type, Is.EqualTo(JTokenType.Null));
+            Assert.That(json["HandBeforeLastReroll"].Type, Is.EqualTo(JTokenType.Null));
             Assert.That(json["CurrentDice"].Type, Is.EqualTo(JTokenType.Array));
             Assert.That(json["$type"], Is.Null);
             AssertRestoresIdentically(session, json);

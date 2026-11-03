@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return dice.Sum < context.InitialDice.Sum;
+            return context.CurrentHand.Sum < context.InitialHand.Sum;
         }
     }
 }

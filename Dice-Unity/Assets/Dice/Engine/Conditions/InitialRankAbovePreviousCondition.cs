@@ -4,7 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            return ModifierConditionHelpers.CompareRank(context.InitialDice, context.PreviousPlayedDice, 1);
+            return ModifierConditionHelpers.CompareRank(context.InitialHand, context.PreviousPlayedHand, 1);
         }
     }
 }

@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.Minimum(dice) == context.HandsRemaining || ModifierConditionHelpers.Maximum(dice) == context.HandsRemaining;
+            return context.CurrentHand.Minimum == context.HandsRemaining || context.CurrentHand.Maximum == context.HandsRemaining;
         }
     }
 }

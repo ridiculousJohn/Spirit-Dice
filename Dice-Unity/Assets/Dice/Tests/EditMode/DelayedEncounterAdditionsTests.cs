@@ -25,29 +25,9 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void RestoredPendingOffersAgreeWithTheAdditionSchedule()
+        public void APendingOfferIntroducingTheAdditionsRestores()
         {
             var delayed = Catalog(firstClearedStage: 3, ordinary: new[] { Owned, Other });
-            var immediate = Catalog(firstClearedStage: 1, ordinary: new[] { Owned, Other });
-            foreach (var catalog in new[] { delayed, immediate })
-            {
-                var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
-                Execute(session, PlayHandAction.Instance);
-                string offered = TestModifiers.NameOf(session.Snapshot.PendingReward.Options.Single().DefinitionId.Value);
-                if (catalog == delayed) Assert.That(offered, Is.EqualTo(Other));
-                string substitute = offered == Other ? Addition : Other;
-                var save = session.CaptureSave();
-                save.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf(substitute);
-                save.ExcludedRewardFamilies = new[] { TestFamilies.IdOf("family." + substitute) };
-                var result = EncounterSession.RestoreEncounter(catalog, save);
-                if (catalog == immediate) Assert.That(result.Success, Is.True, result.Detail);
-                else
-                {
-                    Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-                    Assert.That(result.Detail, Does.Contain("eligibility"));
-                }
-            }
-
             var later = EncounterSession.CreateEncounter(delayed, TestContent.EncounterId, 11);
             for (int cleared = 1; cleared <= 3; ++cleared)
             {

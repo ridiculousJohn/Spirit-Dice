@@ -28,7 +28,7 @@ namespace Dice.Tests
         public void OnlyRollsAndScoredHandsEndTheDiceSelection()
         {
             var state = new EncounterState { CurrentDice = new DiceValues(1, 2, 3, 4, 6) };
-            var score = HandScorer.Calculate(state.CurrentDice, TestContent.Catalog(), new int[HandDefinition.CategoryCount]);
+            var score = HandScorer.Calculate(HandDice.Full(state.CurrentDice), TestContent.Catalog(), new int[HandDefinition.CategoryCount]);
             Assert.That(new DiceRolledEvent(state, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask).EndsDiceSelection,
                 Is.True);
             Assert.That(new HandScoredEvent(state, score, Array.Empty<ModifierActivatedEvent>(),
@@ -86,7 +86,7 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.Revision, Is.Zero);
             Assert.That(session.Snapshot.HandsRemaining, Is.EqualTo(3));
             Assert.That(session.Snapshot.RerollsRemaining, Is.EqualTo(2));
-            Assert.That(session.Snapshot.InitialDice, Is.EqualTo(session.Snapshot.CurrentDice));
+            Assert.That(session.Snapshot.InitialHand.Faces, Is.EqualTo(session.Snapshot.CurrentDice));
             Assert.That(session.InitialResolution.Events.Select(value => value.GetType()), Is.EqualTo(new[]
             {
                 typeof(StageStartedEvent), typeof(HandStartedEvent), typeof(DiceRolledEvent)
@@ -111,8 +111,8 @@ namespace Dice.Tests
             Assert.That(result.Snapshot.TotalRerollsSpent, Is.EqualTo(1));
             Assert.That(result.Snapshot.LatestRerollMask, Is.EqualTo(selectedMask));
             Assert.That(result.Snapshot.EverRerolledMask, Is.EqualTo(selectedMask));
-            Assert.That(result.Snapshot.DiceBeforeLastReroll, Is.EqualTo(before.CurrentDice));
-            Assert.That(result.Snapshot.InitialDice, Is.EqualTo(before.InitialDice));
+            Assert.That(result.Snapshot.HandBeforeLastReroll, Is.EqualTo(HandDice.Full(before.CurrentDice)));
+            Assert.That(result.Snapshot.InitialHand, Is.EqualTo(before.InitialHand));
             int changedMask = 0;
             for (int i = 0; i < 5; ++i)
             {
@@ -211,8 +211,8 @@ namespace Dice.Tests
             Assert.That(after.EverRerolledMask, Is.Zero);
             Assert.That(after.LatestChangedMask, Is.Zero);
             Assert.That(after.LatestRerollMask, Is.Zero);
-            Assert.That(after.DiceBeforeLastReroll, Is.Null);
-            Assert.That(after.PreviousPlayedDice, Is.EqualTo(rerolled.CurrentDice));
+            Assert.That(after.HandBeforeLastReroll, Is.Null);
+            Assert.That(after.PreviousPlayedHand, Is.EqualTo(HandDice.Full(rerolled.CurrentDice)));
             Assert.That(after.RerollsRemaining, Is.EqualTo(rerolled.RerollsRemaining));
             Assert.That(after.HandsRemaining, Is.EqualTo(rerolled.HandsRemaining - 1));
             var scored = played.Events.OfType<HandScoredEvent>().Single();
@@ -267,7 +267,7 @@ namespace Dice.Tests
             Assert.That(result.Snapshot.RemainingThreshold, Is.EqualTo(1000));
             Assert.That(result.Snapshot.PreviousStageStartingHands, Is.EqualTo(3));
             Assert.That(result.Snapshot.PreviousStageHandsRemaining, Is.EqualTo(2));
-            Assert.That(result.Snapshot.PreviousPlayedDice, Is.EqualTo(playedDice));
+            Assert.That(result.Snapshot.PreviousPlayedHand, Is.EqualTo(HandDice.Full(playedDice)));
             Assert.That(result.Snapshot.HandsPlayedInStage, Is.Zero);
             Assert.That(result.Events.OfType<StageClearedEvent>().Single().StageIndex, Is.Zero);
             Assert.That(result.Events.OfType<DiceRolledEvent>().Single().StageIndex, Is.EqualTo(1));

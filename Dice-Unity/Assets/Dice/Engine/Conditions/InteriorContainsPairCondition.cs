@@ -4,7 +4,8 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
+            if (!context.CurrentHand.Counts(ModifierConditionHelpers.InteriorDice)) return false;
+            DiceValues dice = context.CurrentHand.Faces;
             return dice[1] == dice[2] || dice[1] == dice[3] || dice[2] == dice[3];
         }
     }

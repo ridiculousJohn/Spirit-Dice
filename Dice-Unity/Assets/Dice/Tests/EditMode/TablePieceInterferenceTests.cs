@@ -284,9 +284,9 @@ namespace Dice.Tests
             Assert.That(Json(restored.CaptureSave()), Is.EqualTo(Json(original.CaptureSave())));
         }
 
-        /** Checks restore rejects disturbance records the hand could not have produced / fails if an impossible disturbance loads. */
+        /** Checks restore rejects disturbance records it cannot use / fails if a mask outside the bays, a latest die outside the disturbed dice or a rule state the encounter cannot own loads. */
         [Test]
-        public void RestoreRejectsInconsistentDisturbanceRecords()
+        public void RestoreRejectsUnusableDisturbanceRecords()
         {
             var plain = Catalog(chance: 0, haunting: false);
             AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleStates = new[]
@@ -299,18 +299,12 @@ namespace Dice.Tests
             Assert.That(session.Snapshot.Interference().DisturbedMask, Is.Not.Zero);
             AssertInvalid(haunted, session.CaptureSave(), save =>
                 Haunting(save).LatestDisturbedMask = Haunting(save).DisturbedMask == 1 ? 2 : 1);
-            AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = DiceValues.AllMask);
             AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = 32);
             AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
             AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates[0].State = new DieBindingSaveData());
-            AssertInvalid(haunted, session.CaptureSave(), save =>
-            {
-                save.LatestRerollMask |= Haunting(save).DisturbedMask;
-                save.EverRerolledMask |= Haunting(save).DisturbedMask;
-            }, "kept die");
         }
 
-        /** Checks only encounters with an interference rule seed and use the rule stream / fails if a plain encounter draws from or accepts one. */
+        /** Checks only encounters with an interference rule seed and use the rule stream / fails if a plain encounter draws from one. */
         [Test]
         public void OnlyInterferenceRulesSeedAndAdvanceTheRuleStream()
         {
@@ -319,7 +313,6 @@ namespace Dice.Tests
             Execute(session, new RerollDiceAction(3));
             Execute(session, PlayHandAction.Instance);
             Assert.That(session.CaptureSave().RuleRandomState, Is.Zero);
-            AssertInvalid(plain, session.CaptureSave(), save => save.RuleRandomState = 1);
             Assert.That(Session(Catalog(chance: 20)).CaptureSave().RuleRandomState, Is.Not.Zero);
         }
 
@@ -367,14 +360,12 @@ namespace Dice.Tests
 
         private static EncounterSession Session(MechanicalCatalog catalog) => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, Seed);
 
-        private static void AssertInvalid(MechanicalCatalog catalog, EncounterSaveData save, Action<EncounterSaveData> mutate,
-            string detail = null)
+        private static void AssertInvalid(MechanicalCatalog catalog, EncounterSaveData save, Action<EncounterSaveData> mutate)
         {
             mutate(save);
             var result = EncounterSession.RestoreEncounter(catalog, save);
             Assert.That(result.Success, Is.False);
             Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
-            if (detail != null) Assert.That(result.Detail, Does.Contain(detail));
         }
 
         private static DieInterferenceSaveData Haunting(EncounterSaveData save)

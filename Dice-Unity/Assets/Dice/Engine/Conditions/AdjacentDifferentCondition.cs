@@ -4,8 +4,7 @@ namespace Dice.Engine
     {
         public bool Evaluate(in ModifierContext context)
         {
-            DiceValues dice = context.CurrentDice;
-            return ModifierConditionHelpers.AdjacentDifferences(dice, 1, DiceValues.MaximumFaceDifference);
+            return ModifierConditionHelpers.AdjacentDifferences(context, 1, DiceValues.MaximumFaceDifference);
         }
     }
 }

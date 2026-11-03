@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dice.App;
 using Dice.Engine;
 using NUnit.Framework;
 
@@ -38,17 +39,16 @@ namespace Dice.Tests
             var expected = session.CaptureSave();
             var mutated = session.CaptureSave();
             Assert.That(mutated.CurrentDice, Is.Not.SameAs(expected.CurrentDice));
-            Assert.That(mutated.InitialDice, Is.Not.SameAs(expected.InitialDice));
+            Assert.That(mutated.InitialHand, Is.Not.SameAs(expected.InitialHand));
             Assert.That(mutated.Modifiers[0], Is.Not.SameAs(expected.Modifiers[0]));
             Assert.That(mutated.ModifierContributions[0], Is.Not.SameAs(expected.ModifierContributions[0]));
             mutated.CurrentDice[0] = mutated.CurrentDice[0] % 6 + 1;
-            mutated.InitialDice[0] = mutated.InitialDice[0] % 6 + 1;
-            mutated.DiceBeforeLastReroll[0] = mutated.DiceBeforeLastReroll[0] % 6 + 1;
+            mutated.InitialHand.Faces[0] = mutated.InitialHand.Faces[0] % 6 + 1;
+            mutated.HandBeforeLastReroll.Faces[0] = mutated.HandBeforeLastReroll.Faces[0] % 6 + 1;
             mutated.HandUpgrades[0] = 5;
             mutated.Modifiers[0].DefinitionId = TestModifiers.IdOf("mutation");
             mutated.Modifiers[0].TotalActivations = 99;
             mutated.ModifierContributions[0].BaseScore = 99;
-            mutated.ModifierBaseScore = 99;
             mutated.DiceRandomState = 0;
             mutated.RewardRandomState = 0;
             EncounterSessionTests.AssertSnapshotsEqual(before, session.Snapshot);
@@ -56,6 +56,43 @@ namespace Dice.Tests
             var frozen = session.CaptureSave();
             session.Execute(PlayHandAction.Instance, 1);
             AssertGraphEqual(expected, frozen);
+        }
+
+        /**
+         * Checks the core records the opening hand, the hand before a player reroll and the played hand with the dice that
+         * counted then, and a save keeps all three, requires the opening hand and rejects a recorded hand that counts no
+         * die / fails if an earlier hand is recorded or restored as a full hand, a save without its opening hand loads, or a
+         * hand without counted dice loads.
+         */
+        [Test]
+        public void EarlierHandsKeepTheirCountedDiceThroughASave()
+        {
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new EncounterRuleDefinition[] { new FirstDieUncountedRule(TestRules.IdOf("uncounted")) });
+            var catalog = new MechanicalCatalog("test.uncounted", TestContent.Hands(), new[] { encounter },
+                Array.Empty<ModifierDefinition>());
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14);
+            var opening = session.Snapshot;
+            Assert.That(opening.CountedMask, Is.EqualTo(30));
+            Assert.That(opening.InitialHand, Is.EqualTo(new HandDice(opening.CurrentDice, 30)));
+            var rerolled = session.Execute(new RerollDiceAction(1), 0).Snapshot;
+            Assert.That(rerolled.HandBeforeLastReroll, Is.EqualTo(new HandDice(opening.CurrentDice, 30)));
+            var played = session.Execute(PlayHandAction.Instance, 1);
+            Assert.That(played.Snapshot.PreviousPlayedHand, Is.EqualTo(new HandDice(rerolled.CurrentDice, 30)));
+            Assert.That(played.Events.OfType<HandScoredEvent>().Single().Score.CountedDiceMask, Is.EqualTo(30));
+            Assert.That(played.Snapshot.InitialHand.CountedMask, Is.EqualTo(30));
+            session.Execute(new RerollDiceAction(1), 2);
+            var save = session.CaptureSave();
+            var restored = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
+            AssertGraphEqual(save, restored.CaptureSave());
+            Assert.That(restored.Snapshot.InitialHand, Is.EqualTo(session.Snapshot.InitialHand));
+            Assert.That(restored.Snapshot.HandBeforeLastReroll, Is.EqualTo(session.Snapshot.HandBeforeLastReroll));
+            Assert.That(restored.Snapshot.PreviousPlayedHand, Is.EqualTo(session.Snapshot.PreviousPlayedHand));
+            var withoutOpening = session.CaptureSave();
+            withoutOpening.InitialHand = null;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, withoutOpening).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
+            save.PreviousPlayedHand.CountedMask = 0;
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidState));
         }
 
         [Test]
@@ -214,92 +251,6 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void EarnedUpgradeHistoryCannotBeRemovedFromAnOtherwiseValidSave()
-        {
-            var catalog = RewardTestContent.Catalog();
-            var session = RewardTestContent.Session(catalog);
-            session.Execute(PlayHandAction.Instance, 0);
-            var offer = session.Snapshot.PendingReward;
-            session.Execute(new SelectModifierAction(offer.OfferId, offer.Options[0].OptionId), 1);
-            offer = session.Snapshot.PendingReward;
-            session.Execute(new SelectHandUpgradeAction(offer.OfferId, offer.Options[0].OptionId), 2);
-            var save = session.CaptureSave();
-            Restore(catalog, save);
-            Assert.That(save.RecentHandUpgrades.Length, Is.EqualTo(1));
-            save.RecentHandUpgrades = Array.Empty<HandCategory>();
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.False);
-            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            Assert.That(result.Session, Is.Null);
-        }
-
-        [Test]
-        public void AnActiveHandCannotContainConsistentPlayedHandEffectsFromAnEarlierHand()
-        {
-            var catalog = ModifierCatalog();
-            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14);
-            session.Execute(PlayHandAction.Instance, 0);
-            var save = session.CaptureSave();
-            Restore(catalog, save);
-            Assert.That(save.Phase, Is.EqualTo(EncounterPhase.Playing));
-            Assert.That(save.HandIndex, Is.EqualTo(1));
-            Assert.That(save.Modifiers[3].ActivationsThisHand, Is.Zero);
-            Assert.That(save.Modifiers[3].ActivationsThisStage, Is.EqualTo(1));
-            save.Modifiers[3].ActivationsThisHand = 1;
-            save.ModifierContributions = save.ModifierContributions.Concat(new[]
-            {
-                new EncounterSaveContributionData
-                {
-                    InstanceId = 4, DefinitionId = TestModifiers.IdOf("play"), Phase = ModifierPhase.PlayHand, BaseScore = 11
-                }
-            }).ToArray();
-            save.ModifierBaseScore += 11;
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.False);
-            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            Assert.That(result.Session, Is.Null);
-        }
-
-        [Test]
-        public void AnOfferCannotSubstituteFallbackWhileNormalCandidatesRemain()
-        {
-            var normal = new[] { RewardTestContent.Modifier("first", "family.first"),
-                RewardTestContent.Modifier("second", "family.second"), RewardTestContent.Modifier("third", "family.third") };
-            var fallback = new ModifierDefinition(TestModifiers.IdOf("fallback"), TestFamilies.Of("family.fallback"), ModifierPhase.PlayHand,
-                new NeverCondition(), Array.Empty<ModifierEffect>(), rewardEligible: false);
-            var policy = RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[]
-                { new ModifierRewardPoolDefinition("pool", normal.Select(value => value.Identity), fallback.Identity) }) });
-            var catalog = RewardTestContent.Catalog(normal.Concat(new[] { fallback }), policy);
-            var session = RewardTestContent.Session(catalog);
-            session.Execute(PlayHandAction.Instance, 0);
-            var save = session.CaptureSave();
-            Restore(catalog, save);
-            save.PendingReward.Options[0].DefinitionId = fallback.Identity;
-            save.ExcludedRewardFamilies = save.ExcludedRewardFamilies.Concat(new[] { fallback.Family.Identity }).ToArray();
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.False);
-            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            Assert.That(result.Session, Is.Null);
-        }
-
-        [Test]
-        public void AnOfferCannotSkipARewardSlotWhileUnusedNormalCandidatesRemain()
-        {
-            var catalog = RewardTestContent.Catalog();
-            var session = RewardTestContent.Session(catalog);
-            session.Execute(PlayHandAction.Instance, 0);
-            var save = session.CaptureSave();
-            Restore(catalog, save);
-            Assert.That(save.PendingReward.Options.Length, Is.EqualTo(3));
-            save.PendingReward.Options = save.PendingReward.Options.Skip(1).ToArray();
-            Assert.That(save.PendingReward.Options[0].OptionId, Is.EqualTo(save.NextOptionId - save.PendingReward.Options.Length));
-            var result = EncounterSession.RestoreEncounter(catalog, save);
-            Assert.That(result.Success, Is.False);
-            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState));
-            Assert.That(result.Session, Is.Null);
-        }
-
-        [Test]
         public void RestoredRevisionRejectsStaleActionsWithoutChangingStateOrFutureResults()
         {
             var catalog = ModifierCatalog();
@@ -387,8 +338,6 @@ namespace Dice.Tests
             yield return Invalid("hand count", value => value.HandsRemaining = -1);
             yield return Invalid("reroll count", value => value.RerollsRemaining = -1);
             yield return Invalid("threshold", value => value.RemainingThreshold = -1);
-            yield return Invalid("playing without hands", value => value.HandsRemaining = 0);
-            yield return Invalid("playing cleared threshold", value => value.RemainingThreshold = 0);
             yield return Invalid("missing current dice", value => value.CurrentDice = null);
             yield return Invalid("dice count", value => value.CurrentDice = new[] { 1, 2, 3, 4 });
             yield return Invalid("dice face", value => value.CurrentDice[0] = 7);
@@ -403,14 +352,11 @@ namespace Dice.Tests
             yield return Invalid("activation count", value => value.Modifiers[0].ActivationsThisHand = -1);
             yield return Invalid("contribution array", value => value.ModifierContributions = null);
             yield return Invalid("contribution instance", value => value.ModifierContributions[0].InstanceId = 99);
-            yield return Invalid("contribution amount", value => ++value.ModifierContributions[0].BaseScore);
-            yield return Invalid("accumulator", value => ++value.ModifierBaseScore);
             yield return Invalid("refresh currency", value => value.RewardRefreshes = -1);
             yield return Invalid("next offer identity", value => value.NextOfferId = 0);
             yield return Invalid("next option identity", value => value.NextOptionId = 0);
             yield return Invalid("unknown family", value => value.ExcludedRewardFamilies = new[] { TestFamilies.IdOf("unknown") }, EncounterRestoreError.InvalidDefinition);
             yield return Invalid("unknown upgrade history", value => value.RecentHandUpgrades = new[] { (HandCategory)99 });
-            yield return Invalid("unexpected cached choices", value => value.PendingUpgradeCategories = new[] { HandCategory.Pair });
         }
 
         private static IEnumerable<TestCaseData> InvalidRewardSaves()
@@ -418,16 +364,11 @@ namespace Dice.Tests
             yield return InvalidReward("missing offer", value => value.PendingReward = null);
             yield return InvalidReward("empty options", value => value.PendingReward.Options = Array.Empty<EncounterSaveRewardOptionData>());
             yield return InvalidReward("null option", value => value.PendingReward.Options[0] = null);
-            yield return InvalidReward("duplicate option identity", value => value.PendingReward.Options[1].OptionId = value.PendingReward.Options[0].OptionId);
             yield return InvalidReward("wrong offer kind", value => value.PendingReward.Kind = RewardKind.HandUpgrade);
-            yield return InvalidReward("wrong target stage", value => value.PendingReward.TargetStageIndex = value.StageIndex);
-            yield return InvalidReward("offer identity collision", value => value.NextOfferId = value.PendingReward.OfferId);
-            yield return InvalidReward("option identity collision", value => value.NextOptionId = value.PendingReward.Options[0].OptionId);
             yield return InvalidReward("unknown option definition", value => value.PendingReward.Options[0].DefinitionId = TestModifiers.IdOf("unknown"));
             yield return InvalidReward("modifier option with category", value => value.PendingReward.Options[0].HasCategory = true);
             yield return InvalidReward("missing cached choices", value => value.PendingUpgradeCategories = null);
             yield return InvalidReward("unknown cached category", value => value.PendingUpgradeCategories[0] = (HandCategory)99);
-            yield return InvalidReward("duplicate cached category", value => value.PendingUpgradeCategories[1] = value.PendingUpgradeCategories[0]);
             yield return InvalidReward("capped cached category", value => value.HandUpgrades[(int)value.PendingUpgradeCategories[0]] = 6);
         }
 
@@ -437,6 +378,15 @@ namespace Dice.Tests
 
         private static TestCaseData InvalidReward(string name, Action<EncounterSaveData> mutate)
             => new TestCaseData(name, mutate).SetName("InvalidRewardSave_" + name);
+
+        /** A rule that leaves the first die uncounted in every hand. */
+        private sealed class FirstDieUncountedRule : EncounterRuleDefinition
+        {
+            internal FirstDieUncountedRule(Id identity) : base(identity) { }
+
+            internal override bool IsAvailable(EncounterState state) => true;
+            internal override int UncountedDiceMask(EncounterRuleState ruleState) => 1;
+        }
 
         private static MechanicalCatalog ModifierCatalog()
         {

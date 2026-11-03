@@ -286,7 +286,7 @@ namespace Dice.Tests
         /** A scored hand of the given dice under a synthetic category definition, formed by the dice of FormingMask. */
         private static ScoreBreakdown Score(DiceValues dice, HandCategory category, int upgrades,
             IEnumerable<ModifierContribution> contributions, long ruleMultiplier)
-            => new ScoreBreakdown(dice, FormingMask, new HandDefinition(category, 6, 2, 3, 1, 6), upgrades,
+            => new ScoreBreakdown(HandDice.Full(dice), FormingMask, new HandDefinition(category, 6, 2, 3, 1, 6), upgrades,
                 contributions, ruleMultiplier);
     }
 }

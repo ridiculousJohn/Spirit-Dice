@@ -12,8 +12,10 @@ namespace Dice.App
         /** The first retry waits this long; each later retry doubles the wait. */
         private const int FirstRetryDelayMilliseconds = 25;
 
-        internal static void Write(string path, byte[] bytes)
+        /** Writes the payload sealed with its checksum (SaveFileText.Seal) as one complete file. */
+        internal static void Write(string path, byte[] payload)
         {
+            byte[] bytes = SaveFileText.Seal(payload);
             string fullPath = Path.GetFullPath(path);
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
             string temporaryPath = fullPath + ".tmp-" + Guid.NewGuid().ToString("N");

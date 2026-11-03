@@ -24,6 +24,9 @@ namespace Dice.App
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
             nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion);
 
+        /** The oldest save format the codec reads. */
+        internal static int OldestFormatVersion => FormatUpgrades.OldestVersion;
+
         public static byte[] Serialize(EncounterSaveData save)
         {
             if (save == null) throw new ArgumentNullException(nameof(save));
@@ -43,8 +46,11 @@ namespace Dice.App
             return SaveFileText.Encoding.GetBytes(text);
         }
 
-        /** The catalog resolves each rule state's type from the rule that owns it. */
-        public static EncounterSaveData Deserialize(byte[] bytes, MechanicalCatalog catalog)
+        /** Reads a sealed payload; the catalog resolves each rule state's type from the rule that owns it. */
+        public static EncounterSaveData Deserialize(byte[] bytes, MechanicalCatalog catalog) => Deserialize(bytes, catalog, true);
+
+        /** Reads a payload; isSealed says whether the file layer verified its seal. */
+        internal static EncounterSaveData Deserialize(byte[] bytes, MechanicalCatalog catalog, bool isSealed)
         {
             if (bytes == null) throw new ArgumentNullException(nameof(bytes));
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
@@ -62,9 +68,10 @@ namespace Dice.App
                         LineInfoHandling = LineInfoHandling.Ignore
                     });
                     if (reader.Read()) throw new FormatException("The save contains trailing content.");
-                    var check = FormatUpgrades.Upgrade(document);
+                    var check = FormatUpgrades.Upgrade(document, isSealed);
                     if (check == SaveFormatCheck.VersionNotInteger)
                         throw new FormatException("The save format version must be an integer.");
+                    if (check == SaveFormatCheck.Unsealed) throw new FormatException("The save is not sealed.");
                     if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The save format version is unsupported.");
                     var serializer = JsonSerializer.Create(Settings);

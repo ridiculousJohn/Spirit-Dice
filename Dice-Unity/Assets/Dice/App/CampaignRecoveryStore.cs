@@ -33,13 +33,15 @@ namespace Dice.App
         private const string MetadataFileName = "spirit-campaign.json";
         /** The file name prefix of a corrupt slot index's backup copy; a random GUID as 32 hex digits and .json follow it. */
         internal const string BackupPrefix = "spirit-slots.corrupt-";
-        private const int MetadataFormatVersion = 1;
+        private const int MetadataFormatVersion = 2;
         private const int MaximumMetadataBytes = 256;
         private const int MetadataMaximumDepth = 3;
         private const string FormatVersionField = "formatVersion";
         private const string SlotField = "slot";
         // To change the metadata format, raise MetadataFormatVersion and append a step that upgrades the previous format.
-        private static readonly SaveFormatUpgrades MetadataUpgrades = new SaveFormatUpgrades(FormatVersionField, MetadataFormatVersion);
+        // Format 1 is format 2 written without a seal.
+        private static readonly SaveFormatUpgrades MetadataUpgrades = new SaveFormatUpgrades(FormatVersionField, MetadataFormatVersion,
+            document => { });
         private readonly string root;
         private readonly MechanicalCatalog catalog;
 
@@ -153,20 +155,18 @@ namespace Dice.App
             if (!IsRegularFile(path)) return 0;
             try
             {
-                using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                byte[] bytes = SaveFileText.ReadBounded(path, MaximumMetadataBytes, "The campaign metadata", out bool isSealed);
+                using (var text = new StringReader(SaveFileText.Decode(bytes)))
+                using (var reader = new JsonTextReader(text) { MaxDepth = MetadataMaximumDepth, DateParseHandling = DateParseHandling.None })
                 {
-                    if (stream.Length > MaximumMetadataBytes) return 0;
-                    using (var text = new StreamReader(stream, SaveFileText.Encoding, true))
-                    using (var reader = new JsonTextReader(text) { MaxDepth = MetadataMaximumDepth, DateParseHandling = DateParseHandling.None })
-                    {
-                        var document = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
-                        if (reader.Read() || MetadataUpgrades.Upgrade(document) != SaveFormatCheck.Upgraded) return 0;
-                        if (document.Count != 2 || document[SlotField]?.Type != JTokenType.Integer) return 0;
-                        long slot = document[SlotField].Value<long>();
-                        return slot >= 1 && slot <= CampaignSaveSlots.SlotCount ? (int)slot : 0;
-                    }
+                    var document = JObject.Load(reader, new JsonLoadSettings { DuplicatePropertyNameHandling = DuplicatePropertyNameHandling.Error });
+                    if (reader.Read() || MetadataUpgrades.Upgrade(document, isSealed) != SaveFormatCheck.Upgraded) return 0;
+                    if (document.Count != 2 || document[SlotField]?.Type != JTokenType.Integer) return 0;
+                    long slot = document[SlotField].Value<long>();
+                    return slot >= 1 && slot <= CampaignSaveSlots.SlotCount ? (int)slot : 0;
                 }
             }
+            catch (FormatException) { return 0; }
             catch (JsonException) { return 0; }
             catch (DecoderFallbackException) { return 0; }
             catch (OverflowException) { return 0; }

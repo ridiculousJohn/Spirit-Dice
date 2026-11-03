@@ -200,7 +200,7 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(new byte[PlayerProfileCodec.MaximumProfileBytes + 1]));
             var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
             Assert.That(document["ProfileFormatVersion"].Value<int>(), Is.EqualTo(PlayerProfile.CurrentFormatVersion));
-            foreach (int version in new[] { PlayerProfile.CurrentFormatVersion - 1, PlayerProfile.CurrentFormatVersion + 1 })
+            foreach (int version in new[] { PlayerProfileCodec.OldestFormatVersion - 1, PlayerProfile.CurrentFormatVersion + 1 })
             {
                 document["ProfileFormatVersion"] = version;
                 Assert.Throws<NotSupportedException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())),
@@ -237,6 +237,33 @@ namespace Dice.Tests
             Assert.Throws<FormatException>(() => PlayerProfileFileStore.Save(path, new PlayerProfile()));
             Assert.That(File.ReadAllBytes(path), Is.EqualTo(corrupt));
             Assert.That(Directory.GetFiles(Path.GetDirectoryName(path)).Length, Is.EqualTo(1));
+        }
+
+        /**
+         * Checks an unsealed profile of the older format loads and is sealed at the current format by its next write, while an
+         * unsealed current-format profile is rejected / fails if the older profile or its progress is lost, or an unsealed
+         * current profile loads.
+         */
+        [Test]
+        public void AnUnsealedOlderProfileLoadsAndIsSealedOnItsNextWrite()
+        {
+            string path = ArtifactPath();
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            var older = new PlayerProfile();
+            older.UnlockModifier(TestModifiers.IdOf("modifier.older"));
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(older)));
+            File.WriteAllText(path, document.ToString());
+            Assert.Throws<FormatException>(() => PlayerProfileFileStore.Load(path), "An unsealed current profile is rejected.");
+            document["ProfileFormatVersion"] = PlayerProfileCodec.OldestFormatVersion;
+            Assert.That(PlayerProfileCodec.OldestFormatVersion, Is.LessThan(PlayerProfile.CurrentFormatVersion));
+            File.WriteAllText(path, document.ToString());
+            Assert.That(PlayerProfileFileStore.Load(path).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("modifier.older")));
+            PlayerProfileFileStore.Save(path, new PlayerProfile());
+            byte[] payload = SaveFileText.ReadBounded(path, PlayerProfileCodec.MaximumProfileBytes, "The profile", out bool isSealed);
+            Assert.That(isSealed, Is.True);
+            Assert.That(JObject.Parse(SaveFileText.Decode(payload))["ProfileFormatVersion"].Value<int>(),
+                Is.EqualTo(PlayerProfile.CurrentFormatVersion));
+            Assert.That(PlayerProfileFileStore.Load(path).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("modifier.older")));
         }
 
         private static string ArtifactPath()

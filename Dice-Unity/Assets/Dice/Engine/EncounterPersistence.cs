@@ -18,9 +18,9 @@ namespace Dice.Engine
                 StageIndex = state.StageIndex, HandIndex = state.HandIndex,
                 RemainingThreshold = state.RemainingThreshold, HandsRemaining = state.HandsRemaining,
                 RerollsRemaining = state.RerollsRemaining,
-                CurrentDice = state.CurrentDice.ToArray(), InitialDice = state.InitialDice.ToArray(),
-                DiceBeforeLastReroll = state.DiceBeforeLastReroll?.ToArray(),
-                PreviousPlayedDice = state.PreviousPlayedDice?.ToArray(),
+                CurrentDice = state.CurrentDice.ToArray(), InitialHand = CaptureHand(state.InitialHand),
+                HandBeforeLastReroll = CaptureHand(state.HandBeforeLastReroll),
+                PreviousPlayedHand = CaptureHand(state.PreviousPlayedHand),
                 LatestRerollMask = state.LatestRerollMask, LatestChangedMask = state.LatestChangedMask,
                 EverRerolledMask = state.EverRerolledMask, RerollsSpentOnHand = state.RerollsSpentOnHand,
                 RerollsSpentInStage = state.RerollsSpentInStage,
@@ -35,7 +35,6 @@ namespace Dice.Engine
                 RuleRandomState = state.RuleRandom.State,
                 Pieces = CapturePieces(definition, state),
                 RuleStates = CaptureRuleStates(definition, state),
-                ModifierBaseScore = state.ModifierBaseScore, ModifierMultiplier = state.ModifierMultiplier,
                 RewardRefreshes = state.RewardRefreshes, NextOfferId = state.NextOfferId, NextOptionId = state.NextOptionId,
                 ExcludedRewardFamilies = state.ExcludedRewardFamilies.ToArray(),
                 RecentHandUpgrades = state.RecentHandUpgrades.ToArray(),
@@ -43,8 +42,6 @@ namespace Dice.Engine
                 UnlockedModifierIds = state.UnlockedModifierIds.ToArray(),
                 NewlyUnlockedModifierIds = state.NewlyUnlockedModifierIds.ToArray(),
                 DiscoveredFamilyIds = state.DiscoveredFamilyIds.ToArray(),
-                PendingUnlockOfferDiscoveredFamilyIds = state.PendingUnlockOfferDiscoveredFamilyIds?.ToArray(),
-                PendingModifierOfferUnlockedIds = state.PendingModifierOfferUnlockedIds?.ToArray(),
                 Modifiers = new EncounterSaveModifierData[state.Modifiers.Length],
                 ModifierContributions = new EncounterSaveContributionData[state.ModifierContributions.Count]
             };
@@ -63,7 +60,7 @@ namespace Dice.Engine
                 var value = state.ModifierContributions[i];
                 save.ModifierContributions[i] = new EncounterSaveContributionData
                 {
-                    InstanceId = value.InstanceId, DefinitionId = value.DefinitionId, Phase = value.Phase,
+                    InstanceId = value.InstanceId, DefinitionId = value.DefinitionId,
                     BaseScore = value.BaseScore, Multiplier = value.Multiplier, Rerolls = value.Rerolls
                 };
             }
@@ -122,58 +119,45 @@ namespace Dice.Engine
             }
         }
 
+        /**
+         * Maps a save onto encounter state, checking only that the state can be used safely: required data is present,
+         * values are in range, ids resolve in the catalog and each rule state restores. A save is not checked for having
+         * been produced by play; the file seal guards it against corruption.
+         */
         private static EncounterState ValidateAndMap(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save)
         {
             Require(Enum.IsDefined(typeof(EncounterPhase), save.Phase) && Enum.IsDefined(typeof(EncounterOutcome), save.Outcome),
                 "Phase or outcome is invalid.");
             Require(save.Revision >= 0 && save.StageIndex >= 0 && save.StageIndex < definition.Stages.Count,
                 "Revision or stage index is invalid.");
-            var stage = definition.Stages[save.StageIndex];
-            Require(save.RemainingThreshold >= 0 && save.RemainingThreshold <= stage.Threshold,
-                "Remaining threshold is invalid.");
-            Require(save.HandIndex >= 0 && save.HandIndex < stage.StartingHands && save.HandsRemaining >= 0 &&
-                save.HandsPlayedInStage >= 0 && (long)save.HandsRemaining + save.HandsPlayedInStage == stage.StartingHands,
-                "Hand counters or resources are inconsistent.");
-            Require(save.RerollsRemaining >= 0 && save.RewardRefreshes >= 0 && save.RerollsSpentOnHand >= 0 &&
-                save.TotalScore >= 0 && save.TotalHandsPlayed >= save.HandsPlayedInStage &&
-                save.TotalRerollsSpent >= save.RerollsSpentOnHand && save.TotalHandsPlayed <= save.Revision &&
-                save.TotalRerollsSpent <= save.Revision - save.TotalHandsPlayed,
-                "Cumulative counters or resources are invalid.");
-            Require(save.RerollsSpentInStage >= 0, "Reroll accounting counters are invalid.");
+            Require(save.RemainingThreshold >= 0 && save.HandIndex >= 0 && save.HandsRemaining >= 0 && save.HandsPlayedInStage >= 0 &&
+                save.RerollsRemaining >= 0 && save.RerollsSpentOnHand >= 0 && save.RerollsSpentInStage >= 0 &&
+                save.RewardRefreshes >= 0 && save.TotalScore >= 0 && save.TotalHandsPlayed >= 0 && save.TotalRerollsSpent >= 0,
+                "A saved count is negative.");
+            Require(!save.HasPreviousStage || (save.PreviousStageStartingHands >= 0 && save.PreviousStageHandsRemaining >= 0),
+                "Previous stage hand counts are negative.");
             Require(save.NextOfferId > 0 && save.NextOptionId > 0, "Reward identity counters are invalid.");
-            bool completed = save.Phase == EncounterPhase.Completed;
-            Require(completed == (save.Outcome != EncounterOutcome.None), "Phase and outcome disagree.");
-            bool postPlay = save.Phase == EncounterPhase.AwaitingRewards || save.Phase == EncounterPhase.ChoosingModifier ||
-                save.Phase == EncounterPhase.ChoosingHandUpgrade || save.Phase == EncounterPhase.ChoosingUnlock ||
-                (completed && save.Outcome != EncounterOutcome.Abandoned) ||
-                (completed && save.RemainingThreshold == 0);
-            Require(save.HandIndex == save.HandsPlayedInStage - (postPlay ? 1 : 0), "Hand index disagrees with played hands.");
-            Require(save.HandsPlayedInStage == 0 ? save.RemainingThreshold == stage.Threshold : save.RemainingThreshold < stage.Threshold,
-                "Threshold disagrees with stage hand history.");
-            if ((!completed && save.Phase == EncounterPhase.Playing) || (completed && save.Outcome == EncounterOutcome.Abandoned && !postPlay))
-                Require(save.HandsRemaining > 0 && save.RemainingThreshold > 0, "An active hand requires hands and threshold.");
-            if (save.Outcome == EncounterOutcome.Won)
-                Require(save.RemainingThreshold == 0 && save.StageIndex == definition.Stages.Count - 1, "Winning state is inconsistent.");
-            if (save.Outcome == EncounterOutcome.Lost)
-                Require(save.RemainingThreshold > 0 && save.HandsRemaining == 0, "Losing state is inconsistent.");
-            bool abandonedUnlock = completed && save.Outcome == EncounterOutcome.Abandoned &&
-                definition.HasUnlockMilestone(save.StageIndex + 1);
-            if (postPlay && save.Outcome != EncounterOutcome.Won && save.Outcome != EncounterOutcome.Lost)
-                Require(save.RemainingThreshold == 0 && (save.Phase == EncounterPhase.ChoosingUnlock || abandonedUnlock ||
-                    (save.StageIndex < definition.Stages.Count - 1 && stage.ExitBehavior == StageExitBehavior.AwaitRewards)),
-                    "Reward boundary is inconsistent.");
+            // Choosing a modifier or hand upgrade leads into the next stage, which must exist.
+            Require((save.Phase != EncounterPhase.ChoosingModifier && save.Phase != EncounterPhase.ChoosingHandUpgrade) ||
+                save.StageIndex < definition.Stages.Count - 1, "A stage reward requires a following stage.");
+            Require(IsBayMask(save.LatestRerollMask) && IsBayMask(save.LatestChangedMask) && IsBayMask(save.EverRerolledMask),
+                "Dice masks name dice outside the five bays.");
             Require(save.HandUpgrades != null && save.HandUpgrades.Length == HandDefinition.CategoryCount &&
                 save.Modifiers != null && save.ModifierContributions != null && save.ExcludedRewardFamilies != null &&
                 save.RecentHandUpgrades != null, "A required save array is missing.");
+            // Scoring reads each hand at its upgrade level, which the catalog bounds.
+            for (int i = 0; i < save.HandUpgrades.Length; ++i)
+                Require(save.HandUpgrades[i] >= 0 && save.HandUpgrades[i] <= catalog.Hands[i].MaximumUpgrades,
+                    "A hand upgrade lies outside its catalog range.");
             var state = new EncounterState
             {
                 Revision = save.Revision, Phase = save.Phase, Outcome = save.Outcome,
                 StageIndex = save.StageIndex, HandIndex = save.HandIndex,
                 RemainingThreshold = save.RemainingThreshold, HandsRemaining = save.HandsRemaining,
                 RerollsRemaining = save.RerollsRemaining,
-                CurrentDice = ReadDice(save.CurrentDice), InitialDice = ReadDice(save.InitialDice),
-                DiceBeforeLastReroll = save.DiceBeforeLastReroll == null ? (DiceValues?)null : ReadDice(save.DiceBeforeLastReroll),
-                PreviousPlayedDice = save.PreviousPlayedDice == null ? (DiceValues?)null : ReadDice(save.PreviousPlayedDice),
+                CurrentDice = ReadDice(save.CurrentDice), InitialHand = ReadRequiredHand(save.InitialHand),
+                HandBeforeLastReroll = ReadHand(save.HandBeforeLastReroll),
+                PreviousPlayedHand = ReadHand(save.PreviousPlayedHand),
                 LatestRerollMask = save.LatestRerollMask, LatestChangedMask = save.LatestChangedMask,
                 EverRerolledMask = save.EverRerolledMask, RerollsSpentOnHand = save.RerollsSpentOnHand,
                 RerollsSpentInStage = save.RerollsSpentInStage,
@@ -183,160 +167,28 @@ namespace Dice.Engine
                 TotalScore = save.TotalScore, TotalHandsPlayed = save.TotalHandsPlayed, TotalRerollsSpent = save.TotalRerollsSpent,
                 HandUpgrades = (int[])save.HandUpgrades.Clone(), DiceRandom = new DeterministicRandom(save.DiceRandomState),
                 RewardRandom = new DeterministicRandom(save.RewardRandomState), RewardRefreshes = save.RewardRefreshes,
-                RuleRandom = RestoreRuleRandom(definition, save),
+                RuleRandom = new DeterministicRandom(save.RuleRandomState),
                 NextOfferId = save.NextOfferId, NextOptionId = save.NextOptionId,
                 Modifiers = new ModifierInstanceState[save.Modifiers.Length],
-                ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(save.ExcludedRewardFamilies),
+                ExcludedRewardFamilies = ReadFamilies(catalog, save.ExcludedRewardFamilies, "Excluded reward families"),
                 RecentHandUpgrades = new List<HandCategory>(save.RecentHandUpgrades),
                 PendingUpgradeCategories = save.PendingUpgradeCategories == null ? null : new List<HandCategory>(save.PendingUpgradeCategories)
             };
-            ValidateUnlocks(catalog, definition, save, state);
-            ValidateDiscoveries(catalog, save, state);
-            ValidateHistory(definition, save, state);
-            RestoreRuleStates(definition, save, state, postPlay);
-            ValidateDiceHistory(definition, state, postPlay);
-            state.PieceStates = RestorePieces(definition, save);
+            foreach (var category in state.RecentHandUpgrades) RequireCategory(category);
             var definitions = new Dictionary<ModifierDefinition.Id, ModifierDefinition>();
             foreach (var modifier in catalog.Modifiers) definitions.Add(modifier.Identity, modifier);
-            ValidateModifiers(catalog, definition, save, state, definitions, postPlay);
-            ValidateRerollAccounting(definition, state);
-            var excluded = new HashSet<ModifierFamilyDefinition.Id>();
-            foreach (var family in state.ExcludedRewardFamilies)
-            {
-                Require(excluded.Add(family), "Reward family history is invalid.");
-                if (!catalog.HasFamily(family))
-                    throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Reward family is missing from the catalog.");
-            }
-            ValidateRewards(catalog, definition, save, state, definitions, postPlay);
+            state.UnlockedModifierIds = ReadModifierIds(definitions, save.UnlockedModifierIds, "Unlocked modifiers");
+            state.NewlyUnlockedModifierIds = ReadModifierIds(definitions, save.NewlyUnlockedModifierIds, "Newly unlocked modifiers");
+            state.DiscoveredFamilyIds = ReadFamilies(catalog, save.DiscoveredFamilyIds, "Discovered families");
+            RestoreRuleStates(definition, save, state);
+            state.PieceStates = RestorePieces(definition, save);
+            RestoreModifiers(save, state, definitions);
+            RestoreReward(catalog, definition, save, state, definitions);
             return state;
         }
 
-        private static void ValidateUnlocks(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save, EncounterState state)
-        {
-            Require(save.UnlockedModifierIds != null && save.NewlyUnlockedModifierIds != null, "Unlock arrays are missing.");
-            var unlocked = new HashSet<ModifierDefinition.Id>();
-            foreach (var id in save.UnlockedModifierIds)
-            {
-                Require(id.Value != Guid.Empty && unlocked.Add(id), "Unlock IDs must be valid and unique.");
-                ModifierDefinition modifier;
-                try { modifier = catalog.GetModifier(id); }
-                catch (KeyNotFoundException) { throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "Unlocked modifier is missing from the catalog."); }
-                Require(modifier.Availability.Access == ModifierAccess.PermanentUnlock, "An unlock requires permanent access.");
-            }
-            var earned = new HashSet<ModifierDefinition.Id>();
-            int clearedStageNumber = state.StageIndex + (state.RemainingThreshold == 0 ? 1 : 0);
-            bool milestoneCleared = false;
-            foreach (var milestone in definition.UnlockMilestones)
-                if (milestone.StageNumber <= clearedStageNumber) milestoneCleared = true;
-            foreach (var id in save.NewlyUnlockedModifierIds)
-            {
-                Require(unlocked.Contains(id) && earned.Add(id), "Earned unlocks must be unique and unlocked.");
-                // Unlock offers draw only from the encounter's unlock rewards, so only those can be earned.
-                Require(milestoneCleared && definition.UnlockRewardModifierIds.Contains(id), "An earned unlock requires a cleared milestone.");
-            }
-            state.UnlockedModifierIds = new List<ModifierDefinition.Id>(save.UnlockedModifierIds);
-            state.NewlyUnlockedModifierIds = new List<ModifierDefinition.Id>(save.NewlyUnlockedModifierIds);
-            if (state.Phase == EncounterPhase.ChoosingModifier)
-            {
-                Require(save.PendingModifierOfferUnlockedIds != null, "Pending offer unlocks are missing.");
-                var pendingUnlocks = new HashSet<ModifierDefinition.Id>();
-                foreach (var id in save.PendingModifierOfferUnlockedIds)
-                    Require(unlocked.Contains(id) && pendingUnlocks.Add(id), "Pending offer unlocks must be unique and currently unlocked.");
-                state.PendingModifierOfferUnlockedIds = new List<ModifierDefinition.Id>(save.PendingModifierOfferUnlockedIds);
-            }
-            else Require(save.PendingModifierOfferUnlockedIds == null, "Pending offer unlocks require a generated modifier offer.");
-        }
-
-        private static void ValidateDiscoveries(MechanicalCatalog catalog, EncounterSaveData save, EncounterState state)
-        {
-            Require(save.DiscoveredFamilyIds != null, "Discovered family IDs are missing.");
-            var discovered = new HashSet<ModifierFamilyDefinition.Id>();
-            foreach (var id in save.DiscoveredFamilyIds)
-            {
-                Require(discovered.Add(id), "Discovered family IDs must be unique.");
-                if (!catalog.HasFamily(id))
-                    throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, "A discovered family is missing from the catalog.");
-            }
-            state.DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(save.DiscoveredFamilyIds);
-            foreach (var id in state.UnlockedModifierIds)
-                Require(discovered.Contains(catalog.GetModifier(id).Family.Identity), "An owned modifier requires a discovered family.");
-            if (state.Phase == EncounterPhase.ChoosingUnlock)
-            {
-                Require(save.PendingUnlockOfferDiscoveredFamilyIds != null, "Pending unlock discovery IDs are missing.");
-                var pending = new HashSet<ModifierFamilyDefinition.Id>();
-                foreach (var id in save.PendingUnlockOfferDiscoveredFamilyIds)
-                    Require(discovered.Contains(id) && pending.Add(id),
-                        "Pending unlock discoveries must be unique and currently discovered.");
-                state.PendingUnlockOfferDiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(save.PendingUnlockOfferDiscoveredFamilyIds);
-            }
-            else Require(save.PendingUnlockOfferDiscoveredFamilyIds == null, "Pending unlock discoveries require an unlock offer.");
-        }
-
-        private static void ValidateHistory(EncounterDefinition definition, EncounterSaveData save, EncounterState state)
-        {
-            long previousMaximumHands = 0;
-            long minimumScore = definition.Stages[state.StageIndex].Threshold - state.RemainingThreshold;
-            for (int i = 0; i < state.StageIndex; ++i)
-            {
-                previousMaximumHands += definition.Stages[i].StartingHands;
-                minimumScore = checked(minimumScore + definition.Stages[i].Threshold);
-            }
-            long previousHandsPlayed = state.TotalHandsPlayed - state.HandsPlayedInStage;
-            Require(previousHandsPlayed >= state.StageIndex && previousHandsPlayed <= previousMaximumHands &&
-                state.TotalScore >= minimumScore && (state.TotalHandsPlayed == 0 ? state.TotalScore == 0 : state.TotalScore > 0),
-                "Cumulative hand or score history is inconsistent.");
-            Require(save.HasPreviousStage == (state.StageIndex > 0), "Previous stage presence is inconsistent.");
-            if (save.HasPreviousStage)
-            {
-                int starting = definition.Stages[state.StageIndex - 1].StartingHands;
-                Require(save.PreviousStageStartingHands == starting && save.PreviousStageHandsRemaining >= 0 &&
-                    save.PreviousStageHandsRemaining < starting, "Previous stage hand resources are invalid.");
-                long previousPlayed = starting - save.PreviousStageHandsRemaining;
-                Require(previousHandsPlayed >= previousPlayed + state.StageIndex - 1 &&
-                    previousHandsPlayed <= previousMaximumHands - starting + previousPlayed,
-                    "Previous stage resources disagree with total played hands.");
-            }
-            else Require(save.PreviousStageStartingHands == 0 && save.PreviousStageHandsRemaining == 0,
-                "Absent previous stage resources must be empty.");
-            long earnedUpgrades = 0;
-            for (int i = 0; i < state.HandUpgrades.Length; ++i)
-            {
-                Require(state.HandUpgrades[i] >= definition.StartingUpgrades[i], "Upgrade counts cannot precede starting upgrades.");
-                earnedUpgrades += state.HandUpgrades[i] - definition.StartingUpgrades[i];
-            }
-            Require(earnedUpgrades <= state.StageIndex && earnedUpgrades <= state.Revision - state.TotalHandsPlayed - state.TotalRerollsSpent,
-                "Earned upgrade counts exceed selection history.");
-        }
-
-        private static void ValidateDiceHistory(EncounterDefinition definition, EncounterState state, bool postPlay)
-        {
-            Require((state.LatestRerollMask & ~DiceValues.AllMask) == 0 &&
-                (state.LatestChangedMask & ~state.LatestRerollMask) == 0 &&
-                (state.EverRerolledMask & ~DiceValues.AllMask) == 0 &&
-                (state.LatestRerollMask & ~state.EverRerolledMask) == 0, "Dice masks are inconsistent.");
-            Require(state.PreviousPlayedDice.HasValue == (state.TotalHandsPlayed != 0), "Previous played dice presence is inconsistent.");
-            if (postPlay) Require(state.PreviousPlayedDice.HasValue && state.PreviousPlayedDice.Value == state.CurrentDice,
-                "Played dice do not match the last hand.");
-            // Dice changed outside player rerolls are excluded from reroll history checks.
-            int outside = EncounterRuleResolver.DiceChangedOutsideRerolls(definition, state);
-            int undisturbed = DiceValues.AllMask & ~outside;
-            if (state.RerollsSpentOnHand == 0)
-                Require(!state.DiceBeforeLastReroll.HasValue && state.LatestRerollMask == 0 && state.LatestChangedMask == 0 &&
-                    state.EverRerolledMask == 0 && (state.CurrentDice.DifferingMask(state.InitialDice) & undisturbed) == 0,
-                    "Initial hand dice history is inconsistent.");
-            else
-            {
-                Require(state.DiceBeforeLastReroll.HasValue && state.LatestRerollMask != 0, "Rerolled hand history is missing.");
-                int changed = state.DiceBeforeLastReroll.Value.DifferingMask(state.CurrentDice);
-                Require((changed & undisturbed) == (state.LatestChangedMask & undisturbed), "Changed mask disagrees with rerolled dice.");
-            }
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if (((state.EverRerolledMask | outside) & (1 << i)) == 0)
-                    Require(state.InitialDice[i] == state.CurrentDice[i], "An untouched die differs from its initial face.");
-        }
-
-        /** Each stateful rule restores and validates its own saved state against the restored core state. */
-        private static void RestoreRuleStates(EncounterDefinition definition, EncounterSaveData save, EncounterState state, bool postPlay)
+        /** Each stateful rule restores its own saved state; together the rules must leave a die counted. */
+        private static void RestoreRuleStates(EncounterDefinition definition, EncounterSaveData save, EncounterState state)
         {
             Require(save.RuleStates != null, "Rule states are missing.");
             var rules = definition.Rules;
@@ -355,8 +207,11 @@ namespace Dice.Engine
             {
                 if (rules[i].SaveDataType == null) continue;
                 Require(sources[i] != null, "A rule state is missing.");
-                Require(rules[i].TryRestoreState(state, sources[i], postPlay, out state.RuleStates[i], out string detail), detail);
+                Require(rules[i].TryRestoreState(sources[i], out state.RuleStates[i], out string detail), detail);
             }
+            // The current hand is scored from its counted dice, so the rules cannot leave every die uncounted.
+            Require(HandDice.IsCountedMask(DiceValues.AllMask & ~EncounterRuleResolver.UncountedDice(definition, state)),
+                "The rules leave no die counted.");
         }
 
         private static EncounterSaveRuleData[] CaptureRuleStates(EncounterDefinition definition, EncounterState state)
@@ -369,14 +224,6 @@ namespace Dice.Engine
                         RuleId = definition.Rules[i].Identity, State = definition.Rules[i].CaptureState(state.RuleStates[i])
                     });
             return values.ToArray();
-        }
-
-        /** Rules that report drawing from the rule stream are its only consumers. */
-        private static DeterministicRandom RestoreRuleRandom(EncounterDefinition definition, EncounterSaveData save)
-        {
-            Require(EncounterRuleResolver.UsesRuleRandom(definition) || save.RuleRandomState == 0,
-                "Only rules that draw from the rule stream may advance it.");
-            return new DeterministicRandom(save.RuleRandomState);
         }
 
         private static EncounterSavePieceData[] CapturePieces(EncounterDefinition definition, EncounterState state)
@@ -409,39 +256,17 @@ namespace Dice.Engine
             return states;
         }
 
-        private static void ValidateModifiers(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
-            EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, bool postPlay)
+        private static void RestoreModifiers(EncounterSaveData save, EncounterState state,
+            Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions)
         {
-            Require(state.Modifiers.Length >= definition.StartingModifiers.Count, "Starting modifier inventory is missing.");
-            var contributionCounts = new int[state.Modifiers.Length];
-            decimal stageRerollGrants = 0;
             for (int i = 0; i < state.Modifiers.Length; ++i)
             {
                 var source = save.Modifiers[i];
+                // A contribution names its instance by its place in the inventory.
                 Require(source != null && source.InstanceId == i + 1L, "Modifier instance identity or order is invalid.");
-                var modifier = GetModifier(definitions, source.DefinitionId);
-                if (i < definition.StartingModifiers.Count)
-                    Require(source.DefinitionId == definition.StartingModifiers[i], "Starting modifier order is inconsistent.");
-                Require(source.ActivationsThisHand >= 0 && source.ActivationsThisStage >= source.ActivationsThisHand &&
-                    source.TotalActivations >= source.ActivationsThisStage, "Modifier counters are inconsistent.");
-                if (modifier.ActivationLimit == ModifierActivationLimit.OncePerHand)
-                    Require(source.ActivationsThisHand <= 1 && source.ActivationsThisStage <= (long)state.HandIndex + 1 &&
-                        source.TotalActivations <= state.TotalHandsPlayed + 1, "Modifier exceeds its hand activation limit.");
-                if (modifier.ActivationLimit == ModifierActivationLimit.OncePerStage)
-                    Require(source.ActivationsThisStage <= 1 && source.TotalActivations <= (long)state.StageIndex + 1,
-                        "Modifier exceeds its stage activation limit.");
-                if (!modifier.Condition.CanEverActivate)
-                    Require(source.TotalActivations == 0, "An inactive modifier has activation history.");
-                if (modifier.Phase == ModifierPhase.InitialRoll)
-                    Require(source.ActivationsThisHand <= 1 && source.ActivationsThisStage <= (long)state.HandIndex + 1 &&
-                        source.TotalActivations <= state.TotalHandsPlayed + 1, "Initial-roll modifier counters are invalid.");
-                else if (modifier.Phase == ModifierPhase.PlayHand)
-                    Require(source.ActivationsThisHand <= (postPlay ? 1 : 0) && source.ActivationsThisStage <= state.HandsPlayedInStage &&
-                        source.TotalActivations <= state.TotalHandsPlayed, "Played-hand modifier counters are invalid.");
-                else Require(source.ActivationsThisHand <= state.RerollsSpentOnHand && source.ActivationsThisStage <= state.TotalRerollsSpent &&
-                    source.TotalActivations <= state.TotalRerollsSpent, "Reroll modifier counters are invalid.");
-                if (source.ActivationsThisStage != 0)
-                    stageRerollGrants += (decimal)ModifierEffectTotals.Of(modifier).Rerolls * source.ActivationsThisStage;
+                GetModifier(definitions, source.DefinitionId);
+                Require(source.ActivationsThisHand >= 0 && source.ActivationsThisStage >= 0 && source.TotalActivations >= 0,
+                    "Modifier counters are negative.");
                 state.Modifiers[i] = new ModifierInstanceState
                 {
                     InstanceId = source.InstanceId, DefinitionId = source.DefinitionId,
@@ -454,220 +279,91 @@ namespace Dice.Engine
             {
                 Require(source != null && source.InstanceId > 0 && source.InstanceId <= state.Modifiers.Length,
                     "A modifier contribution instance is invalid.");
-                int index = (int)(source.InstanceId - 1);
-                var instance = state.Modifiers[index];
-                Require(source.DefinitionId == instance.DefinitionId, "Contribution definition disagrees with its instance.");
                 var modifier = GetModifier(definitions, source.DefinitionId);
-                ModifierEffectTotals expected = ModifierEffectTotals.Of(modifier);
-                Require(source.Phase == modifier.Phase && source.BaseScore == expected.BaseScore &&
-                    source.Multiplier == expected.Multiplier && source.Rerolls == expected.Rerolls,
-                    "Contribution effects disagree with the catalog.");
-                ++contributionCounts[index];
                 baseScore = checked(baseScore + source.BaseScore);
                 multiplier = checked(multiplier + source.Multiplier);
                 state.ModifierContributions.Add(new ModifierContribution(source.InstanceId, modifier,
                     source.BaseScore, source.Multiplier, source.Rerolls));
             }
-            for (int i = 0; i < state.Modifiers.Length; ++i)
-                Require(contributionCounts[i] == state.Modifiers[i].ActivationsThisHand,
-                    "Contribution count disagrees with modifier hand activations.");
-            Require(save.ModifierBaseScore == baseScore && save.ModifierMultiplier == multiplier,
-                "Modifier accumulated totals are inconsistent.");
             state.ModifierBaseScore = baseScore;
             state.ModifierMultiplier = multiplier;
-            decimal stagePaidRerolls = definition.Stages[state.StageIndex].StartingRerolls + stageRerollGrants - state.RerollsRemaining;
-            Require(stagePaidRerolls == state.RerollsSpentInStage - EncounterRuleResolver.FreeRerollsUsedInStage(definition, state),
-                "Stage reroll resources disagree with paid and free action history.");
-            for (int i = 0; i < state.HandUpgrades.Length; ++i)
-                Require(state.HandUpgrades[i] <= catalog.Hands[i].MaximumUpgrades, "A hand upgrade exceeds its catalog cap.");
         }
 
-        private static void ValidateRerollAccounting(EncounterDefinition definition, EncounterState state)
+        private static void RestoreReward(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
+            EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions)
         {
-            int currentFree = EncounterRuleResolver.FreeRerollsUsedOnHand(definition, state.RerollsSpentOnHand);
-            int maximumFreePerHand = EncounterRuleResolver.MaximumFreeRerollsPerHand(definition);
-            long previousHands = state.TotalHandsPlayed - state.HandsPlayedInStage;
-            long freeInStage = EncounterRuleResolver.FreeRerollsUsedInStage(definition, state);
-            long totalFree = EncounterRuleResolver.TotalFreeRerollsUsed(definition, state);
-            long previousFree = totalFree - freeInStage;
-            Require(state.RerollsSpentInStage >= state.RerollsSpentOnHand &&
-                state.TotalRerollsSpent >= state.RerollsSpentInStage &&
-                (state.StageIndex != 0 || state.TotalRerollsSpent == state.RerollsSpentInStage),
-                "Stage and cumulative reroll action counts disagree.");
-            Require(freeInStage >= currentFree &&
-                freeInStage <= (long)state.HandIndex * maximumFreePerHand + currentFree &&
-                previousFree >= 0 && previousFree <= previousHands * maximumFreePerHand &&
-                totalFree <= state.TotalRerollsSpent,
-                "Free reroll history disagrees with encounter rules and hand history.");
-            long paidOnHand = (long)state.RerollsSpentOnHand - currentFree;
-            long paidInStage = state.RerollsSpentInStage - freeInStage;
-            long paidTotal = state.TotalRerollsSpent - totalFree;
-            Require(paidOnHand >= 0 && paidInStage >= paidOnHand && paidTotal >= paidInStage,
-                "Paid reroll history disagrees with free reroll accounting.");
-        }
-
-        private static void ValidateRewards(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
-            EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, bool postPlay)
-        {
-            var policy = definition.RewardPolicy;
-            bool choosingModifier = state.Phase == EncounterPhase.ChoosingModifier;
-            bool choosingUpgrade = state.Phase == EncounterPhase.ChoosingHandUpgrade;
-            bool choosingUnlock = state.Phase == EncounterPhase.ChoosingUnlock;
-            Require((save.PendingReward != null) == (choosingModifier || choosingUpgrade || choosingUnlock), "Pending offer disagrees with phase.");
-            Require((state.PendingUpgradeCategories != null) == choosingModifier, "Cached upgrade choices disagree with phase.");
-            Require(state.Phase != EncounterPhase.AwaitingRewards || policy == null, "A reward policy cannot await external rewards.");
-            Require(!(choosingModifier || choosingUpgrade) || policy != null, "Reward selection requires a policy.");
-            long previousRewardStages = 0;
-            for (int i = 0; i < state.StageIndex; ++i)
-                if (definition.Stages[i].ExitBehavior == StageExitBehavior.AwaitRewards) ++previousRewardStages;
-            bool currentRewardStage = postPlay && !choosingUnlock && state.StageIndex < definition.Stages.Count - 1 &&
-                state.RemainingThreshold == 0 && definition.Stages[state.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards;
-            long maximumAcquisitions = policy == null ? 0 : previousRewardStages +
-                (currentRewardStage && (choosingUpgrade || state.Outcome == EncounterOutcome.Abandoned) ? 1 : 0);
-            Require(state.Modifiers.Length - definition.StartingModifiers.Count <= maximumAcquisitions,
-                "Acquired inventory exceeds reward stage history.");
-            long earnedUpgrades = 0;
-            for (int i = 0; i < state.HandUpgrades.Length; ++i) earnedUpgrades += state.HandUpgrades[i] - definition.StartingUpgrades[i];
-            Require(earnedUpgrades <= (policy == null ? 0 : previousRewardStages), "Upgrades exceed reward stage history.");
-            int historyCount = policy?.MaximumExcludedRecentChoices ?? 0;
-            Require(state.RecentHandUpgrades.Count == Math.Min(historyCount, earnedUpgrades),
-                "Recent upgrade history length is inconsistent.");
-            var recentCounts = new int[HandDefinition.CategoryCount];
-            foreach (var category in state.RecentHandUpgrades)
-            {
-                RequireCategory(category);
-                ++recentCounts[(int)category];
-            }
-            for (int i = 0; i < recentCounts.Length; ++i)
-                Require(recentCounts[i] <= state.HandUpgrades[i] - definition.StartingUpgrades[i],
-                    "Recent upgrade history disagrees with upgrade counts.");
-            if (policy == null)
-                Require(state.RewardRefreshes == 0 &&
-                    state.ExcludedRewardFamilies.Count == 0, "Reward data requires a policy.");
-            else
-            {
-                long grants = previousRewardStages + (currentRewardStage ? 1 : 0);
-                long availableRefreshes = policy.StartingRefreshes + grants * policy.RefreshesPerClear;
-                long spent = availableRefreshes - state.RewardRefreshes;
-                bool beforeUnlockChoice = state.Outcome == EncounterOutcome.Abandoned && currentRewardStage &&
-                    definition.HasUnlockMilestone(state.ClearedStageNumber) &&
-                    spent >= policy.RefreshesPerClear && (spent - policy.RefreshesPerClear) % policy.RefreshCost == 0;
-                Require(spent >= 0 && (spent % policy.RefreshCost == 0 || beforeUnlockChoice),
-                    "Refresh resources disagree with reward economy.");
-                var acquiredIds = new HashSet<ModifierDefinition.Id>();
-                foreach (var layout in policy.ModifierLayouts)
-                    foreach (var pool in layout.Pools)
-                    {
-                        foreach (var id in pool.ModifierIds) acquiredIds.Add(id);
-                        if (pool.FallbackModifierId.HasValue) acquiredIds.Add(pool.FallbackModifierId.Value);
-                    }
-                foreach (var id in definition.EncounterModifierIds) acquiredIds.Add(id);
-                for (int i = definition.StartingModifiers.Count; i < state.Modifiers.Length; ++i)
-                    Require(acquiredIds.Contains(state.Modifiers[i].DefinitionId), "Acquired modifier is absent from reward pools.");
-            }
-            if (!choosingModifier)
-                Require(state.Outcome == EncounterOutcome.Abandoned || state.ExcludedRewardFamilies.Count == 0,
-                    "Reward family history exists outside modifier selection.");
-            if (choosingModifier) ValidateUpgradeCategories(catalog, definition, state, state.PendingUpgradeCategories);
+            bool choosingStageReward = state.Phase == EncounterPhase.ChoosingModifier || state.Phase == EncounterPhase.ChoosingHandUpgrade;
+            bool choosing = choosingStageReward || state.Phase == EncounterPhase.ChoosingUnlock;
+            // A reward phase waits on its offer, and selecting a stage reward reads the encounter's reward policy.
+            Require(!choosing || save.PendingReward != null, "A reward phase requires its pending offer.");
+            Require(!choosingStageReward || definition.RewardPolicy != null, "Reward selection requires a policy.");
+            // Selecting a modifier goes on to offer the cached hand upgrades.
+            Require(state.Phase != EncounterPhase.ChoosingModifier || state.PendingUpgradeCategories != null,
+                "A modifier offer requires its cached upgrade choices.");
+            if (state.PendingUpgradeCategories != null)
+                foreach (var category in state.PendingUpgradeCategories) RequireUpgradable(catalog, state, category);
             if (save.PendingReward == null) return;
             var source = save.PendingReward;
-            Require(source.Kind != null && source.Kind.WaitingPhase == state.Phase &&
-                source.TargetStageIndex == state.StageIndex + 1 && source.OfferId > 0 &&
-                source.OfferId == state.NextOfferId - 1 && source.Options != null && (source.Options.Length > 0 || source.Kind.OfferedWhenEmpty) &&
-                state.NextOptionId > source.Options.Length, "Pending offer metadata is inconsistent.");
+            Require(source.Kind != null && (!choosing || source.Kind.WaitingPhase == state.Phase) && source.OfferId > 0 &&
+                source.Options != null && (source.Options.Length > 0 || source.Kind.OfferedWhenEmpty),
+                "The pending offer is invalid for the phase.");
+            // Selecting a hand upgrade reads each option's category; selecting a charm or an unlock reads its definition.
+            bool upgradeOffer = source.Kind == RewardKind.HandUpgrade;
             var options = new List<RewardOption>();
             foreach (var option in source.Options)
             {
-                Require(option != null && option.OptionId == state.NextOptionId - source.Options.Length + options.Count,
-                    "Reward option identity or order is invalid.");
-                if (choosingModifier || choosingUnlock)
+                Require(option != null, "A reward option is missing.");
+                if (upgradeOffer)
+                {
+                    Require(option.HasCategory && option.DefinitionId == null, "An upgrade option names its hand by its category alone.");
+                    RequireUpgradable(catalog, state, option.Category);
+                }
+                else
                 {
                     Require(!option.HasCategory && option.Category == default, "A modifier option cannot contain a hand category.");
                     GetModifier(definitions, option.DefinitionId);
                 }
-                else
-                {
-                    Require(option.HasCategory, "An upgrade option requires a hand category.");
-                    RequireCategory(option.Category);
-                    Require(option.DefinitionId == null, "An upgrade option names its hand by its category alone.");
-                }
                 options.Add(new RewardOption(option.OptionId, option.DefinitionId, option.HasCategory ? (HandCategory?)option.Category : null));
-            }
-            if (choosingModifier) ValidateModifierOptions(catalog, definition, state, options);
-            else if (choosingUnlock) ValidateUnlockOptions(catalog, definition, state, options);
-            else
-            {
-                var categories = new List<HandCategory>();
-                foreach (var option in options) categories.Add(option.Category.Value);
-                ValidateUpgradeCategories(catalog, definition, state, categories);
             }
             state.PendingReward = new RewardOffer(source.OfferId, source.Kind, source.TargetStageIndex, options, definition);
         }
 
-        private static void ValidateModifierOptions(MechanicalCatalog catalog, EncounterDefinition definition,
-            EncounterState state, List<RewardOption> options)
+        /** A hand offered for an upgrade is a defined category below its cap, which selecting it would exceed. */
+        private static void RequireUpgradable(MechanicalCatalog catalog, EncounterState state, HandCategory category)
         {
-            var policy = definition.RewardPolicy;
-            var layout = policy.LayoutFor(state.ClearedStageNumber);
-            Require(options.Count <= layout.Pools.Count, "Modifier offer has too many options.");
-            var owned = new HashSet<ModifierDefinition.Id>();
-            foreach (var instance in state.Modifiers) owned.Add(instance.DefinitionId);
-            var offered = new HashSet<ModifierFamilyDefinition.Id>();
-            var history = new HashSet<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies);
-            var unlocked = new HashSet<ModifierDefinition.Id>(state.PendingModifierOfferUnlockedIds);
-            int nextOption = 0;
-            foreach (var pool in layout.Pools)
-            {
-                var eligible = RewardGenerator.AvailableSlotModifiers(catalog, policy, state.IncomingStageNumber, pool, owned, offered,
-                    definition, unlocked);
-                var fallback = RewardGenerator.EligibleFallback(catalog, policy, state.IncomingStageNumber, pool, unlocked);
-                if (eligible.Count == 0 && !fallback.HasValue) continue;
-                Require(nextOption < options.Count, "A nonempty reward slot is missing from the offer.");
-                var optionId = options[nextOption++].DefinitionId.Value;
-                var modifier = catalog.GetModifier(optionId);
-                Require(eligible.Count == 0 ? optionId == fallback : eligible.Contains(optionId),
-                    "Modifier option violates its unlock, pool, or tier eligibility.");
-                Require(history.Contains(modifier.Family.Identity), "An offered family is absent from reward history.");
-                offered.Add(modifier.Family.Identity);
-            }
-            Require(nextOption == options.Count, "Modifier offer contains an extra option.");
+            RequireCategory(category);
+            Require(state.HandUpgrades[(int)category] < catalog.Hands[(int)category].MaximumUpgrades,
+                "An offered hand is already at its upgrade cap.");
         }
 
-        private static void ValidateUnlockOptions(MechanicalCatalog catalog, EncounterDefinition definition, EncounterState state, List<RewardOption> options)
+        private static List<ModifierDefinition.Id> ReadModifierIds(Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions,
+            ModifierDefinition.Id[] ids, string subject)
         {
-            Require(definition.HasUnlockMilestone(state.ClearedStageNumber), "An unlock offer requires a cleared milestone.");
-            var candidates = new HashSet<ModifierDefinition.Id>(definition.UnlockCandidates(catalog, state.UnlockedModifierIds,
-                state.PendingUnlockOfferDiscoveredFamilyIds));
-            var offered = new HashSet<ModifierDefinition.Id>();
-            foreach (var option in options)
+            Require(ids != null, subject + " are missing.");
+            var unique = new HashSet<ModifierDefinition.Id>();
+            foreach (var id in ids)
             {
-                var id = option.DefinitionId.Value;
-                Require(definition.UnlockRewardModifierIds.Contains(id) && offered.Add(id) &&
-                    state.PendingUnlockOfferDiscoveredFamilyIds.Contains(catalog.GetModifier(id).Family.Identity),
-                    "Unlock options must be distinct entries from discovered families in the authored unlock pool.");
-                // Profile progress can have been committed before the corresponding run save was written.
-                candidates.Add(id);
+                Require(unique.Add(id), subject + " must be unique.");
+                GetModifier(definitions, id);
             }
-            Require(options.Count == Math.Min(ModifierUnlockMilestone.OfferSize, candidates.Count),
-                "Unlock offer has an incorrect option count.");
+            return new List<ModifierDefinition.Id>(ids);
         }
 
-        private static void ValidateUpgradeCategories(MechanicalCatalog catalog, EncounterDefinition definition,
-            EncounterState state, IList<HandCategory> categories)
+        private static List<ModifierFamilyDefinition.Id> ReadFamilies(MechanicalCatalog catalog, ModifierFamilyDefinition.Id[] ids,
+            string subject)
         {
-            var policy = definition.RewardPolicy;
-            var candidates = RewardGenerator.UpgradeCandidates(catalog, policy, state.IncomingStageNumber, state.HandUpgrades,
-                state.RecentHandUpgrades);
-            Require(categories.Count == Math.Min(candidates.Count, policy.HandUpgradeOptionCount), "Upgrade offer has an incorrect option count.");
-            int previous = -1;
-            foreach (var category in categories)
+            Require(ids != null, subject + " are missing.");
+            var unique = new HashSet<ModifierFamilyDefinition.Id>();
+            foreach (var id in ids)
             {
-                RequireCategory(category);
-                Require((int)category > previous && candidates.Contains(category),
-                    "Upgrade categories are unordered, repeated, or ineligible.");
-                previous = (int)category;
+                Require(unique.Add(id), subject + " must be unique.");
+                if (!catalog.HasFamily(id))
+                    throw new InvalidSaveException(EncounterRestoreError.InvalidDefinition, subject + " name a family missing from the catalog.");
             }
+            return new List<ModifierFamilyDefinition.Id>(ids);
         }
+
+        private static bool IsBayMask(int mask) => (mask & ~DiceValues.AllMask) == 0;
 
         private static ModifierDefinition GetModifier(Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions, ModifierDefinition.Id? id)
         {
@@ -681,6 +377,20 @@ namespace Dice.Engine
             Require(values != null && values.Length == DiceValues.Count, "Dice must have five faces.");
             foreach (int face in values) Require(DiceValues.IsFace(face), "A saved die face is invalid.");
             return new DiceValues(values[0], values[1], values[2], values[3], values[4]);
+        }
+
+        private static EncounterSaveHandData CaptureHand(HandDice? hand)
+            => hand.HasValue ? new EncounterSaveHandData { Faces = hand.Value.Faces.ToArray(), CountedMask = hand.Value.CountedMask } : null;
+
+        private static HandDice? ReadHand(EncounterSaveHandData saved)
+            => saved == null ? (HandDice?)null : ReadRequiredHand(saved);
+
+        private static HandDice ReadRequiredHand(EncounterSaveHandData saved)
+        {
+            Require(saved != null, "A required saved hand is missing.");
+            DiceValues faces = ReadDice(saved.Faces);
+            Require(HandDice.IsCountedMask(saved.CountedMask), "A saved hand's counted dice are invalid.");
+            return new HandDice(faces, saved.CountedMask);
         }
 
         private static void RequireCategory(HandCategory category)

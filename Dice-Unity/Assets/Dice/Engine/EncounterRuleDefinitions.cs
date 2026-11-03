@@ -37,15 +37,8 @@ namespace Dice.Engine
 
         internal abstract bool IsAvailable(EncounterState state);
         internal virtual bool WaivesRerollCost(EncounterState state) => false;
-        internal virtual int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => 0;
-        internal virtual int MaximumFreeRerollsPerHand => 0;
-
-        /** Rerolls whose cost this rule waived during the current stage. */
-        internal virtual int FreeRerollsUsedInStage(EncounterRuleState ruleState) => 0;
-
-        /** Rerolls whose cost this rule waived across the encounter. */
-        internal virtual long TotalFreeRerollsUsed(EncounterRuleState ruleState) => 0;
-        internal virtual long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => 0;
+        /** The multiplier this rule adds to a scored hand, over the hand's counted dice. */
+        internal virtual long ScoredHandMultiplierBonus(HandDice hand, long totalHandsPlayed) => 0;
         internal virtual void ValidateDefinition(EncounterDefinition encounter) { }
 
         /** Rules that draw from the rule random stream; encounters without one keep the stream empty. */
@@ -69,20 +62,13 @@ namespace Dice.Engine
         /** Returns a new instance of SaveDataType describing the rule's runtime state. */
         internal virtual object CaptureState(EncounterRuleState state) => null;
 
-        /** Validates a saved state against the restored core encounter state; detail describes a rejection. */
-        internal virtual bool TryRestoreState(EncounterState restored, object saved, bool postPlay, out EncounterRuleState state,
-            out string detail)
+        /** Restores a saved state, checking that its values are in range for safe use; detail describes a rejection. */
+        internal virtual bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
         {
             state = null;
             detail = "The rule has no saved state.";
             return false;
         }
-
-        /** Runs when a stage starts, before its first hand. */
-        internal virtual void StageStarted(EncounterState state, EncounterRuleState ruleState) { }
-
-        /** Runs on the rule whose waiver applies to a player reroll, before the reroll is counted. */
-        internal virtual void RerollCostWaived(EncounterState state, EncounterRuleState ruleState) { }
 
         /** Runs after the opening roll lands and before initial-roll modifiers resolve. */
         internal virtual void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events) { }
@@ -94,8 +80,8 @@ namespace Dice.Engine
         /** Dice that cannot be selected for a player reroll. */
         internal virtual int LockedDiceMask(EncounterRuleState ruleState) => 0;
 
-        /** Dice whose faces changed during this hand outside player rerolls. */
-        internal virtual int DiceChangedOutsideRerollsMask(EncounterRuleState ruleState) => 0;
+        /** Dice that do not count in the current hand: scoring, hand ranks and charm conditions read only the counted dice. */
+        internal virtual int UncountedDiceMask(EncounterRuleState ruleState) => 0;
 
         /** Returns true when this rule attempted a disturbance, whether it changed a die or was blocked. */
         internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
@@ -111,75 +97,12 @@ namespace Dice.Engine
         internal abstract EncounterRuleState Copy();
     }
 
-    /** The rerolls whose cost the first-reroll-free rule waived during the current stage and across the encounter. */
-    public sealed class FirstRerollFreeSaveData
-    {
-        public int FreeRerollsUsedInStage;
-        public long TotalFreeRerollsUsed;
-    }
-
-    internal sealed class FirstRerollFreeState : EncounterRuleState
-    {
-        internal int FreeRerollsUsedInStage;
-        internal long TotalFreeRerollsUsed;
-
-        internal override EncounterRuleState Copy() => (FirstRerollFreeState)MemberwiseClone();
-    }
-
     public sealed class FirstRerollFreeRuleDefinition : EncounterRuleDefinition
     {
         public FirstRerollFreeRuleDefinition(Id identity) : base(identity) { }
 
         internal override bool IsAvailable(EncounterState state) => state.RerollsSpentOnHand == 0;
         internal override bool WaivesRerollCost(EncounterState state) => IsAvailable(state);
-        internal override int FreeRerollsUsedOnHand(int rerollsSpentOnHand) => rerollsSpentOnHand > 0 ? 1 : 0;
-        internal override int MaximumFreeRerollsPerHand => 1;
-        public override Type SaveDataType => typeof(FirstRerollFreeSaveData);
-        internal override EncounterRuleState CreateState() => new FirstRerollFreeState();
-
-        internal override object CaptureState(EncounterRuleState state)
-        {
-            var value = (FirstRerollFreeState)state;
-            return new FirstRerollFreeSaveData
-            {
-                FreeRerollsUsedInStage = value.FreeRerollsUsedInStage, TotalFreeRerollsUsed = value.TotalFreeRerollsUsed
-            };
-        }
-
-        /** The counters must be ordered here; restore checks them against the hand and reroll history through the resolver. */
-        internal override bool TryRestoreState(EncounterState restored, object saved, bool postPlay, out EncounterRuleState state,
-            out string detail)
-        {
-            var source = (FirstRerollFreeSaveData)saved;
-            state = null;
-            if (source.FreeRerollsUsedInStage < 0 || source.TotalFreeRerollsUsed < source.FreeRerollsUsedInStage)
-                detail = "Free reroll counters are inconsistent.";
-            else
-            {
-                detail = null;
-                state = new FirstRerollFreeState
-                {
-                    FreeRerollsUsedInStage = source.FreeRerollsUsedInStage, TotalFreeRerollsUsed = source.TotalFreeRerollsUsed
-                };
-            }
-            return state != null;
-        }
-
-        internal override void StageStarted(EncounterState state, EncounterRuleState ruleState)
-            => ((FirstRerollFreeState)ruleState).FreeRerollsUsedInStage = 0;
-
-        internal override void RerollCostWaived(EncounterState state, EncounterRuleState ruleState)
-        {
-            var free = (FirstRerollFreeState)ruleState;
-            free.FreeRerollsUsedInStage = checked(free.FreeRerollsUsedInStage + 1);
-            free.TotalFreeRerollsUsed = checked(free.TotalFreeRerollsUsed + 1);
-        }
-
-        internal override int FreeRerollsUsedInStage(EncounterRuleState ruleState)
-            => ((FirstRerollFreeState)ruleState).FreeRerollsUsedInStage;
-
-        internal override long TotalFreeRerollsUsed(EncounterRuleState ruleState)
-            => ((FirstRerollFreeState)ruleState).TotalFreeRerollsUsed;
     }
 
     public sealed class DistinctFacesMultiplierRuleDefinition : EncounterRuleDefinition
@@ -188,7 +111,7 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
 
-        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed) => dice.DistinctFaceCount;
+        internal override long ScoredHandMultiplierBonus(HandDice hand, long totalHandsPlayed) => hand.DistinctFaceCount;
     }
 
     public sealed class CyclingFavoredFaceMultiplierRuleDefinition : EncounterRuleDefinition
@@ -216,14 +139,8 @@ namespace Dice.Engine
         internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
             => new FavoredFaceRuleSnapshot(Identity, ShowsAvailable(state), FavoredFace(state.TotalHandsPlayed));
 
-        internal override long ScoredHandMultiplierBonus(DiceValues dice, long totalHandsPlayed)
-        {
-            int favoredFace = FavoredFace(totalHandsPlayed);
-            long bonus = 0;
-            for (int i = 0; i < DiceValues.Count; ++i)
-                if (dice[i] == favoredFace) bonus += MultiplierPerFavoredDie;
-            return bonus;
-        }
+        internal override long ScoredHandMultiplierBonus(HandDice hand, long totalHandsPlayed)
+            => (long)hand.CountOf(FavoredFace(totalHandsPlayed)) * MultiplierPerFavoredDie;
     }
 
     /** What every encounter rule shows: its id and whether it is available now. Rules with more state extend it. */
@@ -294,13 +211,11 @@ namespace Dice.Engine
         internal static bool CanAffordReroll(EncounterDefinition definition, EncounterState state)
             => state.RerollsRemaining > 0 || RerollCostWaiverSlot(definition, state) >= 0;
 
-        /** Tells the rule that waives this player reroll's cost that it did so; returns that rule, or null for a paid reroll. */
+        /** The rule that waives this player reroll's cost, or null for a paid reroll. */
         internal static EncounterRuleDefinition WaiveRerollCost(EncounterDefinition definition, EncounterState state)
         {
             int slot = RerollCostWaiverSlot(definition, state);
-            if (slot < 0) return null;
-            definition.Rules[slot].RerollCostWaived(state, state.RuleStates[slot]);
-            return definition.Rules[slot];
+            return slot < 0 ? null : definition.Rules[slot];
         }
 
         private static int RerollCostWaiverSlot(EncounterDefinition definition, EncounterState state)
@@ -309,35 +224,6 @@ namespace Dice.Engine
             for (int i = 0; i < definition.Rules.Count; ++i)
                 if (definition.Rules[i].WaivesRerollCost(state)) return i;
             return -1;
-        }
-
-        internal static long FreeRerollsUsedInStage(EncounterDefinition definition, EncounterState state)
-        {
-            long used = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) used += definition.Rules[i].FreeRerollsUsedInStage(state.RuleStates[i]);
-            return used;
-        }
-
-        internal static long TotalFreeRerollsUsed(EncounterDefinition definition, EncounterState state)
-        {
-            long used = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                used = checked(used + definition.Rules[i].TotalFreeRerollsUsed(state.RuleStates[i]));
-            return used;
-        }
-
-        internal static int FreeRerollsUsedOnHand(EncounterDefinition definition, int rerollsSpentOnHand)
-        {
-            int used = 0;
-            foreach (var rule in definition.Rules) used += rule.FreeRerollsUsedOnHand(rerollsSpentOnHand);
-            return used;
-        }
-
-        internal static int MaximumFreeRerollsPerHand(EncounterDefinition definition)
-        {
-            int maximum = 0;
-            foreach (var rule in definition.Rules) maximum += rule.MaximumFreeRerollsPerHand;
-            return maximum;
         }
 
         internal static bool UsesRuleRandom(EncounterDefinition definition)
@@ -352,11 +238,6 @@ namespace Dice.Engine
             var states = new EncounterRuleState[definition.Rules.Count];
             for (int i = 0; i < states.Length; ++i) states[i] = definition.Rules[i].CreateState();
             return states;
-        }
-
-        internal static void StageStarted(EncounterDefinition definition, EncounterState state)
-        {
-            for (int i = 0; i < definition.Rules.Count; ++i) definition.Rules[i].StageStarted(state, state.RuleStates[i]);
         }
 
         internal static void HandStarted(EncounterDefinition definition, EncounterState state, List<RuleEvent> events)
@@ -378,13 +259,16 @@ namespace Dice.Engine
             return mask;
         }
 
-        internal static int DiceChangedOutsideRerolls(EncounterDefinition definition, EncounterState state)
+        internal static int UncountedDice(EncounterDefinition definition, EncounterState state)
         {
             int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                mask |= definition.Rules[i].DiceChangedOutsideRerollsMask(state.RuleStates[i]);
+            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].UncountedDiceMask(state.RuleStates[i]);
             return mask;
         }
+
+        /** The current dice with the dice every rule leaves counted. */
+        internal static HandDice CurrentHand(EncounterDefinition definition, EncounterState state)
+            => new HandDice(state.CurrentDice, DiceValues.AllMask & ~UncountedDice(definition, state));
 
         internal static void Interfere(EncounterDefinition definition, EncounterState state, InterferenceTrigger trigger,
             int eligibleMask, List<RuleEvent> events)

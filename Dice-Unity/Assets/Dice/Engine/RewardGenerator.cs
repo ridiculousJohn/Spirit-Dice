@@ -88,7 +88,7 @@ namespace Dice.Engine
         }
 
         /** The hands an upgrade offer for the incoming stage chooses from. */
-        internal static List<HandCategory> UpgradeCandidates(MechanicalCatalog catalog, RewardPolicyDefinition policy,
+        private static List<HandCategory> UpgradeCandidates(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, IReadOnlyList<int> upgrades, IReadOnlyList<HandCategory> recentUpgrades)
         {
             var excluded = new HashSet<HandCategory>();
@@ -121,13 +121,13 @@ namespace Dice.Engine
             return candidates;
         }
 
-        internal static List<ModifierDefinition.Id> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
+        private static List<ModifierDefinition.Id> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<ModifierDefinition.Id> owned,
             HashSet<ModifierFamilyDefinition.Id> currentFamilies, EncounterDefinition encounter, ISet<ModifierDefinition.Id> unlocked)
             => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, incomingStageNumber, owned,
                 currentFamilies, encounter, unlocked));
 
-        internal static ModifierDefinition.Id? EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy,
+        private static ModifierDefinition.Id? EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, ISet<ModifierDefinition.Id> unlocked)
         {
             if (!pool.FallbackModifierId.HasValue) return null;

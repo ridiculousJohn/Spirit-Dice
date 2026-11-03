@@ -153,18 +153,18 @@ namespace Dice.Engine
                 beforeHands, next.HandsRemaining));
             activations = ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, beforeHands, events);
             ruleBonuses = new List<EncounterRuleActivatedEvent>();
+            HandDice hand = EncounterRuleResolver.CurrentHand(definition, next);
             long ruleMultiplier = 0;
             foreach (var rule in definition.Rules)
             {
-                long bonus = rule.ScoredHandMultiplierBonus(next.CurrentDice, next.TotalHandsPlayed);
+                long bonus = rule.ScoredHandMultiplierBonus(hand, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
                 ruleMultiplier = checked(ruleMultiplier + bonus);
                 var activated = new EncounterRuleActivatedEvent(next, rule.Identity, bonus);
                 ruleBonuses.Add(activated);
                 events.Add(activated);
             }
-            return HandScorer.Calculate(next.CurrentDice, catalog, next.HandUpgrades, next.ModifierContributions,
-                ruleMultiplier);
+            return HandScorer.Calculate(hand, catalog, next.HandUpgrades, next.ModifierContributions, ruleMultiplier);
         }
 
         private CommandRejection Validate(EncounterAction action, long expectedRevision)
@@ -213,7 +213,6 @@ namespace Dice.Engine
             for (int i = 0; i < owned.Length; ++i) owned[i] = next.Modifiers[i].DefinitionId;
             var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.ClearedStageNumber,
                 owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds);
-            next.PendingModifierOfferUnlockedIds = new List<ModifierDefinition.Id>(next.UnlockedModifierIds);
             next.ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(generated.ExcludedFamilyIds);
             // Upgrade choices are fixed before any modifier refresh can consume the reward stream.
             if (!isRefresh)
@@ -254,14 +253,11 @@ namespace Dice.Engine
             events.Add(new ModifierAcquiredEvent(next, modifier));
             next.PendingReward = null;
             next.ExcludedRewardFamilies.Clear();
-            next.PendingModifierOfferUnlockedIds = null;
-            next.PendingUnlockOfferDiscoveredFamilyIds = null;
             OfferHandUpgrades(next, events);
         }
 
         private void OfferHandUpgrades(EncounterState next, List<RuleEvent> events)
         {
-            next.PendingModifierOfferUnlockedIds = null;
             var categories = next.PendingUpgradeCategories
                 ?? throw new InvalidOperationException("The hand-upgrade choices have not been generated.");
             var options = new List<RewardOption>();
@@ -339,7 +335,6 @@ namespace Dice.Engine
             next.RerollsSpentInStage = 0;
             next.HandIndex = 0;
             foreach (var modifier in next.Modifiers) modifier.ActivationsThisStage = 0;
-            EncounterRuleResolver.StageStarted(definition, next);
             events.Add(new StageStartedEvent(next.StageIndex, stage));
             StartHand(next, events);
         }
@@ -354,12 +349,12 @@ namespace Dice.Engine
             next.LatestRerollMask = 0;
             next.LatestChangedMask = 0;
             next.EverRerolledMask = 0;
-            next.DiceBeforeLastReroll = null;
+            next.HandBeforeLastReroll = null;
             events.Add(new HandStartedEvent(next));
             next.CurrentDice = Roll(next, DiceValues.AllMask);
-            next.InitialDice = next.CurrentDice;
             events.Add(new DiceRolledEvent(next, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask));
             EncounterRuleResolver.HandStarted(definition, next, events);
+            next.InitialHand = EncounterRuleResolver.CurrentHand(definition, next);
             ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, next.HandsRemaining, events);
         }
 
@@ -384,7 +379,7 @@ namespace Dice.Engine
                 events.Add(new ResourceChangedEvent(next, ResourceKind.Rerolls, ResourceChangeCause.RerollDice,
                     beforeRerolls, next.RerollsRemaining));
             DiceValues before = next.CurrentDice;
-            next.DiceBeforeLastReroll = before;
+            next.HandBeforeLastReroll = EncounterRuleResolver.CurrentHand(definition, next);
             next.CurrentDice = Roll(next, selectedMask);
             next.LatestRerollMask = selectedMask;
             next.EverRerolledMask |= selectedMask;
@@ -418,7 +413,7 @@ namespace Dice.Engine
             long beforeThreshold = next.RemainingThreshold;
             next.RemainingThreshold = score.HandScore >= beforeThreshold ? 0 : beforeThreshold - score.HandScore;
             events.Add(new ThresholdChangedEvent(next, beforeThreshold, score.HandScore));
-            next.PreviousPlayedDice = next.CurrentDice;
+            next.PreviousPlayedHand = new HandDice(next.CurrentDice, score.CountedDiceMask);
 
             // Clearing on the final available hand still wins; exhaustion is checked after clearing.
             if (next.RemainingThreshold == 0)
@@ -442,9 +437,7 @@ namespace Dice.Engine
             next.Phase = EncounterPhase.Completed;
             next.Outcome = outcome;
             next.PendingReward = null;
-            next.PendingUnlockOfferDiscoveredFamilyIds = null;
             next.PendingUpgradeCategories = null;
-            next.PendingModifierOfferUnlockedIds = null;
             events.Add(new EncounterCompletedEvent(next));
         }
 
@@ -452,7 +445,6 @@ namespace Dice.Engine
         {
             if (!definition.HasUnlockMilestone(next.ClearedStageNumber)) return false;
             var candidates = definition.UnlockCandidates(catalog, next.UnlockedModifierIds, next.DiscoveredFamilyIds);
-            next.PendingUnlockOfferDiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(next.DiscoveredFamilyIds);
             var options = new List<RewardOption>();
             while (options.Count < ModifierUnlockMilestone.OfferSize && candidates.Count > 0)
             {
@@ -483,7 +475,6 @@ namespace Dice.Engine
         internal void ContinueAfterUnlock(EncounterState next, List<RuleEvent> events)
         {
             next.PendingReward = null;
-            next.PendingUnlockOfferDiscoveredFamilyIds = null;
             if (next.StageIndex == definition.Stages.Count - 1) Complete(next, EncounterOutcome.Won, events);
             else if (definition.Stages[next.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards) BeginRewards(next, events);
             else AdvanceStage(next, events);
@@ -505,9 +496,12 @@ namespace Dice.Engine
         internal int HandsRemaining;
         internal int RerollsRemaining;
         internal DiceValues CurrentDice;
-        internal DiceValues InitialDice;
-        internal DiceValues? DiceBeforeLastReroll;
-        internal DiceValues? PreviousPlayedDice;
+        /** The hand as the rules leave it after the opening roll of this hand. */
+        internal HandDice InitialHand;
+        /** The hand as it stood when the latest player reroll of this hand was committed; null before the first. */
+        internal HandDice? HandBeforeLastReroll;
+        /** The hand last played in the encounter, as it scored; null until a hand is played. */
+        internal HandDice? PreviousPlayedHand;
         internal int LatestRerollMask;
         internal int LatestChangedMask;
         internal int EverRerolledMask;
@@ -540,8 +534,6 @@ namespace Dice.Engine
         internal List<ModifierDefinition.Id> UnlockedModifierIds = new List<ModifierDefinition.Id>();
         internal List<ModifierDefinition.Id> NewlyUnlockedModifierIds = new List<ModifierDefinition.Id>();
         internal List<ModifierFamilyDefinition.Id> DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
-        internal List<ModifierFamilyDefinition.Id> PendingUnlockOfferDiscoveredFamilyIds;
-        internal List<ModifierDefinition.Id> PendingModifierOfferUnlockedIds;
 
         internal EncounterState Copy()
         {
@@ -559,10 +551,6 @@ namespace Dice.Engine
             copy.UnlockedModifierIds = new List<ModifierDefinition.Id>(UnlockedModifierIds);
             copy.NewlyUnlockedModifierIds = new List<ModifierDefinition.Id>(NewlyUnlockedModifierIds);
             copy.DiscoveredFamilyIds = new List<ModifierFamilyDefinition.Id>(DiscoveredFamilyIds);
-            copy.PendingUnlockOfferDiscoveredFamilyIds = PendingUnlockOfferDiscoveredFamilyIds == null ? null
-                : new List<ModifierFamilyDefinition.Id>(PendingUnlockOfferDiscoveredFamilyIds);
-            copy.PendingModifierOfferUnlockedIds = PendingModifierOfferUnlockedIds == null ? null
-                : new List<ModifierDefinition.Id>(PendingModifierOfferUnlockedIds);
             return copy;
         }
     }

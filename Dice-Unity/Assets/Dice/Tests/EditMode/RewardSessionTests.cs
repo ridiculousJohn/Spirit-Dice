@@ -55,7 +55,7 @@ namespace Dice.Tests
             Assert.That(upgradeResult.Snapshot.RerollsRemaining, Is.EqualTo(3));
             Assert.That(upgradeResult.Snapshot.HandUpgrades[(int)category], Is.EqualTo(1));
             Assert.That(upgradeResult.Snapshot.RecentHandUpgrades, Is.EqualTo(new[] { category }));
-            Assert.That(upgradeResult.Snapshot.PreviousPlayedDice, Is.EqualTo(initial.CurrentDice));
+            Assert.That(upgradeResult.Snapshot.PreviousPlayedHand, Is.EqualTo(HandDice.Full(initial.CurrentDice)));
             Assert.That(upgradeResult.Snapshot.PreviousStageStartingHands, Is.EqualTo(3));
             Assert.That(upgradeResult.Snapshot.PreviousStageHandsRemaining, Is.EqualTo(2));
             var upgraded = upgradeResult.Events.OfType<HandUpgradedEvent>().Single();
@@ -65,7 +65,7 @@ namespace Dice.Tests
             Assert.That(upgradeResult.Events.OfType<StageStartedEvent>().Single().StageIndex, Is.EqualTo(1));
             Assert.That(upgradeResult.Events.OfType<DiceRolledEvent>().Single().Kind, Is.EqualTo(RollKind.Initial));
             var next = upgradeResult.Snapshot;
-            var hand = catalog.GetHand(HandEvaluator.Evaluate(next.CurrentDice));
+            var hand = catalog.GetHand(HandEvaluator.Evaluate(HandDice.Full(next.CurrentDice)));
             int count = next.HandUpgrades[(int)hand.Category];
             long expectedBase = next.CurrentDice.Sum + hand.BaseScore + count * hand.BaseScorePerUpgrade + 10;
             long expectedMultiplier = hand.Multiplier + count * hand.MultiplierPerUpgrade;
@@ -174,7 +174,7 @@ namespace Dice.Tests
             SelectPair(control, "first", HandCategory.HighDie);
             Assert.That(session.Snapshot.Revision, Is.EqualTo(control.Snapshot.Revision + 1));
             Assert.That(session.Snapshot.CurrentDice, Is.EqualTo(control.Snapshot.CurrentDice));
-            Assert.That(session.Snapshot.InitialDice, Is.EqualTo(control.Snapshot.InitialDice));
+            Assert.That(session.Snapshot.InitialHand, Is.EqualTo(control.Snapshot.InitialHand));
             Assert.That(session.Snapshot.HandUpgrades, Is.EqualTo(control.Snapshot.HandUpgrades));
             Assert.That(session.Snapshot.Modifiers, Is.EqualTo(control.Snapshot.Modifiers));
             for (int i = 0; i < 3; ++i)
