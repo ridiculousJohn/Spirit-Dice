@@ -56,4 +56,5 @@ Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/SunkenLarder`. Th
 - [SunkenLarderHagUnlit-relight.txt](SunkenLarderHagUnlit-relight.txt) -> Docs/Reference/Art/SunkenLarderRelightHagUnlitDonor.png, transferred into Relight/SunkenLarderHagUnlit.png
 - [SunkenLarderHagBlink-donor.txt](SunkenLarderHagBlink-donor.txt) -> Docs/Reference/Art/SunkenLarderHagBlinkDonor.png, transferred into SunkenLarderHagBlink.png, her closed-eyelid overlay
 - [SunkenLarderHagDowncast-donor.txt](SunkenLarderHagDowncast-donor.txt) -> Docs/Reference/Art/SunkenLarderHagDowncastDonor.png, transferred into SunkenLarderHagDowncast.png, her downcast-eyelid overlay
+- [SunkenLarderSteam-wisps.txt](SunkenLarderSteam-wisps.txt) -> Docs/Reference/Art/SunkenLarderSteamDonor.png, made into the rising steam tiles SunkenLarderSteam{Broad,Wisps}.png
 - [../SunkenLarderConceptPrompt.txt](../SunkenLarderConceptPrompt.txt) -> SunkenLarderOriginal.png, the scene concept

@@ -30,5 +30,5 @@ MonoBehaviour:
   trayPresentation: {fileID: 11400000, guid: 29c3a8bc57d0479bbb67ba1b4e22c508, type: 2}
   rulePresentations:
   - {fileID: 11400000, guid: 8bfa2e3d68f249c68c87cc5a81146a0e, type: 2}
-  ambientActivity: {fileID: 0}
+  ambientActivity: {fileID: 11400000, guid: 5237f9b8d755e9945889bde72a275184, type: 2}
   openingFadeDuration: 0.3

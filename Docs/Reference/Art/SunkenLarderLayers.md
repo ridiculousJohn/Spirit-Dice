@@ -1,6 +1,6 @@
 # Sunken Larder layers
 
-Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, their lighting split (see Relighting) and her host with its eyelid overlays (see Host). Her ambient layers are not built.
+Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, their lighting split (see Relighting), her host with its eyelid overlays (see Host) and the ambient steam and hearth fire (see Ambient).
 
 ## Textures
 
@@ -116,7 +116,7 @@ python Tools/Presentation/author-sunken-larder-relight.py build --write-assets  
 | Receiver Color, Intensity, Range | (1, 0.6, 0.3), 0, 10 |
 
 - Reproduction: at a sampled intensity of exactly 1 the response scale is 1 for every pixel, so the light adds max(SunkenLarderBackground.png - base, 0) and reproduces the plate; her layer reproduces SunkenLarderHag.png the same way. The tint is white because the shader multiplies the contribution by it, so any other tint would change the reproduced concept; the fire's warmth is the painted plate's own, and its receiver colour is warm. Below 1, Distance Falloff 0.8 dims the room farther from the fire (response R) sooner than near it, and Source Response 0.5 keeps the flames (response G) burning longer.
-- Flicker: the shared flicker noise, intensity = multiplier * (1 + 0.1 * noise), quicker than the Bound Tree's glow pulse. The wither jolt and any ambient activity light actor are authored with the table.
+- Flicker: the shared flicker noise, intensity = multiplier * (1 + 0.1 * noise), quicker than the Bound Tree's glow pulse. It is the fire's only resting flicker; the table's ambient activity holds the multiplier at 1 at rest and stutters it on the wither jolt (see Ambient).
 - Receivers: none (Receiver Intensity 0); the table scene sets them.
 
 ## Host
@@ -220,3 +220,53 @@ python Tools/Presentation/author-sunken-larder-host.py host --write-assets      
 ```
 
 `overlays` writes the textures under `textures/`, `review/overlays-face-3x.png` (her face painted and unlit, each overlay at 0, 0.5 and 1, and the registered donor with the mask's full and edge ellipses) and `report.json` (registrations, gains, mask counts, unlit ratio); `--donor-blink` and `--donor-downcast` substitute a candidate donor for review, and `--write-assets` installs only from the preserved donors. `host` writes the mesh, the three materials, the prefab and the host asset (to the output folder, or in place with `--write-assets`) and `report.json` with the measurements above. Existing .meta files are kept; a missing one is written (textures copy SunkenLarderHag.png.meta or MerchantBlinkMask.png.meta under a fresh GUID). Re-run `host` after changing a constant rather than editing the assets; the prefab's object ids are fixed, so scene instances keep their overrides.
+
+## Ambient
+
+The hearth fire's flicker and jolt, and steam rising from the cauldron on two drifting tile layers, built by `Tools/Presentation/author-sunken-larder-ambient.py` (see "Sunken Larder ambient layers" in the [Presentation tools](../../../Tools/Presentation/README.md)) from the installed plates and a kept generated donor, by the Bound Tree's mist method ("Cloud and mist drift" and "Ambient scene layers" in [BoundTreeLayers.md](BoundTreeLayers.md)). The concept already paints steam above the pot, and it stays on the plate: the moving layers show only inside the painted plume, so they read as that steam moving. The hanging herb bundles do not move.
+
+### Hearth fire
+
+`Content/Presentation/SunkenLarder/SunkenLarderAmbientActivity.asset`, referenced by SunkenLarderTable.asset's Ambient Activity, has one light actor, light 0, and no props or prop groups.
+
+- Resting flicker: the scene lighting's own flicker noise (Flicker Amount 0.1, Speed 1.5; see Scene lighting) owns it, a smooth, irregular flicker of three noise octaves near 1.1, 3.2 and 8.6 Hz, at most 10 percent either side of rest (0.93 to 1.06 over 7.5 s of captures). The light actor makes no idle flicker, since its steps cut between levels, share their levels with the jolt, and a jolt is skipped while one runs: its outages are empty (Sputter Flickers 0 to 0, Dark Duration 0 to 0; Idle Interval 30 to 60 s schedules them), so the fire never goes out on its own and its multiplier rests at 1. The two flickers never stack.
+- Wither jolt: the rot presenter jolts the activity as a die withers. The light stutters through 5 to 7 flickers of 0.05 to 0.13 s each (Stutter Flickers, Flicker Duration), alternating dim (Dim Level 0.45 to 0.65) and bright (Bright Level 1.25 to 1.5), starting dim, then cuts back to 1: the fire gutters and flares for about half a second (0.25 to 0.9 s) while the mould closes over the die (0.6 s). The flicker noise multiplies it; the sampled intensity reached 0.56 and 1.45 in the capture. Below 1 the room farther from the fire dims sooner than the flames (Distance Falloff 0.8, Source Response 0.5); above 1 every lit pixel brightens in proportion. Her host and the steam are lit by light 0, so they gutter and flare with the room.
+- Endings: Won, Lost and Abandoned all settle (Light Recovery 1 s). With no props, Jolt Strength 1, Defeat Strength 2.5 and Settle Time 0.35 s move nothing; Burst Clips is empty until the audio step.
+
+### Steam textures
+
+| Texture | Format | Content |
+| --- | --- | --- |
+| SunkenLarderSteamBroad.png | RGBA 399 x 614, wraps both ways | The broad layer's light 0 reference (fire-lit): the donor mirrored, softened (sigma 5 donor px) and scaled 0.48. |
+| SunkenLarderSteamWisps.png | RGBA 250 x 384, wraps both ways | The fine wisps layer's light 0 reference: the donor scaled 0.30. |
+| Relight/SunkenLarderSteam{Broad,Wisps}Unlit.png | RGBA, as above | Each layer's base, the steam with the fire out: the lit tile times the plates' own unlit-over-lit ratio inside the plume (median per channel, linear light: 0.070, 0.135, 0.232), so it is faint and cool. Alpha equals the lit tile's. |
+| SunkenLarderSteamMask.png | RGBA, white, 941 x 1672 | Alpha is the plume window (below), the steam occluder's mask. |
+
+The donor, Docs/Reference/Art/SunkenLarderSteamDonor.png (prompt in [prompts/](prompts/README.md); style reference SunkenLarderSteamReference.png, concept box (0, 150)-(320, 630)), is an even field of rising wisps on transparency. The script divides its alpha by its Gaussian average (sigma 160 donor px, never by less than a quarter of its mean), so no denser band pulses past as the tile scrolls; makes it wrap both ways by a premultiplied cross-fade of its last 192 columns into its first and its last 256 rows into its first; and builds each layer's tile at concept resolution. The fire-lit tiles' alpha-weighted mean colour is set in linear light to the painted steam's bright colour, the mean of the brightest tenth of the plate inside the plume's core between rows 400 and 545 (sRGB 173, 111, 74). The tiles import like SunkenLarderHag.png with wrap U and V Repeat, the mask like SunkenLarderHagBlinkMask.png (sRGB off).
+
+### Plume window
+
+The window is where the moving steam shows. Its envelope is a soft band around the painted plume's centre line, which leans right as it rises (centre x 98 at row 560, 104 at 470, 135 at 360, 156 at 240; half width 70 to 80 above the pot, 58 at the top), full within 0.6 of the half width and none beyond 1.35; zero at the pot's rim (row 556), full from row 520 to 400, 0.8 at row 300 and zero at row 205, below the herb bundles; and zero right of column 186 over rows 250 to 400, so the toy horse and the jars stay clear. Inside the envelope its level follows the painted steam: 0.6 plus 0.4 times the plume's presence, the plate's luminance above its grey opening (61 px, blurred 12 px, softened 6 px), normalised by its 95th percentile in the envelope, so the moving wisps are strongest where steam is painted and still show between its wisps and a little beyond the painted plume. Its bounds with 4 px of margin are the concept rect (0, 204, 239, 355). None of it lies on her figure, which draws after it.
+
+### Steam drift
+
+Each layer's legacy clip (Loop Time on) moves its RawImage's uvRect x from 0 to -1 (one tile right) and y from 0 down by a whole number of tiles (the wisps rise) over its period, the texture wrapping both ways, so the wisps rise and drift right along the plume's lean and the loop is seamless. Content validation (check 4) lists each clip's uvRect jumps at the loop: whole tiles, which the repeating texture shows unchanged.
+
+| Layer | Clip | Opacity | Rise | Drift | Period | uvRect at the start (x, y, width, height) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Broad | SunkenLarderSteamBroadRise.anim | 0.7 +/- 0.08 (2 cycles per period) | 14.8 px/s (4 tiles) | 2.4 px/s | 166.25 s | 0, 0, 239 / 399, 355 / 614 |
+| Wisps | SunkenLarderSteamWispsRise.anim | 0.9 | 22.1 px/s (4 tiles) | 3.6 px/s | 69.44 s | 0, 0, 239 / 250, 355 / 384 |
+
+Speeds are concept px per second. The broad layer's swell is a sine of 8 keys a cycle with the sine's own slopes. The steam changes a visible plate pixel by at most 80 levels, 68 at the 99th percentile inside the window (the script's report, sampled every 0.5 s over 30 s).
+
+### Ambient scene layers
+
+In `Assets/Scenes/SunkenLarderEncounter.unity` the Sunken Larder Scene frame draws, in order:
+
+| Object | Content |
+| --- | --- |
+| Steam Broad, Steam Wisps | RawImage over the window's rect (anchored to the frame's top-left, pivot top-left, position (0, -117.1292), size (137.152, 203.8278)) with the layer's Unlit tile as texture, `SunkenLarderSteam{Broad,Wisps}Lit.mat` (Scene Lit Image, `_SourceTex` the Unlit tile, `_InvertMask` 1, no mask), colour alpha the layer's opacity and uvRect its start; a SceneLitImage on SunkenLarderSceneLighting.asset (base the Unlit tile, light 0 reference the lit tile through Relight/SunkenLarderFireResponse.png, map rect the rect's part of the frame); and an Animation playing its clip. The SceneLitImage maps the response map through the current uvRect, so the firelight's response stays fixed in the room while the texture drifts. |
+| Steam Occluder | RawImage over the same rect with uvRect and map rect (0, 0.665670, 0.253985, 0.212321), the same crop of the full frame; `SunkenLarderSteamOccluderLit.mat` (`_SourceTex` Relight/SunkenLarderAmbientUnlit.png, `_LayerMask` SunkenLarderSteamMask.png, `_InvertMask` 1) and a SceneLitImage lighting it as the scene lighting lights the background (base Relight/SunkenLarderAmbientUnlit.png, light 0 reference SunkenLarderBackground.png through SunkenLarderFireResponse.png). It draws the lit plate wherever the window is below 1, so the steam shows only inside the window, and is invisible at rest. |
+| Old Woman Host | Her host, after the steam, so no steam crosses her. |
+
+The script's review images (`review/` of its output) are `steam-frames.png` and `steam-sequence-1s.png` (the plume at moments of the drift beside the plate without the layers), `steam-window.png` (the window over the plate, with its rect), `steam-tiles.png` (each tile 2 x 2 over a dark wall colour, for its seams), `steam-light-levels.png` (the fire out, at rest and at 1.4), `steam-frame-540.png`, `steam-frame-443.png` and `steam-change-x4.png`. In game the steam sits at the frame's upper left and is clearly visible at phone size, clear of the dice, the HUD's panels and her face at 540 and at 443 wide.
