@@ -843,7 +843,7 @@ def stage_host(args):
     tl = timelines()
     host = A.write_asset(FOLDER / 'SunkenLarderHost.asset', A.HOST_SCRIPT, dict(
         PortraitPrefab=A.ref(prefab_guid, portrait, 3),
-        SigilPrefab=A.ref(None),
+        SigilPrefab=A.ref(A.guid(A.PRESENTATION / 'UI/SunkenLarderHostSigil.prefab'), 9079639759384952736, 3),
         SmokeShader=A.ref(None),
         LitLayerShader=A.ref(A.guid(A.ASSETS / 'Presentation/Shared/SceneLitImage.shader'), 4800000, 3),
         ReferenceSize=A.v2(*SOURCE), Scale=1, Offset=A.v2(0, 0), Layers=layers, Sequences=tl.sequences))

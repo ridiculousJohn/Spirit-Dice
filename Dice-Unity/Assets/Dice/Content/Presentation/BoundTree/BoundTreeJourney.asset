@@ -36,7 +36,8 @@ MonoBehaviour:
   clueBeat:
     rid: 1123138610053513270
   completionReward: {fileID: 0}
-  followUpJourneys: []
+  followUpJourneys:
+  - {fileID: 11400000, guid: 72ea842ad5704d9faaabd58190be5d7c, type: 2}
   requiredCompletedJourneys:
   - {fileID: 11400000, guid: a8ded007d7fa45f3869cf51933250cef, type: 2}
   references:

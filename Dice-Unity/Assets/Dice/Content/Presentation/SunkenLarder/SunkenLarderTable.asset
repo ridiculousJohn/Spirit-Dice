@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
+  m_Name: SunkenLarderTable
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterTablePresentationAsset
+  displayTitle: THE SUNKEN LARDER
+  scene:
+    m_AssetGUID: 079ffca4b2154646acb6d1209f1c1006
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_SubObjectGUID: 
+    m_EditorAssetChanged: 0
+  roomTexture: {fileID: 2800000, guid: fd776ed90f124ae18acceb80fb37074b, type: 3}
+  sceneLighting: {fileID: 11400000, guid: 645c199a929d495eb92c1d2e3834ca01, type: 2}
+  pieceLights: []
+  restingLightLevels:
+  - 1
+  hostLightingPosition: {x: 0, y: 0, z: 0}
+  hostPresentation: {fileID: 11400000, guid: 85a0edf7ec255d56b686d574dd1fafa8, type: 2}
+  audioTheme: {fileID: 11400000, guid: ed94bba6676542b7b017d54e0135c5dc, type: 2}
+  trayPresentation: {fileID: 11400000, guid: 29c3a8bc57d0479bbb67ba1b4e22c508, type: 2}
+  rulePresentations:
+  - {fileID: 11400000, guid: 8bfa2e3d68f249c68c87cc5a81146a0e, type: 2}
+  ambientActivity: {fileID: 0}
+  openingFadeDuration: 0.3

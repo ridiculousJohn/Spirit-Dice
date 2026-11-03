@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Dice Presentation Scenes
   m_GUID: 95e13035eda335846900d3ce9bf14dec
   m_SerializeEntries:
+  - m_GUID: 079ffca4b2154646acb6d1209f1c1006
+    m_Address: dice.scene.sunkenlarder
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 0ad715e91f47eab4c8ec2e340faa5126
     m_Address: dice.scene.moth
     m_ReadOnly: 0

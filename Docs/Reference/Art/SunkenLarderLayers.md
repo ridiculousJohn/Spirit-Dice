@@ -136,7 +136,7 @@ Her figure is one layer: no part of her moves in front of another (her breathing
 - Prefab: root SunkenLarderHost (RectTransform 941 x 1672, anchors and pivot 0, SpiritHostPortrait with Portrait Root `Portrait Layers` and the three layers in draw order), `Portrait Layers` (941 x 1672 at the root's origin), and per layer a SpiritPortraitImage (its texture and material, mesh SunkenLarderHostMesh.asset, five weights at 0, anchored position (470.5, 836) with pivot 0.5 so its rect covers the frame, no raycast target, cull transparent mesh on).
 - The overlays' textures are crops of concept box (404, 436)-(548, 494) (144 x 58); their UV rect (-2.80556, -20.31034, 6.53472, 28.82759) stretches the crop over the full frame, so they keep the concept registration and deform with the figure; the clamped crop's mask is 0 at its border, so nothing draws outside it.
 - Lighting: every layer is lit per pixel by light 0, the hearth fire of SunkenLarderSceneLighting.asset, by reference through Relight/SunkenLarderFireResponse.png over the full map rect, exactly as the plate is: at light 0 = 1 each layer draws its painted texture, and below it fades toward its unlit base. No depth or computed light.
-- Asset: Reference Size 941 x 1672, Scale 1, Offset 0, Lit Layer Shader `Dice/Scene Lit Image`, no smoke and no sigil prefab (an encounter HUD needs a host sigil; none is authored yet).
+- Asset: Reference Size 941 x 1672, Scale 1, Offset 0, Lit Layer Shader `Dice/Scene Lit Image`, no smoke, and Sigil Prefab `Content/Presentation/UI/SunkenLarderHostSigil.prefab` (her stoppered jar, drawn from `Tools/Presentation/host-sigils/sunken-larder-jar.svg`).
 
 ### Eyelid overlays
 

@@ -13,5 +13,9 @@ namespace Dice.Tests
         /** The encounter's single interference rule. */
         public static DieInterferenceRuleSnapshot Interference(this EncounterSnapshot snapshot)
             => snapshot.EncounterRules.OfType<DieInterferenceRuleSnapshot>().Single();
+
+        /** The encounter's single rot rule. */
+        public static RotRuleSnapshot Rot(this EncounterSnapshot snapshot)
+            => snapshot.EncounterRules.OfType<RotRuleSnapshot>().Single();
     }
 }

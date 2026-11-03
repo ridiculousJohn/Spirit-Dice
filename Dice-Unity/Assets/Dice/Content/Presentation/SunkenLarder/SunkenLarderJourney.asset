@@ -1,0 +1,291 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13a2179ce2ab44a59ab59de3267cba11, type: 3}
+  m_Name: SunkenLarderJourney
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterJourneyAsset
+  assetGuid: 72ea842ad5704d9faaabd58190be5d7c
+  locationTitle: The Sunken Larder
+  spiritName: The Old Woman
+  leadText: The nymph saw your traveler go deeper into the swamp, toward the smoke, where a woman lives who keeps things.
+  cardArtwork: {fileID: 2800000, guid: 4865a82e47db4354a74fab36c89fb78b, type: 3}
+  beats:
+  - rid: 1123138610053513300
+  - rid: 1123138610053513301
+  - rid: 1123138610053513302
+  - rid: 1123138610053513303
+  - rid: 1123138610053513304
+  - rid: 1123138610053513305
+  - rid: 1123138610053513306
+  - rid: 1123138610053513307
+  - rid: 1123138610053513308
+  - rid: 1123138610053513309
+  - rid: 1123138610053513310
+  - rid: 1123138610053513311
+  - rid: 1123138610053513312
+  - rid: 1123138610053513313
+  - rid: 1123138610053513314
+  - rid: 1123138610053513315
+  clueBeat:
+    rid: 1123138610053513314
+  completionReward: {fileID: 0}
+  followUpJourneys: []
+  requiredCompletedJourneys:
+  - {fileID: 11400000, guid: 7e4f59fd9c7d6f0458fd325dfa7627b6, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1123138610053513300
+      type: {class: IllustrationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Sunken Larder
+        text: Past the great tree the dry ground gives out into planks and stumps. Smoke hangs low over the reeds. A hut leans on stilts above the black water, firelight showing through the gaps in its boards.
+        continueLabel: Climb to the door
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: c69509fce5964b67aa2d5aa43c3f68cb, type: 2}
+        transition: 0
+        motionFrom: {x: 0, y: 0}
+        motionTo: {x: 0, y: 0}
+        scaleFrom: 1
+        scaleTo: 1
+        backgroundMotionFrom: {x: 0, y: 0}
+        backgroundMotionTo: {x: 0, y: 0}
+        backgroundScaleFrom: 1
+        backgroundScaleTo: 1
+    - rid: 1123138610053513301
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Inside
+        text: Jars crowd every shelf and table, stoppered and unlabeled. Skins hang from the walls. In the corner a small cauldron simmers over the fire.
+        continueLabel: Look closer
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 11400000, guid: d4f3f006d42940859d52e245c667ce5b, type: 2}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513302
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Among the jars
+        text: A child's wooden horse sits among them, one leg snapped off.
+        continueLabel: Step toward the fire
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513303
+      type: {class: ArrivalBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: By the fire
+        text: An old woman stirs the pot without looking up.
+        continueLabel: Wait
+        duration: 0
+        hostState: 1
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        hideNarrativeDuringMotion: 0
+        autoAdvance: 0
+    - rid: 1123138610053513304
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Old Woman
+        text: Your traveler stood where you're standing. Wanted something I had. Paid for it, too.
+        continueLabel: Ask what they wanted
+        duration: 3
+        hostState: 2
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513305
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Answers cost
+        text: Answers cost. What have you got?
+        continueLabel: Empty your pockets
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513306
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Nothing you'd part with
+        text: She looks you over. No. Nothing you'd part with.
+        continueLabel: Wait
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513307
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A game, then
+        text: We'll play, then. Win, and I'll tell you what they bought, and what it cost them.
+        continueLabel: Ask about the smell
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513308
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: In here
+        text: Out there, everything rots. In here, it rots when I say.
+        continueLabel: Ask about the charms
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513309
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: What the larder reveals
+        text: 'This bargain reveals Worn Pebble, Light Basket, and Patient Mill. Their charms reward what rot leaves behind: worn faces, a lighter load, and patient work.'
+        continueLabel: Hear the terms
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513310
+      type: {class: InvitationBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: The Sunken Larder
+        text: The pot keeps simmering. Accept, and we begin.
+        continueLabel: Accept the bargain
+        duration: 0
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 11400000, guid: d1997d1b3a704205b4b34eb20c7973d8, type: 2}
+        scene: {fileID: 0}
+        transition: 0
+    - rid: 1123138610053513311
+      type: {class: EncounterBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: 
+        text: 
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        encounter: {fileID: 11400000, guid: 2149f169e85f405a885c490e78f5fc2c, type: 2}
+        victoryTitle: Fair's fair.
+        victoryText: She sets down the spoon and takes a jar from the highest shelf. Something inside murmurs against the glass. Their voice. That's what they paid.
+        defeatTitle: Pity.
+        defeatText: The fire spits. Things spoil, waiting. Sit down again when you're ready.
+        abandonText: The old woman goes back to her stirring. The jars keep their secrets until the next game.
+        resultContinueLabel: Return to the trail
+        victoryPresentation:
+          enabled: 1
+          hostState: 4
+          holdDuration: 0.25
+          fadeDuration: 0.3
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        defeatPresentation:
+          enabled: 1
+          hostState: 5
+          holdDuration: 0.15
+          fadeDuration: 0.25
+          showDialogue: 1
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        abandonPresentation:
+          enabled: 1
+          hostState: 6
+          holdDuration: 0
+          fadeDuration: 0.2
+          showDialogue: 0
+          artwork: {fileID: 0}
+          audioCue: {fileID: 0}
+        encounterCharmsIntroductionText: 
+    - rid: 1123138610053513312
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: What they bought
+        text: They wanted to follow the blue light without it swallowing them. I gave them the way. Whoever they're chasing, they won't turn back now.
+        continueLabel: Ask about the voice
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513313
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A warning
+        text: If you hear them calling, it isn't them.
+        continueLabel: Leave the larder
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513314
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: A voice in a jar
+        text: The traveler is following someone through the drowned land, by a way the old woman sold them. Their voice sits in her jar. If you hear it calling, it isn't them.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}
+    - rid: 1123138610053513315
+      type: {class: DialogueBeat, ns: Dice.Presentation, asm: Dice.Presentation}
+      data:
+        title: Chapter 2 complete
+        text: The traveler is alive, and searching for someone of their own. You know what they paid to follow. The next chapter lies beyond the drowned land.
+        continueLabel: 
+        duration: 1
+        hostState: 0
+        audioCue: {fileID: 0}
+        progressionReward: {fileID: 0}
+        scene: {fileID: 0}
+        transition: 0
+        charm: {fileID: 0}

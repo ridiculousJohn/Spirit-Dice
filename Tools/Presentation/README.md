@@ -31,15 +31,20 @@ offset by its world origin so neighbouring pieces continue one surface, and Seed
 The texture's colour is the surface's (times Surface Color), its brightness a shallow relief, and Smoothness sets
 the specular roughness (1 - Smoothness), so a painted wet surface can read wet.
 
-The merchant and the Bound Tree share the compact layout (five dice bays and the modifier row on the same slats)
-but each has its own tray: `HauntedMerchant/MerchantTrayPresentation.asset`, `MerchantTrayGeometry.prefab`,
+The merchant, the Bound Tree and the Sunken Larder share the compact layout (five dice bays and the modifier row on
+the same slats) but each has its own tray: `HauntedMerchant/MerchantTrayPresentation.asset`, `MerchantTrayGeometry.prefab`,
 `Rigs/MerchantTrayPresentationRig.prefab` and its render texture in weathered wood (Moth's wood and iron
-materials), and `BoundTree/BoundTreeTrayPresentation.asset`, `BoundTreeTrayGeometry.prefab`,
+materials), `BoundTree/BoundTreeTrayPresentation.asset`, `BoundTreeTrayGeometry.prefab`,
 `Rigs/BoundTreeTrayPresentationRig.prefab` and `Rigs/RenderTargets/BoundTreeTrayPresentationRenderTarget.renderTexture`
-in root bark. The Bound Tree's slats use `BoundTree/BoundTreeTrayRoot.mat` where the merchant's use the light wood and
-`BoundTreeTrayDarkRoot.mat` (Surface Color 0.55, 0.53, 0.5) where they use the dark wood or iron; both are kind 9 with
-`Art/BoundTree/Tray/BoundTreeTrayRoot.png` at tiling (1/3, 2/3), a 3 x 1.5 unit tile, and Smoothness 0.5 (see
-"Bound Tree tray bark" below).
+in root bark, and `SunkenLarder/SunkenLarderTrayPresentation.asset`, `SunkenLarderTrayGeometry.prefab`,
+`Rigs/SunkenLarderTrayPresentationRig.prefab` and `Rigs/RenderTargets/SunkenLarderTrayPresentationRenderTarget.renderTexture`
+in the old woman's stained worktable wood. The Bound Tree's slats use `BoundTree/BoundTreeTrayRoot.mat` where the
+merchant's use the light wood and `BoundTreeTrayDarkRoot.mat` (Surface Color 0.55, 0.53, 0.5) where they use the dark
+wood or iron; both are kind 9 with `Art/BoundTree/Tray/BoundTreeTrayRoot.png` at tiling (1/3, 2/3), a 3 x 1.5 unit
+tile, and Smoothness 0.5 (see "Bound Tree tray bark" below). The Sunken Larder's are the same with
+`SunkenLarder/SunkenLarderTrayWood.mat` and `SunkenLarderTrayDarkWood.mat` sampling
+`Art/SunkenLarder/Tray/SunkenLarderTrayWood.png` at Smoothness 0.3, a drier surface than the wet bark (see "Sunken
+Larder tray wood" below). The look of both re-skinned trays has not been reviewed by John.
 
 Each `EncounterTablePresentationAsset` references its authored encounter scene and a `SpiritTrayPresentationAsset`. The tray asset references the rig prefab and its render-texture size. The rig and encounter scene own the camera, geometry, materials, lights, and placement. Both dice and modifier bays share the authored camera. The table's scene-lighting asset drives surface illumination.
 
@@ -100,6 +105,12 @@ It requires Python 3.9 or later with no third-party packages and takes a few min
 `build-bound-tree-tray-bark.py` builds the Bound Tree tray's texture, `Art/BoundTree/Tray/BoundTreeTrayRoot.png` (1024 x 512, tileable both ways), from the encounter's own painting, `Art/BoundTree/BoundTreeOriginal.png`, so the tray matches the root it sits on; no generated image is involved. It cuts the band of the root's flat top at concept pixels (40, 1205)-(920, 1455), where the bark, its cracks and the moss in them run across the frame as the slats do; flattens the painted light in linear light (luminance over its Gaussian low-pass, sigma 48, factor clamped to 0.33-3), keeping cracks, glints and the moss's colour; resizes it to 1024 x 512, which also undoes the painting's vertical foreshortening of those rows; makes it tile one direction after the other, filling an edge band of 18 % from a copy shifted by half a tile, blended about both images' low-pass means so the bark keeps its contrast; and scales it per channel so that, lit as an upward tray face is lit (the receiver ambient plus the receiver key times its upward component times the shader's 0.92, read from `Content/Presentation/BoundTree/BoundTreeSceneLighting.asset`), its median is the median painted colour of the root surface the tray covers (concept (60, 1025)-(880, 1225)). The texture is thus the bark's albedo, browner than the moonlit painting, and the tray's moonlight returns it to the painting's colour. Constants are at the top of the script. Import it sRGB with mipmaps, trilinear, aniso 4, repeat, maximum size 1024.
 
 It requires Python 3.10 or later with numpy, Pillow and scipy; on this machine use `Docs/work/merchant-table-clear/.venv/Scripts/python.exe`. The default writes a fresh ignored `Docs/work/bound-tree-tray-bark-*` directory with the texture, `review-tiled.png` (2 x 2 tiles), `review-lit.png` (the painted crop and target over the texture lit as an upward tray face) and `report.json` (lighting, medians, gains and the count of texels clipped at 1, the brightest wet glints); `--output` chooses an unused directory under `Docs/work`; `--write-assets` also writes the texture and keeps its `.meta`. The painting and the lighting asset are only read, so repeated runs give the same texture.
+
+### Sunken Larder tray wood
+
+`build-sunken-larder-tray-wood.py` builds the Sunken Larder tray's texture, `Art/SunkenLarder/Tray/SunkenLarderTrayWood.png` (1024 x 512, tileable both ways), from the encounter's own painting, `Art/SunkenLarder/SunkenLarderOriginal.png`, by the bark's method: it runs the steps of `build-bound-tree-tray-bark.py` (imported from beside it) on this painting, `Content/Presentation/SunkenLarder/SunkenLarderSceneLighting.asset` and its own boxes. It cuts the band of the tabletop below the tray at concept pixels (30, 1235)-(910, 1485), whose planks, grain and seams run across the frame as the slats do; flattens the hearth fire's painted fall-off from the left; resizes it to 1024 x 512; makes it tile; and scales it per channel so that, lit as an upward tray face is lit by the scene lighting's receiver ambient and key, its median is the median painted colour of the tabletop the tray covers (concept (60, 1025)-(880, 1225)). The texture is thus the wood's albedo, a warmer, brighter brown than the firelit painting, and the tray's cool receiver light returns it to the painting's colour. The boxes are at the top of the script. It imports like the bark (sRGB with mipmaps, trilinear, aniso 4, repeat, maximum size 1024; its `.meta` is a copy of `BoundTreeTrayRoot.png.meta` with its own GUID).
+
+It needs what the bark script needs (on this machine `Docs/work/merchant-table-clear/.venv/Scripts/python.exe`). The default writes a fresh ignored `Docs/work/sunken-larder-tray-wood-*` directory with the texture, `review-tiled.png`, `review-lit.png` and `report.json`, as the bark's; `--output` chooses an unused directory under `Docs/work`; `--write-assets` also writes the texture and keeps its `.meta`. The painting and the lighting asset are only read, so repeated runs give the same texture.
 
 ### Bound Tree spirit host
 

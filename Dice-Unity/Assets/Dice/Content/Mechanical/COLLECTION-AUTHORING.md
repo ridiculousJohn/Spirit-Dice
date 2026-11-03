@@ -131,7 +131,7 @@ unlock opportunities at stages 3, 6, and 10. Its reward pools
 `RewardPools/reward_pool.hag.sunken_larder.*` copy Moth's ordinary pools, which
 already contain Light Basket, plus the four variants of Worn Pebble and Patient Mill.
 `ProgressionRewards/HagFamilyDiscovery` discovers the three families and grants
-nothing; no journey references it yet. All four Light Basket variants are permanent
+nothing; the invitation of `SunkenLarder/SunkenLarderJourney` grants it. All four Light Basket variants are permanent
 unlocks, so Light Basket is not a starter family; its pairing, Full Basket
 (`modifier.play_hand.sum_greater_than`), is a starter. Worn Pebble and Light Basket
 are tier 2, so they enter ordinary offers from stage 4.
