@@ -685,9 +685,12 @@ namespace Dice.Presentation
             GameplayHud.ResetTransientVisuals();
         }
 
+        /** Shows the selection on the tray and tells the rule presenters when the selection the player sees changes. */
         private void SetDiceSelection(int mask)
         {
+            int shown = DiceTray.SelectionMask;
             DiceTray.SetSelection(mask);
+            if (DiceTray.SelectionMask != shown) rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
         }
 
         private void Present(Resolution resolution)
@@ -808,6 +811,8 @@ namespace Dice.Presentation
             {
                 rulePresenters = EncounterRulePresenters.Create(configuredTable.RulePresentations, encounter,
                     () => new TableRuleContext(this));
+                // New presenters start from the selection the tray already shows.
+                rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
                 piecePresenters = TablePiecePresenters.Create(tablePieces, encounter, new TablePieceContext(this));
             }
             catch
@@ -857,10 +862,10 @@ namespace Dice.Presentation
                 view.hostPortrait.React();
             }
 
-            public override IEnumerator FlipDie(int bay, int face) => view.DiceTray.Flip(bay, face);
+            public override IEnumerator FlipDice(int mask, DiceValues faces) => view.DiceTray.Flip(mask, faces);
 
-            public override IEnumerator RerollDie(int bay, int face)
-                => view.DiceTray.RollDie(bay, face, view.encounterAudio.BeginRoll(1));
+            public override IEnumerator RerollDice(int mask, DiceValues faces)
+                => view.DiceTray.Roll(faces, mask, view.encounterAudio.BeginRoll(DiceValues.CountBays(mask)));
 
             public override void PlayCue(AudioClip clip) => view.encounterAudio.PlayCue(clip);
 

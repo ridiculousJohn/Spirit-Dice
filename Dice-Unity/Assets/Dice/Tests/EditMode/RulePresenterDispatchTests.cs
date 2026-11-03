@@ -12,8 +12,8 @@ using Object = UnityEngine.Object;
 namespace Dice.Tests
 {
     /**
-     * How a table's rule presenters receive snapshots and events, with test-created presenters that record what they
-     * receive: every rule's presenter gets every event, the longest lead-in wins, and the presenters of one event run side by
+     * How a table's rule presenters receive snapshots, selections and events, with test-created presenters that record
+     * what they receive: every rule's presenter gets every snapshot, selection and event, the longest lead-in wins, and the presenters of one event run side by
      * side until the last ends. Playback knows no rule or presenter kind.
      */
     public sealed class RulePresenterDispatchTests
@@ -50,6 +50,19 @@ namespace Dice.Tests
             {
                 FirstId + " sync " + snapshot.Revision + " animated", SecondId + " sync " + snapshot.Revision + " animated",
                 FirstId + " sync none still", SecondId + " sync none still"
+            }));
+        }
+
+        /** Checks the dice selection reaches every rule's presenter in card order / fails if a presenter misses a selection or receives another mask. */
+        [Test]
+        public void TheSelectionReachesEveryRulesPresenter()
+        {
+            var presenters = Create(Card(FirstId, new Recording()), Card(SecondId, new Recording()));
+            presenters.SelectionChanged((1 << 0) | (1 << 2));
+            presenters.SelectionChanged(0);
+            Assert.That(log, Is.EqualTo(new[]
+            {
+                FirstId + " selection 5", SecondId + " selection 5", FirstId + " selection 0", SecondId + " selection 0"
             }));
         }
 
@@ -237,6 +250,8 @@ namespace Dice.Tests
             public override void Sync(EncounterSnapshot snapshot, bool animate)
                 => asset.Log.Add(ruleId + " sync " + (snapshot == null ? "none" : snapshot.Revision.ToString()) +
                     (animate ? " animated" : " still"));
+
+            public override void SelectionChanged(int selectedMask) => asset.Log.Add(ruleId + " selection " + selectedMask);
 
             public override float LeadIn(RuleEvent ruleEvent) => asset.Recording.LeadIns(ruleEvent);
 

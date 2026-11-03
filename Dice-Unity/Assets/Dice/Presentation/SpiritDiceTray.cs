@@ -45,6 +45,7 @@ namespace Dice.Presentation
         private readonly Vector3[] shadowScales = new Vector3[DiceValues.Count];
         private int selectionMask;
         private int scoringHighlightMask;
+        /** The dice a roll or flip is moving: each animation claims its own dice and releases only those. */
         private int rollingMask;
         private int presentationVersion;
         private SpiritTrayScene sharedScene;
@@ -54,11 +55,13 @@ namespace Dice.Presentation
         public RenderTexture Texture => texture;
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
-        public bool IsRolling { get; private set; }
-        /** Raised when a roll or flip ends with its dice at rest in their slots. */
+        /** Whether any die is rolling or flipping. */
+        public bool IsRolling => rollingMask != 0;
+        /** Raised when the last running roll or flip ends, leaving every die at rest in its slot. */
         public event Action RollEnded;
         /** The authored die in each slot; objects parented to it follow its rolls, flips and rest pose. */
         public IReadOnlyList<Transform> Dice => dice;
+        public int SelectionMask => selectionMask;
         public int ScoringHighlightMask => scoringHighlightMask;
 
         public void SetSceneLighting(SceneLightingState state)
@@ -138,14 +141,17 @@ namespace Dice.Presentation
         public IEnumerator Roll(DiceValues after, int mask, float duration = DefaultRollDuration)
             => Roll(after, mask, SpiritRollTiming.ForDuration(duration));
 
+        /**
+         * Rolls the masked dice to their faces in after; the other dice keep their pose. Fails when a masked die is already
+         * rolling or flipping; dice another animation moves may move at the same time.
+         */
         public IEnumerator Roll(DiceValues after, int mask, SpiritRollTiming timing)
         {
             if (!after.IsValid) throw new ArgumentException("Every die must have a face from 1 to 6.", nameof(after));
             if (timing == null) throw new ArgumentNullException(nameof(timing));
             Initialize();
-            if (IsRolling) throw new InvalidOperationException("A dice roll is already running.");
-            rollingMask = mask & DiceValues.AllMask;
-            if (rollingMask == 0) yield break;
+            int rolled = mask & DiceValues.AllMask;
+            if (rolled == 0) yield break;
 
             Quaternion[] startRotations = new Quaternion[DiceValues.Count];
             Quaternion[] endRotations = new Quaternion[DiceValues.Count];
@@ -156,12 +162,10 @@ namespace Dice.Presentation
                 endRotations[index] = RotationForFace(after[index], index);
             }
 
-            IsRolling = true;
+            ClaimDice(rolled);
             try
             {
-                int diceCount = 0;
-                for (int index = 0; index < DiceValues.Count; index++)
-                    if ((rollingMask & (1 << index)) != 0) diceCount++;
+                int diceCount = DiceValues.CountBays(rolled);
                 while (true)
                 {
                     if (version != presentationVersion) yield break;
@@ -169,7 +173,7 @@ namespace Dice.Presentation
                     int ordinal = 0;
                     for (int index = 0; index < DiceValues.Count; index++)
                     {
-                        if ((rollingMask & (1 << index)) == 0) continue;
+                        if ((rolled & (1 << index)) == 0) continue;
                         timing.SamplePose(ordinal++, diceCount, elapsed, startRotations[index], endRotations[index],
                             out Quaternion rotation, out float lift, out float drift);
                         dice[index].localRotation = rotation;
@@ -185,74 +189,86 @@ namespace Dice.Presentation
             }
             finally
             {
-                for (int index = 0; version == presentationVersion && index < DiceValues.Count; index++)
-                {
-                    if ((rollingMask & (1 << index)) == 0) continue;
-                    dice[index].localRotation = endRotations[index];
-                    dice[index].localPosition = SlotPosition(index);
-                    SetShadowHeight(index, 0f);
-                }
-                if (version == presentationVersion)
-                {
-                    rollingMask = 0;
-                    IsRolling = false;
-                    RollEnded?.Invoke();
-                }
+                if (version == presentationVersion) RestDice(rolled, endRotations);
             }
         }
 
-        /** Rolls one die to a face; the other dice keep their current pose. */
-        public IEnumerator RollDie(int index, int face, SpiritRollTiming timing)
+        /**
+         * Turns the masked dice over to their faces together with a short hop, honoring the same cancellation and claiming
+         * rules as Roll; the other dice keep their pose.
+         */
+        public IEnumerator Flip(int mask, DiceValues faces, float duration = DefaultFlipDuration)
         {
-            if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
-            return Roll(new DiceValues(face, face, face, face, face), 1 << index, timing);
-        }
-
-        /** Turns one die over to a face with a short hop, honoring the same cancellation rules as Roll. */
-        public IEnumerator Flip(int index, int face, float duration = DefaultFlipDuration)
-        {
-            if (index < 0 || index >= DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(index));
-            if (face < 1 || face > 6) throw new ArgumentOutOfRangeException(nameof(face));
+            if (!faces.IsValid) throw new ArgumentException("Every die must have a face from 1 to 6.", nameof(faces));
             if (float.IsNaN(duration) || duration < 0f) throw new ArgumentOutOfRangeException(nameof(duration));
             Initialize();
-            if (IsRolling) throw new InvalidOperationException("A dice roll is already running.");
-            rollingMask = 1 << index;
+            int flipped = mask & DiceValues.AllMask;
+            if (flipped == 0) yield break;
+
+            Quaternion[] startRotations = new Quaternion[DiceValues.Count];
+            Quaternion[] endRotations = new Quaternion[DiceValues.Count];
             int version = presentationVersion;
-            Quaternion startRotation = dice[index].localRotation;
-            Quaternion endRotation = RotationForFace(face, index);
+            for (int index = 0; index < DiceValues.Count; index++)
+            {
+                startRotations[index] = dice[index].localRotation;
+                endRotations[index] = RotationForFace(faces[index], index);
+            }
             double start = Time.unscaledTimeAsDouble;
 
-            IsRolling = true;
+            ClaimDice(flipped);
             try
             {
                 while (true)
                 {
                     if (version != presentationVersion) yield break;
                     float progress = duration > 0f ? Mathf.Clamp01((float)(Time.unscaledTimeAsDouble - start) / duration) : 1f;
-                    // Opposite faces differ by a half turn about a horizontal axis, so the slerp tumbles the die over.
-                    Quaternion rotation = Quaternion.Slerp(startRotation, endRotation, Mathf.SmoothStep(0f, 1f, progress));
+                    float turn = Mathf.SmoothStep(0f, 1f, progress);
                     float lift = Mathf.Sin(progress * Mathf.PI) * FlipHopHeight;
-                    dice[index].localRotation = rotation;
-                    Vector3 position = SlotPosition(index);
-                    position.y = (SupportHeight(rotation) + lift) * DieScale;
-                    dice[index].localPosition = position;
-                    SetShadowHeight(index, lift / SpiritRollTiming.MaximumLift);
+                    for (int index = 0; index < DiceValues.Count; index++)
+                    {
+                        if ((flipped & (1 << index)) == 0) continue;
+                        // Each die turns from its own pose: a neighbouring face is a quarter turn, and opposite faces differ
+                        // by a half turn about a horizontal axis, so the slerp tumbles the die over.
+                        Quaternion rotation = Quaternion.Slerp(startRotations[index], endRotations[index], turn);
+                        dice[index].localRotation = rotation;
+                        Vector3 position = SlotPosition(index);
+                        position.y = (SupportHeight(rotation) + lift) * DieScale;
+                        dice[index].localPosition = position;
+                        SetShadowHeight(index, lift / SpiritRollTiming.MaximumLift);
+                    }
                     if (progress >= 1f) break;
                     yield return null;
                 }
             }
             finally
             {
-                if (version == presentationVersion)
-                {
-                    dice[index].localRotation = endRotation;
-                    dice[index].localPosition = SlotPosition(index);
-                    SetShadowHeight(index, 0f);
-                    rollingMask = 0;
-                    IsRolling = false;
-                    RollEnded?.Invoke();
-                }
+                if (version == presentationVersion) RestDice(flipped, endRotations);
             }
+        }
+
+        /** Marks the dice as moved by one animation; fails when another animation is already moving one of them. */
+        private void ClaimDice(int mask)
+        {
+            if ((rollingMask & mask) != 0)
+                throw new InvalidOperationException("A die cannot be moved by two animations at once.");
+            rollingMask |= mask;
+        }
+
+        /**
+         * Rests an animation's dice in their slots on their end rotations and releases them; when no die is left moving,
+         * the last animation has ended.
+         */
+        private void RestDice(int mask, Quaternion[] endRotations)
+        {
+            for (int index = 0; index < DiceValues.Count; index++)
+            {
+                if ((mask & (1 << index)) == 0) continue;
+                dice[index].localRotation = endRotations[index];
+                dice[index].localPosition = SlotPosition(index);
+                SetShadowHeight(index, 0f);
+            }
+            rollingMask &= ~mask;
+            if (rollingMask == 0) RollEnded?.Invoke();
         }
 
         /**
@@ -377,7 +393,6 @@ namespace Dice.Presentation
             selectionMask = 0;
             scoringHighlightMask = 0;
             rollingMask = 0;
-            IsRolling = false;
         }
 
         private void SetContentActive(bool active)

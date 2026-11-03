@@ -8,7 +8,8 @@ namespace Dice.Presentation
     /**
      * The presenters of an encounter table's rules: one per rule card that references a presenter, created for the
      * encounter the table presents and disposed with the encounter screen's presentation of it. Score playback asks it for
-     * each event's lead-in and presentation; it knows no rule or presenter kind.
+     * each event's lead-in and presentation, and the screen passes on each snapshot and dice selection; it knows no rule or
+     * presenter kind.
      */
     public sealed class EncounterRulePresenters : IDisposable
     {
@@ -55,6 +56,12 @@ namespace Dice.Presentation
         public void Sync(EncounterSnapshot snapshot, bool animate)
         {
             foreach (var presenter in presenters) presenter.Sync(snapshot, animate);
+        }
+
+        /** Tells every presenter the dice selection the player sees. */
+        public void SelectionChanged(int selectedMask)
+        {
+            foreach (var presenter in presenters) presenter.SelectionChanged(selectedMask);
         }
 
         /** The longest pause any presenter asks for before the event is presented. */

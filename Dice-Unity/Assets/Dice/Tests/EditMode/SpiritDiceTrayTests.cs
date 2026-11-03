@@ -99,13 +99,73 @@ namespace Dice.Tests
         public void FlipAndSingleDieRollMoveOnlyTheirTarget()
         {
             tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
-            IEnumerator flip = tray.Flip(1, 5, 0f);
+            IEnumerator flip = tray.Flip(1 << 1, AllShowing(5), 0f);
             Assert.That(flip.MoveNext(), Is.False);
-            // A timing that started long ago lands the roll on its first step.
-            IEnumerator roll = tray.RollDie(3, 6, new SpiritRollTiming(0f, null, 0f, Time.unscaledTimeAsDouble - 10, 0));
+            IEnumerator roll = tray.Roll(AllShowing(6), 1 << 3, LandedTiming());
             Assert.That(roll.MoveNext(), Is.False);
             Assert.That(tray.IsRolling, Is.False);
             AssertFaces(1, 5, 3, 6, 5);
+        }
+
+        /** Checks one flip turns every masked die to its own face, neighbouring and opposite alike, and leaves the rest / fails if a masked die misses its face or an unmasked die moves. */
+        [Test]
+        public void AMultiDieFlipLandsEveryMaskedDieOnItsFace()
+        {
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            // Bay 0 turns to its opposite face, bays 2 and 4 to neighbouring faces.
+            IEnumerator flip = tray.Flip((1 << 0) | (1 << 2) | (1 << 4), new DiceValues(6, 1, 2, 1, 1), 0f);
+            Assert.That(flip.MoveNext(), Is.False);
+            Assert.That(tray.IsRolling, Is.False);
+            AssertFaces(6, 2, 2, 4, 1);
+        }
+
+        /** Checks a roll on one die runs while another die is mid-flip and each lands on its own face / fails if the second animation is refused or either die misses its face. */
+        [Test]
+        public void AnimationsOnDifferentDiceRunTogetherAndEachLands()
+        {
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            IEnumerator flip = tray.Flip(1 << 1, AllShowing(5), 10f);
+            Assert.That(flip.MoveNext(), Is.True);
+            IEnumerator roll = tray.Roll(AllShowing(6), (1 << 3) | (1 << 4), LandedTiming());
+            Assert.That(roll.MoveNext(), Is.False, "The roll lands while the flip still runs.");
+            Assert.That(tray.IsRolling, Is.True, "The flipping die still moves.");
+            AssertFaces(1, 2, 3, 6, 6);
+            ((IDisposable)flip).Dispose();
+            Assert.That(tray.IsRolling, Is.False);
+            AssertFaces(1, 5, 3, 6, 6);
+        }
+
+        /** Checks a roll or flip that takes a die another animation is moving throws, claims nothing and leaves the running animation to finish / fails if two animations share a die or the refused one holds a die. */
+        [Test]
+        public void AnAnimationOnAMovingDieThrows()
+        {
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            IEnumerator flip = tray.Flip(1 << 2, AllShowing(4), 10f);
+            Assert.That(flip.MoveNext(), Is.True);
+            Assert.Throws<InvalidOperationException>(() => tray.Roll(AllShowing(6), (1 << 2) | (1 << 3)).MoveNext());
+            Assert.Throws<InvalidOperationException>(() => tray.Flip(1 << 2, AllShowing(1), 10f).MoveNext());
+            ((IDisposable)flip).Dispose();
+            Assert.That(tray.IsRolling, Is.False, "The refused animations hold no die.");
+            AssertFaces(1, 2, 4, 4, 5);
+        }
+
+        /** Checks RollEnded fires once, when the last of two overlapping animations ends / fails if it fires while a die still moves or more than once. */
+        [Test]
+        public void RollEndedFiresOnceWhenTheLastAnimationEnds()
+        {
+            int ended = 0;
+            tray.RollEnded += () => ++ended;
+            tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
+            IEnumerator first = tray.Flip(1 << 0, AllShowing(6), 10f);
+            IEnumerator second = tray.Roll(AllShowing(6), 1 << 1, 10f);
+            Assert.That(first.MoveNext(), Is.True);
+            Assert.That(second.MoveNext(), Is.True);
+            ((IDisposable)first).Dispose();
+            Assert.That(ended, Is.Zero, "Another animation still moves a die.");
+            Assert.That(tray.IsRolling, Is.True);
+            ((IDisposable)second).Dispose();
+            Assert.That(ended, Is.EqualTo(1));
+            Assert.That(tray.IsRolling, Is.False);
         }
 
         /** Checks a running flip rejects new values and settles on its face when interrupted / fails if values can be replaced mid-animation or the interrupted die is left between faces. */
@@ -113,7 +173,7 @@ namespace Dice.Tests
         public void RunningFlipRejectsNewValuesAndSettlesWhenInterrupted()
         {
             tray.SetValues(new DiceValues(1, 2, 3, 4, 5));
-            IEnumerator flip = tray.Flip(4, 2, 10f);
+            IEnumerator flip = tray.Flip(1 << 4, AllShowing(2), 10f);
             Assert.That(flip.MoveNext(), Is.True);
             Assert.Throws<InvalidOperationException>(() => tray.SetValues(new DiceValues(1, 1, 1, 1, 1)));
             ((IDisposable)flip).Dispose();
@@ -138,6 +198,11 @@ namespace Dice.Tests
                 Assert.That(Vector2.Distance(tray.GetSlotLabelViewportPosition(index), label), Is.LessThan(.0001f), "Label " + index);
             }
         }
+
+        private static DiceValues AllShowing(int face) => new DiceValues(face, face, face, face, face);
+
+        /** A roll timing that started long ago, so the roll lands on its first step. */
+        private static SpiritRollTiming LandedTiming() => new SpiritRollTiming(0f, null, 0f, Time.unscaledTimeAsDouble - 10, 0);
 
         private void AssertFaces(params int[] faces)
         {

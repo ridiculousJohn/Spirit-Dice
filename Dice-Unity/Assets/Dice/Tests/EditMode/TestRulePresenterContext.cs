@@ -10,7 +10,7 @@ namespace Dice.Tests
 {
     /**
      * A rule presenter context over five stand-in dice that records, in order, what presenters ask of the table: host
-     * reactions, die flips and rerolls (each landing after one frame), cue clips, ambient jolts, piece flares, rule badge
+     * reactions, dice flips and rerolls (each naming its bays and faces and landing after one frame), cue clips, ambient jolts, piece flares, rule badge
      * refreshes, action cues, selection text and spirit sweeps (each a realtime wait of its duration). Piece flares last
      * the configured duration.
      */
@@ -41,9 +41,9 @@ namespace Dice.Tests
 
         public override void ReactHost() => Log.Add("react");
 
-        public override IEnumerator FlipDie(int bay, int face) => Move("flip " + bay + " to " + face);
+        public override IEnumerator FlipDice(int mask, DiceValues faces) => Move("flip " + Describe(mask, faces));
 
-        public override IEnumerator RerollDie(int bay, int face) => Move("reroll " + bay + " to " + face);
+        public override IEnumerator RerollDice(int mask, DiceValues faces) => Move("reroll " + Describe(mask, faces));
 
         public override void PlayCue(AudioClip clip) => Log.Add("cue " + (clip != null ? clip.name : "none"));
 
@@ -70,6 +70,15 @@ namespace Dice.Tests
         }
 
         private static string Name(Object value) => value != null ? value.name : "none";
+
+        /** Each masked bay and its face in bay order, such as "1 to 4, 3 to 2". */
+        private static string Describe(int mask, DiceValues faces)
+        {
+            var moves = new List<string>();
+            for (int bay = 0; bay < DiceValues.Count; ++bay)
+                if ((mask & (1 << bay)) != 0) moves.Add(bay + " to " + faces[bay]);
+            return string.Join(", ", moves);
+        }
 
         public void Dispose()
         {

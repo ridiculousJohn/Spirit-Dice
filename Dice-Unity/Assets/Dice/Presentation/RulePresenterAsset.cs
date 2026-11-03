@@ -41,10 +41,11 @@ namespace Dice.Presentation
 
     /**
      * What rule presentation may use from the encounter table, nothing rule-specific: the tray's five dice, the host's
-     * reaction and action cue, the scene lights, turning or rerolling one die, the encounter's cue voices, the ambient
-     * activity's jolt, the table pieces' flares, and the HUD's rule badge, selection line and spirit sweep.
-     * Only one die animation runs at a time: the tray refuses a flip or reroll while another die animation is running, so
-     * the presenters of one event must not move dice side by side.
+     * reaction and action cue, the scene lights, turning or rerolling any number of dice together, the encounter's cue
+     * voices, the ambient activity's jolt, the table pieces' flares, and the HUD's rule badge, selection line and spirit
+     * sweep. Different dice may animate at the same time, by one presenter or several, or alongside the tray's own roll;
+     * a die cannot be moved by two animations at once, and the tray throws when a flip or reroll claims a die another
+     * animation is moving.
      */
     public abstract class RulePresenterContext
     {
@@ -66,11 +67,17 @@ namespace Dice.Presentation
         /** Plays the host's reaction; does nothing when the encounter has no host. */
         public abstract void ReactHost();
 
-        /** Turns the die in the bay over to the face; the routine ends when it lands. */
-        public abstract IEnumerator FlipDie(int bay, int face);
+        /**
+         * Turns the masked dice over together, each to its face in faces; the routine ends when they land. Only the masked
+         * entries of faces are used.
+         */
+        public abstract IEnumerator FlipDice(int mask, DiceValues faces);
 
-        /** Rerolls the die in the bay to the face with the tray's roll sound; the routine ends when it lands. */
-        public abstract IEnumerator RerollDie(int bay, int face);
+        /**
+         * Rerolls the masked dice together, each to its face in faces, with the tray's roll sound for that many dice; the
+         * routine ends when they land. Only the masked entries of faces are used.
+         */
+        public abstract IEnumerator RerollDice(int mask, DiceValues faces);
 
         /** Plays the clip on the encounter's cue voices, under the encounter audio's mute, focus and pause. */
         public abstract void PlayCue(AudioClip clip);
@@ -116,6 +123,12 @@ namespace Dice.Presentation
     {
         /** Shows the state of the snapshot, or nothing for a null snapshot or one that is not in play. */
         public virtual void Sync(EncounterSnapshot snapshot, bool animate) { }
+
+        /**
+         * Shows the dice selection the player sees, as a mask of bays; told once when the presenter is created and again
+         * whenever the selection changes, including when playback clears it.
+         */
+        public virtual void SelectionChanged(int selectedMask) { }
 
         /** Seconds playback pauses before presenting the event; zero when the presenter needs no pause. */
         public virtual float LeadIn(RuleEvent ruleEvent) => 0f;

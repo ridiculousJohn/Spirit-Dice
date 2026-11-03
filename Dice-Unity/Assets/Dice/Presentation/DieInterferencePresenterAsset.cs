@@ -90,20 +90,25 @@ namespace Dice.Presentation
             lastDisturbanceClip = SpiritEncounterAudio.ChooseClip(settings.DisturbanceClips, lastDisturbanceClip, null, cosmeticRandom);
             context.PlayCue(lastDisturbanceClip);
             context.JoltAmbient();
-            // The rule's own closed set of effects decides how the die moves.
+            // The rule's own closed set of effects decides how the die moves; only the disturbed die moves.
+            int mask = 1 << disturbed.Bay;
+            DiceValues faces = AllShowing(disturbed.After);
             switch (disturbed.Kind)
             {
                 case DieInterferenceKind.Flip:
-                    yield return context.FlipDie(disturbed.Bay, disturbed.After);
+                    yield return context.FlipDice(mask, faces);
                     break;
                 case DieInterferenceKind.ForcedReroll:
-                    yield return context.RerollDie(disturbed.Bay, disturbed.After);
+                    yield return context.RerollDice(mask, faces);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(disturbed), disturbed.Kind, "Unknown interference effect.");
             }
             if (settings.Hold > 0f) yield return new WaitForSecondsRealtime(settings.Hold);
         }
+
+        /** Dice that all show the face, so a mask picking any one of them moves it to that face. */
+        private static DiceValues AllShowing(int face) => new DiceValues(face, face, face, face, face);
 
         private IEnumerator Repelled()
         {
