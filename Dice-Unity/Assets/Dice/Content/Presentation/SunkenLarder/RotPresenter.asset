@@ -19,5 +19,6 @@ MonoBehaviour:
   rotClip: {fileID: 8300000, guid: 9bead9b82e9b469fabf771fec589f44f, type: 3}
   witherDuration: 0.6
   witherClip: {fileID: 8300000, guid: 7796eb5578644a599a34f768515eff8a, type: 3}
+  witherVoiceClip: {fileID: 8300000, guid: 47d4d5d6091f4d959d85bb4819d32310, type: 3}
   restoreDuration: 0.4
   restoreClip: {fileID: 8300000, guid: 2455337fceea4f469f0169acf912b3ae, type: 3}

@@ -33,6 +33,8 @@ namespace Dice.Presentation
         [SerializeField, Min(0)] private float witherDuration = .6f;
         [Tooltip("Played when a rot step withers a die; empty plays nothing.")]
         [SerializeField] private AudioClip witherClip;
+        [Tooltip("The host's voice, played with the host's reaction when a rot step withers a die; empty plays nothing.")]
+        [SerializeField] private AudioClip witherVoiceClip;
         [Header("Restore")]
         [Tooltip("Seconds a restored die's mould takes to crumble away; playback waits this long.")]
         [SerializeField, Min(0)] private float restoreDuration = .4f;
@@ -46,6 +48,7 @@ namespace Dice.Presentation
         public AudioClip RotClip => rotClip;
         public float WitherDuration => witherDuration;
         public AudioClip WitherClip => witherClip;
+        public AudioClip WitherVoiceClip => witherVoiceClip;
         public float RestoreDuration => restoreDuration;
         public AudioClip RestoreClip => restoreClip;
 
@@ -170,6 +173,7 @@ namespace Dice.Presentation
                 witheredMask |= rotted.WitheredMask;
                 Show(true);
                 context.PlayCue(settings.WitherClip);
+                context.PlayCue(settings.WitherVoiceClip);
                 context.ReactHost();
                 context.JoltAmbient();
                 hold = settings.WitherDuration;

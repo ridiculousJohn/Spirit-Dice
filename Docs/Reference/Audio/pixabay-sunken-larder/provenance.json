@@ -1,11 +1,11 @@
 {
   "title": "Sunken Larder hearth bed, hut creaks, jar clinks and murmurs, and the rot clips",
-  "license": "Pixabay Content License",
+  "license": "Pixabay Content License, except the two Freesound voice recordings, whose licences are on their source entries",
   "license_url": "https://pixabay.com/service/license-summary/",
   "license_terms": "Free for commercial use; attribution not required.",
   "processor": "Tools/Audio/process_sunken_larder_audio.ps1",
   "ffmpeg": "N-122467-gc3d3377fe1-20260116",
-  "status": "Installed in Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/SunkenLarder: sunken_larder_fire_bed_loop.wav (ambience), sunken_larder_creak_01-08 and sunken_larder_sway_creak_01-06 (creaks), sunken_larder_jar_clink_01-08 (ambient one-shots, weight 1) and sunken_larder_jar_murmur_01-02 (ambient one-shots, weight 0.2), referenced by Content/Presentation/SunkenLarder/SunkenLarderAudio.asset; sunken_larder_rot_creak_01, sunken_larder_wither_squelch_01 and sunken_larder_restore_crumble_01, the rot, wither and restore clips of Content/Presentation/SunkenLarder/RotPresenter.asset. The clips with _alt_ in their names are processed for audition and not installed.",
+  "status": "Installed in Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/SunkenLarder: sunken_larder_fire_bed_loop.wav (ambience), sunken_larder_creak_01-08 and sunken_larder_sway_creak_01-06 (creaks), sunken_larder_jar_clink_01-08 (ambient one-shots, weight 1), sunken_larder_jar_murmur_01-02 (ambient one-shots, weight 0.2), referenced by Content/Presentation/SunkenLarder/SunkenLarderAudio.asset; sunken_larder_rot_creak_01, sunken_larder_wither_squelch_01, sunken_larder_chuckle_01 and sunken_larder_restore_crumble_01, the rot, wither, wither voice and restore clips of Content/Presentation/SunkenLarder/RotPresenter.asset. The clips with _alt_ in their names are processed for audition and not installed.",
   "downloads": "Raw downloads stay local in ignored Docs/work/sunken-larder-audio/downloads, as for the other Pixabay sets; the sha256 values identify them. Each page showed the Pixabay Content License, no AI-generated label and no Content ID flag when downloaded from its cdn_url.",
   "processing": {
     "bed": "Stereo 44.1 kHz; the small fire alone: highpass 60 Hz; cut from the source range to exactly the loop length plus the 2.5 second loop crossfade and closed with an equal-power (qsin) tail/head crossfade (cut S of length L + X becomes S[X, L] followed by S[L, L + X] fading out summed with S[0, X] fading in, total length L = 60 s); one gain step to -38.9 LUFS, the installed Bound Tree bed integrated loudness; signed 16-bit PCM WAV. loop_boundary_delta is the first minus the last 16-bit sample per channel.",
@@ -13,6 +13,7 @@
     "clinks": "Mono 44.1 kHz; sliced with a 4 ms fade in; brought to -3 dBFS; highpass 150 Hz; lowpass 7000 Hz; trailing silence below -62 dB trimmed with the listed fade out; peak-normalized to -18 dBFS.",
     "murmurs": "Mono 44.1 kHz; one phrase sliced with an 80 ms fade in; brought to -3 dBFS; highpass 120 Hz and two 900 Hz lowpasses, so no word shape survives; a faint glass ring mixed 14 dB under the voice (a copy through echoes of 1.13 and 2.27 ms with decays 0.55 and 0.3, a comb ringing near 880 Hz and its multiples, highpassed at 700 Hz); trailing silence below -60 dB trimmed with a 0.4 s fade out; peak-normalized to -20 dBFS.",
     "rot": "Rot step: mono 44.1 kHz; sliced with a 5 ms fade in; pitched down by 0.85; brought to -3 dBFS; highpass 80 Hz; lowpass 5000 Hz; trailing silence below -60 dB trimmed with the listed fade out; peak-normalized to -21 dBFS. Withering: no pitch; highpass 60 Hz; lowpass 6000 Hz; trim below -58 dB; -15 dBFS. Restoring: no pitch; highpass 200 Hz; lowpass 9000 Hz; trim below -60 dB; -18 dBFS.",
+    "voice": "Mono 44.1 kHz (the stereo chuckle downmixed); each recording whole with a 5 ms fade in; pitched down (asetrate, then aresample, so also slowed) by the listed factor: 0.917004 is 1.5 semitones, 0.840896 is 3; brought to -3 dBFS; highpass 80 Hz; trailing silence below -60 dB trimmed with a 0.15 s fade out; peak-normalized to -12 dBFS, the Bound Tree reaction groan level (the installed chuckle is -27.2 dBFS RMS, the groans -26.0 to -28.9).",
     "selection": "Ranges were chosen from level envelopes, onset lists and spectrograms, not by listening. Rot, withering and restoring alternatives are processed for audition and not installed; the installed withering take is the squelch with the lowest brightness and crest factor of the takes measured, to keep it mild."
   },
   "sources": [
@@ -167,6 +168,33 @@
       "duration_seconds": 5.064,
       "format": "MP3, 24 kHz stereo, 160 kbps",
       "sha256": "2908af25ecbb7b2cd9166ac33588f4a16a8ea6b3ab08e8203bed516fcf25b599"
+    },
+    {
+      "title": "26.07.28- Woman Giggling - Close-Lipped Muffled Chuckle",
+      "author": "Valerie-Vivegnis",
+      "source": "https://freesound.org/people/Valerie-Vivegnis/sounds/865415/",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "download": "voice-chuckle-close-lipped.wav",
+      "downloaded_by": "John, from the Freesound page",
+      "duration_seconds": 2.0,
+      "format": "WAV, 44.1 kHz stereo, 24-bit PCM",
+      "sha256": "31c83ca1d48b2323ff8cd5a48106481a025c3bd51d4c643cee2cb95ee63aae3c",
+      "credit": "\"26.07.28- Woman Giggling - Close-Lipped Muffled Chuckle\" by Valerie-Vivegnis -- https://freesound.org/s/865415/ -- License: Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/). Trimmed and processed.",
+      "credit_location": "Dice-Unity/Assets/Dice/Presentation/Shared/SpiritAudio/SunkenLarder/AudioCredits.txt"
+    },
+    {
+      "title": "VA FR - Mom - Pack rapide - Onomatopees - Ha ha ha - NT5",
+      "author": "Sadiquecat",
+      "source": "https://freesound.org/people/Sadiquecat/sounds/874438/",
+      "license": "CC0 1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "download": "voice-laugh-ha-ha-ha.wav",
+      "downloaded_by": "John, from the Freesound page",
+      "duration_seconds": 1.591,
+      "format": "WAV, 48 kHz mono, 24-bit PCM",
+      "sha256": "1b00c51667e64671b5413d7bd1e2d4facc2649be6fa6986950d8428911bc98ed",
+      "note": "The author welcomes the credit \"Sadiquecat and his mother, CC0\". Processed for audition only; no clip from it is installed."
     }
   ],
   "bed": {
@@ -868,6 +896,136 @@
       "peak_dbfs": -17.98,
       "rms_dbfs": -45.64,
       "sha256": "6b11a632c7b1dbee660dc31a3fff2c07973e783189117762bd2f1c10b79462ac"
+    },
+    {
+      "clip": "sunken_larder_chuckle_01.wav",
+      "use": "Her chuckle, 1.5 semitones down (withering)",
+      "installed": true,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-chuckle-close-lipped.wav",
+      "source_sha256": "31c83ca1d48b2323ff8cd5a48106481a025c3bd51d4c643cee2cb95ee63aae3c",
+      "source_range_seconds": [
+        0.0,
+        2.0
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": 6.2,
+      "duration_seconds": 2.012,
+      "peak_dbfs": -11.98,
+      "rms_dbfs": -27.19,
+      "sha256": "9976d2d57f4f1e8961e8646193ec65c366b66ea29fad5f61772cfd6c1506ca78",
+      "pitch_factor": 0.917004
+    },
+    {
+      "clip": "sunken_larder_chuckle_alt_0st.wav",
+      "use": "Chuckle alternative, original pitch",
+      "installed": false,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-chuckle-close-lipped.wav",
+      "source_sha256": "31c83ca1d48b2323ff8cd5a48106481a025c3bd51d4c643cee2cb95ee63aae3c",
+      "source_range_seconds": [
+        0.0,
+        2.0
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": 6.1,
+      "duration_seconds": 1.845,
+      "peak_dbfs": -11.99,
+      "rms_dbfs": -27.3,
+      "sha256": "e90d4c5d3f448a0c8e5e7e226b337f5400782f2217e02995dbb5fc87932fcd6d"
+    },
+    {
+      "clip": "sunken_larder_chuckle_alt_3st.wav",
+      "use": "Chuckle alternative, 3 semitones down",
+      "installed": false,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-chuckle-close-lipped.wav",
+      "source_sha256": "31c83ca1d48b2323ff8cd5a48106481a025c3bd51d4c643cee2cb95ee63aae3c",
+      "source_range_seconds": [
+        0.0,
+        2.0
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": 6.3,
+      "duration_seconds": 2.194,
+      "peak_dbfs": -11.97,
+      "rms_dbfs": -27.09,
+      "sha256": "b1dbb85670e6a2851cb0464fe722c3839d44d123eb0c5e3590224a1eb93eb8ac",
+      "pitch_factor": 0.840896
+    },
+    {
+      "clip": "sunken_larder_laugh_alt_0st.wav",
+      "use": "Ha ha ha alternative, original pitch",
+      "installed": false,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-laugh-ha-ha-ha.wav",
+      "source_sha256": "1b00c51667e64671b5413d7bd1e2d4facc2649be6fa6986950d8428911bc98ed",
+      "source_range_seconds": [
+        0.0,
+        1.6
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": -12.2,
+      "duration_seconds": 1.461,
+      "peak_dbfs": -11.98,
+      "rms_dbfs": -31.94,
+      "sha256": "5e24d93963ea0d6ac01ad7a64e210f8cb09bbeb09fa164a84f74491b79c46df9"
+    },
+    {
+      "clip": "sunken_larder_laugh_alt_1_5st.wav",
+      "use": "Ha ha ha alternative, 1.5 semitones down",
+      "installed": false,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-laugh-ha-ha-ha.wav",
+      "source_sha256": "1b00c51667e64671b5413d7bd1e2d4facc2649be6fa6986950d8428911bc98ed",
+      "source_range_seconds": [
+        0.0,
+        1.6
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": -12.2,
+      "duration_seconds": 1.596,
+      "peak_dbfs": -11.98,
+      "rms_dbfs": -31.94,
+      "sha256": "602fb2acf943cb4ef313badb28c1dac6c0c71073ed5e660cac7c1dbba2ed7702",
+      "pitch_factor": 0.917004
+    },
+    {
+      "clip": "sunken_larder_laugh_alt_3st.wav",
+      "use": "Ha ha ha alternative, 3 semitones down",
+      "installed": false,
+      "kind": "voice",
+      "tier": "voice",
+      "source": "voice-laugh-ha-ha-ha.wav",
+      "source_sha256": "1b00c51667e64671b5413d7bd1e2d4facc2649be6fa6986950d8428911bc98ed",
+      "source_range_seconds": [
+        0.0,
+        1.6
+      ],
+      "fade_in_seconds": 0.005,
+      "fade_out_seconds": 0.15,
+      "target_peak_dbfs": -12,
+      "gain_db": -12.3,
+      "duration_seconds": 1.741,
+      "peak_dbfs": -12.04,
+      "rms_dbfs": -32.04,
+      "sha256": "ba750a50b61fa484c4f28c011f295ebfddffe6a118968d437be731ea8e201c4a",
+      "pitch_factor": 0.840896
     }
   ]
 }

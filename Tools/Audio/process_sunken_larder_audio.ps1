@@ -1,14 +1,14 @@
 <#
 .SYNOPSIS
-Processes the Pixabay Sunken Larder recordings into the hut's bed, its creaks, the jar one-shots and the rot clips.
+Processes the Sunken Larder recordings into the hut's bed, its creaks, the jar one-shots, the rot clips and her chuckle.
 
 .DESCRIPTION
-Reads the raw Pixabay downloads listed below from -Source and writes to -Output:
+Reads the raw downloads listed below (Pixabay, and two Freesound voice recordings) from -Source and writes to -Output:
 - one stereo 44.1 kHz signed 16-bit PCM WAV ambience loop of the small hearth fire: highpassed at 60 Hz, cut to the
   loop length plus the loop crossfade, closed with an equal-power tail/head crossfade to exactly the loop length and
   brought to the bed's integrated loudness target with one gain step;
 - one mono 44.1 kHz signed 16-bit PCM WAV per one-shot clip (creaks, jar clinks, jar murmurs, rot step, withering,
-  restoring), sliced at the listed source range with the listed fade in, optionally pitched, brought to -3 dBFS,
+  restoring, her voice), sliced at the listed source range with the listed fade in, optionally pitched, brought to -3 dBFS,
   filtered per kind, trimmed of trailing silence with a fade out and peak-normalized to its tier's level. Murmurs
   also get a faint glass ring: a copy through two very short echoes (a comb ringing near 880 Hz and its multiples),
   highpassed and mixed under the voice;
@@ -45,6 +45,8 @@ $mush = 'wither-squelch-mush.mp3'
 $wetSquelch = 'wither-wet-squelch.mp3'
 $seaweed = 'restore-seaweed-dry-crumble.mp3'
 $leaf = 'restore-dry-leaf.mp3'
+$chuckle = 'voice-chuckle-close-lipped.wav'
+$laugh = 'voice-laugh-ha-ha-ha.wav'
 
 # The bed: the small fire alone, one loop of the loop length closed with the loop crossfade and brought to the
 # installed Bound Tree bed's integrated loudness (bound_tree_swamp_bed_with_frogs_loop.wav, -38.9 LUFS). Its source
@@ -59,8 +61,9 @@ $bedTarget = -38.9
 
 # Target peak dBFS per tier. Creaks match the Bound Tree's random creak; the jar clinks sit 3 dB under the nymph's
 # ambient sobs and the murmurs 2 dB under the clinks; the rot step is quiet (it plays on every reroll), the
-# withering is the loudest rot sound and the restoring sits between.
-$tiers = @{ creak = -14; clink = -18; murmur = -20; rot = -21; wither = -15; restore = -18 }
+# withering is the loudest rot sound and the restoring sits between. Her voice matches the Bound Tree's reaction
+# groan (-12 dBFS).
+$tiers = @{ creak = -14; clink = -18; murmur = -20; rot = -21; wither = -15; restore = -18; voice = -12 }
 
 # name, kind, tier, source file, source start and end seconds, fade in and fade out seconds, pitch factor, use,
 # installed. Each start sits a few milliseconds before the event's measured onset (the Old Wood Creaking Building
@@ -105,7 +108,16 @@ $clips = @(
     @('sunken_larder_rot_squish_alt_01', 'rot', 'rot', $sponge, 4.29, 4.85, 0.005, 0.15, 0.85, 'Rot step alternative (sponge squeeze)', $false),
     @('sunken_larder_wither_squelch_alt_02', 'wither', 'wither', $wetSquelch, 0.00, 0.72, 0.01, 0.20, 1.0, 'Withering alternative (Wet Squelch)', $false),
     @('sunken_larder_restore_crumble_alt_01', 'restore', 'restore', $seaweed, 34.94, 35.60, 0.005, 0.20, 1.0, 'Restoring alternative', $false),
-    @('sunken_larder_restore_crumble_alt_02', 'restore', 'restore', $leaf, 0.23, 0.64, 0.005, 0.12, 1.0, 'Restoring alternative (Dry Leaf)', $false)
+    @('sunken_larder_restore_crumble_alt_02', 'restore', 'restore', $leaf, 0.23, 0.64, 0.005, 0.12, 1.0, 'Restoring alternative (Dry Leaf)', $false),
+    # Her voice on withering: each recording whole, pitched down to age it slightly (and slowed by the same factor). The installed
+    # chuckle is 1.5 semitones down (factor 2^(-1.5/12)); the others are 0 and 3 semitones down (factor 2^(-3/12)) and
+    # the ha-ha-ha laugh at all three, for choosing by ear.
+    @('sunken_larder_chuckle_01', 'voice', 'voice', $chuckle, 0.0, 2.0, 0.005, 0.15, 0.917004, 'Her chuckle, 1.5 semitones down (withering)', $true),
+    @('sunken_larder_chuckle_alt_0st', 'voice', 'voice', $chuckle, 0.0, 2.0, 0.005, 0.15, 1.0, 'Chuckle alternative, original pitch', $false),
+    @('sunken_larder_chuckle_alt_3st', 'voice', 'voice', $chuckle, 0.0, 2.0, 0.005, 0.15, 0.840896, 'Chuckle alternative, 3 semitones down', $false),
+    @('sunken_larder_laugh_alt_0st', 'voice', 'voice', $laugh, 0.0, 1.6, 0.005, 0.15, 1.0, 'Ha ha ha alternative, original pitch', $false),
+    @('sunken_larder_laugh_alt_1_5st', 'voice', 'voice', $laugh, 0.0, 1.6, 0.005, 0.15, 0.917004, 'Ha ha ha alternative, 1.5 semitones down', $false),
+    @('sunken_larder_laugh_alt_3st', 'voice', 'voice', $laugh, 0.0, 1.6, 0.005, 0.15, 0.840896, 'Ha ha ha alternative, 3 semitones down', $false)
 )
 
 # Filters per kind after the slice is brought to -3 dBFS. The reversed silenceremove trims trailing silence and
@@ -117,12 +129,13 @@ $filters = @{
     rot = 'highpass=f=80,lowpass=f=5000'
     wither = 'highpass=f=60,lowpass=f=6000'
     restore = 'highpass=f=200,lowpass=f=9000'
+    voice = 'highpass=f=80'
 }
-$trimThreshold = @{ creak = -60; clink = -62; murmur = -60; rot = -60; wither = -58; restore = -60 }
+$trimThreshold = @{ creak = -60; clink = -62; murmur = -60; rot = -60; wither = -58; restore = -60; voice = -60 }
 # The murmur's glass ring: echoes of 1.13 and 2.27 ms (a comb ringing near 880 Hz and its multiples), highpassed
 # so only the ring is added, mixed 14 dB under the voice.
 $murmurRing = 'aecho=in_gain=1:out_gain=1:delays=1.13|2.27:decays=0.55|0.3,highpass=f=700,volume=-14dB'
-$groups = @(@('creaks', 'creak'), @('jar_clinks', 'clink'), @('jar_murmurs', 'murmur'), @('rot', 'rot'), @('wither', 'wither'), @('restore', 'restore'))
+$groups = @(@('creaks', 'creak'), @('jar_clinks', 'clink'), @('jar_murmurs', 'murmur'), @('rot', 'rot'), @('wither', 'wither'), @('restore', 'restore'), @('voices', 'voice'))
 
 $reportPath = Join-Path $Output 'processing-report.json'
 $listingPath = Join-Path $Output 'listing.txt'
@@ -133,7 +146,7 @@ $outputs = @($reportPath, $listingPath, $bedTwice, (Join-Path $Output "$bedName.
 foreach ($path in $outputs) {
     if (Test-Path $path) { throw "Refusing to replace existing output $path; choose empty output folders." }
 }
-$files = @($fire, $building, $ship, $bottles, $jars, $mumble, $talking, $rubber, $sponge, $mush, $wetSquelch, $seaweed, $leaf)
+$files = @($fire, $building, $ship, $bottles, $jars, $mumble, $talking, $rubber, $sponge, $mush, $wetSquelch, $seaweed, $leaf, $chuckle, $laugh)
 foreach ($file in $files) {
     if (-not (Test-Path (Join-Path $Source $file))) { throw "Missing source recording $(Join-Path $Source $file)." }
 }

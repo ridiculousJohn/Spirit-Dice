@@ -82,7 +82,7 @@ namespace Dice.Tests
             AssertLevels(fixture, 0b11110, 0, 0, endpoint + ": a selected 1");
         }
 
-        /** Checks a rot step turns only the kept dice whose face changed, rerolls those the rule rolled again, plays its sound once and reacts only when a die withers, closing the mould over it / fails if an unchanged die turns or an ordinary step reacts. */
+        /** Checks a rot step turns only the kept dice whose face changed, rerolls those the rule rolled again, plays its sound once and reacts with the host's voice only when a die withers, closing the mould over it / fails if an unchanged die turns, or an ordinary step reacts or plays the voice. */
         [Test]
         public void ARotStepTurnsOnlyTheChangedDiceAndReactsOnlyWhenADieWithers()
         {
@@ -92,7 +92,7 @@ namespace Dice.Tests
             Assert.That(fixture.Presenter.PresentsDuringRoll(rotted), Is.True);
             TestRulePresenterContext.Run(fixture.Presenter.Present(rotted));
             Assert.That(fixture.Context.Log, Is.EqualTo(new[] { "cue Rot", "flip 1 to 2, 2 to 3, 3 to 4, 4 to 5", "landed" }),
-                "An ordinary rot step makes no reaction.");
+                "An ordinary rot step makes no reaction and plays no voice.");
 
             fixture = Fixture(RotEndpoint.Wither);
             session = TestContent.WithDice(Catalog(RotEndpoint.Wither), Seed, 1, 3, 4, 5, 6);
@@ -101,8 +101,8 @@ namespace Dice.Tests
             TestRulePresenterContext.Run(fixture.Presenter.Present(rotted));
             Assert.That(fixture.Context.Log, Is.EqualTo(new[]
             {
-                "cue Rot", "cue Wither", "react", "jolt", "flip 1 to 2, 2 to 3, 3 to 4", "landed"
-            }), "The withering die keeps its face; only the changed dice turn.");
+                "cue Rot", "cue Wither", "cue Voice", "react", "jolt", "flip 1 to 2, 2 to 3, 3 to 4", "landed"
+            }), "The host's voice plays with her reaction; the withering die keeps its face; only the changed dice turn.");
             fixture.Settle();
             AssertLevels(fixture, 0, 0b00001, 0b00001, "The mould closes over the withered die");
 
@@ -211,6 +211,7 @@ namespace Dice.Tests
             serialized.FindProperty("warningLevel").floatValue = WarningLevel;
             serialized.FindProperty("rotClip").objectReferenceValue = Clip("Rot");
             serialized.FindProperty("witherClip").objectReferenceValue = Clip("Wither");
+            serialized.FindProperty("witherVoiceClip").objectReferenceValue = Clip("Voice");
             serialized.FindProperty("restoreClip").objectReferenceValue = Clip("Restore");
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
