@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
   m_Name: SunkenLarderTable
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterTablePresentationAsset
+  narrativeTop: 0.45
   displayTitle: THE SUNKEN LARDER
   scene:
     m_AssetGUID: 079ffca4b2154646acb6d1209f1c1006

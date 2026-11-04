@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.PictureSceneAsset
   background: {fileID: 2800000, guid: bc99f3c6f7764969a51e93294b019566, type: 3}
   sceneLighting: {fileID: 0}
+  driftLayers: []
   foreground: {fileID: 0}
   foregroundRect:
     serializedVersion: 2
@@ -22,3 +23,4 @@ MonoBehaviour:
     width: 1
     height: 1
   foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+  horizontalCropAnchor: 0

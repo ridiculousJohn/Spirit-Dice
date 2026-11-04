@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
   m_Name: MerchantUnquietCartTable
   m_EditorClassIdentifier: 
+  narrativeTop: 0.4646
   displayTitle: THE UNQUIET CART
   scene:
     m_AssetGUID: 2067e3d148bb4ba3ac4aecfaf5e824ac

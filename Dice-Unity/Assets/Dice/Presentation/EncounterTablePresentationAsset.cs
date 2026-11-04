@@ -84,6 +84,7 @@ namespace Dice.Presentation
         {
             if (trayPresentation == null)
                 throw new FormatException("The table scene " + name + " of " + beat + " authors no tray presentation.");
+            ValidateNarrativeTop("table scene", beat);
             sceneLighting?.Validate();
             if (audioTheme != null) audioTheme.Validate();
             if (sceneLighting != null && !FiniteValue.Is(hostLightingPosition))

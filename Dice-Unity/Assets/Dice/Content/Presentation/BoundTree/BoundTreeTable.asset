@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62b152e6ce654d95a426987ff5115f14, type: 3}
   m_Name: BoundTreeTable
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.EncounterTablePresentationAsset
+  narrativeTop: 0.4042
   displayTitle: THE BOUND TREE
   scene:
     m_AssetGUID: f62b841e083a3fe42a30570ee0ca76bf

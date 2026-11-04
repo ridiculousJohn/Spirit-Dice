@@ -37,6 +37,21 @@ namespace Dice.Presentation
         [SerializeField] private Text title;
         [SerializeField] private Text body;
         [SerializeField] private RectTransform narrative;
+        [Tooltip("The narration panel's least height in view units, so a one-line beat still reads as a panel. The panel's " +
+            "top sits on the shown scene's Narrative Top and its height fits the beat's content, growing down to at most its " +
+            "authored bottom anchor, below which the content scrolls.")]
+        [Min(0)]
+        [SerializeField] private float minimumNarrativeHeight = 120;
+        [Tooltip("Seconds the narration panel takes to move its top and bottom to a new beat's, smoothly in and out, on " +
+            "unscaled time. It takes its new place at once on the first beat the journey screen shows and when the view " +
+            "changes size.")]
+        [Min(0)]
+        [SerializeField] private float narrativeEaseSeconds = .25f;
+        // The narration panel's ease toward its fitted rectangle: its top anchor and bottom offset from and to, and when it
+        // began. LateUpdate steps it only while it runs; anything that interrupts the beat completes it.
+        private bool easingNarrative;
+        private float narrativeEaseFromTop, narrativeEaseFromBottom, narrativeEaseToTop, narrativeEaseToBottom;
+        private double narrativeEaseStartTime;
         [SerializeField] private ScrollRect narrativeScroll;
         [SerializeField] private Text ruleHeading;
         [SerializeField] private SpiritInvitationRuleView invitationRulePrefab;
@@ -86,6 +101,8 @@ namespace Dice.Presentation
         internal SceneLightingState PreviousSceneLighting => previousSceneLightingState;
         internal IReadOnlyList<PictureDriftLayerImage> DriftLayers => driftLayers;
         internal int ShownDriftLayerCount => shownDriftLayerCount;
+        // Internal so review captures wait for the narration panel to reach its fitted rectangle.
+        internal bool IsEasingNarrative => easingNarrative;
 
         public bool IsAnimating { get; private set; }
         public int VisibleBeatIndex { get; private set; } = -1;
@@ -169,6 +186,8 @@ namespace Dice.Presentation
         {
             EncounterCharms.Hide();
             bool continuingJourney = hasRendered && renderedJourney == journey && renderedPhase == EncounterJourneyPhase.Sequence;
+            // The panel eases from where it shows, part-way through the previous beat's ease if that still runs.
+            float shownNarrativeTop = NarrativePanel.anchorMax.y, shownNarrativeBottom = NarrativePanel.offsetMin.y;
             CancelAnimation();
             var beat = journey.Beats[index];
             var scene = journey.SceneAt(index);
@@ -209,6 +228,9 @@ namespace Dice.Presentation
             invitationRuleCount = 0;
             beat.Show(this, journey, index);
             ShowInvitationRules();
+            FitNarrative();
+            // The first beat the screen shows has no panel on screen to ease from.
+            if (continuingJourney) EaseNarrative(shownNarrativeTop, shownNarrativeBottom);
             narrativeScroll.StopMovement();
             narrativeScroll.verticalNormalizedPosition = 1;
             advanceButton.gameObject.SetActive(!invitationShown);
@@ -227,8 +249,11 @@ namespace Dice.Presentation
 
         void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting,
             IReadOnlyList<PictureDriftLayer> pictureDriftLayers, Texture2D foregroundTexture, Rect foregroundRect,
-            Color foregroundTint)
+            Color foregroundTint, float horizontalCropAnchor)
         {
+            // The artwork's AspectRatioFitter keeps it at the portrait's shape, covering the view; where it overflows the
+            // view, its pivot is the part that stays in view: the bottom edge, and the side the picture names.
+            artwork.pivot = new Vector2(horizontalCropAnchor, 0);
             shownLighting = lighting;
             ShowDriftLayers(pictureDriftLayers);
             shownForegroundTint = foregroundTint;
@@ -247,7 +272,7 @@ namespace Dice.Presentation
 
         void IJourneyStage.ClearPicture()
             => ((IJourneyStage)this).ShowPicture(null, null, Array.Empty<PictureDriftLayer>(), null, new Rect(0, 0, 1, 1),
-                Color.white);
+                Color.white, .5f);
 
         void IJourneyStage.ShowHost(bool visible) => hostVisibility?.Invoke(visible);
 
@@ -320,7 +345,83 @@ namespace Dice.Presentation
             ruleHeading.text = SpiritUi.GetWording(transform).journey.ruleHeading.For(invitationRuleCount);
             SetInvitationRulesVisible(showRules);
             title.gameObject.SetActive(!showRules);
-            LayoutRebuilder.MarkLayoutForRebuild(narrative);
+        }
+
+        /**
+         * Sits the narration panel's top on the shown scene's narrative top and fits its height to the beat's content (title
+         * or invitation rules, body, charm detail) with the panel's frame around the scroll view, growing down from the top.
+         * It keeps at least its minimum height and never reaches below its authored bottom anchor; content taller than that
+         * scrolls inside it. Called once the beat's content is set and when the view changes size.
+         */
+        private void FitNarrative()
+        {
+            if (shownScene == null) return;
+            var panel = NarrativePanel;
+            var top = panel.anchorMax;
+            top.y = shownScene.NarrativeTop;
+            panel.anchorMax = top;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(narrative);
+            float frame = panel.rect.height - ((RectTransform)narrativeScroll.transform).rect.height;
+            // The panel's height with its bottom on its authored bottom anchor.
+            float room = ((RectTransform)panel.parent).rect.height * (top.y - panel.anchorMin.y) + panel.offsetMax.y;
+            float height = Mathf.Min(room, Mathf.Max(minimumNarrativeHeight, LayoutUtility.GetPreferredHeight(narrative) + frame));
+            panel.offsetMin = new Vector2(panel.offsetMin.x, room - height);
+        }
+
+        // The narration panel is the object whose group fades the narrative, around the scroll view.
+        private RectTransform NarrativePanel => (RectTransform)narrativeGroup.transform;
+
+        /**
+         * Moves the narration panel from the given top anchor and bottom offset to the rectangle FitNarrative just set, over
+         * the ease. Its content is already laid out for that rectangle; only the panel's top and bottom move.
+         */
+        private void EaseNarrative(float fromTop, float fromBottom)
+        {
+            var panel = NarrativePanel;
+            narrativeEaseToTop = panel.anchorMax.y;
+            narrativeEaseToBottom = panel.offsetMin.y;
+            if (narrativeEaseSeconds <= 0 || fromTop == narrativeEaseToTop && fromBottom == narrativeEaseToBottom) return;
+            narrativeEaseFromTop = fromTop;
+            narrativeEaseFromBottom = fromBottom;
+            narrativeEaseStartTime = Time.unscaledTimeAsDouble;
+            easingNarrative = true;
+            SetNarrativeRect(fromTop, fromBottom);
+        }
+
+        private void StepNarrativeEase(double time)
+        {
+            float progress = (float)((time - narrativeEaseStartTime) / narrativeEaseSeconds);
+            if (progress >= 1)
+            {
+                CompleteNarrativeEase();
+                return;
+            }
+            float eased = Mathf.SmoothStep(0, 1, progress);
+            SetNarrativeRect(Mathf.Lerp(narrativeEaseFromTop, narrativeEaseToTop, eased),
+                Mathf.Lerp(narrativeEaseFromBottom, narrativeEaseToBottom, eased));
+        }
+
+        /** Ends a running ease at its fitted rectangle, so the panel is never left part-way. */
+        private void CompleteNarrativeEase()
+        {
+            if (!easingNarrative) return;
+            easingNarrative = false;
+            SetNarrativeRect(narrativeEaseToTop, narrativeEaseToBottom);
+        }
+
+        private void SetNarrativeRect(float top, float bottom)
+        {
+            var panel = NarrativePanel;
+            panel.anchorMax = new Vector2(panel.anchorMax.x, top);
+            panel.offsetMin = new Vector2(panel.offsetMin.x, bottom);
+        }
+
+        // The canvas resizes this root object whenever the screen changes size; the narration's wrapping and room follow it
+        // at once, ending any ease, whose target was fitted to the old size.
+        private void OnRectTransformDimensionsChange()
+        {
+            CompleteNarrativeEase();
+            FitNarrative();
         }
 
         private void SetInvitationRulesVisible(bool visible)
@@ -393,6 +494,8 @@ namespace Dice.Presentation
         /** Ends the current beat at its authored final pose, as its uninterrupted motion would, without auto-advancing. */
         private void FinishAnimation()
         {
+            // The panel's ease can outlast a short beat's motion.
+            CompleteNarrativeEase();
             if (!IsAnimating || activeBeat == null) return;
             StopAllCoroutines();
             ApplyMotion(activeBeat, 1);
@@ -407,6 +510,7 @@ namespace Dice.Presentation
         private void CancelAnimation()
         {
             StopAllCoroutines();
+            CompleteNarrativeEase();
             IsAnimating = false;
             ClearPartingLighting();
             illustrationGroup.alpha = 1;
@@ -430,12 +534,13 @@ namespace Dice.Presentation
         }
 
         /**
-         * Advances the shown picture's drift layers, and samples the shown and departing pictures' lighting from one clock
-         * onto their compositors while there is any.
+         * Steps the narration panel's ease while it runs, advances the shown picture's drift layers, and samples the shown
+         * and departing pictures' lighting from one clock onto their compositors while there is any.
          */
         internal void LateUpdate()
         {
             double time = Time.unscaledTimeAsDouble;
+            if (easingNarrative) StepNarrativeEase(time);
             for (int i = 0; i < shownDriftLayerCount; ++i) driftLayers[i].Drift(time - driftStartTime);
             if (shownLighting == null && previousSceneLighting == null) return;
             if (shownLighting != null)

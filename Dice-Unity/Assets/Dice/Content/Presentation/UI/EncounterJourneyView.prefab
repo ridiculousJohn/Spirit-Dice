@@ -2186,6 +2186,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2216929401910939101}
   - component: {fileID: 6148319120313535978}
+  - component: {fileID: 6001293551747921211}
   m_Layer: 0
   m_Name: JourneyArtwork
   m_TagString: Untagged
@@ -2215,7 +2216,7 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0}
 --- !u!225 &6148319120313535978
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2228,6 +2229,20 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0
+--- !u!114 &6001293551747921211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9018377067552859447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86710e43de46f6f4bac7c8e50813a599, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
+  m_AspectMode: 4
+  m_AspectRatio: 0.5625
 --- !u!1001 &717245654351326826
 PrefabInstance:
   m_ObjectHideFlags: 0

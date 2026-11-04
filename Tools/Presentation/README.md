@@ -62,6 +62,39 @@ A tray asset holds only its rig prefab and render texture size; placement, angle
 
 `SpiritTrayGeometry` defines five dice surface anchors and five selection-label anchors. Dice settle and roll relative to each surface anchor, with `DiceScale` controlling their size. `ModifierRoot` defines the modifier bay's local axes and surface; its width, depth, die size, spacing and visible capacity control the scrolling row. The live bay shows ready PlayHand modifiers and highlights each resolving tile. Additional ready entries remain scrollable. Runtime click targets follow the authored projection, and clipping follows the bay's local coordinates. Keep anchors inside the prefab and its materials on the scene-lighting-compatible dice shader. Scene instances clone materials before applying lighting.
 
+The fox's and the owl's rigs (`Rigs/LanternTrayPresentationRig.prefab`, `Rigs/WatchtowerTrayPresentationRig.prefab`) resize
+the generated dice bays through overrides on their nested geometry. The fox's bays are as deep as they are wide (1.32,
+generated 1.90), so a die sits with the same margin all round: the bays' front edge against the modifier bay's cross divider
+stays at z -0.5, the bay felts, dividers, divider inlays and dice surface anchors are centred at z 0.16, the back rail and its
+fittings move forward by the depth removed, the foundation, side rails and side inlays shorten at the back, and the modifier
+bay is as generated.
+
+The owl's bays fit its dice (0.82, Dice Scale as generated): each bay's opening between the dividers, the cross divider and
+the back rail is 1.10 square, an even margin of 0.14 round the die. The bay pitch is 1.195 (generated 1.38; bays centred at
+x 0, +-1.195, +-2.39, dividers at +-0.5975 and +-1.7925); the felts are 1.065 square and the felts, dice surface anchors and
+dividers (1.06 long) are centred at z 0.04 and 0.015, from the cross divider's back face (z -0.51) to the back rail's front
+face (z 0.59, the back rail at z 0.67). The tray is narrower to match: the iron straps, its side walls, stand at x +-2.99
+and run from z -1.4 to 0.68 (2.08 long, centred at z -0.36) with their nails at z -1.15, -0.36 and 0.43; the front and back
+rails are 5.98 wide, the cross divider 5.85, the base planks 6.10. The fifth base plank is inactive and the fourth is the
+back plank, 0.26 deep at z 0.675, clear of the third. The owl's modifier bay keeps its depth relative to the dice: the bay
+felt is 0.63 deep from the cross divider to z -1.28, centred at z -0.965 with the modifier surface, and the geometry's
+Modifier Depth is 0.6; it is 5.55 wide (Modifier Width), so eight tiles show at the generated tile size and spacing
+(Modifier Visible Capacity 8) and further tiles scroll.
+
+The owl's camera looks down at 43 degrees (local rotation x 43) from (0, 4.17, -4.06) with field of view 43.39, a focal
+length of 380 px at 540 x 960, and clip planes 4.013 to 7.367, and sees the dice at about 42 degrees. The painting
+(`Art/Watchtower/WatchtowerRoomUpperArch.png`) has its horizon, from its floor ring's foreshortening and the distant
+marsh, at y 339 of 960 at 540 wide; a camera with the painting's own focal length (about 873 px at 540 x 960, field of
+view 19.65, pitch 16.54) sees the dice at about 19 degrees and their top faces, the rolled faces, are too thin to read.
+The tray's receding edges converge at the screen's centre at about y 250, above the painting's horizon. The centre die is
+about 60 x 70 px at 540 x 960 and the outer dice about 76 x 72; the outer dice show more of their outer sides at this
+field of view. The owl scene's DiceTrayFrame (anchors y 0.30634-0.95582) keeps the tray's bottom edge just above the score
+panel (y 709 of 960 at 540 wide); the tray spans x 20-518 at 540 wide, the dice's tops are at y 562 and the back rail's
+top at y 575, and the painted floor shows between the HANDS / REROLLS row (its bottom at y 529) and the tray.
+
+The fox's and the owl's selection frames use `Rigs/Meshes/SquareSelectionFrame.asset`, the tall `SelectionFrame.asset`
+with its straight sides shortened to a square, keeping its border and corners inside the bay.
+
 `author-tray-presentations.py` generates the three editable prefabs, native meshes, materials and tray assets. It requires Python 3.9 or later without third-party packages. The default writes a fresh ignored `Docs/work/tray-authoring-*` directory. `--output` chooses an unused directory under `Docs/work`. `--write-assets` intentionally regenerates production content and can replace manual asset edits; review those changes before using it. The game loads the serialized assets and does not execute this tool.
 
 ## Crossroads moth
