@@ -13,7 +13,13 @@ MonoBehaviour:
   m_Name: RotPresenter
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.RotPresenterAsset
   diePrefab: {fileID: 6519059804421318671, guid: 4d46659cab4d48c08316ba9818666694, type: 3}
-  keptMarkLevel: 0.35
+  mouldLevels:
+  - 0
+  - 0.3
+  - 0.55
+  - 0.8
+  - 1
+  mouldGrowDuration: 0.5
   warningLevel: 0.35
   markFadeDuration: 0.3
   rotClip: {fileID: 8300000, guid: 9bead9b82e9b469fabf771fec589f44f, type: 3}

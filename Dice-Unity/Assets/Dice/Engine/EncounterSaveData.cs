@@ -2,7 +2,7 @@ namespace Dice.Engine
 {
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 15;
+        public const int CurrentFormatVersion = 16;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;

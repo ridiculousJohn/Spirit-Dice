@@ -20,11 +20,15 @@ namespace Dice.Tests
      * Review capture of the Sunken Larder reached through the campaign. The first capture shows the journey's arrival
      * picture, the old woman waiting over the pot, her looking up as she first speaks, the invitation with the rot card and
      * the pre-encounter charms screen, then the table after the opening roll at the 540 x 960 authoring width and the
-     * narrow 443 x 960 width, the rot marks on the kept dice beside a selection, the rot step while the rerolled dice are in
+     * narrow 443 x 960 width, a selection (a kept 1 shows the wither warning), the rot step while the rerolled dice are in
      * the air and the table once the reroll has landed. The second capture plays a copy of the encounter whose stages have
      * a target of 1 and whose first stage has at least WitherRerolls rerolls: it keeps the lowest die through rerolls of
      * the other four until it withers, shows the mould closing and the withered die, then plays the hand and shows the first
-     * stage's charm offer, recording its options in offer.txt. It writes PNGs under DICE_SPIRIT_CAPTURE_ROOT/table and DICE_SPIRIT_CAPTURE_ROOT/wither and
+     * stage's charm offer, recording its options in offer.txt. The third capture plays the same copy: it keeps the highest
+     * die through MouldRerolls rerolls of the other four, showing each rot step with the kept die turning under its mould
+     * and the mould grown after each reroll, then rerolls that die and shows its mould crumbling as it is thrown, recording
+     * the die's mould level at each frame in levels.txt. It writes PNGs under DICE_SPIRIT_CAPTURE_ROOT/table,
+     * DICE_SPIRIT_CAPTURE_ROOT/wither and DICE_SPIRIT_CAPTURE_ROOT/mould and
      * is ignored without it; it is a capture, not a regression test. The fixture is explicit: it runs only when a run
      * selects it by name, never in a run of the whole suite. The rot behaviour it shows is tested by RotRuleTests and
      * RotPresenterTests.
@@ -40,6 +44,10 @@ namespace Dice.Tests
         private const int WitherRerolls = 6;
         // Real seconds after a reroll is committed at which the rot step is captured with the rerolled dice in the air.
         private const float RotStepCaptureDelay = .2f;
+        // Rerolls through which the mould capture keeps its die, fewer than a kept 4 needs to wither.
+        private const int MouldRerolls = 3;
+        // Real seconds after a reroll of the mouldy die at which its mould is captured crumbling, early and late.
+        private const float CrumbleEarlyDelay = .1f, CrumbleLateDelay = .25f;
 
         [UnityTest]
         public IEnumerator SunkenLarderTableReviewCapture()
@@ -85,7 +93,7 @@ namespace Dice.Tests
             yield return Capture(root, "f-table-at-rest-" + Width + "x" + Height + ".png");
             yield return Capture(root, "f-table-at-rest-" + NarrowWidth + "x" + Height + ".png", NarrowWidth);
 
-            // Selecting two dice clears their marks; the three kept dice keep theirs.
+            // Selecting two dice; no die shows mould before a rot step, and a kept 1 shows the wither warning.
             controller.ToggleDie(0);
             controller.ToggleDie(1);
             yield return new WaitForSecondsRealtime(.5f);
@@ -122,9 +130,7 @@ namespace Dice.Tests
             bool midCaptured = false;
             while (controller.Snapshot.Rot().WitheredMask == 0 && controller.Snapshot.RerollsRemaining > 0)
             {
-                int wanted = DiceValues.AllMask & ~keepMask;
-                for (int bay = 0; bay < DiceValues.Count; ++bay)
-                    if (((controller.SelectedMask ^ wanted) & (1 << bay)) != 0) controller.ToggleDie(bay);
+                Select(controller, DiceValues.AllMask & ~keepMask);
                 bool withers = controller.Snapshot.CurrentDice[keep] == 1;
                 controller.Reroll();
                 if (withers)
@@ -171,6 +177,71 @@ namespace Dice.Tests
             TestContext.WriteLine(report.ToString());
             yield return Capture(root, "c-stage1-offer.png");
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator SunkenLarderProgressiveMouldCapture()
+        {
+            string root = Fresh("mould");
+            yield return SceneManager.LoadSceneAsync("Application");
+            yield return ContentReady.JourneyAtBoard();
+            var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
+            var journey = ContentReady.JourneyWithRule<RotRuleDefinition>(controller);
+            var mechanical = WitheringFirstStage(controller.Catalog, journey.Encounters.First().Identity);
+            Assert.That(controller.InitializeJourney(mechanical, controller.JourneyCatalog, controller.SavePath), Is.True,
+                controller.JourneyStatus.ToString());
+            yield return ContentReady.EnterEncounter(controller, journey, ContentReady.Seed);
+            var view = ContentReady.EncounterView(controller);
+
+            var dice = controller.Snapshot.CurrentDice;
+            int keep = Enumerable.Range(0, DiceValues.Count).OrderByDescending(bay => dice[bay]).First();
+            Assert.That(dice[keep], Is.GreaterThan(MouldRerolls), "The kept die rots through every reroll without withering.");
+            int keepMask = 1 << keep;
+            var mould = Visual(view, keepMask);
+            var levels = new StringBuilder();
+            levels.AppendLine("Kept die: bay " + keep + ", opening face " + dice[keep]);
+            yield return Capture(root, "a-opening-roll.png");
+            for (int reroll = 1; reroll <= MouldRerolls; ++reroll)
+            {
+                Select(controller, DiceValues.AllMask & ~keepMask);
+                controller.Reroll();
+                yield return new WaitForSecondsRealtime(RotStepCaptureDelay);
+                string turning = "b" + reroll + "-reroll-" + reroll + "-rot-step-turning.png";
+                levels.AppendLine(turning + ": mark " + mould.Mark.ToString("F3") + " (target " + mould.MarkTarget + ")");
+                yield return Capture(root, turning);
+                yield return WaitIdle(controller);
+                yield return new WaitForSecondsRealtime(.6f);
+                Assert.That(controller.Snapshot.Rot().Counts[keep], Is.EqualTo(reroll));
+                string landed = "c" + reroll + "-after-reroll-" + reroll + ".png";
+                levels.AppendLine(landed + ": count " + reroll + ", mark " + mould.Mark.ToString("F3") + ", counts [" +
+                    controller.Snapshot.Rot().Counts + "]");
+                yield return Capture(root, landed);
+            }
+
+            Select(controller, keepMask);
+            controller.Reroll();
+            yield return new WaitForSecondsRealtime(CrumbleEarlyDelay);
+            levels.AppendLine("d1-crumbling-early.png: mark " + mould.Mark.ToString("F3"));
+            yield return Capture(root, "d1-crumbling-early.png");
+            yield return new WaitForSecondsRealtime(CrumbleLateDelay - CrumbleEarlyDelay);
+            levels.AppendLine("d2-crumbling-late.png: mark " + mould.Mark.ToString("F3"));
+            yield return Capture(root, "d2-crumbling-late.png");
+            yield return WaitIdle(controller);
+            yield return new WaitForSecondsRealtime(.5f);
+            Assert.That(controller.Snapshot.Rot().Counts[keep], Is.Zero);
+            Assert.That(mould.Mark, Is.Zero, "The thrown die lands clean.");
+            levels.AppendLine("e-after-crumble.png: counts [" + controller.Snapshot.Rot().Counts + "]");
+            yield return Capture(root, "e-after-crumble.png");
+            File.WriteAllText(Path.Combine(root, "levels.txt"), levels.ToString());
+            TestContext.WriteLine(levels.ToString());
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        /** Selects exactly the masked dice for the next reroll. */
+        private static void Select(SpiritEncounterController controller, int mask)
+        {
+            for (int bay = 0; bay < DiceValues.Count; ++bay)
+                if (((controller.SelectedMask ^ mask) & (1 << bay)) != 0) controller.ToggleDie(bay);
         }
 
         private static string Fresh(string folder)

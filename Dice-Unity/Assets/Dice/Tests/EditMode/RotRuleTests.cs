@@ -109,6 +109,44 @@ namespace Dice.Tests
             Restore(catalog, session.CaptureSave());
         }
 
+        /** Checks a die's rot count rises on each rot step it rots in and returns to 0 when a reroll or the next opening roll throws it, reported by the rule's events and snapshot / fails if a count misses a step, survives a roll or changes unreported. */
+        [Test]
+        public void ADiesRotCountRisesEachStepAndReturnsToZeroWhenItIsRolled()
+        {
+            var catalog = Catalog();
+            var session = WithDice(catalog, Seed, 2, 3, 4, 5, 6);
+            var first = Execute(session, new RerollDiceAction(0b00001));
+            Assert.That(first.Events.OfType<DiceRestoredEvent>(), Is.Empty, "Nothing had rotted.");
+            Assert.That(first.Events.OfType<DiceRottedEvent>().Single().Counts.ToArray(), Is.EqualTo(new[] { 0, 1, 1, 1, 1 }));
+
+            var second = Execute(session, new RerollDiceAction(0b00010));
+            var cleared = second.Events.OfType<DiceRestoredEvent>().Single();
+            Assert.That(cleared.ClearedMask, Is.EqualTo(0b00010));
+            Assert.That(cleared.Roll, Is.EqualTo(RollKind.PlayerReroll));
+            Assert.That(cleared.Counts.ToArray(), Is.EqualTo(new[] { 0, 0, 1, 1, 1 }));
+            var rotted = second.Events.OfType<DiceRottedEvent>().Single();
+            Assert.That(rotted.Counts.ToArray(), Is.EqualTo(new[] { 1, 0, 2, 2, 2 }));
+            Assert.That(Rot(second.Snapshot).Counts, Is.EqualTo(rotted.Counts));
+            Assert.That(Rot(second.Snapshot).DiagnosticDieLabel(2), Is.EqualTo("ROT 2"));
+            Assert.That(new RotRuleSnapshot(RotId, true, 0, rotted.Counts), Is.Not.EqualTo(new RotRuleSnapshot(RotId, true, 0, default)),
+                "The snapshot compares the counts.");
+
+            var all = Execute(session, new RerollDiceAction(DiceValues.AllMask));
+            Assert.That(all.Events.OfType<DiceRottedEvent>(), Is.Empty, "Rerolling every die rots nothing.");
+            cleared = all.Events.OfType<DiceRestoredEvent>().Single();
+            Assert.That(cleared.ClearedMask, Is.EqualTo(0b11101));
+            Assert.That(cleared.Counts, Is.EqualTo(default(RotCounts)));
+            Assert.That(Rot(all.Snapshot).Counts, Is.EqualTo(default(RotCounts)));
+
+            Execute(session, new RerollDiceAction(0b00001));
+            var played = Execute(session, PlayHandAction.Instance);
+            cleared = played.Events.OfType<DiceRestoredEvent>().Single();
+            Assert.That(cleared.Roll, Is.EqualTo(RollKind.Initial));
+            Assert.That(cleared.ClearedMask, Is.EqualTo(0b11110));
+            Assert.That(Rot(played.Snapshot).Counts, Is.EqualTo(default(RotCounts)));
+            Restore(catalog, session.CaptureSave());
+        }
+
         /** Checks each other endpoint's treatment of a kept 1 and that only rerolling draws from the rule stream / fails if a 1 withers or changes otherwise. */
         [TestCase(RotEndpoint.Clamp, 1)]
         [TestCase(RotEndpoint.Wrap, 6)]
@@ -124,6 +162,8 @@ namespace Dice.Tests
             Assert.That(rotted.RottedMask, Is.EqualTo(15));
             Assert.That(rotted.WitheredMask, Is.Zero);
             Assert.That(Rot(result.Snapshot).WitheredMask, Is.Zero);
+            Assert.That(rotted.Counts.ToArray(), Is.EqualTo(new[] { endpoint == RotEndpoint.Reroll ? 0 : 1, 1, 1, 1, 0 }),
+                "A die the rule rolls again starts its count over.");
             if (endpoint == RotEndpoint.Reroll)
             {
                 Assert.That(rotted.RerolledMask, Is.EqualTo(1));
@@ -137,7 +177,7 @@ namespace Dice.Tests
             Restore(catalog, session.CaptureSave());
         }
 
-        /** Checks the rot state survives the save codec and continues identically, and an unusable state is rejected / fails if a mask is lost, a die outside the bays loads or a hand with every die withered loads. */
+        /** Checks the rot state survives the save codec and continues identically, and an unusable state is rejected / fails if a mask or count is lost, a die outside the bays loads, a hand with every die withered loads or counts of the wrong length or range load. */
         [Test]
         public void RotStateRoundTripsAndUnusableStatesAreRejected()
         {
@@ -148,6 +188,7 @@ namespace Dice.Tests
             var save = session.CaptureSave();
             var restored = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
             Assert.That(Rot(restored.Snapshot).WitheredMask, Is.EqualTo(1));
+            Assert.That(Rot(restored.Snapshot).Counts.ToArray(), Is.EqualTo(new[] { 1, 2, 2, 2, 0 }));
             EncounterPersistenceTests.AssertGraphEqual(save, restored.CaptureSave());
             var original = Execute(session, new RerollDiceAction(2));
             var continued = Execute(restored, new RerollDiceAction(2));
@@ -161,6 +202,14 @@ namespace Dice.Tests
                 var result = EncounterSession.RestoreEncounter(catalog, unusable);
                 Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
                 Assert.That(result.Detail, Does.Contain(withered == 32 ? "outside the five bays" : "no die counted"));
+            }
+            foreach (var counts in new[] { null, new[] { 0, 0, 0, 0 }, new[] { 0, -1, 0, 0, 0 }, new[] { 0, 0, RotCounts.MaximumCount + 1, 0, 0 } })
+            {
+                var unusable = session.CaptureSave();
+                ((RotSaveData)unusable.RuleStates.Single().State).Counts = counts;
+                var result = EncounterSession.RestoreEncounter(catalog, unusable);
+                Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
+                Assert.That(result.Detail, Does.Contain("Rot counts"));
             }
         }
 
