@@ -70,6 +70,7 @@ Shader "Dice/Source Masked Image"
             sampler2D _LayerMask;
             float _InvertMask;
             sampler2D _SourceTex;
+            float4 _SourceTex_ST;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
@@ -97,7 +98,9 @@ Shader "Dice/Source Masked Image"
                 input.color.a = round(input.color.a * alphaPrecision) * invAlphaPrecision;
                 float selected = tex2D(_LayerMask, input.texcoord).a;
                 float coverage = lerp(selected, 1.0 - selected, _InvertMask);
-                half4 color = input.color * (tex2D(_SourceTex, input.texcoord) + _TextureSampleAdd);
+                // The source's tiling and offset move it under the mask, which stays at the image's coordinates, so a
+                // repeating texture can drift through a fixed window.
+                half4 color = input.color * (tex2D(_SourceTex, TRANSFORM_TEX(input.texcoord, _SourceTex)) + _TextureSampleAdd);
                 color.a *= coverage;
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(input.localPosition.xy, _ClipRect);

@@ -14,6 +14,46 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.PictureSceneAsset
   background: {fileID: 2800000, guid: 259b88d56acf4797a80abeb635ff5d5c, type: 3}
   sceneLighting: {fileID: 0}
+  driftLayers:
+  - texture: {fileID: 2800000, guid: 942305bc4ccc493086f9464eb26fa4a0, type: 3}
+    window: {fileID: 2800000, guid: fb723d2a602648529c0db3a84a198909, type: 3}
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0.52811
+      width: 1
+      height: 0.2924641
+    tileSize: {x: 1.0201913, y: 0.08133971}
+    velocity: {x: 0.007438895, y: 0}
+    opacity: 0.7
+    swell: 0.08
+    swellPeriod: 83
+  - texture: {fileID: 2800000, guid: 3b51385e4b2e4cdd88d0c8412bd87b49, type: 3}
+    window: {fileID: 2800000, guid: fb723d2a602648529c0db3a84a198909, type: 3}
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0.52811
+      width: 1
+      height: 0.2924641
+    tileSize: {x: 0.6121148, y: 0.049043063}
+    velocity: {x: 0.011689692, y: 0}
+    opacity: 0.9
+    swell: 0
+    swellPeriod: 83
+  - texture: {fileID: 2800000, guid: c2a87a663fcc4e909e335d44ceb5d011, type: 3}
+    window: {fileID: 2800000, guid: 2288227cf9f04432a6e458067c3e3b85, type: 3}
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0.39055023
+      width: 1
+      height: 0.19736843
+    tileSize: {x: 1.1562167, y: 0.091507174}
+    velocity: {x: 0.035069074, y: 0}
+    opacity: 0.75
+    swell: 0.15
+    swellPeriod: 27
   foreground: {fileID: 0}
   foregroundRect:
     serializedVersion: 2

@@ -47,14 +47,8 @@ namespace Dice.Tests
             TestJourneys.SetBeat(journey, 1, "transition", EncounterJourneyTransition.PartingPanels);
             TestJourneys.SetBeat(journey, 1, "duration", 20f);
             var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
-            var prefab = AssetDatabase.LoadAssetAtPath<EncounterJourneyView>("Assets/Dice/Content/Presentation/UI/EncounterJourneyView.prefab");
-            Assert.That(prefab, Is.Not.Null);
-            var view = UnityEngine.Object.Instantiate(prefab);
+            var view = View(controls);
             var root = view.gameObject;
-            SceneManager.MoveGameObjectToScene(root, preview);
-            root.GetComponent<RectTransform>().sizeDelta = SpiritPortraitSafeArea.DefaultReferenceSize;
-            view.Build(null);
-            view.Bind(controls, null);
             view.Refresh();
             view.LateUpdate();
             var background = view.Background;
@@ -105,6 +99,80 @@ namespace Dice.Tests
             Require(view.SceneLighting.Asset == null &&
                 background.material == background.defaultMaterial,
                 "Returning to investigation retained sequence lighting.");
+        }
+
+        [Test]
+        public void PictureDriftLayersShowWithTheirPictureAndHideWhenItLeaves()
+        {
+            var tile = Texture(Color.white);
+            var window = Texture(Color.gray);
+            var rect = new Rect(.1f, .4f, .8f, .3f);
+            var drifting = Picture(null);
+            SyntheticUi.Set(drifting, "background", Texture2D.whiteTexture);
+            using (var serialized = new SerializedObject(drifting))
+            {
+                var layers = serialized.FindProperty("driftLayers");
+                layers.arraySize = 1;
+                var layer = layers.GetArrayElementAtIndex(0);
+                layer.FindPropertyRelative("texture").objectReferenceValue = tile;
+                layer.FindPropertyRelative("window").objectReferenceValue = window;
+                layer.FindPropertyRelative("rect").rectValue = rect;
+                layer.FindPropertyRelative("tileSize").vector2Value = new Vector2(.4f, .1f);
+                layer.FindPropertyRelative("velocity").vector2Value = new Vector2(.01f, .002f);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            var still = Picture(null);
+            SyntheticUi.Set(still, "background", Texture2D.whiteTexture);
+            var journey = UnityEngine.ScriptableObject.CreateInstance<EncounterJourneyAsset>();
+            resources.Add(journey);
+            TestJourneys.SetBeats(journey, drifting, new IllustrationBeat(), new IllustrationBeat());
+            TestJourneys.SetBeat(journey, 1, "scene", still);
+            var controls = new TestJourneyControls { SelectedJourney = journey, JourneyPhase = EncounterJourneyPhase.Sequence };
+            var view = View(controls);
+            view.Refresh();
+            view.LateUpdate();
+            Require(view.ShownDriftLayerCount == 1 && view.DriftLayers[0].gameObject.activeSelf,
+                "The picture's drift layer did not show with it.");
+            var image = view.DriftLayers[0].Image;
+            var placed = image.rectTransform;
+            Require(placed.IsChildOf(view.Background.transform) && placed.anchorMin == rect.min && placed.anchorMax == rect.max &&
+                image.material.GetTexture("_SourceTex") == tile && image.material.GetTexture("_LayerMask") == window,
+                "The drift layer did not draw its texture through its window over its rectangle of the background.");
+            controls.BeatIndex = 1;
+            view.Refresh();
+            view.LateUpdate();
+            Require(view.ShownDriftLayerCount == 0 && !view.DriftLayers[0].gameObject.activeSelf,
+                "The drift layer stayed after its picture left.");
+            controls.BeatIndex = 0;
+            view.Refresh();
+            Require(view.DriftLayers[0].gameObject.activeSelf, "The drift layer did not show again with its picture.");
+            controls.JourneyPhase = EncounterJourneyPhase.Investigation;
+            view.Refresh();
+            Require(view.ShownDriftLayerCount == 0 && !view.DriftLayers[0].gameObject.activeSelf,
+                "The drift layer stayed after the journey screen left its picture.");
+        }
+
+        /** The journey screen in the preview scene at the reference size, bound to the controls. */
+        private EncounterJourneyView View(TestJourneyControls controls)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<EncounterJourneyView>("Assets/Dice/Content/Presentation/UI/EncounterJourneyView.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            var view = UnityEngine.Object.Instantiate(prefab);
+            SceneManager.MoveGameObjectToScene(view.gameObject, preview);
+            view.GetComponent<RectTransform>().sizeDelta = SpiritPortraitSafeArea.DefaultReferenceSize;
+            view.Build(null);
+            view.Bind(controls, null);
+            return view;
+        }
+
+        private Texture2D Texture(Color color)
+        {
+            var texture = new Texture2D(4, 4, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
+            var pixels = new Color[16];
+            for (int i = 0; i < pixels.Length; ++i) pixels[i] = color;
+            texture.SetPixels(pixels); texture.Apply();
+            resources.Add(texture);
+            return texture;
         }
 
         /** A picture scene lit by the lighting. */

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Dice.UnityContent;
 using UnityEngine;
 
@@ -6,9 +7,12 @@ namespace Dice.Presentation
     /** The journey screen as journey scenes and the kinds of beat show themselves on it. */
     internal interface IJourneyStage
     {
-        /** Shows a picture on the picture layer: its background, lit by its scene lighting when it has one, and its foreground. */
-        void ShowPicture(Texture2D background, SceneLightingAsset lighting, Texture2D foreground, Rect foregroundRect,
-            Color foregroundTint);
+        /**
+         * Shows a picture on the picture layer: its background, lit by its scene lighting when it has one, its drift layers
+         * over the background, drifting until the picture leaves, and its foreground.
+         */
+        void ShowPicture(Texture2D background, SceneLightingAsset lighting, IReadOnlyList<PictureDriftLayer> driftLayers,
+            Texture2D foreground, Rect foregroundRect, Color foregroundTint);
 
         /** Empties the picture layer, so the table scene shows. */
         void ClearPicture();

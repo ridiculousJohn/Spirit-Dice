@@ -23,6 +23,13 @@ namespace Dice.Presentation
         private ISpiritEncounterControls encounterControls;
         [SerializeField] private RectTransform artwork;
         [SerializeField] private RawImage background;
+        [Tooltip("Holds the shown picture's drift layers over the background, so they follow its motion.")]
+        [SerializeField] private RectTransform driftLayersRoot;
+        [SerializeField] private PictureDriftLayerImage driftLayerPrefab;
+        private readonly List<PictureDriftLayerImage> driftLayers = new List<PictureDriftLayerImage>();
+        private int shownDriftLayerCount;
+        // Drift layers advance on unscaled time from when their picture is shown.
+        private double driftStartTime;
         [SerializeField] private RawImage foreground;
         [SerializeField] private RawImage leftPanel;
         [SerializeField] private RawImage rightPanel;
@@ -77,6 +84,8 @@ namespace Dice.Presentation
         internal Button AcceptButton => acceptButton;
         internal SceneLightingState SceneLighting => sceneLightingState;
         internal SceneLightingState PreviousSceneLighting => previousSceneLightingState;
+        internal IReadOnlyList<PictureDriftLayerImage> DriftLayers => driftLayers;
+        internal int ShownDriftLayerCount => shownDriftLayerCount;
 
         public bool IsAnimating { get; private set; }
         public int VisibleBeatIndex { get; private set; } = -1;
@@ -216,10 +225,12 @@ namespace Dice.Presentation
             StartCoroutine(AnimateBeat(journey, index));
         }
 
-        void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting, Texture2D foregroundTexture,
-            Rect foregroundRect, Color foregroundTint)
+        void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting,
+            IReadOnlyList<PictureDriftLayer> pictureDriftLayers, Texture2D foregroundTexture, Rect foregroundRect,
+            Color foregroundTint)
         {
             shownLighting = lighting;
+            ShowDriftLayers(pictureDriftLayers);
             shownForegroundTint = foregroundTint;
             var backgroundTexture = lighting != null ? lighting.BaseTexture : picture;
             background.texture = backgroundTexture;
@@ -235,7 +246,8 @@ namespace Dice.Presentation
         }
 
         void IJourneyStage.ClearPicture()
-            => ((IJourneyStage)this).ShowPicture(null, null, null, new Rect(0, 0, 1, 1), Color.white);
+            => ((IJourneyStage)this).ShowPicture(null, null, Array.Empty<PictureDriftLayer>(), null, new Rect(0, 0, 1, 1),
+                Color.white);
 
         void IJourneyStage.ShowHost(bool visible) => hostVisibility?.Invoke(visible);
 
@@ -280,6 +292,25 @@ namespace Dice.Presentation
             background.rectTransform.localScale = Vector3.one * backgroundScale;
             foreground.rectTransform.anchoredPosition = Vector2.Scale(foregroundOffset, artwork.rect.size);
             foreground.rectTransform.localScale = Vector3.one * foregroundScale;
+        }
+
+        /** Shows the picture's drift layers in order over the background, each starting its drift now. */
+        private void ShowDriftLayers(IReadOnlyList<PictureDriftLayer> layers)
+        {
+            HideDriftLayers();
+            for (int i = 0; i < layers.Count; ++i)
+            {
+                if (i == driftLayers.Count) driftLayers.Add(Instantiate(driftLayerPrefab, driftLayersRoot, false));
+                driftLayers[i].Show(layers[i]);
+            }
+            shownDriftLayerCount = layers.Count;
+            driftStartTime = Time.unscaledTimeAsDouble;
+        }
+
+        private void HideDriftLayers()
+        {
+            for (int i = 0; i < shownDriftLayerCount; ++i) driftLayers[i].Hide();
+            shownDriftLayerCount = 0;
         }
 
         /** Shows the rule cards an invitation rendered, in place of the title, or hides the rule section. */
@@ -398,11 +429,15 @@ namespace Dice.Presentation
             hasRendered = false;
         }
 
-        /** Samples the shown and departing pictures' lighting from one clock onto their compositors while there is any. */
+        /**
+         * Advances the shown picture's drift layers, and samples the shown and departing pictures' lighting from one clock
+         * onto their compositors while there is any.
+         */
         internal void LateUpdate()
         {
-            if (shownLighting == null && previousSceneLighting == null) return;
             double time = Time.unscaledTimeAsDouble;
+            for (int i = 0; i < shownDriftLayerCount; ++i) driftLayers[i].Drift(time - driftStartTime);
+            if (shownLighting == null && previousSceneLighting == null) return;
             if (shownLighting != null)
             {
                 sceneLightingState.Sample(shownLighting, time);
@@ -430,6 +465,7 @@ namespace Dice.Presentation
             background.texture = null;
             background.color = Color.clear;
             background.material = null;
+            HideDriftLayers();
             sceneLightingMaterial?.Dispose();
             sceneLightingMaterial = null;
             sceneLightingState.Sample(null, Time.unscaledTimeAsDouble);

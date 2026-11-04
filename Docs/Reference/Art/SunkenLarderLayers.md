@@ -1,6 +1,6 @@
 # Sunken Larder layers
 
-Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, their lighting split (see Relighting), her host with its eyelid overlays (see Host) and the ambient steam and hearth fire (see Ambient).
+Reference for the hag encounter's scene art: what each texture is for, how the layers register, and how to rebuild them. Artwork is under `Dice-Unity/Assets/Dice/Art/SunkenLarder` (paths below are relative to it unless stated). Coordinates are concept pixels with a top-left origin. These are the first cuts, the clean plate and the old woman's figure, their lighting split (see Relighting), her host with its eyelid overlays (see Host), the ambient steam and hearth fire (see Ambient) and the arrival picture's drifting haze and fog (see Arrival motion).
 
 ## Textures
 
@@ -270,3 +270,41 @@ In `Assets/Scenes/SunkenLarderEncounter.unity` the Sunken Larder Scene frame dra
 | Old Woman Host | Her host, after the steam, so no steam crosses her. |
 
 The script's review images (`review/` of its output) are `steam-frames.png` and `steam-sequence-1s.png` (the plume at moments of the drift beside the plate without the layers), `steam-window.png` (the window over the plate, with its rect), `steam-tiles.png` (each tile 2 x 2 over a dark wall colour, for its seams), `steam-light-levels.png` (the fire out, at rest and at 1.4), `steam-frame-540.png`, `steam-frame-443.png` and `steam-change-x4.png`. In game the steam sits at the frame's upper left and is clearly visible at phone size, clear of the dice, the HUD's panels and her face at 540 and at 443 wide.
+
+## Arrival motion
+
+The arrival picture, SunkenLarderArrival.png (941 x 1672, accepted and never changed), shown at the journey's first beat by `Content/Presentation/SunkenLarder/SunkenLarderArrivalPicture.asset`, has its painted haze and low fog drifting on three picture scene drift layers ("Picture scenes" in [presentation authoring](../../PRESENTATION-AUTHORING.md)), built by `Tools/Presentation/author-sunken-larder-arrival-motion.py` (see "Sunken Larder arrival motion" in the [Presentation tools](../../../Tools/Presentation/README.md)). The method is the cauldron steam's (see Ambient): a kept generated donor made into tiles that wrap both ways, for the haze a broad, softened layer and a finer wisps layer drifting at calm speeds, the broad one a little slower, and for the low fog one layer, each seen only through a window. A drift layer draws its tile through its own window, so no occluder is needed. The picture has no scene lighting; the layers are unlit.
+
+The picture scene's plate is the picture itself; the layers drift over the painted haze and fog, which stay on the plate.
+
+### Arrival motion textures
+
+| Texture | Format | Content |
+| --- | --- | --- |
+| SunkenLarderArrivalFogFar.png | RGBA 960 x 136, wraps both ways | The broad haze: the dense band (donor rows 450 to 680) of Docs/Reference/Art/BoundTreeMistFarDonor.png, its brightness over black turned into density (divided by its Gaussian average at 140 donor px, levels 0.85 to 1.8 mapped to alpha 0 to 1 by smoothstep), the donor's own colour kept, cross-faded to wrap, mirrored, softened 6 donor px, scale 0.75. Mean alpha 0.30. |
+| SunkenLarderArrivalFogFarWisps.png | RGBA 576 x 82, wraps both ways | The haze wisps: the same band, not mirrored or softened, scale 0.45. |
+| SunkenLarderArrivalFogNear.png | RGBA 1088 x 153, wraps both ways | The low fog: Docs/Reference/Art/BoundTreeMistNearDonor.png's band (rows 450 to 690) as density alone (sigma 160, levels 0.85 to 1.3), scale 0.85, in one colour, sRGB (38, 58, 75). |
+| SunkenLarderArrival{FogFar,FogNear}Window.png | RGBA, white | Alpha is the window over its layers' rectangle (below), a crop of the full-frame window; the haze's two layers share FogFarWindow. |
+
+Colour, as the cauldron steam's: each haze tile keeps its donor's shading, its alpha-weighted mean colour set in linear light to the painted colour, not brightened: the mean of the brightest third of the picture where its window is at least 0.8, sRGB (39, 61, 81). The low fog's colour is the brightest 40 percent of its window times 1.2. The tiles import like SunkenLarderSteamWisps.png (sRGB, wrap U and V Repeat), the windows like SunkenLarderSteamMask.png (sRGB off, clamped).
+
+### Arrival windows
+
+- Far haze: the cauldron steam's window, 0.6 plus 0.4 times the painted presence (luminance above its grey opening of 61 px, blurred 12 px, softened 6 px, normalised by its 95th percentile), inside an envelope that covers the painted haze: its bluish brightness (luminance between the 25th and 90th percentiles of its rows, times B - R from 4 to 16 levels) blurred 14 px and mapped from 0.12 to 0.4, inside rows rising from 300 to full at 360, full to 700, gone at 790, and zero on the hut, its chimney and porch (`HUT`). It covers 98.4 percent of the painted haze at half or more.
+- Low fog: its rows (rising from 690 to full at 745, full to 930, gone at 1020), zero on the hut's walls above row 745 and 0.45 of itself over the walkway's near planks and posts (`WALKWAY`), times 0.3 plus 0.7 times the painted fog's bluish brightness (between the 20th and 90th percentiles).
+
+### Arrival drift
+
+Rectangles are each window's bounds with 2 px of margin, in concept px (x, y, w, h, top-left origin); the asset holds them, the tile sizes and velocities in picture widths and heights (rectangle origin bottom left, velocity up positive), as the script's report gives them. Speeds are concept px per second.
+
+| Layer | Rect | Velocity | Opacity | Swell, period |
+| --- | --- | --- | --- | --- |
+| FogFar | 0, 300, 941, 489 | 7 right | 0.7 | 0.08, 83 s |
+| FogFarWisps | 0, 300, 941, 489 | 11 right | 0.9 | none |
+| FogNear | 0, 689, 941, 330 | 33 right | 0.75 | 0.15, 27 s |
+
+Drawn in that order. The script simulates the layers over the picture as the drift layer draws them. The far haze's window changes 1.9 levels a second at the median from one second to the next, and 7 percent of it, mostly the bright haze right of the porch behind the narration panel, where the painted haze matches the tiles' colour, barely changes. At the arrival beat the narration panel covers rows 592 to 1420 at phone size, so the far haze shows above it and the low fog only at the panel's sides. At 443 wide the journey screen's background squeezes the picture to the screen's width.
+
+### Arrival review
+
+The script's review images (`review/` of its output) are `far-frames.png` and `near-frames.png` (each region of the picture, then the layers over the picture at eight moments 1 s apart, 1.5x), `one-second-change.png` (the haze's window: green the mean change from one second to the next, red where no step changes a pixel by a level), `windows.png` (the windows tinted over the picture with their rectangles), `tiles.png` (each tile 2 x 2 in its colour), `frames-540.png` (the whole picture at 540 x 960 two seconds apart) and `change-x4.png` (the most each pixel changes over half a minute, x4).
