@@ -336,17 +336,21 @@ def author_watchtower():
         add_angle(glance, i, lambda t, s=spectral: idle_tilt(t, s))
     track(feather, 0, 5, lambda t: abs(math.sin((t + .18) * .82) - math.sin(t * .82)) * .07 * .12, add=True)
     track(glance, 0, 5, lambda t: min(1, abs(idle_tilt(t, True) - idle_tilt(t, False)) / 7) * .3, add=True)
+    # The waiting owl's foot contact, as fractions of the frame from its bottom-left: on the front edge
+    # of the upper window's sill in WatchtowerRoomUpperArch.png, toes hooking over it. The arrival's
+    # flight starts here.
+    sill_x, sill_y = .814, .822
     waiting = sequence('Waiting placement', 1, 1, idle=True)
     for i in range(6):
         height = .062 * 960 / (1 - pivots[i % 3][1])
-        for prop, val in ((0, .814 * 540), (1, .884 * 960), (2, height * aspects[i % 3]), (3, height)):
+        for prop, val in ((0, sill_x * 540), (1, sill_y * 960), (2, height * aspects[i % 3]), (3, height)):
             track(waiting, i, prop, lambda t, value=val: value)
     arrival = sequence('Arrival', 2, 4.5, gesture=True)
     def approach(t):
         p = t / 4.5
         travel = ease(p, .24, .76)
-        return (.814 + (.5 - .814) * travel - .035 * math.sin(travel * math.pi),
-                .884 + (.612 - .884) * travel - .015 * math.sin(travel * math.pi), travel)
+        return (sill_x + (.5 - sill_x) * travel - .035 * math.sin(travel * math.pi),
+                sill_y + (.612 - sill_y) * travel - .015 * math.sin(travel * math.pi), travel)
     def weights(t):
         p = t / 4.5
         opened, landed, folded = ease(p, .22, .26), ease(p, .72, .76), ease(p, .88, .94)
