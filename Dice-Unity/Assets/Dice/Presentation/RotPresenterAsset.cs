@@ -66,8 +66,8 @@ namespace Dice.Presentation
 
     /**
      * Shows a rot rule's kept-die marks, warnings and withered dice on per-die visuals created under the tray's dice. The
-     * player is choosing from a Sync of a snapshot in play in which a player reroll is possible until playback presents its
-     * next event; only then do kept dice show marks and warnings. The rule's rot steps and restorations play while the dice
+     * player is choosing from a Sync of a snapshot in play, with or without rerolls left, until playback presents its next
+     * event; only then do kept dice show marks and warnings. The rule's rot steps and restorations play while the dice
      * of the roll before them are in the air.
      */
     public sealed class RotPresenter : RulePresenter
@@ -100,8 +100,8 @@ namespace Dice.Presentation
         {
             RotRuleSnapshot rot = snapshot != null && snapshot.Phase == EncounterPhase.Playing ? Rot(snapshot) : null;
             witheredMask = rot?.WitheredMask ?? 0;
-            // The same availability the HUD's reroll button reads.
-            choosing = rot != null && snapshot.CanReroll;
+            // The marks show the hut's rot, so they stay while no reroll is left.
+            choosing = rot != null;
             if (choosing) faces = snapshot.CurrentDice;
             Show(animate);
         }

@@ -33,7 +33,7 @@ namespace Dice.Tests
             contexts.Clear();
         }
 
-        /** Checks every kept die shows the faint mark while the player chooses and a selected die none, and that the marks clear when playback presents its next event or no reroll is possible / fails if a selected die keeps its mark or marks show outside the choice. */
+        /** Checks every kept die shows the faint mark while the player chooses and a selected die none, and that the marks clear when playback presents its next event and stay when no reroll is left / fails if a selected die keeps its mark, marks show outside the choice or vanish with the last reroll. */
         [Test]
         public void KeptDiceShowTheMarkOnlyWhileThePlayerChooses()
         {
@@ -61,7 +61,7 @@ namespace Dice.Tests
             var spent = TestContent.WithDice(Catalog(RotEndpoint.Wither, 0), Seed, 2, 3, 4, 5, 6);
             Assert.That(spent.Snapshot.CanReroll, Is.False);
             fixture.Presenter.Sync(spent.Snapshot, false);
-            AssertLevels(fixture, 0, 0, 0, "No reroll possible");
+            AssertLevels(fixture, 0b11111, 0, 0, "No reroll left");
             fixture.Presenter.Sync(choosing, false);
             fixture.Presenter.Sync(null, false);
             AssertLevels(fixture, 0, 0, 0, "No snapshot");

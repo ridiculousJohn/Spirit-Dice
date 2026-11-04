@@ -51,6 +51,36 @@ namespace Dice.Tests
             Assert.That(SpiritEncounterAudio.ChooseClip(new AudioClip[] { null }, null, null, random), Is.Null);
         }
 
+        /**
+         * Checks a weighted choice picks clips in proportion to their weights, skips empty entries, never repeats the
+         * previous clip and returns the lone clip or none when nothing else is assigned / fails if a weight is ignored,
+         * an empty entry is chosen or a clip plays twice in a row.
+         */
+        [Test]
+        public void WeightedClipChoiceFollowsTheWeightsWithoutImmediateRepeats()
+        {
+            var common = Clip("common");
+            var rare = Clip("rare");
+            var clips = new[] { Weighted(common, 1), Weighted(null, 1), Weighted(rare, .25f) };
+            var random = new System.Random(2718);
+            int rareCount = 0;
+            const int draws = 8000;
+            for (int draw = 0; draw < draws; draw++)
+            {
+                var selected = SpiritEncounterAudio.ChooseWeightedClip(clips, null, random);
+                Assert.That(selected, Is.Not.Null, "Empty entries must be skipped.");
+                if (selected == rare) rareCount++;
+            }
+            // Weights 1 and 0.25 give the rare clip a fifth of the draws.
+            Assert.That(rareCount / (float)draws, Is.EqualTo(.2f).Within(.02f));
+            for (int draw = 0; draw < 20; draw++)
+                Assert.That(SpiritEncounterAudio.ChooseWeightedClip(clips, common, random), Is.SameAs(rare),
+                    "The previous clip is excluded whatever its weight.");
+            Assert.That(SpiritEncounterAudio.ChooseWeightedClip(new[] { Weighted(null, 1), Weighted(rare, .25f) }, rare, random), Is.SameAs(rare));
+            Assert.That(SpiritEncounterAudio.ChooseWeightedClip(new[] { Weighted(null, 1) }, null, random), Is.Null);
+            Assert.That(SpiritEncounterAudio.ChooseWeightedClip(null, null, random), Is.Null);
+        }
+
         /** Checks a theme accepts no creaks or a list of assigned creaks and refuses an empty creak entry, naming the theme / fails if an empty entry passes or a valid list is refused. */
         [Test]
         public void ThemeRefusesAnEmptyCreakEntryNamingTheTheme()
@@ -152,6 +182,8 @@ namespace Dice.Tests
                     Does.Contain(root.name));
             }
         }
+
+        private static WeightedAudioClip Weighted(AudioClip clip, float weight) => new WeightedAudioClip { clip = clip, weight = weight };
 
         private AudioClip Clip(string name)
         {

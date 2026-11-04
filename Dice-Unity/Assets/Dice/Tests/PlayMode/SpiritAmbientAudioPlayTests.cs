@@ -185,7 +185,7 @@ namespace Dice.Tests
         {
             theme = ScriptableObject.CreateInstance<SpiritAudioTheme>();
             resources.Add(theme);
-            theme.ambientOneShotClips = clips;
+            theme.ambientOneShots = clips?.Select(clip => new WeightedAudioClip { clip = clip }).ToArray();
             theme.ambientOneShotVolume = .3f;
             theme.minimumAmbientOneShotInterval = 25;
             theme.maximumAmbientOneShotInterval = 60;

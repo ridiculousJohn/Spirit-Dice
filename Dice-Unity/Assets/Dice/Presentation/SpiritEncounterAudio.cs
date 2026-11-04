@@ -59,7 +59,7 @@ namespace Dice.Presentation
 
         private bool CanPlay => isActiveAndEnabled && !muted && hasFocus && !paused && theme != null;
         private bool HasCreaks => theme != null && theme.creakClips != null && theme.creakClips.Length > 0;
-        private bool HasAmbientOneShots => theme != null && theme.ambientOneShotClips != null && theme.ambientOneShotClips.Length > 0;
+        private bool HasAmbientOneShots => theme != null && theme.ambientOneShots != null && theme.ambientOneShots.Length > 0;
 
         private void Awake()
         {
@@ -156,6 +156,25 @@ namespace Dice.Presentation
             return selected != null ? selected : fallback;
         }
 
+        /** Picks an assigned clip other than the previous one at random in proportion to its weight, unless it is the only one; returns null when none is assigned. */
+        public static AudioClip ChooseWeightedClip(WeightedAudioClip[] clips, AudioClip previous, System.Random random)
+        {
+            if (clips == null) return null;
+            AudioClip selected = null;
+            double total = 0;
+            // Weighted reservoir selection: each candidate replaces the choice with its share of the weight seen so far.
+            foreach (var entry in clips)
+                if (entry.clip != null && entry.clip != previous)
+                {
+                    total += entry.weight;
+                    if (random.NextDouble() * total < entry.weight) selected = entry.clip;
+                }
+            if (selected == null)
+                foreach (var entry in clips)
+                    if (entry.clip != null) return entry.clip;
+            return selected;
+        }
+
         /** Returns the delay before a scheduled room one-shot: uniform between the authored bounds, at least one second. */
         public static float NextInterval(float minimumInterval, float maximumInterval, System.Random random)
         {
@@ -214,7 +233,7 @@ namespace Dice.Presentation
             }
             if (HasAmbientOneShots && Time.unscaledTime >= nextAmbientOneShot)
             {
-                lastAmbientOneShotClip = ChooseClip(theme.ambientOneShotClips, lastAmbientOneShotClip, null, cosmeticRandom);
+                lastAmbientOneShotClip = ChooseWeightedClip(theme.ambientOneShots, lastAmbientOneShotClip, cosmeticRandom);
                 // Ambient one-shots use the bounded cue voices, so mute and suspension stop them with the other cues.
                 PlayClip(lastAmbientOneShotClip, theme.ambientOneShotVolume);
                 ScheduleAmbientOneShot();

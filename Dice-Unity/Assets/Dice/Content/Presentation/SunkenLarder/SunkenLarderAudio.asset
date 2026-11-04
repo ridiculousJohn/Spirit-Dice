@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8fe009afd60405b9a183e7e7b0a6149, type: 3}
+  m_Name: SunkenLarderAudio
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritAudioTheme
+  rollClips:
+  - {fileID: 8300000, guid: 07cb5ff0f79f413cb057577b58f6ea9b, type: 3}
+  - {fileID: 8300000, guid: 91688e8a7a9e41a7a8043ec8ab56d57c, type: 3}
+  - {fileID: 8300000, guid: 7e07504efbbd4c388bac12d59e39346c, type: 3}
+  - {fileID: 8300000, guid: f5f444402b224891a916be38205028a5, type: 3}
+  - {fileID: 8300000, guid: 7295bcef526a49baa961b107b8b9155b, type: 3}
+  rollContactTracks:
+  - recordingStartTime: 0.012222
+    contactTimes:
+    - 0.0319
+    - 0.1417
+    - 0.2355
+    - 0.3253
+    - 0.3831
+    - 0.445
+    - 0.5108
+    - 0.5647
+    - 0.6146
+    settleTime: 0.1
+  - recordingStartTime: 0.478912
+    contactTimes:
+    - 0.4889
+    - 0.5368
+    - 0.6166
+    - 0.6625
+    - 0.7124
+    - 0.7822
+    - 0.8201
+    - 0.858
+    settleTime: 0.1
+  - recordingStartTime: 1.198277
+    contactTimes:
+    - 1.2152
+    - 1.2671
+    - 1.317
+    - 1.3749
+    - 1.4288
+    - 1.4886
+    - 1.5265
+    - 1.5644
+    settleTime: 0.1
+  - recordingStartTime: 1.061088
+    contactTimes:
+    - 1.0716
+    - 1.1234
+    - 1.1893
+    - 1.2452
+    - 1.317
+    - 1.3649
+    - 1.4148
+    - 1.4507
+    - 1.4926
+    - 1.5425
+    settleTime: 0.1
+  - recordingStartTime: 0.752358
+    contactTimes:
+    - 0.7623
+    - 0.8082
+    - 0.86
+    - 0.896
+    - 0.9459
+    - 1.0077
+    - 1.0815
+    - 1.1494
+    - 1.1933
+    - 1.2651
+    settleTime: 0.1
+  rollLaunchTime: 0.15
+  spirit: {fileID: 0}
+  spiritClips: []
+  score: {fileID: 8300000, guid: b84699ef9b4c42b5bfc60b29ece30a84, type: 3}
+  stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
+  ambience: {fileID: 8300000, guid: 42b262b8ca7b4765967941c51ecd3cb7, type: 3}
+  creakClips:
+  - {fileID: 8300000, guid: 3d7a8a742a2b43e5aee08d5132ebea9c, type: 3}
+  - {fileID: 8300000, guid: fe9993be47a546b9acc2a5b537af3d6d, type: 3}
+  - {fileID: 8300000, guid: 2702369ebd1f4ca8a9571fef6403bd40, type: 3}
+  - {fileID: 8300000, guid: 166f0afcccd54ce59c0129b2a803cc72, type: 3}
+  - {fileID: 8300000, guid: b0a29db5c85b4f00a9f0731120451e1c, type: 3}
+  - {fileID: 8300000, guid: 4b242701aa864df5a4a914c033235859, type: 3}
+  - {fileID: 8300000, guid: 43ce33ba8bea42fd9d72c83d33bf076e, type: 3}
+  - {fileID: 8300000, guid: aaa19845912b4ae98afd6c1f527df6b1, type: 3}
+  - {fileID: 8300000, guid: 7dfbb8cea87440ac8aa5068e56c5305d, type: 3}
+  - {fileID: 8300000, guid: 0280b192b0154dfbaac8564c5dadf86e, type: 3}
+  - {fileID: 8300000, guid: 33d27fd290744ad28175329d587549d8, type: 3}
+  - {fileID: 8300000, guid: ac1a538a6e4e42319e8f8fc20ee3ac3b, type: 3}
+  - {fileID: 8300000, guid: 39e7e7d5480a44d69e88f572502faeb9, type: 3}
+  - {fileID: 8300000, guid: ece45a1e7443494c97fd4907276006c5, type: 3}
+  ambientOneShots:
+  - clip: {fileID: 8300000, guid: 3f93fde9c9a243e88861f68d3faf3de2, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 2fa4ca7027844a5a8a355d87bdeee577, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 62e64ff36caf4f40abb39ef26aaf5aa3, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: ec157935f8e34d47818b21d66d704cde, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: aba18b470afa4736b81d0301323694dc, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 7a2d9464ecd84e0dbbb8114d57666c03, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: ba1a9c46594d4b7d987597c22d8469af, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 4b5ba40768934ef7b3b3fe1693778037, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: f687a764a1674748a82d43ac1b19778e, type: 3}
+    weight: 0.2
+  - clip: {fileID: 8300000, guid: 76a5a0b151044f89b5dcb1cebe961755, type: 3}
+    weight: 0.2
+  credits: {fileID: 4900000, guid: c1a96e795e7f4168b52a055e894d5c5c, type: 3}
+  ambienceVolume: 0.25
+  effectsVolume: 0.65
+  creakVolume: 0.16
+  ambientOneShotVolume: 0.3
+  minimumCreakInterval: 17
+  maximumCreakInterval: 38
+  minimumAmbientOneShotInterval: 25
+  maximumAmbientOneShotInterval: 60

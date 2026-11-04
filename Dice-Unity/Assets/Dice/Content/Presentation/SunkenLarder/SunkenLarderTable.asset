@@ -26,7 +26,7 @@ MonoBehaviour:
   - 1
   hostLightingPosition: {x: 0, y: 0, z: 0}
   hostPresentation: {fileID: 11400000, guid: 85a0edf7ec255d56b686d574dd1fafa8, type: 2}
-  audioTheme: {fileID: 11400000, guid: ed94bba6676542b7b017d54e0135c5dc, type: 2}
+  audioTheme: {fileID: 11400000, guid: 64a342967634c2646b46e237d6ef02e3, type: 2}
   trayPresentation: {fileID: 11400000, guid: 29c3a8bc57d0479bbb67ba1b4e22c508, type: 2}
   rulePresentations:
   - {fileID: 11400000, guid: 8bfa2e3d68f249c68c87cc5a81146a0e, type: 2}

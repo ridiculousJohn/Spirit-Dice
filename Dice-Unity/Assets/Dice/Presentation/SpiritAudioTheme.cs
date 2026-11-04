@@ -22,8 +22,8 @@ namespace Dice.Presentation
         public AudioClip ambience;
         [Tooltip("Creaks played on the creak source at random intervals, chosen without immediate repeats; empty plays none.")]
         public AudioClip[] creakClips;
-        [Tooltip("Optional one-shots, such as a distant giggle, played at random intervals during the encounter and not tied to any event; chosen without immediate repeats.")]
-        public AudioClip[] ambientOneShotClips;
+        [Tooltip("Optional one-shots, such as a distant giggle, played at random intervals during the encounter and not tied to any event; each chosen in proportion to its weight, without immediate repeats.")]
+        public WeightedAudioClip[] ambientOneShots;
         public TextAsset credits;
 
         [Range(0, 1)] public float ambienceVolume = .24f;
@@ -35,13 +35,24 @@ namespace Dice.Presentation
         [Min(1)] public float minimumAmbientOneShotInterval = 25;
         [Min(1)] public float maximumAmbientOneShotInterval = 60;
 
-        /** Fails, naming the theme, when a creak entry is empty: an empty slot would silently drop that creak from the choice. */
+        /**
+         * Fails, naming the theme, when a creak entry is empty (an empty slot would silently drop that creak from the
+         * choice) or an ambient one-shot's weight is not a finite positive number (it could never, or always, be chosen).
+         */
         public void Validate()
         {
-            if (creakClips == null) return;
-            for (int i = 0; i < creakClips.Length; i++)
-                if (creakClips[i] == null)
-                    throw new FormatException("The audio theme " + name + " has an empty creak clip at index " + i + ".");
+            if (creakClips != null)
+                for (int i = 0; i < creakClips.Length; i++)
+                    if (creakClips[i] == null)
+                        throw new FormatException("The audio theme " + name + " has an empty creak clip at index " + i + ".");
+            if (ambientOneShots != null)
+                for (int i = 0; i < ambientOneShots.Length; i++)
+                {
+                    float weight = ambientOneShots[i].weight;
+                    if (!(weight > 0) || float.IsInfinity(weight))
+                        throw new FormatException("The audio theme " + name + " has ambient one-shot " + i + " with weight " + weight +
+                            "; weights must be finite and above zero.");
+                }
         }
     }
 }

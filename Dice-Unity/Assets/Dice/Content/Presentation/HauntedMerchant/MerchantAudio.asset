@@ -20,19 +20,64 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 7295bcef526a49baa961b107b8b9155b, type: 3}
   rollContactTracks:
   - recordingStartTime: 0.012222
-    contactTimes: [0.0319, 0.1417, 0.2355, 0.3253, 0.3831, 0.445, 0.5108, 0.5647, 0.6146]
+    contactTimes:
+    - 0.0319
+    - 0.1417
+    - 0.2355
+    - 0.3253
+    - 0.3831
+    - 0.445
+    - 0.5108
+    - 0.5647
+    - 0.6146
     settleTime: 0.1
   - recordingStartTime: 0.478912
-    contactTimes: [0.4889, 0.5368, 0.6166, 0.6625, 0.7124, 0.7822, 0.8201, 0.858]
+    contactTimes:
+    - 0.4889
+    - 0.5368
+    - 0.6166
+    - 0.6625
+    - 0.7124
+    - 0.7822
+    - 0.8201
+    - 0.858
     settleTime: 0.1
   - recordingStartTime: 1.198277
-    contactTimes: [1.2152, 1.2671, 1.317, 1.3749, 1.4288, 1.4886, 1.5265, 1.5644]
+    contactTimes:
+    - 1.2152
+    - 1.2671
+    - 1.317
+    - 1.3749
+    - 1.4288
+    - 1.4886
+    - 1.5265
+    - 1.5644
     settleTime: 0.1
   - recordingStartTime: 1.061088
-    contactTimes: [1.0716, 1.1234, 1.1893, 1.2452, 1.317, 1.3649, 1.4148, 1.4507, 1.4926, 1.5425]
+    contactTimes:
+    - 1.0716
+    - 1.1234
+    - 1.1893
+    - 1.2452
+    - 1.317
+    - 1.3649
+    - 1.4148
+    - 1.4507
+    - 1.4926
+    - 1.5425
     settleTime: 0.1
   - recordingStartTime: 0.752358
-    contactTimes: [0.7623, 0.8082, 0.86, 0.896, 0.9459, 1.0077, 1.0815, 1.1494, 1.1933, 1.2651]
+    contactTimes:
+    - 0.7623
+    - 0.8082
+    - 0.86
+    - 0.896
+    - 0.9459
+    - 1.0077
+    - 1.0815
+    - 1.1494
+    - 1.1933
+    - 1.2651
     settleTime: 0.1
   rollLaunchTime: 0.15
   spirit: {fileID: 8300000, guid: 23aba9c1ca204b7ab963f93ff51cc292, type: 3}
@@ -44,10 +89,13 @@ MonoBehaviour:
   stageClear: {fileID: 8300000, guid: 2a49ebb26ca448aaa84873aee4841a50, type: 3}
   ambience: {fileID: 0}
   creakClips: []
-  ambientOneShotClips:
-  - {fileID: 8300000, guid: eab02a49246d4068961577b05e146889, type: 3}
-  - {fileID: 8300000, guid: 1cc583a8ad1c4e60b79d7b69e9779117, type: 3}
-  - {fileID: 8300000, guid: 47eba34444064a2dbe8900d8c3e356d8, type: 3}
+  ambientOneShots:
+  - clip: {fileID: 8300000, guid: eab02a49246d4068961577b05e146889, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 1cc583a8ad1c4e60b79d7b69e9779117, type: 3}
+    weight: 1
+  - clip: {fileID: 8300000, guid: 47eba34444064a2dbe8900d8c3e356d8, type: 3}
+    weight: 1
   credits: {fileID: 4900000, guid: ecfd430ee799131fd390e7390fbb630e, type: 3}
   ambienceVolume: 0.25
   effectsVolume: 0.65
