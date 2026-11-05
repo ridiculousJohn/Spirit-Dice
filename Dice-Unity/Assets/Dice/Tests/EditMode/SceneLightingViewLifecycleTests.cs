@@ -55,14 +55,17 @@ namespace Dice.Tests
             var left = view.LeftPanel;
             var right = view.RightPanel;
             Material approachMaterial = background.material;
+            Rect departingCrop = background.uvRect;
             controls.BeatIndex = 1;
             view.Refresh();
             view.LateUpdate();
             Require(left.gameObject.activeSelf && right.gameObject.activeSelf &&
                 left.material == approachMaterial && right.material == approachMaterial && background.material != approachMaterial,
                 "Departing panels did not retain the previous beat's compositor independently.");
-            Require(left.texture == first.BaseTexture && background.texture == second.BaseTexture &&
-                left.uvRect == new Rect(0, 0, .5f, 1) && right.uvRect == new Rect(.5f, 0, .5f, 1),
+            Require(left.texture == first.BaseTexture && right.texture == first.BaseTexture &&
+                background.texture == second.BaseTexture &&
+                left.uvRect == new Rect(departingCrop.x, departingCrop.y, departingCrop.width / 2, departingCrop.height) &&
+                right.uvRect == new Rect(departingCrop.center.x, departingCrop.y, departingCrop.width / 2, departingCrop.height),
                 "Departing panels lost their matching texture or half of the image.");
             var currentState = view.SceneLighting;
             var previousState = view.PreviousSceneLighting;

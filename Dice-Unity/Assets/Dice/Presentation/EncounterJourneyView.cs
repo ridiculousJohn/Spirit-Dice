@@ -196,6 +196,7 @@ namespace Dice.Presentation
             bool parting = entering && continuingJourney && beat.Scene != null &&
                 beat.Transition == EncounterJourneyTransition.PartingPanels && background.texture != null;
             Texture2D previous = parting ? background.texture as Texture2D : null;
+            Rect previousCrop = background.uvRect;
             if (entering)
             {
                 if (parting)
@@ -242,6 +243,9 @@ namespace Dice.Presentation
             leftPanel.gameObject.SetActive(parting);
             rightPanel.gameObject.SetActive(parting);
             leftPanel.texture = rightPanel.texture = previous;
+            // The departing panels show the departing plate as it was cropped, each one half of it.
+            leftPanel.uvRect = new Rect(previousCrop.x, previousCrop.y, previousCrop.width / 2, previousCrop.height);
+            rightPanel.uvRect = new Rect(previousCrop.center.x, previousCrop.y, previousCrop.width / 2, previousCrop.height);
             leftPanel.material = rightPanel.material = previousSceneLightingMaterial?.Material;
             if (beat.AudioCue != null) audio?.PlayCue(beat.AudioCue);
             StartCoroutine(AnimateBeat(journey, index));
@@ -255,20 +259,47 @@ namespace Dice.Presentation
             // view, its pivot is the part that stays in view: the bottom edge, and the side the picture names.
             artwork.pivot = new Vector2(horizontalCropAnchor, 0);
             shownLighting = lighting;
-            ShowDriftLayers(pictureDriftLayers);
             shownForegroundTint = foregroundTint;
             var backgroundTexture = lighting != null ? lighting.BaseTexture : picture;
             background.texture = backgroundTexture;
             background.color = backgroundTexture != null ? Color.white : Color.clear;
+            // The plate shows at one scale, covering the artwork's portrait shape (its fitter's ratio) and cropping the
+            // excess about its centre. The lighting samples through the same texture coordinates, so it stays registered.
+            Rect crop = backgroundTexture != null
+                ? CoverCrop(backgroundTexture, artwork.GetComponent<AspectRatioFitter>().aspectRatio) : new Rect(0, 0, 1, 1);
+            background.uvRect = crop;
+            ShowDriftLayers(pictureDriftLayers, crop);
             foreground.texture = foregroundTexture;
             foreground.GetComponent<AspectRatioFitter>().aspectRatio = foregroundTexture != null ?
                 (float)foregroundTexture.width / foregroundTexture.height : 1;
             foreground.color = foregroundTexture != null ? foregroundTint : Color.clear;
             var clip = (RectTransform)foreground.transform.parent;
-            clip.anchorMin = foregroundRect.min;
-            clip.anchorMax = foregroundRect.max;
+            Rect clipRect = PictureToFrame(foregroundRect, crop);
+            clip.anchorMin = clipRect.min;
+            clip.anchorMax = clipRect.max;
             clip.offsetMin = clip.offsetMax = Vector2.zero;
         }
+
+        /** The part of the texture that shows at one scale over a frame of this aspect (width / height), cropped about its centre. */
+        private static Rect CoverCrop(Texture texture, float frameAspect)
+        {
+            float textureAspect = (float)texture.width / texture.height;
+            if (textureAspect > frameAspect)
+            {
+                float width = frameAspect / textureAspect;
+                return new Rect((1 - width) / 2, 0, width, 1);
+            }
+            float height = textureAspect / frameAspect;
+            return new Rect(0, (1 - height) / 2, 1, height);
+        }
+
+        /**
+         * A rectangle in picture coordinates (normalized over the plate, origin bottom left) in the coordinates of the frame
+         * that shows the crop of the plate.
+         */
+        private static Rect PictureToFrame(Rect rect, Rect crop)
+            => new Rect((rect.x - crop.x) / crop.width, (rect.y - crop.y) / crop.height, rect.width / crop.width,
+                rect.height / crop.height);
 
         void IJourneyStage.ClearPicture()
             => ((IJourneyStage)this).ShowPicture(null, null, Array.Empty<PictureDriftLayer>(), null, new Rect(0, 0, 1, 1),
@@ -319,10 +350,20 @@ namespace Dice.Presentation
             foreground.rectTransform.localScale = Vector3.one * foregroundScale;
         }
 
-        /** Shows the picture's drift layers in order over the background, each starting its drift now. */
-        private void ShowDriftLayers(IReadOnlyList<PictureDriftLayer> layers)
+        /**
+         * Shows the picture's drift layers in order over the background, each starting its drift now. Their rectangles are in
+         * picture coordinates, so their root spans the whole plate, of which the background shows the crop.
+         */
+        private void ShowDriftLayers(IReadOnlyList<PictureDriftLayer> layers, Rect crop)
         {
             HideDriftLayers();
+            if (layers.Count > 0)
+            {
+                Rect plate = PictureToFrame(new Rect(0, 0, 1, 1), crop);
+                driftLayersRoot.anchorMin = plate.min;
+                driftLayersRoot.anchorMax = plate.max;
+                driftLayersRoot.offsetMin = driftLayersRoot.offsetMax = Vector2.zero;
+            }
             for (int i = 0; i < layers.Count; ++i)
             {
                 if (i == driftLayers.Count) driftLayers.Add(Instantiate(driftLayerPrefab, driftLayersRoot, false));

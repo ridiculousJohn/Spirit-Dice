@@ -36,7 +36,9 @@ def texture_guid(name):
 def author(foot, width):
     texture, smoke = texture_guid('MothHost.png'), texture_guid('MothWingSmoke.png')
     height = width * 2 / 3
-    lantern, rail = (213.3, 753.6), (270, 609.6)
+    # The painted lantern and the cart rail in the 540x960 portrait, where the 948x1660 playfield painting is drawn at
+    # one scale, covering the portrait and cropping its sides equally.
+    lantern, rail = (212.4347, 753.6), (270, 609.6)
 
     def wing(x, y):
         return A.ease(abs(x - .5), .1, .34) * A.ease(y, foot[1] + .02, foot[1] + .16)
