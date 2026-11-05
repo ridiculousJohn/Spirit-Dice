@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Current state: October 29, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
+Current state: November 5, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
 
 ## Working contract
 
@@ -20,6 +20,9 @@ Read this document, [code standards](CODE-STANDARDS.md), [presentation authoring
 - Agreed next work and its design (content assets and typed ids, the content-validation tool, Bound Tree art) are in Docs/work/outstanding.md, which is git-ignored and kept on this machine; read it before choosing what to do next.
 - Open Sunken Larder issues: the wither jolt blinks the hearth fire like a light switch (SunkenLarderAmbientActivity's stutter, 5 to 7 flickers between 0.45 and 1.5); John wants a gentle flicker instead. The arrival picture's chimney smoke is still: animating it as drift layers over the painting failed (a separate layer, a fixed outline, or a cone of light), so it needs another method, such as animating the painted plume itself. The arrival's far haze drifts over its own still painted copy.
 - At narrow widths (443) every scene's art, host and tray crop rather than squeeze ("Framing at narrow widths" in [presentation authoring](PRESENTATION-AUTHORING.md)): each tray keeps its 540-wide size, letting its empty margin run past the screen's sides, and scales down uniformly only as far as its visible content needs (at 443: fox 0.82, owl 0.85, moth 0.86, Chapter 2 tables 0.90). John has not reviewed it in play; no capture shows the merchant's candle on a bay at 443.
+- The owl (The Watchtower) stands on a wooden T-perch painted into its room (Docs/Reference/Art/WatchtowerPerch.md). Its feet are the original art, so the talons hang over the crossbar instead of gripping it; John leaves gripping feet to another tool. Its tray is fitted to the painted floor with John's camera values (see the rig paragraph in [Tools/Presentation/README.md](../Tools/Presentation/README.md)).
+- Two generators are out of date and must not be run with `--write-assets`: Tools/Presentation/author-tray-presentations.py (it writes tray presentation assets in an obsolete format and would regenerate the moth's tray; tray changes go in the rig prefabs' overrides) and Tools/Presentation/author-spirit-presentations.py (it would drop the Unity-set fields of both host assets, including PortraitPrefab and SigilPrefab; change values in the script and copy the changed sequences into the assets through Unity).
+- Unity rendered runs can rewrite Assets/Settings/UniversalRP.asset (m_Light2DKeptVariantCombos); keep that out of commits unless John decides otherwise.
 - Root: C:/Users/jsp73/Projects/Dice; Unity project: Dice-Unity; branch: main.
 - Unity: 6000.6.6f1 at C:/Program Files/Unity/Hub/Editor/6000.6.6f1/Editor/Unity.exe.
 - Entry scene: Dice-Unity/Assets/Scenes/Application.unity; menu: Dice > Open Application.
