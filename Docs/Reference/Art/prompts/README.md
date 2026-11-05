@@ -61,10 +61,6 @@ Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/SunkenLarder`. Th
 
 ## Watchtower perch
 
-Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/Watchtower`. The edits are described in [../WatchtowerPerch.md](../WatchtowerPerch.md).
+Same format; asset paths are under `Dice-Unity/Assets/Dice/Art/Watchtower`. The edit is described in [../WatchtowerPerch.md](../WatchtowerPerch.md).
 
 - [WatchtowerRoomUpperArch-perch.txt](WatchtowerRoomUpperArch-perch.txt) -> Docs/Reference/Art/WatchtowerPerchDonor.png, transferred into WatchtowerRoomUpperArch.png (the T-perch on the floor)
-- [OwlRest-feet-scene.txt](OwlRest-feet-scene.txt) -> Docs/Reference/Art/WatchtowerOwlRestFeetSceneDonor.png, the rest feet gripping the crossbar in the scene
-- [OwlRest-feet-extraction.txt](OwlRest-feet-extraction.txt) -> Docs/Reference/Art/WatchtowerOwlRestFeetExtractionDonor.png, transferred into OwlRest.png
-- [OwlLanding-feet-scene.txt](OwlLanding-feet-scene.txt) -> Docs/Reference/Art/WatchtowerOwlLandingFeetSceneDonor.png, the landing feet gripping the crossbar where the rest feet do
-- [OwlLanding-feet-extraction.txt](OwlLanding-feet-extraction.txt) -> Docs/Reference/Art/WatchtowerOwlLandingFeetExtractionDonor.png, transferred into OwlLanding.png
