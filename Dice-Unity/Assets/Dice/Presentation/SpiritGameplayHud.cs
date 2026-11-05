@@ -40,6 +40,9 @@ namespace Dice.Presentation
         // Units the rule spirit starts left of the tray and ends right of it, and the height of its arc.
         private const float RuleSweepOverhang = 36f;
         private const float RuleSweepArc = 16f;
+        // Units the tray's visible content keeps from each side of a portrait narrower than the reference width; content
+        // authored closer to the edge at the reference width keeps its authored margin.
+        private const float TrayScreenMargin = 8f;
         [SerializeField] private RectTransform portrait;
         public RectTransform Root => portrait;
         [field: SerializeField] public RectTransform DiceTrayFrame { get; private set; }
@@ -124,6 +127,12 @@ namespace Dice.Presentation
         private CanvasGroup previewTrayVisibility;
         private float authoredPreviewHudAlpha;
         private bool authoredPreviewTrayIgnoresParentGroups;
+        // The shown tray's visible content as a viewport rectangle of its texture, and the portrait width its frame is
+        // authored at; the width is 0 until a tray is shown.
+        private Rect trayContent;
+        private float trayReferenceWidth;
+        /** Raised when the tray display takes a new place or size, so what is placed over the tray's dice can follow it. */
+        public event Action TrayDisplayFitted;
 
         public void BuildHeader(RectTransform parent, Action toggleMenu)
         {
@@ -463,12 +472,71 @@ namespace Dice.Presentation
         }
 
         /**
-         * Readies the HUD for a still editor preview: its tray display shows the rendered tray, and an opacity group on the
-         * HUD, which passes input through, lets the preview hide the HUD while the tray display stays shown.
+         * Shows a tray's texture in the tray display, whose visible content covers the given viewport rectangle of the
+         * texture, and fits the display to the portrait's width (see FitTrayDisplay).
          */
-        public void PreparePreview(Texture trayTexture)
+        public void ShowTray(Texture trayTexture, Rect content, float referenceWidth)
         {
+            if (!(referenceWidth > 0)) throw new ArgumentOutOfRangeException(nameof(referenceWidth));
+            var image = DiceTrayImage.rectTransform;
+            if (image.parent != DiceTrayFrame || image.anchorMin != Vector2.zero || image.anchorMax != Vector2.one)
+                throw new InvalidOperationException("The gameplay HUD's tray display must stretch over its tray frame.");
             DiceTrayImage.texture = trayTexture;
+            trayContent = content;
+            trayReferenceWidth = referenceWidth;
+            FitTrayDisplay();
+        }
+
+        /**
+         * Fits the tray display to the portrait's width without stretching it unevenly. The tray frame's authored rectangle at
+         * the reference width is the tray's placement. On a narrower portrait the display keeps that size and shape, centred
+         * where the frame is, and lets its empty margin run past the portrait's sides while the tray's visible content stays
+         * inside them; only if the content still does not fit, the display scales down uniformly about its bottom edge until
+         * it does. At the reference width the display covers its frame exactly. Does nothing until a tray is shown.
+         */
+        public void FitTrayDisplay()
+        {
+            if (trayReferenceWidth <= 0) return;
+            var hud = (RectTransform)transform;
+            Rect frame = DiceTrayFrame.rect;
+            float portraitLeft = DiceTrayFrame.InverseTransformPoint(hud.TransformPoint(new Vector3(hud.rect.xMin, 0))).x;
+            float portraitRight = DiceTrayFrame.InverseTransformPoint(hud.TransformPoint(new Vector3(hud.rect.xMax, 0))).x;
+            // Horizontal placement follows the portrait's width in proportion, so at the reference width the frame and its
+            // distances from the portrait's sides are wider by the same factor.
+            float widen = Mathf.Max(1, trayReferenceWidth / (portraitRight - portraitLeft));
+            float width = frame.width * widen;
+            float centre = frame.center.x;
+            // The content's reach either side of the display's centre at full size, and the margins it keeps from the
+            // portrait's sides: the authored ones at the reference width, at most the screen margin.
+            float reachLeft = width * (.5f - trayContent.xMin);
+            float reachRight = width * (trayContent.xMax - .5f);
+            float marginLeft = Mathf.Min(TrayScreenMargin, (centre - portraitLeft) * widen - reachLeft);
+            float marginRight = Mathf.Min(TrayScreenMargin, (portraitRight - centre) * widen - reachRight);
+            float scale = 1;
+            if (reachLeft > 0) scale = Mathf.Min(scale, (centre - portraitLeft - marginLeft) / reachLeft);
+            if (reachRight > 0) scale = Mathf.Min(scale, (portraitRight - marginRight - centre) / reachRight);
+            scale = Mathf.Max(0, scale);
+            float overhang = (width * scale - frame.width) * .5f;
+            var offsetMin = new Vector2(-overhang, 0);
+            var offsetMax = new Vector2(overhang, frame.height * (scale - 1));
+            var image = DiceTrayImage.rectTransform;
+            if (image.offsetMin == offsetMin && image.offsetMax == offsetMax) return;
+            image.offsetMin = offsetMin;
+            image.offsetMax = offsetMax;
+            TrayDisplayFitted?.Invoke();
+        }
+
+        // The HUD covers the portrait, which changes width with the screen; the tray display fits each new width.
+        private void OnRectTransformDimensionsChange() => FitTrayDisplay();
+
+        /**
+         * Readies the HUD for a still editor preview: its tray display shows the rendered tray, fitted to the preview's width,
+         * and an opacity group on the HUD, which passes input through, lets the preview hide the HUD while the tray display
+         * stays shown.
+         */
+        public void PreparePreview(Texture trayTexture, Rect content, float referenceWidth)
+        {
+            ShowTray(trayTexture, content, referenceWidth);
             DiceTrayImage.enabled = true;
             previewHudVisibility = GetComponent<CanvasGroup>();
             if (previewHudVisibility == null) previewHudVisibility = gameObject.AddComponent<CanvasGroup>();
@@ -588,12 +656,17 @@ namespace Dice.Presentation
             ruleSpiritIcon.gameObject.SetActive(icon != null);
             if (ruleSpiritSigil != null) ruleSpiritSigil.gameObject.SetActive(icon == null);
             RuleSpiritSweep.gameObject.SetActive(true);
+            // The sweep is anchored at the middle of the frame's left side and crosses the tray display, which stretches
+            // over the frame with the offsets FitTrayDisplay gives it.
+            var image = DiceTrayImage.rectTransform;
+            float left = image.offsetMin.x, right = DiceTrayFrame.rect.width + image.offsetMax.x;
+            float middle = (image.offsetMin.y + image.offsetMax.y) * .5f;
             float elapsed = 0;
             while (elapsed < duration)
             {
                 float progress = elapsed / duration;
-                rect.anchoredPosition = new Vector2(Mathf.Lerp(-RuleSweepOverhang, DiceTrayFrame.rect.width + RuleSweepOverhang, progress),
-                    Mathf.Sin(progress * Mathf.PI) * RuleSweepArc);
+                rect.anchoredPosition = new Vector2(Mathf.Lerp(left - RuleSweepOverhang, right + RuleSweepOverhang, progress),
+                    middle + Mathf.Sin(progress * Mathf.PI) * RuleSweepArc);
                 RuleSpiritSweep.alpha = Mathf.Sin(progress * Mathf.PI);
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;

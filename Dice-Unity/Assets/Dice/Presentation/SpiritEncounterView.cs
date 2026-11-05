@@ -204,7 +204,7 @@ namespace Dice.Presentation
             ModifierHistory.BindRenderer(TrayScene.HistoryRenderer);
             ModifierHistory.Configure(presentation, TrayScene);
             ModifierHistory.Build();
-            GameplayHud.DiceTrayImage.texture = TrayScene.Texture;
+            GameplayHud.ShowTray(TrayScene.Texture, TrayScene.ContentViewport, portraitReferenceWidth);
             PositionTrays();
         }
 
@@ -237,6 +237,7 @@ namespace Dice.Presentation
             hostPortrait.SpiritGesture -= PlaySpiritCue;
             ModifierHistory.TokenSelected -= InspectHistoryToken;
             DiceTray.RollEnded -= LayoutTable;
+            GameplayHud.TrayDisplayFitted -= PositionTablePieces;
             Unsubscribe();
         }
 
@@ -337,6 +338,10 @@ namespace Dice.Presentation
             GameplayHud.BuildStageIntro();
             GameplayHud.BuildFooter(ShowCharms, ShowHandRanks, ReturnToInvestigation);
             ConfigureTrays(tablePresentation.TrayPresentation);
+            // The dice touch targets and the charm row's targets lie inside the tray display; the table pieces are placed
+            // from it whenever it is fitted again.
+            GameplayHud.TrayDisplayFitted -= PositionTablePieces;
+            GameplayHud.TrayDisplayFitted += PositionTablePieces;
             hostPortrait.Build(tablePresentation.HostPresentation);
             hostPortrait.SpiritGesture -= PlaySpiritCue;
             hostPortrait.SpiritGesture += PlaySpiritCue;
@@ -403,17 +408,19 @@ namespace Dice.Presentation
             TrayScene.DiceTray.Initialize();
             TrayScene.HistoryRenderer.Configure(presentation, TrayScene);
             TrayScene.HistoryRenderer.Initialize();
-            GameplayHud.PreparePreview(TrayScene.Texture);
+            GameplayHud.PreparePreview(TrayScene.Texture, TrayScene.ContentViewport, portraitReferenceWidth);
             hostPortrait.Build(host);
             hostPortrait.SetVisible(true);
         }
 
-        /** Centres the preview portrait at the given size and lays the screen out for it. */
+        /** Centres the preview portrait at the given size and lays the screen out for it, fitting a shown tray display to it. */
         public void SizePreview(Vector2 portraitSize)
         {
             portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
             portrait.sizeDelta = portraitSize;
             portrait.anchoredPosition = Vector2.zero;
+            // An edit-mode HUD is not told that its size changed.
+            GameplayHud.FitTrayDisplay();
             Canvas.ForceUpdateCanvases();
         }
 

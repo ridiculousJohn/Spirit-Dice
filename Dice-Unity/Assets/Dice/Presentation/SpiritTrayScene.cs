@@ -19,6 +19,13 @@ namespace Dice.Presentation
         private float authoredAspect;
         private bool authoredStageActive;
         public RenderTexture Texture { get; private set; }
+        /**
+         * The part of the texture the tray's visible content covers, as a viewport rectangle of the camera: the projected
+         * bounds of the geometry's shown renderers apart from the surface anchors' contents (the dice, their shadows and
+         * highlights, and the charm row's dice), so the rails, bays and charm row; the texture outside it is empty margin.
+         * Measured when the scene is initialized and when its texture changes shape.
+         */
+        public Rect ContentViewport { get; private set; }
         public Camera RenderCamera => renderCamera;
         public Transform RenderRoot => renderRoot != null ? renderRoot.transform : null;
         public SpiritTrayGeometry Geometry => geometry;
@@ -65,6 +72,7 @@ namespace Dice.Presentation
             RenderCamera.targetTexture = Texture;
             RenderCamera.aspect = (float)Texture.width / Texture.height;
             RebuildGeometry();
+            MeasureContent();
             initialized = true;
             renderRoot.SetActive(isActiveAndEnabled);
         }
@@ -81,6 +89,48 @@ namespace Dice.Presentation
             Texture.Create();
             RenderCamera.targetTexture = Texture;
             RenderCamera.aspect = (float)Texture.width / Texture.height;
+            MeasureContent();
+        }
+
+        /** Projects the bounds of the tray's shown static renderers through the camera; see ContentViewport. */
+        private void MeasureContent()
+        {
+            Vector2 min = Vector2.positiveInfinity;
+            Vector2 max = Vector2.negativeInfinity;
+            foreach (Renderer renderer in Geometry.GetComponentsInChildren<Renderer>(true))
+            {
+                if (!renderer.enabled || !ShownWithGeometry(renderer.transform) || OnSurfaceAnchor(renderer.transform)) continue;
+                Bounds bounds = renderer.localBounds;
+                Matrix4x4 toWorld = renderer.transform.localToWorldMatrix;
+                for (int corner = 0; corner < 8; ++corner)
+                {
+                    var direction = new Vector3((corner & 1) == 0 ? -1 : 1, (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1);
+                    Vector3 point = RenderCamera.WorldToViewportPoint(
+                        toWorld.MultiplyPoint3x4(bounds.center + Vector3.Scale(bounds.extents, direction)));
+                    min = Vector2.Min(min, point);
+                    max = Vector2.Max(max, point);
+                }
+            }
+            if (min.x > max.x)
+                throw new InvalidOperationException("The tray geometry " + Geometry.name + " shows no renderer to frame.");
+            ContentViewport = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+        }
+
+        /** Whether the object and its parents up to the geometry are active, as authored, whatever the stage's own state. */
+        private bool ShownWithGeometry(Transform target)
+        {
+            for (Transform current = target; current != Geometry.transform; current = current.parent)
+                if (!current.gameObject.activeSelf) return false;
+            return Geometry.gameObject.activeSelf;
+        }
+
+        /** Whether the object is content placed on a dice slot or the charm row's surface rather than the tray itself. */
+        private bool OnSurfaceAnchor(Transform target)
+        {
+            if (target.IsChildOf(Geometry.ModifierRoot)) return true;
+            foreach (Transform slot in Geometry.DiceSlots)
+                if (target.IsChildOf(slot)) return true;
+            return false;
         }
 
         /** Bind material instances without replacing the authored geometry. */
