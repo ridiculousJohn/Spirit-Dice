@@ -169,6 +169,22 @@ namespace Dice.Tests
             Assert.That(requests.Count, Is.EqualTo(1), "An unbound prop cannot be moved.");
         }
 
+        /**
+         * Checks the bay points follow the prop's parent when it moves after the layout, as the canvas does when the screen
+         * changes width / fails if a rebind places the prop at a bay point the parent's move left behind.
+         */
+        [Test]
+        public void BayPointsFollowTheParentMovedAfterTheLayout()
+        {
+            piece.Bind(PiecePosition.Bay(1), definition);
+            AssertAt(BayPoints[1]);
+            var shift = new Vector3(42.5f, -20, 0);
+            piece.transform.parent.position += shift;
+            AssertAt(BayPoints[1] + shift);
+            piece.Bind(PiecePosition.Bay(2), definition);
+            AssertAt(BayPoints[2] + shift);
+        }
+
         /** Checks emissive images scale their authored alpha, never exceed it and restore it / fails if emission overwrites the authored color. */
         [Test]
         public void EmissiveImagesFollowTheLightAndRestoreTheirAuthoredColor()

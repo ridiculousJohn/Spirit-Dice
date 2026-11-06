@@ -23,6 +23,8 @@ namespace Dice.Presentation
         [Tooltip("Seconds the prop eases into its position after a release or an engine change.")]
         [SerializeField, Min(0)] private float settleDuration = .12f;
 
+        // The bay points in the prop's parent space (world space for a prop without a parent), so they move with the parent
+        // when the screen moves it without a new layout.
         private readonly Vector3[] bayPoints = new Vector3[DiceValues.Count];
         private Func<bool> canMove;
         private Func<PiecePosition, bool> moveRequested;
@@ -35,6 +37,7 @@ namespace Dice.Presentation
         private bool settling;
         private int dragPointer;
         private Vector3 grabOffset;
+        // Where the settle started, in the same space as the bay points.
         private Vector3 settleFrom;
         private float settleStart = float.NegativeInfinity;
 
@@ -71,12 +74,15 @@ namespace Dice.Presentation
             bound = false;
         }
 
-        /** Takes the tray's bay points in world space and places the prop at its bound position. */
+        /**
+         * Takes the tray's bay points in world space, keeps them in the prop's parent space and places the prop at its bound
+         * position. The parent's current transform converts them, so the points follow the parent wherever it moves later.
+         */
         public void Layout(IReadOnlyList<Vector3> bayWorldPoints)
         {
             if (bayWorldPoints == null || bayWorldPoints.Count != DiceValues.Count)
                 throw new ArgumentException("Five bay points are required.", nameof(bayWorldPoints));
-            for (int i = 0; i < DiceValues.Count; ++i) bayPoints[i] = bayWorldPoints[i];
+            for (int i = 0; i < DiceValues.Count; ++i) bayPoints[i] = ToParentSpace(bayWorldPoints[i]);
             hasBayPoints = true;
             Place();
         }
@@ -96,7 +102,8 @@ namespace Dice.Presentation
             }
             float progress = settleDuration > 0f ? (Time.unscaledTime - settleStart) / settleDuration : 1f;
             settling = progress < 1f;
-            transform.position = settling ? Vector3.Lerp(settleFrom, target, Mathf.SmoothStep(0f, 1f, progress)) : target;
+            transform.position = settling
+                ? Vector3.Lerp(FromParentSpace(settleFrom), target, Mathf.SmoothStep(0f, 1f, progress)) : target;
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -153,9 +160,14 @@ namespace Dice.Presentation
                 point = neutralAnchor != null ? neutralAnchor.position : Vector3.zero;
                 return neutralAnchor != null;
             }
-            point = bayPoints[candidate.Index];
+            point = FromParentSpace(bayPoints[candidate.Index]);
             return hasBayPoints;
         }
+
+        // A prop without a parent keeps its points in world space, which is its parent space.
+        private Vector3 ToParentSpace(Vector3 world) => transform.parent != null ? transform.parent.InverseTransformPoint(world) : world;
+
+        private Vector3 FromParentSpace(Vector3 local) => transform.parent != null ? transform.parent.TransformPoint(local) : local;
 
         private bool TryGetPointer(PointerEventData eventData, out Vector3 pointer)
         {
@@ -166,7 +178,7 @@ namespace Dice.Presentation
 
         private void BeginSettle()
         {
-            settleFrom = transform.position;
+            settleFrom = ToParentSpace(transform.position);
             settleStart = Time.unscaledTime;
             settling = true;
         }
