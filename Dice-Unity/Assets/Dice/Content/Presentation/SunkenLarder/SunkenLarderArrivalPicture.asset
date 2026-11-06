@@ -12,8 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95eb2b50a2c3f0647893272ab6d646fe, type: 3}
   m_Name: SunkenLarderArrivalPicture
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.PictureSceneAsset
+  narrativeTop: 0.65
   background: {fileID: 2800000, guid: 259b88d56acf4797a80abeb635ff5d5c, type: 3}
   sceneLighting: {fileID: 0}
+  flowLayers:
+  - rect:
+      serializedVersion: 2
+      x: 0.20403826
+      y: 0.8361244
+      width: 0.33687568
+      height: 0.086124405
+    window: {fileID: 2800000, guid: a2bc57f54481de8428f56ee04bde5650, type: 3}
+    flow: {fileID: 2800000, guid: ca2e85865abbb1345a7747d2f87f04b8, type: 3}
+    speed: 12
+    phasePeriod: 3
+    noiseStrength: 0.5
   driftLayers:
   - texture: {fileID: 2800000, guid: 942305bc4ccc493086f9464eb26fa4a0, type: 3}
     window: {fileID: 2800000, guid: fb723d2a602648529c0db3a84a198909, type: 3}
@@ -62,3 +75,4 @@ MonoBehaviour:
     width: 1
     height: 1
   foregroundTint: {r: 1, g: 1, b: 1, a: 1}
+  horizontalCropAnchor: 0.5

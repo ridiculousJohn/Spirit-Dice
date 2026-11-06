@@ -6,8 +6,8 @@ namespace Dice.Presentation
 {
     /**
      * A painted scene shown on the journey screen's picture layer: a wide plate, lit when it has scene lighting, layers
-     * drifting over it, and an optional foreground layer. The host is hidden while it shows; the table scene the journey
-     * reaches next stays loaded behind it.
+     * moving its own painted pixels, layers drifting over it, and an optional foreground layer. The host is hidden while it
+     * shows; the table scene the journey reaches next stays loaded behind it.
      */
     [CreateAssetMenu(menuName = "Dice/Presentation/Picture Scene")]
     public sealed class PictureSceneAsset : JourneySceneAsset
@@ -15,6 +15,10 @@ namespace Dice.Presentation
         [Tooltip("The wide plate; scene lighting shows its own base texture in its place.")]
         [SerializeField] private Texture2D background;
         [SerializeField] private SceneLightingAsset sceneLighting;
+        [Tooltip("Layers moving painted parts of the plate by its own pixels, such as smoke, drawn in order above it and " +
+            "below the drift layers. They redraw the background, so a picture with them has a background and no scene " +
+            "lighting.")]
+        [SerializeField] private PictureFlowLayer[] flowLayers = Array.Empty<PictureFlowLayer>();
         [Tooltip("Layers drifting over the plate, such as fog or smoke, drawn in order above it and below the foreground.")]
         [SerializeField] private PictureDriftLayer[] driftLayers = Array.Empty<PictureDriftLayer>();
         [SerializeField] private Texture2D foreground;
@@ -28,6 +32,7 @@ namespace Dice.Presentation
 
         public Texture2D Background => background;
         public SceneLightingAsset SceneLighting => sceneLighting;
+        public IReadOnlyList<PictureFlowLayer> FlowLayers => flowLayers;
         public IReadOnlyList<PictureDriftLayer> DriftLayers => driftLayers;
         public Texture2D Foreground => foreground;
         public Rect ForegroundRect => foregroundRect;
@@ -37,7 +42,7 @@ namespace Dice.Presentation
 
         internal override void Present(IJourneyStage stage)
         {
-            stage.ShowPicture(background, sceneLighting, driftLayers, foreground, foregroundRect, foregroundTint,
+            stage.ShowPicture(background, sceneLighting, flowLayers, driftLayers, foreground, foregroundRect, foregroundTint,
                 horizontalCropAnchor);
             stage.ShowHost(false);
         }
@@ -50,6 +55,15 @@ namespace Dice.Presentation
                 throw new FormatException("The horizontal crop anchor of the picture scene " + name + " of " + beat +
                     " must be a finite number from 0 to 1.");
             ValidateNarrativeTop("picture scene", beat);
+            for (int i = 0; i < flowLayers.Length; ++i)
+            {
+                string layer = "Flow layer " + i + " of the picture scene " + name + " of " + beat;
+                if (flowLayers[i] == null) throw new FormatException(layer + " is empty.");
+                // The layer redraws the background unlit; a lit picture shows its lighting's base texture lit instead.
+                if (background == null || sceneLighting != null)
+                    throw new FormatException(layer + " requires the picture to have a background and no scene lighting.");
+                flowLayers[i].Validate(layer);
+            }
             sceneLighting?.Validate();
             for (int i = 0; i < driftLayers.Length; ++i)
             {

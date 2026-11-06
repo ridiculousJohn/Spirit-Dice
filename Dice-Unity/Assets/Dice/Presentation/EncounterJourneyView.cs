@@ -23,12 +23,18 @@ namespace Dice.Presentation
         private ISpiritEncounterControls encounterControls;
         [SerializeField] private RectTransform artwork;
         [SerializeField] private RawImage background;
+        [Tooltip("Holds the shown picture's flow layers over the background and below its drift layers, so they follow its " +
+            "motion.")]
+        [SerializeField] private RectTransform flowLayersRoot;
+        [SerializeField] private PictureFlowLayerImage flowLayerPrefab;
+        private readonly List<PictureFlowLayerImage> flowLayers = new List<PictureFlowLayerImage>();
+        private int shownFlowLayerCount;
         [Tooltip("Holds the shown picture's drift layers over the background, so they follow its motion.")]
         [SerializeField] private RectTransform driftLayersRoot;
         [SerializeField] private PictureDriftLayerImage driftLayerPrefab;
         private readonly List<PictureDriftLayerImage> driftLayers = new List<PictureDriftLayerImage>();
         private int shownDriftLayerCount;
-        // Drift layers advance on unscaled time from when their picture is shown.
+        // Flow and drift layers advance on unscaled time from when their picture is shown.
         private double driftStartTime;
         [SerializeField] private RawImage foreground;
         [SerializeField] private RawImage leftPanel;
@@ -252,8 +258,8 @@ namespace Dice.Presentation
         }
 
         void IJourneyStage.ShowPicture(Texture2D picture, SceneLightingAsset lighting,
-            IReadOnlyList<PictureDriftLayer> pictureDriftLayers, Texture2D foregroundTexture, Rect foregroundRect,
-            Color foregroundTint, float horizontalCropAnchor)
+            IReadOnlyList<PictureFlowLayer> pictureFlowLayers, IReadOnlyList<PictureDriftLayer> pictureDriftLayers,
+            Texture2D foregroundTexture, Rect foregroundRect, Color foregroundTint, float horizontalCropAnchor)
         {
             // The artwork's AspectRatioFitter keeps it at the portrait's shape, covering the view; where it overflows the
             // view, its pivot is the part that stays in view: the bottom edge, and the side the picture names.
@@ -268,7 +274,9 @@ namespace Dice.Presentation
             Rect crop = backgroundTexture != null
                 ? CoverCrop(backgroundTexture, artwork.GetComponent<AspectRatioFitter>().aspectRatio) : new Rect(0, 0, 1, 1);
             background.uvRect = crop;
+            ShowFlowLayers(pictureFlowLayers, picture, crop);
             ShowDriftLayers(pictureDriftLayers, crop);
+            driftStartTime = Time.unscaledTimeAsDouble;
             foreground.texture = foregroundTexture;
             foreground.GetComponent<AspectRatioFitter>().aspectRatio = foregroundTexture != null ?
                 (float)foregroundTexture.width / foregroundTexture.height : 1;
@@ -302,8 +310,8 @@ namespace Dice.Presentation
                 rect.height / crop.height);
 
         void IJourneyStage.ClearPicture()
-            => ((IJourneyStage)this).ShowPicture(null, null, Array.Empty<PictureDriftLayer>(), null, new Rect(0, 0, 1, 1),
-                Color.white, .5f);
+            => ((IJourneyStage)this).ShowPicture(null, null, Array.Empty<PictureFlowLayer>(), Array.Empty<PictureDriftLayer>(),
+                null, new Rect(0, 0, 1, 1), Color.white, .5f);
 
         void IJourneyStage.ShowHost(bool visible) => hostVisibility?.Invoke(visible);
 
@@ -351,26 +359,51 @@ namespace Dice.Presentation
         }
 
         /**
+         * Shows the picture's flow layers in order over the background, each redrawing the picture inside its rectangle and
+         * starting its flow now. Their rectangles are in picture coordinates, so their root spans the whole plate, of which
+         * the background shows the crop.
+         */
+        private void ShowFlowLayers(IReadOnlyList<PictureFlowLayer> layers, Texture2D picture, Rect crop)
+        {
+            HideFlowLayers();
+            if (layers.Count > 0) SpanPlate(flowLayersRoot, crop);
+            for (int i = 0; i < layers.Count; ++i)
+            {
+                if (i == flowLayers.Count) flowLayers.Add(Instantiate(flowLayerPrefab, flowLayersRoot, false));
+                flowLayers[i].Show(layers[i], picture);
+            }
+            shownFlowLayerCount = layers.Count;
+        }
+
+        private void HideFlowLayers()
+        {
+            for (int i = 0; i < shownFlowLayerCount; ++i) flowLayers[i].Hide();
+            shownFlowLayerCount = 0;
+        }
+
+        /**
          * Shows the picture's drift layers in order over the background, each starting its drift now. Their rectangles are in
          * picture coordinates, so their root spans the whole plate, of which the background shows the crop.
          */
         private void ShowDriftLayers(IReadOnlyList<PictureDriftLayer> layers, Rect crop)
         {
             HideDriftLayers();
-            if (layers.Count > 0)
-            {
-                Rect plate = PictureToFrame(new Rect(0, 0, 1, 1), crop);
-                driftLayersRoot.anchorMin = plate.min;
-                driftLayersRoot.anchorMax = plate.max;
-                driftLayersRoot.offsetMin = driftLayersRoot.offsetMax = Vector2.zero;
-            }
+            if (layers.Count > 0) SpanPlate(driftLayersRoot, crop);
             for (int i = 0; i < layers.Count; ++i)
             {
                 if (i == driftLayers.Count) driftLayers.Add(Instantiate(driftLayerPrefab, driftLayersRoot, false));
                 driftLayers[i].Show(layers[i]);
             }
             shownDriftLayerCount = layers.Count;
-            driftStartTime = Time.unscaledTimeAsDouble;
+        }
+
+        /** Spans a layer root over the whole plate around the background, which shows the crop of it. */
+        private static void SpanPlate(RectTransform root, Rect crop)
+        {
+            Rect plate = PictureToFrame(new Rect(0, 0, 1, 1), crop);
+            root.anchorMin = plate.min;
+            root.anchorMax = plate.max;
+            root.offsetMin = root.offsetMax = Vector2.zero;
         }
 
         private void HideDriftLayers()
@@ -575,13 +608,14 @@ namespace Dice.Presentation
         }
 
         /**
-         * Steps the narration panel's ease while it runs, advances the shown picture's drift layers, and samples the shown
-         * and departing pictures' lighting from one clock onto their compositors while there is any.
+         * Steps the narration panel's ease while it runs, advances the shown picture's flow and drift layers, and samples the
+         * shown and departing pictures' lighting from one clock onto their compositors while there is any.
          */
         internal void LateUpdate()
         {
             double time = Time.unscaledTimeAsDouble;
             if (easingNarrative) StepNarrativeEase(time);
+            for (int i = 0; i < shownFlowLayerCount; ++i) flowLayers[i].Flow(time - driftStartTime);
             for (int i = 0; i < shownDriftLayerCount; ++i) driftLayers[i].Drift(time - driftStartTime);
             if (shownLighting == null && previousSceneLighting == null) return;
             if (shownLighting != null)
@@ -611,6 +645,7 @@ namespace Dice.Presentation
             background.texture = null;
             background.color = Color.clear;
             background.material = null;
+            HideFlowLayers();
             HideDriftLayers();
             sceneLightingMaterial?.Dispose();
             sceneLightingMaterial = null;
