@@ -197,32 +197,6 @@ MonoBehaviour:
     level: Level {level}
     baseBonus: +Base {base}
     multiplierBonus: +Mult {multiplier}
-  scoring:
-    diceStep: STEP 1 OF 4 - DICE
-    diceCategory: COUNTING DICE
-    diceSelection: 'DICE
-
-      {contribution}'
-    handStep: STEP 2 OF 4 - HAND RANK
-    handSelection: '{hand} / LEVEL {level}
-
-      {contribution}'
-    charmStep: STEP 3 OF 4 - CHARMS
-    bankedStep: ROLL BONUS
-    charmSelection: '{charm}
-
-      {contribution} (on play)'
-    bankedSelection: '{charm}
-
-      {contribution} (banked)'
-    ruleStep: STEP 3 OF 4 - ENCOUNTER RULE
-    ruleCategory: ENCOUNTER RULE
-    ruleSelection: '{rule}
-
-      +{bonus} multiplier'
-    totalStep: STEP 4 OF 4 - {base} x {multiplier}
-    totalCategory: FINAL SCORE
-    totalSelection: TOTAL
   hud:
     stage: STAGE {stage} / {stages}
     toClear: TO CLEAR
@@ -243,10 +217,6 @@ MonoBehaviour:
     totalScoreLine: Total score  {score}
     charmCount: '{count} kept'
     charmsButton: CHARMS ({count})
-    newHand: NEW HAND
-    rerollsRemaining:
-      singular: '{count} reroll remaining'
-      plural: '{count} rerolls remaining'
     stageIntro:
       singular: 'CLEAR {threshold} POINT
 

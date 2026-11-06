@@ -894,8 +894,6 @@ namespace Dice.Presentation
             public override void CueAction(ModifierPhase phase, Sprite icon)
                 => view.actionModifierCue.ShowHost(icon, phase, SpiritScorePlayback.GestureDurationOf(view.hostPortrait));
 
-            public override void ShowSelection(string text) => view.GameplayHud.ShowRuleSelection(text);
-
             public override IEnumerator SweepSpirit(Sprite icon, float duration) => view.GameplayHud.AnimateRuleSpirit(icon, duration);
         }
 

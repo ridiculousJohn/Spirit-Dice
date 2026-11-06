@@ -84,36 +84,9 @@ namespace Dice.Presentation
     }
 
     /**
-     * How score playback words a contribution: "+N " and the base score label, "+N " and the multiplier label, and
-     * "+N " and the reroll label when N is 1, otherwise the rerolls label.
-     */
-    [Serializable]
-    public sealed class ModifierContributionWording
-    {
-        [SerializeField] private string baseScoreLabel;
-        [SerializeField] private string multiplierLabel;
-        [SerializeField] private string rerollLabel;
-        [SerializeField] private string rerollsLabel;
-
-        public string BaseScoreLabel => baseScoreLabel;
-        public string MultiplierLabel => multiplierLabel;
-        public string RerollLabel => rerollLabel;
-        public string RerollsLabel => rerollsLabel;
-
-        public ModifierContributionWording(string baseScoreLabel, string multiplierLabel, string rerollLabel, string rerollsLabel)
-        {
-            this.baseScoreLabel = baseScoreLabel;
-            this.multiplierLabel = multiplierLabel;
-            this.rerollLabel = rerollLabel;
-            this.rerollsLabel = rerollsLabel;
-        }
-    }
-
-    /**
-     * How charm text joins the skin's labels and amounts. An effect, a labeled compact effect and a contribution part
-     * fill {amount} and {label}; an unlabeled compact effect fills {amount}; timing text fills {phase} and {limit} with
-     * the phase's and the activation limit's timing labels. The separators join a charm's effects, its compact effect
-     * lines and a contribution's parts.
+     * How charm text joins the skin's labels and amounts. An effect and a labeled compact effect fill {amount} and
+     * {label}; an unlabeled compact effect fills {amount}; timing text fills {phase} and {limit} with the phase's and the
+     * activation limit's timing labels. The separators join a charm's effects and its compact effect lines.
      */
     [Serializable]
     public sealed class ModifierTextFormat
@@ -124,8 +97,6 @@ namespace Dice.Presentation
         [SerializeField] private string labeledCompactEffect;
         [SerializeField] private string compactEffectSeparator;
         [SerializeField] private string timing;
-        [SerializeField] private string contribution;
-        [SerializeField] private string contributionSeparator;
 
         public string Effect => effect;
         public string EffectSeparator => effectSeparator;
@@ -133,11 +104,9 @@ namespace Dice.Presentation
         public string LabeledCompactEffect => labeledCompactEffect;
         public string CompactEffectSeparator => compactEffectSeparator;
         public string Timing => timing;
-        public string Contribution => contribution;
-        public string ContributionSeparator => contributionSeparator;
 
         public ModifierTextFormat(string effect, string effectSeparator, string compactEffect, string labeledCompactEffect,
-            string compactEffectSeparator, string timing, string contribution, string contributionSeparator)
+            string compactEffectSeparator, string timing)
         {
             this.effect = effect;
             this.effectSeparator = effectSeparator;
@@ -145,8 +114,6 @@ namespace Dice.Presentation
             this.labeledCompactEffect = labeledCompactEffect;
             this.compactEffectSeparator = compactEffectSeparator;
             this.timing = timing;
-            this.contribution = contribution;
-            this.contributionSeparator = contributionSeparator;
         }
     }
 
@@ -194,8 +161,7 @@ namespace Dice.Presentation
     /**
      * One theme's charm presentation: a presentation for every charm the content uses, the category style shown for each
      * set of effect kinds, the name and artwork of every charm family, the wording of every effect kind, phase and
-     * activation limit, the wording of score contributions and the format that joins them. Loading validates it against
-     * the loaded content.
+     * activation limit, and the format that joins charm text. Loading validates it against the loaded content.
      */
     [CreateAssetMenu(menuName = "Dice/Modifier Skin")]
     public sealed class ModifierSkinAsset : ScriptableObject
@@ -208,7 +174,6 @@ namespace Dice.Presentation
         [SerializeField] private string noEffectsText;
         [SerializeField] private ModifierPhaseWording[] phaseWording = Array.Empty<ModifierPhaseWording>();
         [SerializeField] private ModifierActivationLimitWording[] limitWording = Array.Empty<ModifierActivationLimitWording>();
-        [SerializeField] private ModifierContributionWording contributionWording;
         [SerializeField] private ModifierTextFormat textFormat;
 
         public IReadOnlyList<ModifierPresentationAsset> Modifiers => modifiers;
@@ -218,7 +183,6 @@ namespace Dice.Presentation
         public string NoEffectsText => noEffectsText;
         public IReadOnlyList<ModifierPhaseWording> PhaseWording => phaseWording;
         public IReadOnlyList<ModifierActivationLimitWording> LimitWording => limitWording;
-        public ModifierContributionWording ContributionWording => contributionWording;
         public ModifierTextFormat TextFormat => textFormat;
     }
 }

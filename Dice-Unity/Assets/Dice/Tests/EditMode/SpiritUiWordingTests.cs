@@ -8,8 +8,8 @@ namespace Dice.Tests
 {
     /**
      * The Spirit House wording asset over fabricated wording: composed text fills the asset's templates with its values,
-     * a count chooses between singular and plural wording, and missing wording fails naming its field. Status, scoring,
-     * collection, reward card, hand ranks and charm description wording are checked where those texts are composed.
+     * a count chooses between singular and plural wording, and missing wording fails naming its field. Status, collection,
+     * reward card, hand ranks and charm description wording are checked where those texts are composed.
      */
     public sealed class SpiritUiWordingTests
     {
@@ -92,7 +92,6 @@ namespace Dice.Tests
             Assert.That(hud.TotalScoreLine(1500), Is.EqualTo("<hud.totalScoreLine>1,500"));
             Assert.That(hud.CharmCount(2), Is.EqualTo("<hud.charmCount>2"));
             Assert.That(hud.CharmsButton(2), Is.EqualTo("<hud.charmsButton>2"));
-            Assert.That(hud.RerollsRemaining(1), Is.EqualTo("<hud.rerollsRemaining.one>1"));
             Assert.That(hud.StageIntro(1300, 1, 2),
                 Is.EqualTo("<hud.stageIntro.many>1,300|<hud.stageHands.one>1|<hud.stageRerolls.many>2"));
         }

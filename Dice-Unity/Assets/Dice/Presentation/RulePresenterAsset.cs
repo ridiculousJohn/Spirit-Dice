@@ -103,9 +103,6 @@ namespace Dice.Presentation
          */
         public abstract void CueAction(ModifierPhase phase, Sprite icon);
 
-        /** Shows the text on the HUD's selection line in the theme's highlight colour. */
-        public abstract void ShowSelection(string text);
-
         /**
          * Sweeps a rule spirit, showing the icon, or the host's sigil without one, across the tray over the duration; the
          * routine ends when it has crossed.

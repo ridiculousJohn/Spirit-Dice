@@ -34,7 +34,7 @@ namespace Dice.Tests
             context.Dispose();
         }
 
-        /** Checks its rule's activation refreshes the badge, cues the card's action with its icon, names the rule, reacts and waits for the authored sweep / fails if a step is missing, out of order or uses another card's values or timing. */
+        /** Checks its rule's activation refreshes the badge, cues the card's action with its icon, reacts and waits for the authored sweep / fails if a step is missing, out of order or uses another card's values or timing. */
         [Test]
         public void AnActivationShowsTheCardsRuleAndWaitsForTheSweep()
         {
@@ -45,7 +45,7 @@ namespace Dice.Tests
             var waits = TestRulePresenterContext.Waits(presenter.Present(activated));
             Assert.That(context.Log, Is.EqualTo(new[]
             {
-                "badge", "action PlayerReroll favor-icon", "selection Favor", "react", "sweep favor-icon"
+                "badge", "action PlayerReroll favor-icon", "react", "sweep favor-icon"
             }));
             Assert.That(waits, Is.EqualTo(new[] { Sweep }));
         }

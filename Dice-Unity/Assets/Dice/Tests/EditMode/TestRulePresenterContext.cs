@@ -61,8 +61,6 @@ namespace Dice.Tests
 
         public override void CueAction(ModifierPhase phase, Sprite icon) => Log.Add("action " + phase + " " + Name(icon));
 
-        public override void ShowSelection(string text) => Log.Add("selection " + text);
-
         public override IEnumerator SweepSpirit(Sprite icon, float duration)
         {
             Log.Add("sweep " + Name(icon));

@@ -224,13 +224,9 @@ namespace Dice.Tests
             .Cast<ModifierActivationLimit>()
             .Select(limit => new ModifierActivationLimitWording(limit, "timing of " + limit, "note of " + limit)).ToArray();
 
-        /** Distinct test contribution wording. */
-        public static ModifierContributionWording ContributionWording() =>
-            new ModifierContributionWording("base label", "multiplier label", "reroll label", "rerolls label");
-
         /** A distinct test text format: amounts and labels in brackets, each separator its own mark. */
         public static ModifierTextFormat TextFormat() => new ModifierTextFormat("[{amount} {label}]", " & ", "[{amount}]",
-            "[{amount} {label}]", " # ", "{phase} @ {limit}", "[{amount} {label}]", " ; ");
+            "[{amount} {label}]", " # ", "{phase} @ {limit}");
 
         /**
          * Test family entries for every family of the given charm presentations: each named "Family of <family asset
@@ -248,8 +244,8 @@ namespace Dice.Tests
         public ModifierSkinAsset Skin(IEnumerable<ModifierPresentationAsset> modifiers,
             IEnumerable<ModifierEffectsCategory> categories = null, IEnumerable<ModifierEffectWording> wording = null,
             string noEffectsText = "No effects", IEnumerable<ModifierPhaseWording> phases = null,
-            IEnumerable<ModifierActivationLimitWording> limits = null, ModifierContributionWording contribution = null,
-            IEnumerable<ModifierFamilyPresentation> families = null, ModifierTextFormat format = null)
+            IEnumerable<ModifierActivationLimitWording> limits = null, IEnumerable<ModifierFamilyPresentation> families = null,
+            ModifierTextFormat format = null)
         {
 #if UNITY_EDITOR
             var skin = Own(ScriptableObject.CreateInstance<ModifierSkinAsset>());
@@ -315,12 +311,6 @@ namespace Dice.Tests
                 element.FindPropertyRelative("timingLabel").stringValue = limitRows[i].TimingLabel;
                 element.FindPropertyRelative("descriptionNote").stringValue = limitRows[i].DescriptionNote;
             }
-            contribution = contribution ?? ContributionWording();
-            SerializedProperty contributionWording = serialized.FindProperty("contributionWording");
-            contributionWording.FindPropertyRelative("baseScoreLabel").stringValue = contribution.BaseScoreLabel;
-            contributionWording.FindPropertyRelative("multiplierLabel").stringValue = contribution.MultiplierLabel;
-            contributionWording.FindPropertyRelative("rerollLabel").stringValue = contribution.RerollLabel;
-            contributionWording.FindPropertyRelative("rerollsLabel").stringValue = contribution.RerollsLabel;
             format = format ?? TextFormat();
             SerializedProperty textFormat = serialized.FindProperty("textFormat");
             textFormat.FindPropertyRelative("effect").stringValue = format.Effect;
@@ -329,8 +319,6 @@ namespace Dice.Tests
             textFormat.FindPropertyRelative("labeledCompactEffect").stringValue = format.LabeledCompactEffect;
             textFormat.FindPropertyRelative("compactEffectSeparator").stringValue = format.CompactEffectSeparator;
             textFormat.FindPropertyRelative("timing").stringValue = format.Timing;
-            textFormat.FindPropertyRelative("contribution").stringValue = format.Contribution;
-            textFormat.FindPropertyRelative("contributionSeparator").stringValue = format.ContributionSeparator;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return skin;
 #else

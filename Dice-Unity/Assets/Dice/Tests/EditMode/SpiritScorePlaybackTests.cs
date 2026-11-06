@@ -59,12 +59,13 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks a reroll shows no hand rank at any point of its playback, and a played hand shows its rank only during
-         * its scoring, after the dice are counted and before the final score, never after the next hand's roll / fails if
-         * a rank shows after a roll or outside the played hand's scoring.
+         * Checks a reroll shows no hand rank at any point of its playback, and a played hand's scoring shows its rank from
+         * its first step through its total and leaves it showing until the next hand starts, whose roll shows none / fails
+         * if a rank shows after a reroll or before the hand is scored, a step replaces the rank, or the rank outlasts the
+         * hand.
          */
         [Test]
-        public void PlaybackShowsTheRankOnlyWhileAPlayedHandIsScored()
+        public void PlaybackShowsThePlayedRankThroughItsScoring()
         {
             var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) });
             var catalog = new MechanicalCatalog("test.playback", TestContent.Hands(), new[] { encounter });
@@ -82,18 +83,24 @@ namespace Dice.Tests
             var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
             Assert.That(played.Accepted, Is.True, played.Rejection.ToString());
             Assert.That(played.Events.OfType<DiceRolledEvent>(), Is.Not.Empty, "The played hand is followed by the next hand's roll.");
-            string rank = Rank(played.Events.OfType<HandScoredEvent>().Single().Score.Category);
-            var scored = Run(playback.Play(played, 0));
+            var events = played.Events;
+            var handScored = events.OfType<HandScoredEvent>().Single();
+            string rank = Rank(handScored.Score.Category);
+            // The played resolution is presented in two parts: up to and including the hand's scoring, then the rest of the
+            // hand and the next hand's start, so the rank line can be read once the total has been shown.
+            int scoredAt = events.IndexOf(handScored);
+            var scoring = new Resolution(played.PreviousRevision, played.Snapshot, events.Take(scoredAt + 1));
+            var rest = new Resolution(played.PreviousRevision, played.Snapshot, events.Skip(scoredAt + 1));
+            var scored = Run(playback.Play(scoring, 0));
             int first = scored.IndexOf(rank);
-            int last = scored.LastIndexOf(rank);
             Assert.That(first, Is.GreaterThan(0), "The played hand's scoring shows its rank.");
-            Assert.That(scored.Take(first), Has.Member("<scoring.diceCategory>"), "The dice are counted before the rank shows.");
             Assert.That(scored.Take(first).Intersect(ranks), Is.Empty, "No rank shows before the played hand is scored.");
-            Assert.That(scored.Skip(first).Take(last - first + 1), Is.All.EqualTo(rank));
-            Assert.That(scored.Skip(last + 1).First(), Is.EqualTo("<scoring.totalCategory>"));
-            Assert.That(scored.Skip(last + 1).Intersect(ranks), Is.Empty, "No rank shows after the hand is scored.");
-            Assert.That(scored.Last(), Is.Empty, "The next hand's roll shows no rank.");
-            Assert.That(host.Finished, Is.EqualTo(new[] { reroll, played }));
+            Assert.That(scored.Skip(first), Is.All.EqualTo(rank), "No scoring step replaces the rank.");
+            Assert.That(labels["CategoryLabel"].text, Is.EqualTo(rank), "The rank stays once the total is shown.");
+            var after = Run(playback.Play(rest, 0));
+            Assert.That(after.First(), Is.EqualTo(rank), "The rank shows until the next hand starts.");
+            Assert.That(after.Last(), Is.Empty, "The next hand's roll shows no rank.");
+            Assert.That(host.Finished, Is.EqualTo(new[] { reroll, scoring, rest }));
         }
 
         /** Checks a resource change a charm activation granted is left to the charm's own step while any other change is shown at once / fails if playback searches the events for the grant's charm or shows a grant on its own. */
@@ -112,9 +119,9 @@ namespace Dice.Tests
             var activated = granted ? new ModifierActivatedEvent(state, new ModifierContribution(1, charm, 0, 0, 1)) : null;
             var change = new ResourceChangedEvent(state, ResourceKind.Rerolls,
                 granted ? ResourceChangeCause.ModifierEffect : ResourceChangeCause.RerollDice, 1, 2, activated);
-            hud.ShowRuleSelection("before");
+            labels["RerollsLabel"].text = "before";
             Run(playback.Play(new Resolution(session.Snapshot.Revision, session.Snapshot, new RuleEvent[] { change }), 0));
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo(granted ? "before" : "<hud.rerollsRemaining.many>2"));
+            Assert.That(labels["RerollsLabel"].text, Is.EqualTo(granted ? "before" : ui.Wording.hud.Rerolls(2)));
         }
 
         /**
@@ -243,8 +250,8 @@ namespace Dice.Tests
             var created = ui.Add<SpiritGameplayHud>(ui.Root, "Gameplay HUD");
             Transform parent = created.transform;
             SyntheticUi.Set(created, "<PlayingPanel>k__BackingField", ui.Rect(parent, "Playing"));
-            foreach (string label in new[] { "SelectionLabel", "CategoryLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
-                "HandScoreLabel", "TargetLabel", "TargetCaption", "HandsLabel", "RerollsLabel", "ResourcesLabel" })
+            foreach (string label in new[] { "CategoryLabel", "BaseScoreLabel", "MultiplierLabel", "HandScoreLabel", "TargetLabel",
+                "TargetCaption", "HandsLabel", "RerollsLabel", "ResourcesLabel" })
             {
                 labels[label] = ui.Add<Text>(parent, label);
                 SyntheticUi.Set(created, "<" + label + ">k__BackingField", labels[label]);

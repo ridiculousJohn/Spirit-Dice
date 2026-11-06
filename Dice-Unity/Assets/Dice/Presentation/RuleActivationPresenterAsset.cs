@@ -7,9 +7,9 @@ namespace Dice.Presentation
 {
     /**
      * The presentation of a rule's activation on an action, such as a waived reroll cost: the HUD's rule badge shows the
-     * rule's new state, the host's cue marks the action of the card's activation phase, the selection line names the
-     * rule, the host reacts and the rule's spirit sweeps across the tray. A scored hand's rule bonus is presented with
-     * the hand's scoring instead. The card supplies the rule's name, icon and action; this asset times the sweep.
+     * rule's new state, the host's cue marks the action of the card's activation phase, the host reacts and the rule's
+     * spirit sweeps across the tray. A scored hand's rule bonus is presented with the hand's scoring instead. The card
+     * supplies the rule's icon and action; this asset times the sweep.
      */
     [CreateAssetMenu(menuName = "Dice/Presentation/Rule Presenter/Rule Activation")]
     public sealed class RuleActivationPresenterAsset : RulePresenterAsset
@@ -56,7 +56,6 @@ namespace Dice.Presentation
         {
             context.ShowRuleBadge();
             context.CueAction(card.ActivationPhase, card.Icon);
-            context.ShowSelection(card.DisplayName);
             context.ReactHost();
             yield return context.SweepSpirit(card.Icon, settings.SweepDuration);
         }

@@ -175,23 +175,6 @@ namespace Dice.Tests
             w.handRanks.baseBonus = "<handRanks.baseBonus>{base}";
             w.handRanks.multiplierBonus = "<handRanks.multiplierBonus>{multiplier}";
 
-            var scoring = w.scoring;
-            scoring.diceStep = "<scoring.diceStep>";
-            scoring.diceCategory = "<scoring.diceCategory>";
-            scoring.diceSelection = "<scoring.diceSelection>{contribution}";
-            scoring.handStep = "<scoring.handStep>";
-            scoring.handSelection = "<scoring.handSelection>{hand}|{level}|{contribution}";
-            scoring.charmStep = "<scoring.charmStep>";
-            scoring.bankedStep = "<scoring.bankedStep>";
-            scoring.charmSelection = "<scoring.charmSelection>{charm}|{contribution}";
-            scoring.bankedSelection = "<scoring.bankedSelection>{charm}|{contribution}";
-            scoring.ruleStep = "<scoring.ruleStep>";
-            scoring.ruleCategory = "<scoring.ruleCategory>";
-            scoring.ruleSelection = "<scoring.ruleSelection>{rule}|{bonus}";
-            scoring.totalStep = "<scoring.totalStep>{base}|{multiplier}";
-            scoring.totalCategory = "<scoring.totalCategory>";
-            scoring.totalSelection = "<scoring.totalSelection>";
-
             var hud = w.hud;
             hud.stage = "<hud.stage>{stage}|{stages}";
             hud.toClear = "<hud.toClear>";
@@ -206,8 +189,6 @@ namespace Dice.Tests
             hud.totalScoreLine = "<hud.totalScoreLine>{score}";
             hud.charmCount = "<hud.charmCount>{count}";
             hud.charmsButton = "<hud.charmsButton>{count}";
-            hud.newHand = "<hud.newHand>";
-            hud.rerollsRemaining = Counted("<hud.rerollsRemaining.one>{count}", "<hud.rerollsRemaining.many>{count}");
             hud.stageIntro = Counted("<hud.stageIntro.one>{threshold}|{hands}|{rerolls}", "<hud.stageIntro.many>{threshold}|{hands}|{rerolls}");
             hud.stageHands = Counted("<hud.stageHands.one>{count}", "<hud.stageHands.many>{count}");
             hud.stageRerolls = Counted("<hud.stageRerolls.one>{count}", "<hud.stageRerolls.many>{count}");

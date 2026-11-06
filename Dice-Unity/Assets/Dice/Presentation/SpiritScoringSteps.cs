@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Dice.Engine;
-using UnityEngine;
 
 namespace Dice.Presentation
 {
     /**
-     * One held state of score playback: what the score counters, labels, dice tray, modifier history and action cues show
+     * One held state of score playback: what the score counters, emblem, dice tray, modifier history and action cues show
      * once the step's counters have finished animating.
      */
     public sealed class SpiritScoringStep
@@ -19,11 +18,6 @@ namespace Dice.Presentation
         public long Total { get; internal set; }
         /** True when the step animates the total counter instead of the base score and multiplier counters. */
         public bool RevealsTotal { get; internal set; }
-        /** The score detail line, which names the step. */
-        public string StepLabel { get; internal set; }
-        public string CategoryText { get; internal set; }
-        public string SelectionText { get; internal set; }
-        public Color SelectionColor { get; internal set; }
         /** The dice tray's scoring highlight mask. */
         public int HighlightMask { get; internal set; }
         /** The index of the resolving token among the hand's PlayHand contributions, or -1 when no token resolves. */
@@ -56,8 +50,7 @@ namespace Dice.Presentation
 
     /**
      * Builds the ordered steps that present a scored hand - dice, hand rank, each PlayHand charm in activation order, the
-     * encounter rule bonus and the total - and the step that presents a banked roll bonus. Charm names, colours and
-     * contribution wording come from the charm presentation; step labels and hand names come from the UI wording.
+     * encounter rule bonus and the total - and the step that presents a banked roll bonus.
      */
     public sealed class SpiritScoringStepBuilder
     {
@@ -65,18 +58,9 @@ namespace Dice.Presentation
         public const float ModifierStepHold = .55f;
         public const float TotalHold = .55f;
         private readonly MechanicalCatalog catalog;
-        private readonly ModifierPresentationCatalog charms;
-        private readonly SpiritUiTheme theme;
-        private readonly SpiritUiWording wording;
 
-        public SpiritScoringStepBuilder(MechanicalCatalog catalog, ModifierPresentationCatalog charms, SpiritUiTheme theme,
-            SpiritUiWording wording)
-        {
-            this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            this.charms = charms ?? throw new ArgumentNullException(nameof(charms));
-            this.theme = theme != null ? theme : throw new ArgumentNullException(nameof(theme));
-            this.wording = wording != null ? wording : throw new ArgumentNullException(nameof(wording));
-        }
+        public SpiritScoringStepBuilder(MechanicalCatalog catalog)
+            => this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
 
         /**
          * The steps of a scored hand, starting from the counters' banked base score and multiplier. The scored hand states
@@ -89,7 +73,6 @@ namespace Dice.Presentation
             if (scored == null) throw new ArgumentNullException(nameof(scored));
             if (rules == null) throw new ArgumentNullException(nameof(rules));
             ScoreBreakdown score = scored.Score;
-            var labels = wording.scoring;
             var steps = new List<SpiritScoringStep>();
             long baseScore = checked(startingBaseScore + score.DiceSum);
             long multiplier = startingMultiplier;
@@ -97,10 +80,6 @@ namespace Dice.Presentation
             {
                 BaseScore = baseScore,
                 Multiplier = multiplier,
-                StepLabel = labels.diceStep,
-                CategoryText = labels.diceCategory,
-                SelectionText = labels.DiceSelection(charms.GetContributionText(score.DiceSum, 0, 0)),
-                SelectionColor = theme.muted,
                 // Only the dice the hand counts make up its sum.
                 HighlightMask = score.CountedDiceMask,
                 ResolvingIndex = -1,
@@ -112,15 +91,10 @@ namespace Dice.Presentation
             long handMultiplier = checked(score.CategoryMultiplier + score.UpgradeMultiplier);
             baseScore = checked(baseScore + handBase);
             multiplier = checked(multiplier + handMultiplier);
-            string category = wording.handNames.Name(score.Category).ToUpperInvariant();
             steps.Add(new SpiritScoringStep
             {
                 BaseScore = baseScore,
                 Multiplier = multiplier,
-                StepLabel = labels.handStep,
-                CategoryText = category,
-                SelectionText = labels.HandSelection(category, score.UpgradeCount, charms.GetContributionText(handBase, handMultiplier, 0)),
-                SelectionColor = theme.muted,
                 HighlightMask = score.FormingDiceMask,
                 ResolvingIndex = -1,
                 Hold = ScoreStepHold
@@ -131,7 +105,7 @@ namespace Dice.Presentation
             int readyIndex = 0;
             foreach (var activated in scored.Activations)
             {
-                var step = BuildContribution(activated, false, readyIndex++, baseScore, multiplier);
+                var step = BuildContribution(activated, readyIndex++, baseScore, multiplier);
                 baseScore = step.BaseScore;
                 multiplier = step.Multiplier;
                 emblem = step.Emblem;
@@ -148,10 +122,6 @@ namespace Dice.Presentation
                 {
                     BaseScore = baseScore,
                     Multiplier = multiplier,
-                    StepLabel = labels.ruleStep,
-                    CategoryText = labels.ruleCategory,
-                    SelectionText = labels.RuleSelection(rule.DisplayName, activated.MultiplierBonus),
-                    SelectionColor = theme.amber,
                     ResolvingIndex = -1,
                     // The rule bonus is shown beside the last charm's emblem.
                     Emblem = emblem,
@@ -168,10 +138,6 @@ namespace Dice.Presentation
                 Multiplier = multiplier,
                 Total = score.HandScore,
                 RevealsTotal = true,
-                StepLabel = labels.TotalStep(score.BaseScore, score.Multiplier),
-                CategoryText = labels.totalCategory,
-                SelectionText = labels.totalSelection,
-                SelectionColor = theme.muted,
                 ResolvingIndex = -1,
                 Hold = TotalHold
             });
@@ -186,15 +152,14 @@ namespace Dice.Presentation
             long startingMultiplier)
         {
             if (activated == null) throw new ArgumentNullException(nameof(activated));
-            return BuildContribution(activated, true, -1, startingBaseScore, startingMultiplier);
+            return BuildContribution(activated, -1, startingBaseScore, startingMultiplier);
         }
 
-        private SpiritScoringStep BuildContribution(ModifierActivatedEvent activated, bool banked, int resolvingIndex,
+        private SpiritScoringStep BuildContribution(ModifierActivatedEvent activated, int resolvingIndex,
             long startingBaseScore, long startingMultiplier)
         {
             ModifierContribution contribution = activated.Contribution;
             var definition = catalog.GetModifier(contribution.DefinitionId);
-            string name = charms.GetName(definition);
             bool grantsRerolls = false;
             bool grantsHands = false;
             foreach (var grant in activated.Grants)
@@ -214,11 +179,6 @@ namespace Dice.Presentation
             {
                 BaseScore = checked(startingBaseScore + contribution.BaseScore),
                 Multiplier = checked(startingMultiplier + contribution.Multiplier),
-                StepLabel = banked ? wording.scoring.bankedStep : wording.scoring.charmStep,
-                CategoryText = name,
-                SelectionText = wording.scoring.CharmSelection(name,
-                    charms.GetContributionText(contribution.BaseScore, contribution.Multiplier, contribution.Rerolls), banked),
-                SelectionColor = charms.GetEffectColor(definition),
                 ResolvingIndex = resolvingIndex,
                 Contribution = contribution,
                 Charm = definition,

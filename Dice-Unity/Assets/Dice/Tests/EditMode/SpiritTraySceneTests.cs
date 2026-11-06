@@ -507,8 +507,7 @@ namespace Dice.Tests
             var icon = Ui<Image>("ModifierActivationIcon");
             SyntheticUi.Set(hud, "<ModifierActivationIcon>k__BackingField", icon);
             graphics.Add(icon);
-            foreach (string property in new[] { "SelectionLabel", "ScoreDetail", "BaseScoreLabel", "MultiplierLabel",
-                "HandScoreLabel", "TargetLabel" })
+            foreach (string property in new[] { "BaseScoreLabel", "MultiplierLabel", "HandScoreLabel", "TargetLabel" })
                 Label(property);
             SyntheticUi.Set(hud, "<CategoryLabel>k__BackingField", Ui<Text>("CategoryLabel"));
             SyntheticUi.Set(hud, "<ModifierEmblem>k__BackingField", Ui<Image>("ModifierEmblem"));

@@ -669,71 +669,6 @@ namespace Dice.Presentation
             }
         }
 
-        /** The labels of score playback's steps; {contribution} is the charm skin's contribution wording. */
-        [Serializable]
-        public sealed class Scoring : SpiritWordingSection
-        {
-            public string diceStep;
-            public string diceCategory;
-            /** {contribution}: the dice sum. */
-            public string diceSelection;
-            public string handStep;
-            /** {hand}, {level} and {contribution}: the hand's upper-cased name, its level and its bonus. */
-            public string handSelection;
-            public string charmStep;
-            public string bankedStep;
-            /** {charm} and {contribution}: the charm's name and its contribution on play. */
-            public string charmSelection;
-            /** {charm} and {contribution}: the charm's name and its banked contribution. */
-            public string bankedSelection;
-            public string ruleStep;
-            public string ruleCategory;
-            /** {rule} and {bonus}: the rule's name and its multiplier bonus. */
-            public string ruleSelection;
-            /** {base} and {multiplier}: the hand's final base score and multiplier. */
-            public string totalStep;
-            public string totalCategory;
-            public string totalSelection;
-
-            public string DiceSelection(string contribution) => SpiritWordingTemplate.Fill(diceSelection, "contribution", contribution);
-
-            public string HandSelection(string hand, int level, string contribution)
-            {
-                string text = SpiritWordingTemplate.Fill(handSelection, "hand", hand);
-                text = SpiritWordingTemplate.Fill(text, "level", level);
-                return SpiritWordingTemplate.Fill(text, "contribution", contribution);
-            }
-
-            public string CharmSelection(string charm, string contribution, bool banked) =>
-                SpiritWordingTemplate.Fill(SpiritWordingTemplate.Fill(banked ? bankedSelection : charmSelection, "charm", charm),
-                    "contribution", contribution);
-
-            public string RuleSelection(string rule, long bonus) =>
-                SpiritWordingTemplate.FillScore(SpiritWordingTemplate.Fill(ruleSelection, "rule", rule), "bonus", bonus);
-
-            public string TotalStep(long baseScore, long multiplier) =>
-                SpiritWordingTemplate.FillScore(SpiritWordingTemplate.FillScore(totalStep, "base", baseScore), "multiplier", multiplier);
-
-            public override void Validate(SpiritWordingCheck check)
-            {
-                check.Text(diceStep, nameof(diceStep));
-                check.Text(diceCategory, nameof(diceCategory));
-                check.Text(diceSelection, nameof(diceSelection));
-                check.Text(handStep, nameof(handStep));
-                check.Text(handSelection, nameof(handSelection));
-                check.Text(charmStep, nameof(charmStep));
-                check.Text(bankedStep, nameof(bankedStep));
-                check.Text(charmSelection, nameof(charmSelection));
-                check.Text(bankedSelection, nameof(bankedSelection));
-                check.Text(ruleStep, nameof(ruleStep));
-                check.Text(ruleCategory, nameof(ruleCategory));
-                check.Text(ruleSelection, nameof(ruleSelection));
-                check.Text(totalStep, nameof(totalStep));
-                check.Text(totalCategory, nameof(totalCategory));
-                check.Text(totalSelection, nameof(totalSelection));
-            }
-        }
-
         /** The gameplay HUD: header, target, resources, footer and the stage intro. */
         [Serializable]
         public sealed class Hud : SpiritWordingSection
@@ -761,9 +696,6 @@ namespace Dice.Presentation
             public string charmCount;
             /** {count}: charms kept this run. */
             public string charmsButton;
-            public string newHand;
-            /** {count}: rerolls remaining. */
-            public SpiritCountedWording rerollsRemaining = new SpiritCountedWording();
             /** {threshold}, {hands} and {rerolls}: the stage's threshold and its counted hands and rerolls. */
             public SpiritCountedWording stageIntro = new SpiritCountedWording();
             /** {count}: the stage's hands. */
@@ -787,7 +719,6 @@ namespace Dice.Presentation
             public string TotalScoreLine(long score) => SpiritWordingTemplate.FillScore(totalScoreLine, "score", score);
             public string CharmCount(int count) => SpiritWordingTemplate.Fill(charmCount, "count", count);
             public string CharmsButton(int count) => SpiritWordingTemplate.Fill(charmsButton, "count", count);
-            public string RerollsRemaining(int count) => Counted(rerollsRemaining, count);
 
             public string StageIntro(long threshold, int handCount, int rerollCount)
             {
@@ -814,8 +745,6 @@ namespace Dice.Presentation
                 check.Text(totalScoreLine, nameof(totalScoreLine));
                 check.Text(charmCount, nameof(charmCount));
                 check.Text(charmsButton, nameof(charmsButton));
-                check.Text(newHand, nameof(newHand));
-                check.Counted(rerollsRemaining, nameof(rerollsRemaining));
                 check.Counted(stageIntro, nameof(stageIntro));
                 check.Counted(stageHands, nameof(stageHands));
                 check.Counted(stageRerolls, nameof(stageRerolls));
@@ -1091,7 +1020,6 @@ namespace Dice.Presentation
         public CharmText charmText = new CharmText();
         public HandNames handNames = new HandNames();
         public HandRanks handRanks = new HandRanks();
-        public Scoring scoring = new Scoring();
         public Hud hud = new Hud();
         public PauseMenu pauseMenu = new PauseMenu();
         public CharmStatus charmStatus = new CharmStatus();
@@ -1116,7 +1044,6 @@ namespace Dice.Presentation
             Validate(charmText, nameof(charmText));
             Validate(handNames, nameof(handNames));
             Validate(handRanks, nameof(handRanks));
-            Validate(scoring, nameof(scoring));
             Validate(hud, nameof(hud));
             Validate(pauseMenu, nameof(pauseMenu));
             Validate(charmStatus, nameof(charmStatus));

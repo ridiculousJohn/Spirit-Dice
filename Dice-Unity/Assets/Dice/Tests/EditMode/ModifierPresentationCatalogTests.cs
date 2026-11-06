@@ -170,21 +170,6 @@ namespace Dice.Tests
             Assert.That(plain, Is.EqualTo(expected));
         }
 
-        /** Checks contribution text words each nonzero part with the skin's contribution labels / fails if a label is not the skin's, a zero part shows or the reroll grammar ignores the count. */
-        [TestCase(3, 0, 0, "[3 grains]")]
-        [TestCase(0, 2, 0, "[2 sparks]")]
-        [TestCase(0, 0, 1, "[1 chance]")]
-        [TestCase(0, 0, 2, "[2 chances]")]
-        [TestCase(4, 5, 2, "[4 grains] ; [5 sparks] ; [2 chances]")]
-        [TestCase(0, 0, 0, "")]
-        public void ContributionTextUsesTheSkinsContributionWording(long baseScore, long multiplier, long rerolls, string expected)
-        {
-            var charm = synthetic.Charm("test.contribution");
-            var charms = synthetic.Load(synthetic.Skin(new[] { synthetic.Presentation(charm) },
-                contribution: new ModifierContributionWording("grains", "sparks", "chance", "chances")), SyntheticCharms.Content(charm));
-            Assert.That(charms.GetContributionText(baseScore, multiplier, rerolls), Is.EqualTo(expected));
-        }
-
         /**
          * Checks each charm shows the category, styling and mark the skin maps the set of its effect kinds to, whatever
          * the order or number of its effects / fails if the category is not the one of exactly the charm's effect kinds,
@@ -403,19 +388,6 @@ namespace Dice.Tests
             }, SyntheticCharms.LimitWording()));
         }
 
-        /** Checks contribution wording missing any label fails at load / fails if score playback could show an unworded part. */
-        [TestCase(" ", "sparks", "chance", "chances")]
-        [TestCase("grains", " ", "chance", "chances")]
-        [TestCase("grains", "sparks", " ", "chances")]
-        [TestCase("grains", "sparks", "chance", " ")]
-        public void IncompleteContributionWordingFailsAtLoad(string baseScore, string multiplier, string reroll, string rerolls)
-        {
-            var charm = synthetic.Charm("test.contribution");
-            var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) },
-                contribution: new ModifierContributionWording(baseScore, multiplier, reroll, rerolls));
-            Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
-        }
-
         /** Checks a text format missing any field fails at load naming it, while spaces suffice for a separator / fails if charm text could be joined without the skin's format. */
         [TestCase("effect")]
         [TestCase("effectSeparator")]
@@ -423,15 +395,12 @@ namespace Dice.Tests
         [TestCase("labeledCompactEffect")]
         [TestCase("compactEffectSeparator")]
         [TestCase("timing")]
-        [TestCase("contribution")]
-        [TestCase("contributionSeparator")]
         public void IncompleteTextFormatFailsAtLoadNamingTheField(string field)
         {
             var charm = synthetic.Charm("test.format");
             string Value(string name, string value) => name == field ? "" : value;
             var format = new ModifierTextFormat(Value("effect", "e"), Value("effectSeparator", " "), Value("compactEffect", "c"),
-                Value("labeledCompactEffect", "l"), Value("compactEffectSeparator", "\n"), Value("timing", "t"),
-                Value("contribution", "p"), Value("contributionSeparator", " "));
+                Value("labeledCompactEffect", "l"), Value("compactEffectSeparator", "\n"), Value("timing", "t"));
             var skin = synthetic.Skin(new[] { synthetic.Presentation(charm) }, format: format);
             var failure = Assert.Throws<InvalidOperationException>(() => synthetic.Load(skin, SyntheticCharms.Content(charm)));
             Assert.That(failure.Message, Does.Contain("text format " + field + "."));

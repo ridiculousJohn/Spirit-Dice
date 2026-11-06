@@ -601,11 +601,6 @@ MonoBehaviour:
   - limit: 2
     timingLabel: Once per stage
     descriptionNote: Once per stage.
-  contributionWording:
-    baseScoreLabel: base
-    multiplierLabel: mult
-    rerollLabel: reroll
-    rerollsLabel: rerolls
   textFormat:
     effect: +{amount} {label}
     effectSeparator: ', '
@@ -615,5 +610,3 @@ MonoBehaviour:
 
 '
     timing: '{phase} / {limit}'
-    contribution: +{amount} {label}
-    contributionSeparator: '  /  '

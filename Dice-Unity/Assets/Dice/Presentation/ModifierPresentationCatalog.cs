@@ -30,7 +30,6 @@ namespace Dice.Presentation
             new Dictionary<ModifierPhase, ModifierPhaseWording>();
         private readonly Dictionary<ModifierActivationLimit, ModifierActivationLimitWording> limitWording =
             new Dictionary<ModifierActivationLimit, ModifierActivationLimitWording>();
-        private readonly ModifierContributionWording contributionWording;
         private readonly ModifierTextFormat format;
         private readonly string noEffectsText;
 
@@ -126,12 +125,6 @@ namespace Dice.Presentation
                         limit.Limit + ".");
                 limitWording.Add(limit.Limit, limit);
             }
-            // Every scored hand shows base score and multiplier, and any charm contribution can carry rerolls.
-            contributionWording = skin.ContributionWording;
-            if (contributionWording == null || string.IsNullOrWhiteSpace(contributionWording.BaseScoreLabel) ||
-                string.IsNullOrWhiteSpace(contributionWording.MultiplierLabel) ||
-                string.IsNullOrWhiteSpace(contributionWording.RerollLabel) || string.IsNullOrWhiteSpace(contributionWording.RerollsLabel))
-                throw new InvalidOperationException("The modifier skin " + skin.name + " has incomplete contribution wording.");
             format = skin.TextFormat ?? throw new InvalidOperationException("The modifier skin " + skin.name + " has no text format.");
             RequireFormat(skin, format.Effect, "effect", false);
             RequireFormat(skin, format.EffectSeparator, "effectSeparator", true);
@@ -139,8 +132,6 @@ namespace Dice.Presentation
             RequireFormat(skin, format.LabeledCompactEffect, "labeledCompactEffect", false);
             RequireFormat(skin, format.CompactEffectSeparator, "compactEffectSeparator", true);
             RequireFormat(skin, format.Timing, "timing", false);
-            RequireFormat(skin, format.Contribution, "contribution", false);
-            RequireFormat(skin, format.ContributionSeparator, "contributionSeparator", true);
             // The content pairs every catalog charm with its asset, whose name names the charm.
             foreach (ModifierAsset modifier in content.Modifiers)
             {
@@ -281,23 +272,6 @@ namespace Dice.Presentation
             foreach (ModifierActivationLimit implied in phase.ImpliedLimits)
                 if (implied == definition.ActivationLimit) return "";
             return limitWording[definition.ActivationLimit].DescriptionNote;
-        }
-
-        /**
-         * The nonzero parts of a score contribution in the skin's contribution wording and format, joined by the format's
-         * contribution separator; empty when all are zero. Reroll counts are written without digit grouping.
-         */
-        public string GetContributionText(long baseScore, long multiplier, long rerolls)
-        {
-            var parts = new List<string>();
-            if (baseScore != 0)
-                parts.Add(Amount(format.Contribution, DiagnosticText.Number(baseScore), contributionWording.BaseScoreLabel));
-            if (multiplier != 0)
-                parts.Add(Amount(format.Contribution, DiagnosticText.Number(multiplier), contributionWording.MultiplierLabel));
-            if (rerolls != 0)
-                parts.Add(Amount(format.Contribution, rerolls.ToString(CultureInfo.InvariantCulture),
-                    rerolls == 1 ? contributionWording.RerollLabel : contributionWording.RerollsLabel));
-            return string.Join(format.ContributionSeparator, parts);
         }
 
         /** The artwork of the charm's family, shared by every variant of the family. */

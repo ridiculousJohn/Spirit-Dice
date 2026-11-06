@@ -206,6 +206,7 @@ namespace Dice.Presentation
             var controls = host.Controls;
             modifierHistory.SynchronizeReady(scored.Score.ModifierContributions, controls.Catalog, controls.ModifierPresentation);
             var steps = Steps().BuildHand(scored, hud.DisplayedBaseScore, hud.DisplayedMultiplier, host.RuleCards);
+            hud.ShowPlayedRank(scored.Score.Category);
             foreach (var step in steps)
             {
                 diceTray.SetScoringHighlight(step.HighlightMask);
@@ -271,7 +272,7 @@ namespace Dice.Presentation
             host.SetOpeningOpacity(1);
         }
 
-        /** Shows a scoring step's labels, emblem, cues and resource changes, animates its counters, and holds it. */
+        /** Shows a scoring step's emblem, cues and resource changes, animates its counters, and holds it. */
         private IEnumerator PlayStep(SpiritScoringStep step)
         {
             if (step.HostReacts) host.Host?.React();
@@ -292,7 +293,7 @@ namespace Dice.Presentation
         private float GestureDuration => GestureDurationOf(host.Host);
 
         private SpiritScoringStepBuilder Steps()
-            => new SpiritScoringStepBuilder(host.Controls.Catalog, Charms, SpiritUi.GetTheme(hud.transform), Wording);
+            => new SpiritScoringStepBuilder(host.Controls.Catalog);
 
         private SpiritUiWording Wording => SpiritUi.GetWording(hud.transform);
 

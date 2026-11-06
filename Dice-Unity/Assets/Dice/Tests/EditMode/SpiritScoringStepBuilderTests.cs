@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Dice.Tests
 {
-    /** The scoring steps built from fabricated scored hands, synthetic charms, a synthetic theme and fabricated wording. */
+    /** The scoring steps built from fabricated scored hands and synthetic charms. */
     public sealed class SpiritScoringStepBuilderTests
     {
         private static readonly EncounterRuleDefinition.Id FreeId = TestRules.IdOf("first_reroll_free");
@@ -18,37 +18,26 @@ namespace Dice.Tests
         // A fabricated forming mask no category of the fixture dice would derive.
         private const int FormingMask = (1 << 1) | (1 << 4);
         private SyntheticCharms synthetic;
-        private SpiritUiTheme theme;
-        private SpiritUiWording wording;
         private ModifierDefinition bank;
         private ModifierDefinition first;
         private ModifierDefinition second;
         private SpiritScoringStepBuilder builder;
-        private ModifierPresentationCatalog charms;
         private readonly List<EncounterRulePresentationAsset> cards = new List<EncounterRulePresentationAsset>();
 
         [SetUp]
         public void SetUp()
         {
             synthetic = new SyntheticCharms();
-            theme = ScriptableObject.CreateInstance<SpiritUiTheme>();
-            theme.muted = new Color(.1f, .2f, .3f);
-            theme.amber = new Color(.6f, .5f, .4f);
             bank = Definition("test.steps.bank", ModifierPhase.InitialRoll);
             first = Definition("test.steps.first", ModifierPhase.PlayHand);
             second = Definition("test.steps.second", ModifierPhase.PlayHand);
-            var catalog = SyntheticCharms.Catalog(bank, first, second);
-            charms = synthetic.For(bank, first, second);
-            wording = SyntheticWording.Create();
-            builder = new SpiritScoringStepBuilder(catalog, charms, theme, wording);
+            builder = new SpiritScoringStepBuilder(SyntheticCharms.Catalog(bank, first, second));
         }
 
         [TearDown]
         public void TearDown()
         {
             synthetic.Dispose();
-            UnityEngine.Object.DestroyImmediate(theme);
-            UnityEngine.Object.DestroyImmediate(wording);
             foreach (var card in cards) UnityEngine.Object.DestroyImmediate(card);
             cards.Clear();
         }
@@ -65,9 +54,6 @@ namespace Dice.Tests
             var dice = Build(score, bankedBase, bankedMultiplier)[0];
             Assert.That(dice.BaseScore, Is.EqualTo(bankedBase + score.DiceSum));
             Assert.That(dice.Multiplier, Is.EqualTo(bankedMultiplier));
-            Assert.That(dice.StepLabel, Is.EqualTo("<scoring.diceStep>"));
-            Assert.That(dice.CategoryText, Is.EqualTo("<scoring.diceCategory>"));
-            Assert.That(dice.SelectionText, Is.EqualTo("<scoring.diceSelection>" + charms.GetContributionText(score.DiceSum, 0, 0)));
             Assert.That(dice.HighlightMask, Is.EqualTo(countedMask));
             Assert.That(dice.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(dice.Charm, Is.Null);
@@ -84,9 +70,6 @@ namespace Dice.Tests
             Assert.That(rank.BaseScore, Is.EqualTo(steps[0].BaseScore + score.CategoryBaseScore + score.UpgradeBaseScore));
             Assert.That(rank.Multiplier, Is.EqualTo(steps[0].Multiplier + score.CategoryMultiplier + score.UpgradeMultiplier));
             Assert.That(score.UpgradeBaseScore != 0 || score.UpgradeMultiplier != 0, Is.EqualTo(upgrades > 0), "Fixture upgrades");
-            Assert.That(rank.StepLabel, Is.EqualTo("<scoring.handStep>"));
-            Assert.That(rank.CategoryText, Is.EqualTo("<HANDNAMES.PAIR>"), "The hand is named by its wording, upper-cased.");
-            Assert.That(rank.SelectionText, Does.StartWith("<scoring.handSelection><HANDNAMES.PAIR>|" + upgrades + "|"));
             Assert.That(rank.HighlightMask, Is.EqualTo(FormingMask), "Only the dice the score states are highlighted.");
             Assert.That(rank.ResolvingIndex, Is.EqualTo(-1));
         }
@@ -111,12 +94,11 @@ namespace Dice.Tests
                 var previous = steps[index + 1];
                 Assert.That(charmSteps[index].BaseScore, Is.EqualTo(previous.BaseScore + contributions[index].BaseScore));
                 Assert.That(charmSteps[index].Multiplier, Is.EqualTo(previous.Multiplier + contributions[index].Multiplier));
-                Assert.That(charmSteps[index].StepLabel, Is.EqualTo("<scoring.charmStep>"));
                 Assert.That(charmSteps[index].HighlightMask, Is.Zero);
             }
         }
 
-        /** Checks a charm step shows the charm's presented name, accent and contribution wording and highlights only the counters it changes / fails if the wording, colour or counter highlights stop following the presentation and contribution. */
+        /** Checks a charm step presents its charm, with the charm's emblem, and highlights only the counters it changes / fails if the step presents another charm or the counter highlights stop following the contribution. */
         [TestCase(10L, 0L)]
         [TestCase(0L, 2L)]
         public void CharmStepShowsThePresentedCharmAndHighlightsTheCountersItChanges(long baseScore, long multiplier)
@@ -125,10 +107,6 @@ namespace Dice.Tests
             var step = Build(Score(HighDieDice, HandCategory.HighDie, 0, contribution), 0, 0, contribution)[2];
             Assert.That(step.Charm, Is.SameAs(first));
             Assert.That(step.Emblem, Is.SameAs(first));
-            Assert.That(step.CategoryText, Is.EqualTo(charms.GetName(first)));
-            Assert.That(step.SelectionText, Is.EqualTo("<scoring.charmSelection>" + charms.GetName(first) + "|" +
-                charms.GetContributionText(baseScore, multiplier, 0)));
-            Assert.That(step.SelectionColor, Is.EqualTo(charms.GetEffectColor(first)));
             Assert.That(step.HighlightsBaseScore, Is.EqualTo(baseScore != 0));
             Assert.That(step.HighlightsMultiplier, Is.EqualTo(multiplier != 0));
         }
@@ -178,7 +156,7 @@ namespace Dice.Tests
             Assert.That(steps.Count, Is.EqualTo(withPlayHandCharm ? 4 : 3));
         }
 
-        /** Checks the total stays zero until the last step, which reveals the hand score with its base and multiplier / fails if any earlier step shows a total or the last step does not reveal it. */
+        /** Checks the total stays zero until the last step, which reveals the hand score / fails if any earlier step shows a total or the last step does not reveal it. */
         [TestCase(0L)]
         [TestCase(2L)]
         public void TotalStaysZeroUntilTheLastStep(long ruleMultiplier)
@@ -186,23 +164,19 @@ namespace Dice.Tests
             var contributions = new[] { Contribution(first, 1, baseScore: 10), Contribution(second, 2, multiplier: 3) };
             var score = Score(PairDice, HandCategory.Pair, 1, contributions, ruleMultiplier);
             var steps = Build(score, 0, 0, contributions);
-            foreach (var step in steps.Take(steps.Count - 1))
+            for (int index = 0; index < steps.Count - 1; ++index)
             {
-                Assert.That(step.Total, Is.Zero, step.StepLabel);
-                Assert.That(step.RevealsTotal, Is.False, step.StepLabel);
+                Assert.That(steps[index].Total, Is.Zero, "Step " + index);
+                Assert.That(steps[index].RevealsTotal, Is.False, "Step " + index);
             }
             var total = steps[steps.Count - 1];
             Assert.That(total.RevealsTotal, Is.True);
             Assert.That(total.Total, Is.EqualTo(score.HandScore));
-            Assert.That(total.StepLabel, Is.EqualTo("<scoring.totalStep>" + DiagnosticText.Number(score.BaseScore) + "|" +
-                DiagnosticText.Number(score.Multiplier)));
-            Assert.That(total.CategoryText, Is.EqualTo("<scoring.totalCategory>"));
-            Assert.That(total.SelectionText, Is.EqualTo("<scoring.totalSelection>"));
             Assert.That(total.Emblem, Is.Null);
             Assert.That(total.ResolvingIndex, Is.EqualTo(-1));
         }
 
-        /** Checks a scored hand's rule bonus adds one step that raises the multiplier only, named by the card of the bonus's rule, and a bonus whose rule has no card fails naming the rule / fails if the rule step is missing, names another rule's card, changes the base or is built without a card. */
+        /** Checks a scored hand's rule bonus adds one step that raises the multiplier only, presented with the card of the bonus's rule, and a bonus whose rule has no card fails naming the rule / fails if the rule step is missing, carries another rule's card, changes the base or is built without a card. */
         [Test]
         public void EncounterRuleBonusAddsOneMultiplierStepNamedByItsRulesCard()
         {
@@ -226,18 +200,14 @@ namespace Dice.Tests
             var rank = steps[1];
             Assert.That(steps[2], Is.SameAs(rule));
             Assert.That(rule.Rule, Is.SameAs(distinct));
-            Assert.That(rule.SelectionText, Is.EqualTo("<scoring.ruleSelection>Distinct|" + DiagnosticText.Number(bonus)));
             Assert.That(rule.BaseScore, Is.EqualTo(rank.BaseScore));
             Assert.That(rule.Multiplier, Is.EqualTo(rank.Multiplier + bonus));
-            Assert.That(rule.StepLabel, Is.EqualTo("<scoring.ruleStep>"));
-            Assert.That(rule.CategoryText, Is.EqualTo("<scoring.ruleCategory>"));
-            Assert.That(rule.SelectionColor, Is.EqualTo(theme.amber));
 
             var unnamed = Assert.Throws<InvalidOperationException>(() => builder.BuildHand(scored, 0, 0, new[] { favor }));
             Assert.That(unnamed.Message, Does.Contain(DistinctId.ToString()));
         }
 
-        /** Checks a banked roll bonus adds its contribution to the current counters as a roll bonus without a resolving token / fails if it is worded as a scored charm or claims a history token. */
+        /** Checks a banked roll bonus adds its contribution to the current counters without a resolving token / fails if it ignores the current counters or claims a history token. */
         [Test]
         public void BankedContributionIsARollBonusWithoutAResolvingToken()
         {
@@ -245,8 +215,6 @@ namespace Dice.Tests
             var step = builder.BuildBankedContribution(new ModifierActivatedEvent(new EncounterState(), contribution), 5, 1);
             Assert.That(step.BaseScore, Is.EqualTo(5 + contribution.BaseScore));
             Assert.That(step.Multiplier, Is.EqualTo(1 + contribution.Multiplier));
-            Assert.That(step.StepLabel, Is.EqualTo("<scoring.bankedStep>"));
-            Assert.That(step.SelectionText, Does.StartWith("<scoring.bankedSelection>" + charms.GetName(bank) + "|"));
             Assert.That(step.ResolvingIndex, Is.EqualTo(-1));
             Assert.That(step.RerollCue, Is.True, "A roll-phase charm that scores cues the reroll button.");
             Assert.That(step.PlayCue, Is.False);

@@ -64,8 +64,6 @@ namespace Dice.Presentation
         private Action returnToInvestigation;
         private bool authoredScalesCaptured;
         private Vector3 modifierActivationIconScale;
-        private Vector3 selectionLabelScale;
-        private Vector3 scoreDetailScale;
         private Vector3 baseScoreLabelScale;
         private Vector3 multiplierLabelScale;
         private Vector3 handScoreLabelScale;
@@ -88,11 +86,9 @@ namespace Dice.Presentation
         [field: SerializeField] private Text RerollsLabel { get; set; }
         [field: SerializeField] private Text ResourcesLabel { get; set; }
         [field: SerializeField] private RectTransform PlayingPanel { get; set; }
-        [field: SerializeField] private Text SelectionLabel { get; set; }
         [field: SerializeField] private Image ModifierEmblem { get; set; }
         [field: SerializeField] private Image ModifierActivationIcon { get; set; }
         [field: SerializeField] private Text CategoryLabel { get; set; }
-        [field: SerializeField] private Text ScoreDetail { get; set; }
         [field: SerializeField] private Text BaseScoreLabel { get; set; }
         [field: SerializeField] private Text MultiplierLabel { get; set; }
         [field: SerializeField] private Text HandScoreLabel { get; set; }
@@ -159,9 +155,8 @@ namespace Dice.Presentation
         {
             if (reroll == null) throw new ArgumentNullException(nameof(reroll));
             if (play == null) throw new ArgumentNullException(nameof(play));
-            if (SelectionLabel == null || ModifierEmblem == null || ModifierActivationIcon == null ||
-                modifierActivationCategory == null || CategoryLabel == null ||
-                ScoreDetail == null || BaseScoreLabel == null || MultiplierLabel == null || HandScoreLabel == null ||
+            if (ModifierEmblem == null || ModifierActivationIcon == null || modifierActivationCategory == null ||
+                CategoryLabel == null || BaseScoreLabel == null || MultiplierLabel == null || HandScoreLabel == null ||
                 RerollButton == null || PlayButton == null || !Valid(BaseScoreHighlight) || !Valid(MultiplierHighlight) ||
                 !Valid(RerollsHighlight) || !Valid(HandsHighlight))
                 throw new InvalidOperationException("The gameplay HUD requires authored score and action references.");
@@ -292,20 +287,19 @@ namespace Dice.Presentation
 
         /**
          * Shows a hand waiting for play: the score counters at these values, the current rank of the dice as they lie (none
-         * without one) and no total, step or selection text.
+         * without one) and no total.
          */
         public void ShowIdleScore(long baseScore, long multiplier, HandCategory? currentCategory)
         {
             ModifierEmblem.gameObject.SetActive(false);
-            // Between actions the current rank shows; a played hand's scoring steps name its final rank.
-            CategoryLabel.text = currentCategory == null ? ""
-                : SpiritUi.GetWording(transform).handNames.Name(currentCategory.Value).ToUpperInvariant();
+            // Between actions the current rank shows; a played hand's scoring shows its scored rank (ShowPlayedRank).
+            CategoryLabel.text = currentCategory == null ? "" : RankText(currentCategory.Value);
             SetScoreValues(baseScore, multiplier);
             HandScoreLabel.text = "0";
-            ScoreDetail.text = "";
-            // Idle play shows no instruction or selection count; the tray highlight marks the reroll selection.
-            SelectionLabel.text = "";
         }
+
+        /** Shows a played hand's scored rank, which stays through its scoring steps and total. */
+        public void ShowPlayedRank(HandCategory category) => CategoryLabel.text = RankText(category);
 
         public void ShowStatus(string text) => StatusLabel.text = text;
 
@@ -374,14 +368,12 @@ namespace Dice.Presentation
 
         public void HideStageIntro() => StageIntroPanel.gameObject.SetActive(false);
 
-        /** Shows a starting hand: its rule badge and resources, cleared score counters and rank, and the new hand line. */
+        /** Shows a starting hand: its rule badge and resources, and cleared score counters and rank. */
         public void ShowHandStart(HandStartedEvent hand, EncounterSnapshot snapshot, EncounterRulePresentationAsset ruleCard)
         {
             RenderEncounterRule(snapshot, ruleCard);
             SetResources(hand.HandsRemaining, hand.RerollsRemaining);
             ShowIdleScore(0, 0, null);
-            SelectionLabel.color = Theme.muted;
-            SelectionLabel.text = SpiritUi.GetWording(transform).hud.newHand;
         }
 
         /** Counts the threshold left to clear from one value to the other over the duration. */
@@ -398,26 +390,17 @@ namespace Dice.Presentation
             TargetCaption.text = SpiritUi.GetWording(transform).hud.stageCleared;
         }
 
-        /** Shows a resource's new count; a reroll change also shows the rerolls remaining as the selection line. */
-        public void ShowResourceChanged(ResourceChangedEvent resource)
-        {
-            ShowResource(resource);
-            if (resource.Resource == ResourceKind.Rerolls)
-                SelectionLabel.text = SpiritUi.GetWording(transform).hud.RerollsRemaining(resource.After);
-        }
+        /** Shows a resource's new count. */
+        public void ShowResourceChanged(ResourceChangedEvent resource) => ShowResource(resource);
 
         /** Shows the played hand's running total before a step that does not reveal the final total. */
         public void ShowHandTotal(long total) => HandScoreLabel.text = DiagnosticText.Number(total);
 
-        /** Shows a scoring step's emblem, rank, selection and step lines, its counter highlights and its granted resources. */
+        /** Shows a scoring step's emblem, its counter highlights and its granted resources; the rank line is left as it is. */
         public void ShowScoringStep(SpiritScoringStep step, ModifierPresentationCatalog charms)
         {
             if (step.Emblem != null) ShowActivationIcon(charms, step.Emblem);
             else ModifierEmblem.gameObject.SetActive(false);
-            CategoryLabel.text = step.CategoryText;
-            SelectionLabel.color = step.SelectionColor;
-            SelectionLabel.text = step.SelectionText;
-            ScoreDetail.text = step.StepLabel;
             stepHighlights = new List<SpiritCounterHighlight>();
             if (step.HighlightsBaseScore) AddCounterHighlight(stepHighlights, BaseScoreHighlight, charms, step.Charm);
             if (step.HighlightsMultiplier) AddCounterHighlight(stepHighlights, MultiplierHighlight, charms, step.Charm);
@@ -432,13 +415,6 @@ namespace Dice.Presentation
             CaptureAuthoredScales();
             return step.RevealsTotal ? CountLabel(HandScoreLabel, handScoreLabelScale, 0, step.Total, duration, TotalPulse)
                 : AnimateScore(DisplayedBaseScore, DisplayedMultiplier, step.BaseScore, step.Multiplier, duration, stepHighlights);
-        }
-
-        /** Shows a rule presenter's selection line, marked as the rule's. */
-        public void ShowRuleSelection(string text)
-        {
-            SelectionLabel.text = text;
-            SelectionLabel.color = Theme.amber;
         }
 
         private void SetScoreValues(long baseScore, long multiplier)
@@ -568,11 +544,6 @@ namespace Dice.Presentation
             foreach (var highlight in new[] { BaseScoreHighlight, MultiplierHighlight, RerollsHighlight, HandsHighlight })
                 ResetCounterHighlight(highlight);
             var theme = Theme;
-            SelectionLabel.text = "";
-            SelectionLabel.color = theme.muted;
-            SelectionLabel.rectTransform.localScale = selectionLabelScale;
-            ScoreDetail.color = theme.muted;
-            ScoreDetail.rectTransform.localScale = scoreDetailScale;
             ResetScoreLabels(theme);
             HandScoreLabel.color = theme.cream;
             HandScoreLabel.rectTransform.localScale = handScoreLabelScale;
@@ -688,8 +659,6 @@ namespace Dice.Presentation
         {
             if (authoredScalesCaptured) return;
             modifierActivationIconScale = ModifierActivationIcon.rectTransform.localScale;
-            selectionLabelScale = SelectionLabel.rectTransform.localScale;
-            scoreDetailScale = ScoreDetail.rectTransform.localScale;
             baseScoreLabelScale = BaseScoreLabel.rectTransform.localScale;
             multiplierLabelScale = MultiplierLabel.rectTransform.localScale;
             handScoreLabelScale = HandScoreLabel.rectTransform.localScale;
@@ -715,6 +684,10 @@ namespace Dice.Presentation
         }
 
         private SpiritUiTheme Theme => SpiritUi.GetTheme(transform);
+
+        /** A hand rank as the rank line shows it: the rank's name, uppercased. */
+        private string RankText(HandCategory category)
+            => SpiritUi.GetWording(transform).handNames.Name(category).ToUpperInvariant();
 
         private static long Interpolate(long before, long after, float progress)
             => (long)((decimal)before + ((decimal)after - before) * (decimal)progress);

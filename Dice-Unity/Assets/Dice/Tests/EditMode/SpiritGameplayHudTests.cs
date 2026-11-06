@@ -62,11 +62,11 @@ namespace Dice.Tests
             Assert.That(panels["StageIntroPanel"].gameObject.activeSelf, Is.False);
         }
 
-        /** Checks a hand start clears the score counters, rank, total and step lines and shows the new hand line muted / fails if a previous hand's score or rule selection remains. */
+        /** Checks a hand start shows its counters and clears the score counters, rank and total / fails if a previous hand's score or rank remains. */
         [Test]
-        public void HandStartClearsTheScoreAndShowsTheNewHandLine()
+        public void HandStartClearsTheScore()
         {
-            hud.ShowRuleSelection("rule");
+            hud.ShowPlayedRank(HandCategory.Pair);
             hud.ShowHandTotal(90);
             hud.ShowHandStart(new HandStartedEvent(new EncounterState { HandsRemaining = 2, RerollsRemaining = 1 }), null, null);
             Assert.That(labels["HandsLabel"].text, Is.EqualTo(Wording.Hands(2)));
@@ -75,9 +75,6 @@ namespace Dice.Tests
             Assert.That(labels["MultiplierLabel"].text, Is.EqualTo("0"));
             Assert.That(labels["HandScoreLabel"].text, Is.EqualTo("0"));
             Assert.That(labels["CategoryLabel"].text, Is.Empty);
-            Assert.That(labels["ScoreDetail"].text, Is.Empty);
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo(Wording.newHand));
-            Assert.That(labels["SelectionLabel"].color, Is.EqualTo(SpiritUi.GetTheme(hud.transform).muted));
             Assert.That(hud.DisplayedBaseScore == 0 && hud.DisplayedMultiplier == 0, Is.True);
         }
 
@@ -89,15 +86,6 @@ namespace Dice.Tests
             Assert.That(labels["CategoryLabel"].text, Is.EqualTo(ui.Wording.handNames.Name(HandCategory.FullHouse).ToUpperInvariant()));
             hud.ShowIdleScore(0, 0, null);
             Assert.That(labels["CategoryLabel"].text, Is.Empty);
-        }
-
-        /** Checks a rule presenter's selection line shows marked as the rule's / fails if its text or mark is missing. */
-        [Test]
-        public void RuleSelectionShowsItsTextMarkedAsTheRules()
-        {
-            hud.ShowRuleSelection("rule selection");
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo("rule selection"));
-            Assert.That(labels["SelectionLabel"].color, Is.EqualTo(SpiritUi.GetTheme(hud.transform).amber));
         }
 
         /** Checks the target counts to a changed threshold and shows zero with the cleared caption when the stage clears / fails if the counter or its caption is not updated. */
@@ -114,18 +102,16 @@ namespace Dice.Tests
             Assert.That(labels["TargetCaption"].text, Is.EqualTo(Wording.stageCleared));
         }
 
-        /** Checks a reroll change shows its count and the rerolls remaining line while a hand change shows only its count / fails if a hand change replaces the selection line or a count is not shown. */
+        /** Checks a hand change and a reroll change each show their count / fails if a count is not shown or lands on the other counter. */
         [Test]
         public void ResourceChangesShowTheirCounts()
         {
             var state = new EncounterState();
-            hud.ShowRuleSelection("before");
             hud.ShowResourceChanged(new ResourceChangedEvent(state, ResourceKind.Hands, ResourceChangeCause.PlayHand, 3, 2));
             Assert.That(labels["HandsLabel"].text, Is.EqualTo(Wording.Hands(2)));
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo("before"));
             hud.ShowResourceChanged(new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.RerollDice, 2, 1));
             Assert.That(labels["RerollsLabel"].text, Is.EqualTo(Wording.Rerolls(1)));
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo(Wording.RerollsRemaining(1)));
+            Assert.That(labels["HandsLabel"].text, Is.EqualTo(Wording.Hands(2)));
         }
 
         /** Checks a screen without a run hides the playing area and shows the run status / fails if the playing area remains or the status is not described. */
@@ -161,7 +147,6 @@ namespace Dice.Tests
             Assert.That(labels["StatusLabel"].text, Is.EqualTo(SpiritStatusText.Gameplay(SpiritStatus.None, ui.Wording.status)));
             Assert.That(labels["BaseScoreLabel"].text, Is.EqualTo(DiagnosticText.Number(playing.ModifierBaseScore)));
             Assert.That(labels["HandScoreLabel"].text, Is.EqualTo("0"));
-            Assert.That(labels["SelectionLabel"].text, Is.Empty);
             Assert.That(buttons["PlayButton"].interactable, Is.True);
             Assert.That(buttons["RerollButton"].interactable, Is.False, "Reroll waits for a selection.");
             hud.ShowSnapshot(playing, null, SpiritStatus.None, null, null, 0b00001);
@@ -179,28 +164,27 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks a scoring step shows its lines, highlights and grants, and its animation leaves the counters at the step's
-         * values with the highlights reset / fails if a line, highlight or grant is missing or a highlight outlasts the step.
+         * Checks a scoring step shows its highlights and grants and leaves the played rank showing, and its animation leaves
+         * the counters at the step's values with the highlights reset / fails if a highlight or grant is missing, the step
+         * replaces the rank or a highlight outlasts the step.
          */
         [Test]
-        public void ScoringStepShowsItsLinesAndCountsToItsValues()
+        public void ScoringStepKeepsTheRankAndCountsToItsValues()
         {
             var charm = new ModifierDefinition(TestModifiers.IdOf("test.hud.grant"), TestFamilies.Of("test.hud.grant"), ModifierPhase.PlayerReroll,
                 new AlwaysCondition(), new ModifierEffect[] { new AddRerollsEffect(1) });
             var state = new EncounterState();
             var step = new SpiritScoringStep
             {
-                BaseScore = 12, Multiplier = 3, CategoryText = "category", SelectionText = "selection", SelectionColor = Color.red,
-                StepLabel = "step", Charm = charm, HighlightsRerolls = true,
+                BaseScore = 12, Multiplier = 3, Charm = charm, HighlightsRerolls = true,
                 Grants = new[] { new ResourceChangedEvent(state, ResourceKind.Rerolls, ResourceChangeCause.ModifierEffect, 1, 2) }
             };
             // A reset hides every counter highlight, as between the authored HUD's steps.
             hud.ResetTransientVisuals();
+            hud.ShowPlayedRank(HandCategory.Pair);
+            string rank = ui.Wording.handNames.Name(HandCategory.Pair).ToUpperInvariant();
+            Assert.That(labels["CategoryLabel"].text, Is.EqualTo(rank));
             hud.ShowScoringStep(step, charms.For(charm));
-            Assert.That(labels["CategoryLabel"].text, Is.EqualTo("category"));
-            Assert.That(labels["SelectionLabel"].text, Is.EqualTo("selection"));
-            Assert.That(labels["SelectionLabel"].color, Is.EqualTo(Color.red));
-            Assert.That(labels["ScoreDetail"].text, Is.EqualTo("step"));
             Assert.That(labels["RerollsLabel"].text, Is.EqualTo(Wording.Rerolls(2)));
             Assert.That(highlightIcons["RerollsHighlight"].gameObject.activeSelf, Is.True);
             Assert.That(highlightIcons["BaseScoreHighlight"].gameObject.activeSelf, Is.False);
@@ -210,6 +194,7 @@ namespace Dice.Tests
             Assert.That(labels["MultiplierLabel"].text, Is.EqualTo("3"));
             Assert.That(hud.DisplayedBaseScore == 12 && hud.DisplayedMultiplier == 3, Is.True);
             Assert.That(highlightIcons["RerollsHighlight"].gameObject.activeSelf, Is.False);
+            Assert.That(labels["CategoryLabel"].text, Is.EqualTo(rank));
         }
 
         /** A HUD with every element its methods fill. */
@@ -220,7 +205,7 @@ namespace Dice.Tests
             foreach (string panel in new[] { "PlayingPanel", "TargetPanel", "HandsPanel", "RerollsPanel", "StageIntroPanel" })
                 SyntheticUi.Set(created, "<" + panel + ">k__BackingField", panels[panel] = ui.Rect(parent, panel));
             foreach (string label in new[] { "EncounterTitle", "StageLabel", "TargetLabel", "TargetCaption", "HandsLabel",
-                "RerollsLabel", "ResourcesLabel", "SelectionLabel", "CategoryLabel", "ScoreDetail", "BaseScoreLabel",
+                "RerollsLabel", "ResourcesLabel", "CategoryLabel", "BaseScoreLabel",
                 "MultiplierLabel", "HandScoreLabel", "StageIntroTitle", "StageIntroDetail", "CharmCount", "StatusLabel" })
                 SyntheticUi.Set(created, "<" + label + ">k__BackingField", labels[label] = ui.Add<Text>(parent, label));
             SyntheticUi.Set(created, "<ModifierEmblem>k__BackingField", ui.Add<Image>(parent, "Emblem"));
