@@ -24,17 +24,18 @@ MonoBehaviour:
       Min: 0
       Max: 0
     StutterFlickers:
-      Min: 5
-      Max: 7
+      Min: 4
+      Max: 6
     FlickerDuration:
-      Min: 0.05
-      Max: 0.13
+      Min: 0.12
+      Max: 0.22
     DimLevel:
-      Min: 0.45
-      Max: 0.65
+      Min: 0.75
+      Max: 0.85
     BrightLevel:
-      Min: 1.25
-      Max: 1.5
+      Min: 1.1
+      Max: 1.2
+    FlickerEase: 1
   props: []
   propGroups: []
   joltStrength: 1

@@ -62,12 +62,14 @@ namespace Dice.Presentation
         public AmbientCount SputterFlickers = new AmbientCount(3, 6);
         [Tooltip("Flickers in the brief stutter on a jolt.")]
         public AmbientCount StutterFlickers = new AmbientCount(2, 4);
-        [Tooltip("Seconds each flicker holds its level.")]
+        [Tooltip("Seconds each flicker lasts: it eases in for the Flicker Ease fraction and holds its level for the rest.")]
         public AmbientRange FlickerDuration = new AmbientRange(.04f, .14f);
         [Tooltip("Intensity multipliers for the dim half of a flicker.")]
         public AmbientRange DimLevel = new AmbientRange(0f, .3f);
         [Tooltip("Intensity multipliers for the bright half of a flicker.")]
         public AmbientRange BrightLevel = new AmbientRange(.55f, 1f);
+        [Tooltip("Fraction of each flicker spent easing from the previous level to its own; 0 cuts between levels.")]
+        [Range(0, 1)] public float FlickerEase;
 
         internal void Validate()
         {
@@ -80,6 +82,8 @@ namespace Dice.Presentation
             BrightLevel.Validate(nameof(BrightLevel));
             if (IdleInterval.Min <= 0f || FlickerDuration.Min <= 0f)
                 throw new InvalidOperationException("Ambient light intervals and flickers require positive durations.");
+            if (!FiniteValue.Is(FlickerEase) || FlickerEase < 0f || FlickerEase > 1f)
+                throw new InvalidOperationException("Ambient light flicker ease requires a value between zero and one.");
         }
     }
 

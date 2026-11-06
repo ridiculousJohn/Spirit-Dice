@@ -32,7 +32,7 @@ namespace Dice.Tests
             {
                 LightIndex = 1, IdleInterval = new AmbientRange(2f, 2f), DarkDuration = new AmbientRange(1f, 1f),
                 SputterFlickers = new AmbientCount(2, 2), FlickerDuration = new AmbientRange(.25f, .25f),
-                DimLevel = new AmbientRange(.2f, .2f), BrightLevel = new AmbientRange(.6f, .6f),
+                DimLevel = new AmbientRange(.2f, .2f), BrightLevel = new AmbientRange(.6f, .6f), FlickerEase = 0f,
             };
             var lighting = new RecordingLighting(2);
             var activity = new EncounterAmbientActivity(Activity(new[] { actor }, Array.Empty<AmbientPropActor>()), lighting,
@@ -42,7 +42,8 @@ namespace Dice.Tests
 
             Assert.That(lighting.Writes.Where(write => write.Index == 0), Is.Empty, "Only the actor's light is driven.");
             var writes = lighting.Writes.Where(write => write.Index == 1).ToList();
-            // Full, then dim and bright flickers out, dark, bright and dim flickers back, and exactly full again.
+            // Full, then dim and bright flickers out, dark, bright and dim flickers back, and exactly full again. Without a
+            // flicker ease the light cuts: only the levels themselves are written, with nothing between them.
             Assert.That(writes.Select(write => write.Value), Is.EqualTo(new[] { 1f, .2f, .6f, 0f, .6f, .2f, 1f }));
             Assert.That(writes[1].Time, Is.EqualTo(2.0).Within(Step), "The outage starts after its idle interval.");
             Assert.That(writes[4].Time - writes[3].Time, Is.EqualTo(1.0).Within(Step), "The light stays dark for its dark duration.");
@@ -52,6 +53,38 @@ namespace Dice.Tests
             var next = lighting.Writes.Where(write => write.Index == 1).Skip(writes.Count).ToList();
             Assert.That(next, Has.Count.EqualTo(1));
             Assert.That(next[0].Time, Is.EqualTo(6.0).Within(Step), "The next outage is timed from the moment the light came back.");
+        }
+
+        [Test]
+        public void EasedFlickersEaseIntoEachLevelThenHoldAndEaseBackToFull()
+        {
+            var actor = new AmbientLightActor
+            {
+                LightIndex = 0, IdleInterval = new AmbientRange(1000f, 1000f), StutterFlickers = new AmbientCount(2, 2),
+                FlickerDuration = new AmbientRange(.5f, .5f), DimLevel = new AmbientRange(.2f, .2f),
+                BrightLevel = new AmbientRange(.8f, .8f), FlickerEase = .5f,
+            };
+            var lighting = new RecordingLighting(1);
+            var asset = Activity(new[] { actor }, Array.Empty<AmbientPropActor>());
+            var activity = new EncounterAmbientActivity(asset, lighting, Array.Empty<EncounterAmbientPropBinding>());
+            activity.Begin(1);
+            Run(activity, lighting, .1f);
+            activity.Jolt();
+            // The dim step eases from full over the first quarter second, then holds; the bright step eases from dim.
+            Run(activity, lighting, .125f);
+            Assert.That(lighting.Values[0], Is.GreaterThan(.2f).And.LessThan(1f), "Mid-ease the dim step lies between full and dim.");
+            Run(activity, lighting, .25f);
+            Assert.That(lighting.Values[0], Is.EqualTo(.2f), "After its ease the dim step holds its level.");
+            Run(activity, lighting, .25f);
+            Assert.That(lighting.Values[0], Is.GreaterThan(.2f).And.LessThan(.8f), "Mid-ease the bright step lies between dim and bright.");
+            Run(activity, lighting, .25f);
+            Assert.That(lighting.Values[0], Is.EqualTo(.8f));
+            // The steps run out after one second; the light then recovers to full over the asset's light recovery.
+            Run(activity, lighting, .25f);
+            Assert.That(lighting.Values[0], Is.GreaterThan(.8f).And.LessThan(1f), "The eased sequence ends by easing back to full.");
+            Run(activity, lighting, asset.LightRecovery);
+            Assert.That(lighting.Values[0], Is.EqualTo(1f));
+            Assert.That(activity.IsAtRest, Is.True);
         }
 
         [Test]

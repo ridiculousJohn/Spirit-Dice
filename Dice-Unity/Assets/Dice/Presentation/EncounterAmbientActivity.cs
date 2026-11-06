@@ -314,24 +314,47 @@ namespace Dice.Presentation
             light.Steps.Clear();
             foreach (var step in steps) light.Steps.Enqueue(step);
             light.StepEnd = start + steps[0].Duration;
+            light.StepFrom = light.Level;
             light.Outage = outage;
             light.RecoveryStart = double.NaN;
         }
 
+        /**
+         * Holds each flicker step's level for its duration, or with a flicker ease first eases from the level the step
+         * started at; when the steps run out the light cuts to full, or with a flicker ease recovers to full.
+         */
         private void UpdateLight(LightActorState light)
         {
+            float ease = light.Actor.FlickerEase;
             while (light.Steps.Count > 0 && time >= light.StepEnd)
             {
-                light.Steps.Dequeue();
-                if (light.Steps.Count > 0) light.StepEnd += light.Steps.Peek().Duration;
-                else if (light.Outage)
+                light.StepFrom = light.Steps.Dequeue().Level;
+                if (light.Steps.Count > 0)
+                {
+                    light.StepEnd += light.Steps.Peek().Duration;
+                    continue;
+                }
+                if (light.Outage)
                 {
                     // The next outage is timed from the moment the light came back on.
                     light.Outage = false;
                     light.NextIdle = light.StepEnd + light.Actor.IdleInterval.Pick(random);
                 }
+                if (ease > 0f)
+                {
+                    // An eased sequence recovers from the level last shown, as a settle does.
+                    light.RecoveryStart = light.StepEnd;
+                    light.RecoveryFrom = light.Level;
+                }
             }
-            if (light.Steps.Count > 0) light.Level = light.Steps.Peek().Level;
+            if (light.Steps.Count > 0)
+            {
+                var step = light.Steps.Peek();
+                float easing = ease * step.Duration;
+                float elapsed = (float)(time - (light.StepEnd - step.Duration));
+                light.Level = easing > 0f && elapsed < easing
+                    ? Mathf.Lerp(light.StepFrom, step.Level, Mathf.SmoothStep(0f, 1f, elapsed / easing)) : step.Level;
+            }
             else if (!double.IsNaN(light.RecoveryStart))
             {
                 float duration = asset.LightRecovery;
@@ -362,6 +385,9 @@ namespace Dice.Presentation
             public readonly AmbientLightActor Actor;
             public readonly Queue<FlickerStep> Steps = new Queue<FlickerStep>();
             public double StepEnd;
+            // The level the current flicker step eases from: the light's level when its sequence started, then the
+            // previous step's level.
+            public float StepFrom = 1f;
             public double NextIdle;
             public bool Outage;
             public float Level = 1f;
