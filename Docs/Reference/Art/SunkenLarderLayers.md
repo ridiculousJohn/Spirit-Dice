@@ -320,7 +320,7 @@ The chimney's painted plume, a thin curl rising from the chimney's cap at about 
 - Values: Rect (0.204038, 0.836124, 0.336876, 0.086124), concept (192, 130, 317, 144); Speed 12 px/s, a slow drifting plume, a little slower than the cauldron steam's rise (14.8 and 22.1 px/s), so the smoke leaves the chimney calmly into still night air; Phase Period 3 s, so a phase pulls the plate at most 36 px, about one painted wisp, before it fades out, and the drawn motion repeats every 1.5 s; Noise Strength 0.5, half a period of phase spread across the plume, so its parts do not fade in unison.
 - Zero displacement: the script draws the layer with no speed over the background, both sampled as the screen samples the plate (bilinear, the background stored at 8 bits) and blended in linear light, at 2x over the plume and at 540 x 960. It differs from the plate by 0 levels everywhere: with no displacement both phases sample the plate where the background does. On the GPU the background is stored at 8 bits and the layer's sample is not, so a difference of at most 1 level is possible where texture filtering lands a value near a rounding boundary.
 
-The narration panel at the arrival beat covers rows 592 and below at phone size, so the whole plume shows above it. John has not seen it in play.
+The narration panel at the arrival beat covers rows 592 and below at phone size, so the whole plume shows above it. John played it and it is fine for now.
 
 ### Arrival review
 
