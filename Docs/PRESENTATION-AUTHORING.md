@@ -82,7 +82,7 @@ Dice > Validate Content (`Editor/ContentValidationWindow.cs`) checks authored co
 2. Host loop ends: for each host a table uses, every track of a looping sequence, its value and slope at the loop's end against its start.
 3. Host transitions: each host's portrait prefab built in a preview scene and driven through `SpiritHostPortrait`'s public API; the largest jump of each layer value as Arrival starts (from Waiting), a Reaction starts and ends, and each outcome state is entered (from Idle), over 128 phases of the longest idle loop (`HostTransitionJumps.IdlePhaseCount`). Position, size, rotation and deformation jumps count only where the layer shows before and after.
 4. Looping animation clips: every clip with Loop Time on, each curve's value and slope at its length against 0.
-5. Response and depth map imports: every texture a scene lighting light, a lit layer (in assets, prefabs or scenes) or a lit-layer material uses as a response map or depth map, listed when it imports with sRGB on.
+5. Data texture imports: every texture a scene lighting light, a lit layer (in assets, prefabs or scenes) or a lit-layer material uses as a response map or depth map, and every picture flow layer's flow texture, listed when it imports with sRGB on. A flow layer's window is read only through its alpha, which sRGB does not change.
 6. Application scene references: `Assets/Scenes/Application.unity`'s recursive dependencies, listed when one is a journey scene asset, host or tray presentation, prefab with an encounter screen or another scene.
 7. Missing scripts: every object of every prefab and scene under `Assets/Dice` and `Assets/Scenes` with a missing script.
 

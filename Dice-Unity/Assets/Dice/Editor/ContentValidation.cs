@@ -374,13 +374,13 @@ namespace Dice.Editor
             return "(property value)";
         }
 
-        // Check 5: data textures (response maps and depth) that import as sRGB color.
+        // Check 5: data textures (response maps, depth and flow) that import as sRGB color.
         private static ContentValidationCheck DataTextureImports()
         {
-            var check = new ContentValidationCheck("5. Response and depth map imports",
+            var check = new ContentValidationCheck("5. Data texture imports",
                 "Every texture used as a response map or depth map, by a scene lighting light or a lit layer (in assets, prefabs " +
-                "and scenes) or held in those slots by a lit-layer material, whose import has sRGB on. The lighting shaders read " +
-                "them as linear data.");
+                "and scenes) or held in those slots by a lit-layer material, and every picture flow layer's flow texture, whose " +
+                "import has sRGB on. The lighting and flow shaders read them as linear data.");
             var referrers = new Dictionary<Texture, List<string>>();
             var order = new List<Texture>();
             void Note(Texture texture, string referrer)
@@ -428,7 +428,8 @@ namespace Dice.Editor
             return check;
         }
 
-        // Response maps and depth of every scene light and lit layer the object serializes, wherever they are nested.
+        // Response maps and depth of every scene light and lit layer, and the flow of every picture flow layer, the object
+        // serializes, wherever they are nested.
         private static void FindDataTextures(UnityEngine.Object owner, string referrer, Action<Texture, string> note)
         {
             using var serialized = new SerializedObject(owner);
@@ -439,7 +440,8 @@ namespace Dice.Editor
                 enter = Contains(property);
                 string field = property.type == nameof(SceneLitLayer) ? nameof(SceneLitLayer.Depth)
                     : property.type == nameof(SceneLightLayer) ? nameof(SceneLightLayer.ResponseMap)
-                    : property.type == nameof(SceneLitLayerLight) ? nameof(SceneLitLayerLight.ResponseMap) : null;
+                    : property.type == nameof(SceneLitLayerLight) ? nameof(SceneLitLayerLight.ResponseMap)
+                    : property.type == nameof(PictureFlowLayer) ? "flow" : null; // The flow layer's serialized field.
                 if (field == null) continue;
                 var texture = property.FindPropertyRelative(field)?.objectReferenceValue as Texture;
                 note(texture, referrer + " (" + owner.GetType().Name + " " + property.propertyPath + ")");

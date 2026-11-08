@@ -303,7 +303,7 @@ Rectangles are each window's bounds with 2 px of margin, in concept px (x, y, w,
 | FogFarWisps | 0, 300, 941, 489 | 11 right | 0.9 | none |
 | FogNear | 0, 689, 941, 330 | 33 right | 0.75 | 0.15, 27 s |
 
-Drawn in that order. The script simulates the layers over the picture as the drift layer draws them. The far haze's window changes 1.9 levels a second at the median from one second to the next, and 7 percent of it, mostly the bright haze right of the porch behind the narration panel, where the painted haze matches the tiles' colour, barely changes. At the arrival beat the narration panel covers rows 592 to 1420 at phone size, so the far haze shows above it and the low fog only at the panel's sides. At 443 wide the journey screen's background squeezes the picture to the screen's width.
+Drawn in that order. The script simulates the layers over the picture as the drift layer draws them. The far haze's window changes 1.9 levels a second at the median from one second to the next, and 7 percent of it, mostly the bright haze right of the porch behind the narration panel, where the painted haze matches the tiles' colour, barely changes. At the arrival beat the narration panel covers rows 592 to 1420 at phone size, so the far haze shows above it and the low fog only at the panel's sides. At 443 wide the journey screen shows the picture at the same scale and crops its sides about its centre (its Horizontal Crop Anchor, 0.5), as "Framing at narrow widths" in [presentation authoring](../../PRESENTATION-AUTHORING.md) describes; its layers follow the crop.
 
 ### Arrival plume
 
