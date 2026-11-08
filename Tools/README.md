@@ -21,7 +21,7 @@ Destructive actions ask for confirmation. In Play Mode the window shows the save
 
 ## Unity tests
 
-Regression tests belong in `Dice-Unity/Assets/Dice/Tests/EditMode` or `PlayMode`, using the existing NUnit test assemblies. Run them through the Unity CLI. If the project is open in the editor, stop and tell John so he can close it or explicitly choose another approach. Do not close the editor or substitute menu-driven checks without his direction.
+Regression tests belong in `Dice-Unity/Assets/Dice/Tests/EditMode` or `PlayMode`, using the existing NUnit test assemblies. Run them through the Unity CLI. If the project is open in the editor, run them in it through the Pipeline package: `unity command --project-path Dice-Unity --timeout <seconds> test run --mode editor` (see "Working practices" in [PROJECT-HANDOFF.md](../Docs/PROJECT-HANDOFF.md)). The batch-mode run below needs the editor closed. Do not close the editor or substitute menu-driven checks without John's direction.
 
 When launching Unity from Codex on this Windows machine, use `exec_command` with `sandbox_permissions: "require_escalated"` for the Unity process. Request this per-command exception on the first launch. The workspace sandbox prevents the editor from connecting to the local Unity licensing client and accessing its profile cache; repeated sandboxed retries time out before tests begin. Normal file edits and inspection can remain sandboxed. Do not change global sandbox settings, Windows ACLs, or Unity licensing files to run these tests.
 
