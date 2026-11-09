@@ -99,8 +99,7 @@ Disturbance playback:
 - Captures: MerchantReviewCapturePlayTests and MerchantDisturbanceCapturePlayTests (flip after reroll, forced reroll on Play Hand, block, candle comparison stills) run only when DICE_SPIRIT_CAPTURE_ROOT is set.
 
 Open items:
-- Tune the merchant's stage targets, hands and rerolls (Moth's placeholder curve) and possibly the 70% haunting chance, which John thinks may be a bit high.
-- Not yet reviewed by John at length: prop motion strength, the prop sounds in game, and the lit merchant's look. The lantern changes the face and shirt little while the candle sits at its neutral home; candle Strength/DepthRange may need tuning in the lighting preview. The cup's lantern warmth leans slightly rose; a slight dark speckle remains under the left hat brim in the unlit textures.
+- John played the merchant and it is fine for now: its stage targets, hands and rerolls (Moth's curve), the 70% haunting chance, prop motion, prop sounds and the lit merchant's look. Balance across the encounters is fine for now. The lantern changes the face and shirt little while the candle sits at its neutral home; candle Strength/DepthRange may need tuning in the lighting preview. The cup's lantern warmth leans slightly rose; a slight dark speckle remains under the left hat brim in the unlit textures.
 - The merchant's acknowledgment reaction is barely visible at phone size; John left it for now, as he did the flip speed.
 - The re-capture of the disturbance clips and candle comparison stills is pending.
 
