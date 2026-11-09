@@ -48,7 +48,7 @@ wood or iron; both are kind 9 with `Art/BoundTree/Tray/BoundTreeTrayRoot.png` at
 tile, and Smoothness 0.5 (see "Bound Tree tray bark" below). The Sunken Larder's are the same with
 `SunkenLarder/SunkenLarderTrayWood.mat` and `SunkenLarderTrayDarkWood.mat` sampling
 `Art/SunkenLarder/Tray/SunkenLarderTrayWood.png` at Smoothness 0.3, a drier surface than the wet bark (see "Sunken
-Larder tray wood" below). The look of both re-skinned trays has not been reviewed by John.
+Larder tray wood" below). John played both encounters and both re-skinned trays are fine for now.
 
 Each `EncounterTablePresentationAsset` references its authored encounter scene and a `SpiritTrayPresentationAsset`. The tray asset references the rig prefab and its render-texture size. The rig and encounter scene own the camera, geometry, materials, lights, and placement. Both dice and modifier bays share the authored camera. The table's scene-lighting asset drives surface illumination.
 
