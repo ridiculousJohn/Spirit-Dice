@@ -7,8 +7,6 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -35,7 +33,7 @@ namespace Dice.Tests
     [Category("Capture")]
     public sealed class BoundTreeReviewCapturePlayTests
     {
-        private const int Width = 540, NarrowWidth = 443, Height = 960;
+        private const int Width = PortraitCapture.Width, NarrowWidth = 443, Height = PortraitCapture.Height;
         // The Bound Tree journey's beats where the nymph first speaks and where the spirit takes up the challenge.
         private const int NymphBeat = 3, ChallengeBeat = 9;
 
@@ -274,10 +272,7 @@ namespace Dice.Tests
         /** Sizes the portrait to the given width at the authoring height. */
         private static IEnumerator SizePortrait(int width)
         {
-            var portrait = ContentReady.Portrait();
-            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-            portrait.sizeDelta = new Vector2(width, Height);
-            portrait.anchoredPosition = Vector2.zero;
+            PortraitCapture.FitPortrait(width);
             yield return null;
             Canvas.ForceUpdateCanvases();
         }
@@ -345,8 +340,7 @@ namespace Dice.Tests
             return result;
         }
 
-        private static DieBindingVisual Visual(SpiritEncounterView view, int mask)
-            => view.DiceTray.Dice[Bay(mask)].GetComponentInChildren<DieBindingVisual>(true);
+        private static DieBindingVisual Visual(SpiritEncounterView view, int mask) => ContentReady.DieVisual(view, Bay(mask));
 
         private static int Bay(int mask)
         {
@@ -390,71 +384,10 @@ namespace Dice.Tests
         /** Renders the portrait canvas at the given width (540 x 960 by default) through a capture camera and writes it as a PNG. */
         private static IEnumerator Capture(string root, string filename, int width = Width)
         {
-            var portrait = ContentReady.Portrait();
-            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-            portrait.sizeDelta = new Vector2(width, Height);
-            portrait.anchoredPosition = Vector2.zero;
-            var canvas = ContentReady.PresentationRoot().GetComponentInChildren<Canvas>(true);
-            var scaler = canvas.GetComponent<CanvasScaler>();
-            bool scalerEnabled = scaler != null && scaler.enabled;
-            RenderMode previousMode = canvas.renderMode;
-            Camera previousCamera = canvas.worldCamera;
-            float previousPlane = canvas.planeDistance;
-            float previousScale = canvas.scaleFactor;
-            var cameraRoot = new GameObject("Bound Tree Review Capture Camera");
-            var camera = cameraRoot.AddComponent<Camera>();
-            var target = new RenderTexture(width, Height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-            Texture2D readback = null;
-            RenderTexture previousTarget = RenderTexture.active;
-            bool previousSrgb = GL.sRGBWrite;
-            try
-            {
-                target.Create();
-                camera.enabled = false;
-                camera.transform.position = new Vector3(0, 0, -100);
-                camera.orthographic = true;
-                camera.orthographicSize = Height / 2f;
-                camera.nearClipPlane = .1f; camera.farClipPlane = 200;
-                camera.cullingMask = ~(1 << SpiritDiceTray.RenderLayer);
-                camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
-                camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.allowHDR = camera.allowMSAA = false;
-                camera.targetTexture = target;
-                canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                canvas.worldCamera = camera;
-                canvas.planeDistance = 1;
-                if (scaler != null) scaler.enabled = false;
-                canvas.scaleFactor = 1;
-                Canvas.ForceUpdateCanvases();
-                yield return null;
-                Canvas.ForceUpdateCanvases();
-                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-                Assert.That(RenderPipeline.SupportsRenderRequest(camera, request), Is.True);
-                RenderPipeline.SubmitRenderRequest(camera, request);
-                RenderTexture.active = target;
-                readback = new Texture2D(width, Height, TextureFormat.RGBA32, false);
-                readback.ReadPixels(new Rect(0, 0, width, Height), 0, 0);
-                readback.Apply();
-                int lit = readback.GetPixels32().Count(pixel => pixel.r > 45 || pixel.g > 45 || pixel.b > 45);
-                Assert.That(lit, Is.GreaterThan(width * Height / 20), filename + ": the portrait must render.");
-                string path = Path.Combine(root, filename);
-                Assert.That(File.Exists(path), Is.False, "Capture output must be fresh.");
-                File.WriteAllBytes(path, readback.EncodeToPNG());
-                TestContext.WriteLine("Bound tree review capture: " + path);
-            }
-            finally
-            {
-                canvas.renderMode = previousMode; canvas.worldCamera = previousCamera; canvas.planeDistance = previousPlane;
-                if (scaler != null) scaler.enabled = scalerEnabled;
-                if (scaler == null || !scalerEnabled) canvas.scaleFactor = previousScale;
-                RenderTexture.active = previousTarget; GL.sRGBWrite = previousSrgb;
-                camera.targetTexture = null;
-                target.Release();
-                UnityEngine.Object.Destroy(target);
-                UnityEngine.Object.Destroy(cameraRoot);
-                if (readback != null) UnityEngine.Object.Destroy(readback);
-            }
-            yield return null;
+            string path = Path.Combine(root, filename);
+            PortraitCapture.FitPortrait(width);
+            yield return PortraitCapture.Still(path, width, 1);
+            TestContext.WriteLine("Bound tree review capture: " + path);
         }
     }
 }

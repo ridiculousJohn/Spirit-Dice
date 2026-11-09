@@ -9,8 +9,6 @@ using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
@@ -26,7 +24,9 @@ namespace Dice.Tests
     [Category("Capture")]
     public sealed class MerchantReviewCapturePlayTests
     {
-        private const int Width = 540, Height = 960, Zoom = 4;
+        private const int Zoom = 4;
+        // A merchant capture must render: more than its pixel count over this divisor are lit.
+        private const int LitDivisor = 10;
         private const int Lantern = 0;
         private static readonly string[] MovingProps = { "HangingPot", "HangingPan", "ShelfBottle", "TrunkLid" };
         private static readonly string[] LeftProps = { "ShelfBottle", "TrunkLid" };
@@ -63,10 +63,7 @@ namespace Dice.Tests
             while (controller.IsBusy && Time.realtimeSinceStartup < deadline) yield return null;
             Assert.That(controller.IsBusy, Is.False);
             yield return null;
-            var portrait = ContentReady.Portrait();
-            portrait.anchorMin = portrait.anchorMax = new Vector2(.5f, .5f);
-            portrait.sizeDelta = new Vector2(Width, Height);
-            portrait.anchoredPosition = Vector2.zero;
+            PortraitCapture.FitPortrait();
 
             var activity = (EncounterAmbientActivity)typeof(SpiritEncounterView)
                 .GetField("ambientActivity", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
@@ -184,89 +181,32 @@ namespace Dice.Tests
         private static IEnumerator Capture(string root, string filename, int zoom, Func<bool> ready,
             params (string File, Region Region)[] crops)
         {
-            int width = Width * zoom, height = Height * zoom;
             var canvas = ContentReady.PresentationRoot().GetComponentInChildren<Canvas>(true);
-            var scaler = canvas.GetComponent<CanvasScaler>();
-            bool scalerEnabled = scaler != null && scaler.enabled;
-            RenderMode previousMode = canvas.renderMode;
-            Camera previousCamera = canvas.worldCamera;
-            float previousPlane = canvas.planeDistance;
-            float previousScale = canvas.scaleFactor;
-            var cameraRoot = new GameObject("Merchant Review Capture Camera");
-            var camera = cameraRoot.AddComponent<Camera>();
-            var target = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-            Texture2D readback = null;
-            RenderTexture previousTarget = RenderTexture.active;
-            bool previousSrgb = GL.sRGBWrite;
-            try
-            {
-                target.Create();
-                camera.enabled = false;
-                camera.transform.position = new Vector3(0, 0, -100);
-                camera.orthographic = true;
-                camera.orthographicSize = Height / 2f;
-                camera.nearClipPlane = .1f; camera.farClipPlane = 200;
-                camera.cullingMask = ~(1 << SpiritDiceTray.RenderLayer);
-                camera.backgroundColor = new Color(.04f, .055f, .05f, 1);
-                camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.allowHDR = camera.allowMSAA = false;
-                camera.targetTexture = target;
-                canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                canvas.worldCamera = camera;
-                canvas.planeDistance = 1;
-                // The layout stays 540 x 960 canvas units; a zoomed capture renders it at a higher pixel density.
-                if (scaler != null) scaler.enabled = false;
-                canvas.scaleFactor = zoom;
-                Canvas.ForceUpdateCanvases();
-                yield return null;
-                float deadline = Time.realtimeSinceStartup + 15;
-                while (ready != null && !ready() && Time.realtimeSinceStartup < deadline) yield return null;
-                Assert.That(ready == null || Time.realtimeSinceStartup < deadline, Is.True, (filename ?? crops[0].File) + " condition");
-                Canvas.ForceUpdateCanvases();
-                TestContext.WriteLine("Capture canvas " + canvas.pixelRect.size + " at scale " + canvas.scaleFactor);
-                var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-                Assert.That(RenderPipeline.SupportsRenderRequest(camera, request), Is.True);
-                RenderPipeline.SubmitRenderRequest(camera, request);
-                RenderTexture.active = target;
-                readback = new Texture2D(width, height, TextureFormat.RGBA32, false);
-                readback.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                readback.Apply();
-                int lit = readback.GetPixels32().Count(pixel => pixel.r > 45 || pixel.g > 45 || pixel.b > 45);
-                Assert.That(lit, Is.GreaterThan(width * height / 10), "The portrait must render.");
-                if (filename != null) Write(root, filename, readback);
-                foreach (var crop in crops)
+            // The layout stays 540 x 960 canvas units; a zoomed capture renders it at a higher pixel density.
+            yield return PortraitCapture.Render(PortraitCapture.Width, zoom, filename ?? crops[0].File, ready, LitDivisor,
+                (readback, camera) =>
                 {
-                    RectInt region = crop.Region(camera, width, height);
-                    var part = new Texture2D(region.width, region.height, TextureFormat.RGBA32, false);
-                    try
+                    TestContext.WriteLine("Capture canvas " + canvas.pixelRect.size + " at scale " + canvas.scaleFactor);
+                    if (filename != null) Write(root, filename, readback);
+                    foreach (var crop in crops)
                     {
-                        part.SetPixels(readback.GetPixels(region.x, region.y, region.width, region.height));
-                        part.Apply();
-                        Write(root, crop.File, part);
+                        RectInt region = crop.Region(camera, readback.width, readback.height);
+                        var part = new Texture2D(region.width, region.height, TextureFormat.RGBA32, false);
+                        try
+                        {
+                            part.SetPixels(readback.GetPixels(region.x, region.y, region.width, region.height));
+                            part.Apply();
+                            Write(root, crop.File, part);
+                        }
+                        finally { UnityEngine.Object.Destroy(part); }
                     }
-                    finally { UnityEngine.Object.Destroy(part); }
-                }
-            }
-            finally
-            {
-                canvas.renderMode = previousMode; canvas.worldCamera = previousCamera; canvas.planeDistance = previousPlane;
-                if (scaler != null) scaler.enabled = scalerEnabled;
-                if (scaler == null || !scalerEnabled) canvas.scaleFactor = previousScale;
-                RenderTexture.active = previousTarget; GL.sRGBWrite = previousSrgb;
-                camera.targetTexture = null;
-                target.Release();
-                UnityEngine.Object.Destroy(target);
-                UnityEngine.Object.Destroy(cameraRoot);
-                if (readback != null) UnityEngine.Object.Destroy(readback);
-            }
-            yield return null;
+                });
         }
 
         private static void Write(string root, string filename, Texture2D pixels)
         {
             string path = Path.Combine(root, filename);
-            Assert.That(File.Exists(path), Is.False, "Capture output must be fresh.");
-            File.WriteAllBytes(path, pixels.EncodeToPNG());
+            PortraitCapture.Write(path, pixels);
             TestContext.WriteLine("Merchant review capture: " + path);
         }
 

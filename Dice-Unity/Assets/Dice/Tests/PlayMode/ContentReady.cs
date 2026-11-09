@@ -146,22 +146,50 @@ namespace Dice.Tests
          */
         internal static IEnumerator EnterEncounter(SpiritEncounterController controller, EncounterJourneyAsset journey, ulong seed)
         {
+            yield return ShowInvitation(controller, journey);
+            yield return AcceptEncounter(controller, seed);
+            yield return Idle(controller);
+            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
+        }
+
+        /**
+         * Opens the journey from the investigation board, completing its prerequisites first, and advances it to the
+         * invitation before its encounter.
+         */
+        internal static IEnumerator ShowInvitation(SpiritEncounterController controller, EncounterJourneyAsset journey)
+        {
+            yield return OpenJourney(controller, journey);
+            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
+                controller.AdvanceJourney();
+        }
+
+        /** Opens the journey from the investigation board at its first beat, completing its prerequisites first. */
+        internal static IEnumerator OpenJourney(SpiritEncounterController controller, EncounterJourneyAsset journey)
+        {
             controller.ReturnToInvestigation();
             yield return Routed(controller);
             SeedJourneyPrerequisites(controller, journey);
             controller.SelectEncounter(journey);
             yield return Routed(controller);
-            while (!(controller.SelectedJourney.Beats[controller.BeatIndex] is InvitationBeat))
-                controller.AdvanceJourney();
+        }
+
+        /**
+         * Accepts the shown invitation with the given session seed and passes any pre-encounter screen, leaving the opening
+         * roll to play.
+         */
+        internal static IEnumerator AcceptEncounter(SpiritEncounterController controller, ulong seed)
+        {
             controller.ConfigureSeedPolicy(true, seed);
             controller.AcceptEncounter();
             yield return Routed(controller);
             // Encounters that introduce their additions before play show the pre-encounter screen first.
             var charms = EncounterView(controller).JourneyView.EncounterCharms;
             if (charms.IsOpen) charms.BeginButton.onClick.Invoke();
-            yield return Idle(controller);
-            Assert.That(controller.Snapshot, Is.Not.Null, controller.Status.ToString());
         }
+
+        /** The per-die visual a rule presenter created on the die in the bay, such as binding roots or rot mould. */
+        internal static DieBindingVisual DieVisual(SpiritEncounterView view, int bay)
+            => view.DiceTray.Dice[bay].GetComponentInChildren<DieBindingVisual>(true);
 
         /**
          * A copy of the catalog in which the encounter has every stage target at 1 and is otherwise as authored, so each
