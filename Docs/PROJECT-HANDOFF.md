@@ -327,13 +327,13 @@ Decided with the script: "If you hear them calling, it isn't them" stays, so Cha
 
 #### Selected mechanic directions
 
-John selected four encounter mechanic directions: carry-over, binding, rot, and haunting, plus the three carry-over charm families below. These are recorded design directions, not authorization to implement. For carry-over, the proposed flow chooses one die from a played hand to retain its face and position in the next opening roll; the other four roll normally. Rerolling the carried die permanently removes its carried status for that hand, even if the same face returns.
+John selected four encounter mechanic directions: carry-over, binding, rot, and haunting, plus the three carry-over charm families below. These are recorded design directions, not authorization to implement. Carry-over is provided by an item (see "Items (effect providers)" below): the die in the item's bay when a hand is played keeps its face and bay into the next opening roll; the other four roll normally. A player reroll of the carried die removes its carried status for that hand, even if the same face returns.
 
 - Keepsake: play a hand containing a carried die.
 - Kindred Spirits: play a hand where at least two other dice match the carried die.
 - Lone Traveler: play a hand where no other die matches the carried die.
 
-Names are provisional. Each family can use the usual Base, Mult, combined, and reroll effects. All three require surviving carried status. Initially they are encounter-only and do not enter ordinary pools or permanent Collection; the future equipment/deck direction below could open them to other encounters. John likes their independence from existing mechanics. Crossing Stones was suggested but is not among the three selected families. Exact values, selection interaction, and stage-boundary behavior remain to be settled.
+Names are provisional. Each family can use the usual Base, Mult, combined, and reroll effects. All three require surviving carried status. They are offered only in encounters where carry-over is in play, whatever provides it, and do not enter permanent Collection. John likes their independence from existing mechanics. Crossing Stones was suggested but is not among the three selected families. Exact values remain to be settled.
 
 John also wants hostile encounter rules for corrupted spirits, ghosts, or a swamp hag. He likes binding and agreed the following rot design for the rot encounter. These are design directions, not implementation authorization.
 
@@ -361,9 +361,21 @@ Haunting is unpredictable interference by a third participant at the table. The 
 
 Haunting and protection are implemented for the merchant as specified above; the extensions listed remain design directions only.
 
+#### Items (effect providers)
+
+Planned design, not implemented; the order of work is in Docs/work/outstanding.md. An effect that helps the player (the candle's ward, carry-over) is written once and is independent of what provides it: a friend lending an item for one encounter, or an item the player owns and always carries. A haunted area could put a poltergeist in every encounter and let the player find an item that wards against it everywhere.
+
+- An item is a content asset with a typed id (the profile stores owned items): one or more rule assets and optionally a table piece with its interactions authored inline. It holds no name, art or text; an item presentation references it and holds its name, icon, prop prefab, rule card and presenters. An item without a piece is allowed.
+- Providers: an encounter lends items for that encounter only. The player owns items granted by any source, such as a beat before or after an encounter (an Illustration beat in which the player finds an old necklace in the mud on the way to a house) or a journey's completion; a granted item is owned however it was granted. Until equipping exists, every owned item is carried into every encounter; choosing which items to carry belongs on the future deck-building screen.
+- Session: the effects in play are the encounter's own rules and pieces plus those of every provided item. An item is in play once, whoever provides it; two different items with the same kind of effect both apply. A rule's reference to a piece is checked against the session, not the encounter. Rule states stay saved under each rule's typed id; piece states are saved under their piece's typed id (a run save format change).
+- Presentation: each table scene authors a resting spot off the dice for carried items, as it authors the candle's home; the prop comes from the item's presentation; scene lights follow a piece only where the scene authors a piece light for it, and elsewhere the prop shows its own glow; the item's rule card shows on the invitation and the HUD like an encounter rule.
+- The merchant's candle becomes an item the merchant encounter lends, with unchanged behaviour.
+- Carry-over is an item: a piece with the position interaction, movable whenever the game accepts input during a hand. When a hand is played, the die in its bay keeps its face and bay into the next opening roll and the other four roll; at the neutral slot nothing carries. Only a player reroll ends carried status; haunting's disturbances and rot change the die's face but keep its status, as disturbed dice do not count as rerolled. A withered die does not carry. The first hand of an encounter carries nothing; a carry survives a stage clear and ends with the encounter. Its state is the rule's own typed save class. Keepsake, Kindred Spirits and Lone Traveler are offered only in encounters where carry-over is in play, whatever provides it: a new offer condition by which a family requires an effect rather than a particular encounter.
+- The first encounter to lend carry-over is in Chapter 3: a friend lends it against a hostile enemy. Its story is not designed.
+
 #### Future equipment, decks, and specialized strategies
 
-John proposed a basic inventory slot system in which equipped talismans grant ongoing abilities, such as carry-over. This could arrive alongside deck building and let currently encounter-only charm families become usable elsewhere. This is a future direction, not a finalized equipment specification or current implementation task.
+John proposed a basic inventory slot system in which equipped talismans grant ongoing abilities, such as carry-over. Talismans are items (see "Items (effect providers)" above); equipping particular items belongs on the deck-building screen. This could arrive alongside deck building and let currently encounter-only charm families become usable elsewhere. This is a future direction, not a finalized equipment specification or current implementation task.
 
 - Proposed separation: equipped talismans provide abilities; decks select charms eligible for ordinary encounter offers; charms actually acquired during the encounter provide their effects. Permanent ownership, equipment, deck membership, and current-run charms remain distinct.
 - Specialized families could eventually require an available mechanic rather than a particular spirit. An encounter's native carry-over rule or an equipped carry-over talisman could support the same families. Ownership alone does not supply the ability.
