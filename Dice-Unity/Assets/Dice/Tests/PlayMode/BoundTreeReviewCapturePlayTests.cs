@@ -262,9 +262,10 @@ namespace Dice.Tests
             var losing = new EncounterDefinition(definition.Identity,
                 definition.Stages.Select((stage, index) => index == 0
                     ? new StageDefinition(1000000, 1, stage.StartingRerolls, stage.ExitBehavior) : stage),
-                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
+                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.OwnRules,
                 definition.UnlockMilestones, definition.EncounterModifierIds,
-                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
+                definition.UnlockRewardModifierIds, definition.OwnPieces, definition.EncounterModifiersFirstClearedStageNumber,
+                definition.Items);
             return new MechanicalCatalog("bound-tree-defeat-capture.v1", authored.Hands,
                 authored.Encounters.Select(value => value.Identity == definition.Identity ? losing : value), authored.Modifiers);
         }

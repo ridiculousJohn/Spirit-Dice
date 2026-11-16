@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,7 +49,7 @@ namespace Dice.Tests
             };
             var view = JourneyView();
             view.Build(null);
-            view.Bind(controls, null);
+            view.Bind(controls, EncounterControls(TestEncounters.IdOf("encounter.rules")));
 
             view.Refresh();
             Assert.That(ShownRows(view), Is.EqualTo(new[] { "First rule / First rule text", "Second rule / Second rule text" }));
@@ -118,5 +122,46 @@ namespace Dice.Tests
         }
 
         private T Create<T>() where T : ScriptableObject => ui.Own(ScriptableObject.CreateInstance<T>());
+
+        /** Controls whose catalog holds a one-stage encounter of the id with no rules or items, and an empty item skin's presentation. */
+        private ISpiritEncounterControls EncounterControls(EncounterDefinition.Id encounterId)
+        {
+            var encounter = new EncounterDefinition(encounterId, new[] { new StageDefinition(100, 3, 0) });
+            var catalog = new MechanicalCatalog("invitation-rules.v1", TestContent.Hands(), new[] { encounter });
+            var content = new MechanicalContent(catalog, Array.Empty<KeyValuePair<ModifierAsset, ModifierDefinition>>());
+            return new Controls(catalog, new ItemPresentationCatalog(Create<ItemSkinAsset>(), content));
+        }
+
+        private sealed class Controls : ISpiritEncounterControls
+        {
+            public Controls(MechanicalCatalog catalog, ItemPresentationCatalog items)
+            {
+                Catalog = catalog;
+                ItemPresentation = items;
+            }
+
+            public EncounterSnapshot Snapshot => null;
+            public MechanicalCatalog Catalog { get; }
+            public ModifierPresentationCatalog ModifierPresentation => null;
+            public ItemPresentationCatalog ItemPresentation { get; }
+            public HandPreview Preview => null;
+            public IReadOnlyList<ModifierInspection> ModifierInspections => Array.Empty<ModifierInspection>();
+            public int SelectedMask => 0;
+            public bool IsBusy => false;
+            public SpiritStatus Status => SpiritStatus.None;
+            public event Action StateChanged { add { } remove { } }
+            public event Action<Dice.Engine.Resolution> Resolved { add { } remove { } }
+            public void ToggleDie(int index) { }
+            public void Reroll() { }
+            public void PlayHand() { }
+            public void InteractWithPiece(TablePieceDefinition.Id pieceId, int interactionIndex, PieceInteractionInput input) { }
+            public void RefreshRewards() { }
+            public void ChooseReward(long offerId, long optionId) { }
+            public void StartNew() { }
+            public void Save() { }
+            public void Load() { }
+            public void Abandon() { }
+            public void CompletePresentation() { }
+        }
     }
 }

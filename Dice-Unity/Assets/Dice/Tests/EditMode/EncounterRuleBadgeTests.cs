@@ -130,8 +130,8 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks that a table's HUD card is the card flagged as shown on the HUD wherever it sits among the table's cards,
-         * and that a table flagging none has no HUD card. Fails if an unflagged card is shown or the flagged card is not.
+         * Checks that the HUD card of a table's cards is the card flagged as shown on the HUD wherever it sits among them,
+         * and that cards flagging none have no HUD card. Fails if an unflagged card is shown or the flagged card is not.
          */
         [Test]
         public void TheTableShowsItsFlaggedCardOnTheHud()
@@ -139,13 +139,13 @@ namespace Dice.Tests
             var unflagged = Presentation(TestRules.IdOf("unflagged"), ModifierPhase.PlayerReroll, "unflagged", "unflagged",
                 shownOnHud: false);
             var flagged = Presentation(TestRules.IdOf("flagged"), ModifierPhase.PlayHand, "flagged", "flagged", shownOnHud: true);
-            Assert.That(Table("table.flagged", unflagged, flagged).HudRuleCard, Is.SameAs(flagged));
-            Assert.That(Table("table.unflagged", unflagged).HudRuleCard, Is.Null);
+            Assert.That(HudCard(Table("table.flagged", unflagged, flagged)), Is.SameAs(flagged));
+            Assert.That(HudCard(Table("table.unflagged", unflagged)), Is.Null);
         }
 
         /**
-         * Checks that a table flagging more than one card as shown on the HUD fails with a message naming the table. Fails if
-         * such a table yields a card or its failure does not name it.
+         * Checks that cards flagging more than one card as shown on the HUD fail with a message naming where they are. Fails
+         * if such cards yield a card or the failure does not name the table.
          */
         [Test]
         public void ATableFlaggingMoreThanOneHudCardFails()
@@ -153,9 +153,12 @@ namespace Dice.Tests
             var table = Table("table.two-flagged",
                 Presentation(TestRules.IdOf("first"), ModifierPhase.PlayerReroll, "first", "first", shownOnHud: true),
                 Presentation(TestRules.IdOf("second"), ModifierPhase.PlayHand, "second", "second", shownOnHud: true));
-            var failure = Assert.Throws<InvalidOperationException>(() => _ = table.HudRuleCard);
+            var failure = Assert.Throws<InvalidOperationException>(() => HudCard(table));
             Assert.That(failure.Message, Does.Contain("table.two-flagged"));
         }
+
+        private static EncounterRulePresentationAsset HudCard(EncounterTablePresentationAsset table)
+            => EncounterRulePresentationAsset.HudCardOf(table.RulePresentations, "The rule cards of encounter table '" + table.name + "'");
 
         /**
          * Checks that rule wording fills each placeholder the rule's snapshot supplies, for its availability, and keeps any

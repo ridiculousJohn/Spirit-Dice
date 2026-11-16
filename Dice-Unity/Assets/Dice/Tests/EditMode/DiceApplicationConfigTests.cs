@@ -14,6 +14,7 @@ namespace Dice.Tests
         private MechanicalCatalogAsset catalogAsset;
         private EncounterJourneyCatalogAsset journeyCatalog;
         private ModifierSkinAsset skin;
+        private ItemSkinAsset itemSkin;
         private readonly SyntheticCharmAssets content = new SyntheticCharmAssets();
 
         [SetUp]
@@ -23,8 +24,10 @@ namespace Dice.Tests
             catalogAsset = ScriptableObject.CreateInstance<MechanicalCatalogAsset>();
             journeyCatalog = ScriptableObject.CreateInstance<EncounterJourneyCatalogAsset>();
             skin = ScriptableObject.CreateInstance<ModifierSkinAsset>();
+            itemSkin = ScriptableObject.CreateInstance<ItemSkinAsset>();
             Set("catalogAsset", catalogAsset);
             Set("modifierSkin", skin);
+            Set("itemSkin", itemSkin);
             Set("encounter", content.Encounter("encounter.test"));
         }
 
@@ -35,6 +38,7 @@ namespace Dice.Tests
             UnityEngine.Object.DestroyImmediate(catalogAsset);
             UnityEngine.Object.DestroyImmediate(journeyCatalog);
             UnityEngine.Object.DestroyImmediate(skin);
+            UnityEngine.Object.DestroyImmediate(itemSkin);
             content.Dispose();
         }
 

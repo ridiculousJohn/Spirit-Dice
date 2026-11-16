@@ -367,13 +367,14 @@ namespace Dice.Tests
             var unlockIds = unlockDefinitions.Select(value => value.Identity).ToArray();
             var shortEncounter = new EncounterDefinition(definition.Identity,
                 Enumerable.Range(0, stageCount).Select(_ => new StageDefinition(winning ? 1 : 1000000, 1, 0)),
-                rules: definition.Rules,
+                rules: definition.OwnRules,
                 unlockMilestones: winning
                     ? Enumerable.Range(1, stageCount).Select(stage => new ModifierUnlockMilestone(stage)).ToArray()
                     : Array.Empty<ModifierUnlockMilestone>(),
                 encounterModifierIds: definition.EncounterModifierIds, unlockRewardModifierIds: unlockIds,
-                pieces: definition.Pieces,
-                encounterModifiersFirstClearedStageNumber: Math.Min(definition.EncounterModifiersFirstClearedStageNumber, stageCount));
+                pieces: definition.OwnPieces,
+                encounterModifiersFirstClearedStageNumber: Math.Min(definition.EncounterModifiersFirstClearedStageNumber, stageCount),
+                items: definition.Items);
             var entries = controller.JourneyCatalog.Entries.Select(value => value == authored ? journey : value).ToArray();
             var mechanical = new MechanicalCatalog("ending-playmode.v1", original.Hands,
                 entries.Where(value => value.Encounters.Any())

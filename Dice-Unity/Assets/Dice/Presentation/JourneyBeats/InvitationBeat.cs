@@ -4,14 +4,14 @@ using Dice.Engine;
 namespace Dice.Presentation
 {
     /**
-     * The offer to play the Encounter beat that directly follows it: shows the rules of that encounter's table and waits for
-     * Accept. Accepting, skipping the intro and retrying all land here.
+     * The offer to play the Encounter beat that directly follows it: shows the rule cards in play at that encounter's table
+     * and waits for Accept. Accepting, skipping the intro and retrying all land here.
      */
     [Serializable]
     public sealed class InvitationBeat : EncounterJourneyBeat
     {
         internal override void Show(IJourneyStage stage, EncounterJourneyAsset journey, int index)
-            => stage.ShowInvitation(journey.TableSceneAt(index + 1));
+            => stage.ShowInvitation(journey.TableSceneAt(index + 1), journey.EncounterBeatAt(index + 1).Encounter);
 
         internal override void Validate(EncounterJourneyAsset journey, int index, MechanicalCatalog catalog)
         {

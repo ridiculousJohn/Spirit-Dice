@@ -382,6 +382,7 @@ namespace Dice.Tests
             public EncounterSnapshot Snapshot => null;
             public MechanicalCatalog Catalog { get; }
             public ModifierPresentationCatalog ModifierPresentation { get; }
+            public ItemPresentationCatalog ItemPresentation => null;
             public HandPreview Preview => null;
             public IReadOnlyList<ModifierInspection> ModifierInspections => Array.Empty<ModifierInspection>();
             public int SelectedMask => 0;

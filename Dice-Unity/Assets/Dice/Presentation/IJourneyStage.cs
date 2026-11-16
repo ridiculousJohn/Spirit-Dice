@@ -26,8 +26,8 @@ namespace Dice.Presentation
         /** Shows the charm the narration names, filling its {charm} placeholder with the charm's family. */
         void ShowCharm(ModifierAsset charm);
 
-        /** Shows the table's rule cards and Accept in place of Continue. */
-        void ShowInvitation(EncounterTablePresentationAsset table);
+        /** Shows the rule cards in play at the table for the encounter, and Accept in place of Continue. */
+        void ShowInvitation(EncounterTablePresentationAsset table, EncounterAsset encounter);
 
         /** Places the picture's background and foreground at offsets, in picture widths and heights, and scales. */
         void MovePicture(Vector2 backgroundOffset, float backgroundScale, Vector2 foregroundOffset, float foregroundScale);

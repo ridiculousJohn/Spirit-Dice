@@ -47,6 +47,7 @@ namespace Dice.Presentation
         [SerializeField] private SpiritHostPresentationAsset hostPresentation;
         [SerializeField] private SpiritAudioTheme audioTheme;
         [SerializeField] private SpiritTrayPresentationAsset trayPresentation;
+        [Tooltip("Cards presenting the encounter's own rules; the cards of the items it lends come from their item presentations.")]
         [SerializeField] private EncounterRulePresentationAsset[] rulePresentations = Array.Empty<EncounterRulePresentationAsset>();
         [Tooltip("Presentation-only light outages and prop jolts while the encounter is played; empty for a still table.")]
         [SerializeField] private EncounterAmbientActivityAsset ambientActivity;
@@ -98,24 +99,6 @@ namespace Dice.Presentation
                 if (rule == null || !ruleIds.Add(rule.RuleId))
                     throw new FormatException("The rule cards of the table scene " + name + " of " + beat +
                         " must be present and present different rules.");
-            }
-        }
-
-        /** The rule card flagged as shown on the HUD, or null when no card is; more than one flagged card fails. */
-        public EncounterRulePresentationAsset HudRuleCard
-        {
-            get
-            {
-                EncounterRulePresentationAsset shown = null;
-                foreach (var card in RulePresentations)
-                {
-                    if (card == null || !card.ShownOnHud) continue;
-                    if (shown != null)
-                        throw new InvalidOperationException("Encounter table '" + name +
-                            "' flags more than one rule card as shown on the HUD: '" + shown.name + "' and '" + card.name + "'.");
-                    shown = card;
-                }
-                return shown;
             }
         }
     }

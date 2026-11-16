@@ -114,7 +114,10 @@ namespace Dice.Tests
                 shot.Mark("play-hand");
                 var scored = played.Events.OfType<HandScoredEvent>().Single();
                 Assert.That(scored.Score.Category, Is.EqualTo(plan.Played), "The hand must score the searched rank.");
-                scoring.Expect(new SpiritScoringStepBuilder(controller.Catalog).BuildHand(scored, 0, 0, view.TablePresentation.RulePresentations));
+                // The rule cards in play, as the view's score playback builds the steps from them.
+                var cards = controller.ItemPresentation.CardsInPlay(view.TablePresentation,
+                    controller.Catalog.GetEncounter(controller.Snapshot.EncounterId)).Cards;
+                scoring.Expect(new SpiritScoringStepBuilder(controller.Catalog).BuildHand(scored, 0, 0, cards));
                 yield return shot.Until(() => scoring.TotalShown, "The scoring did not reach its total.");
                 yield return shot.For(FoxTail);
             }

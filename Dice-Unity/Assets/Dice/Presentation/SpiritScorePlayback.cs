@@ -13,13 +13,13 @@ namespace Dice.Presentation
         ISpiritEncounterControls Controls { get; }
         IEncounterJourneyControls Journey { get; }
         SpiritHostPortrait Host { get; }
-        /** The configured table's rule cards. */
+        /** The rule cards in play at the table for the shown encounter. */
         IReadOnlyList<EncounterRulePresentationAsset> RuleCards { get; }
-        /** The configured table's rule card shown on the HUD, or null when the table shows none. */
+        /** The card in play shown on the HUD, or null when none is. */
         EncounterRulePresentationAsset HudRuleCard { get; }
         /** The table's ambient activity, or null when the encounter authors none. */
         EncounterAmbientActivity Ambient { get; }
-        /** The presenters of the table's rules, or null when no rule card references one. */
+        /** The presenters of the rule cards in play, or null when no card references one. */
         EncounterRulePresenters RulePresenters { get; }
         void SetDiceSelection(int mask);
         void HideRewardsAndEnding();

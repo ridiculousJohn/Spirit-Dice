@@ -202,7 +202,7 @@ namespace Dice.Editor
             hud.ShowHandCounters(SampleHands, SampleRerolls);
             hud.ShowIdleScore(0, 0, null);
             hud.ShowStatus("COMPOSITION PREVIEW");
-            var rule = table.HudRuleCard;
+            var rule = HudRuleCard;
             if (ruleMessage != null) hud.RenderEncounterRuleBadge(rule, true, true, ruleMessage);
             else hud.RenderEncounterRule(ruleSnapshot, rule);
         }
@@ -216,7 +216,7 @@ namespace Dice.Editor
         {
             ruleSnapshot = null;
             ruleMessage = null;
-            if (table.HudRuleCard == null) return;
+            if (HudRuleCard == null) return;
             EnsureContent();
             var encounter = configuration.JourneyCatalog?.Entries
                 .Where(entry => entry != null)
@@ -230,6 +230,11 @@ namespace Dice.Editor
             }
             ruleSnapshot = EncounterSession.CreateEncounter(content.Catalog, encounter.Identity, PreviewSeed).Snapshot;
         }
+
+        // The preview shows the badge of the table's own flagged card; a flagged card of an item an encounter lends shows only
+        // in play, where the cards in play are known.
+        private EncounterRulePresentationAsset HudRuleCard
+            => EncounterRulePresentationAsset.HudCardOf(table.RulePresentations, "The rule cards of encounter table '" + table.name + "'");
 
         /** Loads the application's configuration and builds its content once per staged preview. */
         private void EnsureContent()

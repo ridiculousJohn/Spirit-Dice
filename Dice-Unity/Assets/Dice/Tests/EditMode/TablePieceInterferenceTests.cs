@@ -9,7 +9,7 @@ using static Dice.Tests.TestContent;
 
 namespace Dice.Tests
 {
-    /** Table pieces, the die interference rule and the bay ward rule, each on a minimal test-only encounter. */
+    /** Table pieces, items, the die interference rule and the bay ward rule, each on a minimal test-only encounter. */
     public sealed class TablePieceInterferenceTests
     {
         private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.test");
@@ -17,6 +17,8 @@ namespace Dice.Tests
         private const int InteractionIndex = 0;
         private static readonly EncounterRuleDefinition.Id HauntingId = TestRules.IdOf("haunting");
         private static readonly EncounterRuleDefinition.Id WardId = TestRules.IdOf("ward");
+        private static readonly ItemDefinition.Id ItemId = new ItemDefinition.Id(new Guid("6d1f1b0c2a7e4c1e9b0a5f3c8e2d4a71"));
+        private static readonly TablePieceDefinition.Id ItemPieceId = TestPieces.IdOf("piece.item");
         private const int AllButFirstBay = 0b11110;
         private const ulong Seed = 14;
 
@@ -85,15 +87,56 @@ namespace Dice.Tests
             Assert.That(Position(free), Is.EqualTo(PiecePosition.Bay(3)));
         }
 
-        /** Checks a moved piece's position survives a JSON save and restore / fails if the restored piece returns to its start. */
+        /**
+         * Checks the moved positions of the encounter's piece and an item's piece survive a JSON save and restore, each found
+         * by its piece's id whatever the order of the saved pieces / fails if a restored piece returns to its start or takes
+         * the other piece's state.
+         */
         [Test]
         public void PiecePositionSurvivesSaveAndRestore()
         {
-            var catalog = Catalog(chance: 0);
+            var catalog = Catalog(chance: 0, itemWard: true);
             var session = Session(catalog);
             Execute(session, Move(PiecePosition.Bay(3)));
-            Assert.That(Position(Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave())))),
-                Is.EqualTo(PiecePosition.Bay(3)));
+            Execute(session, Move(ItemPieceId, PiecePosition.Bay(1)));
+            var save = Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave()));
+            Array.Reverse(save.Pieces);
+            var restored = Restore(catalog, save);
+            Assert.That(Position(restored, PieceId), Is.EqualTo(PiecePosition.Bay(3)));
+            Assert.That(Position(restored, ItemPieceId), Is.EqualTo(PiecePosition.Bay(1)));
+        }
+
+        /**
+         * Checks an encounter has its own rules and pieces in play and then those of its item, and that a ward the item
+         * provides protects the bay under the item's piece / fails if the order differs or the item's ward does not block.
+         */
+        [Test]
+        public void ItemRulesAndPieceFollowTheEncountersOwnAndItsWardProtectsTheBayUnderItsPiece()
+        {
+            var catalog = Catalog(chance: 100, itemWard: true);
+            var encounter = catalog.GetEncounter(TestContent.EncounterId);
+            Assert.That(encounter.Rules.Select(rule => rule.Identity), Is.EqualTo(new[] { HauntingId, WardId }));
+            Assert.That(encounter.Pieces.Select(piece => piece.Identity), Is.EqualTo(new[] { PieceId, ItemPieceId }));
+            var session = Session(catalog);
+            Execute(session, Move(ItemPieceId, PiecePosition.Bay(0)));
+            var blocked = Execute(session, new RerollDiceAction(AllButFirstBay));
+            Assert.That(blocked.Events.OfType<DisturbanceBlockedEvent>().Single().ProtectingRuleId, Is.EqualTo(WardId));
+            Assert.That(blocked.Events.OfType<DieDisturbedEvent>(), Is.Empty);
+        }
+
+        /** Checks a rule or piece both the encounter and its item provide fails, naming it / fails if a duplicate constructs. */
+        [Test]
+        public void ARuleOrPieceProvidedByTheEncounterAndAnItemFails()
+        {
+            var stages = new[] { new StageDefinition(10, 1, 1) };
+            TablePieceDefinition Piece() => new TablePieceDefinition(PieceId,
+                new[] { new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand) });
+            var rule = Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId, stages,
+                rules: new[] { Ward() }, pieces: new[] { Piece() }, items: new[] { new ItemDefinition(ItemId, new[] { Ward() }) }));
+            Assert.That(rule.Message, Does.Contain(WardId.ToString()));
+            var piece = Assert.Throws<ArgumentException>(() => new EncounterDefinition(TestContent.EncounterId, stages,
+                pieces: new[] { Piece() }, items: new[] { new ItemDefinition(ItemId, piece: Piece()) }));
+            Assert.That(piece.Message, Does.Contain(PieceId.ToString()));
         }
 
         /** Checks a save carries the encounter's own pieces and only the rules with saved state / fails if pieces or stateless rules are mis-saved. */
@@ -335,7 +378,7 @@ namespace Dice.Tests
             bool afterPlay = true, bool ward = false, DieInterferenceKind[] blocked = null,
             PieceMovementTiming timing = PieceMovementTiming.DuringHand, bool allowsNeutral = true, int allowedBays = DiceValues.AllMask,
             int startingBay = -1, bool haunting = true, StageDefinition[] stages = null,
-            ModifierDefinition[] modifiers = null)
+            ModifierDefinition[] modifiers = null, bool itemWard = false)
         {
             var rules = new System.Collections.Generic.List<EncounterRuleDefinition>();
             if (haunting) rules.Add(new DieInterferenceRuleDefinition(HauntingId, chance, rerollWeight, flipWeight, afterReroll, afterPlay));
@@ -343,20 +386,28 @@ namespace Dice.Tests
             var start = startingBay < 0 ? PiecePosition.Neutral : PiecePosition.Bay(startingBay);
             var pieceList = new[] { new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(start, timing,
                 allowsNeutral, allowedBays) }) };
+            // The item provides a ward over its own piece.
+            var items = itemWard ? new[] { new ItemDefinition(ItemId, new[] { Ward(blocked, ItemPieceId) },
+                new TablePieceDefinition(ItemPieceId, new[] { new PositionInteractionDefinition(PiecePosition.Neutral, timing) })) } : null;
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 stages ?? new[] { new StageDefinition(1000000, 20, 20) }, startingModifiers: modifiers?.Select(value => value.Identity),
-                rules: rules, pieces: pieceList);
+                rules: rules, pieces: pieceList, items: items);
             return new MechanicalCatalog("test.table_pieces", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
-        private static BayWardRuleDefinition Ward(DieInterferenceKind[] blocked = null) => new BayWardRuleDefinition(WardId, PieceId,
-            blocked ?? new[] { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip });
+        private static BayWardRuleDefinition Ward(DieInterferenceKind[] blocked = null, TablePieceDefinition.Id? piece = null)
+            => new BayWardRuleDefinition(WardId, piece ?? PieceId, blocked ?? new[] { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip });
 
-        private static InteractWithPieceAction Move(PiecePosition position)
-            => new InteractWithPieceAction(PieceId, InteractionIndex, new MovePieceInput(position));
+        private static InteractWithPieceAction Move(PiecePosition position) => Move(PieceId, position);
+
+        private static InteractWithPieceAction Move(TablePieceDefinition.Id piece, PiecePosition position)
+            => new InteractWithPieceAction(piece, InteractionIndex, new MovePieceInput(position));
 
         private static PiecePosition Position(EncounterSession session)
             => ((PiecePositionState)session.Snapshot.PieceInteractions.Single().State).Position;
+
+        private static PiecePosition Position(EncounterSession session, TablePieceDefinition.Id piece)
+            => ((PiecePositionState)session.Snapshot.PieceInteractions.Single(value => value.PieceId == piece).State).Position;
 
         private static EncounterSession Session(MechanicalCatalog catalog) => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, Seed);
 

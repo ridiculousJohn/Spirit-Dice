@@ -27,6 +27,7 @@ namespace Dice.App
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
         public ModifierPresentationCatalog ModifierPresentation { get; private set; }
+        public ItemPresentationCatalog ItemPresentation { get; private set; }
         public bool PresentationReady { get; private set; }
         public HandPreview Preview { get; private set; }
         public IReadOnlyList<ModifierInspection> ModifierInspections { get; private set; } = Array.Empty<ModifierInspection>();
@@ -85,6 +86,12 @@ namespace Dice.App
         public void ConfigureModifierPresentation(ModifierPresentationCatalog presentation)
         {
             ModifierPresentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+        }
+
+        /** Supplies the item presentation the views read; its owner keeps it alive while the content is loaded. */
+        public void ConfigureItemPresentation(ItemPresentationCatalog presentation)
+        {
+            ItemPresentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
         }
 
         internal bool Initialize(MechanicalCatalog catalog, EncounterDefinition.Id encounterId)

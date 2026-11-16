@@ -303,7 +303,7 @@ namespace Dice.Presentation
 
         public void ShowStatus(string text) => StatusLabel.text = text;
 
-        /** Shows that the encounter screen has no run: no playing area, the table's rule badge hidden, and the status. */
+        /** Shows that the encounter screen has no run: no playing area, the rule badge hidden, and the status. */
         public void ShowNoEncounter(EncounterRulePresentationAsset ruleCard, SpiritStatus status)
         {
             RenderEncounterRule(null, ruleCard);

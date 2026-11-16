@@ -258,9 +258,10 @@ namespace Dice.Tests
             var withering = new EncounterDefinition(definition.Identity,
                 definition.Stages.Select((stage, index) => new StageDefinition(1, stage.StartingHands,
                     index == 0 ? Math.Max(stage.StartingRerolls, WitherRerolls) : stage.StartingRerolls, stage.ExitBehavior)),
-                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.Rules,
+                definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.OwnRules,
                 definition.UnlockMilestones, definition.EncounterModifierIds,
-                definition.UnlockRewardModifierIds, definition.Pieces, definition.EncounterModifiersFirstClearedStageNumber);
+                definition.UnlockRewardModifierIds, definition.OwnPieces, definition.EncounterModifiersFirstClearedStageNumber,
+                definition.Items);
             return new MechanicalCatalog("sunken-larder-wither-capture.v1", authored.Hands,
                 authored.Encounters.Select(value => value.Identity == definition.Identity ? withering : value), authored.Modifiers);
         }

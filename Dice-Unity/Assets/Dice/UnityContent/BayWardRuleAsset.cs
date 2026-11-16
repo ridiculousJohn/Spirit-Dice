@@ -7,7 +7,7 @@ namespace Dice.UnityContent
     [CreateAssetMenu(menuName = "Dice/Encounter Rules/Bay Ward")]
     public sealed class BayWardRuleAsset : EncounterRuleAsset
     {
-        [Tooltip("The table piece whose bay the ward protects; its encounter must place it with a position interaction.")]
+        [Tooltip("The table piece whose bay the ward protects; wherever the ward is in play, the piece must be in play with a position interaction.")]
         [SerializeField] private TablePieceAsset piece;
         [SerializeField] private DieInterferenceKind[] blockedEffects = { DieInterferenceKind.ForcedReroll, DieInterferenceKind.Flip };
 

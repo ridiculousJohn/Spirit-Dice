@@ -63,13 +63,14 @@ namespace Dice.Presentation
         private EncounterAmbientActivity ambientActivity;
         [Tooltip("Scene figures that play an authored clip for the encounter's outcome; empty when the table scene authors none.")]
         [SerializeField] private List<EncounterOutcomeAnimation> outcomeAnimations = new List<EncounterOutcomeAnimation>();
-        // Presenters of the configured table's rules for the encounter they were created for; null when no rule card references one.
+        // The rule cards in play at the configured table for the encounter the presenters were created for; null until an
+        // encounter is shown.
+        private RuleCardsInPlay ruleCards;
+        // Presenters of the rule cards in play for the encounter they were created for; null when no card references one.
         private EncounterRulePresenters rulePresenters;
         // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
         private TablePiecePresenters piecePresenters;
         private EncounterDefinition.Id? presentersEncounterId;
-        // The configured table's rule card flagged as shown on the HUD; null when the table flags none.
-        private EncounterRulePresentationAsset hudRuleCard;
         private bool applicationFocused = true;
         private bool applicationPaused;
         private UnityAction[] dieToggles;
@@ -169,14 +170,12 @@ namespace Dice.Presentation
             tableLighting?.Release();
             var lighting = new EncounterTableLighting(selectedTable, tablePieces, roomImage, tableImage, TrayScene, DiceTray,
                 ModifierHistory.Renderer, hostPortrait);
-            var shownRule = selectedTable.HudRuleCard;
             ambientActivity?.Stop();
             configuredTable = selectedTable;
-            hudRuleCard = shownRule;
             tableLighting = lighting;
             ambientActivity =selectedTable.AmbientActivity != null
                 ? new EncounterAmbientActivity(selectedTable.AmbientActivity, tableLighting, ambientProps, encounterAudio) : null;
-            // The table's rule and piece presenters are created once the encounter it presents is known.
+            // The rule cards in play and the rule and piece presenters are created once the encounter the table presents is known.
             DisposePresenters();
             encounterAudio.SetTheme(selectedTable.AudioTheme);
             GameplayHud.ConfigureHostSigils(selectedTable.HostPresentation);
@@ -601,7 +600,7 @@ namespace Dice.Presentation
                 RewardsPanel.Root.gameObject.SetActive(false);
                 EncounterCharmsIntroduction.Hide();
                 endingPanel.gameObject.SetActive(false);
-                GameplayHud.ShowNoEncounter(hudRuleCard, controls.Status);
+                GameplayHud.ShowNoEncounter(HudRuleCard, controls.Status);
                 return;
             }
             bool createdPresenters = CreatePresenters(snapshot.EncounterId);
@@ -627,7 +626,7 @@ namespace Dice.Presentation
                     controls.ModifierPresentation);
             else ModifierHistory.Clear();
             bool completed = snapshot.Phase == EncounterPhase.Completed;
-            GameplayHud.ShowSnapshot(snapshot, hudRuleCard, controls.Status, lastScore, CurrentCategory, controls.SelectedMask);
+            GameplayHud.ShowSnapshot(snapshot, HudRuleCard, controls.Status, lastScore, CurrentCategory, controls.SelectedMask);
             RewardsPanel.Root.gameObject.SetActive(!playing && !completed);
             endingPanel.gameObject.SetActive(completed);
             RenderProfileSummary();
@@ -760,8 +759,11 @@ namespace Dice.Presentation
         IEncounterJourneyControls ISpiritScorePlaybackHost.Journey => journeyControls;
         SpiritHostPortrait ISpiritScorePlaybackHost.Host => hostPortrait;
         IReadOnlyList<EncounterRulePresentationAsset> ISpiritScorePlaybackHost.RuleCards
-            => configuredTable != null ? configuredTable.RulePresentations : Array.Empty<EncounterRulePresentationAsset>();
-        EncounterRulePresentationAsset ISpiritScorePlaybackHost.HudRuleCard => hudRuleCard;
+            => ruleCards != null ? ruleCards.Cards : Array.Empty<EncounterRulePresentationAsset>();
+        EncounterRulePresentationAsset ISpiritScorePlaybackHost.HudRuleCard => HudRuleCard;
+
+        // The card in play flagged as shown on the HUD; null when none is or no encounter is shown.
+        private EncounterRulePresentationAsset HudRuleCard => ruleCards?.HudCard;
         EncounterAmbientActivity ISpiritScorePlaybackHost.Ambient => ambientActivity;
         EncounterRulePresenters ISpiritScorePlaybackHost.RulePresenters => rulePresenters;
         void ISpiritScorePlaybackHost.SetDiceSelection(int mask) => SetDiceSelection(mask);
@@ -798,26 +800,26 @@ namespace Dice.Presentation
         }
 
         /**
-         * Creates the configured table's rule presenters and its piece presenters for the encounter unless they already present
-         * it; true when created.
+         * Creates the rule cards in play at the configured table, their rule presenters and the table's piece presenters for
+         * the encounter unless they already present it; true when created.
          */
         private bool CreatePresenters(EncounterDefinition.Id encounterId)
         {
             if (presentersEncounterId == encounterId) return false;
             DisposePresenters();
-            CreatePresenters(controls.Catalog.GetEncounter(encounterId));
+            CreatePresenters(controls.Catalog.GetEncounter(encounterId), controls.ItemPresentation);
             presentersEncounterId = encounterId;
             // New piece presenters place their props over the tray's current bay slots.
             PositionTablePieces();
             return true;
         }
 
-        private void CreatePresenters(EncounterDefinition encounter)
+        private void CreatePresenters(EncounterDefinition encounter, ItemPresentationCatalog items)
         {
             try
             {
-                rulePresenters = EncounterRulePresenters.Create(configuredTable.RulePresentations, encounter,
-                    () => new TableRuleContext(this));
+                ruleCards = items.CardsInPlay(configuredTable, encounter);
+                rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, encounter, () => new TableRuleContext(this));
                 // New presenters start from the selection the tray already shows.
                 rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
                 piecePresenters = TablePiecePresenters.Create(tablePieces, encounter, new TablePieceContext(this));
@@ -830,19 +832,19 @@ namespace Dice.Presentation
         }
 
         /**
-         * Builds the screen for its table, readies its encounter audio and, given an encounter, creates the table's rule and
-         * piece presenters for it, as binding the screen, loading it and showing the encounter do, then disposes the
-         * presenters; it fails as they fail. The editor's content validation runs it on an edit-mode copy of the encounter
-         * scene, where Awake does not run and no controls are bound.
+         * Builds the screen for its table, readies its encounter audio and, given an encounter and the item presentation,
+         * creates the rule cards in play and the rule and piece presenters for it, as binding the screen, loading it and
+         * showing the encounter do, then disposes the presenters; it fails as they fail. The editor's content validation runs
+         * it on an edit-mode copy of the encounter scene, where Awake does not run and no controls are bound.
          */
-        internal void ValidateContent(EncounterDefinition encounter)
+        internal void ValidateContent(EncounterDefinition encounter, ItemPresentationCatalog items)
         {
             if (scorePlayback == null) Build();
             // An edit-mode copy receives no OnDestroy, so the table lighting that building bound is released here.
             tableLighting.Release();
             encounterAudio.Initialize();
             if (encounter == null) return;
-            try { CreatePresenters(encounter); }
+            try { CreatePresenters(encounter, items); }
             finally { DisposePresenters(); }
         }
 
@@ -850,6 +852,7 @@ namespace Dice.Presentation
         {
             rulePresenters?.Dispose();
             rulePresenters = null;
+            ruleCards = null;
             piecePresenters?.Dispose();
             piecePresenters = null;
             presentersEncounterId = null;
@@ -889,7 +892,7 @@ namespace Dice.Presentation
             }
 
             public override void ShowRuleBadge()
-                => view.GameplayHud.RenderEncounterRule(view.presentationSnapshot, view.hudRuleCard);
+                => view.GameplayHud.RenderEncounterRule(view.presentationSnapshot, view.HudRuleCard);
 
             public override void CueAction(ModifierPhase phase, Sprite icon)
                 => view.actionModifierCue.ShowHost(icon, phase, SpiritScorePlayback.GestureDurationOf(view.hostPortrait));

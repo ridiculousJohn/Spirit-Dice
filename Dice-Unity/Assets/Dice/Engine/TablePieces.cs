@@ -33,7 +33,7 @@ namespace Dice.Engine
         public static bool operator !=(PiecePosition left, PiecePosition right) => !left.Equals(right);
     }
 
-    /** An object an encounter places on the table; its interactions decide how the player can affect it. */
+    /** An object an encounter or an item places on the table; its interactions decide how the player can affect it. */
     public sealed class TablePieceDefinition
     {
         /** Identifies a table piece where an identity is stored: the run save keeps its interactions' states under it. */
@@ -61,8 +61,8 @@ namespace Dice.Engine
         public ReadOnlyCollection<PieceInteractionDefinition> Interactions { get; }
 
         /**
-         * The piece's interactions in the encounter that places it, at most one of each kind; an interaction is identified by
-         * the piece's id and its place in this list.
+         * The piece's interactions as the encounter or item that places it authors them, at most one of each kind; an
+         * interaction is identified by the piece's id and its place in this list.
          */
         public TablePieceDefinition(Id identity, IEnumerable<PieceInteractionDefinition> interactions = null)
         {

@@ -59,7 +59,7 @@ namespace Dice.App
                 }
                 DiceApplicationConfig configuration = configurationHandle.Result;
                 if (!ValidateConfiguration(configuration)) yield break;
-                // The catalog, the charms it references and the skin load with the configuration as its dependencies.
+                // The catalog, the charms and items it references and the skins load with the configuration as its dependencies.
                 Initialize(configuration);
             }
             finally
@@ -110,11 +110,13 @@ namespace Dice.App
             {
                 MechanicalContent content;
                 ModifierPresentationCatalog modifierPresentation;
+                ItemPresentationCatalog itemPresentation;
                 try
                 {
                     content = configuration.CatalogAsset.Build();
-                    // The skin must present exactly the charms the content uses.
+                    // The skins must present exactly the charms the content uses and the items its encounters lend.
                     modifierPresentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
+                    itemPresentation = new ItemPresentationCatalog(configuration.ItemSkin, content);
                 }
                 catch (Exception exception)
                 {
@@ -126,6 +128,7 @@ namespace Dice.App
                 retainContent = true;
                 controller.ConfigureSeedPolicy(configuration.UseFixedSeed, configuration.InitialSeed);
                 controller.ConfigureModifierPresentation(modifierPresentation);
+                controller.ConfigureItemPresentation(itemPresentation);
                 bool initialized;
                 if (configuration.JourneyCatalog != null)
                 {

@@ -13,6 +13,7 @@ namespace Dice.App
         [SerializeField] private AssetReference frontendScene;
         [SerializeField] private EncounterJourneyCatalogAsset journeyCatalog;
         [SerializeField] private ModifierSkinAsset modifierSkin;
+        [SerializeField] private ItemSkinAsset itemSkin;
         [SerializeField, Tooltip("The encounter a configuration without a journey catalog plays directly.")]
         private EncounterAsset encounter;
         [SerializeField, Tooltip("Use Initial Seed for repeatable debug runs. Otherwise every new run uses a fresh seed.")]
@@ -23,6 +24,7 @@ namespace Dice.App
         public AssetReference FrontendScene => frontendScene;
         public EncounterJourneyCatalogAsset JourneyCatalog => journeyCatalog;
         public ModifierSkinAsset ModifierSkin => modifierSkin;
+        public ItemSkinAsset ItemSkin => itemSkin;
         public EncounterAsset Encounter => encounter;
         public bool UseFixedSeed => useFixedSeed;
         public ulong InitialSeed => initialSeed;
@@ -31,6 +33,7 @@ namespace Dice.App
         {
             if (catalogAsset == null) throw new InvalidOperationException("A mechanical catalog is required.");
             if (modifierSkin == null) throw new InvalidOperationException("A modifier skin is required.");
+            if (itemSkin == null) throw new InvalidOperationException("An item skin is required.");
             if (journeyCatalog == null && encounter == null)
                 throw new InvalidOperationException("A direct encounter is required when no journey catalog is configured.");
         }

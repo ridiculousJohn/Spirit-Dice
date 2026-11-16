@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Dice.UnityContent
 {
     /**
-     * An encounter: its stages, rules, pieces, charms and reward policy. Its identity is its asset GUID. The game's
-     * encounters are those the mechanical catalog lists.
+     * An encounter: its stages, rules, pieces, lent items, charms and reward policy. Its identity is its asset GUID. The
+     * game's encounters are those the mechanical catalog lists.
      */
     [CreateAssetMenu(menuName = "Dice/Encounter")]
     public sealed class EncounterAsset : ContentAsset
@@ -23,6 +23,8 @@ namespace Dice.UnityContent
         [SerializeReference, SelectImplementation] private RewardPolicyData rewardPolicy;
         [SerializeField] private EncounterRuleAsset[] rules = Array.Empty<EncounterRuleAsset>();
         [SerializeField] private PieceData[] pieces = Array.Empty<PieceData>();
+        [Tooltip("Items the encounter lends for its own play; their rules and pieces are in play beside the encounter's own.")]
+        [SerializeField] private ItemAsset[] lentItems = Array.Empty<ItemAsset>();
 
         public EncounterDefinition.Id Identity => new EncounterDefinition.Id(AssetGuid);
 
@@ -33,10 +35,11 @@ namespace Dice.UnityContent
         public IReadOnlyList<ModifierAsset> EncounterModifiers => encounterModifiers;
 
         /**
-         * The encounter's definition; each charm it references is passed to use, so the catalog collects its charms, and
-         * each reward pool its layouts reference is built by pool.
+         * The encounter's definition; each charm it references is passed to use, so the catalog collects its charms, each
+         * reward pool its layouts reference is built by pool, and each item it lends is built by item.
          */
-        internal EncounterDefinition Build(Action<ModifierAsset> use, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool)
+        internal EncounterDefinition Build(Action<ModifierAsset> use, Func<RewardPoolAsset, ModifierRewardPoolDefinition> pool,
+            Func<ItemAsset, ItemDefinition> item)
         {
             if (stages == null) throw new InvalidOperationException("The encounter " + name + " has no stage list.");
             var stageDefinitions = new StageDefinition[stages.Length];
@@ -56,15 +59,16 @@ namespace Dice.UnityContent
             // Built in this order, the charms reach use in the order the catalog lists them.
             var startingIds = MechanicalCatalogAsset.Ids(startingModifiers, "the starting charms of the encounter " + name, use);
             RewardPolicyDefinition policy = BuildRewardPolicy(rewardPolicy, pool);
-            EncounterRuleDefinition[] ruleDefinitions = BuildRules(rules);
+            EncounterRuleDefinition[] ruleDefinitions = EncounterRuleAsset.BuildAll(rules, "encounter " + name);
             ModifierUnlockMilestone[] milestones = BuildMilestones(unlockMilestones);
             var additionIds = MechanicalCatalogAsset.Ids(encounterModifiers, "the charm additions of the encounter " + name, use);
             var unlockIds = MechanicalCatalogAsset.Ids(unlockRewardModifiers, "the unlock rewards of the encounter " + name, use);
             TablePieceDefinition[] pieceDefinitions = BuildPieces(pieces);
+            ItemDefinition[] itemDefinitions = BuildItems(lentItems, item);
             try
             {
                 return new EncounterDefinition(Identity, stageDefinitions, startingUpgrades, startingIds, policy, ruleDefinitions,
-                    milestones, additionIds, unlockIds, pieceDefinitions, encounterModifiersFirstClearedStageNumber);
+                    milestones, additionIds, unlockIds, pieceDefinitions, encounterModifiersFirstClearedStageNumber, itemDefinitions);
             }
             catch (ArgumentException exception)
             {
@@ -89,23 +93,6 @@ namespace Dice.UnityContent
             return definitions;
         }
 
-        private EncounterRuleDefinition[] BuildRules(EncounterRuleAsset[] sources)
-        {
-            if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no rule list.");
-            var definitions = new EncounterRuleDefinition[sources.Length];
-            for (int i = 0; i < sources.Length; ++i)
-            {
-                var source = sources[i] ?? throw new InvalidOperationException("The encounter " + name + " has a missing rule asset.");
-                try { definitions[i] = source.Build(); }
-                catch (ArgumentException exception)
-                {
-                    throw new InvalidOperationException("The rule " + source.name + " of the encounter " + name + " is invalid: " +
-                        exception.Message, exception);
-                }
-            }
-            return definitions;
-        }
-
         private TablePieceDefinition[] BuildPieces(PieceData[] sources)
         {
             if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no table piece list.");
@@ -114,27 +101,18 @@ namespace Dice.UnityContent
             {
                 var source = sources[i] ??
                     throw new InvalidOperationException("The encounter " + name + " has a missing table piece entry.");
-                if (source.piece == null)
-                    throw new InvalidOperationException("The encounter " + name + " has a table piece entry without its piece.");
-                string where = "The table piece " + source.piece.name + " of the encounter " + name;
-                if (source.interactions == null) throw new InvalidOperationException(where + " has no interaction list.");
-                var interactions = new PieceInteractionDefinition[source.interactions.Length];
-                for (int j = 0; j < interactions.Length; ++j)
-                {
-                    var interaction = source.interactions[j] ?? throw new InvalidOperationException(where + " has a missing interaction.");
-                    // An interaction config has no name of its own, so the piece and encounter name its failures.
-                    try { interactions[j] = interaction.Build(); }
-                    catch (Exception exception) when (exception is ArgumentException || exception is InvalidOperationException)
-                    {
-                        throw new InvalidOperationException(where + " has an invalid interaction: " + exception.Message, exception);
-                    }
-                }
-                try { definitions[i] = new TablePieceDefinition(source.piece.Identity, interactions); }
-                catch (ArgumentException exception)
-                {
-                    throw new InvalidOperationException(where + " is invalid: " + exception.Message, exception);
-                }
+                definitions[i] = source.Build("encounter " + name);
             }
+            return definitions;
+        }
+
+        private ItemDefinition[] BuildItems(ItemAsset[] sources, Func<ItemAsset, ItemDefinition> item)
+        {
+            if (sources == null) throw new InvalidOperationException("The encounter " + name + " has no lent item list.");
+            var definitions = new ItemDefinition[sources.Length];
+            for (int i = 0; i < sources.Length; ++i)
+                definitions[i] = item(sources[i] ??
+                    throw new InvalidOperationException("The encounter " + name + " has a missing lent item."));
             return definitions;
         }
 
@@ -184,18 +162,6 @@ namespace Dice.UnityContent
             {
                 throw new InvalidOperationException(where + " is invalid: " + exception.Message, exception);
             }
-        }
-
-        /**
-         * A table piece the encounter places and the piece's interactions in this encounter, at most one of each kind;
-         * another encounter can place the same piece with other interactions.
-         */
-        [Serializable]
-        private sealed class PieceData
-        {
-            public TablePieceAsset piece;
-            [SerializeReference, SelectImplementation]
-            public PieceInteractionConfig[] interactions = Array.Empty<PieceInteractionConfig>();
         }
 
         /**

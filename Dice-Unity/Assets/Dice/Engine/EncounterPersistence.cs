@@ -239,17 +239,27 @@ namespace Dice.Engine
             return values.ToArray();
         }
 
+        /** Each piece in play restores from the saved entry under its id, whatever the entries' order; each is saved exactly once. */
         private static PieceInteractionState[] RestorePieces(EncounterDefinition definition, EncounterSaveData save)
         {
             Require(save.Pieces != null && save.Pieces.Length == definition.Pieces.Count, "Table piece states disagree with the encounter.");
+            var sources = new EncounterSavePieceData[definition.Pieces.Count];
+            foreach (var entry in save.Pieces)
+            {
+                int index = -1;
+                for (int i = 0; entry != null && i < definition.Pieces.Count; ++i)
+                    if (definition.Pieces[i].Identity == entry.PieceId) index = i;
+                Require(index >= 0 && sources[index] == null, "Table piece states disagree with the encounter.");
+                sources[index] = entry;
+            }
             var states = new PieceInteractionState[TablePieceStates.Initial(definition).Length];
             int slot = 0;
-            for (int index = 0; index < save.Pieces.Length; ++index)
+            for (int index = 0; index < sources.Length; ++index)
             {
                 var piece = definition.Pieces[index];
-                var source = save.Pieces[index];
-                Require(source != null && source.PieceId == piece.Identity && source.Interactions != null &&
-                    source.Interactions.Length == piece.Interactions.Count, "A table piece state is invalid.");
+                var source = sources[index];
+                Require(source.Interactions != null && source.Interactions.Length == piece.Interactions.Count,
+                    "A table piece state is invalid.");
                 for (int i = 0; i < piece.Interactions.Count; ++i, ++slot)
                     Require(piece.Interactions[i].TryRestore(source.Interactions[i], out states[slot]), "A table piece state is invalid.");
             }

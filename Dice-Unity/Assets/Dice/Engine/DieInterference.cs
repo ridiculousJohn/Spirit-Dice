@@ -220,7 +220,7 @@ namespace Dice.Engine
         internal override void ValidateDefinition(EncounterDefinition encounter)
         {
             if (!TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out _, out _))
-                throw new ArgumentException("The ward " + Identity + " must reference a positioned table piece of its encounter: piece " +
+                throw new ArgumentException("The ward " + Identity + " must reference a table piece in play with a position interaction: piece " +
                     PieceId + ".", nameof(encounter));
         }
 

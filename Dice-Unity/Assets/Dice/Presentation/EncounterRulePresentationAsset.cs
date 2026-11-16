@@ -71,6 +71,25 @@ namespace Dice.Presentation
                 (rule != null ? rule.name : "(none)") + " does not supply, or a stray brace; the rule supplies " + supplied + ".");
         }
 
+        /**
+         * The card among the cards flagged as shown on the HUD, or null when none is; more than one flagged card fails,
+         * naming where the cards are.
+         */
+        public static EncounterRulePresentationAsset HudCardOf(IReadOnlyList<EncounterRulePresentationAsset> cards, string where)
+        {
+            if (cards == null) throw new ArgumentNullException(nameof(cards));
+            EncounterRulePresentationAsset shown = null;
+            foreach (var card in cards)
+            {
+                if (card == null || !card.ShownOnHud) continue;
+                if (shown != null)
+                    throw new InvalidOperationException(where + " flag more than one rule card as shown on the HUD: '" + shown.name +
+                        "' and '" + card.name + "'.");
+                shown = card;
+            }
+            return shown;
+        }
+
         /** The card among the cards that presents the rule, or null when none does. */
         public static EncounterRulePresentationAsset For(IReadOnlyList<EncounterRulePresentationAsset> cards,
             EncounterRuleDefinition.Id ruleId)

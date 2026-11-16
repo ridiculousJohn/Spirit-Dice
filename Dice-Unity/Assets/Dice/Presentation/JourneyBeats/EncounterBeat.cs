@@ -90,12 +90,13 @@ namespace Dice.Presentation
             abandonPresentation?.Validate();
             var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in table.RulePresentations) ruleIds.Add(rule.RuleId);
-            bool matches = ruleIds.Count == definition.Rules.Count;
-            foreach (var rule in definition.Rules) matches &= ruleIds.Contains(rule.Identity);
+            // The table's cards present the encounter's own rules; the cards of its items come with their item presentations.
+            bool matches = ruleIds.Count == definition.OwnRules.Count;
+            foreach (var rule in definition.OwnRules) matches &= ruleIds.Contains(rule.Identity);
             if (!matches)
-                throw Invalid(journey, index, "plays in the table scene " + table.name + ", whose rule cards do not match the rules of " +
-                    encounter.name);
-            foreach (var rule in definition.Rules)
+                throw Invalid(journey, index, "plays in the table scene " + table.name +
+                    ", whose rule cards do not match the own rules of the encounter " + encounter.name);
+            foreach (var rule in definition.OwnRules)
                 EncounterRulePresentationAsset.For(table.RulePresentations, rule.Identity).ValidateText(rule);
         }
     }

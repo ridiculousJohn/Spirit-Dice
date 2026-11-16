@@ -335,10 +335,11 @@ namespace Dice.Presentation
             charmIcon.gameObject.SetActive(true);
         }
 
-        void IJourneyStage.ShowInvitation(EncounterTablePresentationAsset table)
+        void IJourneyStage.ShowInvitation(EncounterTablePresentationAsset table, EncounterAsset encounter)
         {
             invitationShown = true;
-            foreach (var rule in table.RulePresentations)
+            var definition = encounterControls.Catalog.GetEncounter(encounter.Identity);
+            foreach (var rule in encounterControls.ItemPresentation.CardsInPlay(table, definition).Cards)
             {
                 if (rule == null) continue;
                 int index = invitationRuleCount++;

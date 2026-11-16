@@ -64,8 +64,8 @@ namespace Dice.Presentation
 
         /**
          * The steps of a scored hand, starting from the counters' banked base score and multiplier. The scored hand states
-         * its charm activations, with the resource changes each granted, and its rule bonuses; rules are the table's rule
-         * cards, which name each bonus's rule.
+         * its charm activations, with the resource changes each granted, and its rule bonuses; rules are the rule cards in
+         * play at the table, which name each bonus's rule.
          */
         public IReadOnlyList<SpiritScoringStep> BuildHand(HandScoredEvent scored, long startingBaseScore,
             long startingMultiplier, IReadOnlyList<EncounterRulePresentationAsset> rules)

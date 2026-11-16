@@ -123,7 +123,10 @@ namespace Dice.Engine
         public ReadOnlyCollection<int> StartingUpgrades { get; }
         public ReadOnlyCollection<ModifierDefinition.Id> StartingModifiers { get; }
         public RewardPolicyDefinition RewardPolicy { get; }
+        /** The rules in play: the encounter's own rules, then the rules of each item in play, in item order. */
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
+        /** The encounter's own rules, those no item provides; Rules lists them first. */
+        public ReadOnlyCollection<EncounterRuleDefinition> OwnRules { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
         public ReadOnlyCollection<ModifierDefinition.Id> EncounterModifierIds { get; }
         /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
@@ -131,14 +134,19 @@ namespace Dice.Engine
         /** Whether the encounter has charms of its own and its first charm offer can already contain them. */
         public bool EncounterModifiersAvailableFromStart => EncounterModifierIds.Count > 0 && EncounterModifiersFirstClearedStageNumber == 1;
         public ReadOnlyCollection<ModifierDefinition.Id> UnlockRewardModifierIds { get; }
+        /** The table pieces in play: the encounter's own pieces, then the piece of each item in play that has one, in item order. */
         public ReadOnlyCollection<TablePieceDefinition> Pieces { get; }
+        /** The encounter's own pieces, those no item provides; Pieces lists them first. */
+        public ReadOnlyCollection<TablePieceDefinition> OwnPieces { get; }
+        /** The items in play, each providing its rules and its piece; an item is in play once. */
+        public ReadOnlyCollection<ItemDefinition> Items { get; }
 
         public EncounterDefinition(Id identity, IEnumerable<StageDefinition> stages, IEnumerable<int> startingUpgrades = null,
             IEnumerable<ModifierDefinition.Id> startingModifiers = null, RewardPolicyDefinition rewardPolicy = null,
             IEnumerable<EncounterRuleDefinition> rules = null,
             IEnumerable<ModifierUnlockMilestone> unlockMilestones = null, IEnumerable<ModifierDefinition.Id> encounterModifierIds = null,
             IEnumerable<ModifierDefinition.Id> unlockRewardModifierIds = null, IEnumerable<TablePieceDefinition> pieces = null,
-            int encounterModifiersFirstClearedStageNumber = 1)
+            int encounterModifiersFirstClearedStageNumber = 1, IEnumerable<ItemDefinition> items = null)
         {
             if (identity.Value == Guid.Empty) throw new ArgumentException("An encounter requires an id.", nameof(identity));
             if (stages == null) throw new ArgumentNullException(nameof(stages));
@@ -156,11 +164,21 @@ namespace Dice.Engine
             foreach (var modifierId in modifiers) RequireModifierId(modifierId, nameof(startingModifiers));
             StartingModifiers = modifiers.AsReadOnly();
             RewardPolicy = rewardPolicy;
-            var ruleList = rules == null ? new List<EncounterRuleDefinition>() : new List<EncounterRuleDefinition>(rules);
+            var itemList = items == null ? new List<ItemDefinition>() : new List<ItemDefinition>(items);
+            var itemIds = new HashSet<ItemDefinition.Id>();
+            foreach (var item in itemList)
+                if (item == null || !itemIds.Add(item.Identity))
+                    throw new ArgumentException("Item IDs must be unique and nonnull.", nameof(items));
+            Items = itemList.AsReadOnly();
+            var ownRules = rules == null ? new List<EncounterRuleDefinition>() : new List<EncounterRuleDefinition>(rules);
+            if (ownRules.Exists(rule => rule == null)) throw new ArgumentException("Encounter rules must be nonnull.", nameof(rules));
+            OwnRules = ownRules.AsReadOnly();
+            var ruleList = new List<EncounterRuleDefinition>(ownRules);
+            foreach (var item in itemList) ruleList.AddRange(item.Rules);
             var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in ruleList)
-                if (rule == null || !ruleIds.Add(rule.Identity))
-                    throw new ArgumentException("Encounter rule IDs must be unique and nonnull.", nameof(rules));
+                if (!ruleIds.Add(rule.Identity))
+                    throw new ArgumentException("The rule " + rule.Identity + " is in play more than once.", nameof(rules));
             Rules = ruleList.AsReadOnly();
             var milestones = unlockMilestones == null ? new List<ModifierUnlockMilestone>() : new List<ModifierUnlockMilestone>(unlockMilestones);
             var milestoneStages = new HashSet<int>();
@@ -173,12 +191,18 @@ namespace Dice.Engine
                 throw new ArgumentOutOfRangeException(nameof(encounterModifiersFirstClearedStageNumber));
             EncounterModifiersFirstClearedStageNumber = encounterModifiersFirstClearedStageNumber;
             UnlockRewardModifierIds = CopyUniqueIds(unlockRewardModifierIds, nameof(unlockRewardModifierIds));
-            var pieceList = pieces == null ? new List<TablePieceDefinition>() : new List<TablePieceDefinition>(pieces);
+            var ownPieces = pieces == null ? new List<TablePieceDefinition>() : new List<TablePieceDefinition>(pieces);
+            if (ownPieces.Exists(piece => piece == null)) throw new ArgumentException("Table pieces must be nonnull.", nameof(pieces));
+            OwnPieces = ownPieces.AsReadOnly();
+            var pieceList = new List<TablePieceDefinition>(ownPieces);
+            foreach (var item in itemList)
+                if (item.Piece != null) pieceList.Add(item.Piece);
             var pieceIds = new HashSet<TablePieceDefinition.Id>();
             foreach (var piece in pieceList)
-                if (piece == null || !pieceIds.Add(piece.Identity))
-                    throw new ArgumentException("Table piece IDs must be unique and nonnull.", nameof(pieces));
+                if (!pieceIds.Add(piece.Identity))
+                    throw new ArgumentException("The table piece " + piece.Identity + " is in play more than once.", nameof(pieces));
             Pieces = pieceList.AsReadOnly();
+            // Each rule is checked against everything in play, so a rule may rely on what an item provides.
             foreach (var rule in Rules) rule.ValidateDefinition(this);
         }
 

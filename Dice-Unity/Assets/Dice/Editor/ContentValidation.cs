@@ -43,7 +43,7 @@ namespace Dice.Editor
         {
             var game = new ContentValidationCheck("1. Game validation",
                 "The checks the game makes at startup, when a journey is validated, when a table scene opens and when its encounter " +
-                "starts: application configuration, catalog, charm skin, journeys, and for each table a journey uses, its encounter " +
+                "starts: application configuration, catalog, charm skin, item skin, journeys, and for each table a journey uses, its encounter " +
                 "scene's screen, host and sigil, tray and rig, piece lights, ambient activity bindings, audio and rule and piece " +
                 "presenters, with errors logged while the scene opens.");
             var content = LoadContent(game);
@@ -88,6 +88,7 @@ namespace Dice.Editor
         {
             public DiceApplicationConfig Configuration;
             public MechanicalContent Content;
+            public ItemPresentationCatalog Items;
         }
 
         /** A table scene a journey uses and the encounters its Encounter beats play there. */
@@ -97,7 +98,7 @@ namespace Dice.Editor
             public readonly List<EncounterAsset> Encounters = new List<EncounterAsset>();
         }
 
-        // Check 1: startup's configuration, catalog and skin, then each journey and the journey catalog against the catalog.
+        // Check 1: startup's configuration, catalog and skins, then each journey and the journey catalog against the catalog.
         private static LoadedContent LoadContent(ContentValidationCheck check)
         {
             var loaded = new LoadedContent();
@@ -117,6 +118,9 @@ namespace Dice.Editor
             if (configuration.ModifierSkin != null)
                 Record(check, AssetPath(configuration.ModifierSkin),
                     () => new ModifierPresentationCatalog(configuration.ModifierSkin, loaded.Content));
+            if (configuration.ItemSkin != null)
+                Record(check, AssetPath(configuration.ItemSkin),
+                    () => loaded.Items = new ItemPresentationCatalog(configuration.ItemSkin, loaded.Content));
             var catalog = configuration.JourneyCatalog;
             if (catalog == null) return loaded;
             var journeyFailures = new HashSet<string>();
@@ -172,7 +176,7 @@ namespace Dice.Editor
         {
             if (use.Encounters.Count == 0)
             {
-                ValidateTableScene(check, use.Table, null, null);
+                ValidateTableScene(check, use.Table, null, null, null);
                 return;
             }
             foreach (var encounter in use.Encounters)
@@ -189,12 +193,17 @@ namespace Dice.Editor
                 }
                 else check.Add(AssetPath(encounter), "Not started, and its table's rule and piece presenters not created: " +
                     "the catalog did not build.");
-                ValidateTableScene(check, use.Table, encounter, definition);
+                if (definition != null && content.Items == null)
+                {
+                    check.Add(AssetPath(encounter), "Its table's rule and piece presenters not created: the item skin did not load.");
+                    definition = null;
+                }
+                ValidateTableScene(check, use.Table, encounter, definition, content.Items);
             }
         }
 
         private static void ValidateTableScene(ContentValidationCheck check, EncounterTablePresentationAsset table,
-            EncounterAsset encounter, EncounterDefinition definition)
+            EncounterAsset encounter, EncounterDefinition definition, ItemPresentationCatalog items)
         {
             string label = "Table " + table.name + (encounter != null ? ", encounter " + encounter.name : "") + ": ";
             string path;
@@ -223,7 +232,7 @@ namespace Dice.Editor
                 // A scene copy never plays sound; the audio's checks read its sources, not whether they are enabled.
                 foreach (var source in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<AudioSource>(true)))
                     source.enabled = false;
-                view.ValidateContent(definition);
+                view.ValidateContent(definition, items);
             }
             catch (Exception exception) { check.Add(path, label + Describe(exception)); }
             finally

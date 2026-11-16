@@ -14,8 +14,8 @@ namespace Dice.UnityContent
 
         /**
          * Builds the engine catalog of the listed encounters from the charms the encounters and their reward pools
-         * reference, listed in the order they are first referenced. An encounter played before it joins the list, as in
-         * the diagnostic scene, is added to the catalog built for it.
+         * reference, listed in the order they are first referenced, and the items the encounters lend. An encounter played
+         * before it joins the list, as in the diagnostic scene, is added to the catalog built for it.
          */
         public MechanicalContent Build(EncounterAsset played = null)
         {
@@ -62,6 +62,19 @@ namespace Dice.UnityContent
                 }
                 return built;
             }
+            // Each item asset is built once, so the encounters lending an item share its definition.
+            var items = new Dictionary<ItemAsset, ItemDefinition>();
+            var itemsById = new Dictionary<ItemDefinition.Id, ItemAsset>();
+            ItemDefinition Item(ItemAsset item)
+            {
+                if (items.TryGetValue(item, out ItemDefinition built)) return built;
+                if (itemsById.TryGetValue(item.Identity, out ItemAsset other))
+                    throw new InvalidOperationException("Two item assets share the id " + item.Identity + ": " + other.name + ", " + item.name);
+                built = item.Build();
+                itemsById.Add(item.Identity, item);
+                items.Add(item, built);
+                return built;
+            }
             var encounterAssets = new List<EncounterAsset>(encounters);
             if (played != null && !encounterAssets.Contains(played)) encounterAssets.Add(played);
             var encounterDefinitions = new EncounterDefinition[encounterAssets.Count];
@@ -73,7 +86,7 @@ namespace Dice.UnityContent
                 if (encountersById.TryGetValue(source.Identity, out EncounterAsset other))
                     throw new InvalidOperationException("Two encounter assets share the id " + source.Identity + ": " + other.name + ", " + source.name);
                 encountersById.Add(source.Identity, source);
-                encounterDefinitions[i] = source.Build(Use, Pool);
+                encounterDefinitions[i] = source.Build(Use, Pool, Item);
             }
             // Each family asset is built once, so the charms of a family share its definition.
             var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
@@ -103,7 +116,7 @@ namespace Dice.UnityContent
             {
                 throw new InvalidOperationException("The mechanical catalog " + name + " is invalid: " + exception.Message, exception);
             }
-            return new MechanicalContent(catalog, pairs);
+            return new MechanicalContent(catalog, pairs, items);
         }
 
         /** The ids of the charms, each passed to use first; list names the charm list in errors, such as "the reward pool X". */

@@ -73,21 +73,12 @@ MonoBehaviour:
     rid: 1123138610971803649
   rules:
   - {fileID: 11400000, guid: 66cb6fac2a9140d3886a095c95610a46, type: 2}
-  - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
-  pieces:
-  - piece: {fileID: 11400000, guid: 9bd9f5a54c6a09a4cb060d91cc64351f, type: 2}
-    interactions:
-    - rid: 1123138607968944128
+  pieces: []
+  lentItems:
+  - {fileID: 11400000, guid: 9de5cda29e8360f42aa84f16af829608, type: 2}
   references:
     version: 2
     RefIds:
-    - rid: 1123138607968944128
-      type: {class: PositionInteractionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
-      data:
-        startingBay: -1
-        timing: 0
-        allowsNeutral: 1
-        allowedBays: 0101010101y
     - rid: 1123138610971803649
       type: {class: EncounterAsset/RewardPolicyData, ns: Dice.UnityContent, asm: Dice.UnityContent}
       data:

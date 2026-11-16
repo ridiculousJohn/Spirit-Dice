@@ -5,6 +5,7 @@ using System.Linq;
 using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -28,6 +29,8 @@ namespace Dice.Tests
         private GameObject host;
         private SpiritEncounterController controller;
         private DiceBootstrap bootstrap;
+        // The item skin of a fabricated direct catalog, which lends no items; null until a test fabricates one.
+        private ItemSkinAsset directItemSkin;
         private Action<AsyncOperationHandle, Exception> previousExceptionHandler;
         private readonly List<Exception> expectedFailures = new List<Exception>();
         private string failureKey;
@@ -80,6 +83,8 @@ namespace Dice.Tests
             RestoreOriginalLocators();
             if (provider != null) Addressables.ResourceManager.ResourceProviders.Remove(provider);
             if (authoredHandle.IsValid()) Addressables.Release(authoredHandle);
+            if (directItemSkin != null) UnityEngine.Object.Destroy(directItemSkin);
+            directItemSkin = null;
             ResourceManager.ExceptionHandler = previousExceptionHandler;
             host = null;
             controller = null;
@@ -175,6 +180,7 @@ namespace Dice.Tests
 
             var encounterId = TestEncounters.IdOf("encounter.bootstrap.recovery");
             var catalog = DirectCatalog("bootstrap.recovery", encounterId, out var table);
+            ConfigureDirectItems(catalog);
             controller.Initialize(catalog, encounterId, 42, ContentReady.SpiritSavePath());
             RestoreOriginalLocators();
             ContentReady.Router(controller).Initialize(authoredHandle.Result.FrontendScene);
@@ -213,6 +219,7 @@ namespace Dice.Tests
             var catalog = DirectCatalog("bootstrap.explicit", encounterId, out var table);
             string savePath = ContentReady.SpiritSavePath();
             controller.ConfigureSeedPolicy(true, 17);
+            ConfigureDirectItems(catalog);
             controller.Initialize(catalog, encounterId, 42, savePath);
             var snapshot = controller.Snapshot;
             var preview = controller.Preview;
@@ -270,6 +277,14 @@ namespace Dice.Tests
          * A one-encounter catalog, of the given version and every hand category, whose encounter carries the rules the
          * direct table's cards present, so a run of it opens on that table.
          */
+        /** Gives the controller the item presentation of a fabricated direct catalog, whose encounter lends no items. */
+        private void ConfigureDirectItems(MechanicalCatalog catalog)
+        {
+            directItemSkin = ScriptableObject.CreateInstance<ItemSkinAsset>();
+            controller.ConfigureItemPresentation(new ItemPresentationCatalog(directItemSkin,
+                new MechanicalContent(catalog, Array.Empty<KeyValuePair<ModifierAsset, ModifierDefinition>>())));
+        }
+
         private MechanicalCatalog DirectCatalog(string version, EncounterDefinition.Id encounterId, out EncounterTablePresentationAsset table)
         {
             var hands = Enum.GetValues(typeof(HandCategory)).Cast<HandCategory>()

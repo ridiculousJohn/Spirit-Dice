@@ -6,8 +6,8 @@ using Dice.Engine;
 namespace Dice.Presentation
 {
     /**
-     * The presenters of an encounter table's rules: one per rule card that references a presenter, created for the
-     * encounter the table presents and disposed with the encounter screen's presentation of it. Score playback asks it for
+     * The presenters of the rule cards in play at an encounter table: one per card that references a presenter, created for
+     * the encounter the table presents and disposed with the encounter screen's presentation of it. Score playback asks it for
      * each event's lead-in and presentation, and the screen passes on each snapshot and dice selection; it knows no rule or
      * presenter kind.
      */

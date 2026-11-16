@@ -87,9 +87,9 @@ namespace Dice.Tests
         {
             var definition = authored.GetEncounter(encounterId);
             var equipped = new EncounterDefinition(definition.Identity, definition.Stages, definition.StartingUpgrades,
-                new[] { charmId }, definition.RewardPolicy, definition.Rules, definition.UnlockMilestones,
-                definition.EncounterModifierIds, definition.UnlockRewardModifierIds, definition.Pieces,
-                definition.EncounterModifiersFirstClearedStageNumber);
+                new[] { charmId }, definition.RewardPolicy, definition.OwnRules, definition.UnlockMilestones,
+                definition.EncounterModifierIds, definition.UnlockRewardModifierIds, definition.OwnPieces,
+                definition.EncounterModifiersFirstClearedStageNumber, definition.Items);
             return new MechanicalCatalog(authored.Version + ".charm-popup-review", authored.Hands,
                 authored.Encounters.Select(value => value.Identity == definition.Identity ? equipped : value), authored.Modifiers);
         }

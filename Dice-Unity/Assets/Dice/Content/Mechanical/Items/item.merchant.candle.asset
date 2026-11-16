@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e3b46c68b6f21b4db41841f06fc399b, type: 3}
+  m_Name: item.merchant.candle
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ItemAsset
+  assetGuid: 9de5cda29e8360f42aa84f16af829608
+  rules:
+  - {fileID: 11400000, guid: d251210bd317410995b91e23a10daeac, type: 2}
+  piece:
+    piece: {fileID: 11400000, guid: 9bd9f5a54c6a09a4cb060d91cc64351f, type: 2}
+    interactions:
+    - rid: 1688710601994665984
+  references:
+    version: 2
+    RefIds:
+    - rid: 1688710601994665984
+      type: {class: PositionInteractionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        startingBay: -1
+        timing: 0
+        allowsNeutral: 1
+        allowedBays: 0101010101y
