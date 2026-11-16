@@ -18,7 +18,7 @@ namespace Dice.Tests
         {
             yield return ContentReady.LoadApplication();
             var controller = UnityEngine.Object.FindAnyObjectByType<SpiritEncounterController>();
-            var definition = controller.Catalog.Modifiers.First(value => value.Availability.Access == ModifierAccess.PermanentUnlock);
+            var definition = controller.Catalog.Modifiers.First(value => value.Availability.RequiresUnlock);
             var configuration = Addressables.LoadAssetAsync<DiceApplicationConfig>(DiceBootstrap.ConfigurationAddress);
             yield return configuration;
             var table = ContentReady.DirectTable(configuration.Result, controller.Catalog, out var rules);

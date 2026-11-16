@@ -236,6 +236,8 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
         internal override bool UsesRuleRandom => Endpoint == RotEndpoint.Reroll;
+        /** Only the Wither endpoint leaves dice that do not count. */
+        internal override bool CanLeaveDiceUncounted => Endpoint == RotEndpoint.Wither;
         public override Type SaveDataType => typeof(RotSaveData);
         internal override EncounterRuleState CreateState() => new RotState();
 

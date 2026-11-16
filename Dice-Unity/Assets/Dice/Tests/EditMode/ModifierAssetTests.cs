@@ -35,7 +35,7 @@ namespace Dice.Tests
             serialized.FindProperty("activationLimit").intValue = (int)ModifierActivationLimit.OncePerStage;
             serialized.FindProperty("rewardEligible").boolValue = false;
             serialized.FindProperty("powerTier").intValue = 3;
-            serialized.FindProperty("access").intValue = (int)ModifierAccess.PermanentUnlock;
+            serialized.FindProperty("requiresUnlock").boolValue = true;
             var effects = serialized.FindProperty("effects");
             effects.arraySize = 2;
             effects.GetArrayElementAtIndex(0).managedReferenceValue = new AddBaseScoreEffectConfig(25);
@@ -56,7 +56,7 @@ namespace Dice.Tests
             Assert.That(definition.ActivationLimit, Is.EqualTo(ModifierActivationLimit.OncePerStage));
             Assert.That(definition.RewardEligible, Is.False);
             Assert.That(definition.Availability.PowerTier, Is.EqualTo(3));
-            Assert.That(definition.Availability.Access, Is.EqualTo(ModifierAccess.PermanentUnlock));
+            Assert.That(definition.Availability.RequiresUnlock, Is.True);
             Assert.That(definition.Effects.Select(effect => effect.GetType()),
                 Is.EqualTo(new[] { typeof(AddBaseScoreEffect), typeof(AddRerollsEffect) }));
             Assert.That(definition.Effects.Select(effect => effect.Amount), Is.EqualTo(new long[] { 25, 2 }));
@@ -90,7 +90,7 @@ namespace Dice.Tests
         {
             var starting = Modifier("modifier.starting");
             var addition = Modifier("modifier.addition");
-            var unlock = Modifier("modifier.unlock", ModifierAccess.PermanentUnlock);
+            var unlock = Modifier("modifier.unlock", requiresUnlock: true);
             var pooled = Modifier("modifier.pooled");
             var fallback = Modifier("modifier.fallback");
             Modifier("modifier.unreferenced");
@@ -223,7 +223,7 @@ namespace Dice.Tests
             => Catalog(content.Encounter("encounter.test", rewardLayouts: new[] { new[] { content.RewardPool("pool.test", modifiers) } }));
 
         /** A charm of the name with the test charm id of the name; without a family it belongs to the one example family of the test. */
-        private ModifierAsset Modifier(string name, ModifierAccess access = ModifierAccess.Starter, ModifierFamilyAsset family = null)
+        private ModifierAsset Modifier(string name, bool requiresUnlock = false, ModifierFamilyAsset family = null)
         {
             var asset = Create<ModifierAsset>();
             asset.name = name;
@@ -232,7 +232,7 @@ namespace Dice.Tests
             serialized.FindProperty("family").objectReferenceValue = family != null ? family
                 : exampleFamily != null ? exampleFamily : exampleFamily = Family(FamilyGuid, "family.example");
             serialized.FindProperty("condition").managedReferenceValue = new AlwaysConditionConfig();
-            serialized.FindProperty("access").intValue = (int)access;
+            serialized.FindProperty("requiresUnlock").boolValue = requiresUnlock;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return asset;
         }

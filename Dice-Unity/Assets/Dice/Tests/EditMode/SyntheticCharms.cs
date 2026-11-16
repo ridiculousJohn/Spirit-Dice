@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dice.Engine;
@@ -10,7 +11,15 @@ namespace Dice.Tests
     internal sealed class SyntheticCharms : SyntheticCharmAssets
     {
         /** Content of the given charms: each charm's definition in a one-encounter catalog. */
-        public static MechanicalContent Content(params ModifierAsset[] charms)
+        public static MechanicalContent Content(params ModifierAsset[] charms) => Content(Catalog, charms);
+
+        /**
+         * Content of the given charms in a one-encounter catalog whose one reward pool holds every reward-eligible charm, so
+         * none of those is addition-only.
+         */
+        public static MechanicalContent PooledContent(params ModifierAsset[] charms) => Content(PooledCatalog, charms);
+
+        private static MechanicalContent Content(Func<ModifierDefinition[], MechanicalCatalog> catalog, ModifierAsset[] charms)
         {
             // Each family asset is built once, so the charms of a family share its definition.
             var families = new Dictionary<ModifierFamilyAsset, ModifierFamilyDefinition>();
@@ -20,7 +29,7 @@ namespace Dice.Tests
                     families.Add(charm.Family, family = charm.Family.Build());
                 return charm.Build(family);
             }).ToArray();
-            return new MechanicalContent(Catalog(definitions), charms.Select((charm, index) =>
+            return new MechanicalContent(catalog(definitions), charms.Select((charm, index) =>
                 new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definitions[index])));
         }
 
@@ -35,5 +44,13 @@ namespace Dice.Tests
         public static MechanicalCatalog Catalog(params ModifierDefinition[] definitions)
             => new MechanicalCatalog("test.charms", TestContent.Hands(),
                 new[] { new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) }) }, definitions);
+
+        /** A one-encounter catalog of the given modifiers whose one reward pool holds every reward-eligible one. */
+        private static MechanicalCatalog PooledCatalog(params ModifierDefinition[] definitions)
+            => new MechanicalCatalog("test.charms.pooled", TestContent.Hands(), new[]
+            {
+                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+                    rewardPolicy: RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { RewardTestContent.Pool(definitions) }) }))
+            }, definitions);
     }
 }

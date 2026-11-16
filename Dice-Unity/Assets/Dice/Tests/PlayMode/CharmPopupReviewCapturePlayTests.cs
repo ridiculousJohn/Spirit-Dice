@@ -43,7 +43,7 @@ namespace Dice.Tests
             // first found. No authored encounter starts with a charm, so its encounter starts with the first starter charm
             // in a copy of the catalog; the popup inspects it as it would a charm taken from an offer.
             var journey = controller.JourneyCatalog.Entries.First(entry => entry != null && entry.Encounters.Any());
-            var starter = controller.Catalog.Modifiers.FirstOrDefault(modifier => modifier.Availability.Access == ModifierAccess.Starter);
+            var starter = controller.Catalog.Modifiers.FirstOrDefault(modifier => !modifier.Availability.RequiresUnlock);
             Assert.That(starter, Is.Not.Null, "The authored catalog has no starter charm to equip.");
             Assert.That(controller.InitializeJourney(WithStartingCharm(controller.Catalog, journey.Encounters.First().Identity,
                 starter.Identity), controller.JourneyCatalog, controller.SavePath), Is.True, controller.JourneyStatus.ToString());

@@ -167,12 +167,12 @@ namespace Dice.Tests
             PlayerProfileFileStore.Save(ProfilePathFor(savePath), profile);
             Assert.That(progression.PrepareProfile(savePath), Is.True);
 
-            var first = Catalog(Modifier(GiftId, GiftFamily), Modifier("modifier.starter", "family.starter", ModifierAccess.Starter));
+            var first = Catalog(Modifier(GiftId, GiftFamily), Modifier("modifier.starter", "family.starter", requiresUnlock: false));
             Assert.That(progression.KnownUnlockedModifiers(first), Is.EqualTo(TestModifiers.IdsOf(GiftId)));
             Assert.That(progression.KnownDiscoveredFamilies(first), Is.EquivalentTo(new[] { GiftFamilyId, TestFamilies.IdOf("family.starter") }));
 
             var second = Catalog(Modifier("modifier.future", "family.future"),
-                Modifier("modifier.other-starter", "family.other-starter", ModifierAccess.Starter));
+                Modifier("modifier.other-starter", "family.other-starter", requiresUnlock: false));
             Assert.That(progression.KnownUnlockedModifiers(second), Is.EqualTo(TestModifiers.IdsOf("modifier.future")));
             Assert.That(progression.KnownDiscoveredFamilies(second), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.future"), TestFamilies.IdOf("family.other-starter") }));
             Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId, "modifier.future")));
@@ -262,15 +262,20 @@ namespace Dice.Tests
         private static string ProfilePathFor(string runPath)
             => Path.Combine(Path.GetDirectoryName(Path.GetFullPath(runPath)), "spirit-profile.json");
 
+        /** A one-encounter catalog of the charms, or of the gift without them, whose one reward pool holds them all. */
         private static MechanicalCatalog Catalog(params ModifierDefinition[] modifiers)
-            => new MechanicalCatalog("test.player-progression", TestContent.Hands(), new[]
+        {
+            var charms = modifiers.Length == 0 ? new[] { Modifier(GiftId, GiftFamily) } : modifiers;
+            return new MechanicalCatalog("test.player-progression", TestContent.Hands(), new[]
             {
-                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) })
-            }, modifiers.Length == 0 ? new[] { Modifier(GiftId, GiftFamily) } : modifiers);
+                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+                    rewardPolicy: RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { RewardTestContent.Pool(charms) }) }))
+            }, charms);
+        }
 
-        private static ModifierDefinition Modifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock)
+        private static ModifierDefinition Modifier(string id, string family, bool requiresUnlock = true)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(1) },
-                availability: new ModifierAvailabilityDefinition(access: access));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
     }
 }

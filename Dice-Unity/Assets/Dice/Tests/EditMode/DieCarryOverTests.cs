@@ -169,6 +169,22 @@ namespace Dice.Tests
             Assert.That(exception.Message, Does.Contain(CarryId.ToString()));
         }
 
+        /**
+         * Checks the catalog rejects an item whose rule lists a charm that can never activate with the item's own rules in
+         * play, naming the charm, the rule and the item / fails if the item loads or the message omits one of them.
+         */
+        [Test]
+        public void TheCatalogRejectsAnItemCharmThatCannotActivateWithTheItemsRules()
+        {
+            var bound = new ModifierDefinition(TestModifiers.IdOf("carry_over.bound"), TestFamilies.Of("family.carry_over.bound"),
+                ModifierPhase.PlayHand, new BoundFaceCountAtLeastCondition(3), new ModifierEffect[] { new AddBaseScoreEffect(10) });
+            var plain = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) });
+            var exception = Assert.Throws<ArgumentException>(() => new MechanicalCatalog("test.carry_over.items", Hands(), new[] { plain },
+                new[] { bound }, new[] { Item(new[] { bound.Identity }) }));
+            Assert.That(exception.Message, Does.Contain(bound.Identity.ToString()).And.Contain(CarryId.ToString())
+                .And.Contain(ItemId.ToString()));
+        }
+
         private static void AssertNothingCarried(IReadOnlyList<RuleEvent> events, EncounterSnapshot snapshot)
         {
             Assert.That(events.OfType<DiceRolledEvent>().Single().SelectedMask, Is.EqualTo(DiceValues.AllMask));

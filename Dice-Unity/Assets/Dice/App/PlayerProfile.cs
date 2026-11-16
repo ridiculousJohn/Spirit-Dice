@@ -41,8 +41,8 @@ namespace Dice.App
             var result = new List<ModifierFamilyDefinition.Id>(discoveredFamilyIds);
             var known = new HashSet<ModifierFamilyDefinition.Id>(result);
             foreach (var modifier in catalog.Modifiers)
-                if ((modifier.IsDiscoveredFromStart ||
-                     modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlockedModifierIds.Contains(modifier.Identity)) &&
+                if ((catalog.IsDiscoveredFromStart(modifier) ||
+                     modifier.Availability.RequiresUnlock && unlockedModifierIds.Contains(modifier.Identity)) &&
                     known.Add(modifier.Family.Identity)) result.Add(modifier.Family.Identity);
             return result.AsReadOnly();
         }

@@ -81,8 +81,8 @@ namespace Dice.Tests
         {
             var modifiers = Ordinary.Select(id => Modifier(id)).Concat(new[]
             {
-                Modifier(Addition, ModifierAccess.EncounterExclusive),
-                Modifier(Unlock, access: ModifierAccess.PermanentUnlock)
+                Modifier(Addition),
+                Modifier(Unlock, requiresUnlock: true)
             }).ToArray();
             var policy = new RewardPolicyDefinition(
                 new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", TestModifiers.IdsOf(Ordinary)) }) },
@@ -97,10 +97,10 @@ namespace Dice.Tests
                 TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
+        private static ModifierDefinition Modifier(string id, bool requiresUnlock = false)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(access: access));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
 
         internal static void ContinueAfterUnlock(EncounterSession session)
         {

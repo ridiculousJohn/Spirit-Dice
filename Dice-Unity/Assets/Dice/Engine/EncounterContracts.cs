@@ -239,8 +239,8 @@ namespace Dice.Engine
         }
 
         protected override string DescribeDetail(IDiagnosticFormat format)
-            => "Unlocked " + format.ModifierName(ModifierId) + " (" + format.Humanize(Availability.Access.ToString()) +
-                ", power tier " + Availability.PowerTier + ").";
+            => "Unlocked " + format.ModifierName(ModifierId) + " (" +
+                (Availability.RequiresUnlock ? "requires unlock" : "requires no unlock") + ", power tier " + Availability.PowerTier + ").";
     }
 
     public sealed class StageStartedEvent : RuleEvent

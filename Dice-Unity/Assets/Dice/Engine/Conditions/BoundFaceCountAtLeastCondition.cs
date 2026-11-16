@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Dice.Engine
 {
@@ -10,6 +11,14 @@ namespace Dice.Engine
         {
             if (parameter < 1 || parameter > DiceValues.Count) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
+        }
+
+        /** Only a binding rule binds dice. */
+        public bool CanEverActivateWith(IReadOnlyList<EncounterRuleDefinition> rulesInPlay)
+        {
+            foreach (var rule in rulesInPlay)
+                if (rule is DieBindingRuleDefinition) return true;
+            return false;
         }
 
         /**

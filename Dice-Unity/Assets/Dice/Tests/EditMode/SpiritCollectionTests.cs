@@ -32,21 +32,17 @@ namespace Dice.Tests
         [SetUp]
         public void BuildCollection()
         {
-            starter = Modifier("starter", ModifierAccess.Starter, new AddBaseScoreEffect(1));
-            locked = Modifier("locked", ModifierAccess.PermanentUnlock, new AddMultiplierEffect(1));
+            starter = Modifier("starter", requiresUnlock: false, new AddBaseScoreEffect(1));
+            locked = Modifier("locked", requiresUnlock: true, new AddMultiplierEffect(1));
             unlocked = new ModifierDefinition(TestModifiers.IdOf("unlocked"), TestFamilies.Of("family"), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(5), new AddMultiplierEffect(1) },
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
-            encounterOnly = Modifier("encounter.only", ModifierAccess.EncounterExclusive, new AddRerollsEffect(1), "family.encounter");
-            discovered = Modifier("discovered", ModifierAccess.PermanentUnlock, new AddBaseScoreEffect(1), "family.discovered");
-            undiscovered = Modifier("undiscovered", ModifierAccess.PermanentUnlock, new AddMultiplierEffect(1), "family.undiscovered");
-            inert = Modifier("inert", ModifierAccess.Starter, new AddRerollsEffect(1), "family.inert", false);
-            var encounter = new EncounterDefinition(TestEncounters.IdOf("encounter.test"), new[]
-                {
-                    new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3)
-                }, unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
-                encounterModifierIds: new[] { encounterOnly.Identity }, unlockRewardModifierIds: new[] { locked.Identity, unlocked.Identity });
-            catalog = new MechanicalCatalog("collection.test", TestContent.Hands(), new[] { encounter },
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true));
+            encounterOnly = Modifier("encounter.only", requiresUnlock: false, new AddRerollsEffect(1), "family.encounter");
+            discovered = Modifier("discovered", requiresUnlock: true, new AddBaseScoreEffect(1), "family.discovered");
+            undiscovered = Modifier("undiscovered", requiresUnlock: true, new AddMultiplierEffect(1), "family.undiscovered");
+            inert = Modifier("inert", requiresUnlock: false, new AddRerollsEffect(1), "family.inert", false);
+            catalog = new MechanicalCatalog("collection.test", TestContent.Hands(),
+                new[] { Encounter(starter, locked, unlocked, discovered, undiscovered) },
                 new[] { starter, locked, unlocked, encounterOnly, discovered, undiscovered, inert });
             charms = synthetic.For(catalog);
             journeys = Journeys("encounter.test", "Test House", out journeyAssets);
@@ -107,7 +103,7 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void ReopeningRefreshesPermanentProgressWithoutChangingEncounterOnlyStatus()
+        public void ReopeningRefreshesPermanentProgressAndLeavesOutAdditionOnlyCharms()
         {
             view.Show(catalog, charms, new[] { unlocked.Identity }, journeys);
             Find<Button>(view.Rows.Single(), "FamilyVariant1").onClick.Invoke();
@@ -118,7 +114,7 @@ namespace Dice.Tests
             Assert.That(view.SelectedModifierId, Is.EqualTo(locked.Identity));
             Assert.That(Find<Text>(view, "CollectionDetailTitle").text, Does.EndWith("|<collection.unlocked>"));
             Assert.That(Find<Text>(view, "CollectionSummary").text, Does.StartWith("<collection.summary>2|4|"));
-            Assert.That(SpiritCollectionView.GetStatusText(encounterOnly, true, wording.collection), Is.EqualTo("<collection.encounterOnly>"));
+            Assert.That(view.Rows.Select(row => row.Family), Has.No.Member(encounterOnly.Family));
         }
 
         [Test]
@@ -176,8 +172,8 @@ namespace Dice.Tests
         [Test]
         public void PermanentOwnershipImpliesDiscoveryAndEmptyFiltersClearPreviousDetails()
         {
-            var permanentCatalog = new MechanicalCatalog("permanent.test", TestContent.Hands(), catalog.Encounters,
-                new[] { locked, unlocked, encounterOnly, discovered, undiscovered });
+            var permanentCatalog = new MechanicalCatalog("permanent.test", TestContent.Hands(),
+                new[] { Encounter(locked, unlocked, discovered, undiscovered) }, new[] { locked, unlocked, encounterOnly, discovered, undiscovered });
             view.Show(permanentCatalog, charms, new[] { discovered.Identity }, journeys);
             Assert.That(view.Rows.Single().Family, Is.EqualTo(discovered.Family));
             Assert.That(view.SelectedModifierId, Is.EqualTo(discovered.Identity));
@@ -202,7 +198,7 @@ namespace Dice.Tests
             var baseScore = synthetic.Charm("order.base_score", "order", effects: new AddBaseScoreEffectConfig(1));
             var multiplier = synthetic.Charm("order.multiplier", "order", effects: new AddMultiplierEffectConfig(1));
             var rerolls = synthetic.Charm("order.rerolls", "order", effects: new AddRerollsEffectConfig(1));
-            var content = SyntheticCharms.Content(baseScore, multiplier, rerolls);
+            var content = SyntheticCharms.PooledContent(baseScore, multiplier, rerolls);
             var skin = synthetic.Skin(new[] { rerolls, baseScore, multiplier }.Select(charm => synthetic.Presentation(charm)),
                 SyntheticCharms.EveryEffectSet(category));
             view.Show(content.Catalog, synthetic.Load(skin, content), Array.Empty<ModifierDefinition.Id>(), journeys);
@@ -216,15 +212,13 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void SourcesDescribeAuthoredUnlockScheduleAndDistinguishRunOnlyAdditions()
+        public void SourcesDescribeAuthoredUnlockScheduleAndStarters()
         {
             var collection = wording.collection;
             Assert.That(SpiritCollectionView.GetSourceText(locked, catalog, journeys, collection), Does.StartWith(
                 "<collection.unlockableSource><collection.unlockChoices><collection.unlockSource.one>Test House|3|"));
             Assert.That(SpiritCollectionView.GetSourceText(starter, catalog, journeys, collection),
                 Does.StartWith("<collection.starterSource>"));
-            Assert.That(SpiritCollectionView.GetSourceText(encounterOnly, catalog, journeys, collection),
-                Does.StartWith("<collection.encounterOnlySource>"));
         }
 
         [Test]
@@ -340,10 +334,22 @@ namespace Dice.Tests
             return chapter;
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAccess access, ModifierEffect effect,
+        /**
+         * The test encounter: its unlock list, its charm additions holding the addition-only charm, and one reward pool of
+         * the pooled charms.
+         */
+        private EncounterDefinition Encounter(params ModifierDefinition[] pooled)
+            => new EncounterDefinition(TestEncounters.IdOf("encounter.test"), new[]
+                {
+                    new StageDefinition(100, 3, 3), new StageDefinition(200, 3, 3), new StageDefinition(300, 3, 3)
+                }, rewardPolicy: RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { RewardTestContent.Pool(pooled) }) }),
+                unlockMilestones: new[] { new ModifierUnlockMilestone(3) },
+                encounterModifierIds: new[] { encounterOnly.Identity }, unlockRewardModifierIds: new[] { locked.Identity, unlocked.Identity });
+
+        private static ModifierDefinition Modifier(string id, bool requiresUnlock, ModifierEffect effect,
             string family = "family", bool rewardEligible = true)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
-                new[] { effect }, rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(access: access));
+                new[] { effect }, rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
 
         private static T Find<T>(Component parent, string name) where T : Component
             => parent.GetComponentsInChildren<T>(true).Single(component => component.name == name);

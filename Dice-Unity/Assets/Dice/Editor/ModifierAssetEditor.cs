@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Dice.Engine;
 using Dice.UnityContent;
 using UnityEditor;
 using UnityEngine;
@@ -8,54 +7,57 @@ using UnityEngine;
 namespace Dice.Editor
 {
     /**
-     * Shows a charm's fields and, for an encounter-exclusive charm, the encounters whose own charm list offers it. That
-     * list is the only statement of the encounter, so the section is read-only and warns unless exactly one encounter
-     * lists the charm.
+     * Shows a charm's fields, among them Requires Unlock as a checkbox with its tooltip, and, under Offered by, the
+     * encounters whose own charm additions hold it and the rules whose charm list holds it. Those lists and the reward
+     * pools are the only statement of where a charm is offered, so the section is read-only.
      */
     [CustomEditor(typeof(ModifierAsset))]
     public sealed class ModifierAssetEditor : UnityEditor.Editor
     {
         // Found once per inspector; whether each lists the charm is read on every draw, so list edits show at once.
         private readonly List<EncounterAsset> encounters = new List<EncounterAsset>();
-        private SerializedProperty access;
+        private readonly List<EncounterRuleAsset> rules = new List<EncounterRuleAsset>();
 
         private void OnEnable()
         {
-            access = serializedObject.FindProperty("access");
             encounters.Clear();
             foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(EncounterAsset)))
             {
                 var encounter = AssetDatabase.LoadAssetAtPath<EncounterAsset>(AssetDatabase.GUIDToAssetPath(guid));
                 if (encounter != null) encounters.Add(encounter);
             }
+            rules.Clear();
+            foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(EncounterRuleAsset)))
+            {
+                var rule = AssetDatabase.LoadAssetAtPath<EncounterRuleAsset>(AssetDatabase.GUIDToAssetPath(guid));
+                if (rule != null) rules.Add(rule);
+            }
         }
 
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
-            if (access.intValue != (int)ModifierAccess.EncounterExclusive) return;
             var charm = (ModifierAsset)target;
-            var offering = encounters.Where(encounter => encounter != null && encounter.EncounterModifiers.Contains(charm)).ToList();
+            var offering = encounters.Where(encounter => encounter != null && encounter.EncounterModifiers.Contains(charm))
+                .Cast<Object>()
+                .Concat(rules.Where(rule => rule != null && rule.AddedModifiers.Contains(charm)))
+                .ToList();
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Offered by", EditorStyles.boldLabel);
-            foreach (var encounter in offering) DrawEncounter(encounter);
-            if (offering.Count > 1)
-                EditorGUILayout.HelpBox("More than one encounter lists this encounter-exclusive charm in its Encounter Modifiers.",
-                    MessageType.Warning);
-            else if (offering.Count == 0)
-                EditorGUILayout.HelpBox("No encounter lists this encounter-exclusive charm in its Encounter Modifiers, so no encounter offers it.",
-                    MessageType.Warning);
+            foreach (var source in offering) DrawSource(source);
+            if (offering.Count == 0)
+                EditorGUILayout.LabelField("No encounter's charm additions or rule's charm list holds this charm.", EditorStyles.miniLabel);
         }
 
-        /** The encounter as an object field that cannot be assigned: a click pings it and a double click selects it. */
-        private static void DrawEncounter(EncounterAsset encounter)
+        /** The encounter or rule as an object field that cannot be assigned: a click pings it and a double click selects it. */
+        private static void DrawSource(Object source)
         {
             Rect rect = EditorGUILayout.GetControlRect();
-            EditorGUI.LabelField(rect, EditorGUIUtility.ObjectContent(encounter, typeof(EncounterAsset)), EditorStyles.objectField);
+            EditorGUI.LabelField(rect, EditorGUIUtility.ObjectContent(source, source.GetType()), EditorStyles.objectField);
             Event current = Event.current;
             if (current.type != EventType.MouseDown || current.button != 0 || !rect.Contains(current.mousePosition)) return;
-            if (current.clickCount == 2) Selection.activeObject = encounter;
-            else EditorGUIUtility.PingObject(encounter);
+            if (current.clickCount == 2) Selection.activeObject = source;
+            else EditorGUIUtility.PingObject(source);
             current.Use();
         }
     }

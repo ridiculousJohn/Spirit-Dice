@@ -1,8 +1,18 @@
+using System.Collections.Generic;
+
 namespace Dice.Engine
 {
     /** What the carried-dice conditions share: the carried dice and the dice matching one of them. */
     internal static class CarriedDice
     {
+        /** Whether a carry-over rule is in play; only such a rule carries dice. */
+        internal static bool RuleInPlay(IReadOnlyList<EncounterRuleDefinition> rulesInPlay)
+        {
+            foreach (var rule in rulesInPlay)
+                if (rule is DieCarryOverRuleDefinition) return true;
+            return false;
+        }
+
         /** The dice every carry-over rule has carried into the hand and that keep their carried status. */
         internal static int Mask(in ModifierContext context)
         {

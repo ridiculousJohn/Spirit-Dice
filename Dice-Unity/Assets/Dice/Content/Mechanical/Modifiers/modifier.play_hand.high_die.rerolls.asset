@@ -22,7 +22,7 @@ MonoBehaviour:
   activationLimit: 1
   rewardEligible: 1
   powerTier: 3
-  access: 0
+  requiresUnlock: 0
   references:
     version: 2
     RefIds:

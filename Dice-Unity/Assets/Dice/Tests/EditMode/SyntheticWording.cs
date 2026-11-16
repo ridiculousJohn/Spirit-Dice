@@ -116,7 +116,6 @@ namespace Dice.Tests
             c.undiscoveredHint = "<collection.undiscoveredHint>";
             c.detailTitle = "<collection.detailTitle>{name}|{status}";
             c.available = "<collection.available>";
-            c.encounterOnly = "<collection.encounterOnly>";
             c.unlocked = "<collection.unlocked>";
             c.locked = "<collection.locked>";
             c.unlockSource = Counted("<collection.unlockSource.one>{location}|{stages}", "<collection.unlockSource.many>{location}|{stages}");
@@ -130,7 +129,6 @@ namespace Dice.Tests
             c.gifts = "<collection.gifts>{sources}";
             c.sourceLineSeparator = " |sourceLineSeparator| ";
             c.notObtainable = "<collection.notObtainable>";
-            c.encounterOnlySource = "<collection.encounterOnlySource>{rewards}";
             c.starterSource = "<collection.starterSource>{rewards}";
             c.unlockableSource = "<collection.unlockableSource>{sources}|{rewards}";
 
@@ -217,10 +215,12 @@ namespace Dice.Tests
             availability.permanentlyUnlocked = "<charmAvailability.permanentlyUnlocked>";
             availability.requiresUnlock = "<charmAvailability.requiresUnlock>";
             availability.encounterExclusive = "<charmAvailability.encounterExclusive>";
+            availability.ruleExclusive = "<charmAvailability.ruleExclusive>";
             availability.availableFromStart = "<charmAvailability.availableFromStart>";
             availability.availability = "<charmAvailability.availability>{access}|{scope}";
             availability.allEncounters = "<charmAvailability.allEncounters>";
             availability.thisEncounter = "<charmAvailability.thisEncounter>";
+            availability.withItsRule = "<charmAvailability.withItsRule>";
             availability.scopeTier = "<charmAvailability.scopeTier>{scope}|{tier}";
 
             w.ownedCharms.noCharmsTitle = "<ownedCharms.noCharmsTitle>";

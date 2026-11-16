@@ -62,7 +62,7 @@ namespace Dice.App
             if (profile == null || catalog == null) yield break;
             var unlocked = new HashSet<ModifierDefinition.Id>(ProfileUnlockedModifierIds);
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.Availability.Access == ModifierAccess.PermanentUnlock && unlocked.Contains(modifier.Identity))
+                if (modifier.Availability.RequiresUnlock && unlocked.Contains(modifier.Identity))
                     yield return modifier.Identity;
         }
 

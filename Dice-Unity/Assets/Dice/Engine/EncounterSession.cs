@@ -45,7 +45,7 @@ namespace Dice.Engine
             // A session created without the player's discoveries, as previews and diagnostics are, has discovered every family.
             AddDiscoveredFamilies(discoveredFamilyIds ?? FamilyIds(catalog));
             foreach (var modifier in catalog.Modifiers)
-                if (modifier.IsDiscoveredFromStart && !state.DiscoveredFamilyIds.Contains(modifier.Family.Identity))
+                if (catalog.IsDiscoveredFromStart(modifier) && !state.DiscoveredFamilyIds.Contains(modifier.Family.Identity))
                     state.DiscoveredFamilyIds.Add(modifier.Family.Identity);
             AddUnlockedModifiers(unlockedModifierIds ?? Array.Empty<ModifierDefinition.Id>());
             var events = new List<RuleEvent>();
@@ -85,7 +85,7 @@ namespace Dice.Engine
             foreach (var id in unlockedModifierIds)
             {
                 var modifier = catalog.GetModifier(id);
-                if (modifier.Availability.Access != ModifierAccess.PermanentUnlock)
+                if (!modifier.Availability.RequiresUnlock)
                     throw new ArgumentException("Unlocks must reference permanent-unlock modifiers.", nameof(unlockedModifierIds));
                 if (known.Add(id)) next.UnlockedModifierIds.Add(id);
                 if (!next.DiscoveredFamilyIds.Contains(modifier.Family.Identity)) next.DiscoveredFamilyIds.Add(modifier.Family.Identity);

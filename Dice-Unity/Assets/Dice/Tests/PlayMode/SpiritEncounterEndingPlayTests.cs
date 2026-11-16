@@ -233,7 +233,7 @@ namespace Dice.Tests
         {
             var profile = PlayerProfileFileStore.LoadOrCreate(controller.ProfilePath);
             var permanent = controller.Catalog.Modifiers.FirstOrDefault(value =>
-                value.Availability.Access == ModifierAccess.PermanentUnlock);
+                value.Availability.RequiresUnlock);
             Assert.That(permanent, Is.Not.Null, "The catalog has no permanent unlock to retain across a retry.");
             profile.UnlockModifier(permanent.Identity);
             PlayerProfileFileStore.Save(controller.ProfilePath, profile);

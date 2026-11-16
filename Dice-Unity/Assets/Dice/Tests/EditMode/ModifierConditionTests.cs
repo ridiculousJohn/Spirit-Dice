@@ -157,6 +157,22 @@ namespace Dice.Tests
             Assert.That(containsFace.CanEverActivate, Is.True);
         }
 
+        /**
+         * Checks a condition reading a rule's state can activate only with that rule in play, and one reading no rule with
+         * any rules / fails if the rule-dependent condition answers the same without its rule.
+         */
+        [Test]
+        public void ARuleDependentConditionCanActivateOnlyWithItsRuleInPlay()
+        {
+            IModifierCondition favored = new FavoredFaceCountAtLeastCondition(2);
+            IModifierCondition always = new AlwaysCondition();
+            var none = Array.Empty<EncounterRuleDefinition>();
+            var favoredRule = new EncounterRuleDefinition[] { new CyclingFavoredFaceMultiplierRuleDefinition(TestRules.IdOf("favored"), 2) };
+            Assert.That(favored.CanEverActivateWith(none), Is.False);
+            Assert.That(favored.CanEverActivateWith(favoredRule), Is.True);
+            Assert.That(always.CanEverActivateWith(none), Is.True);
+        }
+
         /** Checks a condition accepts its largest parameter and rejects the next one / fails if out-of-range content loads. */
         [Test]
         public void ConditionRejectsParametersOutsideItsRange()

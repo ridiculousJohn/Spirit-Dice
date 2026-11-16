@@ -54,14 +54,14 @@ namespace Dice.Tests
             };
             var modifiers = new[]
             {
-                Modifier(Locked, access: ModifierAccess.PermanentUnlock), Modifier(Addition), Modifier(Pooled), Modifier(Fallback),
+                Modifier(Locked, requiresUnlock: true), Modifier(Addition), Modifier(Pooled), Modifier(Fallback),
                 Modifier(Ineligible, eligible: false)
             };
             return new MechanicalCatalog("test.modifier_sources", TestContent.Hands(), encounters, modifiers);
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter, bool eligible = true)
+        private static ModifierDefinition Modifier(string id, bool requiresUnlock = false, bool eligible = true)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
-                rewardEligible: eligible, availability: new ModifierAvailabilityDefinition(access: access));
+                rewardEligible: eligible, availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
     }
 }

@@ -106,7 +106,6 @@ MonoBehaviour:
     undiscoveredHint: Discover charm families during play to reveal their effects and sources.
     detailTitle: '{name} - {status}'
     available: Available
-    encounterOnly: Encounter only
     unlocked: Unlocked
     locked: Locked
     unlockSource:
@@ -124,9 +123,6 @@ MonoBehaviour:
 
 '
     notObtainable: Not obtainable yet
-    encounterOnlySource: 'Encounter only; never permanently collected.
-
-      Run charm pool: {rewards}.'
     starterSource: 'Available from the start.
 
       Run charm pool: {rewards}.'
@@ -260,10 +256,12 @@ MonoBehaviour:
     permanentlyUnlocked: Permanently unlocked
     requiresUnlock: Requires permanent unlock
     encounterExclusive: Encounter exclusive
+    ruleExclusive: Rule exclusive
     availableFromStart: Available from the start
     availability: '{access} / {scope}'
     allEncounters: All encounters
     thisEncounter: This encounter
+    withItsRule: With its rule
     scopeTier: '{scope} / Tier {tier}'
   ownedCharms:
     noCharmsTitle: No charms yet

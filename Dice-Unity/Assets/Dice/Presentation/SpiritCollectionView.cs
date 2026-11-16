@@ -76,24 +76,25 @@ namespace Dice.Presentation
             int starterCount = 0;
             foreach (var definition in catalog.Modifiers)
             {
-                if (!definition.RewardEligible || definition.Availability.Access == ModifierAccess.EncounterExclusive) continue;
+                // Addition-only charms are never permanently collected.
+                if (!definition.RewardEligible || catalog.IsAdditionOnly(definition.Identity)) continue;
                 if (!grouped.TryGetValue(definition.Family, out var family))
                 {
                     family = new List<ModifierDefinition>();
                     grouped.Add(definition.Family, family);
                 }
                 family.Add(definition);
-                if (definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Identity))
+                if (!definition.Availability.RequiresUnlock || unlockedIds.Contains(definition.Identity))
                 {
                     ownedFamilyIds.Add(definition.Family.Identity);
                     discoveredFamilyIds.Add(definition.Family.Identity);
                 }
-                if (definition.Availability.Access == ModifierAccess.PermanentUnlock)
+                if (definition.Availability.RequiresUnlock)
                 {
                     ++permanentCount;
                     if (unlockedIds.Contains(definition.Identity)) ++unlockedCount;
                 }
-                else if (definition.Availability.Access == ModifierAccess.Starter) ++starterCount;
+                else ++starterCount;
             }
             families.Clear();
             families.AddRange(grouped.Values);
@@ -135,7 +136,7 @@ namespace Dice.Presentation
                     continue;
                 }
                 row.Render(charms, family, StatusText, Select,
-                    definition => definition.Availability.Access == ModifierAccess.Starter || unlockedIds.Contains(definition.Identity));
+                    definition => !definition.Availability.RequiresUnlock || unlockedIds.Contains(definition.Identity));
                 if (!firstSelectableId.HasValue) firstSelectableId = family[0].Identity;
                 foreach (var definition in family)
                     if (definition.Identity == SelectedModifierId) selectionExists = true;
@@ -181,18 +182,14 @@ namespace Dice.Presentation
 
         public static string GetStatusText(ModifierDefinition definition, bool unlocked, SpiritUiWording.Collection wording)
         {
-            switch (definition.Availability.Access)
-            {
-                case ModifierAccess.Starter: return wording.available;
-                case ModifierAccess.EncounterExclusive: return wording.encounterOnly;
-                default: return unlocked ? wording.unlocked : wording.locked;
-            }
+            if (!definition.Availability.RequiresUnlock) return wording.available;
+            return unlocked ? wording.unlocked : wording.locked;
         }
 
         /**
-         * Where a charm can be obtained: its unlock and run reward sources as the mechanical catalog states them, and its
-         * beat and completion gifts from the journeys' progression rewards. Encounters are named by their journeys'
-         * locations; encounters without a journey are not listed.
+         * Where a charm of the collection can be obtained: its unlock and run reward sources as the mechanical catalog states
+         * them, and its beat and completion gifts from the journeys' progression rewards. Encounters are named by their
+         * journeys' locations; encounters without a journey are not listed.
          */
         public static string GetSourceText(ModifierDefinition definition, MechanicalCatalog mechanicalCatalog,
             EncounterJourneyCatalogAsset journeyCatalog, SpiritUiWording.Collection wording)
@@ -221,8 +218,7 @@ namespace Dice.Presentation
             foreach (var journey in journeyCatalog.Entries)
                 if (journey != null && listed.Add(journey)) AddGiftSources(journey, definition.Identity, giftSources, wording);
             string rewards = wording.Rewards(rewardSources);
-            if (definition.Availability.Access == ModifierAccess.EncounterExclusive) return wording.EncounterOnlySource(rewards);
-            if (definition.Availability.Access == ModifierAccess.Starter) return wording.StarterSource(rewards);
+            if (!definition.Availability.RequiresUnlock) return wording.StarterSource(rewards);
             var sourceLines = new List<string>();
             if (unlockSources.Count > 0) sourceLines.Add(wording.UnlockChoices(unlockSources));
             if (giftSources.Count > 0) sourceLines.Add(wording.Gifts(giftSources));

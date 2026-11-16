@@ -23,19 +23,19 @@ MonoBehaviour:
   activationLimit: 1
   rewardEligible: 1
   powerTier: 1
-  access: 2
+  requiresUnlock: 0
   references:
     version: 2
     RefIds:
-    - rid: 3561090371429912742
-      type: {class: UncountedDiceCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
-      data:
-        count: 1
-    - rid: 2468555009208122143
-      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
-      data:
-        amount: 5
     - rid: 2209625331929471374
       type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
       data:
         amount: 1
+    - rid: 2468555009208122143
+      type: {class: AddBaseScoreEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 5
+    - rid: 3561090371429912742
+      type: {class: UncountedDiceCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 1

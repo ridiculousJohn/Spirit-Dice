@@ -23,7 +23,7 @@ namespace Dice.Tests
         {
             var modifier = new ModifierDefinition(TestModifiers.IdOf(ModifierId), TestFamilies.Of(FamilyId), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true));
             catalog = new MechanicalCatalog("test.progression-reward-assets", TestContent.Hands(),
                 new[] { new EncounterDefinition(EncounterId, new[] { new StageDefinition(100, 3, 2) }) },
                 new[] { modifier });

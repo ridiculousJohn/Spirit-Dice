@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Dice.Engine
 {
@@ -11,6 +12,14 @@ namespace Dice.Engine
         {
             if (parameter < 1 || parameter > DiceValues.Count - 1) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
+        }
+
+        /** Every die counts unless a rule in play can leave dice uncounted. */
+        public bool CanEverActivateWith(IReadOnlyList<EncounterRuleDefinition> rulesInPlay)
+        {
+            foreach (var rule in rulesInPlay)
+                if (rule.CanLeaveDiceUncounted) return true;
+            return false;
         }
 
         /** Counts the dice of the hand that do not count toward it, whichever rule reports them. */

@@ -350,7 +350,6 @@ namespace Dice.Presentation
             /** {name} and {status}: the selected charm's name and status. */
             public string detailTitle;
             public string available;
-            public string encounterOnly;
             public string unlocked;
             public string locked;
             /** {location} and {stages}: an encounter's location and the stages after which it offers the charm. */
@@ -369,8 +368,6 @@ namespace Dice.Presentation
             public string gifts;
             public string sourceLineSeparator;
             public string notObtainable;
-            /** {rewards}: the encounters whose run charm pool offers the charm. */
-            public string encounterOnlySource;
             /** {rewards}: the encounters whose run charm pool offers the charm. */
             public string starterSource;
             /** {sources}: the unlock and gift sources; {rewards}: the encounters whose run charm pool offers the charm. */
@@ -425,7 +422,6 @@ namespace Dice.Presentation
                 SpiritWordingTemplate.Fill(gifts, "sources", string.Join(sourceSeparator, sources));
             public string Rewards(IReadOnlyCollection<string> encounters) =>
                 encounters.Count > 0 ? string.Join(rewardSeparator, encounters) : noRunRewards;
-            public string EncounterOnlySource(string rewards) => SpiritWordingTemplate.Fill(encounterOnlySource, "rewards", rewards);
             public string StarterSource(string rewards) => SpiritWordingTemplate.Fill(starterSource, "rewards", rewards);
 
             public string UnlockableSource(string sources, string rewards) =>
@@ -444,7 +440,6 @@ namespace Dice.Presentation
                 check.Text(undiscoveredHint, nameof(undiscoveredHint));
                 check.Text(detailTitle, nameof(detailTitle));
                 check.Text(available, nameof(available));
-                check.Text(encounterOnly, nameof(encounterOnly));
                 check.Text(unlocked, nameof(unlocked));
                 check.Text(locked, nameof(locked));
                 check.Counted(unlockSource, nameof(unlockSource));
@@ -458,7 +453,6 @@ namespace Dice.Presentation
                 check.Text(gifts, nameof(gifts));
                 check.Separator(sourceLineSeparator, nameof(sourceLineSeparator));
                 check.Text(notObtainable, nameof(notObtainable));
-                check.Text(encounterOnlySource, nameof(encounterOnlySource));
                 check.Text(starterSource, nameof(starterSource));
                 check.Text(unlockableSource, nameof(unlockableSource));
             }
@@ -827,11 +821,13 @@ namespace Dice.Presentation
             public string permanentlyUnlocked;
             public string requiresUnlock;
             public string encounterExclusive;
+            public string ruleExclusive;
             public string availableFromStart;
             /** {access} and {scope}: how the charm is obtained and its scope line. */
             public string availability;
             public string allEncounters;
             public string thisEncounter;
+            public string withItsRule;
             /** {scope} and {tier}: where the charm can appear and its power tier. */
             public string scopeTier;
 
@@ -846,10 +842,12 @@ namespace Dice.Presentation
                 check.Text(permanentlyUnlocked, nameof(permanentlyUnlocked));
                 check.Text(requiresUnlock, nameof(requiresUnlock));
                 check.Text(encounterExclusive, nameof(encounterExclusive));
+                check.Text(ruleExclusive, nameof(ruleExclusive));
                 check.Text(availableFromStart, nameof(availableFromStart));
                 check.Text(availability, nameof(availability));
                 check.Text(allEncounters, nameof(allEncounters));
                 check.Text(thisEncounter, nameof(thisEncounter));
+                check.Text(withItsRule, nameof(withItsRule));
                 check.Text(scopeTier, nameof(scopeTier));
             }
         }

@@ -40,8 +40,7 @@ namespace Dice.Engine
                 {
                     throw new ArgumentException("A granted modifier is missing from the catalog.", nameof(catalog), exception);
                 }
-                modifier.RejectEncounterExclusive("a progression grant", nameof(catalog));
-                if (modifier.Availability.Access != ModifierAccess.PermanentUnlock || !modifier.IsPlayable)
+                if (!modifier.Availability.RequiresUnlock || !modifier.IsPlayable)
                     throw new ArgumentException("Progression grants require playable permanent modifiers.", nameof(catalog));
             }
         }

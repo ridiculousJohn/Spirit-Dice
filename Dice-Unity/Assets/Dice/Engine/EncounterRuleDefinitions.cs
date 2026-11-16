@@ -99,6 +99,9 @@ namespace Dice.Engine
         /** Dice that do not count in the current hand: scoring, hand ranks and charm conditions read only the counted dice. */
         internal virtual int UncountedDiceMask(EncounterRuleState ruleState) => 0;
 
+        /** Whether UncountedDiceMask can ever name a die. */
+        internal virtual bool CanLeaveDiceUncounted => false;
+
         /** Returns true when this rule attempted a disturbance, whether it changed a die or was blocked. */
         internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
             InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events) => false;

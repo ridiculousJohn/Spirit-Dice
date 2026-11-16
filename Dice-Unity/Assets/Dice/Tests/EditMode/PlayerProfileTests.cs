@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Dice.App;
 using Dice.Engine;
@@ -139,24 +140,28 @@ namespace Dice.Tests
         {
             var modifiers = new[]
             {
-                RewardModifier("starter", "family.starter", ModifierAccess.Starter),
+                RewardModifier("starter", "family.starter", requiresUnlock: false),
                 RewardModifier("owned", "family.owned"), RewardModifier("owned.variant", "family.owned"),
                 RewardModifier("revealed", "family.revealed"),
-                RewardModifier("encounter", "family.encounter", ModifierAccess.EncounterExclusive),
+                RewardModifier("encounter", "family.encounter", requiresUnlock: false),
                 RewardModifier("inert", "family.inert", inert: true), RewardModifier("never", "family.never", never: true)
             };
+            // Every charm but the encounter's addition is in the encounter's reward pool.
+            var pool = RewardTestContent.Pool(modifiers.Where(modifier => modifier.Identity != TestModifiers.IdOf("encounter")));
             return new MechanicalCatalog("profile.rewards", TestContent.Hands(), new[]
             {
-                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) })
+                new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+                    rewardPolicy: RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { pool }) }),
+                    encounterModifierIds: TestModifiers.IdsOf("encounter"))
             }, modifiers);
         }
 
-        private static ModifierDefinition RewardModifier(string id, string family, ModifierAccess access = ModifierAccess.PermanentUnlock,
+        private static ModifierDefinition RewardModifier(string id, string family, bool requiresUnlock = true,
             bool inert = false, bool never = false)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand,
                 never ? new NeverCondition() : (IModifierCondition)new AlwaysCondition(),
                 inert ? Array.Empty<ModifierEffect>() : new ModifierEffect[] { new AddBaseScoreEffect(1) },
-                availability: new ModifierAvailabilityDefinition(access: access));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
 
         [Test]
         public void RoundTripKeepsUnknownIdsAndProgressIsIdempotent()

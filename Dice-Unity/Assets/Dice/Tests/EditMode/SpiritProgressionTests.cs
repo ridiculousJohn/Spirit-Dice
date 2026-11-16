@@ -246,7 +246,7 @@ namespace Dice.Tests
         {
             var modifier = new ModifierDefinition(TestModifiers.IdOf(UnlockedId), TestFamilies.Of("family.permanent"), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(1) },
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true));
             var stages = finalWin ? new[] { new StageDefinition(1, 1, 0) } :
                 new[] { new StageDefinition(1, 1, 0), new StageDefinition(1000000, 1, 0) };
             var encounter = new EncounterDefinition(TestContent.EncounterId, stages,

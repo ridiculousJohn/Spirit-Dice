@@ -140,7 +140,8 @@ namespace Dice.Presentation
                 DetailBody.text = wording.ownedCharms.DetailBody(controls.ModifierPresentation.GetConditionText(definition),
                     "<color=#" + ColorUtility.ToHtmlStringRGB(color) + ">" + controls.ModifierPresentation.GetEffectText(definition) + "</color>",
                     controls.ModifierPresentation.GetTimingText(definition),
-                    SpiritCharmVisuals.AvailabilityText(definition, controls.Snapshot, wording.charmAvailability));
+                    SpiritCharmVisuals.AvailabilityText(definition, controls.Catalog.GetEncounter(controls.Snapshot.EncounterId),
+                        controls.Snapshot, wording.charmAvailability));
                 var status = SpiritCharmVisuals.Status(controls, instance, definition);
                 DetailBadge.Render(status);
                 DetailStatus.text = status.GetDetailText(definition.Phase, controls.Snapshot.Phase, wording.charmStatus);

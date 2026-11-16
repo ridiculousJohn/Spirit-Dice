@@ -55,7 +55,7 @@ namespace Dice.Tests
             yield return ContentReady.LoadApplication();
             controller = Object.FindAnyObjectByType<SpiritEncounterController>();
             var authored = controller.Catalog;
-            var starters = authored.Modifiers.Where(modifier => modifier.Availability.Access == ModifierAccess.Starter &&
+            var starters = authored.Modifiers.Where(modifier => !modifier.Availability.RequiresUnlock &&
                 modifier.Phase == ModifierPhase.PlayHand).Select(modifier => modifier.Identity).ToArray();
             Assert.That(starters, Is.Not.Empty, "The authored catalog has no starter Play Hand charm.");
             var equipped = new MechanicalCatalog(authored.Version + ".board-states-review", authored.Hands,

@@ -18,7 +18,8 @@ namespace Dice.UnityContent
         [SerializeField] private ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand;
         [SerializeField] private bool rewardEligible = true;
         [SerializeField, Min(1)] private int powerTier = 1;
-        [SerializeField] private ModifierAccess access;
+        [SerializeField, Tooltip("Whether the charm can be offered only once the player has permanently unlocked it; off, it can be offered wherever a list offers it.")]
+        private bool requiresUnlock;
 
         public ModifierDefinition.Id Identity => new ModifierDefinition.Id(AssetGuid);
         public ModifierFamilyAsset Family => family;
@@ -40,7 +41,7 @@ namespace Dice.UnityContent
                 }
                 return new ModifierDefinition(Identity, familyDefinition, phase, condition.Build(),
                     effectDefinitions, activationLimit, rewardEligible,
-                    new ModifierAvailabilityDefinition(powerTier, access));
+                    new ModifierAvailabilityDefinition(powerTier, requiresUnlock));
             }
             catch (ArgumentException exception)
             {

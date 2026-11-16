@@ -50,7 +50,7 @@ namespace Dice.Tests
                     new StageDefinition(1000000, 5, 3) }, rewardPolicy: policy)
             }, new[] { modifier, new ModifierDefinition(TestModifiers.IdOf(GiftId), TestFamilies.Of(GiftFamily), ModifierPhase.PlayHand,
                 new AlwaysCondition(), new ModifierEffect[] { new AddBaseScoreEffect(5) },
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock)) });
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true)) });
             journeys = Create<EncounterJourneyCatalogAsset>();
             SyntheticUi.Set(journeys, "chapters", new[] { Chapter("chapter.journeys", Journey(FirstName, "Harbor", "Ferryman"),
                 Journey(SecondName, "Observatory", "Astronomer")) });

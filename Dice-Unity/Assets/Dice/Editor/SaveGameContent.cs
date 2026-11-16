@@ -40,7 +40,7 @@ namespace Dice.Editor
         /** The catalog's encounters in catalog order, grouped under the chapter of the journey that plays each. */
         public IReadOnlyList<Entry<EncounterDefinition.Id>> EncounterEntries { get; }
         public IReadOnlyList<Entry<ModifierFamilyDefinition.Id>> FamilyEntries { get; }
-        /** The permanent unlock charms in catalog order, grouped under their family's name. */
+        /** The charms that require unlocking, in catalog order, grouped under their family's name. */
         public IReadOnlyList<Entry<ModifierDefinition.Id>> CharmEntries { get; }
 
         private SaveGameContent(string configurationPath, MechanicalContent content, ModifierPresentationCatalog presentation,
@@ -64,7 +64,7 @@ namespace Dice.Editor
                 .Select(family => new Entry<ModifierFamilyDefinition.Id>(family.Identity, "", FamilyName(family.Identity)))
                 .ToList();
             CharmEntries = Catalog.Modifiers
-                .Where(modifier => modifier.Availability.Access == ModifierAccess.PermanentUnlock)
+                .Where(modifier => modifier.Availability.RequiresUnlock)
                 .Select(modifier => new Entry<ModifierDefinition.Id>(modifier.Identity, Presentation.GetFamilyName(modifier),
                     Presentation.GetName(modifier)))
                 .GroupBy(entry => entry.Group)

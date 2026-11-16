@@ -49,7 +49,7 @@ and nymph) reveal each encounter's three unlock families. Fox also grants Open G
 For a guide who gives protection before a region, author both discovery and grant
 lists, and include the granted charms in that region's ordinary run pools so they
 can appear during play. Starter and previously owned families need no explicit
-discovery reward. Permanent Collection excludes inert and encounter-only content.
+discovery reward. Permanent Collection excludes inert and addition-only charms (those no reward pool holds).
 
 Chapter 1 follows fox, owl, moth, then the return journey (a journey without an
 encounter) `ChapterOneReturnJourney`. Each requires completion of the preceding
@@ -74,17 +74,20 @@ remain on existing variants, including combined and reroll variants that are not
 currently awarded by these lists. Existing authored ordinary reward pools retain
 their membership.
 
-Moth's `encounterModifiers` contains four encounter-exclusive Lantern Seekers
-variants. They trigger when a played hand contains at least two dice showing the
+Moth's `encounterModifiers` contains four Lantern Seekers variants, addition-only
+charms: no reward pool holds them. They trigger when a played hand contains at least two dice showing the
 favored face supplied by the encounter rule. Provisional effects are +10 Base,
 +2 Mult, +5 Base and +1 Mult, and +1 reroll. Each is tier 1 and once per hand.
-Their access is Encounter Exclusive, and the moth's `encounterModifiers` list is the
-only statement of the encounter that offers them: loading fails, naming the charm's id
-and where it is listed, when an encounter-exclusive charm is in a reward pool or its
-fallback, an unlock reward list, an encounter's starting charms or a progression
-grant. The charm inspector's read-only Offered by section lists each encounter whose
-`encounterModifiers` holds the charm (click to ping, double-click to select) and
-warns when no encounter or more than one lists it.
+They require no unlock (Requires Unlock off): the setting says only whether a charm must be
+unlocked before it can be offered. The
+moth's `encounterModifiers` list is the only statement of where they are offered; the
+catalog derives that they are addition-only, so they stay out of the Collection and
+their family is not discovered from the start. Their condition needs the favored-face
+rule, so loading fails, naming the charm, the place and the encounter, if one is
+offered (in charm additions, starting charms or a reward pool) by an encounter
+without that rule in play. The charm inspector's read-only Offered by section lists,
+for any charm, each encounter whose `encounterModifiers` holds it and each rule asset
+whose charm list holds it (click to ping, double-click to select).
 The family's skin entry provisionally reuses the existing Last Lantern icon; its variants show
 the standard categories of their effects. Replace the shared artwork only when
 dedicated art is approved. The favored-face rule itself still adds +2 Mult per matching scored die.
@@ -104,7 +107,7 @@ The `encounter.nymph.bound_tree` encounter asset authors the Base and Mult varia
 unlock opportunities at stages 3, 6, and 10. `ProgressionRewards/NymphFamilyDiscovery`
 discovers those three families and grants nothing; the bound tree journey references it.
 
-Its `encounterModifiers` contains four encounter-exclusive Grafted Branch
+Its `encounterModifiers` contains four addition-only Grafted Branch
 variants, offered only through that list as Lantern Seekers are through the
 moth's. They trigger when at least three dice show the face of a die bound by
 the encounter's binding rule (`NymphBinding.asset`); the bound die counts toward
@@ -136,7 +139,7 @@ unlocks, so Light Basket is not a starter family; its pairing, Full Basket
 (`modifier.play_hand.sum_greater_than`), is a starter. Worn Pebble and Light Basket
 are tier 2, so they enter ordinary offers from stage 4.
 
-Its `encounterModifiers` contains four encounter-exclusive Bog Offering variants,
+Its `encounterModifiers` contains four addition-only Bog Offering variants,
 offered only through that list as Lantern Seekers are through the moth's. They
 trigger when at least one die of the played hand does not count, which in this
 encounter is a die withered by rot. Provisional effects are +10 Base, +2 Mult,

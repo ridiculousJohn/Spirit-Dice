@@ -105,7 +105,7 @@ namespace Dice.Engine
         public override EncounterPhase WaitingPhase => EncounterPhase.ChoosingUnlock;
         public override bool Refreshable => false;
         public override bool OfferedWhenEmpty => true;
-        // Encounter-exclusive charms are never unlock rewards.
+        // An unlock offer draws only from the unlock list; the charm additions in play are never unlock rewards.
         internal override bool CanOfferEncounterModifiers => false;
 
         internal override string DescribeSelection(RewardOption option, IDiagnosticFormat format)

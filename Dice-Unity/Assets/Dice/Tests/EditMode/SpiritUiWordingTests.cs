@@ -72,7 +72,6 @@ namespace Dice.Tests
             Assert.That(collection.Gifts(new[] { "a", "b" }), Is.EqualTo("<collection.gifts>a |sourceSeparator| b"));
             Assert.That(collection.Rewards(new string[0]), Is.EqualTo("<collection.noRunRewards>"));
             Assert.That(collection.Rewards(new[] { "a", "b" }), Is.EqualTo("a |rewardSeparator| b"));
-            Assert.That(collection.EncounterOnlySource("r"), Is.EqualTo("<collection.encounterOnlySource>r"));
             Assert.That(collection.StarterSource("r"), Is.EqualTo("<collection.starterSource>r"));
             Assert.That(collection.UnlockableSource("s", "r"), Is.EqualTo("<collection.unlockableSource>s|r"));
         }

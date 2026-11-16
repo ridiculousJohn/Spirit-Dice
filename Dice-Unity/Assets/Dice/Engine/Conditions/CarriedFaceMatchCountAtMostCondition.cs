@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Dice.Engine
 {
@@ -12,6 +13,8 @@ namespace Dice.Engine
             if (parameter < 0 || parameter > DiceValues.Count - 1) throw new ArgumentOutOfRangeException(nameof(parameter));
             Parameter = parameter;
         }
+
+        public bool CanEverActivateWith(IReadOnlyList<EncounterRuleDefinition> rulesInPlay) => CarriedDice.RuleInPlay(rulesInPlay);
 
         /**
          * Holds when, for some carried die, at most Parameter other counted dice show its face. A carried die that does not

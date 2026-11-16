@@ -4,23 +4,29 @@ using System.Collections.ObjectModel;
 
 namespace Dice.Engine
 {
-    public enum ModifierAccess { Starter, PermanentUnlock, EncounterExclusive }
-
+    /**
+     * A charm's power tier and whether it must be unlocked before it can be offered. Where a charm is offered is stated
+     * only by the lists that hold it (reward pools, an encounter's charm additions, a rule's charm list).
+     */
     public sealed class ModifierAvailabilityDefinition
     {
         public int PowerTier { get; }
-        public ModifierAccess Access { get; }
+        /**
+         * Whether the charm can be offered only once the player has permanently unlocked it; a charm that requires no unlock
+         * can be offered wherever a list offers it.
+         */
+        public bool RequiresUnlock { get; }
 
-        public ModifierAvailabilityDefinition(int powerTier = 1, ModifierAccess access = ModifierAccess.Starter)
+        public ModifierAvailabilityDefinition(int powerTier = 1, bool requiresUnlock = false)
         {
             if (powerTier < 1) throw new ArgumentOutOfRangeException(nameof(powerTier));
-            if (!Enum.IsDefined(typeof(ModifierAccess), access)) throw new ArgumentOutOfRangeException(nameof(access));
             PowerTier = powerTier;
-            Access = access;
+            RequiresUnlock = requiresUnlock;
         }
 
+        /** A charm that requires unlocking is available once unlocked; any other wherever its charm is offered. */
         internal bool IsAvailable(ISet<ModifierDefinition.Id> unlockedIds, ModifierDefinition.Id modifierId)
-            => Access != ModifierAccess.PermanentUnlock || unlockedIds.Contains(modifierId);
+            => !RequiresUnlock || unlockedIds.Contains(modifierId);
     }
 
     public enum ModifierPhase { InitialRoll, PlayerReroll, PlayHand }
@@ -63,9 +69,6 @@ namespace Dice.Engine
         /** A charm that can be offered and can ever do something when it activates. */
         public bool IsPlayable => RewardEligible && Effects.Count > 0 && Condition.CanEverActivate;
 
-        /** A playable starter charm; every player has discovered its family. */
-        public bool IsDiscoveredFromStart => Availability.Access == ModifierAccess.Starter && IsPlayable;
-
         public ModifierDefinition(Id identity, ModifierFamilyDefinition family, ModifierPhase phase, IModifierCondition condition,
             IEnumerable<ModifierEffect> effects, ModifierActivationLimit activationLimit = ModifierActivationLimit.OncePerHand,
             bool rewardEligible = true, ModifierAvailabilityDefinition availability = null)
@@ -86,17 +89,6 @@ namespace Dice.Engine
             ActivationLimit = activationLimit;
             RewardEligible = rewardEligible;
             Availability = availability ?? new ModifierAvailabilityDefinition();
-        }
-
-        /**
-         * Rejects an encounter-exclusive charm listed at place: an encounter's own charm list is the only statement of
-         * the encounter that offers it.
-         */
-        internal void RejectEncounterExclusive(string place, string parameter)
-        {
-            if (Availability.Access == ModifierAccess.EncounterExclusive)
-                throw new ArgumentException("The encounter-exclusive charm " + Identity + " is listed in " + place +
-                    "; only an encounter's own charm list offers it.", parameter);
         }
     }
 

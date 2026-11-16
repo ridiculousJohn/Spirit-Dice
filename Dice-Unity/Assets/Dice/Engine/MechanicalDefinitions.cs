@@ -268,6 +268,7 @@ namespace Dice.Engine
         private readonly Dictionary<ModifierDefinition.Id, ModifierDefinition> modifiersById;
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         private readonly Dictionary<ItemDefinition.Id, ItemDefinition> itemsById;
+        private readonly HashSet<ModifierDefinition.Id> additionOnlyIds;
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
@@ -330,7 +331,13 @@ namespace Dice.Engine
             var validatedRules = new HashSet<EncounterRuleDefinition>();
             foreach (var item in itemList)
                 foreach (var rule in item.Rules)
+                {
                     if (validatedRules.Add(rule)) ValidateRuleModifiers(rule, nameof(items));
+                    foreach (var modifierId in rule.AddedModifierIds)
+                        if (!modifiersById[modifierId].Condition.CanEverActivateWith(item.Rules))
+                            throw new ArgumentException("The charm " + modifierId + " in the charm list of the rule " + rule.Identity +
+                                " can never activate with the rules of the item " + item.Identity + " in play.", nameof(items));
+                }
             this.encounters = new Dictionary<EncounterDefinition.Id, EncounterDefinition>();
             var encounterList = new List<EncounterDefinition>();
             // Encounters can share a pool, which is validated once.
@@ -345,36 +352,41 @@ namespace Dice.Engine
                         throw new ArgumentException("The starting upgrades of the encounter " + encounter.Identity +
                             " exceed the limit of the category " + (HandCategory)i + ".", nameof(encounters));
                 foreach (var modifierId in encounter.StartingModifiers)
-                {
-                    if (!modifiersById.TryGetValue(modifierId, out var modifier))
+                    if (!modifiersById.ContainsKey(modifierId))
                         throw new ArgumentException("The charm " + modifierId + " in the starting charms of the encounter " +
                             encounter.Identity + " is missing from the catalog.", nameof(encounters));
-                    modifier.RejectEncounterExclusive("the starting charms of the encounter " + encounter.Identity, nameof(encounters));
-                }
                 foreach (var modifierId in encounter.UnlockRewardModifierIds)
                 {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier))
                         throw new ArgumentException("The charm " + modifierId + " in the unlock rewards of the encounter " +
                             encounter.Identity + " is missing from the catalog.", nameof(encounters));
-                    modifier.RejectEncounterExclusive("the unlock rewards of the encounter " + encounter.Identity, nameof(encounters));
-                    if (modifier.Availability.Access != ModifierAccess.PermanentUnlock || !modifier.RewardEligible)
+                    if (!modifier.Availability.RequiresUnlock || !modifier.RewardEligible)
                         throw new ArgumentException("The charm " + modifier.Identity + " in the unlock rewards of the encounter " +
-                            encounter.Identity + " is not a reward-eligible permanent unlock.", nameof(encounters));
+                            encounter.Identity + " is not a reward-eligible charm that requires unlocking.", nameof(encounters));
                 }
                 foreach (var rule in encounter.Rules)
                     if (validatedRules.Add(rule)) ValidateRuleModifiers(rule, nameof(encounters));
                 foreach (var modifierId in encounter.OwnEncounterModifierIds)
+                {
                     if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                         throw new ArgumentException("The charm " + modifierId + " in the charm additions of the encounter " +
                             encounter.Identity + " is missing from the catalog or not reward-eligible.", nameof(encounters));
+                }
                 if (encounter.RewardPolicy != null)
                     foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
                         foreach (var pool in layout.Pools)
                             if (validatedPools.Add(pool)) ValidatePool(pool, nameof(encounters));
+                ValidateActivation(encounter, nameof(encounters));
                 this.encounters.Add(encounter.Identity, encounter);
                 encounterList.Add(encounter);
             }
             if (this.encounters.Count == 0) throw new ArgumentException("At least one encounter is required.", nameof(encounters));
+            additionOnlyIds = new HashSet<ModifierDefinition.Id>(modifiersById.Keys);
+            foreach (var pool in validatedPools)
+            {
+                foreach (var modifierId in pool.ModifierIds) additionOnlyIds.Remove(modifierId);
+                if (pool.FallbackModifierId != null) additionOnlyIds.Remove(pool.FallbackModifierId.Value);
+            }
             Version = version;
             Hands = Array.AsReadOnly(byCategory);
             Encounters = encounterList.AsReadOnly();
@@ -390,6 +402,35 @@ namespace Dice.Engine
                         " is missing from the catalog or not reward-eligible.", parameter);
         }
 
+        /**
+         * Every charm the encounter offers or starts with must be able to activate with its rules in play (its own rules and
+         * those of the items it lends): its charm additions in play, its starting charms and the entries and fallbacks of the
+         * pools its reward policy draws from.
+         */
+        private void ValidateActivation(EncounterDefinition encounter, string parameter)
+        {
+            foreach (var modifierId in encounter.EncounterModifierIds)
+                RequireActivation(modifierId, "the charm additions in play", encounter, parameter);
+            foreach (var modifierId in encounter.StartingModifiers)
+                RequireActivation(modifierId, "the starting charms", encounter, parameter);
+            if (encounter.RewardPolicy == null) return;
+            foreach (var layout in encounter.RewardPolicy.ModifierLayouts)
+                foreach (var pool in layout.Pools)
+                {
+                    foreach (var modifierId in pool.ModifierIds)
+                        RequireActivation(modifierId, "the reward pool " + pool.Name, encounter, parameter);
+                    if (pool.FallbackModifierId != null)
+                        RequireActivation(pool.FallbackModifierId.Value, "the fallback of the reward pool " + pool.Name, encounter, parameter);
+                }
+        }
+
+        private void RequireActivation(ModifierDefinition.Id modifierId, string place, EncounterDefinition encounter, string parameter)
+        {
+            if (!modifiersById[modifierId].Condition.CanEverActivateWith(encounter.Rules))
+                throw new ArgumentException("The charm " + modifierId + " in " + place + " of the encounter " + encounter.Identity +
+                    " can never activate with the encounter's rules in play.", parameter);
+        }
+
         private void ValidatePool(ModifierRewardPoolDefinition pool, string parameter)
         {
             foreach (var modifierId in pool.ModifierIds)
@@ -397,14 +438,12 @@ namespace Dice.Engine
                 if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                     throw new ArgumentException("The charm " + modifierId + " in the reward pool " + pool.Name +
                         " is missing from the catalog or not reward-eligible.", parameter);
-                modifier.RejectEncounterExclusive("the reward pool " + pool.Name, parameter);
             }
             if (pool.FallbackModifierId != null)
             {
-                if (!modifiersById.TryGetValue(pool.FallbackModifierId.Value, out var fallback))
+                if (!modifiersById.ContainsKey(pool.FallbackModifierId.Value))
                     throw new ArgumentException("The fallback charm " + pool.FallbackModifierId.Value + " of the reward pool " + pool.Name +
                         " is missing from the catalog.", parameter);
-                fallback.RejectEncounterExclusive("the fallback of the reward pool " + pool.Name, parameter);
             }
         }
 
@@ -426,6 +465,22 @@ namespace Dice.Engine
             if (id.Value == Guid.Empty) throw new ArgumentException("An item id is required.", nameof(id));
             if (!itemsById.TryGetValue(id, out var item)) throw new KeyNotFoundException(id.ToString());
             return item;
+        }
+
+        /**
+         * Whether the charm is addition-only: no reward pool of the catalog's encounters holds it, as an entry or a fallback,
+         * so it is offered only where an encounter's own charm additions or a rule's charm list hold it.
+         */
+        public bool IsAdditionOnly(ModifierDefinition.Id modifierId) => additionOnlyIds.Contains(GetModifier(modifierId).Identity);
+
+        /**
+         * Whether every player has discovered the charm's family from the start: the charm is playable, requires no unlock and
+         * is not addition-only.
+         */
+        public bool IsDiscoveredFromStart(ModifierDefinition modifier)
+        {
+            if (modifier == null) throw new ArgumentNullException(nameof(modifier));
+            return modifier.IsPlayable && !modifier.Availability.RequiresUnlock && !IsAdditionOnly(modifier.Identity);
         }
 
         /** Whether a charm of the catalog belongs to the family. */

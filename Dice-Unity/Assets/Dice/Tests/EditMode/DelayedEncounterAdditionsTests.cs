@@ -101,7 +101,7 @@ namespace Dice.Tests
         {
             var modifiers = ordinary.Select(id => Modifier(id)).Concat(new[]
             {
-                Modifier(Addition, ModifierAccess.EncounterExclusive)
+                Modifier(Addition)
             }).ToArray();
             var policy = new RewardPolicyDefinition(
                 new[] { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", TestModifiers.IdsOf(ordinary)) }) },
@@ -113,9 +113,9 @@ namespace Dice.Tests
             return new MechanicalCatalog("test.delayed_additions", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
-        private static ModifierDefinition Modifier(string id, ModifierAccess access = ModifierAccess.Starter)
+        private static ModifierDefinition Modifier(string id, bool requiresUnlock = false)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(access: access));
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
     }
 }

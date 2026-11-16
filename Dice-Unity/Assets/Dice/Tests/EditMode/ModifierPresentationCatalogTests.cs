@@ -171,6 +171,44 @@ namespace Dice.Tests
         }
 
         /**
+         * Checks the availability text, for the encounter being played, names a charm on its own charm additions exclusive to
+         * the encounter, one a rule in play brings exclusive to that rule, and any other available from the start, each with
+         * its scope / fails if one reads as another.
+         */
+        [Test]
+        public void AvailabilityNamesHowTheEncounterOffersTheCharm()
+        {
+            var own = RewardTestContent.Modifier("availability.own", "family.availability.own");
+            var brought = RewardTestContent.Modifier("availability.brought", "family.availability.brought");
+            var plain = RewardTestContent.Modifier("availability.plain", "family.availability.plain");
+            var pieceId = TestPieces.IdOf("piece.availability");
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+                rules: new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("availability.carry_over"), pieceId, new[] { brought.Identity }) },
+                encounterModifierIds: new[] { own.Identity },
+                pieces: new[] { new TablePieceDefinition(pieceId, new[] { new PositionInteractionDefinition(PiecePosition.Neutral,
+                    PieceMovementTiming.DuringHand) }) });
+            var wording = SyntheticWording.Create();
+            try
+            {
+                var availability = wording.charmAvailability;
+                // The snapshot is read only for a permanent unlock's unlock state.
+                Assert.That(SpiritCharmVisuals.AvailabilityText(own, encounter, null, availability), Is.EqualTo(
+                    "<charmAvailability.availability><charmAvailability.encounterExclusive>|" +
+                    "<charmAvailability.scopeTier><charmAvailability.thisEncounter>|1"));
+                Assert.That(SpiritCharmVisuals.AvailabilityText(brought, encounter, null, availability), Is.EqualTo(
+                    "<charmAvailability.availability><charmAvailability.ruleExclusive>|" +
+                    "<charmAvailability.scopeTier><charmAvailability.withItsRule>|1"));
+                Assert.That(SpiritCharmVisuals.AvailabilityText(plain, encounter, null, availability), Is.EqualTo(
+                    "<charmAvailability.availability><charmAvailability.availableFromStart>|" +
+                    "<charmAvailability.scopeTier><charmAvailability.allEncounters>|1"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(wording);
+            }
+        }
+
+        /**
          * Checks each charm shows the category, styling and mark the skin maps the set of its effect kinds to, whatever
          * the order or number of its effects / fails if the category is not the one of exactly the charm's effect kinds,
          * or a repeated kind or the effects' order changes it.

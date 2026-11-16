@@ -17,7 +17,7 @@ namespace Dice.Tests
         public void ExplicitFamilyDiscoveryGatesMilestoneIndividualsAndKeepsEmptyContinue(int discoveredCount)
         {
             var modifiers = Enumerable.Range(0, 5).Select(i => Modifier("unlock." + i,
-                access: ModifierAccess.PermanentUnlock)).ToArray();
+                requiresUnlock: true)).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var discoveries = modifiers.Take(discoveredCount).Select(value => value.Family.Identity).ToArray();
@@ -44,7 +44,7 @@ namespace Dice.Tests
         {
             var modifiers = Enumerable.Range(0, 5).Select(i => new ModifierDefinition(TestModifiers.IdOf("unlock." + i), TestFamilies.Of("family.shared"),
                 ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true))).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
@@ -59,7 +59,7 @@ namespace Dice.Tests
         public void DiscoveryMergeRetainsPendingOfferAndInvalidMergeIsAtomic()
         {
             var modifiers = Enumerable.Range(0, 5).Select(i => Modifier("unlock." + i,
-                access: ModifierAccess.PermanentUnlock)).ToArray();
+                requiresUnlock: true)).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
@@ -82,8 +82,8 @@ namespace Dice.Tests
         [Test]
         public void CurrentSaveRejectsUnknownDiscovery()
         {
-            var modifiers = new[] { Modifier("visible", access: ModifierAccess.PermanentUnlock),
-                Modifier("hidden", access: ModifierAccess.PermanentUnlock) };
+            var modifiers = new[] { Modifier("visible", requiresUnlock: true),
+                Modifier("hidden", requiresUnlock: true) };
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 12,
@@ -94,11 +94,11 @@ namespace Dice.Tests
             Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
         }
 
-        private static ModifierDefinition Modifier(string id, int tier = 1, ModifierAccess access = ModifierAccess.Starter,
+        private static ModifierDefinition Modifier(string id, int tier = 1, bool requiresUnlock = false,
             bool rewardEligible = true)
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of("family." + id), ModifierPhase.PlayHand,
                 new NeverCondition(), Array.Empty<ModifierEffect>(),
-                rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, access));
+                rewardEligible: rewardEligible, availability: new ModifierAvailabilityDefinition(tier, requiresUnlock));
 
         /** The pool of the charms other than the fallback, with that fallback. */
         private static ModifierRewardPoolDefinition Pool(ModifierDefinition[] modifiers, string fallback = null)
@@ -138,8 +138,8 @@ namespace Dice.Tests
         [Test]
         public void SmallPoolHistoryBypassAndFallbackNeverExposeLockedModifiers()
         {
-            var modifiers = new[] { Modifier("allowed"), Modifier("locked", access: ModifierAccess.PermanentUnlock),
-                Modifier("fallback", access: ModifierAccess.PermanentUnlock, rewardEligible: false) };
+            var modifiers = new[] { Modifier("allowed"), Modifier("locked", requiresUnlock: true),
+                Modifier("fallback", requiresUnlock: true, rewardEligible: false) };
             var catalog = Catalog(modifiers, fallback: "fallback");
             Assert.That(Generate(catalog, history: new[] { "family.allowed" }).ModifierIds, Is.EqualTo(TestModifiers.IdsOf("allowed")));
             Assert.That(Generate(catalog, owned: new[] { "allowed" }).ModifierIds, Is.Empty);
@@ -147,12 +147,41 @@ namespace Dice.Tests
                 Is.EqualTo(TestModifiers.IdsOf("fallback")));
         }
 
-        /** Checks an encounter-exclusive charm in a reward pool fails loading, naming the charm and the pool / fails if the catalog accepts it or the message omits either. */
+        /**
+         * Checks the catalog derives as addition-only a charm only an encounter's charm additions hold, and not one a reward pool
+         * holds as an entry or a fallback / fails if a pooled charm counts as addition-only or the listed one does not.
+         */
         [Test]
-        public void CatalogRejectsAnEncounterExclusiveCharmInAPoolNamingIt()
+        public void CatalogDerivesAdditionOnlyCharmsFromItsPools()
         {
-            var exception = Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("lantern", access: ModifierAccess.EncounterExclusive) }));
-            Assert.That(exception.Message, Does.Contain(TestModifiers.IdOf("lantern").ToString()).And.Contain("pool.ordinary"));
+            var pooled = Modifier("pooled");
+            var fallback = Modifier("fallback");
+            var addition = Modifier("addition");
+            var pool = new ModifierRewardPoolDefinition("pool.ordinary", new[] { pooled.Identity }, fallback.Identity);
+            var catalog = Catalog(new[] { pooled, fallback, addition }, Policy(pool), encounterModifierIds: new[] { addition.Identity });
+            Assert.That(catalog.IsAdditionOnly(pooled.Identity), Is.False);
+            Assert.That(catalog.IsAdditionOnly(fallback.Identity), Is.False);
+            Assert.That(catalog.IsAdditionOnly(addition.Identity), Is.True);
+        }
+
+        /**
+         * Checks a charm that can never activate with the encounter's rules in play fails loading on the encounter's charm
+         * additions and in a pool its reward policy draws from, naming the charm, the place and the encounter / fails if
+         * either loads or the message omits one of them.
+         */
+        [Test]
+        public void CatalogRejectsACharmThatCannotActivateWithTheEncountersRules()
+        {
+            var pooled = Modifier("pooled");
+            var favored = new ModifierDefinition(TestModifiers.IdOf("favored"), TestFamilies.Of("family.favored"), ModifierPhase.PlayHand,
+                new FavoredFaceCountAtLeastCondition(2), new ModifierEffect[] { new AddBaseScoreEffect(1) });
+            var added = Assert.Throws<ArgumentException>(() => Catalog(new[] { pooled, favored }, Policy(Pool(new[] { pooled })),
+                encounterModifierIds: new[] { favored.Identity }));
+            Assert.That(added.Message, Does.Contain(favored.Identity.ToString()).And.Contain("charm additions")
+                .And.Contain(TestContent.EncounterId.ToString()));
+            var drawn = Assert.Throws<ArgumentException>(() => Catalog(new[] { pooled, favored }));
+            Assert.That(drawn.Message, Does.Contain(favored.Identity.ToString()).And.Contain("pool.ordinary")
+                .And.Contain(TestContent.EncounterId.ToString()));
         }
 
         [Test]
@@ -195,8 +224,8 @@ namespace Dice.Tests
         [Test]
         public void ClearedMilestoneUnlocksBeforeOffersAndFinalCompletionWithoutDuplicateEvents()
         {
-            var modifiers = new[] { Modifier("first", 2, access: ModifierAccess.PermanentUnlock),
-                Modifier("final", access: ModifierAccess.PermanentUnlock) };
+            var modifiers = new[] { Modifier("first", 2, requiresUnlock: true),
+                Modifier("final", requiresUnlock: true) };
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1), new ModifierUnlockMilestone(2) },
                 unlockRewardModifierIds: TestModifiers.IdsOf("first", "final"));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
@@ -234,7 +263,7 @@ namespace Dice.Tests
         [Test]
         public void PendingOffersSurviveProfileMergeAndResumeWithDeterministicRefreshes()
         {
-            var modifiers = new[] { Modifier("weak"), Modifier("strong", 2, access: ModifierAccess.PermanentUnlock) };
+            var modifiers = new[] { Modifier("weak"), Modifier("strong", 2, requiresUnlock: true) };
             var catalog = Catalog(modifiers, Policy(Pool(modifiers), milestones: new[] { new ModifierTierMilestone(2, 2) }));
             var original = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 7);
             original.Execute(PlayHandAction.Instance, 0);
@@ -262,7 +291,7 @@ namespace Dice.Tests
         {
             var modifiers = Enumerable.Range(0, 8).Select(i => new ModifierDefinition(TestModifiers.IdOf("charm." + i), TestFamilies.Of("shared.family"),
                 ModifierPhase.PlayHand, new NeverCondition(), Array.Empty<ModifierEffect>(),
-                availability: new ModifierAvailabilityDefinition(access: ModifierAccess.PermanentUnlock))).ToArray();
+                availability: new ModifierAvailabilityDefinition(requiresUnlock: true))).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var owned = modifiers.Take(8 - remaining).Select(value => value.Identity).ToArray();
@@ -291,7 +320,7 @@ namespace Dice.Tests
         [Test]
         public void UnlockOfferSurvivesProfileMergeWithoutRerollingOrDuplicatingProgress()
         {
-            var modifiers = Enumerable.Range(0, 4).Select(i => Modifier("unlock." + i, access: ModifierAccess.PermanentUnlock)).ToArray();
+            var modifiers = Enumerable.Range(0, 4).Select(i => Modifier("unlock." + i, requiresUnlock: true)).ToArray();
             var catalog = Catalog(modifiers, milestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: modifiers.Select(value => value.Identity));
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 8);
@@ -312,7 +341,7 @@ namespace Dice.Tests
         public void EncounterAdditionsJoinOrdinaryPoolAndKeepTierRulesAndSavedEligibility()
         {
             var starter = Modifier("starter");
-            var addition = Modifier("addition", 2, ModifierAccess.EncounterExclusive);
+            var addition = Modifier("addition", 2);
             var policy = Policy(Pool(new[] { starter }), rules: new[] { new ModifierTierRule(1, new[] { 0, 1 }) });
             var encounter = new EncounterDefinition(TestContent.EncounterId,
                 new[] { new StageDefinition(1, 2, 1, StageExitBehavior.AwaitRewards), new StageDefinition(1, 2, 1) },
@@ -332,7 +361,7 @@ namespace Dice.Tests
         [TestCase(true)]
         public void FinalUnlockWithoutOrdinaryRewardsCanResumeBeforeCompleting(bool collected)
         {
-            var modifier = Modifier("last", access: ModifierAccess.PermanentUnlock);
+            var modifier = Modifier("last", requiresUnlock: true);
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
                 unlockMilestones: new[] { new ModifierUnlockMilestone(1) },
                 unlockRewardModifierIds: new[] { modifier.Identity });
@@ -357,7 +386,7 @@ namespace Dice.Tests
         [TestCase(2)]
         public void AbandonPendingUnlockRetainsRestorableTerminalState(int stages)
         {
-            var modifiers = new[] { Modifier("unlock", access: ModifierAccess.PermanentUnlock) };
+            var modifiers = new[] { Modifier("unlock", requiresUnlock: true) };
             var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 0, 1, 2, 1, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy,
@@ -374,7 +403,7 @@ namespace Dice.Tests
         [Test]
         public void CurrentSaveRequiresTheUnlockedModifiers()
         {
-            var modifiers = new[] { Modifier("starter"), Modifier("locked", access: ModifierAccess.PermanentUnlock) };
+            var modifiers = new[] { Modifier("starter"), Modifier("locked", requiresUnlock: true) };
             var catalog = Catalog(modifiers);
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 9);
             session.Execute(PlayHandAction.Instance, 0);
@@ -390,14 +419,14 @@ namespace Dice.Tests
             var unlocks = TestModifiers.IdsOf("charm");
             Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm") }, milestones: milestone,
                 unlockRewardModifierIds: unlocks));
-            Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm", access: ModifierAccess.PermanentUnlock) },
+            Assert.Throws<ArgumentException>(() => Catalog(new[] { Modifier("charm", requiresUnlock: true) },
                 milestones: new[] { new ModifierUnlockMilestone(3) }, unlockRewardModifierIds: unlocks));
         }
 
         [Test]
         public void FailedRewardResolutionAndInvalidProfileMergeDoNotCommitUnlocks()
         {
-            var modifiers = new[] { Modifier("locked", access: ModifierAccess.PermanentUnlock), Modifier("starter") };
+            var modifiers = new[] { Modifier("locked", requiresUnlock: true), Modifier("starter") };
             var policy = new RewardPolicyDefinition(new[] { new ModifierRewardLayout(new[] { Pool(modifiers) }) },
                 int.MaxValue, 1, 1, 2, new[] { new HandUpgradeHistoryRule(int.MaxValue, 0) });
             var catalog = Catalog(modifiers, policy, new[] { new ModifierUnlockMilestone(1) }, unlockRewardModifierIds: TestModifiers.IdsOf("locked"));

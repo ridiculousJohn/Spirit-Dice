@@ -29,8 +29,8 @@ namespace Dice.UnityContent
         public EncounterDefinition.Id Identity => new EncounterDefinition.Id(AssetGuid);
 
         /**
-         * The charms this encounter's offers add to its pools, as authored. For an encounter-exclusive charm this list is
-         * the only statement of the encounter that offers it.
+         * The charms this encounter's offers add to its pools, as authored: its own charm additions. With the rules' charm
+         * lists and the reward pools, this list is the only statement of where a charm is offered.
          */
         public IReadOnlyList<ModifierAsset> EncounterModifiers => encounterModifiers;
 
