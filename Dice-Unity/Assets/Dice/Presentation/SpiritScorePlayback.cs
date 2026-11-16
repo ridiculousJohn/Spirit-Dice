@@ -184,9 +184,9 @@ namespace Dice.Presentation
             host.SetDiceSelection(rolled.SelectedMask);
             if (openingFade > 0 && rolled.Kind == RollKind.Initial)
                 yield return FadeOpening(openingFade);
-            int rollMask = rolled.Kind == RollKind.Initial ? DiceValues.AllMask : rolled.SelectedMask;
-            SpiritRollTiming rollTiming = encounterAudio.BeginRoll(DiceValues.CountBays(rollMask));
-            activeRoll = diceTray.Roll(rolled.After, rollMask, rollTiming);
+            // The event names the dice the roll threw; an opening roll leaves the dice a rule holds as they lie.
+            SpiritRollTiming rollTiming = encounterAudio.BeginRoll(DiceValues.CountBays(rolled.SelectedMask));
+            activeRoll = diceTray.Roll(rolled.After, rolled.SelectedMask, rollTiming);
             yield return activeRoll;
             activeRoll = null;
         }

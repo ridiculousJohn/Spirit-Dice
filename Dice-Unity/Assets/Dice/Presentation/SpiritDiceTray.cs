@@ -57,6 +57,8 @@ namespace Dice.Presentation
         public Transform RenderRoot => sharedScene != null ? sharedScene.RenderRoot : renderRoot != null ? renderRoot.transform : null;
         /** Whether any die is rolling or flipping. */
         public bool IsRolling => rollingMask != 0;
+        // Internal so tests read which dice a roll or flip moves.
+        internal int RollingMask => rollingMask;
         /** Raised when the last running roll or flip ends, leaving every die at rest in its slot. */
         public event Action RollEnded;
         /** The authored die in each slot; objects parented to it follow its rolls, flips and rest pose. */

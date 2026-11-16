@@ -191,6 +191,43 @@ namespace Dice.Tests
         }
 
         /**
+         * Checks an opening roll after a played hand throws only the dice its event names, leaving the die a carry-over rule
+         * holds as it lies, and times the roll audio for those dice / fails if the tray rolls the held die or the roll audio
+         * counts it.
+         */
+        [Test]
+        public void AnOpeningRollThrowsOnlyTheDiceItsEventNames()
+        {
+            const int HeldBay = 2;
+            var pieceId = TestPieces.IdOf("piece.test.playback.carry_over");
+            var item = new ItemDefinition(new ItemDefinition.Id(new Guid("6f1c2b7e4d9a4c3e8b5a7d0e2f1c3b94")),
+                new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("test.playback.carry_over"), pieceId, Array.Empty<ModifierDefinition.Id>()) },
+                new TablePieceDefinition(pieceId, new[] { new PositionInteractionDefinition(PiecePosition.Bay(HeldBay),
+                    PieceMovementTiming.DuringHand) }));
+            var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 3, 3) }, items: new[] { item });
+            var catalog = new MechanicalCatalog("test.playback", TestContent.Hands(), new[] { encounter });
+            var session = EncounterSession.CreateEncounter(catalog, EncounterId, 7);
+            var tray = rig.StartDice();
+            var host = new PlaybackHost(new Controls(catalog, charms.For()));
+            var playback = new SpiritScorePlayback(host, hud, tray, rig.CreateHistoryTray(), audio, null, null);
+
+            var played = session.Execute(PlayHandAction.Instance, session.Snapshot.Revision);
+            Assert.That(played.Accepted, Is.True, played.Rejection.ToString());
+            var opening = played.Events.SkipWhile(value => !(value is DiceRolledEvent)).ToList();
+            int thrown = ((DiceRolledEvent)opening[0]).SelectedMask;
+            Assert.That(thrown, Is.EqualTo(DiceValues.AllMask & ~(1 << HeldBay)), "The opening roll holds the carried die.");
+            var running = new Stack<IEnumerator>();
+            running.Push(playback.Play(new Resolution(played.PreviousRevision, played.Snapshot, opening), 0));
+            for (int frame = 0; frame < 100 && !tray.IsRolling; ++frame) Assert.That(Frame(running), Is.True);
+            Assert.That(tray.IsRolling, Is.True, "The opening roll is in the air.");
+            Assert.That(tray.RollingMask, Is.EqualTo(thrown), "The tray throws only the dice the roll threw.");
+            Assert.That(audio.RollDiceCount, Is.EqualTo(DiceValues.Count - 1), "The roll audio counts only the thrown dice.");
+            tray.ReleasePresentation();
+            for (int frame = 0; Frame(running); ++frame)
+                if (frame > 100) throw new InvalidOperationException("The playback did not end.");
+        }
+
+        /**
          * Advances the playback by one frame: until a routine waits for the next frame, entering nested routines and passing
          * realtime waits at once; false when it has ended.
          */

@@ -26,6 +26,8 @@ namespace Dice.Presentation
         private float nextAmbientOneShot;
         // Internal so PlayMode tests read the scheduled one-shot time and make the next one-shot due.
         internal float NextAmbientOneShot { get => nextAmbientOneShot; set => nextAmbientOneShot = value; }
+        // The dice count of the latest roll, which picks its clip and contact track; internal so tests read it.
+        internal int RollDiceCount { get; private set; }
         private int nextCueSource;
         private int nextPropSource;
         private AudioClip lastSpiritClip;
@@ -99,6 +101,7 @@ namespace Dice.Presentation
         public SpiritRollTiming BeginRoll(int diceCount)
         {
             Initialize();
+            RollDiceCount = diceCount;
             AudioClip clip = theme != null && theme.rollClips != null && diceCount > 0 && diceCount <= theme.rollClips.Length
                 ? theme.rollClips[diceCount - 1] : null;
             SpiritRollContactTrack track = theme != null && theme.rollContactTracks != null
