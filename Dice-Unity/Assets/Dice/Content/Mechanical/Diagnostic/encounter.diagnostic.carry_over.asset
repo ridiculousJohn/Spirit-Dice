@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19097216ccf440d4f8844c6fa343a3c2, type: 3}
+  m_Name: encounter.diagnostic.carry_over
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.EncounterAsset
+  assetGuid: 3d0ab04db25e05e4bbe02d2f7aaed231
+  unlockMilestones: []
+  encounterModifiers: []
+  encounterModifiersFirstClearedStageNumber: 1
+  unlockRewardModifiers: []
+  startingUpgrades: 0000000000000000000000000000000000000000000000000000000000000000i
+  startingModifiers: []
+  stages:
+  - threshold: 120
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 170
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  - threshold: 230
+    startingHands: 3
+    startingRerolls: 3
+    exitBehavior: 1
+  rewardPolicy:
+    rid: 1688710604275580941
+  rules: []
+  pieces: []
+  lentItems:
+  - {fileID: 11400000, guid: 886cec4fbef9cd64ebb854d8aa88adde, type: 2}
+  references:
+    version: 2
+    RefIds:
+    - rid: 1688710604275580941
+      type: {class: EncounterAsset/RewardPolicyData, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        modifierLayouts:
+        - pools:
+          - {fileID: 11400000, guid: 292d2caf9259da34ca542b709aa6c7ec, type: 2}
+          - {fileID: 11400000, guid: 8794c48323f40904fa26731fe692f3e6, type: 2}
+          - {fileID: 11400000, guid: 26da01b9bb777444cab912e6e060a3d7, type: 2}
+        startingRefreshes: 1
+        refreshesPerClear: 1
+        refreshCost: 1
+        handUpgradeOptionCount: 4
+        upgradeHistory:
+        - maxIncomingStageNumber: 2147483647
+          excludedRecentChoices: 1
+        tierRules:
+        - firstIncomingStageNumber: 1
+          tierWeights: 640000000000000000000000i
+        tierMilestones: []

@@ -14,3 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ItemSkinAsset
   items:
   - {fileID: 11400000, guid: 555313c80e7fc6248bc780c28870746b, type: 2}
+  - {fileID: 11400000, guid: 305f799f364a026499d970ef24855a87, type: 2}

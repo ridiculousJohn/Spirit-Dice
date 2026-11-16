@@ -321,6 +321,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f366c674dc0c0bc43a4bde29245d7d8b, type: 2}
   - {fileID: 11400000, guid: 2256094b59a49b5409c1dd2069316d5d, type: 2}
   - {fileID: 11400000, guid: d4a1839958afd284197a52beede231fb, type: 2}
+  - {fileID: 11400000, guid: 9785d23451388fe4caa6f357a5ce5599, type: 2}
+  - {fileID: 11400000, guid: 84ce8445ba1af4044ad59591fd30a644, type: 2}
+  - {fileID: 11400000, guid: 82ee3ffcdb82b1041af8ec60771b0ea4, type: 2}
+  - {fileID: 11400000, guid: 4cfa8efa087762c47aa483e40f18d6ab, type: 2}
+  - {fileID: 11400000, guid: 4f23966a45b67fb46ac19f277691fbb7, type: 2}
+  - {fileID: 11400000, guid: 5e1713793474c9742b4a735aaef1d30a, type: 2}
   categories:
   - effects: 00000000i
     category: {fileID: 11400000, guid: ed4fdb982c524aa4a21d581437945f87, type: 2}
@@ -564,6 +570,15 @@ MonoBehaviour:
   - family: {fileID: 11400000, guid: c8a7c2dbd9a6328429cc67b42712ca1c, type: 2}
     name: Twin Bowls
     icon: {fileID: 21300000, guid: eddc68de510254cd9deb728ac247abc7, type: 3}
+  - family: {fileID: 11400000, guid: 7b9f58117fc66b746b54c8594467af52, type: 2}
+    name: Keepsake
+    icon: {fileID: 21300000, guid: d714e46eb2da568b97d81d61ae69b3d0, type: 3}
+  - family: {fileID: 11400000, guid: c44455a41c604ba428ad0a70d03e59ee, type: 2}
+    name: Kindred Spirits
+    icon: {fileID: 21300000, guid: 2427425abda2524da25a98002a93d853, type: 3}
+  - family: {fileID: 11400000, guid: 12efb1060340dc14c86c5c317b89da10, type: 2}
+    name: Lone Traveler
+    icon: {fileID: 21300000, guid: a22106dc1ba953368ccbc0b95c1db5d2, type: 3}
   effectWording:
   - kind: 0
     singularLabel: base score

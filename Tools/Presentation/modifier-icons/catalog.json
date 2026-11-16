@@ -338,5 +338,20 @@
     "family": "modifier.player_reroll.selected_sum_equals_either",
     "name": "Twin Bowls",
     "file": "twin-bowls.svg"
+  },
+  {
+    "family": "modifier.play_hand.carried_dice_count_at_least",
+    "name": "Keepsake",
+    "file": "keepsake-locket.svg"
+  },
+  {
+    "family": "modifier.play_hand.carried_face_match_count_at_least",
+    "name": "Kindred Spirits",
+    "file": "kindred-spirits.svg"
+  },
+  {
+    "family": "modifier.play_hand.carried_face_match_count_at_most",
+    "name": "Lone Traveler",
+    "file": "lone-traveler.svg"
   }
 ]

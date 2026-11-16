@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f904e3799b744a75b9f418e0c8394f60, type: 3}
+  m_Name: modifier.play_hand.carried_face_match_count_at_least.multiplier
+  m_EditorClassIdentifier: Dice.UnityContent::Dice.UnityContent.ModifierAsset
+  assetGuid: 05bbf2b3b43bc754fb2e6bae3c5c273e
+  family: {fileID: 11400000, guid: c44455a41c604ba428ad0a70d03e59ee, type: 2}
+  phase: 2
+  condition:
+    rid: 1688710604275580934
+  effects:
+  - rid: 1688710604275580935
+  activationLimit: 1
+  rewardEligible: 1
+  powerTier: 1
+  requiresUnlock: 0
+  references:
+    version: 2
+    RefIds:
+    - rid: 1688710604275580934
+      type: {class: CarriedFaceMatchCountAtLeastConditionConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        count: 2
+    - rid: 1688710604275580935
+      type: {class: AddMultiplierEffectConfig, ns: Dice.UnityContent, asm: Dice.UnityContent}
+      data:
+        amount: 2
