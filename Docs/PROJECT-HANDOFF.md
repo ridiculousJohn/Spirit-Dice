@@ -1,6 +1,6 @@
 # Spirit Dice: start here
 
-Current state: November 6, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
+Current state: November 16, 2026. This is a working contract and current-state summary, not a development diary. Verify relevant code, assets, and fresh Git status before acting.
 
 ## Working contract
 
@@ -17,7 +17,8 @@ Read this document, [code standards](CODE-STANDARDS.md), [presentation authoring
 
 ## Current workspace and outstanding work
 
-- Agreed next work and its design (content assets and typed ids, the content-validation tool, Bound Tree art) are in Docs/work/outstanding.md, which is git-ignored and kept on this machine; read it before choosing what to do next.
+- Agreed next work and its order (items: owned items carried into every encounter, then the Chapter 3 encounter that lends carry-over) are in Docs/work/outstanding.md, which is git-ignored and kept on this machine; read it before choosing what to do next. The design is under "Items (effect providers)" below.
+- Each part of a step is committed on its own once it is compiled and tested; a step is never one commit.
 - John played the Sunken Larder through and it is fine for now, including the wither jolt's eased hearth fire flicker (SunkenLarderAmbientActivity's light 0, see its ambient life under "Rot encounter (the hag)" below) and the arrival picture's chimney smoke moving by its own painted pixels through a picture scene flow layer (SunkenLarderArrivalPicture.asset; "Arrival plume" in Docs/Reference/Art/SunkenLarderLayers.md).
 - John played the Bound Tree and it is fine for now: its look, ambient motion, audio, tray, binding visuals and the spirit's and nymph's motion (see "Tree nymph encounter" below).
 - At narrow widths (443) every scene's art, host and tray crop rather than squeeze ("Framing at narrow widths" in [presentation authoring](PRESENTATION-AUTHORING.md)): each tray keeps its 540-wide size, letting its empty margin run past the screen's sides, and scales down uniformly only as far as its visible content needs (at 443: fox 0.82, owl 0.85, moth 0.86, Chapter 2 tables 0.90). John accepted it in the editor.
