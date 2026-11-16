@@ -6,7 +6,7 @@ namespace Dice.UnityContent
 {
     /**
      * An engine catalog paired with the charm asset each of its modifier definitions was built from and the item asset
-     * each item its encounters lend was built from.
+     * each item of the content was built from: the catalog's items and the items its encounters lend.
      */
     public sealed class MechanicalContent
     {
@@ -15,15 +15,16 @@ namespace Dice.UnityContent
 
         public MechanicalCatalog Catalog { get; }
         public IReadOnlyCollection<ModifierAsset> Modifiers => definitions.Keys;
-        /** The item assets of the items the catalog's encounters lend. */
+        /** The item assets of every item of the content. */
         public IReadOnlyCollection<ItemAsset> Items => items.Keys;
 
         /**
          * Every modifier definition of the catalog is paired with exactly one charm asset, and every pair names one of them;
-         * likewise every item a catalog encounter lends is paired with exactly one item asset.
+         * likewise every item of the content, each item of the catalog and each item a catalog encounter lends, is paired
+         * with exactly one item asset.
          */
         public MechanicalContent(MechanicalCatalog catalog, IEnumerable<KeyValuePair<ModifierAsset, ModifierDefinition>> modifiers,
-            IEnumerable<KeyValuePair<ItemAsset, ItemDefinition>> lentItems = null)
+            IEnumerable<KeyValuePair<ItemAsset, ItemDefinition>> items = null)
         {
             Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
             if (modifiers == null) throw new ArgumentNullException(nameof(modifiers));
@@ -42,22 +43,22 @@ namespace Dice.UnityContent
             }
             if (definitions.Count != catalogModifiers.Count)
                 throw new ArgumentException("Every catalog modifier requires the charm asset it was built from.", nameof(modifiers));
-            var catalogItems = new HashSet<ItemDefinition>();
+            var catalogItems = new HashSet<ItemDefinition>(catalog.Items);
             foreach (EncounterDefinition encounter in catalog.Encounters) catalogItems.UnionWith(encounter.Items);
             var pairedItems = new HashSet<ItemDefinition>();
-            foreach (KeyValuePair<ItemAsset, ItemDefinition> pair in lentItems ?? Array.Empty<KeyValuePair<ItemAsset, ItemDefinition>>())
+            foreach (KeyValuePair<ItemAsset, ItemDefinition> pair in items ?? Array.Empty<KeyValuePair<ItemAsset, ItemDefinition>>())
             {
-                if (pair.Key == null) throw new ArgumentException("An item asset is missing.", nameof(lentItems));
+                if (pair.Key == null) throw new ArgumentException("An item asset is missing.", nameof(items));
                 if (pair.Value == null || !catalogItems.Contains(pair.Value))
-                    throw new ArgumentException("An item asset is paired with an item no catalog encounter lends: " + pair.Key.name, nameof(lentItems));
-                if (items.ContainsKey(pair.Key))
-                    throw new ArgumentException("An item asset is paired more than once: " + pair.Key.name, nameof(lentItems));
+                    throw new ArgumentException("An item asset is paired with an item that is not of the content: " + pair.Key.name, nameof(items));
+                if (this.items.ContainsKey(pair.Key))
+                    throw new ArgumentException("An item asset is paired more than once: " + pair.Key.name, nameof(items));
                 if (!pairedItems.Add(pair.Value))
-                    throw new ArgumentException("An item definition is paired with more than one item asset: " + pair.Key.name, nameof(lentItems));
-                items.Add(pair.Key, pair.Value);
+                    throw new ArgumentException("An item definition is paired with more than one item asset: " + pair.Key.name, nameof(items));
+                this.items.Add(pair.Key, pair.Value);
             }
-            if (items.Count != catalogItems.Count)
-                throw new ArgumentException("Every item a catalog encounter lends requires the item asset it was built from.", nameof(lentItems));
+            if (this.items.Count != catalogItems.Count)
+                throw new ArgumentException("Every item of the content requires the item asset it was built from.", nameof(items));
         }
 
         /** The definition built from a charm the content uses. */
@@ -69,12 +70,12 @@ namespace Dice.UnityContent
             return definition;
         }
 
-        /** The definition built from an item an encounter of the content lends. */
+        /** The definition built from an item of the content. */
         public ItemDefinition GetDefinition(ItemAsset item)
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
             if (!items.TryGetValue(item, out ItemDefinition definition))
-                throw new InvalidOperationException("No encounter of the content lends the item " + item.name + ".");
+                throw new InvalidOperationException("The item " + item.name + " is not an item of the content.");
             return definition;
         }
     }

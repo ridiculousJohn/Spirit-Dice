@@ -114,7 +114,7 @@ namespace Dice.App
                 try
                 {
                     content = configuration.CatalogAsset.Build();
-                    // The skins must present exactly the charms the content uses and the items its encounters lend.
+                    // The skins must present exactly the charms the content uses and the items of the content.
                     modifierPresentation = new ModifierPresentationCatalog(configuration.ModifierSkin, content);
                     itemPresentation = new ItemPresentationCatalog(configuration.ItemSkin, content);
                 }

@@ -136,7 +136,7 @@ namespace Dice.Tests
         /** The encounter as authored, starting with the given charms. */
         private static EncounterDefinition WithStartingCharms(EncounterDefinition definition, ModifierDefinition.Id[] charms)
             => new EncounterDefinition(definition.Identity, definition.Stages, definition.StartingUpgrades, charms,
-                definition.RewardPolicy, definition.OwnRules, definition.UnlockMilestones, definition.EncounterModifierIds,
+                definition.RewardPolicy, definition.OwnRules, definition.UnlockMilestones, definition.OwnEncounterModifierIds,
                 definition.UnlockRewardModifierIds, definition.OwnPieces, definition.EncounterModifiersFirstClearedStageNumber,
                 definition.Items);
     }

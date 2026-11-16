@@ -59,7 +59,7 @@ namespace Dice.UnityContent
             // Built in this order, the charms reach use in the order the catalog lists them.
             var startingIds = MechanicalCatalogAsset.Ids(startingModifiers, "the starting charms of the encounter " + name, use);
             RewardPolicyDefinition policy = BuildRewardPolicy(rewardPolicy, pool);
-            EncounterRuleDefinition[] ruleDefinitions = EncounterRuleAsset.BuildAll(rules, "encounter " + name);
+            EncounterRuleDefinition[] ruleDefinitions = EncounterRuleAsset.BuildAll(rules, "encounter " + name, use);
             ModifierUnlockMilestone[] milestones = BuildMilestones(unlockMilestones);
             var additionIds = MechanicalCatalogAsset.Ids(encounterModifiers, "the charm additions of the encounter " + name, use);
             var unlockIds = MechanicalCatalogAsset.Ids(unlockRewardModifiers, "the unlock rewards of the encounter " + name, use);

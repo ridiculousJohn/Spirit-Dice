@@ -263,7 +263,7 @@ namespace Dice.Tests
                 definition.Stages.Select((stage, index) => index == 0
                     ? new StageDefinition(1000000, 1, stage.StartingRerolls, stage.ExitBehavior) : stage),
                 definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.OwnRules,
-                definition.UnlockMilestones, definition.EncounterModifierIds,
+                definition.UnlockMilestones, definition.OwnEncounterModifierIds,
                 definition.UnlockRewardModifierIds, definition.OwnPieces, definition.EncounterModifiersFirstClearedStageNumber,
                 definition.Items);
             return new MechanicalCatalog("bound-tree-defeat-capture.v1", authored.Hands,

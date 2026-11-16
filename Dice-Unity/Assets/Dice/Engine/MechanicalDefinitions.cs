@@ -128,7 +128,13 @@ namespace Dice.Engine
         /** The encounter's own rules, those no item provides; Rules lists them first. */
         public ReadOnlyCollection<EncounterRuleDefinition> OwnRules { get; }
         public ReadOnlyCollection<ModifierUnlockMilestone> UnlockMilestones { get; }
+        /**
+         * The charm additions in play: the encounter's own charm additions, then the charms each rule in play brings, in
+         * rule order. A charm is in play once.
+         */
         public ReadOnlyCollection<ModifierDefinition.Id> EncounterModifierIds { get; }
+        /** The encounter's own charm additions, those no rule brings; EncounterModifierIds lists them first. */
+        public ReadOnlyCollection<ModifierDefinition.Id> OwnEncounterModifierIds { get; }
         /** The first cleared stage whose charm offer may include EncounterModifierIds; 1 offers them from the first offer. */
         public int EncounterModifiersFirstClearedStageNumber { get; }
         /** Whether the encounter has charms of its own and its first charm offer can already contain them. */
@@ -186,7 +192,21 @@ namespace Dice.Engine
                 if (milestone == null || milestone.StageNumber > Stages.Count || !milestoneStages.Add(milestone.StageNumber))
                     throw new ArgumentException("Unlock stages must be unique and within the encounter.", nameof(unlockMilestones));
             UnlockMilestones = milestones.AsReadOnly();
-            EncounterModifierIds = CopyUniqueIds(encounterModifierIds, nameof(encounterModifierIds));
+            var ownModifierIds = new List<ModifierDefinition.Id>(encounterModifierIds ?? Array.Empty<ModifierDefinition.Id>());
+            foreach (var modifierId in ownModifierIds) RequireModifierId(modifierId, nameof(encounterModifierIds));
+            OwnEncounterModifierIds = ownModifierIds.AsReadOnly();
+            var modifierIdsInPlay = new List<ModifierDefinition.Id>(ownModifierIds);
+            foreach (var rule in Rules)
+                foreach (var modifierId in rule.AddedModifierIds)
+                {
+                    RequireModifierId(modifierId, nameof(rules));
+                    modifierIdsInPlay.Add(modifierId);
+                }
+            var uniqueModifierIds = new HashSet<ModifierDefinition.Id>();
+            foreach (var modifierId in modifierIdsInPlay)
+                if (!uniqueModifierIds.Add(modifierId))
+                    throw new ArgumentException("The charm " + modifierId + " is in play more than once.", nameof(encounterModifierIds));
+            EncounterModifierIds = modifierIdsInPlay.AsReadOnly();
             if (encounterModifiersFirstClearedStageNumber < 1 || encounterModifiersFirstClearedStageNumber > Stages.Count)
                 throw new ArgumentOutOfRangeException(nameof(encounterModifiersFirstClearedStageNumber));
             EncounterModifiersFirstClearedStageNumber = encounterModifiersFirstClearedStageNumber;
@@ -247,15 +267,18 @@ namespace Dice.Engine
         private readonly Dictionary<EncounterDefinition.Id, EncounterDefinition> encounters;
         private readonly Dictionary<ModifierDefinition.Id, ModifierDefinition> modifiersById;
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
+        private readonly Dictionary<ItemDefinition.Id, ItemDefinition> itemsById;
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
         /** The families of the catalog's charms, in the order their first charms appear. */
         public ReadOnlyCollection<ModifierFamilyDefinition> Families { get; }
         public ReadOnlyCollection<EncounterDefinition> Encounters { get; }
+        /** The items of the content, in the order given. */
+        public ReadOnlyCollection<ItemDefinition> Items { get; }
 
         public MechanicalCatalog(string version, IEnumerable<HandDefinition> hands, IEnumerable<EncounterDefinition> encounters,
-            IEnumerable<ModifierDefinition> modifiers = null)
+            IEnumerable<ModifierDefinition> modifiers = null, IEnumerable<ItemDefinition> items = null)
         {
             DefinitionValidation.RequireId(version, nameof(version));
             if (hands == null) throw new ArgumentNullException(nameof(hands));
@@ -293,6 +316,21 @@ namespace Dice.Engine
                     throw new ArgumentException("Two charm families share the id " + modifier.Family.Identity + ".", nameof(modifiers));
             }
             Families = families.AsReadOnly();
+            itemsById = new Dictionary<ItemDefinition.Id, ItemDefinition>();
+            var itemList = new List<ItemDefinition>();
+            if (items != null)
+                foreach (var item in items)
+                {
+                    if (item == null || itemsById.ContainsKey(item.Identity))
+                        throw new ArgumentException("Item IDs must be unique and nonnull.", nameof(items));
+                    itemsById.Add(item.Identity, item);
+                    itemList.Add(item);
+                }
+            // A rule can be in play in several encounters and items, and its charms are validated once.
+            var validatedRules = new HashSet<EncounterRuleDefinition>();
+            foreach (var item in itemList)
+                foreach (var rule in item.Rules)
+                    if (validatedRules.Add(rule)) ValidateRuleModifiers(rule, nameof(items));
             this.encounters = new Dictionary<EncounterDefinition.Id, EncounterDefinition>();
             var encounterList = new List<EncounterDefinition>();
             // Encounters can share a pool, which is validated once.
@@ -323,7 +361,9 @@ namespace Dice.Engine
                         throw new ArgumentException("The charm " + modifier.Identity + " in the unlock rewards of the encounter " +
                             encounter.Identity + " is not a reward-eligible permanent unlock.", nameof(encounters));
                 }
-                foreach (var modifierId in encounter.EncounterModifierIds)
+                foreach (var rule in encounter.Rules)
+                    if (validatedRules.Add(rule)) ValidateRuleModifiers(rule, nameof(encounters));
+                foreach (var modifierId in encounter.OwnEncounterModifierIds)
                     if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
                         throw new ArgumentException("The charm " + modifierId + " in the charm additions of the encounter " +
                             encounter.Identity + " is missing from the catalog or not reward-eligible.", nameof(encounters));
@@ -338,6 +378,16 @@ namespace Dice.Engine
             Version = version;
             Hands = Array.AsReadOnly(byCategory);
             Encounters = encounterList.AsReadOnly();
+            Items = itemList.AsReadOnly();
+        }
+
+        /** The charms a rule brings must be charms of the catalog that are reward-eligible. */
+        private void ValidateRuleModifiers(EncounterRuleDefinition rule, string parameter)
+        {
+            foreach (var modifierId in rule.AddedModifierIds)
+                if (!modifiersById.TryGetValue(modifierId, out var modifier) || !modifier.RewardEligible)
+                    throw new ArgumentException("The charm " + modifierId + " in the charm list of the rule " + rule.Identity +
+                        " is missing from the catalog or not reward-eligible.", parameter);
         }
 
         private void ValidatePool(ModifierRewardPoolDefinition pool, string parameter)
@@ -369,6 +419,13 @@ namespace Dice.Engine
             if (id.Value == Guid.Empty) throw new ArgumentException("A charm id is required.", nameof(id));
             if (!modifiersById.TryGetValue(id, out var modifier)) throw new KeyNotFoundException(id.ToString());
             return modifier;
+        }
+
+        public ItemDefinition GetItem(ItemDefinition.Id id)
+        {
+            if (id.Value == Guid.Empty) throw new ArgumentException("An item id is required.", nameof(id));
+            if (!itemsById.TryGetValue(id, out var item)) throw new KeyNotFoundException(id.ToString());
+            return item;
         }
 
         /** Whether a charm of the catalog belongs to the family. */

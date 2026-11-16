@@ -123,7 +123,8 @@ namespace Dice.Engine
             return state != null;
         }
 
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events)
+        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask,
+            List<RuleEvent> events)
         {
             var binding = (DieBindingState)ruleState;
             binding.BoundMask = 0;

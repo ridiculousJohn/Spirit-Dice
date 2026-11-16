@@ -18,11 +18,11 @@ namespace Dice.UnityContent
 
         public ItemDefinition.Id Identity => new ItemDefinition.Id(AssetGuid);
 
-        /** The item's definition; a failure names the item. */
-        internal ItemDefinition Build()
+        /** The item's definition; each charm its rules bring is passed to use, and a failure names the item. */
+        internal ItemDefinition Build(Action<ModifierAsset> use)
         {
             string owner = "item " + name;
-            EncounterRuleDefinition[] ruleDefinitions = EncounterRuleAsset.BuildAll(rules, owner);
+            EncounterRuleDefinition[] ruleDefinitions = EncounterRuleAsset.BuildAll(rules, owner, use);
             TablePieceDefinition pieceDefinition = null;
             if (piece.piece != null) pieceDefinition = piece.Build(owner);
             else if (piece.interactions != null && piece.interactions.Length > 0)

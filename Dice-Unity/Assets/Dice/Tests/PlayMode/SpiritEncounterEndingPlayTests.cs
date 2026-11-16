@@ -371,7 +371,7 @@ namespace Dice.Tests
                 unlockMilestones: winning
                     ? Enumerable.Range(1, stageCount).Select(stage => new ModifierUnlockMilestone(stage)).ToArray()
                     : Array.Empty<ModifierUnlockMilestone>(),
-                encounterModifierIds: definition.EncounterModifierIds, unlockRewardModifierIds: unlockIds,
+                encounterModifierIds: definition.OwnEncounterModifierIds, unlockRewardModifierIds: unlockIds,
                 pieces: definition.OwnPieces,
                 encounterModifiersFirstClearedStageNumber: Math.Min(definition.EncounterModifiersFirstClearedStageNumber, stageCount),
                 items: definition.Items);

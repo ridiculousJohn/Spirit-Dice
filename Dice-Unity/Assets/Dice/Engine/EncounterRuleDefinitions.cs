@@ -70,8 +70,24 @@ namespace Dice.Engine
             return false;
         }
 
-        /** Runs after the opening roll lands and before initial-roll modifiers resolve. */
-        internal virtual void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events) { }
+        /**
+         * The charms this rule adds to the charm additions in play while it is in play, in authored order; the encounter's
+         * charm additions in play list them after its own.
+         */
+        public virtual IReadOnlyList<ModifierDefinition.Id> AddedModifierIds => Array.Empty<ModifierDefinition.Id>();
+
+        /** Dice the next opening roll leaves as they lie: they keep the face and bay they show while the others are rolled. */
+        internal virtual int OpeningRollHeldDiceMask(EncounterRuleState ruleState) => 0;
+
+        /** Runs after the opening roll lands and before initial-roll modifiers resolve; rolledMask names the dice it threw. */
+        internal virtual void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask, List<RuleEvent> events) { }
+
+        /**
+         * Runs after a committed hand is scored and before the next hand or stage starts; scoredHand is the hand as it
+         * scored, naming the dice that counted. Previews do not run it.
+         */
+        internal virtual void HandPlayed(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+            HandDice scoredHand, List<RuleEvent> events) { }
 
         /** Runs after rerolled dice land, before interference and reroll modifiers resolve. */
         internal virtual void PlayerRerollResolved(EncounterState state, EncounterRuleState ruleState, int rerolledMask,
@@ -240,9 +256,25 @@ namespace Dice.Engine
             return states;
         }
 
-        internal static void HandStarted(EncounterDefinition definition, EncounterState state, List<RuleEvent> events)
+        /** The dice every rule holds out of the next opening roll. */
+        internal static int OpeningRollHeldDice(EncounterDefinition definition, EncounterState state)
         {
-            for (int i = 0; i < definition.Rules.Count; ++i) definition.Rules[i].HandStarted(state, state.RuleStates[i], events);
+            int mask = 0;
+            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].OpeningRollHeldDiceMask(state.RuleStates[i]);
+            return mask;
+        }
+
+        internal static void HandStarted(EncounterDefinition definition, EncounterState state, int rolledMask, List<RuleEvent> events)
+        {
+            for (int i = 0; i < definition.Rules.Count; ++i)
+                definition.Rules[i].HandStarted(state, state.RuleStates[i], rolledMask, events);
+        }
+
+        internal static void HandPlayed(EncounterDefinition definition, EncounterState state, HandDice scoredHand,
+            List<RuleEvent> events)
+        {
+            for (int i = 0; i < definition.Rules.Count; ++i)
+                definition.Rules[i].HandPlayed(definition, state, state.RuleStates[i], scoredHand, events);
         }
 
         internal static void PlayerRerollResolved(EncounterDefinition definition, EncounterState state, int rerolledMask,

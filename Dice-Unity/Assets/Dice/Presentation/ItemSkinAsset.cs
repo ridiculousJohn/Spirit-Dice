@@ -11,7 +11,7 @@ namespace Dice.Presentation
     [CreateAssetMenu(menuName = "Dice/Item Skin")]
     public sealed class ItemSkinAsset : ScriptableObject
     {
-        [Tooltip("One presentation for each item an encounter of the content lends.")]
+        [Tooltip("One presentation for each item of the content.")]
         [SerializeField] private ItemPresentationAsset[] items = Array.Empty<ItemPresentationAsset>();
 
         public IReadOnlyList<ItemPresentationAsset> Items => items;

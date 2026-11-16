@@ -6,11 +6,11 @@ using Dice.UnityContent;
 namespace Dice.Presentation
 {
     /**
-     * The presentation of every item the loaded content's encounters lend, built at load from an item skin. Each
-     * presentation is matched to its item's definition through its own item reference. Construction fails, naming the
-     * skin, presentation or item, when a presentation is missing or references no item or an item no encounter of the
-     * content lends, an item has more than one presentation or none, or a presentation's cards do not present exactly its
-     * item's rules with text using only their rules' placeholders.
+     * The presentation of every item of the loaded content (the catalog's items and the items its encounters lend), built
+     * at load from an item skin. Each presentation is matched to its item's definition through its own item reference.
+     * Construction fails, naming the skin, presentation or item, when a presentation is missing or references no item or
+     * an item that is not of the content, an item of the content has more than one presentation or none, or a
+     * presentation's cards do not present exactly its item's rules with text using only their rules' placeholders.
      */
     public sealed class ItemPresentationCatalog
     {

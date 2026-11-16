@@ -64,6 +64,57 @@ namespace Dice.Tests
         }
 
         /**
+         * Checks the carried dice count counts the counted dice every carry-over rule has carried / fails if it reads one rule
+         * only, counts a carried die that does not count or counts dice no rule carried.
+         */
+        [Test]
+        public void CarriedDiceCountCountsTheCountedCarriedDice()
+        {
+            var condition = new CarriedDiceCountAtLeastCondition(2);
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Carried(1), Plain(), Carried(16) })), Is.True);
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Carried(1) })), Is.False);
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Carried(1), Carried(16) }, counted: 0b01111)), Is.False,
+                "A carried die that does not count is not in the hand.");
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Plain() })), Is.False);
+        }
+
+        /**
+         * Checks the carried face match count holds when some carried die has enough other counted dice showing its face /
+         * fails if it counts the carried die itself, counts uncounted dice or matches an uncounted carried die.
+         */
+        [Test]
+        public void CarriedFaceMatchCountAtLeastCountsOtherDiceShowingACarriedFace()
+        {
+            var condition = new CarriedFaceMatchCountAtLeastCondition(2);
+            Assert.That(condition.Evaluate(C("33312", rules: new[] { Carried(1) })), Is.True);
+            Assert.That(condition.Evaluate(C("33412", rules: new[] { Carried(1) })), Is.False, "The carried die is not its own match.");
+            Assert.That(condition.Evaluate(C("33312", rules: new[] { Carried(1) }, counted: 0b11011)), Is.False,
+                "An uncounted die is no match.");
+            Assert.That(condition.Evaluate(C("33312", rules: new[] { Carried(8), Carried(1) })), Is.True, "Some carried die suffices.");
+            Assert.That(condition.Evaluate(C("33312", rules: new[] { Carried(1) }, counted: 0b11110)), Is.False,
+                "An uncounted carried die has no face.");
+            Assert.That(condition.Evaluate(C("33312")), Is.False);
+        }
+
+        /**
+         * Checks the carried face match count at most holds when some counted carried die has few enough other dice showing
+         * its face / fails if it holds without a carried die, for an uncounted carried die or above its count.
+         */
+        [Test]
+        public void CarriedFaceMatchCountAtMostHoldsForALoneCarriedFace()
+        {
+            var condition = new CarriedFaceMatchCountAtMostCondition(0);
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Carried(1) })), Is.True);
+            Assert.That(condition.Evaluate(C("12145", rules: new[] { Carried(1) })), Is.False);
+            Assert.That(condition.Evaluate(C("12145", rules: new[] { Carried(1) }, counted: 0b11011)), Is.True,
+                "An uncounted die is no match.");
+            Assert.That(condition.Evaluate(C("12145", rules: new[] { Carried(1), Carried(2) })), Is.True, "Some carried die suffices.");
+            Assert.That(condition.Evaluate(C("12345", rules: new[] { Carried(1) }, counted: 0b11110)), Is.False,
+                "An uncounted carried die has no face.");
+            Assert.That(condition.Evaluate(C("12345")), Is.False);
+        }
+
+        /**
          * Checks the uncounted dice count holds at and above its count of dice that do not count and not below it / fails if
          * it counts the counted dice, reads faces or is off by one.
          */
@@ -227,6 +278,9 @@ namespace Dice.Tests
         private static EncounterRuleSnapshot Favored(int face) => new FavoredFaceRuleSnapshot(TestRules.IdOf("favored." + face), true, face);
         private static EncounterRuleSnapshot Bound(int boundMask)
             => new DieBindingRuleSnapshot(TestRules.IdOf("binding." + boundMask), true, boundMask, 0);
+
+        private static EncounterRuleSnapshot Carried(int carriedMask)
+            => new DieCarryOverRuleSnapshot(TestRules.IdOf("carry_over." + carriedMask), true, carriedMask);
 
         private static HandDice H(string values) => HandDice.Full(D(values));
 

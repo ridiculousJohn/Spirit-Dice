@@ -220,8 +220,7 @@ namespace Dice.Engine
     /**
      * Unused things rot away: after each player reroll lands, every die the player did not select drops by one face.
      * The endpoint decides what a die that rots from its lowest face becomes. A withered die keeps that face internally
-     * but counts toward nothing; it stays withered while kept, and the reroll that throws it, or the next opening roll,
-     * restores it. Playing a hand and the opening roll rot nothing. The rule counts, per die, the rot steps the die has
+     * but counts toward nothing; it stays withered while kept, and the reroll or opening roll that throws it restores it. Playing a hand and the opening roll rot nothing. The rule counts, per die, the rot steps the die has
      * rotted in since it was last rolled: a player reroll, the Reroll endpoint and the next opening roll return the dice
      * they throw to 0.
      */
@@ -266,13 +265,17 @@ namespace Dice.Engine
             return state != null;
         }
 
-        /** The opening roll throws all five dice, so it restores every withered die and returns every count to 0. */
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, List<RuleEvent> events)
+        /**
+         * The opening roll restores the withered dice it throws and returns their counts to 0; a die a rule holds out of it
+         * was not rolled, so it keeps its rot.
+         */
+        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask,
+            List<RuleEvent> events)
         {
             var rot = (RotState)ruleState;
-            int restoredMask = rot.WitheredMask, clearedMask = rot.Counts.NonzeroMask;
-            rot.WitheredMask = 0;
-            rot.Counts = default;
+            int restoredMask = rot.WitheredMask & rolledMask, clearedMask = rot.Counts.NonzeroMask & rolledMask;
+            rot.WitheredMask &= ~rolledMask;
+            rot.Counts = rot.Counts.Cleared(rolledMask);
             if (restoredMask != 0 || clearedMask != 0)
                 events.Add(new DiceRestoredEvent(state, Identity, restoredMask, clearedMask, rot.Counts, RollKind.Initial));
         }

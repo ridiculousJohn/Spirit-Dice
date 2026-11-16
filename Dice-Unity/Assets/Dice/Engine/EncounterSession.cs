@@ -351,9 +351,11 @@ namespace Dice.Engine
             next.EverRerolledMask = 0;
             next.HandBeforeLastReroll = null;
             events.Add(new HandStartedEvent(next));
-            next.CurrentDice = Roll(next, DiceValues.AllMask);
-            events.Add(new DiceRolledEvent(next, RollKind.Initial, null, DiceValues.AllMask, DiceValues.AllMask));
-            EncounterRuleResolver.HandStarted(definition, next, events);
+            // Dice a rule holds out of the opening roll keep the face and bay they show.
+            int rolledMask = DiceValues.AllMask & ~EncounterRuleResolver.OpeningRollHeldDice(definition, next);
+            next.CurrentDice = Roll(next, rolledMask);
+            events.Add(new DiceRolledEvent(next, RollKind.Initial, null, rolledMask, rolledMask));
+            EncounterRuleResolver.HandStarted(definition, next, rolledMask, events);
             next.InitialHand = EncounterRuleResolver.CurrentHand(definition, next);
             ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, next.HandsRemaining, events);
         }
@@ -414,6 +416,7 @@ namespace Dice.Engine
             next.RemainingThreshold = score.HandScore >= beforeThreshold ? 0 : beforeThreshold - score.HandScore;
             events.Add(new ThresholdChangedEvent(next, beforeThreshold, score.HandScore));
             next.PreviousPlayedHand = new HandDice(next.CurrentDice, score.CountedDiceMask);
+            EncounterRuleResolver.HandPlayed(definition, next, next.PreviousPlayedHand.Value, events);
 
             // Clearing on the final available hand still wins; exhaustion is checked after clearing.
             if (next.RemainingThreshold == 0)

@@ -11,16 +11,19 @@ namespace Dice.UnityContent
         [SerializeField] private string catalogVersion;
         [SerializeField] private HandData[] hands = Array.Empty<HandData>();
         [SerializeField] private EncounterAsset[] encounters = Array.Empty<EncounterAsset>();
+        [Tooltip("Items of the game beyond those its encounters lend.")]
+        [SerializeField] private ItemAsset[] items = Array.Empty<ItemAsset>();
 
         /**
          * Builds the engine catalog of the listed encounters from the charms the encounters and their reward pools
-         * reference, listed in the order they are first referenced, and the items the encounters lend. An encounter played
-         * before it joins the list, as in the diagnostic scene, is added to the catalog built for it.
+         * reference, listed in the order they are first referenced, and the content's items: the listed items, then the items
+         * the encounters lend, each built once, so an item both listed and lent is one item. An encounter played before it
+         * joins the list, as in the diagnostic scene, is added to the catalog built for it.
          */
         public MechanicalContent Build(EncounterAsset played = null)
         {
-            if (hands == null || encounters == null)
-                throw new InvalidOperationException("The mechanical catalog " + name + " has no hand or encounter list.");
+            if (hands == null || encounters == null || items == null)
+                throw new InvalidOperationException("The mechanical catalog " + name + " has no hand, encounter or item list.");
             var referenced = new List<ModifierAsset>();
             var seen = new HashSet<ModifierAsset>();
             var byId = new Dictionary<ModifierDefinition.Id, ModifierAsset>();
@@ -63,18 +66,22 @@ namespace Dice.UnityContent
                 return built;
             }
             // Each item asset is built once, so the encounters lending an item share its definition.
-            var items = new Dictionary<ItemAsset, ItemDefinition>();
+            var builtItems = new Dictionary<ItemAsset, ItemDefinition>();
+            var itemDefinitions = new List<ItemDefinition>();
             var itemsById = new Dictionary<ItemDefinition.Id, ItemAsset>();
             ItemDefinition Item(ItemAsset item)
             {
-                if (items.TryGetValue(item, out ItemDefinition built)) return built;
+                if (builtItems.TryGetValue(item, out ItemDefinition built)) return built;
                 if (itemsById.TryGetValue(item.Identity, out ItemAsset other))
                     throw new InvalidOperationException("Two item assets share the id " + item.Identity + ": " + other.name + ", " + item.name);
-                built = item.Build();
+                built = item.Build(Use);
                 itemsById.Add(item.Identity, item);
-                items.Add(item, built);
+                builtItems.Add(item, built);
+                itemDefinitions.Add(built);
                 return built;
             }
+            foreach (ItemAsset item in items)
+                Item(item ?? throw new InvalidOperationException("The mechanical catalog " + name + " has a missing item reference."));
             var encounterAssets = new List<EncounterAsset>(encounters);
             if (played != null && !encounterAssets.Contains(played)) encounterAssets.Add(played);
             var encounterDefinitions = new EncounterDefinition[encounterAssets.Count];
@@ -111,12 +118,12 @@ namespace Dice.UnityContent
                 pairs[i] = new KeyValuePair<ModifierAsset, ModifierDefinition>(referenced[i], modifierDefinitions[i]);
             }
             MechanicalCatalog catalog;
-            try { catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions, modifierDefinitions); }
+            try { catalog = new MechanicalCatalog(catalogVersion, handDefinitions, encounterDefinitions, modifierDefinitions, itemDefinitions); }
             catch (ArgumentException exception)
             {
                 throw new InvalidOperationException("The mechanical catalog " + name + " is invalid: " + exception.Message, exception);
             }
-            return new MechanicalContent(catalog, pairs, items);
+            return new MechanicalContent(catalog, pairs, builtItems);
         }
 
         /** The ids of the charms, each passed to use first; list names the charm list in errors, such as "the reward pool X". */

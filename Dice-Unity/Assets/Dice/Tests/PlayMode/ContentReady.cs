@@ -201,7 +201,7 @@ namespace Dice.Tests
             var shortEncounter = new EncounterDefinition(definition.Identity,
                 definition.Stages.Select(stage => new StageDefinition(1, stage.StartingHands, stage.StartingRerolls, stage.ExitBehavior)),
                 definition.StartingUpgrades, definition.StartingModifiers, definition.RewardPolicy, definition.OwnRules,
-                definition.UnlockMilestones, definition.EncounterModifierIds,
+                definition.UnlockMilestones, definition.OwnEncounterModifierIds,
                 definition.UnlockRewardModifierIds, definition.OwnPieces, definition.EncounterModifiersFirstClearedStageNumber,
                 definition.Items);
             return new MechanicalCatalog(version, authored.Hands,
