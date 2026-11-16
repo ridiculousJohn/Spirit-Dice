@@ -54,6 +54,12 @@ namespace Dice.Presentation
         [SerializeField] private Text rewardText, upgradesText, inventoryText, eventText;
         [SerializeField] private RectTransform rewardsContent, inventoryContent;
         [SerializeField] private DiagnosticEncounterCard cardPrefab;
+        [Tooltip("The row of table piece controls; hidden while no positioned piece is in play.")]
+        [SerializeField] private GameObject pieceRow;
+        [SerializeField] private Text pieceText;
+        [SerializeField] private Button nextPieceButton, neutralPieceButton;
+        [Tooltip("One button per dice bay, in bay order, each moving the selected piece onto its bay.")]
+        [SerializeField] private Button[] pieceBayButtons;
         private readonly List<DiagnosticEncounterCard> rewardViews = new List<DiagnosticEncounterCard>();
         private readonly List<DiagnosticEncounterCard> inventoryViews = new List<DiagnosticEncounterCard>();
         private bool bound;
@@ -85,6 +91,13 @@ namespace Dice.Presentation
             {
                 int index = i;
                 dieButtons[i].onClick.AddListener(() => controls.ToggleDie(index));
+            }
+            nextPieceButton.onClick.AddListener(() => controls.SelectNextPiece());
+            neutralPieceButton.onClick.AddListener(() => controls.MovePiece(PiecePosition.Neutral));
+            for (int i = 0; i < pieceBayButtons.Length; ++i)
+            {
+                int bay = i;
+                pieceBayButtons[i].onClick.AddListener(() => controls.MovePiece(PiecePosition.Bay(bay)));
             }
             bound = true;
         }
@@ -140,6 +153,21 @@ namespace Dice.Presentation
             refreshButton.GetComponentInChildren<Text>(true).text = refreshLabel;
             RenderCards(rewardCards, rewardViews, rewardsContent, true, snapshot);
             RenderCards(inventoryCards, inventoryViews, inventoryContent, false, snapshot);
+            RenderPiece();
+        }
+
+        /** Shows the selected positioned piece and where it is; its buttons follow the interaction's availability. */
+        private void RenderPiece()
+        {
+            PieceInteractionSnapshot piece = controls.SelectedPiece;
+            pieceRow.SetActive(piece != null);
+            if (piece == null) return;
+            PiecePosition position = ((PiecePositionState)piece.State).Position;
+            pieceText.text = "PIECE " + (controls.SelectedPieceIndex + 1) + " OF " + controls.PositionedPieceCount + " | " +
+                (position.Kind == PiecePositionKind.DiceBay ? "BAY " + (position.Index + 1) : "NEUTRAL") + " | " + piece.PieceId;
+            nextPieceButton.interactable = controls.PositionedPieceCount > 1;
+            neutralPieceButton.interactable = piece.IsAvailable;
+            foreach (Button button in pieceBayButtons) button.interactable = piece.IsAvailable;
         }
 
         private void RenderCards(List<CardText> cards, List<DiagnosticEncounterCard> views, RectTransform parent, bool rewards,

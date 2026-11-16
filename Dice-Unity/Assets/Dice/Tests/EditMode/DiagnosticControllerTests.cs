@@ -88,6 +88,26 @@ namespace Dice.Tests
             Assert.That(controller.EventLog.Any(value => value.Contains(score.ToString())), Is.True);
         }
 
+        /** Checks the controller moves the selected positioned piece through the generic piece action / fails if the move differs from the engine's or no piece is selected. */
+        [Test]
+        public void MovingAPieceSubmitsTheGenericPieceAction()
+        {
+            var pieceId = TestPieces.IdOf("piece.diagnostic");
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                pieces: new[] { new TablePieceDefinition(pieceId, new[] { new PositionInteractionDefinition(PiecePosition.Neutral,
+                    PieceMovementTiming.DuringHand) }) });
+            var catalog = new MechanicalCatalog("test.piece.controller", TestContent.Hands(), new[] { encounter });
+            Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            var expected = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 17);
+            Assert.That(controller.PositionedPieceCount, Is.EqualTo(1));
+            Assert.That(controller.SelectedPiece.PieceId, Is.EqualTo(pieceId));
+            controller.SelectNextPiece();
+            Assert.That(controller.SelectedPieceIndex, Is.Zero, "With one piece, the next piece is the same one.");
+            controller.MovePiece(PiecePosition.Bay(3));
+            AssertSnapshots(expected.Execute(new InteractWithPieceAction(pieceId, 0, new MovePieceInput(PiecePosition.Bay(3))), 0).Snapshot);
+            Assert.That(((PiecePositionState)controller.SelectedPiece.State).Position, Is.EqualTo(PiecePosition.Bay(3)));
+        }
+
         [Test]
         public void LockedDiceCannotBeSelected()
         {
@@ -382,6 +402,10 @@ namespace Dice.Tests
             foreach (string button in new[] { "startButton", "saveButton", "loadButton", "abandonButton", "selectAllButton",
                 "clearSelectionButton", "rerollButton", "playButton", "refreshButton" })
                 serialized.FindProperty(button).objectReferenceValue = Child<Button>(button, view.transform);
+            foreach (string button in new[] { "nextPieceButton", "neutralPieceButton" })
+                serialized.FindProperty(button).objectReferenceValue = Child<Button>(button, view.transform);
+            serialized.FindProperty("pieceRow").objectReferenceValue = Child<RectTransform>("pieceRow", view.transform).gameObject;
+            serialized.FindProperty("pieceText").objectReferenceValue = Child<Text>("pieceText", view.transform);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return view;
         }

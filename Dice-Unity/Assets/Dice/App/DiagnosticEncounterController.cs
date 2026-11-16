@@ -27,6 +27,7 @@ namespace Dice.App
         private IReadOnlyList<string> readOnlyEventLog;
         private string cacheStatus = string.Empty;
         private EncounterDefinition.Id encounterId;
+        private int selectedPiece;
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
@@ -39,6 +40,17 @@ namespace Dice.App
         public string SavePath { get; private set; }
         public ulong Seed { get; private set; } = EncounterApplication.DefaultSeed;
         public event Action Changed;
+
+        public int PositionedPieceCount => PositionedPieces().Count;
+        public int SelectedPieceIndex => selectedPiece < PositionedPieceCount ? selectedPiece : 0;
+        public PieceInteractionSnapshot SelectedPiece
+        {
+            get
+            {
+                var pieces = PositionedPieces();
+                return pieces.Count == 0 ? null : pieces[SelectedPieceIndex];
+            }
+        }
 
         private void Awake()
         {
@@ -142,6 +154,35 @@ namespace Dice.App
         public void RefreshRewards() => Submit(new RefreshModifierOfferAction(Snapshot?.PendingReward?.OfferId ?? 0), false);
         public void Abandon() => Submit(AbandonEncounterAction.Instance, false);
 
+        public void SelectNextPiece()
+        {
+            int count = PositionedPieceCount;
+            if (count == 0) return;
+            selectedPiece = (SelectedPieceIndex + 1) % count;
+            Changed?.Invoke();
+        }
+
+        public void MovePiece(PiecePosition position)
+        {
+            var piece = SelectedPiece;
+            if (piece == null)
+            {
+                SetStatus("No positioned table piece is in play.");
+                return;
+            }
+            Submit(new InteractWithPieceAction(piece.PieceId, piece.InteractionIndex, new MovePieceInput(position)), false);
+        }
+
+        /** The position interactions of the pieces in play, in the snapshot's order. */
+        private List<PieceInteractionSnapshot> PositionedPieces()
+        {
+            var pieces = new List<PieceInteractionSnapshot>();
+            if (Snapshot == null) return pieces;
+            foreach (var interaction in Snapshot.PieceInteractions)
+                if (interaction.State is PiecePositionState) pieces.Add(interaction);
+            return pieces;
+        }
+
         /** Answers the pending offer; without one there is nothing to choose. */
         public void ChooseReward(long offerId, long optionId)
         {
@@ -181,6 +222,7 @@ namespace Dice.App
                 application = next;
                 encounterId = next.Snapshot.EncounterId;
                 SelectedMask = 0;
+                selectedPiece = 0;
                 eventLog.Clear();
                 application.AttachPresenter(this);
                 SetStatus(WithCacheStatus("Loaded encounter from " + SavePath));
@@ -229,6 +271,7 @@ namespace Dice.App
             application = next;
             Seed = seed;
             SelectedMask = 0;
+            selectedPiece = 0;
             eventLog.Clear();
             application.AttachPresenter(this);
             AppendEvents(application.InitialResolution);

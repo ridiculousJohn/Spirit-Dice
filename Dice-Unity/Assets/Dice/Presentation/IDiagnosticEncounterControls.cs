@@ -17,6 +17,12 @@ namespace Dice.Presentation
         string StatusMessage { get; }
         string SavePath { get; }
         ulong Seed { get; }
+        /** The number of positioned table pieces in play: the position interactions the snapshot lists. */
+        int PositionedPieceCount { get; }
+        /** The index of the selected positioned piece among those in play, from 0; meaningful only while one is in play. */
+        int SelectedPieceIndex { get; }
+        /** The selected positioned piece's interaction as the snapshot shows it, or null when none is in play. */
+        PieceInteractionSnapshot SelectedPiece { get; }
         /** Raised after any of the state or status above changes. */
         event Action Changed;
 
@@ -31,5 +37,9 @@ namespace Dice.Presentation
         void Save();
         void Load();
         void Abandon();
+        /** Selects the next positioned piece in play, after the last the first. */
+        void SelectNextPiece();
+        /** Moves the selected positioned piece to the position through the generic piece interaction action. */
+        void MovePiece(PiecePosition position);
     }
 }
