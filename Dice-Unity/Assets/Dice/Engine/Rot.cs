@@ -202,19 +202,18 @@ namespace Dice.Engine
     }
 
     /** The dice a rot rule withered during the current hand and each die's rot count. */
-    public sealed class RotSaveData
+    public sealed class RotState : EncounterRuleState
     {
         public int WitheredMask;
         /** Each die's rot count, in bay order. */
-        public int[] Counts;
-    }
+        public int[] Counts = new int[DiceValues.Count];
 
-    internal sealed class RotState : EncounterRuleState
-    {
-        internal int WitheredMask;
-        internal RotCounts Counts;
-
-        internal override EncounterRuleState Copy() => (RotState)MemberwiseClone();
+        internal override EncounterRuleState Copy()
+        {
+            var copy = (RotState)MemberwiseClone();
+            copy.Counts = (int[])Counts.Clone();
+            return copy;
+        }
     }
 
     /**
@@ -238,60 +237,54 @@ namespace Dice.Engine
         internal override bool UsesRuleRandom => Endpoint == RotEndpoint.Reroll;
         /** Only the Wither endpoint leaves dice that do not count. */
         internal override bool CanLeaveDiceUncounted => Endpoint == RotEndpoint.Wither;
-        public override Type SaveDataType => typeof(RotSaveData);
+        public override Type StateType => typeof(RotState);
         internal override EncounterRuleState CreateState() => new RotState();
-
-        internal override object CaptureState(EncounterRuleState state)
-        {
-            var value = (RotState)state;
-            return new RotSaveData { WitheredMask = value.WitheredMask, Counts = value.Counts.ToArray() };
-        }
 
         /**
          * The withered mask names dice within the five bays and the counts are five counts from 0 to RotCounts.MaximumCount;
          * restore checks that the hand still counts a die.
          */
-        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
+        internal override bool IsStateUsable(EncounterRuleState state, out string detail)
         {
-            var source = (RotSaveData)saved;
-            state = null;
-            if ((source.WitheredMask & ~DiceValues.AllMask) != 0)
+            var value = (RotState)state;
+            if ((value.WitheredMask & ~DiceValues.AllMask) != 0)
                 detail = "Withered dice lie outside the five bays.";
-            else if (!RotCounts.AreCounts(source.Counts))
+            else if (!RotCounts.AreCounts(value.Counts))
                 detail = "Rot counts must be five counts from 0 to " + RotCounts.MaximumCount + ".";
             else
-            {
                 detail = null;
-                state = new RotState { WitheredMask = source.WitheredMask, Counts = new RotCounts(source.Counts) };
-            }
-            return state != null;
+            return detail == null;
         }
 
         /**
          * The opening roll restores the withered dice it throws and returns their counts to 0; a die a rule holds out of it
          * was not rolled, so it keeps its rot.
          */
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask,
+        internal override void HandStarted(EncounterState state, InstalledRule installed, int rolledMask,
             List<RuleEvent> events)
         {
-            var rot = (RotState)ruleState;
-            int restoredMask = rot.WitheredMask & rolledMask, clearedMask = rot.Counts.NonzeroMask & rolledMask;
+            var rot = (RotState)installed.State;
+            var counts = new RotCounts(rot.Counts);
+            int restoredMask = rot.WitheredMask & rolledMask, clearedMask = counts.NonzeroMask & rolledMask;
             rot.WitheredMask &= ~rolledMask;
-            rot.Counts = rot.Counts.Cleared(rolledMask);
+            counts = counts.Cleared(rolledMask);
+            rot.Counts = counts.ToArray();
             if (restoredMask != 0 || clearedMask != 0)
-                events.Add(new DiceRestoredEvent(state, Identity, restoredMask, clearedMask, rot.Counts, RollKind.Initial));
+                events.Add(new DiceRestoredEvent(state, Identity, restoredMask, clearedMask, counts, RollKind.Initial));
         }
 
-        internal override void PlayerRerollResolved(EncounterState state, EncounterRuleState ruleState, int rerolledMask,
+        internal override void PlayerRerollResolved(EncounterState state, InstalledRule installed, int rerolledMask,
             List<RuleEvent> events)
         {
-            var rot = (RotState)ruleState;
-            int restoredMask = rot.WitheredMask & rerolledMask, clearedMask = rot.Counts.NonzeroMask & rerolledMask;
+            var rot = (RotState)installed.State;
+            var counts = new RotCounts(rot.Counts);
+            int restoredMask = rot.WitheredMask & rerolledMask, clearedMask = counts.NonzeroMask & rerolledMask;
             if (restoredMask != 0 || clearedMask != 0)
             {
                 rot.WitheredMask &= ~restoredMask;
-                rot.Counts = rot.Counts.Cleared(rerolledMask);
-                events.Add(new DiceRestoredEvent(state, Identity, restoredMask, clearedMask, rot.Counts, RollKind.PlayerReroll));
+                counts = counts.Cleared(rerolledMask);
+                rot.Counts = counts.ToArray();
+                events.Add(new DiceRestoredEvent(state, Identity, restoredMask, clearedMask, counts, RollKind.PlayerReroll));
             }
             // A withered die left out of the reroll stays withered without rotting further.
             int rotting = DiceValues.AllMask & ~rerolledMask & ~rot.WitheredMask;
@@ -326,17 +319,18 @@ namespace Dice.Engine
             state.CurrentDice = new DiceValues(faces[0], faces[1], faces[2], faces[3], faces[4]);
             rot.WitheredMask |= witheredMask;
             // A die the rule rolls again has just been rolled, so its count starts over.
-            rot.Counts = rot.Counts.Raised(rotting).Cleared(ruleRerolledMask);
-            events.Add(new DiceRottedEvent(state, Identity, rotting, before, witheredMask, ruleRerolledMask, rot.Counts));
+            counts = counts.Raised(rotting).Cleared(ruleRerolledMask);
+            rot.Counts = counts.ToArray();
+            events.Add(new DiceRottedEvent(state, Identity, rotting, before, witheredMask, ruleRerolledMask, counts));
         }
 
         /** Withered dice count toward nothing. */
-        internal override int UncountedDiceMask(EncounterRuleState ruleState) => ((RotState)ruleState).WitheredMask;
+        internal override int UncountedDiceMask(InstalledRule installed) => ((RotState)installed.State).WitheredMask;
 
-        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, InstalledRule installed)
         {
-            var rot = (RotState)ruleState;
-            return new RotRuleSnapshot(Identity, ShowsAvailable(state), rot.WitheredMask, rot.Counts);
+            var rot = (RotState)installed.State;
+            return new RotRuleSnapshot(Identity, ShowsAvailable(state), rot.WitheredMask, new RotCounts(rot.Counts));
         }
     }
 }

@@ -134,12 +134,12 @@ namespace Dice.Tests
             var inPlay = Catalog().GetEncounterInPlay(TestContent.EncounterId, Array.Empty<ItemDefinition.Id>());
             var plain = new[] { Card(TestRules.IdOf("test.plain"), null), null, Card(TestRules.IdOf("test.other"), null) };
             bool built = false;
-            Assert.That(EncounterRulePresenters.Create(plain, inPlay, () => { built = true; return null; }), Is.Null);
+            Assert.That(EncounterRulePresenters.Create(plain, inPlay.Rules, () => { built = true; return null; }), Is.Null);
             Assert.That(built, Is.False, "Cards without presenters build no context.");
 
             var cards = new[] { Card(TestRules.IdOf("test.plain"), null), Card(BindingId, BindingAsset()) };
             var context = Context();
-            var presenters = EncounterRulePresenters.Create(cards, inPlay, () => context);
+            var presenters = EncounterRulePresenters.Create(cards, inPlay.Rules, () => context);
             try
             {
                 Assert.That(presenters.Presenters.Single(), Is.InstanceOf<DieBindingVisualPresenter>());

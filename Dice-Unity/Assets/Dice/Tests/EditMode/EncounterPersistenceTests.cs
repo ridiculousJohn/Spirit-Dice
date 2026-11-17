@@ -321,6 +321,159 @@ namespace Dice.Tests
             Assert.That(result.Session, Is.Null, name);
         }
 
+        /** Checks a save whose encounter rules lack one the encounter creates is rejected, naming the encounter / fails if it restores or the detail omits it. */
+        [Test]
+        public void RestoreRejectsAnEncounterMissingOneOfItsRulesNamingTheEncounter()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.EncounterRules = save.EncounterRules.Where(entry => entry.RuleId != OwnedBindingId).ToArray();
+            AssertRejectedNaming(catalog, save, TestContent.EncounterId.ToString());
+        }
+
+        /** Checks a save whose item entry lacks one of the item's rules is rejected, naming the item / fails if it restores or the detail omits it. */
+        [Test]
+        public void RestoreRejectsAnItemMissingOneOfItsRulesNamingTheItem()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.LentItems[0].Rules = Array.Empty<EncounterSaveRuleData>();
+            AssertRejectedNaming(catalog, save, LentItemId.ToString());
+        }
+
+        /** Checks a save lacking an item its encounter lends is rejected, naming the encounter / fails if it restores or the detail omits it. */
+        [Test]
+        public void RestoreRejectsAnEncounterMissingAnItemItLendsNamingTheEncounter()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.LentItems = Array.Empty<EncounterSaveItemData>();
+            AssertRejectedNaming(catalog, save, TestContent.EncounterId.ToString());
+        }
+
+        /** Checks a saved entry for a rule its owner does not create is rejected, naming the rule / fails if it restores. */
+        [Test]
+        public void RestoreRejectsAnEntryItsOwnerDoesNotCreate()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            var foreign = TestRules.IdOf("persistence.foreign");
+            save.EncounterRules = save.EncounterRules.Concat(new[] { new EncounterSaveRuleData { RuleId = foreign } }).ToArray();
+            AssertRejectedNaming(catalog, save, foreign.ToString());
+        }
+
+        /** Checks a save holding one rule id twice is rejected, naming the rule / fails if it restores. */
+        [Test]
+        public void RestoreRejectsARepeatedId()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.EncounterRules = save.EncounterRules.Concat(new[] { save.EncounterRules[0] }).ToArray();
+            AssertRejectedNaming(catalog, save, save.EncounterRules[0].RuleId.ToString());
+        }
+
+        /** Checks a save holding no state for a rule that keeps one is rejected, naming the rule / fails if it restores or the detail omits the rule. */
+        [Test]
+        public void RestoreRejectsARuleThatKeepsStateSavedWithNoneNamingTheRule()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.EncounterRules.Single(entry => entry.RuleId == OwnedBindingId).State = null;
+            AssertRejectedNaming(catalog, save, OwnedBindingId.ToString());
+        }
+
+        /** Checks a save whose item entry lacks the item's piece is rejected, naming the item / fails if it restores or the detail omits it. */
+        [Test]
+        public void RestoreRejectsAnItemMissingItsPieceNamingTheItem()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.CarriedItems[0].Piece = null;
+            AssertRejectedNaming(catalog, save, CarriedItemId.ToString());
+        }
+
+        /** Checks a save lacking one of the encounter's own pieces is rejected, naming the encounter / fails if it restores or the detail omits it. */
+        [Test]
+        public void RestoreRejectsAnEncounterMissingOneOfItsPiecesNamingTheEncounter()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            save.EncounterPieces = Array.Empty<EncounterSavePieceData>();
+            AssertRejectedNaming(catalog, save, TestContent.EncounterId.ToString());
+        }
+
+        /** Checks a save naming a carried item the catalog lacks is rejected as an invalid definition, naming the item / fails if it restores. */
+        [Test]
+        public void RestoreRejectsACarriedItemTheCatalogLacks()
+        {
+            var catalog = OwnedCatalog();
+            var save = OwnedSession(catalog).CaptureSave();
+            var unknown = new ItemDefinition.Id(new Guid("5a0e2d4c6b8f4a1c9e3d7b2f0c4a6e81"));
+            save.CarriedItems[0].ItemId = unknown;
+            var result = EncounterSession.RestoreEncounter(catalog, save);
+            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition), result.Detail);
+            Assert.That(result.Detail, Does.Contain(unknown.ToString()));
+        }
+
+        /** Checks two captures of one run are identical / fails if they differ. */
+        [Test]
+        public void CapturesOfTheSameRunAreIdentical()
+        {
+            var session = OwnedSession(OwnedCatalog());
+            Assert.That(EncounterSaveCodec.Serialize(session.CaptureSave()), Is.EqualTo(EncounterSaveCodec.Serialize(session.CaptureSave())));
+        }
+
+        /**
+         * Checks a run carrying an item with a rule and a piece keeps the rule's state and the piece's position through
+         * capture, the codec and restore / fails if either is lost.
+         */
+        [Test]
+        public void ACarriedItemsRuleAndItsPieceRoundTrip()
+        {
+            var catalog = OwnedCatalog();
+            var session = OwnedSession(catalog);
+            TestContent.Execute(session, new InteractWithPieceAction(CarriedPieceId, 0, new MovePieceInput(PiecePosition.Bay(3))));
+            TestContent.Execute(session, PlayHandAction.Instance);
+            var save = session.CaptureSave();
+            var restored = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
+            Assert.That(restored.InPlay.CarriedItems.Select(item => item.Identity), Is.EqualTo(new[] { CarriedItemId }));
+            var carried = restored.Snapshot.PieceInteractions.Single(interaction => interaction.PieceId == CarriedPieceId);
+            Assert.That(((PiecePositionState)carried.State).Position, Is.EqualTo(PiecePosition.Bay(3)));
+            Assert.That(restored.Snapshot.EncounterRules.OfType<DieCarryOverRuleSnapshot>().Single().CarriedMask,
+                Is.EqualTo(session.Snapshot.EncounterRules.OfType<DieCarryOverRuleSnapshot>().Single().CarriedMask));
+            AssertGraphEqual(save, restored.CaptureSave());
+        }
+
+        /**
+         * Checks a carried item's rule reading the encounter's own piece plays and keeps its state and the piece's position
+         * through capture, the codec and restore / fails if the rule cannot read the piece or either is lost.
+         */
+        [Test]
+        public void ARuleReadingAPieceAnotherOwnerCreatesPlaysAndRoundTrips()
+        {
+            var item = new ItemDefinition(CarriedItemId,
+                new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("persistence.carry_over"), OwnPieceId, Array.Empty<ModifierDefinition.Id>()) });
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                pieces: new[] { PositionedPiece(OwnPieceId, PiecePosition.Neutral) });
+            var catalog = new MechanicalCatalog("test.persistence.cross", TestContent.Hands(), new[] { encounter }, items: new[] { item });
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14, carriedItemIds: new[] { CarriedItemId });
+            TestContent.Execute(session, new InteractWithPieceAction(OwnPieceId, 0, new MovePieceInput(PiecePosition.Bay(3))));
+            TestContent.Execute(session, PlayHandAction.Instance);
+            Assert.That(session.Snapshot.EncounterRules.OfType<DieCarryOverRuleSnapshot>().Single().CarriedMask, Is.EqualTo(1 << 3));
+            var save = session.CaptureSave();
+            var restored = Restore(catalog, EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog));
+            Assert.That(((PiecePositionState)restored.Snapshot.PieceInteractions.Single().State).Position, Is.EqualTo(PiecePosition.Bay(3)));
+            Assert.That(restored.Snapshot.EncounterRules.OfType<DieCarryOverRuleSnapshot>().Single().CarriedMask, Is.EqualTo(1 << 3));
+            AssertGraphEqual(save, restored.CaptureSave());
+        }
+
+        private static void AssertRejectedNaming(MechanicalCatalog catalog, EncounterSaveData save, string named)
+        {
+            var result = EncounterSession.RestoreEncounter(catalog, save);
+            Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
+            Assert.That(result.Detail, Does.Contain(named));
+        }
+
         private static IEnumerable<TestCaseData> InvalidInitialSaves()
         {
             yield return Invalid("newer save version", value => ++value.SaveFormatVersion, EncounterRestoreError.SaveFormatVersionMismatch);
@@ -385,7 +538,7 @@ namespace Dice.Tests
             internal FirstDieUncountedRule(Id identity) : base(identity) { }
 
             internal override bool IsAvailable(EncounterState state) => true;
-            internal override int UncountedDiceMask(EncounterRuleState ruleState) => 1;
+            internal override int UncountedDiceMask(InstalledRule installed) => 1;
         }
 
         private static MechanicalCatalog ModifierCatalog()
@@ -403,6 +556,46 @@ namespace Dice.Tests
             var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 startingModifiers: TestModifiers.IdsOf("initial", "reroll", "reroll", "play"));
             return new MechanicalCatalog("test.persistence", TestContent.Hands(), new[] { encounter }, definitions);
+        }
+
+        private static readonly EncounterRuleDefinition.Id OwnedBindingId = TestRules.IdOf("persistence.binding");
+        private static readonly EncounterRuleDefinition.Id OwnedWardId = TestRules.IdOf("persistence.ward");
+        private static readonly ItemDefinition.Id LentItemId = new ItemDefinition.Id(new Guid("2c7e9a1b3d5f4e6a8b0c2d4e6f8a1b3c"));
+        private static readonly ItemDefinition.Id CarriedItemId = new ItemDefinition.Id(new Guid("8e1a3c5b7d9f4b2a6c4e8d0f2a1b3c5d"));
+        private static readonly TablePieceDefinition.Id OwnPieceId = TestPieces.IdOf("piece.persistence.own");
+        private static readonly TablePieceDefinition.Id CarriedPieceId = TestPieces.IdOf("piece.persistence.carried");
+
+        /**
+         * An encounter whose own rules are a binding, a rule that keeps no state and a ward reading the encounter's own piece,
+         * lending an item whose rot keeps state, and a catalog item, which the run carries, with a carry-over rule reading
+         * the item's own piece.
+         */
+        private static MechanicalCatalog OwnedCatalog()
+        {
+            var lent = new ItemDefinition(LentItemId, new[] { new RotRuleDefinition(TestRules.IdOf("persistence.rot"), RotEndpoint.Wither) });
+            var carried = new ItemDefinition(CarriedItemId,
+                new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("persistence.carry_over"), CarriedPieceId, Array.Empty<ModifierDefinition.Id>()) },
+                PositionedPiece(CarriedPieceId, PiecePosition.Bay(2)));
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new EncounterRuleDefinition[]
+                {
+                    new DieBindingRuleDefinition(OwnedBindingId, true, true),
+                    new FirstRerollFreeRuleDefinition(TestRules.IdOf("persistence.free")),
+                    new BayWardRuleDefinition(OwnedWardId, OwnPieceId, new[] { DieInterferenceKind.Flip })
+                },
+                pieces: new[] { PositionedPiece(OwnPieceId, PiecePosition.Neutral) }, items: new[] { lent });
+            return new MechanicalCatalog("test.persistence.owned", TestContent.Hands(), new[] { encounter }, items: new[] { carried });
+        }
+
+        private static TablePieceDefinition PositionedPiece(TablePieceDefinition.Id id, PiecePosition start)
+            => new TablePieceDefinition(id, new[] { new PositionInteractionDefinition(start, PieceMovementTiming.DuringHand) });
+
+        /** A run of the owned encounter carrying the catalog item, after one player reroll. */
+        private static EncounterSession OwnedSession(MechanicalCatalog catalog)
+        {
+            var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 14, carriedItemIds: new[] { CarriedItemId });
+            TestContent.Execute(session, new RerollDiceAction(1));
+            return session;
         }
 
         private static EncounterSession Restore(MechanicalCatalog catalog, EncounterSaveData save)

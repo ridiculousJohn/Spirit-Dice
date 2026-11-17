@@ -14,7 +14,6 @@ namespace Dice.Engine
                 RandomAlgorithmVersion = DeterministicRandom.AlgorithmVersion,
                 CatalogVersion = catalog.Version,
                 EncounterId = inPlay.Encounter.Identity,
-                CarriedItemIds = CaptureCarriedItems(inPlay),
                 Revision = state.Revision, Phase = state.Phase, Outcome = state.Outcome,
                 StageIndex = state.StageIndex, HandIndex = state.HandIndex,
                 RemainingThreshold = state.RemainingThreshold, HandsRemaining = state.HandsRemaining,
@@ -34,8 +33,7 @@ namespace Dice.Engine
                 HandUpgrades = (int[])state.HandUpgrades.Clone(),
                 DiceRandomState = state.DiceRandom.State, RewardRandomState = state.RewardRandom.State,
                 RuleRandomState = state.RuleRandom.State,
-                Pieces = CapturePieces(inPlay, state),
-                RuleStates = CaptureRuleStates(inPlay, state),
+                CarriedItems = ItemList.Save(state.CarriedItems),
                 RewardRefreshes = state.RewardRefreshes, NextOfferId = state.NextOfferId, NextOptionId = state.NextOptionId,
                 ExcludedRewardFamilies = state.ExcludedRewardFamilies.ToArray(),
                 RecentHandUpgrades = state.RecentHandUpgrades.ToArray(),
@@ -83,6 +81,7 @@ namespace Dice.Engine
                     };
                 }
             }
+            inPlay.Encounter.Save(state, save);
             return save;
         }
 
@@ -105,18 +104,26 @@ namespace Dice.Engine
             try { catalog.GetEncounter(save.EncounterId); }
             catch (ArgumentException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is invalid.", out error, out detail); }
             catch (KeyNotFoundException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is missing from the catalog.", out error, out detail); }
-            if (save.CarriedItemIds == null)
+            if (save.CarriedItems == null)
                 return Fail(EncounterRestoreError.InvalidState, "Carried items are missing.", out error, out detail);
+            var carriedItemIds = new List<ItemDefinition.Id>();
+            foreach (var entry in save.CarriedItems)
+            {
+                if (entry == null) return Fail(EncounterRestoreError.InvalidState, "A carried item entry is missing.", out error, out detail);
+                try { catalog.GetItem(entry.ItemId); }
+                catch (Exception exception) when (exception is ArgumentException || exception is KeyNotFoundException)
+                {
+                    return Fail(EncounterRestoreError.InvalidDefinition, "The carried item " + entry.ItemId + " is missing from the catalog.",
+                        out error, out detail);
+                }
+                carriedItemIds.Add(entry.ItemId);
+            }
             // What the run plays is rebuilt from the save alone, never from the profile.
-            try { inPlay = catalog.GetEncounterInPlay(save.EncounterId, save.CarriedItemIds); }
+            try { inPlay = catalog.GetEncounterInPlay(save.EncounterId, carriedItemIds); }
             catch (ArgumentException exception)
             {
                 return Fail(EncounterRestoreError.InvalidDefinition, "The carried items cannot be played with the encounter: " + exception.Message,
                     out error, out detail);
-            }
-            catch (KeyNotFoundException)
-            {
-                return Fail(EncounterRestoreError.InvalidDefinition, "A carried item is missing from the catalog.", out error, out detail);
             }
             try
             {
@@ -135,8 +142,8 @@ namespace Dice.Engine
 
         /**
          * Maps a save onto encounter state, checking only that the state can be used safely: required data is present,
-         * values are in range, ids resolve in the catalog and each rule state restores. A save is not checked for having
-         * been produced by play; the file seal guards it against corruption.
+         * values are in range, ids resolve in the catalog and each installed rule's state is usable. A save is not checked
+         * for having been produced by play; the file seal guards it against corruption.
          */
         private static EncounterState ValidateAndMap(MechanicalCatalog catalog, EncounterInPlay inPlay, EncounterSaveData save)
         {
@@ -194,97 +201,16 @@ namespace Dice.Engine
             state.UnlockedModifierIds = ReadModifierIds(definitions, save.UnlockedModifierIds, "Unlocked modifiers");
             state.NewlyUnlockedModifierIds = ReadModifierIds(definitions, save.NewlyUnlockedModifierIds, "Newly unlocked modifiers");
             state.DiscoveredFamilyIds = ReadFamilies(catalog, save.DiscoveredFamilyIds, "Discovered families");
-            RestoreRuleStates(inPlay, save, state);
-            state.PieceStates = RestorePieces(inPlay, save);
+            // Each owner loads what it creates, a rule its state as a copy the save does not share and a piece its
+            // interactions' states: the encounter its own rules and pieces and the items it lends, the run the carried items.
+            inPlay.Encounter.Load(save, state);
+            state.CarriedItems = ItemList.Load("run", inPlay.CarriedItems, save.CarriedItems);
+            // The current hand is scored from its counted dice, so the rules cannot leave every die uncounted.
+            Require(HandDice.IsCountedMask(DiceValues.AllMask & ~EncounterRuleResolver.UncountedDice(state)),
+                "The rules leave no die counted.");
             RestoreModifiers(save, state, definitions);
             RestoreReward(catalog, inPlay, save, state, definitions);
             return state;
-        }
-
-        /** Each stateful rule restores its own saved state; together the rules must leave a die counted. */
-        private static void RestoreRuleStates(EncounterInPlay inPlay, EncounterSaveData save, EncounterState state)
-        {
-            Require(save.RuleStates != null, "Rule states are missing.");
-            var rules = inPlay.Rules;
-            var sources = new object[rules.Count];
-            foreach (var entry in save.RuleStates)
-            {
-                int slot = -1;
-                for (int i = 0; entry != null && i < rules.Count; ++i)
-                    if (rules[i].Identity == entry.RuleId) slot = i;
-                Require(slot >= 0 && sources[slot] == null && rules[slot].SaveDataType != null && entry.State != null &&
-                    entry.State.GetType() == rules[slot].SaveDataType, "A rule state disagrees with the encounter's rules.");
-                sources[slot] = entry.State;
-            }
-            state.RuleStates = new EncounterRuleState[rules.Count];
-            for (int i = 0; i < rules.Count; ++i)
-            {
-                if (rules[i].SaveDataType == null) continue;
-                Require(sources[i] != null, "A rule state is missing.");
-                Require(rules[i].TryRestoreState(sources[i], out state.RuleStates[i], out string detail), detail);
-            }
-            // The current hand is scored from its counted dice, so the rules cannot leave every die uncounted.
-            Require(HandDice.IsCountedMask(DiceValues.AllMask & ~EncounterRuleResolver.UncountedDice(inPlay, state)),
-                "The rules leave no die counted.");
-        }
-
-        private static ItemDefinition.Id[] CaptureCarriedItems(EncounterInPlay inPlay)
-        {
-            var ids = new ItemDefinition.Id[inPlay.CarriedItems.Count];
-            for (int i = 0; i < ids.Length; ++i) ids[i] = inPlay.CarriedItems[i].Identity;
-            return ids;
-        }
-
-        private static EncounterSaveRuleData[] CaptureRuleStates(EncounterInPlay inPlay, EncounterState state)
-        {
-            var values = new List<EncounterSaveRuleData>();
-            for (int i = 0; i < inPlay.Rules.Count; ++i)
-                if (inPlay.Rules[i].SaveDataType != null)
-                    values.Add(new EncounterSaveRuleData
-                    {
-                        RuleId = inPlay.Rules[i].Identity, State = inPlay.Rules[i].CaptureState(state.RuleStates[i])
-                    });
-            return values.ToArray();
-        }
-
-        private static EncounterSavePieceData[] CapturePieces(EncounterInPlay inPlay, EncounterState state)
-        {
-            var values = new List<EncounterSavePieceData>();
-            int slot = 0;
-            foreach (var piece in inPlay.Pieces)
-            {
-                var interactions = new int[piece.Interactions.Count][];
-                for (int i = 0; i < interactions.Length; ++i) interactions[i] = piece.Interactions[i].Capture(state.PieceStates[slot++]);
-                values.Add(new EncounterSavePieceData { PieceId = piece.Identity, Interactions = interactions });
-            }
-            return values.ToArray();
-        }
-
-        /** Each piece in play restores from the saved entry under its id, whatever the entries' order; each is saved exactly once. */
-        private static PieceInteractionState[] RestorePieces(EncounterInPlay inPlay, EncounterSaveData save)
-        {
-            Require(save.Pieces != null && save.Pieces.Length == inPlay.Pieces.Count, "Table piece states disagree with the encounter.");
-            var sources = new EncounterSavePieceData[inPlay.Pieces.Count];
-            foreach (var entry in save.Pieces)
-            {
-                int index = -1;
-                for (int i = 0; entry != null && i < inPlay.Pieces.Count; ++i)
-                    if (inPlay.Pieces[i].Identity == entry.PieceId) index = i;
-                Require(index >= 0 && sources[index] == null, "Table piece states disagree with the encounter.");
-                sources[index] = entry;
-            }
-            var states = new PieceInteractionState[TablePieceStates.Initial(inPlay).Length];
-            int slot = 0;
-            for (int index = 0; index < sources.Length; ++index)
-            {
-                var piece = inPlay.Pieces[index];
-                var source = sources[index];
-                Require(source.Interactions != null && source.Interactions.Length == piece.Interactions.Count,
-                    "A table piece state is invalid.");
-                for (int i = 0; i < piece.Interactions.Count; ++i, ++slot)
-                    Require(piece.Interactions[i].TryRestore(source.Interactions[i], out states[slot]), "A table piece state is invalid.");
-            }
-            return states;
         }
 
         private static void RestoreModifiers(EncounterSaveData save, EncounterState state,
@@ -427,10 +353,7 @@ namespace Dice.Engine
         private static void RequireCategory(HandCategory category)
             => Require((uint)category < HandDefinition.CategoryCount, "A hand category is invalid.");
 
-        private static void Require(bool condition, string detail)
-        {
-            if (!condition) throw new InvalidSaveException(EncounterRestoreError.InvalidState, detail);
-        }
+        private static void Require(bool condition, string detail) => SavedEntries.Require(condition, detail);
 
         private static bool Fail(EncounterRestoreError value, string message, out EncounterRestoreError error, out string detail)
         {
@@ -438,11 +361,56 @@ namespace Dice.Engine
             detail = message;
             return false;
         }
+    }
 
-        private sealed class InvalidSaveException : Exception
+    /** A save restore rejects; Error says why and the message describes it. */
+    internal sealed class InvalidSaveException : Exception
+    {
+        internal EncounterRestoreError Error { get; }
+        internal InvalidSaveException(EncounterRestoreError error, string detail) : base(detail) => Error = error;
+    }
+
+    /**
+     * Reads the saved entries of the things one owner creates, by id: an owner takes the entry of each thing it creates,
+     * and a missing entry, an entry for a thing it does not create or a repeated id rejects the save, naming the owner and
+     * the id.
+     */
+    internal static class SavedEntries
+    {
+        internal static void Require(bool condition, string detail)
         {
-            internal EncounterRestoreError Error { get; }
-            internal InvalidSaveException(EncounterRestoreError error, string detail) : base(detail) => Error = error;
+            if (!condition) throw new InvalidSaveException(EncounterRestoreError.InvalidState, detail);
+        }
+
+        /** The owner's saved entries by id; kind names what they are, such as "rule". */
+        internal static Dictionary<TId, TEntry> ById<TId, TEntry>(string owner, TEntry[] entries, Func<TEntry, TId> idOf, string kind)
+            where TEntry : class
+        {
+            Require(entries != null, "The " + owner + " has no saved " + kind + " list.");
+            var byId = new Dictionary<TId, TEntry>();
+            foreach (var entry in entries)
+            {
+                Require(entry != null, "The " + owner + " has a missing saved " + kind + " entry.");
+                TId id = idOf(entry);
+                Require(!byId.ContainsKey(id), "The " + owner + " has more than one saved entry for the " + kind + " " + id + ".");
+                byId.Add(id, entry);
+            }
+            return byId;
+        }
+
+        /** Takes the entry of a thing the owner creates, which must be saved. */
+        internal static TEntry Take<TId, TEntry>(string owner, Dictionary<TId, TEntry> entries, TId id, string kind)
+        {
+            Require(entries.TryGetValue(id, out var entry), "The " + owner + " has no saved entry for its " + kind + " " + id + ".");
+            entries.Remove(id);
+            return entry;
+        }
+
+        /** Rejects an entry left once the owner has taken its own, which names a thing the owner does not create. */
+        internal static void RequireNoneLeft<TId, TEntry>(string owner, Dictionary<TId, TEntry> entries, string kind)
+        {
+            foreach (var id in entries.Keys)
+                Require(false, "The " + owner + " has a saved entry for the " + kind + " " + id + ", which it does not create.");
         }
     }
 }

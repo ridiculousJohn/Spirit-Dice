@@ -38,9 +38,9 @@ namespace Dice.Engine
             EncounterState state = session.State;
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
             if (SelectedMask <= 0 || (SelectedMask & ~DiceValues.AllMask) != 0 ||
-                (SelectedMask & EncounterRuleResolver.LockedDice(session.InPlay, state)) != 0)
+                (SelectedMask & EncounterRuleResolver.LockedDice(state)) != 0)
                 return CommandRejection.InvalidDiceSelection;
-            if (!EncounterRuleResolver.CanAffordReroll(session.InPlay, state))
+            if (!EncounterRuleResolver.CanAffordReroll(state))
                 return CommandRejection.NoRerollsRemaining;
             return CommandRejection.None;
         }
@@ -147,11 +147,11 @@ namespace Dice.Engine
             StartingRerolls = stage.StartingRerolls;
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
-            LockedMask = EncounterRuleResolver.LockedDice(inPlay, state);
-            CountedMask = EncounterRuleResolver.CurrentHand(inPlay, state).CountedMask;
+            LockedMask = EncounterRuleResolver.LockedDice(state);
+            CountedMask = EncounterRuleResolver.CurrentHand(state).CountedMask;
             CanReroll = state.Phase == EncounterPhase.Playing && LockedMask != DiceValues.AllMask &&
-                EncounterRuleResolver.CanAffordReroll(inPlay, state);
-            EncounterRules = EncounterRuleResolver.Snapshots(inPlay, state);
+                EncounterRuleResolver.CanAffordReroll(state);
+            EncounterRules = EncounterRuleResolver.Snapshots(state);
             CurrentDice = state.CurrentDice;
             InitialHand = state.InitialHand;
             HandBeforeLastReroll = state.HandBeforeLastReroll;
@@ -159,7 +159,7 @@ namespace Dice.Engine
             LatestRerollMask = state.LatestRerollMask;
             LatestChangedMask = state.LatestChangedMask;
             EverRerolledMask = state.EverRerolledMask;
-            PieceInteractions = TablePieceStates.Capture(inPlay, state);
+            PieceInteractions = TablePieceStates.Capture(state);
             RerollsSpentOnHand = state.RerollsSpentOnHand;
             HandsPlayedInStage = state.HandsPlayedInStage;
             PreviousStageStartingHands = state.PreviousStageStartingHands;

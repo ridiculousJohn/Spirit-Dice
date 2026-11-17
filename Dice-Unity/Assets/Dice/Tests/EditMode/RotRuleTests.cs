@@ -198,7 +198,7 @@ namespace Dice.Tests
             foreach (int withered in new[] { 32, DiceValues.AllMask })
             {
                 var unusable = session.CaptureSave();
-                ((RotSaveData)unusable.RuleStates.Single().State).WitheredMask = withered;
+                ((RotState)unusable.EncounterRules.Single().State).WitheredMask = withered;
                 var result = EncounterSession.RestoreEncounter(catalog, unusable);
                 Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
                 Assert.That(result.Detail, Does.Contain(withered == 32 ? "outside the five bays" : "no die counted"));
@@ -206,7 +206,7 @@ namespace Dice.Tests
             foreach (var counts in new[] { null, new[] { 0, 0, 0, 0 }, new[] { 0, -1, 0, 0, 0 }, new[] { 0, 0, RotCounts.MaximumCount + 1, 0, 0 } })
             {
                 var unusable = session.CaptureSave();
-                ((RotSaveData)unusable.RuleStates.Single().State).Counts = counts;
+                ((RotState)unusable.EncounterRules.Single().State).Counts = counts;
                 var result = EncounterSession.RestoreEncounter(catalog, unusable);
                 Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
                 Assert.That(result.Detail, Does.Contain("Rot counts"));

@@ -17,6 +17,10 @@ namespace Dice.App
         public Resolution InitialResolution => session.InitialResolution;
         /** What the run plays: the catalog's encounter and the items the player carries. */
         public EncounterInPlay InPlay => session.InPlay;
+        /** The rules installed in the run, in the order they run in. */
+        public IReadOnlyList<EncounterRuleDefinition> InstalledRules => session.InstalledRules;
+        /** The table pieces installed in the run, in installed order. */
+        public IReadOnlyList<TablePieceDefinition> InstalledPieces => session.InstalledPieces;
 
         /** Starts the encounter with the identified items carried; none when carriedItemIds is omitted. */
         public EncounterApplication(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed,

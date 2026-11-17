@@ -2,14 +2,12 @@ namespace Dice.Engine
 {
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 17;
+        public const int CurrentFormatVersion = 18;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
         public string CatalogVersion;
         public EncounterDefinition.Id EncounterId;
-        /** The items the player carries into the encounter, those it does not lend; what the run plays is rebuilt from them. */
-        public ItemDefinition.Id[] CarriedItemIds;
         public long Revision;
         public EncounterPhase Phase;
         public EncounterOutcome Outcome;
@@ -43,8 +41,14 @@ namespace Dice.Engine
         public EncounterSaveContributionData[] ModifierContributions;
         public ulong RewardRandomState;
         public ulong RuleRandomState;
-        public EncounterSavePieceData[] Pieces;
-        public EncounterSaveRuleData[] RuleStates;
+        /** The encounter's own rules' entries, which the encounter writes and loads. */
+        public EncounterSaveRuleData[] EncounterRules;
+        /** The encounter's own pieces' entries, which the encounter writes and loads. */
+        public EncounterSavePieceData[] EncounterPieces;
+        /** The entries of the items the encounter lends, which the encounter writes and loads. */
+        public EncounterSaveItemData[] LentItems;
+        /** The entries of the items the player carries, those the encounter does not lend; the run writes and loads them. */
+        public EncounterSaveItemData[] CarriedItems;
         public int RewardRefreshes;
         public EncounterSaveRewardData PendingReward;
         public long NextOfferId;
@@ -73,6 +77,7 @@ namespace Dice.Engine
         public long TotalActivations;
     }
 
+    /** One installed piece's entry, which the encounter or item that creates the piece writes and loads. */
     public sealed class EncounterSavePieceData
     {
         public TablePieceDefinition.Id PieceId;
@@ -80,11 +85,22 @@ namespace Dice.Engine
         public int[][] Interactions;
     }
 
-    /** One stateful encounter rule's state; State is an instance of that rule's SaveDataType. */
+    /**
+     * One installed rule's entry, which the rule writes and loads: State is an instance of the rule's StateType, null for a
+     * rule that keeps none.
+     */
     public sealed class EncounterSaveRuleData
     {
         public EncounterRuleDefinition.Id RuleId;
         public object State;
+    }
+
+    /** One installed item's entry, which the item writes and loads: its rules' entries and its piece's, null without one. */
+    public sealed class EncounterSaveItemData
+    {
+        public ItemDefinition.Id ItemId;
+        public EncounterSaveRuleData[] Rules;
+        public EncounterSavePieceData Piece;
     }
 
     public sealed class EncounterSaveContributionData

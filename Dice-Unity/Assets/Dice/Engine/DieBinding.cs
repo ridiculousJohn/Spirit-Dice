@@ -68,16 +68,10 @@ namespace Dice.Engine
     }
 
     /** The dice a binding rule has bound and the die it has marked during the current hand. */
-    public sealed class DieBindingSaveData
+    public sealed class DieBindingState : EncounterRuleState
     {
         public int BoundMask;
         public int MarkedMask;
-    }
-
-    internal sealed class DieBindingState : EncounterRuleState
-    {
-        internal int BoundMask;
-        internal int MarkedMask;
 
         internal override EncounterRuleState Copy() => (DieBindingState)MemberwiseClone();
     }
@@ -99,43 +93,31 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
         internal override bool UsesRuleRandom => true;
-        public override Type SaveDataType => typeof(DieBindingSaveData);
+        public override Type StateType => typeof(DieBindingState);
         internal override EncounterRuleState CreateState() => new DieBindingState();
 
-        internal override object CaptureState(EncounterRuleState state)
+        /** The bound and marked masks name dice within the five bays. */
+        internal override bool IsStateUsable(EncounterRuleState state, out string detail)
         {
             var value = (DieBindingState)state;
-            return new DieBindingSaveData { BoundMask = value.BoundMask, MarkedMask = value.MarkedMask };
+            bool usable = (value.BoundMask & ~DiceValues.AllMask) == 0 && (value.MarkedMask & ~DiceValues.AllMask) == 0;
+            detail = usable ? null : "Bound or marked dice lie outside the five bays.";
+            return usable;
         }
 
-        /** The bound and marked masks name dice within the five bays. */
-        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
-        {
-            var source = (DieBindingSaveData)saved;
-            state = null;
-            if ((source.BoundMask & ~DiceValues.AllMask) != 0 || (source.MarkedMask & ~DiceValues.AllMask) != 0)
-                detail = "Bound or marked dice lie outside the five bays.";
-            else
-            {
-                detail = null;
-                state = new DieBindingState { BoundMask = source.BoundMask, MarkedMask = source.MarkedMask };
-            }
-            return state != null;
-        }
-
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask,
+        internal override void HandStarted(EncounterState state, InstalledRule installed, int rolledMask,
             List<RuleEvent> events)
         {
-            var binding = (DieBindingState)ruleState;
+            var binding = (DieBindingState)installed.State;
             binding.BoundMask = 0;
             binding.MarkedMask = 0;
             if (MarksAfterOpeningRoll) Mark(state, binding, events);
         }
 
-        internal override void PlayerRerollResolved(EncounterState state, EncounterRuleState ruleState, int rerolledMask,
+        internal override void PlayerRerollResolved(EncounterState state, InstalledRule installed, int rerolledMask,
             List<RuleEvent> events)
         {
-            var binding = (DieBindingState)ruleState;
+            var binding = (DieBindingState)installed.State;
             if (binding.MarkedMask != 0)
             {
                 int bay = DiceValues.NthBay(binding.MarkedMask, 0);
@@ -146,11 +128,11 @@ namespace Dice.Engine
             if (MarksAfterPlayerReroll) Mark(state, binding, events);
         }
 
-        internal override int LockedDiceMask(EncounterRuleState ruleState) => ((DieBindingState)ruleState).BoundMask;
+        internal override int LockedDiceMask(InstalledRule installed) => ((DieBindingState)installed.State).BoundMask;
 
-        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, InstalledRule installed)
         {
-            var binding = (DieBindingState)ruleState;
+            var binding = (DieBindingState)installed.State;
             return new DieBindingRuleSnapshot(Identity, ShowsAvailable(state), binding.BoundMask, binding.MarkedMask);
         }
 

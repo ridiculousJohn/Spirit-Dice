@@ -604,7 +604,7 @@ namespace Dice.Presentation
                 GameplayHud.ShowNoEncounter(HudRuleCard, controls.Status);
                 return;
             }
-            bool createdPresenters = CreatePresenters(controls.InPlay);
+            bool createdPresenters = CreatePresenters(controls.InPlay, controls.InstalledRules, controls.InstalledPieces);
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
@@ -718,7 +718,7 @@ namespace Dice.Presentation
             CloseOverlays();
             if (resolution.Snapshot.Phase == EncounterPhase.Completed && RewardsPanel.Root.gameObject.activeSelf)
                 SetGameplayVisible(false);
-            CreatePresenters(controls.InPlay);
+            CreatePresenters(controls.InPlay, controls.InstalledRules, controls.InstalledPieces);
             // An opening resolution may already have been refreshed as the installed state; its events build the rule state from nothing.
             if (resolution.PreviousRevision < 0) rulePresenters?.Sync(null, false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
@@ -803,13 +803,14 @@ namespace Dice.Presentation
 
         /**
          * Creates the rule cards in play at the configured table, their rule presenters and the table's piece presenters for
-         * what the run plays unless they already present it; true when created.
+         * what the run plays and the rules and pieces installed in it unless they already present it; true when created.
          */
-        private bool CreatePresenters(EncounterInPlay inPlay)
+        private bool CreatePresenters(EncounterInPlay inPlay, IReadOnlyList<EncounterRuleDefinition> installedRules,
+            IReadOnlyList<TablePieceDefinition> installedPieces)
         {
             if (PresentSameEncounter(presentersInPlay, inPlay)) return false;
             DisposePresenters();
-            CreatePresenters(inPlay, controls.ItemPresentation);
+            CreatePresenters(inPlay, installedRules, installedPieces, controls.ItemPresentation);
             presentersInPlay = inPlay;
             // New piece presenters place their props over the tray's current bay slots.
             PositionTablePieces();
@@ -827,15 +828,16 @@ namespace Dice.Presentation
             return true;
         }
 
-        private void CreatePresenters(EncounterInPlay inPlay, ItemPresentationCatalog items)
+        private void CreatePresenters(EncounterInPlay inPlay, IReadOnlyList<EncounterRuleDefinition> installedRules,
+            IReadOnlyList<TablePieceDefinition> installedPieces, ItemPresentationCatalog items)
         {
             try
             {
                 ruleCards = items.CardsInPlay(configuredTable, inPlay.Items);
-                rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, inPlay, () => new TableRuleContext(this));
+                rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, installedRules, () => new TableRuleContext(this));
                 // New presenters start from the selection the tray already shows.
                 rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
-                piecePresenters = TablePiecePresenters.Create(tablePieces, inPlay, new TablePieceContext(this));
+                piecePresenters = TablePiecePresenters.Create(tablePieces, installedPieces, new TablePieceContext(this));
             }
             catch
             {
@@ -857,7 +859,8 @@ namespace Dice.Presentation
             tableLighting.Release();
             encounterAudio.Initialize();
             if (inPlay == null) return;
-            try { CreatePresenters(inPlay, items); }
+            // A run starts with the rules and pieces its EncounterInPlay brings installed, in that order.
+            try { CreatePresenters(inPlay, inPlay.Rules, inPlay.Pieces, items); }
             finally { DisposePresenters(); }
         }
 

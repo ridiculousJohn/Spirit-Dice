@@ -56,22 +56,15 @@ namespace Dice.Engine
     }
 
     /** The die a carry-over rule carries into the next hand and the die it carried into the current hand. */
-    public sealed class DieCarryOverSaveData
+    public sealed class DieCarryOverState : EncounterRuleState
     {
         /** The die the next opening roll holds, at most one; 0 when the next hand carries nothing. */
         public int PendingMask;
         /** The die carried into the current hand that keeps its carried status, at most one. */
         public int CarriedMask;
-    }
-
-    internal sealed class DieCarryOverState : EncounterRuleState
-    {
-        internal int PendingMask;
-        internal int CarriedMask;
 
         internal override EncounterRuleState Copy() => (DieCarryOverState)MemberwiseClone();
     }
-
     /**
      * Carries a die from one hand into the next: when a hand is played, the die in the bay a positioned table piece sits
      * on keeps its face and bay through the next opening roll while the others are rolled, if it counted in the scored
@@ -96,45 +89,33 @@ namespace Dice.Engine
         }
 
         internal override bool IsAvailable(EncounterState state) => true;
-        public override Type SaveDataType => typeof(DieCarryOverSaveData);
+        public override Type StateType => typeof(DieCarryOverState);
         internal override EncounterRuleState CreateState() => new DieCarryOverState();
 
         internal override void ValidateDefinition(EncounterInPlay inPlay)
         {
-            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out _, out _))
+            if (!TablePieceStates.Holds<PositionInteractionDefinition>(inPlay, PieceId))
                 throw new ArgumentException("The carry-over " + Identity + " must reference a table piece in play with a position interaction: piece " +
                     PieceId + ".", nameof(inPlay));
         }
 
-        internal override object CaptureState(EncounterRuleState state)
+        /** The pending and carried masks each name at most one die within the five bays. */
+        internal override bool IsStateUsable(EncounterRuleState state, out string detail)
         {
             var value = (DieCarryOverState)state;
-            return new DieCarryOverSaveData { PendingMask = value.PendingMask, CarriedMask = value.CarriedMask };
-        }
-
-        /** The pending and carried masks each name at most one die within the five bays. */
-        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
-        {
-            var source = (DieCarryOverSaveData)saved;
-            state = null;
-            if (!IsOneDieAtMost(source.PendingMask) || !IsOneDieAtMost(source.CarriedMask))
-                detail = "The pending or carried die lies outside the five bays or names more than one die.";
-            else
-            {
-                detail = null;
-                state = new DieCarryOverState { PendingMask = source.PendingMask, CarriedMask = source.CarriedMask };
-            }
-            return state != null;
+            bool usable = IsOneDieAtMost(value.PendingMask) && IsOneDieAtMost(value.CarriedMask);
+            detail = usable ? null : "The pending or carried die lies outside the five bays or names more than one die.";
+            return usable;
         }
 
         private static bool IsOneDieAtMost(int mask) => (mask & ~DiceValues.AllMask) == 0 && DiceValues.CountBays(mask) <= 1;
 
-        internal override int OpeningRollHeldDiceMask(EncounterRuleState ruleState) => ((DieCarryOverState)ruleState).PendingMask;
+        internal override int OpeningRollHeldDiceMask(InstalledRule installed) => ((DieCarryOverState)installed.State).PendingMask;
 
         /** The die the opening roll held is carried into the hand; the pending carry is spent. */
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask, List<RuleEvent> events)
+        internal override void HandStarted(EncounterState state, InstalledRule installed, int rolledMask, List<RuleEvent> events)
         {
-            var carry = (DieCarryOverState)ruleState;
+            var carry = (DieCarryOverState)installed.State;
             carry.CarriedMask = carry.PendingMask & ~rolledMask;
             carry.PendingMask = 0;
             if (carry.CarriedMask == 0) return;
@@ -143,10 +124,10 @@ namespace Dice.Engine
         }
 
         /** Only a player reroll that throws the carried die ends its status, even if the same face returns. */
-        internal override void PlayerRerollResolved(EncounterState state, EncounterRuleState ruleState, int rerolledMask,
+        internal override void PlayerRerollResolved(EncounterState state, InstalledRule installed, int rerolledMask,
             List<RuleEvent> events)
         {
-            var carry = (DieCarryOverState)ruleState;
+            var carry = (DieCarryOverState)installed.State;
             int ended = carry.CarriedMask & rerolledMask;
             if (ended == 0) return;
             carry.CarriedMask &= ~ended;
@@ -154,19 +135,18 @@ namespace Dice.Engine
         }
 
         /** The die in the piece's bay carries into the next hand if it counted; the neutral position carries nothing. */
-        internal override void HandPlayed(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
-            HandDice scoredHand, List<RuleEvent> events)
+        internal override void HandPlayed(EncounterState state, InstalledRule installed, HandDice scoredHand,
+            List<RuleEvent> events)
         {
-            var carry = (DieCarryOverState)ruleState;
+            var carry = (DieCarryOverState)installed.State;
             carry.PendingMask = 0;
-            TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out int slot, out _);
-            var position = ((PiecePositionState)state.PieceStates[slot]).Position;
+            var position = ((PiecePositionState)TablePieceStates.Find(state, PieceId).StateOf<PositionInteractionDefinition>()).Position;
             if (position.Kind != PiecePositionKind.DiceBay) return;
             int bayMask = 1 << position.Index;
             if (scoredHand.Counts(bayMask)) carry.PendingMask = bayMask;
         }
 
-        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
-            => new DieCarryOverRuleSnapshot(Identity, ShowsAvailable(state), ((DieCarryOverState)ruleState).CarriedMask);
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, InstalledRule installed)
+            => new DieCarryOverRuleSnapshot(Identity, ShowsAvailable(state), ((DieCarryOverState)installed.State).CarriedMask);
     }
 }

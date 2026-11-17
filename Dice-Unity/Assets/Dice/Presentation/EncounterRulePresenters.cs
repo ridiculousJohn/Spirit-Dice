@@ -20,15 +20,15 @@ namespace Dice.Presentation
         public IReadOnlyList<RulePresenter> Presenters => presenters;
 
         /**
-         * Creates the presenters of the rule cards that reference one, each for its rule's definition in what the run plays,
-         * or returns null when no card does; the context is only built when a card needs it. Fails when a card's rule is not
-         * one of the rules in play.
+         * Creates the presenters of the rule cards that reference one, each for its rule's definition among the rules installed
+         * in the run, or returns null when no card does; the context is only built when a card needs it. Fails when a card's
+         * rule is not one of the installed rules.
          */
         public static EncounterRulePresenters Create(IReadOnlyList<EncounterRulePresentationAsset> rules,
-            EncounterInPlay inPlay, Func<RulePresenterContext> context)
+            IReadOnlyList<EncounterRuleDefinition> installedRules, Func<RulePresenterContext> context)
         {
             if (rules == null) throw new ArgumentNullException(nameof(rules));
-            if (inPlay == null) throw new ArgumentNullException(nameof(inPlay));
+            if (installedRules == null) throw new ArgumentNullException(nameof(installedRules));
             if (context == null) throw new ArgumentNullException(nameof(context));
             List<RulePresenter> presenters = null;
             RulePresenterContext built = null;
@@ -37,8 +37,8 @@ namespace Dice.Presentation
                 foreach (var card in rules)
                 {
                     if (card == null || card.Presenter == null) continue;
-                    var rule = Definition(inPlay, card.RuleId) ?? throw new InvalidOperationException("The rule card " +
-                        card.name + " presents rule " + card.Rule.name + ", which encounter " + inPlay.Encounter.Identity + " does not have.");
+                    var rule = Definition(installedRules, card.RuleId) ?? throw new InvalidOperationException("The rule card " +
+                        card.name + " presents rule " + card.Rule.name + ", which the run has not installed.");
                     built ??= context() ?? throw new InvalidOperationException("Rule presenters require a context.");
                     presenters ??= new List<RulePresenter>();
                     presenters.Add(card.Presenter.Create(card, rule, built));
@@ -109,9 +109,10 @@ namespace Dice.Presentation
             presenters.Clear();
         }
 
-        private static EncounterRuleDefinition Definition(EncounterInPlay inPlay, EncounterRuleDefinition.Id ruleId)
+        private static EncounterRuleDefinition Definition(IReadOnlyList<EncounterRuleDefinition> installedRules,
+            EncounterRuleDefinition.Id ruleId)
         {
-            foreach (var rule in inPlay.Rules)
+            foreach (var rule in installedRules)
                 if (rule.Identity == ruleId) return rule;
             return null;
         }

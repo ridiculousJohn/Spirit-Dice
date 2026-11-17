@@ -116,9 +116,9 @@ namespace Dice.Tests
                 new PositionInteractionDefinition(PiecePosition.Bay(3), PieceMovementTiming.DuringHand));
             var catalog = Catalog(firstDefinition, secondDefinition);
             var session = Session(catalog);
-            var inPlay = session.InPlay;
+            var installedPieces = session.InstalledPieces;
 
-            var presenters = TablePiecePresenters.Create(new[] { first, absent, second }, inPlay, context);
+            var presenters = TablePiecePresenters.Create(new[] { first, absent, second }, installedPieces, context);
             Assert.That(presenters.Presenters.Count, Is.EqualTo(2));
             Assert.That(recording.Received.Count, Is.EqualTo(2));
             Assert.That(recording.Received[0], Is.SameAs(firstDefinition), "Each presenter is created with its prop's piece.");
@@ -135,11 +135,11 @@ namespace Dice.Tests
 
             log.Clear();
             var unpresented = Piece(SecondPiece, null, false);
-            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { first, unpresented }, inPlay, context));
+            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { first, unpresented }, installedPieces, context));
             Assert.That(log, Is.EqualTo(new[] { FirstPiece + " create", FirstPiece + " dispose" }),
                 "A failed creation disposes the presenters it created.");
             var unnamed = Piece(null, recording, false);
-            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { unnamed }, inPlay, context));
+            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { unnamed }, installedPieces, context));
         }
 
         private T Asset<T>() where T : ScriptableObject

@@ -18,6 +18,26 @@ namespace Dice.Engine
         internal EncounterState State => state;
         /** What the run plays: the catalog's encounter and the items the player carries. */
         public EncounterInPlay InPlay => inPlay;
+        /** The rules installed in the run, in the order they run in. */
+        public ReadOnlyCollection<EncounterRuleDefinition> InstalledRules
+        {
+            get
+            {
+                var rules = new List<EncounterRuleDefinition>();
+                foreach (var installed in state.InstalledRules) rules.Add(installed.Rule);
+                return rules.AsReadOnly();
+            }
+        }
+        /** The table pieces installed in the run: the encounter's own, then each lent item's, then each carried item's. */
+        public ReadOnlyCollection<TablePieceDefinition> InstalledPieces
+        {
+            get
+            {
+                var pieces = new List<TablePieceDefinition>();
+                foreach (var installed in state.InstalledPieces) pieces.Add(installed.Piece);
+                return pieces.AsReadOnly();
+            }
+        }
         public EncounterSnapshot Snapshot => new EncounterSnapshot(state, inPlay, catalog.Version);
 
         private EncounterSession(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed, IEnumerable<ModifierDefinition.Id> unlockedModifierIds,
@@ -30,13 +50,14 @@ namespace Dice.Engine
                 HandUpgrades = new List<int>(inPlay.Encounter.StartingUpgrades).ToArray(),
                 DiceRandom = new DeterministicRandom(seed),
                 RewardRandom = new DeterministicRandom(seed ^ RewardRandomSalt),
-                // Only rules that draw from this stream seed it; other encounters keep it empty.
-                RuleRandom = new DeterministicRandom(EncounterRuleResolver.UsesRuleRandom(inPlay) ? seed ^ RuleRandomSalt : 0),
                 RewardRefreshes = inPlay.Encounter.RewardPolicy?.StartingRefreshes ?? 0,
-                Modifiers = new ModifierInstanceState[inPlay.Encounter.StartingModifiers.Count],
-                PieceStates = TablePieceStates.Initial(inPlay),
-                RuleStates = EncounterRuleResolver.InitialStates(inPlay)
+                Modifiers = new ModifierInstanceState[inPlay.Encounter.StartingModifiers.Count]
             };
+            // The encounter installs its own rules and the items it lends; the run installs the items the player carries.
+            inPlay.Encounter.Install(state);
+            state.CarriedItems = ItemList.Install(inPlay.CarriedItems);
+            // Only rules that draw from this stream seed it; other encounters keep it empty.
+            state.RuleRandom = new DeterministicRandom(EncounterRuleResolver.UsesRuleRandom(state) ? seed ^ RuleRandomSalt : 0);
             for (int i = 0; i < state.Modifiers.Length; ++i)
                 state.Modifiers[i] = new ModifierInstanceState
                 {
@@ -156,14 +177,14 @@ namespace Dice.Engine
                 beforeHands, next.HandsRemaining));
             activations = ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.PlayHand, beforeHands, events);
             ruleBonuses = new List<EncounterRuleActivatedEvent>();
-            HandDice hand = EncounterRuleResolver.CurrentHand(inPlay, next);
+            HandDice hand = EncounterRuleResolver.CurrentHand(next);
             long ruleMultiplier = 0;
-            foreach (var rule in inPlay.Rules)
+            foreach (var installed in next.InstalledRules)
             {
-                long bonus = rule.ScoredHandMultiplierBonus(hand, next.TotalHandsPlayed);
+                long bonus = installed.Rule.ScoredHandMultiplierBonus(hand, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
                 ruleMultiplier = checked(ruleMultiplier + bonus);
-                var activated = new EncounterRuleActivatedEvent(next, rule.Identity, bonus);
+                var activated = new EncounterRuleActivatedEvent(next, installed.Rule.Identity, bonus);
                 ruleBonuses.Add(activated);
                 events.Add(activated);
             }
@@ -355,11 +376,11 @@ namespace Dice.Engine
             next.HandBeforeLastReroll = null;
             events.Add(new HandStartedEvent(next));
             // Dice a rule holds out of the opening roll keep the face and bay they show.
-            int rolledMask = DiceValues.AllMask & ~EncounterRuleResolver.OpeningRollHeldDice(inPlay, next);
+            int rolledMask = DiceValues.AllMask & ~EncounterRuleResolver.OpeningRollHeldDice(next);
             next.CurrentDice = Roll(next, rolledMask);
             events.Add(new DiceRolledEvent(next, RollKind.Initial, null, rolledMask, rolledMask));
-            EncounterRuleResolver.HandStarted(inPlay, next, rolledMask, events);
-            next.InitialHand = EncounterRuleResolver.CurrentHand(inPlay, next);
+            EncounterRuleResolver.HandStarted(next, rolledMask, events);
+            next.InitialHand = EncounterRuleResolver.CurrentHand(next);
             ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.InitialRoll, next.HandsRemaining, events);
         }
 
@@ -374,7 +395,7 @@ namespace Dice.Engine
         internal void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
         {
             int beforeRerolls = next.RerollsRemaining;
-            var costWaiver = EncounterRuleResolver.WaiveRerollCost(inPlay, next);
+            var costWaiver = EncounterRuleResolver.WaiveRerollCost(next);
             if (costWaiver == null) --next.RerollsRemaining;
             else events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Identity));
             next.RerollsSpentOnHand = checked(next.RerollsSpentOnHand + 1);
@@ -384,32 +405,33 @@ namespace Dice.Engine
                 events.Add(new ResourceChangedEvent(next, ResourceKind.Rerolls, ResourceChangeCause.RerollDice,
                     beforeRerolls, next.RerollsRemaining));
             DiceValues before = next.CurrentDice;
-            next.HandBeforeLastReroll = EncounterRuleResolver.CurrentHand(inPlay, next);
+            next.HandBeforeLastReroll = EncounterRuleResolver.CurrentHand(next);
             next.CurrentDice = Roll(next, selectedMask);
             next.LatestRerollMask = selectedMask;
             next.EverRerolledMask |= selectedMask;
             next.LatestChangedMask = before.DifferingMask(next.CurrentDice);
             events.Add(new DiceRolledEvent(next, RollKind.PlayerReroll, before, selectedMask, next.LatestChangedMask));
-            EncounterRuleResolver.PlayerRerollResolved(inPlay, next, selectedMask, events);
+            EncounterRuleResolver.PlayerRerollResolved(next, selectedMask, events);
             // Interference targets kept dice, then reroll charms observe the disturbed faces.
-            EncounterRuleResolver.Interfere(inPlay, next, InterferenceTrigger.PlayerReroll,
+            EncounterRuleResolver.Interfere(next, InterferenceTrigger.PlayerReroll,
                 DiceValues.AllMask & ~selectedMask, events);
             ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.PlayerReroll, next.HandsRemaining, events);
         }
 
         internal void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
         {
-            TablePieceStates.TryFind(inPlay, action.PieceId, action.InteractionIndex, out int slot, out var interaction);
-            var before = next.PieceStates[slot];
-            var after = interaction.Apply(before, action.Input);
-            next.PieceStates[slot] = after;
+            // The action validated against the committed state, so the piece is installed.
+            TablePieceStates.TryFind(next, action.PieceId, out var installed);
+            var before = installed.InteractionStates[action.InteractionIndex];
+            var after = installed.Piece.Interactions[action.InteractionIndex].Apply(before, action.Input);
+            installed.InteractionStates[action.InteractionIndex] = after;
             events.Add(new PieceInteractionChangedEvent(next, action.PieceId, action.InteractionIndex, before, after));
         }
 
         internal void Play(EncounterState next, List<RuleEvent> events)
         {
             // Committed hands may be disturbed before scoring; previews never are.
-            EncounterRuleResolver.Interfere(inPlay, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
+            EncounterRuleResolver.Interfere(next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
             ScoreBreakdown score = ResolvePlayedHand(next, events, out var activations, out var ruleBonuses);
             next.TotalScore = checked(next.TotalScore + score.HandScore);
             next.TotalHandsPlayed = checked(next.TotalHandsPlayed + 1);
@@ -419,7 +441,7 @@ namespace Dice.Engine
             next.RemainingThreshold = score.HandScore >= beforeThreshold ? 0 : beforeThreshold - score.HandScore;
             events.Add(new ThresholdChangedEvent(next, beforeThreshold, score.HandScore));
             next.PreviousPlayedHand = new HandDice(next.CurrentDice, score.CountedDiceMask);
-            EncounterRuleResolver.HandPlayed(inPlay, next, next.PreviousPlayedHand.Value, events);
+            EncounterRuleResolver.HandPlayed(next, next.PreviousPlayedHand.Value, events);
 
             // Clearing on the final available hand still wins; exhaustion is checked after clearing.
             if (next.RemainingThreshold == 0)
@@ -527,9 +549,43 @@ namespace Dice.Engine
         internal List<ModifierContribution> ModifierContributions = new List<ModifierContribution>();
         internal DeterministicRandom RewardRandom;
         internal DeterministicRandom RuleRandom;
-        internal PieceInteractionState[] PieceStates = Array.Empty<PieceInteractionState>();
-        /** Parallel to the definition's rules; null for rules without state. */
-        internal EncounterRuleState[] RuleStates = Array.Empty<EncounterRuleState>();
+        /** The encounter's own installed rules, which it installs, saves and loads. */
+        internal List<InstalledRule> EncounterRules = new List<InstalledRule>();
+        /** The encounter's own installed pieces, which it installs, saves and loads. */
+        internal List<InstalledPiece> EncounterPieces = new List<InstalledPiece>();
+        /** The installed items the encounter lends, which it installs, saves and loads. */
+        internal List<InstalledItem> LentItems = new List<InstalledItem>();
+        /** The installed items the player carries, which the run installs, saves and loads. */
+        internal List<InstalledItem> CarriedItems = new List<InstalledItem>();
+
+        /** Every installed rule in the order rules run: the encounter's own, then each lent item's, then each carried item's. */
+        internal IEnumerable<InstalledRule> InstalledRules
+        {
+            get
+            {
+                foreach (var rule in EncounterRules) yield return rule;
+                foreach (var item in LentItems)
+                    foreach (var rule in item.Rules) yield return rule;
+                foreach (var item in CarriedItems)
+                    foreach (var rule in item.Rules) yield return rule;
+            }
+        }
+
+        /**
+         * Every installed piece, whoever created it: the encounter's own, then each lent item's, then each carried item's. Rules
+         * find the pieces they read here while the game runs.
+         */
+        internal IEnumerable<InstalledPiece> InstalledPieces
+        {
+            get
+            {
+                foreach (var piece in EncounterPieces) yield return piece;
+                foreach (var item in LentItems)
+                    if (item.Piece != null) yield return item.Piece;
+                foreach (var item in CarriedItems)
+                    if (item.Piece != null) yield return item.Piece;
+            }
+        }
         internal int RewardRefreshes;
         internal RewardOffer PendingReward;
         internal long NextOfferId = 1;
@@ -548,9 +604,10 @@ namespace Dice.Engine
             copy.Modifiers = new ModifierInstanceState[Modifiers.Length];
             for (int i = 0; i < Modifiers.Length; ++i) copy.Modifiers[i] = Modifiers[i].Copy();
             copy.ModifierContributions = new List<ModifierContribution>(ModifierContributions);
-            copy.PieceStates = (PieceInteractionState[])PieceStates.Clone();
-            copy.RuleStates = new EncounterRuleState[RuleStates.Length];
-            for (int i = 0; i < RuleStates.Length; ++i) copy.RuleStates[i] = RuleStates[i]?.Copy();
+            copy.EncounterRules = EncounterRules.ConvertAll(installed => installed.Copy());
+            copy.EncounterPieces = EncounterPieces.ConvertAll(installed => installed.Copy());
+            copy.LentItems = LentItems.ConvertAll(installed => installed.Copy());
+            copy.CarriedItems = CarriedItems.ConvertAll(installed => installed.Copy());
             copy.ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(ExcludedRewardFamilies);
             copy.RecentHandUpgrades = new List<HandCategory>(RecentHandUpgrades);
             copy.PendingUpgradeCategories = PendingUpgradeCategories == null ? null : new List<HandCategory>(PendingUpgradeCategories);

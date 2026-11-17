@@ -191,7 +191,7 @@ namespace Dice.Tests
             }
         }
 
-        /** Checks restore rejects binding records it cannot use / fails if a mask outside the bays or a rule state the encounter cannot own loads. */
+        /** Checks restore rejects binding records it cannot use / fails if a mask outside the bays, a missing state array or a state of another save class loads. */
         [Test]
         public void RestoreRejectsBindingStatesItCannotUse()
         {
@@ -200,15 +200,9 @@ namespace Dice.Tests
             Execute(session, new RerollDiceAction(session.Snapshot.Binding().MarkedMask));
             AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).BoundMask = 32);
             AssertInvalid(catalog, session.CaptureSave(), save => Binding(save).MarkedMask = 32);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = null);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].RuleId = TestRules.IdOf("other"));
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = null);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates[0].State = new DieInterferenceSaveData());
-            AssertInvalid(catalog, session.CaptureSave(), save => save.RuleStates = new[] { save.RuleStates[0], save.RuleStates[0] });
-            var plain = Catalog(binding: false);
-            AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleStates = new[]
-                { new EncounterSaveRuleData { RuleId = BindingId, State = new DieBindingSaveData() } });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterRules = null);
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterRules[0].State = null);
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterRules[0].State = new DieInterferenceState());
         }
 
         [Test]
@@ -221,15 +215,15 @@ namespace Dice.Tests
             string text = Encoding.UTF8.GetString(bytes);
             Assert.That(text, Does.Not.Contain("$type"));
             var json = JObject.Parse(text);
-            var entry = (JObject)((JArray)json[nameof(EncounterSaveData.RuleStates)]).Single();
+            var entry = (JObject)((JArray)json[nameof(EncounterSaveData.EncounterRules)]).Single();
             Assert.That((string)entry[nameof(EncounterSaveRuleData.RuleId)], Is.EqualTo(BindingId.Value.ToString("N")));
             var state = (JObject)entry[nameof(EncounterSaveRuleData.State)];
             Assert.That(state.Properties().Select(value => value.Name),
-                Is.EquivalentTo(new[] { nameof(DieBindingSaveData.BoundMask), nameof(DieBindingSaveData.MarkedMask) }));
-            Assert.That((int)state[nameof(DieBindingSaveData.BoundMask)], Is.EqualTo(session.Snapshot.Binding().BoundMask));
-            Assert.That((int)state[nameof(DieBindingSaveData.MarkedMask)], Is.EqualTo(session.Snapshot.Binding().MarkedMask));
+                Is.EquivalentTo(new[] { nameof(DieBindingState.BoundMask), nameof(DieBindingState.MarkedMask) }));
+            Assert.That((int)state[nameof(DieBindingState.BoundMask)], Is.EqualTo(session.Snapshot.Binding().BoundMask));
+            Assert.That((int)state[nameof(DieBindingState.MarkedMask)], Is.EqualTo(session.Snapshot.Binding().MarkedMask));
             var decoded = Decode(catalog, bytes);
-            var typed = (DieBindingSaveData)decoded.RuleStates.Single().State;
+            var typed = (DieBindingState)decoded.EncounterRules.Single().State;
             Assert.That(typed.BoundMask, Is.EqualTo(session.Snapshot.Binding().BoundMask));
             Assert.That(typed.MarkedMask, Is.EqualTo(session.Snapshot.Binding().MarkedMask));
             Assert.That(EncounterSaveCodec.Serialize(decoded), Is.EqualTo(bytes));
@@ -241,26 +235,26 @@ namespace Dice.Tests
         {
             var catalog = Catalog();
             var session = Session(catalog, 6);
-            JObject State(JObject json) => (JObject)json[nameof(EncounterSaveData.RuleStates)][0][nameof(EncounterSaveRuleData.State)];
+            JObject State(JObject json) => (JObject)json[nameof(EncounterSaveData.EncounterRules)][0][nameof(EncounterSaveRuleData.State)];
 
             var unknown = Json(session);
             State(unknown).Add("Extra", 1);
             Assert.Throws<FormatException>(() => Decode(catalog, unknown));
             var missing = Json(session);
-            State(missing).Remove(nameof(DieBindingSaveData.MarkedMask));
+            State(missing).Remove(nameof(DieBindingState.MarkedMask));
             Assert.Throws<FormatException>(() => Decode(catalog, missing));
             var aliased = Json(session);
             State(aliased).Add("boundMask", 0);
             Assert.Throws<FormatException>(() => Decode(catalog, aliased));
             var text = Json(session);
-            State(text)[nameof(DieBindingSaveData.BoundMask)] = "0";
+            State(text)[nameof(DieBindingState.BoundMask)] = "0";
             Assert.Throws<FormatException>(() => Decode(catalog, text));
             var entryField = Json(session);
-            ((JObject)entryField[nameof(EncounterSaveData.RuleStates)][0]).Remove(nameof(EncounterSaveRuleData.State));
+            ((JObject)entryField[nameof(EncounterSaveData.EncounterRules)][0]).Remove(nameof(EncounterSaveRuleData.State));
             Assert.Throws<FormatException>(() => Decode(catalog, entryField));
 
             var foreign = Json(session);
-            foreign[nameof(EncounterSaveData.RuleStates)][0][nameof(EncounterSaveRuleData.RuleId)] =
+            foreign[nameof(EncounterSaveData.EncounterRules)][0][nameof(EncounterSaveRuleData.RuleId)] =
                 TestRules.IdOf("other").Value.ToString("N");
             State(foreign).Add("Extra", 1);
             var result = EncounterSession.RestoreEncounter(catalog, Decode(catalog, foreign));
@@ -288,8 +282,8 @@ namespace Dice.Tests
             return new MechanicalCatalog("test.binding", TestContent.Hands(), new[] { encounter }, modifiers);
         }
 
-        private static DieBindingSaveData Binding(EncounterSaveData save)
-            => (DieBindingSaveData)save.RuleStates.Single(value => value.RuleId == BindingId).State;
+        private static DieBindingState Binding(EncounterSaveData save)
+            => (DieBindingState)save.EncounterRules.Single(value => value.RuleId == BindingId).State;
 
         private static int Lowest(int mask) => mask & -mask;
 

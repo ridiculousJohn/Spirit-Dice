@@ -88,9 +88,8 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks the moved positions of the encounter's piece and an item's piece survive a JSON save and restore, each found
-         * by its piece's id whatever the order of the saved pieces / fails if a restored piece returns to its start or takes
-         * the other piece's state.
+         * Checks the moved positions of the encounter's piece and an item's piece survive a JSON save and restore / fails if
+         * a restored piece returns to its start or takes the other piece's state.
          */
         [Test]
         public void PiecePositionSurvivesSaveAndRestore()
@@ -99,9 +98,7 @@ namespace Dice.Tests
             var session = Session(catalog);
             Execute(session, Move(PiecePosition.Bay(3)));
             Execute(session, Move(ItemPieceId, PiecePosition.Bay(1)));
-            var save = Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave()));
-            Array.Reverse(save.Pieces);
-            var restored = Restore(catalog, save);
+            var restored = Restore(catalog, Decode(catalog, EncounterSaveCodec.Serialize(session.CaptureSave())));
             Assert.That(Position(restored, PieceId), Is.EqualTo(PiecePosition.Bay(3)));
             Assert.That(Position(restored, ItemPieceId), Is.EqualTo(PiecePosition.Bay(1)));
         }
@@ -139,31 +136,34 @@ namespace Dice.Tests
             Assert.That(piece.Message, Does.Contain(PieceId.ToString()));
         }
 
-        /** Checks a save carries the encounter's own pieces and only the rules with saved state / fails if pieces or stateless rules are mis-saved. */
+        /**
+         * Checks a save writes the encounter's rules, each with its state or none, and its pieces with their interactions /
+         * fails if a rule or piece is mis-saved.
+         */
         [Test]
-        public void SaveCarriesTheEncountersPiecesAndOnlyRulesWithSavedState()
+        public void SaveCarriesTheEncountersRulesAndPieces()
         {
             var save = Session(Catalog(chance: 0, ward: true)).CaptureSave();
-            Assert.That(save.Pieces.Select(value => value.PieceId + "/" + value.Interactions.Length),
+            Assert.That(save.EncounterPieces.Select(value => value.PieceId + "/" + value.Interactions.Length),
                 Is.EqualTo(new[] { PieceId + "/1" }));
-            Assert.That(save.RuleStates.Select(value => value.RuleId), Is.EqualTo(new[] { HauntingId }));
+            Assert.That(save.EncounterRules.Select(value => value.RuleId), Is.EqualTo(new[] { HauntingId, WardId }));
+            Assert.That(save.EncounterRules[0].State, Is.TypeOf<DieInterferenceState>());
+            Assert.That(save.EncounterRules[1].State, Is.Null, "The ward keeps no state.");
         }
 
-        /** Checks restore rejects piece records that disagree with the encounter / fails if a missing, foreign or impossible position loads. */
+        /** Checks restore rejects piece values that disagree with the piece / fails if a wrong interaction count or an impossible position loads. */
         [Test]
-        public void RestoreRejectsPieceStatesThatDisagreeWithTheEncounter()
+        public void RestoreRejectsPieceStatesThatDisagreeWithThePiece()
         {
             var catalog = Catalog(chance: 0);
             var session = Session(catalog);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces = null);
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces = Array.Empty<EncounterSavePieceData>());
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].PieceId = TestPieces.IdOf("piece.other"));
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions = Array.Empty<int[]>());
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 1, 5 });
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 0, 1 });
-            AssertInvalid(catalog, session.CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 1 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterPieces[0].Interactions = Array.Empty<int[]>());
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterPieces[0].Interactions[0] = new[] { 1, 5 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterPieces[0].Interactions[0] = new[] { 0, 1 });
+            AssertInvalid(catalog, session.CaptureSave(), save => save.EncounterPieces[0].Interactions[0] = new[] { 1 });
             var neutralForbidden = Catalog(chance: 0, allowsNeutral: false, startingBay: 0);
-            AssertInvalid(neutralForbidden, Session(neutralForbidden).CaptureSave(), save => save.Pieces[0].Interactions[0] = new[] { 0, 0 });
+            AssertInvalid(neutralForbidden, Session(neutralForbidden).CaptureSave(),
+                save => save.EncounterPieces[0].Interactions[0] = new[] { 0, 0 });
         }
 
         /** Checks piece, interference and ward definitions reject invalid configurations / fails if malformed content constructs. */
@@ -327,15 +327,10 @@ namespace Dice.Tests
             Assert.That(Json(restored.CaptureSave()), Is.EqualTo(Json(original.CaptureSave())));
         }
 
-        /** Checks restore rejects disturbance records it cannot use / fails if a mask outside the bays, a latest die outside the disturbed dice or a rule state the encounter cannot own loads. */
+        /** Checks restore rejects disturbance records it cannot use / fails if a mask outside the bays, a latest die outside the disturbed dice or a state of another save class loads. */
         [Test]
         public void RestoreRejectsUnusableDisturbanceRecords()
         {
-            var plain = Catalog(chance: 0, haunting: false);
-            AssertInvalid(plain, Session(plain).CaptureSave(), save => save.RuleStates = new[]
-            {
-                new EncounterSaveRuleData { RuleId = HauntingId, State = new DieInterferenceSaveData { DisturbedMask = 1 } }
-            });
             var haunted = Catalog(chance: 100);
             var session = Session(haunted);
             Execute(session, new RerollDiceAction(1));
@@ -343,8 +338,7 @@ namespace Dice.Tests
             AssertInvalid(haunted, session.CaptureSave(), save =>
                 Haunting(save).LatestDisturbedMask = Haunting(save).DisturbedMask == 1 ? 2 : 1);
             AssertInvalid(haunted, session.CaptureSave(), save => Haunting(save).DisturbedMask = 32);
-            AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates = Array.Empty<EncounterSaveRuleData>());
-            AssertInvalid(haunted, session.CaptureSave(), save => save.RuleStates[0].State = new DieBindingSaveData());
+            AssertInvalid(haunted, session.CaptureSave(), save => save.EncounterRules[0].State = new DieBindingState());
         }
 
         /** Checks only encounters with an interference rule seed and use the rule stream / fails if a plain encounter draws from one. */
@@ -359,14 +353,15 @@ namespace Dice.Tests
             Assert.That(Session(Catalog(chance: 20)).CaptureSave().RuleRandomState, Is.Not.Zero);
         }
 
-        /** Checks current-format JSON requires the piece and rule fields / fails if a save without one of them loads. */
+        /** Checks current-format JSON requires the rule, piece and item fields / fails if a save without one of them loads. */
         [Test]
-        public void CurrentFormatJsonRequiresThePieceAndRuleFields()
+        public void CurrentFormatJsonRequiresTheRulePieceAndItemFields()
         {
             var catalog = Catalog(chance: 0);
             var session = Session(catalog);
-            foreach (string field in new[] { nameof(EncounterSaveData.Pieces), nameof(EncounterSaveData.RuleRandomState),
-                nameof(EncounterSaveData.RuleStates) })
+            foreach (string field in new[] { nameof(EncounterSaveData.EncounterRules), nameof(EncounterSaveData.EncounterPieces),
+                nameof(EncounterSaveData.LentItems),
+                nameof(EncounterSaveData.CarriedItems), nameof(EncounterSaveData.RuleRandomState) })
             {
                 var json = JObject.Parse(Json(session.CaptureSave()));
                 json.Remove(field);
@@ -419,8 +414,8 @@ namespace Dice.Tests
             Assert.That(result.Error, Is.EqualTo(EncounterRestoreError.InvalidState), result.Detail);
         }
 
-        private static DieInterferenceSaveData Haunting(EncounterSaveData save)
-            => (DieInterferenceSaveData)save.RuleStates.Single(value => value.RuleId == HauntingId).State;
+        private static DieInterferenceState Haunting(EncounterSaveData save)
+            => (DieInterferenceState)save.EncounterRules.Single(value => value.RuleId == HauntingId).State;
 
         private static string Json(EncounterSaveData save) => Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(save));
 

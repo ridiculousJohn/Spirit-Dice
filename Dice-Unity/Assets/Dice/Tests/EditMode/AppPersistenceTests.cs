@@ -54,17 +54,13 @@ namespace Dice.Tests
         }
 
         [Test]
-        public void ASealedFormat16RunSaveLoadsWithNoCarriedItems()
+        public void ASealedFormat17RunSaveIsUnsupported()
         {
             var catalog = TestContent.Catalog();
             var document = JObject.Parse(Encoding.UTF8.GetString(EncounterSaveCodec.Serialize(
                 EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3).CaptureSave())));
-            document.Remove(nameof(EncounterSaveData.CarriedItemIds));
-            document[nameof(EncounterSaveData.SaveFormatVersion)] = 16;
-            var save = EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString()), catalog);
-            Assert.That(save.SaveFormatVersion, Is.EqualTo(EncounterSaveData.CurrentFormatVersion));
-            Assert.That(save.CarriedItemIds, Is.Empty);
-            Assert.That(TestContent.Restore(catalog, save).InPlay.CarriedItems, Is.Empty);
+            document[nameof(EncounterSaveData.SaveFormatVersion)] = 17;
+            Assert.Throws<NotSupportedException>(() => EncounterSaveCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString()), catalog));
         }
 
         [Test]

@@ -27,14 +27,14 @@ namespace Dice.Presentation
         public IReadOnlyList<PieceInteractionPresenter> Presenters => presenters;
 
         /**
-         * Creates the presenters of the props whose piece is in play. Fails when a prop is missing, lacks its piece or
-         * references no presenter, or when what places the piece gives it no interaction of the presenter's kind.
+         * Creates the presenters of the props whose piece is installed in the run. Fails when a prop is missing, lacks its
+         * piece or references no presenter, or when what places the piece gives it no interaction of the presenter's kind.
          */
-        public static TablePiecePresenters Create(IReadOnlyList<SpiritTablePieceView> props, EncounterInPlay inPlay,
-            PieceInteractionPresenterContext context)
+        public static TablePiecePresenters Create(IReadOnlyList<SpiritTablePieceView> props,
+            IReadOnlyList<TablePieceDefinition> installedPieces, PieceInteractionPresenterContext context)
         {
             if (props == null) throw new ArgumentNullException(nameof(props));
-            if (inPlay == null) throw new ArgumentNullException(nameof(inPlay));
+            if (installedPieces == null) throw new ArgumentNullException(nameof(installedPieces));
             if (context == null) throw new ArgumentNullException(nameof(context));
             var pieces = new List<SpiritTablePieceView>();
             var interactionIndices = new List<int>();
@@ -48,7 +48,7 @@ namespace Dice.Presentation
                         throw new InvalidOperationException("The table piece " + piece.name + " references no table piece asset.");
                     if (piece.Presenter == null)
                         throw new InvalidOperationException("The table piece " + piece.name + " references no interaction presenter.");
-                    var definition = Definition(inPlay, piece);
+                    var definition = Definition(installedPieces, piece);
                     // Encounters sharing a table scene need not all place its pieces; only a presenter makes a prop usable, so a
                     // prop the encounter lacks stays in place and unusable.
                     if (definition == null) continue;
@@ -85,9 +85,9 @@ namespace Dice.Presentation
             pieces.Clear();
         }
 
-        private static TablePieceDefinition Definition(EncounterInPlay inPlay, SpiritTablePieceView piece)
+        private static TablePieceDefinition Definition(IReadOnlyList<TablePieceDefinition> installedPieces, SpiritTablePieceView piece)
         {
-            foreach (var candidate in inPlay.Pieces)
+            foreach (var candidate in installedPieces)
                 if (candidate.Identity == piece.Piece.Identity) return candidate;
             return null;
         }

@@ -143,6 +143,8 @@ namespace Dice.Tests
             public EncounterSnapshot Snapshot => null;
             public MechanicalCatalog Catalog { get; }
             public EncounterInPlay InPlay => null;
+            public IReadOnlyList<EncounterRuleDefinition> InstalledRules => null;
+            public IReadOnlyList<TablePieceDefinition> InstalledPieces => null;
             public ModifierPresentationCatalog ModifierPresentation => null;
             public ItemPresentationCatalog ItemPresentation { get; }
             public HandPreview Preview => null;

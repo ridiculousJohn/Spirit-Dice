@@ -58,13 +58,6 @@ namespace Dice.Engine
                 format.Humanize(Trigger.ToString()) + " blocked by " + ProtectingRuleId + ".";
     }
 
-    /** The dice an interference rule disturbed during the current hand. */
-    public sealed class DieInterferenceSaveData
-    {
-        public int DisturbedMask;
-        public int LatestDisturbedMask;
-    }
-
     /** An interference rule's snapshot: the dice it disturbed during the current hand and the one it disturbed last. */
     public sealed class DieInterferenceRuleSnapshot : EncounterRuleSnapshot
     {
@@ -93,10 +86,11 @@ namespace Dice.Engine
         private protected override int StateHash => DisturbedMask << DiceValues.Count | LatestDisturbedMask;
     }
 
-    internal sealed class DieInterferenceState : EncounterRuleState
+    /** The dice an interference rule disturbed during the current hand. */
+    public sealed class DieInterferenceState : EncounterRuleState
     {
-        internal int DisturbedMask;
-        internal int LatestDisturbedMask;
+        public int DisturbedMask;
+        public int LatestDisturbedMask;
 
         internal override EncounterRuleState Copy() => (DieInterferenceState)MemberwiseClone();
     }
@@ -127,57 +121,43 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
         internal override bool UsesRuleRandom => true;
-        public override Type SaveDataType => typeof(DieInterferenceSaveData);
+        public override Type StateType => typeof(DieInterferenceState);
         internal override EncounterRuleState CreateState() => new DieInterferenceState();
 
-        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, EncounterRuleState ruleState)
+        internal override EncounterRuleSnapshot CreateSnapshot(EncounterState state, InstalledRule installed)
         {
-            var value = (DieInterferenceState)ruleState;
+            var value = (DieInterferenceState)installed.State;
             return new DieInterferenceRuleSnapshot(Identity, ShowsAvailable(state), value.DisturbedMask, value.LatestDisturbedMask);
         }
 
-        internal override object CaptureState(EncounterRuleState state)
+        /** The disturbed mask names dice within the five bays and holds the latest disturbed die, as the snapshot requires. */
+        internal override bool IsStateUsable(EncounterRuleState state, out string detail)
         {
             var value = (DieInterferenceState)state;
-            return new DieInterferenceSaveData { DisturbedMask = value.DisturbedMask, LatestDisturbedMask = value.LatestDisturbedMask };
+            bool usable = (value.DisturbedMask & ~DiceValues.AllMask) == 0 && (value.LatestDisturbedMask & ~value.DisturbedMask) == 0;
+            detail = usable ? null : "Disturbed dice lie outside the five bays or the latest disturbed die is not among them.";
+            return usable;
         }
 
-        /** The disturbed mask names dice within the five bays and holds the latest disturbed die, as the snapshot requires. */
-        internal override bool TryRestoreState(object saved, out EncounterRuleState state, out string detail)
-        {
-            var source = (DieInterferenceSaveData)saved;
-            state = null;
-            int disturbed = source.DisturbedMask;
-            int latest = source.LatestDisturbedMask;
-            if ((disturbed & ~DiceValues.AllMask) != 0 || (latest & ~disturbed) != 0)
-                detail = "Disturbed dice lie outside the five bays or the latest disturbed die is not among them.";
-            else
-            {
-                detail = null;
-                state = new DieInterferenceState { DisturbedMask = disturbed, LatestDisturbedMask = latest };
-            }
-            return state != null;
-        }
-
-        internal override void HandStarted(EncounterState state, EncounterRuleState ruleState, int rolledMask,
+        internal override void HandStarted(EncounterState state, InstalledRule installed, int rolledMask,
             List<RuleEvent> events)
         {
-            var value = (DieInterferenceState)ruleState;
+            var value = (DieInterferenceState)installed.State;
             value.DisturbedMask = 0;
             value.LatestDisturbedMask = 0;
         }
 
-        internal override bool Interfere(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
-            InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events)
+        internal override bool Interfere(EncounterState state, InstalledRule installed, InterferenceTrigger trigger,
+            int eligibleMask, List<RuleEvent> events)
         {
-            var disturbance = (DieInterferenceState)ruleState;
+            var disturbance = (DieInterferenceState)installed.State;
             disturbance.LatestDisturbedMask = 0;
             if (trigger == InterferenceTrigger.PlayerReroll ? !AfterPlayerReroll : !AfterPlayHand) return false;
             if (eligibleMask == 0 || state.RuleRandom.NextInt(100) >= ChancePercent) return false;
             int bay = DiceValues.NthBay(eligibleMask, state.RuleRandom.NextInt(DiceValues.CountBays(eligibleMask)));
             var kind = state.RuleRandom.NextInt(ForcedRerollWeight + FlipWeight) < ForcedRerollWeight
                 ? DieInterferenceKind.ForcedReroll : DieInterferenceKind.Flip;
-            var protector = EncounterRuleResolver.Protector(inPlay, state, bay, kind);
+            var protector = EncounterRuleResolver.Protector(state, bay, kind);
             if (protector != null)
             {
                 events.Add(new DisturbanceBlockedEvent(state, Identity, bay, kind, trigger, protector.Identity));
@@ -220,17 +200,15 @@ namespace Dice.Engine
 
         internal override void ValidateDefinition(EncounterInPlay inPlay)
         {
-            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out _, out _))
+            if (!TablePieceStates.Holds<PositionInteractionDefinition>(inPlay, PieceId))
                 throw new ArgumentException("The ward " + Identity + " must reference a table piece in play with a position interaction: piece " +
                     PieceId + ".", nameof(inPlay));
         }
 
-        internal override bool ProtectsBay(EncounterInPlay inPlay, EncounterState state, int bay, DieInterferenceKind kind)
+        internal override bool ProtectsBay(EncounterState state, int bay, DieInterferenceKind kind)
         {
-            if (!blocked.Contains(kind) ||
-                !TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out int slot, out _))
-                return false;
-            var position = ((PiecePositionState)state.PieceStates[slot]).Position;
+            if (!blocked.Contains(kind)) return false;
+            var position = ((PiecePositionState)TablePieceStates.Find(state, PieceId).StateOf<PositionInteractionDefinition>()).Position;
             return position.Kind == PiecePositionKind.DiceBay && position.Index == bay;
         }
     }

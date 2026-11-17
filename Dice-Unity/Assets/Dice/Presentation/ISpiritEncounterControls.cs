@@ -11,6 +11,10 @@ namespace Dice.Presentation
         MechanicalCatalog Catalog { get; }
         /** What the run plays: the catalog's encounter and the items the player carries; null when no run is installed. */
         EncounterInPlay InPlay { get; }
+        /** The rules installed in the run, in the order they run in; null when no run is installed. */
+        IReadOnlyList<EncounterRuleDefinition> InstalledRules { get; }
+        /** The table pieces installed in the run, in installed order; null when no run is installed. */
+        IReadOnlyList<TablePieceDefinition> InstalledPieces { get; }
         /** The presentation of the catalog's charms. */
         ModifierPresentationCatalog ModifierPresentation { get; }
         /** The presentation of the items the catalog's encounters lend. */

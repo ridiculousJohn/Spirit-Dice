@@ -84,6 +84,34 @@ namespace Dice.Engine
                 if (Interactions[i] is TInteraction) return i;
             return -1;
         }
+
+        /** Each interaction's starting state, in the order of Interactions. */
+        internal PieceInteractionState[] InitialStates()
+        {
+            var states = new PieceInteractionState[Interactions.Count];
+            for (int i = 0; i < states.Length; ++i) states[i] = Interactions[i].InitialState;
+            return states;
+        }
+
+        /** Each interaction's captured values, in the order of Interactions. */
+        internal int[][] Capture(PieceInteractionState[] states)
+        {
+            var values = new int[Interactions.Count][];
+            for (int i = 0; i < values.Length; ++i) values[i] = Interactions[i].Capture(states[i]);
+            return values;
+        }
+
+        /** Restores one usable state per interaction from captured values, in the order of Interactions. */
+        internal bool TryRestore(int[][] values, out PieceInteractionState[] states)
+        {
+            states = null;
+            if (values == null || values.Length != Interactions.Count) return false;
+            var restored = new PieceInteractionState[values.Length];
+            for (int i = 0; i < restored.Length; ++i)
+                if (!Interactions[i].TryRestore(values[i], out restored[i])) return false;
+            states = restored;
+            return true;
+        }
     }
 
     /** A reusable kind of player interaction; each kind validates its input and owns its saved state. */
@@ -203,10 +231,13 @@ namespace Dice.Engine
         {
             EncounterState state = session.State;
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
-            if (!TablePieceStates.TryFind(session.InPlay, PieceId, InteractionIndex, out int slot, out var piece))
+            if (!TablePieceStates.TryFind(state, PieceId, out var installed) ||
+                (uint)InteractionIndex >= (uint)installed.Piece.Interactions.Count)
                 return CommandRejection.InvalidPiece;
-            if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
-            return piece.Accepts(state.PieceStates[slot], Input) ? CommandRejection.None : CommandRejection.InvalidPieceInput;
+            var interaction = installed.Piece.Interactions[InteractionIndex];
+            if (!interaction.IsAvailable(state)) return CommandRejection.PieceUnavailable;
+            return interaction.Accepts(installed.InteractionStates[InteractionIndex], Input)
+                ? CommandRejection.None : CommandRejection.InvalidPieceInput;
         }
 
         internal override void Resolve(EncounterSession session, EncounterState next, List<RuleEvent> events)
@@ -252,60 +283,107 @@ namespace Dice.Engine
             => PieceId + " interaction " + InteractionIndex + ": " + Before.DescribeDiagnostic(format) + " -> " + After.DescribeDiagnostic(format) + ".";
     }
 
-    /** Interaction states are stored in definition order: each piece's interactions, piece by piece. */
-    internal static class TablePieceStates
+    /** A table piece installed in a run and its interactions' states, in the order of the piece's interaction list. */
+    internal sealed class InstalledPiece
     {
-        internal static PieceInteractionState[] Initial(EncounterInPlay inPlay)
+        internal TablePieceDefinition Piece { get; }
+        internal PieceInteractionState[] InteractionStates { get; }
+
+        internal InstalledPiece(TablePieceDefinition piece, PieceInteractionState[] interactionStates)
         {
-            var states = new List<PieceInteractionState>();
-            foreach (var piece in inPlay.Pieces)
-                foreach (var interaction in piece.Interactions) states.Add(interaction.InitialState);
-            return states.ToArray();
+            Piece = piece ?? throw new ArgumentNullException(nameof(piece));
+            InteractionStates = interactionStates ?? throw new ArgumentNullException(nameof(interactionStates));
         }
 
-        internal static bool TryFind(EncounterInPlay inPlay, TablePieceDefinition.Id pieceId, int interactionIndex,
-            out int slot, out PieceInteractionDefinition interaction)
+        /** A copy with its own state array; the states themselves are immutable. */
+        internal InstalledPiece Copy() => new InstalledPiece(Piece, (PieceInteractionState[])InteractionStates.Clone());
+
+        /** The state of the piece's interaction of the kind, the one place the piece holds it. */
+        internal PieceInteractionState StateOf<TInteraction>() where TInteraction : PieceInteractionDefinition
+            => InteractionStates[Piece.IndexOf<TInteraction>()];
+    }
+
+    /**
+     * Installs, saves and loads table pieces, as an encounter does its own pieces and an item its piece; owner names the
+     * encounter or item in failures, such as "encounter X".
+     */
+    internal static class PieceList
+    {
+        /** The piece installed at the start of a run, with its interactions' starting states. */
+        internal static InstalledPiece Install(TablePieceDefinition piece) => new InstalledPiece(piece, piece.InitialStates());
+
+        internal static List<InstalledPiece> Install(IReadOnlyList<TablePieceDefinition> pieces)
         {
-            slot = 0;
+            var installed = new List<InstalledPiece>(pieces.Count);
+            foreach (var piece in pieces) installed.Add(Install(piece));
+            return installed;
+        }
+
+        /** The piece's saved entry: its id and each interaction's captured values. */
+        internal static EncounterSavePieceData Save(InstalledPiece installed)
+            => new EncounterSavePieceData { PieceId = installed.Piece.Identity, Interactions = installed.Piece.Capture(installed.InteractionStates) };
+
+        internal static EncounterSavePieceData[] Save(List<InstalledPiece> installed) => installed.ConvertAll(Save).ToArray();
+
+        /** The piece installed from its saved entry, one usable value per interaction, or the save is rejected. */
+        internal static InstalledPiece Load(string owner, TablePieceDefinition piece, EncounterSavePieceData saved)
+        {
+            SavedEntries.Require(piece.TryRestore(saved.Interactions, out var states),
+                "The " + owner + " has no usable saved state for each interaction of its table piece " + piece.Identity + ".");
+            return new InstalledPiece(piece, states);
+        }
+
+        /** The owner's pieces installed from its saved entries, each read by its piece's id. */
+        internal static List<InstalledPiece> Load(string owner, IReadOnlyList<TablePieceDefinition> pieces, EncounterSavePieceData[] saved)
+        {
+            var entries = SavedEntries.ById(owner, saved, entry => entry.PieceId, "table piece");
+            var installed = new List<InstalledPiece>(pieces.Count);
+            foreach (var piece in pieces) installed.Add(Load(owner, piece, SavedEntries.Take(owner, entries, piece.Identity, "table piece")));
+            SavedEntries.RequireNoneLeft(owner, entries, "table piece");
+            return installed;
+        }
+    }
+
+    /** Finds the run's installed pieces, whoever created them, and checks what content places. */
+    internal static class TablePieceStates
+    {
+        /** Whether a piece in play with the id holds an interaction of the kind. */
+        internal static bool Holds<TInteraction>(EncounterInPlay inPlay, TablePieceDefinition.Id pieceId)
+            where TInteraction : PieceInteractionDefinition
+        {
             foreach (var piece in inPlay.Pieces)
-            {
-                if (piece.Identity == pieceId)
-                {
-                    bool found = (uint)interactionIndex < (uint)piece.Interactions.Count;
-                    slot += found ? interactionIndex : 0;
-                    interaction = found ? piece.Interactions[interactionIndex] : null;
-                    return found;
-                }
-                slot += piece.Interactions.Count;
-            }
-            interaction = null;
+                if (piece.Identity == pieceId) return piece.IndexOf<TInteraction>() >= 0;
             return false;
         }
 
-        /** Finds the piece's interaction of the kind, the one place a piece holds it. */
-        internal static bool TryFind<TInteraction>(EncounterInPlay inPlay, TablePieceDefinition.Id pieceId, out int slot,
-            out TInteraction interaction) where TInteraction : PieceInteractionDefinition
+        internal static bool TryFind(EncounterState state, TablePieceDefinition.Id pieceId, out InstalledPiece installed)
         {
-            int index = -1;
-            foreach (var piece in inPlay.Pieces)
-                if (piece.Identity == pieceId) index = piece.IndexOf<TInteraction>();
-            bool found = TryFind(inPlay, pieceId, index, out slot, out var candidate);
-            interaction = (TInteraction)candidate;
-            return found;
+            foreach (var candidate in state.InstalledPieces)
+                if (candidate.Piece.Identity == pieceId)
+                {
+                    installed = candidate;
+                    return true;
+                }
+            installed = null;
+            return false;
         }
 
-        internal static ReadOnlyCollection<PieceInteractionSnapshot> Capture(EncounterInPlay inPlay, EncounterState state)
+        /** The installed piece with the id, which a rule reading it requires; content loading puts it in play. */
+        internal static InstalledPiece Find(EncounterState state, TablePieceDefinition.Id pieceId)
+            => TryFind(state, pieceId, out var installed) ? installed
+                : throw new InvalidOperationException("The run has no installed table piece " + pieceId + ".");
+
+        internal static ReadOnlyCollection<PieceInteractionSnapshot> Capture(EncounterState state)
         {
             var values = new List<PieceInteractionSnapshot>();
-            int slot = 0;
             bool playing = state.Phase == EncounterPhase.Playing;
-            foreach (var piece in inPlay.Pieces)
+            foreach (var installed in state.InstalledPieces)
+            {
+                var piece = installed.Piece;
                 for (int index = 0; index < piece.Interactions.Count; ++index)
-                {
                     values.Add(new PieceInteractionSnapshot(piece.Identity, index,
-                        playing && piece.Interactions[index].IsAvailable(state), state.PieceStates[slot]));
-                    ++slot;
-                }
+                        playing && piece.Interactions[index].IsAvailable(state), installed.InteractionStates[index]));
+            }
             return values.AsReadOnly();
         }
     }

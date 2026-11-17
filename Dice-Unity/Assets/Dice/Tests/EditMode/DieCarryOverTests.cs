@@ -261,42 +261,6 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks a run with a carried item saves its id and restores what the run plays with the carried rule's state,
-         * through capture and restore and through the codec / fails if the item, the piece or the carry is lost.
-         */
-        [Test]
-        public void ARunWithACarriedItemSavesAndRestoresIt()
-        {
-            var catalog = CarryingCatalog();
-            var session = EncounterSession.CreateEncounter(catalog, EncounterId, Seed, carriedItemIds: new[] { ItemId });
-            Assert.That(session.InPlay.CarriedItems.Select(item => item.Identity), Is.EqualTo(new[] { ItemId }));
-            Execute(session, PlayHandAction.Instance);
-            var save = session.CaptureSave();
-            Assert.That(save.CarriedItemIds, Is.EqualTo(new[] { ItemId }));
-            var decoded = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog);
-            var state = decoded.RuleStates.Single(entry => entry.RuleId == CarryId).State;
-            Assert.That(state, Is.TypeOf<DieCarryOverSaveData>(), "The carried rule's state is read by its rule's id with its type.");
-            Assert.That(((DieCarryOverSaveData)state).CarriedMask, Is.EqualTo(1 << CarriedBay));
-
-            foreach (var restored in new[] { Restore(catalog, save), RoundTrip(catalog, session) })
-            {
-                Assert.That(restored.InPlay.CarriedItems.Select(item => item.Identity), Is.EqualTo(new[] { ItemId }));
-                Assert.That(restored.InPlay.Pieces.Select(piece => piece.Identity), Is.EqualTo(new[] { PieceId }));
-                Assert.That(Carry(restored.Snapshot).CarriedMask, Is.EqualTo(1 << CarriedBay));
-            }
-        }
-
-        /** Checks a save carrying an item the catalog lacks fails as an invalid definition / fails if it restores or fails otherwise. */
-        [Test]
-        public void ASaveCarryingAnItemTheCatalogLacksFails()
-        {
-            var catalog = CarryingCatalog();
-            var save = EncounterSession.CreateEncounter(catalog, EncounterId, Seed).CaptureSave();
-            save.CarriedItemIds = new[] { OtherItemId };
-            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
-        }
-
-        /**
          * Checks a die bound in the piece's bay when the hand is played carries into the next hand like any counted die, and
          * binding releases it at that hand / fails if the bound die is rolled, does not carry or stays bound.
          */
@@ -383,11 +347,6 @@ namespace Dice.Tests
         private static TablePieceDefinition Piece(TablePieceDefinition.Id id)
             => new TablePieceDefinition(id, new[] { new PositionInteractionDefinition(PiecePosition.Bay(CarriedBay),
                 PieceMovementTiming.DuringHand) });
-
-        /** A catalog whose encounter lends nothing and whose item list holds the carry-over item. */
-        private static MechanicalCatalog CarryingCatalog()
-            => new MechanicalCatalog("test.carry_over.carried", Hands(),
-                new[] { new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) }) }, items: new[] { Item() });
 
         private static EncounterDefinition Encounter(bool rot = false, bool rewards = false, RewardPolicyDefinition policy = null,
             IEnumerable<ModifierDefinition.Id> ownCharms = null, IEnumerable<ModifierDefinition.Id> ruleCharms = null)

@@ -180,11 +180,11 @@ namespace Dice.Engine
 
         /** One context, with one set of rule snapshots, serves every modifier evaluated in a resolution step. */
         private static ModifierContext CreateContext(EncounterState state, EncounterInPlay inPlay, int handsRemaining)
-            => new ModifierContext(EncounterRuleResolver.CurrentHand(inPlay, state), state.InitialHand,
+            => new ModifierContext(EncounterRuleResolver.CurrentHand(state), state.InitialHand,
                 state.HandBeforeLastReroll, state.PreviousPlayedHand, state.LatestRerollMask, state.EverRerolledMask,
                 state.RerollsSpentOnHand, handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage,
                 inPlay.Encounter.Stages[state.StageIndex].StartingHands, state.PreviousStageStartingHands,
-                state.PreviousStageHandsRemaining, EncounterRuleResolver.Snapshots(inPlay, state));
+                state.PreviousStageHandsRemaining, EncounterRuleResolver.Snapshots(state));
 
         private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)
             => (definition.ActivationLimit != ModifierActivationLimit.OncePerHand || instance.ActivationsThisHand == 0) &&

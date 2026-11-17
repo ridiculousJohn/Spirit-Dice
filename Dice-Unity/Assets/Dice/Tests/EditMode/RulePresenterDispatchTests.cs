@@ -159,7 +159,7 @@ namespace Dice.Tests
         {
             var inPlay = InPlay();
             var missing = new[] { Card(TestRules.IdOf("test.missing"), new Recording()) };
-            Assert.Throws<InvalidOperationException>(() => EncounterRulePresenters.Create(missing, inPlay, () => context));
+            Assert.Throws<InvalidOperationException>(() => EncounterRulePresenters.Create(missing, inPlay.Rules, () => context));
 
             var interference = ScriptableObject.CreateInstance<DieInterferencePresenterAsset>();
             created.Add(interference);
@@ -182,7 +182,7 @@ namespace Dice.Tests
 
         private EncounterRulePresenters Create(params EncounterRulePresentationAsset[] cards)
         {
-            var presenters = EncounterRulePresenters.Create(cards, InPlay(), () => context);
+            var presenters = EncounterRulePresenters.Create(cards, InPlay().Rules, () => context);
             Assert.That(presenters.Presenters.Count, Is.EqualTo(cards.Count(card => card.Presenter != null)));
             return presenters;
         }

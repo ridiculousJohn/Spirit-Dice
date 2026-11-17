@@ -27,6 +27,8 @@ namespace Dice.App
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
         public EncounterInPlay InPlay => application?.InPlay;
+        public IReadOnlyList<EncounterRuleDefinition> InstalledRules => application?.InstalledRules;
+        public IReadOnlyList<TablePieceDefinition> InstalledPieces => application?.InstalledPieces;
         public ModifierPresentationCatalog ModifierPresentation { get; private set; }
         public ItemPresentationCatalog ItemPresentation { get; private set; }
         public bool PresentationReady { get; private set; }

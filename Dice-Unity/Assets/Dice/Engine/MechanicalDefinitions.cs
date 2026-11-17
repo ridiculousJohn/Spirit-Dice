@@ -227,6 +227,37 @@ namespace Dice.Engine
             _ = new EncounterInPlay(this, Array.Empty<ItemDefinition>());
         }
 
+        /**
+         * Installs, at the start of a run, the encounter's own rules, its own pieces and the items it lends, each with its
+         * starting state.
+         */
+        internal void Install(EncounterState state)
+        {
+            state.EncounterRules = RuleList.Install(OwnRules);
+            state.EncounterPieces = PieceList.Install(OwnPieces);
+            state.LentItems = ItemList.Install(Items);
+        }
+
+        /** Writes the entries of the encounter's own rules, its own pieces and the items it lends. */
+        internal void Save(EncounterState state, EncounterSaveData save)
+        {
+            save.EncounterRules = RuleList.Save(state.EncounterRules);
+            save.EncounterPieces = PieceList.Save(state.EncounterPieces);
+            save.LentItems = ItemList.Save(state.LentItems);
+        }
+
+        /**
+         * Installs the encounter's own rules, its own pieces and the items it lends from their saved entries, which hold
+         * exactly what the encounter creates; a failure rejects the save.
+         */
+        internal void Load(EncounterSaveData save, EncounterState state)
+        {
+            string owner = "encounter " + Identity;
+            state.EncounterRules = RuleList.Load(owner, OwnRules, save.EncounterRules);
+            state.EncounterPieces = PieceList.Load(owner, OwnPieces, save.EncounterPieces);
+            state.LentItems = ItemList.Load(owner, Items, save.LentItems);
+        }
+
         /** Whether clearing the stage numbered stageNumber offers a choice from UnlockRewardModifierIds. */
         public bool HasUnlockMilestone(int stageNumber)
         {
@@ -270,7 +301,7 @@ namespace Dice.Engine
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         private readonly Dictionary<ItemDefinition.Id, ItemDefinition> itemsById;
         private readonly HashSet<ModifierDefinition.Id> additionOnlyIds;
-        private readonly Dictionary<EncounterRuleDefinition.Id, Type> ruleSaveDataTypes = new Dictionary<EncounterRuleDefinition.Id, Type>();
+        private readonly Dictionary<EncounterRuleDefinition.Id, Type> ruleStateTypes = new Dictionary<EncounterRuleDefinition.Id, Type>();
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
@@ -390,11 +421,11 @@ namespace Dice.Engine
                 encounterList.Add(encounter);
             }
             if (this.encounters.Count == 0) throw new ArgumentException("At least one encounter is required.", nameof(encounters));
-            // A saved rule state is read by its rule's id alone, so every rule of the content with that id saves one type.
+            // A saved rule state is read by its rule's id alone, so every rule of the content with that id keeps one state type.
             foreach (var item in itemList)
-                foreach (var rule in item.Rules) AddRuleSaveDataType(rule, nameof(items));
+                foreach (var rule in item.Rules) AddRuleStateType(rule, nameof(items));
             foreach (var encounter in encounterList)
-                foreach (var rule in encounter.Rules) AddRuleSaveDataType(rule, nameof(encounters));
+                foreach (var rule in encounter.Rules) AddRuleStateType(rule, nameof(encounters));
             additionOnlyIds = new HashSet<ModifierDefinition.Id>(modifiersById.Keys);
             foreach (var pool in validatedPools)
             {
@@ -407,11 +438,11 @@ namespace Dice.Engine
             Items = itemList.AsReadOnly();
         }
 
-        private void AddRuleSaveDataType(EncounterRuleDefinition rule, string parameter)
+        private void AddRuleStateType(EncounterRuleDefinition rule, string parameter)
         {
-            if (!ruleSaveDataTypes.TryGetValue(rule.Identity, out var known)) ruleSaveDataTypes.Add(rule.Identity, rule.SaveDataType);
-            else if (known != rule.SaveDataType)
-                throw new ArgumentException("Two rules share the id " + rule.Identity + " with different save data types.", parameter);
+            if (!ruleStateTypes.TryGetValue(rule.Identity, out var known)) ruleStateTypes.Add(rule.Identity, rule.StateType);
+            else if (known != rule.StateType)
+                throw new ArgumentException("Two rules share the id " + rule.Identity + " with different state types.", parameter);
         }
 
         /** The charms a rule brings must be charms of the catalog that are reward-eligible. */
@@ -529,11 +560,11 @@ namespace Dice.Engine
         }
 
         /**
-         * The save data type of the content's rule with the id, a rule of its encounters or of its items, wherever it is in
-         * play; null for an id no rule of the content has, or a rule without saved state.
+         * The state type of the content's rule with the id, a rule of its encounters or of its items, wherever it is in
+         * play; null for an id no rule of the content has, or a rule that keeps no state.
          */
-        public Type GetRuleSaveDataType(EncounterRuleDefinition.Id ruleId)
-            => ruleSaveDataTypes.TryGetValue(ruleId, out var type) ? type : null;
+        public Type GetRuleStateType(EncounterRuleDefinition.Id ruleId)
+            => ruleStateTypes.TryGetValue(ruleId, out var type) ? type : null;
 
         /** Where a charm can be obtained in the catalog's encounters. */
         public ModifierSources GetModifierSources(ModifierDefinition.Id modifierId)

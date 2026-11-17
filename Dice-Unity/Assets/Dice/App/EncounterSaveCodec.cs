@@ -18,13 +18,11 @@ namespace Dice.App
         public const int MaximumSaveBytes = 16 * 1024 * 1024;
         private const int MaximumDepth = 64;
         private static readonly JsonSerializerSettings Settings = CreateSettings(MissingMemberHandling.Ignore);
-        // A rule state belongs to its rule's save class, so a field that class does not define is rejected.
+        // A rule state belongs to its rule's state class, so a field that class does not define is rejected.
         private static readonly JsonSerializerSettings RuleStateSettings = CreateSettings(MissingMemberHandling.Error);
         // To change the format, raise EncounterSaveData.CurrentFormatVersion and append a step that upgrades the previous format.
-        // Format 16 lacks the carried items field; such a run carries no items.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
-            nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion,
-            document => document[nameof(EncounterSaveData.CarriedItemIds)] = new JArray());
+            nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion);
 
         /** The oldest save format the codec reads. */
         internal static int OldestFormatVersion => FormatUpgrades.OldestVersion;
@@ -77,12 +75,10 @@ namespace Dice.App
                     if (check == SaveFormatCheck.VersionUnsupported)
                         throw new NotSupportedException("The save format version is unsupported.");
                     var serializer = JsonSerializer.Create(Settings);
-                    var ruleStates = ReadRuleStates(document, catalog, serializer);
                     ValidateFieldNames(document, typeof(EncounterSaveData), serializer.ContractResolver);
                     var save = document.ToObject<EncounterSaveData>(serializer);
                     if (save == null) throw new FormatException("The save payload is missing.");
-                    for (int i = 0; i < ruleStates.Count; ++i)
-                        if (save.RuleStates[i] != null) save.RuleStates[i].State = ruleStates[i];
+                    ReadRuleStates(save, catalog, serializer);
                     return save;
                 }
             }
@@ -119,27 +115,40 @@ namespace Dice.App
         }
 
         /**
-         * Validates each rule state against its rule's save type, found by the rule's id among every rule of the content, and
-         * deserializes it with that type. States of rules the catalog does not define stay as parsed JSON, which restore rejects.
+         * Reads the state of every rule entry, wherever it sits in the save, as its rule's state class, found by the rule's id
+         * among every rule of the content, validating its fields against that class. A state saved for a rule the catalog does
+         * not define or for a rule that keeps none stays as parsed JSON, which restore rejects.
          */
-        private static List<object> ReadRuleStates(JObject document, MechanicalCatalog catalog, JsonSerializer serializer)
+        private static void ReadRuleStates(EncounterSaveData save, MechanicalCatalog catalog, JsonSerializer serializer)
         {
-            var values = new List<object>();
-            if (!(document[nameof(EncounterSaveData.RuleStates)] is JArray entries)) return values;
-            foreach (var entry in entries)
+            foreach (var entry in RuleEntries(save))
             {
-                var ruleId = (entry as JObject)?[nameof(EncounterSaveRuleData.RuleId)];
-                var state = (entry as JObject)?[nameof(EncounterSaveRuleData.State)];
-                Type type = ruleId != null ? catalog.GetRuleSaveDataType(ContentIds.Rule.Read(ruleId)) : null;
-                if (type == null || state == null || state.Type == JTokenType.Null)
+                if (!(entry.State is JToken state)) continue;
+                if (state.Type == JTokenType.Null)
                 {
-                    values.Add(state == null || state.Type == JTokenType.Null ? null : state);
+                    entry.State = null;
                     continue;
                 }
+                Type type = catalog.GetRuleStateType(entry.RuleId);
+                if (type == null) continue;
                 ValidateFieldNames(state, type, serializer.ContractResolver);
-                values.Add(state.ToObject(type, JsonSerializer.Create(RuleStateSettings)));
+                entry.State = state.ToObject(type, JsonSerializer.Create(RuleStateSettings));
             }
-            return values;
+        }
+
+        /** Every rule entry the save holds: the encounter's own rules', then those of each lent and each carried item. */
+        private static IEnumerable<EncounterSaveRuleData> RuleEntries(EncounterSaveData save)
+        {
+            // Missing lists and entries are left for restore to reject.
+            if (save.EncounterRules != null)
+                foreach (var entry in save.EncounterRules)
+                    if (entry != null) yield return entry;
+            foreach (var items in new[] { save.LentItems, save.CarriedItems })
+                if (items != null)
+                    foreach (var item in items)
+                        if (item?.Rules != null)
+                            foreach (var entry in item.Rules)
+                                if (entry != null) yield return entry;
         }
 
         private static void ValidateFieldNames(JToken token, Type type, IContractResolver resolver)
