@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Dice.Engine;
 using Dice.Presentation;
 using NUnit.Framework;
@@ -197,6 +198,78 @@ namespace Dice.Tests
                 Vector2 label = rig.Camera.WorldToViewportPoint(anchor.position);
                 Assert.That(Vector2.Distance(tray.GetSlotLabelViewportPosition(index), label), Is.LessThan(.0001f), "Label " + index);
             }
+        }
+
+        /**
+         * Checks a bay indicator hangs from the content root of the bay it is shown on, moves with a later bay, is inactive
+         * while hidden and destroyed when released, and that releasing the tray's and then the scene's presentation with an
+         * indicator shown destroys it without error / fails if a mark sits under another bay, shows while hidden or outlives
+         * its release or the tray's.
+         */
+        [Test]
+        public void BayIndicatorsHangFromTheirBayUntilReleased()
+        {
+            var resources = new List<UnityEngine.Object>();
+            try
+            {
+                var prefab = BayIndicatorPrefab(resources);
+                var texture = new Texture2D(2, 2);
+                resources.Add(texture);
+                var icon = Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f));
+                resources.Add(icon);
+
+                var first = tray.CreateBayIndicator(prefab, icon, Color.cyan);
+                var view = Indicators()[0];
+                Assert.That(view.gameObject.activeSelf, Is.False, "A new indicator is hidden.");
+                first.ShowOn(3);
+                Assert.That(view.transform.parent, Is.SameAs(rig.SlotContents[3]));
+                Assert.That(view.gameObject.activeSelf, Is.True);
+                first.ShowOn(1);
+                Assert.That(view.transform.parent, Is.SameAs(rig.SlotContents[1]));
+                first.Hide();
+                Assert.That(view.gameObject.activeSelf, Is.False);
+                first.Release();
+                Assert.That(view == null, Is.True, "A released indicator is destroyed.");
+                Assert.That(Indicators(), Is.Empty);
+
+                var second = tray.CreateBayIndicator(prefab, icon, Color.magenta);
+                second.ShowOn(2);
+                Assert.DoesNotThrow(() =>
+                {
+                    tray.ReleasePresentation();
+                    rig.TrayScene.ReleasePresentation();
+                });
+                Assert.That(Indicators(), Is.Empty, "Releasing the tray's presentation destroys its indicators.");
+                Assert.DoesNotThrow(() => second.Release(), "Releasing an indicator the tray released does nothing.");
+            }
+            finally
+            {
+                foreach (var resource in resources)
+                    if (resource != null) UnityEngine.Object.DestroyImmediate(resource);
+            }
+        }
+
+        /** The bay indicators under the tray's bay roots. */
+        private List<SpiritBayIndicator> Indicators()
+        {
+            var found = new List<SpiritBayIndicator>();
+            foreach (Transform root in rig.SlotContents) found.AddRange(root.GetComponentsInChildren<SpiritBayIndicator>(true));
+            return found;
+        }
+
+        /** An indicator template with its glow and emblem sprites on the tray's render layer. */
+        private static SpiritBayIndicator BayIndicatorPrefab(List<UnityEngine.Object> resources)
+        {
+            var root = new GameObject("Bay Indicator") { layer = SpiritDiceTray.RenderLayer };
+            resources.Add(root);
+            var indicator = root.AddComponent<SpiritBayIndicator>();
+            var glow = new GameObject("Glow", typeof(SpriteRenderer)) { layer = SpiritDiceTray.RenderLayer };
+            glow.transform.SetParent(root.transform, false);
+            var emblem = new GameObject("Emblem", typeof(SpriteRenderer)) { layer = SpiritDiceTray.RenderLayer };
+            emblem.transform.SetParent(root.transform, false);
+            SyntheticUi.Set(indicator, "glow", glow.GetComponent<SpriteRenderer>());
+            SyntheticUi.Set(indicator, "emblem", emblem.GetComponent<SpriteRenderer>());
+            return indicator;
         }
 
         private static DiceValues AllShowing(int face) => new DiceValues(face, face, face, face, face);

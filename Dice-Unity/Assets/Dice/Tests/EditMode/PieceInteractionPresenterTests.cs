@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -12,15 +13,18 @@ using Object = UnityEngine.Object;
 namespace Dice.Tests
 {
     /**
-     * How table piece props are bound to their interactions: the encounter screen's piece presenters create one presenter
-     * per prop through the prop's presenter asset and know no interaction kind, and the position kind binds its prop to the
-     * position state and turns a release into a move input.
+     * How table pieces are bound to their interactions: the encounter screen's piece presenters create one presenter per
+     * prop through the prop's presenter asset and one per item piece without a prop through the item presentation's piece
+     * presenter, and know no interaction kind; the position kind binds its prop to the position state and turns a release
+     * into a move input, and the bay indicator kind shows its item's mark on the bay of the position state.
      */
     public sealed class PieceInteractionPresenterTests
     {
         private const string FirstPiece = "piece.test.first";
         private const string SecondPiece = "piece.test.second";
         private const string AbsentPiece = "piece.test.absent";
+        private static readonly ItemDefinition.Id PropItemId = new ItemDefinition.Id(new Guid("6e2b8d4f0a3c4e5a9b1d3f5a7c9e2b4d"));
+        private static readonly ItemDefinition.Id SlotlessItemId = new ItemDefinition.Id(new Guid("7f3c9e5a1b4d4f6b8c2e4a6c8e0f3a5b"));
         private readonly List<Object> created = new List<Object>();
         private readonly List<string> log = new List<string>();
         private RecordingContext context;
@@ -118,7 +122,9 @@ namespace Dice.Tests
             var session = Session(catalog);
             var installedPieces = session.InstalledPieces;
 
-            var presenters = TablePiecePresenters.Create(new[] { first, absent, second }, installedPieces, context);
+            var noItems = Items();
+            var presenters = TablePiecePresenters.Create(new[] { first, absent, second }, installedPieces, Array.Empty<ItemDefinition>(),
+                noItems, context);
             Assert.That(presenters.Presenters.Count, Is.EqualTo(2));
             Assert.That(recording.Received.Count, Is.EqualTo(2));
             Assert.That(recording.Received[0], Is.SameAs(firstDefinition), "Each presenter is created with its prop's piece.");
@@ -135,11 +141,75 @@ namespace Dice.Tests
 
             log.Clear();
             var unpresented = Piece(SecondPiece, null, false);
-            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { first, unpresented }, installedPieces, context));
+            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { first, unpresented }, installedPieces,
+                Array.Empty<ItemDefinition>(), noItems, context));
             Assert.That(log, Is.EqualTo(new[] { FirstPiece + " create", FirstPiece + " dispose" }),
                 "A failed creation disposes the presenters it created.");
             var unnamed = Piece(null, recording, false);
-            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { unnamed }, installedPieces, context));
+            Assert.Throws<InvalidOperationException>(() => TablePiecePresenters.Create(new[] { unnamed }, installedPieces,
+                Array.Empty<ItemDefinition>(), noItems, context));
+        }
+
+        /**
+         * Checks an item's piece that a scene prop presents gets the prop's presenter and no item presenter, and an item's
+         * piece without a prop gets its item presentation's piece presenter, bound to its own interaction / fails if a scene
+         * prop's piece is presented twice or an item piece without a prop is left unpresented.
+         */
+        [Test]
+        public void AnItemPieceWithoutAPropIsPresentedByItsItemPresentation()
+        {
+            var recording = Asset<RecordingPresenterAsset>();
+            recording.Log = log;
+            var itemRecording = Asset<RecordingItemPresenterAsset>();
+            itemRecording.Log = log;
+            var prop = Piece(FirstPiece, recording, false);
+            var propPiece = Piece(FirstPiece, new PositionInteractionDefinition(PiecePosition.Bay(1), PieceMovementTiming.DuringHand));
+            var slotlessPiece = Piece(SecondPiece, new PositionInteractionDefinition(PiecePosition.Bay(3), PieceMovementTiming.DuringHand));
+            var propItem = new ItemDefinition(PropItemId, piece: propPiece);
+            var slotlessItem = new ItemDefinition(SlotlessItemId, piece: slotlessPiece);
+            var items = Items((propItem, itemRecording), (slotlessItem, itemRecording));
+            var session = Session(Catalog(propPiece, slotlessPiece));
+
+            var presenters = TablePiecePresenters.Create(new[] { prop }, new[] { propPiece, slotlessPiece },
+                new[] { propItem, slotlessItem }, items, context);
+            Assert.That(presenters.Presenters.Count, Is.EqualTo(2));
+            Assert.That(itemRecording.Received, Is.EqualTo(new[] { slotlessPiece }), "Only the piece without a prop gets an item presenter.");
+            presenters.Bind(session.Snapshot);
+            presenters.Dispose();
+            Assert.That(log, Is.EqualTo(new[]
+            {
+                FirstPiece + " create", "item " + SecondPiece + " create",
+                FirstPiece + " bind " + TestPieces.IdOf(FirstPiece) + " 0", "item " + SecondPiece + " bind " + TestPieces.IdOf(SecondPiece) + " 0",
+                FirstPiece + " dispose", "item " + SecondPiece + " dispose"
+            }));
+        }
+
+        /**
+         * Checks the bay indicator presenter asks the context for one indicator with its item's icon and glow colour, shows
+         * it on the bay of a bay position, hides it at the neutral position and for a snapshot without the interaction, and
+         * releases it when disposed / fails if the mark shows on another bay, stays shown at neutral or outlives its presenter.
+         */
+        [Test]
+        public void BayIndicatorPresenterShowsItsItemsMarkOnThePiecesBay()
+        {
+            var asset = Asset<BayIndicatorPresenterAsset>();
+            var prefab = new GameObject("Bay Indicator").AddComponent<SpiritBayIndicator>();
+            created.Add(prefab.gameObject);
+            SyntheticUi.Set(asset, "indicatorPrefab", prefab);
+            var definition = Piece(FirstPiece, new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand));
+            var presentation = Presentation(new ItemDefinition(SlotlessItemId, piece: definition), asset);
+            var presenter = asset.Create(presentation, definition, context);
+            var indicator = context.Indicators.Single();
+            Assert.That(indicator.Prefab, Is.SameAs(prefab));
+            Assert.That(indicator.Icon, Is.SameAs(presentation.Icon));
+            Assert.That(indicator.GlowColor, Is.EqualTo(presentation.GlowColor));
+
+            presenter.Bind(Position(definition, PiecePosition.Bay(2)));
+            presenter.Bind(Position(definition, PiecePosition.Neutral));
+            presenter.Bind(Position(definition, PiecePosition.Bay(4)));
+            presenter.Bind(null);
+            presenter.Dispose();
+            Assert.That(indicator.Log, Is.EqualTo(new[] { "show 2", "hide", "show 4", "hide", "release" }));
         }
 
         private T Asset<T>() where T : ScriptableObject
@@ -188,6 +258,48 @@ namespace Dice.Tests
         private static EncounterSession Session(MechanicalCatalog catalog)
             => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
 
+        /** The piece's first interaction in a position state. */
+        private static PieceInteractionSnapshot Position(TablePieceDefinition piece, PiecePosition position)
+            => new PieceInteractionSnapshot(piece.Identity, 0, true, new PiecePositionState(position));
+
+        /** The item presentation of the items, each presented by Presentation with its piece presenter. */
+        private ItemPresentationCatalog Items(params (ItemDefinition item, ItemPiecePresenterAsset presenter)[] items)
+        {
+            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) });
+            var definitions = items.Select(entry => entry.item).ToArray();
+            var catalog = new MechanicalCatalog("test.item.pieces", TestContent.Hands(), new[] { encounter }, items: definitions);
+            var pairs = new List<KeyValuePair<ItemAsset, ItemDefinition>>();
+            var presentations = new List<ItemPresentationAsset>();
+            foreach (var (item, presenter) in items)
+            {
+                var presentation = Presentation(item, presenter);
+                pairs.Add(new KeyValuePair<ItemAsset, ItemDefinition>(presentation.Item, item));
+                presentations.Add(presentation);
+            }
+            var skin = Asset<ItemSkinAsset>();
+            SyntheticUi.Set(skin, "items", presentations.ToArray());
+            var content = new MechanicalContent(catalog, Array.Empty<KeyValuePair<ModifierAsset, ModifierDefinition>>(), pairs);
+            return new ItemPresentationCatalog(skin, content);
+        }
+
+        /** A presentation of the item with a name, an icon, a glow colour, no rule cards and the piece presenter. */
+        private ItemPresentationAsset Presentation(ItemDefinition item, ItemPiecePresenterAsset presenter)
+        {
+            var asset = Asset<ItemAsset>();
+            asset.name = "Item " + item.Identity;
+            var texture = new Texture2D(2, 2);
+            created.Add(texture);
+            var icon = Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f));
+            created.Add(icon);
+            var presentation = Asset<ItemPresentationAsset>();
+            SyntheticUi.Set(presentation, "item", asset);
+            SyntheticUi.Set(presentation, "displayName", "Test item");
+            SyntheticUi.Set(presentation, "icon", icon);
+            SyntheticUi.Set(presentation, "glowColor", new Color(.2f, .6f, .9f, .8f));
+            SyntheticUi.Set(presentation, "piecePresenter", presenter);
+            return presentation;
+        }
+
         private static void Drag(SpiritTablePiecePosition piece, Vector3 from, Vector3 to)
         {
             piece.OnBeginDrag(Pointer(from));
@@ -225,15 +337,47 @@ namespace Dice.Tests
             }
 
             public override Vector3 BayPoint(int bay, Vector2 placement) => Point(bay);
+
+            public readonly List<RecordingBayIndicator> Indicators = new List<RecordingBayIndicator>();
+
+            public override BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
+            {
+                var indicator = new RecordingBayIndicator(prefab, icon, glowColor);
+                Indicators.Add(indicator);
+                return indicator;
+            }
         }
 
-        /** A presenter kind of the first interaction that records, under its prop's piece name, what it is created with and asked to do. */
+        /** A bay indicator that records what it was made with and what it is asked to do. */
+        private sealed class RecordingBayIndicator : BayIndicator
+        {
+            public readonly List<string> Log = new List<string>();
+
+            public RecordingBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
+            {
+                Prefab = prefab;
+                Icon = icon;
+                GlowColor = glowColor;
+            }
+
+            public SpiritBayIndicator Prefab { get; }
+            public Sprite Icon { get; }
+            public Color GlowColor { get; }
+
+            public override void ShowOn(int bay) => Log.Add("show " + bay);
+            public override void Hide() => Log.Add("hide");
+            public override void Release() => Log.Add("release");
+        }
+
+        /** A presenter kind of position interactions that records, under its prop's piece name, what it is created with and asked to do. */
         private sealed class RecordingPresenterAsset : PieceInteractionPresenterAsset
         {
             [NonSerialized] public List<string> Log;
             [NonSerialized] public readonly List<TablePieceDefinition> Received = new List<TablePieceDefinition>();
 
-            public override int InteractionIndex(TablePieceDefinition definition) => 0;
+            public override Type InteractionKind => typeof(PositionInteractionDefinition);
+
+            public override int InteractionIndex(TablePieceDefinition definition) => definition.IndexOf<PositionInteractionDefinition>();
 
             public override PieceInteractionPresenter Create(SpiritTablePieceView piece, TablePieceDefinition definition,
                 PieceInteractionPresenterContext context)
@@ -261,6 +405,29 @@ namespace Dice.Tests
             public override void Layout() => log.Add(pieceName + " layout");
 
             public override void Dispose() => log.Add(pieceName + " dispose");
+        }
+
+        /**
+         * An item piece presenter kind of position interactions that records, under "item" and its piece's name, what it is
+         * created with and asked to do.
+         */
+        private sealed class RecordingItemPresenterAsset : ItemPiecePresenterAsset
+        {
+            [NonSerialized] public List<string> Log;
+            [NonSerialized] public readonly List<TablePieceDefinition> Received = new List<TablePieceDefinition>();
+
+            public override Type InteractionKind => typeof(PositionInteractionDefinition);
+
+            public override int InteractionIndex(TablePieceDefinition definition) => definition.IndexOf<PositionInteractionDefinition>();
+
+            public override PieceInteractionPresenter Create(ItemPresentationAsset item, TablePieceDefinition piece,
+                PieceInteractionPresenterContext context)
+            {
+                string pieceName = piece.Identity == TestPieces.IdOf(FirstPiece) ? FirstPiece : SecondPiece;
+                Log.Add("item " + pieceName + " create");
+                Received.Add(piece);
+                return new RecordingPresenter(Log, "item " + pieceName);
+            }
         }
     }
 }

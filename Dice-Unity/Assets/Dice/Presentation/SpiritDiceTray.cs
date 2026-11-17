@@ -50,6 +50,7 @@ namespace Dice.Presentation
         private int presentationVersion;
         private SpiritTrayScene sharedScene;
         [SerializeField] private Transform[] slotRoots = new Transform[DiceValues.Count];
+        private SpiritBayIndicators bayIndicators;
         private float DieScale => sharedScene.Geometry.DiceScale;
 
         public RenderTexture Texture => texture;
@@ -65,6 +66,17 @@ namespace Dice.Presentation
         public IReadOnlyList<Transform> Dice => dice;
         public int SelectionMask => selectionMask;
         public int ScoringHighlightMask => scoringHighlightMask;
+
+        /**
+         * A mark an item puts on a dice bay, made from the prefab under a bay's content root, its emblem at the geometry's
+         * label anchor of the bay, and showing the icon and glow colour; it is hidden until shown on a bay, and the tray destroys it when it is released or when the tray releases
+         * its presentation.
+         */
+        public BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
+        {
+            Initialize();
+            return bayIndicators.Create(prefab, icon, glowColor);
+        }
 
         public void SetSceneLighting(SceneLightingState state)
         {
@@ -91,13 +103,21 @@ namespace Dice.Presentation
             sharedScene.Initialize();
             texture = sharedScene.Texture;
             renderCamera = sharedScene.RenderCamera;
+            if (slotRoots == null || slotRoots.Length != DiceValues.Count)
+                throw new InvalidOperationException("The dice tray requires five authored dice slot content roots.");
             for (int index = 0; index < DiceValues.Count; ++index)
             {
                 if (dice[index] == null || selectionOutlines[index] == null || selectionFrames[index] == null || contactShadows[index] == null)
                     throw new InvalidOperationException("The dice tray requires five authored dice, shadows, and selection highlights.");
+                // A slot's content, bay indicators included, is the content of that bay, and the tray scene leaves what sits
+                // on a dice slot out of the tray's measured content.
+                if (slotRoots[index] == null || !slotRoots[index].IsChildOf(sharedScene.Geometry.DiceSlots[index]))
+                    throw new InvalidOperationException("The dice tray's slot content root " + index +
+                        " must lie on the tray geometry's dice slot " + index + ".");
                 shadowScales[index] = contactShadows[index].transform.localScale;
             }
             supportPoints = CreateSupportPoints(dice[0].GetComponent<MeshFilter>().sharedMesh);
+            bayIndicators = new SpiritBayIndicators(slotRoots, sharedScene.Geometry.DiceLabelAnchors, DieScale);
             initialized = true;
             SetContentActive(isActiveAndEnabled);
         }
@@ -372,14 +392,16 @@ namespace Dice.Presentation
         }
 
         /**
-         * Unbinds the tray so it can be configured again: it ends its animations, rests its dice in their slots and clears
-         * the highlights and shadow lift it set. A tray never initialized has set nothing.
+         * Unbinds the tray so it can be configured again: it ends its animations, rests its dice in their slots, clears
+         * the highlights and shadow lift it set and destroys its bay indicators. A tray never initialized has set nothing.
          */
         public void ReleasePresentation()
         {
             bool wasInitialized = initialized;
             Unbind();
             if (!wasInitialized) return;
+            bayIndicators.ReleaseAll();
+            bayIndicators = null;
             for (int index = 0; index < DiceValues.Count; ++index)
                 contactShadows[index].transform.localScale = shadowScales[index];
             RefreshHighlights();

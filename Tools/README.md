@@ -1,6 +1,6 @@
 # Repository tools
 
-- [Presentation](Presentation/README.md): author the host animation curves and deformation meshes.
+- [Presentation](Presentation/README.md): author the host animation curves and deformation meshes, and build generated presentation sprites such as the bay indicator's glow (`build-bay-indicator-glow.py`).
 - [Audio](../Docs/Reference/Audio/README.md): synthesize the project-authored audio clips.
 - [Reference analysis](Reference/DiceOfKalma/README.md): extract and inspect the preserved reference game inputs and build its design report.
 

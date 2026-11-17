@@ -13,5 +13,9 @@ MonoBehaviour:
   m_Name: MerchantCandleItem
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ItemPresentationAsset
   item: {fileID: 11400000, guid: 9de5cda29e8360f42aa84f16af829608, type: 2}
+  displayName: Merchant's Candle
+  icon: {fileID: 21300000, guid: 86836402051f4e9f9c7ee642545fa8c6, type: 3}
+  glowColor: {r: 1, g: 0.72, b: 0.35, a: 1}
+  piecePresenter: {fileID: 11400000, guid: 7780dcbfe5e10f3488f9e03b157188ae, type: 2}
   ruleCards:
   - {fileID: 11400000, guid: 9ba561f1ec774ed3a9ae298d718e3c13, type: 2}

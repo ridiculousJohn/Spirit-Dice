@@ -566,6 +566,8 @@ namespace Dice.Tests
         internal SpiritDiceTray Dice { get; }
         internal GameObject[] Outlines { get; } = new GameObject[DiceValues.Count];
         internal GameObject[] Frames { get; } = new GameObject[DiceValues.Count];
+        /** The root of each bay's contents, on its dice slot. */
+        internal Transform[] SlotContents { get; } = new Transform[DiceValues.Count];
         internal SpiritModifierHistoryRenderer History { get; }
         internal SpiritModifierToken Token { get; }
         internal Material TokenMaterial { get; }
@@ -599,14 +601,13 @@ namespace Dice.Tests
 
             var dice = new Transform[DiceValues.Count];
             var shadows = new MeshRenderer[DiceValues.Count];
-            var slotContents = new Transform[DiceValues.Count];
             for (int i = 0; i < DiceValues.Count; ++i)
             {
                 Transform slot = Child("Dice Slot " + i, Geometry.transform);
                 slot.localPosition = new Vector3((i - 2) * 1.45f, 0, 0);
                 Geometry.DiceSlots[i] = slot;
                 // The content the tray shows and hides with itself, as each rig authors one per slot.
-                slotContents[i] = Child("Dice Slot Content " + i, slot);
+                SlotContents[i] = Child("Dice Slot Content " + i, slot);
                 Transform label = Child("Dice Label " + i, Geometry.transform);
                 label.localPosition = new Vector3((i - 2) * 1.45f, .35f, -1.13f);
                 Geometry.DiceLabelAnchors[i] = label;
@@ -629,7 +630,7 @@ namespace Dice.Tests
             SyntheticUi.Set(Dice, "selectionFrames", Frames);
             SyntheticUi.Set(Dice, "contactShadows", shadows);
             SyntheticUi.Set(Dice, "renderRoot", dicePresentation);
-            SyntheticUi.Set(Dice, "slotRoots", slotContents);
+            SyntheticUi.Set(Dice, "slotRoots", SlotContents);
 
             var template = Root("Modifier Token Template");
             Token = template.AddComponent<SpiritModifierToken>();

@@ -133,8 +133,13 @@ namespace Dice.Presentation
             return false;
         }
 
-        /** Bind material instances without replacing the authored geometry. */
-        public void RebuildGeometry()
+        /**
+         * Bind material instances without replacing the authored geometry. It runs when the scene is initialized, before its
+         * consumers create content under the render root (rule die visuals, charm tokens, bay indicators), which keeps its own
+         * materials and is destroyed by its consumer before the scene releases its presentation, so the scene writes the
+         * authored materials back only to renderers it took over.
+         */
+        private void RebuildGeometry()
         {
             if (renderRoot == null) return;
             presentation.ValidateScene();

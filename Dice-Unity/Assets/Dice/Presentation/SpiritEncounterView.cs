@@ -837,7 +837,7 @@ namespace Dice.Presentation
                 rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, installedRules, () => new TableRuleContext(this));
                 // New presenters start from the selection the tray already shows.
                 rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
-                piecePresenters = TablePiecePresenters.Create(tablePieces, installedPieces, new TablePieceContext(this));
+                piecePresenters = TablePiecePresenters.Create(tablePieces, installedPieces, inPlay.Items, items, new TablePieceContext(this));
             }
             catch
             {
@@ -916,7 +916,10 @@ namespace Dice.Presentation
             public override IEnumerator SweepSpirit(Sprite icon, float duration) => view.GameplayHud.AnimateRuleSpirit(icon, duration);
         }
 
-        /** What the encounter screen offers piece interaction presenters: its controls' piece interactions and the tray's bay slots. */
+        /**
+         * What the encounter screen offers piece interaction presenters: its controls' piece interactions, the tray's bay slots
+         * and the tray's bay indicators.
+         */
         private sealed class TablePieceContext : PieceInteractionPresenterContext
         {
             private readonly SpiritEncounterView view;
@@ -946,6 +949,9 @@ namespace Dice.Presentation
                 RectTransform frame = view.GameplayHud.DiceTrayImage.rectTransform;
                 return frame.TransformPoint(SpiritTablePieceLayout.ViewportPoint(frame.rect, view.pieceSlotRects[bay], placement));
             }
+
+            public override BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
+                => view.DiceTray.CreateBayIndicator(prefab, icon, glowColor);
         }
     }
 }

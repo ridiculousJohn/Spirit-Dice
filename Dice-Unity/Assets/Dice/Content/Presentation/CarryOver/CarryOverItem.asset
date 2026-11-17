@@ -13,5 +13,9 @@ MonoBehaviour:
   m_Name: CarryOverItem
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.ItemPresentationAsset
   item: {fileID: 11400000, guid: 886cec4fbef9cd64ebb854d8aa88adde, type: 2}
+  displayName: Carry Over
+  icon: {fileID: 21300000, guid: 333ea89b30b445608f6074e03f4e460b, type: 3}
+  glowColor: {r: 0.55, g: 0.85, b: 1, a: 1}
+  piecePresenter: {fileID: 11400000, guid: 7780dcbfe5e10f3488f9e03b157188ae, type: 2}
   ruleCards:
   - {fileID: 11400000, guid: 509ad170cb2baca40a5fefff090570f4, type: 2}

@@ -5,15 +5,38 @@ using UnityEngine;
 namespace Dice.Presentation
 {
     /**
+     * An asset that presents one kind of table piece interaction, whatever shows the piece: the shared base of the kinds a
+     * scene prop references and the kinds an item presentation references. It finds the piece's interaction of its kind.
+     */
+    public abstract class PieceInteractionKindAsset : ScriptableObject
+    {
+        /** The interaction definition type this asset presents, named in failures. */
+        public abstract Type InteractionKind { get; }
+
+        /** The place in the piece's interaction list of its interaction of the kind this asset presents, or -1 without one. */
+        public abstract int InteractionIndex(TablePieceDefinition definition);
+
+        /**
+         * The place of the piece's interaction of this asset's kind; fails, naming this asset, when it has none.
+         * givenNone completes the failure from what places the piece, such as "the encounter gives the table piece X".
+         */
+        protected int RequireInteractionIndex(TablePieceDefinition definition, string givenNone)
+        {
+            int index = InteractionIndex(definition);
+            if (index < 0)
+                throw new InvalidOperationException("The piece interaction presenter " + name + " presents " + InteractionKind.Name +
+                    " interactions, but " + givenNone + " none.");
+            return index;
+        }
+    }
+
+    /**
      * One kind of table piece interaction presentation, referenced by the piece's authored prop. Each kind creates its own
      * runtime presenter, which binds the prop to the state and input of the piece's interaction of that kind, so a new kind
      * needs no change to the encounter screen.
      */
-    public abstract class PieceInteractionPresenterAsset : ScriptableObject
+    public abstract class PieceInteractionPresenterAsset : PieceInteractionKindAsset
     {
-        /** The place in the piece's interaction list of its interaction of the kind this asset presents, or -1 without one. */
-        public abstract int InteractionIndex(TablePieceDefinition definition);
-
         /**
          * Creates an independent presenter binding the prop to the piece's interaction of the kind this asset presents.
          * Fails when the piece is not the prop's or has no interaction of that kind.
@@ -26,6 +49,8 @@ namespace Dice.Presentation
     public abstract class PieceInteractionPresenterAsset<TInteraction> : PieceInteractionPresenterAsset
         where TInteraction : PieceInteractionDefinition
     {
+        public sealed override Type InteractionKind => typeof(TInteraction);
+
         public sealed override int InteractionIndex(TablePieceDefinition definition) => definition.IndexOf<TInteraction>();
 
         public sealed override PieceInteractionPresenter Create(SpiritTablePieceView piece, TablePieceDefinition definition,
@@ -37,10 +62,7 @@ namespace Dice.Presentation
             if (piece.Piece == null || piece.Piece.Identity != definition.Identity)
                 throw new InvalidOperationException("The table piece " + piece.name + " does not present the piece " +
                     definition.Identity + ".");
-            int index = InteractionIndex(definition);
-            if (index < 0)
-                throw new InvalidOperationException("The piece interaction presenter " + name + " presents " + typeof(TInteraction).Name +
-                    " interactions, but the encounter gives the table piece " + piece.Piece.name + " none.");
+            int index = RequireInteractionIndex(definition, "the encounter gives the table piece " + piece.Piece.name);
             return Create(piece, (TInteraction)definition.Interactions[index], index, context);
         }
 
@@ -51,7 +73,7 @@ namespace Dice.Presentation
 
     /**
      * What piece interaction presentation may use from the encounter table, nothing kind-specific: whether the player may
-     * use a piece's interaction now, submitting an input to it, and points on the tray's dice bays.
+     * use a piece's interaction now, submitting an input to it, points on the tray's dice bays and marks on them.
      */
     public abstract class PieceInteractionPresenterContext
     {
@@ -69,6 +91,27 @@ namespace Dice.Presentation
          * bottom-left); valid during the presenters' layout.
          */
         public abstract Vector3 BayPoint(int bay, Vector2 placement);
+
+        /**
+         * A mark an item puts on a dice bay, made from the prefab and showing the item's icon and glow colour; it is hidden
+         * until shown on a bay, and the tray destroys it when it is released or the tray releases its presentation.
+         */
+        public abstract BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor);
+    }
+
+    /**
+     * A mark an item puts on a dice bay: shown on one bay at a time or hidden, until released. Releasing one the tray has
+     * already released with its presentation does nothing.
+     */
+    public abstract class BayIndicator
+    {
+        /** Shows the mark on the bay, moving it from the bay it was shown on. */
+        public abstract void ShowOn(int bay);
+
+        public abstract void Hide();
+
+        /** Destroys the mark; it is not used afterwards. */
+        public abstract void Release();
     }
 
     /**

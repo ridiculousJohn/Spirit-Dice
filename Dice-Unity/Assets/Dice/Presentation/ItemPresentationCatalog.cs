@@ -10,7 +10,8 @@ namespace Dice.Presentation
      * at load from an item skin. Each presentation is matched to its item's definition through its own item reference.
      * Construction fails, naming the skin, presentation or item, when a presentation is missing or references no item or
      * an item that is not of the content, an item of the content has more than one presentation or none, or a
-     * presentation's cards do not present exactly its item's rules with text using only their rules' placeholders.
+     * presentation lacks its name or icon, its cards do not present exactly its item's rules with text using only their
+     * rules' placeholders, or it lacks the piece presenter its item's piece needs or has one its item does not.
      */
     public sealed class ItemPresentationCatalog
     {
@@ -45,14 +46,20 @@ namespace Dice.Presentation
             if (table == null) throw new ArgumentNullException(nameof(table));
             if (items == null) throw new ArgumentNullException(nameof(items));
             var cards = new List<EncounterRulePresentationAsset>(table.RulePresentations);
-            foreach (ItemDefinition item in items)
-            {
-                if (!presentations.TryGetValue(item.Identity, out ItemPresentationAsset presentation))
-                    throw new InvalidOperationException("The item " + item.Identity + " in play at the table " + table.name +
-                        " has no presentation.");
-                cards.AddRange(presentation.RuleCards);
-            }
+            foreach (ItemDefinition item in items) cards.AddRange(Find(item, " at the table " + table.name).RuleCards);
             return new RuleCardsInPlay(table, cards);
         }
+
+        /** The presentation of an item in play; fails, naming the item, when it has none. */
+        public ItemPresentationAsset PresentationOf(ItemDefinition item)
+        {
+            if (item == null) throw new ArgumentNullException(nameof(item));
+            return Find(item, "");
+        }
+
+        /** where completes the failure's "in play", such as " at the table X". */
+        private ItemPresentationAsset Find(ItemDefinition item, string where)
+            => presentations.TryGetValue(item.Identity, out ItemPresentationAsset presentation) ? presentation
+                : throw new InvalidOperationException("The item " + item.Identity + " in play" + where + " has no presentation.");
     }
 }
