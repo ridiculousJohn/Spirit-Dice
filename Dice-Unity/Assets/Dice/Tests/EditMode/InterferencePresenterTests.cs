@@ -102,37 +102,39 @@ namespace Dice.Tests
             Assert.That(context.Log, Is.Empty);
         }
 
-        /** Checks the ward's piece flares for an attempt the ward repels and the presentation waits for the flare, and nothing else flares it / fails if the ward ignores its block, flares another piece or flares for a disturbance. */
+        /** Checks the ward's piece reacts to an attempt the ward repels and the presentation waits for the reaction, and nothing else makes it react / fails if the ward ignores its block, has another piece react or reacts to a disturbance. */
         [Test]
-        public void TheWardFlaresItsPieceOnlyForAttemptsItRepels()
+        public void TheWardsPieceReactsOnlyToAttemptsItRepels()
         {
             var catalog = Catalog(DieInterferenceKind.Flip, wardedBays: 1);
             var blocked = Execute(catalog, new RerollDiceAction(RerollAllButFirst)).OfType<DisturbanceBlockedEvent>().Single();
             Assert.That(blocked.ProtectingRuleId, Is.EqualTo(WardId));
             var ward = Ward(catalog, WardId);
-            context.FlareDuration = .7f;
+            context.ReactionDuration = .7f;
             Assert.That(ward.LeadIn(blocked), Is.Zero);
             var waits = TestRulePresenterContext.Waits(ward.Present(blocked));
-            Assert.That(context.Log, Is.EqualTo(new[] { "flare " + PieceId }));
+            Assert.That(context.Log, Is.EqualTo(new[] { "piece " + PieceId }));
             Assert.That(waits, Is.EqualTo(new[] { .7f }));
 
             context.Log.Clear();
             var otherWard = Ward(Catalog(DieInterferenceKind.Flip, wardedBays: 1, wardName: "other_ward"), TestRules.IdOf("other_ward"));
-            Assert.That(otherWard.Present(blocked), Is.Null, "Another ward's presenter does not flare for this ward's block.");
+            Assert.That(otherWard.Present(blocked), Is.Null, "Another ward's presenter does not react to this ward's block.");
             var disturbed = Execute(Catalog(DieInterferenceKind.Flip, wardedBays: 0), new RerollDiceAction(RerollAllButFirst))
                 .OfType<DieDisturbedEvent>().Single();
-            Assert.That(ward.Present(disturbed), Is.Null, "A disturbance that was not repelled flares nothing.");
+            Assert.That(ward.Present(disturbed), Is.Null, "A disturbance that was not repelled makes nothing react.");
             Assert.That(context.Log, Is.Empty);
         }
 
-        /** Checks a ward presenter fails at creation, naming its rule, when the table shows no prop for the ward's piece / fails if it is created with nothing to flare. */
+        /** Checks a ward presenter is created where nothing shows its piece and presents a repel that takes no time / fails if creation or the repel fails, or the repel waits for a reaction nothing shows. */
         [Test]
-        public void AWardPresenterFailsAtCreationWithoutItsPiecesProp()
+        public void AWardWhosePieceNothingShowsPresentsARepelWithoutAReaction()
         {
             var catalog = Catalog(DieInterferenceKind.Flip, wardedBays: 1);
+            var blocked = Execute(catalog, new RerollDiceAction(RerollAllButFirst)).OfType<DisturbanceBlockedEvent>().Single();
             context.ShowsPieces = false;
-            var failure = Assert.Throws<InvalidOperationException>(() => Ward(catalog, WardId));
-            Assert.That(failure.Message, Does.Contain(WardId.ToString()));
+            context.ReactionDuration = .7f;
+            var ward = Ward(catalog, WardId);
+            Assert.That(TestRulePresenterContext.Waits(ward.Present(blocked)), Is.Empty);
         }
 
         private DieInterferencePresenter Haunting(MechanicalCatalog catalog, EncounterRuleDefinition.Id ruleId)

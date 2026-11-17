@@ -897,14 +897,11 @@ namespace Dice.Presentation
 
             public override void JoltAmbient() => view.ambientActivity?.Jolt();
 
-            public override bool ShowsPiece(TablePieceDefinition.Id pieceId)
-                => SpiritTablePieceView.Find(view.tablePieces, pieceId) != null;
-
-            public override float FlarePiece(TablePieceDefinition.Id pieceId)
+            /** The scene's prop for the piece flares; a piece the scene gives no prop has no reaction here. */
+            public override float ReactPiece(TablePieceDefinition.Id pieceId)
             {
-                var piece = SpiritTablePieceView.Find(view.tablePieces, pieceId) ?? throw new InvalidOperationException(
-                    "The table shows no prop for piece " + pieceId + ".");
-                return piece.isActiveAndEnabled ? piece.Flare() : 0f;
+                var piece = SpiritTablePieceView.Find(view.tablePieces, pieceId);
+                return piece != null && piece.isActiveAndEnabled ? piece.Flare() : 0f;
             }
 
             public override void ShowRuleBadge()

@@ -10,9 +10,9 @@ namespace Dice.Tests
 {
     /**
      * A rule presenter context over five stand-in dice that records, in order, what presenters ask of the table: host
-     * reactions, dice flips and rerolls (each naming its bays and faces and landing after one frame), cue clips, ambient jolts, piece flares, rule badge
-     * refreshes, action cues, selection text and spirit sweeps (each a realtime wait of its duration). Piece flares last
-     * the configured duration.
+     * reactions, dice flips and rerolls (each naming its bays and faces and landing after one frame), cue clips, ambient jolts, piece reactions, rule badge
+     * refreshes, action cues, selection text and spirit sweeps (each a realtime wait of its duration). A piece's reaction
+     * lasts the configured duration while something shows the table's pieces, and nothing otherwise.
      */
     internal sealed class TestRulePresenterContext : RulePresenterContext, IDisposable
     {
@@ -22,10 +22,10 @@ namespace Dice.Tests
 
         private TestRulePresenterContext(Transform[] dice, bool hasLights) : base(dice) => this.hasLights = hasLights;
 
-        /** Seconds each piece flare reports. */
-        public float FlareDuration { get; set; }
+        /** Seconds each piece reaction reports while something shows the table's pieces. */
+        public float ReactionDuration { get; set; }
 
-        /** Whether the table shows a prop for every piece; true unless a test removes them. */
+        /** Whether something shows every piece; true unless a test removes them, leaving pieces without a reaction. */
         public bool ShowsPieces { get; set; } = true;
 
         public override IRuleSceneLights Lights => hasLights ? RecordedLights : null;
@@ -49,12 +49,10 @@ namespace Dice.Tests
 
         public override void JoltAmbient() => Log.Add("jolt");
 
-        public override bool ShowsPiece(TablePieceDefinition.Id pieceId) => ShowsPieces;
-
-        public override float FlarePiece(TablePieceDefinition.Id pieceId)
+        public override float ReactPiece(TablePieceDefinition.Id pieceId)
         {
-            Log.Add("flare " + pieceId);
-            return FlareDuration;
+            Log.Add("piece " + pieceId);
+            return ShowsPieces ? ReactionDuration : 0f;
         }
 
         public override void ShowRuleBadge() => Log.Add("badge");

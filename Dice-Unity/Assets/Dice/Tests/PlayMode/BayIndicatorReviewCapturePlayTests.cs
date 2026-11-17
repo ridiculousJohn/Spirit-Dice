@@ -15,10 +15,9 @@ namespace Dice.Tests
      * Review capture of the bay indicator, the mark an item puts on a dice bay, on every tray: at one table of each tray the
      * player carries the carry-over item, as a run carries owned items, and its piece is moved onto a middle bay through
      * the screen's controls; the first table is also captured with the die in that bay selected, with the piece at neutral
-     * and on an end bay. A table that does
-     * not lend the merchant's candle is captured with a second mark, made through the tray with the candle presentation's
-     * icon and glow colour, on the same bay, their emblems side by side, and the merchant's table with carry-over and the
-     * candle on one bay, where the candle shows its scene prop and only carry-over is marked.
+     * and on an end bay. The player then also carries the merchant's candle: a table that does not lend it is captured with
+     * both pieces on one bay, their emblems side by side, and the merchant's table with both on one bay, where the candle
+     * shows its scene prop and only carry-over is marked.
      * It writes 540 x 960 PNGs under DICE_SPIRIT_CAPTURE_ROOT/bay-indicators and is ignored without that variable; it is a
      * capture, not a regression test. The fixture is explicit: it runs only when a run selects it by name.
      */
@@ -30,7 +29,6 @@ namespace Dice.Tests
         private const float SettleSeconds = 1f;
         private const int MiddleBay = 2;
         private const int EndBay = 4;
-        private const string IndicatorPrefabPath = "Assets/Dice/Content/Presentation/Shared/BayIndicator.prefab";
 
         [UnityTest]
         public IEnumerator BayIndicatorsOnEveryTrayCapture()
@@ -73,38 +71,21 @@ namespace Dice.Tests
                 yield return Capture(root, name + "-carry-over-bay-" + EndBay);
             }
 
-            // The candle's ward presenter flares the candle's scene prop, so a table without the prop cannot play the candle
-            // carried; the second mark is made through the tray with the candle presentation's icon and glow colour.
+            Own(controller, candle);
             var other = perTray.First(journey => !Lends(controller, journey, candle));
-            yield return Enter(controller, other);
-            yield return Move(controller, carryOver, PiecePosition.Bay(MiddleBay));
-            var candlePresentation = controller.ItemPresentation.PresentationOf(candle);
-            var second = ContentReady.EncounterView(controller).DiceTray.CreateBayIndicator(IndicatorPrefab(),
-                candlePresentation.Icon, candlePresentation.GlowColor);
-            second.ShowOn(MiddleBay);
-            Assert.That(ShownIndicators(controller).Count, Is.EqualTo(2), Table(other).name + " indicators sharing a bay");
-            yield return Capture(root, Table(other).name + "-two-marks-bay-" + MiddleBay);
-            second.Release();
-
             var lender = perTray.First(journey => Lends(controller, journey, candle));
-            yield return Enter(controller, lender);
-            yield return Move(controller, carryOver, PiecePosition.Bay(MiddleBay));
-            yield return Move(controller, candle, PiecePosition.Bay(MiddleBay));
-            Assert.That(ShownIndicators(controller).Count, Is.EqualTo(1), Table(lender).name + " marks only the carried item");
-            yield return Capture(root, Table(lender).name + "-carry-over-and-candle-bay-" + MiddleBay);
+            foreach (var journey in new[] { other, lender })
+            {
+                yield return Enter(controller, journey);
+                string name = Table(journey).name;
+                yield return Move(controller, carryOver, PiecePosition.Bay(MiddleBay));
+                yield return Move(controller, candle, PiecePosition.Bay(MiddleBay));
+                // The merchant's table shows the candle as its scene prop, so only carry-over is marked there.
+                int marks = journey == lender ? 1 : 2;
+                Assert.That(ShownIndicators(controller).Count, Is.EqualTo(marks), name + " marks with both items on one bay");
+                yield return Capture(root, name + "-carry-over-and-candle-bay-" + MiddleBay);
+            }
             LogAssert.NoUnexpectedReceived();
-        }
-
-        /** The authored bay indicator prefab; the capture runs in the editor. */
-        private static SpiritBayIndicator IndicatorPrefab()
-        {
-#if UNITY_EDITOR
-            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<SpiritBayIndicator>(IndicatorPrefabPath);
-            Assert.That(prefab, Is.Not.Null, IndicatorPrefabPath);
-            return prefab;
-#else
-            throw new System.NotSupportedException("The bay indicator capture runs in the editor.");
-#endif
         }
 
         private static ItemDefinition ItemWithRule<TRule>(MechanicalCatalog catalog) where TRule : EncounterRuleDefinition

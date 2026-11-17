@@ -1,25 +1,21 @@
-using System;
 using System.Collections;
 using Dice.Engine;
 using UnityEngine;
 
 namespace Dice.Presentation
 {
-    /** The bay ward rule's presenter: the prop of the ward's table piece flares when the ward repels a disturbance. */
+    /**
+     * The bay ward rule's presenter: when the ward repels a disturbance, whatever shows the ward's table piece reacts in its
+     * own way, such as a scene prop's flare; a piece shown without a reaction, or not shown, has none.
+     */
     [CreateAssetMenu(menuName = "Dice/Presentation/Rule Presenter/Bay Ward")]
     public sealed class BayWardPresenterAsset : RulePresenterAsset<BayWardRuleDefinition>
     {
-        /** Fails when the table shows no prop for the ward's piece, which the ward would have nothing to flare on. */
         protected override RulePresenter Create(BayWardRuleDefinition rule, RulePresenterContext context)
-        {
-            if (!context.ShowsPiece(rule.PieceId))
-                throw new InvalidOperationException("The ward presenter " + name + " presents rule " + rule.Identity +
-                    ", but the table shows no prop for its piece " + rule.PieceId + ".");
-            return new BayWardPresenter(rule, context);
-        }
+            => new BayWardPresenter(rule, context);
     }
 
-    /** Flares the ward's own piece for each disturbance the ward repels and waits for the flare. */
+    /** Has the ward's own piece react for each disturbance the ward repels and waits for the reaction. */
     public sealed class BayWardPresenter : RulePresenter
     {
         private readonly BayWardRuleDefinition ward;
@@ -32,11 +28,11 @@ namespace Dice.Presentation
         }
 
         public override IEnumerator Present(RuleEvent ruleEvent)
-            => ruleEvent is DisturbanceBlockedEvent blocked && blocked.ProtectingRuleId == ward.Identity ? Flare() : null;
+            => ruleEvent is DisturbanceBlockedEvent blocked && blocked.ProtectingRuleId == ward.Identity ? React() : null;
 
-        private IEnumerator Flare()
+        private IEnumerator React()
         {
-            float duration = context.FlarePiece(ward.PieceId);
+            float duration = context.ReactPiece(ward.PieceId);
             if (duration > 0f) yield return new WaitForSecondsRealtime(duration);
         }
     }

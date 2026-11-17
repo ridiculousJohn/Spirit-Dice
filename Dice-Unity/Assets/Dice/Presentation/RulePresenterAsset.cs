@@ -85,14 +85,11 @@ namespace Dice.Presentation
         /** Jolts the table's ambient activity; does nothing when the table authors none. */
         public abstract void JoltAmbient();
 
-        /** Whether the table shows a prop for the table piece. */
-        public abstract bool ShowsPiece(TablePieceDefinition.Id pieceId);
-
         /**
-         * Flares the prop of the table piece and returns how long the flare lasts; zero while the prop is
-         * hidden. The table must show the prop.
+         * Whatever shows the table piece reacts in its own way to a rule acting through it, as a scene prop flares; returns
+         * the seconds the reaction lasts, zero when nothing shows the piece, what shows it has no reaction, or it is hidden.
          */
-        public abstract float FlarePiece(TablePieceDefinition.Id pieceId);
+        public abstract float ReactPiece(TablePieceDefinition.Id pieceId);
 
         /** Shows the HUD's rule badge as the resolution being presented leaves its rule. */
         public abstract void ShowRuleBadge();
