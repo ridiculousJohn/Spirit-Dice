@@ -95,6 +95,7 @@ namespace Dice.Tests
 
             public EncounterSnapshot Snapshot => null;
             public MechanicalCatalog Catalog { get; }
+            public EncounterInPlay InPlay => null;
             public ModifierPresentationCatalog ModifierPresentation { get; }
             public ItemPresentationCatalog ItemPresentation => null;
             public HandPreview Preview => null;

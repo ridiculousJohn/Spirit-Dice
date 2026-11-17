@@ -180,6 +180,25 @@ namespace Dice.Tests
             Assert.That(PlayerProfileFileStore.Load(progression.ProfilePath).DiscoveredFamilyIds, Is.EqualTo(new[] { TestFamilies.IdOf("family.future") }));
         }
 
+        /** Checks the known owned items are the profile's items the catalog has, in catalog order / fails if an unknown item or the profile's order appears. */
+        [Test]
+        public void KnownOwnedItemsAreTheCatalogsItemsTheProfileOwnsInCatalogOrder()
+        {
+            var first = new ItemDefinition.Id(new Guid("5a0e3c7b1d2f4e6a8b9c0d1e2f3a4b5c"));
+            var second = new ItemDefinition.Id(new Guid("6b1f4d8c2e3a4f7b9c0d1e2f3a4b5c6d"));
+            var unknown = new ItemDefinition.Id(new Guid("7c2a5e9d3f4b4a8c0d1e2f3a4b5c6d7e"));
+            var profile = new PlayerProfile();
+            profile.OwnItem(second);
+            profile.OwnItem(unknown);
+            profile.OwnItem(first);
+            PlayerProfileFileStore.Save(ProfilePathFor(savePath), profile);
+            Assert.That(progression.PrepareProfile(savePath), Is.True);
+            var catalog = new MechanicalCatalog("test.player-progression", TestContent.Hands(),
+                new[] { new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) }) },
+                items: new[] { Item(first, "piece.first"), Item(second, "piece.second") });
+            Assert.That(progression.KnownOwnedItems(catalog), Is.EqualTo(new[] { first, second }));
+        }
+
         [Test]
         public void PendingRunWriteBlocksProfileReplacementUntilTheOriginalRunAndProfileAreSaved()
         {
@@ -279,5 +298,10 @@ namespace Dice.Tests
             => new ModifierDefinition(TestModifiers.IdOf(id), TestFamilies.Of(family), ModifierPhase.PlayHand, new AlwaysCondition(),
                 new ModifierEffect[] { new AddBaseScoreEffect(1) },
                 availability: new ModifierAvailabilityDefinition(requiresUnlock: requiresUnlock));
+
+        /** An item that places one piece at neutral. */
+        private static ItemDefinition Item(ItemDefinition.Id id, string pieceId)
+            => new ItemDefinition(id, piece: new TablePieceDefinition(TestPieces.IdOf(pieceId),
+                new[] { new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand) }));
     }
 }

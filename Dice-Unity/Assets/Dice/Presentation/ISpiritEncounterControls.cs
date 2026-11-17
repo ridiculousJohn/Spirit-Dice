@@ -9,6 +9,8 @@ namespace Dice.Presentation
     {
         EncounterSnapshot Snapshot { get; }
         MechanicalCatalog Catalog { get; }
+        /** What the run plays: the catalog's encounter and the items the player carries; null when no run is installed. */
+        EncounterInPlay InPlay { get; }
         /** The presentation of the catalog's charms. */
         ModifierPresentationCatalog ModifierPresentation { get; }
         /** The presentation of the items the catalog's encounters lend. */

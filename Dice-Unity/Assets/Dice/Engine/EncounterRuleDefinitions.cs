@@ -39,7 +39,7 @@ namespace Dice.Engine
         internal virtual bool WaivesRerollCost(EncounterState state) => false;
         /** The multiplier this rule adds to a scored hand, over the hand's counted dice. */
         internal virtual long ScoredHandMultiplierBonus(HandDice hand, long totalHandsPlayed) => 0;
-        internal virtual void ValidateDefinition(EncounterDefinition encounter) { }
+        internal virtual void ValidateDefinition(EncounterInPlay inPlay) { }
 
         /** Rules that draw from the rule random stream; encounters without one keep the stream empty. */
         internal virtual bool UsesRuleRandom => false;
@@ -86,7 +86,7 @@ namespace Dice.Engine
          * Runs after a committed hand is scored and before the next hand or stage starts; scoredHand is the hand as it
          * scored, naming the dice that counted. Previews do not run it.
          */
-        internal virtual void HandPlayed(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+        internal virtual void HandPlayed(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
             HandDice scoredHand, List<RuleEvent> events) { }
 
         /** Runs after rerolled dice land, before interference and reroll modifiers resolve. */
@@ -103,10 +103,10 @@ namespace Dice.Engine
         internal virtual bool CanLeaveDiceUncounted => false;
 
         /** Returns true when this rule attempted a disturbance, whether it changed a die or was blocked. */
-        internal virtual bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+        internal virtual bool Interfere(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
             InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events) => false;
 
-        internal virtual bool ProtectsBay(EncounterDefinition encounter, EncounterState state, int bay, DieInterferenceKind kind)
+        internal virtual bool ProtectsBay(EncounterInPlay inPlay, EncounterState state, int bay, DieInterferenceKind kind)
             => false;
     }
 
@@ -219,107 +219,107 @@ namespace Dice.Engine
 
     internal static class EncounterRuleResolver
     {
-        internal static ReadOnlyCollection<EncounterRuleSnapshot> Snapshots(EncounterDefinition definition, EncounterState state)
+        internal static ReadOnlyCollection<EncounterRuleSnapshot> Snapshots(EncounterInPlay inPlay, EncounterState state)
         {
-            var snapshots = new EncounterRuleSnapshot[definition.Rules.Count];
-            for (int i = 0; i < snapshots.Length; ++i) snapshots[i] = definition.Rules[i].CreateSnapshot(state, state.RuleStates[i]);
+            var snapshots = new EncounterRuleSnapshot[inPlay.Rules.Count];
+            for (int i = 0; i < snapshots.Length; ++i) snapshots[i] = inPlay.Rules[i].CreateSnapshot(state, state.RuleStates[i]);
             return Array.AsReadOnly(snapshots);
         }
 
         /** Whether the player can pay for a reroll or a rule waives its cost. */
-        internal static bool CanAffordReroll(EncounterDefinition definition, EncounterState state)
-            => state.RerollsRemaining > 0 || RerollCostWaiverSlot(definition, state) >= 0;
+        internal static bool CanAffordReroll(EncounterInPlay inPlay, EncounterState state)
+            => state.RerollsRemaining > 0 || RerollCostWaiverSlot(inPlay, state) >= 0;
 
         /** The rule that waives this player reroll's cost, or null for a paid reroll. */
-        internal static EncounterRuleDefinition WaiveRerollCost(EncounterDefinition definition, EncounterState state)
+        internal static EncounterRuleDefinition WaiveRerollCost(EncounterInPlay inPlay, EncounterState state)
         {
-            int slot = RerollCostWaiverSlot(definition, state);
-            return slot < 0 ? null : definition.Rules[slot];
+            int slot = RerollCostWaiverSlot(inPlay, state);
+            return slot < 0 ? null : inPlay.Rules[slot];
         }
 
-        private static int RerollCostWaiverSlot(EncounterDefinition definition, EncounterState state)
+        private static int RerollCostWaiverSlot(EncounterInPlay inPlay, EncounterState state)
         {
             // A reroll has one cost to waive; the first applicable rule owns the activation event.
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                if (definition.Rules[i].WaivesRerollCost(state)) return i;
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                if (inPlay.Rules[i].WaivesRerollCost(state)) return i;
             return -1;
         }
 
-        internal static bool UsesRuleRandom(EncounterDefinition definition)
+        internal static bool UsesRuleRandom(EncounterInPlay inPlay)
         {
-            foreach (var rule in definition.Rules)
+            foreach (var rule in inPlay.Rules)
                 if (rule.UsesRuleRandom) return true;
             return false;
         }
 
-        internal static EncounterRuleState[] InitialStates(EncounterDefinition definition)
+        internal static EncounterRuleState[] InitialStates(EncounterInPlay inPlay)
         {
-            var states = new EncounterRuleState[definition.Rules.Count];
-            for (int i = 0; i < states.Length; ++i) states[i] = definition.Rules[i].CreateState();
+            var states = new EncounterRuleState[inPlay.Rules.Count];
+            for (int i = 0; i < states.Length; ++i) states[i] = inPlay.Rules[i].CreateState();
             return states;
         }
 
         /** The dice every rule holds out of the next opening roll. */
-        internal static int OpeningRollHeldDice(EncounterDefinition definition, EncounterState state)
+        internal static int OpeningRollHeldDice(EncounterInPlay inPlay, EncounterState state)
         {
             int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].OpeningRollHeldDiceMask(state.RuleStates[i]);
+            for (int i = 0; i < inPlay.Rules.Count; ++i) mask |= inPlay.Rules[i].OpeningRollHeldDiceMask(state.RuleStates[i]);
             return mask;
         }
 
-        internal static void HandStarted(EncounterDefinition definition, EncounterState state, int rolledMask, List<RuleEvent> events)
+        internal static void HandStarted(EncounterInPlay inPlay, EncounterState state, int rolledMask, List<RuleEvent> events)
         {
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                definition.Rules[i].HandStarted(state, state.RuleStates[i], rolledMask, events);
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                inPlay.Rules[i].HandStarted(state, state.RuleStates[i], rolledMask, events);
         }
 
-        internal static void HandPlayed(EncounterDefinition definition, EncounterState state, HandDice scoredHand,
+        internal static void HandPlayed(EncounterInPlay inPlay, EncounterState state, HandDice scoredHand,
             List<RuleEvent> events)
         {
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                definition.Rules[i].HandPlayed(definition, state, state.RuleStates[i], scoredHand, events);
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                inPlay.Rules[i].HandPlayed(inPlay, state, state.RuleStates[i], scoredHand, events);
         }
 
-        internal static void PlayerRerollResolved(EncounterDefinition definition, EncounterState state, int rerolledMask,
+        internal static void PlayerRerollResolved(EncounterInPlay inPlay, EncounterState state, int rerolledMask,
             List<RuleEvent> events)
         {
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                definition.Rules[i].PlayerRerollResolved(state, state.RuleStates[i], rerolledMask, events);
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                inPlay.Rules[i].PlayerRerollResolved(state, state.RuleStates[i], rerolledMask, events);
         }
 
-        internal static int LockedDice(EncounterDefinition definition, EncounterState state)
+        internal static int LockedDice(EncounterInPlay inPlay, EncounterState state)
         {
             int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].LockedDiceMask(state.RuleStates[i]);
+            for (int i = 0; i < inPlay.Rules.Count; ++i) mask |= inPlay.Rules[i].LockedDiceMask(state.RuleStates[i]);
             return mask;
         }
 
-        internal static int UncountedDice(EncounterDefinition definition, EncounterState state)
+        internal static int UncountedDice(EncounterInPlay inPlay, EncounterState state)
         {
             int mask = 0;
-            for (int i = 0; i < definition.Rules.Count; ++i) mask |= definition.Rules[i].UncountedDiceMask(state.RuleStates[i]);
+            for (int i = 0; i < inPlay.Rules.Count; ++i) mask |= inPlay.Rules[i].UncountedDiceMask(state.RuleStates[i]);
             return mask;
         }
 
         /** The current dice with the dice every rule leaves counted. */
-        internal static HandDice CurrentHand(EncounterDefinition definition, EncounterState state)
-            => new HandDice(state.CurrentDice, DiceValues.AllMask & ~UncountedDice(definition, state));
+        internal static HandDice CurrentHand(EncounterInPlay inPlay, EncounterState state)
+            => new HandDice(state.CurrentDice, DiceValues.AllMask & ~UncountedDice(inPlay, state));
 
-        internal static void Interfere(EncounterDefinition definition, EncounterState state, InterferenceTrigger trigger,
+        internal static void Interfere(EncounterInPlay inPlay, EncounterState state, InterferenceTrigger trigger,
             int eligibleMask, List<RuleEvent> events)
         {
             // At most one disturbance attempt resolves for each committed action; later rules see no eligible dice.
             bool attempted = false;
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                if (definition.Rules[i].Interfere(definition, state, state.RuleStates[i], trigger, attempted ? 0 : eligibleMask, events))
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                if (inPlay.Rules[i].Interfere(inPlay, state, state.RuleStates[i], trigger, attempted ? 0 : eligibleMask, events))
                     attempted = true;
         }
 
-        internal static EncounterRuleDefinition Protector(EncounterDefinition definition, EncounterState state, int bay,
+        internal static EncounterRuleDefinition Protector(EncounterInPlay inPlay, EncounterState state, int bay,
             DieInterferenceKind kind)
         {
-            foreach (var rule in definition.Rules)
-                if (rule.ProtectsBay(definition, state, bay, kind)) return rule;
+            foreach (var rule in inPlay.Rules)
+                if (rule.ProtectsBay(inPlay, state, bay, kind)) return rule;
             return null;
         }
     }

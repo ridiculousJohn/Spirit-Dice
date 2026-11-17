@@ -15,11 +15,15 @@ namespace Dice.App
 
         public EncounterSnapshot Snapshot => session.Snapshot;
         public Resolution InitialResolution => session.InitialResolution;
+        /** What the run plays: the catalog's encounter and the items the player carries. */
+        public EncounterInPlay InPlay => session.InPlay;
 
+        /** Starts the encounter with the identified items carried; none when carriedItemIds is omitted. */
         public EncounterApplication(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed,
-            IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
+            IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null,
+            IEnumerable<ItemDefinition.Id> carriedItemIds = null)
         {
-            session = EncounterSession.CreateEncounter(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);
+            session = EncounterSession.CreateEncounter(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds, carriedItemIds);
         }
 
         private EncounterApplication(EncounterSession restoredSession)

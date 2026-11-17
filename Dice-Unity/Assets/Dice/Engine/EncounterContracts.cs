@@ -38,9 +38,9 @@ namespace Dice.Engine
             EncounterState state = session.State;
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
             if (SelectedMask <= 0 || (SelectedMask & ~DiceValues.AllMask) != 0 ||
-                (SelectedMask & EncounterRuleResolver.LockedDice(session.Definition, state)) != 0)
+                (SelectedMask & EncounterRuleResolver.LockedDice(session.InPlay, state)) != 0)
                 return CommandRejection.InvalidDiceSelection;
-            if (!EncounterRuleResolver.CanAffordReroll(session.Definition, state))
+            if (!EncounterRuleResolver.CanAffordReroll(session.InPlay, state))
                 return CommandRejection.NoRerollsRemaining;
             return CommandRejection.None;
         }
@@ -130,28 +130,28 @@ namespace Dice.Engine
         public ReadOnlyCollection<ModifierDefinition.Id> NewlyUnlockedModifierIds { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
 
-        internal EncounterSnapshot(EncounterState state, EncounterDefinition definition, string catalogVersion)
+        internal EncounterSnapshot(EncounterState state, EncounterInPlay inPlay, string catalogVersion)
         {
-            var stage = definition.Stages[state.StageIndex];
-            EncounterId = definition.Identity;
+            var stage = inPlay.Encounter.Stages[state.StageIndex];
+            EncounterId = inPlay.Encounter.Identity;
             CatalogVersion = catalogVersion;
             Revision = state.Revision;
             Phase = state.Phase;
             Outcome = state.Outcome;
             StageIndex = state.StageIndex;
             HandIndex = state.HandIndex;
-            StageCount = definition.Stages.Count;
+            StageCount = inPlay.Encounter.Stages.Count;
             StartingThreshold = stage.Threshold;
             RemainingThreshold = state.RemainingThreshold;
             StartingHands = stage.StartingHands;
             StartingRerolls = stage.StartingRerolls;
             HandsRemaining = state.HandsRemaining;
             RerollsRemaining = state.RerollsRemaining;
-            LockedMask = EncounterRuleResolver.LockedDice(definition, state);
-            CountedMask = EncounterRuleResolver.CurrentHand(definition, state).CountedMask;
+            LockedMask = EncounterRuleResolver.LockedDice(inPlay, state);
+            CountedMask = EncounterRuleResolver.CurrentHand(inPlay, state).CountedMask;
             CanReroll = state.Phase == EncounterPhase.Playing && LockedMask != DiceValues.AllMask &&
-                EncounterRuleResolver.CanAffordReroll(definition, state);
-            EncounterRules = EncounterRuleResolver.Snapshots(definition, state);
+                EncounterRuleResolver.CanAffordReroll(inPlay, state);
+            EncounterRules = EncounterRuleResolver.Snapshots(inPlay, state);
             CurrentDice = state.CurrentDice;
             InitialHand = state.InitialHand;
             HandBeforeLastReroll = state.HandBeforeLastReroll;
@@ -159,7 +159,7 @@ namespace Dice.Engine
             LatestRerollMask = state.LatestRerollMask;
             LatestChangedMask = state.LatestChangedMask;
             EverRerolledMask = state.EverRerolledMask;
-            PieceInteractions = TablePieceStates.Capture(definition, state);
+            PieceInteractions = TablePieceStates.Capture(inPlay, state);
             RerollsSpentOnHand = state.RerollsSpentOnHand;
             HandsPlayedInStage = state.HandsPlayedInStage;
             PreviousStageStartingHands = state.PreviousStageStartingHands;
@@ -174,7 +174,7 @@ namespace Dice.Engine
             ModifierContributions = new List<ModifierContribution>(state.ModifierContributions).AsReadOnly();
             PendingReward = state.PendingReward;
             RewardRefreshes = state.RewardRefreshes;
-            RewardRefreshCost = definition.RewardPolicy?.RefreshCost ?? 0;
+            RewardRefreshCost = inPlay.Encounter.RewardPolicy?.RefreshCost ?? 0;
             RewardRefreshesAvailable = RewardRefreshCost > 0 ? state.RewardRefreshes / RewardRefreshCost : 0;
             ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(state.ExcludedRewardFamilies).AsReadOnly();
             RecentHandUpgrades = new List<HandCategory>(state.RecentHandUpgrades).AsReadOnly();

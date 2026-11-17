@@ -81,7 +81,7 @@ namespace Dice.Tests
         public void DeclaredTextValueNamesAreTheSnapshotsTextValueKeys()
         {
             var session = EncounterSession.CreateEncounter(RuleCatalog(new StageDefinition(1000000, 3, 3)), EncounterId, Seed);
-            var definition = session.Definition.Rules.Single();
+            var definition = session.InPlay.Rules.Single();
             Assert.That(session.Snapshot.EncounterRules.Single().TextValues.Keys, Is.EquivalentTo(definition.TextValueNames));
             Assert.That(definition.TextValueNames, Is.Not.Empty);
         }

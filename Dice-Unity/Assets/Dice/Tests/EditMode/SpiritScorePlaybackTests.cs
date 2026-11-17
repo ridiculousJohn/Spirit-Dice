@@ -160,7 +160,8 @@ namespace Dice.Tests
                 serialized.ApplyModifiedPropertiesWithoutUndo();
             }
             context = TestRulePresenterContext.Create();
-            var presenters = EncounterRulePresenters.Create(new[] { card }, encounter, () => context);
+            var presenters = EncounterRulePresenters.Create(new[] { card }, new EncounterInPlay(encounter, Array.Empty<ItemDefinition>()),
+                () => context);
             var host = new PlaybackHost(new Controls(catalog, charms.For()), presenters, log);
             var playback = new SpiritScorePlayback(host, hud, tray, rig.CreateHistoryTray(), audio, null, null);
 
@@ -418,6 +419,7 @@ namespace Dice.Tests
 
             public EncounterSnapshot Snapshot => null;
             public MechanicalCatalog Catalog { get; }
+            public EncounterInPlay InPlay => null;
             public ModifierPresentationCatalog ModifierPresentation { get; }
             public ItemPresentationCatalog ItemPresentation => null;
             public HandPreview Preview => null;

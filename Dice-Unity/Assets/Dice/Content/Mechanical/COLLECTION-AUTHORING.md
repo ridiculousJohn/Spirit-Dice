@@ -74,7 +74,11 @@ or journey's progression reward.
 Ordinary modifiers can be offered by any encounter whose pools or lists hold them. Permanent unlock requirements
 remain on existing variants, including combined and reroll variants that are not
 currently awarded by these lists. Existing authored ordinary reward pools retain
-their membership.
+their membership. The encounter definition is the catalog's encounter with the items
+it lends; what a run plays (`EncounterInPlay`) adds the items the player carries. The
+charms the rules of a carried item bring are the item's, not the encounter's additions:
+they are candidates in every charm offer from the first, whatever the encounter's
+`encounterModifiersFirstClearedStageNumber`.
 
 Moth's `encounterModifiers` contains four Lantern Seekers variants, addition-only
 charms: no reward pool holds them. They trigger when a played hand contains at least two dice showing the

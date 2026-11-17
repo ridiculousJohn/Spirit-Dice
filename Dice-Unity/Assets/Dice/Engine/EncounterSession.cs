@@ -10,37 +10,38 @@ namespace Dice.Engine
         internal const ulong RuleRandomSalt = 0x6a09e667f3bcc909UL;
         private const ulong RewardRandomSalt = 0xd1b54a32d192ed03UL;
         private readonly MechanicalCatalog catalog;
-        private readonly EncounterDefinition definition;
+        private readonly EncounterInPlay inPlay;
         private EncounterState state;
 
         public Resolution InitialResolution { get; }
-        /** The committed state and the encounter, as actions validate against them. */
+        /** The committed state, as actions validate against it. */
         internal EncounterState State => state;
-        internal EncounterDefinition Definition => definition;
-        public EncounterSnapshot Snapshot => new EncounterSnapshot(state, definition, catalog.Version);
+        /** What the run plays: the catalog's encounter and the items the player carries. */
+        public EncounterInPlay InPlay => inPlay;
+        public EncounterSnapshot Snapshot => new EncounterSnapshot(state, inPlay, catalog.Version);
 
         private EncounterSession(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed, IEnumerable<ModifierDefinition.Id> unlockedModifierIds,
-            IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds)
+            IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds, IEnumerable<ItemDefinition.Id> carriedItemIds)
         {
             this.catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            definition = catalog.GetEncounter(encounterId);
+            inPlay = catalog.GetEncounterInPlay(encounterId, carriedItemIds ?? Array.Empty<ItemDefinition.Id>());
             state = new EncounterState
             {
-                HandUpgrades = new List<int>(definition.StartingUpgrades).ToArray(),
+                HandUpgrades = new List<int>(inPlay.Encounter.StartingUpgrades).ToArray(),
                 DiceRandom = new DeterministicRandom(seed),
                 RewardRandom = new DeterministicRandom(seed ^ RewardRandomSalt),
                 // Only rules that draw from this stream seed it; other encounters keep it empty.
-                RuleRandom = new DeterministicRandom(EncounterRuleResolver.UsesRuleRandom(definition) ? seed ^ RuleRandomSalt : 0),
-                RewardRefreshes = definition.RewardPolicy?.StartingRefreshes ?? 0,
-                Modifiers = new ModifierInstanceState[definition.StartingModifiers.Count],
-                PieceStates = TablePieceStates.Initial(definition),
-                RuleStates = EncounterRuleResolver.InitialStates(definition)
+                RuleRandom = new DeterministicRandom(EncounterRuleResolver.UsesRuleRandom(inPlay) ? seed ^ RuleRandomSalt : 0),
+                RewardRefreshes = inPlay.Encounter.RewardPolicy?.StartingRefreshes ?? 0,
+                Modifiers = new ModifierInstanceState[inPlay.Encounter.StartingModifiers.Count],
+                PieceStates = TablePieceStates.Initial(inPlay),
+                RuleStates = EncounterRuleResolver.InitialStates(inPlay)
             };
             for (int i = 0; i < state.Modifiers.Length; ++i)
                 state.Modifiers[i] = new ModifierInstanceState
                 {
                     InstanceId = i + 1L,
-                    DefinitionId = definition.StartingModifiers[i]
+                    DefinitionId = inPlay.Encounter.StartingModifiers[i]
                 };
             // A session created without the player's discoveries, as previews and diagnostics are, has discovered every family.
             AddDiscoveredFamilies(discoveredFamilyIds ?? FamilyIds(catalog));
@@ -53,9 +54,11 @@ namespace Dice.Engine
             InitialResolution = new Resolution(-1, Snapshot, events);
         }
 
+        /** Starts the encounter with the identified items carried; none when carriedItemIds is omitted. */
         public static EncounterSession CreateEncounter(MechanicalCatalog catalog, EncounterDefinition.Id encounterId, ulong seed,
-            IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null)
-            => new EncounterSession(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds);
+            IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null, IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds = null,
+            IEnumerable<ItemDefinition.Id> carriedItemIds = null)
+            => new EncounterSession(catalog, encounterId, seed, unlockedModifierIds, discoveredFamilyIds, carriedItemIds);
 
         private static List<ModifierFamilyDefinition.Id> FamilyIds(MechanicalCatalog catalog)
         {
@@ -93,22 +96,22 @@ namespace Dice.Engine
             state = next;
         }
 
-        private EncounterSession(MechanicalCatalog catalog, EncounterDefinition definition, EncounterState state)
+        private EncounterSession(MechanicalCatalog catalog, EncounterInPlay inPlay, EncounterState state)
         {
             this.catalog = catalog;
-            this.definition = definition;
+            this.inPlay = inPlay;
             this.state = state;
             InitialResolution = new Resolution(state.Revision, Snapshot, Array.Empty<RuleEvent>());
         }
 
-        public EncounterSaveData CaptureSave() => EncounterPersistence.Capture(catalog, definition, state);
+        public EncounterSaveData CaptureSave() => EncounterPersistence.Capture(catalog, inPlay, state);
 
         public static RestoreEncounterResult RestoreEncounter(MechanicalCatalog catalog, EncounterSaveData save)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (!EncounterPersistence.TryRestore(catalog, save, out var definition, out var state, out var error, out var detail))
+            if (!EncounterPersistence.TryRestore(catalog, save, out var inPlay, out var state, out var error, out var detail))
                 return new RestoreEncounterResult(null, error, detail);
-            return new RestoreEncounterResult(new EncounterSession(catalog, definition, state), EncounterRestoreError.None, null);
+            return new RestoreEncounterResult(new EncounterSession(catalog, inPlay, state), EncounterRestoreError.None, null);
         }
 
         public Resolution Execute(EncounterAction action, long expectedRevision)
@@ -122,7 +125,7 @@ namespace Dice.Engine
             var events = new List<RuleEvent>();
             action.Resolve(this, next, events);
             next.Revision = checked(state.Revision + 1);
-            var snapshot = new EncounterSnapshot(next, definition, catalog.Version);
+            var snapshot = new EncounterSnapshot(next, inPlay, catalog.Version);
             var result = new Resolution(state.Revision, snapshot, events);
             state = next;
             return result;
@@ -132,7 +135,7 @@ namespace Dice.Engine
 
         /** Inspect PlayHand eligibility without applying effects, consuming resources, or advancing random streams. */
         public ReadOnlyCollection<ModifierInspection> InspectModifiersForPlayHand()
-            => ModifierResolver.InspectForPlayHand(state, catalog, definition);
+            => ModifierResolver.InspectForPlayHand(state, catalog, inPlay);
 
         public HandPreview PreviewHandResolution()
         {
@@ -151,11 +154,11 @@ namespace Dice.Engine
             --next.HandsRemaining;
             events.Add(new ResourceChangedEvent(next, ResourceKind.Hands, ResourceChangeCause.PlayHand,
                 beforeHands, next.HandsRemaining));
-            activations = ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayHand, beforeHands, events);
+            activations = ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.PlayHand, beforeHands, events);
             ruleBonuses = new List<EncounterRuleActivatedEvent>();
-            HandDice hand = EncounterRuleResolver.CurrentHand(definition, next);
+            HandDice hand = EncounterRuleResolver.CurrentHand(inPlay, next);
             long ruleMultiplier = 0;
-            foreach (var rule in definition.Rules)
+            foreach (var rule in inPlay.Rules)
             {
                 long bonus = rule.ScoredHandMultiplierBonus(hand, next.TotalHandsPlayed);
                 if (bonus == 0) continue;
@@ -193,14 +196,14 @@ namespace Dice.Engine
 
         private void BeginRewards(EncounterState next, List<RuleEvent> events)
         {
-            if (definition.RewardPolicy == null)
+            if (inPlay.Encounter.RewardPolicy == null)
             {
                 next.Phase = EncounterPhase.AwaitingRewards;
                 events.Add(new RewardsRequiredEvent(next));
                 return;
             }
             int before = next.RewardRefreshes;
-            next.RewardRefreshes = checked(before + definition.RewardPolicy.RefreshesPerClear);
+            next.RewardRefreshes = checked(before + inPlay.Encounter.RewardPolicy.RefreshesPerClear);
             if (before != next.RewardRefreshes)
                 events.Add(new ResourceChangedEvent(next, ResourceKind.RewardRefreshes, ResourceChangeCause.StageClear,
                     before, next.RewardRefreshes));
@@ -211,13 +214,13 @@ namespace Dice.Engine
         {
             var owned = new ModifierDefinition.Id[next.Modifiers.Length];
             for (int i = 0; i < owned.Length; ++i) owned[i] = next.Modifiers[i].DefinitionId;
-            var generated = RewardGenerator.GenerateModifiers(catalog, definition.RewardPolicy, next.ClearedStageNumber,
-                owned, next.ExcludedRewardFamilies, ref next.RewardRandom, definition, next.UnlockedModifierIds);
+            var generated = RewardGenerator.GenerateModifiers(catalog, inPlay.Encounter.RewardPolicy, next.ClearedStageNumber,
+                owned, next.ExcludedRewardFamilies, ref next.RewardRandom, inPlay, next.UnlockedModifierIds);
             next.ExcludedRewardFamilies = new List<ModifierFamilyDefinition.Id>(generated.ExcludedFamilyIds);
             // Upgrade choices are fixed before any modifier refresh can consume the reward stream.
             if (!isRefresh)
                 next.PendingUpgradeCategories = new List<HandCategory>(RewardGenerator.GenerateHandUpgrades(catalog,
-                    definition.RewardPolicy, next.IncomingStageNumber, next.HandUpgrades, next.RecentHandUpgrades,
+                    inPlay.Encounter.RewardPolicy, next.IncomingStageNumber, next.HandUpgrades, next.RecentHandUpgrades,
                     ref next.RewardRandom));
             var options = new List<RewardOption>();
             foreach (var id in generated.ModifierIds)
@@ -236,7 +239,7 @@ namespace Dice.Engine
         internal void RefreshModifierOffer(EncounterState next, List<RuleEvent> events)
         {
             int before = next.RewardRefreshes;
-            next.RewardRefreshes -= definition.RewardPolicy.RefreshCost;
+            next.RewardRefreshes -= inPlay.Encounter.RewardPolicy.RefreshCost;
             events.Add(new ResourceChangedEvent(next, ResourceKind.RewardRefreshes, ResourceChangeCause.RefreshReward,
                 before, next.RewardRefreshes));
             OfferModifiers(next, true, events);
@@ -285,7 +288,7 @@ namespace Dice.Engine
             next.HandUpgrades[(int)category] = checked(before + 1);
             events.Add(new HandUpgradedEvent(next, category, before));
             next.RecentHandUpgrades.Insert(0, category);
-            int historyCount = definition.RewardPolicy.MaximumExcludedRecentChoices;
+            int historyCount = inPlay.Encounter.RewardPolicy.MaximumExcludedRecentChoices;
             if (next.RecentHandUpgrades.Count > historyCount)
                 next.RecentHandUpgrades.RemoveRange(historyCount, next.RecentHandUpgrades.Count - historyCount);
             next.PendingReward = null;
@@ -311,14 +314,14 @@ namespace Dice.Engine
         {
             long id = next.NextOfferId;
             next.NextOfferId = checked(id + 1);
-            next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options, definition);
+            next.PendingReward = new RewardOffer(id, kind, next.StageIndex + 1, options, inPlay);
             next.Phase = kind.WaitingPhase;
             events.Add(new RewardOfferedEvent(next, next.PendingReward, isRefresh));
         }
 
         private void AdvanceStage(EncounterState next, List<RuleEvent> events)
         {
-            next.PreviousStageStartingHands = definition.Stages[next.StageIndex].StartingHands;
+            next.PreviousStageStartingHands = inPlay.Encounter.Stages[next.StageIndex].StartingHands;
             next.PreviousStageHandsRemaining = next.HandsRemaining;
             ++next.StageIndex;
             StartStage(next, events);
@@ -326,7 +329,7 @@ namespace Dice.Engine
 
         private void StartStage(EncounterState next, List<RuleEvent> events)
         {
-            StageDefinition stage = definition.Stages[next.StageIndex];
+            StageDefinition stage = inPlay.Encounter.Stages[next.StageIndex];
             next.Phase = EncounterPhase.Playing;
             next.RemainingThreshold = stage.Threshold;
             next.HandsRemaining = stage.StartingHands;
@@ -352,12 +355,12 @@ namespace Dice.Engine
             next.HandBeforeLastReroll = null;
             events.Add(new HandStartedEvent(next));
             // Dice a rule holds out of the opening roll keep the face and bay they show.
-            int rolledMask = DiceValues.AllMask & ~EncounterRuleResolver.OpeningRollHeldDice(definition, next);
+            int rolledMask = DiceValues.AllMask & ~EncounterRuleResolver.OpeningRollHeldDice(inPlay, next);
             next.CurrentDice = Roll(next, rolledMask);
             events.Add(new DiceRolledEvent(next, RollKind.Initial, null, rolledMask, rolledMask));
-            EncounterRuleResolver.HandStarted(definition, next, rolledMask, events);
-            next.InitialHand = EncounterRuleResolver.CurrentHand(definition, next);
-            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.InitialRoll, next.HandsRemaining, events);
+            EncounterRuleResolver.HandStarted(inPlay, next, rolledMask, events);
+            next.InitialHand = EncounterRuleResolver.CurrentHand(inPlay, next);
+            ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.InitialRoll, next.HandsRemaining, events);
         }
 
         private static DiceValues Roll(EncounterState next, int selectedMask)
@@ -371,7 +374,7 @@ namespace Dice.Engine
         internal void Reroll(EncounterState next, int selectedMask, List<RuleEvent> events)
         {
             int beforeRerolls = next.RerollsRemaining;
-            var costWaiver = EncounterRuleResolver.WaiveRerollCost(definition, next);
+            var costWaiver = EncounterRuleResolver.WaiveRerollCost(inPlay, next);
             if (costWaiver == null) --next.RerollsRemaining;
             else events.Add(new EncounterRuleActivatedEvent(next, costWaiver.Identity));
             next.RerollsSpentOnHand = checked(next.RerollsSpentOnHand + 1);
@@ -381,22 +384,22 @@ namespace Dice.Engine
                 events.Add(new ResourceChangedEvent(next, ResourceKind.Rerolls, ResourceChangeCause.RerollDice,
                     beforeRerolls, next.RerollsRemaining));
             DiceValues before = next.CurrentDice;
-            next.HandBeforeLastReroll = EncounterRuleResolver.CurrentHand(definition, next);
+            next.HandBeforeLastReroll = EncounterRuleResolver.CurrentHand(inPlay, next);
             next.CurrentDice = Roll(next, selectedMask);
             next.LatestRerollMask = selectedMask;
             next.EverRerolledMask |= selectedMask;
             next.LatestChangedMask = before.DifferingMask(next.CurrentDice);
             events.Add(new DiceRolledEvent(next, RollKind.PlayerReroll, before, selectedMask, next.LatestChangedMask));
-            EncounterRuleResolver.PlayerRerollResolved(definition, next, selectedMask, events);
+            EncounterRuleResolver.PlayerRerollResolved(inPlay, next, selectedMask, events);
             // Interference targets kept dice, then reroll charms observe the disturbed faces.
-            EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayerReroll,
+            EncounterRuleResolver.Interfere(inPlay, next, InterferenceTrigger.PlayerReroll,
                 DiceValues.AllMask & ~selectedMask, events);
-            ModifierResolver.Resolve(next, catalog, definition, ModifierPhase.PlayerReroll, next.HandsRemaining, events);
+            ModifierResolver.Resolve(next, catalog, inPlay, ModifierPhase.PlayerReroll, next.HandsRemaining, events);
         }
 
         internal void InteractWithPiece(EncounterState next, InteractWithPieceAction action, List<RuleEvent> events)
         {
-            TablePieceStates.TryFind(definition, action.PieceId, action.InteractionIndex, out int slot, out var interaction);
+            TablePieceStates.TryFind(inPlay, action.PieceId, action.InteractionIndex, out int slot, out var interaction);
             var before = next.PieceStates[slot];
             var after = interaction.Apply(before, action.Input);
             next.PieceStates[slot] = after;
@@ -406,7 +409,7 @@ namespace Dice.Engine
         internal void Play(EncounterState next, List<RuleEvent> events)
         {
             // Committed hands may be disturbed before scoring; previews never are.
-            EncounterRuleResolver.Interfere(definition, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
+            EncounterRuleResolver.Interfere(inPlay, next, InterferenceTrigger.PlayHand, DiceValues.AllMask, events);
             ScoreBreakdown score = ResolvePlayedHand(next, events, out var activations, out var ruleBonuses);
             next.TotalScore = checked(next.TotalScore + score.HandScore);
             next.TotalHandsPlayed = checked(next.TotalHandsPlayed + 1);
@@ -416,7 +419,7 @@ namespace Dice.Engine
             next.RemainingThreshold = score.HandScore >= beforeThreshold ? 0 : beforeThreshold - score.HandScore;
             events.Add(new ThresholdChangedEvent(next, beforeThreshold, score.HandScore));
             next.PreviousPlayedHand = new HandDice(next.CurrentDice, score.CountedDiceMask);
-            EncounterRuleResolver.HandPlayed(definition, next, next.PreviousPlayedHand.Value, events);
+            EncounterRuleResolver.HandPlayed(inPlay, next, next.PreviousPlayedHand.Value, events);
 
             // Clearing on the final available hand still wins; exhaustion is checked after clearing.
             if (next.RemainingThreshold == 0)
@@ -446,8 +449,8 @@ namespace Dice.Engine
 
         private bool OfferModifierUnlocks(EncounterState next, List<RuleEvent> events)
         {
-            if (!definition.HasUnlockMilestone(next.ClearedStageNumber)) return false;
-            var candidates = definition.UnlockCandidates(catalog, next.UnlockedModifierIds, next.DiscoveredFamilyIds);
+            if (!inPlay.Encounter.HasUnlockMilestone(next.ClearedStageNumber)) return false;
+            var candidates = inPlay.Encounter.UnlockCandidates(catalog, next.UnlockedModifierIds, next.DiscoveredFamilyIds);
             var options = new List<RewardOption>();
             while (options.Count < ModifierUnlockMilestone.OfferSize && candidates.Count > 0)
             {
@@ -478,8 +481,8 @@ namespace Dice.Engine
         internal void ContinueAfterUnlock(EncounterState next, List<RuleEvent> events)
         {
             next.PendingReward = null;
-            if (next.StageIndex == definition.Stages.Count - 1) Complete(next, EncounterOutcome.Won, events);
-            else if (definition.Stages[next.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards) BeginRewards(next, events);
+            if (next.StageIndex == inPlay.Encounter.Stages.Count - 1) Complete(next, EncounterOutcome.Won, events);
+            else if (inPlay.Encounter.Stages[next.StageIndex].ExitBehavior == StageExitBehavior.AwaitRewards) BeginRewards(next, events);
             else AdvanceStage(next, events);
         }
     }

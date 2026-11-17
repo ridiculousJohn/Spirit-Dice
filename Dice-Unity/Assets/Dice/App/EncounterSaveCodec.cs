@@ -21,8 +21,10 @@ namespace Dice.App
         // A rule state belongs to its rule's save class, so a field that class does not define is rejected.
         private static readonly JsonSerializerSettings RuleStateSettings = CreateSettings(MissingMemberHandling.Error);
         // To change the format, raise EncounterSaveData.CurrentFormatVersion and append a step that upgrades the previous format.
+        // Format 16 lacks the carried items field; such a run carries no items.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
-            nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion);
+            nameof(EncounterSaveData.SaveFormatVersion), EncounterSaveData.CurrentFormatVersion,
+            document => document[nameof(EncounterSaveData.CarriedItemIds)] = new JArray());
 
         /** The oldest save format the codec reads. */
         internal static int OldestFormatVersion => FormatUpgrades.OldestVersion;
@@ -112,29 +114,23 @@ namespace Dice.App
             settings.Converters.Add(ContentIds.Encounter);
             settings.Converters.Add(ContentIds.Piece);
             settings.Converters.Add(ContentIds.Rule);
+            settings.Converters.Add(ContentIds.Item);
             return settings;
         }
 
         /**
-         * Validates each rule state against its owning rule's save type and deserializes it with that type.
-         * States of rules the catalog does not define stay as parsed JSON, which restore rejects.
+         * Validates each rule state against its rule's save type, found by the rule's id among every rule of the content, and
+         * deserializes it with that type. States of rules the catalog does not define stay as parsed JSON, which restore rejects.
          */
         private static List<object> ReadRuleStates(JObject document, MechanicalCatalog catalog, JsonSerializer serializer)
         {
             var values = new List<object>();
             if (!(document[nameof(EncounterSaveData.RuleStates)] is JArray entries)) return values;
-            var encounter = FindEncounter(document, catalog);
             foreach (var entry in entries)
             {
                 var ruleId = (entry as JObject)?[nameof(EncounterSaveRuleData.RuleId)];
                 var state = (entry as JObject)?[nameof(EncounterSaveRuleData.State)];
-                Type type = null;
-                if (encounter != null && ruleId != null)
-                {
-                    EncounterRuleDefinition.Id id = ContentIds.Rule.Read(ruleId);
-                    foreach (var rule in encounter.Rules)
-                        if (rule.Identity == id) type = rule.SaveDataType;
-                }
+                Type type = ruleId != null ? catalog.GetRuleSaveDataType(ContentIds.Rule.Read(ruleId)) : null;
                 if (type == null || state == null || state.Type == JTokenType.Null)
                 {
                     values.Add(state == null || state.Type == JTokenType.Null ? null : state);
@@ -144,16 +140,6 @@ namespace Dice.App
                 values.Add(state.ToObject(type, JsonSerializer.Create(RuleStateSettings)));
             }
             return values;
-        }
-
-        private static EncounterDefinition FindEncounter(JObject document, MechanicalCatalog catalog)
-        {
-            var token = document[nameof(EncounterSaveData.EncounterId)];
-            if (token == null) return null;
-            EncounterDefinition.Id id = ContentIds.Encounter.Read(token);
-            foreach (var encounter in catalog.Encounters)
-                if (encounter.Identity == id) return encounter;
-            return null;
         }
 
         private static void ValidateFieldNames(JToken token, Type type, IContractResolver resolver)

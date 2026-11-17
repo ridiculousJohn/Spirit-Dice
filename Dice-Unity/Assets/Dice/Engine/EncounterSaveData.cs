@@ -2,12 +2,14 @@ namespace Dice.Engine
 {
     public sealed class EncounterSaveData
     {
-        public const int CurrentFormatVersion = 16;
+        public const int CurrentFormatVersion = 17;
         public int SaveFormatVersion;
         public int RulesVersion;
         public int RandomAlgorithmVersion;
         public string CatalogVersion;
         public EncounterDefinition.Id EncounterId;
+        /** The items the player carries into the encounter, those it does not lend; what the run plays is rebuilt from them. */
+        public ItemDefinition.Id[] CarriedItemIds;
         public long Revision;
         public EncounterPhase Phase;
         public EncounterOutcome Outcome;

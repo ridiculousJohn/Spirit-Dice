@@ -222,8 +222,9 @@ namespace Dice.Engine
                 if (!pieceIds.Add(piece.Identity))
                     throw new ArgumentException("The table piece " + piece.Identity + " is in play more than once.", nameof(pieces));
             Pieces = pieceList.AsReadOnly();
-            // Each rule is checked against everything in play, so a rule may rely on what an item provides.
-            foreach (var rule in Rules) rule.ValidateDefinition(this);
+            // Each rule is checked against everything in play, so a rule may rely on what an item provides; with nothing
+            // carried, that is the encounter's own rules and pieces and its lent items'.
+            _ = new EncounterInPlay(this, Array.Empty<ItemDefinition>());
         }
 
         /** Whether clearing the stage numbered stageNumber offers a choice from UnlockRewardModifierIds. */
@@ -269,6 +270,7 @@ namespace Dice.Engine
         private readonly Dictionary<ModifierFamilyDefinition.Id, ModifierFamilyDefinition> familiesById;
         private readonly Dictionary<ItemDefinition.Id, ItemDefinition> itemsById;
         private readonly HashSet<ModifierDefinition.Id> additionOnlyIds;
+        private readonly Dictionary<EncounterRuleDefinition.Id, Type> ruleSaveDataTypes = new Dictionary<EncounterRuleDefinition.Id, Type>();
         public string Version { get; }
         public ReadOnlyCollection<HandDefinition> Hands { get; }
         public ReadOnlyCollection<ModifierDefinition> Modifiers { get; }
@@ -377,10 +379,22 @@ namespace Dice.Engine
                         foreach (var pool in layout.Pools)
                             if (validatedPools.Add(pool)) ValidatePool(pool, nameof(encounters));
                 ValidateActivation(encounter, nameof(encounters));
+                // The player may carry any item of the catalog, so starting an encounter never fails on what is carried.
+                try { _ = new EncounterInPlay(encounter, itemList); }
+                catch (ArgumentException exception)
+                {
+                    throw new ArgumentException("The encounter " + encounter.Identity +
+                        " cannot be played with every catalog item it does not lend carried: " + exception.Message, nameof(encounters), exception);
+                }
                 this.encounters.Add(encounter.Identity, encounter);
                 encounterList.Add(encounter);
             }
             if (this.encounters.Count == 0) throw new ArgumentException("At least one encounter is required.", nameof(encounters));
+            // A saved rule state is read by its rule's id alone, so every rule of the content with that id saves one type.
+            foreach (var item in itemList)
+                foreach (var rule in item.Rules) AddRuleSaveDataType(rule, nameof(items));
+            foreach (var encounter in encounterList)
+                foreach (var rule in encounter.Rules) AddRuleSaveDataType(rule, nameof(encounters));
             additionOnlyIds = new HashSet<ModifierDefinition.Id>(modifiersById.Keys);
             foreach (var pool in validatedPools)
             {
@@ -391,6 +405,13 @@ namespace Dice.Engine
             Hands = Array.AsReadOnly(byCategory);
             Encounters = encounterList.AsReadOnly();
             Items = itemList.AsReadOnly();
+        }
+
+        private void AddRuleSaveDataType(EncounterRuleDefinition rule, string parameter)
+        {
+            if (!ruleSaveDataTypes.TryGetValue(rule.Identity, out var known)) ruleSaveDataTypes.Add(rule.Identity, rule.SaveDataType);
+            else if (known != rule.SaveDataType)
+                throw new ArgumentException("Two rules share the id " + rule.Identity + " with different save data types.", parameter);
         }
 
         /** The charms a rule brings must be charms of the catalog that are reward-eligible. */
@@ -492,6 +513,27 @@ namespace Dice.Engine
             if (!encounters.TryGetValue(id, out var definition)) throw new KeyNotFoundException(id.ToString());
             return definition;
         }
+
+        /**
+         * What a run plays: the catalog's encounter and the identified items carried, resolved through the catalog. The one
+         * place that turns stored ids into what a run plays. Throws KeyNotFoundException for an encounter or item the catalog
+         * lacks.
+         */
+        public EncounterInPlay GetEncounterInPlay(EncounterDefinition.Id encounterId, IEnumerable<ItemDefinition.Id> carriedItemIds)
+        {
+            if (carriedItemIds == null) throw new ArgumentNullException(nameof(carriedItemIds));
+            var encounter = GetEncounter(encounterId);
+            var carried = new List<ItemDefinition>();
+            foreach (var id in carriedItemIds) carried.Add(GetItem(id));
+            return new EncounterInPlay(encounter, carried);
+        }
+
+        /**
+         * The save data type of the content's rule with the id, a rule of its encounters or of its items, wherever it is in
+         * play; null for an id no rule of the content has, or a rule without saved state.
+         */
+        public Type GetRuleSaveDataType(EncounterRuleDefinition.Id ruleId)
+            => ruleSaveDataTypes.TryGetValue(ruleId, out var type) ? type : null;
 
         /** Where a charm can be obtained in the catalog's encounters. */
         public ModifierSources GetModifierSources(ModifierDefinition.Id modifierId)

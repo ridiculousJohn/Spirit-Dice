@@ -339,7 +339,7 @@ namespace Dice.Presentation
         {
             invitationShown = true;
             var definition = encounterControls.Catalog.GetEncounter(encounter.Identity);
-            foreach (var rule in encounterControls.ItemPresentation.CardsInPlay(table, definition).Cards)
+            foreach (var rule in encounterControls.ItemPresentation.CardsInPlay(table, definition.Items).Cards)
             {
                 if (rule == null) continue;
                 int index = invitationRuleCount++;

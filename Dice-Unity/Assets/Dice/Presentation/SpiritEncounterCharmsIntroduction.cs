@@ -41,11 +41,14 @@ namespace Dice.Presentation
                 snapshot.PendingReward.IntroducesEncounterModifiers;
         }
 
-        /** Shows the introduction over the pending offer when it introduces it and was not dismissed; hides it otherwise. */
-        public void Refresh(MechanicalCatalog catalog, ModifierPresentationCatalog charms, EncounterSnapshot snapshot,
-            EncounterJourneyAsset journey)
+        /**
+         * Shows the introduction over the pending offer of the encounter the run plays when it introduces it and was not
+         * dismissed; hides it otherwise.
+         */
+        public void Refresh(MechanicalCatalog catalog, ModifierPresentationCatalog charms, EncounterInPlay inPlay,
+            EncounterSnapshot snapshot, EncounterJourneyAsset journey)
         {
-            var encounter = catalog != null && snapshot != null ? catalog.GetEncounter(snapshot.EncounterId) : null;
+            var encounter = inPlay?.Encounter;
             if (!IntroducesOffer(encounter, snapshot) || snapshot.PendingReward.TargetStageIndex == dismissedTargetStageIndex)
             {
                 screen.Hide();

@@ -26,6 +26,7 @@ namespace Dice.App
 
         public EncounterSnapshot Snapshot { get; private set; }
         public MechanicalCatalog Catalog { get; private set; }
+        public EncounterInPlay InPlay => application?.InPlay;
         public ModifierPresentationCatalog ModifierPresentation { get; private set; }
         public ItemPresentationCatalog ItemPresentation { get; private set; }
         public bool PresentationReady { get; private set; }
@@ -111,7 +112,7 @@ namespace Dice.App
             if (IsBusy) return;
             if (!PrepareProfile(savePath)) return;
             var next = new EncounterApplication(catalog, encounterId, seed, progression.KnownUnlockedModifiers(catalog),
-                progression.KnownDiscoveredFamilies(catalog));
+                progression.KnownDiscoveredFamilies(catalog), progression.KnownOwnedItems(catalog));
             Catalog = catalog;
             this.encounterId = encounterId;
             this.seed = seed;
@@ -241,7 +242,7 @@ namespace Dice.App
                 if (!progression.PersistVisit(selected)) { SetJourneyStatus(ProfileProblem); return; }
                 ulong nextSeed = SelectSeed();
                 var next = new EncounterApplication(Catalog, selected, nextSeed, progression.KnownUnlockedModifiers(Catalog),
-                    ProfileDiscoveredFamilyIds);
+                    ProfileDiscoveredFamilyIds, progression.KnownOwnedItems(Catalog));
                 encounterId = selected;
                 seed = nextSeed;
                 navigation.Commit(transition);

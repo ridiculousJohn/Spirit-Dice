@@ -99,11 +99,11 @@ namespace Dice.Engine
         public override Type SaveDataType => typeof(DieCarryOverSaveData);
         internal override EncounterRuleState CreateState() => new DieCarryOverState();
 
-        internal override void ValidateDefinition(EncounterDefinition encounter)
+        internal override void ValidateDefinition(EncounterInPlay inPlay)
         {
-            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out _, out _))
+            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out _, out _))
                 throw new ArgumentException("The carry-over " + Identity + " must reference a table piece in play with a position interaction: piece " +
-                    PieceId + ".", nameof(encounter));
+                    PieceId + ".", nameof(inPlay));
         }
 
         internal override object CaptureState(EncounterRuleState state)
@@ -154,12 +154,12 @@ namespace Dice.Engine
         }
 
         /** The die in the piece's bay carries into the next hand if it counted; the neutral position carries nothing. */
-        internal override void HandPlayed(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+        internal override void HandPlayed(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
             HandDice scoredHand, List<RuleEvent> events)
         {
             var carry = (DieCarryOverState)ruleState;
             carry.PendingMask = 0;
-            TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out int slot, out _);
+            TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out int slot, out _);
             var position = ((PiecePositionState)state.PieceStates[slot]).Position;
             if (position.Kind != PiecePositionKind.DiceBay) return;
             int bayMask = 1 << position.Index;

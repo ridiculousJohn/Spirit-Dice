@@ -66,6 +66,17 @@ namespace Dice.App
                     yield return modifier.Identity;
         }
 
+        /** The profile's owned items that the catalog has, in the catalog's item order. */
+        public IReadOnlyList<ItemDefinition.Id> KnownOwnedItems(MechanicalCatalog catalog)
+        {
+            if (profile == null || catalog == null) return Array.Empty<ItemDefinition.Id>();
+            var owned = new HashSet<ItemDefinition.Id>(profile.OwnedItemIds);
+            var result = new List<ItemDefinition.Id>();
+            foreach (var item in catalog.Items)
+                if (owned.Contains(item.Identity)) result.Add(item.Identity);
+            return result;
+        }
+
         /** The profile's discovered families that the catalog has, in the catalog's family order. */
         public IReadOnlyList<ModifierFamilyDefinition.Id> KnownDiscoveredFamilies(MechanicalCatalog catalog)
         {

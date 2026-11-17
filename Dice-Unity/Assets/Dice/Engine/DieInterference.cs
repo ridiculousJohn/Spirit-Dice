@@ -167,7 +167,7 @@ namespace Dice.Engine
             value.LatestDisturbedMask = 0;
         }
 
-        internal override bool Interfere(EncounterDefinition encounter, EncounterState state, EncounterRuleState ruleState,
+        internal override bool Interfere(EncounterInPlay inPlay, EncounterState state, EncounterRuleState ruleState,
             InterferenceTrigger trigger, int eligibleMask, List<RuleEvent> events)
         {
             var disturbance = (DieInterferenceState)ruleState;
@@ -177,7 +177,7 @@ namespace Dice.Engine
             int bay = DiceValues.NthBay(eligibleMask, state.RuleRandom.NextInt(DiceValues.CountBays(eligibleMask)));
             var kind = state.RuleRandom.NextInt(ForcedRerollWeight + FlipWeight) < ForcedRerollWeight
                 ? DieInterferenceKind.ForcedReroll : DieInterferenceKind.Flip;
-            var protector = EncounterRuleResolver.Protector(encounter, state, bay, kind);
+            var protector = EncounterRuleResolver.Protector(inPlay, state, bay, kind);
             if (protector != null)
             {
                 events.Add(new DisturbanceBlockedEvent(state, Identity, bay, kind, trigger, protector.Identity));
@@ -218,17 +218,17 @@ namespace Dice.Engine
 
         internal override bool IsAvailable(EncounterState state) => true;
 
-        internal override void ValidateDefinition(EncounterDefinition encounter)
+        internal override void ValidateDefinition(EncounterInPlay inPlay)
         {
-            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out _, out _))
+            if (!TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out _, out _))
                 throw new ArgumentException("The ward " + Identity + " must reference a table piece in play with a position interaction: piece " +
-                    PieceId + ".", nameof(encounter));
+                    PieceId + ".", nameof(inPlay));
         }
 
-        internal override bool ProtectsBay(EncounterDefinition encounter, EncounterState state, int bay, DieInterferenceKind kind)
+        internal override bool ProtectsBay(EncounterInPlay inPlay, EncounterState state, int bay, DieInterferenceKind kind)
         {
             if (!blocked.Contains(kind) ||
-                !TablePieceStates.TryFind<PositionInteractionDefinition>(encounter, PieceId, out int slot, out _))
+                !TablePieceStates.TryFind<PositionInteractionDefinition>(inPlay, PieceId, out int slot, out _))
                 return false;
             var position = ((PiecePositionState)state.PieceStates[slot]).Position;
             return position.Kind == PiecePositionKind.DiceBay && position.Index == bay;

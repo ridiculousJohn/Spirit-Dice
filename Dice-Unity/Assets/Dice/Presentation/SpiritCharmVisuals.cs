@@ -53,39 +53,40 @@ namespace Dice.Presentation
         private enum Offering { Pools, EncounterAddition, RuleAddition }
 
         /**
-         * A charm on the encounter's own charm additions is exclusive to the encounter, one a rule in play brings to that
-         * rule, and any other comes from the reward pools. Whether the charm needs unlocking does not change where it is
-         * offered.
+         * A charm on the encounter's own charm additions is exclusive to the encounter, one a rule in play brings, the
+         * encounter's or a carried item's, to that rule, and any other comes from the reward pools. Whether the charm needs
+         * unlocking does not change where it is offered.
          */
-        private static Offering OfferingIn(ModifierDefinition definition, EncounterDefinition encounter)
+        private static Offering OfferingIn(ModifierDefinition definition, EncounterInPlay inPlay)
         {
-            if (encounter.OwnEncounterModifierIds.Contains(definition.Identity)) return Offering.EncounterAddition;
-            return encounter.EncounterModifierIds.Contains(definition.Identity) ? Offering.RuleAddition : Offering.Pools;
+            if (inPlay.Encounter.OwnEncounterModifierIds.Contains(definition.Identity)) return Offering.EncounterAddition;
+            return inPlay.Encounter.EncounterModifierIds.Contains(definition.Identity) || inPlay.CarriedModifierIds.Contains(definition.Identity)
+                ? Offering.RuleAddition : Offering.Pools;
         }
 
         /** How the charm is obtained and where it can appear, for the encounter being played. */
-        internal static string AvailabilityText(ModifierDefinition definition, EncounterDefinition encounter,
+        internal static string AvailabilityText(ModifierDefinition definition, EncounterInPlay inPlay,
             EncounterSnapshot snapshot, SpiritUiWording.CharmAvailability wording)
         {
             string access;
             if (definition.Availability.RequiresUnlock)
                 access = snapshot.UnlockedModifierIds.Contains(definition.Identity) ? wording.permanentlyUnlocked : wording.requiresUnlock;
             else
-                switch (OfferingIn(definition, encounter))
+                switch (OfferingIn(definition, inPlay))
                 {
                     case Offering.EncounterAddition: access = wording.encounterExclusive; break;
                     case Offering.RuleAddition: access = wording.ruleExclusive; break;
                     default: access = wording.availableFromStart; break;
                 }
-            return wording.Availability(access, AvailabilityScopeText(definition, encounter, wording));
+            return wording.Availability(access, AvailabilityScopeText(definition, inPlay, wording));
         }
 
         /** Where the charm can appear, for the encounter being played, and its power tier. */
-        internal static string AvailabilityScopeText(ModifierDefinition definition, EncounterDefinition encounter,
+        internal static string AvailabilityScopeText(ModifierDefinition definition, EncounterInPlay inPlay,
             SpiritUiWording.CharmAvailability wording)
         {
             string scope;
-            switch (OfferingIn(definition, encounter))
+            switch (OfferingIn(definition, inPlay))
             {
                 case Offering.EncounterAddition: scope = wording.thisEncounter; break;
                 case Offering.RuleAddition: scope = wording.withItsRule; break;
@@ -100,13 +101,13 @@ namespace Dice.Presentation
         internal static string UnlockSummary(ISpiritEncounterControls controls, IReadOnlyList<ModifierDefinition.Id> ids, SpiritUiWording wording)
         {
             if (ids.Count == 0) return wording.ending.noUnlocks;
-            var encounter = controls.Catalog.GetEncounter(controls.Snapshot.EncounterId);
+            var inPlay = controls.InPlay;
             var names = new List<string>();
             foreach (var id in ids)
             {
                 var definition = controls.Catalog.GetModifier(id);
                 names.Add(wording.ending.UnlockedCharm(controls.ModifierPresentation.GetName(definition),
-                    AvailabilityScopeText(definition, encounter, wording.charmAvailability)));
+                    AvailabilityScopeText(definition, inPlay, wording.charmAvailability)));
             }
             return wording.ending.Unlocks(names, HasPendingProgress(controls));
         }

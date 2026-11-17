@@ -39,16 +39,16 @@ namespace Dice.Presentation
                     throw new InvalidOperationException("The item skin " + skin.name + " has no presentation for the item " + item.name + ".");
         }
 
-        /** The rule cards in play at the table for the encounter: the table's own cards, then each item's cards in item order. */
-        public RuleCardsInPlay CardsInPlay(EncounterTablePresentationAsset table, EncounterDefinition encounter)
+        /** The rule cards in play at the table with the items in play: the table's own cards, then each item's cards in item order. */
+        public RuleCardsInPlay CardsInPlay(EncounterTablePresentationAsset table, IReadOnlyList<ItemDefinition> items)
         {
             if (table == null) throw new ArgumentNullException(nameof(table));
-            if (encounter == null) throw new ArgumentNullException(nameof(encounter));
+            if (items == null) throw new ArgumentNullException(nameof(items));
             var cards = new List<EncounterRulePresentationAsset>(table.RulePresentations);
-            foreach (ItemDefinition item in encounter.Items)
+            foreach (ItemDefinition item in items)
             {
                 if (!presentations.TryGetValue(item.Identity, out ItemPresentationAsset presentation))
-                    throw new InvalidOperationException("The item " + item.Identity + " of the encounter " + encounter.Identity +
+                    throw new InvalidOperationException("The item " + item.Identity + " in play at the table " + table.name +
                         " has no presentation.");
                 cards.AddRange(presentation.RuleCards);
             }

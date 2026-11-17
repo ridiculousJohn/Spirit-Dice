@@ -17,10 +17,10 @@ namespace Dice.Tests
         public void GeneratedOffersIncludeAdditionsOnlyFromTheAuthoredClearedStage(int clearedStage, bool offered)
         {
             var catalog = Catalog(firstClearedStage: 3, ordinary: new[] { Owned });
-            var encounter = catalog.GetEncounter(TestContent.EncounterId);
+            var inPlay = catalog.GetEncounterInPlay(TestContent.EncounterId, Array.Empty<ItemDefinition.Id>());
             var random = new DeterministicRandom(7);
-            var generated = RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, clearedStage, TestModifiers.IdsOf(Owned),
-                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, encounter, Array.Empty<ModifierDefinition.Id>());
+            var generated = RewardGenerator.GenerateModifiers(catalog, inPlay.Encounter.RewardPolicy, clearedStage, TestModifiers.IdsOf(Owned),
+                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, inPlay, Array.Empty<ModifierDefinition.Id>());
             Assert.That(generated.ModifierIds, Is.EqualTo(offered ? TestModifiers.IdsOf(Addition) : Array.Empty<ModifierDefinition.Id>()));
         }
 

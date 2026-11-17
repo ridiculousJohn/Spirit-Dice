@@ -70,7 +70,8 @@ namespace Dice.Presentation
         private EncounterRulePresenters rulePresenters;
         // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
         private TablePiecePresenters piecePresenters;
-        private EncounterDefinition.Id? presentersEncounterId;
+        // What the run plays that the presenters were created for; null while none are.
+        private EncounterInPlay presentersInPlay;
         private bool applicationFocused = true;
         private bool applicationPaused;
         private UnityAction[] dieToggles;
@@ -603,7 +604,7 @@ namespace Dice.Presentation
                 GameplayHud.ShowNoEncounter(HudRuleCard, controls.Status);
                 return;
             }
-            bool createdPresenters = CreatePresenters(snapshot.EncounterId);
+            bool createdPresenters = CreatePresenters(controls.InPlay);
             if (!ReferenceEquals(snapshot, presentedSnapshot))
             {
                 ResetPresentation();
@@ -637,7 +638,8 @@ namespace Dice.Presentation
                 SetDiceSelection(controls.SelectedMask);
             }
             else if (!completed) RewardsPanel.Render(snapshot);
-            EncounterCharmsIntroduction.Refresh(controls.Catalog, controls.ModifierPresentation, snapshot, journeyControls?.SelectedJourney);
+            EncounterCharmsIntroduction.Refresh(controls.Catalog, controls.ModifierPresentation, controls.InPlay, snapshot,
+                journeyControls?.SelectedJourney);
             if (completed)
             {
                 SetGameplayVisible(false);
@@ -716,7 +718,7 @@ namespace Dice.Presentation
             CloseOverlays();
             if (resolution.Snapshot.Phase == EncounterPhase.Completed && RewardsPanel.Root.gameObject.activeSelf)
                 SetGameplayVisible(false);
-            CreatePresenters(resolution.Snapshot.EncounterId);
+            CreatePresenters(controls.InPlay);
             // An opening resolution may already have been refreshed as the installed state; its events build the rule state from nothing.
             if (resolution.PreviousRevision < 0) rulePresenters?.Sync(null, false);
             float openingFade = resolution.PreviousRevision < 0 && configuredTable != null
@@ -801,28 +803,39 @@ namespace Dice.Presentation
 
         /**
          * Creates the rule cards in play at the configured table, their rule presenters and the table's piece presenters for
-         * the encounter unless they already present it; true when created.
+         * what the run plays unless they already present it; true when created.
          */
-        private bool CreatePresenters(EncounterDefinition.Id encounterId)
+        private bool CreatePresenters(EncounterInPlay inPlay)
         {
-            if (presentersEncounterId == encounterId) return false;
+            if (PresentSameEncounter(presentersInPlay, inPlay)) return false;
             DisposePresenters();
-            CreatePresenters(controls.Catalog.GetEncounter(encounterId), controls.ItemPresentation);
-            presentersEncounterId = encounterId;
+            CreatePresenters(inPlay, controls.ItemPresentation);
+            presentersInPlay = inPlay;
             // New piece presenters place their props over the tray's current bay slots.
             PositionTablePieces();
             return true;
         }
 
-        private void CreatePresenters(EncounterDefinition encounter, ItemPresentationCatalog items)
+        /** Whether two runs play the same encounter carrying the same items, which the same presenters present. */
+        private static bool PresentSameEncounter(EncounterInPlay presented, EncounterInPlay inPlay)
+        {
+            if (presented == null || presented.Encounter.Identity != inPlay.Encounter.Identity ||
+                presented.CarriedItems.Count != inPlay.CarriedItems.Count)
+                return false;
+            for (int i = 0; i < presented.CarriedItems.Count; ++i)
+                if (presented.CarriedItems[i].Identity != inPlay.CarriedItems[i].Identity) return false;
+            return true;
+        }
+
+        private void CreatePresenters(EncounterInPlay inPlay, ItemPresentationCatalog items)
         {
             try
             {
-                ruleCards = items.CardsInPlay(configuredTable, encounter);
-                rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, encounter, () => new TableRuleContext(this));
+                ruleCards = items.CardsInPlay(configuredTable, inPlay.Items);
+                rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, inPlay, () => new TableRuleContext(this));
                 // New presenters start from the selection the tray already shows.
                 rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
-                piecePresenters = TablePiecePresenters.Create(tablePieces, encounter, new TablePieceContext(this));
+                piecePresenters = TablePiecePresenters.Create(tablePieces, inPlay, new TablePieceContext(this));
             }
             catch
             {
@@ -832,19 +845,19 @@ namespace Dice.Presentation
         }
 
         /**
-         * Builds the screen for its table, readies its encounter audio and, given an encounter and the item presentation,
+         * Builds the screen for its table, readies its encounter audio and, given what a run plays and the item presentation,
          * creates the rule cards in play and the rule and piece presenters for it, as binding the screen, loading it and
          * showing the encounter do, then disposes the presenters; it fails as they fail. The editor's content validation runs
          * it on an edit-mode copy of the encounter scene, where Awake does not run and no controls are bound.
          */
-        internal void ValidateContent(EncounterDefinition encounter, ItemPresentationCatalog items)
+        internal void ValidateContent(EncounterInPlay inPlay, ItemPresentationCatalog items)
         {
             if (scorePlayback == null) Build();
             // An edit-mode copy receives no OnDestroy, so the table lighting that building bound is released here.
             tableLighting.Release();
             encounterAudio.Initialize();
-            if (encounter == null) return;
-            try { CreatePresenters(encounter, items); }
+            if (inPlay == null) return;
+            try { CreatePresenters(inPlay, items); }
             finally { DisposePresenters(); }
         }
 
@@ -855,7 +868,7 @@ namespace Dice.Presentation
             ruleCards = null;
             piecePresenters?.Dispose();
             piecePresenters = null;
-            presentersEncounterId = null;
+            presentersInPlay = null;
         }
 
         /** What the encounter screen offers rule presenters: its tray, host, lights, audio, ambient activity, pieces and HUD. */

@@ -128,11 +128,11 @@ namespace Dice.Tests
         private static ModifierRewardGeneration Generate(MechanicalCatalog catalog, ulong seed = 0,
             IEnumerable<string> unlocked = null, IEnumerable<string> owned = null, IEnumerable<string> history = null, int incomingStage = 2)
         {
-            var encounter = catalog.GetEncounter(TestContent.EncounterId);
+            var inPlay = catalog.GetEncounterInPlay(TestContent.EncounterId, Array.Empty<ItemDefinition.Id>());
             var random = new DeterministicRandom(seed);
-            return RewardGenerator.GenerateModifiers(catalog, encounter.RewardPolicy, incomingStage - 1,
+            return RewardGenerator.GenerateModifiers(catalog, inPlay.Encounter.RewardPolicy, incomingStage - 1,
                 (owned ?? Array.Empty<string>()).Select(TestModifiers.IdOf), (history ?? Array.Empty<string>()).Select(TestFamilies.IdOf),
-                ref random, encounter, unlocked?.Select(TestModifiers.IdOf));
+                ref random, inPlay, unlocked?.Select(TestModifiers.IdOf));
         }
 
         [Test]

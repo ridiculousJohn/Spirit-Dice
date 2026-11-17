@@ -15,6 +15,10 @@ namespace Dice.Tests
         private static readonly EncounterRuleDefinition.Id RotId = TestRules.IdOf("carry_over.rot");
         private static readonly TablePieceDefinition.Id PieceId = TestPieces.IdOf("piece.carry_over");
         private static readonly ItemDefinition.Id ItemId = new ItemDefinition.Id(new Guid("3b5e0d7a9c1f4e2b8a6d0c4f1e7b9a25"));
+        private static readonly ItemDefinition.Id OtherItemId = new ItemDefinition.Id(new Guid("8c2f6a1d4e9b4b7a9f3e5d0c2b1a7e64"));
+        private static readonly EncounterRuleDefinition.Id OtherCarryId = TestRules.IdOf("carry_over.other");
+        private static readonly TablePieceDefinition.Id OtherPieceId = TestPieces.IdOf("piece.carry_over.other");
+        private static readonly EncounterRuleDefinition.Id BindingId = TestRules.IdOf("carry_over.binding");
         // The test piece holds one interaction, its position.
         private const int InteractionIndex = 0;
         private const int CarriedBay = 2;
@@ -144,7 +148,7 @@ namespace Dice.Tests
 
             var random = new DeterministicRandom(Seed);
             var offered = RewardGenerator.GenerateModifiers(catalog, policy, 1, new[] { plain.Identity, own.Identity },
-                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, encounter);
+                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, new EncounterInPlay(encounter, Array.Empty<ItemDefinition>()));
             Assert.That(offered.ModifierIds, Is.EqualTo(new[] { carried.Identity }));
         }
 
@@ -185,6 +189,167 @@ namespace Dice.Tests
                 .And.Contain(ItemId.ToString()));
         }
 
+        /**
+         * Checks what a run plays puts the carried items' rules and pieces in play after the encounter's own and its lent
+         * items', keeps a lent item in play once and out of the carried items, and keeps a carried rule's charms out of the
+         * encounter's additions / fails if the order differs, a lent item is carried, a carried charm joins the additions, or
+         * a carried charm already in play is accepted.
+         */
+        [Test]
+        public void CarriedItemsAreInPlayAfterTheEncountersOwnAndLentItems()
+        {
+            var ownCharm = TestModifiers.IdOf("carry_over.own");
+            var lentCharm = TestModifiers.IdOf("carry_over.lent");
+            var carriedCharm = TestModifiers.IdOf("carry_over.carried");
+            var lent = Item(new[] { lentCharm });
+            var carried = OtherItem(new[] { carriedCharm });
+            var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new RotRuleDefinition(RotId, RotEndpoint.Wither) }, encounterModifierIds: new[] { ownCharm },
+                items: new[] { lent });
+
+            var inPlay = new EncounterInPlay(encounter, new[] { carried, lent });
+            Assert.That(inPlay.Encounter, Is.SameAs(encounter));
+            Assert.That(inPlay.CarriedItems, Is.EqualTo(new[] { carried }), "The lent item is not carried.");
+            Assert.That(inPlay.Items, Is.EqualTo(new[] { lent, carried }));
+            Assert.That(inPlay.Rules.Select(rule => rule.Identity), Is.EqualTo(new[] { RotId, CarryId, OtherCarryId }));
+            Assert.That(inPlay.Pieces.Select(piece => piece.Identity), Is.EqualTo(new[] { PieceId, OtherPieceId }));
+            Assert.That(encounter.EncounterModifierIds, Is.EqualTo(new[] { ownCharm, lentCharm }));
+            Assert.That(inPlay.CarriedModifierIds, Is.EqualTo(new[] { carriedCharm }));
+
+            var exception = Assert.Throws<ArgumentException>(() => new EncounterInPlay(encounter, new[] { OtherItem(new[] { ownCharm }) }));
+            Assert.That(exception.Message, Does.Contain(ownCharm.ToString()));
+        }
+
+        /**
+         * Checks the catalog rejects an encounter that cannot be played with a catalog item carried, naming the encounter and
+         * the cause / fails if the catalog loads or the message omits the encounter or the piece in play twice.
+         */
+        [Test]
+        public void TheCatalogRejectsAnEncounterThatCannotBePlayedWithACatalogItemCarried()
+        {
+            var clashing = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                pieces: new[] { Piece(PieceId) });
+            var exception = Assert.Throws<ArgumentException>(() => new MechanicalCatalog("test.carry_over.carried", Hands(),
+                new[] { clashing }, items: new[] { Item() }));
+            Assert.That(exception.Message, Does.Contain(EncounterId.ToString()).And.Contain(PieceId.ToString()));
+        }
+
+        /**
+         * Checks a carried item's charm is a candidate from the first offer while the encounter's own addition waits for the
+         * stage its setting names / fails if the carried charm waits or the addition is offered early.
+         */
+        [Test]
+        public void ACarriedItemsCharmIsOfferedFromTheFirstOfferWhileTheEncountersAdditionWaits()
+        {
+            var own = RewardTestContent.Modifier("carry_over.own", "family.carry_over.own");
+            var carried = RewardTestContent.Modifier("carry_over.carried", "family.carry_over.carried");
+            var plain = RewardTestContent.Modifier("carry_over.plain", "family.carry_over.plain");
+            var policy = RewardTestContent.Policy(new[]
+                { new ModifierRewardLayout(new[] { new ModifierRewardPoolDefinition("pool", new[] { plain.Identity }) }) });
+            var encounter = new EncounterDefinition(EncounterId, new[]
+            {
+                new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards), new StageDefinition(1, 3, 3, StageExitBehavior.AwaitRewards),
+                new StageDefinition(1000000, 3, 3)
+            }, rewardPolicy: policy, encounterModifierIds: new[] { own.Identity }, encounterModifiersFirstClearedStageNumber: 2);
+            var catalog = new MechanicalCatalog("test.carry_over.carried", Hands(), new[] { encounter }, new[] { own, carried, plain },
+                new[] { Item(new[] { carried.Identity }) });
+            var inPlay = catalog.GetEncounterInPlay(EncounterId, new[] { ItemId });
+
+            Assert.That(Offer(catalog, inPlay, 1, plain.Identity), Is.EqualTo(new[] { carried.Identity }));
+            Assert.That(Offer(catalog, inPlay, 1, plain.Identity, carried.Identity), Is.Empty, "The addition waits for its stage.");
+            Assert.That(Offer(catalog, inPlay, 2, plain.Identity, carried.Identity), Is.EqualTo(new[] { own.Identity }));
+        }
+
+        /**
+         * Checks a run with a carried item saves its id and restores what the run plays with the carried rule's state,
+         * through capture and restore and through the codec / fails if the item, the piece or the carry is lost.
+         */
+        [Test]
+        public void ARunWithACarriedItemSavesAndRestoresIt()
+        {
+            var catalog = CarryingCatalog();
+            var session = EncounterSession.CreateEncounter(catalog, EncounterId, Seed, carriedItemIds: new[] { ItemId });
+            Assert.That(session.InPlay.CarriedItems.Select(item => item.Identity), Is.EqualTo(new[] { ItemId }));
+            Execute(session, PlayHandAction.Instance);
+            var save = session.CaptureSave();
+            Assert.That(save.CarriedItemIds, Is.EqualTo(new[] { ItemId }));
+            var decoded = EncounterSaveCodec.Deserialize(EncounterSaveCodec.Serialize(save), catalog);
+            var state = decoded.RuleStates.Single(entry => entry.RuleId == CarryId).State;
+            Assert.That(state, Is.TypeOf<DieCarryOverSaveData>(), "The carried rule's state is read by its rule's id with its type.");
+            Assert.That(((DieCarryOverSaveData)state).CarriedMask, Is.EqualTo(1 << CarriedBay));
+
+            foreach (var restored in new[] { Restore(catalog, save), RoundTrip(catalog, session) })
+            {
+                Assert.That(restored.InPlay.CarriedItems.Select(item => item.Identity), Is.EqualTo(new[] { ItemId }));
+                Assert.That(restored.InPlay.Pieces.Select(piece => piece.Identity), Is.EqualTo(new[] { PieceId }));
+                Assert.That(Carry(restored.Snapshot).CarriedMask, Is.EqualTo(1 << CarriedBay));
+            }
+        }
+
+        /** Checks a save carrying an item the catalog lacks fails as an invalid definition / fails if it restores or fails otherwise. */
+        [Test]
+        public void ASaveCarryingAnItemTheCatalogLacksFails()
+        {
+            var catalog = CarryingCatalog();
+            var save = EncounterSession.CreateEncounter(catalog, EncounterId, Seed).CaptureSave();
+            save.CarriedItemIds = new[] { OtherItemId };
+            Assert.That(EncounterSession.RestoreEncounter(catalog, save).Error, Is.EqualTo(EncounterRestoreError.InvalidDefinition));
+        }
+
+        /**
+         * Checks a die bound in the piece's bay when the hand is played carries into the next hand like any counted die, and
+         * binding releases it at that hand / fails if the bound die is rolled, does not carry or stays bound.
+         */
+        [Test]
+        public void ABoundDieInThePiecesBayCarriesAndBindingReleasesIt()
+        {
+            var encounter = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new DieBindingRuleDefinition(BindingId, true, false) }, items: new[] { Item() });
+            var session = EncounterSession.CreateEncounter(new MechanicalCatalog("test.carry_over.binding", Hands(), new[] { encounter }),
+                EncounterId, Seed);
+            int marked = Binding(session.Snapshot).MarkedMask;
+            Assert.That(marked, Is.Not.Zero);
+            // The marked die binds after the next player reroll, here of another die.
+            Execute(session, new RerollDiceAction(1 << DiceValues.NthBay(DiceValues.AllMask & ~marked, 0)));
+            int bound = Binding(session.Snapshot).BoundMask;
+            Assert.That(bound, Is.EqualTo(marked));
+            int bay = DiceValues.NthBay(bound, 0);
+            Execute(session, Move(PiecePosition.Bay(bay)));
+            int face = session.Snapshot.CurrentDice[bay];
+
+            var result = Execute(session, PlayHandAction.Instance);
+            var carried = result.Events.OfType<DieCarriedEvent>().Single();
+            Assert.That(carried.Bay, Is.EqualTo(bay));
+            Assert.That(result.Snapshot.CurrentDice[bay], Is.EqualTo(face));
+            Assert.That(Carry(result.Snapshot).CarriedMask, Is.EqualTo(bound));
+            Assert.That(Binding(result.Snapshot).BoundMask, Is.Zero, "Binding releases the die at the next hand.");
+        }
+
+        /**
+         * Checks the catalog rejects two rules of its content that share an id but save different types, naming the id /
+         * fails if the catalog loads or the message omits the id.
+         */
+        [Test]
+        public void TheCatalogRejectsRulesSharingAnIdWithDifferentSaveTypes()
+        {
+            var shared = TestRules.IdOf("carry_over.shared");
+            var bound = new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new DieBindingRuleDefinition(shared, true, false) });
+            var rotting = new EncounterDefinition(TestEncounters.IdOf("encounter.carry_over.rot"), new[] { new StageDefinition(1000000, 20, 20) },
+                rules: new[] { new RotRuleDefinition(shared, RotEndpoint.Wither) });
+            var exception = Assert.Throws<ArgumentException>(() => new MechanicalCatalog("test.carry_over.shared", Hands(),
+                new[] { bound, rotting }));
+            Assert.That(exception.Message, Does.Contain(shared.ToString()));
+        }
+
+        private static ModifierDefinition.Id[] Offer(MechanicalCatalog catalog, EncounterInPlay inPlay, int clearedStage,
+            params ModifierDefinition.Id[] owned)
+        {
+            var random = new DeterministicRandom(Seed);
+            return RewardGenerator.GenerateModifiers(catalog, inPlay.Encounter.RewardPolicy, clearedStage, owned,
+                Array.Empty<ModifierFamilyDefinition.Id>(), ref random, inPlay).ModifierIds.ToArray();
+        }
+
         private static void AssertNothingCarried(IReadOnlyList<RuleEvent> events, EncounterSnapshot snapshot)
         {
             Assert.That(events.OfType<DiceRolledEvent>().Single().SelectedMask, Is.EqualTo(DiceValues.AllMask));
@@ -201,12 +366,28 @@ namespace Dice.Tests
         private static InteractWithPieceAction Move(PiecePosition position)
             => new InteractWithPieceAction(PieceId, InteractionIndex, new MovePieceInput(position));
 
+        private static DieBindingRuleSnapshot Binding(EncounterSnapshot snapshot)
+            => snapshot.EncounterRules.OfType<DieBindingRuleSnapshot>().Single();
+
         /** The carry-over item: the rule and its piece, which starts on the carried bay. */
         private static ItemDefinition Item(IEnumerable<ModifierDefinition.Id> ruleCharms = null)
             => new ItemDefinition(ItemId, new[] { new DieCarryOverRuleDefinition(CarryId, PieceId,
-                    ruleCharms ?? Array.Empty<ModifierDefinition.Id>()) },
-                new TablePieceDefinition(PieceId, new[] { new PositionInteractionDefinition(PiecePosition.Bay(CarriedBay),
-                    PieceMovementTiming.DuringHand) }));
+                    ruleCharms ?? Array.Empty<ModifierDefinition.Id>()) }, Piece(PieceId));
+
+        /** A second carry-over item with its own rule and piece. */
+        private static ItemDefinition OtherItem(IEnumerable<ModifierDefinition.Id> ruleCharms)
+            => new ItemDefinition(OtherItemId, new[] { new DieCarryOverRuleDefinition(OtherCarryId, OtherPieceId, ruleCharms) },
+                Piece(OtherPieceId));
+
+        /** A piece whose position starts on the carried bay. */
+        private static TablePieceDefinition Piece(TablePieceDefinition.Id id)
+            => new TablePieceDefinition(id, new[] { new PositionInteractionDefinition(PiecePosition.Bay(CarriedBay),
+                PieceMovementTiming.DuringHand) });
+
+        /** A catalog whose encounter lends nothing and whose item list holds the carry-over item. */
+        private static MechanicalCatalog CarryingCatalog()
+            => new MechanicalCatalog("test.carry_over.carried", Hands(),
+                new[] { new EncounterDefinition(EncounterId, new[] { new StageDefinition(1000000, 20, 20) }) }, items: new[] { Item() });
 
         private static EncounterDefinition Encounter(bool rot = false, bool rewards = false, RewardPolicyDefinition policy = null,
             IEnumerable<ModifierDefinition.Id> ownCharms = null, IEnumerable<ModifierDefinition.Id> ruleCharms = null)

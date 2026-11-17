@@ -115,8 +115,7 @@ namespace Dice.Tests
                 var scored = played.Events.OfType<HandScoredEvent>().Single();
                 Assert.That(scored.Score.Category, Is.EqualTo(plan.Played), "The hand must score the searched rank.");
                 // The rule cards in play, as the view's score playback builds the steps from them.
-                var cards = controller.ItemPresentation.CardsInPlay(view.TablePresentation,
-                    controller.Catalog.GetEncounter(controller.Snapshot.EncounterId)).Cards;
+                var cards = controller.ItemPresentation.CardsInPlay(view.TablePresentation, controller.InPlay.Items).Cards;
                 scoring.Expect(new SpiritScoringStepBuilder(controller.Catalog).BuildHand(scored, 0, 0, cards));
                 yield return shot.Until(() => scoring.TotalShown, "The scoring did not reach its total.");
                 yield return shot.For(FoxTail);

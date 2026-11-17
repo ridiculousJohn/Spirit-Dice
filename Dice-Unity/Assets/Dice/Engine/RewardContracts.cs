@@ -159,7 +159,7 @@ namespace Dice.Engine
         {
             var rejection = session.ValidateRewardOffer(RewardKind.Modifier, OfferId);
             if (rejection != CommandRejection.None) return rejection;
-            return session.State.RewardRefreshes < session.Definition.RewardPolicy.RefreshCost
+            return session.State.RewardRefreshes < session.InPlay.Encounter.RewardPolicy.RefreshCost
                 ? CommandRejection.InsufficientRewardRefreshes : CommandRejection.None;
         }
 
@@ -230,15 +230,15 @@ namespace Dice.Engine
         public bool IntroducesEncounterModifiers { get; }
 
         internal RewardOffer(long offerId, RewardKind kind, int targetStageIndex, IEnumerable<RewardOption> options,
-            EncounterDefinition encounter)
+            EncounterInPlay inPlay)
         {
             OfferId = offerId;
             Kind = kind;
             TargetStageIndex = targetStageIndex;
             Options = new List<RewardOption>(options).AsReadOnly();
             // An offer's target stage index is the number of the stage whose clear produced it.
-            IntroducesEncounterModifiers = kind.CanOfferEncounterModifiers && encounter.EncounterModifierIds.Count > 0 &&
-                targetStageIndex == encounter.EncounterModifiersFirstClearedStageNumber;
+            IntroducesEncounterModifiers = kind.CanOfferEncounterModifiers && inPlay.Encounter.EncounterModifierIds.Count > 0 &&
+                targetStageIndex == inPlay.Encounter.EncounterModifiersFirstClearedStageNumber;
         }
 
         /**

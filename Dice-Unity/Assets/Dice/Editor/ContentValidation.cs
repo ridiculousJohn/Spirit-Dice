@@ -181,29 +181,29 @@ namespace Dice.Editor
             }
             foreach (var encounter in use.Encounters)
             {
-                EncounterDefinition definition = null;
+                EncounterInPlay inPlay = null;
                 if (content.Content != null)
                 {
                     // Accepting the invitation starts the encounter from the catalog, as the controller does.
                     Record(check, AssetPath(encounter), () =>
                     {
-                        definition = content.Content.Catalog.GetEncounter(encounter.Identity);
+                        inPlay = content.Content.Catalog.GetEncounterInPlay(encounter.Identity, Array.Empty<ItemDefinition.Id>());
                         new EncounterApplication(content.Content.Catalog, encounter.Identity, ValidationSeed);
                     });
                 }
                 else check.Add(AssetPath(encounter), "Not started, and its table's rule and piece presenters not created: " +
                     "the catalog did not build.");
-                if (definition != null && content.Items == null)
+                if (inPlay != null && content.Items == null)
                 {
                     check.Add(AssetPath(encounter), "Its table's rule and piece presenters not created: the item skin did not load.");
-                    definition = null;
+                    inPlay = null;
                 }
-                ValidateTableScene(check, use.Table, encounter, definition, content.Items);
+                ValidateTableScene(check, use.Table, encounter, inPlay, content.Items);
             }
         }
 
         private static void ValidateTableScene(ContentValidationCheck check, EncounterTablePresentationAsset table,
-            EncounterAsset encounter, EncounterDefinition definition, ItemPresentationCatalog items)
+            EncounterAsset encounter, EncounterInPlay inPlay, ItemPresentationCatalog items)
         {
             string label = "Table " + table.name + (encounter != null ? ", encounter " + encounter.name : "") + ": ";
             string path;
@@ -232,7 +232,7 @@ namespace Dice.Editor
                 // A scene copy never plays sound; the audio's checks read its sources, not whether they are enabled.
                 foreach (var source in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<AudioSource>(true)))
                     source.enabled = false;
-                view.ValidateContent(definition, items);
+                view.ValidateContent(inPlay, items);
             }
             catch (Exception exception) { check.Add(path, label + Describe(exception)); }
             finally

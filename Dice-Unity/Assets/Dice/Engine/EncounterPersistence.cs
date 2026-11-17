@@ -5,7 +5,7 @@ namespace Dice.Engine
 {
     internal static class EncounterPersistence
     {
-        internal static EncounterSaveData Capture(MechanicalCatalog catalog, EncounterDefinition definition, EncounterState state)
+        internal static EncounterSaveData Capture(MechanicalCatalog catalog, EncounterInPlay inPlay, EncounterState state)
         {
             var save = new EncounterSaveData
             {
@@ -13,7 +13,8 @@ namespace Dice.Engine
                 RulesVersion = EncounterSession.RulesVersion,
                 RandomAlgorithmVersion = DeterministicRandom.AlgorithmVersion,
                 CatalogVersion = catalog.Version,
-                EncounterId = definition.Identity,
+                EncounterId = inPlay.Encounter.Identity,
+                CarriedItemIds = CaptureCarriedItems(inPlay),
                 Revision = state.Revision, Phase = state.Phase, Outcome = state.Outcome,
                 StageIndex = state.StageIndex, HandIndex = state.HandIndex,
                 RemainingThreshold = state.RemainingThreshold, HandsRemaining = state.HandsRemaining,
@@ -33,8 +34,8 @@ namespace Dice.Engine
                 HandUpgrades = (int[])state.HandUpgrades.Clone(),
                 DiceRandomState = state.DiceRandom.State, RewardRandomState = state.RewardRandom.State,
                 RuleRandomState = state.RuleRandom.State,
-                Pieces = CapturePieces(definition, state),
-                RuleStates = CaptureRuleStates(definition, state),
+                Pieces = CapturePieces(inPlay, state),
+                RuleStates = CaptureRuleStates(inPlay, state),
                 RewardRefreshes = state.RewardRefreshes, NextOfferId = state.NextOfferId, NextOptionId = state.NextOptionId,
                 ExcludedRewardFamilies = state.ExcludedRewardFamilies.ToArray(),
                 RecentHandUpgrades = state.RecentHandUpgrades.ToArray(),
@@ -86,9 +87,9 @@ namespace Dice.Engine
         }
 
         internal static bool TryRestore(MechanicalCatalog catalog, EncounterSaveData save,
-            out EncounterDefinition definition, out EncounterState state, out EncounterRestoreError error, out string detail)
+            out EncounterInPlay inPlay, out EncounterState state, out EncounterRestoreError error, out string detail)
         {
-            definition = null;
+            inPlay = null;
             state = null;
             error = EncounterRestoreError.None;
             detail = null;
@@ -101,12 +102,25 @@ namespace Dice.Engine
                 return Fail(EncounterRestoreError.RandomAlgorithmVersionMismatch, "Random algorithm version mismatch.", out error, out detail);
             if (!string.Equals(save.CatalogVersion, catalog.Version, StringComparison.Ordinal))
                 return Fail(EncounterRestoreError.CatalogVersionMismatch, "Catalog version mismatch.", out error, out detail);
-            try { definition = catalog.GetEncounter(save.EncounterId); }
+            try { catalog.GetEncounter(save.EncounterId); }
             catch (ArgumentException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is invalid.", out error, out detail); }
             catch (KeyNotFoundException) { return Fail(EncounterRestoreError.EncounterNotFound, "Encounter ID is missing from the catalog.", out error, out detail); }
+            if (save.CarriedItemIds == null)
+                return Fail(EncounterRestoreError.InvalidState, "Carried items are missing.", out error, out detail);
+            // What the run plays is rebuilt from the save alone, never from the profile.
+            try { inPlay = catalog.GetEncounterInPlay(save.EncounterId, save.CarriedItemIds); }
+            catch (ArgumentException exception)
+            {
+                return Fail(EncounterRestoreError.InvalidDefinition, "The carried items cannot be played with the encounter: " + exception.Message,
+                    out error, out detail);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Fail(EncounterRestoreError.InvalidDefinition, "A carried item is missing from the catalog.", out error, out detail);
+            }
             try
             {
-                state = ValidateAndMap(catalog, definition, save);
+                state = ValidateAndMap(catalog, inPlay, save);
                 return true;
             }
             catch (InvalidSaveException exception)
@@ -124,11 +138,11 @@ namespace Dice.Engine
          * values are in range, ids resolve in the catalog and each rule state restores. A save is not checked for having
          * been produced by play; the file seal guards it against corruption.
          */
-        private static EncounterState ValidateAndMap(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save)
+        private static EncounterState ValidateAndMap(MechanicalCatalog catalog, EncounterInPlay inPlay, EncounterSaveData save)
         {
             Require(Enum.IsDefined(typeof(EncounterPhase), save.Phase) && Enum.IsDefined(typeof(EncounterOutcome), save.Outcome),
                 "Phase or outcome is invalid.");
-            Require(save.Revision >= 0 && save.StageIndex >= 0 && save.StageIndex < definition.Stages.Count,
+            Require(save.Revision >= 0 && save.StageIndex >= 0 && save.StageIndex < inPlay.Encounter.Stages.Count,
                 "Revision or stage index is invalid.");
             Require(save.RemainingThreshold >= 0 && save.HandIndex >= 0 && save.HandsRemaining >= 0 && save.HandsPlayedInStage >= 0 &&
                 save.RerollsRemaining >= 0 && save.RerollsSpentOnHand >= 0 && save.RerollsSpentInStage >= 0 &&
@@ -139,7 +153,7 @@ namespace Dice.Engine
             Require(save.NextOfferId > 0 && save.NextOptionId > 0, "Reward identity counters are invalid.");
             // Choosing a modifier or hand upgrade leads into the next stage, which must exist.
             Require((save.Phase != EncounterPhase.ChoosingModifier && save.Phase != EncounterPhase.ChoosingHandUpgrade) ||
-                save.StageIndex < definition.Stages.Count - 1, "A stage reward requires a following stage.");
+                save.StageIndex < inPlay.Encounter.Stages.Count - 1, "A stage reward requires a following stage.");
             Require(IsBayMask(save.LatestRerollMask) && IsBayMask(save.LatestChangedMask) && IsBayMask(save.EverRerolledMask),
                 "Dice masks name dice outside the five bays.");
             Require(save.HandUpgrades != null && save.HandUpgrades.Length == HandDefinition.CategoryCount &&
@@ -180,18 +194,18 @@ namespace Dice.Engine
             state.UnlockedModifierIds = ReadModifierIds(definitions, save.UnlockedModifierIds, "Unlocked modifiers");
             state.NewlyUnlockedModifierIds = ReadModifierIds(definitions, save.NewlyUnlockedModifierIds, "Newly unlocked modifiers");
             state.DiscoveredFamilyIds = ReadFamilies(catalog, save.DiscoveredFamilyIds, "Discovered families");
-            RestoreRuleStates(definition, save, state);
-            state.PieceStates = RestorePieces(definition, save);
+            RestoreRuleStates(inPlay, save, state);
+            state.PieceStates = RestorePieces(inPlay, save);
             RestoreModifiers(save, state, definitions);
-            RestoreReward(catalog, definition, save, state, definitions);
+            RestoreReward(catalog, inPlay, save, state, definitions);
             return state;
         }
 
         /** Each stateful rule restores its own saved state; together the rules must leave a die counted. */
-        private static void RestoreRuleStates(EncounterDefinition definition, EncounterSaveData save, EncounterState state)
+        private static void RestoreRuleStates(EncounterInPlay inPlay, EncounterSaveData save, EncounterState state)
         {
             Require(save.RuleStates != null, "Rule states are missing.");
-            var rules = definition.Rules;
+            var rules = inPlay.Rules;
             var sources = new object[rules.Count];
             foreach (var entry in save.RuleStates)
             {
@@ -210,27 +224,34 @@ namespace Dice.Engine
                 Require(rules[i].TryRestoreState(sources[i], out state.RuleStates[i], out string detail), detail);
             }
             // The current hand is scored from its counted dice, so the rules cannot leave every die uncounted.
-            Require(HandDice.IsCountedMask(DiceValues.AllMask & ~EncounterRuleResolver.UncountedDice(definition, state)),
+            Require(HandDice.IsCountedMask(DiceValues.AllMask & ~EncounterRuleResolver.UncountedDice(inPlay, state)),
                 "The rules leave no die counted.");
         }
 
-        private static EncounterSaveRuleData[] CaptureRuleStates(EncounterDefinition definition, EncounterState state)
+        private static ItemDefinition.Id[] CaptureCarriedItems(EncounterInPlay inPlay)
+        {
+            var ids = new ItemDefinition.Id[inPlay.CarriedItems.Count];
+            for (int i = 0; i < ids.Length; ++i) ids[i] = inPlay.CarriedItems[i].Identity;
+            return ids;
+        }
+
+        private static EncounterSaveRuleData[] CaptureRuleStates(EncounterInPlay inPlay, EncounterState state)
         {
             var values = new List<EncounterSaveRuleData>();
-            for (int i = 0; i < definition.Rules.Count; ++i)
-                if (definition.Rules[i].SaveDataType != null)
+            for (int i = 0; i < inPlay.Rules.Count; ++i)
+                if (inPlay.Rules[i].SaveDataType != null)
                     values.Add(new EncounterSaveRuleData
                     {
-                        RuleId = definition.Rules[i].Identity, State = definition.Rules[i].CaptureState(state.RuleStates[i])
+                        RuleId = inPlay.Rules[i].Identity, State = inPlay.Rules[i].CaptureState(state.RuleStates[i])
                     });
             return values.ToArray();
         }
 
-        private static EncounterSavePieceData[] CapturePieces(EncounterDefinition definition, EncounterState state)
+        private static EncounterSavePieceData[] CapturePieces(EncounterInPlay inPlay, EncounterState state)
         {
             var values = new List<EncounterSavePieceData>();
             int slot = 0;
-            foreach (var piece in definition.Pieces)
+            foreach (var piece in inPlay.Pieces)
             {
                 var interactions = new int[piece.Interactions.Count][];
                 for (int i = 0; i < interactions.Length; ++i) interactions[i] = piece.Interactions[i].Capture(state.PieceStates[slot++]);
@@ -240,23 +261,23 @@ namespace Dice.Engine
         }
 
         /** Each piece in play restores from the saved entry under its id, whatever the entries' order; each is saved exactly once. */
-        private static PieceInteractionState[] RestorePieces(EncounterDefinition definition, EncounterSaveData save)
+        private static PieceInteractionState[] RestorePieces(EncounterInPlay inPlay, EncounterSaveData save)
         {
-            Require(save.Pieces != null && save.Pieces.Length == definition.Pieces.Count, "Table piece states disagree with the encounter.");
-            var sources = new EncounterSavePieceData[definition.Pieces.Count];
+            Require(save.Pieces != null && save.Pieces.Length == inPlay.Pieces.Count, "Table piece states disagree with the encounter.");
+            var sources = new EncounterSavePieceData[inPlay.Pieces.Count];
             foreach (var entry in save.Pieces)
             {
                 int index = -1;
-                for (int i = 0; entry != null && i < definition.Pieces.Count; ++i)
-                    if (definition.Pieces[i].Identity == entry.PieceId) index = i;
+                for (int i = 0; entry != null && i < inPlay.Pieces.Count; ++i)
+                    if (inPlay.Pieces[i].Identity == entry.PieceId) index = i;
                 Require(index >= 0 && sources[index] == null, "Table piece states disagree with the encounter.");
                 sources[index] = entry;
             }
-            var states = new PieceInteractionState[TablePieceStates.Initial(definition).Length];
+            var states = new PieceInteractionState[TablePieceStates.Initial(inPlay).Length];
             int slot = 0;
             for (int index = 0; index < sources.Length; ++index)
             {
-                var piece = definition.Pieces[index];
+                var piece = inPlay.Pieces[index];
                 var source = sources[index];
                 Require(source.Interactions != null && source.Interactions.Length == piece.Interactions.Count,
                     "A table piece state is invalid.");
@@ -299,14 +320,14 @@ namespace Dice.Engine
             state.ModifierMultiplier = multiplier;
         }
 
-        private static void RestoreReward(MechanicalCatalog catalog, EncounterDefinition definition, EncounterSaveData save,
+        private static void RestoreReward(MechanicalCatalog catalog, EncounterInPlay inPlay, EncounterSaveData save,
             EncounterState state, Dictionary<ModifierDefinition.Id, ModifierDefinition> definitions)
         {
             bool choosingStageReward = state.Phase == EncounterPhase.ChoosingModifier || state.Phase == EncounterPhase.ChoosingHandUpgrade;
             bool choosing = choosingStageReward || state.Phase == EncounterPhase.ChoosingUnlock;
             // A reward phase waits on its offer, and selecting a stage reward reads the encounter's reward policy.
             Require(!choosing || save.PendingReward != null, "A reward phase requires its pending offer.");
-            Require(!choosingStageReward || definition.RewardPolicy != null, "Reward selection requires a policy.");
+            Require(!choosingStageReward || inPlay.Encounter.RewardPolicy != null, "Reward selection requires a policy.");
             // Selecting a modifier goes on to offer the cached hand upgrades.
             Require(state.Phase != EncounterPhase.ChoosingModifier || state.PendingUpgradeCategories != null,
                 "A modifier offer requires its cached upgrade choices.");
@@ -335,7 +356,7 @@ namespace Dice.Engine
                 }
                 options.Add(new RewardOption(option.OptionId, option.DefinitionId, option.HasCategory ? (HandCategory?)option.Category : null));
             }
-            state.PendingReward = new RewardOffer(source.OfferId, source.Kind, source.TargetStageIndex, options, definition);
+            state.PendingReward = new RewardOffer(source.OfferId, source.Kind, source.TargetStageIndex, options, inPlay);
         }
 
         /** A hand offered for an upgrade is a defined category below its cap, which selecting it would exceed. */

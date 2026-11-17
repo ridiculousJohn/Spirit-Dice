@@ -172,8 +172,8 @@ namespace Dice.Tests
 
         /**
          * Checks the availability text, for the encounter being played, names a charm on its own charm additions exclusive to
-         * the encounter, one a rule in play brings exclusive to that rule, and any other available from the start, each with
-         * its scope / fails if one reads as another.
+         * the encounter, one a rule in play brings, the encounter's or a carried item's, exclusive to that rule, and any other
+         * available from the start, each with its scope / fails if one reads as another.
          */
         [Test]
         public void AvailabilityNamesHowTheEncounterOffersTheCharm()
@@ -181,24 +181,33 @@ namespace Dice.Tests
             var own = RewardTestContent.Modifier("availability.own", "family.availability.own");
             var brought = RewardTestContent.Modifier("availability.brought", "family.availability.brought");
             var plain = RewardTestContent.Modifier("availability.plain", "family.availability.plain");
+            var carried = RewardTestContent.Modifier("availability.carried", "family.availability.carried");
             var pieceId = TestPieces.IdOf("piece.availability");
-            var encounter = new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
+            var carriedPieceId = TestPieces.IdOf("piece.availability.carried");
+            var item = new ItemDefinition(new ItemDefinition.Id(new System.Guid("1e4c7a2b5d6f4c0e8a9b0c1d2e3f4a5b")),
+                new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("availability.carried"), carriedPieceId, new[] { carried.Identity }) },
+                new TablePieceDefinition(carriedPieceId, new[] { new PositionInteractionDefinition(PiecePosition.Neutral,
+                    PieceMovementTiming.DuringHand) }));
+            var inPlay = new EncounterInPlay(new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
                 rules: new[] { new DieCarryOverRuleDefinition(TestRules.IdOf("availability.carry_over"), pieceId, new[] { brought.Identity }) },
                 encounterModifierIds: new[] { own.Identity },
                 pieces: new[] { new TablePieceDefinition(pieceId, new[] { new PositionInteractionDefinition(PiecePosition.Neutral,
-                    PieceMovementTiming.DuringHand) }) });
+                    PieceMovementTiming.DuringHand) }) }), new[] { item });
             var wording = SyntheticWording.Create();
             try
             {
                 var availability = wording.charmAvailability;
                 // The snapshot is read only for a permanent unlock's unlock state.
-                Assert.That(SpiritCharmVisuals.AvailabilityText(own, encounter, null, availability), Is.EqualTo(
+                Assert.That(SpiritCharmVisuals.AvailabilityText(own, inPlay, null, availability), Is.EqualTo(
                     "<charmAvailability.availability><charmAvailability.encounterExclusive>|" +
                     "<charmAvailability.scopeTier><charmAvailability.thisEncounter>|1"));
-                Assert.That(SpiritCharmVisuals.AvailabilityText(brought, encounter, null, availability), Is.EqualTo(
+                Assert.That(SpiritCharmVisuals.AvailabilityText(brought, inPlay, null, availability), Is.EqualTo(
                     "<charmAvailability.availability><charmAvailability.ruleExclusive>|" +
                     "<charmAvailability.scopeTier><charmAvailability.withItsRule>|1"));
-                Assert.That(SpiritCharmVisuals.AvailabilityText(plain, encounter, null, availability), Is.EqualTo(
+                Assert.That(SpiritCharmVisuals.AvailabilityText(carried, inPlay, null, availability), Is.EqualTo(
+                    "<charmAvailability.availability><charmAvailability.ruleExclusive>|" +
+                    "<charmAvailability.scopeTier><charmAvailability.withItsRule>|1"));
+                Assert.That(SpiritCharmVisuals.AvailabilityText(plain, inPlay, null, availability), Is.EqualTo(
                     "<charmAvailability.availability><charmAvailability.availableFromStart>|" +
                     "<charmAvailability.scopeTier><charmAvailability.allEncounters>|1"));
             }

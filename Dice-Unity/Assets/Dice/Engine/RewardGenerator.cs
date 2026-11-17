@@ -16,7 +16,7 @@ namespace Dice.Engine
         /** The offer after clearing the stage numbered rewardCycleIndex, for the stage after it. */
         public static ModifierRewardGeneration GenerateModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int rewardCycleIndex, IEnumerable<ModifierDefinition.Id> ownedModifierIds, IEnumerable<ModifierFamilyDefinition.Id> excludedFamilyIds,
-            ref DeterministicRandom random, EncounterDefinition encounter = null, IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null)
+            ref DeterministicRandom random, EncounterInPlay inPlay = null, IEnumerable<ModifierDefinition.Id> unlockedModifierIds = null)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
             if (policy == null) throw new ArgumentNullException(nameof(policy));
@@ -39,7 +39,7 @@ namespace Dice.Engine
             var currentFamilies = new HashSet<ModifierFamilyDefinition.Id>();
             foreach (var pool in policy.LayoutFor(rewardCycleIndex).Pools)
             {
-                var available = AvailableSlotModifiers(catalog, policy, incomingStageNumber, pool, owned, currentFamilies, encounter, unlocked);
+                var available = AvailableSlotModifiers(catalog, policy, incomingStageNumber, pool, owned, currentFamilies, inPlay, unlocked);
                 var candidates = available.FindAll(id => !excluded.Contains(catalog.GetModifier(id).Family.Identity));
                 if (candidates.Count < MinimumCandidatesBeforeHistoryBypass)
                     candidates = available;
@@ -103,14 +103,18 @@ namespace Dice.Engine
 
         private static List<ModifierDefinition.Id> EligibleModifiers(MechanicalCatalog catalog, ModifierRewardPoolDefinition pool,
             int incomingStageNumber, HashSet<ModifierDefinition.Id> owned, HashSet<ModifierFamilyDefinition.Id> currentFamilies,
-            EncounterDefinition encounter, ISet<ModifierDefinition.Id> unlocked)
+            EncounterInPlay inPlay, ISet<ModifierDefinition.Id> unlocked)
         {
             var candidates = new List<ModifierDefinition.Id>();
             var ids = new List<ModifierDefinition.Id>(pool.ModifierIds);
             // The offer for an incoming stage follows clearing the stage before it.
-            if (encounter != null &&
-                incomingStageNumber - 1 >= encounter.EncounterModifiersFirstClearedStageNumber)
-                foreach (var id in encounter.EncounterModifierIds)
+            if (inPlay != null &&
+                incomingStageNumber - 1 >= inPlay.Encounter.EncounterModifiersFirstClearedStageNumber)
+                foreach (var id in inPlay.Encounter.EncounterModifierIds)
+                    if (!ids.Contains(id)) ids.Add(id);
+            // A carried item's charms are the item's, candidates in every offer from the first.
+            if (inPlay != null)
+                foreach (var id in inPlay.CarriedModifierIds)
                     if (!ids.Contains(id)) ids.Add(id);
             foreach (var id in ids)
             {
@@ -123,9 +127,9 @@ namespace Dice.Engine
 
         private static List<ModifierDefinition.Id> AvailableSlotModifiers(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, HashSet<ModifierDefinition.Id> owned,
-            HashSet<ModifierFamilyDefinition.Id> currentFamilies, EncounterDefinition encounter, ISet<ModifierDefinition.Id> unlocked)
+            HashSet<ModifierFamilyDefinition.Id> currentFamilies, EncounterInPlay inPlay, ISet<ModifierDefinition.Id> unlocked)
             => RestrictTiers(catalog, policy, incomingStageNumber, EligibleModifiers(catalog, pool, incomingStageNumber, owned,
-                currentFamilies, encounter, unlocked));
+                currentFamilies, inPlay, unlocked));
 
         private static ModifierDefinition.Id? EligibleFallback(MechanicalCatalog catalog, RewardPolicyDefinition policy,
             int incomingStageNumber, ModifierRewardPoolDefinition pool, ISet<ModifierDefinition.Id> unlocked)

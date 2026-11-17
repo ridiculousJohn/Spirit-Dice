@@ -239,6 +239,24 @@ namespace Dice.Tests
             Assert.That(profile.CompletedEncounterIds, Is.EquivalentTo(new[] { TestEncounters.IdOf("encounter.future"), TestContent.EncounterId }));
         }
 
+        /** Checks a run the controller starts for a profile that owns an item carries that item / fails if what the run plays lacks it. */
+        [Test]
+        public void ARunStartedForAProfileThatOwnsAnItemCarriesIt()
+        {
+            var itemId = new ItemDefinition.Id(new Guid("9d3b6f0e4a5c4b9d1e2f3a4b5c6d7e8f"));
+            var profile = new PlayerProfile();
+            profile.OwnItem(itemId);
+            PlayerProfileFileStore.Save(Path.Combine(Path.GetDirectoryName(savePath), "spirit-profile.json"), profile);
+            var item = new ItemDefinition(itemId, piece: new TablePieceDefinition(TestPieces.IdOf("piece.owned"),
+                new[] { new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand) }));
+            var catalog = new MechanicalCatalog("test.progression.items", TestContent.Hands(),
+                new[] { new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 1, 0) }) }, items: new[] { item });
+            controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
+            Assert.That(controller.InPlay.CarriedItems, Is.EqualTo(new[] { item }));
+            controller.StartNew();
+            Assert.That(controller.InPlay.CarriedItems, Is.EqualTo(new[] { item }));
+        }
+
         private void ChooseUnlock()
         {
             controller.CompletePresentation();

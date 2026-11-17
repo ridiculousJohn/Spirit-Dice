@@ -203,7 +203,7 @@ namespace Dice.Engine
         {
             EncounterState state = session.State;
             if (state.Phase != EncounterPhase.Playing) return CommandRejection.InvalidPhase;
-            if (!TablePieceStates.TryFind(session.Definition, PieceId, InteractionIndex, out int slot, out var piece))
+            if (!TablePieceStates.TryFind(session.InPlay, PieceId, InteractionIndex, out int slot, out var piece))
                 return CommandRejection.InvalidPiece;
             if (!piece.IsAvailable(state)) return CommandRejection.PieceUnavailable;
             return piece.Accepts(state.PieceStates[slot], Input) ? CommandRejection.None : CommandRejection.InvalidPieceInput;
@@ -255,19 +255,19 @@ namespace Dice.Engine
     /** Interaction states are stored in definition order: each piece's interactions, piece by piece. */
     internal static class TablePieceStates
     {
-        internal static PieceInteractionState[] Initial(EncounterDefinition definition)
+        internal static PieceInteractionState[] Initial(EncounterInPlay inPlay)
         {
             var states = new List<PieceInteractionState>();
-            foreach (var piece in definition.Pieces)
+            foreach (var piece in inPlay.Pieces)
                 foreach (var interaction in piece.Interactions) states.Add(interaction.InitialState);
             return states.ToArray();
         }
 
-        internal static bool TryFind(EncounterDefinition definition, TablePieceDefinition.Id pieceId, int interactionIndex,
+        internal static bool TryFind(EncounterInPlay inPlay, TablePieceDefinition.Id pieceId, int interactionIndex,
             out int slot, out PieceInteractionDefinition interaction)
         {
             slot = 0;
-            foreach (var piece in definition.Pieces)
+            foreach (var piece in inPlay.Pieces)
             {
                 if (piece.Identity == pieceId)
                 {
@@ -283,23 +283,23 @@ namespace Dice.Engine
         }
 
         /** Finds the piece's interaction of the kind, the one place a piece holds it. */
-        internal static bool TryFind<TInteraction>(EncounterDefinition definition, TablePieceDefinition.Id pieceId, out int slot,
+        internal static bool TryFind<TInteraction>(EncounterInPlay inPlay, TablePieceDefinition.Id pieceId, out int slot,
             out TInteraction interaction) where TInteraction : PieceInteractionDefinition
         {
             int index = -1;
-            foreach (var piece in definition.Pieces)
+            foreach (var piece in inPlay.Pieces)
                 if (piece.Identity == pieceId) index = piece.IndexOf<TInteraction>();
-            bool found = TryFind(definition, pieceId, index, out slot, out var candidate);
+            bool found = TryFind(inPlay, pieceId, index, out slot, out var candidate);
             interaction = (TInteraction)candidate;
             return found;
         }
 
-        internal static ReadOnlyCollection<PieceInteractionSnapshot> Capture(EncounterDefinition definition, EncounterState state)
+        internal static ReadOnlyCollection<PieceInteractionSnapshot> Capture(EncounterInPlay inPlay, EncounterState state)
         {
             var values = new List<PieceInteractionSnapshot>();
             int slot = 0;
             bool playing = state.Phase == EncounterPhase.Playing;
-            foreach (var piece in definition.Pieces)
+            foreach (var piece in inPlay.Pieces)
                 for (int index = 0; index < piece.Interactions.Count; ++index)
                 {
                     values.Add(new PieceInteractionSnapshot(piece.Identity, index,

@@ -108,9 +108,9 @@ namespace Dice.Engine
          * including the hand being resolved, since playing a hand spends it before its charms resolve.
          */
         internal static List<ModifierActivatedEvent> Resolve(EncounterState state, MechanicalCatalog catalog,
-            EncounterDefinition encounter, ModifierPhase phase, int handsRemaining, List<RuleEvent> events)
+            EncounterInPlay inPlay, ModifierPhase phase, int handsRemaining, List<RuleEvent> events)
         {
-            var context = CreateContext(state, encounter, handsRemaining);
+            var context = CreateContext(state, inPlay, handsRemaining);
             var contributions = new List<ModifierContribution>();
 
             // Predicates observe one phase snapshot; resource grants cannot change later eligibility.
@@ -151,11 +151,11 @@ namespace Dice.Engine
         }
 
         internal static ReadOnlyCollection<ModifierInspection> InspectForPlayHand(EncounterState state,
-            MechanicalCatalog catalog, EncounterDefinition encounter)
+            MechanicalCatalog catalog, EncounterInPlay inPlay)
         {
             bool playing = state.Phase == EncounterPhase.Playing;
             // PlayHand predicates see the hand being played as remaining and resources before any phase effects.
-            var context = playing ? CreateContext(state, encounter, state.HandsRemaining) : default;
+            var context = playing ? CreateContext(state, inPlay, state.HandsRemaining) : default;
             var values = new ModifierInspection[state.Modifiers.Length];
             for (int i = 0; i < values.Length; ++i)
             {
@@ -179,12 +179,12 @@ namespace Dice.Engine
         }
 
         /** One context, with one set of rule snapshots, serves every modifier evaluated in a resolution step. */
-        private static ModifierContext CreateContext(EncounterState state, EncounterDefinition encounter, int handsRemaining)
-            => new ModifierContext(EncounterRuleResolver.CurrentHand(encounter, state), state.InitialHand,
+        private static ModifierContext CreateContext(EncounterState state, EncounterInPlay inPlay, int handsRemaining)
+            => new ModifierContext(EncounterRuleResolver.CurrentHand(inPlay, state), state.InitialHand,
                 state.HandBeforeLastReroll, state.PreviousPlayedHand, state.LatestRerollMask, state.EverRerolledMask,
                 state.RerollsSpentOnHand, handsRemaining, state.RerollsRemaining, state.HandsPlayedInStage,
-                encounter.Stages[state.StageIndex].StartingHands, state.PreviousStageStartingHands,
-                state.PreviousStageHandsRemaining, EncounterRuleResolver.Snapshots(encounter, state));
+                inPlay.Encounter.Stages[state.StageIndex].StartingHands, state.PreviousStageStartingHands,
+                state.PreviousStageHandsRemaining, EncounterRuleResolver.Snapshots(inPlay, state));
 
         private static bool HasActivationAllowance(ModifierInstanceState instance, ModifierDefinition definition)
             => (definition.ActivationLimit != ModifierActivationLimit.OncePerHand || instance.ActivationsThisHand == 0) &&

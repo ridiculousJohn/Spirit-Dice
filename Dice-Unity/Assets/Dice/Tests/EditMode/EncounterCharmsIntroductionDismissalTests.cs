@@ -18,6 +18,7 @@ namespace Dice.Tests
         private SyntheticUi ui;
         private SpiritEncounterCharmsIntroduction introduction;
         private MechanicalCatalog catalog;
+        private EncounterInPlay inPlay;
         private EncounterJourneyAsset journey;
         private EncounterSnapshot playing;
         private EncounterSnapshot introduced;
@@ -40,6 +41,7 @@ namespace Dice.Tests
             catalog = EncounterCharmsIntroductionTests.Catalog(firstClearedStage: 3, additions: true);
             charms = synthetic.For(catalog);
             var session = EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 11);
+            inPlay = session.InPlay;
             playing = session.Snapshot;
             for (int cleared = 1; cleared <= 3; ++cleared)
             {
@@ -72,10 +74,10 @@ namespace Dice.Tests
         [Test]
         public void ContinueDismissesTheIntroductionForItsOfferAndARefreshedOffer()
         {
-            introduction.Refresh(catalog, charms, playing, journey);
+            introduction.Refresh(catalog, charms, inPlay, playing, journey);
             Assert.That(introduction.IsOpen, Is.False, "Nothing is introduced while playing.");
 
-            introduction.Refresh(catalog, charms, introduced, journey);
+            introduction.Refresh(catalog, charms, inPlay, introduced, journey);
             Assert.That(introduction.IsOpen, Is.True, "The first offer that can contain the additions is introduced.");
             var screen = introduction.Screen;
             Assert.That(screen.Narration.gameObject.activeSelf, Is.True);
@@ -86,9 +88,9 @@ namespace Dice.Tests
 
             screen.BeginButton.onClick.Invoke();
             Assert.That(introduction.IsOpen, Is.False, "Continue dismisses the introduction.");
-            introduction.Refresh(catalog, charms, introduced, journey);
+            introduction.Refresh(catalog, charms, inPlay, introduced, journey);
             Assert.That(introduction.IsOpen, Is.False, "The dismissed offer is not introduced again.");
-            introduction.Refresh(catalog, charms, refreshed, journey);
+            introduction.Refresh(catalog, charms, inPlay, refreshed, journey);
             Assert.That(introduction.IsOpen, Is.False, "A refreshed offer for the same stage stays dismissed.");
         }
 
@@ -96,14 +98,14 @@ namespace Dice.Tests
         [Test]
         public void ResettingTheDismissalIntroducesThePendingOfferAgain()
         {
-            introduction.Refresh(catalog, charms, introduced, journey);
+            introduction.Refresh(catalog, charms, inPlay, introduced, journey);
             introduction.Screen.BeginButton.onClick.Invoke();
             introduction.ResetDismissal();
             Assert.That(introduction.IsOpen, Is.False, "Resetting hides the introduction until the run is shown again.");
 
-            introduction.Refresh(catalog, charms, refreshed, journey);
+            introduction.Refresh(catalog, charms, inPlay, refreshed, journey);
             Assert.That(introduction.IsOpen, Is.True, "The pending offer is introduced again after the reset.");
-            introduction.Refresh(catalog, charms, chosen, journey);
+            introduction.Refresh(catalog, charms, inPlay, chosen, journey);
             Assert.That(introduction.IsOpen, Is.False, "Taking a charm moves on without the introduction.");
         }
     }

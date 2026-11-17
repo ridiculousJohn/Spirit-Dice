@@ -157,9 +157,9 @@ namespace Dice.Tests
         [Test]
         public void PresentersFailAtCreationForAMissingOrDifferentRule()
         {
-            var encounter = Encounter();
+            var inPlay = InPlay();
             var missing = new[] { Card(TestRules.IdOf("test.missing"), new Recording()) };
-            Assert.Throws<InvalidOperationException>(() => EncounterRulePresenters.Create(missing, encounter, () => context));
+            Assert.Throws<InvalidOperationException>(() => EncounterRulePresenters.Create(missing, inPlay, () => context));
 
             var interference = ScriptableObject.CreateInstance<DieInterferencePresenterAsset>();
             created.Add(interference);
@@ -182,19 +182,19 @@ namespace Dice.Tests
 
         private EncounterRulePresenters Create(params EncounterRulePresentationAsset[] cards)
         {
-            var presenters = EncounterRulePresenters.Create(cards, Encounter(), () => context);
+            var presenters = EncounterRulePresenters.Create(cards, InPlay(), () => context);
             Assert.That(presenters.Presenters.Count, Is.EqualTo(cards.Count(card => card.Presenter != null)));
             return presenters;
         }
 
         /** A test encounter with the three test rules the cards present. */
-        private static EncounterDefinition Encounter()
-            => new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
+        private static EncounterInPlay InPlay()
+            => new EncounterInPlay(new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1000000, 20, 20) },
                 rules: new EncounterRuleDefinition[]
                 {
                     new DieBindingRuleDefinition(FirstId, false, false), new DieBindingRuleDefinition(SecondId, false, false),
                     new DieBindingRuleDefinition(ThirdId, false, false)
-                });
+                }), Array.Empty<ItemDefinition>());
 
         /** A rule card whose test presenter records its presenter's calls into this test's log. */
         private EncounterRulePresentationAsset Card(EncounterRuleDefinition.Id ruleId, Recording recording)
