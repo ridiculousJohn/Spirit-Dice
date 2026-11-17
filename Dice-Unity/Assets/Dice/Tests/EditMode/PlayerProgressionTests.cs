@@ -145,7 +145,8 @@ namespace Dice.Tests
         public void RepeatedRewardSucceedsWithoutWritingOrReportingAChange()
         {
             var catalog = Catalog();
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId));
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId),
+                Array.Empty<ItemDefinition.Id>());
             Assert.That(progression.PrepareProfile(savePath), Is.True);
             Assert.That(progression.ApplyProgressionReward(reward, catalog, out bool changed), Is.True);
             Assert.That(changed, Is.True);
@@ -243,7 +244,8 @@ namespace Dice.Tests
 
         private bool ApplyOperation(string operation, MechanicalCatalog catalog)
         {
-            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId));
+            var reward = new ProgressionRewardDefinition(new[] { GiftFamilyId }, TestModifiers.IdsOf(GiftId),
+                Array.Empty<ItemDefinition.Id>());
             if (operation == "journey") return progression.CompleteJourney(ReturnJourneyId, new[] { reward }, catalog);
             if (operation == "visit") return progression.PersistVisit(TestContent.EncounterId);
             bool result = progression.ApplyProgressionReward(reward, catalog, out bool changed);

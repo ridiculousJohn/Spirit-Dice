@@ -9,17 +9,24 @@ namespace Dice.UnityContent
     {
         [SerializeField] private ModifierFamilyAsset[] discoveredFamilies = Array.Empty<ModifierFamilyAsset>();
         [SerializeField] private ModifierAsset[] grantedModifiers = Array.Empty<ModifierAsset>();
+        [Tooltip("The items the player owns once the reward is granted.")]
+        [SerializeField] private ItemAsset[] grantedItems = Array.Empty<ItemAsset>();
 
         public ProgressionRewardDefinition Build(MechanicalCatalog catalog)
         {
-            var families = discoveredFamilies ?? throw new InvalidOperationException("Discovered families are missing.");
+            var families = discoveredFamilies ?? throw new InvalidOperationException("Discovered families are missing: " + name);
             var familyIds = new ModifierFamilyDefinition.Id[families.Length];
             for (int i = 0; i < familyIds.Length; ++i)
                 familyIds[i] = families[i] != null ? families[i].Identity
                     : throw new InvalidOperationException("A discovered family reference is missing: " + name);
             var ids = new ModifierDefinition.Id[GrantedModifiers.Length];
             for (int i = 0; i < ids.Length; ++i) ids[i] = GrantedModifier(i).Identity;
-            var definition = new ProgressionRewardDefinition(familyIds, ids);
+            var items = grantedItems ?? throw new InvalidOperationException("Granted items are missing: " + name);
+            var itemIds = new ItemDefinition.Id[items.Length];
+            for (int i = 0; i < itemIds.Length; ++i)
+                itemIds[i] = items[i] != null ? items[i].Identity
+                    : throw new InvalidOperationException("A granted item reference is missing: " + name);
+            var definition = new ProgressionRewardDefinition(familyIds, ids, itemIds);
             definition.Validate(catalog);
             return definition;
         }
@@ -33,7 +40,7 @@ namespace Dice.UnityContent
         }
 
         private ModifierAsset[] GrantedModifiers
-            => grantedModifiers ?? throw new InvalidOperationException("Granted charms are missing.");
+            => grantedModifiers ?? throw new InvalidOperationException("Granted charms are missing: " + name);
 
         private ModifierAsset GrantedModifier(int index)
             => grantedModifiers[index] != null ? grantedModifiers[index]

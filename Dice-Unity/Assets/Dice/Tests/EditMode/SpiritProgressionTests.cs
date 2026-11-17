@@ -37,7 +37,8 @@ namespace Dice.Tests
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.Save();
             string olderSavePath = Path.Combine(Path.GetDirectoryName(savePath), "older-run.json");
             File.Copy(savePath, olderSavePath);
@@ -87,7 +88,8 @@ namespace Dice.Tests
             Assert.That(File.Exists(replacementPath), Is.False);
 
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.PlayHand();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
             var pending = EncounterSaveFileStore.Load(savePath, catalog);
@@ -112,7 +114,8 @@ namespace Dice.Tests
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.Resolved += resolution =>
             {
                 if (resolution.Snapshot.Outcome == EncounterOutcome.Won)
@@ -152,7 +155,8 @@ namespace Dice.Tests
             var catalog = Catalog();
             controller.Initialize(catalog, TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Directory.CreateDirectory(Path.GetDirectoryName(savePath));
@@ -175,7 +179,8 @@ namespace Dice.Tests
         {
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.PlayHand();
             controller.CompletePresentation();
             Assert.That(controller.Snapshot.Phase, Is.EqualTo(EncounterPhase.ChoosingUnlock));
@@ -225,7 +230,8 @@ namespace Dice.Tests
             controller.Initialize(Catalog(finalWin: true), TestContent.EncounterId, 17, savePath);
             Assert.That(controller.Snapshot.UnlockedModifierIds, Is.Empty);
             Assert.That(controller.ApplyProgressionReward(new ProgressionRewardDefinition(
-                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>())), Is.True);
+                new[] { TestFamilies.IdOf("family.permanent") }, Array.Empty<ModifierDefinition.Id>(),
+                Array.Empty<ItemDefinition.Id>())), Is.True);
             controller.PlayHand();
             ChooseUnlock();
             profile = PlayerProfileFileStore.Load(profilePath);

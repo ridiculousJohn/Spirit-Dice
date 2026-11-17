@@ -23,6 +23,7 @@ namespace Dice.Editor
         [SerializeField] private bool showVisitedEncounters;
         [SerializeField] private bool showFamilies;
         [SerializeField] private bool showCharms;
+        [SerializeField] private bool showItems;
         private SaveGameContent content;
         private SaveGameStore store;
         private string contentError;
@@ -324,6 +325,7 @@ namespace Dice.Editor
                 DrawSelection("Discovered families", ref showFamilies, content.FamilyEntries, edit.DiscoveredFamilies, content.FamilyName,
                     id => implicitFamilies.TryGetValue(id, out var discovery) ? Describe(discovery) : null);
                 DrawSelection("Unlocked charms", ref showCharms, content.CharmEntries, edit.UnlockedCharms, content.CharmName);
+                DrawSelection("Owned items", ref showItems, content.ItemEntries, edit.OwnedItems, content.ItemName);
             }
         }
 

@@ -42,9 +42,10 @@ namespace Dice.Editor
         public SaveGameIdSelection<EncounterDefinition.Id> VisitedEncounters { get; }
         public SaveGameIdSelection<ModifierFamilyDefinition.Id> DiscoveredFamilies { get; }
         public SaveGameIdSelection<ModifierDefinition.Id> UnlockedCharms { get; }
+        public SaveGameIdSelection<ItemDefinition.Id> OwnedItems { get; }
 
         public bool IsChanged => CompletedJourneys.IsChanged || CompletedEncounters.IsChanged || VisitedEncounters.IsChanged ||
-            DiscoveredFamilies.IsChanged || UnlockedCharms.IsChanged;
+            DiscoveredFamilies.IsChanged || UnlockedCharms.IsChanged || OwnedItems.IsChanged;
 
         public SaveGameProfileEdit(PlayerProfile profile)
         {
@@ -54,6 +55,7 @@ namespace Dice.Editor
             VisitedEncounters = new SaveGameIdSelection<EncounterDefinition.Id>(profile.VisitedEncounterIds);
             DiscoveredFamilies = new SaveGameIdSelection<ModifierFamilyDefinition.Id>(profile.DiscoveredFamilyIds);
             UnlockedCharms = new SaveGameIdSelection<ModifierDefinition.Id>(profile.UnlockedModifierIds);
+            OwnedItems = new SaveGameIdSelection<ItemDefinition.Id>(profile.OwnedItemIds);
         }
 
         public PlayerProfile Build()
@@ -64,6 +66,7 @@ namespace Dice.Editor
             foreach (var id in CompletedEncounters.Ids) profile.CompleteEncounter(id);
             foreach (var id in CompletedJourneys.Ids) profile.CompleteJourney(id);
             foreach (var id in VisitedEncounters.Ids) profile.VisitEncounter(id);
+            foreach (var id in OwnedItems.Ids) profile.OwnItem(id);
             return profile;
         }
 

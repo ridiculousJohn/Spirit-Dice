@@ -8,17 +8,19 @@ namespace Dice.App
 {
     public sealed class PlayerProfile
     {
-        public const int CurrentFormatVersion = 9;
+        public const int CurrentFormatVersion = 10;
         private readonly List<ModifierFamilyDefinition.Id> discoveredFamilyIds = new List<ModifierFamilyDefinition.Id>();
         private readonly List<ModifierDefinition.Id> unlockedModifierIds = new List<ModifierDefinition.Id>();
         private readonly List<EncounterDefinition.Id> completedEncounterIds = new List<EncounterDefinition.Id>();
         private readonly List<EncounterJourneyAsset.Id> completedJourneyIds = new List<EncounterJourneyAsset.Id>();
         private readonly List<EncounterDefinition.Id> visitedEncounterIds = new List<EncounterDefinition.Id>();
+        private readonly List<ItemDefinition.Id> ownedItemIds = new List<ItemDefinition.Id>();
         public ReadOnlyCollection<ModifierDefinition.Id> UnlockedModifierIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> CompletedEncounterIds { get; }
         public ReadOnlyCollection<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
         public ReadOnlyCollection<EncounterDefinition.Id> VisitedEncounterIds { get; }
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
+        public ReadOnlyCollection<ItemDefinition.Id> OwnedItemIds { get; }
 
         public PlayerProfile()
         {
@@ -27,6 +29,7 @@ namespace Dice.App
             CompletedJourneyIds = completedJourneyIds.AsReadOnly();
             VisitedEncounterIds = visitedEncounterIds.AsReadOnly();
             DiscoveredFamilyIds = discoveredFamilyIds.AsReadOnly();
+            OwnedItemIds = ownedItemIds.AsReadOnly();
         }
 
         public bool UnlockModifier(ModifierDefinition.Id id) => Add(unlockedModifierIds, id);
@@ -34,6 +37,7 @@ namespace Dice.App
         public bool CompleteJourney(EncounterJourneyAsset.Id id) => Add(completedJourneyIds, id);
         public bool VisitEncounter(EncounterDefinition.Id id) => Add(visitedEncounterIds, id);
         public bool DiscoverFamily(ModifierFamilyDefinition.Id id) => Add(discoveredFamilyIds, id);
+        public bool OwnItem(ItemDefinition.Id id) => Add(ownedItemIds, id);
 
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> GetDiscoveredFamilyIds(MechanicalCatalog catalog)
         {
@@ -58,6 +62,7 @@ namespace Dice.App
                 changed |= UnlockModifier(id);
                 changed |= DiscoverFamily(catalog.GetModifier(id).Family.Identity);
             }
+            foreach (var id in reward.GrantedItemIds) changed |= OwnItem(id);
             return changed;
         }
 
@@ -70,6 +75,7 @@ namespace Dice.App
             foreach (var id in other.CompletedEncounterIds) changed |= CompleteEncounter(id);
             foreach (var id in other.CompletedJourneyIds) changed |= CompleteJourney(id);
             foreach (var id in other.VisitedEncounterIds) changed |= VisitEncounter(id);
+            foreach (var id in other.OwnedItemIds) changed |= OwnItem(id);
             return changed;
         }
 

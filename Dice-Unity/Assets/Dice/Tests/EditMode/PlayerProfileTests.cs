@@ -11,6 +11,9 @@ namespace Dice.Tests
 {
     public sealed class PlayerProfileTests
     {
+        private static readonly ItemDefinition.Id ItemId = new ItemDefinition.Id(new Guid("4a7c2e91b3d54f08a6e1c9b2d7f03e58"));
+        private static readonly ItemDefinition.Id MissingItemId = new ItemDefinition.Id(new Guid("9e3b1f72c4a64d85b0f2e7a1c6d94b13"));
+
         [Test]
         public void DiscoveryIsPersistedMergedAndIndependentOfIndividualOwnership()
         {
@@ -69,6 +72,51 @@ namespace Dice.Tests
             Assert.That(PlayerProfileFileStore.Load(path).CompletedJourneyIds, Is.EquivalentTo(new[] { future, another }));
         }
 
+        [Test]
+        public void OwnedItemsArePersistedMergedAndIdempotent()
+        {
+            var profile = new PlayerProfile();
+            Assert.That(profile.OwnItem(ItemId), Is.True);
+            Assert.That(profile.OwnItem(ItemId), Is.False);
+            Assert.That(profile.UnlockedModifierIds, Is.Empty);
+            var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
+            Assert.That(restored.OwnedItemIds, Is.EqualTo(new[] { ItemId }));
+            Assert.That(restored.Merge(profile), Is.False);
+            var merged = new PlayerProfile();
+            Assert.That(merged.Merge(restored), Is.True);
+            Assert.That(merged.OwnedItemIds, Is.EqualTo(restored.OwnedItemIds));
+        }
+
+        [Test]
+        public void ASealedFormat9ProfileLoadsWithNoOwnedItems()
+        {
+            var profile = new PlayerProfile();
+            profile.UnlockModifier(TestModifiers.IdOf("modifier.older"));
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(profile)));
+            document.Remove("OwnedItemIds");
+            document["ProfileFormatVersion"] = 9;
+            var restored = PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString()));
+            Assert.That(restored.OwnedItemIds, Is.Empty);
+            Assert.That(restored.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("modifier.older")));
+        }
+
+        [TestCase("missing")]
+        [TestCase("null")]
+        [TestCase("number")]
+        [TestCase("duplicate")]
+        [TestCase("invalid")]
+        public void InvalidOwnedItemFieldsAreRejected(string invalid)
+        {
+            var document = JObject.Parse(Encoding.UTF8.GetString(PlayerProfileCodec.Serialize(new PlayerProfile())));
+            string item = ItemId.Value.ToString("N");
+            if (invalid == "missing") document.Remove("OwnedItemIds");
+            if (invalid == "null") document["OwnedItemIds"] = JValue.CreateNull();
+            if (invalid == "number") document["OwnedItemIds"] = new JArray(42);
+            if (invalid == "duplicate") document["OwnedItemIds"] = new JArray(item, item);
+            if (invalid == "invalid") document["OwnedItemIds"] = new JArray("item\ninvalid");
+            Assert.Throws<FormatException>(() => PlayerProfileCodec.Deserialize(Encoding.UTF8.GetBytes(document.ToString())));
+        }
+
         [TestCase("missing")]
         [TestCase("null")]
         [TestCase("number")]
@@ -93,17 +141,21 @@ namespace Dice.Tests
             var profile = new PlayerProfile();
             var discovered = new[] { TestFamilies.IdOf("family.revealed") };
             var granted = TestModifiers.IdsOf("owned");
-            var reward = new ProgressionRewardDefinition(discovered, granted);
+            var items = new[] { ItemId };
+            var reward = new ProgressionRewardDefinition(discovered, granted, items);
             discovered[0] = TestFamilies.IdOf("unknown");
             granted[0] = TestModifiers.IdOf("unknown");
+            items[0] = MissingItemId;
             Assert.That(profile.ApplyReward(reward, catalog), Is.True);
             Assert.That(profile.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("owned")));
+            Assert.That(profile.OwnedItemIds, Is.EqualTo(new[] { ItemId }));
             Assert.That(profile.DiscoveredFamilyIds, Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned") }));
             Assert.That(profile.GetDiscoveredFamilyIds(catalog), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned"), TestFamilies.IdOf("family.starter") }));
             Assert.That(profile.ApplyReward(reward, catalog), Is.False);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.ApplyReward(reward, catalog), Is.False);
             Assert.That(restored.UnlockedModifierIds, Has.No.Member(TestModifiers.IdOf("owned.variant")));
+            Assert.That(restored.OwnedItemIds, Is.EqualTo(new[] { ItemId }));
         }
 
         [TestCase("family")]
@@ -112,15 +164,19 @@ namespace Dice.Tests
         [TestCase("inert")]
         [TestCase("never")]
         [TestCase("starter")]
+        [TestCase("item")]
         public void InvalidRewardRejectsAllProgressBeforeMutation(string invalid)
         {
             var profile = new PlayerProfile();
             ModifierFamilyDefinition.Id[] discoveries = { TestFamilies.IdOf(invalid == "family" ? "unknown.family" : "family.revealed") };
-            var grants = TestModifiers.IdsOf("owned", invalid == "family" ? "owned.variant" : invalid == "modifier" ? "unknown" : invalid);
-            var reward = new ProgressionRewardDefinition(discoveries, grants);
+            var grants = TestModifiers.IdsOf("owned", invalid == "family" || invalid == "item" ? "owned.variant" :
+                invalid == "modifier" ? "unknown" : invalid);
+            var items = new[] { invalid == "item" ? MissingItemId : ItemId };
+            var reward = new ProgressionRewardDefinition(discoveries, grants, items);
             Assert.Throws<ArgumentException>(() => profile.ApplyReward(reward, RewardCatalog()));
             Assert.That(profile.DiscoveredFamilyIds, Is.Empty);
             Assert.That(profile.UnlockedModifierIds, Is.Empty);
+            Assert.That(profile.OwnedItemIds, Is.Empty);
         }
 
         [TestCase("missing")]
@@ -153,7 +209,7 @@ namespace Dice.Tests
                 new EncounterDefinition(TestContent.EncounterId, new[] { new StageDefinition(1, 1, 0) },
                     rewardPolicy: RewardTestContent.Policy(new[] { new ModifierRewardLayout(new[] { pool }) }),
                     encounterModifierIds: TestModifiers.IdsOf("encounter"))
-            }, modifiers);
+            }, modifiers, new[] { new ItemDefinition(ItemId, piece: new TablePieceDefinition(TestPieces.IdOf("piece.owned"))) });
         }
 
         private static ModifierDefinition RewardModifier(string id, string family, bool requiresUnlock = true,

@@ -81,6 +81,7 @@ namespace Dice.Tests
             var journey = new EncounterJourneyAsset.Id(Guid.NewGuid());
             var family = new ModifierFamilyDefinition.Id(Guid.NewGuid());
             var charm = new ModifierDefinition.Id(Guid.NewGuid());
+            var item = new ItemDefinition.Id(Guid.NewGuid());
 
             var read = store.ReadProfile(1);
             var edit = new SaveGameProfileEdit(read.Profile);
@@ -89,6 +90,7 @@ namespace Dice.Tests
             edit.VisitedEncounters.Set(TestContent.EncounterId, true);
             edit.DiscoveredFamilies.Set(family, true);
             edit.UnlockedCharms.Set(charm, true);
+            edit.OwnedItems.Set(item, true);
             store.SaveProfile(read, edit.Build());
 
             var saved = PlayerProfileFileStore.Load(LoadSlots(catalog).GetProfilePath(1));
@@ -97,16 +99,19 @@ namespace Dice.Tests
             Assert.That(saved.VisitedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
             Assert.That(saved.DiscoveredFamilyIds, Is.EqualTo(new[] { family }));
             Assert.That(saved.UnlockedModifierIds, Is.EqualTo(new[] { charm }));
+            Assert.That(saved.OwnedItemIds, Is.EqualTo(new[] { item }));
 
             read = store.ReadProfile(1);
             edit = new SaveGameProfileEdit(read.Profile);
             edit.CompletedJourneys.Set(journey, false);
             edit.UnlockedCharms.Set(charm, false);
+            edit.OwnedItems.Set(item, false);
             store.SaveProfile(read, edit.Build());
 
             var trimmed = PlayerProfileFileStore.Load(LoadSlots(catalog).GetProfilePath(1));
             Assert.That(trimmed.CompletedJourneyIds, Is.Empty);
             Assert.That(trimmed.UnlockedModifierIds, Is.Empty);
+            Assert.That(trimmed.OwnedItemIds, Is.Empty);
             Assert.That(trimmed.CompletedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
             Assert.That(trimmed.VisitedEncounterIds, Is.EqualTo(new[] { TestContent.EncounterId }));
             Assert.That(trimmed.DiscoveredFamilyIds, Is.EqualTo(new[] { family }));

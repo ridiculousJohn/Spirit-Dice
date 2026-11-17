@@ -30,10 +30,12 @@ milestone families; these lists are provisional.
 ## Family discovery and story grants
 
 Create a `Dice/Progression Reward` asset with independent `discoveredFamilies`
-(family asset references) and `grantedModifiers` (charm references) lists. Discovering a family reveals its variants and
+(family asset references), `grantedModifiers` (charm references) and `grantedItems`
+(item asset references) lists. Discovering a family reveals its variants and
 allows its entries in authored unlock lists to be offered. Granting an individual
 charm permanently owns it and also discovers its family. Neither operation equips
-the charm or inserts it into an encounter's ordinary pool.
+the charm or inserts it into an encounter's ordinary pool. Granting an item makes
+the player own it; every granted item must be an item of the catalog.
 
 Reference the asset from an encounter journey beat's `progressionReward` or the
 journey's `completionReward`. Beat rewards apply when continuing past the beat,

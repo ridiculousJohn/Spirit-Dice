@@ -42,6 +42,8 @@ namespace Dice.Editor
         public IReadOnlyList<Entry<ModifierFamilyDefinition.Id>> FamilyEntries { get; }
         /** The charms that require unlocking, in catalog order, grouped under their family's name. */
         public IReadOnlyList<Entry<ModifierDefinition.Id>> CharmEntries { get; }
+        /** The catalog's items in catalog order. */
+        public IReadOnlyList<Entry<ItemDefinition.Id>> ItemEntries { get; }
 
         private SaveGameContent(string configurationPath, MechanicalContent content, ModifierPresentationCatalog presentation,
             EncounterJourneyCatalogAsset journeys)
@@ -69,6 +71,9 @@ namespace Dice.Editor
                     Presentation.GetName(modifier)))
                 .GroupBy(entry => entry.Group)
                 .SelectMany(group => group)
+                .ToList();
+            ItemEntries = Catalog.Items
+                .Select(item => new Entry<ItemDefinition.Id>(item.Identity, "", ItemName(item.Identity)))
                 .ToList();
         }
 
@@ -106,6 +111,9 @@ namespace Dice.Editor
             var modifier = Catalog.Modifiers.FirstOrDefault(candidate => candidate.Identity == id);
             return modifier != null ? Presentation.GetName(modifier) : Unlisted(id.Value);
         }
+
+        /** An item has no display name, so it is named by its asset. */
+        public string ItemName(ItemDefinition.Id id) => Unlisted(id.Value);
 
         private string EncounterGroup(EncounterDefinition.Id id)
         {

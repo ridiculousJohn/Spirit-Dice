@@ -18,10 +18,13 @@ namespace Dice.App
         private const string CompletedEncounterIdsField = "CompletedEncounterIds";
         private const string CompletedJourneyIdsField = "CompletedJourneyIds";
         private const string VisitedEncounterIdsField = "VisitedEncounterIds";
+        private const string OwnedItemIdsField = "OwnedItemIds";
         // To change the format, raise PlayerProfile.CurrentFormatVersion and append a step that upgrades the previous format.
         // Format 8 is format 9 written without a seal.
+        // Format 9 lacks the owned items field.
         private static readonly SaveFormatUpgrades FormatUpgrades = new SaveFormatUpgrades(
-            FormatVersionField, PlayerProfile.CurrentFormatVersion, document => { });
+            FormatVersionField, PlayerProfile.CurrentFormatVersion, document => { },
+            document => document[OwnedItemIdsField] = new JArray());
 
         /** The oldest profile format the codec reads. */
         internal static int OldestFormatVersion => FormatUpgrades.OldestVersion;
@@ -36,7 +39,8 @@ namespace Dice.App
                 [UnlockedModifierIdsField] = IdArray(profile.UnlockedModifierIds, ContentIds.Modifier),
                 [CompletedEncounterIdsField] = IdArray(profile.CompletedEncounterIds, ContentIds.Encounter),
                 [CompletedJourneyIdsField] = IdArray(profile.CompletedJourneyIds, ContentIds.Journey),
-                [VisitedEncounterIdsField] = IdArray(profile.VisitedEncounterIds, ContentIds.Encounter)
+                [VisitedEncounterIdsField] = IdArray(profile.VisitedEncounterIds, ContentIds.Encounter),
+                [OwnedItemIdsField] = IdArray(profile.OwnedItemIds, ContentIds.Item)
             };
             byte[] bytes = SaveFileText.Encoding.GetBytes(document.ToString(Formatting.Indented));
             if (bytes.Length > MaximumProfileBytes) throw new FormatException("The profile exceeds the size limit.");
@@ -70,7 +74,8 @@ namespace Dice.App
                     foreach (var property in document.Properties())
                         if (property.Name != FormatVersionField && property.Name != DiscoveredFamilyIdsField &&
                             property.Name != UnlockedModifierIdsField && property.Name != CompletedEncounterIdsField &&
-                            property.Name != CompletedJourneyIdsField && property.Name != VisitedEncounterIdsField)
+                            property.Name != CompletedJourneyIdsField && property.Name != VisitedEncounterIdsField &&
+                            property.Name != OwnedItemIdsField)
                             throw new FormatException("The profile contains an unsupported field: " + property.Name);
                     var profile = new PlayerProfile();
                     ReadIds(document[DiscoveredFamilyIdsField], ContentIds.Family, profile.DiscoverFamily);
@@ -78,6 +83,7 @@ namespace Dice.App
                     ReadIds(document[UnlockedModifierIdsField], ContentIds.Modifier, profile.UnlockModifier);
                     ReadIds(document[CompletedEncounterIdsField], ContentIds.Encounter, profile.CompleteEncounter);
                     ReadIds(document[VisitedEncounterIdsField], ContentIds.Encounter, profile.VisitEncounter);
+                    ReadIds(document[OwnedItemIdsField], ContentIds.Item, profile.OwnItem);
                     return profile;
                 }
             }

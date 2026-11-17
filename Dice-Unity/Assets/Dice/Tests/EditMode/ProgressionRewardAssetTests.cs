@@ -14,6 +14,8 @@ namespace Dice.Tests
         private const string FamilyId = "family.story";
         private const string ModifierId = "modifier.story.base";
         private static readonly EncounterDefinition.Id EncounterId = TestEncounters.IdOf("encounter.story");
+        private static readonly ItemDefinition.Id ItemId = new ItemDefinition.Id(new Guid("c2e85a1f7b3d4096a4e1f8d2b6c07e39"));
+        private static readonly ItemDefinition.Id MissingItemId = new ItemDefinition.Id(new Guid("5d9f0b3e8a2c47e1b6d4a0f7c3e19b82"));
         private readonly List<ScriptableObject> assets = new List<ScriptableObject>();
         private readonly SyntheticCharms charms = new SyntheticCharms();
         private MechanicalCatalog catalog;
@@ -26,7 +28,8 @@ namespace Dice.Tests
                 availability: new ModifierAvailabilityDefinition(requiresUnlock: true));
             catalog = new MechanicalCatalog("test.progression-reward-assets", TestContent.Hands(),
                 new[] { new EncounterDefinition(EncounterId, new[] { new StageDefinition(100, 3, 2) }) },
-                new[] { modifier });
+                new[] { modifier },
+                new[] { new ItemDefinition(ItemId, piece: new TablePieceDefinition(TestPieces.IdOf("piece.story"))) });
         }
 
         [TearDown]
@@ -60,6 +63,22 @@ namespace Dice.Tests
         {
             var reward = Reward(new[] { unknownFamily ? "family.missing" : FamilyId },
                 new[] { unknownFamily ? ModifierId : "modifier.missing" });
+            Assert.Throws<ArgumentException>(() => reward.Build(catalog));
+        }
+
+        [Test]
+        public void BuildPassesTheGrantedItems()
+        {
+            var reward = Reward(Array.Empty<string>(), Array.Empty<string>());
+            SyntheticUi.Set(reward, "grantedItems", new[] { Item("item.story", ItemId) });
+            Assert.That(reward.Build(catalog).GrantedItemIds, Is.EqualTo(new[] { ItemId }));
+        }
+
+        [Test]
+        public void BuildRejectsUnknownItem()
+        {
+            var reward = Reward(new[] { FamilyId }, new[] { ModifierId });
+            SyntheticUi.Set(reward, "grantedItems", new[] { Item("item.missing", MissingItemId) });
             Assert.Throws<ArgumentException>(() => reward.Build(catalog));
         }
 
@@ -98,6 +117,14 @@ namespace Dice.Tests
             SyntheticUi.Set(reward, "discoveredFamilies", families.Select(charms.Family).ToArray());
             SyntheticUi.Set(reward, "grantedModifiers", modifiers.Select(id => charms.Charm(id)).ToArray());
             return reward;
+        }
+
+        private ItemAsset Item(string name, ItemDefinition.Id id)
+        {
+            var item = Create<ItemAsset>();
+            item.name = name;
+            SyntheticUi.Set(item, ContentAsset.AssetGuidField, id.Value.ToString("N"));
+            return item;
         }
 
         private EncounterJourneyAsset Journey()

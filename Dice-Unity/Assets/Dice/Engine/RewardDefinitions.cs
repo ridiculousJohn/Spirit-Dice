@@ -8,9 +8,10 @@ namespace Dice.Engine
     {
         public ReadOnlyCollection<ModifierFamilyDefinition.Id> DiscoveredFamilyIds { get; }
         public ReadOnlyCollection<ModifierDefinition.Id> GrantedModifierIds { get; }
+        public ReadOnlyCollection<ItemDefinition.Id> GrantedItemIds { get; }
 
         public ProgressionRewardDefinition(IEnumerable<ModifierFamilyDefinition.Id> discoveredFamilyIds,
-            IEnumerable<ModifierDefinition.Id> grantedModifierIds)
+            IEnumerable<ModifierDefinition.Id> grantedModifierIds, IEnumerable<ItemDefinition.Id> grantedItemIds)
         {
             if (discoveredFamilyIds == null) throw new ArgumentNullException(nameof(discoveredFamilyIds));
             var families = new List<ModifierFamilyDefinition.Id>(discoveredFamilyIds);
@@ -24,6 +25,12 @@ namespace Dice.Engine
             foreach (var id in granted)
                 if (!uniqueGranted.Add(id)) throw new ArgumentException("Granted charms must be unique.", nameof(grantedModifierIds));
             GrantedModifierIds = granted.AsReadOnly();
+            if (grantedItemIds == null) throw new ArgumentNullException(nameof(grantedItemIds));
+            var items = new List<ItemDefinition.Id>(grantedItemIds);
+            var uniqueItems = new HashSet<ItemDefinition.Id>();
+            foreach (var id in items)
+                if (!uniqueItems.Add(id)) throw new ArgumentException("Granted items must be unique.", nameof(grantedItemIds));
+            GrantedItemIds = items.AsReadOnly();
         }
 
         public void Validate(MechanicalCatalog catalog)
@@ -42,6 +49,14 @@ namespace Dice.Engine
                 }
                 if (!modifier.Availability.RequiresUnlock || !modifier.IsPlayable)
                     throw new ArgumentException("Progression grants require playable permanent modifiers.", nameof(catalog));
+            }
+            foreach (var id in GrantedItemIds)
+            {
+                try { catalog.GetItem(id); }
+                catch (KeyNotFoundException exception)
+                {
+                    throw new ArgumentException("A granted item is missing from the catalog.", nameof(catalog), exception);
+                }
             }
         }
     }
