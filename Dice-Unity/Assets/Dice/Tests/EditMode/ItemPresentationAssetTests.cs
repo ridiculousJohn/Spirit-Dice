@@ -62,6 +62,25 @@ namespace Dice.Tests
             Assert.DoesNotThrow(() => Presentation("Lantern", Icon(), null, card).Validate(withoutPiece));
         }
 
+        /**
+         * Checks a presentation whose rule card is flagged Shown On HUD is rejected, naming the presentation and the card /
+         * fails if an item's card could take the table's HUD badge.
+         */
+        [Test]
+        public void ValidateRejectsARuleCardFlaggedForTheHud()
+        {
+            var ruleId = TestRules.IdOf(RuleName);
+            var withoutPiece = new ItemDefinition(ItemId, new[] { new FirstRerollFreeRuleDefinition(ruleId) });
+            var card = Create<EncounterRulePresentationAsset>();
+            card.name = "Flagged Card";
+            SyntheticUi.Set(card, "rule", Own(TestRules.Asset(ruleId)));
+            SyntheticUi.Set(card, "shownOnHud", true);
+            var presentation = Presentation("Lantern", Icon(), null, card);
+            presentation.name = "Flagged Presentation";
+            var failure = Assert.Throws<InvalidOperationException>(() => presentation.Validate(withoutPiece));
+            Assert.That(failure.Message, Does.Contain("Flagged Presentation").And.Contain("Flagged Card"));
+        }
+
         private ItemPresentationAsset Presentation(string displayName, Sprite icon, ItemPiecePresenterAsset piecePresenter,
             params EncounterRulePresentationAsset[] cards)
         {

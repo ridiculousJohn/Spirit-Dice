@@ -36,7 +36,8 @@ namespace Dice.Presentation
 
         /**
          * Fails, naming the presentation, unless it has a name and an icon, its cards present exactly the rules of its
-         * item's definition, each once, each card's text uses only the placeholders its rule supplies, and it has a piece
+         * item's definition, each once, none flagged for the HUD, each card's text uses only the placeholders its rule
+         * supplies, and it has a piece
          * presenter exactly when the item places a piece, of a kind the piece has an interaction of and with valid settings
          * of its own.
          */
@@ -52,6 +53,10 @@ namespace Dice.Presentation
                 if (card == null) throw new InvalidOperationException("The item presentation " + name + " has a missing rule card.");
                 if (card.Rule == null)
                     throw new InvalidOperationException("The rule card " + card.name + " of the item presentation " + name + " presents no rule.");
+                // An item shows through its slot or its scene prop; the HUD's rule badge belongs to the table's own cards.
+                if (card.ShownOnHud)
+                    throw new InvalidOperationException("The rule card " + card.name + " of the item presentation " + name +
+                        " is flagged Shown On HUD; only a table's own cards show on the HUD.");
                 if (!presented.Add(card.RuleId))
                     throw new InvalidOperationException("The item presentation " + name + " has more than one card for the rule " +
                         card.Rule.name + ".");
