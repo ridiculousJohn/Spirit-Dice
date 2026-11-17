@@ -56,6 +56,8 @@ namespace Dice.Presentation
         [SerializeField] private float portraitReferenceWidth = SpiritPortraitSafeArea.DefaultReferenceSize.x;
         [Tooltip("Authored props for the encounter's table pieces; empty when the encounter places none.")]
         [SerializeField] private List<SpiritTablePieceView> tablePieces = new List<SpiritTablePieceView>();
+        [Tooltip("Item slots the scene places for the items its encounter lends, each naming its item; empty when the encounter's items need none.")]
+        [SerializeField] private List<SpiritItemSlot> itemSlots = new List<SpiritItemSlot>();
         private readonly Rect[] pieceSlotRects = new Rect[DiceValues.Count];
         private bool pieceSlotsMeasured;
         [Tooltip("Scene transforms for the table's ambient prop actors; empty when the encounter authors none.")]
@@ -70,6 +72,8 @@ namespace Dice.Presentation
         private EncounterRulePresenters rulePresenters;
         // Presenters of the table pieces' interactions for the same encounter; null until an encounter is shown.
         private TablePiecePresenters piecePresenters;
+        // The item slot of each item in play for the same encounter; null while no presenters exist.
+        private ItemSlotAssignment slotAssignment;
         // What the run plays that the presenters were created for; null while none are.
         private EncounterInPlay presentersInPlay;
         private bool applicationFocused = true;
@@ -621,6 +625,8 @@ namespace Dice.Presentation
             // New presenters of a presented snapshot show its state at once as well.
             else if (createdPresenters) rulePresenters?.Sync(snapshot, false);
             piecePresenters.Bind(snapshot);
+            // What shows a piece takes its bay points from its bound state, such as the emblem of the bay an item is on.
+            piecePresenters.Layout();
             bool playing = snapshot.Phase == EncounterPhase.Playing;
             if (playing && controls.Preview != null)
                 ModifierHistory.SynchronizeReady(controls.Preview.Score.ModifierContributions, controls.Catalog,
@@ -654,7 +660,7 @@ namespace Dice.Presentation
         /** Bay points offered to piece presenters follow the tray's resting dice slots, measured like the authored dice touch targets. */
         private void PositionTablePieces()
         {
-            if (tablePieces.Count == 0 || DiceTray == null) return;
+            if (DiceTray == null) return;
             // Rolling dice would carry a bay's piece with them; resting slot bounds do not depend on the face shown.
             if (!pieceSlotsMeasured || !DiceTray.IsRolling)
             {
@@ -837,6 +843,9 @@ namespace Dice.Presentation
                 rulePresenters = EncounterRulePresenters.Create(ruleCards.Cards, installedRules, () => new TableRuleContext(this));
                 // New presenters start from the selection the tray already shows.
                 rulePresenters?.SelectionChanged(DiceTray.SelectionMask);
+                slotAssignment = ItemSlotAssignment.Assign(GameplayHud.PlayerItemSlot, itemSlots, inPlay.Encounter.Items,
+                    inPlay.CarriedItems, tablePieces, configuredTable.name);
+                foreach (var unused in slotAssignment.Unused) unused.Hide();
                 piecePresenters = TablePiecePresenters.Create(tablePieces, installedPieces, inPlay.Items, items, new TablePieceContext(this));
             }
             catch
@@ -869,8 +878,10 @@ namespace Dice.Presentation
             rulePresenters?.Dispose();
             rulePresenters = null;
             ruleCards = null;
+            // Disposing an item's presenter hides its slot.
             piecePresenters?.Dispose();
             piecePresenters = null;
+            slotAssignment = null;
             presentersInPlay = null;
         }
 
@@ -949,6 +960,19 @@ namespace Dice.Presentation
 
             public override BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
                 => view.DiceTray.CreateBayIndicator(prefab, icon, glowColor);
+
+            public override Vector3 BayLabelPoint(int bay) => TrayPoint(view.DiceTray.GetSlotLabelViewportPosition(bay));
+
+            /** The tray display shows the whole tray texture over its rectangle. */
+            public override Vector3 TrayPoint(Vector2 trayViewportPoint)
+            {
+                RectTransform frame = view.GameplayHud.DiceTrayImage.rectTransform;
+                return frame.TransformPoint(SpiritTablePieceLayout.ViewportPoint(frame.rect, new Rect(0, 0, 1, 1), trayViewportPoint));
+            }
+
+            public override SpiritItemSlot ItemSlot(ItemDefinition.Id item)
+                => (view.slotAssignment ?? throw new InvalidOperationException("The table assigns item slots only while its presenters exist."))
+                    .SlotOf(item);
         }
     }
 }

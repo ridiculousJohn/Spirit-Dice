@@ -73,7 +73,8 @@ namespace Dice.Presentation
 
     /**
      * What piece interaction presentation may use from the encounter table, nothing kind-specific: whether the player may
-     * use a piece's interaction now, submitting an input to it, points on the tray's dice bays and marks on them.
+     * use a piece's interaction now, submitting an input to it, points on the tray's dice bays, marks on them, and where an
+     * item's icon rests.
      */
     public abstract class PieceInteractionPresenterContext
     {
@@ -91,6 +92,18 @@ namespace Dice.Presentation
          * bottom-left); valid during the presenters' layout.
          */
         public abstract Vector3 BayPoint(int bay, Vector2 placement);
+
+        /** The world point over the bay's label anchor, where the tray geometry places the bay's emblems; valid during the presenters' layout. */
+        public abstract Vector3 BayLabelPoint(int bay);
+
+        /** The world point over a point of the tray, given as a viewport point of the tray's camera, such as a shown emblem's. */
+        public abstract Vector3 TrayPoint(Vector2 trayViewportPoint);
+
+        /**
+         * Where the item's icon rests: the item slot the table assigns to the item in play while the presenters exist. Fails,
+         * naming the item and the table, for an item that has none.
+         */
+        public abstract SpiritItemSlot ItemSlot(ItemDefinition.Id item);
 
         /**
          * A mark an item puts on a dice bay, made from the prefab and showing the item's icon and glow colour; it is hidden
@@ -110,13 +123,23 @@ namespace Dice.Presentation
 
         public abstract void Hide();
 
+        /**
+         * Whether the mark's emblem shows while the mark is shown, true by default; the glow stays either way, as when what
+         * the emblem stands for is in the player's hand.
+         */
+        public abstract void ShowEmblem(bool shown);
+
+        /** The point of the mark's own emblem as the tray renders it, a viewport point of the tray's camera; only while shown. */
+        public abstract Vector2 EmblemViewportPoint { get; }
+
         /** Destroys the mark; it is not used afterwards. */
         public abstract void Release();
     }
 
     /**
      * A piece interaction's presentation for the lifetime of the encounter screen's presentation of the encounter: it binds
-     * its prop to the interaction's state in each snapshot and turns the player's handling of the prop into input.
+     * what shows the piece (a prop, or an item's slot and bay indicator) to the interaction's state in each snapshot and
+     * turns the player's handling of it into input.
      */
     public abstract class PieceInteractionPresenter : IDisposable
     {
@@ -126,7 +149,10 @@ namespace Dice.Presentation
          */
         public abstract void Bind(PieceInteractionSnapshot interaction);
 
-        /** Places the prop at its bay points; runs when presenters are created, when the screen fits and when a roll or flip ends. */
+        /**
+         * Places what shows the piece at its bay points; runs when presenters are created, after they are bound to a snapshot,
+         * when the screen fits and when a roll or flip ends.
+         */
         public virtual void Layout() { }
 
         /** Leaves the prop in place and unusable; the presenter is not used afterwards. */

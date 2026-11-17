@@ -83,6 +83,11 @@ namespace Dice.Presentation
         [field: SerializeField] private RectTransform HandsPanel { get; set; }
         [field: SerializeField] private Text HandsLabel { get; set; }
         [field: SerializeField] private RectTransform RerollsPanel { get; set; }
+        /**
+         * The player's item slot at the right end of the HANDS / REROLLS row, a child of the REROLLS panel so it follows the
+         * row wherever a scene places it and shows and hides with it; it holds the item the player carries, when one needs it.
+         */
+        [field: SerializeField] public SpiritItemSlot PlayerItemSlot { get; private set; }
         [field: SerializeField] private Text RerollsLabel { get; set; }
         [field: SerializeField] private Text ResourcesLabel { get; set; }
         [field: SerializeField] private RectTransform PlayingPanel { get; set; }

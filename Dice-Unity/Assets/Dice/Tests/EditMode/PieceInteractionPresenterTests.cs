@@ -8,6 +8,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Dice.Tests
@@ -185,31 +186,63 @@ namespace Dice.Tests
         }
 
         /**
-         * Checks the bay indicator presenter asks the context for one indicator with its item's icon and glow colour, shows
-         * it on the bay of a bay position, hides it at the neutral position and for a snapshot without the interaction, and
-         * releases it when disposed / fails if the mark shows on another bay, stays shown at neutral or outlives its presenter.
+         * Checks the item position presenter shows its item on the slot the context gives it and one bay indicator with the
+         * item's icon and glow colour: at neutral the slot shows the item undimmed, the indicator is hidden and the draggable
+         * icon is the invisible handle; on a bay the slot dims and the indicator shows there; while the icon is held it shows,
+         * the slot stays dimmed and the emblem hides, and after the release the emblem shows again; a release near another bay
+         * proposes that move; disposing it releases the indicator and hides the slot / fails if the item shows twice at rest
+         * or in the hand, the slot ignores its item's place, a release reaches the engine as anything but that move or the
+         * slot outlives its presenter.
          */
         [Test]
-        public void BayIndicatorPresenterShowsItsItemsMarkOnThePiecesBay()
+        public void ItemPositionPresenterShowsItsItemOnItsSlotAndItsBay()
         {
-            var asset = Asset<BayIndicatorPresenterAsset>();
+            var asset = Asset<ItemPositionPresenterAsset>();
             var prefab = new GameObject("Bay Indicator").AddComponent<SpiritBayIndicator>();
             created.Add(prefab.gameObject);
             SyntheticUi.Set(asset, "indicatorPrefab", prefab);
             var definition = Piece(FirstPiece, new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand));
-            var presentation = Presentation(new ItemDefinition(SlotlessItemId, piece: definition), asset);
+            var item = new ItemDefinition(SlotlessItemId, piece: definition);
+            var presentation = Presentation(item, asset);
+            context.Slot = Slot();
             var presenter = asset.Create(presentation, definition, context);
             var indicator = context.Indicators.Single();
+            Assert.That(context.SlotRequests, Is.EqualTo(new[] { item.Identity }));
             Assert.That(indicator.Prefab, Is.SameAs(prefab));
             Assert.That(indicator.Icon, Is.SameAs(presentation.Icon));
             Assert.That(indicator.GlowColor, Is.EqualTo(presentation.GlowColor));
+            var icon = context.Slot.Icon;
+
+            presenter.Bind(Position(definition, PiecePosition.Neutral));
+            presenter.Layout();
+            Assert.That(context.Slot.gameObject.activeSelf, Is.True);
+            Assert.That(context.Slot.IsDimmed, Is.False);
+            Assert.That(context.Slot.GetComponentInChildren<Image>().sprite, Is.SameAs(presentation.Icon), "The slot shows its item.");
+            Assert.That(icon.Position, Is.EqualTo(PiecePosition.Neutral));
+            Assert.That(icon.IsVisible, Is.False, "At rest the slot shows the item; the icon is the handle.");
 
             presenter.Bind(Position(definition, PiecePosition.Bay(2)));
-            presenter.Bind(Position(definition, PiecePosition.Neutral));
-            presenter.Bind(Position(definition, PiecePosition.Bay(4)));
-            presenter.Bind(null);
+            presenter.Layout();
+            Assert.That(context.Slot.IsDimmed, Is.True);
+            Assert.That(icon.Position, Is.EqualTo(PiecePosition.Bay(2)));
+            Assert.That(icon.IsVisible, Is.False, "On a bay the indicator shows the item; the icon is the handle.");
+
+            icon.OnBeginDrag(Pointer(RecordingContext.Point(2)));
+            icon.OnDrag(Pointer(RecordingContext.Point(1)));
+            Assert.That(icon.IsVisible, Is.True, "The held icon shows.");
+            Assert.That(context.Slot.IsDimmed, Is.True, "The slot stays dimmed while its item is in the hand.");
+            var release = RecordingContext.Point(0) + new Vector3(10, 5, 0);
+            icon.OnDrag(Pointer(release));
+            icon.OnEndDrag(Pointer(release));
+            var move = context.Inputs.Single();
+            Assert.That(move.Key, Is.EqualTo(TestPieces.IdOf(FirstPiece) + " 0"));
+            Assert.That(((MovePieceInput)move.Value).Position, Is.EqualTo(PiecePosition.Bay(0)));
+
             presenter.Dispose();
-            Assert.That(indicator.Log, Is.EqualTo(new[] { "show 2", "hide", "show 4", "hide", "release" }));
+            Assert.That(indicator.Log, Is.EqualTo(new[] { "hide", "show 2", "emblem on", "emblem off", "emblem on", "release" }),
+                "The emblem hides only while the item is in the hand.");
+            Assert.That(context.Slot.gameObject.activeSelf, Is.False, "Disposing the presenter clears its slot.");
+            Assert.That(context.Slot.IsDimmed, Is.False);
         }
 
         private T Asset<T>() where T : ScriptableObject
@@ -258,6 +291,43 @@ namespace Dice.Tests
         private static EncounterSession Session(MechanicalCatalog catalog)
             => EncounterSession.CreateEncounter(catalog, TestContent.EncounterId, 3);
 
+        /**
+         * An item slot under a table rect with its icon beside it, the icon's neutral anchor on the slot, settling at once;
+         * hidden, as a slot no item is assigned to is.
+         */
+        private SpiritItemSlot Slot()
+        {
+            var table = new GameObject("Table", typeof(RectTransform));
+            created.Add(table);
+            var slotObject = new GameObject("Item Slot", typeof(RectTransform), typeof(CanvasGroup));
+            slotObject.transform.SetParent(table.transform, false);
+            slotObject.transform.position = new Vector3(-300, 200, 0);
+            var itemImage = new GameObject("Item Image", typeof(RectTransform), typeof(Image));
+            itemImage.transform.SetParent(slotObject.transform, false);
+            var anchor = new GameObject("Icon Anchor", typeof(RectTransform));
+            anchor.transform.SetParent(slotObject.transform, false);
+            var iconObject = new GameObject("Item Slot Icon", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
+            iconObject.transform.SetParent(table.transform, false);
+            var icon = iconObject.AddComponent<SpiritItemSlotIcon>();
+            using (var serialized = new SerializedObject(icon))
+            {
+                serialized.FindProperty("image").objectReferenceValue = iconObject.GetComponent<Image>();
+                serialized.FindProperty("neutralAnchor").objectReferenceValue = anchor.transform;
+                serialized.FindProperty("settleDuration").floatValue = 0f;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            var slot = slotObject.AddComponent<SpiritItemSlot>();
+            using (var serialized = new SerializedObject(slot))
+            {
+                serialized.FindProperty("icon").objectReferenceValue = icon;
+                serialized.FindProperty("itemImage").objectReferenceValue = itemImage.GetComponent<Image>();
+                serialized.FindProperty("frame").objectReferenceValue = slotObject.GetComponent<CanvasGroup>();
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
+            slot.Hide();
+            return slot;
+        }
+
         /** The piece's first interaction in a position state. */
         private static PieceInteractionSnapshot Position(TablePieceDefinition piece, PiecePosition position)
             => new PieceInteractionSnapshot(piece.Identity, 0, true, new PiecePositionState(position));
@@ -287,6 +357,7 @@ namespace Dice.Tests
         {
             var asset = Asset<ItemAsset>();
             asset.name = "Item " + item.Identity;
+            SyntheticUi.Set(asset, ContentAsset.AssetGuidField, item.Identity.Value.ToString("N"));
             var texture = new Texture2D(2, 2);
             created.Add(texture);
             var icon = Sprite.Create(texture, new Rect(0, 0, 2, 2), new Vector2(.5f, .5f));
@@ -300,7 +371,7 @@ namespace Dice.Tests
             return presentation;
         }
 
-        private static void Drag(SpiritTablePiecePosition piece, Vector3 from, Vector3 to)
+        private static void Drag(SpiritPositionDrag piece, Vector3 from, Vector3 to)
         {
             piece.OnBeginDrag(Pointer(from));
             piece.OnDrag(Pointer(to));
@@ -338,7 +409,23 @@ namespace Dice.Tests
 
             public override Vector3 BayPoint(int bay, Vector2 placement) => Point(bay);
 
+            /** A bay's label anchor is its bay point. */
+            public override Vector3 BayLabelPoint(int bay) => Point(bay);
+
+            /** A tray viewport point's x counts bays, as the recording indicator reports its emblem. */
+            public override Vector3 TrayPoint(Vector2 trayViewportPoint) => Point(0) + Vector3.right * (100 * trayViewportPoint.x);
+
             public readonly List<RecordingBayIndicator> Indicators = new List<RecordingBayIndicator>();
+
+            /** The slot the table gives every item, and the items it was asked for. */
+            public SpiritItemSlot Slot;
+            public readonly List<ItemDefinition.Id> SlotRequests = new List<ItemDefinition.Id>();
+
+            public override SpiritItemSlot ItemSlot(ItemDefinition.Id item)
+            {
+                SlotRequests.Add(item);
+                return Slot;
+            }
 
             public override BayIndicator CreateBayIndicator(SpiritBayIndicator prefab, Sprite icon, Color glowColor)
             {
@@ -364,8 +451,24 @@ namespace Dice.Tests
             public Sprite Icon { get; }
             public Color GlowColor { get; }
 
-            public override void ShowOn(int bay) => Log.Add("show " + bay);
-            public override void Hide() => Log.Add("hide");
+            private int shownBay = -1;
+
+            public override void ShowOn(int bay)
+            {
+                shownBay = bay;
+                Log.Add("show " + bay);
+            }
+
+            public override void Hide()
+            {
+                shownBay = -1;
+                Log.Add("hide");
+            }
+
+            public override void ShowEmblem(bool shown) => Log.Add(shown ? "emblem on" : "emblem off");
+
+            /** The emblem of a shown mark is at its bay's index across the tray's viewport. */
+            public override Vector2 EmblemViewportPoint => new Vector2(shownBay, 0);
             public override void Release() => Log.Add("release");
         }
 

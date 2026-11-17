@@ -24,32 +24,21 @@ namespace Dice.Presentation
 
         private sealed class PositionInteractionPresenter : PieceInteractionPresenter
         {
-            private readonly SpiritTablePieceView piece;
             private readonly SpiritTablePiecePosition placement;
-            private readonly PositionInteractionDefinition definition;
-            private readonly int interactionIndex;
             private readonly PieceInteractionPresenterContext context;
+            private readonly PositionInteractionBinding binding;
             private readonly Vector3[] bayPoints = new Vector3[DiceValues.Count];
 
             internal PositionInteractionPresenter(SpiritTablePieceView piece, SpiritTablePiecePosition placement,
                 PositionInteractionDefinition definition, int interactionIndex, PieceInteractionPresenterContext context)
             {
-                this.piece = piece;
                 this.placement = placement;
-                this.definition = definition;
-                this.interactionIndex = interactionIndex;
                 this.context = context;
-                placement.Initialize(CanMove, RequestMove);
+                binding = new PositionInteractionBinding(placement, definition, piece.Piece.Identity, interactionIndex, context,
+                    piece.Piece.name + " on " + piece.name);
             }
 
-            public override void Bind(PieceInteractionSnapshot interaction)
-            {
-                if (interaction == null) { placement.Unbind(); return; }
-                if (!(interaction.State is PiecePositionState state))
-                    throw new InvalidOperationException("The position interaction of the table piece " + piece.Piece.name + " on " +
-                        piece.name + " has a " + interaction.State?.GetType().Name + " state.");
-                placement.Bind(state.Position, definition);
-            }
+            public override void Bind(PieceInteractionSnapshot interaction) => binding.Bind(interaction);
 
             /** Bay positions follow the tray's resting dice slots at the prop's authored bay placement. */
             public override void Layout()
@@ -58,12 +47,7 @@ namespace Dice.Presentation
                 placement.Layout(bayPoints);
             }
 
-            public override void Dispose() => placement.Unbind();
-
-            private bool CanMove() => context.CanInteract(piece.Piece.Identity, interactionIndex);
-
-            private bool RequestMove(PiecePosition position)
-                => context.Interact(piece.Piece.Identity, interactionIndex, new MovePieceInput(position));
+            public override void Dispose() => binding.Unbind();
         }
     }
 }

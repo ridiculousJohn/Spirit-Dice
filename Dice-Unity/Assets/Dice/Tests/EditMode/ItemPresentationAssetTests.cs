@@ -37,7 +37,7 @@ namespace Dice.Tests
             var positioned = new TablePieceDefinition(TestPieces.IdOf(PieceName),
                 new[] { new PositionInteractionDefinition(PiecePosition.Neutral, PieceMovementTiming.DuringHand) });
             var withPiece = new ItemDefinition(ItemId, piece: positioned);
-            var presenter = Create<BayIndicatorPresenterAsset>();
+            var presenter = Create<ItemPositionPresenterAsset>();
             SyntheticUi.Set(presenter, "indicatorPrefab", IndicatorPrefab());
 
             var presentation = Presentation("Lantern", Icon(), presenter);
@@ -50,8 +50,8 @@ namespace Dice.Tests
             var unpositioned = new ItemDefinition(ItemId, piece: new TablePieceDefinition(TestPieces.IdOf(PieceName)));
             Assert.Throws<InvalidOperationException>(() => presentation.Validate(unpositioned),
                 "A presenter of a kind the piece has no interaction of.");
-            Assert.Throws<InvalidOperationException>(() => Presentation("Lantern", Icon(), Create<BayIndicatorPresenterAsset>())
-                .Validate(withPiece), "A bay indicator presenter without its prefab.");
+            Assert.Throws<InvalidOperationException>(() => Presentation("Lantern", Icon(), Create<ItemPositionPresenterAsset>())
+                .Validate(withPiece), "An item position presenter without its bay indicator prefab.");
 
             var ruleId = TestRules.IdOf(RuleName);
             var withoutPiece = new ItemDefinition(ItemId, new[] { new FirstRerollFreeRuleDefinition(ruleId) });

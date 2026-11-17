@@ -117,7 +117,7 @@ namespace Dice.Presentation
                 shadowScales[index] = contactShadows[index].transform.localScale;
             }
             supportPoints = CreateSupportPoints(dice[0].GetComponent<MeshFilter>().sharedMesh);
-            bayIndicators = new SpiritBayIndicators(slotRoots, sharedScene.Geometry.DiceLabelAnchors, DieScale);
+            bayIndicators = new SpiritBayIndicators(slotRoots, sharedScene.Geometry.DiceLabelAnchors, renderCamera, DieScale);
             initialized = true;
             SetContentActive(isActiveAndEnabled);
         }

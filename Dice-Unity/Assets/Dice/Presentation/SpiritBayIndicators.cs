@@ -16,16 +16,19 @@ namespace Dice.Presentation
     {
         private readonly IReadOnlyList<Transform> bayRoots;
         private readonly IReadOnlyList<Transform> labelAnchors;
+        private readonly Camera renderCamera;
         private readonly float dieScale;
         // In creation order, which orders the emblems sharing a bay.
         private readonly List<Indicator> indicators = new List<Indicator>();
 
         /**
          * bayRoots are the roots of the five bays' contents, labelAnchors the tray geometry's anchors at each bay's front lip,
-         * where the bay's emblems sit, and dieScale the size of a die in the bay roots' space.
+         * where the bay's emblems sit, renderCamera the tray's camera and dieScale the size of a die in the bay roots' space.
          */
-        internal SpiritBayIndicators(IReadOnlyList<Transform> bayRoots, IReadOnlyList<Transform> labelAnchors, float dieScale)
+        internal SpiritBayIndicators(IReadOnlyList<Transform> bayRoots, IReadOnlyList<Transform> labelAnchors, Camera renderCamera,
+            float dieScale)
         {
+            this.renderCamera = renderCamera != null ? renderCamera : throw new ArgumentNullException(nameof(renderCamera));
             this.bayRoots = bayRoots ?? throw new ArgumentNullException(nameof(bayRoots));
             this.labelAnchors = labelAnchors ?? throw new ArgumentNullException(nameof(labelAnchors));
             if (bayRoots.Count != DiceValues.Count) throw new ArgumentException("A tray has five bay roots.", nameof(bayRoots));
@@ -114,6 +117,16 @@ namespace Dice.Presentation
             public override void ShowOn(int bay) => owner.Show(this, bay);
             public override void Hide() => owner.Hide(this);
             public override void Release() => owner.Release(this);
+
+            public override void ShowEmblem(bool shown)
+            {
+                if (Released) throw new InvalidOperationException("A released bay indicator cannot show its emblem.");
+                View.ShowEmblem(shown);
+            }
+
+            public override Vector2 EmblemViewportPoint
+                => Bay >= 0 ? (Vector2)owner.renderCamera.WorldToViewportPoint(View.EmblemPosition)
+                    : throw new InvalidOperationException("A hidden bay indicator has no emblem point.");
 
             internal void Destroy()
             {

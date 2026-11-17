@@ -41,6 +41,12 @@ namespace Dice.Presentation
                     " must be on the tray's render layer, " + SpiritDiceTray.RenderLayer + ".");
         }
 
+        /** Shows or hides the emblem; the glow stays. */
+        internal void ShowEmblem(bool shown) => emblem.enabled = shown;
+
+        /** Where the emblem is, in world space. */
+        internal Vector3 EmblemPosition => emblem.transform.position;
+
         /** Shows the item's icon at the emblem size and the glow colour. */
         internal void Initialize(Sprite icon, Color glowColor)
         {

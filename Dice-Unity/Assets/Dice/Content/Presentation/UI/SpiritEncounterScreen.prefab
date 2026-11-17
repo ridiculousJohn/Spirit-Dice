@@ -2723,7 +2723,9 @@ MonoBehaviour:
   pauseMenu: {fileID: 6903189206629420999}
   portraitReferenceWidth: 540
   tablePieces: []
+  itemSlots: []
   ambientProps: []
+  outcomeAnimations: []
 --- !u!223 &3955674382443750106
 Canvas:
   m_ObjectHideFlags: 0
@@ -2851,6 +2853,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4251309427726067449}
+  - component: {fileID: 338288853560704917}
   m_Layer: 0
   m_Name: DiceTouchTargets
   m_TagString: Untagged
@@ -2882,6 +2885,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &338288853560704917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6967354195836346541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35c6c0ccd0c59bb4d9f225350a461044, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritDragPassThrough
 --- !u!1 &7115378629778624758
 GameObject:
   m_ObjectHideFlags: 0
@@ -4569,7 +4584,7 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 1017957684403699294, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
-      insertIndex: -1
+      insertIndex: 0
       addedObject: {fileID: 3453035141345958860}
     - targetCorrespondingSourceObject: {fileID: 1017957684403699294, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
       insertIndex: -1
@@ -4655,11 +4670,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!224 &1888980411233909113 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 8129790601908033355, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
-  m_PrefabInstance: {fileID: 7702792356877905458}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2220619634177337897 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8373573917384164379, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
@@ -4818,17 +4828,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &6364067402564629367 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3653656540349259077, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
-  m_PrefabInstance: {fileID: 7702792356877905458}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
 --- !u!224 &7261302095835287660 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 1017957684403699294, guid: 11975bd0686bebd48989ab1da6ce31a6, type: 3}
@@ -4991,39 +4990,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8626751976549907072, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
   m_PrefabInstance: {fileID: 7978226530550862049}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2973417510317468865 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5186996383411010592, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
-  m_PrefabInstance: {fileID: 7978226530550862049}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d1a966081f4415c9997b0426c5c1bb8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiButtonVisual
---- !u!114 &3962896631759396489 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6361145082020138600, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
-  m_PrefabInstance: {fileID: 7978226530550862049}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
---- !u!114 &5796936815703639846 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4524571232572708807, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
-  m_PrefabInstance: {fileID: 7978226530550862049}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d1a966081f4415c9997b0426c5c1bb8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritUiButtonVisual
 --- !u!114 &6903189206629420999 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3563847865579200294, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
@@ -5035,17 +5001,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b699af9ccfb4ab5a0d67cbc7e72b10d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritPauseMenu
---- !u!114 &8967921711744586143 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1354509858507342206, guid: 239656231320b8c4bac88f4f82042ed1, type: 3}
-  m_PrefabInstance: {fileID: 7978226530550862049}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Text
 --- !u!1001 &8311529967597315847
 PrefabInstance:
   m_ObjectHideFlags: 0
