@@ -90,10 +90,10 @@ namespace Dice.App
 
         /**
          * Records the snapshot's unlocks and, when it is won, its encounter and the journey the win completes (none in direct
-         * play or when later beats follow) as completed, with the journey's completion reward.
+         * play or when later beats follow) as completed. It gives no reward: continuing from the won encounter does.
          */
         public bool RecordProgression(EncounterSnapshot snapshot, MechanicalCatalog catalog, EncounterJourneyAsset.Id? journeyId,
-            ProgressionRewardDefinition completionReward, EncounterSaveData unlockSave = null, string unlockSavePath = null)
+            EncounterSaveData unlockSave = null, string unlockSavePath = null)
         {
             if (profile == null) return false;
             if (unlockSave != null)
@@ -108,9 +108,21 @@ namespace Dice.App
             {
                 profileDirty |= profile.CompleteEncounter(snapshot.EncounterId);
                 if (journeyId.HasValue) profileDirty |= profile.CompleteJourney(journeyId.Value);
-                if (completionReward != null) profileDirty |= profile.ApplyReward(completionReward, catalog);
             }
             return PersistProfile();
+        }
+
+        /**
+         * Whether giving the rewards would add anything to the profile; lackedItems receives their items the profile does
+         * not own, each once. Without a profile nothing is given, so nothing is lacking.
+         */
+        public bool Lacks(IEnumerable<ProgressionRewardDefinition> rewards, MechanicalCatalog catalog, ICollection<ItemDefinition.Id> lackedItems)
+        {
+            if (rewards == null) throw new ArgumentNullException(nameof(rewards));
+            if (profile == null) return false;
+            bool lacks = false;
+            foreach (var reward in rewards) lacks |= profile.Lacks(reward, catalog, lackedItems);
+            return lacks;
         }
 
         public bool ApplyProgressionReward(ProgressionRewardDefinition reward, MechanicalCatalog catalog, out bool changed)

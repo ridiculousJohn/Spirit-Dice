@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Dice.Engine;
 using Dice.UnityContent;
 using UnityEngine;
 
@@ -25,6 +26,9 @@ namespace Dice.Presentation
 
         /** Shows the charm the narration names, filling its {charm} placeholder with the charm's family. */
         void ShowCharm(ModifierAsset charm);
+
+        /** Shows the items, each as an item detail in the narration; with none it shows no item. */
+        void ShowItems(IReadOnlyList<ItemDefinition.Id> items);
 
         /** Shows the rule cards in play at the table for the encounter, and Accept in place of Continue. */
         void ShowInvitation(EncounterTablePresentationAsset table, EncounterAsset encounter);

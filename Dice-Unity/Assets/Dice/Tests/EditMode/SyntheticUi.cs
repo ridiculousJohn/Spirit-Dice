@@ -108,6 +108,35 @@ namespace Dice.Tests
             return row;
         }
 
+        /** An invitation rule row template, inactive outside any list, with its texts and icon. */
+        public SpiritInvitationRuleView RuleRow()
+        {
+            var row = Add<SpiritInvitationRuleView>(Root, "Rule Row Template");
+            var iconRoot = Rect(row.transform, "Icon Root");
+            Set(row, "title", Label(row.transform, "Title"));
+            Set(row, "description", Label(row.transform, "Description"));
+            Set(row, "iconRoot", iconRoot);
+            Set(row, "icon", Add<Image>(iconRoot, "Icon"));
+            row.gameObject.SetActive(false);
+            return row;
+        }
+
+        /** An item detail list under the parent whose detail template shows an icon, a name, rule rows and two-variant family rows. */
+        public SpiritItemDetailList ItemDetailList(Transform parent)
+        {
+            var detail = Add<SpiritItemDetailView>(Root, "Item Detail Template");
+            Set(detail, "icon", Add<Image>(detail.transform, "Icon"));
+            Set(detail, "itemName", Label(detail.transform, "Name"));
+            Set(detail, "ruleRowPrefab", RuleRow());
+            Set(detail, "ruleRowsRoot", Rect(detail.transform, "Rules"));
+            Set(detail, "familyRowPrefab", FamilyRow(2));
+            Set(detail, "familyRowsRoot", Rect(detail.transform, "Charms"));
+            detail.gameObject.SetActive(false);
+            var list = Add<SpiritItemDetailList>(parent, "Item Details");
+            Set(list, "detailPrefab", detail);
+            return list;
+        }
+
         /** An encounter-charms screen with a scrolling family list of two-variant rows, narration, Begin and Back. */
         public SpiritEncounterCharmsScreen CharmsScreen(Transform parent)
         {

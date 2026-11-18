@@ -67,6 +67,8 @@ namespace Dice.Presentation
         private int invitationRuleCount;
         private bool invitationShown;
         [SerializeField] private RectTransform charmDetail;
+        [Tooltip("The items continuing from the shown beat gives that the player lacks, in the narration below the charm detail.")]
+        [SerializeField] private SpiritItemDetailList itemDetails;
         [SerializeField] private Image charmIcon;
         [SerializeField] private Text charmName;
         [SerializeField] private Text charmEffect;
@@ -234,6 +236,8 @@ namespace Dice.Presentation
             invitationShown = false;
             invitationRuleCount = 0;
             beat.Show(this, journey, index);
+            // Every beat shows the items continuing from it gives that the player lacks, whatever its kind.
+            ((IJourneyStage)this).ShowItems(controls.Lacks(journey.RewardsThrough(index)).Items);
             ShowInvitationRules();
             FitNarrative();
             // The first beat the screen shows has no panel on screen to ease from.
@@ -335,6 +339,12 @@ namespace Dice.Presentation
             charmIcon.gameObject.SetActive(true);
         }
 
+        void IJourneyStage.ShowItems(IReadOnlyList<ItemDefinition.Id> items)
+        {
+            if (itemDetails == null) throw new InvalidOperationException("The journey screen requires its authored item details.");
+            itemDetails.Show(items, () => ItemDetailSources.Of(encounterControls));
+        }
+
         void IJourneyStage.ShowInvitation(EncounterTablePresentationAsset table, EncounterAsset encounter)
         {
             invitationShown = true;
@@ -424,7 +434,7 @@ namespace Dice.Presentation
 
         /**
          * Sits the narration panel's top on the shown scene's narrative top and fits its height to the beat's content (title
-         * or invitation rules, body, charm detail) with the panel's frame around the scroll view, growing down from the top.
+         * or invitation rules, body, charm detail, item details) with the panel's frame around the scroll view, growing down from the top.
          * It keeps at least its minimum height and never reaches below its authored bottom anchor; content taller than that
          * scrolls inside it. Called once the beat's content is set and when the view changes size.
          */

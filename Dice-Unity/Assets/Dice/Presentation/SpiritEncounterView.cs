@@ -651,7 +651,8 @@ namespace Dice.Presentation
                 SetGameplayVisible(false);
                 endingPanel.gameObject.SetActive(true);
                 endingView.Render(snapshot, journeyControls?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds, SpiritUi.GetWording(transform)));
+                    SpiritCharmVisuals.UnlockSummary(controls, snapshot.NewlyUnlockedModifierIds, SpiritUi.GetWording(transform)),
+                    journeyControls, () => ItemDetailSources.Of(controls));
             }
             if (IsCharmsOpen) OwnedCharmsPanel.Render();
             if (IsHandRanksOpen) RenderHandRanks();
@@ -674,7 +675,7 @@ namespace Dice.Presentation
         {
             CloseCharmPopup();
             StopAllCoroutines();
-            endingView.Reset();
+            endingView.Hide();
             SetOpeningOpacity(1);
             scorePlayback.CancelRoll();
             presenting = false;

@@ -53,11 +53,10 @@ namespace Dice.Engine
             var ruleList = new List<EncounterRuleDefinition>(encounter.Rules);
             var carriedModifierIds = new List<ModifierDefinition.Id>();
             foreach (var item in carried)
-                foreach (var rule in item.Rules)
-                {
-                    ruleList.Add(rule);
-                    carriedModifierIds.AddRange(rule.AddedModifierIds);
-                }
+            {
+                ruleList.AddRange(item.Rules);
+                carriedModifierIds.AddRange(item.AddedModifierIds);
+            }
             var ruleIds = new HashSet<EncounterRuleDefinition.Id>();
             foreach (var rule in ruleList)
                 if (!ruleIds.Add(rule.Identity))

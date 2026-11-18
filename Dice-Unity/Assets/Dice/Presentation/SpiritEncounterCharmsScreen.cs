@@ -41,26 +41,7 @@ namespace Dice.Presentation
         public void Show(MechanicalCatalog catalog, ModifierPresentationCatalog charms, IReadOnlyList<ModifierDefinition.Id> modifierIds,
             string narration = null)
         {
-            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
-            if (charms == null) throw new ArgumentNullException(nameof(charms));
-            if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
-            var families = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
-            foreach (var id in modifierIds)
-            {
-                var definition = catalog.GetModifier(id);
-                if (!families.TryGetValue(definition.Family, out var family))
-                {
-                    family = new List<ModifierDefinition>();
-                    families.Add(definition.Family, family);
-                }
-                family.Add(definition);
-            }
-            while (rows.Count < families.Count)
-                rows.Add(SpiritModifierFamilyRow.Create(rowPrefab, "EncounterCharmFamily" + rows.Count, Content));
-            int index = 0;
-            foreach (var family in families.Values) rows[index++].Render(charms, family);
-            for (int rowIndex = 0; rowIndex < rows.Count; ++rowIndex)
-                rows[rowIndex].gameObject.SetActive(rowIndex < families.Count);
+            SpiritModifierFamilyRow.ShowFamilies(rowPrefab, rows, Content, "EncounterCharmFamily", catalog, charms, modifierIds);
             bool narrated = !string.IsNullOrWhiteSpace(narration);
             Narration.text = narrated ? SpiritUi.GetWording(transform).encounterCharms.Narration(narration.Trim()) : "";
             Narration.gameObject.SetActive(narrated);

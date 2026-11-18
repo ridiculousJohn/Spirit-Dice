@@ -44,6 +44,43 @@ namespace Dice.App
         public IReadOnlyList<ModifierFamilyDefinition.Id> ProfileDiscoveredFamilyIds => progression.KnownDiscoveredFamilies(Catalog);
         public IReadOnlyList<EncounterDefinition.Id> CompletedEncounterIds => progression.CompletedEncounterIds;
         public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds => progression.CompletedJourneyIds;
+
+        /** What giving the rewards would add that the player lacks, read from the profile when asked. */
+        public RewardLack Lacks(IEnumerable<ProgressionRewardAsset> rewards)
+        {
+            if (rewards == null) throw new ArgumentNullException(nameof(rewards));
+            if (Catalog == null) return RewardLack.None;
+            var items = new List<ItemDefinition.Id>();
+            bool any = progression.Lacks(rewards.Select(reward => reward.Build(Catalog)), Catalog, items);
+            return new RewardLack(any, items);
+        }
+
+        /** Gives the rewards, as continuing gives a journey's rewards; a failed write reports the profile problem. */
+        public void GiveRewards(IEnumerable<ProgressionRewardAsset> rewards)
+        {
+            if (rewards == null) throw new ArgumentNullException(nameof(rewards));
+            if (IsBusy || Catalog == null || !progression.HasProfile) return;
+            try
+            {
+                bool changed = false;
+                foreach (var reward in rewards)
+                {
+                    if (!progression.ApplyProgressionReward(reward.Build(Catalog), Catalog, out bool rewardChanged))
+                    {
+                        SetJourneyStatus(ProfileProblem);
+                        return;
+                    }
+                    changed |= rewardChanged;
+                }
+                if (changed) MergeProgression();
+            }
+            catch (Exception exception) when (ExpectedFailures.Includes(exception))
+            {
+                SetJourneyStatus(SpiritStatus.Of(SpiritStatusKind.RewardFailed, exception.Message));
+                return;
+            }
+            StateChanged?.Invoke();
+        }
         public PlayerProfileStatus ProfileStatus => progression.Status;
         public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => progression.VisitedEncounterIds;
         public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => navigation.HighlightedJourneys;
@@ -576,11 +613,10 @@ namespace Dice.App
             var journey = JourneyCatalog?.Find(snapshot.EncounterId);
             if (snapshot.Outcome == EncounterOutcome.Won && highlightFollowUps)
                 navigation.RecordVictory(snapshot.EncounterId, JourneyProgress);
-            // A win completes the journey when its Encounter beat is the last beat; otherwise the last beat's Continue does.
-            var completed = journey != null && journey.IndexOfEncounter(snapshot.EncounterId) == journey.Beats.Count - 1
-                ? journey : null;
-            var completionReward = snapshot.Outcome == EncounterOutcome.Won ? completed?.CompletionReward?.Build(Catalog) : null;
-            progression.RecordProgression(snapshot, Catalog, completed?.Identity, completionReward, unlockSave, SavePath);
+            // A win records the journey as completed when its Encounter beat is the last beat; otherwise the last beat's
+            // Continue does. Continuing from the won encounter gives the rewards.
+            var completed = journey != null && journey.WinCompletes(snapshot.EncounterId) ? journey : null;
+            progression.RecordProgression(snapshot, Catalog, completed?.Identity, unlockSave, SavePath);
         }
 
         public bool ApplyProgressionReward(ProgressionRewardDefinition reward)

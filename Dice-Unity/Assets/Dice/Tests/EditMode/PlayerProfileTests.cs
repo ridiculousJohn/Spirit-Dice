@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -146,11 +147,17 @@ namespace Dice.Tests
             discovered[0] = TestFamilies.IdOf("unknown");
             granted[0] = TestModifiers.IdOf("unknown");
             items[0] = MissingItemId;
+            var lacked = new List<ItemDefinition.Id>();
+            Assert.That(profile.Lacks(reward, catalog, lacked), Is.True);
+            Assert.That(lacked, Is.EqualTo(new[] { ItemId }), "The reward lacks the item the profile does not own.");
             Assert.That(profile.ApplyReward(reward, catalog), Is.True);
             Assert.That(profile.UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf("owned")));
             Assert.That(profile.OwnedItemIds, Is.EqualTo(new[] { ItemId }));
             Assert.That(profile.DiscoveredFamilyIds, Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned") }));
             Assert.That(profile.GetDiscoveredFamilyIds(catalog), Is.EquivalentTo(new[] { TestFamilies.IdOf("family.revealed"), TestFamilies.IdOf("family.owned"), TestFamilies.IdOf("family.starter") }));
+            lacked.Clear();
+            Assert.That(profile.Lacks(reward, catalog, lacked), Is.False, "Nothing is lacking once the reward is given.");
+            Assert.That(lacked, Is.Empty);
             Assert.That(profile.ApplyReward(reward, catalog), Is.False);
             var restored = PlayerProfileCodec.Deserialize(PlayerProfileCodec.Serialize(profile));
             Assert.That(restored.ApplyReward(reward, catalog), Is.False);

@@ -338,6 +338,17 @@ namespace Dice.Tests
          */
         public ModifierPresentationCatalog For(MechanicalCatalog catalog, ModifierCategoryPresentationAsset category = null)
         {
+            Content(catalog, null, out ModifierPresentationCatalog charms, category);
+            return charms;
+        }
+
+        /**
+         * The content of an engine catalog whose items are paired with the given item assets, and, as For presents them, a
+         * presentation of every modifier of the catalog.
+         */
+        public MechanicalContent Content(MechanicalCatalog catalog, IEnumerable<KeyValuePair<ItemAsset, ItemDefinition>> items,
+            out ModifierPresentationCatalog charms, ModifierCategoryPresentationAsset category = null)
+        {
             category = category != null ? category : Category(Icon());
             var pairs = new List<KeyValuePair<ModifierAsset, ModifierDefinition>>();
             var presentations = new List<ModifierPresentationAsset>();
@@ -348,7 +359,9 @@ namespace Dice.Tests
                 pairs.Add(new KeyValuePair<ModifierAsset, ModifierDefinition>(charm, definition));
                 presentations.Add(Presentation(charm, template: "Condition of " + name));
             }
-            return Load(Skin(presentations, EveryEffectSet(category)), new MechanicalContent(catalog, pairs));
+            var content = new MechanicalContent(catalog, pairs, items);
+            charms = Load(Skin(presentations, EveryEffectSet(category)), content);
+            return content;
         }
 
         public void Dispose()

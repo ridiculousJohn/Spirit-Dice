@@ -44,6 +44,37 @@ namespace Dice.Presentation
             return row;
         }
 
+        /**
+         * Shows the charms grouped by family, in the order their families first appear, one row per family, reusing the
+         * rows made before and making more from the prefab under the parent as needed; rows beyond the families are hidden.
+         * namePrefix names each made row with its index.
+         */
+        public static void ShowFamilies(SpiritModifierFamilyRow prefab, List<SpiritModifierFamilyRow> rows, Transform parent,
+            string namePrefix, MechanicalCatalog catalog, ModifierPresentationCatalog charms,
+            IReadOnlyList<ModifierDefinition.Id> modifierIds)
+        {
+            if (rows == null) throw new ArgumentNullException(nameof(rows));
+            if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+            if (charms == null) throw new ArgumentNullException(nameof(charms));
+            if (modifierIds == null) throw new ArgumentNullException(nameof(modifierIds));
+            var families = new Dictionary<ModifierFamilyDefinition, List<ModifierDefinition>>();
+            foreach (var id in modifierIds)
+            {
+                var definition = catalog.GetModifier(id);
+                if (!families.TryGetValue(definition.Family, out var family))
+                {
+                    family = new List<ModifierDefinition>();
+                    families.Add(definition.Family, family);
+                }
+                family.Add(definition);
+            }
+            while (rows.Count < families.Count) rows.Add(Create(prefab, namePrefix + rows.Count, parent));
+            int index = 0;
+            foreach (var family in families.Values) rows[index++].Render(charms, family);
+            for (int rowIndex = 0; rowIndex < rows.Count; ++rowIndex)
+                rows[rowIndex].gameObject.SetActive(rowIndex < families.Count);
+        }
+
         public void Render(ModifierPresentationCatalog charms, IReadOnlyList<ModifierDefinition> definitions,
             Func<ModifierDefinition, string> stateText = null, Action<ModifierDefinition> select = null,
             Func<ModifierDefinition, bool> available = null)

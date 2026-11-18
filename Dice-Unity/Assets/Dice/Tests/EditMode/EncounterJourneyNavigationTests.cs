@@ -107,7 +107,7 @@ namespace Dice.Tests
             Assert.That(navigation.CanSkipIntro(new Progress(false, new[] { FirstId }, null)), Is.False);
             Assert.That(navigation.SkipIntro(progress, out var transition), Is.True);
             int invitation = first.IndexOfEncounter(FirstId) - 1;
-            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Take(invitation).Select(beat => beat.ProgressionReward)));
+            Assert.That(transition.Rewards, Is.Empty, "A skip gives nothing; the beat it lands on gives the skipped beats' rewards.");
             Assert.That(navigation.BeatIndex, Is.Zero);
             navigation.Commit(transition);
             Assert.That(navigation.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Sequence));
@@ -207,7 +207,8 @@ namespace Dice.Tests
             Assert.That(navigation.AdvanceJourney(EncounterOutcome.Won, out var transition), Is.True);
             Assert.That(transition.Phase, Is.EqualTo(EncounterJourneyPhase.Investigation));
             Assert.That(transition.CompletesJourney, Is.False);
-            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Select(beat => beat.ProgressionReward)));
+            Assert.That(transition.Rewards, Is.EqualTo(first.Beats.Select(beat => beat.ProgressionReward).Concat(new[] { first.CompletionReward })),
+                "Continuing from a won last Encounter beat gives every beat's reward and the completion reward its win did not.");
             navigation.Commit(transition);
             AssertInvestigation();
         }

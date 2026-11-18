@@ -66,6 +66,27 @@ namespace Dice.App
             return changed;
         }
 
+        /**
+         * Whether applying the reward would add anything to the profile, as ApplyReward adds it; lackedItems, when given,
+         * receives each item of the reward the profile does not own and does not hold yet.
+         */
+        public bool Lacks(ProgressionRewardDefinition reward, MechanicalCatalog catalog, ICollection<ItemDefinition.Id> lackedItems = null)
+        {
+            if (reward == null) throw new ArgumentNullException(nameof(reward));
+            reward.Validate(catalog);
+            bool lacks = false;
+            foreach (var id in reward.DiscoveredFamilyIds) lacks |= !discoveredFamilyIds.Contains(id);
+            foreach (var id in reward.GrantedModifierIds)
+                lacks |= !unlockedModifierIds.Contains(id) || !discoveredFamilyIds.Contains(catalog.GetModifier(id).Family.Identity);
+            foreach (var id in reward.GrantedItemIds)
+            {
+                if (ownedItemIds.Contains(id)) continue;
+                lacks = true;
+                if (lackedItems != null && !lackedItems.Contains(id)) lackedItems.Add(id);
+            }
+            return lacks;
+        }
+
         public bool Merge(PlayerProfile other)
         {
             if (other == null) throw new ArgumentNullException(nameof(other));

@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Dice.App;
 using Dice.Engine;
 using Dice.Presentation;
+using Dice.UnityContent;
 
 namespace Dice.Tests
 {
     /**
-     * Journey controls whose state the test sets directly. They record chapter choices and acceptances and ignore
-     * every other action.
+     * Journey controls whose state the test sets directly. They record chapter choices, acceptances and the rewards they
+     * are given, which their profile receives, and ignore every other action.
      */
     internal sealed class TestJourneyControls : IEncounterJourneyControls
     {
@@ -28,6 +31,28 @@ namespace Dice.Tests
         public IReadOnlyList<EncounterDefinition.Id> VisitedEncounterIds => Array.Empty<EncounterDefinition.Id>();
         public IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys => Array.Empty<EncounterJourneyAsset>();
         public IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; set; } = Array.Empty<EncounterJourneyAsset.Id>();
+        /** The catalog rewards are built from; without one nothing is lacking. */
+        public MechanicalCatalog RewardCatalog { get; set; }
+        /** The player's profile, which says what a reward lacks and receives what is given. */
+        public PlayerProfile Profile { get; } = new PlayerProfile();
+        /** Each call's rewards, in order. */
+        public readonly List<ProgressionRewardAsset[]> Given = new List<ProgressionRewardAsset[]>();
+
+        public RewardLack Lacks(IEnumerable<ProgressionRewardAsset> rewards)
+        {
+            if (RewardCatalog == null) return RewardLack.None;
+            var items = new List<ItemDefinition.Id>();
+            bool any = false;
+            foreach (var reward in rewards) any |= Profile.Lacks(reward.Build(RewardCatalog), RewardCatalog, items);
+            return new RewardLack(any, items);
+        }
+
+        public void GiveRewards(IEnumerable<ProgressionRewardAsset> rewards)
+        {
+            var given = rewards.ToArray();
+            Given.Add(given);
+            foreach (var reward in given) Profile.ApplyReward(reward.Build(RewardCatalog), RewardCatalog);
+        }
         public bool IsJourneyAvailable(EncounterJourneyAsset journey) => JourneyAvailable(journey);
         public bool IsChapterAvailable(EncounterChapterAsset chapter) => ChapterAvailable(chapter);
         public bool IsChapterCompleted(EncounterChapterAsset chapter) => false;

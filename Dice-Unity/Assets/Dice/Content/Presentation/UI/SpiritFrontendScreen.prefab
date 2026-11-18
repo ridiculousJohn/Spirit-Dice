@@ -212,6 +212,7 @@ MonoBehaviour:
   <MainMenu>k__BackingField: {fileID: 2782238060665922147}
   <Board>k__BackingField: {fileID: 867892838659660570}
   <Collection>k__BackingField: {fileID: 5620780321295590819}
+  <BoardRewards>k__BackingField: {fileID: 8603021776668324156}
 --- !u!114 &2395483272738064353
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -607,6 +608,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1847161201645459850, guid: 60d8d964f38af0d419c4ffc8c0b3282b, type: 3}
   m_PrefabInstance: {fileID: 3543948513662273144}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8603021776668324156 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5065055190447486788, guid: 60d8d964f38af0d419c4ffc8c0b3282b, type: 3}
+  m_PrefabInstance: {fileID: 3543948513662273144}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 918eb919efe889d45a80e4f262386fbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Dice.Presentation::Dice.Presentation.SpiritBoardRewardsPanel
 --- !u!1001 &4181111257370267479
 PrefabInstance:
   m_ObjectHideFlags: 0

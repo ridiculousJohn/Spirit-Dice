@@ -88,8 +88,9 @@ namespace Dice.Tests
             var invitation = ui.Rect(narrative, "Invitation");
             SyntheticUi.Set(view, "invitationSection", invitation.gameObject);
             SyntheticUi.Set(view, "invitationRulesRoot", ui.Rect(invitation, "Rules"));
-            SyntheticUi.Set(view, "invitationRulePrefab", RuleRow());
+            SyntheticUi.Set(view, "invitationRulePrefab", ui.RuleRow());
             SyntheticUi.Set(view, "charmDetail", ui.Rect(narrative, "Charm Detail"));
+            SyntheticUi.Set(view, "itemDetails", ui.ItemDetailList(narrative));
             SyntheticUi.Set(view, "journeyStatus", ui.Label(view.transform, "Status"));
             SyntheticUi.Set(view, "advanceButton", ui.NewButton(view.transform, "Advance"));
             SyntheticUi.Set(view, "acceptButton", ui.NewButton(view.transform, "Accept"));
@@ -97,19 +98,6 @@ namespace Dice.Tests
             SyntheticUi.Set(view, "returnButton", ui.NewButton(view.transform, "Return"));
             SyntheticUi.Set(view, "<EncounterCharms>k__BackingField", ui.CharmsScreen(view.transform));
             return view;
-        }
-
-        /** An invitation rule row template, inactive outside the view, with its texts and icon. */
-        private SpiritInvitationRuleView RuleRow()
-        {
-            var row = ui.Add<SpiritInvitationRuleView>(ui.Root, "Rule Row Template");
-            var iconRoot = ui.Rect(row.transform, "Icon Root");
-            SyntheticUi.Set(row, "title", ui.Label(row.transform, "Title"));
-            SyntheticUi.Set(row, "description", ui.Label(row.transform, "Description"));
-            SyntheticUi.Set(row, "iconRoot", iconRoot);
-            SyntheticUi.Set(row, "icon", ui.Add<Image>(iconRoot, "Icon"));
-            row.gameObject.SetActive(false);
-            return row;
         }
 
         private EncounterRulePresentationAsset Rule(string id, string name, string description)

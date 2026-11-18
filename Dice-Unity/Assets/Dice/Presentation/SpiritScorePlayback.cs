@@ -123,7 +123,8 @@ namespace Dice.Presentation
                 host.Ambient?.End(resolution.Snapshot.Outcome);
                 host.PlayOutcome(resolution.Snapshot.Outcome);
                 endingView.Render(resolution.Snapshot, host.Journey?.SelectedJourney,
-                    SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds, Wording));
+                    SpiritCharmVisuals.UnlockSummary(host.Controls, resolution.Snapshot.NewlyUnlockedModifierIds, Wording),
+                    host.Journey, () => ItemDetailSources.Of(host.Controls));
                 yield return endingView.Present(host.Host, host.SetOpeningOpacity, host.ShowEnding,
                     clip => encounterAudio.PlayCue(clip));
             }

@@ -11,8 +11,11 @@ namespace Dice.Presentation
         [field: SerializeField] public SpiritMainMenu MainMenu { get; private set; }
         [field: SerializeField] public SpiritInvestigationBoard Board { get; private set; }
         [field: SerializeField] public SpiritCollectionView Collection { get; private set; }
+        [field: SerializeField] public SpiritBoardRewardsPanel BoardRewards { get; private set; }
         private ISpiritEncounterControls encounter;
         private IEncounterJourneyControls journey;
+        // Whether the board showed at the last refresh, so arriving at it is told apart from refreshing it.
+        private bool showingBoard;
 
         public void Bind(ISpiritEncounterControls encounterControls, IEncounterJourneyControls journeyControls,
             ISpiritMainMenuControls menuControls)
@@ -26,6 +29,9 @@ namespace Dice.Presentation
             Board.Build(journey.ResumeEncounter, ShowCollection);
             Board.BindMainMenu(menuControls);
             Collection.Build(Collection.Hide);
+            if (BoardRewards == null) throw new InvalidOperationException("The front end requires its authored board rewards panel.");
+            BoardRewards.Build();
+            showingBoard = false;
             encounter.StateChanged += Refresh;
             journey.JourneyChanged += Refresh;
             Refresh();
@@ -40,6 +46,10 @@ namespace Dice.Presentation
             else MainMenu.Hide();
             if (board) Board.Render(journey, encounter, false, true);
             if (!board) Collection.Hide();
+            bool arrived = board && !showingBoard;
+            showingBoard = board;
+            if (arrived) BoardRewards.Arrive(journey, () => ItemDetailSources.Of(encounter));
+            else if (!board) BoardRewards.Hide();
         }
 
         public void ShowCollection()

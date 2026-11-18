@@ -111,6 +111,37 @@ namespace Dice.Presentation
         /** The Encounter beat that plays the encounter, or null when the journey does not play it. */
         public EncounterBeat EncounterBeatOf(EncounterDefinition.Id encounterId) => EncounterBeatAt(IndexOfEncounter(encounterId));
 
+        /**
+         * Whether continuing from the beat records the journey as completed: it is the last beat and not an Encounter beat,
+         * whose win records it instead (WinCompletes). Recording the completion is not giving the completion reward, which
+         * continuing from the last beat always gives (RewardsThrough).
+         */
+        public bool ContinuingCompletes(int index) => index == beats.Length - 1 && EncounterBeatAt(index) == null;
+
+        /** Whether winning the encounter records the journey as completed: its Encounter beat is the journey's last beat. */
+        public bool WinCompletes(EncounterDefinition.Id encounterId)
+        {
+            int index = IndexOfEncounter(encounterId);
+            return index >= 0 && index == beats.Length - 1;
+        }
+
+        /**
+         * The rewards continuing from the beat gives: the reward of every beat through it, so a beat skipped or played
+         * before gives what it lacks then, and the completion reward when the beat is the journey's last, whatever its kind.
+         * Continuing (or Accept) gives these, and every screen that shows what continuing gives shows what of these the
+         * player lacks.
+         */
+        public IEnumerable<ProgressionRewardAsset> RewardsThrough(int index)
+        {
+            if (index < 0 || index >= beats.Length) throw new ArgumentOutOfRangeException(nameof(index));
+            for (int beat = 0; beat <= index; ++beat)
+                if (beats[beat].ProgressionReward != null) yield return beats[beat].ProgressionReward;
+            if (index == beats.Length - 1 && completionReward != null) yield return completionReward;
+        }
+
+        /** Every reward of the journey: its beats' and its completion reward. */
+        public IEnumerable<ProgressionRewardAsset> AllRewards => RewardsThrough(beats.Length - 1);
+
         public void Validate(MechanicalCatalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));

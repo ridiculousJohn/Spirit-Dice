@@ -37,6 +37,8 @@ namespace Dice.Engine
         public ReadOnlyCollection<EncounterRuleDefinition> Rules { get; }
         /** The table piece the item places with its interactions, or null for an item without a piece. */
         public TablePieceDefinition Piece { get; }
+        /** The charms the item adds while it is in play: the charm list of each of its rules, in rule order. */
+        public ReadOnlyCollection<ModifierDefinition.Id> AddedModifierIds { get; }
 
         /** An item provides at least one rule or a piece; its rules are validated against the encounter it is in play in. */
         public ItemDefinition(Id identity, IEnumerable<EncounterRuleDefinition> rules = null, TablePieceDefinition piece = null)
@@ -52,6 +54,9 @@ namespace Dice.Engine
             Identity = identity;
             Rules = ruleList.AsReadOnly();
             Piece = piece;
+            var added = new List<ModifierDefinition.Id>();
+            foreach (var rule in ruleList) added.AddRange(rule.AddedModifierIds);
+            AddedModifierIds = added.AsReadOnly();
         }
 
         /** The item installed at the start of a run: its rules and its piece, each with its starting state. */

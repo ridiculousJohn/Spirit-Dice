@@ -71,6 +71,7 @@ namespace Dice.Tests
             SyntheticUi.Set(view, "rightPanel", ui.Add<RawImage>(artwork, "Right Panel"));
             SyntheticUi.Set(view, "illustrationGroup", artwork.gameObject.AddComponent<CanvasGroup>());
             SyntheticUi.Set(view, "narrativeGroup", ui.Rect(view.transform, "Narrative").gameObject.AddComponent<CanvasGroup>());
+            SyntheticUi.Set(view, "itemDetails", ui.ItemDetailList(view.transform));
             var accept = ui.NewButton(view.transform, "Accept");
             SyntheticUi.Set(view, "advanceButton", ui.NewButton(view.transform, "Advance"));
             SyntheticUi.Set(view, "acceptButton", accept);

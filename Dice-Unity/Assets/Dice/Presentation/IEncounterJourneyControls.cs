@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Dice.Engine;
+using Dice.UnityContent;
 
 namespace Dice.Presentation
 {
@@ -21,6 +22,10 @@ namespace Dice.Presentation
         /** The follow-up leads of won encounters, highlighted until they are selected. */
         IReadOnlyList<EncounterJourneyAsset> HighlightedJourneys { get; }
         IReadOnlyList<EncounterJourneyAsset.Id> CompletedJourneyIds { get; }
+        /** What giving the rewards would add that the player lacks now. */
+        RewardLack Lacks(IEnumerable<ProgressionRewardAsset> rewards);
+        /** Gives the rewards to the player. */
+        void GiveRewards(IEnumerable<ProgressionRewardAsset> rewards);
         bool IsJourneyAvailable(EncounterJourneyAsset journey);
         bool IsChapterAvailable(EncounterChapterAsset chapter);
         bool IsChapterCompleted(EncounterChapterAsset chapter);

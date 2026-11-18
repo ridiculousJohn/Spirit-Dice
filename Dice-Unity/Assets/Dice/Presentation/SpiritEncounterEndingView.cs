@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Dice.Engine;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +21,8 @@ namespace Dice.Presentation
         [SerializeField] private Text detail;
         [SerializeField] private Text unlockTitle;
         [SerializeField] private Text unlocks;
+        [Tooltip("The items continuing from the won encounter gives that the player lacks, in the scrolling content after the unlock summary.")]
+        [SerializeField] private SpiritItemDetailList itemDetails;
         [SerializeField] private RectTransform artworkFrame;
         [SerializeField] private RawImage artwork;
         [SerializeField] private Button returnButton;
@@ -35,6 +38,9 @@ namespace Dice.Presentation
         private EncounterBeat beat;
         private EncounterOutcomePresentation presentation;
         private string unlockSummary;
+        // What the ending asks what the player lacks and where its item details read the items; null until rendered.
+        private IEncounterJourneyControls journeyControls;
+        private Func<ItemDetailSources> itemSources;
         private EndingPhase phase;
         private int contextVersion;
         [SerializeField] private AspectRatioFitter artworkAspect;
@@ -46,7 +52,7 @@ namespace Dice.Presentation
             SpiritUi.RequireWording(transform);
             if (returnToTrail == null) throw new ArgumentNullException(nameof(returnToTrail));
             if (Root == null || panel == null || content == null || scroll == null || title == null || detail == null ||
-                unlockTitle == null || unlocks == null || artworkFrame == null ||
+                unlockTitle == null || unlocks == null || itemDetails == null || artworkFrame == null ||
                 artwork == null || artworkAspect == null || returnButton == null || retryButton == null ||
                 dialogueContinueButton == null || skipButton == null)
                 throw new InvalidOperationException("The encounter ending requires authored UI references.");
@@ -60,15 +66,21 @@ namespace Dice.Presentation
             dialogueContinueButton.onClick.AddListener(ContinueDialogue);
             skipButton.onClick.RemoveListener(Skip);
             skipButton.onClick.AddListener(Skip);
-            Reset();
+            Hide();
         }
 
-        public void Render(EncounterSnapshot snapshot, EncounterJourneyAsset journey, string unlockSummary)
+        /**
+         * Shows the snapshot's ending: its farewell, summary and unlocks and, in the summary of a win, the items continuing
+         * from its Encounter beat gives (EncounterJourneyAsset.RewardsThrough) that the player lacks, asked of the journey
+         * controls when shown and read from itemSources. The ending's Continue gives them; a loss shows none.
+         */
+        public void Render(EncounterSnapshot snapshot, EncounterJourneyAsset journey, string unlockSummary,
+            IEncounterJourneyControls journeyControls, Func<ItemDetailSources> itemSources)
         {
             if (Root == null) throw new InvalidOperationException("Build the encounter ending before rendering it.");
             if (snapshot == null || snapshot.Phase != EncounterPhase.Completed)
             {
-                Reset();
+                Hide();
                 return;
             }
             bool changed = this.snapshot == null || this.snapshot.EncounterId != snapshot.EncounterId ||
@@ -82,6 +94,8 @@ namespace Dice.Presentation
             this.snapshot = snapshot;
             this.journey = journey;
             this.unlockSummary = unlockSummary ?? "";
+            this.journeyControls = journeyControls;
+            this.itemSources = itemSources;
             beat = journey != null ? journey.EncounterBeatOf(snapshot.EncounterId) : null;
             presentation = OutcomePresentation(journey, snapshot);
             Root.gameObject.SetActive(true);
@@ -155,7 +169,11 @@ namespace Dice.Presentation
             }
         }
 
-        public void Reset()
+        /**
+         * Clears the shown ending and hides it. Not named Reset: Unity calls a component's Reset when it is added in the
+         * editor, before its authored references exist.
+         */
+        public void Hide()
         {
             ClearContext();
             Root.gameObject.SetActive(false);
@@ -170,6 +188,8 @@ namespace Dice.Presentation
             beat = null;
             presentation = null;
             unlockSummary = "";
+            journeyControls = null;
+            itemSources = null;
             phase = EndingPhase.Hidden;
         }
 
@@ -211,6 +231,14 @@ namespace Dice.Presentation
 
         private void OnDisable() => ClearContext();
 
+        /** The items continuing from the won encounter gives that the player lacks; none after any other outcome. */
+        private IReadOnlyList<ItemDefinition.Id> WinItems()
+        {
+            int index = journey != null ? journey.IndexOfEncounter(snapshot.EncounterId) : -1;
+            if (snapshot.Outcome != EncounterOutcome.Won || index < 0 || journeyControls == null) return Array.Empty<ItemDefinition.Id>();
+            return journeyControls.Lacks(journey.RewardsThrough(index)).Items;
+        }
+
         private string FarewellText => beat == null ? "" : snapshot.Outcome == EncounterOutcome.Won ? beat.VictoryText :
             snapshot.Outcome == EncounterOutcome.Abandoned ? beat.AbandonText : beat.DefeatText;
 
@@ -249,6 +277,7 @@ namespace Dice.Presentation
             bool hasUnlocks = !string.IsNullOrWhiteSpace(unlocks.text);
             unlockTitle.gameObject.SetActive(hasUnlocks);
             unlocks.gameObject.SetActive(hasUnlocks);
+            itemDetails.Show(summary ? WinItems() : Array.Empty<ItemDefinition.Id>(), itemSources);
             artwork.texture = presentation?.Artwork;
             artworkFrame.gameObject.SetActive(artwork.texture != null);
             if (artwork.texture != null)

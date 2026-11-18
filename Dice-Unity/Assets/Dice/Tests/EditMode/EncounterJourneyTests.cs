@@ -129,7 +129,8 @@ namespace Dice.Tests
             {
                 ++journeyNotifications;
                 Assert.That(controller.BeatIndex, Is.EqualTo(skip ? 3 : 1));
-                Assert.That(controller.ProfileUnlockedModifierIds, Does.Contain(TestModifiers.IdOf(GiftId)));
+                // A skip gives nothing by itself; the invitation it lands on gives the skipped beats' rewards on Accept.
+                Assert.That(controller.ProfileUnlockedModifierIds.Contains(TestModifiers.IdOf(GiftId)), Is.EqualTo(!skip));
             };
             controller.StateChanged += () => ++stateNotifications;
 
@@ -140,8 +141,12 @@ namespace Dice.Tests
             Assert.That(stateNotifications, Is.Zero);
         }
 
+        /**
+         * Checks a win of a last Encounter beat records the journey as completed and gives nothing, a reload keeps it so,
+         * and the ending's Continue gives the completion reward / fails if a win gives a reward unseen or Continue misses it.
+         */
         [Test]
-        public void VictoryAwardsAuthoredCompletionRewardAndReloadIsIdempotent()
+        public void VictoryRecordsCompletionAndItsContinueGivesTheCompletionReward()
         {
             var winningCatalog = new MechanicalCatalog("test.story-reward.v1", TestContent.Hands(), new[]
             {
@@ -156,10 +161,15 @@ namespace Dice.Tests
             controller.PlayHand();
             controller.CompletePresentation();
             Assert.That(controller.Snapshot.Outcome, Is.EqualTo(EncounterOutcome.Won));
-            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
+            Assert.That(controller.CompletedJourneyIds, Does.Contain(journeys.Entries[0].Identity));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.Empty, "The win gives nothing.");
             controller.Save();
             controller.Load();
-            Assert.That(controller.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));
+            Assert.That(controller.ProfileUnlockedModifierIds, Is.Empty);
+            controller.AdvanceJourney();
+            Assert.That(controller.JourneyPhase, Is.EqualTo(EncounterJourneyPhase.Investigation));
+            Assert.That(PlayerProfileFileStore.Load(controller.ProfilePath).UnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)),
+                "The ending's Continue gives the completion reward.");
         }
 
         private ProgressionRewardAsset Reward(bool discover, bool grant)

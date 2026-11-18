@@ -38,7 +38,7 @@ namespace Dice.Tests
             byte[] runBytes = File.ReadAllBytes(savePath);
             using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, null, application.CaptureSave(), savePath), Is.False);
+                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, application.CaptureSave(), savePath), Is.False);
                 progression.Clear();
                 Assert.That(progression.PersistProfile(), Is.True);
                 Assert.That(progression.HasProfile, Is.False);
@@ -214,7 +214,7 @@ namespace Dice.Tests
 
             using (var lockedRun = new FileStream(savePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, null, savedRun, savePath), Is.False);
+                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, savedRun, savePath), Is.False);
                 Assert.That(PlayerProfileFileStore.Load(originalProfile).UnlockedModifierIds, Is.Empty);
                 Assert.That(progression.PrepareProfile(otherRun), Is.False);
                 Assert.That(progression.ProfilePath, Is.EqualTo(originalProfile));
@@ -242,7 +242,7 @@ namespace Dice.Tests
 
             using (var lockedProfile = new FileStream(progression.ProfilePath, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, null, application.CaptureSave(), savePath), Is.False);
+                Assert.That(progression.RecordProgression(application.Snapshot, catalog, null, application.CaptureSave(), savePath), Is.False);
                 Assert.That(EncounterSaveFileStore.Load(savePath, catalog).Outcome, Is.EqualTo(EncounterOutcome.Won));
                 Assert.That(progression.Status.Kind, Is.EqualTo(PlayerProfileStatusKind.ProfileSavePending));
                 Assert.That(progression.ProfileUnlockedModifierIds, Is.EqualTo(TestModifiers.IdsOf(GiftId)));

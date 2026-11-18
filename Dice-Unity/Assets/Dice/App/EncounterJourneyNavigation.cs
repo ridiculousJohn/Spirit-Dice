@@ -157,7 +157,8 @@ namespace Dice.App
                 JourneyPhase != EncounterJourneyPhase.Sequence || SelectedJourney.EncounterBeatAt(BeatIndex + 1) != null) return false;
             transition = BeatIndex < SelectedJourney.Beats.Count - 1
                 ? new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, BeatIndex + 1, BeatIndex)
-                : new Transition(SelectedJourney, EncounterJourneyPhase.Investigation, -1, BeatIndex, !encounter);
+                : new Transition(SelectedJourney, EncounterJourneyPhase.Investigation, -1, BeatIndex,
+                    SelectedJourney.ContinuingCompletes(BeatIndex));
             return true;
         }
 
@@ -166,7 +167,8 @@ namespace Dice.App
             transition = null;
             if (!CanSkipIntro(progress)) return false;
             int invitation = NextEncounterBeat() - 1;
-            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, invitation, invitation - 1);
+            // A skip gives nothing by itself: the beat it lands on shows the skipped beats' rewards, and Accept gives them.
+            transition = new Transition(SelectedJourney, EncounterJourneyPhase.Sequence, invitation);
             return true;
         }
 
@@ -291,10 +293,10 @@ namespace Dice.App
             {
                 get
                 {
-                    // Revisit earlier beats for skipped sequences and retries; grants are idempotent.
-                    for (int index = 0; index <= rewardThroughBeat; ++index)
-                        if (Journey.Beats[index].ProgressionReward != null) yield return Journey.Beats[index].ProgressionReward;
-                    if (CompletesJourney && Journey.CompletionReward != null) yield return Journey.CompletionReward;
+                    // Continuing gives the rewards of every beat through the one continued from, which revisits skipped
+                    // beats and retries (grants are idempotent), as the journey says and its screens show.
+                    if (rewardThroughBeat >= 0)
+                        foreach (var reward in Journey.RewardsThrough(rewardThroughBeat)) yield return reward;
                 }
             }
         }
